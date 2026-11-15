@@ -37,6 +37,7 @@ set(ART_TEST_SHADER_NAMES
   art_glass_footprint_field
   art_glass_footprint_reference
   art_specular_footprint
+  art_rough_footprint_reference
   art_normal_vector
   art_nested_reference
   art_curved_reference
@@ -70,6 +71,8 @@ set(ART_GLASS_FOOTPRINT_REGRESSION_TIMEOUT 1200)
 set(ART_SPECULAR_FOOTPRINT_REGRESSION_TIMEOUT 1800)
 # Bundled wrappers compare 352 normal-source and geometry paths.
 set(ART_BUNDLED_SPECULAR_REGRESSION_TIMEOUT 1800)
+# Independent rough-path estimators compare 72 position/footprint pairs.
+set(ART_ROUGH_FOOTPRINT_REGRESSION_TIMEOUT 1200)
 # Two area emitters each qualify constant and angular photon emission.
 set(ART_DIRECTIONAL_EMISSION_REGRESSION_TIMEOUT 1200)
 # Each dielectric exit case checks clear and absorbing 16-million-photon batches.
@@ -83,6 +86,8 @@ function(art_regression_timeout name result)
     set(${result} ${ART_DIRECTIONAL_EMISSION_REGRESSION_TIMEOUT} PARENT_SCOPE)
   elseif(name MATCHES "^regress-art-volume-walk(-overlap)?$")
     set(${result} ${ART_VOLUME_WALK_REGRESSION_TIMEOUT} PARENT_SCOPE)
+  elseif(name STREQUAL "regress-art-rough-footprints")
+    set(${result} ${ART_ROUGH_FOOTPRINT_REGRESSION_TIMEOUT} PARENT_SCOPE)
   elseif(name STREQUAL "regress-art-bundled-specular")
     set(${result} ${ART_BUNDLED_SPECULAR_REGRESSION_TIMEOUT} PARENT_SCOPE)
   elseif(name STREQUAL "regress-art-specular-footprints")
@@ -157,6 +162,7 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-glass-footprints
   regress-art-specular-footprints
   regress-art-bundled-specular
+  regress-art-rough-footprints
   regress-art-reflection-energy
   regress-art-nested
   regress-art-mixture
@@ -238,6 +244,7 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-glass-sides.cmake.in regress-art-mapped-glass.cmake.in
   regress-art-glass-footprints.cmake.in regress-art-reflection-energy.cmake.in
   regress-art-specular-footprints.cmake.in regress-art-bundled-specular.cmake.in
+  regress-art-rough-footprints.cmake.in
   regress-art-mixture.cmake.in regress-art-surface.cmake.in regress-art-nested.cmake.in
   regress-art-metal-energy.cmake.in regress-art-coat.cmake.in
   regress-art-materials.cmake.in regress-art-inspect.cmake.in
@@ -302,6 +309,7 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/refraction-output"
     "${CMAKE_CURRENT_BINARY_DIR}/glass-sides-output"
     "${CMAKE_CURRENT_BINARY_DIR}/mapped-glass-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/rough-footprints-output"
     "${CMAKE_CURRENT_BINARY_DIR}/bundled-specular-output"
     "${CMAKE_CURRENT_BINARY_DIR}/specular-footprints-output"
     "${CMAKE_CURRENT_BINARY_DIR}/glass-footprints-output"

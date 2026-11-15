@@ -1085,14 +1085,44 @@ qualified `as_glossy_layer` network for a coat while that legacy path is
 modernized. Maya refraction and complete subsurface transport also need
 separate qualification.
 
-These checks qualify smooth ray footprints for the tested normal fields;
-they do not qualify all filtered secondary textures. A separate
+Rough canonical GGX reflection and transmission differentiate the sampled
+microfacet normal, the selected shading frame, and the actual reflected or
+refracted direction. The random variates, roughness and anisotropy are held
+fixed. Native neighboring-ray tests cover glossy, metal, plastic, glossy
+coat and both glass lobes, including both transport directions, back-face
+glass, varying reference tangents, and geometric-side correction.
+
+Custom shaders with an explicit closure tangent can supply `"dTdx",
+Dx(Tn)` and `"dTdy", Dy(Tn)` alongside the enabled normal-derivative
+keywords. Supply derivatives of the actual raw tangent argument; its
+component along the selected normal affects frame differentiation.
+Bundled tangent-bearing canonical calls supply these keywords. Zero
+normal or tangent inputs retain the original-frame fallback and ignore
+derivatives of discarded shader tangents.
+
+`regress-art-rough-footprints` compares 72 position and footprint images
+with an independently sampled OSL reference. OSL automatic differentiation
+computes the reference path derivatives without the native sampler's
+Jacobian. The cases cover white metal, glass reflection and transmission,
+CSG and solid BOT faces, both projections, isotropic and signed anisotropic
+roughness, and varying world normal/tangent fields. Diagnostic receivers
+lie before the next glass interface. Bounded footprint diagnostics avoid
+unbounded grazing-ray variance; position controls check accepted-path
+probability and energy. Both images must have positive receiver signals.
+At 131072 samples, mean comparisons permit 1% including binary16 rounding.
+These sampled-continuation diagnostics disable next-event estimation
+because derivative-dependent emission is not an ordinary emitter model.
+
+These checks qualify smooth ray footprints and the tested rough sampled
+paths; they do not qualify all filtered secondary textures. A separate
 high-frequency image study reproduces a discontinuity in OIIO's
 anisotropic quadrature: its sample count changes from one to two when
 the footprint aspect ratio crosses 1.5. First-order footprint differences
 can therefore cause a larger isolated color difference. Filter continuity,
-curved tangent-frame derivatives, height-map second derivatives, and
-rough-path footprint growth still need qualification.
+curved userdata tangent-frame derivatives, geometric-normal derivative
+plumbing for curved clipping corrections, height-map second derivatives,
+roughness/anisotropy gradients, and general rough-lobe filtering still need
+qualification.
 
 Rough curved/nested interfaces, general caustic focusing, transmitted
 shadows, arbitrary overlapping media, thin refractive surfaces, and filtered

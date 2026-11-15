@@ -1,0 +1,92 @@
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/rough-footprints-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_nested_test_commands.cmake")
+configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_rough_footprint_reference.oso"
+  "${WORK}/shaders/art_rough_footprint_reference.oso" COPYONLY)
+set(TOOL "@ART_OIIOTOOL_EXECUTABLE@")
+set(ACTUAL_DB "${WORK}/actual.g")
+set(REFERENCE_DB "${WORK}/reference.g")
+# Two independent estimators converge below this 1% budget at 131072
+# samples. The bound also includes binary16 output rounding.
+set(SAMPLES 131072)
+set(RELATIVE_BOUND 0.01)
+# Both diagnostics must contain a positive receiver signal, ruling out
+# agreement between two black images.
+set(MIN_RADIANCE 0.001)
+set(ART_COMMAND_TIMEOUT 120)
+set(RENDER_ARGS -P 1 -w 1 -n 1 -c "viewsize 0.05"
+  -c "eye_pt 2 -2 40" -c "orientation 0 0 0 1"
+  -c "set sampling=uniform samples=${SAMPLES} next_event_estimation=0 max_bounces=4 light_intensity=0 environment_intensity=0 background_color=black")
+# Derivative-dependent diagnostic emission measures a sampled continuation;
+# it is not direction-independent emitter radiance for MIS/NEE.
+
+function(set_rough_parameter name value)
+  foreach(db IN ITEMS "${ACTUAL_DB}" "${REFERENCE_DB}")
+    run("${VEXEC}" set-material "${db}" "OSL.param.${name}" "${value}")
+  endforeach()
+endfunction()
+
+function(render_rough_pair label shape projection position)
+  foreach(variant IN ITEMS actual reference)
+    string(TOUPPER "${variant}" upper_variant)
+    set(db "${${upper_variant}_DB}")
+    foreach(material IN ITEMS osl.material receiver.material)
+      run("${VEXEC}" set-named-material "${db}" "${material}" OSL.param.in_position "int ${position}")
+    endforeach()
+    set(image "${WORK}/${label}-${variant}.exr")
+    run_in("${WORK}" "${EXEC}" ${RENDER_ARGS} -p ${projection}
+      -o "${image}" "${db}" "${shape}.r" target.r)
+    run("${VEXEC}" check-image "${image}" 1 1)
+    run("${TOOL}" --fail 0 --hardfail 0 --warn 0 --hardwarn 0
+      "${image}" --ch R,G,B --minc ${MIN_RADIANCE}
+      --pattern "constant:color=${MIN_RADIANCE},${MIN_RADIANCE},${MIN_RADIANCE}" 1x1 3 --diff)
+  endforeach()
+  compare_radiance_mean("${WORK}/${label}-actual.exr"
+    "${WORK}/${label}-reference.exr" ${RELATIVE_BOUND} FALSE)
+endfunction()
+
+# Each lobe uses its actual native closure. The reference differentiates a
+# sampled GGX path in OSL and intersects the diagnostic receiver analytically.
+foreach(mode IN ITEMS 0 1 2)
+  foreach(db IN ITEMS "${ACTUAL_DB}" "${REFERENCE_DB}")
+    run("${VEXEC}" create-material "${db}" art_rough_footprint_reference)
+    if(mode EQUAL 2)
+      # The receiver lies inside the glass, before any second interface.
+      run("${VEXEC}" in "${db}" target.s rpp -9 9 -9 9 0 1)
+      run("${VEXEC}" r "${db}" target.r u target.s)
+    else()
+      # The primary camera looks through the hole; reflected rays hit the
+      # plane or the walls of its finite thickness.
+      run("${VEXEC}" in "${db}" outer.s rpp -200 200 -200 200 30 31)
+      run("${VEXEC}" in "${db}" hole.s rpp 1 3 -3 -1 29 32)
+      run("${VEXEC}" r "${db}" target.r u outer.s - hole.s)
+    endif()
+    run("${VEXEC}" material "${db}" assign target.r receiver.material)
+    run("${VEXEC}" material "${db}" remove receiver.material optical OSL.param.in_target)
+    run("${VEXEC}" set-named-material "${db}" receiver.material OSL art_rough_footprint_reference)
+    run("${VEXEC}" set-named-material "${db}" receiver.material OSL.param.in_receiver "int 1")
+  endforeach()
+  run("${VEXEC}" set-material "${REFERENCE_DB}" OSL.param.in_reference "int 1")
+  set_rough_parameter(in_mode "int ${mode}")
+  # Low roughness/negative anisotropy, isotropic roughness, and a broader
+  # positive-anisotropy lobe exercise distinct sampling configurations.
+  foreach(profile IN ITEMS "0.3|-0.5" "0.6|0" "0.6|0.5")
+    string(REPLACE "|" ";" parameters "${profile}")
+    list(GET parameters 0 roughness)
+    list(GET parameters 1 anisotropy)
+    set_rough_parameter(in_roughness "float ${roughness}")
+    set_rough_parameter(in_anisotropy "float ${anisotropy}")
+    foreach(shape IN ITEMS cube mesh)
+      foreach(projection IN ITEMS 0 2)
+        foreach(position IN ITEMS 1 0)
+          set(label "${mode}-${roughness}-${anisotropy}-${shape}-${projection}-${position}")
+          render_rough_pair("${label}" "${shape}" ${projection} ${position})
+        endforeach()
+      endforeach()
+    endforeach()
+  endforeach()
+endforeach()
