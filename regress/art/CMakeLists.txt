@@ -38,6 +38,7 @@ set(ART_TEST_SHADER_NAMES
   art_rough_furnace_reference
   art_glass_lighting_reference
   art_photon_reference
+  art_area_exit_reference
   art_mirror_mixture
   art_mirror_node
   art_surface_reference
@@ -54,9 +55,13 @@ set(ART_PHOTON_INSIDE_REGRESSION_TIMEOUT 1560)
 set(ART_VOLUME_ENERGY_REGRESSION_TIMEOUT 720)
 # Two area emitters each qualify constant and angular photon emission.
 set(ART_DIRECTIONAL_EMISSION_REGRESSION_TIMEOUT 1200)
+# Each dielectric exit case checks clear and absorbing 16-million-photon batches.
+set(ART_AREA_EXIT_REGRESSION_TIMEOUT 900)
 function(art_regression_timeout name result)
   if(name MATCHES "^regress-art-photon-inside-(csg|bot)-")
     set(${result} ${ART_PHOTON_INSIDE_REGRESSION_TIMEOUT} PARENT_SCOPE)
+  elseif(name MATCHES "^regress-art-area-exit-(csg|bot)-")
+    set(${result} ${ART_AREA_EXIT_REGRESSION_TIMEOUT} PARENT_SCOPE)
   elseif(name STREQUAL "regress-art-directional-emission")
     set(${result} ${ART_DIRECTIONAL_EMISSION_REGRESSION_TIMEOUT} PARENT_SCOPE)
   elseif(name STREQUAL "regress-art-volume-energy-spectral")
@@ -76,6 +81,10 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-attributes
   regress-art-emission
   regress-art-directional-emission
+  regress-art-area-exit-csg-15
+  regress-art-area-exit-csg-20
+  regress-art-area-exit-bot-15
+  regress-art-area-exit-bot-20
   regress-art-emission-medium
   regress-art-nee-context
   regress-art-color
@@ -150,6 +159,11 @@ endif()
 cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   art_nested_test_commands.cmake art_curved_test_commands.cmake
   art_caustic_test_commands.cmake.in art_photon_test_commands.cmake.in
+  art_area_exit_test_commands.cmake.in
+  regress-art-area-exit-csg-15.cmake.in
+  regress-art-area-exit-csg-20.cmake.in
+  regress-art-area-exit-bot-15.cmake.in
+  regress-art-area-exit-bot-20.cmake.in
   art_rough_box.appleseed.in art_rough_box.obj art_lit_glass.appleseed.in
   regress-art-color-metadata.cmake.in
   art_initial_volume.appleseed.in regress-art-volume.cmake.in
@@ -214,6 +228,10 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/attributes-output"
     "${CMAKE_CURRENT_BINARY_DIR}/emission-output"
     "${CMAKE_CURRENT_BINARY_DIR}/directional-emission-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/area-exit-csg-15-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/area-exit-csg-20-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/area-exit-bot-15-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/area-exit-bot-20-output"
     "${CMAKE_CURRENT_BINARY_DIR}/emission-medium-output"
     "${CMAKE_CURRENT_BINARY_DIR}/nee-context-output"
     "${CMAKE_CURRENT_BINARY_DIR}/trace-output"

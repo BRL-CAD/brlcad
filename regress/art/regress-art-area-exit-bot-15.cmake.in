@@ -1,0 +1,4 @@
+set(AREA_EXIT_KIND mesh)
+set(AREA_EXIT_IOR 1.5)
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/area-exit-bot-15-output")
+include("@CMAKE_CURRENT_BINARY_DIR@/art_area_exit_test_commands.cmake")

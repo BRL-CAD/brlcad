@@ -1657,6 +1657,21 @@ length and depth.  Each matched-seed pair must have identical pixels and
 positive control radiance.  These comparisons qualify context propagation,
 rather than a general refractive area-light energy model.
 
+`regress-art-area-exit-csg-15`, `-csg-20`, `-bot-15`, and `-bot-20`
+measure emitted power through a smooth planar dielectric exit.  A
+unit-radiance square source lies one unit inside glass; an albedo-0.5
+receiver lies two units beyond the exit.  Each case checks clear and RGB
+Beer absorption at IOR 1.5 or 2 with sixteen million photons.  The
+receiver-footprint mean must match independent Snell/Fresnel and
+solid-angle quadrature within 3 percent.  The reference includes the
+glass-to-air radiance factor and source-to-receiver area Jacobian.
+Quadrature refinement must agree, index one must recover direct lighting
+and the analytic square-source center value, a wrong IOR must disagree,
+and disabling caustics must give black.  Reflection is suppressed to
+isolate one transmitted path.  These checks cover CSG and solid BOT
+emitters within CSG glass, not curved focusing, repeated reflections,
+rough exits, or emitters in scattering volumes.
+
 The emitter contract supports static geometry.  Qualification of moving
 emitters, participating media, and general area-lit caustic focusing
 remains separate from these diffuse surface-lighting checks.

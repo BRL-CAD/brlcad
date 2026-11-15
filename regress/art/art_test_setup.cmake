@@ -20,6 +20,8 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/art_caustic_test_commands.cmake.in"
   "${CMAKE_CURRENT_BINARY_DIR}/art_caustic_test_commands.cmake" @ONLY)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/art_photon_test_commands.cmake.in"
   "${CMAKE_CURRENT_BINARY_DIR}/art_photon_test_commands.cmake" @ONLY)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/art_area_exit_test_commands.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/art_area_exit_test_commands.cmake" @ONLY)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/art_volume_test_commands.cmake.in"
   "${CMAKE_CURRENT_BINARY_DIR}/art_volume_test_commands.cmake" @ONLY)
