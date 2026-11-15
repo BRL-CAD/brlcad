@@ -77,6 +77,7 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-emission
   regress-art-directional-emission
   regress-art-emission-medium
+  regress-art-nee-context
   regress-art-color
   regress-art-color-metadata
   regress-art-image-maps
@@ -172,7 +173,7 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-trace.cmake.in
   regress-art-attributes.cmake.in
   regress-art-emission.cmake.in regress-art-directional-emission.cmake.in
-  regress-art-emission-medium.cmake.in
+  regress-art-emission-medium.cmake.in regress-art-nee-context.cmake.in
   regress-art-texture.cmake.in regress-art-color.cmake.in
   regress-art-image-maps.cmake.in regress-art-resources.cmake.in
   regress-art-transmission.cmake.in regress-art-absorption.cmake.in regress-art-initial-media.cmake.in regress-art-medium-priority.cmake.in
@@ -213,6 +214,7 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/emission-output"
     "${CMAKE_CURRENT_BINARY_DIR}/directional-emission-output"
     "${CMAKE_CURRENT_BINARY_DIR}/emission-medium-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/nee-context-output"
     "${CMAKE_CURRENT_BINARY_DIR}/trace-output"
     "${CMAKE_CURRENT_BINARY_DIR}/color-output"
     "${CMAKE_CURRENT_BINARY_DIR}/color-metadata-output"

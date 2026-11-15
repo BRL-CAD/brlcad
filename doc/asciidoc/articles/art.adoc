@@ -1598,6 +1598,14 @@ use the same medium stack and sampled IOR.  This matters for emitters
 inside glass, and for materials whose glass closures offer several IORs.
 The launched ray retains the time used to sample the emitter geometry.
 
+Explicit light sampling also evaluates the emitter with the optical state
+at the end of its visibility segment.  The sampled shader receives that
+segment's time, depth, and full distance to the light, including when the
+sample starts at a volume-scattering point.  It does not acquire a camera
+texture footprint.  Alpha coverage attenuates visibility without entering
+a fictitious index-one medium; only standalone volume boundaries update
+the shadow ray's medium stack.
+
 `regress-art-emission` compares received linear radiance with independent
 analytic integrals for a sphere, a hollow sphere, a recessed box, and a
 solid BOT.  Additional sphere and cavity checks exercise area-normalized
@@ -1627,6 +1635,15 @@ photon launches in vacuum.  These are shader-context diagnostics; they do
 not measure refractive area-light energy or general caustic focusing.
 Native renderer tests also check mixed glass closures, launch time, path
 metadata, geometry, and removal of the camera footprint.
+
+`regress-art-nee-context` compares queried emission with a fixed-color
+control on CSG and BOT emitters inside a shared glass host.  Surface cases
+exercise explicit light sampling enabled and disabled, alpha covers and
+absorbing fog.  A separate scattering-only view exercises volume light
+sampling.  The shader requires the expected incident IOR and nonzero path
+length and depth.  Each matched-seed pair must have identical pixels and
+positive control radiance.  These comparisons qualify context propagation,
+rather than a general refractive area-light energy model.
 
 The emitter contract supports static geometry.  Qualification of moving
 emitters, participating media, and general area-lit caustic focusing

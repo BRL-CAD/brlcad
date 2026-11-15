@@ -20,12 +20,19 @@
 surface art_emission_medium(
     color in_color = color(1),
     float in_expected_ior = 1.5,
-    int in_constant = 0)
+    int in_constant = 0,
+    int in_require_path = 0)
 {
     float ior = 0;
     int found = getattribute("path:ray_ior", ior);
     float IOR_TOLERANCE = 0.0001;
     int correct = found && abs(ior - in_expected_ior) < IOR_TOLERANCE;
+    if (in_require_path) {
+        float ray_length = 0;
+        int ray_depth = 0;
+        correct = correct && getattribute("path:ray_length", ray_length) &&
+            getattribute("path:ray_depth", ray_depth) && ray_length > 0 && ray_depth > 0;
+    }
     color value = in_constant || correct ? color(1, 0, 0) : color(0, 1, 0);
     Ci = in_color * value * emission();
 }
