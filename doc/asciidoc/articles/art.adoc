@@ -1368,10 +1368,13 @@ material assign panel.r panel.material
 
 Include `panel.r` with the objects selected for rendering.  Its geometry
 provides visible and reflected emission as well as illumination.
-Emitting regions must have finite conservative bounds;
-ray-dependent plate BOTs require conversion to explicit volume geometry.
-Unsupported emitting geometry reports an error before saving the image.
-Nonemitting geometry retains its ordinary intersection behavior.
+Explicit sampling requires finite conservative bounds; ray-dependent
+plate BOTs require conversion to explicit volume geometry.  When a region
+does not provide a fixed surface sampler, art logs a warning and preserves
+its visible emission.  Explicit light sampling and photon emission remain
+unavailable for that region.  Existing plate diagnostics can therefore
+continue to render; use physical volume geometry for an area-light workflow.
+Area-normalized emission also requires a registered emitting area.
 
 The renderer estimates emitting area during scene preparation and makes
 it available through OSL `surfacearea()`, in square millimeters.  Art assigns

@@ -348,10 +348,7 @@ BrlcadObject::trace(const asr::ShadingRay &ray, IntersectionResult *result) cons
 double
 BrlcadObject::get_surface_sampling_reference_area() const
 {
-    if (!m_trace->sampler_ready)
-	throw std::runtime_error(std::string("Cannot sample emitting BRL-CAD geometry '") + get_name() +
-	    "': requires one finite bounded region without ray-dependent plate BOTs");
-    return m_trace->sampler.area_scale;
+    return m_trace->sampler_ready ? m_trace->sampler.area_scale : 0.0;
 }
 
 bool
@@ -359,7 +356,8 @@ BrlcadObject::sample_surface(const double variates[SurfaceSampleDimensions], Sur
 {
     static_assert(SurfaceSampleDimensions == RT_SURFACE_SAMPLE_DIMENSIONS,
 	"Native and librt surface sampling dimensions must agree");
-    get_surface_sampling_reference_area();
+    if (!m_trace->sampler_ready)
+	throw std::runtime_error(std::string("Cannot sample BRL-CAD surface for '") + get_name() + "'");
     auto resource = m_trace->acquire();
     struct rt_surface_sample sample;
     const int status = rt_surface_sampler_sample(&sample, &m_trace->sampler, resource.get(), variates);
