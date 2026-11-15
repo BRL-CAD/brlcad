@@ -1,0 +1,26 @@
+/*              A R T _ G L A S S _ F O O T P R I N T _ F I E L D . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+shader art_glass_footprint_field(float in_slope = 0.05, float in_base = 0,
+    point in_center = point(0), output normal out_normal = N, output color out_map = color(0, 0, 1))
+{
+    point p = P - in_center;
+    out_map = color(in_base + in_slope * p[0], 0.8 * in_slope * p[1], 1);
+    out_normal = normalize(normal(out_map));
+}

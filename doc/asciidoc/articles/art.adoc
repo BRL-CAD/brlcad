@@ -1014,6 +1014,36 @@ ratio, rather than roughness, to its transmitted-differential calculation.
 These checks establish the tested first-order direction changes; filtered
 textures along secondary paths still need image-based qualification.
 
+`regress-art-glass-footprints` compares complete smooth reflection and
+transmission paths through CSG boxes, solid BOTs, spheres, and ellipsoids
+with independently differentiated analytic paths. Its 204 comparisons
+cover indices 1.5 and 2, both projections, original surface normals,
+constant mapped normals, direct world-space normal fields, and the same
+fields through `as_bump` in Normal Map mode. Positive images and separate
+hit-position comparisons prevent missing paths from passing. First-order
+footprint comparisons allow a 1% relative approximation budget at 16 by 16
+pixels and 0.5% at 32 by 32, plus one relative binary16 step and 0.00002
+absolute arithmetic error. The refined cases check curved reflection in
+perspective.
+
+The bundled `as_glass` shader supplies derivatives of its selected normal
+to the renderer. Its default normal, and `as_bump`'s default surface
+normal, obtain original surface derivatives through `as_shading_normal()`.
+Custom shaders calling the `as_glass` closure directly can opt in with
+`"normal_derivatives", 1`, `"dNdx", vector(Dx(Nn))`, and
+`"dNdy", vector(Dy(Nn))`, where `Nn` is their closure normal. Existing
+compiled shaders without these optional keywords retain the original
+surface-derivative behavior.
+
+These checks qualify smooth ray footprints for the tested normal fields;
+they do not qualify all filtered secondary textures. A separate
+high-frequency image study reproduces a discontinuity in OIIO's
+anisotropic quadrature: its sample count changes from one to two when
+the footprint aspect ratio crosses 1.5. First-order footprint differences
+can therefore cause a larger isolated color difference. Filter continuity,
+curved tangent-frame derivatives, height-map second derivatives, and
+rough-path footprint growth still need qualification.
+
 Rough curved/nested interfaces, general caustic focusing, transmitted
 shadows, arbitrary overlapping media, thin refractive surfaces, and filtered
 secondary image maps need further qualification.  The distinct-priority

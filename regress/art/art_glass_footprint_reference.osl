@@ -1,0 +1,70 @@
+/*              A R T _ G L A S S _ F O O T P R I N T _ R E F E R E N C E . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+#include "art_glass_reference.h"
+
+normal path_normal(point position, point center, vector axes, int mapped, int exit,
+    float slope, float base)
+{
+    point p = position - center;
+    if (mapped)
+        return normalize(normal(base + slope * p[0], 0.8 * slope * p[1], 1));
+    return (exit ? -1 : 1) * normalize(normal(p / (axes * axes)));
+}
+
+surface art_glass_footprint_reference(float in_slope = 0.05, float in_ior = 1.5,
+    int in_mode = 0, int in_mapped = 1, int in_reflection = 0, int in_curved = 0,
+    point in_center = point(0), vector in_axes = vector(10), int in_receiver = 0)
+{
+    point position = P;
+    vector direction = normalize(I);
+    float throughput = 1;
+    if (!in_receiver) {
+        float base = in_reflection ? 0.3 : 0;
+        normal n = in_curved ? path_normal(position, in_center, in_axes, in_mapped, 0, in_slope, base) :
+            (in_mapped ? normalize(normal(base + in_slope * position[0], 0.8 * in_slope * position[1], 1)) : normal(0, 0, 1));
+        if (in_reflection) {
+            vector transmitted = refract(direction, n, 1 / in_ior);
+            throughput = 1 - interface_transmission(1, in_ior, -dot(direction, n), -dot(transmitted, n));
+            direction = reflect(direction, n);
+        } else {
+            vector transmitted = refract(direction, n, 1 / in_ior);
+            throughput = interface_radiance_transmission(1, in_ior, -dot(direction, n), -dot(transmitted, n));
+            direction = transmitted;
+            if (in_curved) {
+                vector q = (position - in_center) / in_axes;
+                vector d = direction / in_axes;
+                position += -2 * dot(q, d) / dot(d, d) * direction;
+                n = path_normal(position, in_center, in_axes, in_mapped, 1, in_slope, base);
+            } else {
+                position += (-10 - position[2]) / direction[2] * direction;
+                n = in_mapped ? normalize(normal(in_slope * position[0], 0.8 * in_slope * position[1], 1)) : normal(0, 0, 1);
+            }
+            transmitted = refract(direction, n, in_ior);
+            throughput *= interface_radiance_transmission(in_ior, 1, -dot(direction, n), -dot(transmitted, n));
+            direction = transmitted;
+        }
+        float target_z = in_reflection ? 30 : -30;
+        position += (target_z - position[2]) / direction[2] * direction;
+    }
+    color value = color(100 * length(Dx(position)), 100 * length(Dy(position)), 100 * length(Dx(position) + Dy(position)));
+    if (in_mode == 1)
+        value = color(0.5 + 0.01 * position[0], 0.5 + 0.01 * position[1], 0.5);
+    Ci = throughput * value * emission();
+}
