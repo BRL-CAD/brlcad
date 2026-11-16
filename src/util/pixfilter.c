@@ -27,33 +27,32 @@
 
 #include "common.h"
 
-#include <errno.h>
 #include <limits.h>
-#include <stdlib.h>
-#include <string.h>
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "util_arg.h"
-#include "bu/str.h"
 #include "bu/exit.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 
 
 #define MAXLINE (8*1024)
 #define DEFAULT_WIDTH 512
 #define KERNEL_ELEMENT_COUNT 9
-unsigned char line1[3*MAXLINE], line2[3*MAXLINE], line3[3*MAXLINE], obuf[3*MAXLINE];
-unsigned char *top, *middle, *bottom, *temp;
+static unsigned char line1[3*MAXLINE], line2[3*MAXLINE], line3[3*MAXLINE], obuf[3*MAXLINE];
 
 /* The filter kernels */
-struct kernels {
+struct pixfilter_kernel {
     const char *name;
     const char *uname;		/* What is needed to recognize it */
     int kern[9];
     int kerndiv;	/* Divisor for kernel */
     int kernoffset;	/* To be added to result */
-} kernel[] = {
+};
+
+static const struct pixfilter_kernel pixfilter_kernels[] = {
     { "Low Pass", "lo", {3, 5, 3, 5, 10, 5, 3, 5, 3}, 42, 0 },
     { "Laplacian", "la", {-1, -1, -1, -1, 8, -1, -1, -1, -1}, 16, 128 },
     { "High Pass", "hi", {-1, -2, -1, -2, 13, -2, -1, -2, -1}, 1, 0 },
@@ -64,118 +63,225 @@ struct kernels {
 };
 
 
-int *kern;
-int kerndiv;
-int kernoffset;
-int width = DEFAULT_WIDTH;
-int height = DEFAULT_WIDTH;
-int verbose = 0;
-int dflag = 0;	/* Different divisor specified */
-int oflag = 0;	/* Different offset specified */
+struct pixfilter_args {
+    struct pixfilter_args *self;
+    int help;
+    int verbose;
+    const char *filter;
+    int divisor;
+    int divisor_set;
+    int offset;
+    int offset_set;
+    int width;
+    int height;
+};
 
-char *file_name;
-FILE *infp;
+enum pixfilter_dimension {
+    PIXFILTER_SIZE,
+    PIXFILTER_WIDTH,
+    PIXFILTER_HEIGHT
+};
 
-void select_filter(const char *str), dousage(void);
-
-char usage[] = "\
-Usage: pixfilter [-f type] [-v] [-d div] [-o offset]\n\
-	[-s squaresize] [-w width] [-n height] [file.pix] > file.pix\n";
-
-char hyphen[] = "-";
-
-int
-get_args(int argc, char **argv)
+static struct pixfilter_args *
+pixfilter_args_from_storage(void *storage)
 {
-    int c;
+    return storage ? *(struct pixfilter_args **)storage : NULL;
+}
 
-    while ((c = bu_getopt(argc, argv, "vf:d:o:w:n:s:h?")) != -1) {
-	switch (c) {
-	    case 'v':
-		verbose++;
-		break;
-	    case 'f':
-		select_filter(bu_optarg);
-		break;
-	    case 'd':
-		dflag++;
-		if (!util_arg_int(bu_optarg, &kerndiv, "divisor") || kerndiv == 0)
-		    return 0;
-		break;
-	    case 'o':
-		oflag++;
-		if (!util_arg_int(bu_optarg, &kernoffset, "offset"))
-		    return 0;
-		break;
-	    case 'w':
-		if (!util_arg_int_range(bu_optarg, &width, 1, INT_MAX, "width"))
-		    return 0;
-		break;
-	    case 'n':
-		if (!util_arg_int_range(bu_optarg, &height, 1, INT_MAX, "height"))
-		    return 0;
-		break;
-	    case 's':
-		if (!util_arg_int_range(bu_optarg, &width, 1, INT_MAX, "size"))
-		    return 0;
-		height = width;
-		break;
-	    default:		/* 'h' '?' */
-		return 0;
-	}
+static int
+pixfilter_divisor(struct bu_vls *msg, const char *arg, void *storage)
+{
+    struct pixfilter_args *args = pixfilter_args_from_storage(storage);
+    int value;
+
+    if (!bu_arg_integer_from_str(msg, &value, arg, 10))
+	return -1;
+    if (value == 0) {
+	if (msg)
+	    bu_vls_printf(msg, "divisor must not be zero\n");
+	return -1;
+    }
+    if (args) {
+	args->divisor = value;
+	args->divisor_set = 1;
+    }
+    return 0;
+}
+
+static int
+pixfilter_offset(struct bu_vls *msg, const char *arg, void *storage)
+{
+    struct pixfilter_args *args = pixfilter_args_from_storage(storage);
+    int value;
+
+    if (!bu_arg_integer_from_str(msg, &value, arg, 10))
+	return -1;
+    if (args) {
+	args->offset = value;
+	args->offset_set = 1;
+    }
+    return 0;
+}
+
+static int
+pixfilter_dimension(struct bu_vls *msg, const char *arg, void *storage,
+	enum pixfilter_dimension dimension)
+{
+    struct pixfilter_args *args = pixfilter_args_from_storage(storage);
+    int value;
+
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 1, INT_MAX))
+	return -1;
+    if (args) {
+	if (dimension == PIXFILTER_SIZE)
+	    args->width = args->height = value;
+	else if (dimension == PIXFILTER_WIDTH)
+	    args->width = value;
+	else
+	    args->height = value;
+    }
+    return 0;
+}
+
+#define PIXFILTER_DIMENSION_CALLBACK(_name, _dimension) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return pixfilter_dimension(msg, arg, storage, _dimension); \
     }
 
-    if (bu_optind >= argc) {
-	if (isatty(fileno(stdin)))
-	    return 0;
-	file_name = hyphen;
-	infp = stdin;
-    } else {
-	file_name = argv[bu_optind];
-	if ((infp = fopen(file_name, "rb")) == NULL) {
-	    fprintf(stderr,
-		    "pixfilter: cannot open \"%s\" for reading\n",
-		    file_name);
-	    return 0;
-	}
+PIXFILTER_DIMENSION_CALLBACK(pixfilter_size, PIXFILTER_SIZE)
+PIXFILTER_DIMENSION_CALLBACK(pixfilter_width, PIXFILTER_WIDTH)
+PIXFILTER_DIMENSION_CALLBACK(pixfilter_height, PIXFILTER_HEIGHT)
+
+static const struct bu_arg_value_keyword pixfilter_filter_values[] = {
+    {"lo", NULL, "Low-pass filter"},
+    {"la", NULL, "Laplacian filter"},
+    {"hi", NULL, "High-pass filter"},
+    {"hg", NULL, "Horizontal gradient"},
+    {"vg", NULL, "Vertical gradient"},
+    {"b", NULL, "Boxcar average"},
+    {NULL, NULL, NULL}
+};
+
+static const struct bu_arg_option pixfilter_options[] = {
+    BU_ARG_FLAG("h", "help", struct pixfilter_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_COUNTING_FLAG("v", "verbose", struct pixfilter_args, verbose,
+	BU_ARG_VALUE_FLAG, "Print kernel and result-range diagnostics"),
+    BU_ARG_KEYWORD_VALUES("f", "filter", struct pixfilter_args, filter,
+	"type", "Select the filter kernel", pixfilter_filter_values),
+    BU_ARG_CUSTOM("d", "divisor", struct pixfilter_args, self,
+	pixfilter_divisor, "integer", "Override the kernel divisor"),
+    BU_ARG_CUSTOM("o", "offset", struct pixfilter_args, self,
+	pixfilter_offset, "integer", "Override the kernel offset"),
+    BU_ARG_CUSTOM("s", "size", struct pixfilter_args, self, pixfilter_size,
+	"pixels", "Set both input dimensions"),
+    BU_ARG_CUSTOM("w", "width", struct pixfilter_args, self,
+	pixfilter_width, "pixels", "Set the input image width"),
+    BU_ARG_CUSTOM("n", "height", struct pixfilter_args, self,
+	pixfilter_height, "pixels", "Set the input image height"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand pixfilter_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"Input PIX file; omit to read standard input", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema pixfilter_schema = BU_ARG_SCHEMA(
+    "pixfilter", "Apply a 3x3 kernel to a PIX image", pixfilter_options,
+    pixfilter_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar pixfilter_grammar = {
+    &pixfilter_schema, NULL, NULL
+};
+
+static const struct pixfilter_kernel *
+pixfilter_kernel(const char *name)
+{
+    size_t i;
+
+    for (i = 0; pixfilter_kernels[i].name; i++) {
+	if (BU_STR_EQUAL(name, pixfilter_kernels[i].uname))
+	    return &pixfilter_kernels[i];
     }
-
-    if (isatty(fileno(stdout)))
-	return 0;
-
-    if (argc > ++bu_optind) {
-	fprintf(stderr, "pixfilter: excess argument(s) not supported\n");
-	return 0;
-    }
-
-    return 1;		/* OK */
+    return NULL;
 }
 
 
 int
 main(int argc, char **argv)
 {
+    struct pixfilter_args args = {NULL, 0, 0, "lo", 0, 0, 0, 0,
+	DEFAULT_WIDTH, DEFAULT_WIDTH};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    const struct pixfilter_kernel *filter = NULL;
+    const char *input = NULL;
+    const int *kern = NULL;
+    FILE *infp = stdin;
+    unsigned char *top = NULL;
+    unsigned char *middle = NULL;
+    unsigned char *bottom = NULL;
+    unsigned char *temp = NULL;
+    int kerndiv;
+    int kernoffset;
+    int width;
+    int height;
+    int verbose;
     int x, y, color;
     int value, r1, r2, r3;
     int max, min;
     size_t ret;
+    args.self = &args;
 
     bu_setprogname(argv[0]);
+
+    int introspection = bu_arg_introspect(&msg, &pixfilter_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&pixfilter_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&pixfilter_schema, "pixfilter");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "pixfilter help");
+	return 0;
+    }
+
+    if (operand_index < argc - 1)
+	input = argv[operand_index + 1];
+    if (!input && isatty(fileno(stdin)))
+	bu_exit(1, "pixfilter: no input file and standard input is a terminal\n");
+    if (isatty(fileno(stdout)))
+	bu_exit(1, "pixfilter cannot send binary output to a terminal\n");
+    if (input && (infp = fopen(input, "rb")) == NULL)
+	bu_exit(1, "pixfilter: cannot open \"%s\" for reading\n", input);
+
+    filter = pixfilter_kernel(args.filter);
+    if (!filter)
+	bu_exit(1, "pixfilter: internal filter selection failure\n");
+    kern = filter->kern;
+    kerndiv = args.divisor_set ? args.divisor : filter->kerndiv;
+    kernoffset = args.offset_set ? args.offset : filter->kernoffset;
+    width = args.width;
+    height = args.height;
+    verbose = args.verbose;
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    /* Select Default Filter (low pass) */
-    select_filter("low");
-
-    if (!get_args(argc, argv)) {
-	dousage();
-	bu_exit (1, NULL);
-    }
-
     if (width > MAXLINE) {
-	fprintf(stderr, "pixfilter:  limited to scanlines of %d\n", MAXLINE);
-	bu_exit (1, NULL);
+	bu_exit(1, "pixfilter: limited to scanlines of %d pixels\n", MAXLINE);
     }
 
     /*
@@ -192,7 +298,7 @@ main(int argc, char **argv)
 
     if (verbose) {
 	for (x = 0; x < KERNEL_ELEMENT_COUNT; x++)
-	    fprintf(stderr, "kern[%d] = %d\n", x, kern[x]);
+	    bu_flog(stderr, "kern[%d] = %d\n", x, kern[x]);
     }
 
     if (height == 1) {
@@ -230,8 +336,8 @@ main(int argc, char **argv)
 		if (value > max) max = value;
 		if (value < min) min = value;
 		if (verbose && (value > 255 || value < 0)) {
-		    fprintf(stderr, "Value %d\n", value);
-		    fprintf(stderr, "r1=%d, r2=%d, r3=%d\n", r1, r2, r3);
+		    bu_flog(stderr, "Value %d\n", value);
+		    bu_flog(stderr, "r1=%d, r2=%d, r3=%d\n", r1, r2, r3);
 		}
 		if (value < 0)
 		    obuf[x] = 0;
@@ -258,56 +364,9 @@ main(int argc, char **argv)
 
     /* Give advise on scaling factors */
     if (verbose)
-	fprintf(stderr, "Max = %d,  Min = %d\n", max, min);
+	bu_flog(stderr, "Max = %d,  Min = %d\n", max, min);
 
     return 0;
-}
-
-
-/*
- * Looks at the command line string and selects a filter
- * based on it.
- */
-void
-select_filter(const char *str)
-{
-    int i;
-
-    i = 0;
-    while (kernel[i].name != NULL) {
-	if (bu_strncmp(str, kernel[i].uname, strlen(kernel[i].uname)) == 0)
-	    break;
-	i++;
-    }
-
-    if (kernel[i].name == NULL) {
-	/* No match, output list and exit */
-	fprintf(stderr, "Unrecognized filter type \"%s\"\n", str);
-	dousage();
-	bu_exit (3, NULL);
-    }
-
-    /* Have a match, set up that kernel */
-    kern = &kernel[i].kern[0];
-    if (dflag == 0)
-	kerndiv = kernel[i].kerndiv;
-    if (oflag == 0)
-	kernoffset = kernel[i].kernoffset;
-}
-
-
-void
-dousage(void)
-{
-    int i;
-
-    fputs(usage, stderr);
-    fputs("Possible arguments for -f (type):\n", stderr);
-    i = 0;
-    while (kernel[i].name != NULL) {
-	fprintf(stderr, "  %-10s%s\n", kernel[i].uname, kernel[i].name);
-	i++;
-    }
 }
 
 
