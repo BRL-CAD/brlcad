@@ -10,7 +10,7 @@ fbgamma - load a gamma correcting colormap
 
 [source]
 ----
-fbgamma [-H] [-o] [-i] [-F framebuffer] val [gval bval]
+fbgamma [-H | --high-resolution] [-o | --overlay] [-i | --image] [-F device | --framebuffer device] (gamma | red-gamma green-gamma blue-gamma)
 ----
 
 
@@ -39,30 +39,30 @@ in the usual mathematical sense).
 [[options]]
 == OPTIONS
 
-*-F* _framebuffer_::
+*-F* _device_, *--framebuffer* _device_::
 Specify the framebuffer device to use.
 
-*-H*::
+*-H*, *--high-resolution*::
 Sets the default framebuffer size to 1024x1024 instead of 512x512.
 This size distinction is important for devices like the Adage
 framebuffers which have different operating modes based on the display
 size.
 
-*-i*::
+*-i*, *--image*::
 Display a standard gamma calibration image on the framebuffer. This
 image consists of intensity ramps with patches of solid color, and
 vertically adjacent patches containing alternating black and colored
 scanlines. Adjust gamma values until vertically adjacent ramps of
 the same color appear equal in intensity for all patches.
 
-*-o*::
+*-o*, *--overlay*::
 Overlay mode. Reads the current colormap from the framebuffer and
 applies the gamma correction to it, instead of starting from a
 linear ramp. Useful for saturating or desaturating an arbitrary
 colormap.
 
-*-h* or *-?*::
-Print usage information and exit.
+*-h*, *--help*::
+Print command help and exit.
 
 
 [[theory]]
@@ -89,10 +89,9 @@ careful calibration and measurement of your display device. The
 values are likely to be different for each color channel, and will
 depend on the brightness setting, etc.
 
-A gamma value greater than unity will saturate colors by pushing them
-away from the white point and closer to the primaries. A gamma less
-than unity will desaturate colors by moving them closer to the white
-point.
+A gamma value greater than unity will desaturate colors by lifting dim
+channel values toward the white point. A gamma less than unity will
+saturate colors by suppressing dim channel values toward the primaries.
 
 
 [[examples]]
