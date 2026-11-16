@@ -56,6 +56,28 @@ file(
       {"short": "*", "long": "", "canonical": "*", "alias_of": "", "argument": "value", "argument_requirement": "required", "hidden": false}
     ],
     "operands": []
+  },
+  {
+    "schema_version": 1,
+    "kind": "native",
+    "name": "presented",
+    "parse_policy": "options_first",
+    "options": [
+      {"short": "z", "long": "zeta", "canonical": "zeta", "alias_of": "", "argument_requirement": "none", "hidden": false, "visibility": "default", "help_group": "Primary options", "help": "First option"},
+      {"short": "b", "long": "basic", "canonical": "basic", "alias_of": "", "argument_requirement": "none", "hidden": false, "visibility": "default", "help_group": "Primary options", "help": "Second option"},
+      {"short": "a", "long": "advanced", "canonical": "advanced", "alias_of": "", "argument_requirement": "none", "hidden": false, "visibility": "advanced", "help_group": "Advanced options", "help": "Specialized option"},
+      {"short": "i", "long": "internal", "canonical": "internal", "alias_of": "", "argument_requirement": "none", "hidden": true, "visibility": "internal", "help_group": "Advanced options", "help": "Internal option"}
+    ],
+    "help_groups": [
+      {"name": "Primary options", "help": "Ordinary controls", "first_option": "zeta", "visibility": "default"},
+      {"name": "Advanced options", "help": "Specialized controls", "first_option": "advanced", "visibility": "advanced"}
+    ],
+    "parameter_groups": [
+      {"option": "advanced", "name": "Expert", "help": "Expert controls", "parameters": [
+        {"name": "quality", "argument": "level", "type": "integer", "default": "2", "help": "Rendering quality"}
+      ]}
+    ],
+    "operands": []
   }
 ]
 ]=]
@@ -103,6 +125,33 @@ endif()
 string(FIND "${symbolic_render}" "`-*` _value_::" symbolic_term)
 if(symbolic_term EQUAL -1)
   message(FATAL_ERROR "argdoc did not render the symbolic short option canonically")
+endif()
+
+execute_process(
+  COMMAND "${ARGDOC}" --render --schema "${schema_file}" --name presented
+  OUTPUT_VARIABLE presented_render
+  RESULT_VARIABLE presented_render_result
+  ERROR_VARIABLE presented_render_error
+)
+if(NOT presented_render_result EQUAL 0)
+  message(FATAL_ERROR "argdoc could not render grouped options: ${presented_render_error}")
+endif()
+string(FIND "${presented_render}" "=== Primary options" primary_heading)
+string(FIND "${presented_render}" "*-z*, *--zeta*::" zeta_term)
+string(FIND "${presented_render}" "*-b*, *--basic*::" basic_term)
+string(FIND "${presented_render}" "=== Advanced options" advanced_heading)
+string(FIND "${presented_render}" "*-a*, *--advanced*::" advanced_term)
+string(FIND "${presented_render}" "==== Expert" parameter_heading)
+string(FIND "${presented_render}" "*quality*=_level_::" parameter_term)
+string(FIND "${presented_render}" "--internal" internal_term)
+if(primary_heading EQUAL -1 OR zeta_term EQUAL -1 OR basic_term EQUAL -1 OR
+   advanced_heading EQUAL -1 OR advanced_term EQUAL -1 OR
+   parameter_heading EQUAL -1 OR parameter_term EQUAL -1 OR
+   NOT primary_heading LESS zeta_term OR NOT zeta_term LESS basic_term OR
+   NOT basic_term LESS advanced_heading OR NOT advanced_heading LESS advanced_term OR
+   NOT advanced_term LESS parameter_heading OR NOT parameter_heading LESS parameter_term OR
+   NOT internal_term EQUAL -1)
+  message(FATAL_ERROR "argdoc did not preserve grouped schema order and visibility")
 endif()
 
 set(audit_dir "${TEST_DIR}/argdoc-audit-pages")

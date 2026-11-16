@@ -547,6 +547,46 @@ static const struct bu_arg_schema combined_schema =
 	grouped_operands, combined_constraints, cannot_bypass_structure,
 	test_context_validate);
 
+static const struct bu_arg_option presented_options[] = {
+    BU_ARG_FLAG("z", "zeta", struct test_args, list_mode,
+	"First ordinary option"),
+    BU_ARG_FLAG("b", "basic", struct test_args, list_mode,
+	"Second ordinary option"),
+    BU_ARG_FLAG("a", "advanced", struct test_args, level,
+	"Advanced option"),
+    BU_ARG_FLAG("i", "internal", struct test_args, level,
+	"Internal option"),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_help_group presented_groups[] = {
+    BU_ARG_HELP_GROUP("Primary options", "Ordinary controls", "zeta",
+	BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Advanced options", "Specialized controls", "advanced",
+	BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_HELP_GROUP_NULL
+};
+static const struct bu_arg_option_visibility presented_visibility[] = {
+    BU_ARG_OPTION_VISIBILITY("internal", BU_ARG_VISIBILITY_INTERNAL),
+    BU_ARG_OPTION_VISIBILITY_NULL
+};
+static const struct bu_arg_parameter presented_parameters[] = {
+    BU_ARG_PARAMETER("quality", "level", "Rendering quality",
+	BU_ARG_VALUE_INTEGER, "2", BU_ARG_INTEGER_RANGE_INIT(1, 1, 1, 5)),
+    BU_ARG_PARAMETER_NULL
+};
+static const struct bu_arg_parameter_group presented_parameter_groups[] = {
+    BU_ARG_PARAMETER_GROUP("advanced", "Expert",
+	"Expert rendering controls", presented_parameters),
+    BU_ARG_PARAMETER_GROUP_NULL
+};
+static const struct bu_arg_presentation presented_help =
+    BU_ARG_PRESENTATION(presented_groups, presented_visibility,
+	presented_parameter_groups);
+static const struct bu_arg_schema presented_schema =
+    BU_ARG_SCHEMA_PRESENTED("presented", "Presentation metadata fixture",
+	presented_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+	BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL), &presented_help);
+
 static int
 packed_quaternion_validate(struct bu_vls *UNUSED(msg), const char *arg)
 {
@@ -1296,6 +1336,58 @@ main(int UNUSED(argc), char **argv)
 	bu_free(shaped_usage, "shaped schema usage");
     }
     {
+	const char *option_prefix[] = {"--"};
+	char *default_help = bu_arg_schema_help(&presented_schema, NULL);
+	char *extended_help = bu_arg_schema_help_mode(&presented_schema, NULL,
+	    BU_ARG_HELP_EXTENDED);
+	char *schema_json = bu_arg_schema_describe_json(&presented_schema);
+	const char *primary_heading = extended_help ?
+	    strstr(extended_help, "Primary options:\n") : NULL;
+	const char *advanced_heading = extended_help ?
+	    strstr(extended_help, "Advanced options:\n") : NULL;
+	if (!default_help || !strstr(default_help, "Primary options:\n") ||
+	    !strstr(default_help, "--zeta") || !strstr(default_help, "--basic") ||
+	    strstr(default_help, "Advanced options:\n") ||
+	    strstr(default_help, "--advanced") || strstr(default_help, "--internal") ||
+	    !extended_help || !primary_heading || !advanced_heading ||
+	    primary_heading >= advanced_heading ||
+	    !strstr(extended_help, "--advanced") ||
+	    !strstr(extended_help, "Expert parameters for --advanced:") ||
+	    !strstr(extended_help, "quality=level") ||
+	    strstr(extended_help, "--internal") ||
+	    !schema_json || !strstr(schema_json, "\"help_groups\":[{") ||
+	    !strstr(schema_json, "\"parameter_groups\":[{") ||
+	    !strstr(schema_json, "\"name\":\"quality\"") ||
+	    !strstr(schema_json, "\"help_group\":\"Advanced options\"") ||
+	    !strstr(schema_json, "\"visibility\":\"advanced\"") ||
+	    !strstr(schema_json, "\"visibility\":\"internal\"")) {
+	    bu_log("presentation help or JSON omitted ordering and visibility metadata\n");
+	    if (default_help)
+		bu_free(default_help, "default presentation help");
+	    if (extended_help)
+		bu_free(extended_help, "extended presentation help");
+	    if (schema_json)
+		bu_free(schema_json, "presentation schema JSON");
+	    bu_vls_free(&msg);
+	    return 1;
+	}
+	bu_free(default_help, "default presentation help");
+	bu_free(extended_help, "extended presentation help");
+	bu_free(schema_json, "presentation schema JSON");
+	if (bu_arg_schema_validate(&presented_schema, 1, option_prefix, 0,
+		&result) != 0 ||
+	    !candidate_present(&result, "--zeta") ||
+	    !candidate_present(&result, "--basic") ||
+	    !candidate_present(&result, "--advanced") ||
+	    candidate_present(&result, "--internal")) {
+	    bu_log("presentation visibility was not honored by completion\n");
+	    bu_arg_validate_result_clear(&result);
+	    bu_vls_free(&msg);
+	    return 1;
+	}
+	bu_arg_validate_result_clear(&result);
+    }
+    {
 	char *shaped_help = bu_arg_schema_help(&shaped_schema, NULL);
 	if (!shaped_help || !strstr(shaped_help, "Argument forms:\n") ||
 	    !strstr(shaped_help, "packed") ||
@@ -1334,6 +1426,7 @@ main(int UNUSED(argc), char **argv)
     }
 
     if (bu_arg_schema_lint(&combined_schema, &msg) != 0 ||
+	bu_arg_schema_lint(&presented_schema, &msg) != 0 ||
 	bu_arg_schema_lint(&relation_schema, &msg) != 0 ||
 	bu_arg_schema_lint(&occurrence_schema, &msg) != 0 ||
 	bu_arg_schema_lint(&guarded_schema, &msg) != 0) {
@@ -1341,6 +1434,27 @@ main(int UNUSED(argc), char **argv)
 	    bu_vls_addr(&msg));
 	bu_vls_free(&msg);
 	return 1;
+    }
+    bu_vls_trunc(&msg, 0);
+    {
+	const struct bu_arg_help_group invalid_groups[] = {
+	    BU_ARG_HELP_GROUP("Later", NULL, "basic",
+		BU_ARG_VISIBILITY_DEFAULT),
+	    BU_ARG_HELP_GROUP("Earlier", NULL, "zeta",
+		BU_ARG_VISIBILITY_DEFAULT),
+	    BU_ARG_HELP_GROUP_NULL
+	};
+	const struct bu_arg_presentation invalid_presentation =
+	    BU_ARG_PRESENTATION(invalid_groups, NULL, NULL);
+	struct bu_arg_schema invalid_schema = presented_schema;
+	invalid_schema.presentation = &invalid_presentation;
+	if (bu_arg_schema_lint(&invalid_schema, &msg) == 0 ||
+	    !strstr(bu_vls_cstr(&msg), "unknown or out-of-order boundary")) {
+	    bu_log("lint accepted out-of-order help groups: %s\n",
+		bu_vls_cstr(&msg));
+	    bu_vls_free(&msg);
+	    return 1;
+	}
     }
     bu_vls_trunc(&msg, 0);
     if (bu_arg_schema_lint(&duplicate_relation_schema, &msg) == 0 ||

@@ -2483,10 +2483,113 @@ cmd_schema_option_spelling(struct bu_vls *spellings, const char *name,
 	bu_vls_printf(spellings, " %s", argument);
 }
 
+static const struct bu_arg_help_group *
+cmd_schema_option_group(const struct bu_arg_schema *schema,
+	const struct bu_arg_option *target)
+{
+    const struct bu_arg_help_group *active = NULL;
+
+    if (!schema || !schema->options || !schema->presentation ||
+	!schema->presentation->groups || !target)
+	return NULL;
+    for (size_t i = 0; bu_arg_option_is_valid(&schema->options[i]); i++) {
+	const struct bu_arg_option *option = &schema->options[i];
+	if (!option->alias_of) {
+	    const char *canonical = bu_arg_option_canonical(option);
+	    for (size_t gi = 0; schema->presentation->groups[gi].name; gi++) {
+		const struct bu_arg_help_group *group =
+		    &schema->presentation->groups[gi];
+		if (BU_STR_EQUAL(group->first_option, canonical)) {
+		    active = group;
+		    break;
+		}
+	    }
+	}
+	if (option == target)
+	    return active;
+    }
+    return NULL;
+}
+
+
+static bu_arg_visibility_t
+cmd_schema_option_visibility(const struct bu_arg_schema *schema,
+	const struct bu_arg_option *option)
+{
+    const struct bu_arg_option *canonical = option;
+    bu_arg_visibility_t visibility = BU_ARG_VISIBILITY_DEFAULT;
+
+    if (!schema || !option)
+	return BU_ARG_VISIBILITY_INTERNAL;
+    if (option->hidden)
+	return BU_ARG_VISIBILITY_INTERNAL;
+    if (option->alias_of) {
+	canonical = cmd_schema_find_canonical(schema, option->alias_of);
+	if (!canonical)
+	    return BU_ARG_VISIBILITY_INTERNAL;
+    }
+    const struct bu_arg_help_group *group =
+	cmd_schema_option_group(schema, canonical);
+    if (group)
+	visibility = group->visibility;
+    if (schema->presentation && schema->presentation->option_visibility) {
+	const char *name = bu_arg_option_canonical(canonical);
+	for (size_t i = 0;
+		schema->presentation->option_visibility[i].option; i++) {
+	    const struct bu_arg_option_visibility *override =
+		&schema->presentation->option_visibility[i];
+	    if (BU_STR_EQUAL(override->option, name)) {
+		visibility = override->visibility;
+		break;
+	    }
+	}
+    }
+    return visibility;
+}
+
+
+static int
+cmd_schema_option_in_help(const struct bu_arg_schema *schema,
+	const struct bu_arg_option *option, bu_arg_help_mode_t mode)
+{
+    bu_arg_visibility_t visibility =
+	cmd_schema_option_visibility(schema, option);
+
+    if (visibility == BU_ARG_VISIBILITY_INTERNAL)
+	return 0;
+    return visibility == BU_ARG_VISIBILITY_DEFAULT || mode == BU_ARG_HELP_EXTENDED;
+}
+
+static void
+cmd_schema_append_option_help(struct bu_vls *out,
+	const struct bu_arg_schema *schema, const struct bu_arg_option *option,
+	bu_arg_help_mode_t mode)
+{
+    struct bu_vls spellings = BU_VLS_INIT_ZERO;
+
+    if (!out || !schema || !option)
+	return;
+    cmd_schema_option_spelling(&spellings, option->shortopt, 0, option);
+    cmd_schema_option_spelling(&spellings, option->longopt, 1, option);
+    for (size_t i = 0; bu_arg_option_is_valid(&schema->options[i]); i++) {
+	const struct bu_arg_option *alias = &schema->options[i];
+	if (!cmd_schema_option_in_help(schema, alias, mode) || !alias->alias_of ||
+		!BU_STR_EQUAL(alias->alias_of,
+		    bu_arg_option_canonical(option)))
+	    continue;
+	cmd_schema_option_spelling(&spellings, alias->shortopt, 0, option);
+	cmd_schema_option_spelling(&spellings, alias->longopt, 1, option);
+    }
+    bu_vls_printf(out, "  %-34s %s\n", bu_vls_addr(&spellings),
+	option->help ? option->help : "");
+    bu_vls_free(&spellings);
+}
+
 
 static char *
 cmd_schema_describe_selected(const struct bu_arg_schema *schema,
-	const char * const *selected, int include_constraints)
+	const char * const *selected, int include_constraints,
+	bu_arg_help_mode_t mode)
 {
     struct bu_vls out = BU_VLS_INIT_ZERO;
     size_t i = 0;
@@ -2496,9 +2599,8 @@ cmd_schema_describe_selected(const struct bu_arg_schema *schema,
 
     while (bu_arg_option_is_valid(&schema->options[i])) {
 	const struct bu_arg_option *option = &schema->options[i];
-	struct bu_vls spellings = BU_VLS_INIT_ZERO;
 
-	if (option->alias_of || option->hidden) {
+	if (option->alias_of || !cmd_schema_option_in_help(schema, option, mode)) {
 	    i++;
 	    continue;
 	}
@@ -2516,20 +2618,7 @@ cmd_schema_describe_selected(const struct bu_arg_schema *schema,
 		continue;
 	    }
 	}
-	cmd_schema_option_spelling(&spellings, option->shortopt, 0, option);
-	cmd_schema_option_spelling(&spellings, option->longopt, 1, option);
-	for (size_t ai = 0; bu_arg_option_is_valid(&schema->options[ai]); ai++) {
-	    const struct bu_arg_option *alias = &schema->options[ai];
-	    if (alias->hidden || !alias->alias_of ||
-		    !BU_STR_EQUAL(alias->alias_of,
-			bu_arg_option_canonical(option)))
-		continue;
-	    cmd_schema_option_spelling(&spellings, alias->shortopt, 0, option);
-	    cmd_schema_option_spelling(&spellings, alias->longopt, 1, option);
-	}
-	bu_vls_printf(&out, "  %-34s %s\n", bu_vls_addr(&spellings),
-		option->help ? option->help : "");
-	bu_vls_free(&spellings);
+	cmd_schema_append_option_help(&out, schema, option, mode);
 	i++;
     }
 
@@ -2550,7 +2639,7 @@ cmd_schema_describe_selected(const struct bu_arg_schema *schema,
 char *
 bu_arg_schema_describe(const struct bu_arg_schema *schema)
 {
-    return cmd_schema_describe_selected(schema, NULL, 1);
+    return cmd_schema_describe_selected(schema, NULL, 1, BU_ARG_HELP_DEFAULT);
 }
 
 
@@ -2753,8 +2842,9 @@ cmd_schema_help_arg_variants(struct bu_vls *out, int *heading,
 }
 
 
-char *
-bu_arg_schema_usage(const struct bu_arg_schema *schema, const char *invocation)
+static char *
+cmd_schema_usage(const struct bu_arg_schema *schema, const char *invocation,
+	bu_arg_help_mode_t mode)
 {
     struct bu_vls out = BU_VLS_INIT_ZERO;
     int have_options = 0;
@@ -2770,7 +2860,7 @@ bu_arg_schema_usage(const struct bu_arg_schema *schema, const char *invocation)
 	    view.operands = cmd_case->operands;
 	    view.operand_groups = cmd_case->operand_groups;
 	    view.validation.cases = NULL;
-	    case_usage = bu_arg_schema_usage(&view, invocation);
+	    case_usage = cmd_schema_usage(&view, invocation, mode);
 	    if (case_usage) {
 		bu_vls_strcat(&out, case_usage);
 		bu_free(case_usage, "command case usage");
@@ -2788,7 +2878,7 @@ bu_arg_schema_usage(const struct bu_arg_schema *schema, const char *invocation)
     if (schema->options) {
 	for (size_t i = 0; bu_arg_option_is_valid(&schema->options[i]); i++) {
 	    const struct bu_arg_option *option = &schema->options[i];
-	    if (!option->alias_of && !option->hidden) {
+	    if (!option->alias_of && cmd_schema_option_in_help(schema, option, mode)) {
 		have_options = 1;
 		break;
 	    }
@@ -2824,7 +2914,90 @@ bu_arg_schema_usage(const struct bu_arg_schema *schema, const char *invocation)
 
 
 char *
-bu_arg_schema_help(const struct bu_arg_schema *schema, const char *invocation)
+bu_arg_schema_usage(const struct bu_arg_schema *schema, const char *invocation)
+{
+    return cmd_schema_usage(schema, invocation, BU_ARG_HELP_DEFAULT);
+}
+
+
+static char *
+cmd_schema_grouped_option_help(const struct bu_arg_schema *schema,
+	bu_arg_help_mode_t mode)
+{
+    struct bu_vls out = BU_VLS_INIT_ZERO;
+    const struct bu_arg_help_group *printed_group = NULL;
+    int printed_ungrouped = 0;
+    int have_heading = 0;
+
+    if (!schema || !schema->options)
+	return NULL;
+    for (size_t i = 0; bu_arg_option_is_valid(&schema->options[i]); i++) {
+	const struct bu_arg_option *option = &schema->options[i];
+	const struct bu_arg_help_group *group;
+
+	if (option->alias_of || !cmd_schema_option_in_help(schema, option, mode))
+	    continue;
+	group = cmd_schema_option_group(schema, option);
+	if (!have_heading || group != printed_group) {
+	    if (group) {
+		bu_vls_printf(&out, "\n%s:\n", group->name);
+		if (!BU_STR_EMPTY(group->help))
+		    bu_vls_printf(&out, "  %s\n", group->help);
+	    } else if (!printed_ungrouped) {
+		bu_vls_strcat(&out, "\nOptions:\n");
+		printed_ungrouped = 1;
+	    }
+	    printed_group = group;
+	    have_heading = 1;
+	}
+	cmd_schema_append_option_help(&out, schema, option, mode);
+    }
+    char *result = bu_vls_strdup(&out);
+    bu_vls_free(&out);
+    return result;
+}
+
+
+static void
+cmd_schema_parameter_help(struct bu_vls *out,
+	const struct bu_arg_schema *schema, bu_arg_help_mode_t mode)
+{
+    const struct bu_arg_parameter_group *groups;
+
+    if (!out || !schema || !schema->presentation ||
+	!schema->presentation->parameter_groups)
+	return;
+    groups = schema->presentation->parameter_groups;
+    for (size_t gi = 0; groups[gi].option; gi++) {
+	const struct bu_arg_parameter_group *group = &groups[gi];
+	const struct bu_arg_option *owner =
+	    cmd_schema_find_canonical(schema, group->option);
+	if (!owner || !cmd_schema_option_in_help(schema, owner, mode))
+	    continue;
+	bu_vls_printf(out, "\n%s parameters for --%s:\n", group->name,
+	    group->option);
+	if (!BU_STR_EMPTY(group->help))
+	    bu_vls_printf(out, "  %s\n", group->help);
+	for (size_t pi = 0; group->parameters &&
+		group->parameters[pi].name; pi++) {
+	    const struct bu_arg_parameter *parameter = &group->parameters[pi];
+	    struct bu_vls term = BU_VLS_INIT_ZERO;
+	    bu_vls_printf(&term, "%s=%s", parameter->name,
+		BU_STR_EMPTY(parameter->argument) ? "value" : parameter->argument);
+	    bu_vls_printf(out, "  %-34s %s", bu_vls_cstr(&term),
+		parameter->help ? parameter->help : "");
+	    if (!BU_STR_EMPTY(parameter->default_value))
+		bu_vls_printf(out, " (default: %s)", parameter->default_value);
+	    bu_vls_putc(out, '\n');
+	    bu_vls_free(&term);
+	}
+    }
+}
+
+
+char *
+bu_arg_schema_help_mode(const struct bu_arg_schema *schema, const char *invocation,
+	bu_arg_help_mode_t mode)
 {
     struct bu_vls out = BU_VLS_INIT_ZERO;
     struct bu_vls label = BU_VLS_INIT_ZERO;
@@ -2835,7 +3008,7 @@ bu_arg_schema_help(const struct bu_arg_schema *schema, const char *invocation)
 
     if (!schema)
 	return NULL;
-    usage = bu_arg_schema_usage(schema, invocation);
+    usage = cmd_schema_usage(schema, invocation, mode);
     if (usage) {
 	bu_vls_strcat(&out, usage);
 	bu_free(usage, "command schema usage");
@@ -2843,11 +3016,13 @@ bu_arg_schema_help(const struct bu_arg_schema *schema, const char *invocation)
     if (!BU_STR_EMPTY(schema->help))
 	bu_vls_printf(&out, "\n%s\n", schema->help);
 
-    options = cmd_schema_describe_selected(schema, NULL, 0);
+    options = cmd_schema_grouped_option_help(schema, mode);
     if (options && options[0])
-	bu_vls_printf(&out, "\nOptions:\n%s", options);
+	bu_vls_strcat(&out, options);
     if (options)
 	bu_free(options, "command schema option help");
+
+    cmd_schema_parameter_help(&out, schema, mode);
 
     if (schema->operands && schema->operands[0].name) {
 	bu_vls_strcat(&out, "\nOperands:\n");
@@ -2870,7 +3045,8 @@ bu_arg_schema_help(const struct bu_arg_schema *schema, const char *invocation)
 	for (size_t i = 0; bu_arg_option_is_valid(&schema->options[i]); i++) {
 	    const struct bu_arg_option *option = &schema->options[i];
 	    const struct bu_arg_shape *shape = cmd_schema_option_arg_shape(option);
-	    if (option->alias_of || option->hidden || !shape || !shape->variants)
+	    if (option->alias_of || !cmd_schema_option_in_help(schema, option, mode) ||
+		    !shape || !shape->variants)
 		continue;
 	    bu_vls_trunc(&label, 0);
 	    if (!BU_STR_EMPTY(option->longopt))
@@ -2931,7 +3107,7 @@ bu_arg_schema_help(const struct bu_arg_schema *schema, const char *invocation)
     if (schema->options) {
 	for (size_t i = 0; bu_arg_option_is_valid(&schema->options[i]); i++) {
 	    const struct bu_arg_option *option = &schema->options[i];
-	    if (option->alias_of || option->hidden)
+	    if (option->alias_of || !cmd_schema_option_in_help(schema, option, mode))
 		continue;
 	    bu_vls_trunc(&label, 0);
 	    if (!BU_STR_EMPTY(option->longopt))
@@ -3031,6 +3207,13 @@ bu_arg_schema_help(const struct bu_arg_schema *schema, const char *invocation)
     bu_vls_free(&label);
     bu_vls_free(&out);
     return result;
+}
+
+
+char *
+bu_arg_schema_help(const struct bu_arg_schema *schema, const char *invocation)
+{
+    return bu_arg_schema_help_mode(schema, invocation, BU_ARG_HELP_DEFAULT);
 }
 
 
@@ -3259,6 +3442,19 @@ cmd_schema_constraint_kind_name(bu_arg_constraint_kind_t kind)
 }
 
 
+static const char *
+cmd_schema_visibility_name(bu_arg_visibility_t visibility)
+{
+    switch (visibility) {
+	case BU_ARG_VISIBILITY_DEFAULT: return "default";
+	case BU_ARG_VISIBILITY_ADVANCED: return "advanced";
+	case BU_ARG_VISIBILITY_INTERNAL: return "internal";
+	default: break;
+    }
+    return "internal";
+}
+
+
 static void
 cmd_schema_json_arg_shape(struct bu_vls *out,
 	const struct bu_arg_shape *shape)
@@ -3320,6 +3516,11 @@ bu_arg_schema_describe_json(const struct bu_arg_schema *schema)
 	while (bu_arg_option_is_valid(&schema->options[i])) {
 	    const struct bu_arg_option *option = &schema->options[i];
 	    const struct bu_arg_shape *shape = cmd_schema_option_arg_shape(option);
+	    const struct bu_arg_help_group *group =
+		cmd_schema_option_group(schema, option->alias_of ?
+		    cmd_schema_find_canonical(schema, option->alias_of) : option);
+	    bu_arg_visibility_t visibility =
+		cmd_schema_option_visibility(schema, option);
 	    if (comma)
 		bu_vls_putc(&out, ',');
 	    bu_vls_strcat(&out, "{\"short\":");
@@ -3344,12 +3545,78 @@ bu_arg_schema_describe_json(const struct bu_arg_schema *schema)
 	    cmd_schema_json_keyword_values(&out, option->value_keywords, option->keyword_values);
 	    bu_vls_strcat(&out, ",\"range\":");
 	    cmd_schema_json_range(&out, &option->range);
-	    bu_vls_printf(&out, ",\"repeat\":%s,\"hidden\":%s,\"help\":",
-		option->repeat ? "true" : "false", option->hidden ? "true" : "false");
+	    bu_vls_printf(&out, ",\"repeat\":%s,\"hidden\":%s,\"visibility\":",
+		option->repeat ? "true" : "false",
+		visibility == BU_ARG_VISIBILITY_INTERNAL ? "true" : "false");
+	    bu_arg_json_string(&out, cmd_schema_visibility_name(visibility));
+	    bu_vls_strcat(&out, ",\"help_group\":");
+	    bu_arg_json_string(&out, group ? group->name : NULL);
+	    bu_vls_strcat(&out, ",\"help\":");
 	    bu_arg_json_string(&out, option->help);
 	    bu_vls_putc(&out, '}');
 	    comma = 1;
 	    i++;
+	}
+    }
+    bu_vls_strcat(&out, "],\"help_groups\":[");
+    comma = 0;
+    if (schema->presentation && schema->presentation->groups) {
+	for (i = 0; schema->presentation->groups[i].name; i++) {
+	    const struct bu_arg_help_group *group =
+		&schema->presentation->groups[i];
+	    if (comma)
+		bu_vls_putc(&out, ',');
+	    bu_vls_strcat(&out, "{\"name\":");
+	    bu_arg_json_string(&out, group->name);
+	    bu_vls_strcat(&out, ",\"help\":");
+	    bu_arg_json_string(&out, group->help);
+	    bu_vls_strcat(&out, ",\"first_option\":");
+	    bu_arg_json_string(&out, group->first_option);
+	    bu_vls_strcat(&out, ",\"visibility\":");
+	    bu_arg_json_string(&out,
+		cmd_schema_visibility_name(group->visibility));
+	    bu_vls_putc(&out, '}');
+	    comma = 1;
+	}
+    }
+    bu_vls_strcat(&out, "],\"parameter_groups\":[");
+    comma = 0;
+    if (schema->presentation && schema->presentation->parameter_groups) {
+	const struct bu_arg_parameter_group *groups =
+	    schema->presentation->parameter_groups;
+	for (i = 0; groups[i].option; i++) {
+	    const struct bu_arg_parameter_group *group = &groups[i];
+	    if (comma)
+		bu_vls_putc(&out, ',');
+	    bu_vls_strcat(&out, "{\"option\":");
+	    bu_arg_json_string(&out, group->option);
+	    bu_vls_strcat(&out, ",\"name\":");
+	    bu_arg_json_string(&out, group->name);
+	    bu_vls_strcat(&out, ",\"help\":");
+	    bu_arg_json_string(&out, group->help);
+	    bu_vls_strcat(&out, ",\"parameters\":[");
+	    for (size_t pi = 0; group->parameters &&
+		    group->parameters[pi].name; pi++) {
+		const struct bu_arg_parameter *parameter = &group->parameters[pi];
+		if (pi)
+		    bu_vls_putc(&out, ',');
+		bu_vls_strcat(&out, "{\"name\":");
+		bu_arg_json_string(&out, parameter->name);
+		bu_vls_strcat(&out, ",\"argument\":");
+		bu_arg_json_string(&out, parameter->argument);
+		bu_vls_strcat(&out, ",\"type\":");
+		bu_arg_json_string(&out,
+		    cmd_schema_value_name(parameter->value_type));
+		bu_vls_strcat(&out, ",\"default\":");
+		bu_arg_json_string(&out, parameter->default_value);
+		bu_vls_strcat(&out, ",\"range\":");
+		cmd_schema_json_range(&out, &parameter->range);
+		bu_vls_strcat(&out, ",\"help\":");
+		bu_arg_json_string(&out, parameter->help);
+		bu_vls_putc(&out, '}');
+	    }
+	    bu_vls_strcat(&out, "]}");
+	    comma = 1;
 	}
     }
     bu_vls_strcat(&out, "],\"terminal_options\":[");
@@ -3632,7 +3899,8 @@ cmd_schema_add_option_candidates(const struct bu_arg_schema *schema,
 	return;
     while (bu_arg_option_is_valid(&schema->options[i])) {
 	const struct bu_arg_option *option = &schema->options[i];
-	if (!option->hidden && !option->alias_of) {
+	if (cmd_schema_option_visibility(schema, option) !=
+		BU_ARG_VISIBILITY_INTERNAL && !option->alias_of) {
 	    if (option->shortopt && strlen(option->shortopt) == 1) {
 		char spelling[3] = {'-', option->shortopt[0], '\0'};
 		if (cmd_schema_prefix_match(spelling, prefix)) count++;
@@ -3653,7 +3921,8 @@ cmd_schema_add_option_candidates(const struct bu_arg_schema *schema,
     i = 0;
     while (bu_arg_option_is_valid(&schema->options[i])) {
 	const struct bu_arg_option *option = &schema->options[i];
-	if (!option->hidden && !option->alias_of) {
+	if (cmd_schema_option_visibility(schema, option) !=
+		BU_ARG_VISIBILITY_INTERNAL && !option->alias_of) {
 	    if (option->shortopt && strlen(option->shortopt) == 1) {
 		char spelling[3] = {'-', option->shortopt[0], '\0'};
 		if (cmd_schema_prefix_match(spelling, prefix))
@@ -3700,7 +3969,8 @@ cmd_schema_add_named_option_candidates(const struct bu_arg_schema *schema,
     for (size_t i = 0; canonical_names[i]; i++) {
 	const struct bu_arg_option *option = cmd_schema_find_canonical(schema,
 	    canonical_names[i]);
-	if (!option || option->hidden)
+	if (!option || cmd_schema_option_visibility(schema, option) ==
+		BU_ARG_VISIBILITY_INTERNAL)
 	    continue;
 	if (option->shortopt && strlen(option->shortopt) == 1) {
 	    char spelling[3] = {'-', option->shortopt[0], '\0'};
@@ -5415,7 +5685,8 @@ bu_arg_tree_help(const struct bu_arg_tree *tree, const char *invocation)
 	for (size_t i = 0;
 		bu_arg_option_is_valid(&tree->root_schema->options[i]); i++) {
 	    if (!tree->root_schema->options[i].alias_of &&
-		    !tree->root_schema->options[i].hidden) {
+		    cmd_schema_option_in_help(tree->root_schema,
+			&tree->root_schema->options[i], BU_ARG_HELP_DEFAULT)) {
 		have_options = 1;
 		break;
 	    }
@@ -5876,6 +6147,151 @@ cmd_schema_case_same_predicate(const struct bu_arg_schema_case *left,
     return 1;
 }
 
+static int
+cmd_schema_lint_presentation(const struct bu_arg_schema *schema,
+	struct bu_vls *msgs)
+{
+    const char *path = schema && schema->name ? schema->name : "(unnamed)";
+    size_t previous_index = 0;
+    int have_previous = 0;
+    int failures = 0;
+
+    if (!schema || !schema->presentation)
+	return 0;
+    if (schema->presentation->groups) {
+	for (size_t gi = 0; schema->presentation->groups[gi].name; gi++) {
+	    const struct bu_arg_help_group *group =
+		&schema->presentation->groups[gi];
+	    size_t option_index = 0;
+	    int found = 0;
+	    if (!group->name[0] || BU_STR_EMPTY(group->first_option) ||
+		    group->visibility < BU_ARG_VISIBILITY_DEFAULT ||
+		    group->visibility > BU_ARG_VISIBILITY_INTERNAL) {
+		if (msgs)
+		    bu_vls_printf(msgs, "%s: invalid option help group %lu\n",
+			path, (unsigned long)gi);
+		failures++;
+	    }
+	    for (size_t oi = 0; !BU_STR_EMPTY(group->first_option) && schema->options &&
+		    bu_arg_option_is_valid(&schema->options[oi]); oi++) {
+		const struct bu_arg_option *option = &schema->options[oi];
+		if (!option->alias_of && BU_STR_EQUAL(group->first_option,
+			bu_arg_option_canonical(option))) {
+		    option_index = oi;
+		    found = 1;
+		    break;
+		}
+	    }
+	    if (!found || (have_previous && option_index <= previous_index)) {
+		if (msgs)
+		    bu_vls_printf(msgs,
+			"%s: option help group \"%s\" has an unknown or out-of-order boundary \"%s\"\n",
+			path, group->name, group->first_option ? group->first_option : "");
+		failures++;
+	    } else {
+		previous_index = option_index;
+		have_previous = 1;
+	    }
+	    for (size_t earlier = 0; earlier < gi; earlier++) {
+		const struct bu_arg_help_group *prior =
+		    &schema->presentation->groups[earlier];
+		if (BU_STR_EQUAL(group->name, prior->name) ||
+			(!BU_STR_EMPTY(group->first_option) &&
+			 BU_STR_EQUAL(group->first_option, prior->first_option))) {
+		    if (msgs)
+			bu_vls_printf(msgs,
+			    "%s: duplicate option help group \"%s\"\n",
+			    path, group->name);
+		    failures++;
+		    break;
+		}
+	    }
+	}
+    }
+    if (schema->presentation->option_visibility) {
+	for (size_t vi = 0;
+		schema->presentation->option_visibility[vi].option; vi++) {
+	    const struct bu_arg_option_visibility *override =
+		&schema->presentation->option_visibility[vi];
+	    if (!cmd_schema_find_canonical(schema, override->option) ||
+		    override->visibility < BU_ARG_VISIBILITY_DEFAULT ||
+		    override->visibility > BU_ARG_VISIBILITY_INTERNAL) {
+		if (msgs)
+		    bu_vls_printf(msgs,
+			"%s: invalid visibility override for option \"%s\"\n",
+			path, override->option ? override->option : "");
+		failures++;
+	    }
+	    for (size_t earlier = 0; earlier < vi; earlier++) {
+		if (BU_STR_EQUAL(override->option,
+			schema->presentation->option_visibility[earlier].option)) {
+		    if (msgs)
+			bu_vls_printf(msgs,
+			    "%s: duplicate visibility override for option \"%s\"\n",
+			    path, override->option);
+		    failures++;
+		    break;
+		}
+	    }
+	}
+    }
+    if (schema->presentation->parameter_groups) {
+	const struct bu_arg_parameter_group *groups =
+	    schema->presentation->parameter_groups;
+	for (size_t gi = 0; groups[gi].option; gi++) {
+	    const struct bu_arg_parameter_group *group = &groups[gi];
+	    if (!cmd_schema_find_canonical(schema, group->option) ||
+		BU_STR_EMPTY(group->name) || !group->parameters) {
+		if (msgs)
+		    bu_vls_printf(msgs,
+			"%s: invalid parameter group \"%s\" for option \"%s\"\n",
+			path, group->name ? group->name : "",
+			group->option ? group->option : "");
+		failures++;
+		continue;
+	    }
+	    for (size_t earlier = 0; earlier < gi; earlier++) {
+		if (BU_STR_EQUAL(group->option, groups[earlier].option) &&
+			BU_STR_EQUAL(group->name, groups[earlier].name)) {
+		    if (msgs)
+			bu_vls_printf(msgs,
+			    "%s: duplicate parameter group \"%s\" for option \"%s\"\n",
+			    path, group->name, group->option);
+		    failures++;
+		    break;
+		}
+	    }
+	    for (size_t pi = 0; group->parameters[pi].name; pi++) {
+		const struct bu_arg_parameter *parameter = &group->parameters[pi];
+		if (BU_STR_EMPTY(parameter->name) ||
+			BU_STR_EMPTY(parameter->argument) ||
+			parameter->value_type < BU_ARG_VALUE_BOOL ||
+			parameter->value_type > BU_ARG_VALUE_CUSTOM) {
+		    if (msgs)
+			bu_vls_printf(msgs,
+			    "%s: invalid parameter %lu in group \"%s\"\n",
+			    path, (unsigned long)pi, group->name);
+		    failures++;
+		}
+		failures += cmd_schema_lint_range(schema, &parameter->range,
+		    parameter->value_type, "parameter", parameter->name, msgs);
+		for (size_t earlier = 0; earlier < pi; earlier++) {
+		    if (BU_STR_EQUAL(parameter->name,
+			    group->parameters[earlier].name)) {
+			if (msgs)
+			    bu_vls_printf(msgs,
+				"%s: duplicate parameter \"%s\" in group \"%s\"\n",
+				path, parameter->name, group->name);
+			failures++;
+			break;
+		    }
+		}
+	    }
+	}
+    }
+    return failures;
+}
+
 
 int
 bu_arg_schema_lint(const struct bu_arg_schema *schema, struct bu_vls *msgs)
@@ -5905,6 +6321,7 @@ bu_arg_schema_lint(const struct bu_arg_schema *schema, struct bu_vls *msgs)
 	    bu_vls_printf(msgs, "%s: invalid terminal-action flags\n", path);
 	failures++;
     }
+    failures += cmd_schema_lint_presentation(schema, msgs);
     if (schema->options) {
 	for (size_t i = 0; bu_arg_option_is_valid(&schema->options[i]); i++) {
 	    const struct bu_arg_option *option = &schema->options[i];

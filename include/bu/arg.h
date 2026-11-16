@@ -401,6 +401,66 @@ struct bu_arg_option {
     bu_arg_shape_kind_t standard_shape;
 };
 
+/** User-facing visibility of one canonical option or option help group. */
+typedef enum {
+    /** Display in ordinary help and generated documentation. */
+    BU_ARG_VISIBILITY_DEFAULT = 0,
+    /** Display only in extended help, but include in generated documentation. */
+    BU_ARG_VISIBILITY_ADVANCED,
+    /** Accept for compatibility or internal use, but do not document or complete. */
+    BU_ARG_VISIBILITY_INTERNAL
+} bu_arg_visibility_t;
+
+/** Amount of option detail requested from a help formatter. */
+typedef enum {
+    BU_ARG_HELP_DEFAULT = 0,
+    BU_ARG_HELP_EXTENDED
+} bu_arg_help_mode_t;
+
+/**
+ * One ordered option-help group.  first_option is the canonical name of the
+ * first option in the group; the group continues until the next declaration.
+ * This preserves the authoritative option-array order without duplicating an
+ * option list in presentation metadata.
+ */
+struct bu_arg_help_group {
+    const char *name;
+    const char *help;
+    const char *first_option;
+    bu_arg_visibility_t visibility;
+};
+
+/** Exceptional visibility for one canonical option. */
+struct bu_arg_option_visibility {
+    const char *option;
+    bu_arg_visibility_t visibility;
+};
+
+/** One named key=value parameter accepted inside an option argument. */
+struct bu_arg_parameter {
+    const char *name;
+    const char *argument;
+    const char *help;
+    bu_arg_value_t value_type;
+    const char *default_value;
+    struct bu_arg_value_range range;
+};
+
+/** One namespace of parameters owned by a canonical command option. */
+struct bu_arg_parameter_group {
+    const char *option;
+    const char *name;
+    const char *help;
+    const struct bu_arg_parameter *parameters;
+};
+
+/** Optional help organization for a schema with unusually many options. */
+struct bu_arg_presentation {
+    const struct bu_arg_help_group *groups;
+    const struct bu_arg_option_visibility *option_visibility;
+    const struct bu_arg_parameter_group *parameter_groups;
+};
+
 /** Return an option's stable name, preferring its long spelling. */
 BU_EXPORT extern const char *bu_arg_option_canonical(const struct bu_arg_option *option);
 
@@ -569,6 +629,7 @@ struct bu_arg_schema {
     bu_arg_parse_policy_t parse_policy;
     const struct bu_arg_operand_group *operand_groups;
     struct bu_arg_schema_validation validation;
+    const struct bu_arg_presentation *presentation;
 };
 
 
@@ -801,7 +862,9 @@ BU_EXPORT extern int bu_arg_integer_pair_optional_validate(size_t argc,
  * validation, context validation, and execution ownership together.
  */
 #define BU_ARG_SCHEMA(_name, _help, _options, _operands, _policy, _metadata) \
-    {_name, _help, _options, _operands, _policy, _metadata}
+    {_name, _help, _options, _operands, _policy, _metadata, NULL}
+#define BU_ARG_SCHEMA_PRESENTED(_name, _help, _options, _operands, _policy, _metadata, _presentation) \
+    {_name, _help, _options, _operands, _policy, _metadata, _presentation}
 #define BU_ARG_SCHEMA_BOUND(_name, _help, _options, _operands, _policy, _groups, _constraints, _validator, _context) \
     BU_ARG_SCHEMA(_name, _help, _options, _operands, _policy, \
         BU_ARG_SCHEMA_META(_groups, _constraints, _validator, _context))
@@ -828,6 +891,20 @@ BU_EXPORT extern int bu_arg_integer_pair_optional_validate(size_t argc,
 #define BU_ARG_FORM_NULL {NULL, NULL, NULL, NULL}
 #define BU_ARG_FORMS(_name, _help, _forms, _select) {_name, _help, _forms, _select}
 #define BU_ARG_ALIASES(...) ((const char * const[]){__VA_ARGS__, NULL})
+#define BU_ARG_HELP_GROUP(_name, _help, _first, _visibility) \
+    {_name, _help, _first, _visibility}
+#define BU_ARG_HELP_GROUP_NULL {NULL, NULL, NULL, BU_ARG_VISIBILITY_DEFAULT}
+#define BU_ARG_OPTION_VISIBILITY(_option, _visibility) {_option, _visibility}
+#define BU_ARG_OPTION_VISIBILITY_NULL {NULL, BU_ARG_VISIBILITY_DEFAULT}
+#define BU_ARG_PARAMETER(_name, _argument, _help, _type, _default, _range) \
+    {_name, _argument, _help, _type, _default, _range}
+#define BU_ARG_PARAMETER_NULL \
+    {NULL, NULL, NULL, BU_ARG_VALUE_UNKNOWN, NULL, BU_ARG_VALUE_RANGE_NONE}
+#define BU_ARG_PARAMETER_GROUP(_option, _name, _help, _parameters) \
+    {_option, _name, _help, _parameters}
+#define BU_ARG_PARAMETER_GROUP_NULL {NULL, NULL, NULL, NULL}
+#define BU_ARG_PRESENTATION(_groups, _visibility, _parameters) \
+    {_groups, _visibility, _parameters}
 
 
 /** Compact option declaration helpers. */
@@ -940,6 +1017,9 @@ BU_EXPORT extern char *bu_arg_schema_usage(const struct bu_arg_schema *schema,
  * notes without duplicating structural syntax.  The caller owns the result. */
 BU_EXPORT extern char *bu_arg_schema_help(const struct bu_arg_schema *schema,
 	const char *invocation);
+/** Build standard or extended user-facing help. */
+BU_EXPORT extern char *bu_arg_schema_help_mode(const struct bu_arg_schema *schema,
+	const char *invocation, bu_arg_help_mode_t mode);
 /** Append schema help to an initialized dynamic string without exposing
  * ownership of the temporary generated string to the caller.  Returns 0 on
  * success and -1 for invalid input or generation failure. */

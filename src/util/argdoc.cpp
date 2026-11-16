@@ -364,16 +364,31 @@ sentence(std::string text)
 }
 
 static std::vector<documented_option>
-collect_options(const json &schema, bool include_hidden)
+collect_options(const json &schema)
 {
-    std::map<std::string, documented_option> grouped;
+    std::vector<documented_option> result;
+    std::map<std::string, size_t> canonical_indices;
+
     for (const json &option : schema.at("options")) {
-	if (!include_hidden && option.value("hidden", false))
+	if (option.value("visibility", std::string()) == "internal" ||
+	    option.value("hidden", false) ||
+	    !option.value("alias_of", std::string()).empty())
+	    continue;
+	const std::string canonical = option.value("canonical", std::string());
+	canonical_indices[canonical] = result.size();
+	result.emplace_back();
+    }
+    for (const json &option : schema.at("options")) {
+	if (option.value("visibility", std::string()) == "internal" ||
+	    option.value("hidden", false))
 	    continue;
 	std::string canonical = option.value("alias_of", std::string());
 	if (canonical.empty())
 	    canonical = option.value("canonical", std::string());
-	documented_option &entry = grouped[canonical];
+	auto index = canonical_indices.find(canonical);
+	if (index == canonical_indices.end())
+	    continue;
+	documented_option &entry = result[index->second];
 	const std::string shortopt = option.value("short", std::string());
 	const std::string longopt = option.value("long", std::string());
 	if (!shortopt.empty())
@@ -381,21 +396,27 @@ collect_options(const json &schema, bool include_hidden)
 	if (!longopt.empty())
 	    entry.spellings.insert("--" + longopt);
     }
-    std::vector<documented_option> result;
-    for (const auto &entry : grouped)
-	result.push_back(entry.second);
     return result;
 }
 
 static std::string
-render_schema_options(const json &schema)
+render_schema_options(const json &schema, size_t group_heading_level)
 {
     std::vector<const json *> canonical;
     std::map<std::string, std::vector<const json *>> aliases;
+    std::map<std::string, std::string> group_help;
     std::ostringstream output;
+    std::string active_group;
+
+    if (schema.contains("help_groups") && schema.at("help_groups").is_array()) {
+	for (const json &group : schema.at("help_groups"))
+	    group_help[group.value("name", std::string())] =
+		group.value("help", std::string());
+    }
 
     for (const json &option : schema.at("options")) {
-	if (option.value("hidden", false))
+	if (option.value("visibility", std::string()) == "internal" ||
+	    option.value("hidden", false))
 	    continue;
 	const std::string alias_of = option.value("alias_of", std::string());
 	if (alias_of.empty())
@@ -406,6 +427,15 @@ render_schema_options(const json &schema)
     for (const json *canonical_option : canonical) {
 	const json &option = *canonical_option;
 	const std::string name = option.value("canonical", std::string());
+	const std::string option_group = option.value("help_group", std::string());
+	if (!option_group.empty() && option_group != active_group) {
+	    output << std::string(group_heading_level, '=') << " "
+		<< option_group << "\n\n";
+	    const std::string help = group_help[option_group];
+	    if (!help.empty())
+		output << sentence(help) << "\n\n";
+	}
+	active_group = option_group;
 	output << option_term(option);
 	for (const json *alias : aliases[name]) {
 	    std::string term = option_term(*alias);
@@ -427,7 +457,55 @@ render_schema_options(const json &schema)
 	}
 	output << "\n\n";
     }
+    if (schema.contains("parameter_groups") &&
+	    schema.at("parameter_groups").is_array() &&
+	    !schema.at("parameter_groups").empty()) {
+	std::string owner;
+	for (const json &group : schema.at("parameter_groups")) {
+	    const std::string option = group.value("option", std::string());
+	    const bool owner_is_documented = std::any_of(canonical.begin(),
+		canonical.end(), [&option](const json *candidate) {
+		    return candidate->value("canonical", std::string()) == option;
+		});
+	    if (!owner_is_documented)
+		continue;
+	    if (option != owner) {
+		output << std::string(group_heading_level, '=') << " --" << option
+		    << " parameter schemas\n\n";
+		owner = option;
+	    }
+	    output << std::string(group_heading_level + 1, '=') << " "
+		<< group.value("name", std::string("Parameters")) << "\n\n";
+	    const std::string help = group.value("help", std::string());
+	    if (!help.empty())
+		output << sentence(help) << "\n\n";
+	    for (const json &parameter : group.at("parameters")) {
+		std::string argument = parameter.value("argument",
+		    std::string("value"));
+		output << "*" << parameter.value("name", std::string()) << "*=_"
+		    << argument << "_::\n  "
+		    << sentence(parameter.value("help", std::string()));
+		const std::string default_value = parameter.value("default",
+		    std::string());
+		if (!default_value.empty())
+		    output << " Default: *" << default_value << "*.";
+		output << "\n\n";
+	    }
+	}
+    }
     return output.str();
+}
+
+static bool
+schema_has_documented_options(const json &schema)
+{
+    for (const json &option : schema.at("options")) {
+	if (option.value("visibility", std::string()) != "internal" &&
+	    !option.value("hidden", false) &&
+	    option.value("alias_of", std::string()).empty())
+	    return true;
+    }
+    return false;
 }
 
 static std::string
@@ -436,19 +514,20 @@ render_options(const std::vector<schema_view> &views)
     struct option_group {
 	std::string contents;
 	std::vector<std::string> invocations;
+	const json *schema;
     };
     std::vector<option_group> groups;
     std::ostringstream output;
     for (const schema_view &view : views) {
-	if (view.schema->at("options").empty())
+	if (!schema_has_documented_options(*view.schema))
 	    continue;
-	std::string contents = render_schema_options(*view.schema);
+	std::string contents = render_schema_options(*view.schema, 3);
 	auto group = std::find_if(groups.begin(), groups.end(),
 	    [&contents](const option_group &candidate) {
 		return candidate.contents == contents;
 	    });
 	if (group == groups.end())
-	    groups.push_back({contents, {view.invocation}});
+	    groups.push_back({contents, {view.invocation}, view.schema});
 	else
 	    group->invocations.push_back(view.invocation);
     }
@@ -467,7 +546,7 @@ render_options(const std::vector<schema_view> &views)
 		output << ".\n\n";
 	    }
 	}
-	output << group.contents;
+	output << render_schema_options(*group.schema, groups.size() > 1 ? 4 : 3);
     }
     output << options_end << "\n";
     return output.str();
@@ -480,7 +559,7 @@ render_synopsis(const std::vector<schema_view> &views)
     output << synopsis_begin << "\n[source]\n----\n";
     for (const schema_view &view : views) {
 	output << view.invocation;
-	if (!view.schema->at("options").empty())
+	if (schema_has_documented_options(*view.schema))
 	    output << " [options]";
 	for (const json &operand : view.schema->at("operands")) {
 	    const std::string name = operand.value("name", std::string("argument"));
@@ -522,18 +601,36 @@ documented_options(const std::string &page)
 }
 
 static std::set<std::string>
-schema_spellings(const json &schema, bool include_hidden)
+schema_spellings(const json &schema)
 {
     std::set<std::string> result;
     if (!schema.contains("options") || !schema.at("options").is_array())
 	return result;
-    for (const documented_option &option : collect_options(schema, include_hidden))
+    for (const documented_option &option : collect_options(schema))
 	result.insert(option.spellings.begin(), option.spellings.end());
     return result;
 }
 
+static std::set<std::string>
+schema_accepted_spellings(const json &schema)
+{
+    std::set<std::string> result;
+
+    if (!schema.contains("options") || !schema.at("options").is_array())
+	return result;
+    for (const json &option : schema.at("options")) {
+	const std::string shortopt = option.value("short", std::string());
+	const std::string longopt = option.value("long", std::string());
+	if (!shortopt.empty())
+	    result.insert("-" + shortopt);
+	if (!longopt.empty())
+	    result.insert("--" + longopt);
+    }
+    return result;
+}
+
 static std::map<std::string, bool>
-schema_arguments(const json &schema, bool include_hidden)
+schema_arguments(const json &schema)
 {
     std::map<std::string, bool> canonical;
     std::map<std::string, bool> result;
@@ -546,7 +643,8 @@ schema_arguments(const json &schema, bool include_hidden)
 	    option.value("argument_requirement", std::string("none")) != "none";
     }
     for (const json &option : schema.at("options")) {
-	if (!include_hidden && option.value("hidden", false))
+	if (option.value("visibility", std::string()) == "internal" ||
+	    option.value("hidden", false))
 	    continue;
 	std::string name = option.value("alias_of", std::string());
 	if (name.empty())
@@ -597,34 +695,83 @@ replace_region(const std::string &page, const char *begin, const char *end,
     return page.substr(0, first) + replacement + page.substr(last);
 }
 
+static std::string
+generated_region(const std::string &page, const char *begin, const char *end)
+{
+    const size_t first = page.find(begin);
+    size_t last = page.find(end);
+
+    if (first == std::string::npos || last == std::string::npos || last < first)
+	return std::string();
+    last += std::strlen(end);
+    if (last < page.size() && page[last] == '\r')
+	last++;
+    if (last < page.size() && page[last] == '\n')
+	last++;
+    std::string result = page.substr(first, last - first);
+    size_t carriage_return = result.find('\r');
+    while (carriage_return != std::string::npos) {
+	result.erase(carriage_return, 1);
+	carriage_return = result.find('\r', carriage_return);
+    }
+    return result;
+}
+
 static bool
 check_page(const fs::path &path, const std::vector<schema_view> &views)
 {
     const std::string page = slurp(path);
+    std::string checked_options = page;
     std::set<std::string> expected;
     std::set<std::string> accepted;
     std::map<std::string, std::set<bool>> argument_sets;
     bool accepts_opaque_tokens = false;
+    bool failed = false;
+
+    const std::string options_region = generated_region(page, options_begin,
+	options_end);
+    if (!options_region.empty()) {
+	checked_options = options_region;
+	bool has_parameter_groups = false;
+	for (const schema_view &view : views) {
+	    has_parameter_groups = has_parameter_groups ||
+		(view.schema->contains("parameter_groups") &&
+		 view.schema->at("parameter_groups").is_array() &&
+		 !view.schema->at("parameter_groups").empty());
+	}
+	if (has_parameter_groups && options_region != render_options(views)) {
+	    std::cerr << path.string()
+		<< ": generated parameter-schema region is stale\n";
+	    failed = true;
+	}
+    }
+    const std::string synopsis_region = generated_region(page, synopsis_begin,
+	synopsis_end);
+    if (!synopsis_region.empty() && synopsis_region != render_synopsis(views)) {
+	std::cerr << path.string() << ": generated synopsis region is stale\n";
+	failed = true;
+    }
 
     for (const schema_view &view : views) {
-	std::set<std::string> view_expected = schema_spellings(*view.schema, false);
-	std::set<std::string> view_accepted = schema_spellings(*view.schema, true);
+	std::set<std::string> view_expected = schema_spellings(*view.schema);
+	std::set<std::string> view_accepted =
+	    schema_accepted_spellings(*view.schema);
 	if (view.required)
 	    expected.insert(view_expected.begin(), view_expected.end());
 	accepted.insert(view_accepted.begin(), view_accepted.end());
 	accepts_opaque_tokens = accepts_opaque_tokens ||
 	    schema_accepts_opaque_tokens(*view.schema);
 	if (view.required) {
-	    for (const auto &entry : schema_arguments(*view.schema, false))
+	    for (const auto &entry : schema_arguments(*view.schema))
 		argument_sets[entry.first].insert(entry.second);
 	}
     }
 
-    std::map<std::string, std::set<bool>> documented = documented_options(page);
+    std::map<std::string, std::set<bool>> documented =
+	documented_options(checked_options);
     std::set<std::string> actual;
     for (const auto &entry : documented)
 	actual.insert(entry.first);
-    bool failed = false;
     for (const std::string &spelling : expected) {
 	if (!actual.count(spelling)) {
 	    std::cerr << path.string() << ": missing option " << spelling << "\n";
