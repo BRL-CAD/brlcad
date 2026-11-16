@@ -67,6 +67,81 @@ create_key_light(struct rt_wdb *db, const point_t position)
 	mk_lcomb(db, "key_light.r", &members, 1, "light", "bright=1", white, 0) == 0;
 }
 
+static constexpr double EMITTER_ALBEDO = 0.5;
+static constexpr double EMITTER_RADIUS = 0.5;
+static const point_t EMITTER_CENTER = {1.5, 3, 0};
+static constexpr double EMITTER_BOX_HALF_WIDTH = 1;
+static constexpr double EMITTER_BOX_HEIGHT = 3;
+
+static int
+create_emitter_scene(const char *path, const char *kind)
+{
+    const bool sphere = BU_STR_EQUAL(kind, "sphere");
+    const bool cavity = BU_STR_EQUAL(kind, "cavity");
+    const bool box = BU_STR_EQUAL(kind, "box");
+    const bool mesh = BU_STR_EQUAL(kind, "mesh");
+    if (!sphere && !cavity && !box && !mesh)
+	return 1;
+    struct rt_wdb *db = wdb_fopen(path);
+    if (!db)
+	return 1;
+    struct wmember members;
+    BU_LIST_INIT(&members.l);
+    const point_t low = {-10, -0.1, -10}, high = {10, 0, 10};
+    bool success = mk_rpp(db, "receiver.s", low, high) == 0 &&
+	mk_addmember("receiver.s", &members.l, NULL, WMOP_UNION) &&
+	mk_lcomb(db, "receiver.r", &members, 1, NULL, NULL, NULL, 0) == 0;
+    BU_LIST_INIT(&members.l);
+    if (sphere || cavity) {
+	const point_t origin = {0, 0, 0};
+	success = success && mk_sph(db, "emitter.s", cavity ? origin : EMITTER_CENTER,
+	    cavity ? 10 : EMITTER_RADIUS) == 0 &&
+	    mk_addmember("emitter.s", &members.l, NULL, WMOP_UNION);
+	if (cavity)
+	    success = success && mk_sph(db, "inner.s", origin, 9) == 0 &&
+		mk_addmember("inner.s", &members.l, NULL, WMOP_SUBTRACT);
+    } else if (box) {
+	const point_t bottom = {-EMITTER_BOX_HALF_WIDTH, EMITTER_BOX_HEIGHT, -EMITTER_BOX_HALF_WIDTH};
+	const point_t top = {EMITTER_BOX_HALF_WIDTH, EMITTER_BOX_HEIGHT + 1, EMITTER_BOX_HALF_WIDTH};
+	const point_t cut_bottom = {-0.5, EMITTER_BOX_HEIGHT + 0.5, -0.5};
+	const point_t cut_top = {0.5, EMITTER_BOX_HEIGHT + 1.5, 0.5};
+	// The upper recess adds Boolean boundaries while the visible bottom
+	// remains the same rectangle used by the independent energy integral.
+	success = success && mk_rpp(db, "emitter.s", bottom, top) == 0 &&
+	    mk_rpp(db, "recess.s", cut_bottom, cut_top) == 0 &&
+	    mk_addmember("emitter.s", &members.l, NULL, WMOP_UNION) &&
+	    mk_addmember("recess.s", &members.l, NULL, WMOP_SUBTRACT);
+    } else {
+	// The shared mesh fixture spans [-10,10] on each axis.
+	constexpr double MESH_HALF_EXTENT = 10;
+	mat_t transform;
+	MAT_IDN(transform);
+	transform[0] = transform[10] = EMITTER_BOX_HALF_WIDTH / MESH_HALF_EXTENT;
+	transform[5] = 0.5 / MESH_HALF_EXTENT;
+	transform[MDY] = EMITTER_BOX_HEIGHT + 0.5;
+	success = success && art_test::make_mesh(db, "emitter.s", art_test::MeshUV::None) == 0 &&
+	    mk_addmember("emitter.s", &members.l, transform, WMOP_UNION);
+    }
+    success = success && mk_lcomb(db, "emitter.r", &members, 1, NULL, NULL, NULL, 0) == 0;
+    const std::string albedo = std::to_string(EMITTER_ALBEDO);
+    const std::string diffuse_color = "color " + albedo + " " + albedo + " " + albedo;
+    const struct { const char *region; const char *name; const char *shader; const char *color; } materials[] = {
+	{"receiver.r", "receiver.material", "art_diffuse", diffuse_color.c_str()},
+	{"emitter.r", "emitter.material", "art_emission", "color 1 1 1"}
+    };
+    for (const auto &material : materials) {
+	struct bu_attribute_value_set optical;
+	bu_avs_init_empty(&optical);
+	bu_avs_add(&optical, "OSL", material.shader);
+	bu_avs_add(&optical, "OSL.param.in_color", material.color);
+	success = success && write_osl_material(db, material.name, &optical) &&
+	    db5_update_attribute(material.region, "material_name", material.name, db->dbip) == 0;
+	bu_avs_free(&optical);
+    }
+    wdb_close(db);
+    return success ? 0 : 1;
+}
+
 static int
 create_scene(const char *path, const char *shader, const char *output)
 {
@@ -493,6 +568,38 @@ read_image(const char *path, size_t width, size_t height)
     return image;
 }
 
+static int
+check_emitter_image(const char *path, const char *kind)
+{
+    auto image = read_image(path, 1, 1);
+    if (!image)
+	return 1;
+    double expected;
+    if (BU_STR_EQUAL(kind, "cavity")) {
+	expected = EMITTER_ALBEDO;
+    } else if (BU_STR_EQUAL(kind, "sphere")) {
+	const double distance_squared = MAGSQ(EMITTER_CENTER);
+	expected = EMITTER_ALBEDO * EMITTER_RADIUS * EMITTER_RADIUS * EMITTER_CENTER[Y] /
+	    (distance_squared * std::sqrt(distance_squared));
+    } else if (BU_STR_EQUAL(kind, "box") || BU_STR_EQUAL(kind, "mesh")) {
+	const double t = EMITTER_BOX_HALF_WIDTH / std::hypot(EMITTER_BOX_HALF_WIDTH, EMITTER_BOX_HEIGHT);
+	expected = EMITTER_ALBEDO * 4 * t * std::atan(t) / M_PI;
+    } else {
+	return 1;
+    }
+    // A tiny camera footprint isolates the analytic receiver point.
+    // The bound covers finite Monte Carlo error, not an image-derived oracle.
+    constexpr double RELATIVE_ENERGY_BOUND = 0.025;
+    for (size_t channel = 0; channel < 3; ++channel) {
+	const double actual = image->data[channel];
+	if (!std::isfinite(actual) || std::abs(actual - expected) > RELATIVE_ENERGY_BOUND * expected) {
+	    bu_log("Emitter %s: channel %zu radiance %.17g, expected %.17g\n", kind, channel, actual, expected);
+	    return 1;
+	}
+    }
+    return 0;
+}
+
 enum class TexturePattern { Checker, Black, Gray };
 
 static int
@@ -825,6 +932,10 @@ main(int argc, char **argv)
     if (argc > 5 && BU_STR_EQUAL(argv[1], "interrupt-render"))
 	return interrupt_render_process(argv[2], argv[3], argv[4], const_cast<const char **>(argv + 5));
 #endif
+    if (argc == 4 && BU_STR_EQUAL(argv[1], "create-emitter"))
+        return create_emitter_scene(argv[2], argv[3]);
+    if (argc == 4 && BU_STR_EQUAL(argv[1], "check-emitter-image"))
+        return check_emitter_image(argv[2], argv[3]);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create-contour-limit"))
 	return create_contour_limit_scene(argv[2]);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create-lit-glass-inside"))

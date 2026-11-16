@@ -220,6 +220,9 @@ brlcad_add_test(NAME rt_primitive_brep COMMAND rt_primitive_brep)
 brlcad_addexec(rt_brep_io brep_io.cpp "librt;libbrep;libbu;Threads::Threads;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_brep_io COMMAND rt_brep_io)
 
+brlcad_addexec(rt_surface_sampling surface_sampling.cpp "librt;libwdb;libbu;Threads::Threads;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_surface_sampling COMMAND rt_surface_sampling)
+
 # stand-alone Crofton estimator tests
 brlcad_addexec(rt_crofton crofton.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_crofton COMMAND rt_crofton)
@@ -253,6 +256,7 @@ set(
   brep_import.c
   arb_uv.cpp
   surface_derivatives.c
+  surface_sampling.cpp
   bot_normals.cpp
   bot_test.h
   bot_uv.cpp

@@ -92,6 +92,7 @@
 /* brlcad headers */
 #include "vmath.h"
 #include "raytrace.h"
+#include "rt/surface.h"
 #include "brlcadplugin.h"
 
 namespace asf = foundation;
@@ -102,13 +103,31 @@ const char *const Model = "brlcad geometry";
 
 struct RayHit {
     double distance;
-    asf::Vector3d geometric_normal;
-    asf::Vector3d shading_normal;
-    asf::Vector2f uv = asf::Vector2f(0.0f);
-    asr::ProceduralObject::SurfaceDerivatives derivatives;
+    asr::ProceduralObject::IntersectionResult surface = {};
     bool compute_shading = false;
     const char *error = nullptr;
 };
+
+const char *
+fill_surface_attributes(asr::ProceduralObject::IntersectionResult &result, const struct rt_surface_attributes &surface)
+{
+    result.m_hit = true;
+    result.m_material_slot = 0;
+    result.m_geometric_normal = asf::Vector3d(V3ARGS(surface.geometric_normal));
+    result.m_shading_normal = asf::Vector3d(V3ARGS(surface.shading_normal));
+    result.m_uv = asf::Vector2f(static_cast<float>(surface.uv[0]), static_cast<float>(surface.uv[1]));
+    if (!std::isfinite(result.m_uv[0]) || !std::isfinite(result.m_uv[1]))
+	return "Primitive produced nonfinite UV coordinates";
+    result.m_derivatives = {};
+    if (surface.derivatives_available) {
+	result.m_derivatives.m_valid = true;
+	result.m_derivatives.m_dpdu = asf::Vector3d(V3ARGS(surface.derivatives.dpdu));
+	result.m_derivatives.m_dpdv = asf::Vector3d(V3ARGS(surface.derivatives.dpdv));
+	result.m_derivatives.m_dndu = asf::Vector3d(V3ARGS(surface.derivatives.dndu));
+	result.m_derivatives.m_dndv = asf::Vector3d(V3ARGS(surface.derivatives.dndv));
+    }
+    return nullptr;
+}
 
 struct DestroyResource {
     void operator()(struct resource *resource) const {
@@ -145,47 +164,12 @@ brlcad_hit(struct application *ap, struct partition *head, struct seg *UNUSED(se
 	result.distance = hit->hit_dist;
 	if (!result.compute_shading)
 	    return 1;
-	vect_t geometric, shading;
-	struct xray *ray = hit->hit_rayp ? hit->hit_rayp : &ap->a_ray;
-	if (rt_obj_normals(hit, solid, ray, geometric, shading) != 0) {
-	    result.error = "Primitive normal query failed";
+	struct rt_surface_attributes surface;
+	if (rt_obj_surface_attributes(&surface, ap, solid, hit, flip) != 0) {
+	    result.error = "Primitive surface query failed";
 	    return 1;
 	}
-	// Legacy UV callbacks consume a computed point and primitive shading normal.
-	struct hit shading_hit = *hit;
-	VJOIN1(shading_hit.hit_point, ray->r_pt, hit->hit_dist, ray->r_dir);
-	VMOVE(shading_hit.hit_normal, shading);
-	if (flip) {
-	    VREVERSE(geometric, geometric);
-	    VREVERSE(shading, shading);
-	}
-	result.geometric_normal = asf::Vector3d(V3ARGS(geometric));
-	result.shading_normal = asf::Vector3d(V3ARGS(shading));
-	if (solid->st_meth->ft_uv) {
-	    struct uvcoord uv = {0, 0, 0, 0};
-	    if (rt_obj_uv(ap, solid, &shading_hit, &uv) != 0) {
-		result.error = "Primitive UV query failed";
-		return 1;
-	    }
-	    result.uv = asf::Vector2f(static_cast<float>(uv.uv_u), static_cast<float>(uv.uv_v));
-	    if (!std::isfinite(result.uv[0]) || !std::isfinite(result.uv[1]))
-		result.error = "Primitive produced nonfinite UV coordinates";
-	}
-	struct rt_surface_derivatives derivatives = RT_SURFACE_DERIVATIVES_INIT_ZERO;
-	const int status = rt_obj_surface_derivatives(ap, solid, hit, &derivatives);
-	if (status == RT_DERIVATIVES_ERROR) {
-	    result.error = "Primitive surface derivative query failed";
-	    return 1;
-	}
-	if (status == RT_DERIVATIVES_OK) {
-	    result.derivatives.m_valid = true;
-	    result.derivatives.m_dpdu = asf::Vector3d(V3ARGS(derivatives.dpdu));
-	    result.derivatives.m_dpdv = asf::Vector3d(V3ARGS(derivatives.dpdv));
-	    // Boolean cuts reverse the normal field, preserving its UV chart.
-	    const double normal_sign = flip ? -1.0 : 1.0;
-	    result.derivatives.m_dndu = normal_sign * asf::Vector3d(V3ARGS(derivatives.dndu));
-	    result.derivatives.m_dndv = normal_sign * asf::Vector3d(V3ARGS(derivatives.dndv));
-	}
+	result.error = fill_surface_attributes(result.surface, surface);
 	return 1;
     }
     return 0;
@@ -218,6 +202,7 @@ public:
 	if (!rtip || path.empty() || rt_gettree(rtip.get(), path.c_str()) < 0)
 	    throw std::runtime_error("Cannot load BRL-CAD object '" + path + "'");
 	rt_prep_parallel(rtip.get(), 1);
+	sampler_ready = rt_surface_sampler_init(&sampler, rtip.get()) == 0;
 	if (!rtip->stats.nregions || !rtip->stats.nsolids)
 	    throw std::runtime_error("No renderable geometry in BRL-CAD object '" + path + "'");
     }
@@ -248,6 +233,8 @@ private:
     std::vector<struct resource *> available;
     std::vector<std::unique_ptr<struct resource, DestroyResource>> resources;
 public:
+    struct rt_surface_sampler sampler = {};
+    bool sampler_ready = false;
     // rt_i destruction cleans registered resources; their storage must survive it.
     std::unique_ptr<struct rt_i, DestroyRaytrace> rtip;
 };
@@ -352,14 +339,38 @@ BrlcadObject::trace(const asr::ShadingRay &ray, IntersectionResult *result) cons
     if (result) {
 	if (hit.error)
 	    throw std::runtime_error(std::string(hit.error) + " for '" + get_name() + "'");
-	result->m_hit = true;
+	*result = hit.surface;
 	result->m_distance = distance;
-	result->m_geometric_normal = hit.geometric_normal;
-	result->m_shading_normal = hit.shading_normal;
-	result->m_uv = hit.uv;
-	result->m_derivatives = hit.derivatives;
-	result->m_material_slot = 0;
     }
+    return true;
+}
+
+double
+BrlcadObject::get_surface_sampling_reference_area() const
+{
+    return m_trace->sampler_ready ? m_trace->sampler.area_scale : 0.0;
+}
+
+bool
+BrlcadObject::sample_surface(const double variates[SurfaceSampleDimensions], SurfaceSample &result) const
+{
+    static_assert(SurfaceSampleDimensions == RT_SURFACE_SAMPLE_DIMENSIONS,
+	"Native and librt surface sampling dimensions must agree");
+    if (!m_trace->sampler_ready)
+	throw std::runtime_error(std::string("Cannot sample BRL-CAD surface for '") + get_name() + "'");
+    auto resource = m_trace->acquire();
+    struct rt_surface_sample sample;
+    const int status = rt_surface_sampler_sample(&sample, &m_trace->sampler, resource.get(), variates);
+    if (status == RT_SURFACE_SAMPLE_MISS)
+	return false;
+    if (status != RT_SURFACE_SAMPLE_HIT)
+	throw std::runtime_error(std::string("Cannot sample BRL-CAD surface for '") + get_name() + "'");
+    SurfaceSample output = {};
+    output.m_point = asf::Vector3d(V3ARGS(sample.surface.point));
+    output.m_estimator_weight = static_cast<double>(sample.crossing_count);
+    if (const char *error = fill_surface_attributes(output.m_attributes, sample.surface))
+	throw std::runtime_error(std::string(error) + " for '" + get_name() + "'");
+    result = output;
     return true;
 }
 

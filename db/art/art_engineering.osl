@@ -46,6 +46,7 @@ shader art_engineering(
     out_outColor = (1 - opacity) * transparent();
     if (raytype("transparency") || raytype("shadow"))
         return;
+    // NPR compositing supplies the color without turning parts into lights.
     if (raytype("npr")) {
         // Coverage is applied by the surface shader after NPR compositing.
         out_outColor = in_color * shading * as_npr_shading();
@@ -53,7 +54,5 @@ shader art_engineering(
             out_outColor += as_npr_contour(in_contour_color, 1,
                 in_contour_width, 1, 1, in_depth_contours, in_contour_depth_threshold,
                 1, in_contour_crease_angle);
-    } else {
-        out_outColor += in_color * shading * emission();
     }
 }

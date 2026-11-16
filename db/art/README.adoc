@@ -356,7 +356,8 @@ cmake -DBRLCAD_PREFIX="${BRLCAD_PREFIX}" -DOUTPUT_DIR=twin-structure \
 The driver needs art, mged, oslc, the installed OSL headers, and the standard
 Generic_Twin database.  It compiles `art_engineering.osl` into the generated
 project's `shaders` directory.  The shader uses illustrative fill and
-view-facing shading, plus Appleseed's ray-traced NPR contours.  Contours
+view-facing shading, plus Appleseed's ray-traced NPR contours.  These
+illustrative materials do not emit light or illuminate other geometry.  Contours
 follow object/material boundaries and normal creases.  Depth contours are
 available through `in_depth_contours` and its millimeter threshold; they
 are disabled in these views to retain clean lines on sloped surfaces.

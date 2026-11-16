@@ -1093,8 +1093,8 @@ origins, including photon emitters, before tracing the first segment.
 Correcting only the IOR at the first exit would omit absorption between
 an interior source and that boundary.  These cases qualify initial smooth
 slab photon transport on CSG and solid BOT geometry.  Rough or nested
-photon paths, general caustic focusing, participating media, and sampled
-emission from librt surfaces remain open qualification.
+photon paths, general caustic focusing, and participating media remain open
+qualification.  Sampled surface emission is checked separately below.
 Separate checks exercise control errors, repeated frames, engine changes,
 cumulative progress and cancellation, including framebuffer cleanup.
 Initial state is limited to eight containing optical objects, including
@@ -1349,10 +1349,58 @@ separately, including chart orientation and mirrored UVs.
 Rebuild procedural
 plugins and applications against the matching Appleseed headers and library.
 
-Visible emission is covered by the diagnostic shader, but direct light
-sampling of emissive librt surfaces and their surface-area registration are
-not implemented.  Emission visibility does not establish an efficient area
-light workflow or area-normalized power controls.
+=== Emissive BRL-CAD regions
+
+OSL emission on librt regions participates in explicit light sampling
+without tessellating the geometry.  This includes Boolean subtraction
+boundaries.  For example, assign the installed area-light shader to a
+rectangular solid in MGED:
+
+----
+in panel.s rpp -1000 1000 -1000 1000 2000 2010
+r panel.r u panel.s
+material create panel.material Area_light
+material set panel.material optical OSL as_maya_areaLight
+material set panel.material optical OSL.param.in_color "color 1 0.95 0.85"
+material set panel.material optical OSL.param.in_intensity "float 5"
+material assign panel.r panel.material
+----
+
+Include `panel.r` with the objects selected for rendering.  Its geometry
+provides visible and reflected emission as well as illumination.
+Explicit sampling requires finite conservative bounds; ray-dependent
+plate BOTs require conversion to explicit volume geometry.  When a region
+does not provide a fixed surface sampler, art logs a warning and preserves
+its visible emission.  Explicit light sampling and photon emission remain
+unavailable for that region.  Existing plate diagnostics can therefore
+continue to render; use physical volume geometry for an area-light workflow.
+Area-normalized emission also requires a registered emitting area.
+
+The renderer estimates emitting area during scene preparation and makes
+it available through OSL `surfacearea()`, in square millimeters.  Art assigns
+the region material to both sides, so its registered emitting area counts
+both sides of every boundary, including cavity walls.  Shaders that divide
+their emission by this area can keep the same total emitted power when
+the geometry changes.  The area estimate uses 65536 chord attempts per
+region; its accuracy and preparation cost depend on the geometry and the
+tightness of its bound.  It is not an exact CAD area measurement.
+Lighting samples retain the crossing weights and missed attempts of the
+Boolean surface sampler independently of that area estimate.
+
+`regress-art-emission` compares received linear radiance with independent
+analytic integrals for a sphere, a hollow sphere, a recessed box, and a
+solid BOT.  Additional sphere and cavity checks exercise area-normalized
+`as_maya_areaLight` emission on sampled light hits and directly visible surfaces.  A
+sampled-emission metadata check evaluates region identity,
+material identity, region color, numeric identifiers, and raw attributes
+on the manufactured light hit.  A fully transparent cover between the
+receiver and emitter must preserve the analytic illumination, including
+paths that hit the light after passing through both cover boundaries.
+These complement the ordinary camera and post-transmission query checks.
+
+The emitter contract supports static geometry.  Qualification of moving
+emitters, participating media, and general area-lit caustic focusing
+remains separate from these diffuse surface-lighting checks.
 
 == Shader geometry queries
 

@@ -247,6 +247,7 @@ set(
   primitives/obj_tess.c
   primitives/obj_tnurb.c
   primitives/obj_uv.c
+  primitives/surface.cpp
   primitives/obj_vshot.c
   primitives/obj_xform.c
   primitives/part/part.c

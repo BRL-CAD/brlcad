@@ -107,6 +107,9 @@ public:
     size_t get_material_slot_count() const override;
     const char* get_material_slot(const size_t index) const override;
 
+    double get_surface_sampling_reference_area() const override;
+    bool sample_surface(const double variates[SurfaceSampleDimensions], SurfaceSample& sample) const override;
+
     void intersect(const asr::ShadingRay& ray, IntersectionResult& result) const override;
     bool intersect(const asr::ShadingRay& ray) const override;
 
