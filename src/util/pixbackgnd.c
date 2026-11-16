@@ -28,38 +28,101 @@
 
 #include "common.h"
 
-#include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <math.h>
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "util_arg.h"
-#include "bu/malloc.h"
 #include "bu/exit.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 
 
-double RGB[3] = {128, 128, 128};	/* r, g, b */
-double HSV[3] = {0, 0, 0};		/* h, s, v */
+struct pixbackgnd_args {
+    struct pixbackgnd_args *self;
+    int help;
+    int invert;
+    int file_width;
+    int file_height;
+    int title_height;
+    int top_intensity;
+    int bottom_intensity;
+};
 
-int file_width = 512;
-int file_height = 512;
-int invert = 0;
+static struct pixbackgnd_args *
+pixbackgnd_args_from_storage(void *storage)
+{
+    return storage ? *(struct pixbackgnd_args **)storage : NULL;
+}
 
-double deltav;
-int title_height = 80;
-int h_start = 240; /* top_inten, in the Usage and in the man page */
-int h_end = 50; /* bottom_inten, in the Usage and in the man page */
+static int
+pixbackgnd_high_resolution(struct bu_vls *UNUSED(msg),
+	const char *UNUSED(arg), void *storage)
+{
+    struct pixbackgnd_args *args = pixbackgnd_args_from_storage(storage);
 
-char usage[] = "\
-Usage:  pixbackgnd [-H -i] [-s squaresize] [-w width] [-n height]\n\
-	[-t title_height] [-a top_inten] [-b bottom_inten]\n\
-	hue saturation\n\
-or	r g b <--(used in place of \"hue saturation\" just above)\n\
-	> file.pix\n";
+    if (args) {
+	args->file_width = 1024;
+	args->file_height = 1024;
+	args->title_height = 90;
+    }
+    return 0;
+}
+
+static int
+pixbackgnd_size(struct bu_vls *msg, const char *arg, void *storage)
+{
+    struct pixbackgnd_args *args = pixbackgnd_args_from_storage(storage);
+    int value;
+
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 1, INT_MAX))
+	return -1;
+    if (args)
+	args->file_width = args->file_height = value;
+    return 0;
+}
+
+static const struct bu_arg_option pixbackgnd_options[] = {
+    BU_ARG_FLAG("h", "help", struct pixbackgnd_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_CUSTOM_FLAG("H", "high-resolution", "high-resolution",
+	struct pixbackgnd_args, self, pixbackgnd_high_resolution,
+	"Generate a 1024 by 1024 image with a 90-line title area"),
+    BU_ARG_FLAG("i", "invert", struct pixbackgnd_args, invert,
+	"Write scanlines from top to bottom"),
+    BU_ARG_CUSTOM("s", "size", struct pixbackgnd_args, self,
+	pixbackgnd_size, "pixels", "Set both output dimensions"),
+    BU_ARG_INTEGER_RANGE("w", "width", struct pixbackgnd_args, file_width,
+	1, 1, 1, INT_MAX, "pixels", "Set the output image width"),
+    BU_ARG_INTEGER_RANGE("n", "height", struct pixbackgnd_args, file_height,
+	1, 1, 1, INT_MAX, "pixels", "Set the output image height"),
+    BU_ARG_INTEGER_RANGE("t", "title-height", struct pixbackgnd_args,
+	title_height, 1, 1, 1, INT_MAX, "lines", "Set the title area height"),
+    BU_ARG_INTEGER_RANGE("a", "top-intensity", struct pixbackgnd_args,
+	top_intensity, 1, 0, 1, 255, "value", "Set the top intensity"),
+    BU_ARG_INTEGER_RANGE("b", "bottom-intensity", struct pixbackgnd_args,
+	bottom_intensity, 1, 0, 1, 255, "value", "Set the bottom intensity"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand pixbackgnd_operands[] = {
+    BU_ARG_OPERAND_NUMBER_RANGE("component", 2, 3, 1, 0.0, 1, 255.0,
+	"Hue and saturation, or red, green, and blue", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema pixbackgnd_schema = BU_ARG_SCHEMA(
+    "pixbackgnd", "Generate a shaded PIX background",
+    pixbackgnd_options, pixbackgnd_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar pixbackgnd_grammar = {
+    &pixbackgnd_schema, NULL, NULL
+};
 
 /* rgbhsv
  *
@@ -69,7 +132,7 @@ static void
 rgbhsv(double *rgb, double *hsv)
 {
     double s, v, r, g, b, x;
-    static double h;
+    double h = 0.0;
     double dif = 0.0;
 
     r = rgb[0];
@@ -169,96 +232,12 @@ hsvrgb(double *hsv, double *rgb)
 }
 
 
-static int
-get_args(int argc, char **argv)
-{
-    int c;
-    int remaining;
-
-    while ((c = bu_getopt(argc, argv, "His:w:n:t:a:b:h?")) != -1) {
-	switch (c) {
-	    case 'i':
-		invert = 1;
-		break;
-	    case 'H':
-		/* high-res, and also set title_height to 90 */
-		file_height = file_width = 1024;
-		title_height = 90;
-		break;
-	    case 's':
-		/* square file size */
-		if (!util_arg_int_range(bu_optarg, &file_width, 1, INT_MAX, "size"))
-		    return 0;
-		file_height = file_width;
-		break;
-	    case 'w':
-		if (!util_arg_int_range(bu_optarg, &file_width, 1, INT_MAX, "width"))
-		    return 0;
-		break;
-	    case 'n':
-		if (!util_arg_int_range(bu_optarg, &file_height, 1, INT_MAX, "height"))
-		    return 0;
-		break;
-	    case 't':
-		/* Title area size */
-		if (!util_arg_int_range(bu_optarg, &title_height, 1, INT_MAX, "title height"))
-		    return 0;
-		break;
-	    case 'a':
-		if (!util_arg_int_range(bu_optarg, &h_start, 0, 255,
-			"top intensity"))
-		    return 0;
-		break;
-	    case 'b':
-		if (!util_arg_int_range(bu_optarg, &h_end, 0, 255,
-			"bottom intensity"))
-		    return 0;
-		break;
-
-	    default:		/* '?' 'h' */
-		return 0;
-	}
-    }
-    remaining = argc - bu_optind;
-    if (remaining == 2) {
-	/* Parameters are H S */
-	if (!util_arg_double_range(argv[bu_optind++], &HSV[0], 0.0, 255.0,
-		"hue") ||
-	    !util_arg_double_range(argv[bu_optind], &HSV[1], 0.0, 255.0,
-		"saturation"))
-	    return 0;
-	HSV[2] = h_start;
-
-	hsvrgb(HSV, RGB);
-    } else if (remaining == 3) {
-	/* parameters are R G B */
-	if (!util_arg_double_range(argv[bu_optind++], &RGB[0], 0.0, 255.0,
-		"red") ||
-	    !util_arg_double_range(argv[bu_optind++], &RGB[1], 0.0, 255.0,
-		"green") ||
-	    !util_arg_double_range(argv[bu_optind++], &RGB[2], 0.0, 255.0,
-		"blue"))
-	    return 0;
-
-	rgbhsv(RGB, HSV);
-	HSV[2] = h_start;	/* Change given RGB to starting inten */
-    } else {
-	fprintf(stderr, "pixbackgnd: expected either 2 HSV values or 3 RGB values\n");
-	return 0;
-    }
-    if (file_height <= 4 || title_height >= file_height - 4) {
-	fprintf(stderr,
-		"pixbackgnd: title height must leave room for the white stripe and gradient\n");
-	return 0;
-    }
-    return 1;			/* OK */
-}
-
-
 static void
-flood(unsigned char *horiz_buf, unsigned char *vert_buf, unsigned char *vp, int line)
+flood(unsigned char *horiz_buf, unsigned char *vert_buf, int file_width,
+	int line)
 {
     unsigned char *op;
+    unsigned char *vp;
     ssize_t ret = 0;
     vp = &vert_buf[line*3];
     op = &horiz_buf[(file_width*3)-1];
@@ -281,13 +260,62 @@ main(int argc, char **argv)
     unsigned char *horiz_buf = NULL;
     unsigned char *vert_buf = NULL;
     unsigned char *vp = NULL;
+    double RGB[3] = {128.0, 128.0, 128.0};
+    double HSV[3] = {0.0, 0.0, 0.0};
+    double deltav;
+    struct pixbackgnd_args args = {NULL, 0, 0, 512, 512, 80, 240, 50};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    args.self = &args;
 
     bu_setprogname(argv[0]);
 
-    if (!get_args(argc, argv) || isatty(fileno(stdout))) {
-	(void)fputs(usage, stderr);
-	bu_exit(1, NULL);
+    int introspection = bu_arg_introspect(&msg, &pixbackgnd_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+    int operand_index = bu_arg_schema_parse_complete(&pixbackgnd_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&pixbackgnd_schema, "pixbackgnd");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "pixbackgnd help");
+	return 0;
+    }
+    if (isatty(fileno(stdout)))
+	bu_exit(1, "pixbackgnd requires redirected standard output\n");
+
+    int operand_count = argc - operand_index - 1;
+    if (operand_count == 2) {
+	if (!bu_arg_double_range_from_str(NULL, &HSV[0],
+		argv[operand_index + 1], 0.0, 255.0) ||
+	    !bu_arg_double_range_from_str(NULL, &HSV[1],
+		argv[operand_index + 2], 0.0, 255.0))
+	    bu_exit(1, "pixbackgnd: internal HSV validation failure\n");
+	HSV[2] = args.top_intensity;
+	hsvrgb(HSV, RGB);
+    } else {
+	for (i = 0; i < 3; i++) {
+	    if (!bu_arg_double_range_from_str(NULL, &RGB[i],
+		    argv[operand_index + i + 1], 0.0, 255.0))
+		bu_exit(1, "pixbackgnd: internal RGB validation failure\n");
+	}
+	rgbhsv(RGB, HSV);
+	HSV[2] = args.top_intensity;
+    }
+    if (args.file_height <= 4 ||
+	args.title_height >= args.file_height - 4)
+	bu_exit(1, "pixbackgnd: title height must leave room for the white stripe and gradient\n");
+
+    int file_width = args.file_width;
+    int file_height = args.file_height;
+    int title_height = args.title_height;
+    int h_end = args.bottom_intensity;
 
     setmode(fileno(stdout), O_BINARY);
 
@@ -349,16 +377,17 @@ main(int argc, char **argv)
      * and write the scanline out.  Here we proceed bottom-to-top
      * for pix(5) format.
      */
-    if (!invert) {
+
+    if (!args.invert) {
 	for (line = file_height-1; line >= 0; line--)
-	    flood(horiz_buf, vert_buf, vp, line);
+	    flood(horiz_buf, vert_buf, file_width, line);
     } else {
 	/* Inverted: top-to-bottom */
 	for (line=0; line < file_height; line++)
-	    flood(horiz_buf, vert_buf, vp, line);
+	    flood(horiz_buf, vert_buf, file_width, line);
     }
 
-    bu_free(horiz_buf, "horiz_buf alloc from malloc");
+    bu_free(horiz_buf, "horiz_buf");
     bu_free(vert_buf, "vert_buf");
 
     return 0;

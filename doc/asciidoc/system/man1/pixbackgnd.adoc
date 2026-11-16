@@ -43,32 +43,37 @@ pipe; *pixbackgnd* refuses to write *pix*(5) data to a terminal.
 [[options]]
 == OPTIONS
 
-*-H*::
+*-H*, *--high-resolution*::
   High resolution. Produce a 1024x1024 image instead of 512x512, and
   set the title height to 90 scanlines.
 
-*-i*::
+*-i*, *--invert*::
   Invert the output, writing scanlines top to bottom rather than the
   bottom-to-top order normally used for *pix*(5) data.
 
-*-s* _squaresize_::
+*-s*, *--size* _squaresize_::
   Set both the width and the height to _squaresize_ pixels.
 
-*-w* _width_::
+*-w*, *--width* _width_::
   Set the output width to _width_ pixels.
 
-*-n* _height_::
+*-n*, *--height* _height_::
   Set the output height to _height_ pixels.
 
-*-t* _title_height_::
+*-t*, *--title-height* _title_height_::
   Set the height in scanlines of the constant-intensity title area at
-  the top of the image (default 80, or 90 with *-H*).
+  the top of the image (default 80, or 90 with *-H*). The selected
+  image height must also leave four scanlines for the white stripe and
+  at least one scanline for the intensity gradient.
 
-*-a* _top_inten_::
+*-a*, *--top-intensity* _top_inten_::
   Set the top (starting) intensity in the range 0 to 255 (default 240).
 
-*-b* _bottom_inten_::
+*-b*, *--bottom-intensity* _bottom_inten_::
   Set the bottom (ending) intensity in the range 0 to 255 (default 50).
+
+*-h*, *--help*, *-?*::
+  Print command help and exit.
 
 [[examples]]
 == EXAMPLES
@@ -84,7 +89,7 @@ existing foreground image fg.pix over it with *pixmerge*(1), and display
 the result on a framebuffer with *pix-fb*(1).
 ====
 
-.Produce a high-resolution untitled backdrop
+.Produce a high-resolution backdrop
 ====
 [source,console]
 ----
