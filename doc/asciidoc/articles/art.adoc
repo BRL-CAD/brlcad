@@ -97,6 +97,9 @@ and material assignments along full instance paths.  Advanced closures
 remain only partially qualified.
 `regress-art-mixture` checks the energy of ideal-mirror mixtures in single
 shaders and persisted native blend networks against an emission reference.
+`regress-art-reflection-energy` checks explicit-IOR mirror energy against
+independent Fresnel references on CSG and solid BOTs, including the
+unweighted default, matched indices, and total internal reflection.
 
 |Bump and normal-map nodes
 |Native normal-map chains preserve upstream normals when disabled.
@@ -1013,6 +1016,83 @@ independent analytic rays on a plane and sphere.  Glass passes the refractive
 ratio, rather than roughness, to its transmitted-differential calculation.
 These checks establish the tested first-order direction changes; filtered
 textures along secondary paths still need image-based qualification.
+
+`regress-art-glass-footprints` compares complete smooth reflection and
+transmission paths through CSG boxes, solid BOTs, spheres, and ellipsoids
+with independently differentiated analytic paths. Its 204 comparisons
+cover indices 1.5 and 2, both projections, original surface normals,
+constant mapped normals, direct world-space normal fields, and the same
+fields through `as_bump` in Normal Map mode. Positive images and separate
+hit-position comparisons prevent missing paths from passing. First-order
+footprint comparisons allow a 1% relative approximation budget at 16 by 16
+pixels and 0.5% at 32 by 32, plus one relative binary16 step and 0.00002
+absolute arithmetic error. The refined cases check curved reflection in
+perspective.
+
+The bundled `as_glass` shader supplies derivatives of its selected normal
+to the renderer. Its default normal, and `as_bump`'s default surface
+normal, obtain original surface derivatives through `as_shading_normal()`.
+Custom shaders calling the `as_glass` closure directly can opt in with
+`"normal_derivatives", 1`, `"dNdx", vector(Dx(Nn))`, and
+`"dNdy", vector(Dy(Nn))`, where `Nn` is their closure normal. Existing
+compiled shaders without these optional keywords retain the original
+surface-derivative behavior.
+
+`regress-art-specular-footprints` applies the same analytic method to
+unweighted mirrors, explicit-IOR reflection, canonical glossy reflection,
+white metal, specular-only plastic, and an empty glossy coat. Its 312
+comparisons cover the same four shapes, normal sources, projections,
+footprint and hit-position controls, with refined curved perspective
+footprints. These cases qualify smooth reflection; colored metal and
+substrate transport require their separate energy tests.
+
+The bundled `as_metal`, `as_plastic`, and `as_glossy_layer` shaders also
+supply their selected normal derivatives and obtain default surface
+normals through `as_shading_normal()`. Custom shaders can use the same
+optional keywords with the canonical `as_glossy`, `as_metal`, `as_plastic`,
+and `as_glossy_layer` closures. The standard `reflection` closure accepts
+these keywords in its two-argument form; the `as_reflection(normal)` and
+`as_reflection(normal, ior)` helpers supply them automatically, preserving
+the zero-IOR unweighted mirror convention. Native tests compare reflected
+ray derivatives with finite differences for both unit and scaled raw
+normal fields and both transport directions. Microfacet normal-mapping
+wrapper closures have a distinct frame selection and remain unqualified.
+
+`regress-art-bundled-specular` checks the derivative wiring in Standard
+Surface, Substance-style PBR, Max metal/plastic/glass, the isolated specular
+lobe of Max SSS, and Blackbody's specular lobe. Its 352 comparisons cover
+planar CSG and solid BOTs with original, direct and world normal-map inputs,
+plus original normals on spheres and ellipsoids. Both projections include
+footprint and hit-position controls. The 256 smooth comparisons use the
+independent analytic reference and its existing first-order error budget.
+The 96 Substance-style comparisons use matched canonical shader graphs at
+that material's minimum roughness of 0.01, allowing binary16 rounding;
+they check wrapper wiring rather than independently establish rough-path
+footprint growth. Legacy Max vector inputs use an explicit normal-to-vector
+adapter to preserve strict graph typing.
+
+All remaining bundled calls to the canonical glass, glossy, metal and
+plastic closures supply their selected normal derivatives. Updated default
+normal inputs use `as_shading_normal()`. The Subsurface, Maya PhongE, and
+Toon shader changes are compiler checked; these checks do not qualify
+their complete transport behavior. Toon is already included in the
+installed catalogue.
+
+Standard Surface's legacy coat still calls the standard OSL `microfacet`
+closure, which this renderer does not register. Enabling that coat reports
+an unsupported-closure error and saves no image. Use the separately
+qualified `as_glossy_layer` network for a coat while that legacy path is
+modernized. Maya refraction and complete subsurface transport also need
+separate qualification.
+
+These checks qualify smooth ray footprints for the tested normal fields;
+they do not qualify all filtered secondary textures. A separate
+high-frequency image study reproduces a discontinuity in OIIO's
+anisotropic quadrature: its sample count changes from one to two when
+the footprint aspect ratio crosses 1.5. First-order footprint differences
+can therefore cause a larger isolated color difference. Filter continuity,
+curved tangent-frame derivatives, height-map second derivatives, and
+rough-path footprint growth still need qualification.
 
 Rough curved/nested interfaces, general caustic focusing, transmitted
 shadows, arbitrary overlapping media, thin refractive surfaces, and filtered
@@ -2101,6 +2181,15 @@ terminal output is `out_color`.  Connect the two material closures to
 layer's default weight of one, the result is `(1-weight1)*first +
 weight1*second`.  This is a weighted mixture; a physically coated material
 requires its own transport model and qualification.
+
+The standard OSL `reflection(N)` closure is an unweighted ideal mirror.
+`reflection(N, eta)` with a positive index uses dielectric Fresnel
+attenuation. At normal incidence and incident index one, index 1.5 reflects
+0.04 of the incident radiance; a matched index reflects zero.
+`regress-art-reflection-energy` compares 20 CSG/BOT views with independent
+unpolarized Fresnel equations, covering indices 0, 0.5, 1, 1.5, and 2 at
+normal and oblique incidence. Zero checks the unweighted mirror convention;
+index 0.5 also checks total internal reflection at the oblique view.
 
 `regress-art-mixture` uses two half-reflecting ideal mirrors with different
 shading normals under a constant environment of radiance 0.4.  Every mixture

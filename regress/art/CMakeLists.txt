@@ -34,6 +34,10 @@ set(ART_TEST_SHADER_NAMES
   art_refraction_reference
   art_mapped_glass_field
   art_mapped_glass_reference
+  art_glass_footprint_field
+  art_glass_footprint_reference
+  art_specular_footprint
+  art_normal_vector
   art_nested_reference
   art_curved_reference
   art_rough_glass_reference
@@ -41,6 +45,7 @@ set(ART_TEST_SHADER_NAMES
   art_glass_lighting_reference
   art_photon_reference
   art_area_exit_reference
+  art_reflection_energy
   art_mirror_mixture
   art_mirror_node
   art_surface_reference
@@ -59,6 +64,12 @@ set(ART_VOLUME_ENERGY_REGRESSION_TIMEOUT 720)
 set(ART_VOLUME_WALK_REGRESSION_TIMEOUT 1200)
 # Mapped transmission compares 78 complete nested paths with analytic references.
 set(ART_MAPPED_GLASS_REGRESSION_TIMEOUT 600)
+# Screen-space checks compare 204 paths at two footprint sizes.
+set(ART_GLASS_FOOTPRINT_REGRESSION_TIMEOUT 1200)
+# Six reflective materials compare 312 complete smooth paths.
+set(ART_SPECULAR_FOOTPRINT_REGRESSION_TIMEOUT 1800)
+# Bundled wrappers compare 352 normal-source and geometry paths.
+set(ART_BUNDLED_SPECULAR_REGRESSION_TIMEOUT 1800)
 # Two area emitters each qualify constant and angular photon emission.
 set(ART_DIRECTIONAL_EMISSION_REGRESSION_TIMEOUT 1200)
 # Each dielectric exit case checks clear and absorbing 16-million-photon batches.
@@ -72,6 +83,12 @@ function(art_regression_timeout name result)
     set(${result} ${ART_DIRECTIONAL_EMISSION_REGRESSION_TIMEOUT} PARENT_SCOPE)
   elseif(name MATCHES "^regress-art-volume-walk(-overlap)?$")
     set(${result} ${ART_VOLUME_WALK_REGRESSION_TIMEOUT} PARENT_SCOPE)
+  elseif(name STREQUAL "regress-art-bundled-specular")
+    set(${result} ${ART_BUNDLED_SPECULAR_REGRESSION_TIMEOUT} PARENT_SCOPE)
+  elseif(name STREQUAL "regress-art-specular-footprints")
+    set(${result} ${ART_SPECULAR_FOOTPRINT_REGRESSION_TIMEOUT} PARENT_SCOPE)
+  elseif(name STREQUAL "regress-art-glass-footprints")
+    set(${result} ${ART_GLASS_FOOTPRINT_REGRESSION_TIMEOUT} PARENT_SCOPE)
   elseif(name STREQUAL "regress-art-mapped-glass")
     set(${result} ${ART_MAPPED_GLASS_REGRESSION_TIMEOUT} PARENT_SCOPE)
   elseif(name STREQUAL "regress-art-volume-energy-spectral")
@@ -137,6 +154,10 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-refraction
   regress-art-glass-sides
   regress-art-mapped-glass
+  regress-art-glass-footprints
+  regress-art-specular-footprints
+  regress-art-bundled-specular
+  regress-art-reflection-energy
   regress-art-nested
   regress-art-mixture
   regress-art-surface
@@ -200,6 +221,7 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-photon-controls.cmake.in
   regress-art-photon-cancel.cmake.in
   art_scene.cpp art_test_mesh.h art_glass_reference.h art_test_commands.cmake
+  art_footprint_test_commands.cmake art_bundled_specular_cases.json
   regress-art.cmake.in regress-art-bump.cmake.in regress-art-normal.cmake.in
   regress-art-trace.cmake.in
   regress-art-attributes.cmake.in
@@ -214,6 +236,8 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-caustics-clear.cmake.in regress-art-caustics-absorption.cmake.in regress-art-caustics-state.cmake.in regress-art-caustics-rough.cmake.in
   regress-art-refraction.cmake.in
   regress-art-glass-sides.cmake.in regress-art-mapped-glass.cmake.in
+  regress-art-glass-footprints.cmake.in regress-art-reflection-energy.cmake.in
+  regress-art-specular-footprints.cmake.in regress-art-bundled-specular.cmake.in
   regress-art-mixture.cmake.in regress-art-surface.cmake.in regress-art-nested.cmake.in
   regress-art-metal-energy.cmake.in regress-art-coat.cmake.in
   regress-art-materials.cmake.in regress-art-inspect.cmake.in
@@ -278,6 +302,10 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/refraction-output"
     "${CMAKE_CURRENT_BINARY_DIR}/glass-sides-output"
     "${CMAKE_CURRENT_BINARY_DIR}/mapped-glass-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/bundled-specular-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/specular-footprints-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/glass-footprints-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/reflection-energy-output"
     "${CMAKE_CURRENT_BINARY_DIR}/nested-output"
     "${CMAKE_CURRENT_BINARY_DIR}/mixture-output"
     "${CMAKE_CURRENT_BINARY_DIR}/surface-output"
