@@ -101,6 +101,18 @@ shaders and persisted native blend networks against an emission reference.
 independent Fresnel references on CSG and solid BOTs, including the
 unweighted default, matched indices, and total internal reflection.
 
+|Standard OSL microfacet reflection
+|The `microfacet` closure supports Beckmann and GGX reflection (mode 0).
+`regress-art-standard-microfacet` compares 64 position and footprint pairs
+with independently differentiated scalar samplers on CSG, solid BOTs,
+spheres, and ellipsoids under both projections.  Native tests compare
+oblique reflection, Fresnel energy, sampling densities, and fixed-random
+ray derivatives with independent references.  `regress-art-standard-materials`
+checks Standard Surface coat and Maya Anisotropic, including constant and
+connected coating normals, zero-normal inheritance, disabled coat, and
+rough diffuse.  Standard microfacet transmission modes 1 and 2 remain
+unsupported and report an error.
+
 |Bump and normal-map nodes
 |Native normal-map chains preserve upstream normals when disabled.
 `regress-art-bump` checks constant height and independent analytic gradients
@@ -2324,6 +2336,41 @@ These cases establish the stated single-surface models and tested lighting
 conditions.  General glossy layering, anisotropic roughness, colored-metal
 energy compensation, secondary textured paths, and denoising albedo need
 further qualification.
+
+== Standard microfacet materials
+
+Standard Surface (`as_standard_surface`, output `out_outColor`) supports
+its Beckmann coating lobe, and Maya Anisotropic (`as_maya_anisotropic`,
+output `out_outColor`) supports its GGX reflection lobe.  Selected normal
+and tangent derivatives follow these bundled shader paths.
+
+The standard OSL `microfacet` closure accepts distribution widths directly;
+they are not perceptual roughness values to be squared by the renderer.
+Its `eta` parameter supplies the relative index for dielectric Fresnel
+reflection.  Both widths equal to zero select ideal reflection.  Finite
+lobes use a minimum width of `1e-6` per axis to avoid singular anisotropic
+sampling; ray roughness clamping scales the two axes together to preserve
+their ratio.  The supported reflection mode is `0`.  Transmission mode `1`
+and combined mode `2` are not yet implemented.
+
+A Standard Surface coating normal set as a material parameter has the same
+meaning as a normal supplied by a node connection.  Zero inherits the
+substrate normal, including when zero is explicitly authored.  For example:
+
+[source,tcl]
+----
+material set paint.material optical OSL.param.in_coating_reflectivity "float 1"
+material set paint.material optical OSL.param.in_coating_roughness "float 0.25"
+material set paint.material optical OSL.param.in_coating_ior "float 1.5"
+material set paint.material optical OSL.param.in_bump_normal_coating "normal 0.5 0 1"
+----
+
+These settings address the coating lobe.  They do not qualify every
+Standard Surface or Maya feature, general rough-coat layering, subsurface
+transport, or standard microfacet transmission.  The independent sampler
+regression also requires the OSL dependency's corrected `atan2` derivatives;
+its scalar and compiled-shader tests check both partials against finite
+differences.
 
 == Coating networks
 
