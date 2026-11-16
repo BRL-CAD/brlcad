@@ -23,6 +23,11 @@ function(run_command directory should_fail)
     if(output MATCHES "(error|fatal)[ \t]+[|]")
       message(FATAL_ERROR "Renderer reported an error: ${ARGN}\n${output}")
     endif()
+    # The renderer can discard invalid radiance while returning success.
+    # Such images cannot establish agreement with a rendering reference.
+    if(output MATCHES "NaN, negative or infinite")
+      message(FATAL_ERROR "Renderer discarded invalid radiance: ${ARGN}\n${output}")
+    endif()
   endif()
 endfunction()
 

@@ -19,6 +19,7 @@
  */
 #include "appleseed/as_osl_extensions.h"
 #include "art_glass_reference.h"
+#include "art_beckmann_reference.h"
 
 vector to_local(vector value, vector basis_u, normal n, vector basis_v)
 {
@@ -53,6 +54,8 @@ color diagnostic(point hit, int position, float scale)
 }
 surface art_rough_footprint_reference(float in_roughness = 0.6, float in_anisotropy = 0.5,
     int in_reference = 0, int in_receiver = 0, int in_position = 0,
+    int in_standard = 0, int in_beckmann = 0,
+    float in_alpha_x = 0.36, float in_alpha_y = 0.1, float in_eta = 1.5,
     int in_curved = 0, int in_mapped_normal = 0, int in_tangent_source = 0,
     point in_center = point(-15, 0, 0), vector in_axes = vector(10),
     int in_seed = 17, float in_scale = 20, int in_tangent_gradient = 1, int in_mode = 0)
@@ -89,7 +92,12 @@ surface art_rough_footprint_reference(float in_roughness = 0.6, float in_anisotr
             tangent = vector(0, 1, 0);
     }
     if (!in_reference) {
-        if (in_mode == 0)
+        if (in_standard)
+            Ci = microfacet(in_beckmann ? "beckmann" : "ggx", n, tangent,
+                in_alpha_x, in_alpha_y, in_eta, 0,
+                "normal_derivatives", 1, "dNdx", vector(Dx(n)), "dNdy", vector(Dy(n)),
+                "dTdx", Dx(tangent), "dTdy", Dy(tangent));
+        else if (in_mode == 0)
             Ci = as_metal(n, tangent, color(1), color(1), 0, in_roughness, in_anisotropy,
                 "normal_derivatives", 1, "dNdx", vector(Dx(n)), "dNdy", vector(Dy(n)),
                 "dTdx", Dx(tangent), "dTdy", Dy(tangent));
@@ -106,12 +114,14 @@ surface art_rough_footprint_reference(float in_roughness = 0.6, float in_anisotr
     float aspect = sqrt(1 - abs(in_anisotropy) * 0.9);
     float wide = max(0.001, in_roughness * in_roughness / aspect);
     float narrow = max(0.001, in_roughness * in_roughness * aspect);
-    float ax = in_anisotropy >= 0 ? wide : narrow;
-    float ay = in_anisotropy >= 0 ? narrow : wide;
+    float ax = in_standard ? in_alpha_x : (in_anisotropy >= 0 ? wide : narrow);
+    float ay = in_standard ? in_alpha_y : (in_anisotropy >= 0 ? narrow : wide);
     // Independent cell noise supplies fixed random variates to OSL automatic
     // differentiation. This does not use the renderer's sampling Jacobian.
     color random_sample = cellnoise(P * 1048576 + vector(in_seed, 3 * in_seed, 7 * in_seed));
-    vector m = ggx_sample(outgoing, random_sample[0], random_sample[1], ax, ay);
+    int beckmann = in_standard && in_beckmann;
+    vector m = beckmann ? beckmann_sample(outgoing, random_sample[0], random_sample[1], ax, ay) :
+        ggx_sample(outgoing, random_sample[0], random_sample[1], ax, ay);
     float cosine = dot(outgoing, m);
     float transmitted_cosine = sqrt(max(0, 1 - (1 - cosine * cosine) / (1.5 * 1.5)));
     vector incoming = in_mode == 2 ? (cosine / 1.5 - transmitted_cosine) * m - outgoing / 1.5 :
@@ -129,10 +139,18 @@ surface art_rough_footprint_reference(float in_roughness = 0.6, float in_anisotr
         float cosine_i = dot(incoming, ng);
         if ((in_mode == 1 && cosine_i <= 0) || (in_mode == 2 && cosine_i >= 0)) { Ci = 0; return; }
     }
-    if (incoming[1] == 0) { Ci = 0; return; }
-    float weight = (1 + ggx_lambda(outgoing, ax, ay)) /
-        (1 + ggx_lambda(outgoing, ax, ay) + ggx_lambda(incoming, ax, ay));
-    if (in_mode == 1)
+    if (incoming[1] == 0 || (in_standard && incoming[1] < 0)) { Ci = 0; return; }
+    float lambda_o = beckmann ? beckmann_lambda(outgoing, ax, ay) : ggx_lambda(outgoing, ax, ay);
+    float lambda_i = beckmann ? beckmann_lambda(incoming, ax, ay) : ggx_lambda(incoming, ax, ay);
+    float weight = (1 + lambda_o) / (1 + lambda_o + lambda_i);
+    if (in_standard) {
+        // Geometric correction can change the sampled half vector. Fresnel
+        // must use that corrected value, just as the reflection BSDF does.
+        float facet_cosine = min(1, abs(dot(outgoing, m)));
+        float transmitted_squared = 1 - (1 - facet_cosine * facet_cosine) / (in_eta * in_eta);
+        if (transmitted_squared > 0)
+            weight *= 1 - interface_transmission(1, in_eta, facet_cosine, sqrt(transmitted_squared));
+    } else if (in_mode == 1)
         weight *= 1 - interface_transmission(1, 1.5, abs(cosine), transmitted_cosine);
     else if (in_mode == 2)
         weight *= interface_radiance_transmission(1, 1.5, abs(cosine), transmitted_cosine);

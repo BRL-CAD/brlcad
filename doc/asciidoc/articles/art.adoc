@@ -101,6 +101,18 @@ shaders and persisted native blend networks against an emission reference.
 independent Fresnel references on CSG and solid BOTs, including the
 unweighted default, matched indices, and total internal reflection.
 
+|Standard OSL microfacet reflection
+|The `microfacet` closure supports Beckmann and GGX reflection (mode 0).
+`regress-art-standard-microfacet` compares 64 position and footprint pairs
+with independently differentiated scalar samplers on CSG, solid BOTs,
+spheres, and ellipsoids under both projections.  Native tests compare
+oblique reflection, Fresnel energy, sampling densities, and fixed-random
+ray derivatives with independent references.  `regress-art-standard-materials`
+checks Standard Surface coat and Maya Anisotropic, including constant and
+connected coating normals, zero-normal inheritance, disabled coat, and
+rough diffuse.  Standard microfacet transmission modes 1 and 2 remain
+unsupported and report an error.
+
 |Bump and normal-map nodes
 |Native normal-map chains preserve upstream normals when disabled.
 `regress-art-bump` checks constant height and independent analytic gradients
@@ -113,9 +125,10 @@ project relocation.  `regress-art-image-maps` checks spatial image
 orientation and magnified linear ramps against position-based references
 on flat and smooth BOTs, including reflected U/V charts, and on spheres
 and ellipsoids with full-range and transformed UVs.  LOD transitions,
-baked per-vertex tangents, and filtered secondary textures remain
+baked per-vertex tangents, and filtered secondary normal/height textures remain
 unqualified.  The mapped-glass cases below separately qualify analytic
-normal fields along smooth transmission paths.
+normal fields along smooth transmission paths, and the filtered-footprint
+cases qualify color-texture lookup on planar reflection and transmission.
 
 |Rough plastic and metal
 |`regress-art-surface` compares native plastic and uncompensated isotropic
@@ -1078,12 +1091,12 @@ Toon shader changes are compiler checked; these checks do not qualify
 their complete transport behavior. Toon is already included in the
 installed catalogue.
 
-Standard Surface's legacy coat still calls the standard OSL `microfacet`
-closure, which this renderer does not register. Enabling that coat reports
-an unsupported-closure error and saves no image. Use the separately
-qualified `as_glossy_layer` network for a coat while that legacy path is
-modernized. Maya refraction and complete subsurface transport also need
-separate qualification.
+Standard Surface's Beckmann coat and Maya Anisotropic's GGX reflection
+use the standard OSL `microfacet` closure, including selected frame
+derivatives. See <<Standard microfacet materials>> for their controls and
+qualified behavior. Standard microfacet transmission, Maya refraction,
+and complete subsurface transport still need separate implementation or
+qualification.
 
 Rough canonical GGX reflection and transmission differentiate the sampled
 microfacet normal, the selected shading frame, and the actual reflected or
@@ -1137,21 +1150,33 @@ before a second glass interface. These checks retain the planar test's
 strongly tilted clipping configurations use 524288 samples to bound their
 higher estimator variance at the same 1% threshold.
 
-These checks qualify smooth ray footprints and the tested rough sampled
-paths; they do not qualify all filtered secondary textures. A separate
-high-frequency image study reproduces a discontinuity in OIIO's
-anisotropic quadrature: its sample count changes from one to two when
-the footprint aspect ratio crosses 1.5. First-order footprint differences
-can therefore cause a larger isolated color difference. Filter continuity,
-height-map second derivatives, roughness/anisotropy gradients, and general
-rough-lobe filtering still need qualification. Geometry tangent and
-geometric-normal partials currently come from spheres, ellipsoids and
-BOTs. Other librt primitives, native curves and material basis modifiers
-need further frame-derivative support and qualification.
+`regress-art-filtered-footprints` adds 16 color-texture image comparisons
+on planar CSG and solid BOTs. Smooth reflection and transmission use direct
+or world normal-map fields under both projections. Each filtered receiver
+is compared with an independently differentiated analytic path. Every
+pixel permits an absolute error of `0.0001` plus one binary16 relative
+step, and both images must contain a positive signal.
+
+OIIO's deterministic anisotropic filter uses partial edge cells with
+continuous weights. This removes sample-count discontinuities in bilinear
+and bicubic reconstruction, including the old one-to-two transition at a
+footprint aspect ratio of 1.5. Nearest-texel reconstruction retains its
+inherent discontinuities. Native filter tests also compare nearest,
+bilinear and bicubic responses with independently integrated continuous
+kernels and check reference convergence, linear derivatives and scalar/
+batched agreement.
+
+These checks qualify the tested smooth filtered color paths and rough
+sampled footprints. Height-map second derivatives, roughness/anisotropy
+gradients, general rough-lobe filtering and curved/nested filtered image
+paths still need qualification. Geometry tangent and geometric-normal
+partials currently come from spheres, ellipsoids and BOTs. Other librt
+primitives, native curves and material basis modifiers need further
+frame-derivative support and qualification.
 
 Rough curved/nested interfaces, general caustic focusing, transmitted
 shadows, arbitrary overlapping media, thin refractive surfaces, and filtered
-secondary image maps need further qualification.  The distinct-priority
+secondary normal/height maps need further qualification.  The distinct-priority
 nested-volume case below has independent image references.
 
 === Rough glass under direct lighting
@@ -2324,6 +2349,41 @@ These cases establish the stated single-surface models and tested lighting
 conditions.  General glossy layering, anisotropic roughness, colored-metal
 energy compensation, secondary textured paths, and denoising albedo need
 further qualification.
+
+== Standard microfacet materials
+
+Standard Surface (`as_standard_surface`, output `out_outColor`) supports
+its Beckmann coating lobe, and Maya Anisotropic (`as_maya_anisotropic`,
+output `out_outColor`) supports its GGX reflection lobe.  Selected normal
+and tangent derivatives follow these bundled shader paths.
+
+The standard OSL `microfacet` closure accepts distribution widths directly;
+they are not perceptual roughness values to be squared by the renderer.
+Its `eta` parameter supplies the relative index for dielectric Fresnel
+reflection.  Both widths equal to zero select ideal reflection.  Finite
+lobes use a minimum width of `1e-6` per axis to avoid singular anisotropic
+sampling; ray roughness clamping scales the two axes together to preserve
+their ratio.  The supported reflection mode is `0`.  Transmission mode `1`
+and combined mode `2` are not yet implemented.
+
+A Standard Surface coating normal set as a material parameter has the same
+meaning as a normal supplied by a node connection.  Zero inherits the
+substrate normal, including when zero is explicitly authored.  For example:
+
+[source,tcl]
+----
+material set paint.material optical OSL.param.in_coating_reflectivity "float 1"
+material set paint.material optical OSL.param.in_coating_roughness "float 0.25"
+material set paint.material optical OSL.param.in_coating_ior "float 1.5"
+material set paint.material optical OSL.param.in_bump_normal_coating "normal 0.5 0 1"
+----
+
+These settings address the coating lobe.  They do not qualify every
+Standard Surface or Maya feature, general rough-coat layering, subsurface
+transport, or standard microfacet transmission.  The independent sampler
+regression also requires the OSL dependency's corrected `atan2` derivatives;
+its scalar and compiled-shader tests check both partials against finite
+differences.
 
 == Coating networks
 
