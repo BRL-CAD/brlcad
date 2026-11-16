@@ -1,0 +1,116 @@
+# R E G R E S S - A R T - C O L O R - M E T A D A T A . C M A K E
+# BRL-CAD
+#
+# Copyright (c) 2026 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+cmake_minimum_required(VERSION 3.22)
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/color-metadata-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+# The default OCIO scene-linear role is ACEScg, rather than renderer RGB.
+set(ENV{OCIO} "ocio://default")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+set(TOOL "@ART_OIIOTOOL_EXECUTABLE@")
+configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_emission.oso" "${WORK}/shaders/art_emission.oso" COPYONLY)
+set(DB "${WORK}/scene.g")
+run("${VEXEC}" create-material "${DB}" art_emission)
+run("${VEXEC}" set-material "${DB}" OSL.param.in_color "color 0.25 0.5 4")
+set(RENDER_ARGS -P 1 -w 1 -n 1 -c "viewsize 4" -c "eye_pt 0 0 40" -c "orientation 0 0 0 1"
+  -c "set samples=1 light_intensity=0 environment_intensity=0 background_color=black")
+set(FLOAT_BOUND 0.00003)
+# One 8-bit step accommodates the native display writer's dithering.
+set(BYTE_STEP_BOUND 0.004)
+set(DIFF_ARGS --fail ${FLOAT_BOUND} --hardfail ${FLOAT_BOUND} --warn ${FLOAT_BOUND} --hardwarn ${FLOAT_BOUND})
+run("${TOOL}" --pattern constant:color=0.25,0.5,4 1x1 3 -d float -o "${WORK}/linear-reference.exr")
+# Independent sRGB OETF: 1.055*x^(1/2.4)-0.055 for these positive inputs.
+run("${TOOL}" --pattern constant:color=0.5370987304831942,0.7353569830524495,1.824796295276116 1x1 3
+  -d float -o "${WORK}/srgb-reference.exr")
+
+function(check_metadata image expected_interop gamut)
+  run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${TOOL}" --info -v "${image}")
+  string(FIND "${command_output}" "colorInteropID: \"${expected_interop}\"" position)
+  if(position LESS 0)
+    message(FATAL_ERROR "Wrong color interpretation for ${image}: expected ${expected_interop}\n${command_output}")
+  endif()
+  if(gamut STREQUAL rec709)
+    if(NOT command_output MATCHES "chromaticities: 0[.]64, 0[.]33, 0[.]3, 0[.]6, 0[.]15, 0[.]06, 0[.]3127, 0[.]329")
+      message(FATAL_ERROR "Missing Rec.709/D65 chromaticities in ${image}\n${command_output}")
+    endif()
+  elseif(gamut STREQUAL ap1)
+    if(NOT command_output MATCHES "chromaticities: 0[.]713, 0[.]293, 0[.]165, 0[.]83, 0[.]128, 0[.]044, 0[.]32168, 0[.]33767")
+      message(FATAL_ERROR "Missing AP1/D60 chromaticities in ${image}\n${command_output}")
+    endif()
+  elseif(gamut STREQUAL data)
+    if(command_output MATCHES "[\r\n] +chromaticities:")
+      message(FATAL_ERROR "Numeric channels carry color primaries in ${image}\n${command_output}")
+    endif()
+  else()
+    message(FATAL_ERROR "Unknown expected gamut: ${gamut}")
+  endif()
+endfunction()
+
+foreach(object IN ITEMS cube.r mesh.r)
+  set(stem "${WORK}/${object}")
+  run("${EXEC}" ${RENDER_ARGS} -c "set aovs=depth,normal,position,uv,emission" -o "${stem}.exr" "${DB}" "${object}")
+  check_metadata("${stem}.exr" lin_rec709_scene rec709)
+  check_metadata("${stem}.emission.exr" lin_rec709_scene rec709)
+  foreach(pass IN ITEMS depth normal position uv)
+    check_metadata("${stem}.${pass}.exr" data data)
+  endforeach()
+  run("${TOOL}" ${DIFF_ARGS} "${stem}.exr" --ch R,G,B "${WORK}/linear-reference.exr" --diff)
+  run("${TOOL}" ${DIFF_ARGS} "${stem}.emission.exr" --ch R,G,B "${WORK}/linear-reference.exr" --diff)
+
+  # A consumer must infer the source space from the file's metadata.
+  run("${TOOL}" "${stem}.exr" --ch R,G,B --colorconvert current srgb_rec709_scene -d float -o "${stem}-converted.exr")
+  run("${TOOL}" ${DIFF_ARGS} "${stem}-converted.exr" "${WORK}/srgb-reference.exr" --diff)
+  run("${TOOL}" "${stem}-converted.exr" --colorconvert current lin_rec709_scene -d float -o "${stem}-roundtrip.exr")
+  run("${TOOL}" ${DIFF_ARGS} "${stem}-roundtrip.exr" "${WORK}/linear-reference.exr" --diff)
+
+  # Normal/position/UV names look like RGB, but their values are not colors.
+  foreach(pass IN ITEMS normal position uv)
+    run("${TOOL}" "${stem}.${pass}.exr" --colorconvert current srgb_rec709_scene -d float -o "${stem}-${pass}-converted.exr")
+    run("${TOOL}" ${DIFF_ARGS} "${stem}-${pass}-converted.exr" "${stem}.${pass}.exr" --diff)
+    check_metadata("${stem}-${pass}-converted.exr" data data)
+  endforeach()
+  run("${TOOL}" "${stem}.exr" --ch R,G,B --colorconvert current lin_ap1_scene -d float -o "${stem}-ap1.exr")
+  check_metadata("${stem}-ap1.exr" lin_ap1_scene ap1)
+  run("${TOOL}" "${stem}-ap1.exr" --colorconvert current lin_rec709_scene -d float -o "${stem}-gamut-roundtrip.exr")
+  check_metadata("${stem}-gamut-roundtrip.exr" lin_rec709_scene rec709)
+  run("${TOOL}" ${DIFF_ARGS} "${stem}-gamut-roundtrip.exr" "${WORK}/linear-reference.exr" --diff)
+  run("${EXEC}" ${RENDER_ARGS} -o "${stem}.png" "${DB}" "${object}")
+  run("${TOOL}" "${stem}.exr" --colorconvert current srgb_rec709_scene -d uint8 -o "${stem}-consumer.png")
+  run("${TOOL}" --fail ${BYTE_STEP_BOUND} --hardfail ${BYTE_STEP_BOUND}
+    --warn ${BYTE_STEP_BOUND} --hardwarn ${BYTE_STEP_BOUND}
+    "${stem}.png" "${stem}-consumer.png" --diff)
+endforeach()

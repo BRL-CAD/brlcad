@@ -1,0 +1,77 @@
+cmake_minimum_required(VERSION 3.22)
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/volume-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_nested_test_commands.cmake")
+set(TOOL "@ART_OIIOTOOL_EXECUTABLE@")
+set(NATIVE_RENDERER "@ART_APPLESEED_CLI_EXECUTABLE@")
+function(render_volume label expected bound)
+  set(stem "${WORK}/${label}")
+  configure_file("@CMAKE_CURRENT_SOURCE_DIR@/art_initial_volume.appleseed.in"
+    "${stem}.appleseed" @ONLY)
+  run("${NATIVE_RENDERER}" --disable-autosave --output "${stem}.exr" "${stem}.appleseed")
+  run("${VEXEC}" check-image "${stem}.exr" 1 1)
+  run("${TOOL}" --pattern "constant:color=${expected},${expected},${expected}" 1x1 3
+    -d float -o "${WORK}/reference.exr")
+  compare_radiance_mean("${stem}.exr" "${WORK}/reference.exr" ${bound} FALSE)
+endfunction()
+
+# The first visible light point is 2.5 units from the camera. Pure absorption
+# with coefficient 0.4 gives exp(-1); half-float storage needs a relative step.
+set(MEDIUM_BINDING volume)
+set(MEDIUM_NAME fog)
+set(ABSORPTION 0.4)
+set(SCATTERING 0)
+set(SOURCE_X 0)
+set(SOURCE_Z -3)
+set(SAMPLES 16)
+set(EXPONENTIAL_ONLY true)
+set(COVER_ALPHA 0)
+# Move the control cover outside the radius-10 fog and every shadow segment.
+set(COVER_X 20)
+set(BEER_REFERENCE 0.3678794411714423)
+set(HALF_RELATIVE_BOUND 0.001)
+render_volume(absorption-clear ${BEER_REFERENCE} ${HALF_RELATIVE_BOUND})
+set(COVER_X 0)
+render_volume(absorption-transparent ${BEER_REFERENCE} ${HALF_RELATIVE_BOUND})
+# A black quarter-opaque cover contributes two factors of 0.75 transmission.
+set(COVER_ALPHA 0.25)
+set(COVERED_BEER_REFERENCE 0.2069321856589363)
+render_volume(absorption-partial ${COVERED_BEER_REFERENCE} ${HALF_RELATIVE_BOUND})
+
+# The same physical segment is required by a BSDF-only absorbing interior,
+# where the path tracer applies absorption without generic-volume marching.
+set(MEDIUM_BINDING bsdf)
+set(MEDIUM_NAME glass)
+set(COVER_X 20)
+set(COVER_ALPHA 0)
+render_volume(glass-clear ${BEER_REFERENCE} ${HALF_RELATIVE_BOUND})
+set(COVER_X 0)
+render_volume(glass-transparent ${BEER_REFERENCE} ${HALF_RELATIVE_BOUND})
+set(COVER_ALPHA 0.25)
+render_volume(glass-partial ${COVERED_BEER_REFERENCE} ${HALF_RELATIVE_BOUND})
+set(MEDIUM_BINDING volume)
+set(MEDIUM_NAME fog)
+
+# Independent single-scattering quadrature: a radius-0.5 unit-radiance sphere
+# at (1.5,0,1) illuminates a camera ray from z=0 to z=-10. Integrate exp(-0.04*t)
+# times the sphere's visible solid angle and its shadow-ray Beer transmission,
+# times 0.03/(4*pi). Doubling Gauss-Legendre orders from 128/64 to 256/128
+# changes the reference by less than 7e-9 relative.
+set(ABSORPTION 0.01)
+set(SCATTERING 0.03)
+set(SOURCE_X 1.5)
+set(SOURCE_Z 1)
+set(SAMPLES 65536)
+set(COVER_ALPHA 0)
+set(SCATTERING_REFERENCE 0.0008693382326021578)
+set(SCATTERING_RELATIVE_BOUND 0.025)
+foreach(EXPONENTIAL_ONLY IN ITEMS true false)
+  foreach(COVER_X IN ITEMS 20 0)
+    render_volume("scattering-${EXPONENTIAL_ONLY}-${COVER_X}"
+      ${SCATTERING_REFERENCE} ${SCATTERING_RELATIVE_BOUND})
+  endforeach()
+endforeach()

@@ -1,0 +1,131 @@
+# REGRESS-ART-VOLUME-SCATTERING.CMAKE.IN
+# BRL-CAD
+#
+# Copyright (c) 2026 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+cmake_minimum_required(VERSION 3.22)
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/volume-scattering-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_nested_test_commands.cmake")
+include("@CMAKE_CURRENT_BINARY_DIR@/art_volume_test_commands.cmake")
+run("${VEXEC}" set-named-material "${DB}" fog.material OSL.volume.absorption "float 0.01")
+run("${VEXEC}" set-named-material "${DB}" fog.material OSL.volume.scattering "float 0.03")
+# The existing key-light fixture is white and centered at (0,0,40).
+# For a point s units along the camera's fog segment, shadow length inside
+# the medium is s (outside camera) or 10+s (inside camera). The reference is
+# sigma_s*I/(4*pi) times integral(exp(-sigma_t*(2*s+offset))/(r0+s)^2, ds).
+# Gauss-Legendre orders 64 and 128 agree to better than 1e-12 relative.
+set(OUTSIDE_ISOTROPIC 0.01801971226380573)
+set(INSIDE_ISOTROPIC 0.005670963304229496)
+# At g=0.4 and a backscattering angle, the Henyey/isotropic phase ratio is
+# (1-g)/(1+g)^2 = 0.6/1.96.
+set(OUTSIDE_HENYEY 0.005516238448103795)
+set(INSIDE_HENYEY 0.0017360091747641315)
+set(RELATIVE_ENERGY_BOUND 0.015)
+function(render_scattering label eye exponential)
+  foreach(object IN ITEMS cube.r mesh.r)
+    set(image "${WORK}/${label}-${exponential}-${object}.exr")
+    run("${EXEC}" -P 2 -w 1 -n 1 -p 0.02 -c "viewsize 0.01"
+      -c "eye_pt 0 0 ${eye}" -c "orientation 0 0 0 1"
+      -c "set samples=32768 max_volume_bounces=0 volume_distance_samples=2 volume_exponential_only=${exponential} light_intensity=1000 environment_intensity=0 background_color=black"
+      -o "${image}" "${DB}" "${object}" key_light.r ${ARGN})
+    run("${VEXEC}" check-image "${image}" 1 1)
+    compare_radiance_mean("${image}" "${WORK}/reference.exr" ${RELATIVE_ENERGY_BOUND} FALSE)
+  endforeach()
+endfunction()
+foreach(phase IN ITEMS isotropic henyey)
+  run("${VEXEC}" set-named-material "${DB}" fog.material OSL.volume.phase_function "${phase}")
+  run("${VEXEC}" set-named-material "${DB}" fog.material OSL.volume.average_cosine "float 0.4")
+  foreach(location IN ITEMS outside inside)
+    if(location STREQUAL outside)
+      set(eye 40)
+      if(phase STREQUAL isotropic)
+        set(expected ${OUTSIDE_ISOTROPIC})
+      else()
+        set(expected ${OUTSIDE_HENYEY})
+      endif()
+    else()
+      set(eye 0)
+      if(phase STREQUAL isotropic)
+        set(expected ${INSIDE_ISOTROPIC})
+      else()
+        set(expected ${INSIDE_HENYEY})
+      endif()
+    endif()
+    run("${TOOL}" --pattern "constant:color=${expected},${expected},${expected}" 1x1 3
+      -d float -o "${WORK}/reference.exr")
+    foreach(exponential IN ITEMS 0 1)
+      render_scattering("${phase}-${location}" ${eye} ${exponential})
+    endforeach()
+  endforeach()
+endforeach()
+
+# A two-millimeter alpha cover must leave the medium in place. Its two
+# interfaces attenuate both the camera and point-light shadow segment.
+run("${VEXEC}" set-named-material "${DB}" fog.material OSL.volume.phase_function isotropic)
+run("${VEXEC}" in "${DB}" cover.s rpp -2 2 -2 2 -4 -2)
+run("${VEXEC}" r "${DB}" cover.r u cover.s)
+run("${VEXEC}" material "${DB}" create cover.material Cover)
+run("${VEXEC}" set-named-material "${DB}" cover.material OSL art_alpha)
+run("${VEXEC}" material "${DB}" assign cover.r cover.material)
+# Integrate the inside-camera reference over [0,2], [2,4] and [4,10].
+# For 0.25 opacity, the respective camera-times-shadow alpha factors
+# are 1, 0.75^2 and 0.75^4. Quadrature orders 64 and 128 agree to 1e-12.
+set(PARTIAL_COVER_REFERENCE 0.003335396337843819)
+foreach(opacity IN ITEMS 0 0.25)
+  run("${VEXEC}" set-named-material "${DB}" cover.material OSL.param.in_opacity "float ${opacity}")
+  set(expected ${INSIDE_ISOTROPIC})
+  if(opacity EQUAL 0.25)
+    set(expected ${PARTIAL_COVER_REFERENCE})
+  endif()
+  run("${TOOL}" --pattern "constant:color=${expected},${expected},${expected}" 1x1 3
+    -d float -o "${WORK}/reference.exr")
+  foreach(exponential IN ITEMS 0 1)
+    render_scattering("alpha-${opacity}" 0 ${exponential} cover.r)
+  endforeach()
+endforeach()
+
+# A small offset from exact alignment also needs a normalized proposal.
+# The 5e-6 mm offset changes the energy reference by less than 1e-12, but
+# float guide angles previously biased this case by more than ten percent.
+foreach(offset IN ITEMS 0.000005 0.00002)
+  run("${VEXEC}" adjust "${DB}" key_light.s V "${offset} 0 40")
+  run("${TOOL}" --pattern "constant:color=${OUTSIDE_ISOTROPIC},${OUTSIDE_ISOTROPIC},${OUTSIDE_ISOTROPIC}" 1x1 3
+    -d float -o "${WORK}/reference.exr")
+  foreach(exponential IN ITEMS 0 1)
+    render_scattering("near-${offset}" 40 ${exponential})
+  endforeach()
+endforeach()

@@ -58,7 +58,10 @@ foreach(setting IN ITEMS "samples=0" "samples=-1" "s=4junk" "samples=2147483648"
     "progress=1junk" "progress=" "save_overlaps=-1"
     "save_overlaps=2" "perspective=180" "angle=-1" "angle=nan" "angle=50junk"
     "rt_cline_radius=inf" "rt_bot_minpieces=1junk" "background=bad-color"
-    "bg=1/0" "bg=1/0/0junk" "bg=nan/0/0")
+    "bg=1/0" "bg=1/0/0junk" "bg=nan/0/0"
+    "max_volume_bounces=-2" "max_volume_bounces=1junk" "max_volume_bounces=2147483648"
+    "volume_distance_samples=0" "volume_distance_samples=-1" "volume_distance_samples=1.5"
+    "volume_exponential_only=-1" "volume_exponential_only=2" "volume_exponential_only=nan")
   file(WRITE "${image}" "${sentinel}")
   expect_failure_matching("invalid setting" "${EXEC}" ${RENDER_ARGS}
     -c "set inspect_materials=1" -c "set ${setting}" -o "${image}" "${DB}" all.g)

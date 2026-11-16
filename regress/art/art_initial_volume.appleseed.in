@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+A R T _ I N I T I A L _ V O L U M E
+BRL-CAD
+
+Copyright (c) 2026 United States Government as represented by
+the U.S. Army Research Laboratory.
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public License
+version 2.1 as published by the Free Software Foundation.
+
+This library is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this file; see the file named COPYING for more
+information.
+-->
+<project format_revision="33">
+  <scene>
+    <camera name="camera" model="pinhole_camera">
+      <parameter name="film_dimensions" value="1 1" />
+      <parameter name="horizontal_fov" value="0.02" />
+    </camera>
+    <assembly name="assembly">
+      <volume name="fog" model="generic_volume">
+        <parameter name="absorption" value="@ABSORPTION@" />
+        <parameter name="scattering" value="@SCATTERING@" />
+        <parameter name="phase_function_model" value="isotropic" />
+      </volume>
+      <bsdf name="glass" model="glass_bsdf">
+        <parameter name="surface_transmittance" value="1" />
+        <parameter name="ior" value="1" />
+        <parameter name="volume_parameterization" value="transmittance" />
+        <parameter name="volume_transmittance" value="@BEER_REFERENCE@" />
+        <parameter name="volume_transmittance_distance" value="2.5" />
+      </bsdf>
+      <material name="fog_material" model="generic_material">
+        <parameter name="@MEDIUM_BINDING@" value="@MEDIUM_NAME@" />
+      </material>
+      <object name="fog_bounds" model="sphere_object" />
+      <object_instance name="fog_instance" object="fog_bounds">
+        <transform><matrix>10 0 0 0 0 10 0 0 0 0 10 0 0 0 0 1</matrix></transform>
+        <assign_material slot="default" side="front" material="fog_material" />
+        <assign_material slot="default" side="back" material="fog_material" />
+      </object_instance>
+      <edf name="emission" model="diffuse_edf">
+        <parameter name="radiance" value="1" />
+      </edf>
+      <material name="emitter" model="generic_material">
+        <parameter name="edf" value="emission" />
+      </material>
+      <object name="light" model="sphere_object" />
+      <object_instance name="light_instance" object="light">
+        <transform><matrix>0.5 0 0 @SOURCE_X@ 0 0.5 0 0 0 0 0.5 @SOURCE_Z@ 0 0 0 1</matrix></transform>
+        <assign_material slot="default" side="front" material="emitter" />
+        <assign_material slot="default" side="back" material="emitter" />
+      </object_instance>
+      <material name="cover_material" model="generic_material">
+        <parameter name="alpha_map" value="@COVER_ALPHA@" />
+      </material>
+      <object name="cover" model="sphere_object" />
+      <object_instance name="cover_instance" object="cover">
+        <transform><matrix>0.1 0 0 @COVER_X@ 0 0.1 0 0 0 0 0.1 -1 0 0 0 1</matrix></transform>
+        <assign_material slot="default" side="front" material="cover_material" />
+        <assign_material slot="default" side="back" material="cover_material" />
+      </object_instance>
+    </assembly>
+    <assembly_instance name="scene_instance" assembly="assembly" />
+  </scene>
+  <output>
+    <frame name="beauty">
+      <parameter name="camera" value="camera" />
+      <parameter name="resolution" value="1 1" />
+      <parameter name="tile_size" value="1 1" />
+      <parameter name="filter" value="box" />
+      <parameter name="filter_size" value="0.5" />
+    </frame>
+  </output>
+  <configurations>
+    <configuration name="interactive" base="base_interactive" />
+    <configuration name="final" base="base_final">
+      <parameter name="lighting_engine" value="pt" />
+      <parameter name="pixel_renderer" value="uniform" />
+      <parameter name="spectrum_mode" value="rgb" />
+      <parameter name="tile_renderer" value="generic" />
+      <parameter name="rendering_threads" value="2" />
+      <parameters name="uniform_pixel_renderer">
+        <parameter name="samples" value="@SAMPLES@" />
+      </parameters>
+      <parameters name="pt">
+        <parameter name="max_bounces" value="4" />
+        <parameter name="max_volume_bounces" value="0" />
+        <parameter name="enable_ibl" value="false" />
+        <parameter name="volume_distance_samples" value="2" />
+        <parameter name="optimize_for_lights_outside_volumes" value="@EXPONENTIAL_ONLY@" />
+      </parameters>
+    </configuration>
+  </configurations>
+</project>
