@@ -173,20 +173,13 @@ create_skinned_bot(struct rt_wdb *wdbp)
 }
 
 static int
-pose_and_check_skin(struct ged *gedp, const char *output_name,
+check_skin_output(struct ged *gedp, const char *output_name,
 	fastf_t child_position, fastf_t blended_position)
 {
-    const char *arguments[] = {
-	"joint", "skin", "pose", "rig.bot", output_name, "parent", "slide.j"
-    };
     struct rt_db_internal intern;
     struct directory *directory;
     int result = BRLCAD_ERROR;
 
-    if (ged_exec_joint(gedp, 7, arguments) != BRLCAD_OK) {
-	bu_log("skin pose failed: %s\n", bu_vls_cstr(gedp->ged_result_str));
-	return BRLCAD_ERROR;
-    }
     directory = db_lookup(gedp->dbip, output_name, LOOKUP_QUIET);
     RT_DB_INTERNAL_INIT(&intern);
     if (!directory || rt_db_get_internal(&intern, directory, gedp->dbip,
@@ -205,6 +198,37 @@ pose_and_check_skin(struct ged *gedp, const char *output_name,
 cleanup:
     rt_db_free_internal(&intern);
     return result;
+}
+
+static int
+pose_and_check_skin(struct ged *gedp, const char *output_name,
+	fastf_t child_position, fastf_t blended_position)
+{
+    const char *arguments[] = {
+	"joint", "skin", "pose", "rig.bot", output_name, "parent", "slide.j"
+    };
+
+    if (ged_exec_joint(gedp, 7, arguments) != BRLCAD_OK) {
+	bu_log("skin pose failed: %s\n", bu_vls_cstr(gedp->ged_result_str));
+	return BRLCAD_ERROR;
+    }
+    return check_skin_output(gedp, output_name, child_position, blended_position);
+}
+
+static int
+pose_animation_and_check_skin(struct ged *gedp, const char *output_name,
+	const char *time, fastf_t child_position, fastf_t blended_position)
+{
+    const char *arguments[] = {
+	"joint", "skin", "pose-at", "motion.anim", time, "rig.bot",
+	output_name, "parent", "slide.j"
+    };
+
+    if (ged_exec_joint(gedp, 9, arguments) != BRLCAD_OK) {
+	bu_log("animated skin pose failed: %s\n", bu_vls_cstr(gedp->ged_result_str));
+	return BRLCAD_ERROR;
+    }
+    return check_skin_output(gedp, output_name, child_position, blended_position);
 }
 
 static int
@@ -303,13 +327,36 @@ solve_closure_and_apply(struct ged *gedp)
 }
 
 static int
-sample_animation(struct ged *gedp, const char *time)
+inspect_animation(struct ged *gedp)
+{
+    const char *list_arguments[] = {"joint", "animation", "list"};
+    const char *show_arguments[] = {"joint", "animation", "show", "motion.anim"};
+    const char *evaluate_arguments[] = {
+	"joint", "animation", "evaluate", "motion.anim", "0.5"
+    };
+
+    if (ged_exec_joint(gedp, 3, list_arguments) != BRLCAD_OK ||
+	!strstr(bu_vls_cstr(gedp->ged_result_str), "motion.anim") ||
+	ged_exec_joint(gedp, 4, show_arguments) != BRLCAD_OK ||
+	!strstr(bu_vls_cstr(gedp->ged_result_str), "1 channel") ||
+	ged_exec_joint(gedp, 5, evaluate_arguments) != BRLCAD_OK ||
+	!strstr(bu_vls_cstr(gedp->ged_result_str),
+	    "child translation 0 0 2")) {
+	bu_log("animation inspection failed: %s\n",
+	    bu_vls_cstr(gedp->ged_result_str));
+	return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
+
+static int
+apply_animation(struct ged *gedp, const char *command, const char *time)
 {
     const char *arguments[] = {
-	"joint", "animation", "sample", "motion.anim", time, "slide.j"
+	"joint", "animation", command, "motion.anim", time, "slide.j"
     };
     if (ged_exec_joint(gedp, 6, arguments) != BRLCAD_OK) {
-	bu_log("animation sample failed: %s\n", bu_vls_cstr(gedp->ged_result_str));
+	bu_log("animation apply failed: %s\n", bu_vls_cstr(gedp->ged_result_str));
 	return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
@@ -361,10 +408,13 @@ main(int argc, char **argv)
 
     if (ged_exec_joint(gedp, 3, legacy_arguments) != BRLCAD_OK ||
 	ged_exec_joint(gedp, 2, legacy_alias_arguments) != BRLCAD_OK ||
+	inspect_animation(gedp) != BRLCAD_OK ||
 	pose_and_check_skin(gedp, "bind-pose.bot", 0.0, 0.0) != BRLCAD_OK ||
-	sample_animation(gedp, "0.5") != BRLCAD_OK ||
+	pose_animation_and_check_skin(gedp, "evaluated-pose.bot", "0.5",
+	    2.0, 1.0) != BRLCAD_OK ||
+	apply_animation(gedp, "apply", "0.5") != BRLCAD_OK ||
 	pose_and_check_skin(gedp, "animated-pose.bot", 2.0, 1.0) != BRLCAD_OK ||
-	sample_animation(gedp, "0") != BRLCAD_OK ||
+	apply_animation(gedp, "sample", "0") != BRLCAD_OK ||
 	set_and_apply(gedp, "5", 0) != BRLCAD_OK ||
 	check_child_position(gedp->dbip, 5.0) != BRLCAD_OK ||
 	pose_and_check_skin(gedp, "moved-pose.bot", 5.0, 2.5) != BRLCAD_OK ||

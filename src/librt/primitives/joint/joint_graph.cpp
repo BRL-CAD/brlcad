@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "raytrace.h"
+#include "rt/primitives/animation.h"
 #include "rt/primitives/joint.h"
 
 struct joint_link_state {
@@ -33,6 +34,8 @@ struct rt_joint_eval {
 
 struct joint_graph_edge {
     const struct rt_joint_internal *joint;
+    struct rt_joint_internal animated_joint;
+    bool animated;
     std::string parent;
     std::string child;
 };
@@ -64,6 +67,8 @@ joint_graph_visit(struct rt_joint_eval *evaluation,
 	return BRLCAD_OK;
     for (const size_t edge_index : child_edges->second) {
 	const joint_graph_edge &edge = edges[edge_index];
+	const struct rt_joint_internal *joint = edge.animated ?
+	    &edge.animated_joint : edge.joint;
 	mat_t relative;
 	joint_link_state child_state;
 
@@ -75,7 +80,7 @@ joint_graph_visit(struct rt_joint_eval *evaluation,
 	if (edge_state[edge_index] == 2)
 	    continue;
 	edge_state[edge_index] = 1;
-	if (rt_joint_relative_mat(relative, edge.joint) != BRLCAD_OK) {
+	if (rt_joint_relative_mat(relative, joint) != BRLCAD_OK) {
 	    joint_graph_message(messages, "unable to evaluate joint for child link '%s'",
 		    edge.child.c_str());
 	    return BRLCAD_ERROR;
@@ -92,15 +97,17 @@ joint_graph_visit(struct rt_joint_eval *evaluation,
     return BRLCAD_OK;
 }
 
-extern "C" int
-rt_joint_eval_create(struct rt_joint_eval **result,
+static int
+joint_eval_create(struct rt_joint_eval **result,
 	const struct rt_joint_internal * const *joints, size_t joint_count,
-	const struct rt_joint_eval_options *options)
+	const struct rt_joint_eval_options *options,
+	const struct rt_animation_eval *animation)
 {
     std::vector<joint_graph_edge> edges;
     std::unordered_map<std::string, size_t> child_owners;
     std::unordered_map<std::string, std::vector<size_t>> children;
     std::vector<unsigned char> edge_state;
+    std::vector<unsigned char> animation_state;
     struct rt_joint_eval *evaluation;
     joint_link_state root_state;
 
@@ -125,6 +132,7 @@ rt_joint_eval_create(struct rt_joint_eval **result,
 	}
     }
     *result = nullptr;
+    animation_state.resize(rt_animation_eval_count(animation), 0);
     edges.reserve(joint_count);
     for (size_t i = 0; i < joint_count; ++i) {
 	const struct rt_joint_internal *joint = joints[i];
@@ -132,6 +140,7 @@ rt_joint_eval_create(struct rt_joint_eval **result,
 	if (!joint || rt_joint_validate(joint, options->messages))
 	    return BRLCAD_ERROR;
 	edge.joint = joint;
+	edge.animated = false;
 	edge.parent = bu_vls_cstr(&joint->parent_link);
 	edge.child = bu_vls_cstr(&joint->child_link);
 	if (edge.parent.empty() || edge.child.empty()) {
@@ -148,7 +157,37 @@ rt_joint_eval_create(struct rt_joint_eval **result,
 		    edge.child.c_str());
 	    return BRLCAD_ERROR;
 	}
+	for (size_t animation_index = 0;
+	    animation_index < animation_state.size(); ++animation_index) {
+	    const char *link = rt_animation_eval_link(animation, animation_index);
+	    if (!link || edge.child != link)
+		continue;
+	    edge.animated_joint = *joint;
+	    if (rt_animation_eval_value(edge.animated_joint.pose_translation,
+		    animation, animation_index,
+		    RT_ANIMATION_TRANSLATION) == BRLCAD_OK)
+		edge.animated = true;
+	    if (rt_animation_eval_value(edge.animated_joint.pose_rotation,
+		    animation, animation_index,
+		    RT_ANIMATION_ROTATION) == BRLCAD_OK)
+		edge.animated = true;
+	    if (rt_animation_eval_value(edge.animated_joint.pose_scale,
+		    animation, animation_index,
+		    RT_ANIMATION_SCALE) == BRLCAD_OK)
+		edge.animated = true;
+	    animation_state[animation_index] = 1;
+	    break;
+	}
 	edges.push_back(edge);
+    }
+    for (size_t animation_index = 0;
+	animation_index < animation_state.size(); ++animation_index) {
+	if (!animation_state[animation_index]) {
+	    joint_graph_message(options->messages,
+		    "animation target link '%s' is not a joint child",
+		    rt_animation_eval_link(animation, animation_index));
+	    return BRLCAD_ERROR;
+	}
     }
     for (size_t i = 0; i < edges.size(); ++i)
 	children[edges[i].parent].push_back(i);
@@ -179,6 +218,25 @@ rt_joint_eval_create(struct rt_joint_eval **result,
     }
     *result = evaluation;
     return BRLCAD_OK;
+}
+
+extern "C" int
+rt_joint_eval_create(struct rt_joint_eval **result,
+	const struct rt_joint_internal * const *joints, size_t joint_count,
+	const struct rt_joint_eval_options *options)
+{
+    return joint_eval_create(result, joints, joint_count, options, nullptr);
+}
+
+extern "C" int
+rt_joint_eval_create_animated(struct rt_joint_eval **result,
+	const struct rt_joint_internal * const *joints, size_t joint_count,
+	const struct rt_joint_eval_options *options,
+	const struct rt_animation_eval *animation)
+{
+    if (!animation)
+	return BRLCAD_ERROR;
+    return joint_eval_create(result, joints, joint_count, options, animation);
 }
 
 extern "C" void

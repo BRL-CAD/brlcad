@@ -57,6 +57,7 @@ enum rt_joint_motion {
 struct rt_joint_internal;
 struct rt_joint_eval;
 struct rt_joint_problem;
+struct rt_animation_eval;
 
 #define RT_JOINT_EVAL_OPTIONS_VERSION 1u
 #define RT_JOINT_EVAL_OPTIONS_RESERVED 4u
@@ -110,6 +111,13 @@ RT_EXPORT extern int rt_joint_eval_create(struct rt_joint_eval **result,
 					  const struct rt_joint_internal * const *joints,
 					  size_t joint_count,
 					  const struct rt_joint_eval_options *options);
+
+/** Evaluate a joint graph with immutable animation pose overrides. */
+RT_EXPORT extern int rt_joint_eval_create_animated(
+	struct rt_joint_eval **result,
+	const struct rt_joint_internal * const *joints, size_t joint_count,
+	const struct rt_joint_eval_options *options,
+	const struct rt_animation_eval *animation);
 
 RT_EXPORT extern void rt_joint_eval_destroy(struct rt_joint_eval *evaluation);
 RT_EXPORT extern size_t rt_joint_eval_count(const struct rt_joint_eval *evaluation);

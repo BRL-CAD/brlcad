@@ -12,9 +12,14 @@ joint - manage kinematic joint and constraint data for articulated models
 ----
 joint subcommand [args]
 joint object joint_name operation [args]
+joint animation list
+joint animation show animation_name
+joint animation evaluate animation_name time
+joint animation apply animation_name time joint_name [joint_name ...]
 joint animation sample animation_name time joint_name [joint_name ...]
 joint graph evaluate root_link joint_name [joint_name ...]
 joint skin pose bind_bot posed_bot root_link joint_name [joint_name ...]
+joint skin pose-at animation_name time bind_bot posed_bot root_link joint_name [joint_name ...]
 joint solve point root_link target_link px py pz tx ty tz joint_name [joint_name ...]
 joint solve closure root_link first_link ax ay az second_link bx by bz joint_name [joint_name ...]
 joint legacy subcommand [args]
@@ -53,13 +58,33 @@ affine pose.  Object operations include `show`, `validate`, `matrix`, `apply`,
 |root_link joint_name [joint_name ...]
 |Evaluate and print root-to-link matrices for a persistent joint graph.
 
+|`animation list`
+|None
+|List persistent animation objects.
+
+|`animation show`
+|animation_name
+|Report the clip time range and its target, interpolation, and key information.
+
+|`animation evaluate`
+|animation_name time
+|Evaluate and print immutable per-link pose overrides without changing database objects.
+
+|`animation apply`
+|animation_name time joint_name [joint_name ...]
+|Apply persistent animation channels to the affine poses of joints selected by child link.
+
 |`animation sample`
 |animation_name time joint_name [joint_name ...]
-|Sample persistent animation channels into the affine poses of joints selected by child link.
+|Compatibility alias for `animation apply`.
 
 |`skin pose`
 |bind_bot posed_bot root_link joint_name [joint_name ...]
 |Create a static renderable BoT by applying a joint graph to a skinned bind-pose BoT.
+
+|`skin pose-at`
+|animation_name time bind_bot posed_bot root_link joint_name [joint_name ...]
+|Create a static BoT from a non-mutating animation and joint-graph evaluation.
 
 |`solve point`
 |root_link target_link px py pz tx ty tz joint_name [joint_name ...]
@@ -179,14 +204,25 @@ relative orientation as well as position through the solver-neutral API.
 ====
 [source,console]
 ----
-mged> joint animation sample walk.anim 1.25 hip.j knee.j ankle.j
-mged> joint skin pose body.bot body-frame.bot root hip.j knee.j ankle.j
+mged> joint animation show walk.anim
+mged> joint animation evaluate walk.anim 1.25
+mged> joint skin pose-at walk.anim 1.25 body.bot body-frame.bot root hip.j knee.j ankle.j
 ----
 
-Samples translation, rotation, and scale channels at 1.25 seconds.  Channels
-target stable link names and update the affine pose of the supplied joint whose
-child link matches.  Sampling clamps outside the animation's key time range.
-The second command creates a static BoT snapshot for display or ray tracing.
+Animation key times and command times are measured in seconds; clips do not
+store a frame rate.  The clip range is derived from its channel keys.  The
+`evaluate` and `pose-at` operations leave persistent joints unchanged and clamp
+times outside the clip range.  Channels target stable link names, and
+`pose-at` creates a static BoT snapshot for display or ray tracing.
+
+To persist the sampled affine poses in joint objects, use:
+
+[source,console]
+----
+mged> joint animation apply walk.anim 1.25 hip.j knee.j ankle.j
+----
+
+The historical `animation sample` form remains an alias for `animation apply`.
 ====
 
 .Pose a skinned mesh
