@@ -205,11 +205,13 @@ get_args(int argc, char **argv)
 		    return 0;
 		break;
 	    case 'a':
-		if (!bu_opt_scan_int(bu_optarg, &h_start, "top intensity"))
+		if (!bu_opt_scan_int_range(bu_optarg, &h_start, 0, 255,
+			"top intensity"))
 		    return 0;
 		break;
 	    case 'b':
-		if (!bu_opt_scan_int(bu_optarg, &h_end, "bottom intensity"))
+		if (!bu_opt_scan_int_range(bu_optarg, &h_end, 0, 255,
+			"bottom intensity"))
 		    return 0;
 		break;
 
@@ -220,23 +222,33 @@ get_args(int argc, char **argv)
     remaining = argc - bu_optind;
     if (remaining == 2) {
 	/* Parameters are H S */
-	if (!bu_opt_scan_double(argv[bu_optind++], &HSV[0], "hue") ||
-	    !bu_opt_scan_double(argv[bu_optind], &HSV[1], "saturation"))
+	if (!bu_opt_scan_double_range(argv[bu_optind++], &HSV[0], 0.0, 255.0,
+		"hue") ||
+	    !bu_opt_scan_double_range(argv[bu_optind], &HSV[1], 0.0, 255.0,
+		"saturation"))
 	    return 0;
 	HSV[2] = h_start;
 
 	hsvrgb(HSV, RGB);
     } else if (remaining == 3) {
 	/* parameters are R G B */
-	if (!bu_opt_scan_double(argv[bu_optind++], &RGB[0], "red") ||
-	    !bu_opt_scan_double(argv[bu_optind++], &RGB[1], "green") ||
-	    !bu_opt_scan_double(argv[bu_optind++], &RGB[2], "blue"))
+	if (!bu_opt_scan_double_range(argv[bu_optind++], &RGB[0], 0.0, 255.0,
+		"red") ||
+	    !bu_opt_scan_double_range(argv[bu_optind++], &RGB[1], 0.0, 255.0,
+		"green") ||
+	    !bu_opt_scan_double_range(argv[bu_optind++], &RGB[2], 0.0, 255.0,
+		"blue"))
 	    return 0;
 
 	rgbhsv(RGB, HSV);
 	HSV[2] = h_start;	/* Change given RGB to starting inten */
     } else {
 	fprintf(stderr, "pixbackgnd: expected either 2 HSV values or 3 RGB values\n");
+	return 0;
+    }
+    if (file_height <= 4 || title_height >= file_height - 4) {
+	fprintf(stderr,
+		"pixbackgnd: title height must leave room for the white stripe and gradient\n");
 	return 0;
     }
     return 1;			/* OK */
@@ -277,10 +289,12 @@ main(int argc, char **argv)
 	bu_exit(1, NULL);
     }
 
-    double *dhbuf = (double *)bu_calloc(file_width, sizeof(double)*3, "horiz_buf");
-    horiz_buf = (unsigned char *)dhbuf;
-    double *dvbuf = (double *)bu_calloc(file_height, sizeof(double)*3, "vert_buf");
-    vert_buf = (unsigned char *)dvbuf;
+    setmode(fileno(stdout), O_BINARY);
+
+    horiz_buf = (unsigned char *)bu_calloc(file_width * 3,
+	sizeof(unsigned char), "horiz_buf");
+    vert_buf = (unsigned char *)bu_calloc(file_height * 3,
+	sizeof(unsigned char), "vert_buf");
 
     /*
      * First stage -- prepare the vert_buf with one pixel
@@ -345,7 +359,7 @@ main(int argc, char **argv)
     }
 
     bu_free(horiz_buf, "horiz_buf alloc from malloc");
-    bu_free(vp, "vp");
+    bu_free(vert_buf, "vert_buf");
 
     return 0;
 }
