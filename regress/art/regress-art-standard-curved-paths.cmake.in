@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.22)
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/standard-curved-paths-output")
+set(LOG "${WORK}/art.log")
+set(ART_COMMAND_TIMEOUT 120)
+set(TOOL "@ART_OIIOTOOL_EXECUTABLE@")
+set(NATIVE_RENDERER "@ART_APPLESEED_CLI_EXECUTABLE@")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_standard_path_test_commands.cmake")
+art_standard_rough_paths("sphere;ellipsoid" 8 2048)

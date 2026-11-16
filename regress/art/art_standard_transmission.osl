@@ -1,0 +1,38 @@
+/*              A R T _ S T A N D A R D _ T R A N S M I S S I O N . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+#include "appleseed/as_osl_extensions.h"
+#include "appleseed/material/as_material_helpers.h"
+
+surface art_standard_transmission(
+    float in_ior = 1.5,
+    string in_distribution = "ggx",
+    float in_alpha = 0,
+    int in_mode = 1,
+    int in_assume_air = 0,
+    vector in_tangent = vector(0))
+{
+    normal n = as_shading_normal();
+    // The air shortcut is an intentionally wrong nested-medium control.
+    float eta = in_assume_air ? (backfacing() ? 1 / in_ior : in_ior) :
+        as_relative_ior(in_ior);
+    Ci = microfacet(in_distribution, n, in_tangent, in_alpha, in_alpha, eta, in_mode,
+        "normal_derivatives", 1, "dNdx", vector(Dx(n)), "dNdy", vector(Dy(n)),
+        "dTdx", Dx(in_tangent), "dTdy", Dy(in_tangent));
+}

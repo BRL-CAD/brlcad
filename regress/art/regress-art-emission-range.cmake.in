@@ -1,0 +1,34 @@
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/emission-range-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_emission.oso" "${WORK}/shaders/art_emission.oso" COPYONLY)
+set(TOOL "@ART_OIIOTOOL_EXECUTABLE@")
+set(DB "${WORK}/emission.g")
+set(SIZE 4)
+run("${VEXEC}" create-material "${DB}" art_emission)
+set(RENDER_ARGS -P 1 -w ${SIZE} -n ${SIZE} -p 0 -c "viewsize 1"
+  -c "eye_pt 0 0 40" -c "orientation 0 0 0 1"
+  -c "set sampling=uniform samples=1 light_intensity=0 environment_intensity=0 background_color=black max_bounces=4")
+set(cases zero tiny normal hdr)
+# The tiny case multiplies normal authored values into a subnormal weight.
+# HDR values stay within the default binary16 EXR writer's finite range.
+set(colors "0.25 0.5 1" "2.5e-21 5e-21 1e-20" "0.25 0.5 1" "0.25 0.5 1")
+set(multipliers 0 1e-20 1 16384)
+set(references "0,0,0" "0,0,0" "0.25,0.5,1" "4096,8192,16384")
+foreach(case color multiplier reference IN ZIP_LISTS cases colors multipliers references)
+  run("${VEXEC}" set-material "${DB}" OSL.param.in_color "color ${color}")
+  run("${VEXEC}" set-material "${DB}" OSL.param.in_multiplier "float ${multiplier}")
+  set(expected "${WORK}/${case}-reference.exr")
+  run("${TOOL}" --pattern constant:color=${reference},1 ${SIZE}x${SIZE} 4 -o "${expected}")
+  foreach(kind IN ITEMS cube mesh)
+    set(image "${WORK}/${case}-${kind}.exr")
+    run("${EXEC}" ${RENDER_ARGS} -o "${image}" "${DB}" "${kind}.r")
+    run("${VEXEC}" check-image "${image}" ${SIZE} ${SIZE})
+    # Half storage rounds tiny RGB to black; opaque alpha and clean renderer
+    # diagnostics still distinguish valid dark emission from discarded samples.
+    run("${TOOL}" --fail 0 --hardfail 0 "${image}" "${expected}" --diff)
+  endforeach()
+endforeach()

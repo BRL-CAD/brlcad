@@ -101,7 +101,7 @@ shaders and persisted native blend networks against an emission reference.
 independent Fresnel references on CSG and solid BOTs, including the
 unweighted default, matched indices, and total internal reflection.
 
-|Standard OSL microfacet reflection
+|Standard OSL microfacet reflection and transmission
 |The `microfacet` closure supports Beckmann and GGX reflection (mode 0).
 `regress-art-standard-microfacet` compares 64 position and footprint pairs
 with independently differentiated scalar samplers on CSG, solid BOTs,
@@ -110,8 +110,19 @@ oblique reflection, Fresnel energy, sampling densities, and fixed-random
 ray derivatives with independent references.  `regress-art-standard-materials`
 checks Standard Surface coat and Maya Anisotropic, including constant and
 connected coating normals, zero-normal inheritance, disabled coat, and
-rough diffuse.  Standard microfacet transmission modes 1 and 2 remain
-unsupported and report an error.
+rough diffuse.  The standard closure also implements transmission-only
+mode 1 and Fresnel-combined mode 2.  `regress-art-standard-transmission`
+compares 120 smooth, nested mode-1 paths with independent analytic references,
+including CSG, solid BOTs, mixed canonical/standard materials, both projections,
+and cameras initially within each layer.  `regress-art-standard-rough-paths`
+compares 32 rough nested CSG/BOT paths with native meshes and eight GGX paths
+with canonical glass.  These use common authored tangents, clear box volumes,
+and uniform lighting.  `regress-art-standard-curved-paths` adds 32 complete
+rough paths through concentric spheres and ellipsoids with native analytic
+sphere references, plus eight canonical GGX glass comparisons.  It uses
+clear volumes and common authored tangents with outside and interior cameras.
+General curved rough paths, varying frames, and filtered secondary maps need
+further qualification.
 
 |Bump and normal-map nodes
 |Native normal-map chains preserve upstream normals when disabled.
@@ -170,7 +181,7 @@ with native Appleseed geometry.  `regress-art-mapped-glass` checks smooth,
 mapped transmission and absorption through nested CSG and solid BOT boxes,
 including initial interior cameras and native BOT UV charts.
 `regress-art-glass-sides` prevents smooth or rough reflection from leaking
-through geometric surfaces when normals are mapped.  Rough curved/nested
+through geometric surfaces when normals are mapped.  General rough curved/nested
 interfaces, transmitted shadows, and filtered secondary normal textures
 remain unqualified.
 
@@ -1174,7 +1185,7 @@ partials currently come from spheres, ellipsoids and BOTs. Other librt
 primitives, native curves and material basis modifiers need further
 frame-derivative support and qualification.
 
-Rough curved/nested interfaces, general caustic focusing, transmitted
+General rough curved/nested interfaces, caustic focusing, transmitted
 shadows, arbitrary overlapping media, thin refractive surfaces, and filtered
 secondary normal/height maps need further qualification.  The distinct-priority
 nested-volume case below has independent image references.
@@ -1788,6 +1799,14 @@ plugins and applications against the matching Appleseed headers and library.
 
 === Emissive BRL-CAD regions
 
+`regress-art-emission-range` checks zero, subnormal, ordinary, and HDR
+emission on CSG and solid BOT regions.  The HDR values remain within the
+binary16 EXR writer's finite range.  Subnormal RGB rounds to black in that
+format; opaque alpha and clean renderer diagnostics distinguish valid dark
+emission from discarded samples.  Native Appleseed tests separately verify
+positive subnormal radiance during sampling, evaluation, and photon launch,
+and closure selection and chromaticity across the finite float weight range.
+
 OSL emission on librt regions participates in explicit light sampling
 without tessellating the geometry.  This includes Boolean subtraction
 boundaries.  For example, assign the installed area-light shader to a
@@ -2359,12 +2378,68 @@ and tangent derivatives follow these bundled shader paths.
 
 The standard OSL `microfacet` closure accepts distribution widths directly;
 they are not perceptual roughness values to be squared by the renderer.
-Its `eta` parameter supplies the relative index for dielectric Fresnel
-reflection.  Both widths equal to zero select ideal reflection.  Finite
-lobes use a minimum width of `1e-6` per axis to avoid singular anisotropic
-sampling; ray roughness clamping scales the two axes together to preserve
-their ratio.  The supported reflection mode is `0`.  Transmission mode `1`
-and combined mode `2` are not yet implemented.
+Its `eta` parameter is the transmitted/incident index ratio.  Both widths
+equal to zero select an ideal specular interface.  Finite lobes use a
+minimum width of `1e-6` per axis to avoid singular anisotropic sampling;
+ray roughness clamping scales the two axes together to preserve their
+ratio.  Mode `0` reflects, mode `1` transmits with the dielectric Fresnel
+transmission weight, and mode `2` samples both sides using Fresnel
+probabilities.  Equal indices give straight-through delta transmission even
+when nonzero widths were authored.  Total internal reflection absorbs a
+mode-1 sample and reflects a mode-2 sample.
+
+A closed dielectric's authored absolute IOR needs conversion to the standard
+closure's relative ratio.  `as_relative_ior` uses `path:outside_ior`, which
+supplies the adjacent medium's absolute IOR on either side of the interface.
+This differs from `path:ray_ior`, the current ray's IOR.  Assuming air gives
+incorrect results when another dielectric contains the object.
+
+[source,osl]
+----
+#include "appleseed/as_osl_extensions.h"
+#include "appleseed/material/as_material_helpers.h"
+surface example_glass(float ior = 1.5, float alpha = 0.1)
+{
+    normal n = as_shading_normal();
+    Ci = microfacet("ggx", n, vector(0), alpha, alpha, as_relative_ior(ior), 2,
+        "normal_derivatives", 1, "dNdx", vector(Dx(n)), "dNdy", vector(Dy(n)));
+}
+----
+
+The helper rejects invalid or unrepresentable indices and missing medium
+context.  The outside-IOR query returns a float with zero screen derivatives;
+varying IOR gradients and filtered secondary maps remain unqualified.
+`regress-art-standard-transmission` checks smooth paths through three nested
+layers with indices 1.5, 2.4, and 1.1.  It compares both distributions and
+mixed canonical/standard assignments with independent Fresnel, Snell, and
+initial-medium references on CSG and solid BOTs.  The reference's oblique
+paths stay on the boxes' Z faces.  An air-assumption control must differ,
+and invalid-index cases must fail without replacing the existing output.
+Normal-incidence mirror checks additionally cover finite indices whose
+reciprocals have overflowing squares; these must render finite radiance.
+
+`regress-art-standard-rough-paths` compares complete rough transport through
+three clear concentric boxes.  Both standard modes and distributions use
+widths 0.12 and 0.4, with outside and interior cameras on CSG and solid BOTs.
+A common diagonal tangent is nonparallel to every box face and controls
+sampling variance across geometry adapters.  GGX combined mode also uses
+the canonical glass closure as an independent BSDF comparison.  Native
+projects use relative shaders and meshes with the same camera filter as
+art.  Radiance-mean differences are bounded at 0.2 percent; normalized
+per-pixel differences use the existing 10 percent budget and 0.0005
+reference floor.  These cases do not qualify general curved or textured
+paths, arbitrary inherited frames, absorption, or all light types.
+
+`regress-art-standard-curved-paths` reuses the same project and comparison
+helpers for two concentric spheres and ellipsoids.  Both standard modes and
+distributions use widths 0.12 and 0.4, with outside and interior cameras.
+The native reference uses transformed analytic unit spheres, independently
+of librt's quadric intersections.  Thirty-two paths compare the standard
+closure across geometry adapters; eight GGX paths also compare canonical
+glass.  Each 8-by-8 image uses 2048 samples per pixel.  The mean and normalized
+per-pixel bounds remain unchanged.  These checks qualify clear concentric
+quadrics with shared authored frames under uniform illumination; they do
+not establish textured curved transport or general overlapping media.
 
 A Standard Surface coating normal set as a material parameter has the same
 meaning as a normal supplied by a node connection.  Zero inherits the
