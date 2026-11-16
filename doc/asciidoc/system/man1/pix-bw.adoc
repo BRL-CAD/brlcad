@@ -33,16 +33,16 @@ destinations.
 [[options]]
 == OPTIONS
 
-*-s* _squaresize_::
+*-s*, *--size* _squaresize_::
   Set both the width and height of the input image to _squaresize_ pixels.
 
-*-w* _width_::
+*-w*, *--width* _width_::
   Set the width of each scanline of the input image, in pixels.
 
-*-n* _height_::
+*-n*, *--height* _height_::
   Set the height of the input image, in scanlines.
 
-*-e* _type_::
+*-e*, *--encoding* _type_::
   Use a standard luminance weighting scheme. _type_ may be one of:
   *ntsc* (Rec. ITU-R BT.601-7 NTSC primaries, weights 0.299/0.587/0.114);
   *crt* (historic CRT phosphors with D6500 white, weights 0.26/0.66/0.08);
@@ -50,22 +50,22 @@ destinations.
   *hdr* (Rec. ITU-R BT.2020, weights 0.2627/0.6780/0.0593);
   *avg* (simple average of the three planes).
 
-*-R* _red_weight_::
+*-R*, *--red-weight* _red_weight_::
   Select the red plane and apply _red_weight_ to it.
 
-*-G* _green_weight_::
+*-G*, *--green-weight* _green_weight_::
   Select the green plane and apply _green_weight_ to it.
 
-*-B* _blue_weight_::
+*-B*, *--blue-weight* _blue_weight_::
   Select the blue plane and apply _blue_weight_ to it. If a weight of 0 is
   supplied to any of *-R*, *-G*, or *-B*, the selected planes are instead
   weighted equally as 1.0 divided by the number of planes selected.
 
-*-o* _out_file.bw_::
+*-o*, *--output* _out_file.bw_::
   Write the output to the named *bw*(5) file instead of (or in addition to)
   standard output.
 
-*-h*, *-?*::
+*-h*, *--help*, *-?*::
   Print a usage message and exit.
 
 [[examples]]
