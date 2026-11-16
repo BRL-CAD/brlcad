@@ -84,8 +84,10 @@ If a child fails before acknowledging that its write has started, the working da
 == OPTIONS
 
 // BEGIN GENERATED BU_ARG OPTIONS
-*-h*, *--help*::
-  Print help and exit.
+=== General
+
+*-h* [_all_], *--help*[=_all_]::
+  Print help and exit; use --help=all for method and advanced options.
 
 *-v*, *--verbose*::
   Verbose output; repeat to increase detail. May be repeated.
@@ -93,11 +95,15 @@ If a child fails before acknowledging that its write has started, the working da
 *-q*, *--quiet*::
   Suppress all output.
 
+=== Output organization
+
 *-n*, *--nmg-output*::
   Create N-Manifold Geometry output.
 
 *-r*, *--regions*::
   Facetize region trees.
+
+=== Execution and naming
 
 *-j* _count_, *--jobs*=_count_::
   Maximum facetize worker processes; zero selects an automatic limit.
@@ -120,11 +126,15 @@ If a child fails before acknowledging that its write has started, the working da
 *--resume*::
   Resume conversion.
 
+=== Tessellation methods
+
 *--methods*=_method[,method...]_::
   Comma-separated tessellation methods. Accepted values: *NMG*, *MDC*, *SPSR*.
 
 *--method-opts*=_"METHOD option=value ..."_::
   Method-specific options.
+
+=== Validation and recovery
 
 *--no-empty*::
   Suppress empty outputs.
@@ -144,6 +154,8 @@ If a child fails before acknowledging that its write has started, the working da
 *--no-perturb*::
   Disable perturbation.
 
+=== Experimental BREP processing
+
 *-B*::
   Use experimental non-overlapping BREP mode.
 
@@ -159,13 +171,97 @@ If a child fails before acknowledging that its write has started, the working da
 *--tolerate-failures*::
   Generate partial output after failures.
 
+=== --method-opts parameter schemas
+
+==== NMG
+
+N-Manifold Geometry tessellation.
+
+*max_time*=_seconds_::
+  Maximum overall object-conversion time. Default: *30*.
+
+*plate_max_time*=_seconds_::
+  Maximum plate-mode-to-volume conversion time. Default: *1200*.
+
+*nmg_debug*=_flags_::
+  NMG hexadecimal debug flags. Default: *0*.
+
+*tol_abs*=_length_::
+  Absolute distance tolerance. Default: *0*.
+
+*tol_norm*=_value_::
+  Normal tolerance. Default: *0*.
+
+*tol_rel*=_fraction_::
+  Relative distance tolerance. Default: *0.01*.
+
+==== MDC
+
+Ray-driven Manifold Dual Contouring.
+
+*feature_size*=_length_::
+  Maximum finest-cell edge length; zero selects an automatic size. Default: *0*.
+
+*max_rays*=_count_::
+  Ray-budget ceiling; zero selects automatic resource limits. Default: *0*.
+
+*minimum_free_mem*=_bytes_::
+  Stop before free memory falls below this amount. Default: *system default*.
+
+*min_depth*=_depth_::
+  Minimum power-of-two grid depth. Default: *library default*.
+
+*max_depth*=_depth_::
+  Maximum power-of-two grid depth. Default: *library default*.
+
+*max_time*=_seconds_::
+  Maximum run time; zero is unlimited. Default: *library default*.
+
+*verbosity*=_level_::
+  Emit diagnostics when non-zero. Default: *0*.
+
+==== SPSR
+
+Screened Poisson Surface Reconstruction.
+
+*feature_scale*=_fraction_::
+  Fraction of average thickness used as the target feature size. Default: *0.15*.
+
+*feature_size*=_length_::
+  Explicit sampling feature length; overrides feature_scale. Default: *0*.
+
+*d_feature_size*=_length_::
+  Initial decimation feature length. Default: *1.5 times feature_size*.
+
+*max_sample_time*=_seconds_::
+  Maximum point-sampling time. Default: *30*.
+
+*max_pnts*=_count_::
+  Maximum sampled point count. Default: *200000*.
+
+*depth*=_depth_::
+  Maximum reconstruction depth. Default: *8*.
+
+*interpolate*=_weight_::
+  Interpolation weight; lower values produce smoother meshes. Default: *2.0*.
+
+*max_time*=_seconds_::
+  Maximum overall object-conversion time. Default: *600*.
+
+*refinement_passes*=_count_::
+  Maximum adaptive source-refinement passes. Default: *library default*.
+
+*samples_per_node*=_count_::
+  Samples assigned to a cell before refinement. Default: *1.5*.
+
 // END GENERATED BU_ARG OPTIONS
 
 [[option_details]]
 == OPTION DETAILS
 
-=== *-h*, *--help*
-Print help and exit.
+=== *-h* [_all_], *--help*[=_all_]
+Print help and exit. Specify *--help=all* to include advanced controls and
+the parameter schemas owned by each tessellation method.
 
 
 === *-v*, *--verbose*
@@ -217,7 +313,7 @@ Accepts a comma separated list of one or more facetization methods to use. The d
 
 
 === *--method-opts* _"METHOD option=value ..."_
-This option can be used to pass parameter values to specific facetize methods. Its complete argument must be quoted: *--method-opts "METHOD opt1=val1 opt2=val2 ..."*. Each setting is a *key=value* pair. See the *--help* output for which methods and parameters are supported by *facetize*.
+This option can be used to pass parameter values to specific facetize methods. Its complete argument must be quoted: *--method-opts "METHOD opt1=val1 opt2=val2 ..."*. Each setting is a *key=value* pair. The generated option summary lists the parameter schema owned by each method; *--help=all* prints the same schemas at run time.
 
 
 === *--no-empty*
@@ -267,7 +363,7 @@ In broad, there are two stages to a facetization process. The first stage is the
 
 The process of individual primitive to mesh conversion can sometimes be problematic - routines may take extremely long lengths of time trying to resolve a conversion problem. In order to avoid the process hanging indefinitely with no progress, a timeout is established that limits how long each individual conversion process should take. Various methods have defaults defined internally, so this isn't something the user normally needs to concern themselves with, but if they wish to set a limit themselves (either allowing more time or forcing shorter cycles) they can do so with the *--max-time* option.
 
-It can be difficult to produce a mesh from a primitive shape. Simply waiting longer for results often isn't practical or even the right answer - indeed, infinite looping has been observed in some primitive conversion cases. To work around these limitations, BRL-CAD provides multiple methods that can be used to attempt mesh production in case other methods fail. We deliberately do not document those methods in detail here - they are subject to change as new alternatives are identified that can produce better results. What we _do_ document is how to use the facetize command to see what methods are currently available and control them. The *-h* option will list, at the end of its output, information about all currently available methods and what controls they offer. The facetize option *--methods* can be used to restrict the facetize command to a particular subset of the available methodologies, and the *--method-opts* option is used to pass specific parameters to a specific method.
+It can be difficult to produce a mesh from a primitive shape. Simply waiting longer for results often isn't practical or even the right answer - indeed, infinite looping has been observed in some primitive conversion cases. To work around these limitations, BRL-CAD provides multiple methods that can be used to attempt mesh production in case other methods fail. The generated option summary records the controls currently owned by each method, and *--help=all* prints those same method schemas at run time. The facetize option *--methods* can be used to restrict the facetize command to a particular subset of the available methodologies, and the *--method-opts* option is used to pass specific parameters to a specific method.
 
 Because many of the facetization methods are sampling based (the raytracer is used to sample the volume) a top level control is available to specify the maximum number of points to use when generating inputs for such methods. (More points generally means a better conversion at the expense of memory and runtime.)
 

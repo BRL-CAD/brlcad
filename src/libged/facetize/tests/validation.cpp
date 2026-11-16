@@ -47,6 +47,8 @@
 #include "wdb.h"
 
 #include "../validation.h"
+#define TESS_OPTS_IMPLEMENTATION
+#include "../tess_opts.h"
 
 static int failures = 0;
 
@@ -72,6 +74,28 @@ int
 main(int UNUSED(argc), const char **argv)
 {
     bu_setprogname(argv[0]);
+
+    expect(tess_method_opts_from_str(NULL,
+	"NMG max_time=30 tol_rel=0.01", NULL) == 0,
+	"NMG method parameters validate");
+    expect(tess_method_opts_from_str(NULL,
+	"MDC feature_size=0.1 max_rays=400000", NULL) == 0,
+	"MDC method parameters validate");
+    expect(tess_method_opts_from_str(NULL,
+	"SPSR depth=8 samples_per_node=1.5", NULL) == 0,
+	"SPSR method parameters validate");
+    expect(tess_method_opts_from_str(NULL,
+	"UNKNOWN max_time=30", NULL) != 0,
+	"unknown tessellation methods are rejected");
+    expect(tess_method_opts_from_str(NULL,
+	"NMG unknown=1", NULL) != 0,
+	"unknown method parameters are rejected");
+    expect(tess_method_opts_from_str(NULL,
+	"SPSR depth=0", NULL) != 0,
+	"method parameter ranges are enforced");
+    expect(tess_method_opts_from_str(NULL,
+	"NMG max_time=-1", NULL) != 0,
+	"NMG method parameter ranges are enforced");
 
     struct db_i *dbip = db_create_inmem();
     expect(dbip != NULL, "create in-memory database");

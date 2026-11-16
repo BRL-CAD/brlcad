@@ -100,46 +100,15 @@ static const struct bu_arg_schema *facetize_schema(void);
 
 
 static void
-facetize_show_schema_help(struct ged *gedp)
+facetize_show_schema_help(struct ged *gedp, bool extended)
 {
-    char *help = bu_arg_schema_help(facetize_schema(), "facetize");
+    char *help = bu_arg_schema_help_mode(facetize_schema(), "facetize",
+	extended ? BU_ARG_HELP_EXTENDED : BU_ARG_HELP_DEFAULT);
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
 	bu_free(help, "facetize native schema help");
     }
-}
-
-void
-_facetize_methods_help(struct ged *gedp)
-{
-    // Build up the path to the ged_exec executable
-    char tess_exec[MAXPATHLEN];
-    bu_dir(tess_exec, MAXPATHLEN, BU_DIR_BIN, "ged_exec", BU_DIR_EXT, NULL);
-
-    const char *tess_cmd[5] = {NULL};
-    tess_cmd[0] = tess_exec;
-    tess_cmd[1] = "facetize_process";
-    tess_cmd[2] = "--list-methods";
-    tess_cmd[3] = NULL;
-
-    struct bu_vls method_output = BU_VLS_INIT_ZERO;
-    if (facetize_process_output(&method_output, tess_cmd) != BRLCAD_OK) {
-	bu_vls_free(&method_output);
-	return;
-    }
-    bu_vls_printf(gedp->ged_result_str,
-	    "Available BoT tessellation methods: %s\n",
-	    bu_vls_cstr(&method_output));
-
-    tess_cmd[3] = "-h";
-    tess_cmd[4] = NULL;
-
-    if (facetize_process_output(&method_output, tess_cmd) == BRLCAD_OK)
-	bu_vls_printf(gedp->ged_result_str,
-		"\nMethod specific options:\n\n%s\n",
-		bu_vls_cstr(&method_output));
-    bu_vls_free(&method_output);
 }
 
 static int
@@ -426,8 +395,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     /* Check if we want/need help */
     need_help = argc < (s->execution.writes_in_place() ? 1 : 2);
     if (args.print_help || need_help) {
-	facetize_show_schema_help(gedp);
-	_facetize_methods_help(gedp);
+	facetize_show_schema_help(gedp, args.print_help > 1);
 	ret = args.print_help ? BRLCAD_OK : BRLCAD_ERROR;
 	goto ged_facetize_done;
     }
@@ -463,6 +431,33 @@ static const struct bu_arg_shape facetize_methods_shape = {
     BU_ARG_SHAPE_COMMA_LIST, 1, 1, "comma-separated tessellation methods", NULL, NULL
 };
 
+static size_t
+facetize_attached_only(size_t UNUSED(available), const char **UNUSED(argv))
+{
+    return 0;
+}
+
+static const struct bu_arg_shape facetize_help_shape = {
+    BU_ARG_SHAPE_SCALAR, 0, 1, "[=all]", facetize_attached_only, NULL
+};
+
+static int
+facetize_help_from_str(struct bu_vls *msg, const char *arg, void *storage)
+{
+    int mode = 1;
+
+    if (arg && !BU_STR_EQUAL(arg, "all")) {
+	if (msg)
+	    bu_vls_strcat(msg, "--help accepts only the optional value 'all'\n");
+	return -1;
+    }
+    if (arg)
+	mode = 2;
+    if (storage)
+	*((int *)storage) = mode;
+    return 0;
+}
+
 static const struct bu_arg_constraint facetize_constraints[] = {
     BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, facetize_perturb_options, 0, 1,
 	"--perturb and --no-perturb cannot be used together"),
@@ -470,7 +465,12 @@ static const struct bu_arg_constraint facetize_constraints[] = {
 };
 
 static const struct bu_arg_option facetize_options[] = {
-    BU_ARG_FLAG("h", "help", facetize_parse_args, print_help, "Print help and exit"),
+    {"h", "help", "help", "all",
+	"Print help and exit; use --help=all for method and advanced options",
+	BU_ARG_VALUE_CUSTOM, offsetof(facetize_parse_args, print_help),
+	facetize_help_from_str, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_OPTIONAL,
+	&facetize_help_shape, NULL, NULL, BU_ARG_VALUE_RANGE_NONE,
+	BU_ARG_SHAPE_SCALAR},
     BU_ARG_COUNTING_FLAG("v", "verbose", facetize_parse_args, verbosity, BU_ARG_VALUE_LONG, "Verbose output; repeat to increase detail"),
     BU_ARG_FLAG("q", "quiet", facetize_parse_args, quiet, "Suppress all output"),
     BU_ARG_FLAG("n", "nmg-output", facetize_parse_args, make_nmg, "Create N-Manifold Geometry output"),
@@ -510,10 +510,27 @@ static const struct bu_arg_operand facetize_operands[] = {
     BU_ARG_OPERAND_NULL
 };
 
-static const struct bu_arg_schema facetize_cmd_schema = {
-    "facetize", "Convert geometry to BOT or NMG form", facetize_options, facetize_operands,
-    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, facetize_constraints)
+static const struct bu_arg_help_group facetize_help_groups[] = {
+    BU_ARG_HELP_GROUP("General", NULL, "help", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Output organization", NULL, "nmg-output", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Execution and naming", NULL, "jobs", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Tessellation methods", NULL, "methods", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Validation and recovery", NULL, "no-empty", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_HELP_GROUP("Experimental BREP processing", NULL, "B", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_HELP_GROUP_NULL
 };
+static const struct bu_arg_option_visibility facetize_option_visibility[] = {
+    BU_ARG_OPTION_VISIBILITY("method-opts", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY_NULL
+};
+static const struct bu_arg_presentation facetize_presentation =
+    BU_ARG_PRESENTATION(facetize_help_groups, facetize_option_visibility,
+	tess_method_parameter_groups());
+
+static const struct bu_arg_schema facetize_cmd_schema = BU_ARG_SCHEMA_PRESENTED(
+    "facetize", "Convert geometry to BOT or NMG form", facetize_options, facetize_operands,
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, facetize_constraints),
+    &facetize_presentation);
 
 static const struct bu_arg_schema *
 facetize_schema(void)
