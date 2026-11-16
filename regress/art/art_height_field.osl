@@ -1,0 +1,36 @@
+/*              A R T _ H E I G H T _ F I E L D . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+#include "appleseed/as_osl_extensions.h"
+
+shader art_height_field(float in_base = 0.3, float in_slope = 0.05,
+    float in_depth = 1, vector in_global_shift = vector(0),
+    output float out_height = 0, output normal out_reference = N)
+{
+    P += in_global_shift;
+    // Keep fixture heights away from the bump clamp. The reference uses
+    // the polynomial's ambient gradient projected onto the actual surface.
+    out_height = 0.5 - in_base * P[0] - 0.5 * in_slope * P[0] * P[0] -
+        0.4 * in_slope * P[1] * P[1];
+    normal surface_normal = as_shading_normal();
+    vector gradient = in_depth * vector(-in_base - in_slope * P[0],
+        -0.8 * in_slope * P[1], 0);
+    out_reference = normalize(surface_normal - normal(gradient) +
+        surface_normal * dot(surface_normal, gradient));
+}
