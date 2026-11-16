@@ -33,9 +33,8 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "util_arg.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
 #include "bu/log.h"
@@ -47,9 +46,7 @@
 #include "dm.h"
 
 
-#define OPT_STRING "acf:s:n:w:#:h?"
-#define usage1 "Usage: double-asc [-a] [-s squaresize] [-w width] [-n height]\n"
-#define usage2 "                  [-c] [-f format] [-# depth] [file.d]\n"
+#define DOUBLE_ASC_BUFFER_BYTES ((size_t)1 << 16)
 
 static const char *file_name;
 static char *format = 0;
@@ -64,96 +61,178 @@ static long int file_height = 512L;	/* default input height */
 static int make_cells = 0;		/* Insert cell coords in output? */
 static int d_per_l = 1;		/* doubles per line of output */
 
-void
-print_usage(void)
+struct double_asc_args {
+    struct double_asc_args *self;
+    int help;
+    int autosize;
+    int make_cells;
+    long width;
+    long height;
+    int depth;
+    const char *format;
+};
+
+enum double_asc_dimension {
+    DOUBLE_ASC_WIDTH = -1,
+    DOUBLE_ASC_SIZE,
+    DOUBLE_ASC_HEIGHT
+};
+
+static struct double_asc_args *
+double_asc_args_from_storage(void *storage)
 {
-    bu_exit(1, "%s%s", usage1, usage2);
+    return storage ? *(struct double_asc_args **)storage : NULL;
 }
+
+static int
+double_asc_autosize(struct bu_vls *UNUSED(msg), const char *UNUSED(arg),
+	void *storage)
+{
+    struct double_asc_args *args = double_asc_args_from_storage(storage);
+    if (args)
+	args->autosize = 1;
+    return 0;
+}
+
+static int
+double_asc_dimension(struct bu_vls *msg, const char *arg, void *storage,
+	enum double_asc_dimension dimension)
+{
+    long value;
+    struct double_asc_args *args = double_asc_args_from_storage(storage);
+
+    if (!bu_arg_long_range_from_str(msg, &value, arg, 10, 1, LONG_MAX))
+	return -1;
+    if (args) {
+	switch (dimension) {
+	    case DOUBLE_ASC_WIDTH:
+		args->width = value;
+		break;
+	    case DOUBLE_ASC_SIZE:
+		args->width = value;
+		args->height = value;
+		break;
+	    case DOUBLE_ASC_HEIGHT:
+		args->height = value;
+		break;
+	}
+	args->autosize = 0;
+    }
+    return 0;
+}
+
+static int
+double_asc_size(struct bu_vls *msg, const char *arg, void *storage)
+{
+    return double_asc_dimension(msg, arg, storage, DOUBLE_ASC_SIZE);
+}
+
+static int
+double_asc_width(struct bu_vls *msg, const char *arg, void *storage)
+{
+    return double_asc_dimension(msg, arg, storage, DOUBLE_ASC_WIDTH);
+}
+
+static int
+double_asc_height(struct bu_vls *msg, const char *arg, void *storage)
+{
+    return double_asc_dimension(msg, arg, storage, DOUBLE_ASC_HEIGHT);
+}
+
+static const struct bu_arg_option double_asc_options[] = {
+    BU_ARG_FLAG("h", "help", struct double_asc_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_CUSTOM_FLAG("a", "autosize", "autosize", struct double_asc_args,
+	self, double_asc_autosize, "Derive dimensions from a named input file"),
+    BU_ARG_FLAG("c", "cells", struct double_asc_args, make_cells,
+	"Prepend column and row coordinates to each output line"),
+    BU_ARG_VALUE("f", "format", struct double_asc_args, format,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "format", "Set the output number format"),
+    BU_ARG_CUSTOM("s", "size", struct double_asc_args, self, double_asc_size,
+	"pixels", "Set both input dimensions"),
+    BU_ARG_CUSTOM("w", "width", struct double_asc_args, self, double_asc_width,
+	"pixels", "Set the input width"),
+    BU_ARG_CUSTOM("n", "height", struct double_asc_args, self, double_asc_height,
+	"scanlines", "Set the input height"),
+    BU_ARG_INTEGER_RANGE("#", "depth", struct double_asc_args, depth,
+	1, 1, 1, INT_MAX / SIZEOF_NETWORK_DOUBLE, "count",
+	"Set the doubles per output line"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand double_asc_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"Network-order double input file (default: standard input)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema double_asc_schema = BU_ARG_SCHEMA(
+    "double-asc", "Convert network-order IEEE doubles to ASCII text",
+    double_asc_options, double_asc_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar double_asc_grammar = {
+    &double_asc_schema, NULL, NULL
+};
 
 
 int
 get_args(int argc, char **argv)
 {
-    int ch;
+    struct double_asc_args args = {NULL, 0, 0, 0, 512L, 512L, 1, NULL};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int introspection;
+    int operand_index;
     char *ifname;
+    args.self = &args;
 
-    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != -1) {
-	switch (ch) {
-	    /*
-	     * BRL-CAD image-size options
-	     */
-	    case 'a':
-		autosize = 1;
-		break;
-	    case 's':
-		/* square file size */
-		if (!util_arg_long_range(bu_optarg, &file_width, 1, LONG_MAX, "input size"))
-		    print_usage();
-		file_height = file_width;
-		autosize = 0;
-		break;
-	    case 'n':
-		if (!util_arg_long_range(bu_optarg, &file_height, 1, LONG_MAX, "input height"))
-		    print_usage();
-		autosize = 0;
-		break;
-	    case 'w':
-		if (!util_arg_long_range(bu_optarg, &file_width, 1, LONG_MAX, "input width"))
-		    print_usage();
-		autosize = 0;
-		break;
-		/*
-		 * application-specific options
-		 */
-	    case 'c':
-		make_cells = 1;
-		break;
-	    case 'f':
-		bu_free(format, "format_string");
-		format = (char *)bu_malloc(strlen(bu_optarg)+1, "format string");
-		bu_strlcpy(format, bu_optarg, strlen(bu_optarg)+1);
-		break;
-	    case '#':
-		if (!util_arg_int_range(bu_optarg, &d_per_l, 1, INT_MAX, "doubles per line"))
-		    print_usage();
-		break;
-	    default:
-		print_usage();
+    introspection = bu_arg_introspect(&msg, &double_asc_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : -1;
+    }
+    operand_index = bu_arg_schema_parse_complete(&double_asc_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_log("%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return -1;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&double_asc_schema, "double-asc");
+	if (help) {
+	    bu_flog(stdout, "%s", help);
+	    bu_free(help, "double-asc help");
 	}
+	return 0;
     }
-
-    if (format == 0)
-	format = bu_strdup(" %g");
-
-    /*
-     * Establish the input stream
-     */
-    switch (argc - bu_optind) {
-	case 0:
-	    file_name = "stdin";
-	    infd = fileno(stdin);
-	    setmode(fileno(stdin), O_BINARY);
-	    break;
-	case 1:
-	    file_name = argv[bu_optind++];
-	    ifname = bu_file_realpath(file_name, NULL);
-	    infd = open(ifname, O_RDONLY|O_BINARY);
-	    if (infd == -1) {
-		bu_free(ifname, "ifname alloc from bu_file_realpath");
-		bu_exit (1, "Cannot open file '%s'\n", file_name);
-	    }
-	    bu_free(ifname, "ifname alloc from bu_file_realpath");
-	    fileinput = 1;
-	    break;
-	default:
-	    print_usage();
+    autosize = args.autosize;
+    make_cells = args.make_cells;
+    file_width = args.width;
+    file_height = args.height;
+    d_per_l = args.depth;
+    format = bu_strdup(args.format ? args.format : " %g");
+    if (operand_index == argc - 1) {
+	file_name = "stdin";
+	infd = fileno(stdin);
+	setmode(fileno(stdin), O_BINARY);
+	return 1;
     }
-
-    if (argc > ++bu_optind) {
-	print_usage();
+    file_name = argv[operand_index + 1];
+    ifname = bu_file_realpath(file_name, NULL);
+    infd = open(ifname, O_RDONLY|O_BINARY);
+    bu_free(ifname, "resolved double input path");
+    if (infd == -1) {
+	bu_log("double-asc: cannot open '%s'\n", file_name);
+	return -1;
     }
+    fileinput = 1;
 
-    return 1;		/* OK */
+    return 1;
 }
 
 
@@ -163,26 +242,33 @@ main (int argc, char **argv)
     unsigned char *buffer;
     unsigned char *bp;
     double *value;
-    int bufsiz;		/* buffer size (in bytes) */
+    size_t sample_size;
+    size_t lines_per_buffer;
+    size_t buffer_size;
     int l_per_b;	/* buffer size (in output lines) */
     int line_nm;	/* number of current line */
     int num;		/* number of bytes read */
     int row, col;	/* coords within input stream */
+    int arg_status;
 
     bu_setprogname(argv[0]);
 
+    arg_status = get_args(argc, argv);
+    if (arg_status <= 0) {
+	if (format)
+	    bu_free(format, "double-asc format");
+	return arg_status < 0 ? 1 : 0;
+    }
+
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
     bu_snooze(BU_SEC2USEC(1));
-
-    if (!get_args(argc, argv)) {
-	print_usage();
-    }
 
     /* autosize input? */
     if (fileinput && autosize) {
 	size_t w, h;
 
-	if (fb_common_file_size(&w, &h, file_name, d_per_l * 8)) {
+	if (fb_common_file_size(&w, &h, file_name,
+		(size_t)d_per_l * SIZEOF_NETWORK_DOUBLE)) {
 	    file_width = (long)w;
 	    file_height = (long)h;
 	} else
@@ -194,20 +280,24 @@ main (int argc, char **argv)
      * Choose an input-buffer size as close as possible to 64 kbytes,
      * while still an integral multiple of the size of an output line.
      */
-    l_per_b = ((1 << 16) / (d_per_l * 8));
-    bufsiz = l_per_b * (d_per_l * 8);
+    sample_size = (size_t)d_per_l * SIZEOF_NETWORK_DOUBLE;
+    lines_per_buffer = DOUBLE_ASC_BUFFER_BYTES / sample_size;
+    if (lines_per_buffer == 0)
+	lines_per_buffer = 1;
+    buffer_size = lines_per_buffer * sample_size;
 
-    buffer = (unsigned char *) bu_malloc(bufsiz, "char buffer");
-    value = (double *) bu_malloc(d_per_l * 8, "doubles");
+    buffer = (unsigned char *)bu_malloc(buffer_size, "double input buffer");
+    value = (double *)bu_malloc((size_t)d_per_l * sizeof(double),
+	"converted doubles");
     col = row = 0;
-    while ((num = read(infd, buffer, bufsiz)) > 0) {
+    while ((num = read(infd, buffer, (unsigned int)buffer_size)) > 0) {
 	bp = buffer;
-	l_per_b = num / (d_per_l * 8);
+	l_per_b = num / (int)sample_size;
 	for (line_nm = 0; line_nm < l_per_b; ++line_nm) {
 	    if (make_cells)
 		printf("%d %d", col, row);
 	    bu_cv_ntohd((unsigned char *)value, bp, d_per_l);
-	    bp += d_per_l * 8;
+	    bp += sample_size;
 	    bu_num_print(value, (size_t)d_per_l, (size_t)d_per_l,
 			 NULL, NULL, format, "", NULL, "\n");
 	    if (++col % file_width == 0) {
@@ -218,8 +308,14 @@ main (int argc, char **argv)
     }
     if (num < 0) {
 	perror("double-asc");
-	bu_exit (1, NULL);
+	bu_free(value, "converted doubles");
+	bu_free(buffer, "double input buffer");
+	bu_free(format, "double-asc format");
+	return 1;
     }
+    bu_free(value, "converted doubles");
+    bu_free(buffer, "double input buffer");
+    bu_free(format, "double-asc format");
     return 0;
 }
 

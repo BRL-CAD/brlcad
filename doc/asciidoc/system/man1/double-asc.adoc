@@ -10,7 +10,7 @@ double-asc - convert a stream of IEEE doubles to ASCII text
 
 [source]
 ----
-double-asc [-a] [-c] [-f format] [-s squaresize] [-w width] [-n height] [-# depth] [file.d]
+double-asc [-a | --autosize] [-c | --cells] [-f _format_ | --format _format_] [-s _squaresize_ | --size _squaresize_] [-w _width_ | --width _width_] [-n _height_ | --height _height_] [-# _depth_ | --depth _depth_] [_file.d_]
 ----
 
 
@@ -40,32 +40,32 @@ the developers if you rely on it.
 [[options]]
 == OPTIONS
 
-*-a*::
+*-a*, *--autosize*::
   Autosize the input.  When reading from a file, attempt to infer the
   image width and height from the file size.
 
-*-c*::
+*-c*, *--cells*::
   Prepend the column and row cell coordinates to each output line.  The
   coordinates wrap according to the configured image width.
 
-*-f* _format_::
+*-f* _format_, *--format* _format_::
   Set the *printf*(3)-style format string applied to each double.  The
   default is " %g".
 
-*-s* _squaresize_::
+*-s* _squaresize_, *--size* _squaresize_::
   Set both the input width and height to _squaresize_ pixels.
 
-*-w* _width_::
+*-w* _width_, *--width* _width_::
   Set the input width in pixels (default 512).
 
-*-n* _height_::
+*-n* _height_, *--height* _height_::
   Set the input height in pixels (default 512).
 
-*-#* _depth_::
+*-#* _depth_, *--depth* _depth_::
   Set the number of doubles per logical sample (output line).  The
   default is 1.
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a usage message and exit.
 
 [[examples]]
