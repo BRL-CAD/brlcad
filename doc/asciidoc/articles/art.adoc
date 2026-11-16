@@ -68,6 +68,17 @@ The modernized dependency build has been exercised with LLVM 23.1.5, OSL
 is disabled.  The OSL compatibility patch also accommodates LLVM builds
 that have libxml2 enabled.
 
+Appleseed's core and `art` no longer require Boost.  Fixed internal patterns,
+filesystem, threading, time, atomics, and utility helpers use standard C++17.
+Public Perl-style filters use PCRE2; its documented newline edge semantics
+replace engine-specific Boost behavior.  Optional Appleseed Python bindings
+still require Boost and are disabled in the bext renderer stack.
+
+The sandbox and installed shader standard headers come from the selected
+OSL package.  Appleseed's older copies are no longer distributed.  Custom
+shaders that need Appleseed closure declarations should explicitly include
+`appleseed/as_osl_extensions.h` through the installed helper namespace.
+
 [cols="2,3"]
 |===
 |Capability |Evidence and remaining boundary
@@ -123,11 +134,28 @@ leave derivative inputs unavailable.
 texture renders, and selected Appleseed unit suites.  These provide
 independent renderer references; librt BOT coverage comes from `regress-art`.
 
+|Text rendering and Unicode data
+|OpenImageIO and Appleseed use the shared bounded struetype header.  TrueType
+and OpenType/CFF fonts passed sanitizer-enabled adapter probes.  OpenImageIO
+checks cover UTF-8 text, font lookup, metrics, alignment, shadows, and invalid
+fonts and bounds; its FreeType backend remains optional.  Appleseed checks
+cover embedded fonts, bounded custom buffers, kerning, multiline layout,
+clipping, and premultiplied coverage.  Appleseed retains single-byte text
+input.  Both use unhinted rasterization with struetype.
+
 |Installed builds across platforms
-|The current renderer validation was performed on FreeBSD.  Custom shader
-compilation through the selected SDK's installed helper headers and rendering
-are checked.  Linux, Windows, and macOS runtime qualification and relocatable
-installation remain open.
+|The current renderer validation was performed on FreeBSD.  A finalized SDK
+copied to a different directory compiles an OSL helper shader, builds an
+installed-API consumer, and renders.  The checked renderer, shader compiler,
+and texture tools load libraries only from that SDK and the base system,
+with no FreeType or Boost dependency.  Relocated consumers also validate
+Unicode conversion and normalization data, libdeflate's exported include
+paths, and OpenImageIO text rendering with installed fonts.  Bundled ICU
+uses a UTF-8 default charset on FreeBSD even in the C character locale,
+preserving UTF-8 XML filenames without changing application locale settings.
+These checks qualify the tested renderer SDK workflow; a complete installed
+`art` application and Linux, Windows, and macOS runtime qualification remain
+open.
 |===
 
 == Basic rendering
@@ -632,7 +660,16 @@ remain unqualified.  Literal array assignments are still unsupported.
 
 `art` resolves project assets relative to the database directory, including
 its `shaders` subdirectory, and also searches the selected Appleseed
-`appleseed`, `max`, and `maya` shader libraries.  Build-directory paths and the caller's working directory are
+`appleseed`, `max`, and `maya` shader libraries.  An installation containing
+`shaders/appleseed` beside its `bin` directory supplies these libraries and
+its OSL headers relative to the running application.  Development builds
+without staged renderer resources use the configured Appleseed prefix.
+`regress-art-resources` renders a shader available only in a separate
+installation directory, using an independent project-local reference.
+This test qualifies resource lookup while retaining build-tree libraries;
+it does not establish a self-contained binary distribution.
+
+Build-directory paths and the caller's working directory are
 not part of the project convention.  Keep database-relative asset paths
 when moving a project to another directory.
 

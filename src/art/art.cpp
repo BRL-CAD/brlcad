@@ -745,6 +745,21 @@ do_ae(double azim, double elev)
 }
 
 
+static std::string
+art_renderer_root()
+{
+    char root[MAXPATHLEN];
+    char shaders[MAXPATHLEN];
+    const char *runtime_root = bu_dir(root, MAXPATHLEN, BU_DIR_BIN, "..", NULL);
+    if (runtime_root && bu_dir(shaders, MAXPATHLEN, runtime_root, "shaders/appleseed", NULL)
+	&& bu_file_directory(shaders))
+	return runtime_root;
+
+    // Development builds may use an external SDK before dependency staging.
+    return APPLESEED_ROOT;
+}
+
+
 static asf::auto_release_ptr<asr::Project>
 build_project()
 {
@@ -771,10 +786,11 @@ build_project()
     bu_vls_free(&directory);
 
     // Add the shader libraries from the selected Appleseed installation.
+    const std::string renderer_root = art_renderer_root();
     char root[MAXPATHLEN];
     const char *libraries[] = {"shaders/appleseed", "shaders/max", "shaders/maya"};
     for (const char *library : libraries) {
-	const char *path = bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, library, NULL);
+	const char *path = bu_dir(root, MAXPATHLEN, renderer_root.c_str(), library, NULL);
 	if (path) project->search_paths().push_back_explicit_path(path);
     }
 
@@ -1253,11 +1269,12 @@ art_render_image(asr::Project& project, ArtTileCallback* callback = nullptr)
 {
     asr::DefaultRendererController controller;
     asf::SearchPaths resource_search_paths;
+    const std::string renderer_root = art_renderer_root();
     char headers[MAXPATHLEN];
-    const char *path = bu_dir(headers, MAXPATHLEN, APPLESEED_ROOT, "share/OSL/shaders", NULL);
+    const char *path = bu_dir(headers, MAXPATHLEN, renderer_root.c_str(), "share/OSL/shaders", NULL);
     if (path)
 	resource_search_paths.push_back_explicit_path(path);
-    path = bu_dir(headers, MAXPATHLEN, APPLESEED_ROOT, "shaders", NULL);
+    path = bu_dir(headers, MAXPATHLEN, renderer_root.c_str(), "shaders", NULL);
     if (path)
 	resource_search_paths.push_back_explicit_path(path);
     std::unique_ptr<RenderErrors, ReleaseLogTarget> errors(new RenderErrors());
