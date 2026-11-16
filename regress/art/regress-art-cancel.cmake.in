@@ -1,0 +1,82 @@
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/cancel-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_emission.oso"
+  "${WORK}/shaders/art_emission.oso" COPYONLY)
+set(DB "${WORK}/scene.g")
+run("${VEXEC}" create-material "${DB}" art_emission)
+set(RENDER_ARGS -w 512 -n 384 -c "set samples=1024"
+  -c "viewsize 80" -c "eye_pt 0 0 40" -c "orientation 0 0 0 1")
+set(sentinel "preserve existing image")
+foreach(mode IN ITEMS single quiet framebuffer)
+  set(output "${WORK}/${mode}.png")
+  file(WRITE "${output}" "${sentinel}")
+  set(arguments -P 1)
+  set(ready "art: frame 0 rendering")
+  if(mode STREQUAL quiet)
+    set(arguments -P 2 -c "set progress=0")
+    # The native frame log follows controller setup even with progress off.
+    set(ready "tile size")
+  elseif(mode STREQUAL framebuffer)
+    set(arguments -P 2 -F "${WORK}/display.fb")
+    # Wait for real tile work to test cancellation during active rendering.
+    set(ready "art: frame 0 progress:")
+  endif()
+  run("${VEXEC}" interrupt-render "${WORK}/${mode}.log" "${ready}" -
+    "${EXEC}" ${RENDER_ARGS} ${arguments} -o "${output}" "${DB}" all.g)
+  file(READ "${output}" retained)
+  if(NOT retained STREQUAL sentinel)
+    message(FATAL_ERROR "Cancelled rendering replaced an existing image: ${mode}")
+  endif()
+  file(READ "${WORK}/${mode}.log" cancelled)
+  if(cancelled MATCHES "art: frame 0 complete:")
+    message(FATAL_ERROR "Cancelled rendering was reported as complete")
+  endif()
+endforeach()
+# Signal only after a shader executes inside a large per-pixel batch.
+# This catches renderers that check cancellation between pixels only.
+configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_sampling.oso"
+  "${WORK}/shaders/art_sampling.oso" COPYONLY)
+set(SAMPLING_DB "${WORK}/sampling.g")
+run("${VEXEC}" create-material "${SAMPLING_DB}" art_sampling)
+foreach(mode IN ITEMS uniform adaptive)
+  set(output "${WORK}/large-${mode}.exr")
+  file(WRITE "${output}" "${sentinel}")
+  run("${VEXEC}" interrupt-render "${WORK}/large-${mode}.log" "art_sampling_evaluation" -
+    "${EXEC}" -P 1 -w 1 -n 1
+    -c "set sampling=${mode} samples=2000000000 batch_size=2000000000 renderer_log=debug"
+    -c "viewsize 4" -c "eye_pt 0 0 40" -c "orientation 0 0 0 1"
+    -o "${output}" "${SAMPLING_DB}" cube.r)
+  file(READ "${output}" retained)
+  if(NOT retained STREQUAL sentinel)
+    message(FATAL_ERROR "Cancelled large ${mode} batch replaced an existing image")
+  endif()
+endforeach()
+if(NOT EXISTS "${WORK}/display.fb")
+  message(FATAL_ERROR "Framebuffer cancellation did not open the test device")
+endif()
+
+# One completed frame must remain usable; cancellation in the second must
+# preserve its old image and prevent all later frames from executing.
+set(stream "${WORK}/frames.view")
+file(WRITE "${stream}" "start 0; set width=37 height=35 samples=4; end;\n"
+  "start 1; set width=512 height=384 samples=1024; end;\nstart 2; end;\n")
+foreach(frame IN ITEMS 1 2)
+  file(WRITE "${WORK}/frames.${frame}.png" "${sentinel}")
+endforeach()
+run("${VEXEC}" interrupt-render "${WORK}/frames.log" "art: frame 1 rendering" "${stream}"
+  "${EXEC}" ${RENDER_ARGS} -P 2 -M -o "${WORK}/frames.png" "${DB}" all.g)
+run("${VEXEC}" check-image "${WORK}/frames.png" 37 35)
+foreach(frame IN ITEMS 1 2)
+  file(READ "${WORK}/frames.${frame}.png" retained)
+  if(NOT retained STREQUAL sentinel)
+    message(FATAL_ERROR "Cancellation overwrote frame ${frame}")
+  endif()
+endforeach()
+file(READ "${WORK}/frames.log" frames)
+if(frames MATCHES "art: frame [12] complete:|art: frame 2 rendering")
+  message(FATAL_ERROR "A cancelled stream continued rendering")
+endif()

@@ -1,0 +1,27 @@
+/*              A R T _ S A M P L I N G . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+// Count only camera evaluations: emission queries execute the shader again.
+surface art_sampling(int in_varying = 0)
+{
+    if (raytype("camera"))
+        printf("art_sampling_evaluation\n");
+    color value = in_varying ? color(u * u, v * v, u * v) : color(0.25, 0.5, 0.75);
+    Ci = value * emission();
+}

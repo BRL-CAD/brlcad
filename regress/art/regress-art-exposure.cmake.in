@@ -1,0 +1,163 @@
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/exposure-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+set(TOOL "@ART_OIIOTOOL_EXECUTABLE@")
+foreach(shader IN ITEMS art_emission art_color_check)
+  configure_file("@CMAKE_CURRENT_BINARY_DIR@/${shader}.oso"
+    "${WORK}/shaders/${shader}.oso" COPYONLY)
+endforeach()
+set(DB "${WORK}/scene.g")
+set(REFERENCE_DB "${WORK}/reference.g")
+foreach(database IN ITEMS "${DB}" "${REFERENCE_DB}")
+  run("${VEXEC}" create-material "${database}" art_emission)
+  run("${VEXEC}" set-material "${database}" OSL.param.in_color "color 0.03125 0.125 0.5")
+endforeach()
+set(RENDER_ARGS -P 2 -w 37 -n 35
+  -c "set samples=4 light_intensity=0 environment_intensity=0 background_color=black"
+  -c "viewsize 80" -c "eye_pt 0 0 40" -c "orientation 0 0 0 1")
+# Display comparisons allow one code value for PNG dithering and rounding.
+set(DISPLAY_TOLERANCE 0.004)
+set(DIFF_ARGS --fail ${DISPLAY_TOLERANCE} --hardfail ${DISPLAY_TOLERANCE}
+  --warn ${DISPLAY_TOLERANCE} --hardwarn ${DISPLAY_TOLERANCE})
+function(matches actual expected)
+  run("${TOOL}" ${DIFF_ARGS} "${actual}" "${expected}" --diff)
+endfunction()
+function(exact actual expected)
+  run("${TOOL}" --fail 0 --hardfail 0 --warn 0 --hardwarn 0 "${actual}" "${expected}" --diff)
+endfunction()
+run("${EXEC}" ${RENDER_ARGS} -o "${WORK}/default.png" "${DB}" all.g)
+foreach(stops IN ITEMS 0 2 -1 0.5)
+  if(stops STREQUAL "2")
+    set(color "0.125 0.5 2")
+  elseif(stops STREQUAL "-1")
+    set(color "0.015625 0.0625 0.25")
+  elseif(stops STREQUAL "0.5")
+    # A half stop multiplies radiance by sqrt(2).
+    set(color "0.04419417382415922 0.1767766952966369 0.7071067811865476")
+  else()
+    set(color "0.03125 0.125 0.5")
+  endif()
+  run("${VEXEC}" set-material "${REFERENCE_DB}" OSL.param.in_color "color ${color}")
+  run("${EXEC}" ${RENDER_ARGS} -o "${WORK}/reference-${stops}.png" "${REFERENCE_DB}" all.g)
+  run("${EXEC}" ${RENDER_ARGS} -c "set display_exposure=${stops}"
+    -F "${WORK}/display-${stops}.fb" -o "${WORK}/display-${stops}.png" "${DB}" all.g)
+  matches("${WORK}/display-${stops}.png" "${WORK}/reference-${stops}.png")
+  run("${VEXEC}" check-framebuffer "${WORK}/display-${stops}.fb"
+    "${WORK}/reference-${stops}.png" 37 35 512 512)
+  # Alpha is unchanged even along partially covered object boundaries.
+  run("${TOOL}" "${WORK}/display-${stops}.png" --ch A
+    "${WORK}/default.png" --ch A --fail 0 --hardfail 0 --warn 0 --hardwarn 0 --diff)
+endforeach()
+exact("${WORK}/default.png" "${WORK}/display-0.png")
+run("${VEXEC}" set-material "${REFERENCE_DB}" OSL.param.in_color "color 0.125 0.5 2")
+foreach(extension IN ITEMS pix ppm bw)
+  run("${EXEC}" ${RENDER_ARGS} -c "set display_exposure=2"
+    -o "${WORK}/converted.${extension}" "${DB}" all.g)
+  if(extension STREQUAL bw)
+    run("${EXEC}" ${RENDER_ARGS} -o "${WORK}/reference.bw" "${REFERENCE_DB}" all.g)
+    run("${CMAKE_COMMAND}" -E compare_files "${WORK}/converted.bw" "${WORK}/reference.bw")
+  else()
+    run("${VEXEC}" check-matching-image "${WORK}/converted.${extension}"
+      "${WORK}/reference-2.png" 37 35)
+  endif()
+endforeach()
+
+# EXR and every diagnostic pass retain the original HDR radiance and data.
+run("${VEXEC}" set-material "${DB}" OSL.param.in_color "color 0.125 0.25 4")
+set(AOVS depth,normal,position,uv,emission)
+set(CUBE_ARGS ${RENDER_ARGS} -P 1 -w 1 -n 1 -c "viewsize 4")
+run("${EXEC}" ${CUBE_ARGS} -c "set aovs=${AOVS}"
+  -o "${WORK}/raw.exr" "${DB}" cube.r)
+foreach(stops IN ITEMS 2 -1 1e300 -1e300)
+  run("${EXEC}" ${CUBE_ARGS} -c "set display_exposure=${stops} aovs=${AOVS}"
+    -o "${WORK}/raw-${stops}.exr" "${DB}" cube.r)
+  exact("${WORK}/raw-${stops}.exr" "${WORK}/raw.exr")
+  foreach(name IN ITEMS depth normal position uv emission)
+    exact("${WORK}/raw-${stops}.${name}.exr" "${WORK}/raw.${name}.exr")
+  endforeach()
+endforeach()
+run("${VEXEC}" set-material "${REFERENCE_DB}" OSL.param.in_color "color 0.0625 0.125 2")
+run("${EXEC}" ${CUBE_ARGS} -o "${WORK}/hdr-display-reference.png" "${REFERENCE_DB}" cube.r)
+run("${EXEC}" ${CUBE_ARGS} -c "set display_exposure=-1 aovs=${AOVS}"
+  -F "${WORK}/hdr-display.fb" -o "${WORK}/hdr-display.exr" "${DB}" cube.r)
+exact("${WORK}/hdr-display.exr" "${WORK}/raw.exr")
+run("${VEXEC}" check-framebuffer "${WORK}/hdr-display.fb"
+  "${WORK}/hdr-display-reference.png" 1 1 512 512)
+# Large finite stops saturate safely, preserve exact zero, and leave alpha.
+run("${VEXEC}" set-material "${DB}" OSL.param.in_color "color 0 0.125 0.5")
+foreach(stops IN ITEMS 1e300 -1e300)
+  if(stops STREQUAL "1e300")
+    set(color "0 1 1")
+  else()
+    set(color "0 0 0")
+  endif()
+  run("${VEXEC}" set-material "${REFERENCE_DB}" OSL.param.in_color "color ${color}")
+  run("${EXEC}" ${CUBE_ARGS} -o "${WORK}/extreme-reference.png" "${REFERENCE_DB}" cube.r)
+  run("${EXEC}" ${CUBE_ARGS} -c "set display_exposure=${stops}"
+    -F "${WORK}/extreme.fb" -o "${WORK}/extreme.png" "${DB}" cube.r)
+  exact("${WORK}/extreme.png" "${WORK}/extreme-reference.png")
+  run("${VEXEC}" check-framebuffer "${WORK}/extreme.fb"
+    "${WORK}/extreme-reference.png" 1 1 512 512)
+endforeach()
+
+run("${VEXEC}" set-material "${DB}" OSL.param.in_color "color 0.03125 0.125 0.5")
+file(WRITE "${WORK}/frames.view"
+  "start 0; set display_exposure=0; end;\n"
+  "start 1; set display_exposure=2; end;\n"
+  "start 2; clean; end;\n"
+  "start 3; set display_exposure=-1; end;\n"
+  "start 4; set display_exposure=0; end;\n")
+run(INPUT_FILE "${WORK}/frames.view" "${EXEC}" ${RENDER_ARGS} -M
+  -F "${WORK}/frames.fb" -o "${WORK}/frames.png" "${DB}" all.g)
+foreach(pair IN ITEMS "0;0" "1;2" "2;2" "3;-1" "4;0")
+  list(GET pair 0 frame)
+  list(GET pair 1 stops)
+  if(frame EQUAL 0)
+    set(image "${WORK}/frames.png")
+  else()
+    set(image "${WORK}/frames.${frame}.png")
+  endif()
+  matches("${image}" "${WORK}/reference-${stops}.png")
+endforeach()
+run("${VEXEC}" check-framebuffer "${WORK}/frames.fb" "${WORK}/reference-0.png" 37 35 512 512)
+run(INPUT_FILE "${WORK}/frames.view" "${EXEC}" ${RENDER_ARGS} -M -D 2 -K 2
+  -o "${WORK}/skip.png" "${DB}" all.g)
+matches("${WORK}/skip.2.png" "${WORK}/reference-2.png")
+if(EXISTS "${WORK}/skip.png" OR EXISTS "${WORK}/skip.1.png")
+  message(FATAL_ERROR "Skipped exposure frames produced output")
+endif()
+run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}" -c "set inspect_materials=1"
+  -c "set display_exposure=-1.5" -c set "${DB}" cube.r)
+if(NOT command_output MATCHES "display_exposure=-1[.]5")
+  message(FATAL_ERROR "Exposure query lost a fractional stop value")
+endif()
+run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}" -c "set inspect_materials=1"
+  -c set "${DB}" cube.r)
+if(NOT command_output MATCHES "display_exposure=0")
+  message(FATAL_ERROR "Default exposure changed")
+endif()
+foreach(setting IN ITEMS "display_exposure=nan" "display_exposure=inf"
+    "display_exposure=1e309" "display_exposure=1junk" "display_exposure=!"
+    "display_exposure=1 aovs=unknown")
+  file(WRITE "${WORK}/invalid.png" "preserve existing output")
+  expect_failure_matching("invalid setting" "${EXEC}" ${RENDER_ARGS}
+    -c "set ${setting}" -o "${WORK}/invalid.png" "${DB}" cube.r)
+  file(READ "${WORK}/invalid.png" retained)
+  if(NOT retained STREQUAL "preserve existing output")
+    message(FATAL_ERROR "Invalid exposure settings replaced output")
+  endif()
+endforeach()
+set(ERROR_DB "${WORK}/error.g")
+run("${VEXEC}" create-material "${ERROR_DB}" art_color_check)
+run("${VEXEC}" set-material "${ERROR_DB}" OSL.param.in_expected "color 1 1 1")
+file(WRITE "${WORK}/error.png" "preserve existing output")
+expect_failure_matching("Color mismatch" "${EXEC}" ${CUBE_ARGS}
+  -c "set display_exposure=1e300 renderer_log=error"
+  -o "${WORK}/error.png" "${ERROR_DB}" cube.r)
+file(READ "${WORK}/error.png" retained)
+if(NOT retained STREQUAL "preserve existing output")
+  message(FATAL_ERROR "Shader failure replaced exposed output")
+endif()

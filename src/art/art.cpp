@@ -117,6 +117,7 @@
 
 
 // appleseed.renderer headers. Only include header files from renderer/api/.
+#include "renderer/api/aov.h"
 #include "renderer/api/camera.h"
 #include "renderer/api/color.h"
 #include "renderer/api/environment.h"
@@ -182,12 +183,16 @@
 
 #include "dm.h"
 #include "tile.h"
+#include "render_control.h"
+#include "aov_output.h"
+#include "display_exposure.h"
 
 
 #define VERBOSE_STATS 0x00000008
 
 
 static int inspect_materials = 0;
+static int render_progress = 1;
 
 static int samples = 25;
 static double light_intensity = 200.0;
@@ -222,6 +227,98 @@ struct ArtEnvironmentControls {
 	std::ostream *report) const;
 };
 ArtEnvironmentControls environment_controls;
+
+enum class ArtSamplingMode { Uniform, Adaptive };
+
+struct ArtRenderSettings {
+    ArtSamplingMode sampling = ArtSamplingMode::Uniform;
+    int min_samples = 0;
+    int batch_size = 16;
+    double noise_threshold = 0.1;
+    foundation::LogMessage::Category log_level = foundation::LogMessage::Info;
+    std::optional<int> max_bounces;
+    std::optional<int> max_diffuse_bounces;
+    std::optional<int> max_glossy_bounces;
+    std::optional<int> max_specular_bounces;
+    std::optional<int> rr_min_path_length;
+    std::optional<int> next_event_estimation;
+
+    bool valid_budget(int budget) const {
+	return sampling != ArtSamplingMode::Adaptive || min_samples <= budget;
+    }
+    void apply(renderer::ParamArray& parameters, int budget) const;
+    void write(std::ostream& output) const;
+};
+ArtRenderSettings render_settings;
+ArtAOVOutput aov_output;
+double display_exposure = 0.0;
+
+struct ArtRenderIntegerSetting {
+    const char *name;
+    const char *renderer_path;
+    int minimum;
+    int maximum;
+    std::optional<int> ArtRenderSettings::*value;
+};
+constexpr int MAX_RENDER_INTEGER = std::numeric_limits<int>::max();
+constexpr ArtRenderIntegerSetting render_integer_settings[] = {
+    {"max_bounces", "pt.max_bounces", -1, MAX_RENDER_INTEGER, &ArtRenderSettings::max_bounces},
+    {"max_diffuse_bounces", "pt.max_diffuse_bounces", -1, MAX_RENDER_INTEGER, &ArtRenderSettings::max_diffuse_bounces},
+    {"max_glossy_bounces", "pt.max_glossy_bounces", -1, MAX_RENDER_INTEGER, &ArtRenderSettings::max_glossy_bounces},
+    {"max_specular_bounces", "pt.max_specular_bounces", -1, MAX_RENDER_INTEGER, &ArtRenderSettings::max_specular_bounces},
+    {"rr_min_path_length", "pt.rr_min_path_length", 0, MAX_RENDER_INTEGER, &ArtRenderSettings::rr_min_path_length},
+    {"next_event_estimation", "pt.next_event_estimation", 0, 1, &ArtRenderSettings::next_event_estimation}
+};
+constexpr std::pair<const char *, foundation::LogMessage::Category> render_log_levels[] = {
+    {"debug", foundation::LogMessage::Debug}, {"info", foundation::LogMessage::Info},
+    {"warning", foundation::LogMessage::Warning}, {"error", foundation::LogMessage::Error}
+};
+// Stay within the adaptive renderer's advertised threshold range.
+constexpr double MIN_RENDER_NOISE_THRESHOLD = 0.0001;
+constexpr double MAX_RENDER_NOISE_THRESHOLD = 10000.0;
+
+static const ArtRenderIntegerSetting *
+art_render_integer_setting(const std::string& name)
+{
+    for (const auto& setting : render_integer_settings)
+	if (name == setting.name)
+	    return &setting;
+    return nullptr;
+}
+
+void
+ArtRenderSettings::apply(renderer::ParamArray& parameters, int budget) const
+{
+    parameters.insert("tile_renderer", sampling == ArtSamplingMode::Adaptive ? "adaptive" : "generic");
+    if (sampling == ArtSamplingMode::Adaptive) {
+	parameters.insert_path("adaptive_tile_renderer.min_samples", min_samples)
+	    .insert_path("adaptive_tile_renderer.max_samples", budget)
+	    .insert_path("adaptive_tile_renderer.batch_size", batch_size)
+	    .insert_path("adaptive_tile_renderer.noise_threshold", noise_threshold);
+    }
+    for (const auto& setting : render_integer_settings) {
+	const auto& number = this->*(setting.value);
+	if (number)
+	    parameters.insert_path(setting.renderer_path, *number);
+    }
+}
+
+void
+ArtRenderSettings::write(std::ostream& output) const
+{
+    output << "sampling=" << (sampling == ArtSamplingMode::Adaptive ? "adaptive" : "uniform")
+	<< "\nmin_samples=" << min_samples << "\nbatch_size=" << batch_size
+	<< "\nnoise_threshold=" << std::setprecision(std::numeric_limits<double>::max_digits10)
+	<< noise_threshold << '\n';
+    for (const auto& setting : render_integer_settings) {
+	const auto& number = this->*(setting.value);
+	output << setting.name << '=' << (number ? std::to_string(*number) : "inherit") << '\n';
+    }
+    for (const auto& level : render_log_levels)
+	if (log_level == level.second)
+	    output << "renderer_log=" << level.first << '\n';
+}
+
 
 } // namespace
 
@@ -325,6 +422,7 @@ extern "C" {
 	{"%g", 1, "light_intensity", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
 	{"%g", 1, "li", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
 	{"%d", 1, "inspect_materials", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+	{"%d", 1, "progress", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
 	{"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
     };
 }
@@ -348,6 +446,7 @@ init_defaults(void)
     view_parse[4].sp_offset = bu_byteoffset(light_intensity);
     view_parse[5].sp_offset = bu_byteoffset(light_intensity);
     view_parse[6].sp_offset = bu_byteoffset(inspect_materials);
+    view_parse[7].sp_offset = bu_byteoffset(render_progress);
 
     // default output file name
     outputfile = (char*)"art.png";
@@ -362,7 +461,7 @@ init_defaults(void)
     background[2] = 1.0;
 
     option("", "-o filename", "Render to specified image file (e.g., image.png or image.pix)", 0);
-    option("", "-F framebuffer", "Render to a framebuffer (defaults to a window)", 100);
+    option("", "-F framebuffer", "Render to a framebuffer (defaults to a window)", 0);
     // option("", "-s #", "Square image size (default: 512 - implies 512x512 image)", 100);
     // option("", "-w # -n #", "Image pixel dimensions as width and height", 100);
     option("", "-C #/#/#", "Set legacy background/environment color to R/G/B values (default: white)", 0);
@@ -952,14 +1051,16 @@ build_project(std::ostream *report)
     // Add default configurations to the project.
     project->add_default_configurations();
 
-    // Set the number of samples. This is the main quality parameter: the higher the
-    // number of samples, the smoother the image but the longer the rendering time.
-    // we overwrite via command line -c "set"
+    if (!render_settings.valid_budget(samples)) {
+	bu_log("art: adaptive min_samples must not exceed the samples budget\n");
+	return asf::auto_release_ptr<asr::Project>();
+    }
     project->configurations()
 	.get_by_name("final")->get_parameters()
 	.insert_path("uniform_pixel_renderer.samples", samples)
 	.insert_path("rendering_threads", (size_t)npsw)
 	.insert("project_rooted_textures", true);
+    render_settings.apply(project->configurations().get_by_name("final")->get_parameters(), samples);
     project->configurations()
 	.get_by_name("interactive")->get_parameters()
 	.insert_path("rendering_threads", "1") /* no multithreading - for debug rendering on appleseed */
@@ -1162,6 +1263,9 @@ build_project(std::ostream *report)
     //------------------------------------------------------------------------
 
     // Create a frame and bind it to the project.
+    asr::AOVContainer aovs;
+    if (!aov_output.populate(aovs))
+	return asf::auto_release_ptr<asr::Project>();
     bu_vls_sprintf(&dimensions, "%zd %zd", width, height);
     project->set_frame(
 	asr::FrameFactory::create(
@@ -1169,7 +1273,7 @@ build_project(std::ostream *report)
 	    asr::ParamArray()
 	    .insert("camera", "camera")
 	    .insert("tile_size", "32 32")
-	    .insert("resolution", bu_vls_cstr(&dimensions))));
+	    .insert("resolution", bu_vls_cstr(&dimensions)), aovs));
 
     // Bind the scene to the project.
     project->set_scene(scene);
@@ -1315,7 +1419,13 @@ art_save_image(asr::Project& project, const char* filename)
 {
     const char* dot = strrchr(filename, '.');
 
-    if (dot && (BU_STR_EQUIV(dot, ".png") || BU_STR_EQUIV(dot, ".exr")))
+    if (dot && BU_STR_EQUIV(dot, ".exr"))
+	return project.get_frame()->write_main_image(filename);
+
+    // Diagnostic sidecars have already been saved from the linear frame.
+    if (!ArtDisplayExposure(display_exposure).apply(project.get_frame()->image()))
+	return false;
+    if (dot && BU_STR_EQUIV(dot, ".png"))
 	return project.get_frame()->write_main_image(filename);
 
     struct TemporaryRender {
@@ -1373,9 +1483,11 @@ public:
 }
 
 static bool
-art_render_image(asr::Project& project, const char *filename, ArtTileCallback* callback = nullptr)
+art_render_image(asr::Project& project, const char *filename, ArtTileCallback& callback)
 {
-    asr::DefaultRendererController controller;
+    ArtRenderControl controller(callback, curframe, render_progress != 0);
+    if (!controller.valid())
+	return false;
     asf::SearchPaths resource_search_paths;
     const std::string renderer_root = art_renderer_root();
     char headers[MAXPATHLEN];
@@ -1393,9 +1505,16 @@ art_render_image(asr::Project& project, const char *filename, ArtTileCallback* c
 	    project,
 	    project.configurations().get_by_name("final")->get_inherited_parameters(),
 	    resource_search_paths,
-	    callback);
+	    &callback);
 	succeeded = renderer.render(controller).m_status == asr::MasterRenderer::RenderingResult::Succeeded;
     }
+    const bool restored = controller.restore();
+    if (controller.cancelled()) {
+	bu_log("art: rendering cancelled; image was not saved\n");
+	return false;
+    }
+    if (!restored)
+	return false;
     if (!succeeded) {
 	bu_log("art: rendering did not complete successfully\n");
 	return false;
@@ -1406,11 +1525,13 @@ art_render_image(asr::Project& project, const char *filename, ArtTileCallback* c
 	bu_log("art: renderer reported errors; image was not saved\n");
 	return false;
     }
-    if (callback && !callback->flush())
+    if (!callback.flush())
 	return false;
-    const bool saved = art_save_image(project, filename);
+    const bool saved = aov_output.write(*project.get_frame(), filename) && art_save_image(project, filename);
+    if (saved)
+	controller.complete();
     // Some framebuffer backends linger until their window is closed.
-    const bool closed = !callback || callback->finish();
+    const bool closed = callback.finish();
     return saved && closed;
 }
 
@@ -1418,6 +1539,7 @@ art_render_image(asr::Project& project, const char *filename, ArtTileCallback* c
 static bool
 art_process_scene(bool display_framebuffer, const char *filename)
 {
+    asr::global_logger().set_verbosity_level(render_settings.log_level);
     if (!inspect_materials) {
 	if (!std::isfinite(azimuth) || !std::isfinite(elevation)) {
 	    bu_log("art: camera azimuth and elevation must be finite\n");
@@ -1445,8 +1567,8 @@ art_process_scene(bool display_framebuffer, const char *filename)
     struct fb *fbp = display_framebuffer ? fb_setup() : FB_NULL;
     if (display_framebuffer && !fbp)
 	return false;
-    ArtTileCallback callback(fbp);
-    return art_render_image(project.ref(), filename, display_framebuffer ? &callback : nullptr);
+    ArtTileCallback callback(fbp, display_exposure);
+    return art_render_image(project.ref(), filename, callback);
 }
 
 
@@ -1659,6 +1781,12 @@ art_cm_set(const int argc, const char **argv)
 	    else
 		bu_log("%s=inherit\n", power.first);
 	}
+	std::ostringstream controls;
+	controls.imbue(std::locale::classic());
+	render_settings.write(controls);
+	controls << "aovs=" << aov_output.value() << '\n'
+	    << "display_exposure=" << display_exposure << '\n';
+	bu_log("%s", controls.str().c_str());
 	return 0;
     }
 
@@ -1691,6 +1819,10 @@ art_cm_set(const int argc, const char **argv)
     canonical << std::showpoint << std::setprecision(std::numeric_limits<double>::max_digits10);
     std::optional<size_t> new_width, new_height;
     ArtEnvironmentControls new_environment = environment_controls;
+    ArtRenderSettings new_render_settings = render_settings;
+    ArtAOVOutput new_aov_output = aov_output;
+    double new_display_exposure = display_exposure;
+    int new_sample_budget = samples;
     std::set<std::string> compatibility_settings;
     size_t cursor = 0;
     while (cursor < input.size()) {
@@ -1721,6 +1853,61 @@ art_cm_set(const int argc, const char **argv)
 	    return art_setting_error(name, value, "expected whitespace after closing quote");
 	if (value.empty())
 	    return art_setting_error(name, value, "a value is required");
+	if (name == "display_exposure") {
+	    if (!art_setting_real(value, new_display_exposure))
+		return art_setting_error(name, value, "expected a finite exposure in stops");
+	    continue;
+	}
+	if (name == "aovs") {
+	    std::string reason;
+	    if (!new_aov_output.assign(value, reason))
+		return art_setting_error(name, value, reason.c_str());
+	    continue;
+	}
+	if (name == "sampling") {
+	    if (value == "uniform")
+		new_render_settings.sampling = ArtSamplingMode::Uniform;
+	    else if (value == "adaptive")
+		new_render_settings.sampling = ArtSamplingMode::Adaptive;
+	    else
+		return art_setting_error(name, value, "expected uniform or adaptive");
+	    continue;
+	}
+	if (name == "renderer_log") {
+	    const auto level = std::find_if(std::begin(render_log_levels), std::end(render_log_levels),
+		[&value](const auto& entry) { return value == entry.first; });
+	    if (level == std::end(render_log_levels))
+		return art_setting_error(name, value, "expected debug, info, warning, or error");
+	    new_render_settings.log_level = level->second;
+	    continue;
+	}
+	if (name == "min_samples" || name == "batch_size") {
+	    int number;
+	    if (!art_setting_integer(value, number) || number < (name == "batch_size" ? 1 : 0))
+		return art_setting_error(name, value, "expected a complete integer in the supported range");
+	    (name == "min_samples" ? new_render_settings.min_samples : new_render_settings.batch_size) = number;
+	    continue;
+	}
+	if (name == "noise_threshold") {
+	    double number;
+	    if (!art_setting_real(value, number) || number < MIN_RENDER_NOISE_THRESHOLD ||
+		number > MAX_RENDER_NOISE_THRESHOLD)
+		return art_setting_error(name, value, "expected a finite threshold from 0.0001 through 10000");
+	    new_render_settings.noise_threshold = number;
+	    continue;
+	}
+	if (const auto *setting = art_render_integer_setting(name)) {
+	    auto& number = new_render_settings.*(setting->value);
+	    if (value == "inherit") {
+		number.reset();
+	    } else {
+		int parsed;
+		if (!art_setting_integer(value, parsed) || parsed < setting->minimum || parsed > setting->maximum)
+		    return art_setting_error(name, value, "expected inherit or an integer in the supported range");
+		number = parsed;
+	    }
+	    continue;
+	}
 	if (name == "environment_map") {
 	    new_environment.map = value == "inherit" ? "" : value;
 	    continue;
@@ -1794,7 +1981,7 @@ art_cm_set(const int argc, const char **argv)
 	    canonical << name << "=\"" << color[0] << '/' << color[1]
 		<< '/' << color[2] << "\" ";
 	} else if (field->sp_fmt[1] == 'd' && field->sp_count == 1) {
-	    const bool boolean = name == "inspect_materials" || name == "save_overlaps";
+	    const bool boolean = name == "inspect_materials" || name == "save_overlaps" || name == "progress";
 	    if (boolean && value == "!") {
 		canonical << name << "=! ";
 		continue;
@@ -1806,6 +1993,8 @@ art_cm_set(const int argc, const char **argv)
 	    if ((positive && number < 1) || (!positive && number < 0) || (boolean && number > 1))
 		return art_setting_error(name, value, boolean ? "expected 0, 1, or !" :
 		    positive ? "expected a positive integer" : "expected a nonnegative integer");
+	    if (name == "samples" || name == "s")
+		new_sample_budget = number;
 	    if (name == "width")
 		new_width = static_cast<size_t>(number);
 	    else if (name == "height")
@@ -1828,6 +2017,9 @@ art_cm_set(const int argc, const char **argv)
 	}
     }
 
+    if (!new_render_settings.valid_budget(new_sample_budget))
+	return art_setting_error("min_samples", std::to_string(new_render_settings.min_samples),
+	    "adaptive minimum must not exceed samples");
     // Validate the whole assignment list before changing shared renderer state.
     const std::string settings = canonical.str();
     if (!settings.empty()) {
@@ -1841,6 +2033,9 @@ art_cm_set(const int argc, const char **argv)
     if (new_height)
 	height = *new_height;
     environment_controls = new_environment;
+    render_settings = new_render_settings;
+    aov_output = std::move(new_aov_output);
+    display_exposure = new_display_exposure;
     for (const auto& name : compatibility_settings)
 	bu_log("art: warning: unsupported rendering setting '%s'; value stored for command compatibility\n", name.c_str());
     return 0;

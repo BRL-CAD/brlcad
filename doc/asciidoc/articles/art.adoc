@@ -388,6 +388,212 @@ frame persistence, rooted asset lookup, and invalid-image handling.
 Native Appleseed tests check filtered sampling/evaluation consistency away
 from texel centers, longitude interpolation, and zero-shift pole handling.
 
+== Sampling and path limits
+
+The default `sampling=uniform` traces exactly `samples` camera samples per
+pixel (`s` is an alias).  The default remains 25.  To spend less work on
+converged image regions, select adaptive sampling:
+
+----
+art -c "set sampling=adaptive samples=256 min_samples=16 batch_size=16 noise_threshold=0.1" \
+    -o view.exr model.g all.g
+----
+
+In adaptive mode, `samples` is the maximum per-pixel budget.  `min_samples`
+is an optional initial uniform pass; its default of zero skips that pass.
+`batch_size` controls subsequent sample batches and defaults to 16.  The
+renderer compares full and half-sample estimates within image blocks,
+then refines noisy blocks until they converge or exhaust the budget.
+`noise_threshold` defaults to 0.1; smaller values demand closer estimates
+and generally do more work.  This is the renderer's weighted block error
+threshold, not a percentage or a guaranteed bound on image error.
+The accepted range is 0.0001 through 10000.
+
+The initial pass is followed by a comparison batch when budget remains.
+For example, `min_samples=6 batch_size=4` needs at least ten samples to
+make its first comparison.  Batches are clipped to the budget, including
+budgets that are not batch multiples.  `min_samples=samples` requests a
+fixed budget.  Minimum samples must be nonnegative, batch size must be
+positive, and the adaptive minimum must not exceed `samples`.  An unused
+minimum may exceed the budget in uniform mode; switching to adaptive
+validates the complete assignment list before changing any settings.
+
+Path controls pass through to Appleseed's path tracer.  They default to
+`inherit`, which retains the renderer's defaults:
+
+[cols="1,1,3",options="header"]
+|===
+|Setting |Native default |Meaning
+|`max_bounces` |8 |Overall limit, excluding the first lighting bounce
+|`max_diffuse_bounces` |3 |Diffuse limit, excluding the first diffuse bounce
+|`max_glossy_bounces` |8 |Number of rough reflection or transmission continuations
+|`max_specular_bounces` |8 |Number of ideal reflection or refraction continuations
+|`rr_min_path_length` |6 |Path length before Russian roulette may prune paths
+|`next_event_estimation` |1 |Estimate lighting explicitly at surface vertices
+|===
+
+The four bounce limits accept nonnegative integers, `-1` to remove that
+individual cap, or `inherit` to restore the native default.  Caps combine:
+removing a specular cap does not remove the overall cap or Russian
+roulette.  Native global and diffuse limits of zero retain direct
+lighting; glossy and specular limits of zero disable continuations of
+those types.  Two ideal refractions are needed to pass through a solid
+glass slab, so `max_specular_bounces=1` blocks that transmitted view while
+`max_specular_bounces=2` permits it.  Rough glass uses glossy events.
+Explicit lighting and surface emission are evaluated before continuation
+limits, so a zero cap need not make a surface black.
+
+`rr_min_path_length=0` disables Russian roulette; positive values select
+the minimum path length, and `inherit` restores the default.
+`next_event_estimation` accepts `0`, `1`, or `inherit`.  Leave it enabled
+for normal rendering; disabling it can help isolate sampled continuation
+paths during shader diagnosis.  These controls do not enable participating
+media, thin glass, or transport features that the geometry adapter has
+not yet qualified.
+
+`renderer_log=debug|info|warning|error` selects native renderer diagnostics;
+the default is `info`.  Debug includes shader `printf` messages and native
+sampling statistics and can produce substantial output.  It does not
+suppress art's own errors or its separate progress reports.  Sampling,
+path limits, and logging persist across saved-view frames and geometry
+cleanup, and `set` without assignments reports their current values.
+
+`regress-art-sampling` counts actual camera shader evaluations to verify
+uniform budgets, adaptive early stopping, strict thresholds, initial
+passes, clipped batches, frame changes, and native logging.
+`regress-art-bounces` checks glossy reflection and two-interface ideal
+glass on CSG and BOT geometry, including inherited and unlimited limits.
+
+== Display exposure
+
+`display_exposure` adjusts PNG output, images converted through libicv,
+and framebuffer display in photographic stops.  The default is zero;
+positive stops brighten the display and negative stops darken it.  One
+stop doubles linear RGB before sRGB conversion, while minus one stop
+halves it.  For example:
+
+----
+art -c "set samples=64 display_exposure=1.5" -o view.png model.g all.g
+----
+
+The transform leaves alpha unchanged and clips display RGB to its valid
+range after exposure.  Finite fractional stop values are accepted;
+nonfinite values and incomplete numbers are errors.  Extreme finite
+values saturate safely, including channels that are exactly zero.
+`display_exposure=0` restores the original display pipeline.
+
+EXR beauty images and diagnostic passes retain their original linear HDR
+radiance and geometric data.  An EXR render with `-F` therefore provides
+an exposed framebuffer preview alongside the original HDR file.
+Exposure does not change lighting, materials, sampling, or convergence.
+For saved-view streams, it persists until changed, including across
+`clean`; skipped frames still update the setting.  `set` without
+assignments reports the current value.
+
+`regress-art-exposure` compares displayed images with independently scaled
+emissive materials, checks fractional and extreme stops, framebuffer
+agreement and alpha preservation, and verifies unchanged EXR and AOV data.
+It also covers converted formats, saved-view frames, skipped settings,
+invalid values, and shader-error output preservation.
+
+== Auxiliary image output
+
+Auxiliary output variables (AOVs) expose geometry and lighting separately
+from the beauty image.  They are disabled by default.  Select a
+comma-separated list with `aovs`, or use `aovs=none` to disable them:
+
+----
+art -c "set samples=64 aovs=depth,normal,position,uv,diffuse,glossy,emission" \
+    -o view.exr model.g all.g
+----
+
+This writes the beauty to `view.exr` and selected passes to files such as
+`view.depth.exr` and `view.diffuse.exr`.  A PNG or BRL-CAD image output uses
+the same EXR sidecars: `-o view.png` still writes `view.depth.exr`.
+Saved-view frame numbers remain before the pass name, for example
+`view.7.normal.exr`.  Names are case sensitive, duplicates and unknown
+names are errors, and the entire `set` assignment is validated before
+changing state.  Selection persists through saved-view frames and `clean`.
+Skipped frames produce no images.
+
+[cols="1,3",options="header"]
+|===
+|AOV |Data
+|`depth` |Full-float `Z` and `A`: negative camera-space Z in database base
+units (millimeters), with A=1 for a surface hit.  Misses have zero Z and A.
+|`position` |Full-float world-space XYZ in RGB channels, in millimeters.
+Negative coordinates and values above one remain intact.  Misses are zero.
+|`normal` |World-space shading normal encoded as `0.5 * N + 0.5` in
+full-float RGB.  Decode with `N = 2 * RGB - 1`; a miss is `(0.5,0.5,0.5)`.
+|`uv` |Full-float U and V in R and G; B is zero.  Values are not clamped.
+|`albedo` |Linear RGBA surface reflectance supplied by the shading system.
+|`diffuse`, `glossy` |Linear RGBA lighting contributions, including their
+respective direct and indirect components.  Glossy includes ideal
+specular reflection and refraction.
+|`direct_diffuse`, `indirect_diffuse` |Separate diffuse lighting components.
+|`direct_glossy`, `indirect_glossy` |Separate glossy lighting components.
+|`emission` |Linear RGBA emission directly visible to the camera.  Emission
+reached through reflection or refraction contributes to indirect lighting.
+|===
+
+Geometry passes are unfiltered diagnostic samples.  They retain the last
+sample written at each pixel rather than a filtered mean; through alpha
+transparency, a later primary-ray surface can replace an earlier one.
+They describe the primary visibility path, not the secondary surface seen
+inside a mirror or through refractive glass.  Camera-space depth is stable
+when orthographic tracing moves ray origins according to scene bounds;
+for perspective views it is axial Z, not Euclidean range.
+
+Color passes use the beauty image's reconstruction filter, preserve HDR
+radiance, and are stored as half-float linear EXR.  Geometry passes retain
+full float precision.  These are separate EXR files; libicv's RGB image
+interface does not represent their arbitrary channel layouts.  Art does
+not apply display conversion to AOV data.  Use the appropriate channels
+explicitly when inspecting EXR; for example, a reader may present depth's
+A channel before Z.
+
+Cancelled renders and shader errors leave existing beauty and sidecars
+unchanged.  AOVs are saved before the beauty; a sidecar write failure
+returns failure and leaves the existing beauty unchanged.  Writing the
+set of files is not atomic: earlier sidecars can exist if a later write
+fails.  Successful completion is reported only after all selected output
+has been saved.
+
+`regress-art-aovs` checks analytic depth, position, normals, and UVs on CSG
+and BOTs; HDR emission; diffuse albedo; direct/indirect reconstruction;
+lighting reached through two refractive interfaces; frame selection;
+format-independent sidecar naming; cancellation; and output failures.
+
+== Progress and cancellation
+
+Art reports the frame number when rendering starts, completed tiles during
+long renders, and the final tile count and elapsed time after saving the
+image.  Intermediate reports appear at most once per second.  Tile
+percentages count image work completed; sampling quality is controlled
+separately.  Each saved-view frame starts a fresh count, including partial
+edge tiles.
+
+`set progress=0` disables these art status messages; `set progress=1`
+enables them and `set progress=!` toggles the current value.  The default
+is enabled.  The setting persists across saved-view frames and geometry
+cleanup.  Native renderer diagnostics remain available with progress off.
+
+Press Ctrl-C during rendering to request cancellation.  Art asks the
+renderer to stop, waits for its workers and resources to finish cleanup,
+and returns failure without saving the cancelled frame.  Existing output
+for that frame remains unchanged.  Earlier completed frames remain
+available and later frames in the stream are not rendered.  Cancellation
+also works with progress disabled and with framebuffer output enabled;
+the framebuffer can retain tiles already completed.
+
+The interrupt handler belongs to one render and restores the caller's
+previous handler afterward.  Geometry loading before renderer setup and
+image saving after the render retain their usual process signal behavior.
+The command-line interruption regression uses POSIX signals.  Native
+Windows console delivery and interactive framebuffer windows still need
+platform qualification.
+
+
 == Framebuffer display
 
 `-F device` displays completed tiles while rendering and can be combined

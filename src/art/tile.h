@@ -23,7 +23,10 @@
 
 #include "common.h"
 
+#include <atomic>
 #include <cstdint>
+
+#include "display_exposure.h"
 
 #include "renderer/kernel/rendering/itilecallback.h"
 
@@ -34,12 +37,13 @@ struct fb;
 class ArtTileCallback final : public renderer::ITileCallback
 {
 public:
-    explicit ArtTileCallback(struct fb *framebuffer) : m_framebuffer(framebuffer) {}
+    explicit ArtTileCallback(struct fb *framebuffer, double exposure = 0.0)
+	: m_framebuffer(framebuffer), m_exposure(exposure) {}
     ~ArtTileCallback() override;
     ArtTileCallback(const ArtTileCallback&) = delete;
     ArtTileCallback& operator=(const ArtTileCallback&) = delete;
 
-    void on_tiled_frame_begin(const renderer::Frame*) override {}
+    void on_tiled_frame_begin(const renderer::Frame*) override;
     void on_tiled_frame_end(const renderer::Frame*) override {}
     void on_tile_begin(const renderer::Frame*, size_t, size_t, size_t, size_t) override {}
     void on_tile_end(const renderer::Frame*, size_t, size_t) override;
@@ -48,12 +52,18 @@ public:
 
     // The callback lives on the caller's stack.
     void release() override {}
+    size_t completed_tiles() const { return m_completed_tiles; }
+    size_t total_tiles() const { return m_total_tiles; }
+    bool failed() const { return m_failed.load(std::memory_order_relaxed); }
     bool flush();
     bool finish();
 
 private:
     struct fb *m_framebuffer;
-    bool m_failed = false;
+    const ArtDisplayExposure m_exposure;
+    std::atomic<bool> m_failed{false};
+    size_t m_completed_tiles = 0;
+    size_t m_total_tiles = 0;
 };
 
 #endif
