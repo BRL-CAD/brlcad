@@ -43,6 +43,18 @@ foreach(test IN LISTS installed_tests)
     ENVIRONMENT_MODIFICATION "${runtime_environment}")
 endforeach()
 
+# Runtime-only packages may omit the development headers and CMake exports.
+if(EXISTS "${renderer_prefix}/${LIB_DIR}/cmake/OSL/OSLConfig.cmake")
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/art_osl_sdk.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/osl-sdk-source/CMakeLists.txt" @ONLY)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/art_installed_osl_sdk.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/art_installed_osl_sdk.cmake" @ONLY)
+  add_test(NAME art-installed-osl-sdk COMMAND "${CMAKE_COMMAND}"
+    -P "${CMAKE_CURRENT_BINARY_DIR}/art_installed_osl_sdk.cmake")
+  set_tests_properties(art-installed-osl-sdk PROPERTIES TIMEOUT ${ART_REGRESSION_TIMEOUT} LABELS Installed
+    ENVIRONMENT_MODIFICATION "${runtime_environment}")
+endif()
+
 if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
   find_program(ART_LDD_EXECUTABLE NAMES ldd REQUIRED)
   find_program(ART_READELF_EXECUTABLE NAMES readelf llvm-readelf REQUIRED)

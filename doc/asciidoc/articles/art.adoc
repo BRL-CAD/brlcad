@@ -2971,6 +2971,14 @@ the installation.  Runtime logs are saved alongside the test outputs.
 Other platforms require their own loader audit before recording a
 portable-installation result.
 
+When the installation includes OSL development exports, the additional
+`art-installed-osl-sdk` test builds a separate C++ consumer of all four OSL
+library targets.  It rejects public OSL header paths outside the selected
+installation, compiles a shader into memory, queries its parameters, and
+JIT-executes it to check the output.  Run this test again from a fresh build
+directory after moving the installation.  Runtime-only packages without
+the OSL CMake exports omit this development check.
+
 The development `regress-rpath` target separately tests executable and plugin
 lookup with conflicting libraries at the configured prefix.  It installs and
 moves small fixtures under default, `lib64`, and nested directory layouts,

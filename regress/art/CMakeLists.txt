@@ -249,6 +249,7 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-volume-energy.cmake.in regress-art-volume-energy-spectral.cmake.in
   regress-art-volume-overlap.cmake.in regress-art-volume-glass.cmake.in
   art_installed_runtime.cmake.in art-installed-material.cmake.in
+  art_installed_osl_sdk.cmake.in art_osl_sdk.cmake.in art_osl_sdk.cpp
   art-installed-plate.cmake.in art-installed-view.cmake.in
   regress-art-photon-csg-15.cmake.in
   regress-art-photon-csg-20.cmake.in

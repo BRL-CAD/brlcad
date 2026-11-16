@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 3.22)
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/osl-sdk-build")
+set(LOG "@CMAKE_CURRENT_BINARY_DIR@/osl-sdk.log")
+set(ART_COMMAND_TIMEOUT @ART_REGRESSION_TIMEOUT@)
+file(REMOVE_RECURSE "${WORK}")
+file(WRITE "${LOG}" "")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+run("${CMAKE_COMMAND}" -S "@CMAKE_CURRENT_BINARY_DIR@/osl-sdk-source" -B "${WORK}"
+  "-DCMAKE_PREFIX_PATH=@renderer_prefix@" -DCMAKE_BUILD_TYPE=Release)
+run("${CMAKE_COMMAND}" --build "${WORK}" --config Release --parallel 2)
+run("@CMAKE_CTEST_COMMAND@" --test-dir "${WORK}" --build-config Release --output-on-failure)

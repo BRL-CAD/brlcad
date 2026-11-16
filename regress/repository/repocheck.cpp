@@ -570,7 +570,8 @@ init_repo_config(RepoConfig &cfg)
 	for (int i=0; sp_exempt[i]; ++i)
 	    cfg.setprog.exemptions.emplace_back(
 		std::string(".*/") + sp_exempt[i] + ".*", true);
-	// Add additional specific exemptions here as needed.
+	// This external SDK consumer deliberately has no BRL-CAD library dependency.
+	cfg.setprog.exemptions.emplace_back(".*/regress/art/art_osl_sdk[.]cpp$", true);
     }
 
     /* Platform symbol test */
