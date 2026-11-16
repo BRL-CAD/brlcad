@@ -70,6 +70,6 @@ surface art_glass_footprint_reference(float in_slope = 0.05, float in_ior = 1.5,
         value = color(0.5 + 0.01 * position[0], 0.5 + 0.01 * position[1], 0.5);
     if (in_mode == 2)
         value = texture(in_filename, 0.5 + in_scale * position[0], 0.5 + in_scale * position[1],
-            "interp", "bilinear", "wrap", "periodic");
+            "interp", "smartcubic", "wrap", "periodic");
     Ci = throughput * value * emission();
 }
