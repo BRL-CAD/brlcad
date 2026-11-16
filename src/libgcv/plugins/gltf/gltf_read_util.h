@@ -29,7 +29,9 @@
 #include <cstring>
 #include <fstream>
 #include <limits>
+#include <memory>
 #include <string>
+#include <vector>
 
 #include "tiny_gltf_v3.h"
 
@@ -46,7 +48,10 @@ struct accessor_view {
     const tg3_accessor *accessor = nullptr;
     const uint8_t *data = nullptr;
     size_t stride = 0;
+    std::shared_ptr<std::vector<uint8_t>> storage;
 };
+
+inline bool read_index(const uint8_t *data, int32_t component_type, size_t &index);
 
 inline std::string
 to_string(tg3_str value)
@@ -87,42 +92,111 @@ get_accessor_view(const tg3_model &model, int32_t accessor_index, accessor_view 
 	return false;
 
     const tg3_accessor &accessor = model.accessors[accessor_index];
-    if (accessor.sparse.is_sparse || accessor.buffer_view < 0 ||
-	static_cast<uint32_t>(accessor.buffer_view) >= model.buffer_views_count)
-	return false;
-
-    const tg3_buffer_view &view = model.buffer_views[accessor.buffer_view];
-    if (view.buffer < 0 || static_cast<uint32_t>(view.buffer) >= model.buffers_count)
-	return false;
-
-    const tg3_buffer &buffer = model.buffers[view.buffer];
-    int32_t stride = tg3_accessor_byte_stride(&accessor, &view);
     int32_t component_size = tg3_component_size(accessor.component_type);
     int32_t component_count = tg3_num_components(accessor.type);
-    if (stride <= 0 || component_size <= 0 || component_count <= 0 || !buffer.data.data)
+    if (component_size <= 0 || component_count <= 0)
 	return false;
-
     uint64_t element_size = static_cast<uint64_t>(component_size) *
 	static_cast<uint64_t>(component_count);
-    if (static_cast<uint64_t>(stride) < element_size ||
-	view.byte_offset > buffer.data.count ||
-	view.byte_length > buffer.data.count - view.byte_offset ||
-	accessor.byte_offset > view.byte_length)
+    if (accessor.count > SIZE_MAX || element_size > SIZE_MAX ||
+	accessor.count > MAX_PARSE_MEMORY_BYTES / element_size)
 	return false;
-
-    uint64_t available = view.byte_length - accessor.byte_offset;
-    if (accessor.count > 0 &&
-	(available < element_size ||
-	 accessor.count - 1 > (available - element_size) / static_cast<uint64_t>(stride)))
-	return false;
-
-    uint64_t data_offset = view.byte_offset + accessor.byte_offset;
-    if (data_offset > std::numeric_limits<size_t>::max())
-	return false;
-
+    result = accessor_view();
     result.accessor = &accessor;
-    result.data = buffer.data.data + static_cast<size_t>(data_offset);
-    result.stride = static_cast<size_t>(stride);
+
+    const tg3_buffer_view *base_view = nullptr;
+    const tg3_buffer *base_buffer = nullptr;
+    int32_t stride = 0;
+    if (accessor.buffer_view >= 0) {
+	if (static_cast<uint32_t>(accessor.buffer_view) >= model.buffer_views_count)
+	    return false;
+	base_view = &model.buffer_views[accessor.buffer_view];
+	if (base_view->buffer < 0 ||
+	    static_cast<uint32_t>(base_view->buffer) >= model.buffers_count)
+	    return false;
+	base_buffer = &model.buffers[base_view->buffer];
+	stride = tg3_accessor_byte_stride(&accessor, base_view);
+	if (stride <= 0 || static_cast<uint64_t>(stride) < element_size ||
+	    !base_buffer->data.data ||
+	    base_view->byte_offset > base_buffer->data.count ||
+	    base_view->byte_length > base_buffer->data.count - base_view->byte_offset ||
+	    accessor.byte_offset > base_view->byte_length)
+	    return false;
+	uint64_t available = base_view->byte_length - accessor.byte_offset;
+	if (accessor.count > 0 &&
+	    (available < element_size || accessor.count - 1 >
+	    (available - element_size) / static_cast<uint64_t>(stride)))
+	    return false;
+    } else if (!accessor.sparse.is_sparse) {
+	return false;
+    }
+
+    if (!accessor.sparse.is_sparse) {
+	uint64_t data_offset = base_view->byte_offset + accessor.byte_offset;
+	if (data_offset > std::numeric_limits<size_t>::max())
+	    return false;
+	result.data = base_buffer->data.data + static_cast<size_t>(data_offset);
+	result.stride = static_cast<size_t>(stride);
+	return true;
+    }
+
+    const tg3_accessor_sparse &sparse = accessor.sparse;
+    if (sparse.count > accessor.count || sparse.indices.buffer_view < 0 ||
+	sparse.values.buffer_view < 0 ||
+	static_cast<uint32_t>(sparse.indices.buffer_view) >= model.buffer_views_count ||
+	static_cast<uint32_t>(sparse.values.buffer_view) >= model.buffer_views_count)
+	return false;
+    const tg3_buffer_view &index_view = model.buffer_views[sparse.indices.buffer_view];
+    const tg3_buffer_view &value_view = model.buffer_views[sparse.values.buffer_view];
+    if (index_view.buffer < 0 || value_view.buffer < 0 ||
+	static_cast<uint32_t>(index_view.buffer) >= model.buffers_count ||
+	static_cast<uint32_t>(value_view.buffer) >= model.buffers_count)
+	return false;
+    const tg3_buffer &index_buffer = model.buffers[index_view.buffer];
+    const tg3_buffer &value_buffer = model.buffers[value_view.buffer];
+    int32_t index_size = tg3_component_size(sparse.indices.component_type);
+    if (index_size <= 0 || !index_buffer.data.data || !value_buffer.data.data ||
+	index_view.byte_offset > index_buffer.data.count ||
+	index_view.byte_length > index_buffer.data.count - index_view.byte_offset ||
+	value_view.byte_offset > value_buffer.data.count ||
+	value_view.byte_length > value_buffer.data.count - value_view.byte_offset ||
+	sparse.indices.byte_offset > index_view.byte_length ||
+	sparse.values.byte_offset > value_view.byte_length ||
+	sparse.count > (index_view.byte_length - sparse.indices.byte_offset) /
+	    static_cast<uint64_t>(index_size) ||
+	sparse.count > (value_view.byte_length - sparse.values.byte_offset) /
+	    element_size)
+	return false;
+
+    size_t byte_count = static_cast<size_t>(accessor.count * element_size);
+    result.storage = std::make_shared<std::vector<uint8_t>>(byte_count, 0);
+    if (base_view) {
+	const uint8_t *base = base_buffer->data.data +
+	    static_cast<size_t>(base_view->byte_offset + accessor.byte_offset);
+	for (size_t index = 0; index < static_cast<size_t>(accessor.count); ++index)
+	    std::memcpy(result.storage->data() + index * static_cast<size_t>(element_size),
+		base + index * static_cast<size_t>(stride),
+		static_cast<size_t>(element_size));
+    }
+    const uint8_t *sparse_indices = index_buffer.data.data +
+	static_cast<size_t>(index_view.byte_offset + sparse.indices.byte_offset);
+    const uint8_t *sparse_values = value_buffer.data.data +
+	static_cast<size_t>(value_view.byte_offset + sparse.values.byte_offset);
+    size_t previous = 0;
+    for (size_t sparse_index = 0; sparse_index < static_cast<size_t>(sparse.count);
+	sparse_index++) {
+	size_t index;
+	if (!read_index(sparse_indices + sparse_index * static_cast<size_t>(index_size),
+		sparse.indices.component_type, index) || index >= accessor.count ||
+	    (sparse_index && index <= previous))
+	    return false;
+	previous = index;
+	std::memcpy(result.storage->data() + index * static_cast<size_t>(element_size),
+	    sparse_values + sparse_index * static_cast<size_t>(element_size),
+	    static_cast<size_t>(element_size));
+    }
+    result.data = result.storage->data();
+    result.stride = static_cast<size_t>(element_size);
     return true;
 }
 

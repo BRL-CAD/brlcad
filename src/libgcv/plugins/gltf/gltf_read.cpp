@@ -25,6 +25,7 @@
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <map>
 #include <set>
 #include <string>
 #include <vector>
@@ -49,17 +50,144 @@ struct conversion_state
     struct wmember scene;
     std::set<std::string> object_names;
     std::vector<std::string> link_names;
+    std::vector<std::string> node_objects;
+    std::vector<unsigned char> node_built;
+    std::map<std::pair<int32_t, int32_t>, std::vector<std::string>> geometry_objects;
+    std::vector<std::string> material_objects;
     std::string world_link;
     bool has_native_joints;
 };
-#define CONVERSION_STATE_ZERO {"", NULL, WMEMBER_INIT_ZERO, {}, {}, "", false}
+#define CONVERSION_STATE_ZERO {"", NULL, WMEMBER_INIT_ZERO, {}, {}, {}, {}, {}, {}, "", false}
 
 static constexpr double gltf_meters_to_millimeters = 1000.0;
+static constexpr size_t gltf_normal_components = 3;
+static constexpr size_t gltf_uv_components = 2;
+static constexpr size_t bot_uv_components = 3;
 
 static std::string
 gltf_string(tg3_str value)
 {
     return value.data ? std::string(value.data, value.len) : std::string();
+}
+
+static std::string unique_object_name(struct conversion_state *state,
+    const std::string &base_name);
+
+static std::string
+format_values(const double *values, size_t count)
+{
+    struct bu_vls text = BU_VLS_INIT_ZERO;
+    for (size_t index = 0; index < count; ++index)
+	bu_vls_printf(&text, index ? " %.17g" : "%.17g", values[index]);
+    std::string result = bu_vls_cstr(&text);
+    bu_vls_free(&text);
+    return result;
+}
+
+static bool
+import_materials(struct conversion_state *state, const tg3_model &model)
+{
+    state->material_objects.resize(model.materials_count);
+    for (uint32_t index = 0; index < model.materials_count; ++index) {
+	const tg3_material &material = model.materials[index];
+	const tg3_pbr_metallic_roughness &pbr = material.pbr_metallic_roughness;
+	if (pbr.base_color_texture.index != TG3_INDEX_NONE ||
+	    pbr.metallic_roughness_texture.index != TG3_INDEX_NONE ||
+	    material.normal_texture.index != TG3_INDEX_NONE ||
+	    material.occlusion_texture.index != TG3_INDEX_NONE ||
+	    material.emissive_texture.index != TG3_INDEX_NONE) {
+	    bu_log("glTF material %u uses textures, which are not yet supported\n",
+		index);
+	    return false;
+	}
+	std::string material_name = gltf_string(material.name);
+	std::string object_name = unique_object_name(state, material_name.empty() ?
+	    "gltf_material_" + std::to_string(index) : material_name + ".material");
+	struct bu_attribute_value_set physical;
+	struct bu_attribute_value_set mechanical;
+	struct bu_attribute_value_set optical;
+	struct bu_attribute_value_set thermal;
+	bu_avs_init_empty(&physical);
+	bu_avs_init_empty(&mechanical);
+	bu_avs_init_empty(&optical);
+	bu_avs_init_empty(&thermal);
+	std::string base_color = format_values(pbr.base_color_factor, 4);
+	std::string metallic = format_values(&pbr.metallic_factor, 1);
+	std::string roughness = format_values(&pbr.roughness_factor, 1);
+	std::string emissive = format_values(material.emissive_factor, 3);
+	std::string alpha_cutoff = format_values(&material.alpha_cutoff, 1);
+	std::string alpha_mode = gltf_string(material.alpha_mode);
+	bu_avs_add(&optical, "gltf::base_color_factor", base_color.c_str());
+	bu_avs_add(&optical, "gltf::metallic_factor", metallic.c_str());
+	bu_avs_add(&optical, "gltf::roughness_factor", roughness.c_str());
+	bu_avs_add(&optical, "gltf::emissive_factor", emissive.c_str());
+	bu_avs_add(&optical, "gltf::alpha_mode", alpha_mode.c_str());
+	bu_avs_add(&optical, "gltf::alpha_cutoff", alpha_cutoff.c_str());
+	bu_avs_add(&optical, "gltf::double_sided",
+	    material.double_sided ? "1" : "0");
+	int result = mk_material(state->fd_out, object_name.c_str(),
+	    material_name.c_str(), "", "glTF 2.0 metallic-roughness",
+	    &physical, &mechanical, &optical, &thermal);
+	bu_avs_free(&thermal);
+	bu_avs_free(&optical);
+	bu_avs_free(&mechanical);
+	bu_avs_free(&physical);
+	if (result < 0)
+	    return false;
+	std::string index_text = std::to_string(index);
+	if (db5_update_attribute(object_name.c_str(), "gltf::kind", "material",
+		state->fd_out->dbip) ||
+	    db5_update_attribute(object_name.c_str(), "gltf::material_index",
+		index_text.c_str(), state->fd_out->dbip))
+	    return false;
+	state->object_names.insert(object_name);
+	state->material_objects[index] = object_name;
+    }
+    return true;
+}
+
+static bool
+supported_model_features(const tg3_model &model)
+{
+    if (model.extensions_used_count || model.extensions_required_count) {
+	bu_log("glTF extensions are not yet supported by this importer\n");
+	return false;
+    }
+    if (model.images_count || model.textures_count || model.samplers_count) {
+	bu_log("glTF images, textures, and samplers are not yet supported\n");
+	return false;
+    }
+    if (model.cameras_count || model.lights_count || model.audio_emitters_count ||
+	model.audio_sources_count) {
+	bu_log("glTF cameras, lights, and audio objects are not yet supported\n");
+	return false;
+    }
+    for (uint32_t mesh_index = 0; mesh_index < model.meshes_count; ++mesh_index) {
+	const tg3_mesh &mesh = model.meshes[mesh_index];
+	if (mesh.weights_count) {
+	    bu_log("glTF mesh %u uses morph weights, which are not yet supported\n",
+		mesh_index);
+	    return false;
+	}
+	for (uint32_t primitive_index = 0;
+	    primitive_index < mesh.primitives_count; ++primitive_index) {
+	    if (mesh.primitives[primitive_index].targets_count) {
+		bu_log("glTF mesh %u primitive %u uses morph targets, which are not yet supported\n",
+		    mesh_index, primitive_index);
+		return false;
+	    }
+	}
+    }
+    for (uint32_t node_index = 0; node_index < model.nodes_count; ++node_index) {
+	const tg3_node &node = model.nodes[node_index];
+	if (node.camera != TG3_INDEX_NONE || node.light != TG3_INDEX_NONE ||
+	    node.emitter != TG3_INDEX_NONE || node.lods_count || node.weights_count) {
+	    bu_log("glTF node %u uses an unsupported camera, light, audio, LOD, or morph feature\n",
+		node_index);
+	    return false;
+	}
+    }
+    return true;
 }
 
 static bool
@@ -313,6 +441,118 @@ read_skin_weight(const uint8_t *data, const tg3_accessor &accessor, double &weig
 }
 
 static bool
+read_attribute_value(const uint8_t *data, const tg3_accessor &accessor,
+    double &value)
+{
+    if (accessor.component_type == TG3_COMPONENT_TYPE_FLOAT)
+	return brlcad_gltf::read_coordinate(data, accessor.component_type, value);
+    if (!accessor.normalized)
+	return false;
+    size_t integer;
+    if (!brlcad_gltf::read_index(data, accessor.component_type, integer))
+	return false;
+    if (accessor.component_type == TG3_COMPONENT_TYPE_UNSIGNED_BYTE)
+	value = static_cast<double>(integer) / UINT8_MAX;
+    else if (accessor.component_type == TG3_COMPONENT_TYPE_UNSIGNED_SHORT)
+	value = static_cast<double>(integer) / UINT16_MAX;
+    else
+	return false;
+    return true;
+}
+
+static bool
+attach_vertex_attributes(struct conversion_state *state, const tg3_model &model,
+    const tg3_primitive &primitive, const std::string &bot_name,
+    size_t vertex_count, const std::vector<int> &faces)
+{
+    int32_t normal_index = brlcad_gltf::find_attribute(primitive, "NORMAL");
+    int32_t uv_index = brlcad_gltf::find_attribute(primitive, "TEXCOORD_0");
+    if (normal_index == TG3_INDEX_NONE && uv_index == TG3_INDEX_NONE)
+	return true;
+
+    brlcad_gltf::accessor_view normals;
+    brlcad_gltf::accessor_view uvs;
+    if ((normal_index != TG3_INDEX_NONE &&
+	    (!brlcad_gltf::get_accessor_view(model, normal_index, normals) ||
+	     normals.accessor->component_type != TG3_COMPONENT_TYPE_FLOAT ||
+	     normals.accessor->type != TG3_TYPE_VEC3 ||
+	     normals.accessor->count != vertex_count)) ||
+	(uv_index != TG3_INDEX_NONE &&
+	    (!brlcad_gltf::get_accessor_view(model, uv_index, uvs) ||
+	     uvs.accessor->type != TG3_TYPE_VEC2 ||
+	     uvs.accessor->count != vertex_count)))
+	return false;
+
+    struct directory *directory = db_lookup(state->fd_out->dbip,
+	bot_name.c_str(), LOOKUP_QUIET);
+    struct rt_db_internal internal;
+    RT_DB_INTERNAL_INIT(&internal);
+    if (!directory || rt_db_get_internal(&internal, directory,
+	    state->fd_out->dbip, nullptr) < 0 || internal.idb_type != ID_BOT) {
+	rt_db_free_internal(&internal);
+	return false;
+    }
+    auto *bot = static_cast<struct rt_bot_internal *>(internal.idb_ptr);
+    if (normal_index != TG3_INDEX_NONE) {
+	bot->num_normals = vertex_count;
+	bot->normals = static_cast<fastf_t *>(bu_malloc(
+	    vertex_count * gltf_normal_components * sizeof(fastf_t),
+	    "glTF vertex normals"));
+	for (size_t vertex = 0; vertex < vertex_count; ++vertex) {
+	    for (size_t component = 0; component < gltf_normal_components;
+		component++) {
+		double value;
+		if (!read_attribute_value(normals.data + vertex * normals.stride +
+			component * sizeof(float), *normals.accessor, value) ||
+		    !std::isfinite(value))
+		    goto fail;
+		bot->normals[vertex * gltf_normal_components + component] =
+		    static_cast<fastf_t>(value);
+	    }
+	}
+	bot->num_face_normals = bot->num_faces;
+	bot->face_normals = static_cast<int *>(bu_malloc(
+	    faces.size() * sizeof(int), "glTF face normal indices"));
+	memcpy(bot->face_normals, faces.data(), faces.size() * sizeof(int));
+	bot->bot_flags |= RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS;
+    }
+    if (uv_index != TG3_INDEX_NONE) {
+	int32_t component_size = tg3_component_size(uvs.accessor->component_type);
+	if (component_size <= 0)
+	    goto fail;
+	bot->num_uvs = vertex_count;
+	bot->uvs = static_cast<fastf_t *>(bu_calloc(
+	    vertex_count * bot_uv_components, sizeof(fastf_t),
+	    "glTF texture coordinates"));
+	for (size_t vertex = 0; vertex < vertex_count; ++vertex) {
+	    for (size_t component = 0; component < gltf_uv_components;
+		component++) {
+		double value;
+		if (!read_attribute_value(uvs.data + vertex * uvs.stride +
+			component * component_size, *uvs.accessor, value) ||
+		    !std::isfinite(value))
+		    goto fail;
+		bot->uvs[vertex * bot_uv_components + component] =
+		    static_cast<fastf_t>(value);
+	    }
+	}
+	bot->num_face_uvs = bot->num_faces;
+	bot->face_uvs = static_cast<int *>(bu_malloc(
+	    faces.size() * sizeof(int), "glTF face UV indices"));
+	memcpy(bot->face_uvs, faces.data(), faces.size() * sizeof(int));
+	bot->bot_flags |= RT_BOT_HAS_TEXTURE_UVS;
+    }
+    if (wdb_put_internal(state->fd_out, bot_name.c_str(), &internal, 1.0) < 0)
+	goto fail;
+    rt_db_free_internal(&internal);
+    return true;
+
+fail:
+    rt_db_free_internal(&internal);
+    return false;
+}
+
+static bool
 attach_skin(struct conversion_state *state, const tg3_model &model,
     const tg3_primitive &primitive, int32_t skin_index,
     const std::string &bot_name, size_t vertex_count)
@@ -459,6 +699,42 @@ fail:
 }
 
 static bool
+attach_material(struct conversion_state *state, const tg3_primitive &primitive,
+    const std::string &bot_name)
+{
+    if (primitive.material == TG3_INDEX_NONE)
+	return true;
+    if (primitive.material < 0 ||
+	static_cast<size_t>(primitive.material) >= state->material_objects.size())
+	return false;
+    const std::string &material = state->material_objects[
+	static_cast<size_t>(primitive.material)];
+    std::string index_text = std::to_string(primitive.material);
+    return db5_update_attribute(bot_name.c_str(), "material_name",
+	material.c_str(), state->fd_out->dbip) == 0 &&
+	db5_update_attribute(bot_name.c_str(), "gltf::material_index",
+	    index_text.c_str(), state->fd_out->dbip) == 0;
+}
+
+static bool
+supported_primitive_attributes(const tg3_primitive &primitive,
+    int32_t skin_index)
+{
+    for (uint32_t index = 0; index < primitive.attributes_count; ++index) {
+	std::string name = gltf_string(primitive.attributes[index].key);
+	bool skin_attribute = name.compare(0, 7, "JOINTS_") == 0 ||
+	    name.compare(0, 8, "WEIGHTS_") == 0;
+	if (name == "POSITION" || name == "NORMAL" || name == "TEXCOORD_0")
+	    continue;
+	if (skin_attribute && skin_index != TG3_INDEX_NONE)
+	    continue;
+	bu_log("glTF primitive attribute '%s' is not supported\n", name.c_str());
+	return false;
+    }
+    return true;
+}
+
+static bool
 generate_geometry(struct conversion_state *state, const tg3_model &model,
     int32_t mesh_number, int32_t skin_index, const std::string &shape_name,
     wmember &region)
@@ -468,10 +744,23 @@ generate_geometry(struct conversion_state *state, const tg3_model &model,
 	return false;
     }
 
+    const std::pair<int32_t, int32_t> geometry_key(mesh_number, skin_index);
+    auto existing = state->geometry_objects.find(geometry_key);
+    if (existing != state->geometry_objects.end()) {
+	for (const std::string &object_name : existing->second) {
+	    if (!mk_addmember(object_name.c_str(), &region.l, NULL, WMOP_UNION))
+		return false;
+	}
+	return true;
+    }
+
     const tg3_mesh &mesh = model.meshes[mesh_number];
+    std::vector<std::string> objects;
     for (uint32_t primitive_number = 0; primitive_number < mesh.primitives_count;
 	++primitive_number) {
 	const tg3_primitive &primitive = mesh.primitives[primitive_number];
+	if (!supported_primitive_attributes(primitive, skin_index))
+	    return false;
 	if (primitive.mode != TG3_MODE_TRIANGLES) {
 	    bu_log("glTF primitive %u is not a triangle mesh\n", primitive_number);
 	    return false;
@@ -550,18 +839,25 @@ generate_geometry(struct conversion_state *state, const tg3_model &model,
 	    faces[i] = static_cast<int>(index);
 	}
 
-	std::string bot_name = mesh.primitives_count == 1 ? shape_name :
+	std::string requested_name = mesh.primitives_count == 1 ? shape_name :
 	    shape_name + std::to_string(primitive_number);
+	std::string bot_name = unique_object_name(state, requested_name);
 	if (mk_bot(state->fd_out, bot_name.c_str(), RT_BOT_SOLID,
 		RT_BOT_UNORIENTED, 0, vertex_count, index_count / 3,
 		vertices.data(), faces.data(), NULL, NULL) < 0 ||
+	    !attach_vertex_attributes(state, model, primitive, bot_name,
+		vertex_count, faces) ||
 	    !attach_skin(state, model, primitive, skin_index, bot_name, vertex_count) ||
+	    !attach_material(state, primitive, bot_name) ||
 	    !mk_addmember(bot_name.c_str(), &region.l, NULL, WMOP_UNION)) {
 	    bu_log("Unable to write glTF primitive %u\n", primitive_number);
 	    return false;
 	}
+	state->object_names.insert(bot_name);
+	objects.push_back(bot_name);
     }
 
+    state->geometry_objects.emplace(geometry_key, std::move(objects));
     return true;
 }
 
@@ -623,7 +919,6 @@ node_matrix(mat_t matrix, const tg3_node &node)
     return true;
 }
 
-
 static bool
 handle_node(struct conversion_state *state, const tg3_model &model,
     int32_t node_index, struct wmember &regions, std::set<int32_t> &active_nodes)
@@ -631,6 +926,15 @@ handle_node(struct conversion_state *state, const tg3_model &model,
     if (node_index < 0 || static_cast<uint32_t>(node_index) >= model.nodes_count) {
 	bu_log("glTF node index %d is invalid\n", node_index);
 	return false;
+    }
+    if (state->node_built[static_cast<size_t>(node_index)]) {
+	const std::string &object = state->node_objects[static_cast<size_t>(node_index)];
+	if (object.empty())
+	    return true;
+	mat_t matrix;
+	if (!node_matrix(matrix, model.nodes[node_index]))
+	    return false;
+	return mk_addmember(object.c_str(), &regions.l, matrix, WMOP_UNION) != NULL;
     }
     if (!active_nodes.insert(node_index).second) {
 	bu_log("glTF node hierarchy contains a cycle at node %d\n", node_index);
@@ -645,10 +949,9 @@ handle_node(struct conversion_state *state, const tg3_model &model,
     const tg3_node &node = model.nodes[node_index];
     if (!import_objects(state, node))
 	return false;
-    if (node.children_count == 0 && node.mesh == TG3_INDEX_NONE)
-	return true;
 
-    std::string region_name = "Region_" + std::to_string(node_index);
+    std::string region_name = unique_object_name(state,
+	"gltf_node_" + std::to_string(node_index));
     struct wmember region;
     BU_LIST_INIT(&region.l);
     struct wmember_list_guard {
@@ -673,13 +976,58 @@ handle_node(struct conversion_state *state, const tg3_model &model,
 	    return false;
     }
 
-    if (BU_LIST_IS_EMPTY(&region.l))
-	return true;
-
     int comb_result = mk_lrcomb(state->fd_out, region_name.c_str(), &region,
-	node.children_count == 0 ? 1 : 0, NULL, NULL, NULL, 0, 0, 0, 100, 0);
+	node.children_count == 0 && node.mesh != TG3_INDEX_NONE ? 1 : 0,
+	NULL, NULL, NULL, 0, 0, 0, 100, 0);
     region_guard.head = NULL;
     if (comb_result < 0)
+	return false;
+    state->object_names.insert(region_name);
+    state->node_objects[static_cast<size_t>(node_index)] = region_name;
+    state->node_built[static_cast<size_t>(node_index)] = 1;
+    std::string index_text = std::to_string(node_index);
+    std::string node_name = gltf_string(node.name);
+    std::string mesh_name;
+    if (node.mesh != TG3_INDEX_NONE)
+	mesh_name = gltf_string(model.meshes[node.mesh].name);
+    std::string skin_name;
+    std::string skeleton_link;
+    std::string mesh_index_text;
+    if (node.mesh != TG3_INDEX_NONE)
+	mesh_index_text = std::to_string(node.mesh);
+    std::string skin_index_text;
+    if (node.skin != TG3_INDEX_NONE) {
+	if (node.skin < 0 || static_cast<uint32_t>(node.skin) >= model.skins_count)
+	    return false;
+	const tg3_skin &skin = model.skins[node.skin];
+	skin_index_text = std::to_string(node.skin);
+	skin_name = gltf_string(skin.name);
+	int32_t skeleton = skin.skeleton;
+	if (skeleton != TG3_INDEX_NONE) {
+	    if (skeleton < 0 || static_cast<uint32_t>(skeleton) >= model.nodes_count)
+		return false;
+	    skeleton_link = state->link_names[static_cast<size_t>(skeleton)];
+	}
+    }
+    if (db5_update_attribute(region_name.c_str(), "gltf::kind", "node",
+	    state->fd_out->dbip) ||
+	db5_update_attribute(region_name.c_str(), "gltf::node_index",
+	    index_text.c_str(), state->fd_out->dbip) ||
+	db5_update_attribute(region_name.c_str(), "gltf::link",
+	    state->link_names[static_cast<size_t>(node_index)].c_str(),
+	    state->fd_out->dbip) ||
+	(!node_name.empty() && db5_update_attribute(region_name.c_str(),
+	    "gltf::name", node_name.c_str(), state->fd_out->dbip)) ||
+	(!mesh_name.empty() && db5_update_attribute(region_name.c_str(),
+	    "gltf::mesh_name", mesh_name.c_str(), state->fd_out->dbip)) ||
+	(!mesh_index_text.empty() && db5_update_attribute(region_name.c_str(),
+	    "gltf::mesh_index", mesh_index_text.c_str(), state->fd_out->dbip)) ||
+	(!skin_name.empty() && db5_update_attribute(region_name.c_str(),
+	    "gltf::skin_name", skin_name.c_str(), state->fd_out->dbip)) ||
+	(!skin_index_text.empty() && db5_update_attribute(region_name.c_str(),
+	    "gltf::skin_index", skin_index_text.c_str(), state->fd_out->dbip)) ||
+	(!skeleton_link.empty() && db5_update_attribute(region_name.c_str(),
+	    "gltf::skin_skeleton", skeleton_link.c_str(), state->fd_out->dbip)))
 	return false;
 
     mat_t matrix;
@@ -826,6 +1174,8 @@ import_standard_joint_graph(struct conversion_state *state, const tg3_model &mod
 static bool
 convert_from_gltf(struct conversion_state *state, const tg3_model &model)
 {
+    if (!supported_model_features(model))
+	return false;
     if (model.scenes_count == 0) {
 	bu_log("glTF input does not define a scene\n");
 	return false;
@@ -836,12 +1186,50 @@ convert_from_gltf(struct conversion_state *state, const tg3_model &model)
 	return false;
     }
 
-    if (!initialize_link_names(state, model))
+    if (!initialize_link_names(state, model) || !import_materials(state, model))
 	return false;
-    const tg3_scene &scene = model.scenes[scene_index];
+    state->node_objects.resize(model.nodes_count);
+    state->node_built.resize(model.nodes_count, 0);
     std::set<int32_t> active_nodes;
-    for (uint32_t i = 0; i < scene.nodes_count; ++i) {
-	if (!handle_node(state, model, scene.nodes[i], state->scene, active_nodes))
+    for (uint32_t current_scene = 0; current_scene < model.scenes_count;
+	++current_scene) {
+	const tg3_scene &scene = model.scenes[current_scene];
+	struct wmember scene_members;
+	BU_LIST_INIT(&scene_members.l);
+	for (uint32_t root = 0; root < scene.nodes_count; ++root) {
+	    if (!handle_node(state, model, scene.nodes[root], scene_members,
+		    active_nodes)) {
+		mk_freemembers(&scene_members.l);
+		return false;
+	    }
+	}
+	std::string scene_object = unique_object_name(state,
+	    "gltf_scene_" + std::to_string(current_scene));
+	if (mk_lcomb(state->fd_out, scene_object.c_str(), &scene_members,
+		0, NULL, NULL, NULL, 0) < 0)
+	    return false;
+	state->object_names.insert(scene_object);
+	std::string index_text = std::to_string(current_scene);
+	std::string scene_name = gltf_string(scene.name);
+	if (db5_update_attribute(scene_object.c_str(), "gltf::kind", "scene",
+		state->fd_out->dbip) ||
+	    db5_update_attribute(scene_object.c_str(), "gltf::scene_index",
+		index_text.c_str(), state->fd_out->dbip) ||
+	    (!scene_name.empty() && db5_update_attribute(scene_object.c_str(),
+		"gltf::name", scene_name.c_str(), state->fd_out->dbip)))
+	    return false;
+	if (static_cast<int32_t>(current_scene) == scene_index) {
+	    for (uint32_t root = 0; root < scene.nodes_count; ++root) {
+		if (!handle_node(state, model, scene.nodes[root], state->scene,
+			active_nodes))
+		    return false;
+	    }
+	}
+    }
+    if (model.default_scene >= 0) {
+	std::string default_scene = std::to_string(scene_index);
+	if (db5_update_attribute(DB5_GLOBAL_OBJECT_NAME, "gltf::default_scene",
+		default_scene.c_str(), state->fd_out->dbip))
 	    return false;
     }
     return import_standard_joint_graph(state, model) &&
