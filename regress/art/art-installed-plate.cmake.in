@@ -1,0 +1,95 @@
+cmake_minimum_required(VERSION 3.22)
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/installed-plate-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+foreach(shader IN ITEMS art_absorption_reference art_refraction_reference)
+  configure_file("@CMAKE_CURRENT_BINARY_DIR@/${shader}.oso" "${WORK}/shaders/${shader}.oso" COPYONLY)
+endforeach()
+set(GLASS_DB "${WORK}/glass.g")
+set(REFERENCE_DB "${WORK}/reference.g")
+run("${VEXEC}" create-material "${GLASS_DB}" as_glass)
+run("${VEXEC}" create-material "${REFERENCE_DB}" art_absorption_reference)
+file(WRITE "${WORK}/plate.tcl" [=[
+put plate.s bot mode plate orient no V {{-10 -10 0} {10 -10 0} {10 10 0} {-10 10 0}} F {{0 1 2} {0 2 3}} T {2 2} fm 00
+r plate.r u plate.s
+attr set plate.r region P
+material assign plate.r osl.material
+cp plate.s physical.s
+r physical.r u physical.s
+attr set physical.r region P
+material assign physical.r osl.material
+bot extrude --max-area-delta 0 -i physical.s
+if {[get plate.s mode] ne "plate" || [get physical.s mode] ne "volume"} {
+    error {Plate conversion did not preserve the source and replace the copy}
+}
+if {[attr get physical.r region] ne "P"} {
+    error {Plate conversion changed the existing region metadata}
+}
+puts {physical plate fixture ready}
+]=])
+foreach(database IN ITEMS "${GLASS_DB}" "${REFERENCE_DB}")
+  run_command("${WORK}" FALSE "@ART_MGED_EXECUTABLE@" -c "${database}" "source plate.tcl")
+  string(FIND "${command_output}" "physical plate fixture ready" completed)
+  if(completed LESS 0)
+    message(FATAL_ERROR "Installed mged did not finish the plate conversion\n${command_output}")
+  endif()
+endforeach()
+foreach(database IN ITEMS "${GLASS_DB}" "${REFERENCE_DB}")
+  run("${VEXEC}" set-material "${database}" OSL.param.in_volume_transmittance "color 0.25 0.5 0.8")
+  run("${VEXEC}" set-material "${database}" OSL.param.in_volume_transmittance_distance "float 2")
+endforeach()
+run("${VEXEC}" set-material "${GLASS_DB}" OSL.param.in_ior "float 1")
+run("${VEXEC}" set-material "${GLASS_DB}" OSL.param.in_roughness "float 0")
+run("${VEXEC}" set-material "${GLASS_DB}" OSL.param.in_transmittance_amount "float 1")
+run("${VEXEC}" set-material "${GLASS_DB}" OSL.param.in_surface_transmittance "color 1 1 1")
+run("${VEXEC}" set-material "${REFERENCE_DB}" OSL.param.in_center "point 0 0 0")
+run("${VEXEC}" set-material "${REFERENCE_DB}" OSL.param.in_axes "vector 10 10 1")
+set(RENDER_ARGS -a 0 -E 2 -P 2 -w 64 -n 64 -c "set samples=16 light_intensity=0" -c "viewsize 40")
+foreach(object IN ITEMS plate.r physical.r)
+  if(object STREQUAL "plate.r")
+    set(shape plate)
+  else()
+    set(shape box)
+  endif()
+  run("${VEXEC}" set-material "${REFERENCE_DB}" OSL.param.in_shape "string ${shape}")
+  foreach(elevation IN ITEMS 90 65 -65)
+    foreach(perspective IN ITEMS 0 50)
+      set(tag "absorption_${object}_${elevation}_${perspective}")
+      run("${EXEC}" ${RENDER_ARGS} -e ${elevation} -p ${perspective} -C 255/255/255
+        -o "${WORK}/actual_${tag}.png" "${GLASS_DB}" "${object}")
+      run("${EXEC}" ${RENDER_ARGS} -e ${elevation} -p ${perspective} -C 255/255/255
+        -o "${WORK}/reference_${tag}.png" "${REFERENCE_DB}" "${object}")
+      run("${VEXEC}" check-matching-image "${WORK}/actual_${tag}.png" "${WORK}/reference_${tag}.png" 64 64)
+    endforeach()
+  endforeach()
+endforeach()
+
+# Convert to a physical volume before changing the ray direction at a boundary.
+run("${VEXEC}" set-material "${GLASS_DB}" OSL.param.in_volume_transmittance_distance "float 0")
+run("${VEXEC}" set-material "${GLASS_DB}" OSL.param.in_reflection_tint "color 0 0 0")
+run("${VEXEC}" set-material "${REFERENCE_DB}" OSL art_refraction_reference)
+run("${VEXEC}" remove-material "${REFERENCE_DB}" OSL.param.in_volume_transmittance)
+run("${VEXEC}" remove-material "${REFERENCE_DB}" OSL.param.in_volume_transmittance_distance)
+run("${VEXEC}" set-material "${REFERENCE_DB}" OSL.param.in_shape "string box")
+foreach(ior IN ITEMS 1.5 2)
+  foreach(database IN ITEMS "${GLASS_DB}" "${REFERENCE_DB}")
+    run("${VEXEC}" set-material "${database}" OSL.param.in_ior "float ${ior}")
+  endforeach()
+  foreach(elevation IN ITEMS 90 65)
+    foreach(perspective IN ITEMS 0 50)
+      set(tag "refraction_${ior}_${elevation}_${perspective}")
+      run("${EXEC}" ${RENDER_ARGS} -e ${elevation} -p ${perspective} -C 0/0/0
+        -o "${WORK}/actual_${tag}.png" "${GLASS_DB}" physical.r receiver.r)
+      run("${EXEC}" ${RENDER_ARGS} -e ${elevation} -p ${perspective} -C 0/0/0
+        -o "${WORK}/reference_${tag}.png" "${REFERENCE_DB}" physical.r receiver.r)
+      run("${VEXEC}" check-matching-image "${WORK}/actual_${tag}.png" "${WORK}/reference_${tag}.png" 64 64)
+    endforeach()
+  endforeach()
+endforeach()
+run("${VEXEC}" set-material "${GLASS_DB}" OSL.param.in_ior "float 1")
+run("${EXEC}" ${RENDER_ARGS} -e 65 -p 50 -C 0/0/0
+  -o "${WORK}/wrong_ior.png" "${GLASS_DB}" physical.r receiver.r)
+expect_failure("${VEXEC}" check-matching-image "${WORK}/wrong_ior.png"
+  "${WORK}/reference_refraction_2_65_50.png" 64 64)

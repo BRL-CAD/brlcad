@@ -6,6 +6,9 @@ brlcad_add_test(NAME rt_arb_uv COMMAND rt_arb_uv)
 brlcad_addexec(rt_bot_normals bot_normals.cpp "${RT_TEST_LIBS}" TEST)
 brlcad_add_test(NAME rt_bot_normals COMMAND rt_bot_normals)
 
+brlcad_addexec(rt_bot_plate_volume bot_plate_volume.cpp "librt;libbg;libbu" TEST)
+brlcad_add_test(NAME rt_bot_plate_volume COMMAND rt_bot_plate_volume)
+
 brlcad_addexec(rt_surface_derivatives surface_derivatives.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_surface_derivatives COMMAND rt_surface_derivatives)
 
