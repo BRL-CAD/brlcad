@@ -1,6 +1,13 @@
 brlcad_addexec(icv_robustness robustness.c "libicv;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME icv_robustness COMMAND icv_robustness)
 
+brlcad_addexec(icv_exr_test exr_test.cpp "libicv;libbu;OpenEXR::OpenEXR" TEST)
+brlcad_add_test(NAME icv_exr_test COMMAND icv_exr_test ${CMAKE_CURRENT_BINARY_DIR})
+brlcad_add_test(NAME icv_exr_streams COMMAND ${CMAKE_COMMAND}
+  "-DEXEC=$<TARGET_FILE:icv_exr_test>" -P "${CMAKE_CURRENT_SOURCE_DIR}/exr_streams.cmake")
+cmakefiles(exr_streams.cmake)
+
+
 brlcad_addexec(icv_demo demo.c "libicv;libbu" TEST)
 brlcad_add_test(NAME icv_demo COMMAND icv_demo)
 

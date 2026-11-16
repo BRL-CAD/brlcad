@@ -1,6 +1,7 @@
 brlcad_find_package(NETPBM REQUIRED)
 brlcad_find_package(PNG REQUIRED)
 brlcad_find_package(JPEG REQUIRED)
+brlcad_find_package(OpenEXR 3.5 CONFIG REQUIRED)
 cmake_push_check_state()
 set(CMAKE_REQUIRED_INCLUDES ${JPEG_INCLUDE_DIRS} ${JPEG_INCLUDE_DIR})
 brlcad_include_file("stddef.h;stdio.h;jpeglib.h" HAVE_JPEGLIB_H)
@@ -40,6 +41,7 @@ set(
   diff_approx.cpp
   dpix.c
   encoding.c
+  exr.cpp
   fileformat.c
   filter.c
   jpeg.c
@@ -55,7 +57,7 @@ set(
 
 
 # Note - libicv_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
-set(ICV_LIBS ${libicv_deps} PNG::PNG NETPBM::NETPBM JPEG::JPEG)
+set(ICV_LIBS PNG::PNG NETPBM::NETPBM JPEG::JPEG OpenEXR::OpenEXR)
 set(LOCAL_ICV_INCLUDE_DIRS
   ${PNG_INCLUDE_DIRS}
   ${NETPBM_INCLUDE_DIR}
@@ -64,6 +66,7 @@ set(LOCAL_ICV_INCLUDE_DIRS
 )
 
 brlcad_addlib(libicv "${LIBICV_SOURCES}" "" "${LOCAL_ICV_INCLUDE_DIRS}"
+  PUBLIC_LIBS ${libicv_deps}
   PRIVATE_LIBS ${ICV_LIBS}
 )
 set_target_properties(libicv PROPERTIES VERSION 20.0.1 SOVERSION 20)

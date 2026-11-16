@@ -59,12 +59,6 @@ foreach(extension IN ITEMS png pix exr)
   file(WRITE "${input}" "start 08; ${POSE}; opt -o \"${base}\"; end;\n")
   run(INPUT_FILE "${input}" "${EXEC}" ${RENDER_ARGS} -M "${DB}" all.g)
   set(image "${WORK}/formats.v1/frame output.8.${extension}")
-  if(extension STREQUAL exr)
-    # libicv does not read EXR; validate its float pixels before conversion.
-    run(@ART_TEST_TOOL_ENV@ "@ART_OIIOTOOL_EXECUTABLE@" "${image}"
-      --fixnan error -o "${WORK}/exr-check.png")
-    set(image "${WORK}/exr-check.png")
-  endif()
   run("${VEXEC}" check-image "${image}" 64 64)
   if(EXISTS "${base}")
     message(FATAL_ERROR "A numbered frame overwrote the unnumbered output: ${base}")

@@ -162,10 +162,24 @@ brlcad_add_test(
     -P "${CMAKE_CURRENT_SOURCE_DIR}/test_rt_command_view.cmake"
 )
 
+brlcad_add_test(
+  NAME rt_command_selection
+  COMMAND "${CMAKE_COMMAND}" "-DRT=$<TARGET_FILE:rt>"
+    "-DDBGEN=$<TARGET_FILE:test_rtarea_db>"
+    "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/command-selection"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/test_rt_command_selection.cmake"
+)
+if(BUILD_TESTING AND TARGET rt AND TARGET test_rtarea_db)
+  add_dependencies(unit rt test_rtarea_db)
+  add_dependencies(check rt test_rtarea_db)
+endif()
+distclean("${CMAKE_CURRENT_BINARY_DIR}/command-selection")
+
 # Housekeeping
 cmakefiles(
   CMakeLists.txt
   test_rt_command_view.cmake
+  test_rt_command_selection.cmake
   test_rt_disk_framebuffer_size.cmake
   test_rt_unbuffered_background.cmake
   test_rtarea_analytic.cmake

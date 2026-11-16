@@ -391,7 +391,11 @@ static int
 rt_opt_command(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "command");
-    (void)rt_do_cmd((struct rt_i *)0, argv[0], rt_do_tab);
+    if (rt_do_cmd((struct rt_i *)0, argv[0], rt_do_tab) != 0) {
+	if (msg)
+	    bu_vls_printf(msg, "command failed: %s", argv[0]);
+	return -1;
+    }
     return 1;
 }
 

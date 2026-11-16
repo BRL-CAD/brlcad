@@ -58,6 +58,17 @@ add_target_deps(halftone dm_plugins)
 # This is intended to replace all of the img-img utils eventually
 brlcad_addexec(icv icv.cpp "libicv;libbu" FOLDER Util)
 
+if(BUILD_TESTING AND TARGET icv_exr_test)
+  brlcad_add_test(NAME icv_conversion_cli COMMAND "${CMAKE_COMMAND}"
+    "-DICV=$<TARGET_FILE:icv>" "-DFIXTURE=$<TARGET_FILE:icv_exr_test>"
+    "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/icv-conversion"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/icv_conversion.cmake")
+  add_dependencies(unit icv icv_exr_test)
+  add_dependencies(check icv icv_exr_test)
+endif()
+cmakefiles(tests/icv_conversion.cmake)
+distclean("${CMAKE_CURRENT_BINARY_DIR}/icv-conversion")
+
 # Should (eventually) have the pixdiff functionality, but be more
 # flexible about input and output formats...
 brlcad_addexec(imgdiff imgdiff.cpp "libicv;libbu" FOLDER Util)

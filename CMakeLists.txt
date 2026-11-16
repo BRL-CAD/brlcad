@@ -3166,6 +3166,10 @@ foreach(_brlcad_dep ZLIB LMDB MANIFOLD MMESH REGEX STRUETYPE PNG NETPBM OPENNURB
 endforeach()
 
 set(BRLCAD_FIND_DEP_JPEG "find_dependency(JPEG)")
+set(BRLCAD_FIND_DEP_OPENEXR "")
+if(TARGET libicv)
+  set(BRLCAD_FIND_DEP_OPENEXR "find_dependency(OpenEXR 3.5 CONFIG)")
+endif()
 
 set(BRLCAD_HAVE_TCL FALSE)
 if(BRLCAD_ENABLE_TCL)

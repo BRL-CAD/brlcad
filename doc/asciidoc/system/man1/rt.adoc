@@ -65,9 +65,25 @@ must follow any viewing parameters.
 
 
 *-c "script_command"*, *--command "script_command"*::
-is for specifying commands for rt to run prior to ray tracing. The "script_command" can be a single command or a semi-colon separated list of commands. The commands available are the same commands that may appear in a *-M* command script.
+supplies one configuration command before the database opens. Repeat *-c*
+to supply additional commands. Commands such as *set*, *viewsize*, *eye_pt*,
+*lookat_pt*, *viewrot*, *orientation*, and *autoview* configure the later render.
+A failed command makes option parsing fail.
 +
-Some common script commands include start, viewsize, eye_pt, lookat_pt, viewrot, orientation, multiview, autoview, anim, tree, draw, erase, prep, clean, set, ae, start, and end. Running the *saveview* in MGED will produce an rt script for the current view.
+Commands that load geometry, modify articulation, or render frames require an
+open database and belong in *-M* input. These include *start*, *end*, *tree*,
+*draw*, *erase*, *prep*, *anim*, *clean*, and *multiview*. Running *saveview* in
+MGED produces such a rendering script.
++
+In a command stream, *tree object ...* replaces the selected tree tops;
+*draw object ...* adds names and *erase object ...* removes names. Every
+argument is processed, and duplicate names are ignored. Edits start from the
+command-line selection or a database default that has already been loaded.
+An explicitly emptied selection does not fall back to a database default.
+Selection changes invalidate prepared geometry while retaining articulation;
+*anim* also invalidates geometry. An explicit *clean* clears articulation
+while keeping the selected names. Use *prep* to load the current selection
+explicitly, or let *end* prepare it before rendering.
 +
 Some common *set* variables include ambSamples, overlay, a_onehit, a_no_booleans. Running *-c "set"* will print values for all settable variables.
 

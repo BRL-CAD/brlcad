@@ -305,8 +305,38 @@ are covered by cleanup regressions.
 `art-installed-view` generates the saved view through installed mged,
 compares the rendered result with an independent camera setup, and executes
 the complete generated shell script on Unix.  It also checks two clean/render
-cycles within one art process.  Changes to the active tree list remain
-unqualified.
+cycles within one art process. Active tree-list edits have their own
+selection regression described below.
+
+=== Active object selection
+
+In `-M` input, `tree object ...` replaces the active tree tops, `draw object
+...` adds tree tops without duplicating an existing name, and `erase object
+...` removes named tree tops. Each command accepts multiple objects. The
+initial selection comes from the command line or `-I` object file; a stream
+may also establish its selection without either. Geometry preparation and
+material traversal use the same active list. Removing every object reports
+an empty-selection error when rendering, without falling back to the original
+command-line objects.
+
+Selection edits invalidate prepared geometry automatically. `prep` loads the
+current selection explicitly, and `end` prepares it as needed. `anim` also
+invalidates geometry so articulation changes reach subsequent renders.
+Selection edits retain animation commands; an explicit `clean` clears
+articulation while retaining the selected object names. Failed tree loading
+stops the stream. Selection commands require an open database and belong in
+`-M` input, rather than command-line `-c` options processed before database
+loading. Frame, preparation, and cleanup commands also require database
+loading. Failed `-c` commands return an error. `multiview` and the internal
+`_closedb` debugging command are unsupported and report errors; use explicit
+`start`/`end` blocks for multiple views.
+
+`regress-art-selection` compares multi-object edits, replacements, repeated
+frames, and retained/reset articulation with independent reference renders.
+It checks empty selections, missing objects, and inline-command errors while
+preserving existing output files. The same test runs against installed art.
+The shared command handlers also have a native `rt_command_selection`
+regression with deterministic pixel comparisons.
 
 === Command-stream frames
 

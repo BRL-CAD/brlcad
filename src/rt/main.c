@@ -462,12 +462,6 @@ int main(int argc, char *argv[])
 	objc = argc - bu_optind - 1;
 	if (objc) {
 	    objv = (char **)&(argv[bu_optind+1]);
-	} else {
-	    /* No objects in either input file or argv - try getting
-	     * objs from command processing.  Initialize the table.
-	     */
-	    BU_GET(cmd_objs, struct bu_ptbl);
-	    bu_ptbl_init(cmd_objs, 8, "initialize cmdobjs table");
 	}
     } else {
 	objs_free_argv = 1;

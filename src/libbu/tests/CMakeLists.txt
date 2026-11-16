@@ -197,6 +197,13 @@ brlcad_add_test(NAME bu_file  COMMAND bu_test test_file)
 # NOTE: these test numbers correspond with the bu_mime_t enum values in include/bu/mime.h
 brlcad_add_test(NAME bu_file_mime_dxf   COMMAND bu_test test_file_mime dxf 5 BU_MIME_MODEL_DXF) # tests dxf extension in model context
 brlcad_add_test(NAME bu_file_mime_stp   COMMAND bu_test test_file_mime stp 5 BU_MIME_MODEL_STEP) # tests stp extension in model context
+brlcad_add_test(NAME bu_mime_extensions COMMAND ${CMAKE_COMMAND}
+  "-DSOURCE_DIR=${CMAKE_SOURCE_DIR}"
+  "-DTEST_ROOT=${CMAKE_CURRENT_BINARY_DIR}/mime-extension-test"
+  -P "${CMAKE_CURRENT_SOURCE_DIR}/mime_extensions.cmake")
+cmakefiles(mime_extensions.cmake)
+
+brlcad_add_test(NAME bu_file_mime_exr COMMAND bu_test test_file_mime exr 3 BU_MIME_IMAGE_EXR)
 brlcad_add_test(NAME bu_file_mime_png   COMMAND bu_test test_file_mime png 3 BU_MIME_IMAGE_PNG) # tests png extension in image context
 
 #BRLCAD_ADD_TEST(NAME bu_file_glob   COMMAND bu_test file_glob) # runs a series of built-in unit tests

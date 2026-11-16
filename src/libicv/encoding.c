@@ -51,6 +51,17 @@ icv_uchar2double(unsigned char *data, size_t size)
 }
 
 
+/* Clamp before integer conversion: valid HDR samples may exceed lrint's
+ * range. Display formats map NaN to black and infinities to their limits. */
+static double
+icv_display_sample(double value)
+{
+    if (isnan(value) || value < 0.0)
+	return 0.0;
+    return value > 1.0 ? 1.0 : value;
+}
+
+
 unsigned char *
 icv_data2uchar(const icv_image_t *bif)
 {
@@ -75,14 +86,7 @@ icv_data2uchar(const icv_image_t *bif)
 
     if (ZERO(bif->gamma_corr)) {
 	while (size--) {
-	    long longval = lrint((*double_p)*255.0);
-
-	    if (longval > 255)
-		*char_p = 255;
-	    else if (longval < 0)
-		*char_p = 0;
-	    else
-		*char_p = (unsigned char)longval;
+	    *char_p = (unsigned char)lrint(icv_display_sample(*double_p)*255.0);
 
 	    char_p++;
 	    double_p++;
@@ -94,9 +98,7 @@ icv_data2uchar(const icv_image_t *bif)
 	bn_rand_init(rand_p, 0);
 
 	while (size--) {
-	    double val = *double_p;
-	    if (val < 0.0) val = 0.0;
-	    else if (val > 1.0) val = 1.0;
+	    double val = icv_display_sample(*double_p);
 
 	    long longval = lrint(pow(val, ex)*255.0 + (double) bn_rand0to1(rand_p));
 	    if (longval > 255)

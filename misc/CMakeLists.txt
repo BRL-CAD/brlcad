@@ -117,6 +117,7 @@ set(
   macosx/openUp.c
   mime.types
   mime_cad.types
+  mime_extensions.types
   nsis/archer.ico
   nsis/brlcad.ico
   nsis/header.bmp

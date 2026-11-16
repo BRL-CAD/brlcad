@@ -22,6 +22,13 @@ icv anim <action> <anim_file> ...
 
 Without a subcommand, *icv* acts as an image format converter, reading the input image and writing it to the output file. Image formats are auto-detected from file extensions unless overridden with *--input-format* / *--output-format*. To stream through standard input or output (a path of which carries no extension) the corresponding format must be given explicitly. This tool is intended to eventually replace the family of single-purpose *pix-png*(1), *png-pix*(1), *bw-pix*(1) and similar converters.
 
+Conversion accepts up to two positional paths, filling input and output
+paths that were not specified with `-i` or `-o`. An omitted path selects
+standard input or standard output when its format is supplied explicitly.
+The `-o` option refuses an existing destination. Parsing, input, and output
+failures return a nonzero exit status; a failed input does not open or
+replace the requested output.
+
 === Supported Formats
 
 [cols="2*"]
@@ -31,7 +38,7 @@ Without a subcommand, *icv* acts as an image format converter, reading the input
 |Black and White (Grayscale)
 |bw
 
-|Double Precision Pixel (R/G/B/A double)
+|Double Precision Pixel (R/G/B double)
 |dpix
 
 |Pixel Sequence (R/G/B unsigned char)
@@ -40,9 +47,39 @@ Without a subcommand, *icv* acts as an image format converter, reading the input
 |Portable Network Graphics
 |png
 
+|OpenEXR (floating-point RGB/RGBA or gray/gray-alpha)
+|exr
+
 |Portable Pixmap
 |ppm
 |===
+
+=== OpenEXR and HDR data
+
+EXR input supports flat, single-part RGB/RGBA and Y/YA images, including tiled
+files and offset data windows. HALF and FLOAT values are imported as doubles;
+UINT samples retain their exact 32-bit integer values on input. The EXR data
+window becomes the image extent, with libicv's usual bottom-up row order.
+
+EXR output uses lossless ZIP compression and 32-bit FLOAT channels. Values
+outside finite FLOAT range are rejected; other doubles are rounded to FLOAT.
+Negative values, values above one, alpha samples, and IEEE NaN/Infinity values
+are retained without gamma correction, tone mapping, or alpha-association
+conversion. EXR input enables unclamped scalar and binary arithmetic. An
+explicit sanitize operation and conversion to display formats may still clip
+values to their display range.
+
+Auxiliary channels, subsampled color channels, multipart files, and deep data
+are rejected rather than silently reduced to a color image. Header metadata,
+including display-window origins, chromaticities, and render information, is
+not preserved by this image representation. Non-color planes such as depth,
+normals, or object IDs need a separate channel-aware interface; they should not
+be passed through RGB color operations.
+
+For example, `icv scene.exr copy.exr` preserves FLOAT image samples, while
+`icv scene.exr preview.png` makes a display-range conversion without applying
+a tone mapper. Standard input and output are supported with explicit
+`--input-format exr` and `--output-format exr` options.
 
 === Subcommands
 

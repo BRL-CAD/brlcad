@@ -87,7 +87,8 @@ ICV_EXPORT int icv_pow_val(icv_image_t* img, double val);
  * This routine adds pixel value of one image to pixel value of other
  * pixel and inserts in the same index of the output image.
  *
- * Also it sanitizes the image.
+ * The result is sanitized unless either input has ICV_OPERATIONS_MODE set.
+ * In that case, the result retains that flag and unclamped sample values.
  */
 ICV_EXPORT icv_image_t *icv_add(icv_image_t *img1, icv_image_t *img2);
 
@@ -96,7 +97,8 @@ ICV_EXPORT icv_image_t *icv_add(icv_image_t *img1, icv_image_t *img2);
  * other pixel and inserts the result at the same index of the output
  * image.
  *
- * Also it sanitizes the image.
+ * The result is sanitized unless either input has ICV_OPERATIONS_MODE set.
+ * In that case, the result retains that flag and unclamped sample values.
  *
  * @param img1 First Image.
  * @param img2 Second Image.
@@ -110,7 +112,8 @@ ICV_EXPORT icv_image_t *icv_sub(icv_image_t *img1, icv_image_t *img2);
  * other pixel and inserts the result at the same index of the output
  * image.
  *
- * Also it sanitizes the image.
+ * The result is sanitized unless either input has ICV_OPERATIONS_MODE set.
+ * In that case, the result retains that flag and unclamped sample values.
  *
  * @param img1 First Image.
  * @param img2 Second Image.
@@ -124,7 +127,8 @@ ICV_EXPORT icv_image_t *icv_multiply(icv_image_t *img1, icv_image_t *img2);
  * other pixel and inserts the result at the same index of the output
  * image.
  *
- * Also it sanitizes the image.
+ * The result is sanitized unless either input has ICV_OPERATIONS_MODE set.
+ * In that case, the result retains that flag and unclamped sample values.
  *
  * @param img1 First Image.
  * @param img2 Second Image.
