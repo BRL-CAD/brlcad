@@ -1094,6 +1094,14 @@ passes, and cancellation preserves existing output files.
 |`photon_alpha` |0.7 |Progressive radius reduction parameter, greater than 0 and at most 1
 |===
 
+Importon guidance uses an initial setup pass before tracing lighting.
+When `passes` is inherited, art selects two total passes for SPPM with
+importons enabled, so the default produces a lighting result.  An explicit
+pass count includes the setup pass and must be at least two in this mode.
+`photon_importons=0` disables the setup pass; its inherited pass count is
+one, as for PT.  The setup pass contributes to progress but is cleared from
+the final image.  These rules also apply after engine changes and `clean`.
+
 All numeric controls accept `inherit`.  Photon counts may be zero to
 disable that emitter class; the estimate limit and pass count must be
 positive.  The initial radius must be positive and at most 100 percent.
@@ -1571,6 +1579,33 @@ tightness of its bound.  It is not an exact CAD area measurement.
 Lighting samples retain the crossing weights and missed attempts of the
 Boolean surface sampler independently of that area estimate.
 
+Emission weights may depend on the outgoing direction.  Photon emission
+reevaluates the shader with `I` pointing into the emitting surface from
+the sampled outgoing direction and with `raytype("light")` enabled.  A
+zero emission weight along the surface normal therefore does not suppress
+light emitted at oblique angles.  The renderer sums the emission closures
+at that direction.  Visible evaluation retains its path metadata and
+texture footprint; a new photon launch begins at path length and depth
+zero, without a camera footprint.  Appleseed uses `raytype("light")` to
+select emission closures, including evaluation of a visible emitter.
+That tag identifies emission evaluation, rather than the origin of the
+physical path.
+
+Before evaluating a launch shader, the renderer finds the closed optical
+media surrounding its sampled outgoing ray.  The shader's
+`getattribute("path:ray_ior", value)` query and subsequent photon transport
+use the same medium stack and sampled IOR.  This matters for emitters
+inside glass, and for materials whose glass closures offer several IORs.
+The launched ray retains the time used to sample the emitter geometry.
+
+Explicit light sampling also evaluates the emitter with the optical state
+at the end of its visibility segment.  The sampled shader receives that
+segment's time, depth, and full distance to the light, including when the
+sample starts at a volume-scattering point.  It does not acquire a camera
+texture footprint.  Alpha coverage attenuates visibility without entering
+a fictitious index-one medium; only standalone volume boundaries update
+the shadow ray's medium stack.
+
 `regress-art-emission` compares received linear radiance with independent
 analytic integrals for a sphere, a hollow sphere, a recessed box, and a
 solid BOT.  Additional sphere and cavity checks exercise area-normalized
@@ -1581,6 +1616,34 @@ on the manufactured light hit.  A fully transparent cover between the
 receiver and emitter must preserve the analytic illumination, including
 paths that hit the light after passing through both cover boundaries.
 These complement the ordinary camera and post-transmission query checks.
+
+`regress-art-directional-emission` checks constant and annular emission on
+a recessed CSG box and a solid BOT.  The annular profile is dark along the
+normal.  A center-point PT render must match the square's analytic
+irradiance minus the excluded normal cone.  Separate photon renders pass
+through index-one clear glass and compare mean linear radiance with PT
+over a wider receiver footprint.  Each uses 16 million photons, with a
+three-percent bound for photon noise and finite-radius estimation.  This
+qualifies directional surface emission through an optically neutral cover;
+it does not qualify general refractive area-light focusing.
+
+`regress-art-emission-medium` compares an IOR-querying shader with a
+fixed-color control on both CSG and BOT emitters.  Cameras inside and
+outside a glass host and photons launched inside that host must produce
+matching images with positive radiance.  A separate neutral cover checks
+photon launches in vacuum.  These are shader-context diagnostics; they do
+not measure refractive area-light energy or general caustic focusing.
+Native renderer tests also check mixed glass closures, launch time, path
+metadata, geometry, and removal of the camera footprint.
+
+`regress-art-nee-context` compares queried emission with a fixed-color
+control on CSG and BOT emitters inside a shared glass host.  Surface cases
+exercise explicit light sampling enabled and disabled, alpha covers and
+absorbing fog.  A separate scattering-only view exercises volume light
+sampling.  The shader requires the expected incident IOR and nonzero path
+length and depth.  Each matched-seed pair must have identical pixels and
+positive control radiance.  These comparisons qualify context propagation,
+rather than a general refractive area-light energy model.
 
 The emitter contract supports static geometry.  Qualification of moving
 emitters, participating media, and general area-lit caustic focusing

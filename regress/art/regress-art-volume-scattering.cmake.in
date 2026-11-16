@@ -100,6 +100,8 @@ run("${VEXEC}" in "${DB}" cover.s rpp -2 2 -2 2 -4 -2)
 run("${VEXEC}" r "${DB}" cover.r u cover.s)
 run("${VEXEC}" material "${DB}" create cover.material Cover)
 run("${VEXEC}" set-named-material "${DB}" cover.material OSL art_alpha)
+# Coverage cannot displace the fog, even at a higher medium priority.
+run("${VEXEC}" set-named-material "${DB}" cover.material OSL.medium_priority 7)
 run("${VEXEC}" material "${DB}" assign cover.r cover.material)
 # Integrate the inside-camera reference over [0,2], [2,4] and [4,10].
 # For 0.25 opacity, the respective camera-times-shadow alpha factors

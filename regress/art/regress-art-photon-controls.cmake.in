@@ -39,7 +39,9 @@ foreach(settings IN ITEMS "integrator=unknown" "integrator=sppm sampling=adaptiv
     "integrator=sppm photon_radius_percent=100.01" "integrator=sppm photon_radius_percent=1junk"
     "integrator=sppm max_diffuse_bounces=0" "integrator=sppm max_glossy_bounces=0"
     "integrator=sppm max_specular_bounces=0" "integrator=sppm next_event_estimation=1"
-    "integrator=sppm light_photons=1000 passes=0")
+    "integrator=sppm light_photons=1000 passes=0"
+    "integrator=sppm passes=1" "integrator=sppm photon_importons=1 passes=1"
+    "passes=1 integrator=sppm photon_importons=inherit")
   file(WRITE "${WORK}/retained.exr" "preserve existing output")
   expect_failure_matching("invalid setting" "${EXEC}" -c "set ${settings}"
     -o "${WORK}/retained.exr" "${ACTUAL_DB}" receiver.box.r)
@@ -48,8 +50,66 @@ foreach(settings IN ITEMS "integrator=unknown" "integrator=sppm sampling=adaptiv
     message(FATAL_ERROR "Invalid photon configuration replaced an output")
   endif()
 endforeach()
+# A constant visible emitter isolates setup/pass semantics from photon noise.
+configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_sampling.oso"
+  "${WORK}/shaders/art_sampling.oso" COPYONLY)
+set(SETUP_DB "${WORK}/setup.g")
+run("${VEXEC}" create-material "${SETUP_DB}" art_sampling)
+set(SETUP_ARGS -P 2 -w 37 -n 35 -c "viewsize 4" -c "eye_pt 0 0 40"
+  -c "orientation 0 0 0 1"
+  -c "set integrator=sppm sampling=uniform samples=1 light_photons=0 environment_photons=0 light_intensity=0 environment_intensity=0")
+function(check_setup_image image)
+  run("${VEXEC}" check-image "${image}" 37 35)
+  run("${TOOL}" --fail 0 --hardfail 0 "${image}" --ch R,G,B
+    --pattern constant:color=0.25,0.5,0.75 37x35 3 --diff)
+endfunction()
+foreach(profile IN ITEMS "inherited;passes=inherit;8" "disabled;photon_importons=0;4"
+    "enabled;photon_importons=1 passes=2;8" "explicit-single;photon_importons=0 passes=1;4"
+    "enabled-three;photon_importons=1 passes=3;12")
+  list(GET profile 0 name)
+  list(GET profile 1 settings)
+  list(GET profile 2 tiles)
+  set(image "${WORK}/setup-${name}.exr")
+  run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}" ${SETUP_ARGS}
+    -c "set ${settings}" -o "${image}" "${SETUP_DB}" cube.r)
+  if(NOT command_output MATCHES "art: frame 0 complete: ${tiles}/${tiles} tiles")
+    message(FATAL_ERROR "Importon setup used the wrong pass/progress budget: ${name}")
+  endif()
+  check_setup_image("${image}")
+endforeach()
+file(WRITE "${WORK}/setup-frames.view"
+  "start 0; end; start 1; clean; end; start 2; set photon_importons=0; end;\n"
+  "start 3; set photon_importons=inherit passes=3; end;\n"
+  "start 4; set integrator=pt passes=inherit ${PHOTON_RESET}; end;\n"
+  "start 5; set integrator=sppm light_photons=0 environment_photons=0; end;\n")
+run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE INPUT_FILE "${WORK}/setup-frames.view"
+  "${EXEC}" ${SETUP_ARGS} -M -o "${WORK}/setup-frames.exr" "${SETUP_DB}" cube.r)
+set(setup_output "${command_output}")
+set(setup_tiles 8 8 4 12 4 8)
+foreach(frame RANGE 0 5)
+  list(GET setup_tiles ${frame} tiles)
+  if(NOT setup_output MATCHES "art: frame ${frame} complete: ${tiles}/${tiles} tiles")
+    message(FATAL_ERROR "Importon setup budget was stale in frame ${frame}")
+  endif()
+  set(suffix ".${frame}")
+  if(frame EQUAL 0)
+    set(suffix "")
+  endif()
+  check_setup_image("${WORK}/setup-frames${suffix}.exr")
+endforeach()
+
 # Clear direct lighting calibrates both engines independently of photon estimates.
 render_photon_reference(1 "${WORK}/clear-reference.exr")
+# Inherited guidance must reach actual point lighting after its setup pass.
+run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}" ${BASE_ARGS}
+  -c "set ${PHOTON_CONTROLS} passes=inherit photon_importons=inherit"
+  -o "${WORK}/guided-clear.exr" "${ACTUAL_DB}" receiver.box.r key_light.r)
+if(NOT command_output MATCHES "pure importon tracing pass" OR
+    NOT command_output MATCHES "sppm pass 2 completed" OR
+    NOT command_output MATCHES "art: frame 0 complete: 2/2 tiles")
+  message(FATAL_ERROR "Inherited importon guidance did not complete setup and lighting")
+endif()
+compare_radiance_mean("${WORK}/guided-clear.exr" "${WORK}/clear-reference.exr" 0.0011 FALSE)
 file(WRITE "${WORK}/frames.view"
   "start 0; end; start 1; clean; end; start 2; set integrator=pt ${PHOTON_RESET}; end; start 3; set ${PHOTON_CONTROLS}; end;\n")
 run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE INPUT_FILE "${WORK}/frames.view" "${EXEC}" ${BASE_ARGS} -M

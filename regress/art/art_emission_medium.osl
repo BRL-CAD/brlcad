@@ -1,0 +1,38 @@
+/*              A R T _ E M I S S I O N _ M E D I U M . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+surface art_emission_medium(
+    color in_color = color(1),
+    float in_expected_ior = 1.5,
+    int in_constant = 0,
+    int in_require_path = 0)
+{
+    float ior = 0;
+    int found = getattribute("path:ray_ior", ior);
+    float IOR_TOLERANCE = 0.0001;
+    int correct = found && abs(ior - in_expected_ior) < IOR_TOLERANCE;
+    if (in_require_path) {
+        float ray_length = 0;
+        int ray_depth = 0;
+        correct = correct && getattribute("path:ray_length", ray_length) &&
+            getattribute("path:ray_depth", ray_depth) && ray_length > 0 && ray_depth > 0;
+    }
+    color value = in_constant || correct ? color(1, 0, 0) : color(0, 1, 0);
+    Ci = in_color * value * emission();
+}

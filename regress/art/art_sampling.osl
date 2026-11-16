@@ -20,8 +20,8 @@
 // Count only camera evaluations: emission queries execute the shader again.
 surface art_sampling(int in_varying = 0)
 {
-    if (raytype("camera"))
-        printf("art_sampling_evaluation\n");
     color value = in_varying ? color(u * u, v * v, u * v) : color(0.25, 0.5, 0.75);
+    if (raytype("camera"))
+        printf("art_sampling_evaluation %.9g %.9g %.9g\n", value[0], value[1], value[2]);
     Ci = value * emission();
 }

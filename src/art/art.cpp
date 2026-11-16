@@ -238,6 +238,9 @@ art_integrator_name(ArtIntegrator integrator)
 }
 
 struct ArtRenderSettings {
+    static constexpr int DefaultImagePasses = 1;
+    static constexpr int ImportonSetupPasses = 1;
+
     ArtSamplingMode sampling = ArtSamplingMode::Uniform;
     ArtIntegrator integrator = ArtIntegrator::PathTracing;
     int min_samples = 0;
@@ -267,6 +270,8 @@ struct ArtRenderSettings {
     bool valid_budget(int budget) const {
 	return sampling != ArtSamplingMode::Adaptive || min_samples <= budget;
     }
+    bool uses_importons() const;
+    int pass_count() const;
     std::string invalid_configuration() const;
     void apply(renderer::ParamArray& parameters, int budget) const;
     void write(std::ostream& output) const;
@@ -361,12 +366,27 @@ art_write_render_setting(std::ostream& output, const char *name, const std::opti
     output << '\n';
 }
 
+bool
+ArtRenderSettings::uses_importons() const
+{
+    return integrator == ArtIntegrator::PhotonMapping && photon_importons.value_or(true);
+}
+
+int
+ArtRenderSettings::pass_count() const
+{
+    const int setup_passes = uses_importons() ? ImportonSetupPasses : 0;
+    return passes.value_or(DefaultImagePasses + setup_passes);
+}
+
 std::string
 ArtRenderSettings::invalid_configuration() const
 {
     if (sampling == ArtSamplingMode::Adaptive &&
-	(integrator == ArtIntegrator::PhotonMapping || passes.value_or(1) > 1))
+	(integrator == ArtIntegrator::PhotonMapping || pass_count() > DefaultImagePasses))
 	return "photon mapping and multiple passes require sampling=uniform";
+    if (uses_importons() && pass_count() <= ImportonSetupPasses)
+	return "photon_importons=1 requires passes>=2; use passes=inherit or photon_importons=0";
     const bool photon_mapping = integrator == ArtIntegrator::PhotonMapping;
     for (const auto& setting : render_integer_settings) {
 	const char *path = photon_mapping ? setting.sppm_path : setting.pt_path;
@@ -387,6 +407,8 @@ ArtRenderSettings::apply(renderer::ParamArray& parameters, int budget) const
 {
     parameters.insert("lighting_engine", art_integrator_name(integrator));
     parameters.insert("tile_renderer", sampling == ArtSamplingMode::Adaptive ? "adaptive" : "generic");
+    // Later passes must add to the existing sample sums rather than replace them.
+    parameters.insert("shading_result_framebuffer", pass_count() > DefaultImagePasses ? "permanent" : "ephemeral");
     if (sampling == ArtSamplingMode::Adaptive) {
 	parameters.insert_path("adaptive_tile_renderer.min_samples", min_samples)
 	    .insert_path("adaptive_tile_renderer.max_samples", budget)
@@ -399,6 +421,9 @@ ArtRenderSettings::apply(renderer::ParamArray& parameters, int budget) const
 	if (number && path)
 	    parameters.insert_path(path, *number);
     }
+    // Guided photon mapping needs its setup pass before producing lighting.
+    if (!passes)
+	parameters.insert("passes", pass_count());
     for (const auto& setting : render_scalar_settings) {
 	const auto& number = this->*(setting.value);
 	if (number)
@@ -1719,7 +1744,7 @@ art_process_scene(bool display_framebuffer, const char *filename)
     struct fb *fbp = display_framebuffer ? fb_setup() : FB_NULL;
     if (display_framebuffer && !fbp)
 	return false;
-    ArtTileCallback callback(fbp, display_exposure, static_cast<size_t>(render_settings.passes.value_or(1)));
+    ArtTileCallback callback(fbp, display_exposure, static_cast<size_t>(render_settings.pass_count()));
     return art_render_image(project.ref(), filename, callback);
 }
 

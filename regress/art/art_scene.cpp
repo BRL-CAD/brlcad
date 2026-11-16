@@ -569,7 +569,7 @@ read_image(const char *path, size_t width, size_t height)
 }
 
 static int
-check_emitter_image(const char *path, const char *kind)
+check_emitter_image(const char *path, const char *kind, double normal_cone_cosine = 1.0)
 {
     auto image = read_image(path, 1, 1);
     if (!image)
@@ -586,6 +586,20 @@ check_emitter_image(const char *path, const char *kind)
 	expected = EMITTER_ALBEDO * 4 * t * std::atan(t) / M_PI;
     } else {
 	return 1;
+    }
+    if (!std::isfinite(normal_cone_cosine) || normal_cone_cosine <= 0 || normal_cone_cosine > 1)
+	return 1;
+    if (normal_cone_cosine < 1) {
+	if (!BU_STR_EQUAL(kind, "box") && !BU_STR_EQUAL(kind, "mesh"))
+	    return 1;
+	const double radius = EMITTER_BOX_HEIGHT * std::sqrt(1 / (normal_cone_cosine * normal_cone_cosine) - 1);
+	if (radius > EMITTER_BOX_HALF_WIDTH) {
+	    bu_log("The excluded normal cone must fit inside the square emitter\n");
+	    return 1;
+	}
+	// The excluded cone projects to a disk entirely inside the square.
+	// Its cosine-weighted solid angle is pi * (1 - cos(theta)^2).
+	expected -= EMITTER_ALBEDO * (1 - normal_cone_cosine * normal_cone_cosine);
     }
     // A tiny camera footprint isolates the analytic receiver point.
     // The bound covers finite Monte Carlo error, not an image-derived oracle.
@@ -934,8 +948,8 @@ main(int argc, char **argv)
 #endif
     if (argc == 4 && BU_STR_EQUAL(argv[1], "create-emitter"))
         return create_emitter_scene(argv[2], argv[3]);
-    if (argc == 4 && BU_STR_EQUAL(argv[1], "check-emitter-image"))
-        return check_emitter_image(argv[2], argv[3]);
+    if ((argc == 4 || argc == 5) && BU_STR_EQUAL(argv[1], "check-emitter-image"))
+        return check_emitter_image(argv[2], argv[3], argc == 5 ? std::stod(argv[4]) : 1.0);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create-contour-limit"))
 	return create_contour_limit_scene(argv[2]);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create-lit-glass-inside"))
