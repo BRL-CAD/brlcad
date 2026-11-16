@@ -362,10 +362,10 @@ getargs(struct uplot *up)
 
 
 static int
-parse_dimension(double *value, const char *arg, const char *name)
+parse_dimension(double *value, const char *str, const char *name)
 {
-    if (!bu_opt_scan_double(arg, value, NULL) || *value <= 0.0) {
-	bu_flog(stderr, "plot3-ps: invalid output %s '%s'\n", name, arg);
+    if (!bu_opt_scan_double(str, value, NULL) || *value <= 0.0) {
+	bu_flog(stderr, "plot3-ps: invalid output %s '%s'\n", name, str);
 	return 0;
     }
     return 1;
