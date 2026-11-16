@@ -1799,6 +1799,14 @@ plugins and applications against the matching Appleseed headers and library.
 
 === Emissive BRL-CAD regions
 
+`regress-art-emission-range` checks zero, subnormal, ordinary, and HDR
+emission on CSG and solid BOT regions.  The HDR values remain within the
+binary16 EXR writer's finite range.  Subnormal RGB rounds to black in that
+format; opaque alpha and clean renderer diagnostics distinguish valid dark
+emission from discarded samples.  Native Appleseed tests separately verify
+positive subnormal radiance during sampling, evaluation, and photon launch,
+and closure selection and chromaticity across the finite float weight range.
+
 OSL emission on librt regions participates in explicit light sampling
 without tessellating the geometry.  This includes Boolean subtraction
 boundaries.  For example, assign the installed area-light shader to a

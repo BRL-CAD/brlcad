@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-surface art_emission(color in_color = color(1))
+surface art_emission(color in_color = color(1), float in_multiplier = 1)
 {
-    Ci = in_color * emission();
+    Ci = in_color * in_multiplier * emission();
 }

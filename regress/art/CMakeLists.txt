@@ -135,6 +135,7 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-trace
   regress-art-attributes
   regress-art-emission
+  regress-art-emission-range
   regress-art-directional-emission
   regress-art-area-exit-csg-15
   regress-art-area-exit-csg-20
@@ -264,7 +265,8 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art.cmake.in regress-art-bump.cmake.in regress-art-normal.cmake.in
   regress-art-trace.cmake.in
   regress-art-attributes.cmake.in
-  regress-art-emission.cmake.in regress-art-directional-emission.cmake.in
+  regress-art-emission.cmake.in regress-art-emission-range.cmake.in
+  regress-art-directional-emission.cmake.in
   regress-art-emission-medium.cmake.in regress-art-nee-context.cmake.in
   regress-art-texture.cmake.in regress-art-color.cmake.in
   regress-art-image-maps.cmake.in regress-art-resources.cmake.in
@@ -312,6 +314,7 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/normal-output" "${CMAKE_CURRENT_BINARY_DIR}/texture-output"
     "${CMAKE_CURRENT_BINARY_DIR}/attributes-output"
     "${CMAKE_CURRENT_BINARY_DIR}/emission-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/emission-range-output"
     "${CMAKE_CURRENT_BINARY_DIR}/directional-emission-output"
     "${CMAKE_CURRENT_BINARY_DIR}/area-exit-csg-15-output"
     "${CMAKE_CURRENT_BINARY_DIR}/area-exit-csg-20-output"
