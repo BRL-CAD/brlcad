@@ -44,11 +44,13 @@
 #include "icv.h"
 #include "vmath.h"
 
+#define KERNEL_ELEMENT_COUNT 9
+
 /* The filter kernels */
 struct kernels {
     const char *name;
     const char *uname;		/* What is needed to recognize it */
-    int kern[9];
+    int kern[KERNEL_ELEMENT_COUNT];
     int kerndiv;	/* Divisor for kernel */
     int kernoffset;	/* To be added to result */
     ICV_FILTER filter;
@@ -219,7 +221,7 @@ main(int argc, char **argv)
     }
 
     if (verbose) {
-	for (x = 0; x < 11; x++)
+	for (x = 0; x < KERNEL_ELEMENT_COUNT; x++)
 	    bu_log("kern[%d] = %d\n", x, kern[x]);
 
 	max_d = icv_max(img);

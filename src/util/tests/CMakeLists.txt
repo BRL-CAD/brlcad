@@ -61,6 +61,13 @@ brlcad_add_test(
     -P "${CMAKE_CURRENT_SOURCE_DIR}/test_bwfilter_divisor.cmake"
 )
 
+brlcad_add_test(
+  NAME util_bwfilter_verbose_kernel
+  COMMAND
+    "${CMAKE_COMMAND}" "-DBWFILTER=$<TARGET_FILE:bwfilter>" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/test_bwfilter_verbose.cmake"
+)
+
 if(TARGET argdoc)
   brlcad_add_test(
     NAME util_argdoc_schema_selection
@@ -76,6 +83,7 @@ cmakefiles(
   test_argdoc_schema_selection.cmake
   test_bwcrop_single_axis.cmake
   test_bwfilter_divisor.cmake
+  test_bwfilter_verbose.cmake
   test_bwscale_endpoints.cmake
   test_bwstat_statistics.cmake
   test_dpix_pix_byte_order.cmake
