@@ -129,6 +129,22 @@ brlcad_add_test(
 )
 
 brlcad_add_test(
+  NAME rt_joint_skin_render
+  COMMAND
+    "${CMAKE_COMMAND}"
+    "-DGENERATOR=$<TARGET_FILE:ged_test_joint2>"
+    "-DRT=$<TARGET_FILE:rt>"
+    "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/test_joint_skin_render.cmake"
+)
+if(BUILD_TESTING AND TARGET rt AND TARGET ged_test_joint2)
+  add_dependencies(ged_test_joint2 rt)
+  add_dependencies(unit ged_test_joint2 rt)
+  add_dependencies(check ged_test_joint2 rt)
+  set_property(TEST rt_joint_skin_render APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif()
+
+brlcad_add_test(
   NAME rtarea_modes
   COMMAND
     "${CMAKE_COMMAND}"
@@ -168,6 +184,7 @@ cmakefiles(
   test_rt_command_view.cmake
   test_rt_disk_framebuffer_size.cmake
   test_rt_unbuffered_background.cmake
+  test_joint_skin_render.cmake
   test_rtarea_analytic.cmake
   test_rtarea_db.c
   test_rtarea_modes.cmake

@@ -111,6 +111,7 @@ __BEGIN_DECLS
 #define RT_HF_INTERNAL_MAGIC		0x4846494d /**< HFIM */
 #define RT_HYP_INTERNAL_MAGIC		0x68797065 /**< hype */
 #define RT_JOINT_INTERNAL_MAGIC		0x4a6f696e /**< Join */
+#define RT_ANIMATION_INTERNAL_MAGIC	0x416e696d /**< Anim */
 #define RT_METABALL_INTERNAL_MAGIC      0x62616c6c /**< ball */
 #define RT_NURB_INTERNAL_MAGIC		0x002b2bdd /**< ?++? */
 #define RT_PART_INTERNAL_MAGIC		0xaaccee87 /**< ???? */

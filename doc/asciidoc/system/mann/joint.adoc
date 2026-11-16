@@ -12,8 +12,11 @@ joint - manage kinematic joint and constraint data for articulated models
 ----
 joint subcommand [args]
 joint object joint_name operation [args]
+joint animation sample animation_name time joint_name [joint_name ...]
 joint graph evaluate root_link joint_name [joint_name ...]
+joint skin pose bind_bot posed_bot root_link joint_name [joint_name ...]
 joint solve point root_link target_link px py pz tx ty tz joint_name [joint_name ...]
+joint solve closure root_link first_link ax ay az second_link bx by bz joint_name [joint_name ...]
 joint legacy subcommand [args]
 ----
 
@@ -50,9 +53,21 @@ affine pose.  Object operations include `show`, `validate`, `matrix`, `apply`,
 |root_link joint_name [joint_name ...]
 |Evaluate and print root-to-link matrices for a persistent joint graph.
 
+|`animation sample`
+|animation_name time joint_name [joint_name ...]
+|Sample persistent animation channels into the affine poses of joints selected by child link.
+
+|`skin pose`
+|bind_bot posed_bot root_link joint_name [joint_name ...]
+|Create a static renderable BoT by applying a joint graph to a skinned bind-pose BoT.
+
 |`solve point`
 |root_link target_link px py pz tx ty tz joint_name [joint_name ...]
 |Position persistent joint DOFs so a link-local point reaches a world target.
+
+|`solve closure`
+|root_link first_link ax ay az second_link bx by bz joint_name [joint_name ...]
+|Position persistent joint DOFs so two link-local points coincide, closing a loop over an acyclic joint graph.
 
 |`?`
 |[commands]
@@ -146,6 +161,46 @@ Uses bounded damped least squares to move the origin of `tool` to the target
 point.  Coordinates use database local units.  Solved joint objects are stored
 in the database; `apply` updates their bound geometry instances for drawing and
 ray tracing.
+====
+
+.Close a kinematic loop
+====
+[source,console]
+----
+mged> joint solve closure base left-link 0 0 0 right-link 0 0 0 left.j right.j
+----
+
+Solves the acyclic spanning-tree joints until the specified link-local points
+coincide.  Multiple closure constraints at distinct points can constrain the
+relative orientation as well as position through the solver-neutral API.
+====
+
+.Sample an animation
+====
+[source,console]
+----
+mged> joint animation sample walk.anim 1.25 hip.j knee.j ankle.j
+mged> joint skin pose body.bot body-frame.bot root hip.j knee.j ankle.j
+----
+
+Samples translation, rotation, and scale channels at 1.25 seconds.  Channels
+target stable link names and update the affine pose of the supplied joint whose
+child link matches.  Sampling clamps outside the animation's key time range.
+The second command creates a static BoT snapshot for display or ray tracing.
+====
+
+.Pose a skinned mesh
+====
+[source,console]
+----
+mged> joint object elbow.j position 0 45
+mged> joint skin pose arm.bot arm-posed.bot base shoulder.j elbow.j
+----
+
+Evaluates the listed joint graph and applies linear blend skinning to
+`arm.bot`.  The source remains the reusable bind-pose mesh with its skin data;
+`arm-posed.bot` is an unskinned static snapshot suitable for drawing and ray
+tracing.  The output name must not already exist.
 ====
 
 .List joints

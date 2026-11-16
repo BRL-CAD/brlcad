@@ -4093,6 +4093,7 @@ scan_input_g(const char *g_path, const char *g_root)
 	    case ID_HRT:        /* no NMG impl */
 	    case ID_DATUM:      /* stub */
 	    case ID_SCRIPT:     /* no tess */
+	    case ID_ANIMATION:  /* no tess */
 	    case ID_SKETCH:     /* 2-D only */
 		fprintf(stderr, "  SKIP %-32s  (type %d: no manifold tess)\n",
 			dp->d_namep, id);

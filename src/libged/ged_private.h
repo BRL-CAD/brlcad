@@ -598,7 +598,9 @@ GED_EXPORT extern int ged_view_data_lines(struct ged *gedp, int argc, const char
 GED_EXPORT extern int ged_repair(struct ged *gedp, int argc, const char **argv);
 
 GED_EXPORT extern int _ged_joint_object_core(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int _ged_joint_animation_core(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int _ged_joint_graph_core(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int _ged_joint_skin_core(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int _ged_joint_solve_core(struct ged *gedp, int argc, const char *argv[]);
 
 

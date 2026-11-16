@@ -187,6 +187,14 @@ extern int rt_joint_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_joint_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol);
 extern int rt_joint_data_export(struct rt_data_node **result, const struct rt_db_internal *ip, const struct rt_data_context *context);
 extern int rt_joint_data_import(struct rt_db_internal *ip, const struct rt_data_node *data, const struct rt_data_context *context);
+extern int rt_animation_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip);
+extern int rt_animation_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip);
+extern void rt_animation_ifree(struct rt_db_internal *ip);
+extern int rt_animation_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
+extern int rt_animation_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *variant, const point_t origin, double scale);
+extern int rt_animation_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol);
+extern int rt_animation_data_export(struct rt_data_node **result, const struct rt_db_internal *ip, const struct rt_data_context *context);
+extern int rt_animation_data_import(struct rt_db_internal *ip, const struct rt_data_node *data, const struct rt_data_context *context);
 
 } // extern "C"
 
@@ -196,6 +204,8 @@ extern int rt_ell_functab_validate(struct bu_vls *error_msg, const struct rt_db_
 extern int rt_tgc_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol);
 extern int rt_eto_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol);
 extern int rt_bot_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol);
+extern int rt_bot_data_export(struct rt_data_node **result, const struct rt_db_internal *ip, const struct rt_data_context *context);
+extern int rt_bot_data_import(struct rt_db_internal *ip, const struct rt_data_node *data, const struct rt_data_context *context);
 extern int rt_ehy_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol);
 extern int rt_epa_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol);
 extern int rt_rhc_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol);
@@ -1812,7 +1822,9 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_bot_mat),
 	NULL, /* perturb */
 	NULL   /* scene_obj */,
-	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_bot_functab_validate) /* validate */
+	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_bot_functab_validate), /* validate */
+	RTFUNCTAB_FUNC_DATA_EXPORT_CAST(rt_bot_data_export),
+	RTFUNCTAB_FUNC_DATA_IMPORT_CAST(rt_bot_data_import)
     },
 
     {
@@ -2651,6 +2663,60 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	NULL  /* scene_obj */,
 	NULL /* validate */
+    },
+
+    {
+	/* 47 */
+	RT_FUNCTAB_MAGIC, "ID_ANIMATION", "anim",
+	0, /* ft_use_rpp */
+	NULL, /* prep */
+	NULL, /* shot */
+	NULL, /* print */
+	NULL, /* norm */
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
+	NULL, /* uv */
+	NULL, /* curve */
+	NULL, /* classify */
+	NULL, /* free */
+	NULL, /* plot */
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
+	NULL, /* tess */
+	NULL, /* tnurb */
+	NULL, /* brep */
+	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_animation_import5),
+	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_animation_export5),
+	NULL, /* import4 */
+	NULL, /* export4 */
+	RTFUNCTAB_FUNC_IFREE_CAST(rt_animation_ifree),
+	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_animation_describe),
+	NULL, /* xform */
+	NULL, /* parse */
+	sizeof(struct rt_animation_internal),
+	RT_ANIMATION_INTERNAL_MAGIC,
+	NULL, /* get */
+	NULL, /* adjust */
+	NULL, /* form */
+	RTFUNCTAB_FUNC_MAKE_CAST(rt_animation_make),
+	NULL, /* params */
+	NULL, /* bbox */
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL, /* serialize */
+	NULL, /* label */
+	NULL, /* keypoint */
+	NULL, /* mat */
+	NULL, /* perturb */
+	NULL, /* scene_obj */
+	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_animation_functab_validate),
+	RTFUNCTAB_FUNC_DATA_EXPORT_CAST(rt_animation_data_export),
+	RTFUNCTAB_FUNC_DATA_IMPORT_CAST(rt_animation_data_import)
     },
 
     {

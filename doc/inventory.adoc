@@ -126,6 +126,8 @@ rather than thickness divided by cosine of obliquity angle
 ** Supports per-vertex surface normals, per-face UV texture coordinates,
 and a float-precision mode to reduce memory for very large meshes;
 stores face normals as index arrays
+** Optionally stores vertex skin bindings as stable joint-link names, inverse
+bind matrices, and sparse per-vertex weights for articulated meshes
 ** HLBVH (Hierarchical Linear Bounding Volume Hierarchy) acceleration
 for large meshes
 ** Oriented bounding box (OBB) computation for BoT primitives
@@ -158,6 +160,8 @@ partitioning
 * *GRIP* – Display-only grip/handle object used by animation scripts
 * *JOINT* – Kinematic joint object connecting two geometry paths; used
 in animation to define articulated assemblies
+* *ANIMATION* - Persistent STEP, LINEAR, or CUBICSPLINE translation,
+rotation, and scale channels targeting stable articulation link names
 * *DATUM* – Reference geometry entity per ASME Y14.5M: stores points,
 lines, and planes as coordinate reference features; supports linked
 lists of multiple datum elements
@@ -1234,6 +1238,9 @@ names); read support maintained for backward compatibility; `g4-g5` and
 * *ASCII/Tcl text format* (`.asc`): human-readable ASCII representation
 of the database via Tcl-encoded key-value pairs; convertible to/from
 binary via `asc` plugin and `g2asc`
+* *GSON JSON format* (`.gson`): non-executable JSON database exchange
+through `libgcv`; uses format-neutral functab serializers when available and
+preserves native joint, animation, and skinned BoT data without Tcl evaluation
 * *BRL-CAD in-memory database*: databases can be created and populated
 entirely in memory without a backing file (used by converters and
 analysis tools)
@@ -1257,7 +1264,9 @@ and surface STL; automatic normal computation
 * *PLY*: Stanford PLY polygon format import/ export; handles vertex
 colors, normals, and arbitrary per-vertex/per-face properties
 * *glTF/GLB*: GL Transmission Format v2 import/export; supports meshes,
-nodes, scenes, materials
+nodes, scenes, skins, joint hierarchies, and STEP, LINEAR, and CUBICSPLINE
+animation channels; standard data uses glTF float precision while neutral
+BRL-CAD metadata preserves exact database values
 * *OFF*: Object File Format (simple polygon mesh) import/export
 * *3DM*: standalone Rhino 3DM converter
 
