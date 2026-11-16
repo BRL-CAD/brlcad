@@ -86,7 +86,6 @@
 #include <exception>
 #include <filesystem>
 #include <iomanip>
-#include <limits>
 #include <locale>
 #include <limits>
 #include <optional>
@@ -1407,24 +1406,12 @@ art_render_image(asr::Project& project, const char *filename, ArtTileCallback* c
 	bu_log("art: renderer reported errors; image was not saved\n");
 	return false;
     }
-
     if (callback && !callback->flush())
 	return false;
     const bool saved = art_save_image(project, filename);
-    // Save before a framebuffer backend waits for its window to close.
+    // Some framebuffer backends linger until their window is closed.
     const bool closed = !callback || callback->finish();
     return saved && closed;
-}
-
-
-static bool
-art_display_project(asr::Project& project, bool display_framebuffer, const char *filename)
-{
-    struct fb *fbp = display_framebuffer ? fb_setup() : FB_NULL;
-    if (display_framebuffer && !fbp)
-	return false;
-    ArtTileCallback callback(fbp);
-    return art_render_image(project, filename, display_framebuffer ? &callback : nullptr);
 }
 
 
@@ -1455,7 +1442,11 @@ art_process_scene(bool display_framebuffer, const char *filename)
 	}
 	return true;
     }
-    return art_display_project(project.ref(), display_framebuffer, filename);
+    struct fb *fbp = display_framebuffer ? fb_setup() : FB_NULL;
+    if (display_framebuffer && !fbp)
+	return false;
+    ArtTileCallback callback(fbp);
+    return art_render_image(project.ref(), filename, display_framebuffer ? &callback : nullptr);
 }
 
 
