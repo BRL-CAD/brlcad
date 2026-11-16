@@ -10,7 +10,7 @@ cad_parea - compute the area of a polygon
 
 [source]
 ----
-cad_parea [-i input] [-o output]
+cad_parea [-i _input_ | --input _input_] [-o _output_ | --output _output_]
 ----
 
 
@@ -34,15 +34,15 @@ to standard output, making *cad_parea* convenient in a pipeline.
 [[options]]
 == OPTIONS
 
-*-i* _input_::
+*-i* _input_, *--input* _input_::
   Read coordinates from _input_ instead of standard input. A value of
   *-* means standard input. May be given only once.
 
-*-o* _output_::
+*-o* _output_, *--output* _output_::
   Write the computed area to _output_ instead of standard output. A value
   of *-* means standard output. May be given only once.
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a usage message and exit.
 
 [[examples]]

@@ -161,9 +161,9 @@ else(BRLCAD_ENABLE_TCL)
   cmakefiles(${MGED_SOURCES})
 endif(BRLCAD_ENABLE_TCL)
 
-brlcad_addexec(cad_boundp cad_boundp.c "libbu;${M_LIBRARY}")
+brlcad_addexec(cad_boundp cad_boundp.c "libbu;${M_LIBRARY}" ARG_SCHEMA)
 
-brlcad_addexec(cad_parea cad_parea.c libbu)
+brlcad_addexec(cad_parea cad_parea.c libbu ARG_SCHEMA)
 
 set(
   mged_ignore_files
