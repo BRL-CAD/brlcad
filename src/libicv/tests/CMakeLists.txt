@@ -10,6 +10,9 @@ if(BUILD_TESTING AND TARGET icv_fileformat_test)
   set_tests_properties(icv_fileformat_test PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 endif()
 
+brlcad_addexec(icv_sun_test sun.c "libicv;libbu" TEST)
+brlcad_add_test(NAME icv_sun_test COMMAND icv_sun_test)
+
 brlcad_addexec(icv_rle rle.cpp "libicv;libbu" TEST)
 brlcad_add_test(NAME icv_rle  COMMAND icv_rle)
 distclean(

@@ -76,6 +76,10 @@ extern icv_image_t* ppm_read_mem(const unsigned char *buffer, size_t size);
 extern int ppm_write(icv_image_t *bif, FILE *fp);
 extern int ppm_write_mem(icv_image_t *bif, unsigned char **outbuffer, size_t *outsize);
 
+/* defined in sun.c */
+extern int sun_write(icv_image_t *bif, FILE *fp, int dither);
+extern int sun_write_mem(icv_image_t *bif, unsigned char **outbuffer, size_t *outsize, int dither);
+
 /* defined in rle.cpp */
 ICV_EXPORT extern icv_image_t* rle_read(FILE *fp);
 ICV_EXPORT extern icv_image_t* rle_read_mem(const unsigned char *buffer, size_t size);

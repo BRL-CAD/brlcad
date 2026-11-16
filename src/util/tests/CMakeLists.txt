@@ -47,6 +47,13 @@ brlcad_add_test(
     -P "${CMAKE_CURRENT_SOURCE_DIR}/test_bwscale_endpoints.cmake"
 )
 
+brlcad_add_test(
+  NAME util_pix_sun_header
+  COMMAND
+    "${CMAKE_COMMAND}" "-DPIX_SUN=$<TARGET_FILE:pix-sun>" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/test_pix_sun_header.cmake"
+)
+
 cmakefiles(
   CMakeLists.txt
   test_bwcrop_single_axis.cmake
@@ -56,6 +63,7 @@ cmakefiles(
   test_pixdiff_bytes.cmake
   test_pixdiff_pix.cmake
   test_pixembed_edge_replication.cmake
+  test_pix_sun_header.cmake
 )
 
 # Local Variables:

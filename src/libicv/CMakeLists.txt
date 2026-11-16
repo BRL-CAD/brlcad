@@ -51,6 +51,7 @@ set(
   rot.c
   size.c
   stat.c
+  sun.c
 )
 
 

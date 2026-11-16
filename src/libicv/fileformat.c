@@ -306,6 +306,9 @@ icv_write(icv_image_t *bif, const char *filename, bu_mime_image_t format)
 	case BU_MIME_IMAGE_RLE :
 	    ret = rle_write(bif, fp);
 	    break;
+	case BU_MIME_IMAGE_SUN:
+	    ret = sun_write(bif, fp, 0);
+	    break;
 	case BU_MIME_IMAGE_JPEG :
 	    // The icv write function doesn't expose a quality setting - we
 	    // try to make a good trade-off between file size and quality.
@@ -361,6 +364,9 @@ icv_write_mem(icv_image_t *bif, unsigned char **buffer, size_t *size, bu_mime_im
 	    break;
 	case BU_MIME_IMAGE_RLE:
 	    ret = rle_write_mem(bif, buffer, size);
+	    break;
+	case BU_MIME_IMAGE_SUN:
+	    ret = sun_write_mem(bif, buffer, size, 0);
 	    break;
 	default:
 	    bu_log("ERROR: icv_write_mem not implemented for this format\n");

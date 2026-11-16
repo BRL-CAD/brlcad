@@ -157,6 +157,20 @@ ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, bu_mime_i
 ICV_EXPORT extern int icv_write_mem(icv_image_t *bif, unsigned char **buffer, size_t *size, bu_mime_image_t format);
 
 /**
+ * Saves an image as an 8-bit color-mapped Sun rasterfile.
+ *
+ * This format-specific entry point supports optional dithering during palette
+ * quantization.  Use icv_write() with BU_MIME_IMAGE_SUN when dithering is not
+ * needed.
+ *
+ * @param bif Image structure.
+ * @param filename Output filename, or NULL to write to standard output.
+ * @param dither Non-zero to dither while quantizing to the rasterfile palette.
+ * @return on success 0, on failure -1 with log messages.
+ */
+ICV_EXPORT extern int icv_write_sun(icv_image_t *bif, const char *filename, int dither);
+
+/**
  * Write an image line to the data of ICV struct. Can handle unsigned
  * char buffers.
  *
