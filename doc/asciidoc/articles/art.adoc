@@ -128,7 +128,8 @@ and lit diffuse substrates, matched-index coats, distinct inner coat
 normals, one through four coats, exact zero transmittance, bypass, ideal
 coat reflection, and a null coat over native plastic.  A fifth active coat
 must report an error and preserve the existing output.  These cases do not
-qualify general rough-coat transport or nested refractive media.
+qualify general rough-coat transport or coats inside nested refractive
+media.
 
 |Basic glass transmission and absorption
 |`regress-art-transmission` compares equal-index homogeneous absorption
@@ -138,9 +139,13 @@ zero absorption and material visibility from inside solids.
 `regress-art-refraction` independently compares smooth, directly transmitted
 paths with analytic Snell directions and unpolarized Fresnel weights on
 CSG cubes, flat BOTs, spheres, and ellipsoids.  It covers indices 1.5 and 2,
-both projections, and two view angles.  Nested dielectrics, rough-glass
-transport, transmitted shadows, and normal-mapped transmission remain
-unqualified.
+both projections, and two view angles.  `regress-art-nested` and
+`regress-art-initial-media` qualify smooth, homogeneous layered CSG and
+solid BOT volumes, including camera origins within them.
+`regress-art-shared-media` checks matching shell/filling interfaces,
+reflection, total internal reflection, and primary geometry-pass ownership.
+Rough-glass transport, transmitted shadows, and normal-mapped transmission
+remain unqualified.
 
 |Lighting across frames
 |`regress-art-lighting` compares diffuse HDR frame sequences with fresh-process
@@ -193,20 +198,19 @@ clipping, and premultiplied coverage.  Appleseed retains single-byte text
 input.  Both use unhinted rasterization with struetype.
 
 |Installed builds across platforms
-|A complete headless art installation passed all 28 installed checks on
-FreeBSD.  After relocation to a path containing spaces, nine camera,
-frame, selection, lighting, output, settings, constant and image environment,
-and runtime checks passed.
-Coverage includes 24 shared rendering, camera, and material regressions, persisted material
-authoring, plate conversion and saved-view execution through installed
-mged, and the runtime library audit.
+|A complete headless art installation has been qualified on FreeBSD after
+relocation to a path containing spaces.  The installed suite covers shared
+rendering, camera, and material regressions, including initial optical
+media, refraction, nested volumes, and NPR contours.  It also exercises
+persisted material authoring, plate conversion, and saved-view execution
+through installed mged, and audits runtime library locations.
 The ELF install policy uses paths relative to each executable, library, or
 plugin.  A separate collision regression exercises `lib`, `lib64`, and
 nested installation layouts with a conflicting library still present at
 the configured prefix; both executable and plugin controls verify that the
 old search order selects the conflicting version.
-Seven geometry and procedural-intersection checks also passed against the
-fresh bundled build.
+Development-build adapter checks exercise procedural intersections and
+rendering controls alongside the installed rendering suite.
 A finalized renderer SDK copied to a different directory compiles an OSL
 helper shader, builds an installed-API consumer, and renders.  The checked
 renderer, shader compiler, and texture tools load libraries only from that
@@ -865,6 +869,13 @@ sampling, total internal reflection, and both sides of an interface.
 GGX sampling also handles exact back-face normal incidence without a
 singular tangent basis.
 
+Glass applies the squared index-ratio correction for radiance at refractive
+boundaries and uses its adjoint form for importance transport.  These
+factors cancel on complete air-to-air paths and remain observable for a
+camera inside a dielectric.  The analytic references include this optical
+measure, following
+https://pbr-book.org/4ed/Reflection_Models/Dielectric_BSDF[Dielectric BSDF].
+
 When the inside and outside indices match, the glass BSDF transmits straight
 through, including for rough surfaces.  Appleseed samples this as a specular
 delta event because the microfacet transmission density is singular at
@@ -936,13 +947,18 @@ root shader resets the inherited definition, including priority.
 `inspect_materials=1` reports the effective priority before rendering.
 Invalid priorities fail without replacing an existing image.
 
+Priority displacement applies to optical interiors.  An enclosed opaque
+part remains a visible surface regardless of its priority relative to the
+glass.  `regress-art-medium-priority` checks diffuse and emissive opaque
+parts in CSG and solid BOT glass from outside and inside, including
+independent Beer attenuation and normal-incidence interface transmission.
+
 The qualified representation uses full, deliberately overlapping closed
 volumes: the outer volume contains the complete inner volume, and an
 optional higher-priority air-like core can be placed inside it.  The
 priority controls which volume supplies the index and absorption on each
-path segment.  This does not qualify coincident interfaces between a CSG
-shell and a separately modeled filling.  Those shared boundaries require
-separate handling.  Optical air-like regions in this workflow remain
+path segment.  Matching shell/filling boundaries use the shared-interface
+handling described below.  Optical air-like regions in this workflow remain
 ordinary regions with an index of one; BRL-CAD air regions continue to be
 excluded from art rendering.
 
@@ -964,9 +980,78 @@ limits and indirect glossy diagnostic passes.  Both orthographic and
 perspective center rays are checked; disabling absorption recovers the
 emitter's full HDR radiance.
 
-Cameras starting inside absorbing glass still need initial-medium
-handling.  Surface visibility from inside a solid does not establish
-correct absorption or refraction for such a camera.
+Art initializes optical media at each primary ray's actual origin.  It
+identifies containing, consistently oriented closed volumes before shading
+any surface, evaluates their glass interiors, and orders them by medium
+priority.  This applies absorption even when the first visible surface is
+an emitter inside the glass.  Index-one absorbing glass is still an optical
+medium; opaque, emissive, and illustrative materials do not acquire a glass
+interior merely because the ray starts inside their geometry.
+
+The native medium list holds eight volumes.  Discovering more containing
+optical volumes fails without replacing an existing image.  Initial-medium
+discovery classifies every procedural object at a coincident boundary;
+a camera inside a filled CSG or solid BOT shell therefore retains the
+filling's absorption before its first exit.  Open surfaces and plate-mode
+representations remain outside this qualification.  Use distinct priorities
+and homogeneous glass
+interiors for the qualified nested workflow.
+
+A pinhole ray starts at the camera's eye point.  Appleseed places an
+orthographic ray a scene diameter behind its nominal eye point, so moving
+that eye inside a solid need not put the ray origin inside it.
+`regress-art-initial-media` compares pinhole views starting in outer glass,
+inner liquid, and an air-like core with analytic Snell, Fresnel, and Beer
+references, and retains orthographic views as outside-origin controls.
+It covers CSG and solid BOTs, oblique views, equal and distinct indices,
+internal emission, coincident shell/filling discovery in either object
+selection order, unrelated foreground geometry, and capacity failures.
+
+The renderer's BSDF interface reports whether evaluated inputs define an
+optical interior or support surface transmission.  Shading points retain
+resolved optical state across copies.  Rebuild consumers and plug-ins
+against the updated renderer headers and BSDF interface.
+
+=== Shared shell/filling interfaces
+
+A closed shell may subtract its filling volume and render beside that
+filling.  At matching boundaries, art processes all procedural entries and
+exits at the same point as one optical event.  It uses the incident and
+transmitted media directly, avoiding an artificial air transition.  Exits
+are removed before entries are added, within the native eight-medium
+capacity.  Reflection retains the incident state; transmission receives
+the complete updated state.  Absorption distances retain the physical
+surface points while outgoing rays clear the shared boundary group.
+
+Declare distinct medium priorities for the optical materials.  The highest
+priority at a visible interface identifies the material that supplies its
+surface properties.  Visible tied priorities, different tangent planes,
+partial coverage, and non-glass transmissive layers are outside this
+shared-interface workflow; ambiguous groups fail with a diagnostic.
+Opaque contacts and arbitrary interpenetrating-volume arrangements still
+need separate qualification.
+
+Lower-priority optical boundaries displaced by the active medium do not
+own primary shading or geometry passes.  This applies to individual
+boundaries and coincident groups.  Hidden subordinate priorities may tie
+while the dominant medium remains active.  The primary traversal budget
+is finite; exhaustion fails without replacing existing beauty or sidecar
+output, rather than writing incomplete coverage.
+
+`regress-art-shared-media` compares smooth CSG and solid BOT shells with an
+independent Snell/Fresnel/Beer reference.  It covers equal and distinct
+indices, colored absorption, both object selection orders, translated
+assemblies, oblique views, and camera origins inside and outside the
+filling.  Orthographic views provide outside-origin compatibility checks.
+Its oblique outside camera is close enough to cross every intended slab
+face.  Separate checks qualify reflected-ray medium state, total internal
+reflection, real air gaps, hidden-boundary depth/position ownership, and
+output preservation on ambiguous ownership or primary-budget exhaustion.
+Per-pixel transport comparisons allow binary16 output rounding, including
+HDR values; independent center-ray energy and full-float geometry checks
+retain their absolute bounds.  This does not establish rough or arbitrary
+curved shared-interface transport, native triangle/Embree boundary
+coalescing, transmitted shadows, or caustics.
 
 === Plate-mode BOTs
 

@@ -1,0 +1,283 @@
+cmake_minimum_required(VERSION 3.22)
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/shared-media-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_nested_test_commands.cmake")
+set(TOOL "@ART_OIIOTOOL_EXECUTABLE@")
+foreach(shader IN ITEMS art_nested_reference art_refraction_reference art_emission art_shared_layer)
+  configure_file("@CMAKE_CURRENT_BINARY_DIR@/${shader}.oso"
+    "${WORK}/shaders/${shader}.oso" COPYONLY)
+endforeach()
+set(ACTUAL_DB "${WORK}/actual.g")
+set(REFERENCE_DB "${WORK}/reference.g")
+foreach(db IN ITEMS "${ACTUAL_DB}" "${REFERENCE_DB}")
+  run("${VEXEC}" create-nested "${db}")
+endforeach()
+set(layers outer inner)
+set(priorities 1 2)
+foreach(layer priority IN ZIP_LISTS layers priorities)
+  run("${VEXEC}" set-named-material "${ACTUAL_DB}" "${layer}.material" OSL.medium_priority "${priority}")
+  foreach(kind IN ITEMS box mesh)
+    run("${VEXEC}" material "${REFERENCE_DB}" assign "${kind}.${layer}.r" outer.material)
+  endforeach()
+endforeach()
+run("${VEXEC}" set-named-material "${REFERENCE_DB}" outer.material OSL art_nested_reference)
+set_nested_parameter("${REFERENCE_DB}" outer in_initial_camera "int 1")
+set(SIZE 8)
+set(TOLERANCE 0.0005)
+set(DIFF_ARGS --fail ${TOLERANCE} --hardfail ${TOLERANCE}
+  --warn ${TOLERANCE} --hardwarn ${TOLERANCE})
+# Independent shader and BSDF arithmetic can straddle a binary16 rounding
+# boundary, particularly in HDR and translated scenes. Allow one relative
+# half-float step (ten fraction bits) plus the absolute arithmetic bound.
+set(HALF_RELATIVE_STEP 0.0009765625)
+function(compare_shared_transport actual reference)
+  run("${TOOL}" --fail 1 --hardfail 1 --warn 1 --hardwarn 1
+    "${actual}" "${reference}" --absdiff
+    "${reference}" --abs --mulc ${HALF_RELATIVE_STEP} --addc ${TOLERANCE} --div
+    --pattern constant:color=0,0,0,0 ${SIZE}x${SIZE} 4 --diff)
+endfunction()
+set(RENDER_ARGS -P 1 -w ${SIZE} -n ${SIZE} -c "viewsize 0.5"
+  -c "set samples=1 light_intensity=0 environment_intensity=0 background_color=black max_bounces=-1 rr_min_path_length=0")
+run("${TOOL}" --pattern constant:color=0,0,0 ${SIZE}x${SIZE} 3 -o "${WORK}/black.exr")
+foreach(profile IN ITEMS equal clear absorbing)
+  set_nested_profile("${profile}")
+  foreach(transform IN ITEMS original translated)
+    if(transform STREQUAL "translated")
+      set(x 10000)
+      set(y -40000)
+      set(z_offset 5000)
+      set(suffix .translated)
+    else()
+      set(x 0)
+      set(y 0)
+      set(z_offset 0)
+      set(suffix "")
+    endif()
+    set_nested_parameter("${REFERENCE_DB}" outer in_offset "point ${x} ${y} ${z_offset}")
+    foreach(kind IN ITEMS box mesh)
+      foreach(location IN ITEMS outside inside)
+        if(location STREQUAL "outside")
+          math(EXPR z "${z_offset} + 12")
+        else()
+          set(z ${z_offset})
+        endif()
+        foreach(projection IN ITEMS 0 2)
+          # Orthographic rays back off beyond the entire scene; one nominal
+          # eye suffices for that outside-origin compatibility check.
+          if(projection EQUAL 0 AND location STREQUAL "inside")
+            continue()
+          endif()
+          foreach(tilt IN ITEMS 0 10)
+            if(tilt EQUAL 0)
+              set(orientation "0 0 0 1")
+            else()
+              set(orientation "0 0.08715574274765817 0 0.9961946980917455")
+            endif()
+            set(label "${profile}-${transform}-${kind}-${location}-${projection}-${tilt}")
+            set(reference "${WORK}/reference-${label}.exr")
+            run("${EXEC}" ${RENDER_ARGS} -p ${projection} -c "eye_pt ${x} ${y} ${z}"
+              -c "orientation ${orientation}" -o "${reference}" "${REFERENCE_DB}"
+              "${kind}.shared.overlap${suffix}.g")
+            run("${VEXEC}" check-image "${reference}" ${SIZE} ${SIZE})
+            expect_failure("${TOOL}" ${DIFF_ARGS} "${reference}" --ch R,G,B "${WORK}/black.exr" --diff)
+            foreach(order IN ITEMS shell_first filling_first)
+              set(image "${WORK}/${order}-${label}.exr")
+              run("${EXEC}" ${RENDER_ARGS} -p ${projection} -c "eye_pt ${x} ${y} ${z}"
+                -c "orientation ${orientation}" -o "${image}" "${ACTUAL_DB}"
+                "${kind}.shared.${order}${suffix}.g")
+              run("${VEXEC}" check-image "${image}" ${SIZE} ${SIZE})
+              compare_shared_transport("${image}" "${reference}")
+            endforeach()
+          endforeach()
+        endforeach()
+      endforeach()
+    endforeach()
+  endforeach()
+endforeach()
+
+# Pure reflection at the shared interface must keep the incident medium.
+# Reflection from glass (1.5) to filling (2.4) has R=(0.9/3.9)^2. A
+# subsequent glass-to-air exit contributes 0.96 * 1.5^2 in radiance measure.
+set(INTERNAL_REFLECTANCE 0.0532544378698225)
+set(REFLECTION_AND_EXIT_SCALE 0.1150295857988166)
+set_nested_profile(absorbing)
+set_nested_parameter("${ACTUAL_DB}" inner in_reflection_tint "color 1 1 1")
+set_nested_parameter("${ACTUAL_DB}" inner in_refraction_tint "color 0 0 0")
+run("${VEXEC}" in "${ACTUAL_DB}" reflection.receiver.s rpp -200 200 -200 200 2 3)
+run("${VEXEC}" r "${ACTUAL_DB}" reflection.receiver.r u reflection.receiver.s)
+run("${VEXEC}" material "${ACTUAL_DB}" create reflection.receiver.material Emission)
+run("${VEXEC}" material "${ACTUAL_DB}" set reflection.receiver.material optical OSL art_emission)
+run("${VEXEC}" material "${ACTUAL_DB}" set reflection.receiver.material optical OSL.param.in_color "color 0 1 0")
+run("${VEXEC}" material "${ACTUAL_DB}" assign reflection.receiver.r reflection.receiver.material)
+set(CENTER_ARGS -P 1 -w 1 -n 1 -p 2 -c "viewsize 1" -c "orientation 0 0 0 1"
+  -c "set samples=1 light_intensity=0 background_color=black max_bounces=-1 rr_min_path_length=0")
+run("${TOOL}" --pattern constant:color=0.25,0.5,0.8 1x1 3 --powc 0.4
+  --mulc 0.4 --mulc ${REFLECTION_AND_EXIT_SCALE} -o "${WORK}/outer-reflection-reference.exr")
+run("${TOOL}" --pattern constant:color=0.8,0.6,0.4 1x1 3 --powc 1.2
+  --mulc 0,1,0 --mulc ${INTERNAL_REFLECTANCE} -o "${WORK}/inner-reflection-reference.exr")
+foreach(kind IN ITEMS box mesh)
+  set(objects "${kind}.shell.r" "${kind}.inner.r" reflection.receiver.r)
+  run("${EXEC}" ${CENTER_ARGS} -c "eye_pt 0 0 8"
+    -c "set environment_color=white environment_intensity=0.4"
+    -o "${WORK}/outer-reflection-${kind}.exr" "${ACTUAL_DB}" ${objects})
+  run("${TOOL}" ${DIFF_ARGS} "${WORK}/outer-reflection-${kind}.exr" --ch R,G,B
+    "${WORK}/outer-reflection-reference.exr" --diff)
+  run("${EXEC}" ${CENTER_ARGS} -c "eye_pt 0 0 0" -c "set environment_intensity=0"
+    -o "${WORK}/inner-reflection-${kind}.exr" "${ACTUAL_DB}" ${objects})
+  run("${TOOL}" ${DIFF_ARGS} "${WORK}/inner-reflection-${kind}.exr" --ch R,G,B
+    "${WORK}/inner-reflection-reference.exr" --diff)
+endforeach()
+
+# A 60-degree liquid-to-glass incidence is totally internally reflected.
+# The receiver sits just above the shared bottom face, beyond the bounce
+# and before the liquid's side face. Its front is X=4.8; the incident ray
+# starts at (-4,0,0), reaches Z=-5 after distance ten, then reflects to it.
+set_nested_parameter("${ACTUAL_DB}" inner in_refraction_tint "color 1 1 1")
+run("${VEXEC}" in "${ACTUAL_DB}" tir.receiver.s rpp 4.8 4.9 -1 1 -4.96 -4.75)
+run("${VEXEC}" r "${ACTUAL_DB}" tir.receiver.r u tir.receiver.s)
+run("${VEXEC}" material "${ACTUAL_DB}" assign tir.receiver.r reflection.receiver.material)
+set(TIR_ABSORPTION_EXPONENT 1.0161364737737415) # (10 + (8.8 - 10*sin(60))/sin(60)) / 10.
+run("${TOOL}" --pattern constant:color=0.8,0.6,0.4 1x1 3 --powc ${TIR_ABSORPTION_EXPONENT}
+  --mulc 0,1,0 -o "${WORK}/tir-reference.exr")
+foreach(kind IN ITEMS box mesh)
+  set(image "${WORK}/tir-${kind}.exr")
+  run("${EXEC}" ${CENTER_ARGS} -c "eye_pt -4 0 0"
+    -c "orientation 0 -0.5 0 0.8660254037844386" -c "set environment_intensity=0"
+    -o "${image}" "${ACTUAL_DB}" "${kind}.shell.r" "${kind}.inner.r" tir.receiver.r)
+  run("${TOOL}" ${DIFF_ARGS} "${image}" --ch R,G,B "${WORK}/tir-reference.exr" --diff)
+endforeach()
+
+# A filling with a real air gap must remain distinct. Its extra Fresnel
+# interfaces differ from the coincident reference even at normal incidence.
+set_nested_profile(absorbing)
+set_nested_parameter("${ACTUAL_DB}" inner in_refraction_tint "color 1 1 1")
+set_nested_parameter("${REFERENCE_DB}" outer in_offset "point 0 0 0")
+set(GAPPED_FILLING_HALF_WIDTH 4.95) # The shell cavity's half width is five.
+run("${VEXEC}" in "${ACTUAL_DB}" gap.filling.s rpp
+  -${GAPPED_FILLING_HALF_WIDTH} ${GAPPED_FILLING_HALF_WIDTH}
+  -${GAPPED_FILLING_HALF_WIDTH} ${GAPPED_FILLING_HALF_WIDTH}
+  -${GAPPED_FILLING_HALF_WIDTH} ${GAPPED_FILLING_HALF_WIDTH})
+run("${VEXEC}" r "${ACTUAL_DB}" gap.filling.r u gap.filling.s)
+run("${VEXEC}" material "${ACTUAL_DB}" assign gap.filling.r inner.material)
+run("${EXEC}" ${CENTER_ARGS} -c "eye_pt 0 0 12" -c "set environment_intensity=0"
+  -o "${WORK}/gap-reference.exr" "${REFERENCE_DB}" box.shared.overlap.g)
+foreach(kind IN ITEMS box mesh)
+  set(image "${WORK}/gap-${kind}.exr")
+  run("${EXEC}" ${CENTER_ARGS} -c "eye_pt 0 0 12" -c "set environment_intensity=0"
+    -o "${image}" "${ACTUAL_DB}" "${kind}.shell.r" gap.filling.r target.r)
+  run("${VEXEC}" check-image "${image}" 1 1)
+  expect_failure("${TOOL}" ${DIFF_ARGS} "${image}" "${WORK}/gap-reference.exr" --diff)
+endforeach()
+
+# Hidden boundaries must not become the primary depth/position owner.
+# Equal subordinate priorities are harmless while the dominant medium
+# remains active: no physical interface needs an optical surface owner.
+run("${VEXEC}" in "${ACTUAL_DB}" dominant.s rpp -20 20 -20 20 -20 20)
+run("${VEXEC}" r "${ACTUAL_DB}" dominant.r u dominant.s)
+run("${VEXEC}" material "${ACTUAL_DB}" create dominant.material Glass)
+run("${VEXEC}" material "${ACTUAL_DB}" set dominant.material optical OSL as_glass)
+run("${VEXEC}" material "${ACTUAL_DB}" set dominant.material optical OSL.medium_priority 3)
+foreach(parameter IN ITEMS "in_ior;float 1" "in_roughness;float 0"
+    "in_transmittance_amount;float 1" "in_surface_transmittance;color 1 1 1"
+    "in_reflection_tint;color 0 0 0" "in_volume_transmittance;color 0.5 0.6 0.8"
+    "in_volume_transmittance_distance;float 40")
+  list(GET parameter 0 name)
+  list(GET parameter 1 value)
+  set_nested_parameter("${ACTUAL_DB}" dominant "${name}" "${value}")
+endforeach()
+run("${VEXEC}" material "${ACTUAL_DB}" assign dominant.r dominant.material)
+run("${VEXEC}" set-named-material "${ACTUAL_DB}" inner.material OSL.medium_priority 1)
+run("${TOOL}" --pattern constant:color=0,0,-20 1x1 3 -d float -o "${WORK}/dominant-position.exr")
+foreach(z IN ITEMS 8 12)
+  math(EXPR depth "${z} + 20")
+  if(z EQUAL 8)
+    set(exponent 0.7) # Camera Z=8 to dominant exit Z=-20, divided by 40.
+  else()
+    set(exponent 0.8)
+  endif()
+  run("${TOOL}" --pattern "constant:color=${depth},1" 1x1 2 --chnames Z,A
+    -d float -o "${WORK}/dominant-depth-${z}.exr")
+  run("${TOOL}" --pattern constant:color=0.5,0.6,0.8 1x1 3 --powc ${exponent}
+    --mulc 0.4 -o "${WORK}/dominant-beauty-${z}.exr")
+  foreach(kind IN ITEMS box mesh)
+    set(stem "${WORK}/dominant-${kind}-${z}")
+    run("${EXEC}" ${CENTER_ARGS} -c "eye_pt 0 0 ${z}"
+      -c "set environment_color=white environment_intensity=0.4 aovs=depth,position"
+      -o "${stem}.exr" "${ACTUAL_DB}" dominant.r "${kind}.shell.r" "${kind}.inner.r")
+    run("${TOOL}" ${DIFF_ARGS} "${stem}.exr" --ch R,G,B "${WORK}/dominant-beauty-${z}.exr" --diff)
+    run("${TOOL}" ${DIFF_ARGS} "${stem}.depth.exr" --ch Z,A
+      "${WORK}/dominant-depth-${z}.exr" --ch Z,A --diff)
+    run("${TOOL}" ${DIFF_ARGS} "${stem}.position.exr" --ch R,G,B "${WORK}/dominant-position.exr" --diff)
+  endforeach()
+endforeach()
+
+# More hidden crossings than the primary traversal budget must fail,
+# preserving both beauty and sidecars rather than writing partial output.
+run("${VEXEC}" in "${ACTUAL_DB}" dominant.long.s rpp -20 20 -20 20 -150 20)
+run("${VEXEC}" r "${ACTUAL_DB}" dominant.long.r u dominant.long.s)
+run("${VEXEC}" material "${ACTUAL_DB}" assign dominant.long.r dominant.material)
+set(HIDDEN_SOLID_COUNT 60)
+math(EXPR last "${HIDDEN_SOLID_COUNT} - 1")
+set(members)
+foreach(i RANGE 0 ${last})
+  math(EXPR top "-1 - 2 * ${i}")
+  math(EXPR bottom "${top} - 1")
+  run("${VEXEC}" in "${ACTUAL_DB}" "hidden${i}.s" rpp -2 2 -2 2 ${bottom} ${top})
+  run("${VEXEC}" r "${ACTUAL_DB}" "hidden${i}.r" u "hidden${i}.s")
+  run("${VEXEC}" material "${ACTUAL_DB}" assign "hidden${i}.r" outer.material)
+  list(APPEND members u "hidden${i}.r")
+endforeach()
+run("${VEXEC}" comb "${ACTUAL_DB}" hidden.g ${members})
+foreach(path IN ITEMS hidden-budget.exr hidden-budget.depth.exr)
+  file(WRITE "${WORK}/${path}" "preserve existing output")
+endforeach()
+expect_failure_matching("reached primary-ray intersection limit" "${EXEC}" ${CENTER_ARGS}
+  -c "eye_pt 0 0 12" -c "set aovs=depth" -o "${WORK}/hidden-budget.exr"
+  "${ACTUAL_DB}" dominant.long.r hidden.g)
+foreach(path IN ITEMS hidden-budget.exr hidden-budget.depth.exr)
+  file(READ "${WORK}/${path}" retained)
+  if(NOT retained STREQUAL "preserve existing output")
+    message(FATAL_ERROR "Primary traversal exhaustion replaced ${path}")
+  endif()
+endforeach()
+
+# A tied priority does not declare which optical material owns the shared
+# surface. Reject the ambiguity without replacing a previous image.
+set_nested_profile(absorbing)
+set_nested_parameter("${ACTUAL_DB}" inner in_refraction_tint "color 1 1 1")
+run("${VEXEC}" set-named-material "${ACTUAL_DB}" inner.material OSL.medium_priority 1)
+set(image "${WORK}/preserved.exr")
+file(WRITE "${image}" "preserve existing output")
+expect_failure_matching("shared optical interfaces require distinct medium priorities"
+  "${EXEC}" ${CENTER_ARGS} -c "eye_pt 0 0 40" -o "${image}" "${ACTUAL_DB}" box.shared.shell_first.g)
+file(READ "${image}" retained)
+if(NOT retained STREQUAL "preserve existing output")
+  message(FATAL_ERROR "Shared-interface failure replaced an existing image")
+endif()
+
+# Partial glass coverage is not one homogeneous interface. Reject it in
+# either object order before writing beauty or geometry output.
+run("${VEXEC}" material "${ACTUAL_DB}" create partial.material Glass)
+run("${VEXEC}" material "${ACTUAL_DB}" set partial.material optical OSL art_shared_layer)
+run("${VEXEC}" material "${ACTUAL_DB}" set partial.material optical OSL.medium_priority 2)
+foreach(kind IN ITEMS box mesh)
+  run("${VEXEC}" material "${ACTUAL_DB}" assign "${kind}.inner.r" partial.material)
+  foreach(order IN ITEMS shell_first filling_first)
+    foreach(path IN ITEMS partial.exr partial.depth.exr)
+      file(WRITE "${WORK}/${path}" "preserve existing output")
+    endforeach()
+    expect_failure_matching("shared optical interfaces require opaque coverage and glass interiors"
+      "${EXEC}" ${CENTER_ARGS} -c "eye_pt 0 0 8" -c "set aovs=depth"
+      -o "${WORK}/partial.exr" "${ACTUAL_DB}" "${kind}.shared.${order}.g")
+    foreach(path IN ITEMS partial.exr partial.depth.exr)
+      file(READ "${WORK}/${path}" retained)
+      if(NOT retained STREQUAL "preserve existing output")
+        message(FATAL_ERROR "Unsupported shared coverage replaced ${path}")
+      endif()
+    endforeach()
+  endforeach()
+endforeach()

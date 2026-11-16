@@ -1,0 +1,92 @@
+cmake_minimum_required(VERSION 3.22)
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/medium-priority-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_nested_test_commands.cmake")
+set(TOOL "@ART_OIIOTOOL_EXECUTABLE@")
+configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_embedded_surface.oso"
+  "${WORK}/shaders/art_embedded_surface.oso" COPYONLY)
+set(DB "${WORK}/embedded.g")
+run("${VEXEC}" create-nested "${DB}")
+run("${VEXEC}" material "${DB}" create embedded.material Opaque)
+run("${VEXEC}" material "${DB}" set embedded.material optical OSL art_embedded_surface)
+foreach(kind IN ITEMS box mesh)
+  run("${VEXEC}" material "${DB}" assign "${kind}.inner.r" embedded.material)
+endforeach()
+run("${VEXEC}" set-named-material "${DB}" outer.material OSL.medium_priority 1)
+foreach(parameter IN ITEMS "in_roughness;float 0" "in_transmittance_amount;float 1"
+    "in_surface_transmittance;color 1 1 1" "in_reflection_tint;color 0 0 0"
+    "in_volume_transmittance;color 0.25 0.5 0.8")
+  list(GET parameter 0 name)
+  list(GET parameter 1 value)
+  set_nested_parameter("${DB}" outer "${name}" "${value}")
+endforeach()
+set(SIZE 8)
+set(TOLERANCE 0.0005)
+set(DIFF_ARGS --fail ${TOLERANCE} --hardfail ${TOLERANCE}
+  --warn ${TOLERANCE} --hardwarn ${TOLERANCE})
+set(RENDER_ARGS -P 1 -w ${SIZE} -n ${SIZE} -p 2 -c "viewsize 0.5" -c "orientation 0 0 0 1"
+  -c "set samples=1 light_intensity=0 environment_color=white environment_intensity=0.4 background_color=black max_diffuse_bounces=0 max_glossy_bounces=0 rr_min_path_length=0")
+foreach(ior IN ITEMS 1 1.5)
+  set_nested_parameter("${DB}" outer in_ior "float ${ior}")
+  foreach(distance IN ITEMS 0 20)
+    set_nested_parameter("${DB}" outer in_volume_transmittance_distance "float ${distance}")
+    foreach(origin IN ITEMS outside inside)
+      if(origin STREQUAL "outside")
+        set(z 40)
+        set(exponent 0.25) # Glass from Z=10 to Z=5, divided by 20.
+        set(interface_scale 1)
+        if(ior STREQUAL "1.5")
+          # Normal Fresnel transmission divided by index squared: 0.96 / 2.25.
+          set(interface_scale 0.4266666666666667)
+        endif()
+      else()
+        set(z 8)
+        set(exponent 0.15) # Camera Z=8 to target Z=5, divided by 20.
+        set(interface_scale 1)
+      endif()
+      if(distance EQUAL 0)
+        set(exponent 0)
+      endif()
+      run("${TOOL}" --pattern constant:color=0.25,0.5,0.8 1x1 3 --powc ${exponent}
+        --mulc 0.2,0.8,0.1 --mulc ${interface_scale} -o "${WORK}/analytic.exr")
+      foreach(kind IN ITEMS box mesh)
+        foreach(priority IN ITEMS -128 0 127)
+          run("${VEXEC}" material "${DB}" set embedded.material optical OSL.medium_priority "${priority}")
+          set(stem "${WORK}/${ior}-${distance}-${origin}-${kind}-${priority}")
+          run("${EXEC}" ${RENDER_ARGS} -c "eye_pt 0 0 ${z}"
+            -o "${stem}.exr" "${DB}" "${kind}.outer.r" "${kind}.inner.r")
+          run("${VEXEC}" check-image "${stem}.exr" ${SIZE} ${SIZE})
+          run("${EXEC}" ${RENDER_ARGS} -w 1 -n 1 -c "eye_pt 0 0 ${z}"
+            -o "${stem}-center.exr" "${DB}" "${kind}.outer.r" "${kind}.inner.r")
+          run("${TOOL}" ${DIFF_ARGS} "${stem}-center.exr" --ch R,G,B "${WORK}/analytic.exr" --diff)
+        endforeach()
+        foreach(priority IN ITEMS -128 0)
+          run("${TOOL}" ${DIFF_ARGS} "${WORK}/${ior}-${distance}-${origin}-${kind}-${priority}.exr"
+            "${WORK}/${ior}-${distance}-${origin}-${kind}-127.exr" --diff)
+        endforeach()
+      endforeach()
+      run("${TOOL}" ${DIFF_ARGS} "${WORK}/${ior}-${distance}-${origin}-box-0.exr"
+        "${WORK}/${ior}-${distance}-${origin}-mesh-0.exr" --diff)
+    endforeach()
+  endforeach()
+endforeach()
+
+# With emission disabled and diffuse bounces excluded, a visible opaque
+# part is black. Incorrectly suppressing it reveals the nonblack environment.
+set_nested_parameter("${DB}" outer in_ior "float 1")
+set_nested_parameter("${DB}" outer in_volume_transmittance_distance "float 0")
+run("${VEXEC}" material "${DB}" set embedded.material optical OSL.param.in_emission "color 0 0 0")
+run("${TOOL}" --pattern constant:color=0,0,0 ${SIZE}x${SIZE} 3 -o "${WORK}/black.exr")
+foreach(kind IN ITEMS box mesh)
+  foreach(priority IN ITEMS 0 127)
+    run("${VEXEC}" material "${DB}" set embedded.material optical OSL.medium_priority "${priority}")
+    set(image "${WORK}/diffuse-${kind}-${priority}.exr")
+    run("${EXEC}" ${RENDER_ARGS} -c "eye_pt 0 0 8"
+      -o "${image}" "${DB}" "${kind}.outer.r" "${kind}.inner.r")
+    run("${TOOL}" ${DIFF_ARGS} "${image}" --ch R,G,B "${WORK}/black.exr" --diff)
+  endforeach()
+endforeach()

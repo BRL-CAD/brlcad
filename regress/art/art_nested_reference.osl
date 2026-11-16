@@ -20,6 +20,8 @@
 #include "art_glass_reference.h"
 
 surface art_nested_reference(
+    int in_initial_camera = 0,
+    point in_offset = point(0),
     float in_outer_ior = 1.5,
     float in_inner_ior = 2.4,
     float in_core_ior = 1,
@@ -53,14 +55,26 @@ surface art_nested_reference(
         extent[2] = 5;
         extent[3] = 10;
     }
-    point position = P;
+    point position = P - in_offset;
     vector direction = normalize(I);
     color weight = color(1);
-    for (int i = 0; i < count; ++i) {
-        if (i > 0) {
+    int first_boundary = 0;
+    if (in_initial_camera) {
+        float ray_length = 0;
+        if (!getattribute("path:ray_length", ray_length)) {
+            error("Missing primary ray length for initial-medium reference");
+            Ci = 0;
+            return;
+        }
+        position -= ray_length * direction;
+        while (first_boundary < count && planes[first_boundary] >= position[2])
+            ++first_boundary;
+    }
+    for (int i = first_boundary; i < count; ++i) {
+        if (in_initial_camera || i > 0) {
             float segment_length = (planes[i] - position[2]) / direction[2];
             position += segment_length * direction;
-            if (reference_distance[i - 1] > 0)
+            if (i > 0 && reference_distance[i - 1] > 0)
                 weight *= pow(transmittance[i - 1], segment_length / reference_distance[i - 1]);
         }
         if (abs(position[2] - planes[i]) > 1.0e-4 ||
@@ -74,7 +88,7 @@ surface art_nested_reference(
             Ci = 0;
             return;
         }
-        weight *= interface_transmission(indices[i], indices[i + 1], -direction[2], -transmitted[2]);
+        weight *= interface_radiance_transmission(indices[i], indices[i + 1], -direction[2], -transmitted[2]);
         direction = transmitted;
     }
     // The finite receiver's top is Z=-30 and its half width is 200.
@@ -83,5 +97,5 @@ surface art_nested_reference(
         Ci = 0;
         return;
     }
-    Ci = weight * target_color(position) * emission();
+    Ci = weight * target_color(position + in_offset) * emission();
 }

@@ -35,7 +35,7 @@ surface art_refraction_reference(
     vector incident = normalize(I);
     normal entry_normal = normalize(Ng);
     vector inside = refract(incident, entry_normal, 1 / in_ior);
-    float entry_transmission = interface_transmission(1, in_ior,
+    float entry_transmission = interface_radiance_transmission(1, in_ior,
         -dot(incident, entry_normal), -dot(inside, entry_normal));
     vector offset = P - in_center;
     float path_length;
@@ -65,7 +65,7 @@ surface art_refraction_reference(
         Ci = 0;
         return;
     }
-    float exit_transmission = interface_transmission(in_ior, 1,
+    float exit_transmission = interface_radiance_transmission(in_ior, 1,
         dot(inside, exit_normal), dot(outside, exit_normal));
     // The actual receiver is a finite box, including its narrow side faces.
     // Strongly bent rays can miss it even when they cross its top plane.

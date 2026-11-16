@@ -27,6 +27,13 @@ float interface_transmission(float ni, float nt, float ci, float ct)
     return 1 - 0.5 * (rs * rs + rp * rp);
 }
 
+float interface_radiance_transmission(float ni, float nt, float ci, float ct)
+{
+    // Radiance divided by index squared is invariant under refraction.
+    float ratio = ni / nt;
+    return interface_transmission(ni, nt, ci, ct) * ratio * ratio;
+}
+
 color target_color(point position)
 {
     return color(0.35 + 0.25 * sin(0.17 * position[0]),

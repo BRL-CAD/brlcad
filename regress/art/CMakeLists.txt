@@ -12,6 +12,8 @@ set(ART_TEST_SHADER_NAMES
   art_parameters
   art_texture
   art_emission
+  art_embedded_surface
+  art_shared_layer
   art_npr
   art_sampling
   art_graph_value
@@ -44,6 +46,9 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-resources
   regress-art-transmission
   regress-art-absorption
+  regress-art-initial-media
+  regress-art-medium-priority
+  regress-art-shared-media
   regress-art-refraction
   regress-art-nested
   regress-art-mixture
@@ -79,13 +84,15 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 endif()
 
 cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
+  art_nested_test_commands.cmake
   art_installed_runtime.cmake.in art-installed-material.cmake.in
   art-installed-plate.cmake.in art-installed-view.cmake.in
   art_scene.cpp art_test_mesh.h art_glass_reference.h art_test_commands.cmake
   regress-art.cmake.in regress-art-bump.cmake.in regress-art-normal.cmake.in
   regress-art-texture.cmake.in regress-art-color.cmake.in
   regress-art-image-maps.cmake.in regress-art-resources.cmake.in
-  regress-art-transmission.cmake.in regress-art-absorption.cmake.in regress-art-refraction.cmake.in
+  regress-art-transmission.cmake.in regress-art-absorption.cmake.in regress-art-initial-media.cmake.in regress-art-medium-priority.cmake.in
+  regress-art-shared-media.cmake.in regress-art-refraction.cmake.in
   regress-art-mixture.cmake.in regress-art-surface.cmake.in regress-art-nested.cmake.in
   regress-art-metal-energy.cmake.in regress-art-coat.cmake.in
   regress-art-materials.cmake.in regress-art-inspect.cmake.in
@@ -117,7 +124,7 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/image-maps-output"
     "${CMAKE_CURRENT_BINARY_DIR}/resources-output"
     "${CMAKE_CURRENT_BINARY_DIR}/transmission-output"
-    "${CMAKE_CURRENT_BINARY_DIR}/absorption-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/absorption-output" "${CMAKE_CURRENT_BINARY_DIR}/initial-media-output" "${CMAKE_CURRENT_BINARY_DIR}/medium-priority-output" "${CMAKE_CURRENT_BINARY_DIR}/shared-media-output"
     "${CMAKE_CURRENT_BINARY_DIR}/refraction-output"
     "${CMAKE_CURRENT_BINARY_DIR}/nested-output"
     "${CMAKE_CURRENT_BINARY_DIR}/mixture-output"

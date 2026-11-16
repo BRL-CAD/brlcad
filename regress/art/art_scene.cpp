@@ -198,6 +198,50 @@ create_scene(const char *path, const char *shader, const char *output)
     return success ? 0 : 1;
 }
 
+static bool
+create_shared_nested_groups(struct rt_wdb *db, const char *kind,
+    double inner_scale, const mat_t translated)
+{
+    const std::string prefix(kind);
+    const std::string solid = "nested." + prefix;
+    const std::string shell = prefix + ".shell.r";
+    const std::string outer = prefix + ".outer.r";
+    const std::string inner = prefix + ".inner.r";
+    mat_t scaled;
+    MAT_IDN(scaled);
+    scaled[0] = scaled[5] = scaled[10] = inner_scale;
+    struct wmember members;
+    BU_LIST_INIT(&members.l);
+    if (!mk_addmember(solid.c_str(), &members.l, NULL, WMOP_UNION) ||
+	!mk_addmember(solid.c_str(), &members.l, scaled, WMOP_SUBTRACT) ||
+	mk_lcomb(db, shell.c_str(), &members, 1, NULL, NULL, NULL, 0) != 0 ||
+	db5_update_attribute(shell.c_str(), "material_name", "outer.material", db->dbip) != 0)
+	return false;
+
+    for (bool transform : {false, true}) {
+	mat_t matrix;
+	MAT_IDN(matrix);
+	if (transform)
+	    MAT_COPY(matrix, translated);
+	for (const char *order : {"overlap", "shell_first", "filling_first"}) {
+	    const std::string context = BU_STR_EQUAL(order, "overlap") ? outer : shell;
+	    const bool filling_first = BU_STR_EQUAL(order, "filling_first");
+	    const std::string first = filling_first ? inner : context;
+	    const std::string second = filling_first ? context : inner;
+	    const std::string group = prefix + ".shared." + order +
+		(transform ? ".translated.g" : ".g");
+	    BU_LIST_INIT(&members.l);
+	    if (!mk_addmember(first.c_str(), &members.l, matrix, WMOP_UNION) ||
+		!mk_addmember(second.c_str(), &members.l, matrix, WMOP_UNION) ||
+		!mk_addmember("target.r", &members.l, matrix, WMOP_UNION) ||
+		mk_lcomb(db, group.c_str(), &members, 0, NULL, NULL, NULL, 0) != 0)
+		return false;
+	}
+    }
+    return true;
+}
+
+
 static int
 create_nested_scene(const char *path)
 {
@@ -209,6 +253,10 @@ create_nested_scene(const char *path)
     bool success = mk_rpp(db, "nested.box", low, high) == 0 &&
 	art_test::make_mesh(db, "nested.mesh", art_test::MeshUV::None) == 0 &&
 	mk_rpp(db, "nested.target", target_low, target_high) == 0;
+    const vect_t scene_translation = {10000, -40000, 5000};
+    mat_t translated;
+    MAT_IDN(translated);
+    MAT_DELTAS_VEC(translated, scene_translation);
     const struct { const char *name; double scale; } layers[] = {
 	{"outer", 1.0}, {"inner", 0.5}, {"core", 0.2}
     };
@@ -230,6 +278,8 @@ create_nested_scene(const char *path)
 	    success = success && mk_addmember(solid.c_str(), &members.l, scale, WMOP_UNION) &&
 		mk_lcomb(db, region.c_str(), &members, 1, NULL, NULL, NULL, 0) == 0 &&
 		db5_update_attribute(region.c_str(), "material_name", material.c_str(), db->dbip) == 0;
+	    if (BU_STR_EQUAL(layer.name, "inner"))
+		success = success && create_shared_nested_groups(db, kind, layer.scale, translated);
 	}
     }
     struct bu_attribute_value_set optical;
@@ -273,10 +323,6 @@ create_nested_scene(const char *path)
     success = success && mk_addmember("npr.cover.s", &members.l, NULL, WMOP_UNION) &&
 	mk_lcomb(db, "npr.cover.r", &members, 1, NULL, NULL, NULL, 0) == 0 &&
 	db5_update_attribute("npr.cover.r", "material_name", "npr.cover.material", db->dbip) == 0;
-    const vect_t contour_translation = {10000, -40000, 5000};
-    mat_t translated;
-    MAT_IDN(translated);
-    MAT_DELTAS_VEC(translated, contour_translation);
     for (const char *kind : {"box", "mesh"}) {
 	const std::string region = std::string(kind) + ".inner.r";
 	const std::string group = std::string("npr.") + kind + ".translated.g";
@@ -726,11 +772,15 @@ main(int argc, char **argv)
 	return create_texture(argv[2], TexturePattern::Black);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create-gray-texture"))
 	return create_texture(argv[2], TexturePattern::Gray);
-    if (argc >= 4 && (BU_STR_EQUAL(argv[1], "material") ||
-	BU_STR_EQUAL(argv[1], "attr") || BU_STR_EQUAL(argv[1], "color"))) {
-	std::vector<const char *> command{argv[1]};
-	command.insert(command.end(), argv + 3, argv + argc);
-	return edit_database_command(argv[2], static_cast<int>(command.size()), command.data());
+    if (argc >= 4) {
+	const char *const database_commands[] = {"material", "attr", "color", "in", "r", "comb"};
+	for (const char *name : database_commands) {
+	    if (BU_STR_EQUAL(argv[1], name)) {
+		std::vector<const char *> command{argv[1]};
+		command.insert(command.end(), argv + 3, argv + argc);
+		return edit_database_command(argv[2], static_cast<int>(command.size()), command.data());
+	    }
+	}
     }
     if ((argc == 4 || argc == 5) && BU_STR_EQUAL(argv[1], "create-material"))
 	return create_scene(argv[2], argv[3], argc == 5 ? argv[4] : nullptr);
