@@ -1264,9 +1264,13 @@ and surface STL; automatic normal computation
 * *PLY*: Stanford PLY polygon format import/ export; handles vertex
 colors, normals, and arbitrary per-vertex/per-face properties
 * *glTF/GLB*: GL Transmission Format v2 import/export; supports meshes,
-nodes, scenes, skins, joint hierarchies, and STEP, LINEAR, and CUBICSPLINE
-animation channels; standard data uses glTF float precision while neutral
-BRL-CAD metadata preserves exact database values
+nodes, scenes, sparse accessors, vertex normals, primary texture coordinates,
+skins, joint hierarchies, and STEP, LINEAR, and CUBICSPLINE animation channels;
+round trips shared mesh and skin instances, optional skin skeleton roots,
+multiple named scenes, optional default-scene selection, and per-primitive
+textureless metallic-roughness PBR materials through persistent material objects;
+standard data uses glTF float precision while neutral BRL-CAD metadata preserves
+exact database values
 * *OFF*: Object File Format (simple polygon mesh) import/export
 * *3DM*: standalone Rhino 3DM converter
 

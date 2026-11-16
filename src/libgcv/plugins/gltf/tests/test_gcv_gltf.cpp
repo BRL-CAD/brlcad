@@ -16,6 +16,7 @@
 #include <cstring>
 #include <fstream>
 #include <iterator>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -112,6 +113,12 @@ add_skinned_bot(context &destination)
 	0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 10.0, 0.0
     };
     static const int faces[] = {0, 1, 2};
+    static const fastf_t normals[] = {
+	0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0
+    };
+    static const fastf_t uvs[] = {
+	0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0
+    };
     static const uint32_t offsets[] = {0, 1, 3, 4};
     static const uint32_t indices[] = {0, 0, 1, 1};
     static const fastf_t weights[] = {1.0, 0.25, 0.75, 1.0};
@@ -124,13 +131,27 @@ add_skinned_bot(context &destination)
     bot->magic = RT_BOT_INTERNAL_MAGIC;
     bot->mode = RT_BOT_SOLID;
     bot->orientation = RT_BOT_CCW;
-    bot->bot_flags = RT_BOT_HAS_SKIN;
+    bot->bot_flags = RT_BOT_HAS_SKIN | RT_BOT_HAS_SURFACE_NORMALS |
+	RT_BOT_USE_NORMALS | RT_BOT_HAS_TEXTURE_UVS;
     bot->num_vertices = 3;
     bot->vertices = static_cast<fastf_t *>(bu_malloc(sizeof(vertices), "test vertices"));
     memcpy(bot->vertices, vertices, sizeof(vertices));
     bot->num_faces = 1;
     bot->faces = static_cast<int *>(bu_malloc(sizeof(faces), "test faces"));
     memcpy(bot->faces, faces, sizeof(faces));
+    bot->num_normals = 3;
+    bot->normals = static_cast<fastf_t *>(bu_malloc(sizeof(normals), "test normals"));
+    memcpy(bot->normals, normals, sizeof(normals));
+    bot->num_face_normals = 1;
+    bot->face_normals = static_cast<int *>(bu_malloc(sizeof(faces),
+	"test face normals"));
+    memcpy(bot->face_normals, faces, sizeof(faces));
+    bot->num_uvs = 3;
+    bot->uvs = static_cast<fastf_t *>(bu_malloc(sizeof(uvs), "test UVs"));
+    memcpy(bot->uvs, uvs, sizeof(uvs));
+    bot->num_face_uvs = 1;
+    bot->face_uvs = static_cast<int *>(bu_malloc(sizeof(faces), "test face UVs"));
+    memcpy(bot->face_uvs, faces, sizeof(faces));
     BU_ALLOC(bot->skin, struct rt_bot_skin);
     bot->skin->joint_count = 2;
     bot->skin->joint_links = static_cast<struct bu_vls *>(bu_calloc(
@@ -233,6 +254,48 @@ same_double(double first, double second)
     return first_bits == second_bits;
 }
 
+void
+check_material_values(context &database, const char *name,
+    const double expected_color[4], double expected_metallic,
+    double expected_roughness, const char *expected_alpha_mode,
+    bool expected_double_sided)
+{
+    struct rt_db_internal internal;
+    RT_DB_INTERNAL_INIT(&internal);
+    const struct directory *directory = db_lookup(database.value.dbip, name,
+	LOOKUP_QUIET);
+    require(directory && rt_db_get_internal(&internal, directory,
+	database.value.dbip, nullptr) >= 0 && internal.idb_type == ID_MATERIAL,
+	std::string("missing material ") + name);
+    const auto *material = static_cast<const struct rt_material_internal *>(
+	internal.idb_ptr);
+    const char *color_text = bu_avs_get(&material->opticalProperties,
+	"gltf::base_color_factor");
+    const char *metallic_text = bu_avs_get(&material->opticalProperties,
+	"gltf::metallic_factor");
+    const char *roughness_text = bu_avs_get(&material->opticalProperties,
+	"gltf::roughness_factor");
+    const char *alpha_mode = bu_avs_get(&material->opticalProperties,
+	"gltf::alpha_mode");
+    const char *double_sided = bu_avs_get(&material->opticalProperties,
+	"gltf::double_sided");
+    double color[4];
+    std::istringstream color_stream(color_text ? color_text : "");
+    for (double &component : color)
+	color_stream >> component;
+    require(color_stream && metallic_text && roughness_text && alpha_mode &&
+	double_sided && same_double(color[0], expected_color[0]) &&
+	same_double(color[1], expected_color[1]) &&
+	same_double(color[2], expected_color[2]) &&
+	same_double(color[3], expected_color[3]) &&
+	same_double(std::strtod(metallic_text, nullptr), expected_metallic) &&
+	same_double(std::strtod(roughness_text, nullptr), expected_roughness) &&
+	BU_STR_EQUAL(alpha_mode, expected_alpha_mode) &&
+	BU_STR_EQUAL(double_sided, expected_double_sided ? "1" : "0"),
+	std::string("incorrect glTF properties on material ") + name);
+    rt_db_free_internal(&internal);
+}
+
 bool
 near_transform_value(double first, double second)
 {
@@ -284,6 +347,8 @@ check_gltf(const char *path)
 	"written glTF omitted neutral joint metadata");
     require(model.nodes[3].mesh == 0 && model.nodes[3].skin == 0 &&
 	model.meshes[0].primitives_count == 1 &&
+	has_attribute(model.meshes[0].primitives[0], "NORMAL") &&
+	has_attribute(model.meshes[0].primitives[0], "TEXCOORD_0") &&
 	has_attribute(model.meshes[0].primitives[0], "JOINTS_0") &&
 	has_attribute(model.meshes[0].primitives[0], "WEIGHTS_0"),
 	"written glTF omitted the standard skin binding");
@@ -345,6 +410,12 @@ check_roundtrip(const char *path)
     const auto *bot = static_cast<const struct rt_bot_internal *>(bot_internal.idb_ptr);
     require(rt_bot_skin_validate(bot, nullptr) == BRLCAD_OK &&
 	bot->skin->joint_count == 2 && bot->skin->influence_count == 4 &&
+	(bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) &&
+	(bot->bot_flags & RT_BOT_HAS_TEXTURE_UVS) &&
+	bot->num_normals == 3 && bot->num_face_normals == 1 &&
+	bot->num_uvs == 3 && bot->num_face_uvs == 1 &&
+	near_gltf_float(bot->normals[2], 1.0) &&
+	near_gltf_float(bot->uvs[3], 1.0) &&
 	BU_STR_EQUAL(bu_vls_cstr(&bot->skin->joint_links[1]), "tool") &&
 	near_gltf_float(bot->skin->weights[1], 0.25) &&
 	near_gltf_float(bot->skin->inverse_bind_matrices[1][3], -10.0),
@@ -462,15 +533,16 @@ check_standard_rig_import(const char *path)
   "nodes": [
     {"name": "base", "children": [1]},
     {"name": "tool", "translation": [1, 0, 0]},
-    {"name": "mesh_node", "translation": [10, 0, 0], "mesh": 0, "skin": 0}
+    {"name": "mesh_node", "translation": [10, 0, 0], "mesh": 0, "skin": 0},
+    {"name": "mesh_instance", "translation": [20, 0, 0], "mesh": 0, "skin": 0}
   ],
-  "skins": [{"inverseBindMatrices": 3, "skeleton": 0, "joints": [0, 1]}],
+  "skins": [{"name": "armature", "inverseBindMatrices": 3, "skeleton": 0, "joints": [0, 1]}],
   "animations": [{
     "name": "rig.anim",
     "samplers": [{"input": 4, "output": 5, "interpolation": "LINEAR"}],
     "channels": [{"sampler": 0, "target": {"node": 1, "path": "translation"}}]
   }],
-  "scenes": [{"nodes": [0, 2]}],
+  "scenes": [{"nodes": [0, 2, 3]}],
   "scene": 0
 })";
     std::ofstream stream(path, std::ios::binary);
@@ -481,6 +553,18 @@ check_standard_rig_import(const char *path)
     context imported;
     require(imported.execute(GCV_FILTER_READ, path) == 1,
 	"standard glTF rig import failed");
+    const struct directory *mesh_node = db_lookup(imported.value.dbip,
+	"gltf_node_2", LOOKUP_QUIET);
+    struct bu_attribute_value_set attributes;
+    bu_avs_init_empty(&attributes);
+    require(mesh_node && db5_get_attributes(imported.value.dbip, &attributes,
+	mesh_node) == 0 && BU_STR_EQUAL(bu_avs_get(&attributes,
+	"gltf::skin_skeleton"), "base") &&
+	BU_STR_EQUAL(bu_avs_get(&attributes, "gltf::mesh_name"),
+	    "rigged_triangle") &&
+	BU_STR_EQUAL(bu_avs_get(&attributes, "gltf::skin_name"), "armature"),
+	"standard glTF mesh or skin identity was not retained");
+    bu_avs_free(&attributes);
 
     struct rt_db_internal bot_internal;
     RT_DB_INTERNAL_INIT(&bot_internal);
@@ -554,6 +638,33 @@ check_standard_rig_import(const char *path)
 	EQUAL(posed->vertices[7], 3000.0) &&
 	EQUAL(posed->vertices[8], 3000.0),
 	"standard glTF rig did not produce the expected sampled skin pose");
+    std::string roundtrip_path = std::string(path) + ".roundtrip.gltf";
+    bu_file_delete(roundtrip_path.c_str());
+    require(imported.execute(GCV_FILTER_WRITE, roundtrip_path.c_str()) == 1,
+	"standard glTF rig export failed");
+    context roundtripped;
+    require(roundtripped.execute(GCV_FILTER_READ, roundtrip_path.c_str()) == 1,
+	"standard glTF rig round trip failed");
+    mesh_node = db_lookup(roundtripped.value.dbip, "gltf_node_2", LOOKUP_QUIET);
+    const struct directory *mesh_instance = db_lookup(roundtripped.value.dbip,
+	"gltf_node_3", LOOKUP_QUIET);
+    bu_avs_init_empty(&attributes);
+    require(mesh_node && db5_get_attributes(roundtripped.value.dbip, &attributes,
+	mesh_node) == 0 && BU_STR_EQUAL(bu_avs_get(&attributes,
+	"gltf::skin_skeleton"), "base") &&
+	BU_STR_EQUAL(bu_avs_get(&attributes, "gltf::mesh_name"),
+	    "rigged_triangle") &&
+	BU_STR_EQUAL(bu_avs_get(&attributes, "gltf::skin_name"), "armature"),
+	"standard glTF mesh or skin identity was not round-tripped");
+    bu_avs_free(&attributes);
+    bu_avs_init_empty(&attributes);
+    require(mesh_instance && db5_get_attributes(roundtripped.value.dbip,
+	&attributes, mesh_instance) == 0 &&
+	BU_STR_EQUAL(bu_avs_get(&attributes, "gltf::mesh_index"), "0") &&
+	BU_STR_EQUAL(bu_avs_get(&attributes, "gltf::skin_index"), "0"),
+	"shared glTF mesh or skin identity was not round-tripped");
+    bu_avs_free(&attributes);
+    bu_file_delete(roundtrip_path.c_str());
     rt_bot_internal_free(posed);
     rt_joint_eval_destroy(evaluation);
     rt_db_free_internal(&tool_internal);
@@ -606,6 +717,342 @@ check_transform_import(const char *path, const char *transform)
     rt_db_free_internal(&all_internal);
 }
 
+void
+check_sparse_import(const char *path)
+{
+    static const char *fixture = R"({
+  "asset": {"version": "2.0"},
+  "buffers": [{"uri": "data:application/octet-stream;base64,AQIAAAAAgD8AAAAAAAAAAAAAAAAAAIA/AAAAAA==", "byteLength": 28}],
+  "bufferViews": [
+    {"buffer": 0, "byteOffset": 0, "byteLength": 2},
+    {"buffer": 0, "byteOffset": 4, "byteLength": 24}
+  ],
+  "accessors": [{
+    "componentType": 5126,
+    "count": 3,
+    "type": "VEC3",
+    "sparse": {
+      "count": 2,
+      "indices": {"bufferView": 0, "componentType": 5121},
+      "values": {"bufferView": 1}
+    }
+  }],
+  "meshes": [{"name": "sparse_triangle", "primitives": [{"attributes": {"POSITION": 0}}]}],
+  "nodes": [{"mesh": 0}],
+  "scenes": [{"nodes": [0]}]
+})";
+    std::ofstream stream(path, std::ios::binary);
+    stream << fixture;
+    stream.close();
+
+    context imported;
+    require(imported.execute(GCV_FILTER_READ, path) == 1,
+	"sparse glTF import failed");
+    struct rt_db_internal internal;
+    RT_DB_INTERNAL_INIT(&internal);
+    const struct directory *directory = db_lookup(imported.value.dbip,
+	"sparse_triangle", LOOKUP_QUIET);
+    require(directory && rt_db_get_internal(&internal, directory,
+	imported.value.dbip, nullptr) >= 0 && internal.idb_type == ID_BOT,
+	"sparse glTF fixture did not create its mesh");
+    const auto *bot = static_cast<const struct rt_bot_internal *>(internal.idb_ptr);
+    require(bot->num_vertices == 3 && EQUAL(bot->vertices[3], 1000.0) &&
+	EQUAL(bot->vertices[7], 1000.0),
+	"sparse POSITION accessor was not materialized correctly");
+    rt_db_free_internal(&internal);
+    const struct directory *global = db_lookup(imported.value.dbip,
+	DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET);
+    struct bu_attribute_value_set attributes;
+    bu_avs_init_empty(&attributes);
+    require(global && db5_get_attributes(imported.value.dbip, &attributes,
+	global) == 0 && !bu_avs_get(&attributes, "gltf::default_scene"),
+	"an absent glTF default scene was not retained");
+    bu_avs_free(&attributes);
+    std::string roundtrip_path = std::string(path) + ".roundtrip.gltf";
+    bu_file_delete(roundtrip_path.c_str());
+    require(imported.execute(GCV_FILTER_WRITE, roundtrip_path.c_str()) == 1,
+	"no-default-scene glTF export failed");
+    context roundtripped;
+    require(roundtripped.execute(GCV_FILTER_READ, roundtrip_path.c_str()) == 1,
+	"no-default-scene glTF round trip failed");
+    global = db_lookup(roundtripped.value.dbip, DB5_GLOBAL_OBJECT_NAME,
+	LOOKUP_QUIET);
+    bu_avs_init_empty(&attributes);
+    require(global && db5_get_attributes(roundtripped.value.dbip, &attributes,
+	global) == 0 && !bu_avs_get(&attributes, "gltf::default_scene"),
+	"an absent glTF default scene was not round-tripped");
+    bu_avs_free(&attributes);
+    bu_file_delete(roundtrip_path.c_str());
+}
+
+void
+check_scene_import(const char *path)
+{
+    static const char *fixture = R"({
+  "asset": {"version": "2.0"},
+  "buffers": [{"uri": "data:application/octet-stream;base64,AAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAAAAAAAAgD8AAAAA", "byteLength": 36}],
+  "bufferViews": [{"buffer": 0, "byteOffset": 0, "byteLength": 36}],
+  "accessors": [{"bufferView": 0, "componentType": 5126, "count": 3, "type": "VEC3"}],
+  "meshes": [{"name": "scene_triangle", "primitives": [{"attributes": {"POSITION": 0}}]}],
+  "nodes": [
+    {"name": "mesh_node", "mesh": 0},
+    {"name": "empty_node"},
+    {"name": "mesh_instance", "translation": [2, 0, 0], "mesh": 0}
+  ],
+  "scenes": [
+    {"name": "first_scene", "nodes": [0]},
+    {"name": "second_scene", "nodes": [0, 1, 2]}
+  ],
+  "scene": 1
+})";
+    std::ofstream stream(path, std::ios::binary);
+    stream << fixture;
+    stream.close();
+
+    context imported;
+    require(imported.execute(GCV_FILTER_READ, path) == 1,
+	"multi-scene glTF import failed");
+    const struct directory *node = db_lookup(imported.value.dbip,
+	"gltf_node_0", LOOKUP_QUIET);
+    const struct directory *empty = db_lookup(imported.value.dbip,
+	"gltf_node_1", LOOKUP_QUIET);
+    const struct directory *instance = db_lookup(imported.value.dbip,
+	"gltf_node_2", LOOKUP_QUIET);
+    const struct directory *first = db_lookup(imported.value.dbip,
+	"gltf_scene_0", LOOKUP_QUIET);
+    const struct directory *second = db_lookup(imported.value.dbip,
+	"gltf_scene_1", LOOKUP_QUIET);
+    const struct directory *global = db_lookup(imported.value.dbip,
+	DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET);
+    require(node && empty && instance && first && second && global,
+	"multi-scene glTF objects were not retained");
+
+    struct rt_db_internal node_internal;
+    struct rt_db_internal instance_internal;
+    RT_DB_INTERNAL_INIT(&node_internal);
+    RT_DB_INTERNAL_INIT(&instance_internal);
+    require(rt_db_get_internal(&node_internal, node, imported.value.dbip,
+	nullptr) >= 0 && rt_db_get_internal(&instance_internal, instance,
+	imported.value.dbip, nullptr) >= 0,
+	"shared glTF mesh nodes could not be read");
+    const auto *node_combination = static_cast<const struct rt_comb_internal *>(
+	node_internal.idb_ptr);
+    const auto *instance_combination = static_cast<const struct rt_comb_internal *>(
+	instance_internal.idb_ptr);
+    require(node_combination->tree && instance_combination->tree &&
+	node_combination->tree->tr_op == OP_DB_LEAF &&
+	instance_combination->tree->tr_op == OP_DB_LEAF &&
+	BU_STR_EQUAL(node_combination->tree->tr_l.tl_name,
+	    instance_combination->tree->tr_l.tl_name),
+	"shared glTF mesh geometry was duplicated during import");
+    rt_db_free_internal(&instance_internal);
+    rt_db_free_internal(&node_internal);
+
+    struct bu_attribute_value_set attributes;
+    bu_avs_init_empty(&attributes);
+    require(db5_get_attributes(imported.value.dbip, &attributes, node) == 0 &&
+	BU_STR_EQUAL(bu_avs_get(&attributes, "gltf::name"), "mesh_node"),
+	"glTF node name was not retained separately from its link");
+    bu_avs_free(&attributes);
+    bu_avs_init_empty(&attributes);
+    require(db5_get_attributes(imported.value.dbip, &attributes, first) == 0 &&
+	BU_STR_EQUAL(bu_avs_get(&attributes, "gltf::scene_index"), "0") &&
+	BU_STR_EQUAL(bu_avs_get(&attributes, "gltf::name"), "first_scene"),
+	"first glTF scene metadata was not retained");
+    bu_avs_free(&attributes);
+    bu_avs_init_empty(&attributes);
+    require(db5_get_attributes(imported.value.dbip, &attributes, second) == 0 &&
+	BU_STR_EQUAL(bu_avs_get(&attributes, "gltf::scene_index"), "1") &&
+	BU_STR_EQUAL(bu_avs_get(&attributes, "gltf::name"), "second_scene"),
+	"second glTF scene metadata was not retained");
+    bu_avs_free(&attributes);
+    bu_avs_init_empty(&attributes);
+    require(db5_get_attributes(imported.value.dbip, &attributes, global) == 0 &&
+	BU_STR_EQUAL(bu_avs_get(&attributes, "gltf::default_scene"), "1"),
+	"default glTF scene was not retained");
+    bu_avs_free(&attributes);
+
+    std::string roundtrip_path = std::string(path) + ".roundtrip.gltf";
+    bu_file_delete(roundtrip_path.c_str());
+    require(imported.execute(GCV_FILTER_WRITE, roundtrip_path.c_str()) == 1,
+	"multi-scene glTF export failed");
+    context roundtripped;
+    require(roundtripped.execute(GCV_FILTER_READ, roundtrip_path.c_str()) == 1,
+	"multi-scene glTF round trip failed");
+    first = db_lookup(roundtripped.value.dbip, "gltf_scene_0", LOOKUP_QUIET);
+    second = db_lookup(roundtripped.value.dbip, "gltf_scene_1", LOOKUP_QUIET);
+    node = db_lookup(roundtripped.value.dbip, "gltf_node_0", LOOKUP_QUIET);
+    empty = db_lookup(roundtripped.value.dbip, "gltf_node_1", LOOKUP_QUIET);
+    instance = db_lookup(roundtripped.value.dbip, "gltf_node_2", LOOKUP_QUIET);
+    global = db_lookup(roundtripped.value.dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET);
+    require(first && second && node && empty && instance && global,
+	"multi-scene glTF structure was not round-tripped");
+    RT_DB_INTERNAL_INIT(&node_internal);
+    RT_DB_INTERNAL_INIT(&instance_internal);
+    require(rt_db_get_internal(&node_internal, node, roundtripped.value.dbip,
+	nullptr) >= 0 && rt_db_get_internal(&instance_internal, instance,
+	roundtripped.value.dbip, nullptr) >= 0,
+	"round-tripped shared glTF mesh nodes could not be read");
+    node_combination = static_cast<const struct rt_comb_internal *>(
+	node_internal.idb_ptr);
+    instance_combination = static_cast<const struct rt_comb_internal *>(
+	instance_internal.idb_ptr);
+    require(node_combination->tree && instance_combination->tree &&
+	BU_STR_EQUAL(node_combination->tree->tr_l.tl_name,
+	    instance_combination->tree->tr_l.tl_name),
+	"shared glTF mesh identity was not round-tripped");
+    rt_db_free_internal(&instance_internal);
+    rt_db_free_internal(&node_internal);
+    bu_avs_init_empty(&attributes);
+    require(db5_get_attributes(roundtripped.value.dbip, &attributes, node) == 0 &&
+	BU_STR_EQUAL(bu_avs_get(&attributes, "gltf::name"), "mesh_node"),
+	"glTF node name was not round-tripped");
+    bu_avs_free(&attributes);
+    bu_avs_init_empty(&attributes);
+    require(db5_get_attributes(roundtripped.value.dbip, &attributes, first) == 0 &&
+	BU_STR_EQUAL(bu_avs_get(&attributes, "gltf::name"), "first_scene"),
+	"first glTF scene name was not round-tripped");
+    bu_avs_free(&attributes);
+    bu_avs_init_empty(&attributes);
+    require(db5_get_attributes(roundtripped.value.dbip, &attributes, second) == 0 &&
+	BU_STR_EQUAL(bu_avs_get(&attributes, "gltf::name"), "second_scene"),
+	"second glTF scene name was not round-tripped");
+    bu_avs_free(&attributes);
+    bu_avs_init_empty(&attributes);
+    require(db5_get_attributes(roundtripped.value.dbip, &attributes, global) == 0 &&
+	BU_STR_EQUAL(bu_avs_get(&attributes, "gltf::default_scene"), "1"),
+	"default glTF scene was not round-tripped");
+    bu_avs_free(&attributes);
+    bu_file_delete(roundtrip_path.c_str());
+}
+
+void
+check_multi_primitive_roundtrip(const char *path)
+{
+    static const char *fixture = R"({
+  "asset": {"version": "2.0"},
+  "buffers": [{"uri": "data:application/octet-stream;base64,AAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAAAAAAAAgD8AAAAA", "byteLength": 36}],
+  "bufferViews": [{"buffer": 0, "byteOffset": 0, "byteLength": 36}],
+  "accessors": [{"bufferView": 0, "componentType": 5126, "count": 3, "type": "VEC3"}],
+  "materials": [
+    {"name": "red", "pbrMetallicRoughness": {
+      "baseColorFactor": [1, 0.2, 0.3, 1],
+      "metallicFactor": 0.25, "roughnessFactor": 0.75
+    }, "emissiveFactor": [0.1, 0.2, 0.3], "doubleSided": true},
+    {"name": "glass", "pbrMetallicRoughness": {
+      "baseColorFactor": [0.4, 0.5, 0.6, 0.5],
+      "metallicFactor": 0, "roughnessFactor": 0.1
+    }, "alphaMode": "BLEND"}
+  ],
+  "meshes": [{"name": "two_parts", "primitives": [
+    {"attributes": {"POSITION": 0}, "material": 0},
+    {"attributes": {"POSITION": 0}, "material": 1}
+  ]}],
+  "nodes": [{"name": "two_part_node", "mesh": 0}],
+  "scenes": [{"nodes": [0]}],
+  "scene": 0
+})";
+    std::ofstream stream(path, std::ios::binary);
+    stream << fixture;
+    stream.close();
+    context imported;
+    require(imported.execute(GCV_FILTER_READ, path) == 1,
+	"multi-primitive glTF import failed");
+    const struct directory *node = db_lookup(imported.value.dbip,
+	"gltf_node_0", LOOKUP_QUIET);
+    struct rt_db_internal internal;
+    RT_DB_INTERNAL_INIT(&internal);
+    require(node && rt_db_get_internal(&internal, node, imported.value.dbip,
+	nullptr) >= 0 && internal.idb_type == ID_COMBINATION &&
+	db_tree_nleaves(static_cast<const struct rt_comb_internal *>(
+	    internal.idb_ptr)->tree) == 2,
+	"multi-primitive glTF mesh was not represented as two BoTs");
+    rt_db_free_internal(&internal);
+    const struct directory *first_bot = db_lookup(imported.value.dbip,
+	"two_parts0", LOOKUP_QUIET);
+    const struct directory *second_bot = db_lookup(imported.value.dbip,
+	"two_parts1", LOOKUP_QUIET);
+    const struct directory *red_material = db_lookup(imported.value.dbip,
+	"red.material", LOOKUP_QUIET);
+    const struct directory *glass_material = db_lookup(imported.value.dbip,
+	"glass.material", LOOKUP_QUIET);
+    struct bu_attribute_value_set attributes;
+    bu_avs_init_empty(&attributes);
+    require(first_bot && second_bot && red_material && glass_material &&
+	db5_get_attributes(imported.value.dbip, &attributes, first_bot) == 0 &&
+	BU_STR_EQUAL(bu_avs_get(&attributes, "material_name"), "red.material"),
+	"first glTF primitive material was not imported");
+    bu_avs_free(&attributes);
+    bu_avs_init_empty(&attributes);
+    require(db5_get_attributes(imported.value.dbip, &attributes, second_bot) == 0 &&
+	BU_STR_EQUAL(bu_avs_get(&attributes, "material_name"), "glass.material"),
+	"second glTF primitive material was not imported");
+    bu_avs_free(&attributes);
+    const double red_color[4] = {1.0, 0.2, 0.3, 1.0};
+    const double glass_color[4] = {0.4, 0.5, 0.6, 0.5};
+    check_material_values(imported, "red.material", red_color, 0.25, 0.75,
+	"OPAQUE", true);
+    check_material_values(imported, "glass.material", glass_color, 0.0, 0.1,
+	"BLEND", false);
+    std::string roundtrip_path = std::string(path) + ".roundtrip.gltf";
+    bu_file_delete(roundtrip_path.c_str());
+    require(imported.execute(GCV_FILTER_WRITE, roundtrip_path.c_str()) == 1,
+	"multi-primitive glTF export failed");
+    context roundtripped;
+    require(roundtripped.execute(GCV_FILTER_READ, roundtrip_path.c_str()) == 1,
+	"multi-primitive glTF round trip failed");
+    node = db_lookup(roundtripped.value.dbip, "gltf_node_0", LOOKUP_QUIET);
+    RT_DB_INTERNAL_INIT(&internal);
+    require(node && rt_db_get_internal(&internal, node,
+	roundtripped.value.dbip, nullptr) >= 0 &&
+	db_tree_nleaves(static_cast<const struct rt_comb_internal *>(
+	    internal.idb_ptr)->tree) == 2,
+	"multi-primitive glTF mesh was not round-tripped");
+    rt_db_free_internal(&internal);
+    first_bot = db_lookup(roundtripped.value.dbip, "two_parts0", LOOKUP_QUIET);
+    second_bot = db_lookup(roundtripped.value.dbip, "two_parts1", LOOKUP_QUIET);
+    red_material = db_lookup(roundtripped.value.dbip, "red.material", LOOKUP_QUIET);
+    glass_material = db_lookup(roundtripped.value.dbip, "glass.material", LOOKUP_QUIET);
+    bu_avs_init_empty(&attributes);
+    require(first_bot && second_bot && red_material && glass_material &&
+	db5_get_attributes(roundtripped.value.dbip, &attributes, first_bot) == 0 &&
+	BU_STR_EQUAL(bu_avs_get(&attributes, "material_name"), "red.material"),
+	"first glTF primitive material was not round-tripped");
+    bu_avs_free(&attributes);
+    bu_avs_init_empty(&attributes);
+    require(db5_get_attributes(roundtripped.value.dbip, &attributes,
+	second_bot) == 0 && BU_STR_EQUAL(bu_avs_get(&attributes,
+	"material_name"), "glass.material"),
+	"second glTF primitive material was not round-tripped");
+    bu_avs_free(&attributes);
+    check_material_values(roundtripped, "red.material", red_color, 0.25,
+	0.75, "OPAQUE", true);
+    check_material_values(roundtripped, "glass.material", glass_color, 0.0,
+	0.1, "BLEND", false);
+    bu_file_delete(roundtrip_path.c_str());
+}
+
+void
+check_unsupported_attribute_rejection(const char *path)
+{
+    static const char *fixture = R"({
+  "asset": {"version": "2.0"},
+  "buffers": [{"uri": "data:application/octet-stream;base64,AAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAAAAAAAAgD8AAAAA", "byteLength": 36}],
+  "bufferViews": [{"buffer": 0, "byteOffset": 0, "byteLength": 36}],
+  "accessors": [{"bufferView": 0, "componentType": 5126, "count": 3, "type": "VEC3"}],
+  "meshes": [{"primitives": [{"attributes": {"POSITION": 0, "COLOR_0": 0}}]}],
+  "nodes": [{"mesh": 0}],
+  "scenes": [{"nodes": [0]}],
+  "scene": 0
+})";
+    std::ofstream stream(path, std::ios::binary);
+    stream << fixture;
+    stream.close();
+    context imported;
+    require(imported.execute(GCV_FILTER_READ, path) == 0,
+	"unsupported glTF vertex colors were silently discarded");
+}
+
 } // namespace
 
 int
@@ -617,10 +1064,18 @@ main(int argc, char **argv)
     std::string transform_path = std::string(argv[1]) + ".transform.gltf";
     std::string animation_path = std::string(argv[1]) + ".animation.gltf";
     std::string rig_path = std::string(argv[1]) + ".rig.gltf";
+    std::string sparse_path = std::string(argv[1]) + ".sparse.gltf";
+    std::string scene_path = std::string(argv[1]) + ".scene.gltf";
+    std::string multi_path = std::string(argv[1]) + ".multi.gltf";
+    std::string unsupported_path = std::string(argv[1]) + ".unsupported.gltf";
     bu_file_delete(argv[1]);
     bu_file_delete(transform_path.c_str());
     bu_file_delete(animation_path.c_str());
     bu_file_delete(rig_path.c_str());
+    bu_file_delete(sparse_path.c_str());
+    bu_file_delete(scene_path.c_str());
+    bu_file_delete(multi_path.c_str());
+    bu_file_delete(unsupported_path.c_str());
     try {
 	check_roundtrip(argv[1]);
 	check_transform_import(transform_path.c_str(),
@@ -629,10 +1084,18 @@ main(int argc, char **argv)
 	    R"("matrix": [0, 2, 0, 0, -3, 0, 0, 0, 0, 0, 4, 0, 1, 2, 3, 1])");
 	check_standard_animation_import(animation_path.c_str());
 	check_standard_rig_import(rig_path.c_str());
+	check_sparse_import(sparse_path.c_str());
+	check_scene_import(scene_path.c_str());
+	check_multi_primitive_roundtrip(multi_path.c_str());
+	check_unsupported_attribute_rejection(unsupported_path.c_str());
 	bu_file_delete(argv[1]);
 	bu_file_delete(transform_path.c_str());
 	bu_file_delete(animation_path.c_str());
 	bu_file_delete(rig_path.c_str());
+	bu_file_delete(sparse_path.c_str());
+	bu_file_delete(scene_path.c_str());
+	bu_file_delete(multi_path.c_str());
+	bu_file_delete(unsupported_path.c_str());
 	return 0;
     } catch (const std::exception &error) {
 	bu_log("%s\n", error.what());
@@ -640,6 +1103,10 @@ main(int argc, char **argv)
 	bu_file_delete(transform_path.c_str());
 	bu_file_delete(animation_path.c_str());
 	bu_file_delete(rig_path.c_str());
+	bu_file_delete(sparse_path.c_str());
+	bu_file_delete(scene_path.c_str());
+	bu_file_delete(multi_path.c_str());
+	bu_file_delete(unsupported_path.c_str());
 	return 1;
     }
 }
