@@ -125,9 +125,10 @@ project relocation.  `regress-art-image-maps` checks spatial image
 orientation and magnified linear ramps against position-based references
 on flat and smooth BOTs, including reflected U/V charts, and on spheres
 and ellipsoids with full-range and transformed UVs.  LOD transitions,
-baked per-vertex tangents, and filtered secondary textures remain
+baked per-vertex tangents, and filtered secondary normal/height textures remain
 unqualified.  The mapped-glass cases below separately qualify analytic
-normal fields along smooth transmission paths.
+normal fields along smooth transmission paths, and the filtered-footprint
+cases qualify color-texture lookup on planar reflection and transmission.
 
 |Rough plastic and metal
 |`regress-art-surface` compares native plastic and uncompensated isotropic
@@ -1149,21 +1150,33 @@ before a second glass interface. These checks retain the planar test's
 strongly tilted clipping configurations use 524288 samples to bound their
 higher estimator variance at the same 1% threshold.
 
-These checks qualify smooth ray footprints and the tested rough sampled
-paths; they do not qualify all filtered secondary textures. A separate
-high-frequency image study reproduces a discontinuity in OIIO's
-anisotropic quadrature: its sample count changes from one to two when
-the footprint aspect ratio crosses 1.5. First-order footprint differences
-can therefore cause a larger isolated color difference. Filter continuity,
-height-map second derivatives, roughness/anisotropy gradients, and general
-rough-lobe filtering still need qualification. Geometry tangent and
-geometric-normal partials currently come from spheres, ellipsoids and
-BOTs. Other librt primitives, native curves and material basis modifiers
-need further frame-derivative support and qualification.
+`regress-art-filtered-footprints` adds 16 color-texture image comparisons
+on planar CSG and solid BOTs. Smooth reflection and transmission use direct
+or world normal-map fields under both projections. Each filtered receiver
+is compared with an independently differentiated analytic path. Every
+pixel permits an absolute error of `0.0001` plus one binary16 relative
+step, and both images must contain a positive signal.
+
+OIIO's deterministic anisotropic filter uses partial edge cells with
+continuous weights. This removes sample-count discontinuities in bilinear
+and bicubic reconstruction, including the old one-to-two transition at a
+footprint aspect ratio of 1.5. Nearest-texel reconstruction retains its
+inherent discontinuities. Native filter tests also compare nearest,
+bilinear and bicubic responses with independently integrated continuous
+kernels and check reference convergence, linear derivatives and scalar/
+batched agreement.
+
+These checks qualify the tested smooth filtered color paths and rough
+sampled footprints. Height-map second derivatives, roughness/anisotropy
+gradients, general rough-lobe filtering and curved/nested filtered image
+paths still need qualification. Geometry tangent and geometric-normal
+partials currently come from spheres, ellipsoids and BOTs. Other librt
+primitives, native curves and material basis modifiers need further
+frame-derivative support and qualification.
 
 Rough curved/nested interfaces, general caustic focusing, transmitted
 shadows, arbitrary overlapping media, thin refractive surfaces, and filtered
-secondary image maps need further qualification.  The distinct-priority
+secondary normal/height maps need further qualification.  The distinct-priority
 nested-volume case below has independent image references.
 
 === Rough glass under direct lighting

@@ -169,6 +169,7 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-glass-sides
   regress-art-mapped-glass
   regress-art-glass-footprints
+  regress-art-filtered-footprints
   regress-art-specular-footprints
   regress-art-bundled-specular
   regress-art-rough-footprints
@@ -255,7 +256,8 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-caustics-clear.cmake.in regress-art-caustics-absorption.cmake.in regress-art-caustics-state.cmake.in regress-art-caustics-rough.cmake.in
   regress-art-refraction.cmake.in
   regress-art-glass-sides.cmake.in regress-art-mapped-glass.cmake.in
-  regress-art-glass-footprints.cmake.in regress-art-reflection-energy.cmake.in
+  regress-art-glass-footprints.cmake.in regress-art-filtered-footprints.cmake.in
+  regress-art-reflection-energy.cmake.in
   regress-art-specular-footprints.cmake.in regress-art-bundled-specular.cmake.in
   regress-art-rough-footprints.cmake.in regress-art-frame-derivatives.cmake.in
   regress-art-curved-footprints.cmake.in regress-art-standard-microfacet.cmake.in
@@ -332,6 +334,7 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/bundled-specular-output"
     "${CMAKE_CURRENT_BINARY_DIR}/specular-footprints-output"
     "${CMAKE_CURRENT_BINARY_DIR}/glass-footprints-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/filtered-footprints-output"
     "${CMAKE_CURRENT_BINARY_DIR}/reflection-energy-output"
     "${CMAKE_CURRENT_BINARY_DIR}/nested-output"
     "${CMAKE_CURRENT_BINARY_DIR}/mixture-output"

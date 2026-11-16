@@ -30,7 +30,8 @@ normal path_normal(point position, point center, vector axes, int mapped, int ex
 
 surface art_glass_footprint_reference(float in_slope = 0.05, float in_ior = 1.5,
     int in_mode = 0, int in_mapped = 1, int in_reflection = 0, int in_curved = 0,
-    point in_center = point(0), vector in_axes = vector(10), int in_receiver = 0, int in_unweighted = 0)
+    point in_center = point(0), vector in_axes = vector(10), int in_receiver = 0, int in_unweighted = 0,
+    string in_filename = "", float in_scale = 0.1)
 {
     point position = P;
     vector direction = normalize(I);
@@ -67,5 +68,8 @@ surface art_glass_footprint_reference(float in_slope = 0.05, float in_ior = 1.5,
     color value = color(100 * length(Dx(position)), 100 * length(Dy(position)), 100 * length(Dx(position) + Dy(position)));
     if (in_mode == 1)
         value = color(0.5 + 0.01 * position[0], 0.5 + 0.01 * position[1], 0.5);
+    if (in_mode == 2)
+        value = texture(in_filename, 0.5 + in_scale * position[0], 0.5 + in_scale * position[1],
+            "interp", "bilinear", "wrap", "periodic");
     Ci = throughput * value * emission();
 }
