@@ -110,7 +110,9 @@ project relocation.  `regress-art-image-maps` checks spatial image
 orientation and magnified linear ramps against position-based references
 on flat and smooth BOTs, including reflected U/V charts, and on spheres
 and ellipsoids with full-range and transformed UVs.  LOD transitions,
-baked per-vertex tangents, and secondary rays remain unqualified.
+baked per-vertex tangents, and filtered secondary textures remain
+unqualified.  The mapped-glass cases below separately qualify analytic
+normal fields along smooth transmission paths.
 
 |Rough plastic and metal
 |`regress-art-surface` compares native plastic and uncompensated isotropic
@@ -148,8 +150,13 @@ reflection, total internal reflection, and primary geometry-pass ownership.
 quadric transmission and opaque contacts with independent analytic paths.
 `regress-art-rough-glass` checks the direct-light GGX response on CSG and
 solid BOT faces, from both sides of an interface.  `regress-art-rough-paths` compares complete absorbing closed-box paths
-with native Appleseed geometry.  Rough curved/nested interfaces, transmitted
-shadows, and normal-mapped transmission remain unqualified.
+with native Appleseed geometry.  `regress-art-mapped-glass` checks smooth,
+mapped transmission and absorption through nested CSG and solid BOT boxes,
+including initial interior cameras and native BOT UV charts.
+`regress-art-glass-sides` prevents smooth or rough reflection from leaking
+through geometric surfaces when normals are mapped.  Rough curved/nested
+interfaces, transmitted shadows, and filtered secondary normal textures
+remain unqualified.
 
 |Participating-media renderer foundation
 |`regress-art-volume` checks native Appleseed cameras within a standalone
@@ -167,8 +174,12 @@ emitters, alpha covers, inheritance, and invalid-input/geometry checks.
 `regress-art-volume-scattering` compares point-lit CSG and BOT single
 scattering with independent quadrature for both phase functions and both
 distance sampling modes, with transparent and partially opaque covers on
-camera and shadow segments.  Multiple scattering, overlapping media and volume
-compositing alpha need further qualification.
+camera and shadow segments.  Conservative multiple scattering has uniform-field
+and single-scattering quadrature checks.  `regress-art-volume-walk` and
+`regress-art-volume-walk-overlap` compare absorbing RGB multiple scattering
+with independent random walks, including priority and phase-function changes
+in concentric CSG media.  Interpenetrating scattering regions, arbitrary
+illumination fields, and volume compositing alpha need further qualification.
 
 |Lighting across frames
 |`regress-art-lighting` compares diffuse HDR frame sequences with fresh-process
@@ -970,17 +981,43 @@ views at elevations 90 and 65.  A neutral-background emission control proves
 that each view contains the tested solid.  A straight-through reference
 must fail the refracted-path comparison.
 
+Mapped surface normals change scattering directions while geometric
+boundaries define the occupied media.  Glass sampling, evaluation, and
+probability evaluation require reflection to remain on the incident
+geometric side and transmission to cross it.  These checks prevent a
+reflected ray from crossing the current boundary and acquiring its
+transmitted medium.  This geometric-side distinction also underlies the
+https://www.pbr-book.org/3ed-2018/Materials/BSDFs[PBRT BSDF model].
+
+`regress-art-glass-sides` checks reflection-only CSG and solid BOT objects
+with mapped normals tilted from 0 through 75 degrees, at zero and finite
+roughness.  A white receiver behind each closed solid must remain invisible.
+Positive front-reflection and straight-transmission controls check Fresnel
+energy.  Native tests additionally check both sides, radiance and adjoint
+sampling, and rejection of incompatible evaluation directions and PDFs.
+
+`regress-art-mapped-glass` compares 78 smooth nested-glass paths with
+independent Snell/Fresnel/Beer transport and analytic receiver positions.
+The authored world-space normal field changes across the interfaces;
+the tangent-space field uses the BOT's UV coordinates and independently
+known front/back triangle frames.  Cases cover clear and RGB-absorbing CSG
+and solid BOT boxes, outer indices 1.5 and 2, an inner index of 2.4,
+outside and initial interior origins, both projections, and disabled and
+quarter-weight normal maps.  Comparisons allow one binary16 relative step
+plus a 0.00002 absolute arithmetic bound.  These cases do not qualify rough
+mapped transmission, filtered secondary image maps, or arbitrary curved
+normal fields.
+
 Native tests compare reflected and transmitted neighboring directions with
 independent analytic rays on a plane and sphere.  Glass passes the refractive
 ratio, rather than roughness, to its transmitted-differential calculation.
 These checks establish the tested first-order direction changes; filtered
 textures along secondary paths still need image-based qualification.
 
-Rough curved/nested interfaces, caustics,
-transmitted shadows, general overlapping media, thin surfaces, and
-bump/normal-mapped transmission need further qualification before a general
-production-glass claim.  The distinct-priority nested-volume case below
-has independent image references.
+Rough curved/nested interfaces, general caustic focusing, transmitted
+shadows, arbitrary overlapping media, thin refractive surfaces, and filtered
+secondary image maps need further qualification.  The distinct-priority
+nested-volume case below has independent image references.
 
 === Rough glass under direct lighting
 
@@ -1262,8 +1299,40 @@ checks nested and interpenetrating intervals with higher and lower inner
 priorities, CSG and solid BOT outer boundaries, and outside and inside
 pinhole origins.  Its sixteen Beer comparisons use independently computed
 active-medium lengths and a 0.1-percent relative energy bound.  This
-qualifies absorption and priority transitions; overlapping scattering
-transport remains separate work.
+qualifies absorption and priority transitions; the random-walk cases below
+separately check concentric overlapping scattering.
+
+`regress-art-volume-walk` compares absorbing RGB multiple scattering in a
+radius-10 CSG sphere with an independent channel-by-channel survival-weighted
+random walk.  `regress-art-volume-walk-overlap` adds a concentric radius-5
+medium with distinct coefficients and higher or lower priority.  Both check
+inside and outside pinhole origins and direct light sampling on and off.
+The overlapping cases include different forward/backward Henyey phase
+functions on the two sides; a hidden inner region must recover the outer
+homogeneous result.  Together these cases compare 52 rendered views with
+the reference means at the existing 1.5-percent relative energy bound.
+
+The checked-in `art_volume_reference.json` records means, standard errors,
+sample counts, coefficients, and collision/crossing statistics.  Its 48
+channel estimates each use two million independent paths.  The development
+`art_volume_reference` target regenerates this data without linking the
+renderer or reusing its transport code:
+
+----
+cmake --build BRLCAD_BUILD --target art_volume_reference
+BRLCAD_BUILD/regress/art/art_volume_reference > regenerated-volume-reference.json
+----
+
+The utility first requires analytic Beer, conservative-field, and
+homogeneous-medium recovery controls to pass.  It applies absorption as
+survival weight at each sampled collision and switches coefficients and
+phase functions at explicit sphere crossings.  The rendered tests use 64
+volume continuations with Russian roulette disabled.  At their maximum
+single-scattering albedo of 0.8, the remaining reference-path weight after
+64 collisions is below 0.000001.  These cases qualify constant-white
+boundary illumination and concentric CSG regions; they do not establish
+arbitrary light fields, interpenetrating scattering regions, BOT scattering
+overlaps, or volume compositing alpha.
 
 A homogeneous region has refractive index one.  It may fill a glass
 shell's cavity or overlap a closed glass region.  Declare distinct medium
@@ -1399,7 +1468,10 @@ priority supplies the interface's surface properties.  A surface-free fog
 interior can therefore have higher priority than the glass surface around
 it.  Visible tied priorities, different tangent planes, partial coverage,
 and non-glass transmissive layers are outside this shared-interface
-workflow; ambiguous groups fail with a diagnostic.
+workflow; ambiguous groups fail with a diagnostic.  Partial coverage needs
+a layer order: moving a transparent filter just inside or outside a glass
+boundary changes how reflection and transmission traverse that filter.
+Keep such surfaces distinct on the intended side of the interface.
 The opaque contact cases below retain the incident medium when reflecting.
 Arbitrary interpenetrating-volume arrangements still need separate
 qualification.
@@ -1424,6 +1496,15 @@ Per-pixel transport comparisons allow binary16 output rounding, including
 HDR values; independent center-ray energy and full-float geometry checks
 retain their absolute bounds.  This does not establish rough shared-interface transport, native
 triangle/Embree boundary coalescing, transmitted shadows, or caustics.
+
+A fully transparent cover does not own a coincident surface or optical
+boundary.  `regress-art-transparent-contact` compares covered and uncovered
+CSG and solid BOT glass, fog, and emissive surfaces, with cameras inside and
+outside and both object-selection orders.  The images must match exactly.
+Native tests also force the invisible cover to be the first hit and check
+glass entry/exit media and ordinary opaque ownership.  A partially covered
+optical contact must diagnose ambiguity in either hit order and preserve
+existing output, rather than silently skipping the glass.
 
 `regress-art-curved-media` extends the independent optical reference to
 concentric spheres and ellipsoids.  It solves quadratic intersections and
@@ -1644,6 +1725,21 @@ sampling.  The shader requires the expected incident IOR and nonzero path
 length and depth.  Each matched-seed pair must have identical pixels and
 positive control radiance.  These comparisons qualify context propagation,
 rather than a general refractive area-light energy model.
+
+`regress-art-area-exit-csg-15`, `-csg-20`, `-bot-15`, and `-bot-20`
+measure emitted power through a smooth planar dielectric exit.  A
+unit-radiance square source lies one unit inside glass; an albedo-0.5
+receiver lies two units beyond the exit.  Each case checks clear and RGB
+Beer absorption at IOR 1.5 or 2 with sixteen million photons.  The
+receiver-footprint mean must match independent Snell/Fresnel and
+solid-angle quadrature within 3 percent.  The reference includes the
+glass-to-air radiance factor and source-to-receiver area Jacobian.
+Quadrature refinement must agree, index one must recover direct lighting
+and the analytic square-source center value, a wrong IOR must disagree,
+and disabling caustics must give black.  Reflection is suppressed to
+isolate one transmitted path.  These checks cover CSG and solid BOT
+emitters within CSG glass, not curved focusing, repeated reflections,
+rough exits, or emitters in scattering volumes.
 
 The emitter contract supports static geometry.  Qualification of moving
 emitters, participating media, and general area-lit caustic focusing

@@ -1,0 +1,94 @@
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+set(ART_COMMAND_TIMEOUT 360)
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_nested_test_commands.cmake")
+foreach(shader IN ITEMS art_diffuse art_emission art_area_exit_reference)
+  configure_file("@CMAKE_CURRENT_BINARY_DIR@/${shader}.oso" "${WORK}/shaders/${shader}.oso" COPYONLY)
+endforeach()
+set(TOOL "@ART_OIIOTOOL_EXECUTABLE@")
+set(ACTUAL_DB "${WORK}/actual.g")
+set(REFERENCE_DB "${WORK}/reference.g")
+run("${VEXEC}" create-emitter "${ACTUAL_DB}" "${AREA_EXIT_KIND}")
+configure_file("${ACTUAL_DB}" "${REFERENCE_DB}" COPYONLY)
+run("${VEXEC}" set-named-material "${REFERENCE_DB}" receiver.material OSL art_area_exit_reference)
+run("${VEXEC}" material "${ACTUAL_DB}" create glass.material Glass)
+run("${VEXEC}" set-named-material "${ACTUAL_DB}" glass.material OSL as_glass)
+foreach(parameter IN ITEMS "in_ior;float ${AREA_EXIT_IOR}" "in_roughness;float 0"
+    "in_transmittance_amount;float 1" "in_surface_transmittance;color 1 1 1"
+    "in_refraction_tint;color 1 1 1" "in_reflection_tint;color 0 0 0"
+    "in_volume_transmittance_distance;float 1")
+  list(GET parameter 0 name)
+  list(GET parameter 1 value)
+  set_nested_parameter("${ACTUAL_DB}" glass "${name}" "${value}")
+endforeach()
+# The source bottom lies one unit inside the glass.  Suppress reflected
+# paths to isolate one exit; the receiver is two units below that exit.
+run("${VEXEC}" in "${ACTUAL_DB}" glass.s rpp -20 20 2 5 -20 20)
+run("${VEXEC}" r "${ACTUAL_DB}" glass.r u glass.s)
+run("${VEXEC}" material "${ACTUAL_DB}" assign glass.r glass.material)
+set(SIZE 32)
+set(PHOTON_PASSES 16)
+set(PHOTONS_PER_PASS 1000000)
+set(ENERGY_RELATIVE_BOUND 0.03)
+set(REFERENCE_RELATIVE_BOUND 0.0011) # Binary16 reference rounding.
+set(BASE_ARGS -P 2 -p 90 -w ${SIZE} -n ${SIZE} -c "viewsize 0.001"
+  -c "eye_pt 0 0.5 0" -c "lookat_pt 0 0 0"
+  -c "set sampling=uniform light_intensity=0 environment_intensity=0 background_color=black rr_min_path_length=0")
+
+function(render_area_reference ior transmittance prefix)
+  set_nested_parameter("${REFERENCE_DB}" receiver in_ior "float ${ior}")
+  set_nested_parameter("${REFERENCE_DB}" receiver in_volume_transmittance "color ${transmittance}")
+  foreach(intervals IN ITEMS 8 16)
+    set_nested_parameter("${REFERENCE_DB}" receiver in_intervals "int ${intervals}")
+    run("${EXEC}" ${BASE_ARGS} -w 1 -n 1 -c "set samples=1 max_bounces=0"
+      -o "${prefix}-${intervals}.exr" "${REFERENCE_DB}" receiver.r)
+    run("${VEXEC}" check-image "${prefix}-${intervals}.exr" 1 1)
+  endforeach()
+  compare_radiance_mean("${prefix}-8.exr" "${prefix}-16.exr" ${REFERENCE_RELATIVE_BOUND} FALSE)
+  set(reference "${prefix}-16.exr" PARENT_SCOPE)
+endfunction()
+
+# At index one the refractive integral must recover direct lighting in air.
+render_area_reference(1 "1 1 1" "${WORK}/air-reference")
+run("${EXEC}" ${BASE_ARGS} -c "set samples=2048 max_bounces=1 max_diffuse_bounces=0"
+  -o "${WORK}/air.exr" "${ACTUAL_DB}" receiver.r emitter.r)
+compare_radiance_mean("${WORK}/air.exr" "${reference}" ${ENERGY_RELATIVE_BOUND} FALSE)
+run("${EXEC}" ${BASE_ARGS} -p 0.02 -w 1 -n 1 -c "set samples=131072 max_bounces=1 max_diffuse_bounces=0"
+  -o "${WORK}/air-center.exr" "${ACTUAL_DB}" receiver.r emitter.r)
+run("${VEXEC}" check-emitter-image "${WORK}/air-center.exr" "${AREA_EXIT_KIND}")
+
+foreach(profile IN ITEMS clear absorbing)
+  set(transmittance "1 1 1")
+  if(profile STREQUAL "absorbing")
+    set(transmittance "0.5 0.7 0.9")
+  endif()
+  set_nested_parameter("${ACTUAL_DB}" glass in_volume_transmittance "color ${transmittance}")
+  render_area_reference(${AREA_EXIT_IOR} "${transmittance}" "${WORK}/${profile}-reference")
+  set(image "${WORK}/${profile}.exr")
+  run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}" ${BASE_ARGS}
+    -c "set integrator=sppm samples=1 passes=${PHOTON_PASSES} light_photons=${PHOTONS_PER_PASS} environment_photons=0 max_bounces=0 photon_max_bounces=1 photon_rr_min_path_length=0 photon_max_estimate=10000 photon_importons=0 photon_radius_percent=0.05 enable_caustics=1"
+    -o "${image}" "${ACTUAL_DB}" receiver.r emitter.r glass.r)
+  if(NOT command_output MATCHES "sppm pass ${PHOTON_PASSES} completed" OR
+      NOT command_output MATCHES "complete: ${PHOTON_PASSES}/${PHOTON_PASSES} tiles")
+    message(FATAL_ERROR "Area-light exit did not complete every photon pass")
+  endif()
+  run("${VEXEC}" check-image "${image}" ${SIZE} ${SIZE})
+  compare_radiance_mean("${image}" "${reference}" ${ENERGY_RELATIVE_BOUND} FALSE)
+  if(AREA_EXIT_IOR LESS 2)
+    set(wrong_ior 2)
+  else()
+    set(wrong_ior 1.5)
+  endif()
+  render_area_reference(${wrong_ior} "${transmittance}" "${WORK}/${profile}-wrong-ior")
+  compare_radiance_mean("${image}" "${reference}" ${ENERGY_RELATIVE_BOUND} TRUE)
+endforeach()
+
+# Disabling caustics cannot substitute an unrelated direct-light solution.
+run("${EXEC}" ${BASE_ARGS}
+  -c "set integrator=sppm samples=1 passes=1 light_photons=100000 environment_photons=0 max_bounces=0 photon_max_bounces=1 photon_importons=0 enable_caustics=0"
+  -o "${WORK}/disabled.exr" "${ACTUAL_DB}" receiver.r emitter.r glass.r)
+run("${TOOL}" --pattern constant:color=0,0,0 ${SIZE}x${SIZE} 3 -o "${WORK}/black.exr")
+run("${TOOL}" --fail 0 --hardfail 0 "${WORK}/disabled.exr" --ch R,G,B "${WORK}/black.exr" --diff)

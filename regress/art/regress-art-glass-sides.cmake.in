@@ -1,0 +1,66 @@
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/glass-sides-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_emission.oso" "${WORK}/shaders/art_emission.oso" COPYONLY)
+set(TOOL "@ART_OIIOTOOL_EXECUTABLE@")
+set(DB "${WORK}/mirror.g")
+# Normal-incidence Fresnel R=((1.5-1)/(1.5+1))^2 and the two-exit T^2.
+set(FRESNEL_REFLECTANCE 0.04)
+set(TWO_INTERFACE_TRANSMITTANCE 0.9216)
+# Bounds cover binary16 rounding of these positive energy controls.
+set(REFLECTION_ABSOLUTE_BOUND 0.00005)
+set(TRANSMISSION_ABSOLUTE_BOUND 0.0005)
+run("${VEXEC}" create-material "${DB}" as_glass)
+run("${VEXEC}" material "${DB}" remove receiver.material optical OSL.param.in_target)
+run("${VEXEC}" set-named-material "${DB}" receiver.material OSL art_emission)
+run("${VEXEC}" set-named-material "${DB}" receiver.material OSL.param.in_color "color 1 1 1")
+run("${VEXEC}" in "${DB}" slab.s rpp -100 100 -100 100 -10 10)
+run("${VEXEC}" r "${DB}" slab.r u slab.s)
+run("${VEXEC}" material "${DB}" assign slab.r osl.material)
+foreach(parameter IN ITEMS "OSL.version;2" "OSL.node.map;as_bump"
+    "OSL.param.map.in_mode;string Normal Map" "OSL.param.map.in_normal_map_mode;string Signed"
+    "OSL.param.map.in_normal_map_coordsys;string World Space"
+    "OSL.connect.material.in_bump_normal;map.out_normal"
+    "OSL.param.in_transmittance_amount;float 1" "OSL.param.in_surface_transmittance;color 1 1 1"
+    "OSL.param.in_ior;float 1.5" "OSL.param.in_volume_transmittance_distance;float 0"
+    "OSL.param.in_reflection_tint;color 1 1 1" "OSL.param.in_refraction_tint;color 0 0 0")
+  list(GET parameter 0 name)
+  list(GET parameter 1 value)
+  run("${VEXEC}" set-material "${DB}" "${name}" "${value}")
+endforeach()
+set(ARGS -P 1 -w 1 -n 1 -p 0.02 -c "viewsize 0.001" -c "eye_pt 0 0 40"
+  -c "orientation 0 0 0 1"
+  -c "set samples=4096 max_bounces=16 max_specular_bounces=16 max_glossy_bounces=16 rr_min_path_length=0 light_intensity=0 environment_intensity=0 background_color=black")
+run("${TOOL}" --pattern constant:color=0,0,0 1x1 3 -o "${WORK}/black.exr")
+foreach(object IN ITEMS slab.r mesh.r)
+  foreach(roughness IN ITEMS 0 0.35 0.7)
+    run("${VEXEC}" set-material "${DB}" OSL.param.in_roughness "float ${roughness}")
+    # World normals tilted 0, 30, 60 and 75 degrees from the top face.
+    foreach(normal IN ITEMS "0 0 1" "0.5 0 0.8660254037844386"
+        "0.8660254037844386 0 0.5" "0.9659258262890683 0 0.2588190451025207")
+      run("${VEXEC}" set-material "${DB}" OSL.param.map.in_normal_map "color ${normal}")
+      set(image "${WORK}/${object}-${roughness}-${normal}.exr")
+      run("${EXEC}" ${ARGS} -o "${image}" "${DB}" "${object}" receiver.r)
+      run("${VEXEC}" check-image "${image}" 1 1)
+      # A reflection-only closed solid cannot expose a receiver behind it.
+      run("${TOOL}" --fail 0 --hardfail 0 "${image}" --ch R,G,B "${WORK}/black.exr" --diff)
+    endforeach()
+  endforeach()
+  run("${VEXEC}" set-material "${DB}" OSL.param.map.in_normal_map "color 0 0 1")
+  run("${VEXEC}" set-material "${DB}" OSL.param.in_roughness "float 0")
+  # A positive front-side control prevents a disabled BSDF from passing.
+  run("${EXEC}" ${ARGS} -c "set environment_color=white environment_intensity=1"
+    -o "${WORK}/reflection.exr" "${DB}" "${object}" receiver.r)
+  run("${TOOL}" --pattern "constant:color=${FRESNEL_REFLECTANCE},${FRESNEL_REFLECTANCE},${FRESNEL_REFLECTANCE}" 1x1 3 -o "${WORK}/reference.exr")
+  run("${TOOL}" --fail ${REFLECTION_ABSOLUTE_BOUND} --hardfail ${REFLECTION_ABSOLUTE_BOUND} "${WORK}/reflection.exr" --ch R,G,B "${WORK}/reference.exr" --diff)
+  run("${VEXEC}" set-material "${DB}" OSL.param.in_reflection_tint "color 0 0 0")
+  run("${VEXEC}" set-material "${DB}" OSL.param.in_refraction_tint "color 1 1 1")
+  run("${EXEC}" ${ARGS} -o "${WORK}/transmission.exr" "${DB}" "${object}" receiver.r)
+  run("${TOOL}" --pattern "constant:color=${TWO_INTERFACE_TRANSMITTANCE},${TWO_INTERFACE_TRANSMITTANCE},${TWO_INTERFACE_TRANSMITTANCE}" 1x1 3 -o "${WORK}/reference.exr")
+  run("${TOOL}" --fail ${TRANSMISSION_ABSOLUTE_BOUND} --hardfail ${TRANSMISSION_ABSOLUTE_BOUND} "${WORK}/transmission.exr" --ch R,G,B "${WORK}/reference.exr" --diff)
+  run("${VEXEC}" set-material "${DB}" OSL.param.in_reflection_tint "color 1 1 1")
+  run("${VEXEC}" set-material "${DB}" OSL.param.in_refraction_tint "color 0 0 0")
+endforeach()

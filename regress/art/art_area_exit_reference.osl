@@ -1,0 +1,103 @@
+/*              A R T _ A R E A _ E X I T _ R E F E R E N C E . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+#include "stdosl.h"
+
+color area_exit_transport(float radius, float ior, color volume_transmittance)
+{
+    float AirHeight = 2;
+    float GlassHeight = 1;
+    int SnellIterations = 32;
+    float lower = radius / (AirHeight + GlassHeight);
+    float upper = radius / AirHeight;
+    for (int iteration = 0; iteration < SnellIterations; ++iteration) {
+        float tangent = (lower + upper) / 2;
+        float factor = sqrt(ior * ior + (ior * ior - 1) * tangent * tangent);
+        float projected = tangent * (AirHeight + GlassHeight / factor);
+        if (projected < radius)
+            lower = tangent;
+        else
+            upper = tangent;
+    }
+    float tangent = (lower + upper) / 2;
+    float factor = sqrt(ior * ior + (ior * ior - 1) * tangent * tangent);
+    float derivative = AirHeight + GlassHeight * ior * ior / (factor * factor * factor);
+    float density = radius > 0
+        ? tangent / ((1 + tangent * tangent) * (1 + tangent * tangent) * radius * derivative)
+        : 1 / ((AirHeight + GlassHeight / ior) * (AirHeight + GlassHeight / ior));
+    float air_cosine = 1 / sqrt(1 + tangent * tangent);
+    float glass_cosine = sqrt(1 - (1 - air_cosine * air_cosine) / (ior * ior));
+    float rs = (ior * glass_cosine - air_cosine) / (ior * glass_cosine + air_cosine);
+    float rp = (glass_cosine - ior * air_cosine) / (glass_cosine + ior * air_cosine);
+    float transmission = 1 - (rs * rs + rp * rp) / 2;
+    // Radiance leaving the dielectric is reduced by its squared index.
+    return density * transmission * pow(volume_transmittance, GlassHeight / glass_cosine) / (ior * ior);
+}
+
+surface art_area_exit_reference(
+    color in_color = color(0.5),
+    float in_ior = 1.5,
+    color in_volume_transmittance = color(1),
+    int in_intervals = 16)
+{
+    int MaximumIntervals = 64;
+    if (in_ior < 1 || in_intervals < 2 || in_intervals > MaximumIntervals || in_intervals % 2 != 0) {
+        error("Invalid area-light exit reference parameters");
+        Ci = 0;
+        return;
+    }
+    for (int channel = 0; channel < 3; ++channel) {
+        if (in_volume_transmittance[channel] <= 0 || in_volume_transmittance[channel] > 1) {
+            error("Invalid area-light exit reference transmittance");
+            Ci = 0;
+            return;
+        }
+    }
+    // The unit-radiance source spans [-1,1]^2 at y=3.  The diffuse
+    // receiver has albedo 0.5 and its sampled footprint is [-0.5,0.5]^2
+    // at y=0; the planar glass exit is at y=2.  Integrating both square
+    // positions gives separable overlap weights for their difference.
+    float SourceHalfWidth = 1;
+    float ReceiverHalfWidth = 0.5;
+    float transitions[3] = {0, SourceHalfWidth - ReceiverHalfWidth,
+        SourceHalfWidth + ReceiverHalfWidth};
+    color integral = 0;
+    for (int xsegment = 0; xsegment < 2; ++xsegment) {
+        float dx = (transitions[xsegment + 1] - transitions[xsegment]) / in_intervals;
+        for (int zsegment = 0; zsegment < 2; ++zsegment) {
+            float dz = (transitions[zsegment + 1] - transitions[zsegment]) / in_intervals;
+            for (int xi = 0; xi <= in_intervals; ++xi) {
+                float x = transitions[xsegment] + xi * dx;
+                float xweight = xi == 0 || xi == in_intervals ? 1 : (xi % 2 != 0 ? 4 : 2);
+                float xoverlap = min(2 * ReceiverHalfWidth, transitions[2] - x);
+                for (int zi = 0; zi <= in_intervals; ++zi) {
+                    float z = transitions[zsegment] + zi * dz;
+                    float zweight = zi == 0 || zi == in_intervals ? 1 : (zi % 2 != 0 ? 4 : 2);
+                    float zoverlap = min(2 * ReceiverHalfWidth, transitions[2] - z);
+                    // Composite Simpson quadrature, split where the
+                    // overlap's derivative changes; four equal quadrants.
+                    integral += xweight * zweight * dx * dz / 9 * xoverlap * zoverlap *
+                        area_exit_transport(sqrt(x * x + z * z), in_ior, in_volume_transmittance);
+                }
+            }
+        }
+    }
+    float ReceiverArea = 4 * ReceiverHalfWidth * ReceiverHalfWidth;
+    Ci = 4 * in_color / (M_PI * ReceiverArea) * integral * emission();
+}
