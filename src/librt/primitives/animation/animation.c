@@ -33,17 +33,19 @@
 #include "../../librt_private.h"
 
 #define ANIMATION_EXT_MAGIC 0x414e4d31u /* "ANM1" */
-#define ANIMATION_EXT_VERSION 1u
+#define ANIMATION_EXT_VERSION 2u
+#define ANIMATION_EXT_VERSION_LEGACY 1u
 #define ANIMATION_EXT_HEADER_LONGS 3u
-#define ANIMATION_CHANNEL_HEADER_LONGS 4u
+#define ANIMATION_CHANNEL_HEADER_LONGS 5u
+#define ANIMATION_CHANNEL_HEADER_LONGS_LEGACY 4u
 #define ANIMATION_QUATERNION_TOLERANCE 1.0e-5
-#define ANIMATION_TARGET_COUNT 3u
-#define ANIMATION_MAX_COMPONENTS 4u
+#define ANIMATION_TARGET_COUNT 4u
 
 struct animation_eval_entry {
     struct bu_vls link;
     uint32_t targets;
-    fastf_t values[ANIMATION_TARGET_COUNT][ANIMATION_MAX_COMPONENTS];
+    size_t components[ANIMATION_TARGET_COUNT];
+    fastf_t *values[ANIMATION_TARGET_COUNT];
 };
 
 struct rt_animation_eval {
@@ -52,7 +54,7 @@ struct rt_animation_eval {
 };
 
 static const char *animation_targets[] = {
-    "translation", "rotation", "scale"
+    "translation", "rotation", "scale", "weights"
 };
 
 static const char *animation_interpolations[] = {
@@ -112,9 +114,15 @@ rt_animation_interpolation_from_name(const char *name, uint32_t *interpolation)
 size_t
 rt_animation_channel_components(const struct rt_animation_channel *channel)
 {
+    size_t expected;
+
     if (!channel || !rt_animation_target_name(channel->target))
 	return 0;
-    return channel->target == RT_ANIMATION_ROTATION ? 4 : 3;
+    if (channel->target == RT_ANIMATION_WEIGHTS)
+	return channel->component_count;
+    expected = channel->target == RT_ANIMATION_ROTATION ? 4 : 3;
+    return !channel->component_count || channel->component_count == expected ?
+	expected : 0;
 }
 
 size_t
@@ -230,6 +238,11 @@ rt_animation_validate(const struct rt_animation_internal *animation,
 	if (!rt_animation_interpolation_name(channel->interpolation)) {
 	    animation_message(messages, "channel %zu has unknown interpolation %u",
 		channel_index, channel->interpolation);
+	    errors++;
+	}
+	if (!components || components > UINT32_MAX) {
+	    animation_message(messages, "channel %zu has invalid component count",
+		channel_index);
 	    errors++;
 	}
 	if (!channel->keyframe_count || channel->keyframe_count > UINT32_MAX ||
@@ -419,6 +432,10 @@ rt_animation_eval_create(struct rt_animation_eval **result,
 	    bu_vls_init(&entry->link);
 	    bu_vls_vlscat(&entry->link, &channel->target_link);
 	}
+	entry->components[channel->target] = rt_animation_channel_components(channel);
+	entry->values[channel->target] = (fastf_t *)bu_malloc(
+	    entry->components[channel->target] * sizeof(fastf_t),
+	    "animation evaluation values");
 	if (rt_animation_channel_sample(entry->values[channel->target], channel,
 		sample_time) != BRLCAD_OK) {
 	    rt_animation_eval_destroy(evaluation);
@@ -437,8 +454,13 @@ rt_animation_eval_destroy(struct rt_animation_eval *evaluation)
 
     if (!evaluation)
 	return;
-    for (index = 0; index < evaluation->count; index++)
+    for (index = 0; index < evaluation->count; index++) {
+	size_t target;
 	bu_vls_free(&evaluation->entries[index].link);
+	for (target = 0; target < ANIMATION_TARGET_COUNT; target++)
+	    bu_free(evaluation->entries[index].values[target],
+		"animation evaluation values");
+    }
     bu_free(evaluation->entries, "animation evaluation entries");
     bu_free(evaluation, "animation evaluation");
 }
@@ -461,18 +483,25 @@ int
 rt_animation_eval_value(fastf_t *result,
 	const struct rt_animation_eval *evaluation, size_t index, uint32_t target)
 {
-    size_t components;
-    struct rt_animation_channel channel = {0};
+    size_t components = rt_animation_eval_value_components(evaluation, index,
+	target);
 
-    if (!result || !evaluation || index >= evaluation->count ||
-	target > RT_ANIMATION_SCALE ||
-	!(evaluation->entries[index].targets & (1u << target)))
+    if (!result || !components)
 	return BRLCAD_ERROR;
-    channel.target = target;
-    components = rt_animation_channel_components(&channel);
     memcpy(result, evaluation->entries[index].values[target],
 	components * sizeof(fastf_t));
     return BRLCAD_OK;
+}
+
+size_t
+rt_animation_eval_value_components(const struct rt_animation_eval *evaluation,
+	size_t index, uint32_t target)
+{
+    if (!evaluation || index >= evaluation->count ||
+	target >= ANIMATION_TARGET_COUNT ||
+	!(evaluation->entries[index].targets & (1u << target)))
+	return 0;
+    return evaluation->entries[index].components[target];
 }
 
 static const fastf_t *
@@ -632,6 +661,7 @@ rt_animation_import5(struct rt_db_internal *intern,
     const unsigned char *cursor;
     size_t available;
     size_t channel_index;
+    uint32_t version;
 
     if (dbip) RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(intern);
@@ -655,7 +685,9 @@ rt_animation_import5(struct rt_db_internal *intern,
     if (animation_get_uint32(cursor) != ANIMATION_EXT_MAGIC)
 	goto import_error;
     cursor += SIZEOF_NETWORK_LONG;
-    if (animation_get_uint32(cursor) != ANIMATION_EXT_VERSION)
+    version = animation_get_uint32(cursor);
+    if (version != ANIMATION_EXT_VERSION &&
+	version != ANIMATION_EXT_VERSION_LEGACY)
 	goto import_error;
     cursor += SIZEOF_NETWORK_LONG;
     animation->channel_count = animation_get_uint32(cursor);
@@ -674,10 +706,16 @@ rt_animation_import5(struct rt_db_internal *intern,
 	size_t value;
 	double number;
 	animation_channel_init(channel);
-	ANIMATION_IMPORT_REQUIRE(ANIMATION_CHANNEL_HEADER_LONGS * SIZEOF_NETWORK_LONG);
+	ANIMATION_IMPORT_REQUIRE((version == ANIMATION_EXT_VERSION ?
+	    ANIMATION_CHANNEL_HEADER_LONGS : ANIMATION_CHANNEL_HEADER_LONGS_LEGACY) *
+	    SIZEOF_NETWORK_LONG);
 	link_length = animation_get_uint32(cursor); cursor += SIZEOF_NETWORK_LONG;
 	channel->target = animation_get_uint32(cursor); cursor += SIZEOF_NETWORK_LONG;
 	channel->interpolation = animation_get_uint32(cursor); cursor += SIZEOF_NETWORK_LONG;
+	if (version == ANIMATION_EXT_VERSION) {
+	    channel->component_count = animation_get_uint32(cursor);
+	    cursor += SIZEOF_NETWORK_LONG;
+	}
 	channel->keyframe_count = animation_get_uint32(cursor); cursor += SIZEOF_NETWORK_LONG;
 	if (!link_length || !channel->keyframe_count)
 	    goto import_error;
@@ -775,6 +813,9 @@ rt_animation_export5(struct bu_external *external,
 	animation_put_uint32(cursor, (uint32_t)link_length); cursor += SIZEOF_NETWORK_LONG;
 	animation_put_uint32(cursor, channel->target); cursor += SIZEOF_NETWORK_LONG;
 	animation_put_uint32(cursor, channel->interpolation); cursor += SIZEOF_NETWORK_LONG;
+	animation_put_uint32(cursor,
+	    (uint32_t)rt_animation_channel_components(channel));
+	cursor += SIZEOF_NETWORK_LONG;
 	animation_put_uint32(cursor, (uint32_t)channel->keyframe_count);
 	cursor += SIZEOF_NETWORK_LONG;
 	memcpy(cursor, bu_vls_cstr(&channel->target_link), link_length);
@@ -922,7 +963,9 @@ rt_animation_data_export(struct rt_data_node **result,
 	    animation_data_set(description, "target",
 		rt_data_string(rt_animation_target_name(channel->target))) != BRLCAD_OK ||
 	    animation_data_set(description, "interpolation",
-		rt_data_string(rt_animation_interpolation_name(channel->interpolation))) != BRLCAD_OK)
+		rt_data_string(rt_animation_interpolation_name(channel->interpolation))) != BRLCAD_OK ||
+	    animation_data_set(description, "components",
+		rt_data_uint(rt_animation_channel_components(channel))) != BRLCAD_OK)
 	    goto channel_error;
 	{
 	    struct rt_data_node *owned_times = times;
@@ -993,7 +1036,8 @@ rt_animation_data_import(struct rt_db_internal *intern,
 
     if (!intern || !data || rt_data_node_type(data) != RT_DATA_OBJECT ||
 	rt_data_get_uint(rt_data_object_get(data, "version"), &version) != BRLCAD_OK ||
-	version != ANIMATION_EXT_VERSION)
+	(version != ANIMATION_EXT_VERSION &&
+	 version != ANIMATION_EXT_VERSION_LEGACY))
 	return BRLCAD_ERROR;
     animation = (struct rt_animation_internal *)intern->idb_ptr;
     RT_ANIMATION_CK_MAGIC(animation);
@@ -1015,6 +1059,7 @@ rt_animation_data_import(struct rt_db_internal *intern,
 	const char *link;
 	const char *target;
 	const char *interpolation;
+	uint64_t components = 0;
 	size_t value_count;
 	animation_channel_init(channel);
 	if (!description || rt_data_node_type(description) != RT_DATA_OBJECT)
@@ -1031,6 +1076,12 @@ rt_animation_data_import(struct rt_db_internal *intern,
 		&channel->interpolation) != BRLCAD_OK ||
 	    rt_data_node_type(times) != RT_DATA_ARRAY)
 	    goto import_error;
+	if (version == ANIMATION_EXT_VERSION) {
+	    if (rt_data_get_uint(rt_data_object_get(description, "components"),
+		    &components) != BRLCAD_OK || !components || components > UINT32_MAX)
+		goto import_error;
+	    channel->component_count = (size_t)components;
+	}
 	bu_vls_strcpy(&channel->target_link, link);
 	channel->keyframe_count = rt_data_array_size(times);
 	value_count = rt_animation_channel_value_count(channel);

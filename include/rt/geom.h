@@ -275,6 +275,7 @@ struct rt_animation_channel {
     struct bu_vls target_link;
     uint32_t target;
     uint32_t interpolation;
+    size_t component_count;     /**< explicit width; zero infers fixed-width targets */
     size_t keyframe_count;
     fastf_t *times;
     fastf_t *values;

@@ -27,7 +27,8 @@ __BEGIN_DECLS
 enum rt_animation_target {
     RT_ANIMATION_TRANSLATION = 0,
     RT_ANIMATION_ROTATION,
-    RT_ANIMATION_SCALE
+    RT_ANIMATION_SCALE,
+    RT_ANIMATION_WEIGHTS
 };
 
 enum rt_animation_interpolation {
@@ -94,6 +95,8 @@ RT_EXPORT extern size_t rt_animation_eval_count(
 RT_EXPORT extern const char *rt_animation_eval_link(
 	const struct rt_animation_eval *evaluation, size_t index);
 RT_EXPORT extern int rt_animation_eval_value(fastf_t *result,
+	const struct rt_animation_eval *evaluation, size_t index, uint32_t target);
+RT_EXPORT extern size_t rt_animation_eval_value_components(
 	const struct rt_animation_eval *evaluation, size_t index, uint32_t target);
 
 /** Sample one channel at time in seconds. */

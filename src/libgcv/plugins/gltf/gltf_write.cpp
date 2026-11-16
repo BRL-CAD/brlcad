@@ -459,7 +459,8 @@ build_animations(const std::vector<std::unique_ptr<animation_record>> &records,
 	    const char *path = rt_animation_target_name(channel.target);
 	    const char *interpolation =
 		rt_animation_interpolation_name(channel.interpolation);
-	    if (node == node_indices.end() || !path || !interpolation)
+	    if (node == node_indices.end() || !path || !interpolation ||
+		channel.target == RT_ANIMATION_WEIGHTS)
 		return false;
 
 	    std::vector<float> times(channel.keyframe_count);
