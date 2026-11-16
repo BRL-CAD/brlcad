@@ -450,69 +450,69 @@ jobs:
   # platforms.  This job is intended to execute that update if the
   # prior tasks succeed.  It's "needs" section should contain every
   # test that is not already the dependency of another tests.
-  sync-stable-branch:
-    name: Sync STABLE branch (GitHub & Gitea)
-    runs-on: ubuntu-latest
-    needs: [archives, componentbext, windows_std_tools, osx]
-    # This job should only run on a successful push to the main branch
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    steps:
-      # 1. Generate a short-lived token using the GitHub App
-      - name: Generate GitHub App Token
-        id: generate_token
-        uses: actions/create-github-app-token@v3
-        with:
-          app-id: ${{ secrets.STABLESYNC_APP_ID }}
-          private-key: ${{ secrets.STABLESYNC_APP_PRIVATE_KEY }}
+# sync-stable-branch:
+#   name: Sync STABLE branch (GitHub & Gitea)
+#   runs-on: ubuntu-latest
+#   needs: [archives, componentbext, windows_std_tools, osx]
+#   # This job should only run on a successful push to the main branch
+#   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+#   steps:
+#     # 1. Generate a short-lived token using the GitHub App
+#     - name: Generate GitHub App Token
+#       id: generate_token
+#       uses: actions/create-github-app-token@v3
+#       with:
+#         app-id: ${{ secrets.STABLESYNC_APP_ID }}
+#         private-key: ${{ secrets.STABLESYNC_APP_PRIVATE_KEY }}
 
-      # 2. Checkout the repository using the App Token
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          token: ${{ steps.generate_token.outputs.token }}
-          fetch-depth: 0 # Fetches all history to safely move branches
+#     # 2. Checkout the repository using the App Token
+#     - name: Checkout Code
+#       uses: actions/checkout@v4
+#       with:
+#         token: ${{ steps.generate_token.outputs.token }}
+#         fetch-depth: 0 # Fetches all history to safely move branches
 
-      # 3. Configure SSH credentials for Gitea
-      - name: Setup SSH for Gitea
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.GITEA_SSH_KEY }}
+#     # 3. Configure SSH credentials for Gitea
+#     - name: Setup SSH for Gitea
+#       uses: webfactory/ssh-agent@v0.9.0
+#       with:
+#         ssh-private-key: ${{ secrets.GITEA_SSH_KEY }}
 
-      # 4. Update STABLE on GitHub and Push to Gitea
-      - name: Update STABLE on GitHub and Gitea
-        run: |
-          # Configure Git to identify as the GitHub Actions bot
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+#     # 4. Update STABLE on GitHub and Push to Gitea
+#     - name: Update STABLE on GitHub and Gitea
+#       run: |
+#         # Configure Git to identify as the GitHub Actions bot
+#         git config --global user.name "github-actions[bot]"
+#         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Add host key to prevent unknown host prompts (adjust port if not default 22)
-          mkdir -p ~/.ssh
-          ssh-keyscan -H git.brlcad.org >> ~/.ssh/known_hosts
+#         # Add host key to prevent unknown host prompts (adjust port if not default 22)
+#         mkdir -p ~/.ssh
+#         ssh-keyscan -H git.brlcad.org >> ~/.ssh/known_hosts
 
-          git remote add gitea git@git.brlcad.org:BRL-CAD/brlcad.git
-          git fetch origin +refs/heads/STABLE:refs/remotes/origin/STABLE
-          git fetch gitea +refs/heads/STABLE:refs/remotes/gitea/STABLE
+#         git remote add gitea git@git.brlcad.org:BRL-CAD/brlcad.git
+#         git fetch origin +refs/heads/STABLE:refs/remotes/origin/STABLE
+#         git fetch gitea +refs/heads/STABLE:refs/remotes/gitea/STABLE
 
-          # Check both remotes before updating either one.  A later CI run may
-          # already have advanced STABLE while this run was still testing.
-          for remote in origin gitea; do
-            stable_ref="refs/remotes/$remote/STABLE"
-            stable_sha=$(git rev-parse "$stable_ref")
-            if [ "$stable_sha" = "${{ github.sha }}" ]; then
-              continue
-            elif git merge-base --is-ancestor "${{ github.sha }}" "$stable_ref"; then
-              echo "$remote STABLE is already newer; skipping this run."
-              exit 0
-            elif ! git merge-base --is-ancestor "$stable_ref" "${{ github.sha }}"; then
-              echo "$remote STABLE has diverged from the tested commit." >&2
-              exit 1
-            fi
-          done
+#         # Check both remotes before updating either one.  A later CI run may
+#         # already have advanced STABLE while this run was still testing.
+#         for remote in origin gitea; do
+#           stable_ref="refs/remotes/$remote/STABLE"
+#           stable_sha=$(git rev-parse "$stable_ref")
+#           if [ "$stable_sha" = "${{ github.sha }}" ]; then
+#             continue
+#           elif git merge-base --is-ancestor "${{ github.sha }}" "$stable_ref"; then
+#             echo "$remote STABLE is already newer; skipping this run."
+#             exit 0
+#           elif ! git merge-base --is-ancestor "$stable_ref" "${{ github.sha }}"; then
+#             echo "$remote STABLE has diverged from the tested commit." >&2
+#             exit 1
+#           fi
+#         done
 
-          # Fast-forward pushes also reject a concurrent newer update.
-          echo "Updating STABLE to tested commit ${{ github.sha }}..."
-          git push gitea "${{ github.sha }}:refs/heads/STABLE"
-          echo "git.brlcad.org update successful."
+#         # Fast-forward pushes also reject a concurrent newer update.
+#         echo "Updating STABLE to tested commit ${{ github.sha }}..."
+#         git push gitea "${{ github.sha }}:refs/heads/STABLE"
+#         echo "git.brlcad.org update successful."
 
-          git push origin "${{ github.sha }}:refs/heads/STABLE"
-          echo "GitHub update successful"
+#         git push origin "${{ github.sha }}:refs/heads/STABLE"
+#         echo "GitHub update successful"
