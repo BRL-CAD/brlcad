@@ -1,0 +1,62 @@
+# R E G R E S S - A R T - L I G H T I N G . C M A K E
+# BRL-CAD
+#
+# Copyright (c) 2026 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/lighting-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_diffuse.oso" "${WORK}/shaders/art_diffuse.oso" COPYONLY)
+set(DB "${WORK}/scene.g")
+run("${VEXEC}" create-material "${DB}" art_diffuse)
+run("${VEXEC}" set-material "${DB}" OSL.param.in_color "color 0.5 0.5 0.5")
+set(RENDER_ARGS -P 2 -w 64 -n 64 -C 0/0/0 -p 0 -a 0 -e 45 -c "set samples=16 light_intensity=1000" -c "viewsize 50" -c "eye_pt 13.284271247461902 0 28.284271247461902")
+# Compare each frame with a fresh process using the same configured intensity.
+run("${EXEC}" ${RENDER_ARGS} -o "${WORK}/fallback.exr" "${DB}" ball.r)
+run("${EXEC}" ${RENDER_ARGS} -o "${WORK}/explicit.exr" "${DB}" ball.r key_light.r)
+# Exercise fallback/explicit transitions and prepared-geometry cleanup.
+file(WRITE "${WORK}/frames.view" "start 0; end; start 1; end; start 2; tree ball.r key_light.r; end; start 3; end; start 4; tree ball.r; end; start 5; clean; end;\n")
+run(INPUT_FILE "${WORK}/frames.view" "${EXEC}" ${RENDER_ARGS} -M -o "${WORK}/frames.exr" "${DB}" ball.r)
+foreach(frame RANGE 0 5)
+  set(suffix ".${frame}")
+  if(frame EQUAL 0)
+    set(suffix "")
+  endif()
+  set(reference fallback)
+  if(frame EQUAL 2 OR frame EQUAL 3)
+    set(reference explicit)
+  endif()
+  run("${VEXEC}" check-mean-image "${WORK}/frames${suffix}.exr" "${WORK}/${reference}.exr" 64 64)
+endforeach()

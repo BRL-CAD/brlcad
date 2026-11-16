@@ -142,6 +142,13 @@ both projections, and two view angles.  Nested dielectrics, rough-glass
 transport, transmitted shadows, and normal-mapped transmission remain
 unqualified.
 
+|Lighting across frames
+|`regress-art-lighting` compares diffuse HDR frame sequences with fresh-process
+references.  It checks repeated fallback and explicit point-light frames,
+changes between those selections, and explicit `clean`.  Fallback lighting
+scales the configured intensity for each project without changing the
+intensity used by later frames.
+
 |Region instances
 |Full indexed database paths distinguish occurrences under different parents
 and repeated arcs in one combination.  `regress-art` checks translated
@@ -186,9 +193,11 @@ clipping, and premultiplied coverage.  Appleseed retains single-byte text
 input.  Both use unhinted rasterization with struetype.
 
 |Installed builds across platforms
-|A complete headless art installation passed all 21 installed checks on
-FreeBSD after relocation to a path containing spaces.  Coverage includes
-17 shared rendering, camera, and material regressions, persisted material
+|A complete headless art installation passed all 27 installed checks on
+FreeBSD.  After relocation to a path containing spaces, eight camera,
+frame, selection, lighting, output, settings, environment, and runtime checks
+passed.
+Coverage includes 23 shared rendering, camera, and material regressions, persisted material
 authoring, plate conversion and saved-view execution through installed
 mged, and the runtime library audit.
 The ELF install policy uses paths relative to each executable, library, or
@@ -220,6 +229,27 @@ art -a 35 -e 25 -w 640 -n 480 -P 4 -c "set samples=64" \
     -o view.png model.g all.g
 ----
 
+`set` validates every assignment before applying it.  Unknown names,
+trailing numeric text, overflow, and nonfinite numbers are errors.  Samples
+(`samples` or `s`) and dimensions (`width`, `height`) must be positive decimal
+integers within `int` range.  Light power (`light_intensity` or `li`) accepts
+zero and positive fractional values representable by the renderer's float
+multiplier.  `inspect_materials` and `save_overlaps` accept `0`, `1`, or `!`
+to toggle.  Perspective (`perspective` or `angle`) must satisfy
+`0 <= angle < 180` degrees.  `rt_cline_radius` accepts finite numbers;
+negative values retain the shared command's no-override meaning.  The shared
+`save_overlaps` and `rt_cline_radius` settings are stored for command
+compatibility and produce warnings: their rendering effects are not yet
+implemented in art's procedural geometry.
+
+Background (`background` or `bg`) accepts libbu color syntax, including
+byte RGB triples, normalized fractional RGB triples, names, and hex colors.
+Quote values containing spaces, for example `set bg="1.0 0.0 0.0"`.
+`set` without assignments reports the current settings.  These rules apply
+to inline `-c` commands and `-M` streams, including skipped frames.
+`regress-art-settings` checks invalid-input output preservation, stored
+values, aliases, color forms, frame changes, and fractional-light energy.
+
 Region colors follow combination inheritance.  When no explicit or inherited
 color is available, a matching region-ID color-table entry supplies the
 fallback; an unmatched region defaults to white.  Explicit black is a valid
@@ -244,6 +274,53 @@ that terminal connection was absent; adding it restored shading on both.
 The `art` regression now exercises the connected graph on librt CSG and
 BOT geometry.  This identifies a wiring failure independently of any
 remaining renderer compatibility or geometric-shading issues.
+
+For formats converted through libicv, such as PIX and PPM, `art` reserves a
+unique temporary PNG and removes it after successful or failed conversion.
+The intermediate uses the renderer's 8-bit sRGB output pipeline; native
+OpenEXR output retains HDR data.  Existing `<output>.tmp.png` files,
+directories, and symbolic links are unrelated inputs and are left intact.
+`regress-art-output` checks converted images against native PNG output,
+failed destination writes, temporary-file cleanup, and repeated frames.
+
+=== Environment illumination and visible background
+
+`environment_color` and `environment_intensity` control the constant dome
+seen by lighting, reflection, and refraction rays.  `background_color` and
+`background_intensity` control the backdrop seen by camera rays.  Colors
+use the same libbu syntax as `bg`; intensities are nonnegative, finite,
+renderer-representable multipliers applied to linear radiance after sRGB
+color conversion.  For example, illuminate a model with a neutral dome
+while displaying a blue background:
+
+----
+art -c "set environment_color=white environment_intensity=0.4" \
+    -c "set background_color=0/0/150 background_intensity=1" \
+    -o view.png model.g subject.g
+----
+
+These controls do not change point-light power.  Set `light_intensity=0`
+to render with environment illumination alone.  The visible backdrop does
+not supply light or appear in reflections: use the environment controls
+for those effects.
+
+Each control defaults to `inherit`, and assigning that literal clears its
+override.  Inherited colors use the legacy `background`/`bg` value, also
+set by `-C` or `-W`.  Inherited environment intensity uses `-A`.  Inherited
+background intensity uses one when `background_color` is explicit and
+otherwise uses `-A`.  With all four controls inherited, art retains its
+original combined environment and background, including the original AOV
+behavior.  With any override, art uses an independent background shader.
+`-A` must remain finite, nonnegative, and renderer-representable; legacy
+point-light scaling by `-A` is unchanged.
+
+`set` reports overrides or `inherit`; `inspect_materials=1` also reports
+resolved environment and background colors and intensities.  Overrides
+persist across frames, skipped frames, and `clean`.  Reset all four to
+`inherit` to restore legacy behavior.  `regress-art-environment` checks
+independent backdrop and illumination changes on diffuse and mirror CSG
+and BOT surfaces, an analytic radiance reference, frame persistence,
+resetting, and invalid-input output preservation.
 
 == Camera pose
 

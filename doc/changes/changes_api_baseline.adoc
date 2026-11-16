@@ -818,6 +818,7 @@ include/bu/app.h: BU_EXPORT extern void bu_setprogname(const char *path);
 include/bu/app.h: BU_EXPORT extern const char *bu_which(const char *cmd);
 include/bu/app.h: BU_EXPORT extern const char *bu_whereis(const char *cmd);
 include/bu/app.h: BU_EXPORT extern FILE *bu_temp_file(char *filepath, size_t len);
+include/bu/app.h: BU_EXPORT extern FILE *bu_temp_file_suffix(char *filepath, size_t len, const char *suffix);
 include/bu/app.h: BU_EXPORT extern const char* bu_temp_file_name(char* filename, size_t len);
 include/bu/app.h: BU_EXPORT extern int bu_fchmod(int fd, unsigned long pmode);
 include/bu/app.h: BU_EXPORT extern const char *bu_dir(char *result, size_t len, .../*, NULL */);
@@ -4351,10 +4352,13 @@ include/rt/db_instance.h: #define RT_CHECK_DBI(_p) BU_CKMAG(_p, DBI_MAGIC, "stru
 include/rt/db_instance.h: #define RT_CK_DBI(_p) RT_CHECK_DBI(_p)
 include/rt/db_instance.h: #define DB_OPEN_READONLY "r"
 include/rt/db_instance.h: #define DB_OPEN_READWRITE "rw"
+include/rt/db_instance.h: #define DB_OPEN_DEFAULT 0x0u
+include/rt/db_instance.h: #define DB_OPEN_COMB_INSTANCES 0x1u
+include/rt/db_instance.h: RT_EXPORT extern struct db_i *
 include/rt/db_instance.h: RT_EXPORT extern struct db_i *
 include/rt/db_instance.h: RT_EXPORT extern struct db_i * db_open_inmem(void);
-include/rt/db_instance.h: #define DB_OPEN_INMEM_DEFAULT 0x0u
-include/rt/db_instance.h: #define DB_OPEN_INMEM_COMB_INSTANCES 0x1u
+include/rt/db_instance.h: #define DB_OPEN_INMEM_DEFAULT DB_OPEN_DEFAULT
+include/rt/db_instance.h: #define DB_OPEN_INMEM_COMB_INSTANCES DB_OPEN_COMB_INSTANCES
 include/rt/db_instance.h: RT_EXPORT extern struct db_i *db_open_inmem_ex(unsigned int flags);
 include/rt/db_instance.h: RT_EXPORT extern struct db_i *
 include/rt/db_instance.h: RT_EXPORT extern struct db_i * db_create_inmem(void);
@@ -4446,6 +4450,7 @@ include/rt/db_io.h: DEPRECATED RT_EXPORT extern void db_alloc_directory_block(st
 include/rt/db_io.h: RT_EXPORT extern void db_alloc_dir_block(struct db_i *dbip);
 include/rt/db_io.h: RT_EXPORT extern void rt_alloc_seg_block(struct resource *res);
 include/rt/db_io.h: RT_EXPORT extern struct rt_i *rt_dirbuild(const char *filename, char *buf, int len);
+include/rt/db_io.h: RT_EXPORT extern struct rt_i *rt_dirbuild_ex(const char *filename, char *buf, int len, unsigned int flags);
 include/rt/db_io.h: RT_EXPORT extern struct rt_i *rt_dirbuild_inmem(const void *data, b_off_t data_size, char *buf, int len);
 include/rt/db_io.h: RT_EXPORT extern int db5_type_tag_from_major(const char **tag,
 include/rt/db_io.h: RT_EXPORT extern int db5_type_descrip_from_major(const char **descrip,
@@ -4676,7 +4681,9 @@ include/rt/func.h: RT_EXPORT extern int rt_obj_piece_shot(struct rt_piecestate *
 include/rt/func.h: RT_EXPORT extern int rt_obj_piece_hitsegs(struct rt_piecestate *psp, struct seg *seghead, struct application *ap);
 include/rt/func.h: RT_EXPORT extern int rt_obj_print(const struct soltab *stp);
 include/rt/func.h: RT_EXPORT extern int rt_obj_norm(struct hit *hitp, struct soltab *stp, struct xray *rp);
+include/rt/func.h: RT_EXPORT extern int rt_obj_normals(const struct hit *hitp, struct soltab *stp,
 include/rt/func.h: RT_EXPORT extern int rt_obj_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp);
+include/rt/func.h: RT_EXPORT extern int rt_obj_surface_derivatives(struct application *ap,
 include/rt/func.h: RT_EXPORT extern int rt_obj_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp);
 include/rt/func.h: DEPRECATED RT_EXPORT extern int rt_obj_class(void);
 include/rt/func.h: RT_EXPORT extern int rt_obj_free(struct soltab *stp);
@@ -4744,6 +4751,8 @@ include/rt/functab.h: #define RTFUNCTAB_FUNC_MAT_CAST(_func) ((int (*)(struct rt
 include/rt/functab.h: #define RTFUNCTAB_FUNC_PERTURB_CAST(_func) ((int (*)(struct rt_db_internal **, const struct rt_db_internal *, int, fastf_t))((void (*)(void))_func))
 include/rt/functab.h: #define RTFUNCTAB_FUNC_SCENE_OBJ_CAST(_func) ((int (*)(struct bv_scene_obj *, struct directory *, struct db_i *, const struct bg_tess_tol *, const struct bn_tol *, const struct bview *))((void (*)(void))_func))
 include/rt/functab.h: #define RTFUNCTAB_FUNC_VALIDATE_CAST(_func) ((int (*)(struct bu_vls *, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
+include/rt/functab.h: #define RTFUNCTAB_FUNC_NORMALS_CAST(_func) ((int (*)(const struct hit *, struct soltab *, struct xray *, vect_t, vect_t))((void (*)(void))_func))
+include/rt/functab.h: #define RTFUNCTAB_FUNC_SURFACE_DERIVATIVES_CAST(_func) ((int (*)(struct application *, struct soltab *, const struct hit *, struct rt_surface_derivatives *))((void (*)(void))_func))
 include/rt/functab.h: RT_EXPORT extern const struct rt_functab OBJ[];
 include/rt/functab.h: #define RT_CK_FUNCTAB(_p) BU_CKMAG(_p, RT_FUNCTAB_MAGIC, "functab");
 include/rt/functab.h: RT_EXPORT extern const struct rt_functab *rt_get_functab_by_label(const char *label);
@@ -4791,7 +4800,8 @@ include/rt/hit.h: #define RT_CK_HIT(_p) BU_CKMAG(_p, RT_HIT_MAGIC, "struct hit")
 include/rt/hit.h: #define RT_HIT_INIT_ZERO { RT_HIT_MAGIC, 0.0, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, NULL, 0, NULL }
 include/rt/hit.h: #define RT_HIT_NORMAL(_normal, _hitp, _stp, _unused, _flipflag) { ;#define CURVE_NULL      ((struct curvature *)0)
 include/rt/hit.h: #define RT_CURVATURE_INIT_ZERO { VINIT_ZERO, 0.0, 0.0 }
-include/rt/hit.h: #define RT_CURVATURE(_curvp, _hitp, _flipflag, _stp) { ;#define RT_HIT_UVCOORD(ap, _stp, _hitp, uvp) { ;RT_EXPORT extern void rt_pr_hit(const char *str,
+include/rt/hit.h: #define RT_CURVATURE(_curvp, _hitp, _flipflag, _stp) { ;#define RT_SURFACE_DERIVATIVES_INIT_ZERO { VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO }
+include/rt/hit.h: #define RT_HIT_UVCOORD(ap, _stp, _hitp, uvp) { ;RT_EXPORT extern void rt_pr_hit(const char *str,
 include/rt/hit.h: RT_EXPORT extern void rt_pr_hit_vls(struct bu_vls *v,
 include/rt/hit.h: RT_EXPORT extern void rt_pr_hitarray_vls(struct bu_vls *v,
 include/rt/htbl.h: RT_EXPORT extern void rt_htbl_init(struct rt_htbl *b, size_t len, const char *str);
@@ -5093,6 +5103,7 @@ include/rt/rt_instance.h: RT_EXPORT extern void rt_clean_resource_basic(struct r
 include/rt/rt_instance.h: RT_EXPORT extern void rt_clean_resource(struct rt_i *rtip,
 include/rt/rt_instance.h: DEPRECATED RT_EXPORT extern void rt_clean_resource_complete(struct rt_i *rtip,
 include/rt/rt_instance.h: RT_EXPORT extern void rt_clean(struct rt_i *rtip);
+include/rt/rt_instance.h: RT_EXPORT extern void rt_clean_geometry(struct rt_i *rtip);
 include/rt/rt_instance.h: RT_EXPORT extern int rt_del_regtree(struct rt_i *rtip,
 include/rt/rt_instance.h: RT_EXPORT extern void rt_iterate_regions(struct rt_i *rtip,
 include/rt/rt_instance.h: RT_EXPORT extern void rt_mark_region_deleted(struct rt_i *rtip,

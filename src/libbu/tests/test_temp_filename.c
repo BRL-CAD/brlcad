@@ -40,6 +40,8 @@
 #include "bio.h"
 #include "bu/app.h"
 #include "bu/file.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 
 static int
@@ -83,6 +85,66 @@ temp_file_binary(void)
 	return 1;
     }
 
+    return 0;
+}
+
+
+static int
+temp_file_suffix(void)
+{
+    const char *suffixes[] = {".png", ".tar.gz", "XXX", "", NULL};
+    for (size_t i = 0; i < sizeof(suffixes) / sizeof(suffixes[0]); ++i) {
+	char first[MAXPATHLEN] = {0}, second[MAXPATHLEN] = {0};
+	FILE *a = bu_temp_file_suffix(first, sizeof(first), suffixes[i]);
+	FILE *b = bu_temp_file_suffix(second, sizeof(second), suffixes[i]);
+	int failed = !a || !b || !bu_strcmp(first, second);
+	const size_t suffix_length = suffixes[i] ? strlen(suffixes[i]) : 0;
+	if (a && (strlen(first) < suffix_length ||
+	    bu_strcmp(first + strlen(first) - suffix_length, suffixes[i] ? suffixes[i] : "")))
+	    failed = 1;
+	if (a && (fputs("retained reservation", a) < 0 || fflush(a) != 0))
+	    failed = 1;
+	// A third-party writer must be able to reopen the reserved pathname.
+	FILE *writer = a ? fopen(first, "wb") : NULL;
+	if (!writer || fputs("converted image", writer) < 0)
+	    failed = 1;
+	if (writer && fclose(writer) != 0)
+	    failed = 1;
+	FILE *reader = a ? fopen(first, "rb") : NULL;
+	char contents[sizeof("converted image")] = {0};
+	if (!reader || fread(contents, 1, sizeof(contents) - 1, reader) != sizeof(contents) - 1 ||
+	    bu_strcmp(contents, "converted image"))
+	    failed = 1;
+	if (reader && fclose(reader) != 0)
+	    failed = 1;
+	if (a && fclose(a) != 0)
+	    failed = 1;
+	if (b && fclose(b) != 0)
+	    failed = 1;
+	if (a && !bu_file_delete(first))
+	    failed = 1;
+	if (b && !bu_file_delete(second))
+	    failed = 1;
+	if (failed) {
+	    bu_log("temp_filename failure: suffix or reserved-file access\n");
+	    return 1;
+	}
+    }
+
+    const char *invalid[] = {"/image.png", "\\image.png"};
+    for (size_t i = 0; i < sizeof(invalid) / sizeof(invalid[0]); ++i) {
+	FILE *unexpected = bu_temp_file_suffix(NULL, 0, invalid[i]);
+	if (unexpected) {
+	    fclose(unexpected);
+	    return 1;
+	}
+    }
+    char small[1] = {0};
+    FILE *unexpected = bu_temp_file_suffix(small, sizeof(small), ".png");
+    if (unexpected) {
+	fclose(unexpected);
+	return 1;
+    }
     return 0;
 }
 
@@ -147,6 +209,18 @@ main(int argc, char *argv[])
 	    if (strlen(under_size) != 4)    /* buffer size -1 */
 		bu_exit(EXIT_FAILURE, "temp_filename failure: expected size [%d], got [%ld]]\n", 4, strlen(under_size));
 
+	} else if (!bu_strcmp(curr, "auto-clean")) {
+	    // Leave files open so the parent test can verify process-exit cleanup.
+	    const int file_count = 25;
+	    for (int i = 0; i < file_count; ++i) {
+		FILE *stream = i % 2 ? bu_temp_file(NULL, 0) :
+		    bu_temp_file_suffix(NULL, 0, ".png");
+		if (!stream || fputs("automatic cleanup", stream) < 0)
+		    return EXIT_FAILURE;
+	    }
+	} else if (!bu_strcmp(curr, "suffix")) {
+	    if (temp_file_suffix())
+		return EXIT_FAILURE;
 	} else if (!bu_strcmp(curr, "binary")) {
 	    if (temp_file_binary())
 		return EXIT_FAILURE;

@@ -122,7 +122,7 @@ invalid_view(singular_orientation "orientation must be nonsingular"
   "viewsize 40; eye_pt 0 0 20; viewrot 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1")
 invalid_view(projective_orientation "viewrot must contain an affine orientation"
   "viewsize 40; eye_pt 0 0 20; viewrot 1 0 0 0 0 1 0 0 0 0 1 0 1 0 0 1")
-invalid_view(invalid_fov "perspective must be finite"
+invalid_view(invalid_fov "invalid setting.*perspective"
   "viewsize 40; eye_pt 0 0 20; ${IDENTITY}; set perspective=180")
 invalid_view(nonfinite_fov "perspective must be finite"
   "viewsize 40; eye_pt 0 0 20; ${IDENTITY}; opt -p nan")

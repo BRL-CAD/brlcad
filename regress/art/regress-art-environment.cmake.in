@@ -1,0 +1,182 @@
+# R E G R E S S - A R T - E N V I R O N M E N T . C M A K E
+# BRL-CAD
+#
+# Copyright (c) 2026 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/environment-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+set(TOOL "@ART_OIIOTOOL_EXECUTABLE@")
+foreach(shader IN ITEMS art_diffuse art_mirror_mixture)
+  configure_file("@CMAKE_CURRENT_BINARY_DIR@/${shader}.oso"
+    "${WORK}/shaders/${shader}.oso" COPYONLY)
+endforeach()
+# One percent of the analytic 0.2 radiance allows half-float quantization
+# and sampling error in the high-sample region mean.
+set(PIXEL_TOLERANCE 0.002)
+set(DIFF_ARGS --fail ${PIXEL_TOLERANCE} --hardfail ${PIXEL_TOLERANCE}
+  --warn ${PIXEL_TOLERANCE} --hardwarn ${PIXEL_TOLERANCE})
+run("${TOOL}" --pattern constant:color=0.2,0.2,0.2,1 1x1 4 -o "${WORK}/analytic.exr")
+run("${TOOL}" --pattern constant:color=0,0,0,1 16x16 4 -o "${WORK}/black.exr")
+
+function(render name ambient color)
+  run("${EXEC}" ${RENDER_ARGS} -A "${ambient}" -C "${color}" ${ARGN}
+    -o "${CASE}/${name}.exr" "${DB}" "${object}")
+endfunction()
+function(crop image region output)
+  run("${TOOL}" "${image}" --cut "${region}" -o "${output}")
+endfunction()
+function(matches actual expected)
+  run("${TOOL}" ${DIFF_ARGS} "${actual}" "${expected}" --diff)
+endfunction()
+function(differs actual expected)
+  expect_failure("${TOOL}" ${DIFF_ARGS} "${actual}" "${expected}" --diff)
+endfunction()
+function(matches_region actual expected region)
+  crop("${actual}" "${region}" "${CASE}/actual-crop.exr")
+  crop("${expected}" "${region}" "${CASE}/expected-crop.exr")
+  matches("${CASE}/actual-crop.exr" "${CASE}/expected-crop.exr")
+endfunction()
+set(CENTER 16x16+24+24)
+set(CORNER 8x8+0+0)
+set(RENDER_ARGS -P 1 -w 64 -n 64 -p 0 -c "set samples=16 light_intensity=0"
+  -c "viewsize 40" -c "eye_pt 0 0 40" -c "orientation 0 0 0 1")
+
+foreach(shader IN ITEMS art_diffuse art_mirror_mixture)
+  set(DB "${WORK}/${shader}.g")
+  run("${VEXEC}" create-material "${DB}" "${shader}")
+  run("${VEXEC}" set-material "${DB}" OSL.param.in_color "color 0.5 0.5 0.5")
+  if(shader STREQUAL "art_mirror_mixture")
+    run("${VEXEC}" set-material "${DB}" OSL.param.in_weight "float 1")
+  endif()
+  foreach(object IN ITEMS cube.r mesh.r)
+    set(CASE "${WORK}/${shader}-${object}")
+    file(MAKE_DIRECTORY "${CASE}")
+    render(legacy-white 0.4 white)
+    render(legacy-red 1 red)
+    render(legacy-blue 0.4 blue)
+    render(legacy-bright 0.8 white)
+    render(legacy-half-red 0.5 red)
+    if(object STREQUAL "cube.r")
+      render(analytic-white 0.4 white -c "set samples=1024")
+      crop("${CASE}/analytic-white.exr" "${CENTER}" "${CASE}/analytic-crop.exr")
+      run("${TOOL}" "${CASE}/analytic-crop.exr" --resize:filter=box 1x1
+        -o "${CASE}/analytic-mean.exr")
+      matches("${CASE}/analytic-mean.exr" "${WORK}/analytic.exr")
+    endif()
+
+    set(WHITE_ENV "environment_color=white environment_intensity=0.4")
+    render(black-background 0.4 white -c "set ${WHITE_ENV} background_color=black")
+    render(red-background 0.4 white -c "set ${WHITE_ENV} background_color=red")
+    render(bright-environment 0.4 white
+      -c "set environment_color=white environment_intensity=0.8 background_color=red")
+    render(blue-environment 0.4 white
+      -c "set environment_color=blue environment_intensity=0.4 background_color=red")
+    render(half-background 0.4 white
+      -c "set ${WHITE_ENV} background_color=red background_intensity=0.5")
+    render(dark-environment 0.4 white
+      -c "set environment_intensity=0 background_color=red")
+    foreach(name IN ITEMS black-background red-background half-background)
+      matches_region("${CASE}/${name}.exr" "${CASE}/legacy-white.exr" "${CENTER}")
+    endforeach()
+    matches_region("${CASE}/bright-environment.exr" "${CASE}/legacy-bright.exr" "${CENTER}")
+    matches_region("${CASE}/blue-environment.exr" "${CASE}/legacy-blue.exr" "${CENTER}")
+    foreach(name IN ITEMS red-background bright-environment blue-environment dark-environment)
+      matches_region("${CASE}/${name}.exr" "${CASE}/legacy-red.exr" "${CORNER}")
+    endforeach()
+    matches_region("${CASE}/half-background.exr" "${CASE}/legacy-half-red.exr" "${CORNER}")
+    crop("${CASE}/black-background.exr" "${CENTER}" "${CASE}/white-center.exr")
+    crop("${CASE}/bright-environment.exr" "${CENTER}" "${CASE}/bright-center.exr")
+    differs("${CASE}/white-center.exr" "${CASE}/bright-center.exr")
+    crop("${CASE}/dark-environment.exr" "${CENTER}" "${CASE}/dark-center.exr")
+    matches("${CASE}/dark-center.exr" "${WORK}/black.exr")
+
+    file(WRITE "${CASE}/frames.view"
+      "start 0; set ${WHITE_ENV} background_color=black; end;\n
+       start 1; set background_color=red; end;\n
+       start 2; set environment_intensity=0.8; end;\n
+       start 3; clean; end;\n
+       start 4; set environment_color=inherit environment_intensity=inherit background_color=inherit background_intensity=inherit; end;\n")
+    run(INPUT_FILE "${CASE}/frames.view" "${EXEC}" ${RENDER_ARGS} -A 0.4 -C white -M
+      -o "${CASE}/frames.exr" "${DB}" "${object}")
+    matches("${CASE}/frames.exr" "${CASE}/black-background.exr")
+    matches("${CASE}/frames.1.exr" "${CASE}/red-background.exr")
+    matches("${CASE}/frames.2.exr" "${CASE}/bright-environment.exr")
+    matches("${CASE}/frames.3.exr" "${CASE}/bright-environment.exr")
+    matches("${CASE}/frames.4.exr" "${CASE}/legacy-white.exr")
+    file(WRITE "${CASE}/skip.view"
+      "start 0; set ${WHITE_ENV} background_color=black; end; start 1; set background_color=red; end; start 2; end;\n")
+    run(INPUT_FILE "${CASE}/skip.view" "${EXEC}" ${RENDER_ARGS} -A 0.4 -C white -M -D 2 -K 2
+      -o "${CASE}/skip.exr" "${DB}" "${object}")
+    matches("${CASE}/skip.2.exr" "${CASE}/red-background.exr")
+    if(EXISTS "${CASE}/skip.exr" OR EXISTS "${CASE}/skip.1.exr")
+      message(FATAL_ERROR "Skipped environment frames produced output")
+    endif()
+  endforeach()
+endforeach()
+
+run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}" -c "set inspect_materials=1"
+  -c "set environment_color=white environment_intensity=0.75 background_color=black background_intensity=0.5"
+  -c set "${DB}" cube.r)
+foreach(pattern IN ITEMS "environment_intensity=0[.]75" "background_intensity=0[.]5"
+    "environment_color 1 1 1 intensity 0[.]75" "background_color 0 0 0 intensity 0[.]5")
+  if(NOT command_output MATCHES "${pattern}")
+    message(FATAL_ERROR "Environment inspection missed '${pattern}': ${command_output}")
+  endif()
+endforeach()
+run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}" -c "set inspect_materials=1" -c set "${DB}" cube.r)
+foreach(name IN ITEMS environment_color background_color environment_intensity background_intensity)
+  if(NOT command_output MATCHES "${name}=inherit")
+    message(FATAL_ERROR "Default environment query missed '${name}=inherit'")
+  endif()
+endforeach()
+
+set(image "${WORK}/invalid.exr")
+foreach(setting IN ITEMS "environment_color=bad-color" "background_color=nan/0/0"
+    "environment_intensity=-1" "environment_intensity=nan" "background_intensity=inf"
+    "environment_intensity=1e100" "background_intensity=1e-100"
+    "environment_intensity=0.5junk" "environment_color=white background_intensity=-1")
+  file(WRITE "${image}" "preserve existing output")
+  expect_failure_matching("invalid setting" "${EXEC}" -c "set inspect_materials=1"
+    -c "set ${setting}" -o "${image}" "${DB}" cube.r)
+  file(READ "${image}" retained)
+  if(NOT retained STREQUAL "preserve existing output")
+    message(FATAL_ERROR "Invalid environment setting replaced existing output")
+  endif()
+endforeach()
+foreach(ambient IN ITEMS -1 nan inf 1e100)
+  expect_failure_matching("ambient intensity must be finite" "${EXEC}" -A "${ambient}"
+    -c "set inspect_materials=1" "${DB}" cube.r)
+endforeach()
