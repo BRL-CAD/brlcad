@@ -50,7 +50,6 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <limits.h>
-#include <float.h>
 
 #include "bio.h"
 
@@ -61,6 +60,9 @@
 #include "bu/mime.h"
 
 #include "icv.h"
+
+#define PIXFADE_PERCENT_MAX 100.0
+#define PIXFADE_CHANNEL_MAX 255
 
 int inx=512, iny=512;
 char *out_file = NULL;
@@ -82,13 +84,14 @@ get_args(int argc, char **argv)
     while ((c = bu_getopt(argc, argv, "p:f:s:w:n:o:m:h?")) != -1) {
 	switch (c) {
             case 'p':
-		if (!bu_opt_scan_double_range(bu_optarg, &multiplier, 0.0, DBL_MAX, "percentage")) {
+		if (!bu_opt_scan_double_range(bu_optarg, &multiplier, 0.0,
+			PIXFADE_PERCENT_MAX, "percentage")) {
 		    bu_exit(1, NULL);
 		}
 		multiplier /= 100.0;
 		break;
 	    case 'f':
-		if (!bu_opt_scan_double_range(bu_optarg, &multiplier, 0.0, DBL_MAX, "fraction")) {
+		if (!bu_opt_scan_double_range(bu_optarg, &multiplier, 0.0, 1.0, "fraction")) {
 		    bu_exit(1, NULL);
 		}
 		break;
@@ -117,8 +120,8 @@ get_args(int argc, char **argv)
 		}
 		if (max < 0 )
 		    max = 0;
-		else if (max > 255)
-		    max=255;
+		else if (max > PIXFADE_CHANNEL_MAX)
+		    max = PIXFADE_CHANNEL_MAX;
 		break;
 	    default:		/* 'h' '?' */
 		return 0;
@@ -144,6 +147,7 @@ get_args(int argc, char **argv)
 int
 icv_ceiling(icv_image_t *img, int ceiling)
 {
+    double normalized_ceiling = (double)ceiling / PIXFADE_CHANNEL_MAX;
     size_t size;
     double *data;
 
@@ -157,8 +161,8 @@ icv_ceiling(icv_image_t *img, int ceiling)
     data = img->data;
 
     while (size--) {
-	if (*data > ceiling)
-	    *data = ceiling;
+	if (*data > normalized_ceiling)
+	    *data = normalized_ceiling;
 	data++;
     }
     return 0;
