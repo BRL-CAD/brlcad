@@ -10,7 +10,7 @@ fbgrid - draw a calibration grid on a frame buffer
 
 [source]
 ----
-fbgrid [-c] [-b | -d | -o] [-F framebuffer] [-s squaresize] [-w width] [-n height]
+fbgrid [-c | --clear] [-b | --binary | -d | --decimal | -o | --old-style] [-F device | --framebuffer device] [--size pixels] [--width pixels] [--height pixels]
 ----
 
 
@@ -32,38 +32,35 @@ is used (see *brlcad*(1)).
 [[options]]
 == OPTIONS
 
-*-c*::
+*-c*, *--clear*::
   Clear the frame buffer to black before drawing the grid.
 
-*-b*::
+*-b*, *--binary*::
   Use binary spacing: dark lines every 8 pixels, grey lines every 64
   pixels, and white lines every 128 pixels.
 
-*-d*::
+*-d*, *--decimal*::
   Use decimal spacing (the default): dark lines every 10 pixels, grey
   lines every 50 pixels, and white lines every 100 pixels.
 
-*-o*::
+*-o*, *--old-style*::
   Draw the old-style grid: a dotted background with white diagonals from
   corner to corner and red lines through the center.
 
-*-F* _framebuffer_::
+*-F* _device_, *--framebuffer* _device_::
   Specify the frame buffer device to draw on.
 
-*-s* _squaresize_::
-  Set both the width and height of the frame buffer to _squaresize_
-  pixels. *-S* is an equivalent synonym.
+*-s* _pixels_, *--size* _pixels_::
+  Set both the width and height of the frame buffer to _pixels_ pixels.
 
-*-w* _width_::
-  Set the frame buffer width to _width_ pixels. *-W* is an equivalent
-  synonym.
+*-w* _pixels_, *--width* _pixels_::
+  Set the frame buffer width to _pixels_ pixels.
 
-*-n* _height_::
-  Set the frame buffer height to _height_ scanlines. *-N* is an
-  equivalent synonym.
+*-n* _pixels_, *--height* _pixels_::
+  Set the frame buffer height to _pixels_ scanlines.
 
-*-h*, *-?*::
-  Print usage information and exit.
+*-h*, *--help*::
+  Print command help and exit.
 
 
 [[examples]]
