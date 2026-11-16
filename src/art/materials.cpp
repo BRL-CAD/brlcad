@@ -517,7 +517,7 @@ bool
 art_add_material(asr::Assembly &assembly, const char *name,
     const float srgb[3], struct db_i *db, const struct db_full_path *path,
     const struct rt_comb_internal *comb, const asf::SearchPaths &search_paths,
-    int& medium_priority, std::ostream *report)
+    int& medium_priority, std::string &assigned_material, std::ostream *report)
 {
     MaterialAssignment assignment;
     if (!resolve_assignment(db, path, comb, assignment))
@@ -526,6 +526,7 @@ art_add_material(asr::Assembly &assembly, const char *name,
     if (!read_shader(db, assignment.name.c_str(), shader))
 	return false;
     medium_priority = shader.medium_priority;
+    assigned_material = assignment.name;
 
     std::map<std::string, MaterialNode> nodes = shader.nodes;
     nodes.emplace(TerminalLayer, shader.root);

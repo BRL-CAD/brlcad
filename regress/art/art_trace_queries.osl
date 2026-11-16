@@ -1,0 +1,86 @@
+/*              A R T _ T R A C E _ Q U E R I E S . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+surface art_trace_queries(
+    color in_color = color(1),
+    int in_target = 0)
+{
+    if (in_target) {
+	Ci = transparent();
+	return;
+    }
+
+    // The fixture's lower slab face is at Z=5, its upper face at Z=6.
+    float tolerance = 0.001;
+    vector direction = vector(0, 0, 1);
+    int valid = 1;
+    int hit = -1;
+    float hit_distance = -1;
+    valid &= !getmessage("trace", "hit", hit) && hit == -1;
+    valid &= !getmessage("trace", "hitdist", hit_distance) && hit_distance == -1;
+
+    valid &= !trace(P, direction, "maxdist", 4.0);
+    valid &= getmessage("trace", "hit", hit) && hit == 0;
+
+    valid &= trace(P, direction, "maxdist", 10.0);
+    valid &= getmessage("trace", "hit", hit) && hit == 1;
+    valid &= getmessage("trace", "hitdist", hit_distance) && abs(hit_distance - 5) < tolerance;
+    point position = point(-1);
+    normal shading_normal = normal(0);
+    normal geometric_normal = normal(0);
+    valid &= getmessage("trace", "P", position)
+	&& length(position - point(P[0], P[1], 5)) < tolerance;
+    valid &= getmessage("trace", "N", shading_normal)
+	&& length(shading_normal - normal(0, 0, -1)) < tolerance;
+    valid &= getmessage("trace", "Ng", geometric_normal)
+	&& length(geometric_normal - normal(0, 0, -1)) < tolerance;
+    valid &= length(Dx(position)) == 0 && length(Dy(position)) == 0;
+    float coordinate = -1;
+    valid &= getmessage("trace", "u", coordinate) && isfinite(coordinate);
+    valid &= getmessage("trace", "v", coordinate) && isfinite(coordinate);
+
+    float sentinel = -1;
+    valid &= !getmessage("trace", "hit", sentinel) && sentinel == -1;
+    valid &= !getmessage("trace", "unsupported", sentinel) && sentinel == -1;
+    valid &= !getmessage("unsupported", "hitdist", sentinel) && sentinel == -1;
+
+    valid &= !trace(P, direction, "maxdist", 4.0);
+    valid &= getmessage("trace", "hit", hit) && hit == 0;
+    hit_distance = -1;
+    valid &= !getmessage("trace", "hitdist", hit_distance) && hit_distance == -1;
+    position = point(-1);
+    valid &= !getmessage("trace", "P", position) && position == point(-1);
+    shading_normal = normal(-1);
+    valid &= !getmessage("trace", "N", shading_normal) && shading_normal == normal(-1);
+    geometric_normal = normal(-1);
+    valid &= !getmessage("trace", "Ng", geometric_normal) && geometric_normal == normal(-1);
+    coordinate = -1;
+    valid &= !getmessage("trace", "u", coordinate) && coordinate == -1;
+    valid &= !getmessage("trace", "v", coordinate) && coordinate == -1;
+
+    valid &= trace(P, direction, "mindist", 5.25, "maxdist", 10.0);
+    valid &= getmessage("trace", "hitdist", hit_distance) && abs(hit_distance - 6) < tolerance;
+    valid &= !trace(P, direction, "mindist", 6.25, "maxdist", 10.0);
+    valid &= getmessage("trace", "hit", hit) && hit == 0;
+    valid &= trace(P + direction, direction, "maxdist", 10.0);
+    valid &= getmessage("trace", "hit", hit) && hit == 1;
+    valid &= getmessage("trace", "hitdist", hit_distance) && abs(hit_distance - 4) < tolerance;
+
+    Ci = in_color * (valid ? color(1) : color(1, 0, 1)) * diffuse(N);
+}
