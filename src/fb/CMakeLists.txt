@@ -39,7 +39,7 @@ brlcad_addexec(fbgamma fbgamma.c "libdm;${M_LIBRARY}" FOLDER Fb)
 add_target_deps(fbgamma dm_plugins)
 brlcad_addexec(fbgrid fbgrid.c libdm FOLDER Fb)
 add_target_deps(fbgrid dm_plugins)
-brlcad_addexec(fbhelp fbhelp.c libdm FOLDER Fb)
+brlcad_addexec(fbhelp fbhelp.c libdm FOLDER Fb ARG_SCHEMA)
 add_target_deps(fbhelp dm_plugins)
 brlcad_add_test(
   NAME fbhelp_output_stream

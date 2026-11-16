@@ -27,18 +27,36 @@
 
 #include "common.h"
 
-#include <stdlib.h>
-
 #include "bio.h"
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "dm.h"
 
+struct fbhelp_args {
+    int help;
+    const char *framebuffer;
+};
 
-static char *framebuffer = NULL;
+static const struct bu_arg_option fbhelp_options[] = {
+    BU_ARG_FLAG("h", "help", struct fbhelp_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_VALUE("F", "framebuffer", struct fbhelp_args, framebuffer,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Select the framebuffer device"),
+    BU_ARG_OPTION_NULL
+};
 
-static char usage[] = "\
-Usage: fbhelp [-F framebuffer]\n";
+static const struct bu_arg_schema fbhelp_schema = BU_ARG_SCHEMA(
+    "fbhelp", "Describe available and selected framebuffer devices",
+    fbhelp_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar fbhelp_grammar = {
+    &fbhelp_schema, NULL, NULL
+};
 
 static int
 fbhelp_log_to_stdout(int *saved_stderr)
@@ -75,7 +93,8 @@ fbhelp_restore_stderr(int saved_stderr)
 int
 main(int argc, char **argv)
 {
-    int c;
+    struct fbhelp_args args = {0, NULL};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     int close_result;
     int help_result;
     int saved_stderr = -1;
@@ -83,33 +102,38 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
-    while ((c = bu_getopt(argc, argv, "F:h?")) != -1) {
-	switch (c) {
-	    case 'F':
-		framebuffer = bu_optarg;
-		break;
-	    default:		/* '?' */
-		(void)fputs(usage, stderr);
-		return 1;
-	}
+    int introspection = bu_arg_introspect(&msg, &fbhelp_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
-    if (argc > bu_optind) {
-	fprintf(stderr, "fbhelp: excess argument(s) not supported\n");
-	(void)fputs(usage, stderr);
+    if (bu_arg_schema_parse_complete(&fbhelp_schema, &args, &msg, argc - 1,
+	    (const char **)(argv + 1)) < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
 	return 1;
     }
-    if ((fbp = fb_open(framebuffer, 0, 0)) == FB_NULL) {
-	fprintf(stderr, "fbhelp: Can't open frame buffer\n");
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&fbhelp_schema, "fbhelp");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "fbhelp help");
+	return 0;
+    }
+    if ((fbp = fb_open(args.framebuffer, 0, 0)) == FB_NULL) {
+	bu_flog(stderr, "fbhelp: Can't open frame buffer\n");
 	return 1;
     }
 
     if (fbhelp_log_to_stdout(&saved_stderr) != 0) {
-	fprintf(stderr, "fbhelp: unable to consolidate help output\n");
+	bu_flog(stderr, "fbhelp: unable to consolidate help output\n");
 	fb_close(fbp);
 	return 1;
     }
 
-    fprintf(stdout, "\
+    bu_flog(stdout, "\
 A Frame Buffer display device is selected by\n\
 setting the environment variable FB_FILE:\n\
 (/bin/sh) FB_FILE=/dev/device; export FB_FILE\n\
@@ -117,18 +141,18 @@ setting the environment variable FB_FILE:\n\
 Many programs also accept a \"-F framebuffer\" flag.\n\
 Type \"man brlcad\" for more information.\n");
 
-    fprintf(stdout, "=============== Available Devices ================\n");
+    bu_flog(stdout, "=============== Available Devices ================\n");
     help_result = fflush(stdout) == EOF;
     if (fb_genhelp() != 0)
 	help_result = 1;
 
-    fprintf(stdout, "=============== Current Selection ================\n");
+    bu_flog(stdout, "=============== Current Selection ================\n");
     if (fflush(stdout) == EOF)
 	help_result = 1;
     if (fb_help(fbp) != 0)
 	help_result = 1;
     if (fbhelp_restore_stderr(saved_stderr) != 0) {
-	fprintf(stderr, "fbhelp: unable to restore standard error\n");
+	bu_flog(stderr, "fbhelp: unable to restore standard error\n");
 	fb_close(fbp);
 	return 1;
     }
