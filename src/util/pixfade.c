@@ -176,6 +176,8 @@ main(int argc, char **argv)
         return 1;
     }
 
+    setmode(fileno(stdout), O_BINARY);
+
     img = icv_read(in_file, BU_MIME_IMAGE_PIX, inx, iny);
     if (img == NULL)
         return 1;
