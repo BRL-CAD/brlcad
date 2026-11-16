@@ -415,11 +415,11 @@ rt_sph_surface_derivatives(struct application *UNUSED(ap), struct soltab *stp,
     const struct hit *hitp, struct rt_surface_derivatives *derivatives)
 {
     const struct sph_specific *sph = (const struct sph_specific *)stp->st_specific;
-    vect_t offset, point, du, dv;
+    vect_t offset, point, du, dv, duu, duv;
     VSUB2(offset, hitp->hit_point, sph->sph_V);
     MAT4X3VEC(point, sph->sph_SoR, offset);
     VUNITIZE(point);
-    const int status = rt_unit_sphere_uv_derivatives(point, du, dv);
+    const int status = rt_unit_sphere_uv_derivatives(point, du, dv, duu, duv);
     if (status != RT_DERIVATIVES_OK)
 	return status;
     // Preparation can accept unequal axes within tolerance while retaining
@@ -436,6 +436,17 @@ rt_sph_surface_derivatives(struct application *UNUSED(ap), struct soltab *stp,
 	return RT_DERIVATIVES_ERROR;
     VSCALE(derivatives->dpdu, derivatives->dndu, sph->sph_rad);
     VSCALE(derivatives->dpdv, derivatives->dndv, sph->sph_rad);
+    vect_t chart_duu, chart_duv, normal_duu, normal_duv;
+    MAT4X3VEC(chart_duu, inverse, duu);
+    MAT4X3VEC(chart_duv, inverse, duv);
+    if (rt_normalize_second_derivative(normal_duu, chart_point, chart_du, chart_du, chart_duu) != RT_DERIVATIVES_OK ||
+	rt_normalize_second_derivative(normal_duv, chart_point, chart_du, chart_dv, chart_duv) != RT_DERIVATIVES_OK)
+	return RT_DERIVATIVES_ERROR;
+    VSCALE(derivatives->d2pduu, normal_duu, sph->sph_rad);
+    VSCALE(derivatives->d2pduv, normal_duv, sph->sph_rad);
+    VMOVE(derivatives->dngdu, derivatives->dndu);
+    VMOVE(derivatives->dngdv, derivatives->dndv);
+    derivatives->flags = RT_DERIVATIVES_HAS_TANGENT_PARTIALS | RT_DERIVATIVES_HAS_GEOMETRIC_NORMAL_PARTIALS;
     return RT_DERIVATIVES_OK;
 }
 

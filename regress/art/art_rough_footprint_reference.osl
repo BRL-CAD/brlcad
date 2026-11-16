@@ -1,0 +1,186 @@
+/*              A R T _ R O U G H _ F O O T P R I N T _ R E F E R E N C E . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+#include "appleseed/as_osl_extensions.h"
+#include "art_glass_reference.h"
+
+vector to_local(vector value, vector basis_u, normal n, vector basis_v)
+{
+    return vector(dot(value, basis_u), dot(value, n), dot(value, basis_v));
+}
+vector ggx_sample(vector outgoing, float random_x, float random_y, float ax, float ay)
+{
+    float side = outgoing[1] < 0 ? -1 : 1;
+    // Match the visible-normal distribution, independently differentiated by OSL.
+    vector stretched = normalize(side * vector(outgoing[0] * ax, outgoing[1], outgoing[2] * ay));
+    vector t1 = stretched[1] < 0.9999 ? normalize(cross(stretched, vector(0, 1, 0))) : vector(1, 0, 0);
+    vector t2 = cross(t1, stretched);
+    float a = 1 / (1 + stretched[1]);
+    float radius = sqrt(random_x);
+    float phi = random_y < a ? random_y / a * M_PI : M_PI + (random_y - a) / (1 - a) * M_PI;
+    float p1 = radius * cos(phi);
+    float p2 = radius * sin(phi) * (random_y < a ? 1 : stretched[1]);
+    vector h = p1 * t1 + p2 * t2 + sqrt(max(0, 1 - p1 * p1 - p2 * p2)) * stretched;
+    return normalize(vector(ax * h[0], max(0, h[1]), ay * h[2]));
+}
+float ggx_lambda(vector value, float ax, float ay)
+{
+    return 0.5 * (sqrt(1 + (ax * ax * value[0] * value[0] + ay * ay * value[2] * value[2]) /
+        (value[1] * value[1])) - 1);
+}
+color diagnostic(point hit, int position, float scale)
+{
+    if (position)
+        return color(0.5 + 0.001 * hit[0], 0.5 + 0.001 * hit[1], 0.5);
+    color width = color(length(Dx(hit)), length(Dy(hit)), length(Dx(hit) + Dy(hit))) * scale;
+    return width / (1 + width);
+}
+surface art_rough_footprint_reference(float in_roughness = 0.6, float in_anisotropy = 0.5,
+    int in_reference = 0, int in_receiver = 0, int in_position = 0,
+    int in_curved = 0, int in_mapped_normal = 0, int in_tangent_source = 0,
+    point in_center = point(-15, 0, 0), vector in_axes = vector(10),
+    int in_seed = 17, float in_scale = 20, int in_tangent_gradient = 1, int in_mode = 0)
+{
+    // A bounded position or footprint diagnostic avoids unbounded grazing-ray
+    // variance. Position controls also measure accepted-path probability/energy.
+    if (in_receiver) {
+        Ci = diagnostic(P, in_position, in_scale) * emission();
+        return;
+    }
+    normal n = normalize(normal(0.3 + 0.05 * P[0], 0.04 * P[1], 1));
+    vector tangent = vector(1, 0.3 + in_tangent_gradient * 0.15 * P[0], 0.2 + in_tangent_gradient * 0.15 * P[1]);
+    normal geometric = normal(0, 0, 1);
+    if (in_curved) {
+        vector offset = P - in_center;
+        geometric = normalize(normal(offset / (in_axes * in_axes)));
+        n = in_reference ? geometric : as_shading_normal();
+        // The reference differentiates the quadric's chart independently.
+        tangent = normalize(vector(-in_axes[0] / in_axes[1] * offset[1],
+            in_axes[1] / in_axes[0] * offset[0], 0));
+        if (!in_reference) {
+            if (in_tangent_source == 1)
+                getattribute("Tn", tangent);
+            else
+                tangent = vector(0);
+        }
+        if (in_mapped_normal == 1)
+            n = normalize(n + normal(0.45 + 0.05 * offset[0], 0.04 * offset[1], 0));
+        else if (in_mapped_normal == 2)
+            n = normalize(normal(0.9, 0.25, 0.25));
+        if (in_tangent_source == 2)
+            tangent = vector(1, 0.3 + 0.15 * offset[0], 0.2 + 0.15 * offset[1]);
+        else if (in_tangent_source == 3)
+            tangent = vector(0, 1, 0);
+    }
+    if (!in_reference) {
+        if (in_mode == 0)
+            Ci = as_metal(n, tangent, color(1), color(1), 0, in_roughness, in_anisotropy,
+                "normal_derivatives", 1, "dNdx", vector(Dx(n)), "dNdy", vector(Dy(n)),
+                "dTdx", Dx(tangent), "dTdy", Dy(tangent));
+        else
+            Ci = as_glass(n, tangent, color(1), color(in_mode == 1), color(in_mode == 2),
+                in_roughness, in_anisotropy, 1.5, color(1), 0,
+                "normal_derivatives", 1, "dNdx", vector(Dx(n)), "dNdy", vector(Dy(n)),
+                "dTdx", Dx(tangent), "dTdy", Dy(tangent));
+        return;
+    }
+    vector basis_v = normalize(cross(tangent, n));
+    vector basis_u = cross(n, basis_v);
+    vector outgoing = to_local(-normalize(I), basis_u, n, basis_v);
+    float aspect = sqrt(1 - abs(in_anisotropy) * 0.9);
+    float wide = max(0.001, in_roughness * in_roughness / aspect);
+    float narrow = max(0.001, in_roughness * in_roughness * aspect);
+    float ax = in_anisotropy >= 0 ? wide : narrow;
+    float ay = in_anisotropy >= 0 ? narrow : wide;
+    // Independent cell noise supplies fixed random variates to OSL automatic
+    // differentiation. This does not use the renderer's sampling Jacobian.
+    color random_sample = cellnoise(P * 1048576 + vector(in_seed, 3 * in_seed, 7 * in_seed));
+    vector m = ggx_sample(outgoing, random_sample[0], random_sample[1], ax, ay);
+    float cosine = dot(outgoing, m);
+    float transmitted_cosine = sqrt(max(0, 1 - (1 - cosine * cosine) / (1.5 * 1.5)));
+    vector incoming = in_mode == 2 ? (cosine / 1.5 - transmitted_cosine) * m - outgoing / 1.5 :
+        2 * cosine * m - outgoing;
+    vector ng = to_local(vector(geometric), basis_u, n, basis_v);
+    if (in_mode == 0) {
+        float correction = 0.0001 - dot(incoming, ng);
+        if (correction > 0) {
+            incoming = normalize(incoming + correction * ng);
+            m = normalize(outgoing + incoming);
+        }
+    } else {
+        if ((in_mode == 1 && incoming[1] * outgoing[1] <= 0) ||
+            (in_mode == 2 && incoming[1] * outgoing[1] > 0)) { Ci = 0; return; }
+        float cosine_i = dot(incoming, ng);
+        if ((in_mode == 1 && cosine_i <= 0) || (in_mode == 2 && cosine_i >= 0)) { Ci = 0; return; }
+    }
+    if (incoming[1] == 0) { Ci = 0; return; }
+    float weight = (1 + ggx_lambda(outgoing, ax, ay)) /
+        (1 + ggx_lambda(outgoing, ax, ay) + ggx_lambda(incoming, ax, ay));
+    if (in_mode == 1)
+        weight *= 1 - interface_transmission(1, 1.5, abs(cosine), transmitted_cosine);
+    else if (in_mode == 2)
+        weight *= interface_radiance_transmission(1, 1.5, abs(cosine), transmitted_cosine);
+    vector direction = incoming[0] * basis_u + incoming[1] * n + incoming[2] * basis_v;
+    point hit;
+    if (in_mode == 2) {
+        // The diagnostic box lies inside the glass. Its first intersection
+        // must precede the enclosing glass box's exit.
+        vector target_min = in_curved ? in_center + vector(-0.6 * in_axes[0], -6, 0) : vector(-9, -9, 0);
+        vector target_max = in_curved ? in_center + vector(0.6 * in_axes[0], 6, 1) : vector(9, 9, 1);
+        float near = 0;
+        float far = 1e30;
+        float glass_exit = 1e30;
+        if (in_curved) {
+            vector q = (P - in_center) / in_axes;
+            vector d = direction / in_axes;
+            float a = dot(d, d), b = dot(q, d);
+            glass_exit = (-b + sqrt(max(0, b * b - a * (dot(q, q) - 1)))) / a;
+        }
+        for (int axis = 0; axis < 3; ++axis) {
+            if (direction[axis] == 0) {
+                if (P[axis] < target_min[axis] || P[axis] > target_max[axis]) { Ci = 0; return; }
+            } else {
+                float t0 = (target_min[axis] - P[axis]) / direction[axis];
+                float t1 = (target_max[axis] - P[axis]) / direction[axis];
+                near = max(near, min(t0, t1));
+                far = min(far, max(t0, t1));
+                if (!in_curved)
+                    glass_exit = min(glass_exit, ((direction[axis] > 0 ? 10 : -10) - P[axis]) / direction[axis]);
+            }
+        }
+        if (far < near || near > glass_exit) { Ci = 0; return; }
+        hit = P + near * direction;
+    } else {
+        if (direction[2] <= 0) { Ci = 0; return; }
+        float enter = (30 - P[2]) / direction[2];
+        float leave = (31 - P[2]) / direction[2];
+        hit = P + enter * direction;
+        if (abs(hit[0]) > 200 || abs(hit[1]) > 200) { Ci = 0; return; }
+        float hole_min = in_curved ? in_center[0] + 1 : 1;
+        float hole_max = hole_min + 2;
+        if (hit[0] > hole_min && hit[0] < hole_max && hit[1] > -3 && hit[1] < -1) {
+            float tx = direction[0] == 0 ? 1e30 : ((direction[0] > 0 ? hole_max : hole_min) - P[0]) / direction[0];
+            float ty = direction[1] == 0 ? 1e30 : ((direction[1] > 0 ? -1 : -3) - P[1]) / direction[1];
+            float wall = min(tx, ty);
+            if (wall > leave) { Ci = 0; return; }
+            hit = P + wall * direction;
+        }
+    }
+    Ci = weight * diagnostic(hit, in_position, in_scale) * emission();
+}

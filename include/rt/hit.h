@@ -155,14 +155,31 @@ struct uvcoord {
     fastf_t uv_du;      /**< @brief delta in u */
     fastf_t uv_dv;      /**< @brief delta in v */
 };
-/** Derivatives with respect to a primitive's native (u, v) mapping. */
+enum rt_surface_derivative_flag {
+    RT_DERIVATIVES_HAS_TANGENT_PARTIALS = 1u << 0,
+    RT_DERIVATIVES_HAS_GEOMETRIC_NORMAL_PARTIALS = 1u << 1
+};
+
+/** Derivatives with respect to a primitive's native (u, v) mapping.
+ * Normal derivatives refer to unit normals.  Extra chart data is optional
+ * because UV mappings may be unavailable or singular.  Optional fields have
+ * values only when their flag is set; otherwise they are zero.  Consumers
+ * must be rebuilt when this structure's layout changes.
+ */
 struct rt_surface_derivatives {
     vect_t dpdu;
     vect_t dpdv;
-    vect_t dndu;
+    vect_t dndu;      /**< Shading normal derivative. */
     vect_t dndv;
+    vect_t d2pduu;    /**< Partial of dpdu with respect to u. */
+    vect_t d2pduv;    /**< Partial of dpdu with respect to v. */
+    vect_t dngdu;     /**< Geometric normal derivative, independent of shading. */
+    vect_t dngdv;
+    unsigned int flags;
 };
-#define RT_SURFACE_DERIVATIVES_INIT_ZERO { VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO }
+#define RT_SURFACE_DERIVATIVES_INIT_ZERO { \
+    VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, \
+    VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, 0 }
 
 enum rt_derivative_status {
     RT_DERIVATIVES_OK = 0,

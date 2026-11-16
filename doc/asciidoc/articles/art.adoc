@@ -1085,14 +1085,69 @@ qualified `as_glossy_layer` network for a coat while that legacy path is
 modernized. Maya refraction and complete subsurface transport also need
 separate qualification.
 
-These checks qualify smooth ray footprints for the tested normal fields;
-they do not qualify all filtered secondary textures. A separate
+Rough canonical GGX reflection and transmission differentiate the sampled
+microfacet normal, the selected shading frame, and the actual reflected or
+refracted direction. The random variates, roughness and anisotropy are held
+fixed. Native neighboring-ray tests cover glossy, metal, plastic, glossy
+coat and both glass lobes, including both transport directions, back-face
+glass, varying reference tangents, and geometric-side correction.
+
+Custom shaders with an explicit closure tangent can supply `"dTdx",
+Dx(Tn)` and `"dTdy", Dy(Tn)` alongside the enabled normal-derivative
+keywords. Supply derivatives of the actual raw tangent argument; its
+component along the selected normal affects frame differentiation.
+Bundled tangent-bearing canonical calls supply these keywords. Zero
+normal or tangent inputs retain the original-frame fallback and ignore
+derivatives of discarded shader tangents. Closures using the default
+surface tangent inherit its derivatives, including zero-tangent fallbacks.
+Explicit shader tangents keep their own derivatives even if their values
+happen to equal the surface tangent.
+
+`regress-art-frame-derivatives` compares tangent, UV-oriented bitangent,
+and normal values and screen derivatives with independently differentiated
+sphere and ellipsoid charts in both projections. Native neighboring-ray
+tests also cover transformed sphere, disk and rectangle frames and smooth
+triangles with and without authored UVs or tangents. The native triangle's
+position chart follows its geometric plane; authored shading normals are
+interpolated and normalized independently.
+
+`regress-art-rough-footprints` compares 72 position and footprint images
+with an independently sampled OSL reference. OSL automatic differentiation
+computes the reference path derivatives without the native sampler's
+Jacobian. The cases cover white metal, glass reflection and transmission,
+CSG and solid BOT faces, both projections, isotropic and signed anisotropic
+roughness, and varying world normal/tangent fields. Diagnostic receivers
+lie before the next glass interface. Bounded footprint diagnostics avoid
+unbounded grazing-ray variance; position controls check accepted-path
+probability and energy. Both images must have positive receiver signals.
+At 131072 samples, mean comparisons permit 1% including binary16 rounding.
+These sampled-continuation diagnostics disable next-event estimation
+because derivative-dependent emission is not an ordinary emitter model.
+
+`regress-art-curved-footprints` adds 152 independent position and footprint
+comparisons on spheres and ellipsoids. White metal and both glass lobes use
+default or mapped normals, default surface tangents, explicit `Tn`
+userdata, and authored world tangents, in both projections with signed
+anisotropy. Four additional configurations hold the shader normal and
+tangent constant to isolate the geometric-normal derivatives used by
+metal's geometric-side correction. The reference solves each quadric's
+next exit analytically. Transmission receivers lie inside the quadric,
+before a second glass interface. These checks retain the planar test's
+131072 samples, 1% mean bound and positive receiver requirement. The
+strongly tilted clipping configurations use 524288 samples to bound their
+higher estimator variance at the same 1% threshold.
+
+These checks qualify smooth ray footprints and the tested rough sampled
+paths; they do not qualify all filtered secondary textures. A separate
 high-frequency image study reproduces a discontinuity in OIIO's
 anisotropic quadrature: its sample count changes from one to two when
 the footprint aspect ratio crosses 1.5. First-order footprint differences
 can therefore cause a larger isolated color difference. Filter continuity,
-curved tangent-frame derivatives, height-map second derivatives, and
-rough-path footprint growth still need qualification.
+height-map second derivatives, roughness/anisotropy gradients, and general
+rough-lobe filtering still need qualification. Geometry tangent and
+geometric-normal partials currently come from spheres, ellipsoids and
+BOTs. Other librt primitives, native curves and material basis modifiers
+need further frame-derivative support and qualification.
 
 Rough curved/nested interfaces, general caustic focusing, transmitted
 shadows, arbitrary overlapping media, thin refractive surfaces, and filtered
@@ -1668,9 +1723,13 @@ Exact intersection tests check coordinates and transformed instances;
 malformed data, and ownership of prepared coordinates.  `rt_arb_uv` exercises
 concurrent first-use mapping and normal queries.
 
-These checks establish point coordinates.  Appleseed now accepts optional
+These checks establish point coordinates. Appleseed accepts optional
 object-space derivatives of position and the unit shading normal with
-respect to UV.  It preserves them through copied hits and side changes,
+respect to UV. Additional optional fields supply the second partials of
+the raw U position tangent and the derivatives of the unit geometric
+normal. Availability flags distinguish unavailable fields from a valid
+zero derivative. A smooth BOT's geometric normal remains constant across
+its triangle even when its authored shading normal varies.  It preserves them through copied hits and side changes,
 transforms position derivatives as vectors, and differentiates both the
 inverse-transpose normal transform and normalization.  Ray footprints use
 the geometric surface and a double-precision UV solve.  Native renderer

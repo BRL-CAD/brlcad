@@ -65,6 +65,8 @@ rt_obj_surface_attributes(struct rt_surface_attributes *out,
 	VREVERSE(result.shading_normal, result.shading_normal);
 	VREVERSE(result.derivatives.dndu, result.derivatives.dndu);
 	VREVERSE(result.derivatives.dndv, result.derivatives.dndv);
+	VREVERSE(result.derivatives.dngdu, result.derivatives.dngdu);
+	VREVERSE(result.derivatives.dngdv, result.derivatives.dngdv);
     }
     *out = result;
     return 0;

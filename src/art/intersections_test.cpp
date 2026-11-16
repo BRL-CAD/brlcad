@@ -206,6 +206,8 @@ check_derivatives(BrlcadObject &object, const asf::Vector3d &origin,
     const auto result = query_surface(object, origin, direction);
     const auto &derivatives = result.m_derivatives;
     bool passed = result.m_hit && derivatives.m_valid == available &&
+	derivatives.m_has_tangent_partials == available &&
+	derivatives.m_has_geometric_normal_partials == available &&
 	same_vector(derivatives.m_dpdu, dpdu) && same_vector(derivatives.m_dpdv, dpdv);
     if (available && passed) {
 	// Shift independent rays along each known chart tangent and differentiate
@@ -213,15 +215,24 @@ check_derivatives(BrlcadObject &object, const asf::Vector3d &origin,
 	constexpr double DIFFERENCE_STEP = 1.0e-6;
 	const std::array<asf::Vector3d, 2> tangents = {dpdu, dpdv};
 	const std::array<asf::Vector3d, 2> normals = {derivatives.m_dndu, derivatives.m_dndv};
+	const std::array<asf::Vector3d, 2> geometric = {derivatives.m_dngdu, derivatives.m_dngdv};
+	const std::array<asf::Vector3d, 2> tangent_partials = {derivatives.m_d2pduu, derivatives.m_d2pduv};
 	for (size_t axis = 0; axis < tangents.size(); ++axis) {
 	    const auto left = query_surface(object, origin - DIFFERENCE_STEP * tangents[axis], direction);
 	    const auto right = query_surface(object, origin + DIFFERENCE_STEP * tangents[axis], direction);
 	    passed = passed && left.m_hit && right.m_hit &&
-		same_vector(normals[axis], (right.m_shading_normal - left.m_shading_normal) / (2 * DIFFERENCE_STEP));
+		same_vector(normals[axis], (right.m_shading_normal - left.m_shading_normal) / (2 * DIFFERENCE_STEP)) &&
+		same_vector(geometric[axis], (right.m_geometric_normal - left.m_geometric_normal) / (2 * DIFFERENCE_STEP)) &&
+		same_vector(tangent_partials[axis],
+		    (right.m_derivatives.m_dpdu - left.m_derivatives.m_dpdu) / (2 * DIFFERENCE_STEP));
 	}
     } else if (!available) {
 	passed = passed && same_vector(derivatives.m_dndu, asf::Vector3d(0)) &&
-	    same_vector(derivatives.m_dndv, asf::Vector3d(0));
+	    same_vector(derivatives.m_dndv, asf::Vector3d(0)) &&
+	    same_vector(derivatives.m_d2pduu, asf::Vector3d(0)) &&
+	    same_vector(derivatives.m_d2pduv, asf::Vector3d(0)) &&
+	    same_vector(derivatives.m_dngdu, asf::Vector3d(0)) &&
+	    same_vector(derivatives.m_dngdv, asf::Vector3d(0));
     }
     if (!passed)
 	bu_log("Unexpected surface derivatives for %s: hit=%d available=%d expected=%d\n",

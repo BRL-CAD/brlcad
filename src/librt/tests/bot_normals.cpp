@@ -89,6 +89,9 @@ expected_derivatives(const std::array<fastf_t, 12> &normals, const vect_t dpdu, 
 {
     struct rt_surface_derivatives result = RT_SURFACE_DERIVATIVES_INIT_ZERO;
     VMOVE(result.dpdu, dpdu); VMOVE(result.dpdv, dpdv);
+    // Authored shading normals vary, while both geometric-normal partials
+    // and the position second partials remain exactly zero.
+    result.flags = RT_DERIVATIVES_HAS_TANGENT_PARTIALS | RT_DERIVATIVES_HAS_GEOMETRIC_NORMAL_PARTIALS;
     const auto left = normal_at(normals, 0.3 - DerivativeStep, 0.5);
     const auto right = normal_at(normals, 0.3 + DerivativeStep, 0.5);
     const auto down = normal_at(normals, 0.3, 0.5 - DerivativeStep);

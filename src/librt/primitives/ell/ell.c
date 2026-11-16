@@ -643,11 +643,11 @@ rt_ell_surface_derivatives(struct application *UNUSED(ap), struct soltab *stp,
     const struct hit *hitp, struct rt_surface_derivatives *derivatives)
 {
     const struct ell_specific *ell = (const struct ell_specific *)stp->st_specific;
-    vect_t offset, point, du, dv;
+    vect_t offset, point, du, dv, duu, duv;
     VSUB2(offset, hitp->hit_point, ell->ell_V);
     MAT4X3VEC(point, ell->ell_SoR, offset);
     VUNITIZE(point);
-    const int status = rt_unit_sphere_uv_derivatives(point, du, dv);
+    const int status = rt_unit_sphere_uv_derivatives(point, du, dv, duu, duv);
     if (status != RT_DERIVATIVES_OK)
 	return status;
     mat_t inverse;
@@ -655,6 +655,8 @@ rt_ell_surface_derivatives(struct application *UNUSED(ap), struct soltab *stp,
 	return RT_DERIVATIVES_ERROR;
     MAT4X3VEC(derivatives->dpdu, inverse, du);
     MAT4X3VEC(derivatives->dpdv, inverse, dv);
+    MAT4X3VEC(derivatives->d2pduu, inverse, duu);
+    MAT4X3VEC(derivatives->d2pduv, inverse, duv);
 
     vect_t normal, normal_du, normal_dv;
     VEC3X4MAT(normal, point, ell->ell_SoR);
@@ -663,6 +665,9 @@ rt_ell_surface_derivatives(struct application *UNUSED(ap), struct soltab *stp,
     if (rt_normalize_derivative(derivatives->dndu, normal, normal_du) != RT_DERIVATIVES_OK ||
 	rt_normalize_derivative(derivatives->dndv, normal, normal_dv) != RT_DERIVATIVES_OK)
 	return RT_DERIVATIVES_ERROR;
+    VMOVE(derivatives->dngdu, derivatives->dndu);
+    VMOVE(derivatives->dngdv, derivatives->dndv);
+    derivatives->flags = RT_DERIVATIVES_HAS_TANGENT_PARTIALS | RT_DERIVATIVES_HAS_GEOMETRIC_NORMAL_PARTIALS;
     return RT_DERIVATIVES_OK;
 }
 

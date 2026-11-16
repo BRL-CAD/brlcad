@@ -161,6 +161,16 @@ fill_surface_attributes(asr::ProceduralObject::IntersectionResult &result, const
 	result.m_derivatives.m_dpdv = asf::Vector3d(V3ARGS(surface.derivatives.dpdv));
 	result.m_derivatives.m_dndu = asf::Vector3d(V3ARGS(surface.derivatives.dndu));
 	result.m_derivatives.m_dndv = asf::Vector3d(V3ARGS(surface.derivatives.dndv));
+	if (surface.derivatives.flags & RT_DERIVATIVES_HAS_TANGENT_PARTIALS) {
+	    result.m_derivatives.m_has_tangent_partials = true;
+	    result.m_derivatives.m_d2pduu = asf::Vector3d(V3ARGS(surface.derivatives.d2pduu));
+	    result.m_derivatives.m_d2pduv = asf::Vector3d(V3ARGS(surface.derivatives.d2pduv));
+	}
+	if (surface.derivatives.flags & RT_DERIVATIVES_HAS_GEOMETRIC_NORMAL_PARTIALS) {
+	    result.m_derivatives.m_has_geometric_normal_partials = true;
+	    result.m_derivatives.m_dngdu = asf::Vector3d(V3ARGS(surface.derivatives.dngdu));
+	    result.m_derivatives.m_dngdv = asf::Vector3d(V3ARGS(surface.derivatives.dngdv));
+	}
     }
     return nullptr;
 }
