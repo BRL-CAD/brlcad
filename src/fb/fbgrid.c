@@ -103,9 +103,6 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
-	return 0;
-
     remaining = argc - bu_optind;
     if (remaining != 0) {
 	fprintf(stderr, "fbgrid: excess argument(s) not supported\n");
