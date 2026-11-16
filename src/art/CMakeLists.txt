@@ -11,25 +11,15 @@ set(
 )
 cmakefiles(${art_ignore_files})
 
-set(Appleseed_ROOT "${CMAKE_BINARY_DIR}")
+if(NOT Appleseed_ROOT)
+  set(Appleseed_ROOT "${CMAKE_BINARY_DIR}")
+endif()
 find_package(Appleseed)
 if(NOT Appleseed_FOUND)
   message("'art' appleseed ray tracing is DISABLED")
   return()
 endif(NOT Appleseed_FOUND)
 message("Found Appleseed: ${Appleseed_LIBRARIES}")
-
-set(Boost_ROOT "${CMAKE_BINARY_DIR}")
-set(Boost_USE_STATIC_LIBS OFF)
-find_package(
-  Boost
-  COMPONENTS chrono date_time filesystem regex system thread wave
-)
-if(NOT Boost_FOUND)
-  message("'art' appleseed ray tracing is DISABLED")
-  return()
-endif(NOT Boost_FOUND)
-message("Found Boost: ${Boost_LIBRARIES}")
 
 string(REPLACE "\\" "/" APPLESEED_CONF_ROOT ${Appleseed_ROOT}) # use forward slashes
 config_h_append(BRLCAD "#define APPLESEED_ROOT \"${APPLESEED_CONF_ROOT}\"\n")
@@ -44,11 +34,10 @@ set(
   liboptical
   libicv
   ${Appleseed_LIBRARIES}
-  ${Boost_LIBRARIES}
   ${M_LIBRARY}
 )
 
-set(ART_INCLUDE_DIRS ${Appleseed_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+set(ART_INCLUDE_DIRS ${Appleseed_INCLUDE_DIRS})
 
 set(
   ART_SRCS
@@ -61,8 +50,9 @@ set(
   tile.cpp
 )
 
-add_definitions(-DBOOST_ALL_DYN_LINK)
 brlcad_addexec(art "${ART_SRCS}" "${ART_LIBS}" FOLDER Rt)
+# The shared rt sources rely on translation-unit isolation for C globals.
+set_target_properties(art PROPERTIES UNITY_BUILD OFF)
 target_include_directories(art BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(art SYSTEM PRIVATE ${ART_INCLUDE_DIRS})
 
