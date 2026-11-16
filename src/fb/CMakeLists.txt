@@ -31,7 +31,7 @@ brlcad_add_test(
 )
 brlcad_addexec(fbfade "fbfade.c;ioutil.c" libdm FOLDER Fb)
 add_target_deps(fbfade dm_plugins)
-brlcad_addexec(fbframe fbframe.c libdm FOLDER Fb)
+brlcad_addexec(fbframe fbframe.c libdm FOLDER Fb ARG_SCHEMA)
 add_target_deps(fbframe dm_plugins)
 brlcad_addexec(fbfree fbfree.c libdm FOLDER Fb ARG_SCHEMA)
 add_target_deps(fbfree dm_plugins)

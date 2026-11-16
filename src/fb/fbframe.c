@@ -27,82 +27,137 @@
 
 #include "common.h"
 
-#include <errno.h>
 #include <limits.h>
-#include <stdlib.h>
 
-#include "bio.h"
-
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/color.h"
-#include "bu/getopt.h"
-#include "fb_arg.h"
 #include "bu/exit.h"
+#include "bu/log.h"
 #include "bu/malloc.h"
 #include "dm.h"
 
-const char *Usage="[-F framebuffer] [-s|S squareframesize] [-w|W frame_width] [-n|N frame_height]\n";
+struct fbframe_args {
+    struct fbframe_args *self;
+    int help;
+    const char *framebuffer;
+    int width;
+    int height;
+};
 
-#define USAGE_EXIT(p) { fprintf(stderr, "Usage: %s %s\n", (p), Usage); \
-	bu_exit(-1, NULL); }
+enum fbframe_dimension {
+    FBFRAME_SIZE,
+    FBFRAME_WIDTH,
+    FBFRAME_HEIGHT
+};
+
+static struct fbframe_args *
+fbframe_args_from_storage(void *storage)
+{
+    return storage ? *(struct fbframe_args **)storage : NULL;
+}
+
+static int
+fbframe_dimension(struct bu_vls *msg, const char *arg, void *storage,
+	enum fbframe_dimension dimension)
+{
+    struct fbframe_args *args = fbframe_args_from_storage(storage);
+    int value;
+
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 1, INT_MAX))
+	return -1;
+    if (args) {
+	if (dimension == FBFRAME_SIZE)
+	    args->width = args->height = value;
+	else if (dimension == FBFRAME_WIDTH)
+	    args->width = value;
+	else
+	    args->height = value;
+    }
+    return 0;
+}
+
+#define FBFRAME_DIMENSION_CALLBACK(_name, _dimension) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return fbframe_dimension(msg, arg, storage, _dimension); \
+    }
+
+FBFRAME_DIMENSION_CALLBACK(fbframe_size, FBFRAME_SIZE)
+FBFRAME_DIMENSION_CALLBACK(fbframe_width, FBFRAME_WIDTH)
+FBFRAME_DIMENSION_CALLBACK(fbframe_height, FBFRAME_HEIGHT)
+
+static const struct bu_arg_option fbframe_options[] = {
+    BU_ARG_FLAG("h", "help", struct fbframe_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_VALUE("F", "framebuffer", struct fbframe_args, framebuffer,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Select the framebuffer device"),
+    BU_ARG_CUSTOM("s", "size", struct fbframe_args, self, fbframe_size,
+	"pixels", "Set both frame dimensions"),
+    BU_ARG_ALIAS("S", NULL, "size", 1),
+    BU_ARG_CUSTOM("w", "width", struct fbframe_args, self, fbframe_width,
+	"pixels", "Set the frame width"),
+    BU_ARG_ALIAS("W", NULL, "width", 1),
+    BU_ARG_CUSTOM("n", "height", struct fbframe_args, self, fbframe_height,
+	"pixels", "Set the frame height"),
+    BU_ARG_ALIAS("N", NULL, "height", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema fbframe_schema = BU_ARG_SCHEMA(
+    "fbframe", "Draw a colored border around a framebuffer",
+    fbframe_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar fbframe_grammar = {
+    &fbframe_schema, NULL, NULL
+};
 
 int
 main(int argc, char **argv)
 {
-    int c;
+    struct fbframe_args args = {NULL, 0, NULL, 0, 0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     int x;
     struct fb *fbp;
-    int xsize, ysize;
+    int xsize;
+    int ysize;
     int len;
-    char *framebuffer = (char *)NULL;
     unsigned char *line;
     static RGBpixel white = { 255, 255, 255 };
     static RGBpixel red = { 255, 0, 0 };
     static RGBpixel green = { 0, 255, 0 };
     static RGBpixel blue = { 0, 0, 255 };
+    args.self = &args;
 
     bu_setprogname(argv[0]);
 
-    xsize = ysize = 0;
-    while ((c = bu_getopt(argc, argv, "F:s:w:n:S:W:N:h?")) != -1) {
-	switch (c) {
-	    case 'F':
-		framebuffer = bu_optarg;
-		break;
-	    case 's':
-	    case 'S':
-		/* square file size */
-		if (fb_arg_int_range(bu_optarg, &len, 1, INT_MAX, "square frame size"))
-		    xsize = ysize = len;
-		else
-		    USAGE_EXIT(*argv);
-		break;
-	    case 'w':
-	    case 'W':
-		if (fb_arg_int_range(bu_optarg, &len, 1, INT_MAX, "frame width"))
-		    xsize = len;
-		else
-		    USAGE_EXIT(*argv);
-		break;
-	    case 'n':
-	    case 'N':
-		if (fb_arg_int_range(bu_optarg, &len, 1, INT_MAX, "frame height"))
-		    ysize = len;
-		else
-		    USAGE_EXIT(*argv);
-		break;
-	    default:	/* '?' 'h' */
-		USAGE_EXIT(*argv);
-		break;
-	}
+    int introspection = bu_arg_introspect(&msg, &fbframe_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
-
-    if (argc > bu_optind) {
-	fprintf(stderr, "%s: excess argument(s) not supported\n", bu_getprogname());
-	USAGE_EXIT(*argv);
+    if (bu_arg_schema_parse_complete(&fbframe_schema, &args, &msg, argc - 1,
+	    (const char **)(argv + 1)) < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
     }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&fbframe_schema, "fbframe");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "fbframe help");
+	return 0;
+    }
+    xsize = args.width;
+    ysize = args.height;
 
-    if ((fbp = fb_open(framebuffer, xsize, ysize)) == FB_NULL)
+    if ((fbp = fb_open(args.framebuffer, xsize, ysize)) == FB_NULL)
 	bu_exit(1, NULL);
 
     if (xsize <= 0)
@@ -114,7 +169,7 @@ main(int argc, char **argv)
     len = (xsize > ysize) ? xsize : ysize;
     line = (unsigned char *)bu_calloc(len, sizeof(RGBpixel), "line");
     if (line == RGBPIXEL_NULL) {
-	fprintf(stderr, "fbframe:  malloc failure\n");
+	bu_flog(stderr, "fbframe: malloc failure\n");
 	return 1;
     }
 
