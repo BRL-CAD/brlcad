@@ -78,8 +78,9 @@ and a solid BOT.  Coverage includes multiple aspect ratios and projections,
 PNG/PIX output, single/multiple workers, and error exits.  Basic
 material-object selection and custom diffuse surface shaders are covered.
 Native primitive UVs and authored BOT UVs are covered by diagnostic
-emission shaders and exact intersection checks.  Networks, general parameter
-authoring, and advanced closures remain unqualified.
+emission shaders and exact intersection checks.  Typed single-shader
+parameters are validated and persisted through the material command.
+Networks and advanced closures remain unqualified.
 
 |Region instances
 |Full indexed database paths distinguish occurrences under different parents
@@ -237,10 +238,10 @@ An OSL emission diagnostic evaluates `filterwidth(u)` and `filterwidth(v)`
 in actual orthographic and perspective renders.  Spheres, ellipsoids, and
 flat and smooth authored BOTs must produce finite, positive footprints.
 The current ARB/TGC Boolean fixture must produce the zero-footprint fallback.
-These checks establish that the mapping derivatives reach OSL; they do not
-yet qualify texture-filter responses or bump/normal mapping.  Rebuild
-procedural plugins and applications against the matching Appleseed headers
-and library.
+These checks establish that the mapping derivatives reach OSL.  Mipmapped
+texture minification is also checked against a known reference as described
+below.  Bump and normal-map shading remain unqualified.  Rebuild procedural
+plugins and applications against the matching Appleseed headers and library.
 
 Visible emission is covered by the diagnostic shader, but direct light
 sampling of emissive librt surfaces and their surface-area registration are
@@ -269,10 +270,53 @@ Shaders are queried through Appleseed's public metadata interface before
 rendering.  Missing shaders, invalid outputs, and invalid material-object
 references stop the render with an error.  The region's resolved sRGB color
 is converted to linear RGB and supplied to a compatible scalar `in_color`
-input, when present.  Other shader parameters currently retain their
-shader defaults; a complete typed parameter/network interface remains a
-planned milestone.  Material-object parent inheritance and per-instance
-material overrides also require further qualification.
+input, when present.  Explicit typed parameters override this color and the
+compatibility defaults for `as_plastic`.
+
+Version 1 stores typed inputs in optical properties named
+`OSL.param.<input>`.  `OSL.version` can be set to `1`; omitting it retains
+version 1 behavior for existing assignments.  For example:
+
+----
+material set paint.material optical OSL.version 1
+material set paint.material optical OSL.param.in_color "color 0.2 0.4 0.6"
+material set paint.material optical OSL.param.in_specular_roughness "float 0.35"
+material get paint.material optical OSL.param.in_specular_roughness
+material remove paint.material optical OSL.param.in_specular_roughness
+----
+
+Supported input types are `int`, `float`, `color`, `point`, `vector`,
+`normal`, `matrix`, and `string`.  A value starts with its exact OSL type.
+Triples require three components; matrices require sixteen components in
+the renderer's row-major order.  Numeric components must be finite and
+representable in the renderer's `int` or `float` storage.  Explicit colors
+are linear RGB.  Points, vectors, and normals use the shader's common
+coordinate space; no implicit unit or coordinate conversion is applied.
+A string contains the remaining text after `string`, including internal
+spaces; leading and trailing whitespace is trimmed.  Tcl quotes group the
+property value and are not part of the stored string.
+
+Unknown inputs, type mismatches, invalid values, output assignments,
+closures, structures, and arrays stop rendering before an image is written.
+Unknown `OSL.` properties and unsupported format versions also produce an
+error.  Unspecified inputs retain the shader or compatibility defaults;
+removing an input property restores those defaults.  The regression uses
+the material command to persist and reopen every supported input type,
+including a string with spaces, before checking rendered shader results.
+
+Multi-node networks, material-object parent inheritance, and per-instance
+material overrides remain planned capabilities.
+
+Errors reported by the renderer during initialization, worker execution,
+or renderer cleanup stop the render with a nonzero exit status before
+saving an image or replacing an existing output.  This includes unhandled
+OSL texture errors, even when
+Appleseed's render status otherwise reports success.  Warnings alone do
+not fail the render.  A shader may deliberately request the `texture()`
+`errormessage` output and supply its own fallback; handled errors that do
+not reach the renderer error log remain under the shader's control.
+`regress-art` checks both missing-texture behaviors.
+
 
 == Project shader assets
 
@@ -281,6 +325,12 @@ its `shaders` subdirectory, and also searches the selected Appleseed shader
 libraries.  Build-directory paths and the caller's working directory are
 not part of the project convention.  Keep database-relative asset paths
 when moving a project to another directory.
+
+Shader metadata inspection follows the same ordered search paths as OSL
+execution.  A same-named compiled shader in the caller's working directory
+cannot supply a different interface for a project shader.  The regression
+renders with such a collision and compares the result with the independent
+texture reference.
 
 For a custom surface shader, save this source as `painted.osl`:
 
@@ -315,6 +365,83 @@ installation and renders it on a sphere, a Boolean solid, and a BOT.  Its
 project directory contains spaces and is separate from the rendering
 working directory.  A second fixture returns an ordinary color output;
 selecting that output as a material closure is rejected before rendering.
+
+== Image-texture preview and minification
+
+Prepare color textures in scene-linear RGB.  A generic OSL `texture()`
+lookup uses the stored numeric values; color-space conversion belongs in
+asset preparation or an explicit shader operation.  Mipmapped textures
+provide reduced-resolution image levels for filtered lookups.  The renderer
+dependency installation supplies `maketx`:
+
+----
+mkdir -p textures
+"$RENDERER_PREFIX/bin/maketx" -d float --filter box --wrap periodic \
+    -o textures/wood.tx wood_linear.exr
+----
+
+An emission preview exposes texture values independently of scene lighting.
+Save this shader as `texture_preview.osl`:
+
+[source,c]
+----
+surface texture_preview(string in_filename = "", float in_uv_scale = 1)
+{
+    color texel = texture(in_filename, in_uv_scale * u, in_uv_scale * v,
+        "interp", "closest");
+    Ci = texel * emission();
+}
+----
+
+This diagnostic uses nearest interpolation within each mip level.  Mip
+selection and anisotropic filtering use the automatic OSL derivatives,
+including the UV scaling operation.  Compile and select the preview:
+
+----
+"$RENDERER_PREFIX/bin/oslc" -I "$RENDERER_PREFIX/share/OSL/shaders" \
+    -o shaders/texture_preview.oso texture_preview.osl
+----
+
+In MGED:
+
+----
+material create map.material "Texture preview"
+material set map.material optical OSL texture_preview
+material set map.material optical OSL.version 1
+material set map.material optical OSL.param.in_filename "string textures/wood.tx"
+material set map.material optical OSL.param.in_uv_scale "float 4"
+material assign ball.r map.material
+----
+
+Then render with `art -w 512 -n 512 -o preview.png scene.g ball.r`.
+Relative texture filenames resolve directly against the database directory.
+They do not search the shader-library directories.  Keep textures and compiled shaders with the
+database when moving the project.  Paths containing spaces are supported.
+
+`regress-art` generates a one-texel black/white checker and converts it to
+floating-point mipmapped data.  Fully minified renders of spheres,
+ellipsoids, and flat and smooth authored BOTs must match an independently
+shaded linear 0.5 emission reference in orthographic and perspective views.
+The comparison bounds both RMS and maximum display-image error.  A control
+with zero UV derivatives must differ substantially, establishing that the
+check detects missing filtering.  A copied project is also rendered while
+the original texture is unavailable, exercising relative asset lookup.
+These checks qualify this minification workflow; LOD transitions, color
+conversion, alpha, and bump/normal mapping need additional coverage.
+
+`art` enables Appleseed's project-rooted texture lookup for both cached
+constant filenames and dynamic filenames.  A same-named file in the
+caller's working directory cannot override an asset or supply a missing
+project texture.  Explicit absolute filenames retain their meaning.  The
+regression checks these cases for 2D lookups and checks constant and dynamic
+latitude-longitude environment lookups and both texture-metadata query
+variants.  Missing project textures must fail unless the shader explicitly
+handles the lookup error and supplies a fallback.
+
+The environment regression also covers a modern OSL compatibility fix:
+lookup directions without derivative storage supply zero footprints
+instead of dereferencing absent derivatives.
+
 
 == Development milestones
 

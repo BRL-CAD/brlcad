@@ -19,6 +19,10 @@
  */
 #include "common.h"
 
+#include <cmath>
+#include <locale>
+#include <map>
+#include <sstream>
 #include <string>
 
 #include "renderer/api/scene.h"
@@ -44,7 +48,12 @@ struct MaterialShader {
     std::string name = "as_plastic";
     std::string output = "out_outColor";
     bool output_explicit = false;
+    std::map<std::string, std::string> parameters;
 };
+
+constexpr char PropertyPrefix[] = "OSL.";
+constexpr char ParameterPrefix[] = "OSL.param.";
+constexpr char MaterialFormatVersion[] = "1";
 
 bool
 read_shader(struct db_i *db, const struct rt_comb_internal *comb, MaterialShader &shader)
@@ -74,7 +83,28 @@ read_shader(struct db_i *db, const struct rt_comb_internal *comb, MaterialShader
 	shader.output = osl_output;
 	shader.output_explicit = true;
     }
+    bool valid = true;
+    const struct bu_attribute_value_pair *property;
+    for (BU_AVS_FOR(property, &material->opticalProperties)) {
+	const std::string key = property->name;
+	const std::string value = property->value ? property->value : "";
+	if (key.compare(0, sizeof(ParameterPrefix) - 1, ParameterPrefix) == 0) {
+	    shader.parameters.emplace(key.substr(sizeof(ParameterPrefix) - 1), value);
+	} else if (key == "OSL.version") {
+	    if (value != MaterialFormatVersion) {
+		bu_log("art: material '%s' has unsupported OSL.version '%s'\n", material_name, value.c_str());
+		valid = false;
+		break;
+	    }
+	} else if (key.compare(0, sizeof(PropertyPrefix) - 1, PropertyPrefix) == 0 && key != "OSL.output") {
+	    bu_log("art: material '%s' has unsupported OSL property '%s'\n", material_name, key.c_str());
+	    valid = false;
+	    break;
+	}
+    }
     rt_db_free_internal(&intern);
+    if (!valid)
+	return false;
     if (shader.name.empty() || shader.output.empty()) {
 	bu_log("art: material '%s' has an empty OSL shader or output\n", material_name);
 	return false;
@@ -82,20 +112,67 @@ read_shader(struct db_i *db, const struct rt_comb_internal *comb, MaterialShader
     return true;
 }
 
-bool
-has_color_parameter(const asr::ShaderQuery &query, const char *name, bool closure_output)
+const asf::Dictionary *
+find_parameter(const asr::ShaderQuery &query, const char *name)
 {
     for (size_t i = 0; i < query.get_param_count(); ++i) {
 	const asf::Dictionary &param = query.get_param_info(i);
-	if (BU_STR_EQUAL(param.get("name"), name)) {
-	    // OSL exposes closure storage as a pointer; isclosure defines its type.
-	    return (closure_output || BU_STR_EQUAL(param.get("type"), "color")) &&
-		param.get<bool>("isoutput") == closure_output &&
-		param.get<bool>("isclosure") == closure_output &&
-		!param.get<bool>("isarray");
+	if (BU_STR_EQUAL(param.get("name"), name))
+	    return &param;
+    }
+    return nullptr;
+}
+
+bool
+has_color_parameter(const asr::ShaderQuery &query, const char *name, bool closure_output)
+{
+    const auto *param = find_parameter(query, name);
+    // OSL exposes closure storage as a pointer; isclosure defines its type.
+    return param && (closure_output || BU_STR_EQUAL(param->get("type"), "color")) &&
+	param->get<bool>("isoutput") == closure_output &&
+	param->get<bool>("isclosure") == closure_output && !param->get<bool>("isarray");
+}
+
+const char *
+parameter_error(const asr::ShaderQuery &query, const std::string &name, const std::string &value)
+{
+    const auto *param = find_parameter(query, name.c_str());
+    if (!param)
+	return "input does not exist";
+    if (param->get<bool>("isoutput") || param->get<bool>("isclosure") ||
+	param->get<bool>("isstruct") || param->get<bool>("isarray"))
+	return "output, closure, structured, and array parameters cannot be assigned";
+
+    std::istringstream input(value);
+    input.imbue(std::locale::classic());
+    std::string type;
+    if (!(input >> type) || type != param->get("type"))
+	return "declared type does not match the shader input";
+    if (type == "string")
+	return nullptr;
+
+    const struct { const char *name; size_t components; } numeric_types[] = {
+	{"int", 1}, {"float", 1}, {"color", 3}, {"point", 3},
+	{"vector", 3}, {"normal", 3}, {"matrix", 16}
+    };
+    size_t components = 0;
+    for (const auto &candidate : numeric_types)
+	if (type == candidate.name) components = candidate.components;
+    if (!components)
+	return "unsupported input type";
+    for (size_t i = 0; i < components; ++i) {
+	if (type == "int") {
+	    int number;
+	    if (!(input >> number))
+		return "expected a representable integer";
+	} else {
+	    float number;
+	    if (!(input >> number) || !std::isfinite(number))
+		return "expected finite numeric components";
 	}
     }
-    return false;
+    input >> std::ws;
+    return input.eof() ? nullptr : "too many components or an invalid numeric value";
 }
 
 }
@@ -148,6 +225,17 @@ art_add_material(asr::Assembly &assembly, const char *name,
 	params.insert("in_specular_weight", "float 0.06")
 	    .insert("in_specular_roughness", "float 0.08")
 	    .insert("in_ior", "float 1.5");
+    }
+
+    // Explicit inputs override region color and the compatibility defaults.
+    for (const auto &parameter : shader.parameters) {
+	const char *error = parameter_error(query.ref(), parameter.first, parameter.second);
+	if (error) {
+	    bu_log("art: invalid OSL parameter '%s' for shader '%s' in material '%s': %s\n",
+		parameter.first.c_str(), shader.name.c_str(), name, error);
+	    return false;
+	}
+	params.insert(parameter.first.c_str(), parameter.second.c_str());
     }
 
     const std::string group_name = std::string(name) + "_shader";

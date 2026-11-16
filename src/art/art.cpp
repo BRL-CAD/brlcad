@@ -77,6 +77,7 @@
 #include <stdio.h>
 
 #include <algorithm>
+#include <atomic>
 #include <cstddef>
 #include <exception>
 #include <limits>
@@ -127,6 +128,7 @@
 #include "foundation/math/vector.h"
 #include "foundation/containers/dictionary.h"
 #include "foundation/log/consolelogtarget.h"
+#include "foundation/log/ilogtarget.h"
 #include "foundation/memory/autoreleaseptr.h"
 #include "foundation/utility/searchpaths.h"
 
@@ -785,10 +787,12 @@ build_project()
     project->configurations()
 	.get_by_name("final")->get_parameters()
 	.insert_path("uniform_pixel_renderer.samples", samples)
-	.insert_path("rendering_threads", (size_t)npsw);
+	.insert_path("rendering_threads", (size_t)npsw)
+	.insert("project_rooted_textures", true);
     project->configurations()
 	.get_by_name("interactive")->get_parameters()
-	.insert_path("rendering_threads", "1"); /* no multithreading - for debug rendering on appleseed */
+	.insert_path("rendering_threads", "1") /* no multithreading - for debug rendering on appleseed */
+	.insert("project_rooted_textures", true);
 
     // Create a scene.
     asf::auto_release_ptr<asr::Scene> scene(asr::SceneFactory::create());
@@ -1223,6 +1227,27 @@ art_save_image(asr::Project& project, const char* filename)
 }
 
 
+namespace {
+struct ReleaseLogTarget {
+    void operator()(asf::ILogTarget *target) const {
+	asr::global_logger().remove_target(target);
+	target->release();
+    }
+};
+
+class RenderErrors final : public asf::ILogTarget {
+    std::atomic<bool> m_has_errors{false};
+public:
+    void release() override { delete this; }
+    void write(const asf::LogMessage::Category category, const char *UNUSED(file),
+	const size_t UNUSED(line), const char *UNUSED(header), const char *UNUSED(message)) override {
+	if (category >= asf::LogMessage::Error)
+	    m_has_errors.store(true, std::memory_order_relaxed);
+    }
+    bool has_errors() const { return m_has_errors.load(std::memory_order_relaxed); }
+};
+}
+
 static bool
 art_render_image(asr::Project& project, ArtTileCallback* callback = nullptr)
 {
@@ -1235,14 +1260,25 @@ art_render_image(asr::Project& project, ArtTileCallback* callback = nullptr)
     path = bu_dir(headers, MAXPATHLEN, APPLESEED_ROOT, "shaders", NULL);
     if (path)
 	resource_search_paths.push_back_explicit_path(path);
-    asr::MasterRenderer renderer(
-	project,
-	project.configurations().get_by_name("final")->get_inherited_parameters(),
-	resource_search_paths,
-	callback);
-
-    if (renderer.render(controller).m_status != asr::MasterRenderer::RenderingResult::Succeeded) {
+    std::unique_ptr<RenderErrors, ReleaseLogTarget> errors(new RenderErrors());
+    asr::global_logger().add_target(errors.get());
+    bool succeeded = false;
+    {
+	asr::MasterRenderer renderer(
+	    project,
+	    project.configurations().get_by_name("final")->get_inherited_parameters(),
+	    resource_search_paths,
+	    callback);
+	succeeded = renderer.render(controller).m_status == asr::MasterRenderer::RenderingResult::Succeeded;
+    }
+    if (!succeeded) {
 	bu_log("art: rendering did not complete successfully\n");
+	return false;
+    }
+    // Worker and OSL errors can be logged without failing MasterRenderer.
+    // Include renderer cleanup in the observed scope before saving the image.
+    if (errors->has_errors()) {
+	bu_log("art: renderer reported errors; image was not saved\n");
 	return false;
     }
 
@@ -1294,11 +1330,9 @@ main(int argc, char **argv)
 	   bu_version()
 	);
 
-    // Create a log target that outputs to stderr, and binds it to the renderer's global logger.
-    // Eventually you will probably want to redirect log messages to your own target. For this
-    // you will need to implement foundation::ILogTarget (foundation/utility/log/ilogtarget.h).
-    asf::ILogTarget* log_target(asf::create_console_log_target(stderr));
-    asr::global_logger().add_target(log_target);
+    std::unique_ptr<asf::ILogTarget, ReleaseLogTarget> log_target(
+	asf::create_console_log_target(stderr));
+    asr::global_logger().add_target(log_target.get());
 
     rt_perspective = 85; // setting the default
 

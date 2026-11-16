@@ -329,7 +329,6 @@ db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_v
     int ret;
     size_t i;
     long int attr_num_val;
-    char *attr_char_val;
     /*double attr_float_val;*/
     char *endptr = NULL;
     int color[3] = {-1, -1, -1};
@@ -386,14 +385,7 @@ db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_v
     bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_MATERIAL_NAME)));
     bu_vls_trimspace(&newval);
     if (bu_vls_strlen(&newval) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)") && !BU_STR_EQUAL(bu_vls_addr(&newval), "del")) {
-	endptr = bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval));
-	if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
-	    attr_char_val = bu_vls_strdup(&newval);
-	    bu_vls_strcpy(&comb->material, attr_char_val);
-	    // set the material_id using this material_name
-	} else {
-	    bu_log("WARNING: [%s] has invalid material_name value [%s]\nmaterial_name remains at %s\n", name, bu_vls_addr(&newval), bu_vls_strdup(&comb->material));
-	}
+	bu_vls_strcpy(&comb->material, bu_vls_cstr(&newval));
     } else {
 	/* empty - set to zero */
 	bu_vls_trunc(&comb->material, 0);

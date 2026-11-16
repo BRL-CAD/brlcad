@@ -22,12 +22,14 @@
 #include <algorithm>
 #include <cmath>
 #include <exception>
+#include <memory>
 #include <string>
 
 #include "bu/app.h"
 #include "bu/log.h"
 #include "bu/str.h"
 #include "icv.h"
+#include "ged.h"
 #include "raytrace.h"
 #include "wdb.h"
 #include "art_test_mesh.h"
@@ -122,29 +124,77 @@ create_scene(const char *path, const char *shader, const char *output)
     return success ? 0 : 1;
 }
 
+static int
+edit_material_property(const char *path, const char *key, const char *value)
+{
+    struct ged *editor = ged_open("db", path, 0);
+    if (!editor)
+	return 1;
+    const char *arguments[] = {"material", value ? "set" : "remove", "osl.material", "optical", key, value};
+    const int argument_count = sizeof(arguments) / sizeof(arguments[0]) - (value ? 0 : 1);
+    const int status = ged_exec_material(editor, argument_count, arguments);
+    if (status != BRLCAD_OK)
+	bu_log("Cannot edit material property '%s': %s\n", key, bu_vls_cstr(editor->ged_result_str));
+    ged_close(editor);
+    return status == BRLCAD_OK ? 0 : 1;
+}
+
+static constexpr double MIN_GEOMETRY_COVERAGE = 0.01;
+using ImagePtr = std::unique_ptr<icv_image_t, decltype(&icv_destroy)>;
+
+static ImagePtr
+read_image(const char *path, size_t width, size_t height)
+{
+    ImagePtr image(icv_read(path, BU_MIME_IMAGE_AUTO, width, height), icv_destroy);
+    if (image && (image->width != width || image->height != height || image->channels < 3)) {
+	bu_log("Unexpected image dimensions or channel count: %s\n", path);
+	image.reset();
+    }
+    return image;
+}
+
+enum class TexturePattern { Checker, Black, Gray };
+
+static int
+create_texture(const char *path, TexturePattern pattern)
+{
+    // A one-texel checker must minify in the smaller regression renders.
+    constexpr size_t CHECKER_SIZE = 512;
+    // Constant fixtures also serve as 2:1 latitude-longitude environments.
+    constexpr size_t ENVIRONMENT_WIDTH = 2;
+    constexpr size_t ENVIRONMENT_HEIGHT = 1;
+    const size_t width = pattern == TexturePattern::Checker ? CHECKER_SIZE : ENVIRONMENT_WIDTH;
+    const size_t height = pattern == TexturePattern::Checker ? CHECKER_SIZE : ENVIRONMENT_HEIGHT;
+    ImagePtr image(icv_create(width, height, ICV_COLOR_SPACE_RGB), icv_destroy);
+    if (!image)
+	return 1;
+    for (size_t y = 0; y < image->height; ++y) {
+	for (size_t x = 0; x < image->width; ++x) {
+	    const double value = pattern == TexturePattern::Checker ? static_cast<double>((x + y) % 2) :
+		pattern == TexturePattern::Gray ? 0.5 : 0.0;
+	    std::fill_n(image->data + (y * image->width + x) * image->channels, image->channels, value);
+	}
+    }
+    return icv_write(image.get(), path, BU_MIME_IMAGE_AUTO) == 0 ? 0 : 1;
+}
+
 enum class ImageCheck {
-    Regions, Mesh, RepeatedArcs, VaryingRG, FlatNormals, PositiveFootprints, ZeroFootprints
+    Regions, Mesh, RepeatedArcs, VaryingRG, FlatNormals, GreenDiagnostic, RedDiagnostic
 };
 
 static int
 check_image(const char *path, size_t width, size_t height, ImageCheck check)
 {
-    icv_image_t *image = icv_read(path, BU_MIME_IMAGE_AUTO, width, height);
+    auto image = read_image(path, width, height);
     if (!image)
 	return 1;
-    if (image->width != width || image->height != height || image->channels < 3) {
-	bu_log("Unexpected image dimensions or channel count: %s\n", path);
-	icv_destroy(image);
-	return 1;
-    }
 
     const double COLOR_DOMINANCE = 2.0;
     const double ASPECT_TOLERANCE = 0.2;
-    const double MIN_COLOR_COVERAGE = 0.01;
     // The separated arc instances leave a central band free of geometry.
     const double PAIR_GAP_HALF_FRACTION = 0.05;
     const size_t gap_half = static_cast<size_t>(width * PAIR_GAP_HALF_FRACTION);
-    const size_t min_color_pixels = static_cast<size_t>(width * height * MIN_COLOR_COVERAGE);
+    const size_t min_color_pixels = static_cast<size_t>(width * height * MIN_GEOMETRY_COVERAGE);
     size_t min_x = width, min_y = height, max_x = 0, max_y = 0;
     size_t red_pixels = 0, blue_pixels = 0, green_pixels = 0;
     size_t pair_left = 0, pair_right = 0, pair_center = 0;
@@ -182,15 +232,15 @@ check_image(const char *path, size_t width, size_t height, ImageCheck check)
 		++green_pixels;
 	}
     }
-    icv_destroy(image);
-    if (check == ImageCheck::PositiveFootprints || check == ImageCheck::ZeroFootprints) {
-	const bool positive = check == ImageCheck::PositiveFootprints;
+    image.reset();
+    if (check == ImageCheck::GreenDiagnostic || check == ImageCheck::RedDiagnostic) {
+	const bool positive = check == ImageCheck::GreenDiagnostic;
 	const size_t expected = positive ? green_pixels : red_pixels;
 	const size_t unexpected = positive ? red_pixels : green_pixels;
 	if (finite && expected > min_color_pixels && unexpected == 0 && blue_pixels == 0)
 	    return 0;
-	bu_log("Unexpected %s UV footprints in %s: positive=%zu zero=%zu invalid=%zu\n",
-	    positive ? "positive" : "zero", path, green_pixels, red_pixels, blue_pixels);
+	bu_log("Unexpected %s diagnostic in %s: green=%zu red=%zu blue=%zu\n",
+	    positive ? "green" : "red", path, green_pixels, red_pixels, blue_pixels);
 	return 1;
     }
     if (check == ImageCheck::FlatNormals) {
@@ -235,30 +285,90 @@ check_image(const char *path, size_t width, size_t height, ImageCheck check)
     return 0;
 }
 
+static int
+check_image_difference(const char *path, const char *reference_path,
+    size_t width, size_t height, bool matching)
+{
+    auto image = read_image(path, width, height);
+    auto reference = read_image(reference_path, width, height);
+    if (!image || !reference)
+	return 1;
+    // Use the same display pipeline for the texture and its independent
+    // reference. A reference corner identifies the sky background.
+    constexpr double MIN_GEOMETRY_CONTRAST = 0.02;
+    constexpr double MAX_MATCHING_RMS = 0.02;
+    constexpr double MAX_MATCHING_ERROR = 0.05;
+    constexpr double MIN_ALIASED_RMS = 0.1;
+    double squared_error = 0, max_error = 0;
+    size_t geometry_pixels = 0;
+    const size_t pixel_count = width * height;
+    for (size_t pixel = 0; pixel < pixel_count; ++pixel) {
+	const double *actual = image->data + pixel * image->channels;
+	const double *expected = reference->data + pixel * reference->channels;
+	double background_contrast = 0;
+	for (size_t channel = 0; channel < 3; ++channel)
+	    background_contrast = std::max(background_contrast,
+		std::abs(expected[channel] - reference->data[channel]));
+	if (background_contrast > MIN_GEOMETRY_CONTRAST)
+	    ++geometry_pixels;
+	for (size_t channel = 0; channel < 3; ++channel) {
+	    if (!std::isfinite(actual[channel]) || !std::isfinite(expected[channel])) {
+		bu_log("Nonfinite texture comparison pixel: %s\n", path);
+		return 1;
+	    }
+	    const double error = std::abs(actual[channel] - expected[channel]);
+	    squared_error += error * error;
+	    max_error = std::max(max_error, error);
+	}
+    }
+    const double rms = std::sqrt(squared_error / (pixel_count * 3));
+    const bool difference_matches = matching ?
+	rms <= MAX_MATCHING_RMS && max_error <= MAX_MATCHING_ERROR : rms >= MIN_ALIASED_RMS;
+    const bool enough_geometry = geometry_pixels > static_cast<size_t>(pixel_count * MIN_GEOMETRY_COVERAGE);
+    bu_log("Image comparison %s: rms=%g max=%g geometry=%zu matching=%d\n",
+	path, rms, max_error, geometry_pixels, matching);
+    return difference_matches && enough_geometry ? 0 : 1;
+}
+
 int
 main(int argc, char **argv)
 {
     bu_setprogname(argv[0]);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create"))
 	return create_scene(argv[2], nullptr, nullptr);
+    if (argc == 3 && BU_STR_EQUAL(argv[1], "create-checker-texture"))
+	return create_texture(argv[2], TexturePattern::Checker);
+    if (argc == 3 && BU_STR_EQUAL(argv[1], "create-black-texture"))
+	return create_texture(argv[2], TexturePattern::Black);
+    if (argc == 3 && BU_STR_EQUAL(argv[1], "create-gray-texture"))
+	return create_texture(argv[2], TexturePattern::Gray);
     if ((argc == 4 || argc == 5) && BU_STR_EQUAL(argv[1], "create-material"))
 	return create_scene(argv[2], argv[3], argc == 5 ? argv[4] : nullptr);
-    if (argc == 5) {
-	const struct { const char *name; ImageCheck check; } checks[] = {
-	    {"check", ImageCheck::Regions}, {"check-mesh", ImageCheck::Mesh},
-	    {"check-pair", ImageCheck::RepeatedArcs}, {"check-uv", ImageCheck::VaryingRG},
-	    {"check-normals", ImageCheck::VaryingRG}, {"check-flat-normals", ImageCheck::FlatNormals},
-	    {"check-footprints", ImageCheck::PositiveFootprints}, {"check-zero-footprints", ImageCheck::ZeroFootprints}
-	};
-	for (const auto &check : checks) {
-	    if (!BU_STR_EQUAL(argv[1], check.name)) continue;
-	    try {
-		return check_image(argv[2], std::stoul(argv[3]), std::stoul(argv[4]), check.check);
-	    } catch (const std::exception &error) {
-		bu_log("Invalid image dimensions: %s\n", error.what());
-		return 1;
-	    }
+    if (argc == 4 && BU_STR_EQUAL(argv[1], "remove-material"))
+	return edit_material_property(argv[2], argv[3], nullptr);
+    if (argc == 5 && BU_STR_EQUAL(argv[1], "set-material"))
+	return edit_material_property(argv[2], argv[3], argv[4]);
+    try {
+	if (argc == 6 && (BU_STR_EQUAL(argv[1], "check-filtered-texture") ||
+	    BU_STR_EQUAL(argv[1], "check-aliased-texture") || BU_STR_EQUAL(argv[1], "check-matching-image")))
+	    return check_image_difference(argv[2], argv[3], std::stoul(argv[4]), std::stoul(argv[5]),
+		!BU_STR_EQUAL(argv[1], "check-aliased-texture"));
+	if (argc == 5) {
+	    const struct { const char *name; ImageCheck check; } checks[] = {
+		{"check", ImageCheck::Regions}, {"check-mesh", ImageCheck::Mesh},
+		{"check-pair", ImageCheck::RepeatedArcs}, {"check-uv", ImageCheck::VaryingRG},
+		{"check-normals", ImageCheck::VaryingRG}, {"check-flat-normals", ImageCheck::FlatNormals},
+		{"check-footprints", ImageCheck::GreenDiagnostic}, {"check-zero-footprints", ImageCheck::RedDiagnostic},
+		{"check-parameters", ImageCheck::GreenDiagnostic}, {"check-default-parameters", ImageCheck::RedDiagnostic},
+		{"check-material-red", ImageCheck::RedDiagnostic}, {"check-texture-fallback", ImageCheck::GreenDiagnostic}
+	    };
+	    for (const auto &check : checks)
+		if (BU_STR_EQUAL(argv[1], check.name))
+		    return check_image(argv[2], std::stoul(argv[3]), std::stoul(argv[4]), check.check);
 	}
+    } catch (const std::exception &error) {
+	bu_log("Image check failed: %s\n", error.what());
+	return 1;
     }
     return 1;
 }
