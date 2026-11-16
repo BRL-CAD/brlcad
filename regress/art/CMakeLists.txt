@@ -23,6 +23,8 @@ set(ART_TEST_SHADER_NAMES
   art_sampling
   art_graph_value
   art_bump_field
+  art_height_field
+  art_height_jets
   art_bump_normal
   art_sdk_helpers
   art_normal_reference
@@ -58,6 +60,8 @@ set(ART_TEST_SHADER_NAMES
   art_instance_materials
 )
 set(ART_REGRESSION_TIMEOUT 180)
+# Height curvature compares outgoing paths and analytic normal derivatives.
+set(ART_HEIGHT_REGRESSION_TIMEOUT 1800)
 # The energy cases use 32 million photons to bound estimator error at 1 percent.
 set(ART_PHOTON_REGRESSION_TIMEOUT 720)
 # Inside-light cases compare clear and absorbing transport in separate batches.
@@ -99,6 +103,8 @@ function(art_regression_timeout name result)
     set(${result} ${ART_DIRECTIONAL_EMISSION_REGRESSION_TIMEOUT} PARENT_SCOPE)
   elseif(name MATCHES "^regress-art-volume-walk(-overlap)?$")
     set(${result} ${ART_VOLUME_WALK_REGRESSION_TIMEOUT} PARENT_SCOPE)
+  elseif(name MATCHES "^regress-art-height-(curvature|jets)$")
+    set(${result} ${ART_HEIGHT_REGRESSION_TIMEOUT} PARENT_SCOPE)
   elseif(name STREQUAL "regress-art-curved-footprints")
     set(${result} ${ART_CURVED_FOOTPRINT_REGRESSION_TIMEOUT} PARENT_SCOPE)
   elseif(name STREQUAL "regress-art-standard-microfacet")
@@ -130,6 +136,8 @@ endfunction()
 set(ART_REGRESSION_TEST_NAMES
   regress-art
   regress-art-bump
+  regress-art-height-curvature
+  regress-art-height-jets
   regress-art-normal
   regress-art-texture
   regress-art-trace
@@ -249,6 +257,7 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-volume-energy.cmake.in regress-art-volume-energy-spectral.cmake.in
   regress-art-volume-overlap.cmake.in regress-art-volume-glass.cmake.in
   art_installed_runtime.cmake.in art-installed-material.cmake.in
+  art_installed_osl_sdk.cmake.in art_osl_sdk.cmake.in art_osl_sdk.cpp
   art-installed-plate.cmake.in art-installed-view.cmake.in
   regress-art-photon-csg-15.cmake.in
   regress-art-photon-csg-20.cmake.in
@@ -263,6 +272,7 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   art_scene.cpp art_test_mesh.h art_glass_reference.h art_beckmann_reference.h art_test_commands.cmake
   art_footprint_test_commands.cmake art_rough_test_commands.cmake art_bundled_specular_cases.json
   regress-art.cmake.in regress-art-bump.cmake.in regress-art-normal.cmake.in
+  regress-art-height-curvature.cmake.in regress-art-height-jets.cmake.in
   regress-art-trace.cmake.in
   regress-art-attributes.cmake.in
   regress-art-emission.cmake.in regress-art-emission-range.cmake.in
@@ -311,6 +321,7 @@ if(TARGET art AND BUILD_TESTING)
   add_test(NAME regress-art-intersections COMMAND art_intersection_test)
   brlcad_regression_test(regress-art-intersections "art_intersection_test" TEST_DEFINED TIMEOUT 120)
   distclean("${CMAKE_CURRENT_BINARY_DIR}/output" "${CMAKE_CURRENT_BINARY_DIR}/bump-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/height-curvature-output" "${CMAKE_CURRENT_BINARY_DIR}/height-jets-output"
     "${CMAKE_CURRENT_BINARY_DIR}/normal-output" "${CMAKE_CURRENT_BINARY_DIR}/texture-output"
     "${CMAKE_CURRENT_BINARY_DIR}/attributes-output"
     "${CMAKE_CURRENT_BINARY_DIR}/emission-output"
