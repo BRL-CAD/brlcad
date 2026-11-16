@@ -20,6 +20,7 @@ if(BRLCAD_ENABLE_TK)
     set(TKSWRAST_LIBS
       libdm
       libbu
+      STRUETYPE::STRUETYPE
       ${OSMESA_LIBRARY}
       ${TCL_LIBRARY}
       ${TK_LIBRARY}

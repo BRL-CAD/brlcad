@@ -40,6 +40,7 @@
 #include "bu/opt.h"
 #include "bu/parallel.h"
 #include "bu/units.h"
+#include "bu/vls.h"
 #include "bn/str.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -700,13 +701,24 @@ rt_opt_light_model(struct bu_vls *msg, size_t argc, const char **argv, void *UNU
 }
 
 
+static void
+rt_opt_set_output(const char *name, int double_precision)
+{
+    // Command-stream option arguments are freed before the frame renders.
+    // Keep one owned name for the lifetime of the shared option state.
+    static struct bu_vls filename = BU_VLS_INIT_ZERO;
+    bu_vls_strcpy(&filename, name);
+    outputfile = bu_vls_addr(&filename);
+    doubles_out = double_precision;
+}
+
+
 /* -O / --output-double  file (double-precision .dpix output) */
 static int
 rt_opt_output_double(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "output-double");
-    outputfile = (char *)argv[0];
-    doubles_out = 1;
+    rt_opt_set_output(argv[0], 1);
     return 1;
 }
 
@@ -716,8 +728,7 @@ static int
 rt_opt_output(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "output");
-    outputfile = (char *)argv[0];
-    doubles_out = 0;
+    rt_opt_set_output(argv[0], 0);
     return 1;
 }
 

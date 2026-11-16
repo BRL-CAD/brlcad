@@ -11,10 +11,10 @@ brlcad_add_test(NAME dm_dlist_sensor COMMAND test_dm_dlist_sensor)
 set_source_files_properties(fontstash_test.c PROPERTIES LANGUAGE CXX)
 brlcad_addexec(test_fontstash fontstash_test.c "libbu;${M_LIBRARY}" TEST)
 if(BUILD_TESTING AND TARGET test_fontstash)
+  target_link_libraries(test_fontstash STRUETYPE::STRUETYPE)
   target_include_directories(
     test_fontstash
     PRIVATE
-      ${CMAKE_SOURCE_DIR}/src/libbu
       ${CMAKE_SOURCE_DIR}/src/libdm/fontstash
   )
 endif()

@@ -78,6 +78,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <charconv>
 #include <cstddef>
 #include <cmath>
 #include <exception>
@@ -249,6 +250,7 @@ extern "C" {
     extern char *string_pix_start;	/* -b */
     extern int desiredframe;		/* -D */
     extern int finalframe;		/* -K (default -1) */
+    extern int curframe;
 
     size_t n_free;
     size_t n_malloc;		/* Totals at last check */
@@ -1219,7 +1221,7 @@ public:
 }
 
 static bool
-art_render_image(asr::Project& project, ArtTileCallback* callback = nullptr)
+art_render_image(asr::Project& project, const char *filename, ArtTileCallback* callback = nullptr)
 {
     asr::DefaultRendererController controller;
     asf::SearchPaths resource_search_paths;
@@ -1255,7 +1257,7 @@ art_render_image(asr::Project& project, ArtTileCallback* callback = nullptr)
 
     if (callback && !callback->flush())
 	return false;
-    const bool saved = art_save_image(project, outputfile);
+    const bool saved = art_save_image(project, filename);
     // Save before a framebuffer backend waits for its window to close.
     const bool closed = !callback || callback->finish();
     return saved && closed;
@@ -1263,18 +1265,18 @@ art_render_image(asr::Project& project, ArtTileCallback* callback = nullptr)
 
 
 static bool
-art_display_project(asr::Project& project, bool display_framebuffer)
+art_display_project(asr::Project& project, bool display_framebuffer, const char *filename)
 {
     struct fb *fbp = display_framebuffer ? fb_setup() : FB_NULL;
     if (display_framebuffer && !fbp)
 	return false;
     ArtTileCallback callback(fbp);
-    return art_render_image(project, display_framebuffer ? &callback : nullptr);
+    return art_render_image(project, filename, display_framebuffer ? &callback : nullptr);
 }
 
 
 static bool
-art_process_scene(bool display_framebuffer)
+art_process_scene(bool display_framebuffer, const char *filename)
 {
     if (!inspect_materials) {
 	if (!std::isfinite(azimuth) || !std::isfinite(elevation)) {
@@ -1300,16 +1302,86 @@ art_process_scene(bool display_framebuffer)
 	}
 	return true;
     }
-    return art_display_project(project.ref(), display_framebuffer);
+    return art_display_project(project.ref(), display_framebuffer, filename);
+}
+
+
+struct ArtCommandFrames {
+    bool pending = false;
+    bool finished = false;
+};
+static ArtCommandFrames command_frames;
+
+
+static bool
+art_frame_range_valid()
+{
+    if (desiredframe < 0 || finalframe < -1 || (finalframe >= 0 && desiredframe > finalframe)) {
+	bu_log("art: frame range requires 0 <= start <= end, or end=-1 for no limit\n");
+	return false;
+    }
+    return true;
+}
+
+
+static std::string
+art_frame_filename(const char *filename, int frame)
+{
+    std::string path(filename);
+    if (frame == 0)
+	return path;
+    const size_t separator = path.find_last_of("/\\");
+    const size_t basename = separator == std::string::npos ? 0 : separator + 1;
+    const size_t dot = path.find_last_of('.');
+    const size_t suffix = dot != std::string::npos && dot > basename ? dot : path.size();
+    path.insert(suffix, "." + std::to_string(frame));
+    return path;
+}
+
+
+static int
+art_cm_start(const int UNUSED(argc), const char **argv)
+{
+    if (command_frames.pending) {
+	bu_log("art: frame %d has no end command before start\n", curframe);
+	return -1;
+    }
+    int frame = 0;
+    const char *end = argv[1] + strlen(argv[1]);
+    const auto parsed = std::from_chars(argv[1], end, frame);
+    if (parsed.ec != std::errc() || parsed.ptr != end || frame < 0) {
+	bu_log("art: start requires a nonnegative decimal frame number: %s\n", argv[1]);
+	return -1;
+    }
+    if (!art_frame_range_valid())
+	return -1;
+    if (finalframe >= 0 && frame > finalframe) {
+	command_frames.finished = true;
+	return 0;
+    }
+    curframe = frame;
+    command_frames.pending = true;
+    return 0;
 }
 
 
 static int
 art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
 {
+    command_frames.pending = false;
+    if (!art_frame_range_valid())
+	return -1;
+    // Retain setup commands from earlier frames; only rendering is skipped.
+    if (curframe < desiredframe)
+	return 0;
+    if (finalframe >= 0 && curframe > finalframe) {
+	command_frames.finished = true;
+	return 0;
+    }
     if (!inspect_materials && !art_prepare_geometry(APP.a_rt_i))
 	return -1;
-    return art_process_scene(framebuffer != nullptr) ? 0 : -1;
+    const std::string filename = art_frame_filename(outputfile, curframe);
+    return art_process_scene(framebuffer != nullptr, filename.c_str()) ? 0 : -1;
 }
 
 
@@ -1358,6 +1430,8 @@ main(int argc, char **argv)
     /* Warn about any rt options that parsed but that art will not honor,
      * so nothing is silently dropped. */
     art_validate_options();
+    if (matflag && !art_frame_range_valid())
+	return BRLCAD_ERROR;
 
     if (bu_optind >= argc) {
 	RENDERER_LOG_INFO("%s: BRL-CAD geometry database not specified\n", argv[0]);
@@ -1416,27 +1490,44 @@ main(int argc, char **argv)
     if (matflag) {
 	char* buf;
 	int nret = 0;
-	auto *end_command = rt_do_tab;
-	while (end_command->ct_cmd && !BU_STR_EQUAL(end_command->ct_cmd, "end"))
-	    ++end_command;
-	if (!end_command->ct_cmd) {
-	    bu_log("art: ray tracing command table has no end command\n");
+	bool have_start = false;
+	bool have_end = false;
+	for (auto *command = rt_do_tab; command->ct_cmd; ++command) {
+	    if (BU_STR_EQUAL(command->ct_cmd, "start")) {
+		command->ct_func = art_cm_start;
+		have_start = true;
+	    } else if (BU_STR_EQUAL(command->ct_cmd, "end")) {
+		command->ct_func = art_cm_end;
+		have_end = true;
+	    }
+	}
+	if (!have_start || !have_end) {
+	    bu_log("art: ray tracing command table is missing frame commands\n");
 	    return BRLCAD_ERROR;
 	}
-	end_command->ct_func = art_cm_end;
 
 	while ((buf = rt_read_cmd(stdin)) != (char*)0) {
 	    RENDERER_LOG_INFO("cmd: %s \n", buf);
 	    nret = rt_do_cmd(APP.a_rt_i, buf, rt_do_tab);
 	    bu_free(buf, "rt_read_cmd command buffer");
-	    if (nret < 0)
+	    if (nret < 0 || command_frames.finished)
 		break;
 	}
-	return nret < 0 ? BRLCAD_ERROR : BRLCAD_OK;
+	if (nret < 0)
+	    return BRLCAD_ERROR;
+	if (ferror(stdin)) {
+	    bu_log("art: cannot read frame command stream\n");
+	    return BRLCAD_ERROR;
+	}
+	if (command_frames.pending) {
+	    bu_log("art: frame %d has no end command\n", curframe);
+	    return BRLCAD_ERROR;
+	}
+	return BRLCAD_OK;
     }
 
 
-    return art_process_scene(framebuffer != nullptr) ? BRLCAD_OK : BRLCAD_ERROR;
+    return art_process_scene(framebuffer != nullptr, outputfile) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 

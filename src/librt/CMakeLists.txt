@@ -4,6 +4,7 @@ brlcad_find_package(manifold REQUIRED)
 brlcad_find_package(mmesh REQUIRED)
 brlcad_find_package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
 brlcad_find_package(REGEX REQUIRED)
+brlcad_find_package(STRUETYPE REQUIRED)
 find_package_gte(REQUIRED)
 
 if(BRLCAD_ENABLE_OPENCL)
@@ -433,6 +434,7 @@ set(
   ${OPENCL_LIBS}
   mmesh::mmesh
   REGEX::REGEX
+  STRUETYPE::STRUETYPE
   ${WINSOCK_LIB}
   ${RPCRT_LIB}
   ${STDCXX_LIBRARIES}

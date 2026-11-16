@@ -290,6 +290,10 @@ shell and add art's pixel dimensions and worker count as arguments.  Keep
 `art` on `PATH` when executing the script.  An orthographic saved view needs no perspective override; a perspective saved
 view includes its field of view.
 
+Use `opt -o "image name.png";` in a command stream to change the output
+path for subsequent renders.  Output paths remain valid after the option
+command finishes, including quoted names containing spaces.
+
 The generated `-M` command stream contains `clean` before rendering.  `art`
 releases each render's project and procedural objects when the render ends;
 `clean` discards the prepared librt geometry, which is loaded and prepared
@@ -301,9 +305,32 @@ are covered by cleanup regressions.
 `art-installed-view` generates the saved view through installed mged,
 compares the rendered result with an independent camera setup, and executes
 the complete generated shell script on Unix.  It also checks two clean/render
-cycles within one art process.  Frame numbering, range termination, and
-changes to the active tree list remain unqualified.  Multiple `end`
-commands currently write the same output path.
+cycles within one art process.  Changes to the active tree list remain
+unqualified.
+
+=== Command-stream frames
+
+A `start N; ...; end;` block renders frame _N_.  Frame zero uses the requested
+output path unchanged.  Positive frame numbers are inserted before the file
+extension: `-o shot.png` writes `shot.1.png` for frame one.  This preserves
+PNG, EXR, and BRL-CAD image-format selection.  A later `opt -o` command sets
+a new base path for subsequent frames; generated frame names do not alter
+that base path.  A stream without a `start` command renders the implicit
+frame zero used by older command streams.
+
+`-D first -K last` selects an inclusive frame range in `-M` mode.  Setup
+commands in frames before _first_ still execute, retaining camera, object,
+and animation state needed by selected frames; their `end` commands skip
+rendering.  The first `start` beyond _last_ ends processing successfully.
+Reaching the end of a stream before any selected frame is also successful
+and writes no image.  `-K -1` means there is no upper limit.
+
+Frame numbers must be nonnegative decimal integers.  Invalid ranges,
+malformed frame numbers, a second `start` before `end`, and an unfinished
+frame at end of input produce an error.  `regress-art-frames` checks distinct
+numbered images, inherited state across skipped frames, range completion,
+quoted output paths, PNG/PIX/EXR writers, and invalid streams.  The same
+regression runs against installed applications.
 
 == Geometry boundary handling
 

@@ -24,6 +24,7 @@ if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL AND OPENGL_TARGETS)
     libdmgl
     libdm
     libbu
+    STRUETYPE::STRUETYPE
   )
 
   if(Qt6Widgets_FOUND)

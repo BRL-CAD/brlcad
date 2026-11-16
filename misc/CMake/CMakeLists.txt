@@ -61,6 +61,7 @@ set(
   FindREGEX.cmake
   FindSPSR.cmake
   FindSTL.cmake
+  FindSTRUETYPE.cmake
   FindShellDeps.cmake
   FindSTEPCODE.cmake
   FindTBB.cmake

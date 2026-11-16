@@ -365,6 +365,20 @@ test_opt_height(void)
 }
 
 
+/* Option values must survive reuse of a caller's temporary argument buffer. */
+static void
+check_output_argument_lifetime(const char *option)
+{
+    extern char *outputfile;
+    char name[] = "temporary output.png";
+    reset_globals();
+    MAKE_ARGV(av, "rt", option, name);
+    CALL_GET_ARGS(av, 1);
+    memset(name, '?', sizeof(name) - 1);
+    CHECK_STR("output argument lifetime", "temporary output.png", outputfile);
+}
+
+
 /* -o / --output */
 static void
 test_opt_output(void)
@@ -381,6 +395,7 @@ test_opt_output(void)
     MAKE_ARGV(av2, "rt", "--output", "image.png");
     CALL_GET_ARGS(av2, 1);
     CHECK_STR("--output", "image.png", outputfile);
+    check_output_argument_lifetime("-o");
 }
 
 
@@ -401,6 +416,7 @@ test_opt_output_double(void)
     CALL_GET_ARGS(av2, 1);
     CHECK_STR("--output-double", "out2.dpix", outputfile);
     CHECK_INT("--output-double doubles_out", 1, doubles_out);
+    check_output_argument_lifetime("-O");
 }
 
 

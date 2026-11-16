@@ -3152,11 +3152,12 @@ set(
   "${BRLCAD_CMAKE_DIR}/FindOPENNURBS.cmake"
   "${BRLCAD_CMAKE_DIR}/FindPNG.cmake"
   "${BRLCAD_CMAKE_DIR}/FindREGEX.cmake"
+  "${BRLCAD_CMAKE_DIR}/FindSTRUETYPE.cmake"
   "${BRLCAD_CMAKE_DIR}/FindTCL.cmake"
   "${BRLCAD_CMAKE_DIR}/FindZLIB.cmake"
 )
 
-foreach(_brlcad_dep ZLIB LMDB MANIFOLD MMESH REGEX PNG NETPBM OPENNURBS)
+foreach(_brlcad_dep ZLIB LMDB MANIFOLD MMESH REGEX STRUETYPE PNG NETPBM OPENNURBS)
   if("${${_brlcad_dep}_STATUS}" STREQUAL "Bundled")
     set(BRLCAD_FIND_DEP_${_brlcad_dep} "find_dependency(${_brlcad_dep} MODULE)")
   else()

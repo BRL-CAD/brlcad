@@ -68,6 +68,7 @@ file(WRITE "${input}"
 run(INPUT_FILE "${input}" "${EXEC}" ${RENDER_ARGS} -p 0 -M
   -o "${WORK}/draw-prep.png" "${DB}")
 run("${VEXEC}" check-matching-image "${WORK}/draw-prep.png" "${WORK}/reference_0.png" 64 64)
+run("${VEXEC}" check-matching-image "${WORK}/draw-prep.1.png" "${WORK}/reference_0.png" 64 64)
 
 set(input "${WORK}/empty.view")
 file(WRITE "${input}" "end;\n")

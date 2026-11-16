@@ -258,7 +258,7 @@ create_texture(const char *path, TexturePattern pattern)
 }
 
 enum class ImageCheck {
-    Regions, Mesh, RepeatedArcs, VaryingRG, FlatNormals, GreenDiagnostic, RedDiagnostic
+    Regions, Mesh, RepeatedArcs, VaryingRG, FlatNormals, GreenDiagnostic, RedDiagnostic, Finite
 };
 
 static int
@@ -312,6 +312,11 @@ check_image(const char *path, size_t width, size_t height, ImageCheck check)
 	}
     }
     image.reset();
+    if (check == ImageCheck::Finite) {
+	if (!finite)
+	    bu_log("Nonfinite image pixels: %s\n", path);
+	return finite ? 0 : 1;
+    }
     if (check == ImageCheck::GreenDiagnostic || check == ImageCheck::RedDiagnostic) {
 	const bool positive = check == ImageCheck::GreenDiagnostic;
 	const size_t expected = positive ? green_pixels : red_pixels;
@@ -477,6 +482,7 @@ main(int argc, char **argv)
 	if (argc == 5) {
 	    const struct { const char *name; ImageCheck check; } checks[] = {
 		{"check", ImageCheck::Regions}, {"check-mesh", ImageCheck::Mesh},
+		{"check-image", ImageCheck::Finite},
 		{"check-pair", ImageCheck::RepeatedArcs}, {"check-uv", ImageCheck::VaryingRG},
 		{"check-normals", ImageCheck::VaryingRG}, {"check-flat-normals", ImageCheck::FlatNormals},
 		{"check-footprints", ImageCheck::GreenDiagnostic}, {"check-zero-footprints", ImageCheck::RedDiagnostic},
