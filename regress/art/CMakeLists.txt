@@ -48,6 +48,7 @@ set(ART_TEST_SHADER_NAMES
   art_photon_reference
   art_area_exit_reference
   art_reflection_energy
+  art_standard_transmission
   art_mirror_mixture
   art_mirror_node
   art_surface_reference
@@ -78,6 +79,8 @@ set(ART_ROUGH_FOOTPRINT_REGRESSION_TIMEOUT 1200)
 set(ART_CURVED_FOOTPRINT_REGRESSION_TIMEOUT 1800)
 # Standard Beckmann/GGX reflection compares 64 position/footprint pairs.
 set(ART_STANDARD_MICROFACET_REGRESSION_TIMEOUT 1200)
+# Smooth nested standard closures compare 120 complete paths.
+set(ART_STANDARD_TRANSMISSION_REGRESSION_TIMEOUT 600)
 # Two area emitters each qualify constant and angular photon emission.
 set(ART_DIRECTIONAL_EMISSION_REGRESSION_TIMEOUT 1200)
 # Each dielectric exit case checks clear and absorbing 16-million-photon batches.
@@ -95,6 +98,8 @@ function(art_regression_timeout name result)
     set(${result} ${ART_CURVED_FOOTPRINT_REGRESSION_TIMEOUT} PARENT_SCOPE)
   elseif(name STREQUAL "regress-art-standard-microfacet")
     set(${result} ${ART_STANDARD_MICROFACET_REGRESSION_TIMEOUT} PARENT_SCOPE)
+  elseif(name STREQUAL "regress-art-standard-transmission")
+    set(${result} ${ART_STANDARD_TRANSMISSION_REGRESSION_TIMEOUT} PARENT_SCOPE)
   elseif(name STREQUAL "regress-art-rough-footprints")
     set(${result} ${ART_ROUGH_FOOTPRINT_REGRESSION_TIMEOUT} PARENT_SCOPE)
   elseif(name STREQUAL "regress-art-bundled-specular")
@@ -174,6 +179,7 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-bundled-specular
   regress-art-rough-footprints
   regress-art-standard-microfacet
+  regress-art-standard-transmission
   regress-art-standard-materials
   regress-art-frame-derivatives
   regress-art-curved-footprints
@@ -261,7 +267,7 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-specular-footprints.cmake.in regress-art-bundled-specular.cmake.in
   regress-art-rough-footprints.cmake.in regress-art-frame-derivatives.cmake.in
   regress-art-curved-footprints.cmake.in regress-art-standard-microfacet.cmake.in
-  regress-art-standard-materials.cmake.in
+  regress-art-standard-materials.cmake.in regress-art-standard-transmission.cmake.in
   regress-art-mixture.cmake.in regress-art-surface.cmake.in regress-art-nested.cmake.in
   regress-art-metal-energy.cmake.in regress-art-coat.cmake.in
   regress-art-materials.cmake.in regress-art-inspect.cmake.in
@@ -330,6 +336,7 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/curved-footprints-output"
     "${CMAKE_CURRENT_BINARY_DIR}/rough-footprints-output"
     "${CMAKE_CURRENT_BINARY_DIR}/standard-microfacet-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/standard-transmission-output"
     "${CMAKE_CURRENT_BINARY_DIR}/standard-materials-output"
     "${CMAKE_CURRENT_BINARY_DIR}/bundled-specular-output"
     "${CMAKE_CURRENT_BINARY_DIR}/specular-footprints-output"
