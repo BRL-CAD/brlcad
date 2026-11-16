@@ -11,7 +11,9 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <cmath>
+#include <string>
 #include <vector>
 
 #include "bu/opt.h"
@@ -88,76 +90,150 @@ joint_system_print_matrix(struct bu_vls *output, const mat_t matrix)
 extern "C" int
 _ged_joint_animation_core(struct ged *gedp, int argc, const char *argv[])
 {
-    joint_object_collection objects;
-    struct rt_db_internal animation_internal;
-    fastf_t time;
-    int result = BRLCAD_ERROR;
-
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     bu_vls_trunc(gedp->ged_result_str, 0);
-    if (argc < 4 || !BU_STR_EQUAL(argv[0], "sample")) {
+    if (!argc) {
 	bu_vls_strcat(gedp->ged_result_str,
-	    "Usage: joint animation sample animation_name time joint_name [joint_name ...]");
-	return argc ? BRLCAD_ERROR : GED_HELP;
+	    "Usage: joint animation list\n"
+	    "       joint animation show animation_name\n"
+	    "       joint animation evaluate animation_name time\n"
+	    "       joint animation apply animation_name time joint_name [joint_name ...]\n"
+	    "       joint animation sample animation_name time joint_name [joint_name ...]");
+	return GED_HELP;
     }
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    if (bu_opt_fastf_t(nullptr, 1, &argv[2], &time) != 1 || !std::isfinite(time)) {
-	bu_vls_printf(gedp->ged_result_str, "invalid animation time: %s", argv[2]);
+
+    if (BU_STR_EQUAL(argv[0], "list")) {
+	std::vector<std::string> names;
+	struct directory *directory;
+	if (argc != 1)
+	    return BRLCAD_ERROR;
+	FOR_ALL_DIRECTORY_START(directory, gedp->dbip) {
+	    if (directory->d_major_type == DB5_MAJORTYPE_BRLCAD &&
+		directory->d_minor_type == ID_ANIMATION)
+		names.emplace_back(directory->d_namep);
+	} FOR_ALL_DIRECTORY_END;
+	std::sort(names.begin(), names.end());
+	for (const std::string &name : names)
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", name.c_str());
+	return BRLCAD_OK;
+    }
+
+    if (BU_STR_EQUAL(argv[0], "apply") || BU_STR_EQUAL(argv[0], "sample"))
+	GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+
+    if (argc < 2)
 	return BRLCAD_ERROR;
-    }
     struct directory *directory = db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET);
     if (!directory) {
 	bu_vls_printf(gedp->ged_result_str, "animation object not found: %s", argv[1]);
 	return BRLCAD_ERROR;
     }
+    struct rt_db_internal animation_internal;
     RT_DB_INTERNAL_INIT(&animation_internal);
     if (rt_db_get_internal(&animation_internal, directory, gedp->dbip,
 	    bn_mat_identity) < 0 || animation_internal.idb_type != ID_ANIMATION) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not an animation", argv[1]);
-	goto cleanup;
+	rt_db_free_internal(&animation_internal);
+	return BRLCAD_ERROR;
     }
-    if (objects.load(gedp, argc - 3, argv + 3) != BRLCAD_OK)
-	goto cleanup;
     const auto *animation = static_cast<const struct rt_animation_internal *>(
 	animation_internal.idb_ptr);
-    for (size_t channel_index = 0; channel_index < animation->channel_count;
-	++channel_index) {
-	const struct rt_animation_channel &channel = animation->channels[channel_index];
-	struct rt_joint_internal *target = nullptr;
-	for (struct rt_joint_internal *joint : objects.joints) {
-	    if (BU_STR_EQUAL(bu_vls_cstr(&joint->child_link),
-		    bu_vls_cstr(&channel.target_link))) {
-		if (target) {
-		    bu_vls_printf(gedp->ged_result_str,
-			"multiple joints have animation target link: %s",
-			bu_vls_cstr(&channel.target_link));
-		    goto cleanup;
-		}
-		target = joint;
+
+    if (BU_STR_EQUAL(argv[0], "show")) {
+	fastf_t start;
+	fastf_t end;
+	if (argc != 2 || rt_animation_time_range(&start, &end, animation) != BRLCAD_OK) {
+	    rt_db_free_internal(&animation_internal);
+	    return BRLCAD_ERROR;
+	}
+	bu_vls_printf(gedp->ged_result_str,
+	    "%s: %.17g %.17g %zu channel%s\n", argv[1], start, end,
+	    animation->channel_count, animation->channel_count == 1 ? "" : "s");
+	for (size_t channel_index = 0; channel_index < animation->channel_count;
+	    ++channel_index) {
+	    const struct rt_animation_channel &channel =
+		animation->channels[channel_index];
+	    bu_vls_printf(gedp->ged_result_str, "%s %s %s %zu %.17g %.17g\n",
+		bu_vls_cstr(&channel.target_link),
+		rt_animation_target_name(channel.target),
+		rt_animation_interpolation_name(channel.interpolation),
+		channel.keyframe_count, channel.times[0],
+		channel.times[channel.keyframe_count - 1]);
+	}
+	rt_db_free_internal(&animation_internal);
+	return BRLCAD_OK;
+    }
+
+    if ((!BU_STR_EQUAL(argv[0], "evaluate") || argc != 3) &&
+	(!BU_STR_EQUAL(argv[0], "apply") || argc < 4) &&
+	(!BU_STR_EQUAL(argv[0], "sample") || argc < 4)) {
+	rt_db_free_internal(&animation_internal);
+	return BRLCAD_ERROR;
+    }
+    fastf_t time;
+    if (bu_opt_fastf_t(nullptr, 1, &argv[2], &time) != 1 || !std::isfinite(time)) {
+	bu_vls_printf(gedp->ged_result_str, "invalid animation time: %s", argv[2]);
+	rt_db_free_internal(&animation_internal);
+	return BRLCAD_ERROR;
+    }
+    struct rt_animation_eval_options options = RT_ANIMATION_EVAL_OPTIONS_INIT;
+    struct rt_animation_eval *evaluation = nullptr;
+    options.messages = gedp->ged_result_str;
+    if (rt_animation_eval_create(&evaluation, animation, time, &options) != BRLCAD_OK) {
+	rt_db_free_internal(&animation_internal);
+	return BRLCAD_ERROR;
+    }
+
+    if (BU_STR_EQUAL(argv[0], "evaluate")) {
+	bu_vls_trunc(gedp->ged_result_str, 0);
+	for (size_t entry = 0; entry < rt_animation_eval_count(evaluation); ++entry) {
+	    for (uint32_t target = RT_ANIMATION_TRANSLATION;
+		target <= RT_ANIMATION_SCALE; ++target) {
+		fastf_t value[4];
+		if (rt_animation_eval_value(value, evaluation, entry, target) != BRLCAD_OK)
+		    continue;
+		bu_vls_printf(gedp->ged_result_str, "%s %s",
+		    rt_animation_eval_link(evaluation, entry),
+		    rt_animation_target_name(target));
+		for (size_t component = 0;
+		    component < (target == RT_ANIMATION_ROTATION ? 4u : 3u);
+		    ++component)
+		    bu_vls_printf(gedp->ged_result_str, " %.17g", value[component]);
+		bu_vls_putc(gedp->ged_result_str, '\n');
 	    }
 	}
-	if (!target) {
-	    bu_vls_printf(gedp->ged_result_str,
-		"animation target link is not a supplied joint child: %s",
-		bu_vls_cstr(&channel.target_link));
-	    goto cleanup;
-	}
-	fastf_t sampled[4];
-	if (rt_animation_channel_sample(sampled, &channel, time) != BRLCAD_OK)
-	    goto cleanup;
-	switch (channel.target) {
-	    case RT_ANIMATION_TRANSLATION:
-		VMOVE(target->pose_translation, sampled);
-		break;
-	    case RT_ANIMATION_ROTATION:
-		HMOVE(target->pose_rotation, sampled);
-		break;
-	    case RT_ANIMATION_SCALE:
-		VMOVE(target->pose_scale, sampled);
-		break;
-	    default:
+	rt_animation_eval_destroy(evaluation);
+	rt_db_free_internal(&animation_internal);
+	return BRLCAD_OK;
+    }
+    joint_object_collection objects;
+    int result = BRLCAD_ERROR;
+    if (objects.load(gedp, argc - 3, argv + 3) != BRLCAD_OK)
+	goto cleanup;
+    for (size_t entry = 0; entry < rt_animation_eval_count(evaluation); ++entry) {
+	struct rt_joint_internal *joint = nullptr;
+	const char *link = rt_animation_eval_link(evaluation, entry);
+	for (struct rt_joint_internal *candidate : objects.joints) {
+	    if (!BU_STR_EQUAL(bu_vls_cstr(&candidate->child_link), link))
+		continue;
+	    if (joint) {
+		bu_vls_printf(gedp->ged_result_str,
+		    "multiple joints have animation target link: %s", link);
 		goto cleanup;
+	    }
+	    joint = candidate;
 	}
+	if (!joint) {
+	    bu_vls_printf(gedp->ged_result_str,
+		"animation target link is not a supplied joint child: %s", link);
+	    goto cleanup;
+	}
+	(void)rt_animation_eval_value(joint->pose_translation, evaluation, entry,
+	    RT_ANIMATION_TRANSLATION);
+	(void)rt_animation_eval_value(joint->pose_rotation, evaluation, entry,
+	    RT_ANIMATION_ROTATION);
+	(void)rt_animation_eval_value(joint->pose_scale, evaluation, entry,
+	    RT_ANIMATION_SCALE);
     }
     for (struct rt_joint_internal *joint : objects.joints) {
 	if (rt_joint_validate(joint, gedp->ged_result_str) != 0)
@@ -165,10 +241,12 @@ _ged_joint_animation_core(struct ged *gedp, int argc, const char *argv[])
     }
     if (objects.write(gedp) != BRLCAD_OK)
 	goto cleanup;
-    bu_vls_printf(gedp->ged_result_str, "sampled %s at %.17g", argv[1], time);
+    bu_vls_printf(gedp->ged_result_str, "%s %s at %.17g",
+	BU_STR_EQUAL(argv[0], "sample") ? "sampled" : "applied", argv[1], time);
     result = BRLCAD_OK;
 
 cleanup:
+    rt_animation_eval_destroy(evaluation);
     rt_db_free_internal(&animation_internal);
     return result;
 }
@@ -213,52 +291,101 @@ _ged_joint_skin_core(struct ged *gedp, int argc, const char *argv[])
     joint_object_collection objects;
     struct rt_joint_eval_options options = RT_JOINT_EVAL_OPTIONS_INIT;
     struct rt_joint_eval *evaluation = nullptr;
+    struct rt_animation_eval_options animation_options = RT_ANIMATION_EVAL_OPTIONS_INIT;
+    struct rt_animation_eval *animation_evaluation = nullptr;
+    struct rt_db_internal animation_internal;
     struct rt_db_internal bind_internal;
     struct rt_db_internal posed_internal;
     struct rt_bot_internal *posed = nullptr;
+    const struct rt_bot_internal *bind_bot = nullptr;
+    struct directory *animation_directory = nullptr;
+    struct directory *bind_directory = nullptr;
+    struct rt_wdb *wdbp = nullptr;
     mat_t *joint_matrices = nullptr;
     std::vector<const struct rt_joint_internal *> joints;
+    fastf_t time = 0.0;
+    bool animated;
+    int bind_index;
+    int output_index;
+    int root_index;
+    int joint_index;
     int result = BRLCAD_ERROR;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     bu_vls_trunc(gedp->ged_result_str, 0);
-    if (argc < 5 || !BU_STR_EQUAL(argv[0], "pose")) {
+    animated = argc > 0 && BU_STR_EQUAL(argv[0], "pose-at");
+    if ((!animated && (argc < 5 || !BU_STR_EQUAL(argv[0], "pose"))) ||
+	(animated && argc < 7)) {
 	bu_vls_strcat(gedp->ged_result_str,
 	    "Usage: joint skin pose bind_bot posed_bot root_link "
-	    "joint_name [joint_name ...]");
+	    "joint_name [joint_name ...]\n"
+	    "       joint skin pose-at animation_name time bind_bot posed_bot "
+	    "root_link joint_name [joint_name ...]");
 	return argc ? BRLCAD_ERROR : GED_HELP;
     }
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    struct directory *bind_directory = db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET);
-    if (!bind_directory) {
-	bu_vls_printf(gedp->ged_result_str, "skin bind BOT not found: %s", argv[1]);
-	return BRLCAD_ERROR;
-    }
-    if (db_lookup(gedp->dbip, argv[2], LOOKUP_QUIET)) {
-	bu_vls_printf(gedp->ged_result_str, "skin pose output already exists: %s", argv[2]);
-	return BRLCAD_ERROR;
-    }
+    bind_index = animated ? 3 : 1;
+    output_index = bind_index + 1;
+    root_index = bind_index + 2;
+    joint_index = bind_index + 3;
+    RT_DB_INTERNAL_INIT(&animation_internal);
     RT_DB_INTERNAL_INIT(&bind_internal);
     RT_DB_INTERNAL_INIT(&posed_internal);
+    if (animated) {
+	animation_directory = db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET);
+	if (bu_opt_fastf_t(nullptr, 1, &argv[2], &time) != 1 ||
+	    !std::isfinite(time)) {
+	    bu_vls_printf(gedp->ged_result_str, "invalid animation time: %s", argv[2]);
+	    return BRLCAD_ERROR;
+	}
+	if (!animation_directory ||
+	    rt_db_get_internal(&animation_internal, animation_directory, gedp->dbip,
+		bn_mat_identity) < 0 || animation_internal.idb_type != ID_ANIMATION) {
+	    bu_vls_printf(gedp->ged_result_str,
+		"animation object not found or invalid: %s", argv[1]);
+	    rt_db_free_internal(&animation_internal);
+	    return BRLCAD_ERROR;
+	}
+	animation_options.messages = gedp->ged_result_str;
+	if (rt_animation_eval_create(&animation_evaluation,
+		static_cast<const struct rt_animation_internal *>(
+		    animation_internal.idb_ptr), time,
+		&animation_options) != BRLCAD_OK)
+	    goto cleanup;
+    }
+    bind_directory = db_lookup(gedp->dbip, argv[bind_index], LOOKUP_QUIET);
+    if (!bind_directory) {
+	bu_vls_printf(gedp->ged_result_str, "skin bind BOT not found: %s",
+	    argv[bind_index]);
+	goto cleanup;
+    }
+    if (db_lookup(gedp->dbip, argv[output_index], LOOKUP_QUIET)) {
+	bu_vls_printf(gedp->ged_result_str, "skin pose output already exists: %s",
+	    argv[output_index]);
+	goto cleanup;
+    }
     if (rt_db_get_internal(&bind_internal, bind_directory, gedp->dbip,
 	    bn_mat_identity) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "unable to read skin bind BOT: %s", argv[1]);
-	return BRLCAD_ERROR;
+	bu_vls_printf(gedp->ged_result_str, "unable to read skin bind BOT: %s",
+	    argv[bind_index]);
+	goto cleanup;
     }
     if (bind_internal.idb_type != ID_BOT) {
-	bu_vls_printf(gedp->ged_result_str, "%s is not a BOT", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s is not a BOT", argv[bind_index]);
 	goto cleanup;
     }
-    const auto *bind_bot = static_cast<const struct rt_bot_internal *>(bind_internal.idb_ptr);
+    bind_bot = static_cast<const struct rt_bot_internal *>(bind_internal.idb_ptr);
     if (rt_bot_skin_validate(bind_bot, gedp->ged_result_str) != BRLCAD_OK)
 	goto cleanup;
-    if (objects.load(gedp, argc - 4, argv + 4) != BRLCAD_OK)
+    if (objects.load(gedp, argc - joint_index, argv + joint_index) != BRLCAD_OK)
 	goto cleanup;
-    options.root_link = argv[3];
+    options.root_link = argv[root_index];
     options.messages = gedp->ged_result_str;
     joints.assign(objects.joints.begin(), objects.joints.end());
-    if (rt_joint_eval_create(&evaluation, joints.data(), joints.size(),
-	    &options) != BRLCAD_OK)
+    if ((animated && rt_joint_eval_create_animated(&evaluation, joints.data(),
+	    joints.size(), &options, animation_evaluation) != BRLCAD_OK) ||
+	(!animated && rt_joint_eval_create(&evaluation, joints.data(), joints.size(),
+	    &options) != BRLCAD_OK))
 	goto cleanup;
 
     joint_matrices = static_cast<mat_t *>(bu_calloc(bind_bot->skin->joint_count,
@@ -280,12 +407,14 @@ _ged_joint_skin_core(struct ged *gedp, int argc, const char *argv[])
     posed_internal.idb_meth = &OBJ[ID_BOT];
     posed_internal.idb_ptr = posed;
     posed = nullptr;
-    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    if (!wdbp || wdb_put_internal(wdbp, argv[2], &posed_internal, 1.0) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "unable to write skin pose: %s", argv[2]);
+    wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (!wdbp || wdb_put_internal(wdbp, argv[output_index],
+	    &posed_internal, 1.0) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "unable to write skin pose: %s",
+	    argv[output_index]);
 	goto cleanup;
     }
-    bu_vls_printf(gedp->ged_result_str, "posed %s", argv[2]);
+    bu_vls_printf(gedp->ged_result_str, "posed %s", argv[output_index]);
     result = BRLCAD_OK;
 
 cleanup:
@@ -295,6 +424,8 @@ cleanup:
     }
     bu_free(joint_matrices, "joint skin pose matrices");
     rt_joint_eval_destroy(evaluation);
+    rt_animation_eval_destroy(animation_evaluation);
+    rt_db_free_internal(&animation_internal);
     rt_db_free_internal(&posed_internal);
     rt_db_free_internal(&bind_internal);
     return result;

@@ -162,13 +162,93 @@ test_duplicate_target_rejected(void)
     return result;
 }
 
+static int
+test_evaluation(void)
+{
+    struct rt_db_internal intern;
+    const struct rt_animation_internal *animation;
+    struct rt_animation_eval_options options = RT_ANIMATION_EVAL_OPTIONS_INIT;
+    struct rt_animation_eval *evaluation = NULL;
+    fastf_t start;
+    fastf_t end;
+    fastf_t value[4];
+    int result = BRLCAD_ERROR;
+
+    make_animation(&intern);
+    animation = (const struct rt_animation_internal *)intern.idb_ptr;
+    if (rt_animation_time_range(&start, &end, animation) != BRLCAD_OK ||
+	!close_enough(start, 0.0) || !close_enough(end, 2.0) ||
+	rt_animation_eval_create(&evaluation, animation, 1.0, &options) != BRLCAD_OK ||
+	rt_animation_eval_count(evaluation) != 1 ||
+	!BU_STR_EQUAL(rt_animation_eval_link(evaluation, 0), "tool") ||
+	rt_animation_eval_value(value, evaluation, 0,
+	    RT_ANIMATION_TRANSLATION) != BRLCAD_OK ||
+	!close_enough(value[X], 5.0))
+	goto cleanup;
+    rt_animation_eval_destroy(evaluation);
+    evaluation = NULL;
+
+    options.extrapolation = RT_ANIMATION_EXTRAPOLATE_REPEAT;
+    if (rt_animation_eval_create(&evaluation, animation, 3.0, &options) != BRLCAD_OK ||
+	rt_animation_eval_value(value, evaluation, 0,
+	    RT_ANIMATION_TRANSLATION) != BRLCAD_OK ||
+	!close_enough(value[X], 5.0))
+	goto cleanup;
+    rt_animation_eval_destroy(evaluation);
+    evaluation = NULL;
+
+    options.extrapolation = RT_ANIMATION_EXTRAPOLATE_MIRROR;
+    if (rt_animation_eval_create(&evaluation, animation, -1.0, &options) != BRLCAD_OK ||
+	rt_animation_eval_value(value, evaluation, 0,
+	    RT_ANIMATION_TRANSLATION) != BRLCAD_OK ||
+	!close_enough(value[X], 5.0))
+	goto cleanup;
+    rt_animation_eval_destroy(evaluation);
+    evaluation = NULL;
+
+    options.extrapolation = RT_ANIMATION_EXTRAPOLATE_ERROR;
+    if (rt_animation_eval_create(&evaluation, animation, 3.0, &options) != BRLCAD_ERROR)
+	goto cleanup;
+    result = BRLCAD_OK;
+
+cleanup:
+    rt_animation_eval_destroy(evaluation);
+    rt_db_free_internal(&intern);
+    return result;
+}
+
+static int
+test_negative_time(void)
+{
+    struct rt_db_internal intern;
+    struct rt_animation_internal *animation;
+    fastf_t start;
+    fastf_t end;
+    int result = BRLCAD_ERROR;
+
+    make_animation(&intern);
+    animation = (struct rt_animation_internal *)intern.idb_ptr;
+    for (size_t channel = 0; channel < animation->channel_count; channel++) {
+	animation->channels[channel].times[0] -= 2.0;
+	animation->channels[channel].times[1] -= 2.0;
+    }
+    if (!rt_animation_validate(animation, NULL) &&
+	rt_animation_time_range(&start, &end, animation) == BRLCAD_OK &&
+	close_enough(start, -2.0) && close_enough(end, 0.0))
+	result = BRLCAD_OK;
+    rt_db_free_internal(&intern);
+    return result;
+}
+
 int
 main(int argc, char **argv)
 {
     bu_setprogname(argv[0]);
     if (argc != 1 || test_db5_round_trip() != BRLCAD_OK ||
 	test_data_round_trip() != BRLCAD_OK ||
-	test_duplicate_target_rejected() != BRLCAD_OK)
+	test_duplicate_target_rejected() != BRLCAD_OK ||
+	test_evaluation() != BRLCAD_OK ||
+	test_negative_time() != BRLCAD_OK)
 	return 1;
     return 0;
 }

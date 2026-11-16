@@ -37,6 +37,19 @@
 #define ANIMATION_EXT_HEADER_LONGS 3u
 #define ANIMATION_CHANNEL_HEADER_LONGS 4u
 #define ANIMATION_QUATERNION_TOLERANCE 1.0e-5
+#define ANIMATION_TARGET_COUNT 3u
+#define ANIMATION_MAX_COMPONENTS 4u
+
+struct animation_eval_entry {
+    struct bu_vls link;
+    uint32_t targets;
+    fastf_t values[ANIMATION_TARGET_COUNT][ANIMATION_MAX_COMPONENTS];
+};
+
+struct rt_animation_eval {
+    size_t count;
+    struct animation_eval_entry *entries;
+};
 
 static const char *animation_targets[] = {
     "translation", "rotation", "scale"
@@ -238,10 +251,10 @@ rt_animation_validate(const struct rt_animation_internal *animation,
 	    }
 	}
 	for (key = 0; key < channel->keyframe_count; key++) {
-	    if (!isfinite(channel->times[key]) || channel->times[key] < 0.0 ||
+	    if (!isfinite(channel->times[key]) ||
 		(key && channel->times[key] <= channel->times[key - 1])) {
 		animation_message(messages,
-		    "channel %zu key times are not finite, nonnegative, and increasing",
+		    "channel %zu key times are not finite and increasing",
 		    channel_index);
 		errors++;
 		break;
@@ -275,6 +288,191 @@ rt_animation_validate(const struct rt_animation_internal *animation,
 	}
     }
     return errors;
+}
+
+int
+rt_animation_time_range(fastf_t *start, fastf_t *end,
+	const struct rt_animation_internal *animation)
+{
+    size_t channel_index;
+    fastf_t first;
+    fastf_t last;
+
+    if (!start || !end || rt_animation_validate(animation, NULL))
+	return BRLCAD_ERROR;
+    first = animation->channels[0].times[0];
+    last = animation->channels[0].times[
+	animation->channels[0].keyframe_count - 1];
+    for (channel_index = 1; channel_index < animation->channel_count;
+	channel_index++) {
+	const struct rt_animation_channel *channel =
+	    &animation->channels[channel_index];
+	if (channel->times[0] < first)
+	    first = channel->times[0];
+	if (channel->times[channel->keyframe_count - 1] > last)
+	    last = channel->times[channel->keyframe_count - 1];
+    }
+    *start = first;
+    *end = last;
+    return BRLCAD_OK;
+}
+
+static int
+animation_eval_time(fastf_t *sample_time, fastf_t time, fastf_t start,
+	fastf_t end, const struct rt_animation_eval_options *options)
+{
+    fastf_t duration;
+    fastf_t offset;
+
+    if (time >= start && time <= end) {
+	*sample_time = time;
+	return BRLCAD_OK;
+    }
+    duration = end - start;
+    switch (options->extrapolation) {
+	case RT_ANIMATION_EXTRAPOLATE_CLAMP:
+	    *sample_time = time < start ? start : end;
+	    return BRLCAD_OK;
+	case RT_ANIMATION_EXTRAPOLATE_REPEAT:
+	    if (ZERO(duration)) {
+		*sample_time = start;
+		return BRLCAD_OK;
+	    }
+	    offset = fmod(time - start, duration);
+	    if (offset < 0.0)
+		offset += duration;
+	    *sample_time = start + offset;
+	    return BRLCAD_OK;
+	case RT_ANIMATION_EXTRAPOLATE_MIRROR:
+	    if (ZERO(duration)) {
+		*sample_time = start;
+		return BRLCAD_OK;
+	    }
+	    offset = fmod(time - start, 2.0 * duration);
+	    if (offset < 0.0)
+		offset += 2.0 * duration;
+	    if (offset > duration)
+		offset = 2.0 * duration - offset;
+	    *sample_time = start + offset;
+	    return BRLCAD_OK;
+	case RT_ANIMATION_EXTRAPOLATE_ERROR:
+	    animation_message(options->messages,
+		"animation time %.17g is outside [%.17g, %.17g]", time,
+		start, end);
+	    return BRLCAD_ERROR;
+	default:
+	    animation_message(options->messages,
+		"unsupported animation extrapolation %u", options->extrapolation);
+	    return BRLCAD_ERROR;
+    }
+}
+
+int
+rt_animation_eval_create(struct rt_animation_eval **result,
+	const struct rt_animation_internal *animation, fastf_t time,
+	const struct rt_animation_eval_options *options)
+{
+    const size_t minimum_options_size = offsetof(
+	struct rt_animation_eval_options, reserved);
+    struct rt_animation_eval *evaluation;
+    fastf_t start;
+    fastf_t end;
+    fastf_t sample_time;
+    size_t channel_index;
+
+    if (!result)
+	return BRLCAD_ERROR;
+    *result = NULL;
+    if (!options || options->size < minimum_options_size ||
+	options->version != RT_ANIMATION_EVAL_OPTIONS_VERSION ||
+	options->flags || !isfinite(time) ||
+	options->extrapolation > RT_ANIMATION_EXTRAPOLATE_ERROR) {
+	animation_message(options ? options->messages : NULL,
+	    "invalid animation evaluation options");
+	return BRLCAD_ERROR;
+    }
+    if (rt_animation_time_range(&start, &end, animation) != BRLCAD_OK ||
+	animation_eval_time(&sample_time, time, start, end, options) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+
+    BU_ALLOC(evaluation, struct rt_animation_eval);
+    evaluation->count = 0;
+    evaluation->entries = (struct animation_eval_entry *)bu_calloc(
+	animation->channel_count, sizeof(struct animation_eval_entry),
+	"animation evaluation entries");
+    for (channel_index = 0; channel_index < animation->channel_count;
+	channel_index++) {
+	const struct rt_animation_channel *channel =
+	    &animation->channels[channel_index];
+	struct animation_eval_entry *entry = NULL;
+	size_t entry_index;
+
+	for (entry_index = 0; entry_index < evaluation->count; entry_index++) {
+	    if (BU_STR_EQUAL(bu_vls_cstr(&evaluation->entries[entry_index].link),
+		    bu_vls_cstr(&channel->target_link))) {
+		entry = &evaluation->entries[entry_index];
+		break;
+	    }
+	}
+	if (!entry) {
+	    entry = &evaluation->entries[evaluation->count++];
+	    bu_vls_init(&entry->link);
+	    bu_vls_vlscat(&entry->link, &channel->target_link);
+	}
+	if (rt_animation_channel_sample(entry->values[channel->target], channel,
+		sample_time) != BRLCAD_OK) {
+	    rt_animation_eval_destroy(evaluation);
+	    return BRLCAD_ERROR;
+	}
+	entry->targets |= 1u << channel->target;
+    }
+    *result = evaluation;
+    return BRLCAD_OK;
+}
+
+void
+rt_animation_eval_destroy(struct rt_animation_eval *evaluation)
+{
+    size_t index;
+
+    if (!evaluation)
+	return;
+    for (index = 0; index < evaluation->count; index++)
+	bu_vls_free(&evaluation->entries[index].link);
+    bu_free(evaluation->entries, "animation evaluation entries");
+    bu_free(evaluation, "animation evaluation");
+}
+
+size_t
+rt_animation_eval_count(const struct rt_animation_eval *evaluation)
+{
+    return evaluation ? evaluation->count : 0;
+}
+
+const char *
+rt_animation_eval_link(const struct rt_animation_eval *evaluation, size_t index)
+{
+    if (!evaluation || index >= evaluation->count)
+	return NULL;
+    return bu_vls_cstr(&evaluation->entries[index].link);
+}
+
+int
+rt_animation_eval_value(fastf_t *result,
+	const struct rt_animation_eval *evaluation, size_t index, uint32_t target)
+{
+    size_t components;
+    struct rt_animation_channel channel = {0};
+
+    if (!result || !evaluation || index >= evaluation->count ||
+	target > RT_ANIMATION_SCALE ||
+	!(evaluation->entries[index].targets & (1u << target)))
+	return BRLCAD_ERROR;
+    channel.target = target;
+    components = rt_animation_channel_components(&channel);
+    memcpy(result, evaluation->entries[index].values[target],
+	components * sizeof(fastf_t));
+    return BRLCAD_OK;
 }
 
 static const fastf_t *

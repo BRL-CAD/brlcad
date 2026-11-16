@@ -15,6 +15,7 @@
 
 #include "bu/app.h"
 #include "raytrace.h"
+#include "rt/primitives/animation.h"
 #include "rt/primitives/joint.h"
 
 static int
@@ -296,6 +297,56 @@ cleanup:
 }
 
 static int
+test_animated_forward_kinematics(void)
+{
+    static fastf_t times[] = {0.0, 1.0};
+    static fastf_t values[] = {0.0, 0.0, 0.0, 0.0, 6.0, 0.0};
+    struct rt_db_internal intern;
+    const struct rt_joint_internal *joints[1];
+    struct rt_animation_channel channel = {0};
+    struct rt_animation_internal animation = {0};
+    struct rt_animation_eval_options animation_options = RT_ANIMATION_EVAL_OPTIONS_INIT;
+    struct rt_animation_eval *pose = NULL;
+    struct rt_joint_eval_options joint_options = RT_JOINT_EVAL_OPTIONS_INIT;
+    struct rt_joint_eval *evaluation = NULL;
+    mat_t matrix;
+    int result = BRLCAD_ERROR;
+
+    if (make_graph_joint(&intern, "base", "tool",
+	    "translation unlimited {1 0 0} 0 0 2") != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    joints[0] = (const struct rt_joint_internal *)intern.idb_ptr;
+    animation.magic = RT_ANIMATION_INTERNAL_MAGIC;
+    animation.channel_count = 1;
+    animation.channels = &channel;
+    bu_vls_init(&channel.target_link);
+    bu_vls_strcpy(&channel.target_link, "tool");
+    channel.target = RT_ANIMATION_TRANSLATION;
+    channel.interpolation = RT_ANIMATION_LINEAR;
+    channel.keyframe_count = 2;
+    channel.times = times;
+    channel.values = values;
+    joint_options.root_link = "base";
+    if (rt_animation_eval_create(&pose, &animation, 0.5,
+	    &animation_options) != BRLCAD_OK ||
+	rt_joint_eval_create_animated(&evaluation, joints, 1,
+	    &joint_options, pose) != BRLCAD_OK ||
+	rt_joint_eval_find(matrix, evaluation, "tool") != BRLCAD_OK ||
+	!close_enough(matrix[MDX], 2.0) ||
+	!close_enough(matrix[MDY], 3.0) ||
+	!ZERO(joints[0]->pose_translation[Y]))
+	goto cleanup;
+    result = BRLCAD_OK;
+
+cleanup:
+    rt_joint_eval_destroy(evaluation);
+    rt_animation_eval_destroy(pose);
+    bu_vls_free(&channel.target_link);
+    rt_db_free_internal(&intern);
+    return result;
+}
+
+static int
 test_joint_problem(void)
 {
     struct rt_db_internal first;
@@ -527,6 +578,10 @@ main(int argc, char **argv)
     }
     if (test_forward_kinematics_cycle() != BRLCAD_OK) {
 	bu_log("forward kinematics cycle detection failed\n");
+	failures++;
+    }
+    if (test_animated_forward_kinematics() != BRLCAD_OK) {
+	bu_log("animated forward kinematics failed\n");
 	failures++;
     }
     if (test_joint_problem() != BRLCAD_OK) {
