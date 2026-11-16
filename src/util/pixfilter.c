@@ -42,6 +42,7 @@
 
 #define MAXLINE (8*1024)
 #define DEFAULT_WIDTH 512
+#define KERNEL_ELEMENT_COUNT 9
 unsigned char line1[3*MAXLINE], line2[3*MAXLINE], line3[3*MAXLINE], obuf[3*MAXLINE];
 unsigned char *top, *middle, *bottom, *temp;
 
@@ -189,6 +190,18 @@ main(int argc, char **argv)
     if (ret < (size_t)3*width)
 	perror("fread");
 
+    if (verbose) {
+	for (x = 0; x < KERNEL_ELEMENT_COUNT; x++)
+	    fprintf(stderr, "kern[%d] = %d\n", x, kern[x]);
+    }
+
+    if (height == 1) {
+	ret = fwrite(bottom, sizeof(char), 3*width, stdout);
+	if (ret < (size_t)3*width)
+	    perror("fwrite");
+	return 0;
+    }
+
     ret = fread(middle, sizeof(char), 3*width, infp);
     if (ret < (size_t)3*width)
 	perror("fread");
@@ -196,11 +209,6 @@ main(int argc, char **argv)
     ret = fwrite(bottom, sizeof(char), 3*width, stdout);
     if (ret < (size_t)3*width)
 	perror("fwrite");
-
-    if (verbose) {
-	for (x = 0; x < 11; x++)
-	    fprintf(stderr, "kern[%d] = %d\n", x, kern[x]);
-    }
 
     max = 0;
     min = 255;
@@ -244,7 +252,7 @@ main(int argc, char **argv)
 	top = temp;
     }
     /* write out last line untouched */
-    ret = fwrite(top, sizeof(char), 3*width, stdout);
+    ret = fwrite(middle, sizeof(char), 3*width, stdout);
     if (ret < (size_t)3*width)
 	perror("fwrite");
 
