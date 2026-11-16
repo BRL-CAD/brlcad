@@ -169,6 +169,32 @@ RT_EXPORT extern void rt_bot_list_free(struct rt_bot_list *headRblp,
 
 RT_EXPORT extern void rt_bot_internal_free(struct rt_bot_internal *bot);
 
+/** Validate the optional skin binding owned by a BOT. */
+RT_EXPORT extern int rt_bot_skin_validate(const struct rt_bot_internal *bot,
+					  struct bu_vls *message);
+
+/** Deep-copy a skin binding.  The vertex count validates its CSR offsets. */
+RT_EXPORT extern struct rt_bot_skin *rt_bot_skin_copy(
+	const struct rt_bot_skin *skin, size_t vertex_count);
+
+/** Free an owned skin binding. */
+RT_EXPORT extern void rt_bot_skin_free(struct rt_bot_skin *skin);
+
+/** Update inverse binds after applying a matrix to the BOT coordinates. */
+RT_EXPORT extern int rt_bot_skin_mat(struct rt_bot_skin *output,
+	const struct rt_bot_skin *input, const mat_t matrix);
+
+/**
+ * Create an unskinned BOT snapshot by applying linear blend skinning.
+ * joint_matrices contains one row-major matrix for each skin joint, in the
+ * same order as rt_bot_skin::joint_links.  The caller owns the result.
+ */
+RT_EXPORT extern int rt_bot_skin_pose(struct rt_bot_internal **result,
+				       const struct rt_bot_internal *bind_bot,
+				       const mat_t *joint_matrices,
+				       size_t joint_count,
+				       struct bu_vls *message);
+
 RT_EXPORT extern int rt_bot_same_orientation(const int *a,
 					     const int *b);
 

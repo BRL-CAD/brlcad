@@ -1176,6 +1176,27 @@ const struct rt_edit_functab EDOBJ[] = {
     },
 
     {
+	/* 47 */
+	RT_FUNCTAB_MAGIC, "ID_ANIMATION", "anim",
+	NULL, /* label */
+	NULL, /* keypoint */
+	NULL, /* s->e_axes_pos */
+	NULL, /* write_params */
+	NULL, /* read_params */
+	NULL, /* edit */
+	NULL, /* edit xy */
+	NULL, /* prim edit create */
+	NULL, /* prim edit destroy */
+	NULL, /* prim edit reset */
+	NULL, /* menu_str */
+	NULL, /* set edit mode */
+	NULL, /* menu_item */
+	NULL, /* edit_desc */
+	NULL, /* edit_get_values */
+	NULL /* repair */
+    },
+
+    {
 	/* this entry for sanity only */
 	0L, ">ID_MAXIMUM", ">id_max",
 	NULL,  /* label */

@@ -30,6 +30,7 @@ struct joint_problem_variable {
 struct joint_point_residual {
     std::string link;
     point_t point;
+    std::string target_link;
     point_t target;
     fastf_t weight;
 };
@@ -73,6 +74,46 @@ joint_affects_link(const struct rt_joint_problem *problem, size_t joint_index,
 	current = bu_vls_cstr(&problem->joints[incoming->second]->parent_link);
     }
     return false;
+}
+
+static int
+joint_point_derivative(vect_t derivative, const struct rt_joint_problem *problem,
+	const struct rt_joint_eval *evaluation,
+	const joint_problem_variable &variable, const std::string &link,
+	const point_t world_point)
+{
+    const struct rt_joint_internal *joint = problem->joints[variable.joint];
+    const auto &dof = joint->dofs[variable.dof];
+    mat_t parent_world;
+    mat_t prefix;
+    vect_t axis;
+    point_t origin = VINIT_ZERO;
+    point_t world_origin;
+
+    VSETALL(derivative, 0.0);
+    if (!joint_affects_link(problem, variable.joint, link))
+	return BRLCAD_OK;
+    if (rt_joint_eval_find(parent_world, evaluation,
+	    bu_vls_cstr(&joint->parent_link)) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    bn_mat_mul(prefix, parent_world, joint->parent_frame);
+    for (size_t preceding = 0; preceding < variable.dof; ++preceding) {
+	mat_t step;
+	mat_t combined;
+	joint_dof_step(step, joint, preceding);
+	bn_mat_mul(combined, prefix, step);
+	MAT_COPY(prefix, combined);
+    }
+    MAT4X3VEC(axis, prefix, dof.axis);
+    if (dof.motion == RT_JOINT_ROTATION) {
+	vect_t offset;
+	MAT4X3PNT(world_origin, prefix, origin);
+	VSUB2(offset, world_point, world_origin);
+	VCROSS(derivative, axis, offset);
+    } else {
+	VMOVE(derivative, axis);
+    }
+    return BRLCAD_OK;
 }
 
 extern "C" int
@@ -177,7 +218,39 @@ rt_joint_problem_add_point(struct rt_joint_problem *problem,
 	return BRLCAD_ERROR;
     point.link = constraint->link;
     VMOVE(point.point, constraint->point);
+    point.target_link.clear();
     VMOVE(point.target, constraint->target);
+    point.weight = constraint->weight;
+    problem->points.push_back(point);
+    return BRLCAD_OK;
+}
+
+extern "C" int
+rt_joint_problem_add_closure(struct rt_joint_problem *problem,
+	const struct rt_joint_closure_constraint *constraint)
+{
+    const size_t minimum_size = offsetof(struct rt_joint_closure_constraint, reserved);
+    joint_point_residual point;
+
+    if (!problem || !constraint || constraint->size < minimum_size ||
+	constraint->version != RT_JOINT_CLOSURE_CONSTRAINT_VERSION ||
+	constraint->flags || !constraint->first_link || !constraint->first_link[0] ||
+	!constraint->second_link || !constraint->second_link[0] ||
+	!std::isfinite(constraint->weight) || constraint->weight <= 0.0)
+	return BRLCAD_ERROR;
+    for (size_t i = 0; i < 3; ++i)
+	if (!std::isfinite(constraint->first_point[i]) ||
+	    !std::isfinite(constraint->second_point[i]))
+	    return BRLCAD_ERROR;
+    if ((constraint->first_link != problem->root &&
+	 problem->incoming.find(constraint->first_link) == problem->incoming.end()) ||
+	(constraint->second_link != problem->root &&
+	 problem->incoming.find(constraint->second_link) == problem->incoming.end()))
+	return BRLCAD_ERROR;
+    point.link = constraint->first_link;
+    VMOVE(point.point, constraint->first_point);
+    point.target_link = constraint->second_link;
+    VMOVE(point.target, constraint->second_point);
     point.weight = constraint->weight;
     problem->points.push_back(point);
     return BRLCAD_OK;
@@ -210,56 +283,46 @@ rt_joint_problem_evaluate(const struct rt_joint_problem *problem,
     for (size_t constraint_index = 0; constraint_index < problem->points.size(); ++constraint_index) {
 	const joint_point_residual &constraint = problem->points[constraint_index];
 	mat_t link_matrix;
+	mat_t target_matrix;
 	point_t world_point;
+	point_t target_point;
 	if (rt_joint_eval_find(link_matrix, evaluation, constraint.link.c_str()) != BRLCAD_OK) {
 	    rt_joint_eval_destroy(evaluation);
 	    return BRLCAD_ERROR;
 	}
 	MAT4X3PNT(world_point, link_matrix, constraint.point);
+	if (constraint.target_link.empty()) {
+	    VMOVE(target_point, constraint.target);
+	} else {
+	    if (rt_joint_eval_find(target_matrix, evaluation,
+		    constraint.target_link.c_str()) != BRLCAD_OK) {
+		rt_joint_eval_destroy(evaluation);
+		return BRLCAD_ERROR;
+	    }
+	    MAT4X3PNT(target_point, target_matrix, constraint.target);
+	}
 	for (size_t component = 0; component < 3; ++component)
 	    residuals[3 * constraint_index + component] = constraint.weight *
-		(world_point[component] - constraint.target[component]);
+		(world_point[component] - target_point[component]);
 
 	if (!jacobian)
 	    continue;
 	for (size_t variable_index = 0; variable_index < variable_count; ++variable_index) {
 	    const joint_problem_variable &variable = problem->variables[variable_index];
-	    const struct rt_joint_internal *joint = problem->joints[variable.joint];
-	    const auto &dof = joint->dofs[variable.dof];
-	    mat_t parent_world;
-	    mat_t prefix;
-	    vect_t axis;
-	    vect_t derivative;
-	    point_t origin = VINIT_ZERO;
-	    point_t world_origin;
-
-	    if (!joint_affects_link(problem, variable.joint, constraint.link))
-		continue;
-	    if (rt_joint_eval_find(parent_world, evaluation,
-		    bu_vls_cstr(&joint->parent_link)) != BRLCAD_OK) {
+	    vect_t source_derivative;
+	    vect_t target_derivative = VINIT_ZERO;
+	    if (joint_point_derivative(source_derivative, problem, evaluation,
+		    variable, constraint.link, world_point) != BRLCAD_OK ||
+		(!constraint.target_link.empty() &&
+		 joint_point_derivative(target_derivative, problem, evaluation,
+		    variable, constraint.target_link, target_point) != BRLCAD_OK)) {
 		rt_joint_eval_destroy(evaluation);
 		return BRLCAD_ERROR;
 	    }
-	    bn_mat_mul(prefix, parent_world, joint->parent_frame);
-	    for (size_t preceding = 0; preceding < variable.dof; ++preceding) {
-		mat_t step;
-		mat_t combined;
-		joint_dof_step(step, joint, preceding);
-		bn_mat_mul(combined, prefix, step);
-		MAT_COPY(prefix, combined);
-	    }
-	    MAT4X3VEC(axis, prefix, dof.axis);
-	    MAT4X3PNT(world_origin, prefix, origin);
-	    if (dof.motion == RT_JOINT_ROTATION) {
-		vect_t offset;
-		VSUB2(offset, world_point, world_origin);
-		VCROSS(derivative, axis, offset);
-	    } else {
-		VMOVE(derivative, axis);
-	    }
 	    for (size_t component = 0; component < 3; ++component)
 		jacobian[(3 * constraint_index + component) * variable_count + variable_index] =
-		    constraint.weight * derivative[component];
+		    constraint.weight *
+		    (source_derivative[component] - target_derivative[component]);
 	}
     }
     rt_joint_eval_destroy(evaluation);

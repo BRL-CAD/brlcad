@@ -4,6 +4,10 @@ set_property(TARGET gcv-gson APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 validate_style(gcv-gson gson.cpp)
 plugin_setup(gcv-gson gcv)
 
+if(BUILD_TESTING)
+  add_subdirectory(tests)
+endif(BUILD_TESTING)
+
 cmakefiles(CMakeLists.txt gson.cpp)
 
 # Local Variables:

@@ -45,6 +45,7 @@
 #define BOT_MIN_DN 1.0e-9
 #define HLBVH_STACK_SIZE 256
 #define RT_DEFAULT_MAX_PRIMS_IN_NODE 8
+#define RT_BOT_SKIN_FORMAT_VERSION 1
 
 static uint32_t
 bot_get_uint32(const unsigned char *cp)
@@ -61,6 +62,171 @@ bot_put_uint32(unsigned char *cp, uint32_t value)
 {
     value = htonl(value);
     memcpy(cp, &value, sizeof(value));
+}
+
+static size_t
+bot_skin_external_size(const struct rt_bot_skin *skin, size_t vertex_count)
+{
+    size_t size = 3 * SIZEOF_NETWORK_LONG;
+    size_t i;
+
+    for (i = 0; i < skin->joint_count; i++)
+	size += SIZEOF_NETWORK_LONG + bu_vls_strlen(&skin->joint_links[i]);
+    size += skin->joint_count * ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE;
+    size += (vertex_count + 1) * SIZEOF_NETWORK_LONG;
+    size += skin->influence_count * SIZEOF_NETWORK_LONG;
+    size += skin->influence_count * SIZEOF_NETWORK_DOUBLE;
+    return size;
+}
+
+static int
+bot_skin_import(struct rt_bot_internal *bot, unsigned char **cursor, size_t available)
+{
+    struct rt_bot_skin *skin = NULL;
+    unsigned char *cp = *cursor;
+    size_t needed;
+    size_t i;
+
+#define BOT_SKIN_REQUIRE(_bytes) do { \
+    needed = (_bytes); \
+    if (needed > available) goto fail; \
+    available -= needed; \
+} while (0)
+
+    BOT_SKIN_REQUIRE(3 * SIZEOF_NETWORK_LONG);
+    if (bot_get_uint32(cp) != RT_BOT_SKIN_FORMAT_VERSION)
+	goto fail;
+    cp += SIZEOF_NETWORK_LONG;
+    BU_ALLOC(skin, struct rt_bot_skin);
+    skin->joint_count = bot_get_uint32(cp);
+    cp += SIZEOF_NETWORK_LONG;
+    skin->influence_count = bot_get_uint32(cp);
+    cp += SIZEOF_NETWORK_LONG;
+    if (!skin->joint_count || !skin->influence_count)
+	goto fail;
+    if (skin->joint_count > SIZE_MAX / sizeof(struct bu_vls) ||
+	skin->joint_count > SIZE_MAX / sizeof(mat_t) ||
+	skin->influence_count > SIZE_MAX / sizeof(uint32_t) ||
+	skin->influence_count > SIZE_MAX / sizeof(fastf_t) ||
+	bot->num_vertices == SIZE_MAX)
+	goto fail;
+    skin->joint_links = (struct bu_vls *)bu_calloc(skin->joint_count,
+	sizeof(struct bu_vls), "BOT skin joint links");
+    skin->inverse_bind_matrices = (mat_t *)bu_malloc(skin->joint_count *
+	sizeof(mat_t), "BOT skin inverse bind matrices");
+    for (i = 0; i < skin->joint_count; i++)
+	bu_vls_init(&skin->joint_links[i]);
+    for (i = 0; i < skin->joint_count; i++) {
+	uint32_t length;
+	BOT_SKIN_REQUIRE(SIZEOF_NETWORK_LONG);
+	length = bot_get_uint32(cp);
+	cp += SIZEOF_NETWORK_LONG;
+	BOT_SKIN_REQUIRE(length);
+	bu_vls_strncpy(&skin->joint_links[i], (const char *)cp, length);
+	cp += length;
+    }
+    if (skin->joint_count > available /
+	(ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE))
+	goto fail;
+    BOT_SKIN_REQUIRE(skin->joint_count * ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE);
+    for (i = 0; i < skin->joint_count; i++) {
+	double matrix[ELEMENTS_PER_MAT];
+	size_t element;
+	bu_cv_ntohd((unsigned char *)matrix, cp, ELEMENTS_PER_MAT);
+	cp += ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE;
+	for (element = 0; element < ELEMENTS_PER_MAT; element++)
+	    skin->inverse_bind_matrices[i][element] = matrix[element];
+    }
+    if (bot->num_vertices + 1 > available / SIZEOF_NETWORK_LONG)
+	goto fail;
+    BOT_SKIN_REQUIRE((bot->num_vertices + 1) * SIZEOF_NETWORK_LONG);
+    skin->vertex_offsets = (uint32_t *)bu_malloc((bot->num_vertices + 1) *
+	sizeof(uint32_t), "BOT skin vertex offsets");
+    for (i = 0; i <= bot->num_vertices; i++) {
+	skin->vertex_offsets[i] = bot_get_uint32(cp);
+	cp += SIZEOF_NETWORK_LONG;
+    }
+    if (skin->influence_count > available / SIZEOF_NETWORK_LONG)
+	goto fail;
+    BOT_SKIN_REQUIRE(skin->influence_count * SIZEOF_NETWORK_LONG);
+    skin->joint_indices = (uint32_t *)bu_malloc(skin->influence_count *
+	sizeof(uint32_t), "BOT skin joint indices");
+    for (i = 0; i < skin->influence_count; i++) {
+	skin->joint_indices[i] = bot_get_uint32(cp);
+	cp += SIZEOF_NETWORK_LONG;
+    }
+    if (skin->influence_count > available / SIZEOF_NETWORK_DOUBLE)
+	goto fail;
+    BOT_SKIN_REQUIRE(skin->influence_count * SIZEOF_NETWORK_DOUBLE);
+    skin->weights = (fastf_t *)bu_malloc(skin->influence_count *
+	sizeof(fastf_t), "BOT skin weights");
+    for (i = 0; i < skin->influence_count; i++) {
+	double weight;
+	bu_cv_ntohd((unsigned char *)&weight, cp, 1);
+	cp += SIZEOF_NETWORK_DOUBLE;
+	skin->weights[i] = weight;
+    }
+    bot->skin = skin;
+    if (rt_bot_skin_validate(bot, NULL) != BRLCAD_OK)
+	goto fail;
+    *cursor = cp;
+#undef BOT_SKIN_REQUIRE
+    return BRLCAD_OK;
+
+fail:
+    if (bot->skin == skin)
+	bot->skin = NULL;
+    rt_bot_skin_free(skin);
+#undef BOT_SKIN_REQUIRE
+    return BRLCAD_ERROR;
+}
+
+static void
+bot_skin_export(unsigned char **cursor, const struct rt_bot_internal *bot,
+    double local2mm)
+{
+    const struct rt_bot_skin *skin = bot->skin;
+    unsigned char *cp = *cursor;
+    size_t i;
+
+    bot_put_uint32(cp, RT_BOT_SKIN_FORMAT_VERSION);
+    cp += SIZEOF_NETWORK_LONG;
+    bot_put_uint32(cp, (uint32_t)skin->joint_count);
+    cp += SIZEOF_NETWORK_LONG;
+    bot_put_uint32(cp, (uint32_t)skin->influence_count);
+    cp += SIZEOF_NETWORK_LONG;
+    for (i = 0; i < skin->joint_count; i++) {
+	size_t length = bu_vls_strlen(&skin->joint_links[i]);
+	bot_put_uint32(cp, (uint32_t)length);
+	cp += SIZEOF_NETWORK_LONG;
+	memcpy(cp, bu_vls_cstr(&skin->joint_links[i]), length);
+	cp += length;
+    }
+    for (i = 0; i < skin->joint_count; i++) {
+	double matrix[ELEMENTS_PER_MAT];
+	size_t element;
+	for (element = 0; element < ELEMENTS_PER_MAT; element++)
+	    matrix[element] = skin->inverse_bind_matrices[i][element];
+	matrix[3] *= local2mm;
+	matrix[7] *= local2mm;
+	matrix[11] *= local2mm;
+	bu_cv_htond(cp, (const unsigned char *)matrix, ELEMENTS_PER_MAT);
+	cp += ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE;
+    }
+    for (i = 0; i <= bot->num_vertices; i++) {
+	bot_put_uint32(cp, skin->vertex_offsets[i]);
+	cp += SIZEOF_NETWORK_LONG;
+    }
+    for (i = 0; i < skin->influence_count; i++) {
+	bot_put_uint32(cp, skin->joint_indices[i]);
+	cp += SIZEOF_NETWORK_LONG;
+    }
+    for (i = 0; i < skin->influence_count; i++) {
+	double weight = skin->weights[i];
+	bu_cv_htond(cp, (const unsigned char *)&weight, 1);
+	cp += SIZEOF_NETWORK_DOUBLE;
+    }
+    *cursor = cp;
 }
 
 #define BOT_UNORIENTED_NORM(_ap, _hitp, _norm, _out) {		    \
@@ -2302,6 +2468,11 @@ rt_bot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
 
+    if (bot_ip->skin || (bot_ip->bot_flags & RT_BOT_HAS_SKIN)) {
+	bu_log("BOT skin bindings are not supported in v4 databases\n");
+	return BRLCAD_ERROR;
+    }
+
     if (bot_ip->num_normals > 0) {
 	bu_log("BOT surface normals not supported in older database formats, normals not saved\n");
 	bu_log("\tPlease update to current database format using \"dbupgrade\"\n");
@@ -2408,6 +2579,8 @@ rt_bot_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
 	if (tip->num_uvs != top->num_uvs)
 	    return BRLCAD_ERROR;
     }
+    if (tip->skin && rt_bot_skin_mat(top->skin, tip->skin, mat) != BRLCAD_OK)
+	return BRLCAD_ERROR;
 
     if (tip->vertices) {
 	for (size_t i = 0; i < tip->num_vertices; i++) {
@@ -2430,7 +2603,6 @@ rt_bot_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
 	    MAT4X3VEC(&(top->uvs[i*ELEMENTS_PER_VECT]), mat, tmp_uvs);
 	}
     }
-
     return BRLCAD_OK;
 }
 
@@ -2598,6 +2770,16 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	bip->num_face_uvs = 0;
     }
 
+    if (bip->bot_flags & RT_BOT_HAS_SKIN) {
+	size_t available = ep->ext_nbytes - (size_t)(cp - (unsigned char *)ep->ext_buf);
+	if (bot_skin_import(bip, &cp, available) != BRLCAD_OK) {
+	    rt_bot_internal_free(bip);
+	    bu_free(bip, "invalid BOT");
+	    ip->idb_ptr = NULL;
+	    return BRLCAD_ERROR;
+	}
+    }
+
     /* Apply transform */
     if (mat == NULL) mat = bn_mat_identity;
     return rt_bot_mat(ip, mat, ip);
@@ -2619,6 +2801,12 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (ip->idb_type != ID_BOT) return -1;
     bip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bip);
+
+    if ((bip->skin != NULL) != ((bip->bot_flags & RT_BOT_HAS_SKIN) != 0) ||
+	(bip->skin && (bip->skin->joint_count > UINT32_MAX ||
+	    bip->skin->influence_count > UINT32_MAX ||
+	    rt_bot_skin_validate(bip, NULL) != BRLCAD_OK)))
+	return BRLCAD_ERROR;
 
     BU_CK_EXTERNAL(ep);
 
@@ -2646,6 +2834,9 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	ep->ext_nbytes += SIZEOF_NETWORK_DOUBLE * bip->num_uvs * 3 /* vertex uvs */
 	    + SIZEOF_NETWORK_LONG * (bip->num_face_uvs * 3 + 2); /* indices into uvs array, num_uvs, num_face_uvs */
     }
+
+    if (bip->bot_flags & RT_BOT_HAS_SKIN)
+	ep->ext_nbytes += bot_skin_external_size(bip->skin, bip->num_vertices);
 
     ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "BOT external");
 
@@ -2793,6 +2984,9 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	    }
 	}
     }
+
+    if (bip->bot_flags & RT_BOT_HAS_SKIN)
+	bot_skin_export(&cp, bip, local2mm);
 
     return 0;
 }
@@ -2977,6 +3171,9 @@ rt_bot_internal_free(struct rt_bot_internal *bot_ip)
     bu_free(bot_ip->face_uvs, "BOT face uvs");
     bot_ip->face_uvs = NULL;
     bot_ip->num_face_uvs = 0;
+
+    rt_bot_skin_free(bot_ip->skin);
+    bot_ip->skin = NULL;
 }
 
 
@@ -3035,6 +3232,12 @@ rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_interna
 	    bu_avs_init(&op->idb_avs, ip->idb_avs.count, "avs");
 	    bu_avs_merge(&op->idb_avs, &ip->idb_avs);
 	}
+    }
+
+    if (botip->skin && rt_bot_skin_mat(botop->skin, botip->skin, mat) != BRLCAD_OK) {
+	if (op != ip)
+	    rt_db_free_internal(op);
+	return -1;
     }
 
     for (i = 0; i < botip->num_vertices; i++) {
@@ -4434,6 +4637,11 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot, const struct bn_tol *tol)
 
     RT_BOT_CK_MAGIC(bot);
 
+    if (bot->skin) {
+	bu_log("rt_bot_vertex_fuse: skin bindings cannot yet be fused; BOT is unchanged\n");
+	return 0;
+    }
+
     for (i = 0; i < bot->num_vertices; i++) {
 	j = i + 1;
 	while (j < bot->num_vertices) {
@@ -4821,6 +5029,30 @@ rt_bot_condense(struct rt_bot_internal *bot)
 	if (remap[i] >= 0) {
 	    VMOVE(&bot->vertices[remap[i] * 3], &bot->vertices[i * 3]);
 	}
+    }
+
+    if (bot->skin) {
+	uint32_t influence_count = 0;
+	for (i = 0; i < num_verts; i++) {
+	    if (remap[i] >= 0) {
+		uint32_t begin = bot->skin->vertex_offsets[i];
+		uint32_t count = bot->skin->vertex_offsets[i + 1] - begin;
+		memmove(&bot->skin->joint_indices[influence_count],
+		    &bot->skin->joint_indices[begin], count * sizeof(uint32_t));
+		memmove(&bot->skin->weights[influence_count],
+		    &bot->skin->weights[begin], count * sizeof(fastf_t));
+		bot->skin->vertex_offsets[(size_t)remap[i]] = influence_count;
+		influence_count += count;
+	    }
+	}
+	bot->skin->vertex_offsets[num_verts - dead_verts] = influence_count;
+	bot->skin->influence_count = influence_count;
+	bot->skin->vertex_offsets = (uint32_t *)bu_realloc(bot->skin->vertex_offsets,
+	    (num_verts - dead_verts + 1) * sizeof(uint32_t), "BOT skin offsets");
+	bot->skin->joint_indices = (uint32_t *)bu_realloc(bot->skin->joint_indices,
+	    influence_count * sizeof(uint32_t), "BOT skin joint indices");
+	bot->skin->weights = (fastf_t *)bu_realloc(bot->skin->weights,
+	    influence_count * sizeof(fastf_t), "BOT skin weights");
     }
 
     bu_free(remap, "rt_bot_condense: remap");
@@ -6089,6 +6321,8 @@ rt_bot_merge(size_t num_bots, const struct rt_bot_internal * const *bots)
     size_t avail_vert, avail_face;
     size_t i, face;
     int *reverse_flags;
+    const struct rt_bot_skin *binding = NULL;
+    size_t influence_count = 0;
 
     /* create a new bot */
     BU_ALLOC(result, struct rt_bot_internal);
@@ -6112,9 +6346,69 @@ rt_bot_merge(size_t num_bots, const struct rt_bot_internal * const *bots)
 
     for (i = 0; i < num_bots; ++i) {
 	RT_BOT_CK_MAGIC(bots[i]);
+	if (bots[i]->skin) {
+	    size_t joint;
+	    if (rt_bot_skin_validate(bots[i], NULL) != BRLCAD_OK)
+		goto incompatible_skin;
+	    if (!binding) {
+		binding = bots[i]->skin;
+	    } else if (binding->joint_count != bots[i]->skin->joint_count) {
+		goto incompatible_skin;
+	    } else {
+		for (joint = 0; joint < binding->joint_count; joint++) {
+		    if (!BU_STR_EQUAL(bu_vls_cstr(&binding->joint_links[joint]),
+			    bu_vls_cstr(&bots[i]->skin->joint_links[joint])) ||
+			memcmp(binding->inverse_bind_matrices[joint],
+			    bots[i]->skin->inverse_bind_matrices[joint], sizeof(mat_t)) != 0)
+			goto incompatible_skin;
+		}
+	    }
+	    if (bots[i]->skin->influence_count > UINT32_MAX - influence_count)
+		goto incompatible_skin;
+	    influence_count += bots[i]->skin->influence_count;
+	}
 
 	result->num_vertices += bots[i]->num_vertices;
 	result->num_faces += bots[i]->num_faces;
+    }
+
+    if (binding) {
+	for (i = 0; i < num_bots; i++) {
+	    if (!bots[i]->skin)
+		goto incompatible_skin;
+	}
+	result->skin = rt_bot_skin_copy(binding, bots[0]->num_vertices);
+	if (!result->skin)
+	    goto incompatible_skin;
+	bu_free(result->skin->vertex_offsets, "BOT skin vertex offsets");
+	bu_free(result->skin->joint_indices, "BOT skin joint indices");
+	bu_free(result->skin->weights, "BOT skin weights");
+	result->skin->influence_count = influence_count;
+	result->skin->vertex_offsets = (uint32_t *)bu_calloc(result->num_vertices + 1,
+	    sizeof(uint32_t), "merged BOT skin offsets");
+	result->skin->joint_indices = (uint32_t *)bu_malloc(influence_count *
+	    sizeof(uint32_t), "merged BOT skin indices");
+	result->skin->weights = (fastf_t *)bu_malloc(influence_count *
+	    sizeof(fastf_t), "merged BOT skin weights");
+	result->bot_flags |= RT_BOT_HAS_SKIN;
+	{
+	    size_t vertex_base = 0;
+	    size_t influence_base = 0;
+	    for (i = 0; i < num_bots; i++) {
+		for (size_t vertex = 0; vertex < bots[i]->num_vertices; vertex++) {
+		    result->skin->vertex_offsets[vertex_base + vertex] =
+			(uint32_t)(influence_base + bots[i]->skin->vertex_offsets[vertex]);
+		}
+		memcpy(&result->skin->joint_indices[influence_base],
+		    bots[i]->skin->joint_indices,
+		    bots[i]->skin->influence_count * sizeof(uint32_t));
+		memcpy(&result->skin->weights[influence_base], bots[i]->skin->weights,
+		    bots[i]->skin->influence_count * sizeof(fastf_t));
+		vertex_base += bots[i]->num_vertices;
+		influence_base += bots[i]->skin->influence_count;
+	    }
+	    result->skin->vertex_offsets[result->num_vertices] = (uint32_t)influence_base;
+	}
     }
 
     reverse_flags = (int *)bu_calloc(num_bots, sizeof(int), "reverse_flags");
@@ -6205,7 +6499,14 @@ rt_bot_merge(size_t num_bots, const struct rt_bot_internal * const *bots)
 	avail_face += bots[i]->num_faces;
     }
 
+    bu_free(reverse_flags, "reverse_flags");
     return result;
+
+incompatible_skin:
+    bu_log("rt_bot_merge: incompatible skin bindings\n");
+    rt_bot_internal_free(result);
+    BU_PUT(result, struct rt_bot_internal);
+    return NULL;
 }
 
 C_DECL const char *
@@ -6268,6 +6569,9 @@ rt_bot_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *i
             issues |= 2;
         }
     }
+    if ((bot->skin || (bot->bot_flags & RT_BOT_HAS_SKIN)) &&
+	rt_bot_skin_validate(bot, NULL) != BRLCAD_OK)
+	issues |= 4;
 
     if (issues && error_msg) {
         const char *comma = "";
@@ -6278,6 +6582,10 @@ rt_bot_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *i
         }
         if (issues & 2) {
             bu_vls_printf(error_msg, "%s{\"problem_type\":\"non_manifold\"}", comma);
+	    comma = ",";
+	}
+	if (issues & 4) {
+	    bu_vls_printf(error_msg, "%s{\"problem_type\":\"invalid_skin\"}", comma);
         }
         bu_vls_printf(error_msg, "]");
     }
@@ -6295,3 +6603,234 @@ rt_bot_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *i
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+C_DECL void
+rt_bot_skin_free(struct rt_bot_skin *skin)
+{
+    size_t i;
+
+    if (!skin)
+	return;
+    if (skin->joint_links) {
+	for (i = 0; i < skin->joint_count; i++) {
+	    if (BU_VLS_IS_INITIALIZED(&skin->joint_links[i]))
+		bu_vls_free(&skin->joint_links[i]);
+	}
+    }
+    bu_free(skin->joint_links, "BOT skin joint links");
+    bu_free(skin->inverse_bind_matrices, "BOT skin inverse bind matrices");
+    bu_free(skin->vertex_offsets, "BOT skin vertex offsets");
+    bu_free(skin->joint_indices, "BOT skin joint indices");
+    bu_free(skin->weights, "BOT skin weights");
+    bu_free(skin, "BOT skin");
+}
+
+C_DECL int
+rt_bot_skin_mat(struct rt_bot_skin *output, const struct rt_bot_skin *input,
+	const mat_t matrix)
+{
+    mat_t inverse;
+    size_t i;
+
+    if (!output || !input || !matrix ||
+	output->joint_count != input->joint_count ||
+	!bn_mat_inverse(inverse, matrix))
+	return BRLCAD_ERROR;
+    for (i = 0; i < input->joint_count; i++) {
+	mat_t transformed;
+	bn_mat_mul(transformed, input->inverse_bind_matrices[i], inverse);
+	MAT_COPY(output->inverse_bind_matrices[i], transformed);
+    }
+    return BRLCAD_OK;
+}
+
+static int
+bot_skin_error(struct bu_vls *message, const char *text)
+{
+    if (message)
+	bu_vls_strcpy(message, text);
+    return BRLCAD_ERROR;
+}
+
+C_DECL int
+rt_bot_skin_validate(const struct rt_bot_internal *bot, struct bu_vls *message)
+{
+    static const fastf_t weight_tolerance = 1.0e-6;
+    static const fastf_t affine_tolerance = 1.0e-9;
+    const struct rt_bot_skin *skin;
+    size_t i;
+
+    if (!bot)
+	return bot_skin_error(message, "BOT is missing");
+    RT_BOT_CK_MAGIC(bot);
+    skin = bot->skin;
+    if ((skin != NULL) != ((bot->bot_flags & RT_BOT_HAS_SKIN) != 0))
+	return bot_skin_error(message, "BOT skin flag and payload disagree");
+    if (!skin)
+	return bot_skin_error(message, "BOT skin is missing");
+    if (skin->joint_count > UINT32_MAX || skin->influence_count > UINT32_MAX)
+	return bot_skin_error(message, "BOT skin exceeds serialized count limits");
+    if (!skin->joint_count || !skin->joint_links || !skin->inverse_bind_matrices)
+	return bot_skin_error(message, "BOT skin has no joints");
+    if (!skin->influence_count || !skin->vertex_offsets ||
+	!skin->joint_indices || !skin->weights)
+	return bot_skin_error(message, "BOT skin has no influences");
+    for (i = 0; i < skin->joint_count; i++) {
+	size_t j;
+	if (!BU_VLS_IS_INITIALIZED(&skin->joint_links[i]) ||
+	    !bu_vls_strlen(&skin->joint_links[i]))
+	    return bot_skin_error(message, "BOT skin has an empty joint link");
+	for (j = 0; j < i; j++) {
+	    if (BU_STR_EQUAL(bu_vls_cstr(&skin->joint_links[i]),
+		    bu_vls_cstr(&skin->joint_links[j])))
+		return bot_skin_error(message, "BOT skin joint links are not unique");
+	}
+	for (j = 0; j < ELEMENTS_PER_MAT; j++) {
+	    if (!isfinite(skin->inverse_bind_matrices[i][j]))
+		return bot_skin_error(message, "BOT skin inverse bind matrix is not finite");
+	}
+	if (!NEAR_ZERO(skin->inverse_bind_matrices[i][12], affine_tolerance) ||
+	    !NEAR_ZERO(skin->inverse_bind_matrices[i][13], affine_tolerance) ||
+	    !NEAR_ZERO(skin->inverse_bind_matrices[i][14], affine_tolerance) ||
+	    !NEAR_EQUAL(skin->inverse_bind_matrices[i][15], 1.0, affine_tolerance))
+	    return bot_skin_error(message, "BOT skin inverse bind matrix is not affine");
+    }
+    if (skin->vertex_offsets[0] != 0 ||
+	skin->vertex_offsets[bot->num_vertices] != skin->influence_count)
+	return bot_skin_error(message, "BOT skin vertex offsets do not span its influences");
+    for (i = 0; i < bot->num_vertices; i++) {
+	uint32_t begin = skin->vertex_offsets[i];
+	uint32_t end = skin->vertex_offsets[i + 1];
+	fastf_t sum = 0.0;
+	uint32_t influence;
+	if (begin >= end || end > skin->influence_count)
+	    return bot_skin_error(message, "BOT skin has invalid vertex offsets");
+	for (influence = begin; influence < end; influence++) {
+	    if (skin->joint_indices[influence] >= skin->joint_count)
+		return bot_skin_error(message, "BOT skin joint index is out of range");
+	    if (!isfinite(skin->weights[influence]) || skin->weights[influence] < 0.0)
+		return bot_skin_error(message, "BOT skin weight is invalid");
+	    sum += skin->weights[influence];
+	}
+	if (!NEAR_EQUAL(sum, 1.0, weight_tolerance))
+	    return bot_skin_error(message, "BOT skin vertex weights do not sum to one");
+    }
+    if (message)
+	bu_vls_trunc(message, 0);
+    return BRLCAD_OK;
+}
+
+C_DECL struct rt_bot_skin *
+rt_bot_skin_copy(const struct rt_bot_skin *skin, size_t vertex_count)
+{
+    struct rt_bot_internal validator = {0};
+    struct rt_bot_skin *copy;
+    size_t i;
+
+    if (!skin)
+	return NULL;
+    validator.magic = RT_BOT_INTERNAL_MAGIC;
+    validator.bot_flags = RT_BOT_HAS_SKIN;
+    validator.num_vertices = vertex_count;
+    validator.skin = (struct rt_bot_skin *)skin;
+    if (rt_bot_skin_validate(&validator, NULL) != BRLCAD_OK)
+	return NULL;
+    BU_ALLOC(copy, struct rt_bot_skin);
+    copy->joint_count = skin->joint_count;
+    copy->influence_count = skin->influence_count;
+    copy->joint_links = (struct bu_vls *)bu_calloc(copy->joint_count,
+	sizeof(struct bu_vls), "BOT skin joint links");
+    copy->inverse_bind_matrices = (mat_t *)bu_malloc(copy->joint_count *
+	sizeof(mat_t), "BOT skin inverse bind matrices");
+    copy->vertex_offsets = (uint32_t *)bu_malloc((vertex_count + 1) *
+	sizeof(uint32_t), "BOT skin vertex offsets");
+    copy->joint_indices = (uint32_t *)bu_malloc(copy->influence_count *
+	sizeof(uint32_t), "BOT skin joint indices");
+    copy->weights = (fastf_t *)bu_malloc(copy->influence_count *
+	sizeof(fastf_t), "BOT skin weights");
+    for (i = 0; i < copy->joint_count; i++) {
+	bu_vls_init(&copy->joint_links[i]);
+	bu_vls_vlscat(&copy->joint_links[i], &skin->joint_links[i]);
+    }
+    memcpy(copy->inverse_bind_matrices, skin->inverse_bind_matrices,
+	copy->joint_count * sizeof(mat_t));
+    memcpy(copy->vertex_offsets, skin->vertex_offsets,
+	(vertex_count + 1) * sizeof(uint32_t));
+    memcpy(copy->joint_indices, skin->joint_indices,
+	copy->influence_count * sizeof(uint32_t));
+    memcpy(copy->weights, skin->weights,
+	copy->influence_count * sizeof(fastf_t));
+    return copy;
+}
+
+C_DECL int
+rt_bot_skin_pose(struct rt_bot_internal **result,
+	const struct rt_bot_internal *bind_bot, const mat_t *joint_matrices,
+	size_t joint_count, struct bu_vls *message)
+{
+    static const fastf_t affine_tolerance = 1.0e-9;
+    struct rt_bot_internal *posed;
+    mat_t *skin_matrices;
+    size_t joint;
+    size_t vertex;
+
+    if (!result)
+	return bot_skin_error(message, "BOT skin pose result is missing");
+    *result = NULL;
+    if (!bind_bot || rt_bot_skin_validate(bind_bot, message) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    if (!joint_matrices || joint_count != bind_bot->skin->joint_count)
+	return bot_skin_error(message, "BOT skin pose joint matrix count does not match");
+    for (joint = 0; joint < joint_count; joint++) {
+	size_t element;
+	for (element = 0; element < ELEMENTS_PER_MAT; element++) {
+	    if (!isfinite(joint_matrices[joint][element]))
+		return bot_skin_error(message, "BOT skin pose joint matrix is not finite");
+	}
+	if (!NEAR_ZERO(joint_matrices[joint][12], affine_tolerance) ||
+	    !NEAR_ZERO(joint_matrices[joint][13], affine_tolerance) ||
+	    !NEAR_ZERO(joint_matrices[joint][14], affine_tolerance) ||
+	    !NEAR_EQUAL(joint_matrices[joint][15], 1.0, affine_tolerance))
+	    return bot_skin_error(message, "BOT skin pose joint matrix is not affine");
+    }
+
+    posed = rt_bot_dup(bind_bot);
+    if (!posed)
+	return bot_skin_error(message, "unable to duplicate BOT for skin pose");
+    skin_matrices = (mat_t *)bu_malloc(joint_count * sizeof(mat_t),
+	"BOT skin pose matrices");
+    for (joint = 0; joint < joint_count; joint++)
+	bn_mat_mul(skin_matrices[joint], joint_matrices[joint],
+	    bind_bot->skin->inverse_bind_matrices[joint]);
+
+    for (vertex = 0; vertex < bind_bot->num_vertices; vertex++) {
+	point_t posed_vertex = VINIT_ZERO;
+	point_t bind_vertex;
+	uint32_t influence;
+	VMOVE(bind_vertex, &bind_bot->vertices[vertex * ELEMENTS_PER_VECT]);
+	for (influence = bind_bot->skin->vertex_offsets[vertex];
+	     influence < bind_bot->skin->vertex_offsets[vertex + 1]; influence++) {
+	    point_t transformed;
+	    uint32_t joint_index = bind_bot->skin->joint_indices[influence];
+	    fastf_t weight = bind_bot->skin->weights[influence];
+	    MAT4X3PNT(transformed, skin_matrices[joint_index], bind_vertex);
+	    VJOIN1(posed_vertex, posed_vertex, weight, transformed);
+	}
+	VMOVE(&posed->vertices[vertex * ELEMENTS_PER_VECT], posed_vertex);
+    }
+    bu_free(skin_matrices, "BOT skin pose matrices");
+
+    rt_bot_skin_free(posed->skin);
+    posed->skin = NULL;
+    posed->bot_flags &= ~RT_BOT_HAS_SKIN;
+    bu_free(posed->normals, "BOT normals");
+    posed->normals = NULL;
+    posed->num_normals = 0;
+    bu_free(posed->face_normals, "BOT face normals");
+    posed->face_normals = NULL;
+    posed->num_face_normals = 0;
+    posed->bot_flags &= ~(RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS);
+    if (message)
+	bu_vls_trunc(message, 0);
+    *result = posed;
+    return BRLCAD_OK;
+}

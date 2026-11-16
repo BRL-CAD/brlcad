@@ -512,6 +512,10 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
 	!bot->num_faces || bot->num_vertices > INT_MAX ||
 	bot->num_faces > INT_MAX || !bot->vertices || !bot->faces)
 	return -1;
+    if (bot->skin) {
+	bu_log("rt_bot_repair: skin remapping is not available; BOT is unchanged\n");
+	return -1;
+    }
     for (size_t face_corner = 0; face_corner < bot->num_faces * 3;
 	++face_corner) {
 	int vertex = bot->faces[face_corner];
@@ -782,6 +786,68 @@ bot_from_faces(const struct rt_bot_internal *original,
 	    source_faces, face_count))
 	goto fail;
 
+    if (original->skin && face_count) {
+	std::vector<int> new_to_old(result->num_vertices, -1);
+	for (size_t output_face = 0; output_face < face_count; ++output_face) {
+	    for (size_t corner = 0; corner < 3; ++corner) {
+		int old_vertex = replacement_faces ?
+		    replacement_faces[output_face * 3 + corner] :
+		    original->faces[(size_t)source_faces[output_face] * 3 + corner];
+		int new_vertex = result->faces[output_face * 3 + corner];
+		if (old_vertex < 0 || (size_t)old_vertex >= original->num_vertices ||
+		    new_vertex < 0 || (size_t)new_vertex >= result->num_vertices)
+		    goto fail;
+		new_to_old[(size_t)new_vertex] = old_vertex;
+	    }
+	}
+	if (rt_bot_skin_validate(original, NULL) != BRLCAD_OK)
+	    goto fail;
+	BU_ALLOC(result->skin, struct rt_bot_skin);
+	result->skin->joint_count = original->skin->joint_count;
+	result->skin->joint_links = (struct bu_vls *)bu_calloc(
+	    result->skin->joint_count, sizeof(struct bu_vls), "BOT subset skin joints");
+	result->skin->inverse_bind_matrices = (mat_t *)bu_malloc(
+	    result->skin->joint_count * sizeof(mat_t), "BOT subset inverse binds");
+	for (size_t joint = 0; joint < result->skin->joint_count; ++joint) {
+	    bu_vls_init(&result->skin->joint_links[joint]);
+	    bu_vls_vlscat(&result->skin->joint_links[joint],
+		&original->skin->joint_links[joint]);
+	}
+	memcpy(result->skin->inverse_bind_matrices,
+	    original->skin->inverse_bind_matrices,
+	    result->skin->joint_count * sizeof(mat_t));
+	result->skin->vertex_offsets = (uint32_t *)bu_calloc(
+	    result->num_vertices + 1, sizeof(uint32_t), "BOT subset skin offsets");
+	for (size_t vertex = 0; vertex < result->num_vertices; ++vertex) {
+	    int old_vertex = new_to_old[vertex];
+	    if (old_vertex < 0)
+		goto fail;
+	    result->skin->influence_count +=
+		original->skin->vertex_offsets[(size_t)old_vertex + 1] -
+		original->skin->vertex_offsets[(size_t)old_vertex];
+	    result->skin->vertex_offsets[vertex + 1] =
+		(uint32_t)result->skin->influence_count;
+	}
+	result->skin->joint_indices = (uint32_t *)bu_malloc(
+	    result->skin->influence_count * sizeof(uint32_t), "BOT subset skin indices");
+	result->skin->weights = (fastf_t *)bu_malloc(
+	    result->skin->influence_count * sizeof(fastf_t), "BOT subset skin weights");
+	for (size_t vertex = 0; vertex < result->num_vertices; ++vertex) {
+	    size_t old_vertex = (size_t)new_to_old[vertex];
+	    uint32_t old_begin = original->skin->vertex_offsets[old_vertex];
+	    uint32_t count = original->skin->vertex_offsets[old_vertex + 1] - old_begin;
+	    uint32_t new_begin = result->skin->vertex_offsets[vertex];
+	    memcpy(&result->skin->joint_indices[new_begin],
+		&original->skin->joint_indices[old_begin], count * sizeof(uint32_t));
+	    memcpy(&result->skin->weights[new_begin],
+		&original->skin->weights[old_begin], count * sizeof(fastf_t));
+	}
+	if (rt_bot_skin_validate(result, NULL) != BRLCAD_OK)
+	    goto fail;
+    } else if (!face_count) {
+	result->bot_flags &= ~RT_BOT_HAS_SKIN;
+    }
+
     return result;
 
 fail:
@@ -941,6 +1007,15 @@ rt_bot_dup(const struct rt_bot_internal *obot)
 	bot->num_face_uvs = obot->num_face_uvs;
 	bot->face_uvs = (int*)bu_malloc(obot->num_face_uvs * sizeof(int)*3, "bot face_uvs");
 	memcpy(bot->face_uvs, obot->face_uvs, obot->num_face_uvs * sizeof(int)*3);
+    }
+
+    if (obot->skin) {
+	bot->skin = rt_bot_skin_copy(obot->skin, obot->num_vertices);
+	if (!bot->skin) {
+	    rt_bot_internal_free(bot);
+	    BU_PUT(bot, struct rt_bot_internal);
+	    return NULL;
+	}
     }
 
     return bot;

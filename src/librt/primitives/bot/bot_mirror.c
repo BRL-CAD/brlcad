@@ -89,6 +89,9 @@ rt_bot_mirror(struct rt_db_internal *ip, register const plane_t plane)
 	MAT4X3PNT(&bot->vertices[i*3], mirmat, pt);
     }
 
+    if (bot->skin && rt_bot_skin_mat(bot->skin, bot->skin, mirmat) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+
     /* Reverse each faces' order */
     for (i=0; i<bot->num_faces; i++) {
 	int save_face = bot->faces[i*3];

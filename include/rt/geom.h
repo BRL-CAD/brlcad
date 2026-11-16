@@ -266,6 +266,28 @@ struct rt_joint_internal {
 #define RT_JOINT_CK_MAGIC(_p) BU_CKMAG(_p, RT_JOINT_INTERNAL_MAGIC, "rt_joint_internal")
 /** @} */
 
+/** @addtogroup rt_animation */
+/** @{ */
+/*
+ * ID_ANIMATION
+ */
+struct rt_animation_channel {
+    struct bu_vls target_link;
+    uint32_t target;
+    uint32_t interpolation;
+    size_t keyframe_count;
+    fastf_t *times;
+    fastf_t *values;
+};
+
+struct rt_animation_internal {
+    uint32_t magic;
+    size_t channel_count;
+    struct rt_animation_channel *channels;
+};
+#define RT_ANIMATION_CK_MAGIC(_p) BU_CKMAG(_p, RT_ANIMATION_INTERNAL_MAGIC, "rt_animation_internal")
+/** @} */
+
 /** @addtogroup rt_pg */
 /** @{ */
 /**
@@ -793,6 +815,18 @@ struct rt_cline_internal
  * ID_BOT
  */
 
+struct rt_bot_skin
+{
+    size_t joint_count;
+    struct bu_vls *joint_links;
+    mat_t *inverse_bind_matrices;
+
+    size_t influence_count;
+    uint32_t *vertex_offsets;
+    uint32_t *joint_indices;
+    fastf_t *weights;
+};
+
 struct rt_bot_internal
 {
     uint32_t magic;
@@ -855,6 +889,8 @@ struct rt_bot_internal
     int *face_uvs;		/**< @brief array of indices into the
 				 * "uvs" array, one per face vertex
 				 * [num_uvs*3] */
+
+    struct rt_bot_skin *skin;   /**< @brief optional vertex skin binding */
 };
 
 
@@ -891,7 +927,7 @@ struct rt_bot_list {
 #define RT_BOT_USE_NORMALS         0x02 /**< @brief Use the surface normals if they exist */
 #define RT_BOT_USE_FLOATS          0x04 /**< @brief Use the single precision version of "tri_specific" during prep */
 #define RT_BOT_HAS_TEXTURE_UVS     0x08 /**< @brief Has uv texture coordinates at each face vertex */
-#define RT_BOT_HAS_UNUSED1         0x10 /**< @brief TBD */
+#define RT_BOT_HAS_SKIN            0x10 /**< @brief Has a vertex skin binding */
 #define RT_BOT_HAS_UNUSED2         0x20 /**< @brief TBD */
 #define RT_BOT_HAS_UNUSED3         0x40 /**< @brief TBD */
 #define RT_BOT_HAS_UNUSED4         0x80 /**< @brief WARNING: use this flag to denote more bits in the export serialization */

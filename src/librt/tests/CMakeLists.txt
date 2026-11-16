@@ -162,6 +162,9 @@ brlcad_addexec(rt_bot_split
 target_include_directories(rt_bot_split PRIVATE ${BRLCAD_SOURCE_DIR}/src/libbg)
 brlcad_add_test(NAME rt_bot_split COMMAND rt_bot_split)
 
+brlcad_addexec(rt_bot_skin bot_skin.c "librt;libbu;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_bot_skin COMMAND rt_bot_skin)
+
 brlcad_addexec(rt_ars_inside ars_inside.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_ars_inside COMMAND rt_ars_inside)
 
@@ -220,11 +223,15 @@ brlcad_add_test(NAME rt_metaball_adjust COMMAND rt_metaball_adjust)
 brlcad_addexec(rt_joint joint.c "${RT_TEST_LIBS}" TEST)
 brlcad_add_test(NAME rt_joint COMMAND rt_joint)
 
+brlcad_addexec(rt_animation animation.c "${RT_TEST_LIBS}" TEST)
+brlcad_add_test(NAME rt_animation COMMAND rt_animation)
+
 set(
   distcheck_files
   CMakeLists.txt
   arb_intersect.g
   ars_inside.c
+  animation.c
   binary_attribute.c
   binunif.c
   bound_internal.c

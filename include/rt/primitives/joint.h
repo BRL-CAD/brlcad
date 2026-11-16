@@ -141,6 +141,28 @@ struct rt_joint_point_constraint {
     0, NULL, VINIT_ZERO, VINIT_ZERO, 1.0, {NULL, NULL, NULL, NULL} \
 }
 
+#define RT_JOINT_CLOSURE_CONSTRAINT_VERSION 1u
+#define RT_JOINT_CLOSURE_CONSTRAINT_RESERVED 4u
+
+/** Constrain two link-local points to coincide, closing a kinematic loop. */
+struct rt_joint_closure_constraint {
+    size_t size;
+    uint32_t version;
+    uint64_t flags;
+    const char *first_link;
+    point_t first_point;
+    const char *second_link;
+    point_t second_point;
+    fastf_t weight;
+    void *reserved[RT_JOINT_CLOSURE_CONSTRAINT_RESERVED];
+};
+
+#define RT_JOINT_CLOSURE_CONSTRAINT_INIT { \
+    sizeof(struct rt_joint_closure_constraint), \
+    RT_JOINT_CLOSURE_CONSTRAINT_VERSION, 0, NULL, VINIT_ZERO, NULL, \
+    VINIT_ZERO, 1.0, {NULL, NULL, NULL, NULL} \
+}
+
 /** Create a solver-neutral problem whose variables are the ordered joint DOFs. */
 RT_EXPORT extern int rt_joint_problem_create(struct rt_joint_problem **result,
 				      struct rt_joint_internal * const *joints,
@@ -158,6 +180,8 @@ RT_EXPORT extern int rt_joint_problem_set_values(struct rt_joint_problem *proble
 					 const fastf_t *values, size_t count);
 RT_EXPORT extern int rt_joint_problem_add_point(struct rt_joint_problem *problem,
 					const struct rt_joint_point_constraint *constraint);
+RT_EXPORT extern int rt_joint_problem_add_closure(struct rt_joint_problem *problem,
+				  const struct rt_joint_closure_constraint *constraint);
 /** Evaluate residuals and an optional row-major residual-by-variable Jacobian. */
 RT_EXPORT extern int rt_joint_problem_evaluate(const struct rt_joint_problem *problem,
 				       fastf_t *residuals, size_t residual_count,

@@ -151,6 +151,7 @@ set(
   prep.cpp
   ${LIBRT_PRIMEDIT_SOURCES}
   primitives/annot/annot.c
+  primitives/animation/animation.c
   primitives/arb8/arb8.c
   primitives/arb8/arb8_brep.cpp
   primitives/arb8/arb8_mirror.c
@@ -161,6 +162,7 @@ set(
   primitives/ars/ars_brep.cpp
   primitives/ars/ars_mirror.c
   primitives/bot/bot.c
+  primitives/bot/bot_data.c
   primitives/bot/bot_brep.cpp
   primitives/bot/bot_edge.c
   primitives/bot/bot_mirror.c
@@ -483,6 +485,7 @@ brlcad_addlib(librt "${LIBRT_SOURCES}" "${RT_INCLUDE_DIRS}" "${RT_LOCAL_INCLUDE_
     search.cpp
     search_old.cpp
     primitives/annot/annot.c
+    primitives/animation/animation.c
     primitives/vol/vol_brep.cpp
     primitives/dsp/dsp.c
     primitives/ebm/ebm.c

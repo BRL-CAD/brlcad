@@ -3535,8 +3535,12 @@ ged_joint_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc > 0 && BU_STR_EQUAL(argv[0], "object"))
 	status = _ged_joint_object_core(gedp, argc - 1, argv + 1);
+    else if (argc > 0 && BU_STR_EQUAL(argv[0], "animation"))
+	status = _ged_joint_animation_core(gedp, argc - 1, argv + 1);
     else if (argc > 0 && BU_STR_EQUAL(argv[0], "graph"))
 	status = _ged_joint_graph_core(gedp, argc - 1, argv + 1);
+    else if (argc > 0 && BU_STR_EQUAL(argv[0], "skin"))
+	status = _ged_joint_skin_core(gedp, argc - 1, argv + 1);
     else if (argc > 0 && BU_STR_EQUAL(argv[0], "solve"))
 	status = _ged_joint_solve_core(gedp, argc - 1, argv + 1);
     else if (argc > 0 && BU_STR_EQUAL(argv[0], "legacy"))

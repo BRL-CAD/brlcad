@@ -403,6 +403,58 @@ cleanup:
 }
 
 static int
+test_joint_solver_closure(void)
+{
+    struct rt_db_internal first;
+    struct rt_db_internal second;
+    struct rt_joint_internal *joints[2];
+    struct rt_joint_problem *problem = NULL;
+    struct rt_joint_eval_options eval_options = RT_JOINT_EVAL_OPTIONS_INIT;
+    struct rt_joint_closure_constraint constraint = RT_JOINT_CLOSURE_CONSTRAINT_INIT;
+    struct rt_joint_solve_options solve_options = RT_JOINT_SOLVE_OPTIONS_INIT;
+    struct rt_joint_solve_result solve_result = RT_JOINT_SOLVE_RESULT_INIT;
+    fastf_t residuals[3];
+    fastf_t jacobian[6];
+    fastf_t values[2];
+    int result = BRLCAD_ERROR;
+
+    if (make_graph_joint(&first, "base", "left",
+	    "translation unlimited {1 0 0} 0 0 0") != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    if (make_graph_joint(&second, "base", "right",
+	    "translation unlimited {1 0 0} 0 0 4") != BRLCAD_OK)
+	goto cleanup;
+    joints[0] = (struct rt_joint_internal *)first.idb_ptr;
+    joints[1] = (struct rt_joint_internal *)second.idb_ptr;
+    eval_options.root_link = "base";
+    constraint.first_link = "left";
+    constraint.second_link = "right";
+    if (rt_joint_problem_create(&problem, joints, 2, &eval_options) != BRLCAD_OK ||
+	rt_joint_problem_add_closure(problem, &constraint) != BRLCAD_OK ||
+	rt_joint_problem_evaluate(problem, residuals, 3, jacobian, 6) != BRLCAD_OK ||
+	!close_enough(residuals[X], -4.0) ||
+	!close_enough(residuals[Y], 0.0) ||
+	!close_enough(residuals[Z], 0.0) ||
+	!close_enough(jacobian[0], 1.0) ||
+	!close_enough(jacobian[1], -1.0) ||
+	rt_joint_problem_solve(problem, &solve_options, &solve_result) != BRLCAD_OK ||
+	solve_result.status != RT_JOINT_SOLVE_CONVERGED_RESIDUAL ||
+	solve_result.rank != 1 ||
+	!(solve_result.flags & RT_JOINT_SOLVE_RESULT_USED_SVD) ||
+	rt_joint_problem_values(problem, values, 2) != BRLCAD_OK ||
+	!NEAR_EQUAL(values[0], values[1], 1.0e-8) ||
+	!NEAR_EQUAL(values[0] + values[1], 4.0, 1.0e-8))
+	goto cleanup;
+    result = BRLCAD_OK;
+
+cleanup:
+    rt_joint_problem_destroy(problem);
+    rt_db_free_internal(&second);
+    rt_db_free_internal(&first);
+    return result;
+}
+
+static int
 test_joint_solver_rank_deficient(void)
 {
     struct rt_db_internal first;
@@ -483,6 +535,10 @@ main(int argc, char **argv)
     }
     if (test_joint_solver_bounds() != BRLCAD_OK) {
 	bu_log("joint bounded solver failed\n");
+	failures++;
+    }
+    if (test_joint_solver_closure() != BRLCAD_OK) {
+	bu_log("joint closure solver failed\n");
 	failures++;
     }
     if (test_joint_solver_rank_deficient() != BRLCAD_OK) {
