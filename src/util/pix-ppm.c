@@ -238,7 +238,7 @@ main(int argc, char *argv[])
      * gobble up the bytes
      */
     scanbuf = (char *)bu_malloc(size, "scanbuf");
-    if (fread(scanbuf, 1, size, infp) == 0) {
+    if (fread(scanbuf, 1, size, infp) != (size_t)size) {
 	bu_exit (1, "%s: Short read\n", bu_getprogname());
     }
 

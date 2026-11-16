@@ -21,3 +21,13 @@ file(READ "${output_file}" output_hex HEX)
 if(NOT output_hex STREQUAL "50350a3120310a3235350a7f")
   message(FATAL_ERROR "pix-ppm did not write binary PGM data: ${output_hex}")
 endif()
+
+execute_process(
+  COMMAND "${PIX_PPM}" "-#" 3 -s 1 "${input_file}"
+  OUTPUT_QUIET
+  ERROR_QUIET
+  RESULT_VARIABLE short_result
+)
+if(short_result EQUAL 0)
+  message(FATAL_ERROR "pix-ppm accepted a partial input pixel")
+endif()
