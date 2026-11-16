@@ -47,27 +47,7 @@
 
 #include "common.h"
 
-/* brlcad headers */
-
-#include <stdlib.h>
-#include <string.h>
-#include <vector>
-#include <stdio.h>
-
-#include "vmath.h"
-#include "raytrace.h"
-
 #include "art.h"
-
-/* A BRLCAD object from geometry database */
-const char* Model = "brlcad geometry";
-
-struct BRLCAD_to_ASR
-{
-    fastf_t distance;
-    asf::Vector3d normal;
-};
-
 
 class APPLESEED_DLL_EXPORT BrlcadObjectFactory : public asr::IObjectFactory
 {

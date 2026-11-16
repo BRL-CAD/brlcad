@@ -45,28 +45,34 @@
  * (struct rt_i *) Success
  * RTI_NULL Fatal Error
  */
+static struct rt_i *
+dirbuild_from_db(struct db_i *dbip, char *buf, int len)
+{
+    if (dbip == DBI_NULL)
+	return RTI_NULL;
+    RT_CK_DBI(dbip);
+    if (db_dirbuild(dbip) < 0) {
+	db_close(dbip);
+	return RTI_NULL;
+    }
+
+    struct rt_i *rtip = rt_i_create(dbip);
+    if (rtip && buf)
+	bu_strlcpy(buf, dbip->dbi_title, len);
+    db_close(dbip);
+    return rtip;
+}
+
 struct rt_i *
 rt_dirbuild(const char *filename, char *buf, int len)
 {
-    register struct rt_i *rtip;
-    register struct db_i *dbip;		/* Database instance ptr */
+    return dirbuild_from_db(db_open(filename, DB_OPEN_READONLY), buf, len);
+}
 
-    if ((dbip = db_open(filename, DB_OPEN_READONLY)) == DBI_NULL)
-	return RTI_NULL;		/* FAIL */
-    RT_CK_DBI(dbip);
-
-    if (db_dirbuild(dbip) < 0) {
-	db_close(dbip);
-	return RTI_NULL;		/* FAIL */
-    }
-
-    rtip = rt_i_create(dbip);		/* clones dbip */
-    db_close(dbip);				/* releases original dbip */
-
-    if (buf != (char *)NULL)
-	bu_strlcpy(buf, dbip->dbi_title, len);
-
-    return rtip;				/* OK */
+struct rt_i *
+rt_dirbuild_ex(const char *filename, char *buf, int len, unsigned int flags)
+{
+    return dirbuild_from_db(db_open_ex(filename, DB_OPEN_READONLY, flags), buf, len);
 }
 
 

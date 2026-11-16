@@ -143,6 +143,9 @@ extern RT_EXPORT int db_rm_update_nref_clbk(struct db_i *dbip, dbi_update_nref_t
  */
 #define DB_OPEN_READWRITE "rw"
 
+#define DB_OPEN_DEFAULT 0x0u
+#define DB_OPEN_COMB_INSTANCES 0x1u
+
 /**
  * Open the named database.
  *
@@ -168,14 +171,26 @@ RT_EXPORT extern struct db_i *
 db_open(const char *name, const char *mode);
 
 /**
+ * Open a database with an explicit path-interpretation policy.
+ *
+ * DB_OPEN_COMB_INSTANCES enables repeated-arc instance specifiers; otherwise
+ * they are disabled.  This function does not consult the process environment.
+ * The policy is fixed for the returned database's lifetime.  Read-only cache
+ * entries are separated by policy and from the legacy db_open() cache.
+ * Returns DBI_NULL on an unknown flag or an open failure.
+ */
+RT_EXPORT extern struct db_i *
+db_open_ex(const char *name, const char *mode, unsigned int flags);
+
+/**
  * "open" an in-memory-only database instance.  this initializes a
  * dbip for use, creating an inmem dbi_wdbp as the means to add
  * geometry to the directory (use wdb_export_external()).
  */
 RT_EXPORT extern struct db_i * db_open_inmem(void);
 
-#define DB_OPEN_INMEM_DEFAULT 0x0u
-#define DB_OPEN_INMEM_COMB_INSTANCES 0x1u
+#define DB_OPEN_INMEM_DEFAULT DB_OPEN_DEFAULT
+#define DB_OPEN_INMEM_COMB_INSTANCES DB_OPEN_COMB_INSTANCES
 
 /**
  * Create an in-memory database with explicit setup flags.
@@ -213,9 +228,9 @@ RT_EXPORT extern struct db_i * db_create_inmem(void);
  * Report whether combination instance specifiers were enabled when @p dbip
  * was opened.
  *
- * This state is initialized from LIBRT_USE_COMB_INSTANCE_SPECIFIERS and is
- * fixed for the lifetime of the database instance.  Changing the environment
- * after opening a database does not change its path interpretation.
+ * Explicit open flags or the legacy LIBRT_USE_COMB_INSTANCE_SPECIFIERS
+ * environment setting initialize this state.  It is fixed for the database's
+ * lifetime; changing the environment does not change an open database.
  */
 RT_EXPORT extern int db_uses_instance_specifiers(const struct db_i *dbip);
 

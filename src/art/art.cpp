@@ -63,9 +63,8 @@
  *
  * SHADER IMPLEMENTATION NOTES
  * ---------------------------
- * default shader "as_disney_material" is pathed from appleseed root
- * specified when building and pulled from default .oso folder user
- * specified shaders are pathed from build/output/shaders
+ * The default as_plastic material returns a closure that is connected to
+ * as_closure2surface.  Both shaders come from the selected Appleseed install.
  */
 
 #include "common.h"
@@ -79,7 +78,9 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <exception>
 #include <limits>
+#include <memory>
 #include <set>
 #include <string>
 #include <vector>
@@ -104,7 +105,6 @@
 
 
 // appleseed.renderer headers. Only include header files from renderer/api/.
-#include "renderer/api/bsdf.h"
 #include "renderer/api/camera.h"
 #include "renderer/api/color.h"
 #include "renderer/api/environment.h"
@@ -113,14 +113,11 @@
 #include "renderer/api/frame.h"
 #include "renderer/api/light.h"
 #include "renderer/api/log.h"
-#include "renderer/api/material.h"
 #include "renderer/api/object.h"
 #include "renderer/api/project.h"
 #include "renderer/api/rendering.h"
 #include "renderer/api/scene.h"
-#include "renderer/api/surfaceshader.h"
 #include "renderer/api/utility.h"
-#include "renderer/api/shadergroup.h"
 
 // appleseed.foundation headers.
 #include "foundation/core/appleseed.h"
@@ -146,6 +143,7 @@
 
 #include "vmath.h"	/* vector math macros */
 #include "raytrace.h"	/* librt interface definitions */
+#include "materials.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/vls.h"
@@ -160,6 +158,7 @@
 #include "optical/defines.h"
 #include "icv.h"		/* image save/convert */
 #include "bu/file.h"	/* bu_file_delete */
+#include "bu/path.h"
 #include "bu/mime.h"	/* BU_MIME_IMAGE_AUTO */
 #include "bu/str.h"	/* BU_STR_EQUIV */
 
@@ -172,7 +171,6 @@
 #define VERBOSE_STATS 0x00000008
 
 
-struct resource* resources;
 size_t samples = 25;
 size_t light_intensity = 200; // make ambient light match rt
 
@@ -188,15 +186,6 @@ struct ArtLight {
     double fract;	/* "fract"/lt_fraction; <0 => derive from bright */
 };
 static std::vector<ArtLight> art_lights;
-
-/* Region names already registered this frame.  db_walk_tree() invokes
- * register_region() once per PATH to a region, so a region shared/referenced
- * from multiple combs is visited multiple times -- re-registering it would
- * insert duplicate-named Appleseed entities (assembly/object/material), which
- * asserts in appleseed's EntityMap (entitymap.cpp) / corrupts state in release.
- * We register each unique region once. */
-#include <set>
-static std::set<std::string> art_seen_regions;
 
 //size_t light_intensity = 30.0;
 const char* global_title_file;
@@ -514,49 +503,46 @@ art_parse_light_intensity(const struct bu_vls* shader, double* bright, double* f
 }
 
 
+struct ArtSceneBuilder {
+    asr::Scene &scene;
+    const asf::SearchPaths &search_paths;
+    std::set<std::string> region_paths = {};
+    bool valid = true;
+};
+
+
 /* db_walk_tree() callback to register all regions within the scene
- * using either a disney shader with rgb color set on combination regions
- * or specified material OSL optical shader
+ * using an OSL plastic material with the resolved region color.
  */
 static int
-register_region(struct db_tree_state* tsp,
+register_region_impl(struct db_tree_state* tsp,
 		const struct db_full_path* pathp,
 		const struct rt_comb_internal* combp,
 		void* data)
 {
     if (!pathp || !combp || !data)
 	return 1;
-    // We open the db using the region path to get objects name
-    struct directory* dp = DB_FULL_PATH_CUR_DIR(pathp);
-    if (!dp)
-	return 1;
-
-    const char* name;
-    name = dp->d_namep;
-
-    // Register each unique region only once: db_walk_tree() revisits a region
-    // once per path to it, and re-registering inserts duplicate-named Appleseed
-    // entities (assert in EntityMap for multi-region models like toyjeep).
-    if (!art_seen_regions.insert(std::string(name)).second)
-	return 0;
-
-    // Strip the objects name to get correct bounding box
+    auto &builder = *static_cast<ArtSceneBuilder *>(data);
     struct bu_vls path = BU_VLS_INIT_ZERO;
     db_path_to_vls(&path, pathp);
-    const char* name_full;
-    std::string conversion_temp = bu_vls_cstr(&path);
+    const std::string region_path = bu_vls_cstr(&path);
     bu_vls_free(&path);
-    name_full = conversion_temp.c_str();
-    bu_log("name: %s\n", conversion_temp.c_str());
+    const char *name = region_path.c_str();
 
-    // get objects bounding box
-    struct ged* gedp;
-    gedp = ged_open("db", tsp->ts_dbip->dbi_filename, 1);
-    point_t min;
-    point_t max;
-    int ret = rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char**)&name_full, 1, min, max);
+    // Distinct paths, including repeated-arc indices, are distinct instances.
+    if (!builder.region_paths.insert(region_path).second)
+	return 0;
 
-    bu_log("ged: %i | min: %f %f %f | max: %f %f %f\n", ret, V3ARGS(min), V3ARGS(max));
+    point_t min, max;
+    struct bu_vls bounds_error = BU_VLS_INIT_ZERO;
+    const int status = rt_obj_bounds(&bounds_error, tsp->ts_dbip, 1, &name, 1, min, max);
+    if (status != 0) {
+	bu_log("art: cannot bound region '%s': %s\n", name, bu_vls_cstr(&bounds_error));
+	bu_vls_free(&bounds_error);
+	builder.valid = false;
+	return 0;
+    }
+    bu_vls_free(&bounds_error);
 
     /* If this region uses the BRL-CAD "light" shader, treat it as a light
      * source rather than renderable geometry: record its centroid and color
@@ -586,34 +572,14 @@ register_region(struct db_tree_state* tsp,
 	art_lights.push_back(L);
 	bu_log("art: light source '%s' at %g %g %g (bright=%g)\n",
 	       name, L.pos[0], L.pos[1], L.pos[2], L.bright);
-	ged_close(gedp);
 	return 0;
     }
 
-    /*
-      create object paramArray to pass to constructor
-      NOTE: we will need to eventually match brl geometry to appleseed plugin
-    */
-    renderer::ParamArray geometry_parameters = asr::ParamArray()
-	.insert("database_path", name)
-	.insert("object_path", name_full)
-	.insert("object_count", objc)
-	.insert("minX", min[X])
-	.insert("minY", min[Y])
-	.insert("minZ", min[Z])
-	.insert("maxX", max[X])
-	.insert("maxY", max[Y])
-	.insert("maxZ", max[Z]);
-
-
-    asf::auto_release_ptr<renderer::Object> brlcad_object(
-	new BrlcadObject{
-	    name,
-	    geometry_parameters,
-	    &APP, resources});
-
-    // typecast our scene using the callback function 'data'
-    asr::Scene* scene = static_cast<asr::Scene*>(data);
+    const asr::ParamArray geometry_parameters = asr::ParamArray()
+	.insert("database_path", tsp->ts_dbip->dbi_filename)
+	.insert("object_path", name);
+    asf::auto_release_ptr<asr::Object> brlcad_object(
+	new BrlcadObject(name, geometry_parameters, tsp->ts_dbip));
 
     // create assembly for current object
     std::string assembly_name = std::string(name) + "_object_assembly";
@@ -623,17 +589,7 @@ register_region(struct db_tree_state* tsp,
 	    asr::ParamArray()));
 
 
-    /* Build a native Appleseed plastic BSDF for this region.
-     *
-     * NOTE: we deliberately do NOT use an OSL shader group here.  Appleseed's
-     * OSL BSDFs evaluate to zero on ProceduralObject hits in this build (the
-     * OSL closure is never populated for procedural surfaces), so an OSL
-     * material renders every surface as an unlit black silhouette.  Native
-     * BSDFs (Lambertian, plastic, Disney, ...) shade procedural surfaces
-     * correctly, so we map the region's optical properties onto a plastic_brdf
-     * -- which matches BRL-CAD's default "plastic" shader closely (diffuse base
-     * color plus a glossy specular coat). */
-    std::string base_name = std::string(name) + "_mat";
+    const std::string material_name = std::string(name) + "_mat";
 
     /* Diffuse base color.  Prefer the tree-state's resolved material color
      * (tsp->ts_mater.ma_color): db_walk_tree accumulates BRL-CAD's color
@@ -655,56 +611,11 @@ register_region(struct db_tree_state* tsp,
     } else {
 	diffuse_rgb[0] = diffuse_rgb[1] = diffuse_rgb[2] = 1.0f;
     }
-    std::string diffuse_col = base_name + "_diffuse";
-    assembly->colors().insert(
-	asr::ColorEntityFactory::create(
-	    diffuse_col.c_str(),
-	    asr::ParamArray().insert("color_space", "srgb"),
-	    asr::ColorValueArray(3, diffuse_rgb)));
-
-    static const float WhiteSpec[3] = { 1.0f, 1.0f, 1.0f };
-    std::string spec_col = base_name + "_specular";
-    assembly->colors().insert(
-	asr::ColorEntityFactory::create(
-	    spec_col.c_str(),
-	    asr::ParamArray().insert("color_space", "linear_rgb"),
-	    asr::ColorValueArray(3, WhiteSpec)));
-
-    std::string brdf_name = base_name + "_brdf";
-    assembly->bsdfs().insert(
-	asr::PlasticBRDFFactory().create(
-	    brdf_name.c_str(),
-	    asr::ParamArray()
-	    .insert("diffuse_reflectance", diffuse_col.c_str())
-	    .insert("diffuse_reflectance_multiplier", "1.0")
-	    /* Keep the specular coat small and tight: a broad, bright white coat
-	     * reflects the (uniform) environment across the whole surface and
-	     * desaturates the diffuse color.  A small multiplier + low roughness
-	     * gives only a subtle glint, preserving the true region color. */
-	    .insert("specular_reflectance", spec_col.c_str())
-	    .insert("specular_reflectance_multiplier", "0.06")
-	    .insert("roughness", "0.08")
-	    .insert("ior", "1.5")));
-
-    // Create a physical surface shader and insert it into the assembly.
-    assembly->surface_shaders().insert(
-	asr::PhysicalSurfaceShaderFactory().create(
-	    "Material_mat_surface_shader",
-	    asr::ParamArray()
-	    .insert("lighting_samples", "1")
-	    )
-	);
-
-    // Create the material that binds the BSDF to the surface.
-    std::string material_mat = base_name;
-    assembly->materials().insert(
-	asr::GenericMaterialFactory().create(
-	    material_mat.c_str(),
-	    asr::ParamArray()
-	    .insert("bsdf", brdf_name.c_str())
-	    .insert("surface_shader", "Material_mat_surface_shader")
-	    )
-	);
+    if (!art_add_material(assembly.ref(), material_name.c_str(), diffuse_rgb,
+	    tsp->ts_dbip, combp, builder.search_paths)) {
+	builder.valid = false;
+	return 0;
+    }
 
     // insert object into object array in assembly
     assembly->objects().insert(brlcad_object);
@@ -718,11 +629,11 @@ register_region(struct db_tree_state* tsp,
 	    name,
 	    asf::Transformd::identity(),
 	    asf::StringDictionary()
-	    .insert("default", material_mat.c_str())
+	    .insert("default", material_name.c_str())
 	    ));
 
     // add assembly to assemblies array in scene
-    scene->assemblies().insert(assembly);
+    builder.scene.assemblies().insert(assembly);
 
     // finally, we add an instance to use the assembly in the render
     std::string assembly_inst_name = assembly_name + "_inst";
@@ -737,9 +648,23 @@ register_region(struct db_tree_state* tsp,
 	.set_transform(
 	    0.0f,
 	    asf::Transformd::identity());
-    scene->assembly_instances().insert(assembly_instance);
+    builder.scene.assembly_instances().insert(assembly_instance);
 
     return 0;
+}
+
+
+static int
+register_region(struct db_tree_state *state, const struct db_full_path *path,
+    const struct rt_comb_internal *combination, void *data)
+{
+    try {
+	return register_region_impl(state, path, combination, data);
+    } catch (const std::exception &error) {
+	bu_log("art: cannot register region: %s\n", error.what());
+	static_cast<ArtSceneBuilder *>(data)->valid = false;
+	return 0;
+    }
 }
 
 
@@ -819,7 +744,7 @@ do_ae(double azim, double elev)
 
 
 static asf::auto_release_ptr<asr::Project>
-build_project(const char* file)
+build_project()
 {
     /* If user gave no sizing info at all, use 512 as default */
     struct bu_vls dimensions = BU_VLS_INIT_ZERO;
@@ -830,16 +755,25 @@ build_project(const char* file)
 
     // Create an empty project.
     asf::auto_release_ptr<asr::Project> project(asr::ProjectFactory::create("test project"));
-    project->search_paths().push_back_explicit_path("build/Debug");
-    // add precompiled shaders from appleseed
+    // Keep asset lookup stable when invoked from another directory.
+    char database_path[MAXPATHLEN];
+    struct bu_vls directory = BU_VLS_INIT_ZERO;
+    if (!bu_file_realpath(APP.a_rt_i->rti_dbip->dbi_filename, database_path) ||
+	!bu_path_component(&directory, database_path, BU_PATH_DIRNAME)) {
+	bu_log("art: cannot resolve the database asset directory\n");
+	bu_vls_free(&directory);
+	return asf::auto_release_ptr<asr::Project>();
+    }
+    project->search_paths().set_root_path(bu_vls_cstr(&directory));
+    project->search_paths().push_back_explicit_path("shaders");
+    bu_vls_free(&directory);
+
+    // Add the shader libraries from the selected Appleseed installation.
     char root[MAXPATHLEN];
     const char* sp;
     sp = bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, "shaders/appleseed", NULL);
     if (sp) project->search_paths().push_back_explicit_path(sp);
     sp = bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, "shaders/max", NULL);
-    if (sp) project->search_paths().push_back_explicit_path(sp);
-    // add path for materialX converted shaders
-    sp = bu_dir(root, MAXPATHLEN, BU_DIR_INIT, "output/shaders", NULL);
     if (sp) project->search_paths().push_back_explicit_path(sp);
 
     // Add default configurations to the project.
@@ -870,27 +804,30 @@ build_project(const char* file)
     // Materials
     //------------------------------------------------------------------------
 
+    ArtSceneBuilder builder{scene.ref(), project->search_paths()};
+
     // walk the db to register all regions
     struct db_tree_state state;
     RT_DBTS_INIT(&state);
-    struct db_i* dbip = db_open(file, DB_OPEN_READONLY);
-    state.ts_dbip = dbip;
+    state.ts_dbip = APP.a_rt_i->rti_dbip;
 
     /* discovered lights are collected by register_region() during the walk */
     art_lights.clear();
-    art_seen_regions.clear();
 
     if (objc) {
-	db_walk_tree(APP.a_rt_i->rti_dbip, objc, (const char**)objv, 1, &state, register_region, NULL, NULL, reinterpret_cast<void*>(scene.get()));
+	db_walk_tree(APP.a_rt_i->rti_dbip, objc, (const char**)objv, 1, &state, register_region, NULL, NULL, &builder);
     }
     if (cmd_objs) {
 
 	size_t cmdobjc = BU_PTBL_LEN(cmd_objs);
 	const char** cmdobjv = (const char**)cmd_objs->buffer;
 	if (cmdobjc) {
-	    db_walk_tree(APP.a_rt_i->rti_dbip, (int)cmdobjc, cmdobjv, 1, &state, register_region, NULL, NULL, reinterpret_cast<void*>(scene.get()));
+	    db_walk_tree(APP.a_rt_i->rti_dbip, (int)cmdobjc, cmdobjv, 1, &state, register_region, NULL, NULL, &builder);
 	}
     }
+
+    if (!builder.valid)
+	return asf::auto_release_ptr<asr::Project>();
 
     //------------------------------------------------------------------------
     // Light
@@ -1291,6 +1228,13 @@ art_render_image(asr::Project& project, ArtTileCallback* callback = nullptr)
 {
     asr::DefaultRendererController controller;
     asf::SearchPaths resource_search_paths;
+    char headers[MAXPATHLEN];
+    const char *path = bu_dir(headers, MAXPATHLEN, APPLESEED_ROOT, "share/OSL/shaders", NULL);
+    if (path)
+	resource_search_paths.push_back_explicit_path(path);
+    path = bu_dir(headers, MAXPATHLEN, APPLESEED_ROOT, "shaders", NULL);
+    if (path)
+	resource_search_paths.push_back_explicit_path(path);
     asr::MasterRenderer renderer(
 	project,
 	project.configurations().get_by_name("final")->get_inherited_parameters(),
@@ -1329,7 +1273,9 @@ art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
 	def_tree(APP.a_rt_i);
 
     do_ae(azimuth, elevation);
-    asf::auto_release_ptr<asr::Project> project(build_project(global_title_file));
+    asf::auto_release_ptr<asr::Project> project(build_project());
+    if (!project.get())
+	return -1;
 
     return art_display_project(project.ref()) ? 0 : -1;
 }
@@ -1413,20 +1359,16 @@ main(int argc, char **argv)
     }
 
 
-    resources = static_cast<resource*>(bu_calloc(1, sizeof(resource) * MAX_PSW, "appleseed"));
     char title[1024] = { 0 };
 
     /* load the specified geometry database */
-    rtip = rt_dirbuild(title_file, title, sizeof(title));
+    rtip = rt_dirbuild_ex(title_file, title, sizeof(title), DB_OPEN_COMB_INSTANCES);
     if (rtip == RTI_NULL) {
 	RENDERER_LOG_INFO("building the database directory for [%s] FAILED\n", title_file);
 	return -1;
     }
 
-    for (int ic = 0; ic < MAX_PSW; ic++) {
-	rt_init_resource(&resources[ic], ic, rtip);
-	RT_CK_RESOURCE(&resources[ic]);
-    }
+    std::unique_ptr<struct rt_i, decltype(&rt_i_destroy)> database(rtip, rt_i_destroy);
 
     /* print optional title */
     if (title[0]) {
@@ -1439,8 +1381,6 @@ main(int argc, char **argv)
     /* configure raytrace application */
     APP.a_rt_i = rtip;
     APP.a_onehit = 1;
-    APP.a_hit = brlcad_hit;
-    APP.a_miss = brlcad_miss;
 
     if (objv) {
 
@@ -1468,7 +1408,6 @@ main(int argc, char **argv)
 	    if (nret < 0)
 		break;
 	}
-	bu_free(resources, "appleseed");
 	return nret < 0 ? BRLCAD_ERROR : BRLCAD_OK;
     }
 
@@ -1477,10 +1416,12 @@ main(int argc, char **argv)
     // RENDERER_LOG_INFO("View model: (%f, %f, %f)", eye_model[0], eye_model[2], -eye_model[1]);
 
     // Build the project.
-    asf::auto_release_ptr<asr::Project> project(build_project(title_file));
+    asf::auto_release_ptr<asr::Project> project(build_project());
+    if (!project.get()) {
+	return BRLCAD_ERROR;
+    }
 
     const bool success = art_display_project(project.ref());
-    bu_free(resources, "appleseed");
 
     return success ? BRLCAD_OK : BRLCAD_ERROR;
 }

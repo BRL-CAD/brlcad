@@ -1,0 +1,286 @@
+= Rendering BRL-CAD Models with art
+:doctype: article
+:toc:
+:toclevels: 3
+
+`art` renders BRL-CAD databases using Appleseed for light transport and
+librt for geometry intersections.  The integration is under development.
+This document records the design contract, acceptance criteria, and
+verified capabilities; planned capabilities are not promises of current
+support.
+
+== Application and renderer responsibilities
+
+* BRL-CAD owns the database, Boolean geometry evaluation, instance paths,
+  region and material assignments, attributes, and database units.
+* `art` translates that information into an Appleseed scene and owns the
+  application workflow, asset resolution, diagnostics, and image output.
+* Appleseed owns light transport, sampling, OSL shader execution, closure
+  interpretation, texture services, and rendering outputs.
+* bext supplies the pinned dependency stack and installation machinery.
+
+Use public renderer and OSL APIs.  BRL-CAD geometry continues to use librt;
+adding native Appleseed geometry or another intersection backend must not
+change the meaning of BRL-CAD Boolean evaluation.
+
+Material translation must preserve full instance identity and resolved
+inheritance.  Object, world, camera, and shader coordinate spaces and the
+conversion from database units must be explicit.  Surface orientation is
+geometric information: it must not be replaced with a view-dependent normal
+when crossing a renderer interface.
+
+Keep ownership explicit for prepared geometry, per-worker librt resources,
+shader groups, and renderer state.  Repeated renders must release or reuse
+that state deliberately, without relying on process termination.  Share
+prepared geometry only where instance transforms and material assignments
+remain correct.
+
+A requested shader, parameter, or asset that cannot be used must produce an
+actionable error.  Defaults apply to unspecified inputs; they must not hide
+an invalid explicit material assignment.  Unsupported features must be
+reported rather than silently approximated.
+
+== Existing implementations
+
+The 2011 liboptical implementation (`sh_osl.cpp`, `liboslrend`, and
+`render_svc`) contains examples of shader parameters, networks, hit-point
+inputs, reflection/refraction, and worker state.  Its private OSL interfaces
+and custom closure sampling are historical implementation details, not the
+interface for a modern Appleseed integration.  Recover useful semantics and
+examples as public-API implementations and regression cases.
+
+The later `art` prototype introduced Appleseed procedural objects and read
+shader names from a material object's optical `OSL` property.  OSL shading
+was disabled in July 2026 after black renders and replaced with native
+plastic materials.  Retest the failure using the modern dependency stack;
+its historical diagnosis does not establish a general OSL limitation on CSG
+or procedural objects.
+
+Do not remove legacy user-facing behavior without identifying its
+replacement and documenting any migration requirements.  Share material
+representation and validation where there are actual consumers; keep
+renderer-specific transport and execution in the renderer.
+
+== Current verified baseline
+
+The modernized dependency build has been exercised with LLVM 23.1.5, OSL
+1.15, OpenImageIO 3.2, and OpenEXR 3.5.  Optional LLVM/Clang libxml2 support
+is disabled.  The OSL compatibility patch also accommodates LLVM builds
+that have libxml2 enabled.
+
+[cols="2,3"]
+|===
+|Capability |Evidence and remaining boundary
+
+|OSL plastic on librt geometry
+|`regress-art` checks a colored sphere, a Boolean box with inherited color,
+and a solid BOT.  Coverage includes multiple aspect ratios and projections,
+PNG/PIX output, single/multiple workers, and error exits.  Basic
+material-object selection and custom diffuse surface shaders are covered.
+UV mapping, networks, general parameter authoring, and advanced closures
+remain unqualified.
+
+|Region instances
+|Full indexed database paths distinguish occurrences under different parents
+and repeated arcs in one combination.  `regress-art` checks translated
+instances with inherited colors and two separated occurrences of one region.
+
+|Ray boundaries and resource ownership
+|`regress-art-intersections` checks entry/exit and Boolean cut normals,
+non-unit ray directions, clipping intervals, concurrent objects, more than
+`MAX_PSW` sequential worker lifetimes, and repeated object destruction.
+Each procedural object owns its prepared geometry and leases private librt
+resources per query.  Query results have call-local storage.  Large-scale
+and thin-geometry ray offsets, UV mapping, and derivatives remain open.
+
+|OSL execution and native Appleseed mesh scenes
+|The development validation includes a native JIT probe, material and
+texture renders, and selected Appleseed unit suites.  These provide
+independent renderer references; librt BOT coverage comes from `regress-art`.
+
+|Installed builds across platforms
+|The current renderer validation was performed on FreeBSD.  Linux, Windows,
+and macOS runtime qualification and relocatable installation remain open.
+|===
+
+== Basic rendering
+
+A development build with Appleseed enabled can render selected database
+objects with the default OSL plastic material:
+
+----
+art -a 35 -e 25 -w 640 -n 480 -P 4 -c "set samples=64" \
+    -o view.png model.g all.g
+----
+
+Region colors include colors resolved through combination inheritance.
+The default material is a modest specular coat over a diffuse base.  This
+baseline does not yet translate every BRL-CAD optical shader or provide a
+complete custom-material authoring interface.
+
+The material graph connects `as_plastic.out_outColor` to
+`as_closure2surface.in_input`.  A library material node that only returns
+an output closure does not itself set the OSL surface result `Ci`.  A
+controlled comparison with the modern stack produced black material
+surfaces on both a native Appleseed mesh and its procedural sphere when
+that terminal connection was absent; adding it restored shading on both.
+The `art` regression now exercises the connected graph on librt CSG and
+BOT geometry.  This identifies a wiring failure independently of any
+remaining renderer compatibility or geometric-shading issues.
+
+== Selecting an OSL material
+
+The existing `material` command can select a compiled OSL shader for a
+region.  For example, in MGED:
+
+----
+material create paint.material Paint
+material set paint.material optical OSL as_plastic
+material set paint.material optical OSL.output out_outColor
+material assign ball.r paint.material
+material get paint.material optical OSL
+----
+
+The optical `OSL` property names the shader.  For a library shader node,
+`OSL.output` selects a scalar closure-color output and defaults to
+`out_outColor`.  `art` connects it to `as_closure2surface`.  A shader declared
+as `surface` writes `Ci` itself and must not specify `OSL.output`.
+
+Shaders are queried through Appleseed's public metadata interface before
+rendering.  Missing shaders, invalid outputs, and invalid material-object
+references stop the render with an error.  The region's resolved sRGB color
+is converted to linear RGB and supplied to a compatible scalar `in_color`
+input, when present.  Other shader parameters currently retain their
+shader defaults; a complete typed parameter/network interface remains a
+planned milestone.  Material-object parent inheritance and per-instance
+material overrides also require further qualification.
+
+== Project shader assets
+
+`art` resolves project assets relative to the database directory, including
+its `shaders` subdirectory, and also searches the selected Appleseed shader
+libraries.  Build-directory paths and the caller's working directory are
+not part of the project convention.  Keep database-relative asset paths
+when moving a project to another directory.
+
+For a custom surface shader, save this source as `painted.osl`:
+
+[source,c]
+----
+surface painted(color in_color = color(1))
+{
+    Ci = in_color * diffuse(N);
+}
+----
+
+Compile with the OSL compiler and standard headers from the renderer's
+dependency installation.  Here `RENDERER_PREFIX` identifies that installation:
+
+----
+mkdir -p shaders
+"$RENDERER_PREFIX/bin/oslc" -I "$RENDERER_PREFIX/share/OSL/shaders" \
+    -o shaders/painted.oso painted.osl
+----
+
+Place the database beside the `shaders` directory.  Select the shader in
+MGED, removing the closure-output property because this shader writes `Ci`
+directly:
+
+----
+material set paint.material optical OSL painted
+material remove paint.material optical OSL.output
+----
+
+`regress-art` compiles its diffuse shader using the selected dependency
+installation and renders it on a sphere, a Boolean solid, and a BOT.  Its
+project directory contains spaces and is separate from the rendering
+working directory.  A second fixture returns an ordinary color output;
+selecting that output as a material closure is rejected before rendering.
+
+== Development milestones
+
+Each milestone requires source changes, documentation, and appropriate
+regressions.  A capability is supported only after its complete user path
+has passed, including installation and asset lookup where applicable.
+
+. *Design and regression inventory.*  Maintain the responsibility contract
+  and capability matrix.  Inventory the useful legacy behavior and create
+  small reference scenes.  Exit when each planned feature has a known
+  implementation boundary and observable acceptance test.
+. *Basic OSL through librt.*  Use a simple diffuse material on a native
+  Appleseed mesh, a librt sphere, a Boolean subtraction, and a BOT mesh.
+  Isolate shader wiring from intersection behavior.  Exercise multiple
+  regions, inherited colors, and explicit shader errors.  Exit when OSL
+  shading is demonstrated on all geometry paths with automated checks.
+. *Geometry and shading correctness.*  Test full database paths, repeated
+  instances, transforms, material inheritance, entry/exit boundaries,
+  subtraction normals, back faces, and rays originating inside solids.
+  Validate offsets over different model scales.  Define UVs and their
+  limitations on primitives, Boolean cut faces, and BOTs; test position-based
+  mapping independently.  Validate tangent and differential behavior and
+  repeated-render resource ownership.  Exit when diagnostic shaders and
+  intersection tests agree with known geometry and threading is reliable.
+. *Material authoring.*  Define a versioned representation for shader names,
+  typed parameters, networks, connections, assets, and mapping settings.
+  Integrate material objects with documented inheritance and override
+  precedence.  Preserve useful existing assignments through explicit
+  compatibility rules.  Provide command-based creation, inspection,
+  validation, modification, saving, and reopening, with examples.  Exit when
+  installed applications can reproduce the material workflow independently
+  of the build tree and current working directory.
+. *Core surface shading.*  Qualify diffuse and glossy reflection, metals,
+  glass and absorption, transparency, emission, layering, procedural
+  patterns, image textures, and bump/normal mapping.  Test secondary rays,
+  nested dielectrics, cavities, thin surfaces, and transmitted shadows.
+  Expose useful BRL-CAD attributes through renderer services.  Specify color
+  spaces and distance units.  Exit when documented materials work on CSG
+  and BOT geometry with semantic image checks and defined tolerances.
+. *Boost removal.*  Audit declared components before replacing code.  Migrate
+  containers and optional values, atomics/time, filesystem, threading, and
+  specialized facilities in separate changes.  Combine rendering regressions
+  with focused tests of changed path, pattern, and concurrency behavior.
+  Exit when the intended renderer build has no Boost build or runtime
+  dependency and its regression suite passes, including Windows behavior.
+. *Rendering workflow and quality.*  Expose coherent sampling, convergence,
+  bounce limits, lighting, environment, camera, and output controls.  Separate
+  camera background appearance from environment illumination.  Finish
+  supported light translation.  Provide diagnostic AOVs, deliberate color
+  management, progress, cancellation, saveview input, framebuffer output,
+  repeated frames, and scene/material inspection.  Exit when documented
+  commands render representative models reproducibly with useful errors.
+. *Advanced capabilities.*  Qualify subsurface scattering, participating
+  media, animation/motion blur, additional shader queries, and integrators
+  individually against the pinned Appleseed implementation.  Treat true
+  displacement separately from bump mapping: displacing exact CSG boundaries
+  needs an explicit geometry strategy.  Define overlapping-volume semantics.
+  Evaluate MaterialX after the OSL network model is stable, and evaluate TBB
+  and Embree through measured requirements.  Exit for each capability requires
+  an implementation, examples, tests, and documented limits.  Unresolved
+  capabilities remain open milestones.
+. *Production qualification.*  Exercise relocatable installed builds on
+  FreeBSD, Linux, Windows, and macOS.  Validate shader/compiler compatibility,
+  caches, assets, cancellation, cleanup, malformed input, and large scenes.
+  Record scene-preparation time, memory, intersections, shader execution, and
+  thread scaling before optimizing measured bottlenecks.  Finish user and
+  developer documentation and legacy migration guidance.  Exit when fresh
+  installations pass the documented workflows and platform results are
+  recorded; unavailable platform evidence is not a passing result.
+
+== Validation rules
+
+* Keep small cases with known geometric, material, and visibility answers.
+  Pair appropriate cases with native Appleseed scenes to separate renderer
+  behavior from the BRL-CAD adapter.
+* Compile shader fixtures with the selected OSL compiler and headers.  Check
+  renderer diagnostics as well as exit status; an image file alone is not
+  proof of successful shader execution.
+* Prefer geometric/color/energy bounds for stochastic renders.  Use exact
+  pixel comparisons only for controlled deterministic cases.
+* Check finite pixels, expected visible regions, material identity, image
+  dimensions, output files, and error behavior.  Maintain focused lower-level
+  tests for intersection, mapping, filesystem, and threading changes.
+* Exercise single-worker and multi-worker rendering and multiple renders in
+  one process.  Use sanitizers and resource measurements where supported.
+* Preserve meaningful regressions during dependency changes.  Passing a
+  narrow shader or mesh test does not establish complete CSG, material,
+  installation, or platform support.

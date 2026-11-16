@@ -3,6 +3,7 @@ set(
   TEMPLATE.adoc
   about.adoc
   adrt_pathtrace.adoc
+  art.adoc
   build_pattern.adoc
   build_region.adoc
   camo_shader.adoc
