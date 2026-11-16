@@ -208,8 +208,8 @@ main(int argc, char **argv)
         icv_add_val(img, -ICV_CONV_8BIT(kernel[kernel_index].kernoffset));
 
         if (dflag) {
-            if (ZERO(kerndiv))
-            icv_multiply_val(img, ICV_CONV_8BIT(kernel[kernel_index].kerndiv/kerndiv));
+	    icv_multiply_val(img,
+		(double)kernel[kernel_index].kerndiv / (double)kerndiv);
         }
 
         if (oflag)
