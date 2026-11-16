@@ -83,6 +83,8 @@
 #include <cmath>
 #include <mutex>
 #include <memory>
+#include <limits>
+#include <algorithm>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -100,7 +102,12 @@ const char *const Model = "brlcad geometry";
 
 struct RayHit {
     double distance;
-    asf::Vector3d normal;
+    asf::Vector3d geometric_normal;
+    asf::Vector3d shading_normal;
+    asf::Vector2f uv = asf::Vector2f(0.0f);
+    asr::ProceduralObject::SurfaceDerivatives derivatives;
+    bool compute_shading = false;
+    const char *error = nullptr;
 };
 
 struct DestroyResource {
@@ -135,10 +142,50 @@ brlcad_hit(struct application *ap, struct partition *head, struct seg *UNUSED(se
 	    flip = part->pt_outflip;
 	}
 	if (!hit || !solid) continue;
-	vect_t normal;
-	RT_HIT_NORMAL(normal, hit, solid, &ap->a_ray, flip);
 	result.distance = hit->hit_dist;
-	result.normal = asf::Vector3d(V3ARGS(normal));
+	if (!result.compute_shading)
+	    return 1;
+	vect_t geometric, shading;
+	struct xray *ray = hit->hit_rayp ? hit->hit_rayp : &ap->a_ray;
+	if (rt_obj_normals(hit, solid, ray, geometric, shading) != 0) {
+	    result.error = "Primitive normal query failed";
+	    return 1;
+	}
+	// Legacy UV callbacks consume a computed point and primitive shading normal.
+	struct hit shading_hit = *hit;
+	VJOIN1(shading_hit.hit_point, ray->r_pt, hit->hit_dist, ray->r_dir);
+	VMOVE(shading_hit.hit_normal, shading);
+	if (flip) {
+	    VREVERSE(geometric, geometric);
+	    VREVERSE(shading, shading);
+	}
+	result.geometric_normal = asf::Vector3d(V3ARGS(geometric));
+	result.shading_normal = asf::Vector3d(V3ARGS(shading));
+	if (solid->st_meth->ft_uv) {
+	    struct uvcoord uv = {0, 0, 0, 0};
+	    if (rt_obj_uv(ap, solid, &shading_hit, &uv) != 0) {
+		result.error = "Primitive UV query failed";
+		return 1;
+	    }
+	    result.uv = asf::Vector2f(static_cast<float>(uv.uv_u), static_cast<float>(uv.uv_v));
+	    if (!std::isfinite(result.uv[0]) || !std::isfinite(result.uv[1]))
+		result.error = "Primitive produced nonfinite UV coordinates";
+	}
+	struct rt_surface_derivatives derivatives = RT_SURFACE_DERIVATIVES_INIT_ZERO;
+	const int status = rt_obj_surface_derivatives(ap, solid, hit, &derivatives);
+	if (status == RT_DERIVATIVES_ERROR) {
+	    result.error = "Primitive surface derivative query failed";
+	    return 1;
+	}
+	if (status == RT_DERIVATIVES_OK) {
+	    result.derivatives.m_valid = true;
+	    result.derivatives.m_dpdu = asf::Vector3d(V3ARGS(derivatives.dpdu));
+	    result.derivatives.m_dpdv = asf::Vector3d(V3ARGS(derivatives.dpdv));
+	    // Boolean cuts reverse the normal field, preserving its UV chart.
+	    const double normal_sign = flip ? -1.0 : 1.0;
+	    result.derivatives.m_dndu = normal_sign * asf::Vector3d(V3ARGS(derivatives.dndu));
+	    result.derivatives.m_dndv = normal_sign * asf::Vector3d(V3ARGS(derivatives.dndv));
+	}
 	return 1;
     }
     return 0;
@@ -272,9 +319,9 @@ BrlcadObject::get_material_slot(const size_t UNUSED(index)) const
 
 
 bool
-BrlcadObject::trace(const asr::ShadingRay &ray, IntersectionResult &result) const
+BrlcadObject::trace(const asr::ShadingRay &ray, IntersectionResult *result) const
 {
-    result.m_hit = false;
+    if (result) result->m_hit = false;
     const double length = asf::norm(ray.m_dir);
     if (!(length > 0.0) || !std::isfinite(length) || !(ray.m_tmin < ray.m_tmax))
 	return false;
@@ -284,9 +331,11 @@ BrlcadObject::trace(const asr::ShadingRay &ray, IntersectionResult &result) cons
     app.a_rt_i = m_trace->rtip.get();
     app.a_resource = resource.get();
     app.a_onehit = 1;
+    app.a_no_hit_snap = 1;
     app.a_hit = brlcad_hit;
     app.a_miss = brlcad_miss;
     RayHit hit;
+    hit.compute_shading = result != nullptr;
     app.a_uptr = &hit;
 
     // librt requires unit directions and reports distance from the shifted
@@ -300,56 +349,65 @@ BrlcadObject::trace(const asr::ShadingRay &ray, IntersectionResult &result) cons
     const double distance = ray.m_tmin + hit.distance / length;
     if (!(distance < ray.m_tmax))
 	return false;
-    result.m_hit = true;
-    result.m_distance = distance;
-    result.m_geometric_normal = asf::normalize(hit.normal);
-    result.m_shading_normal = result.m_geometric_normal;
-    result.m_uv = asf::Vector2f(1.0f);
-    result.m_material_slot = 0;
+    if (result) {
+	if (hit.error)
+	    throw std::runtime_error(std::string(hit.error) + " for '" + get_name() + "'");
+	result->m_hit = true;
+	result->m_distance = distance;
+	result->m_geometric_normal = hit.geometric_normal;
+	result->m_shading_normal = hit.shading_normal;
+	result->m_uv = hit.uv;
+	result->m_derivatives = hit.derivatives;
+	result->m_material_slot = 0;
+    }
     return true;
 }
 
 void
 BrlcadObject::intersect(const asr::ShadingRay &ray, IntersectionResult &result) const
 {
-    trace(ray, result);
+    trace(ray, &result);
 }
 
 bool
 BrlcadObject::intersect(const asr::ShadingRay &ray) const
 {
-    IntersectionResult result;
-    return trace(ray, result);
+    return trace(ray, nullptr);
 }
 
 
-// Compute a front point, a back point and the geometric normal in object
-// instance space for a given ray with origin being a point on the surface
 void
 BrlcadObject::refine_and_offset(
-    const asf::Ray3d& obj_inst_ray,
-    asf::Vector3d& obj_inst_front_point,
-    asf::Vector3d& obj_inst_back_point,
-    asf::Vector3d& obj_inst_geo_normal) const
+    const asf::Ray3d &ray,
+    const asf::Vector3d &geometric_normal,
+    asf::Vector3d &front,
+    asf::Vector3d &back,
+    asf::Vector3d &offset_normal) const
 {
-    /* Offset the spawned-ray origins off the surface so the next path segment
-     * does not immediately self-intersect.  We offset along the incoming ray
-     * direction (front = the side the ray came from), which needs neither the
-     * surface normal nor an extra ray shot. */
-    const double dlen = std::sqrt(obj_inst_ray.m_dir[0]*obj_inst_ray.m_dir[0]
-			       + obj_inst_ray.m_dir[1]*obj_inst_ray.m_dir[1]
-			       + obj_inst_ray.m_dir[2]*obj_inst_ray.m_dir[2]);
-    const double mag = std::sqrt(obj_inst_ray.m_org[0]*obj_inst_ray.m_org[0]
-			       + obj_inst_ray.m_org[1]*obj_inst_ray.m_org[1]
-			       + obj_inst_ray.m_org[2]*obj_inst_ray.m_org[2]);
-    const double eps = 1.0e-4 * (mag > 1.0 ? mag : 1.0);
-    asf::Vector3d d = (dlen > 0.0)
-	? asf::Vector3d(obj_inst_ray.m_dir[0]/dlen, obj_inst_ray.m_dir[1]/dlen, obj_inst_ray.m_dir[2]/dlen)
-	: asf::Vector3d(0.0, 0.0, 1.0);
-
-    obj_inst_geo_normal = -d;
-    obj_inst_front_point = obj_inst_ray.m_org - eps * d;   // reflection side (toward viewer)
-    obj_inst_back_point  = obj_inst_ray.m_org + eps * d;   // transmission side
+    offset_normal = asf::normalize(asf::faceforward(geometric_normal, ray.m_dir));
+    const auto &point = ray.m_org;
+    const auto *rtip = m_trace->rtip.get();
+    const double position_scale = std::max({std::abs(point[0]), std::abs(point[1]), std::abs(point[2])});
+    const double extent = std::max({rtip->mdl_max[0] - rtip->mdl_min[0],
+	rtip->mdl_max[1] - rtip->mdl_min[1], rtip->mdl_max[2] - rtip->mdl_min[2]});
+    // Allow several rounding steps for hit-point reconstruction and placement.
+    // Object extent supplies the scale near zero, without a distance-unit floor.
+    constexpr double OFFSET_ROUNDING_STEPS = 8;
+    const double distance = OFFSET_ROUNDING_STEPS * std::numeric_limits<double>::epsilon() *
+	(position_scale + extent);
+    const auto displacement = distance * offset_normal;
+    front = point + displacement;
+    back = point - displacement;
+    // Round away from the surface so placement cannot cancel a small offset.
+    for (size_t axis = 0; axis < 3; ++axis) {
+	if (offset_normal[axis] > 0.0) {
+	    front[axis] = std::nextafter(front[axis], INFINITY);
+	    back[axis] = std::nextafter(back[axis], -INFINITY);
+	} else if (offset_normal[axis] < 0.0) {
+	    front[axis] = std::nextafter(front[axis], -INFINITY);
+	    back[axis] = std::nextafter(back[axis], INFINITY);
+	}
+    }
 }
 
 

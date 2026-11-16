@@ -448,6 +448,55 @@ first_dsp_soltab(struct rt_i *rtip)
 
 
 static int
+check_hit_normals(const char *label, struct soltab *stp, struct xray *ray, const struct hit *hit)
+{
+    const unsigned short *samples;
+    unsigned int xcount, ycount;
+    fastf_t transform[16];
+    int cuttype, smooth;
+    dsp_query_terrain(stp, &samples, &xcount, &ycount, transform, &cuttype, &smooth);
+    // These fixtures use diagonal scales: compare each component independently.
+    vect_t expected = {hit->hit_normal[X] / transform[0],
+	hit->hit_normal[Y] / transform[5], hit->hit_normal[Z] / transform[10]};
+    VUNITIZE(expected);
+    struct hit legacy = *hit;
+    if (rt_obj_norm(&legacy, stp, ray) != 0)
+	return 1;
+    vect_t saved_normal;
+    VMOVE(saved_normal, hit->hit_normal);
+    for (int repeat = 0; repeat < 2; ++repeat) {
+	vect_t geometric, shading;
+	if (rt_obj_normals(hit, stp, ray, geometric, shading) < 0 ||
+	    VINVALID(geometric) || VINVALID(shading) ||
+	    !VNEAR_EQUAL(geometric, expected, DSP_RAY_CHECK_TOLERANCE) ||
+	    !VNEAR_EQUAL(shading, legacy.hit_normal, DSP_RAY_CHECK_TOLERANCE) ||
+	    !VNEAR_EQUAL(saved_normal, hit->hit_normal, DSP_RAY_CHECK_TOLERANCE)) {
+	    printf("    FAIL: %s separate DSP normals are incorrect or mutate the hit\n", label);
+	    return 1;
+	}
+    }
+    const vect_t directions[] = {{1, 0, -0.01}, {-1, 0, -0.01}, {0, 0, 1}};
+    point_t point;
+    VJOIN1(point, ray->r_pt, hit->hit_dist, ray->r_dir);
+    for (size_t view = 0; view < sizeof(directions) / sizeof(directions[0]); ++view) {
+	struct xray alternate = *ray;
+	VMOVE(alternate.r_dir, directions[view]);
+	VUNITIZE(alternate.r_dir);
+	VJOIN1(alternate.r_pt, point, -hit->hit_dist, alternate.r_dir);
+	vect_t geometric, shading;
+	if (rt_obj_normals(hit, stp, &alternate, geometric, shading) < 0 ||
+	    VINVALID(geometric) || VINVALID(shading) ||
+	    !VNEAR_EQUAL(geometric, expected, DSP_RAY_CHECK_TOLERANCE) ||
+	    !VNEAR_EQUAL(shading, legacy.hit_normal, DSP_RAY_CHECK_TOLERANCE)) {
+	    printf("    FAIL: %s DSP shading direction changes with view %zu\n", label, view);
+	    return 1;
+	}
+    }
+    return 0;
+}
+
+
+static int
 check_direct_ray(const char *label, struct soltab *stp, struct rt_i *rtip,
 	const point_t origin, const vect_t direction,
 	int expect_segments, double expect_in, double expect_out,
@@ -492,6 +541,8 @@ check_direct_ray(const char *label, struct soltab *stp, struct rt_i *rtip,
 		    label, segp->seg_out.hit_dist, expect_out);
 	    failures++;
 	}
+	failures += check_hit_normals(label, stp, &ap.a_ray, &segp->seg_in);
+	failures += check_hit_normals(label, stp, &ap.a_ray, &segp->seg_out);
 	if (check_top_normal) {
 	    struct hit nhit = segp->seg_in;
 	    if (nhit.hit_surfno != DSP_TEST_ZTOP) {

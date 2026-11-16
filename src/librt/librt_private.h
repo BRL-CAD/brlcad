@@ -455,6 +455,13 @@ RT_EXPORT extern void rt_vshot_via_shot(
     struct soltab **stp, struct xray **rp, struct seg *segp, int n,
     struct application *ap);
 
+/* Native azimuth/elevation chart at a point projected onto the unit sphere. */
+extern int rt_unit_sphere_uv_derivatives(const vect_t point, vect_t dpdu, vect_t dpdv);
+
+/* Differentiate N/|N| without losing the normalization term. */
+extern int rt_normalize_derivative(vect_t result, const vect_t normal,
+    const vect_t derivative);
+
 /* Shoot a BoT using prep state owned by another primitive. */
 struct bot_specific;
 RT_EXPORT extern int rt_bot_shot_specific(

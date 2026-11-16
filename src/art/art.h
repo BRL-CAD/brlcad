@@ -112,6 +112,7 @@ public:
 
     void refine_and_offset(
 	const asf::Ray3d& obj_inst_ray,
+	const asf::Vector3d& geometric_normal,
 	asf::Vector3d& obj_inst_front_point,
 	asf::Vector3d& obj_inst_back_point,
 	asf::Vector3d& obj_inst_geo_normal) const override;
@@ -120,7 +121,7 @@ private:
     class RaytraceState;
     std::unique_ptr<RaytraceState> m_trace;
 
-    bool trace(const asr::ShadingRay& ray, IntersectionResult& result) const;
+    bool trace(const asr::ShadingRay& ray, IntersectionResult* result) const;
 };
 
 

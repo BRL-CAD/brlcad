@@ -155,6 +155,21 @@ struct uvcoord {
     fastf_t uv_du;      /**< @brief delta in u */
     fastf_t uv_dv;      /**< @brief delta in v */
 };
+/** Derivatives with respect to a primitive's native (u, v) mapping. */
+struct rt_surface_derivatives {
+    vect_t dpdu;
+    vect_t dpdv;
+    vect_t dndu;
+    vect_t dndv;
+};
+#define RT_SURFACE_DERIVATIVES_INIT_ZERO { VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO }
+
+enum rt_derivative_status {
+    RT_DERIVATIVES_OK = 0,
+    RT_DERIVATIVES_UNAVAILABLE = 1,
+    RT_DERIVATIVES_ERROR = -1
+};
+
 #define RT_HIT_UVCOORD(ap, _stp, _hitp, uvp) { \
 	RT_CK_HIT(_hitp); \
 	RT_CK_SOLTAB(_stp); \

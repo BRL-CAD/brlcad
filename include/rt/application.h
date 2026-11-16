@@ -119,6 +119,8 @@ struct application {
     fastf_t             a_diverge;      /**< @brief  slope of beam divergence/mm */
     int                 a_return;       /**< @brief  Return of a_hit()/a_miss() */
     int                 a_no_booleans;  /**< @brief  1= partitions==segs, no booleans */
+    int                 a_no_hit_snap;  /**< @brief  Preserve signed near-origin distances and forward boundaries.
+                                        * Boolean coalescing and model tolerances still apply. */
     char **             attrs;          /**< @brief  null terminated list of attributes
 					 * This list should be the same as passed to
 					 * rt_gettrees_and_attrs() */
