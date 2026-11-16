@@ -37,8 +37,8 @@ struct fb;
 class ArtTileCallback final : public renderer::ITileCallback
 {
 public:
-    explicit ArtTileCallback(struct fb *framebuffer, double exposure = 0.0)
-	: m_framebuffer(framebuffer), m_exposure(exposure) {}
+    explicit ArtTileCallback(struct fb *framebuffer, double exposure = 0.0, size_t passes = 1)
+	: m_framebuffer(framebuffer), m_exposure(exposure), m_passes(passes) {}
     ~ArtTileCallback() override;
     ArtTileCallback(const ArtTileCallback&) = delete;
     ArtTileCallback& operator=(const ArtTileCallback&) = delete;
@@ -61,6 +61,7 @@ public:
 private:
     struct fb *m_framebuffer;
     const ArtDisplayExposure m_exposure;
+    const size_t m_passes;
     std::atomic<bool> m_failed{false};
     size_t m_completed_tiles = 0;
     size_t m_total_tiles = 0;

@@ -1,0 +1,104 @@
+cmake_minimum_required(VERSION 3.22)
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/photon-controls-output")
+include("@CMAKE_CURRENT_BINARY_DIR@/art_photon_test_commands.cmake")
+set(ART_COMMAND_TIMEOUT 30)
+set(PHOTON_CONTROLS "integrator=sppm passes=2 light_photons=1000 environment_photons=0 photon_max_bounces=2 photon_rr_min_path_length=0 photon_max_estimate=10000 photon_importons=0 photon_radius_percent=0.05 photon_alpha=0.7 max_bounces=0 rr_min_path_length=0")
+set(PHOTON_RESET "light_photons=inherit environment_photons=inherit photon_max_bounces=inherit photon_rr_min_path_length=inherit photon_max_estimate=inherit photon_importons=inherit photon_radius_percent=inherit photon_alpha=inherit")
+run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}" -c "set inspect_materials=1" -c set "${ACTUAL_DB}" receiver.box.r)
+if(NOT command_output MATCHES "integrator=pt" OR NOT command_output MATCHES "passes=inherit")
+  message(FATAL_ERROR "The default renderer or pass count changed")
+endif()
+foreach(control IN ITEMS light_photons environment_photons photon_max_bounces photon_rr_min_path_length
+    photon_max_estimate photon_importons photon_radius_percent photon_alpha)
+  if(NOT command_output MATCHES "${control}=inherit")
+    message(FATAL_ERROR "Photon default was overridden: ${control}")
+  endif()
+endforeach()
+run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}" -c "set inspect_materials=1" -c "set ${PHOTON_CONTROLS}" -c set
+  "${ACTUAL_DB}" receiver.box.r)
+foreach(value IN ITEMS "integrator=sppm" "passes=2" "light_photons=1000" "environment_photons=0"
+    "photon_max_bounces=2" "photon_rr_min_path_length=0" "photon_max_estimate=10000"
+    "photon_importons=0" "photon_radius_percent=0.05")
+  if(NOT command_output MATCHES "${value}")
+    message(FATAL_ERROR "Photon control was not retained: ${value}")
+  endif()
+endforeach()
+run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}" -c "set inspect_materials=1" -c "set ${PHOTON_CONTROLS}"
+  -c "set integrator=pt passes=inherit ${PHOTON_RESET}" -c set "${ACTUAL_DB}" receiver.box.r)
+if(NOT command_output MATCHES "integrator=pt" OR NOT command_output MATCHES "passes=inherit")
+  message(FATAL_ERROR "Photon controls could not be reset atomically")
+endif()
+foreach(settings IN ITEMS "integrator=unknown" "integrator=sppm sampling=adaptive"
+    "sampling=adaptive passes=2" "passes=0" "passes=-1" "passes=2147483648"
+    "light_photons=1" "photon_alpha=0.7" "integrator=sppm light_photons=-1"
+    "integrator=sppm environment_photons=2147483648" "integrator=sppm photon_max_bounces=-2"
+    "integrator=sppm photon_rr_min_path_length=-1" "integrator=sppm photon_max_estimate=0"
+    "integrator=sppm photon_importons=2" "integrator=sppm photon_alpha=0"
+    "integrator=sppm photon_alpha=1.01" "integrator=sppm photon_alpha=nan"
+    "integrator=sppm photon_alpha=1e-50" "integrator=sppm photon_radius_percent=0"
+    "integrator=sppm photon_radius_percent=100.01" "integrator=sppm photon_radius_percent=1junk"
+    "integrator=sppm max_diffuse_bounces=0" "integrator=sppm max_glossy_bounces=0"
+    "integrator=sppm max_specular_bounces=0" "integrator=sppm next_event_estimation=1"
+    "integrator=sppm light_photons=1000 passes=0")
+  file(WRITE "${WORK}/retained.exr" "preserve existing output")
+  expect_failure_matching("invalid setting" "${EXEC}" -c "set ${settings}"
+    -o "${WORK}/retained.exr" "${ACTUAL_DB}" receiver.box.r)
+  file(READ "${WORK}/retained.exr" retained)
+  if(NOT retained STREQUAL "preserve existing output")
+    message(FATAL_ERROR "Invalid photon configuration replaced an output")
+  endif()
+endforeach()
+# Clear direct lighting calibrates both engines independently of photon estimates.
+render_photon_reference(1 "${WORK}/clear-reference.exr")
+file(WRITE "${WORK}/frames.view"
+  "start 0; end; start 1; clean; end; start 2; set integrator=pt ${PHOTON_RESET}; end; start 3; set ${PHOTON_CONTROLS}; end;\n")
+run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE INPUT_FILE "${WORK}/frames.view" "${EXEC}" ${BASE_ARGS} -M
+  -c "set ${PHOTON_CONTROLS}" -o "${WORK}/frames.exr" "${ACTUAL_DB}" receiver.box.r key_light.r)
+set(frame_output "${command_output}")
+if(NOT frame_output MATCHES "sppm pass 2 completed")
+  message(FATAL_ERROR "The selected photon engine did not run")
+endif()
+foreach(frame RANGE 0 3)
+  set(suffix ".${frame}")
+  if(frame EQUAL 0)
+    set(suffix "")
+  endif()
+  run("${VEXEC}" check-image "${WORK}/frames${suffix}.exr" ${SIZE} ${SIZE})
+  compare_radiance_mean("${WORK}/frames${suffix}.exr" "${WORK}/clear-reference.exr" 0.0011 FALSE)
+  if(NOT frame_output MATCHES "art: frame ${frame} complete: 2/2 tiles")
+    message(FATAL_ERROR "Pass progress was not reset for frame ${frame}")
+  endif()
+endforeach()
+# A disabled caustic path through the cover must stay dark.
+run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}" ${BASE_ARGS} -c "set ${PHOTON_CONTROLS} enable_caustics=0"
+  -o "${WORK}/disabled.exr" "${ACTUAL_DB}" receiver.box.r slab.box.r key_light.r)
+run("${VEXEC}" check-image "${WORK}/disabled.exr" ${SIZE} ${SIZE})
+run("${TOOL}" --fail 0.000001 --hardfail 0.000001 "${WORK}/disabled.exr" --ch R,G,B
+  --pattern constant:color=0,0,0 ${SIZE}x${SIZE} 3 --diff)
+
+# A photon worker cannot continue with a truncated initial medium list.
+# The camera is outside this stack; the point emitter is inside all nine layers.
+set(members)
+set(LIGHT_Z 10)
+foreach(half_width RANGE 1 9)
+  math(EXPR lower "${LIGHT_Z} - ${half_width}")
+  math(EXPR upper "${LIGHT_Z} + ${half_width}")
+  run("${VEXEC}" in "${ACTUAL_DB}" "stack${half_width}.s" rpp
+    -${half_width} ${half_width} -${half_width} ${half_width} ${lower} ${upper})
+  run("${VEXEC}" r "${ACTUAL_DB}" "stack${half_width}.r" u "stack${half_width}.s")
+  run("${VEXEC}" material "${ACTUAL_DB}" assign "stack${half_width}.r" glass.material)
+  list(APPEND members u "stack${half_width}.r")
+endforeach()
+run("${VEXEC}" comb "${ACTUAL_DB}" stack.g ${members})
+set(image "${WORK}/overflow.exr")
+file(WRITE "${image}" "preserve existing output")
+run_command("${CMAKE_CURRENT_BINARY_DIR}" TRUE "${EXEC}" ${BASE_ARGS} -w 1 -n 1
+  -c "eye_pt 0 0 30" -c "set ${PHOTON_CONTROLS}"
+  -o "${image}" "${ACTUAL_DB}" stack.g key_light.r)
+if(NOT command_output MATCHES "worker thread [0-9]+: job was terminated [(]too many initial optical media[)]")
+  message(FATAL_ERROR "Initial photon media overflow did not report a worker error: ${command_output}")
+endif()
+file(READ "${image}" retained)
+if(NOT retained STREQUAL "preserve existing output")
+  message(FATAL_ERROR "A photon worker failure replaced existing output")
+endif()

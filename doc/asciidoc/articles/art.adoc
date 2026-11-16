@@ -438,6 +438,7 @@ Path controls pass through to Appleseed's path tracer.  They default to
 |`max_specular_bounces` |8 |Number of ideal reflection or refraction continuations
 |`rr_min_path_length` |6 |Path length before Russian roulette may prune paths
 |`next_event_estimation` |1 |Estimate lighting explicitly at surface vertices
+|`enable_caustics` |0 |Allow glossy/specular paths after diffuse or volume scattering
 |===
 
 The four bounce limits accept nonnegative integers, `-1` to remove that
@@ -453,7 +454,8 @@ limits, so a zero cap need not make a surface black.
 
 `rr_min_path_length=0` disables Russian roulette; positive values select
 the minimum path length, and `inherit` restores the default.
-`next_event_estimation` accepts `0`, `1`, or `inherit`.  Leave it enabled
+`next_event_estimation` and `enable_caustics` accept `0`, `1`, or `inherit`.
+Leave next-event estimation enabled
 for normal rendering; disabling it can help isolate sampled continuation
 paths during shader diagnosis.  These controls do not enable participating
 media, thin glass, or transport features that the geometry adapter has
@@ -979,6 +981,127 @@ per-pixel bound limits stochastic differences.  A zero-absorption control
 must disagree with the absorbing reference.  This qualifies the tested
 closed-box paths; curved or nested rough interfaces, transmitted shadows,
 and caustic lighting remain outside these cases.
+
+=== Illumination through glass
+
+Use `set enable_caustics=1` when light paths must continue from a diffuse
+surface through ideal or rough glass.  The native path-tracer default is
+off.  With that default, a visible surface beneath a glass cover can stay
+dark even when the environment illuminates the outside of the cover.
+The option permits the missing scattering sequences; it can also increase
+noise and the sampling budget needed for convergence.  `0` disables them,
+and `inherit` restores the native default.  Assignments persist across
+frames and `clean`, like the other path controls.
+
+The `regress-art-caustics-clear` and `regress-art-caustics-absorption`
+checks compare smooth-slab illumination with an independent
+Lambert/Fresnel/Beer hemisphere integral.  The reference sums the internal
+reflection series between the parallel interfaces.  CSG and solid BOT
+slabs cover indices 1.5 and 2, clear and absorbing volumes, disabled/enabled
+paths.  `regress-art-caustics-state` checks frame/reset behavior, and
+`regress-art-caustics-rough` compares a rough absorbing slab with
+a separate native Appleseed triangle scene.  Receiver channel means agree
+within 1 percent; disabled controls retain only the bounded contribution
+from grazing rays that miss the finite slab.  The fixture isolates one
+diffuse bounce and allows up to 64 dielectric continuations.
+
+These cases establish illumination through glass from a broad environment.
+Point-light transmission is covered by the photon mapper below.
+Directional emitters and general caustic focusing still need separate
+integration and qualification.
+
+=== Photon mapping for point-light transmission
+
+`set integrator=sppm` selects Appleseed's stochastic progressive photon
+mapper.  `integrator=pt` retains the default path tracer.  Photon mapping
+can illuminate receivers through ideal glass from point emitters, whose
+refracted paths cannot be found by ordinary camera path tracing.  The
+qualified scenes use emitters outside a homogeneous slab and at its
+midplane.  These checks do not qualify arbitrary caustic focusing,
+rough or nested photon paths, or area emitters.
+
+Use uniform sampling for photon mapping.  `samples` is the camera sample
+budget per pixel per pass; `passes` controls the number of passes.  More
+photons and passes reduce sampling error, while the photon lookup radius
+controls spatial smoothing.  These controls are independent of the camera
+sample budget.  The existing progress report counts tiles across all
+passes, and cancellation preserves existing output files.
+
+[cols="1,1,3",options="header"]
+|===
+|Setting |Native default |Meaning
+|`passes` |1 |Uniform rendering passes, for either integrator
+|`light_photons` |1000000 |Photons emitted by scene lights per pass
+|`environment_photons` |1000000 |Environment photons per pass
+|`photon_max_bounces` |-1 |Photon-path bounce limit; -1 is unbounded
+|`photon_rr_min_path_length` |6 |Photon roulette threshold; 0 disables roulette
+|`photon_max_estimate` |100 |Maximum photons in a density estimate
+|`photon_importons` |1 |Enable photon storage guided by camera-visible points
+|`photon_radius_percent` |0.1 |Initial lookup radius as a percentage of the scene bounding-box diagonal
+|`photon_alpha` |0.7 |Progressive radius reduction parameter, greater than 0 and at most 1
+|===
+
+All numeric controls accept `inherit`.  Photon counts may be zero to
+disable that emitter class; the estimate limit and pass count must be
+positive.  The initial radius must be positive and at most 100 percent.
+Photon-specific assignments require `integrator=sppm`.  Reset them to
+`inherit` when switching to `pt`, in the same `set` command if necessary.
+Settings persist across frames and `clean`.
+
+`max_bounces` and `rr_min_path_length` control camera paths in either
+integrator.  Photon paths have their own corresponding controls above.
+`enable_caustics` applies to the selected integrator; the native default
+is off for PT and on for SPPM.  Per-type camera bounce caps and
+`next_event_estimation` are PT controls and must be reset to `inherit`
+before switching to SPPM.  Unsupported combinations fail before rendering
+or replacing output, rather than being silently ignored.  Adaptive
+sampling and multiple uniform passes are distinct modes; adaptive
+sampling currently requires PT and one pass.
+
+For example, after assigning physical glass and selecting point emitters:
+
+----
+set integrator=sppm sampling=uniform samples=1 passes=32 light_photons=1000000 environment_photons=0 photon_radius_percent=0.05 photon_max_estimate=10000
+----
+
+Radius percentages depend on the entire scene bounds.  A very large
+surrounding object can make the same percentage too broad for a small
+mechanism.  Inspect scene bounds and adjust the radius for the intended
+detail; increased photon counts cannot undo excessive spatial smoothing.
+
+The four `regress-art-photon-csg-*` and `regress-art-photon-bot-*` checks
+compare point-lit slab transmission at IORs 1.5 and 2 with an independent
+axial Lambert/Fresnel reference.  Each uses 32 passes of one million
+photons, with a 1-percent channel-mean bound.  Their two-bounce photon cap
+permits one entry and exit before the first diffuse hit, excluding later
+diffuse interreflection and internally reflected bundles.
+
+The four `regress-art-photon-inside-*` checks put the point emitter at the
+slab's midplane and keep the camera outside the glass.  Both geometry kinds
+cover indices 1.5 and 2 with clear and absorbing glass.  Each render uses
+32 passes of 500000 photons and a 1-percent channel-mean bound.  A wider
+receiver view averages distinct photon neighborhoods.  The independent
+reference inverts Snell's law, converts emitted solid angle to receiver
+area, evaluates angular Fresnel transmission, and applies Beer attenuation
+over the actual oblique glass path.  An index-one control first compares
+that spatial reference with direct point-light illumination in air.
+The one-bounce photon cap admits one exit before the first diffuse hit;
+wrong-IOR and missing-absorption controls must fail.
+
+Appleseed discovers containing closed optical media at physical path
+origins, including photon emitters, before tracing the first segment.
+Correcting only the IOR at the first exit would omit absorption between
+an interior source and that boundary.  These cases qualify initial smooth
+slab photon transport on CSG and solid BOT geometry.  Rough or nested
+photon paths, general caustic focusing, participating media, and sampled
+emission from librt surfaces remain open qualification.
+Separate checks exercise control errors, repeated frames, engine changes,
+cumulative progress and cancellation, including framebuffer cleanup.
+Initial state is limited to eight containing optical objects, including
+subordinate media.  Exceeding that limit at a photon emitter reports a
+worker error, aborts the render, and preserves existing output.  Renderer
+errors are observed during rendering as well as cleanup; later passes must
+not wait indefinitely after photon workers fail.
 
 === Nested optical volumes
 

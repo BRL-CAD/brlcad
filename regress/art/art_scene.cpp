@@ -54,6 +54,19 @@ write_osl_material(struct rt_wdb *db, const char *name, struct bu_attribute_valu
     return success;
 }
 
+static bool
+create_key_light(struct rt_wdb *db, const point_t position)
+{
+    constexpr double LIGHT_RADIUS = 0.25;
+    const unsigned char white[] = {255, 255, 255};
+    struct wmember members;
+    BU_LIST_INIT(&members.l);
+    // The sphere supplies a centroid for ART's translated point emitter.
+    return mk_sph(db, "key_light.s", position, LIGHT_RADIUS) == 0 &&
+	mk_addmember("key_light.s", &members.l, NULL, WMOP_UNION) &&
+	mk_lcomb(db, "key_light.r", &members, 1, "light", "bright=1", white, 0) == 0;
+}
+
 static int
 create_scene(const char *path, const char *shader, const char *output)
 {
@@ -156,11 +169,7 @@ create_scene(const char *path, const char *shader, const char *output)
 
     // The surface regression selects this region as a point-light source.
     const point_t key_position = {0, 0, 40};
-    const unsigned char white[] = {255, 255, 255};
-    BU_LIST_INIT(&members.l);
-    success = success && mk_sph(db, "key_light.s", key_position, 0.25) == 0 &&
-	mk_addmember("key_light.s", &members.l, NULL, WMOP_UNION) &&
-	mk_lcomb(db, "key_light.r", &members, 1, "light", "bright=1", white, 0) == 0;
+    success = success && create_key_light(db, key_position);
     BU_LIST_INIT(&members.l);
     success = success && mk_addmember("key_light.r", &members.l, NULL, WMOP_UNION) &&
 	mk_lcomb(db, "key_light.g", &members, 0, NULL, NULL, red, 1) == 0;
@@ -239,6 +248,62 @@ create_shared_nested_groups(struct rt_wdb *db, const char *kind,
 	}
     }
     return true;
+}
+
+
+static int
+create_lit_glass_scene(const char *path, const bool light_inside = false)
+{
+    struct rt_wdb *db = wdb_fopen(path);
+    if (!db)
+	return 1;
+    constexpr double SOURCE_HALF_WIDTH = 10;
+    // A wide slab bounds the omitted grazing irradiance below 0.01 percent.
+    constexpr double PLANE_HALF_WIDTH = 1000;
+    constexpr double THICKNESS = 1;
+    constexpr double SLAB_BASE = 5;
+    const point_t low = {-SOURCE_HALF_WIDTH, -SOURCE_HALF_WIDTH, -SOURCE_HALF_WIDTH};
+    const point_t high = {SOURCE_HALF_WIDTH, SOURCE_HALF_WIDTH, SOURCE_HALF_WIDTH};
+    bool success = mk_rpp(db, "source.box", low, high) == 0 &&
+	art_test::make_mesh(db, "source.mesh", art_test::MeshUV::None) == 0;
+    const struct { const char *name; const char *shader; const char *color; } materials[] = {
+	{"receiver.material", "art_diffuse", "color 0.25 0.5 0.75"},
+	{"glass.material", "as_glass", nullptr}
+    };
+    for (const auto& material : materials) {
+	struct bu_attribute_value_set optical;
+	bu_avs_init_empty(&optical);
+	bu_avs_add(&optical, "OSL", material.shader);
+	if (material.color)
+	    bu_avs_add(&optical, "OSL.param.in_color", material.color);
+	success = success && write_osl_material(db, material.name, &optical);
+	bu_avs_free(&optical);
+    }
+    const struct { const char *name; double center; const char *material; } layers[] = {
+	{"receiver", -THICKNESS / 2, "receiver.material"},
+	{"slab", SLAB_BASE + THICKNESS / 2, "glass.material"}
+    };
+    struct wmember members;
+    for (const char *kind : {"box", "mesh"}) {
+	const std::string solid = std::string("source.") + kind;
+	for (const auto& layer : layers) {
+	    mat_t transform;
+	    MAT_IDN(transform);
+	    transform[0] = transform[5] = PLANE_HALF_WIDTH / SOURCE_HALF_WIDTH;
+	    transform[10] = THICKNESS / (2 * SOURCE_HALF_WIDTH);
+	    transform[MDZ] = layer.center;
+	    const std::string region = std::string(layer.name) + "." + kind + ".r";
+	    BU_LIST_INIT(&members.l);
+	    success = success && mk_addmember(solid.c_str(), &members.l, transform, WMOP_UNION) &&
+		mk_lcomb(db, region.c_str(), &members, 1, NULL, NULL, NULL, 0) == 0 &&
+		db5_update_attribute(region.c_str(), "material_name", layer.material, db->dbip) == 0;
+	}
+    }
+    constexpr double EXTERNAL_LIGHT_Z = 10;
+    const point_t key_position = {0, 0, light_inside ? SLAB_BASE + THICKNESS / 2 : EXTERNAL_LIGHT_Z};
+    success = success && create_key_light(db, key_position);
+    wdb_close(db);
+    return success ? 0 : 1;
 }
 
 
@@ -762,6 +827,10 @@ main(int argc, char **argv)
 #endif
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create-contour-limit"))
 	return create_contour_limit_scene(argv[2]);
+    if (argc == 3 && BU_STR_EQUAL(argv[1], "create-lit-glass-inside"))
+	return create_lit_glass_scene(argv[2], true);
+    if (argc == 3 && BU_STR_EQUAL(argv[1], "create-lit-glass"))
+	return create_lit_glass_scene(argv[2]);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create-nested"))
 	return create_nested_scene(argv[2]);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create"))

@@ -31,6 +31,8 @@ set(ART_TEST_SHADER_NAMES
   art_curved_reference
   art_rough_glass_reference
   art_rough_furnace_reference
+  art_glass_lighting_reference
+  art_photon_reference
   art_mirror_mixture
   art_mirror_node
   art_surface_reference
@@ -39,6 +41,19 @@ set(ART_TEST_SHADER_NAMES
   art_instance_materials
 )
 set(ART_REGRESSION_TIMEOUT 180)
+# The energy cases use 32 million photons to bound estimator error at 1 percent.
+set(ART_PHOTON_REGRESSION_TIMEOUT 420)
+# Inside-light cases compare clear and absorbing transport in separate batches.
+set(ART_PHOTON_INSIDE_REGRESSION_TIMEOUT 1560)
+function(art_regression_timeout name result)
+  if(name MATCHES "^regress-art-photon-inside-(csg|bot)-")
+    set(${result} ${ART_PHOTON_INSIDE_REGRESSION_TIMEOUT} PARENT_SCOPE)
+  elseif(name MATCHES "^regress-art-photon-(csg|bot)-")
+    set(${result} ${ART_PHOTON_REGRESSION_TIMEOUT} PARENT_SCOPE)
+  else()
+    set(${result} ${ART_REGRESSION_TIMEOUT} PARENT_SCOPE)
+  endif()
+endfunction()
 set(ART_REGRESSION_TEST_NAMES
   regress-art
   regress-art-bump
@@ -57,6 +72,19 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-rough-glass
   regress-art-rough-energy
   regress-art-rough-paths
+  regress-art-caustics-clear
+  regress-art-caustics-absorption
+  regress-art-caustics-state
+  regress-art-caustics-rough
+  regress-art-photon-csg-15
+  regress-art-photon-csg-20
+  regress-art-photon-bot-15
+  regress-art-photon-bot-20
+  regress-art-photon-inside-csg-15
+  regress-art-photon-inside-csg-20
+  regress-art-photon-inside-bot-15
+  regress-art-photon-inside-bot-20
+  regress-art-photon-controls
   regress-art-refraction
   regress-art-nested
   regress-art-mixture
@@ -83,7 +111,7 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-exposure
 )
 if(UNIX)
-  list(APPEND ART_REGRESSION_TEST_NAMES regress-art-cancel)
+  list(APPEND ART_REGRESSION_TEST_NAMES regress-art-cancel regress-art-photon-cancel)
 endif()
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
@@ -93,9 +121,20 @@ endif()
 
 cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   art_nested_test_commands.cmake art_curved_test_commands.cmake
-  art_rough_box.appleseed.in art_rough_box.obj
+  art_caustic_test_commands.cmake.in art_photon_test_commands.cmake.in
+  art_rough_box.appleseed.in art_rough_box.obj art_lit_glass.appleseed.in
   art_installed_runtime.cmake.in art-installed-material.cmake.in
   art-installed-plate.cmake.in art-installed-view.cmake.in
+  regress-art-photon-csg-15.cmake.in
+  regress-art-photon-csg-20.cmake.in
+  regress-art-photon-bot-15.cmake.in
+  regress-art-photon-bot-20.cmake.in
+  regress-art-photon-inside-csg-15.cmake.in
+  regress-art-photon-inside-csg-20.cmake.in
+  regress-art-photon-inside-bot-15.cmake.in
+  regress-art-photon-inside-bot-20.cmake.in
+  regress-art-photon-controls.cmake.in
+  regress-art-photon-cancel.cmake.in
   art_scene.cpp art_test_mesh.h art_glass_reference.h art_test_commands.cmake
   regress-art.cmake.in regress-art-bump.cmake.in regress-art-normal.cmake.in
   regress-art-texture.cmake.in regress-art-color.cmake.in
@@ -104,6 +143,7 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-shared-media.cmake.in regress-art-curved-media.cmake.in
   regress-art-curved-contact.cmake.in regress-art-rough-glass.cmake.in
   regress-art-rough-energy.cmake.in regress-art-rough-paths.cmake.in
+  regress-art-caustics-clear.cmake.in regress-art-caustics-absorption.cmake.in regress-art-caustics-state.cmake.in regress-art-caustics-rough.cmake.in
   regress-art-refraction.cmake.in
   regress-art-mixture.cmake.in regress-art-surface.cmake.in regress-art-nested.cmake.in
   regress-art-metal-energy.cmake.in regress-art-coat.cmake.in
@@ -124,7 +164,8 @@ if(TARGET art AND BUILD_TESTING)
   brlcad_addexec(art_scene_test art_scene.cpp "libged;libwdb;libicv" TEST)
   add_dependencies(art_scene_test art_test_shaders)
   foreach(test IN LISTS ART_REGRESSION_TEST_NAMES)
-    brlcad_regression_test(${test} "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT ${ART_REGRESSION_TIMEOUT})
+    art_regression_timeout("${test}" timeout)
+    brlcad_regression_test(${test} "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT ${timeout})
   endforeach()
   add_test(NAME regress-art-render-control COMMAND art_render_control_test)
   brlcad_regression_test(regress-art-render-control "art_render_control_test" TEST_DEFINED TIMEOUT 30)
@@ -141,6 +182,16 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/rough-glass-output"
     "${CMAKE_CURRENT_BINARY_DIR}/rough-energy-output"
     "${CMAKE_CURRENT_BINARY_DIR}/rough-paths-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/caustics-clear-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/caustics-absorption-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/caustics-state-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/caustics-rough-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/regress-art-photon-csg-15-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/regress-art-photon-csg-20-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/regress-art-photon-bot-15-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/regress-art-photon-bot-20-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/photon-controls-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/photon-cancel-output"
     "${CMAKE_CURRENT_BINARY_DIR}/refraction-output"
     "${CMAKE_CURRENT_BINARY_DIR}/nested-output"
     "${CMAKE_CURRENT_BINARY_DIR}/mixture-output"

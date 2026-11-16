@@ -47,3 +47,14 @@ run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}" -h)
 if(NOT command_output MATCHES "-F framebuffer")
   message(FATAL_ERROR "The supported framebuffer option is absent from help")
 endif()
+
+# A full-frame emitter removes edge-sampling variance from the pass comparison.
+run("${EXEC}" ${RENDER_ARGS} -c "viewsize 4"
+  -o "${WORK}/single-pass.png" "${DB}" cube.r)
+# A tile callback begins once per pass; reporting must retain cumulative work.
+run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}" ${RENDER_ARGS}
+  -c "viewsize 4" -c "set passes=3" -o "${WORK}/passes.png" "${DB}" cube.r)
+if(NOT command_output MATCHES "art: frame 0 complete: 12/12 tiles [(]100%[)]")
+  message(FATAL_ERROR "Multiple passes did not report cumulative tile progress")
+endif()
+run("${VEXEC}" check-uniform-image "${WORK}/passes.png" "${WORK}/single-pass.png" 37 35)

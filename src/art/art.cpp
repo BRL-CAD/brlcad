@@ -78,7 +78,6 @@
 
 #include <algorithm>
 #include <array>
-#include <atomic>
 #include <charconv>
 #include <cctype>
 #include <cstddef>
@@ -229,9 +228,17 @@ struct ArtEnvironmentControls {
 ArtEnvironmentControls environment_controls;
 
 enum class ArtSamplingMode { Uniform, Adaptive };
+enum class ArtIntegrator { PathTracing, PhotonMapping };
+
+static const char *
+art_integrator_name(ArtIntegrator integrator)
+{
+    return integrator == ArtIntegrator::PhotonMapping ? "sppm" : "pt";
+}
 
 struct ArtRenderSettings {
     ArtSamplingMode sampling = ArtSamplingMode::Uniform;
+    ArtIntegrator integrator = ArtIntegrator::PathTracing;
     int min_samples = 0;
     int batch_size = 16;
     double noise_threshold = 0.1;
@@ -242,10 +249,21 @@ struct ArtRenderSettings {
     std::optional<int> max_specular_bounces;
     std::optional<int> rr_min_path_length;
     std::optional<int> next_event_estimation;
+    std::optional<int> enable_caustics;
+    std::optional<int> passes;
+    std::optional<int> light_photons;
+    std::optional<int> environment_photons;
+    std::optional<int> photon_max_bounces;
+    std::optional<int> photon_rr_min_path_length;
+    std::optional<int> photon_max_estimate;
+    std::optional<int> photon_importons;
+    std::optional<double> photon_radius_percent;
+    std::optional<double> photon_alpha;
 
     bool valid_budget(int budget) const {
 	return sampling != ArtSamplingMode::Adaptive || min_samples <= budget;
     }
+    std::string invalid_configuration() const;
     void apply(renderer::ParamArray& parameters, int budget) const;
     void write(std::ostream& output) const;
 };
@@ -255,19 +273,53 @@ double display_exposure = 0.0;
 
 struct ArtRenderIntegerSetting {
     const char *name;
-    const char *renderer_path;
+    const char *pt_path;
+    const char *sppm_path;
     int minimum;
     int maximum;
     std::optional<int> ArtRenderSettings::*value;
 };
 constexpr int MAX_RENDER_INTEGER = std::numeric_limits<int>::max();
 constexpr ArtRenderIntegerSetting render_integer_settings[] = {
-    {"max_bounces", "pt.max_bounces", -1, MAX_RENDER_INTEGER, &ArtRenderSettings::max_bounces},
-    {"max_diffuse_bounces", "pt.max_diffuse_bounces", -1, MAX_RENDER_INTEGER, &ArtRenderSettings::max_diffuse_bounces},
-    {"max_glossy_bounces", "pt.max_glossy_bounces", -1, MAX_RENDER_INTEGER, &ArtRenderSettings::max_glossy_bounces},
-    {"max_specular_bounces", "pt.max_specular_bounces", -1, MAX_RENDER_INTEGER, &ArtRenderSettings::max_specular_bounces},
-    {"rr_min_path_length", "pt.rr_min_path_length", 0, MAX_RENDER_INTEGER, &ArtRenderSettings::rr_min_path_length},
-    {"next_event_estimation", "pt.next_event_estimation", 0, 1, &ArtRenderSettings::next_event_estimation}
+    {"max_bounces", "pt.max_bounces", "sppm.path_tracing_max_bounces", -1, MAX_RENDER_INTEGER,
+	&ArtRenderSettings::max_bounces},
+    {"max_diffuse_bounces", "pt.max_diffuse_bounces", nullptr, -1, MAX_RENDER_INTEGER,
+	&ArtRenderSettings::max_diffuse_bounces},
+    {"max_glossy_bounces", "pt.max_glossy_bounces", nullptr, -1, MAX_RENDER_INTEGER,
+	&ArtRenderSettings::max_glossy_bounces},
+    {"max_specular_bounces", "pt.max_specular_bounces", nullptr, -1, MAX_RENDER_INTEGER,
+	&ArtRenderSettings::max_specular_bounces},
+    {"rr_min_path_length", "pt.rr_min_path_length", "sppm.path_tracing_rr_min_path_length", 0, MAX_RENDER_INTEGER,
+	&ArtRenderSettings::rr_min_path_length},
+    {"next_event_estimation", "pt.next_event_estimation", nullptr, 0, 1,
+	&ArtRenderSettings::next_event_estimation},
+    {"enable_caustics", "pt.enable_caustics", "sppm.enable_caustics", 0, 1,
+	&ArtRenderSettings::enable_caustics},
+    {"passes", "passes", "passes", 1, MAX_RENDER_INTEGER, &ArtRenderSettings::passes},
+    {"light_photons", nullptr, "sppm.light_photons_per_pass", 0, MAX_RENDER_INTEGER,
+	&ArtRenderSettings::light_photons},
+    {"environment_photons", nullptr, "sppm.env_photons_per_pass", 0, MAX_RENDER_INTEGER,
+	&ArtRenderSettings::environment_photons},
+    {"photon_max_bounces", nullptr, "sppm.photon_tracing_max_bounces", -1, MAX_RENDER_INTEGER,
+	&ArtRenderSettings::photon_max_bounces},
+    {"photon_rr_min_path_length", nullptr, "sppm.photon_tracing_rr_min_path_length", 0, MAX_RENDER_INTEGER,
+	&ArtRenderSettings::photon_rr_min_path_length},
+    {"photon_max_estimate", nullptr, "sppm.max_photons_per_estimate", 1, MAX_RENDER_INTEGER,
+	&ArtRenderSettings::photon_max_estimate},
+    {"photon_importons", nullptr, "sppm.enable_importons", 0, 1, &ArtRenderSettings::photon_importons}
+};
+struct ArtRenderScalarSetting {
+    const char *name;
+    const char *renderer_path;
+    double maximum;
+    std::optional<double> ArtRenderSettings::*value;
+};
+// A lookup radius up to the scene diagonal covers its entire photon map.
+constexpr double MAX_PHOTON_RADIUS_PERCENT = 100.0;
+constexpr ArtRenderScalarSetting render_scalar_settings[] = {
+    {"photon_radius_percent", "sppm.initial_photon_lookup_radius", MAX_PHOTON_RADIUS_PERCENT,
+	&ArtRenderSettings::photon_radius_percent},
+    {"photon_alpha", "sppm.alpha", 1.0, &ArtRenderSettings::photon_alpha}
 };
 constexpr std::pair<const char *, foundation::LogMessage::Category> render_log_levels[] = {
     {"debug", foundation::LogMessage::Debug}, {"info", foundation::LogMessage::Info},
@@ -277,18 +329,53 @@ constexpr std::pair<const char *, foundation::LogMessage::Category> render_log_l
 constexpr double MIN_RENDER_NOISE_THRESHOLD = 0.0001;
 constexpr double MAX_RENDER_NOISE_THRESHOLD = 10000.0;
 
-static const ArtRenderIntegerSetting *
-art_render_integer_setting(const std::string& name)
+template <typename Setting, size_t Count>
+static const Setting *
+art_render_setting(const Setting (&settings)[Count], const std::string& name)
 {
-    for (const auto& setting : render_integer_settings)
+    for (const auto& setting : settings)
 	if (name == setting.name)
 	    return &setting;
     return nullptr;
 }
 
+template <typename Number>
+static void
+art_write_render_setting(std::ostream& output, const char *name, const std::optional<Number>& number)
+{
+    output << name << '=';
+    if (number)
+	output << *number;
+    else
+	output << "inherit";
+    output << '\n';
+}
+
+std::string
+ArtRenderSettings::invalid_configuration() const
+{
+    if (sampling == ArtSamplingMode::Adaptive &&
+	(integrator == ArtIntegrator::PhotonMapping || passes.value_or(1) > 1))
+	return "photon mapping and multiple passes require sampling=uniform";
+    const bool photon_mapping = integrator == ArtIntegrator::PhotonMapping;
+    for (const auto& setting : render_integer_settings) {
+	const char *path = photon_mapping ? setting.sppm_path : setting.pt_path;
+	if (this->*(setting.value) && !path)
+	    return std::string(setting.name) + " requires integrator=" + (photon_mapping ? "pt" : "sppm") +
+		"; reset it to inherit when changing integrators";
+    }
+    if (!photon_mapping) {
+	for (const auto& setting : render_scalar_settings)
+	    if (this->*(setting.value))
+		return std::string(setting.name) + " requires integrator=sppm; reset it to inherit";
+    }
+    return {};
+}
+
 void
 ArtRenderSettings::apply(renderer::ParamArray& parameters, int budget) const
 {
+    parameters.insert("lighting_engine", art_integrator_name(integrator));
     parameters.insert("tile_renderer", sampling == ArtSamplingMode::Adaptive ? "adaptive" : "generic");
     if (sampling == ArtSamplingMode::Adaptive) {
 	parameters.insert_path("adaptive_tile_renderer.min_samples", min_samples)
@@ -298,6 +385,12 @@ ArtRenderSettings::apply(renderer::ParamArray& parameters, int budget) const
     }
     for (const auto& setting : render_integer_settings) {
 	const auto& number = this->*(setting.value);
+	const char *path = integrator == ArtIntegrator::PhotonMapping ? setting.sppm_path : setting.pt_path;
+	if (number && path)
+	    parameters.insert_path(path, *number);
+    }
+    for (const auto& setting : render_scalar_settings) {
+	const auto& number = this->*(setting.value);
 	if (number)
 	    parameters.insert_path(setting.renderer_path, *number);
     }
@@ -306,14 +399,14 @@ ArtRenderSettings::apply(renderer::ParamArray& parameters, int budget) const
 void
 ArtRenderSettings::write(std::ostream& output) const
 {
-    output << "sampling=" << (sampling == ArtSamplingMode::Adaptive ? "adaptive" : "uniform")
+    output << "integrator=" << art_integrator_name(integrator) << "\nsampling=" << (sampling == ArtSamplingMode::Adaptive ? "adaptive" : "uniform")
 	<< "\nmin_samples=" << min_samples << "\nbatch_size=" << batch_size
 	<< "\nnoise_threshold=" << std::setprecision(std::numeric_limits<double>::max_digits10)
 	<< noise_threshold << '\n';
-    for (const auto& setting : render_integer_settings) {
-	const auto& number = this->*(setting.value);
-	output << setting.name << '=' << (number ? std::to_string(*number) : "inherit") << '\n';
-    }
+    for (const auto& setting : render_integer_settings)
+	art_write_render_setting(output, setting.name, this->*(setting.value));
+    for (const auto& setting : render_scalar_settings)
+	art_write_render_setting(output, setting.name, this->*(setting.value));
     for (const auto& level : render_log_levels)
 	if (log_level == level.second)
 	    output << "renderer_log=" << level.first << '\n';
@@ -376,7 +469,7 @@ extern "C" {
      * globals (fullfloat_mode, reproject_mode) are deliberately omitted
      * since art does not link worker.c.
      */
-    extern int lightmodel;		/* -l  (art is always a path tracer) */
+    extern int lightmodel;		/* -l liboptical lighting model */
     extern int hypersample;		/* -H */
     extern unsigned int jitter;		/* -J */
     extern int stereo;			/* -S */
@@ -519,15 +612,14 @@ art_validate_options(void)
 
 #define ART_WARN(msg) do { bu_log("art: warning: %s\n", (msg)); n++; } while (0)
 
-    /* Fundamental model differences: no path-tracer equivalent. */
+    /* The liboptical model numbers do not select Appleseed integrators. */
     if (lightmodel != 0)
-	ART_WARN("-l lighting-model selection is ignored; art always renders "
-		 "with the Appleseed global-illumination path tracer "
-		 "(this includes -l7 photon mapping and -l8 heat-graph)");
+	ART_WARN("-l lighting-model selection is ignored; choose an Appleseed integrator "
+		 "with -c \"set integrator=pt\" or -c \"set integrator=sppm\"");
 
     if (hypersample != 0 || jitter != 0)
 	ART_WARN("-H hypersample / -J jitter are ignored; control art's "
-		 "path-tracer quality with -c \"set samples=<N>\" instead "
+		 "rendering quality with -c \"set samples=<N>\" instead "
 		 "(current default is 25)");
 
     if (use_air != 0 || airdensity != 0.0 || densityfile != NULL)
@@ -1052,6 +1144,11 @@ build_project(std::ostream *report)
     // Add default configurations to the project.
     project->add_default_configurations();
 
+    const std::string configuration_error = render_settings.invalid_configuration();
+    if (!configuration_error.empty()) {
+	bu_log("art: %s\n", configuration_error.c_str());
+	return asf::auto_release_ptr<asr::Project>();
+    }
     if (!render_settings.valid_budget(samples)) {
 	bu_log("art: adaptive min_samples must not exceed the samples budget\n");
 	return asf::auto_release_ptr<asr::Project>();
@@ -1471,15 +1568,15 @@ struct ReleaseLogTarget {
 };
 
 class RenderErrors final : public asf::ILogTarget {
-    std::atomic<bool> m_has_errors{false};
+    ArtRenderControl& m_controller;
 public:
+    explicit RenderErrors(ArtRenderControl& controller) : m_controller(controller) {}
     void release() override { delete this; }
     void write(const asf::LogMessage::Category category, const char *UNUSED(file),
 	const size_t UNUSED(line), const char *UNUSED(header), const char *UNUSED(message)) override {
 	if (category >= asf::LogMessage::Error)
-	    m_has_errors.store(true, std::memory_order_relaxed);
+	    m_controller.fail();
     }
-    bool has_errors() const { return m_has_errors.load(std::memory_order_relaxed); }
 };
 }
 
@@ -1498,7 +1595,7 @@ art_render_image(asr::Project& project, const char *filename, ArtTileCallback& c
     path = bu_dir(headers, MAXPATHLEN, renderer_root.c_str(), "shaders", NULL);
     if (path)
 	resource_search_paths.push_back_explicit_path(path);
-    std::unique_ptr<RenderErrors, ReleaseLogTarget> errors(new RenderErrors());
+    std::unique_ptr<RenderErrors, ReleaseLogTarget> errors(new RenderErrors(controller));
     asr::global_logger().add_target(errors.get());
     bool succeeded = false;
     {
@@ -1516,14 +1613,14 @@ art_render_image(asr::Project& project, const char *filename, ArtTileCallback& c
     }
     if (!restored)
 	return false;
-    if (!succeeded) {
-	bu_log("art: rendering did not complete successfully\n");
+    // Worker failures can exhaust a photon job pool before later passes run.
+    // Abort on logged errors, and include renderer cleanup in the observed scope.
+    if (controller.failed()) {
+	bu_log("art: renderer reported errors; image was not saved\n");
 	return false;
     }
-    // Worker and OSL errors can be logged without failing MasterRenderer.
-    // Include renderer cleanup in the observed scope before saving the image.
-    if (errors->has_errors()) {
-	bu_log("art: renderer reported errors; image was not saved\n");
+    if (!succeeded) {
+	bu_log("art: rendering did not complete successfully\n");
 	return false;
     }
     if (!callback.flush())
@@ -1568,7 +1665,7 @@ art_process_scene(bool display_framebuffer, const char *filename)
     struct fb *fbp = display_framebuffer ? fb_setup() : FB_NULL;
     if (display_framebuffer && !fbp)
 	return false;
-    ArtTileCallback callback(fbp, display_exposure);
+    ArtTileCallback callback(fbp, display_exposure, static_cast<size_t>(render_settings.passes.value_or(1)));
     return art_render_image(project.ref(), filename, callback);
 }
 
@@ -1865,6 +1962,15 @@ art_cm_set(const int argc, const char **argv)
 		return art_setting_error(name, value, reason.c_str());
 	    continue;
 	}
+	if (name == "integrator") {
+	    if (value == "pt")
+		new_render_settings.integrator = ArtIntegrator::PathTracing;
+	    else if (value == "sppm")
+		new_render_settings.integrator = ArtIntegrator::PhotonMapping;
+	    else
+		return art_setting_error(name, value, "expected pt or sppm");
+	    continue;
+	}
 	if (name == "sampling") {
 	    if (value == "uniform")
 		new_render_settings.sampling = ArtSamplingMode::Uniform;
@@ -1897,7 +2003,7 @@ art_cm_set(const int argc, const char **argv)
 	    new_render_settings.noise_threshold = number;
 	    continue;
 	}
-	if (const auto *setting = art_render_integer_setting(name)) {
+	if (const auto *setting = art_render_setting(render_integer_settings, name)) {
 	    auto& number = new_render_settings.*(setting->value);
 	    if (value == "inherit") {
 		number.reset();
@@ -1905,6 +2011,19 @@ art_cm_set(const int argc, const char **argv)
 		int parsed;
 		if (!art_setting_integer(value, parsed) || parsed < setting->minimum || parsed > setting->maximum)
 		    return art_setting_error(name, value, "expected inherit or an integer in the supported range");
+		number = parsed;
+	    }
+	    continue;
+	}
+	if (const auto *setting = art_render_setting(render_scalar_settings, name)) {
+	    auto& number = new_render_settings.*(setting->value);
+	    if (value == "inherit") {
+		number.reset();
+	    } else {
+		double parsed;
+		if (!art_setting_real(value, parsed) || !(parsed > 0.0) ||
+		    parsed > setting->maximum || !art_valid_power(parsed))
+		    return art_setting_error(name, value, "expected inherit or a positive finite value in range");
 		number = parsed;
 	    }
 	    continue;
@@ -2018,6 +2137,10 @@ art_cm_set(const int argc, const char **argv)
 	}
     }
 
+    const std::string configuration_error = new_render_settings.invalid_configuration();
+    if (!configuration_error.empty())
+	return art_setting_error("integrator", art_integrator_name(new_render_settings.integrator),
+	    configuration_error.c_str());
     if (!new_render_settings.valid_budget(new_sample_budget))
 	return art_setting_error("min_samples", std::to_string(new_render_settings.min_samples),
 	    "adaptive minimum must not exceed samples");

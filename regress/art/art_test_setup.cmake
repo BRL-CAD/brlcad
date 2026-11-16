@@ -16,6 +16,11 @@ find_program(ART_APPLESEED_CLI_EXECUTABLE NAMES appleseed.cli
 unset(ART_OIIOTOOL_EXECUTABLE CACHE)
 find_program(ART_OIIOTOOL_EXECUTABLE NAMES oiiotool
   HINTS "${renderer_prefix}/bin" NO_DEFAULT_PATH NO_CACHE REQUIRED)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/art_caustic_test_commands.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/art_caustic_test_commands.cmake" @ONLY)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/art_photon_test_commands.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/art_photon_test_commands.cmake" @ONLY)
+
 # SDK helper includes are outside the source tree; track their updates too.
 file(GLOB_RECURSE ART_OSL_HELPER_HEADERS CONFIGURE_DEPENDS
   "${ART_OSL_HELPER_INCLUDE_DIR}/appleseed/*.h")

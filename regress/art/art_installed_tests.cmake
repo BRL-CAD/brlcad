@@ -38,7 +38,8 @@ foreach(test IN LISTS installed_tests)
     "${CMAKE_CURRENT_BINARY_DIR}/${test}.cmake" @ONLY)
   add_test(NAME ${test} COMMAND "${CMAKE_COMMAND}" "-DEXEC=${ART_EXECUTABLE}"
     "-DVEXEC=${ART_SCENE_TEST}" -P "${CMAKE_CURRENT_BINARY_DIR}/${test}.cmake")
-  set_tests_properties(${test} PROPERTIES TIMEOUT ${ART_REGRESSION_TIMEOUT} LABELS Installed
+  art_regression_timeout("${test}" timeout)
+  set_tests_properties(${test} PROPERTIES TIMEOUT ${timeout} LABELS Installed
     ENVIRONMENT_MODIFICATION "${runtime_environment}")
 endforeach()
 

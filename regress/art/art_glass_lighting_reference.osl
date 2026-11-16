@@ -1,0 +1,53 @@
+/*              A R T _ G L A S S _ L I G H T I N G _ R E F E R E N C E . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+#include "art_glass_reference.h"
+
+surface art_glass_lighting_reference(
+    color in_color = color(0.25, 0.5, 0.75),
+    float in_ior = 1.5,
+    color in_volume_transmittance = color(1),
+    float in_volume_transmittance_distance = 0,
+    float in_environment = 0.4,
+    int in_intervals = 8192)
+{
+    if (in_ior < 1 || in_intervals < 2) {
+        error("Glass lighting reference requires an index of at least one and positive quadrature");
+        Ci = 0;
+        return;
+    }
+    float SlabThickness = 1;
+    color integral = 0;
+    for (int i = 0; i < in_intervals; ++i) {
+        float cosine = (i+0.5)/in_intervals;
+        float inside_cosine = sqrt(1-(1-cosine*cosine)/(in_ior*in_ior));
+        float transmission = interface_transmission(1, in_ior, cosine, inside_cosine);
+        float reflection = 1-transmission;
+        color attenuation = color(1);
+        if (in_volume_transmittance_distance > 0)
+            attenuation = pow(in_volume_transmittance,
+                SlabThickness/(inside_cosine*in_volume_transmittance_distance));
+        // Sum every round trip between the parallel interfaces. Index
+        // factors cancel on the complete air-to-air radiance path.
+        color effective = transmission*transmission * attenuation /
+            (1-reflection*reflection*attenuation*attenuation);
+        integral += 2*cosine * effective/in_intervals;
+    }
+    Ci = in_color * in_environment * integral * emission();
+}

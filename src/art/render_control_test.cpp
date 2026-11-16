@@ -64,9 +64,21 @@ main(int argc, char **argv)
 	success = control.valid() && !control.cancelled() && success;
     }
     success = std::raise(SIGINT) == 0 && prior_handler_calls == 2 && success;
+    success = std::signal(SIGINT, prior_handler) != SIG_ERR && success;
+    {
+	ArtRenderControl control(callback, 2, false);
+	control.fail();
+	success = control.valid() && control.failed() && !control.cancelled() &&
+	    control.get_status() == renderer::IRendererController::AbortRendering && success;
+    }
+    {
+	ArtRenderControl control(callback, 3, false);
+	success = control.valid() && !control.failed() && !control.cancelled() &&
+	    control.get_status() == renderer::IRendererController::ContinueRendering && success;
+    }
     success = std::signal(SIGINT, original) != SIG_ERR && success;
     if (!success)
-	bu_log("Render cancellation state or signal restoration failed\n");
+	bu_log("Render termination state or signal restoration failed\n");
     return success ? 0 : 1;
 }
 

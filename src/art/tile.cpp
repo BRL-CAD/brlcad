@@ -20,6 +20,8 @@
 
 #include "common.h"
 
+#include <limits>
+
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic push
 #endif
@@ -90,8 +92,14 @@ ArtTileCallback::finish()
 void
 ArtTileCallback::on_tiled_frame_begin(const renderer::Frame* frame)
 {
-    m_completed_tiles = 0;
-    m_total_tiles = frame->image().properties().m_tile_count;
+    const size_t tiles = frame->image().properties().m_tile_count;
+    if (!m_passes || tiles > std::numeric_limits<size_t>::max() / m_passes) {
+	bu_log("art: render pass tile count exceeds the supported range\n");
+	m_failed = true;
+	return;
+    }
+    // Native callbacks begin each pass; cumulative work belongs to one render.
+    m_total_tiles = tiles * m_passes;
 }
 
 
