@@ -1,0 +1,82 @@
+# ART_VOLUME_ENERGY_TEST_COMMANDS.CMAKE.IN
+# BRL-CAD
+#
+# Copyright (c) 2026 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/${ENERGY_TEST}-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_nested_test_commands.cmake")
+include("@CMAKE_CURRENT_BINARY_DIR@/art_volume_test_commands.cmake")
+set(RELATIVE_ENERGY_BOUND 0.015)
+set(ENERGY_ARGS -P 2 -w ${ENERGY_SIZE} -n ${ENERGY_SIZE} -p 0.02 -c "viewsize 0.001"
+  -c "orientation 0 0 0 1"
+  -c "set samples=${ENERGY_SAMPLES} max_bounces=128 max_volume_bounces=64 rr_min_path_length=0 light_intensity=0 environment_color=white environment_intensity=1 background_source=environment")
+function(energy_reference color)
+  run("${TOOL}" --pattern "constant:color=${color}" 1x1 3 -d float -o "${WORK}/reference.exr")
+endfunction()
+function(render_energy_image label object eye bounces nee)
+  set(image "${WORK}/${label}.exr")
+  run("${EXEC}" ${ENERGY_ARGS} -c "eye_pt 0 0 ${eye}"
+    -c "set max_volume_bounces=${bounces} next_event_estimation=${nee}"
+    -o "${image}" "${DB}" "${object}" ${ARGN})
+  run("${VEXEC}" check-image "${image}" ${ENERGY_SIZE} ${ENERGY_SIZE})
+endfunction()
+function(render_energy label object eye bounces nee)
+  render_energy_image("${label}" "${object}" ${eye} ${bounces} ${nee} ${ARGN})
+  compare_radiance_mean("${WORK}/${label}.exr" "${WORK}/reference.exr" ${RELATIVE_ENERGY_BOUND} FALSE)
+endfunction()
+function(energy_phase g)
+  set(model henyey)
+  if(g STREQUAL "0")
+    set(model isotropic)
+  endif()
+  run("${VEXEC}" set-named-material "${DB}" fog.material OSL.volume.phase_function "${model}")
+  run("${VEXEC}" set-named-material "${DB}" fog.material OSL.volume.average_cosine "float ${g}")
+endfunction()
+function(check_conservation)
+  energy_reference("1,1,1")
+  foreach(g IN ITEMS 0 0.4 -0.4)
+    energy_phase("${g}")
+    foreach(object IN ITEMS cube.r mesh.r)
+      foreach(eye IN ITEMS 40 0)
+        foreach(nee IN ITEMS 0 1)
+          render_energy("g${g}-${object}-eye${eye}-nee${nee}" "${object}" ${eye} 64 ${nee})
+        endforeach()
+      endforeach()
+    endforeach()
+  endforeach()
+endfunction()
+run("${VEXEC}" set-named-material "${DB}" fog.material OSL.volume.absorption "float 0")

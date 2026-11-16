@@ -45,12 +45,16 @@ set(ART_TEST_SHADER_NAMES
 )
 set(ART_REGRESSION_TIMEOUT 180)
 # The energy cases use 32 million photons to bound estimator error at 1 percent.
-set(ART_PHOTON_REGRESSION_TIMEOUT 420)
+set(ART_PHOTON_REGRESSION_TIMEOUT 720)
 # Inside-light cases compare clear and absorbing transport in separate batches.
 set(ART_PHOTON_INSIDE_REGRESSION_TIMEOUT 1560)
+# Spectral conservation uses 12.6 million samples and permits concurrent checks.
+set(ART_VOLUME_ENERGY_REGRESSION_TIMEOUT 720)
 function(art_regression_timeout name result)
   if(name MATCHES "^regress-art-photon-inside-(csg|bot)-")
     set(${result} ${ART_PHOTON_INSIDE_REGRESSION_TIMEOUT} PARENT_SCOPE)
+  elseif(name STREQUAL "regress-art-volume-energy-spectral")
+    set(${result} ${ART_VOLUME_ENERGY_REGRESSION_TIMEOUT} PARENT_SCOPE)
   elseif(name MATCHES "^regress-art-photon-(csg|bot)-")
     set(${result} ${ART_PHOTON_REGRESSION_TIMEOUT} PARENT_SCOPE)
   else()
@@ -75,6 +79,10 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-volume
   regress-art-volume-materials
   regress-art-volume-scattering
+  regress-art-volume-energy
+  regress-art-volume-energy-spectral
+  regress-art-volume-overlap
+  regress-art-volume-glass
   regress-art-medium-priority
   regress-art-shared-media
   regress-art-curved-media
@@ -136,7 +144,9 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-color-metadata.cmake.in
   art_initial_volume.appleseed.in regress-art-volume.cmake.in
   regress-art-volume-materials.cmake.in regress-art-volume-scattering.cmake.in
-  art_volume_test_commands.cmake.in
+  art_volume_test_commands.cmake.in art_volume_energy_test_commands.cmake.in
+  regress-art-volume-energy.cmake.in regress-art-volume-energy-spectral.cmake.in
+  regress-art-volume-overlap.cmake.in regress-art-volume-glass.cmake.in
   art_installed_runtime.cmake.in art-installed-material.cmake.in
   art-installed-plate.cmake.in art-installed-view.cmake.in
   regress-art-photon-csg-15.cmake.in
@@ -198,7 +208,7 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/image-maps-output"
     "${CMAKE_CURRENT_BINARY_DIR}/resources-output"
     "${CMAKE_CURRENT_BINARY_DIR}/transmission-output"
-    "${CMAKE_CURRENT_BINARY_DIR}/absorption-output" "${CMAKE_CURRENT_BINARY_DIR}/initial-media-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-materials-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-scattering-output" "${CMAKE_CURRENT_BINARY_DIR}/medium-priority-output" "${CMAKE_CURRENT_BINARY_DIR}/shared-media-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/absorption-output" "${CMAKE_CURRENT_BINARY_DIR}/initial-media-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-materials-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-scattering-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-energy-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-energy-spectral-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-overlap-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-glass-output" "${CMAKE_CURRENT_BINARY_DIR}/medium-priority-output" "${CMAKE_CURRENT_BINARY_DIR}/shared-media-output"
     "${CMAKE_CURRENT_BINARY_DIR}/curved-media-output" "${CMAKE_CURRENT_BINARY_DIR}/curved-contact-output"
     "${CMAKE_CURRENT_BINARY_DIR}/rough-glass-output"
     "${CMAKE_CURRENT_BINARY_DIR}/rough-energy-output"
