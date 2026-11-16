@@ -1,0 +1,154 @@
+cmake_minimum_required(VERSION 3.22)
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/npr-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+set(TOOL "@ART_OIIOTOOL_EXECUTABLE@")
+configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_npr.oso" "${WORK}/shaders/art_npr.oso" COPYONLY)
+set(DB "${WORK}/npr.g")
+run("${VEXEC}" create-material "${DB}" art_npr)
+run("${VEXEC}" set-material "${DB}" OSL.param.in_color "color 0.5 0.5 0.5")
+set(SIZE 32)
+# The camera is 50 mm from the origin at azimuth 35 and elevation 25.
+set(RENDER_ARGS -P 1 -w ${SIZE} -n ${SIZE} -a 35 -e 25 -c "viewsize 30"
+  -c "eye_pt 37.1201938253052 25.9918395350569 21.1309130870350"
+  -c "set samples=1 light_intensity=0 environment_intensity=0 background_color=black aovs=npr_shading,npr_contour")
+set(DIFF_ARGS --fail 0.0005 --hardfail 0.0005 --warn 0.0005 --hardwarn 0.0005)
+function(count_edges image result)
+  run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${TOOL}" --dumpdata "${image}")
+  string(REGEX MATCHALL "Pixel [(][0-9]+, [0-9]+[)]: [^\n]*" pixels "${command_output}")
+  list(LENGTH pixels count)
+  math(EXPR expected "${SIZE} * ${SIZE}")
+  if(NOT count EQUAL expected)
+    message(FATAL_ERROR "Missing NPR contour pixels: ${image}")
+  endif()
+  set(edges 0)
+  foreach(pixel IN LISTS pixels)
+    string(REGEX REPLACE ".* ([^ ]+)$" "\\1" alpha "${pixel}")
+    if(alpha GREATER 0.05)
+      math(EXPR edges "${edges} + 1")
+    endif()
+  endforeach()
+  set(${result} ${edges} PARENT_SCOPE)
+endfunction()
+foreach(projection IN ITEMS 0 40)
+  foreach(object IN ITEMS cube.r mesh.r)
+    foreach(feature IN ITEMS none objects creases both)
+      set(object_edges 0)
+      set(crease_edges 0)
+      if(feature STREQUAL "objects" OR feature STREQUAL "both")
+        set(object_edges 1)
+      endif()
+      if(feature STREQUAL "creases" OR feature STREQUAL "both")
+        set(crease_edges 1)
+      endif()
+      run("${VEXEC}" set-material "${DB}" OSL.param.in_object_edges "int ${object_edges}")
+      run("${VEXEC}" set-material "${DB}" OSL.param.in_crease_edges "int ${crease_edges}")
+      set(stem "${WORK}/${object}-${projection}-${feature}")
+      run("${EXEC}" ${RENDER_ARGS} -p ${projection} -o "${stem}.exr" "${DB}" "${object}")
+      run("${VEXEC}" check-image "${stem}.exr" ${SIZE} ${SIZE})
+      run("${VEXEC}" check-image "${stem}.npr_shading.exr" ${SIZE} ${SIZE})
+      count_edges("${stem}.npr_contour.exr" edges)
+      if(feature STREQUAL "none")
+        if(NOT edges EQUAL 0)
+          message(FATAL_ERROR "Disabled NPR features produced contours")
+        endif()
+        run("${TOOL}" ${DIFF_ARGS} "${stem}.exr" --ch R,G,B
+          "${stem}.npr_shading.exr" --ch R,G,B --diff)
+      else()
+        # Sparse lines, rather than a missing contour or a solid black object.
+        math(EXPR maximum_edges "${SIZE} * ${SIZE} / 2")
+        if(edges LESS 5 OR edges GREATER maximum_edges)
+          message(FATAL_ERROR "Unexpected NPR edge coverage (${edges}) for ${stem}")
+        endif()
+        expect_failure("${TOOL}" ${DIFF_ARGS} "${stem}.exr" --ch R,G,B
+          "${stem}.npr_shading.exr" --ch R,G,B --diff)
+      endif()
+    endforeach()
+  endforeach()
+  foreach(feature IN ITEMS none objects creases both)
+    run("${TOOL}" ${DIFF_ARGS} "${WORK}/cube.r-${projection}-${feature}.exr"
+      "${WORK}/mesh.r-${projection}-${feature}.exr" --diff)
+  endforeach()
+endforeach()
+
+# A very distant perspective camera still has distinct ray directions.
+# Treating its small angular footprint as parallel loses every contour.
+set(stem "${WORK}/narrow-perspective")
+run("${EXEC}" -P 1 -w ${SIZE} -n ${SIZE} -a 35 -e 25 -p 0.0000000001
+  -c "viewsize 30"
+  -c "eye_pt 22272116295183.12 15595103721770.535 12678547852220.982"
+  -c "set samples=1 light_intensity=0 environment_intensity=0 background_color=black aovs=npr_contour"
+  -o "${stem}.exr" "${DB}" cube.r)
+run("${VEXEC}" check-image "${stem}.exr" ${SIZE} ${SIZE})
+count_edges("${stem}.npr_contour.exr" edges)
+math(EXPR maximum_edges "${SIZE} * ${SIZE} / 2")
+if(edges LESS 5 OR edges GREATER maximum_edges)
+  message(FATAL_ERROR "Unexpected narrow-perspective edge coverage: ${edges}")
+endif()
+
+# NPR colors are unassociated; two quarter-opaque faces cover 7/16 of
+# an opaque equal-colored reference. No lighting or contour math enters it.
+run("${VEXEC}" set-material "${DB}" OSL.param.in_contours "int 0")
+foreach(object IN ITEMS cube.r mesh.r)
+  foreach(opacity IN ITEMS 1 0.25 0)
+    run("${VEXEC}" set-material "${DB}" OSL.param.in_opacity "float ${opacity}")
+    run("${EXEC}" -P 1 -w 1 -n 1 -c "viewsize 1" -c "eye_pt 0 0 40"
+      -c "orientation 0 0 0 1" -c "set samples=1 light_intensity=0 environment_intensity=0 background_color=black"
+      -o "${WORK}/${object}-${opacity}.exr" "${DB}" "${object}")
+  endforeach()
+  run("${TOOL}" "${WORK}/${object}-1.exr" --ch R,G,B --mulc 0.4375
+    -o "${WORK}/coverage-reference.exr")
+  run("${TOOL}" ${DIFF_ARGS} "${WORK}/${object}-0.25.exr" --ch R,G,B
+    "${WORK}/coverage-reference.exr" --diff)
+  run("${TOOL}" --pattern constant:color=0,0,0 1x1 3 -o "${WORK}/black.exr")
+  run("${TOOL}" ${DIFF_ARGS} "${WORK}/${object}-0.exr" --ch R,G,B "${WORK}/black.exr" --diff)
+endforeach()
+
+# A curved transparent foreground must not become a false opaque boundary
+# of the inner flat part. All stencil samples here lie away from its edges.
+set(COVER_DB "${WORK}/cover.g")
+run("${VEXEC}" create-nested "${COVER_DB}")
+run("${VEXEC}" set-named-material "${COVER_DB}" inner.material OSL art_npr)
+run("${VEXEC}" set-named-material "${COVER_DB}" inner.material OSL.param.in_color "color 0.5 0.5 0.5")
+run("${TOOL}" --pattern constant:color=0.4,0.4,0.5 1x1 3 -o "${WORK}/covered-reference.exr")
+foreach(object IN ITEMS box.inner.r mesh.inner.r)
+  foreach(projection IN ITEMS 0 0.1)
+    foreach(contours IN ITEMS 0 1)
+      run("${VEXEC}" set-named-material "${COVER_DB}" inner.material OSL.param.in_contours "int ${contours}")
+      set(image "${WORK}/covered-${object}-${projection}-${contours}.exr")
+      run("${EXEC}" -P 1 -w 1 -n 1 -p ${projection} -c "viewsize 0.1"
+        -c "eye_pt 3 0 40" -c "orientation 0 0 0 1"
+        -c "set samples=1 light_intensity=0 environment_intensity=0 background_color=black"
+        -o "${image}" "${COVER_DB}" npr.cover.r "${object}")
+      run("${TOOL}" ${DIFF_ARGS} "${image}" --ch R,G,B "${WORK}/covered-reference.exr" --diff)
+    endforeach()
+  endforeach()
+endforeach()
+
+# Large authored coordinates must not make clipped stencil rays repeatedly
+# rediscover the same cover. The geometry and blend are otherwise identical.
+foreach(kind IN ITEMS box mesh)
+  set(image "${WORK}/translated-${kind}.exr")
+  run("${EXEC}" -P 1 -w 1 -n 1 -p 0 -c "viewsize 0.1"
+    -c "eye_pt 10003 -40000 5040" -c "orientation 0 0 0 1"
+    -c "set samples=1 light_intensity=0 environment_intensity=0 background_color=black"
+    -o "${image}" "${COVER_DB}" "npr.${kind}.translated.g")
+  run("${TOOL}" ${DIFF_ARGS} "${image}" --ch R,G,B "${WORK}/covered-reference.exr" --diff)
+endforeach()
+
+# Limit exhaustion must terminate promptly and retain an existing image.
+set(LIMIT_DB "${WORK}/limit.g")
+run("${VEXEC}" create-contour-limit "${LIMIT_DB}")
+set(image "${WORK}/preserved.exr")
+file(WRITE "${image}" "preserve existing output")
+expect_failure_matching("intersection limit while tracing an NPR contour ray" "${EXEC}"
+  -P 1 -w 1 -n 1 -c "viewsize 1" -c "eye_pt 0 0 40" -c "orientation 0 0 0 1"
+  -c "set samples=1 light_intensity=0 environment_intensity=0 background_color=black"
+  -o "${image}" "${LIMIT_DB}" npr.limit.g)
+file(READ "${image}" retained)
+if(NOT retained STREQUAL "preserve existing output")
+  message(FATAL_ERROR "Contour-limit failure replaced existing output")
+endif()

@@ -199,6 +199,148 @@ create_scene(const char *path, const char *shader, const char *output)
 }
 
 static int
+create_nested_scene(const char *path)
+{
+    struct rt_wdb *db = wdb_fopen(path);
+    if (!db)
+	return 1;
+    const point_t low = {-10, -10, -10}, high = {10, 10, 10};
+    const point_t target_low = {-200, -200, -31}, target_high = {200, 200, -30};
+    bool success = mk_rpp(db, "nested.box", low, high) == 0 &&
+	art_test::make_mesh(db, "nested.mesh", art_test::MeshUV::None) == 0 &&
+	mk_rpp(db, "nested.target", target_low, target_high) == 0;
+    const struct { const char *name; double scale; } layers[] = {
+	{"outer", 1.0}, {"inner", 0.5}, {"core", 0.2}
+    };
+    struct wmember members;
+    for (const auto& layer : layers) {
+	const std::string material = std::string(layer.name) + ".material";
+	struct bu_attribute_value_set optical;
+	bu_avs_init_empty(&optical);
+	bu_avs_add(&optical, "OSL", "as_glass");
+	success = success && write_osl_material(db, material.c_str(), &optical);
+	bu_avs_free(&optical);
+	for (const char *kind : {"box", "mesh"}) {
+	    const std::string region = std::string(kind) + "." + layer.name + ".r";
+	    const std::string solid = std::string("nested.") + kind;
+	    mat_t scale;
+	    MAT_IDN(scale);
+	    scale[0] = scale[5] = scale[10] = layer.scale;
+	    BU_LIST_INIT(&members.l);
+	    success = success && mk_addmember(solid.c_str(), &members.l, scale, WMOP_UNION) &&
+		mk_lcomb(db, region.c_str(), &members, 1, NULL, NULL, NULL, 0) == 0 &&
+		db5_update_attribute(region.c_str(), "material_name", material.c_str(), db->dbip) == 0;
+	}
+    }
+    struct bu_attribute_value_set optical;
+    bu_avs_init_empty(&optical);
+    bu_avs_add(&optical, "OSL", "art_refraction_reference");
+    bu_avs_add(&optical, "OSL.param.in_target", "int 1");
+    success = success && write_osl_material(db, "target.material", &optical);
+    bu_avs_free(&optical);
+    BU_LIST_INIT(&members.l);
+    success = success && mk_addmember("nested.target", &members.l, NULL, WMOP_UNION) &&
+	mk_lcomb(db, "target.r", &members, 1, NULL, NULL, NULL, 0) == 0 &&
+	db5_update_attribute("target.r", "material_name", "target.material", db->dbip) == 0;
+    for (const char *kind : {"box", "mesh"}) {
+	for (bool core : {false, true}) {
+	    BU_LIST_INIT(&members.l);
+	    for (const auto& layer : layers) {
+		if (!core && BU_STR_EQUAL(layer.name, "core"))
+		    continue;
+		const std::string region = std::string(kind) + "." + layer.name + ".r";
+		success = success && mk_addmember(region.c_str(), &members.l, NULL, WMOP_UNION);
+	    }
+	    const std::string group = std::string(kind) + (core ? ".core.g" : ".nested.g");
+	    success = success && mk_addmember("target.r", &members.l, NULL, WMOP_UNION) &&
+		mk_lcomb(db, group.c_str(), &members, 0, NULL, NULL, NULL, 0) == 0;
+	}
+    }
+    // A curved foreground cover exercises contour visibility for an inner
+    // part; the existing nested groups intentionally leave this cover out.
+    const point_t cover_center = {0, 0, 0};
+    const double cover_radius = 15;
+    struct bu_attribute_value_set cover_optical;
+    bu_avs_init_empty(&cover_optical);
+    bu_avs_add(&cover_optical, "OSL", "art_npr");
+    bu_avs_add(&cover_optical, "OSL.param.in_color", "color 0 0 0.5");
+    bu_avs_add(&cover_optical, "OSL.param.in_opacity", "float 0.2");
+    bu_avs_add(&cover_optical, "OSL.param.in_contours", "int 0");
+    success = success && mk_sph(db, "npr.cover.s", cover_center, cover_radius) == 0 &&
+	write_osl_material(db, "npr.cover.material", &cover_optical);
+    bu_avs_free(&cover_optical);
+    BU_LIST_INIT(&members.l);
+    success = success && mk_addmember("npr.cover.s", &members.l, NULL, WMOP_UNION) &&
+	mk_lcomb(db, "npr.cover.r", &members, 1, NULL, NULL, NULL, 0) == 0 &&
+	db5_update_attribute("npr.cover.r", "material_name", "npr.cover.material", db->dbip) == 0;
+    const vect_t contour_translation = {10000, -40000, 5000};
+    mat_t translated;
+    MAT_IDN(translated);
+    MAT_DELTAS_VEC(translated, contour_translation);
+    for (const char *kind : {"box", "mesh"}) {
+	const std::string region = std::string(kind) + ".inner.r";
+	const std::string group = std::string("npr.") + kind + ".translated.g";
+	BU_LIST_INIT(&members.l);
+	success = success && mk_addmember("npr.cover.r", &members.l, translated, WMOP_UNION) &&
+	    mk_addmember(region.c_str(), &members.l, translated, WMOP_UNION) &&
+	    mk_lcomb(db, group.c_str(), &members, 0, NULL, NULL, NULL, 0) == 0;
+    }
+    wdb_close(db);
+    return success ? 0 : 1;
+}
+
+
+static int
+create_contour_limit_scene(const char *path)
+{
+    struct rt_wdb *db = wdb_fopen(path);
+    if (!db)
+	return 1;
+    struct bu_attribute_value_set optical;
+    bu_avs_init_empty(&optical);
+    bu_avs_add(&optical, "OSL", "art_npr");
+    bool success = write_osl_material(db, "reference.material", &optical);
+    bu_avs_add(&optical, "OSL.param.in_opacity", "float 0");
+    bu_avs_add(&optical, "OSL.param.in_contours", "int 0");
+    success = success && write_osl_material(db, "cover.material", &optical);
+    bu_avs_free(&optical);
+
+    const point_t reference_low = {-0.01, -0.01, 0};
+    const point_t reference_high = {0.01, 0.01, 0.1};
+    struct wmember members;
+    BU_LIST_INIT(&members.l);
+    success = success && mk_rpp(db, "reference.s", reference_low, reference_high) == 0 &&
+	mk_addmember("reference.s", &members.l, NULL, WMOP_UNION) &&
+	mk_lcomb(db, "reference.r", &members, 1, NULL, NULL, NULL, 0) == 0 &&
+	db5_update_attribute("reference.r", "material_name", "reference.material", db->dbip) == 0;
+
+    // Sixty closed slabs exceed the default stencil limit of 100 crossings.
+    // The primary ray hits the small reference first; its stencil misses it.
+    constexpr size_t COVER_COUNT = 60;
+    for (size_t i = 0; i < COVER_COUNT; ++i) {
+	const double top = -1.0 - static_cast<double>(i);
+	const point_t low = {-10, -10, top - 0.01}, high = {10, 10, top};
+	const std::string solid = "cover" + std::to_string(i) + ".s";
+	const std::string region = "cover" + std::to_string(i) + ".r";
+	BU_LIST_INIT(&members.l);
+	success = success && mk_rpp(db, solid.c_str(), low, high) == 0 &&
+	    mk_addmember(solid.c_str(), &members.l, NULL, WMOP_UNION) &&
+	    mk_lcomb(db, region.c_str(), &members, 1, NULL, NULL, NULL, 0) == 0 &&
+	    db5_update_attribute(region.c_str(), "material_name", "cover.material", db->dbip) == 0;
+    }
+    BU_LIST_INIT(&members.l);
+    success = success && mk_addmember("reference.r", &members.l, NULL, WMOP_UNION);
+    for (size_t i = 0; i < COVER_COUNT; ++i) {
+	const std::string region = "cover" + std::to_string(i) + ".r";
+	success = success && mk_addmember(region.c_str(), &members.l, NULL, WMOP_UNION);
+    }
+    success = success && mk_lcomb(db, "npr.limit.g", &members, 0, NULL, NULL, NULL, 0) == 0;
+    wdb_close(db);
+    return success ? 0 : 1;
+}
+
+
+static int
 edit_database_command(const char *path, int argc, const char *argv[])
 {
     struct ged *editor = ged_open("db", path, 0);
@@ -572,6 +714,10 @@ main(int argc, char **argv)
     if (argc > 5 && BU_STR_EQUAL(argv[1], "interrupt-render"))
 	return interrupt_render_process(argv[2], argv[3], argv[4], const_cast<const char **>(argv + 5));
 #endif
+    if (argc == 3 && BU_STR_EQUAL(argv[1], "create-contour-limit"))
+	return create_contour_limit_scene(argv[2]);
+    if (argc == 3 && BU_STR_EQUAL(argv[1], "create-nested"))
+	return create_nested_scene(argv[2]);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create"))
 	return create_scene(argv[2], nullptr, nullptr);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create-checker-texture"))

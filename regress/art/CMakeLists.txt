@@ -12,6 +12,7 @@ set(ART_TEST_SHADER_NAMES
   art_parameters
   art_texture
   art_emission
+  art_npr
   art_sampling
   art_graph_value
   art_bump_field
@@ -24,6 +25,7 @@ set(ART_TEST_SHADER_NAMES
   art_array_values
   art_absorption_reference
   art_refraction_reference
+  art_nested_reference
   art_mirror_mixture
   art_mirror_node
   art_surface_reference
@@ -41,7 +43,9 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-image-maps
   regress-art-resources
   regress-art-transmission
+  regress-art-absorption
   regress-art-refraction
+  regress-art-nested
   regress-art-mixture
   regress-art-surface
   regress-art-metal-energy
@@ -62,6 +66,7 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-sampling
   regress-art-bounces
   regress-art-aovs
+  regress-art-npr
   regress-art-exposure
 )
 if(UNIX)
@@ -76,12 +81,12 @@ endif()
 cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   art_installed_runtime.cmake.in art-installed-material.cmake.in
   art-installed-plate.cmake.in art-installed-view.cmake.in
-  art_scene.cpp art_test_mesh.h art_test_commands.cmake
+  art_scene.cpp art_test_mesh.h art_glass_reference.h art_test_commands.cmake
   regress-art.cmake.in regress-art-bump.cmake.in regress-art-normal.cmake.in
   regress-art-texture.cmake.in regress-art-color.cmake.in
   regress-art-image-maps.cmake.in regress-art-resources.cmake.in
-  regress-art-transmission.cmake.in regress-art-refraction.cmake.in
-  regress-art-mixture.cmake.in regress-art-surface.cmake.in
+  regress-art-transmission.cmake.in regress-art-absorption.cmake.in regress-art-refraction.cmake.in
+  regress-art-mixture.cmake.in regress-art-surface.cmake.in regress-art-nested.cmake.in
   regress-art-metal-energy.cmake.in regress-art-coat.cmake.in
   regress-art-materials.cmake.in regress-art-inspect.cmake.in
   regress-art-region-colors.cmake.in regress-art-view.cmake.in
@@ -89,7 +94,7 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-lighting.cmake.in regress-art-output.cmake.in regress-art-settings.cmake.in
   regress-art-environment.cmake.in regress-art-environment-map.cmake.in
   regress-art-framebuffer.cmake.in regress-art-progress.cmake.in regress-art-cancel.cmake.in
-  regress-art-sampling.cmake.in regress-art-bounces.cmake.in regress-art-aovs.cmake.in regress-art-exposure.cmake.in)
+  regress-art-sampling.cmake.in regress-art-bounces.cmake.in regress-art-aovs.cmake.in regress-art-npr.cmake.in regress-art-exposure.cmake.in)
 foreach(shader IN LISTS ART_TEST_SHADER_NAMES)
   cmakefiles("${shader}.osl")
 endforeach()
@@ -112,7 +117,9 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/image-maps-output"
     "${CMAKE_CURRENT_BINARY_DIR}/resources-output"
     "${CMAKE_CURRENT_BINARY_DIR}/transmission-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/absorption-output"
     "${CMAKE_CURRENT_BINARY_DIR}/refraction-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/nested-output"
     "${CMAKE_CURRENT_BINARY_DIR}/mixture-output"
     "${CMAKE_CURRENT_BINARY_DIR}/surface-output"
     "${CMAKE_CURRENT_BINARY_DIR}/metal-energy-output"
@@ -128,7 +135,7 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/framebuffer-output"
     "${CMAKE_CURRENT_BINARY_DIR}/progress-output" "${CMAKE_CURRENT_BINARY_DIR}/cancel-output"
     "${CMAKE_CURRENT_BINARY_DIR}/sampling-output" "${CMAKE_CURRENT_BINARY_DIR}/bounces-output"
-    "${CMAKE_CURRENT_BINARY_DIR}/aovs-output" "${CMAKE_CURRENT_BINARY_DIR}/exposure-output")
+    "${CMAKE_CURRENT_BINARY_DIR}/aovs-output" "${CMAKE_CURRENT_BINARY_DIR}/npr-output" "${CMAKE_CURRENT_BINARY_DIR}/exposure-output")
 endif()
 
 # Local Variables:

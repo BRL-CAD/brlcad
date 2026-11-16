@@ -532,6 +532,10 @@ respective direct and indirect components.  Glossy includes ideal
 specular reflection and refraction.
 |`direct_diffuse`, `indirect_diffuse` |Separate diffuse lighting components.
 |`direct_glossy`, `indirect_glossy` |Separate glossy lighting components.
+|`npr_shading` |Linear RGBA illustrative shading before contours, supplied
+by `as_npr_shading()` closures.
+|`npr_contour` |RGBA contour color and stroke coverage supplied by
+`as_npr_contour()` closures.
 |`emission` |Linear RGBA emission directly visible to the camera.  Emission
 reached through reflection or refraction contributes to indirect lighting.
 |===
@@ -551,6 +555,36 @@ interface does not represent their arbitrary channel layouts.  Art does
 not apply display conversion to AOV data.  Use the appropriate channels
 explicitly when inspecting EXR; for example, a reader may present depth's
 A channel before Z.
+
+Appleseed's NPR closures can replace the physical beauty and add ray-traced
+contours based on object or material boundaries, depth differences, and
+normal creases.  Their line width, color, opacity, and thresholds are shader
+parameters.  Depth thresholds use database base units (millimeters).
+Orthographic contours use parallel stencil rays; perspective contours use
+diverging rays.  `regress-art-npr` checks both projections on equal CSG and
+BOT boxes, with separate object-boundary and crease controls and analytic
+alpha coverage.  Physical lighting AOVs retain the pre-NPR contributions;
+they do not decompose the replaced NPR beauty.  Use the NPR passes when
+inspecting that replacement.  Contour coverage and surface opacity are
+separate quantities, so the contour pass is not a general transparent-layer
+beauty reconstruction mask.
+
+For built-in toon shading with object and crease outlines, assign
+`as_toon` and enable its contour controls:
+
+[source,tcl]
+----
+material create linework.material Linework
+material set linework.material optical OSL as_toon
+material set linework.material optical OSL.output out_outColor
+material set linework.material optical OSL.param.in_contour_object "int 1"
+material set linework.material optical OSL.param.in_contour_creases "int 1"
+material set linework.material optical OSL.param.in_contour_width "float 1"
+material assign model.g linework.material
+----
+
+The engineering recipes in `share/db/art` use the same contour closure
+with illustrative shading and translucent envelopes.
 
 Cancelled renders and shader errors leave existing beauty and sidecars
 unchanged.  AOVs are saved before the beauty; a sidecar write failure
@@ -872,10 +906,67 @@ ratio, rather than roughness, to its transmitted-differential calculation.
 These checks establish the tested first-order direction changes; filtered
 textures along secondary paths still need image-based qualification.
 
-Nested indices, general rough-glass transport, multiple internal bounces,
-caustics, transmitted shadows, overlapping media, thin surfaces, and
+General rough-glass transport, multiple internal bounces, caustics,
+transmitted shadows, general overlapping media, thin surfaces, and
 bump/normal-mapped transmission need further qualification before a general
-production-glass claim.
+production-glass claim.  The distinct-priority nested-volume case below
+has independent image references.
+
+=== Nested optical volumes
+
+`OSL.medium_priority` assigns Appleseed's medium priority to each region
+instance using a material.  It is material metadata, separate from shader
+inputs.  For example:
+
+[source,tcl]
+----
+material set glass.material optical OSL.medium_priority 1
+material set liquid.material optical OSL.medium_priority 2
+material set bubble.material optical OSL.medium_priority 3
+----
+
+The value is a bare integer from -128 through 127 and defaults to zero.
+Higher priorities select the active medium where optical volumes overlap;
+a lower-priority contained region is displaced by its surrounding medium.
+Use distinct increasing priorities for successively nested media.
+Equal priorities do not establish the required ordering for nested indices
+and absorption.  Negative priorities are supported.  Material inheritance
+and child overrides follow the normal OSL definition rules; replacing a
+root shader resets the inherited definition, including priority.
+`inspect_materials=1` reports the effective priority before rendering.
+Invalid priorities fail without replacing an existing image.
+
+The qualified representation uses full, deliberately overlapping closed
+volumes: the outer volume contains the complete inner volume, and an
+optional higher-priority air-like core can be placed inside it.  The
+priority controls which volume supplies the index and absorption on each
+path segment.  This does not qualify coincident interfaces between a CSG
+shell and a separately modeled filling.  Those shared boundaries require
+separate handling.  Optical air-like regions in this workflow remain
+ordinary regions with an index of one; BRL-CAD air regions continue to be
+excluded from art rendering.
+
+`regress-art-nested` compares two- and three-layer CSG and solid BOT boxes
+with a separate shader that traces their interfaces analytically.  It
+checks Snell directions, Fresnel transmission, and colored Beer absorption
+at each segment, including different indices, orthographic and perspective
+views, oblique rays, negative priorities, inherited settings, and hidden
+lower-priority regions.  Reflection tint is zero to isolate directly
+transmitted paths.  The reference checks its slab-face bounds explicitly;
+these tests do not establish rough, multiply reflected, or arbitrary
+interpenetrating-volume transport.  A tied-priority control must fail the
+physical nested-absorption comparison.
+
+`regress-art-absorption` checks energy arriving at an emitter inside one
+or two absorbing volumes.  Equal-index CSG and BOT paths agree with
+independent segment-wise Beer attenuation, including terminal bounce
+limits and indirect glossy diagnostic passes.  Both orthographic and
+perspective center rays are checked; disabling absorption recovers the
+emitter's full HDR radiance.
+
+Cameras starting inside absorbing glass still need initial-medium
+handling.  Surface visibility from inside a solid does not establish
+correct absorption or refraction for such a camera.
 
 === Plate-mode BOTs
 

@@ -20,6 +20,8 @@
 #include "common.h"
 
 #include <cmath>
+#include <cstdint>
+#include <limits>
 #include <iomanip>
 #include <locale>
 #include <map>
@@ -80,6 +82,7 @@ struct MaterialShader {
     MaterialNode root{"as_plastic", {}};
     std::string output = "out_outColor";
     bool output_explicit = false;
+    int medium_priority = 0;
     std::map<std::string, MaterialNode> nodes;
     std::vector<Connection> connections;
     std::vector<std::string> material_chain;
@@ -139,6 +142,20 @@ parse_shader(const std::map<std::string, std::string> &properties,
 	const std::string &value = entry.second;
 	if (key == "OSL") {
 	    shader.root.name = value;
+	} else if (key == "OSL.medium_priority") {
+	    std::istringstream input(value);
+	    input.imbue(std::locale::classic());
+	    int priority = 0;
+	    const bool parsed = static_cast<bool>(input >> priority);
+	    input >> std::ws;
+	    constexpr int minimum = std::numeric_limits<std::int8_t>::min();
+	    constexpr int maximum = std::numeric_limits<std::int8_t>::max();
+	    if (!parsed || !input.eof() || priority < minimum || priority > maximum) {
+		bu_log("art: material '%s' has invalid OSL.medium_priority '%s': expected an integer from %d through %d\n",
+		    material_name, value.c_str(), minimum, maximum);
+		return false;
+	    }
+	    shader.medium_priority = priority;
 	} else if (key == "OSL.output") {
 	    shader.output = value;
 	    shader.output_explicit = true;
@@ -466,6 +483,7 @@ report_material(std::ostream &out, const struct db_full_path *path,
 	    out << ' ' << std::quoted(parent);
 	out << '\n';
     }
+    out << "  medium_priority " << shader.medium_priority << '\n';
     for (const auto &node : order) {
 	const auto &query = *queries.at(node);
 	const auto &shader_name = node == TerminalLayer ? shader.root.name : shader.nodes.at(node).name;
@@ -499,7 +517,7 @@ bool
 art_add_material(asr::Assembly &assembly, const char *name,
     const float srgb[3], struct db_i *db, const struct db_full_path *path,
     const struct rt_comb_internal *comb, const asf::SearchPaths &search_paths,
-    std::ostream *report)
+    int& medium_priority, std::ostream *report)
 {
     MaterialAssignment assignment;
     if (!resolve_assignment(db, path, comb, assignment))
@@ -507,6 +525,7 @@ art_add_material(asr::Assembly &assembly, const char *name,
     MaterialShader shader;
     if (!read_shader(db, assignment.name.c_str(), shader))
 	return false;
+    medium_priority = shader.medium_priority;
 
     std::map<std::string, MaterialNode> nodes = shader.nodes;
     nodes.emplace(TerminalLayer, shader.root);

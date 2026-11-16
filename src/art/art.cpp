@@ -740,8 +740,9 @@ register_region_impl(struct db_tree_state* tsp,
 
     const std::string material_name = std::string(name) + "_mat";
 
+    int medium_priority = 0;
     if (!art_add_material(assembly.ref(), material_name.c_str(), region_rgb,
-	    tsp->ts_dbip, pathp, combp, builder.search_paths, builder.report)) {
+	    tsp->ts_dbip, pathp, combp, builder.search_paths, medium_priority, builder.report)) {
 	builder.valid = false;
 	return 0;
     }
@@ -766,7 +767,7 @@ register_region_impl(struct db_tree_state* tsp,
     assembly->object_instances().insert(
 	asr::ObjectInstanceFactory::create(
 	    instance_name.c_str(),
-	    asr::ParamArray(),
+	    asr::ParamArray().insert("medium_priority", medium_priority),
 	    name,
 	    asf::Transformd::identity(),
 	    material_mapping,
