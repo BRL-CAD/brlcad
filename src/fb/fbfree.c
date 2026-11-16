@@ -27,44 +27,68 @@
 
 #include "common.h"
 
-#include <stdlib.h>
-
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "dm.h"
 
+struct fbfree_args {
+    int help;
+    const char *framebuffer;
+};
 
-static char *framebuffer = NULL;
+static const struct bu_arg_option fbfree_options[] = {
+    BU_ARG_FLAG("h", "help", struct fbfree_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_VALUE("F", "framebuffer", struct fbfree_args, framebuffer,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Select the framebuffer device"),
+    BU_ARG_OPTION_NULL
+};
 
-static char usage[] = "\
-Usage: fbfree [-F framebuffer]\n";
+static const struct bu_arg_schema fbfree_schema = BU_ARG_SCHEMA(
+    "fbfree", "Release resources associated with a framebuffer",
+    fbfree_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar fbfree_grammar = {
+    &fbfree_schema, NULL, NULL
+};
 
 int
 main(int argc, char **argv)
 {
-    int c;
+    struct fbfree_args args = {0, NULL};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct fb *fbp;
 
     bu_setprogname(argv[0]);
 
-    while ((c = bu_getopt(argc, argv, "F:h?")) != -1) {
-	switch (c) {
-	    case 'F':
-		framebuffer = bu_optarg;
-		break;
-	    default:		/* '?' */
-		(void)fputs(usage, stderr);
-		return 1;
-	}
+    int introspection = bu_arg_introspect(&msg, &fbfree_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
-    if (argc > bu_optind) {
-	fprintf(stderr, "fbfree: excess argument(s) not supported\n");
-	(void)fputs(usage, stderr);
+    if (bu_arg_schema_parse_complete(&fbfree_schema, &args, &msg, argc - 1,
+	    (const char **)(argv + 1)) < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
 	return 1;
     }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&fbfree_schema, "fbfree");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "fbfree help");
+	return 0;
+    }
 
-    if ((fbp = fb_open(framebuffer, 0, 0)) == FB_NULL) {
-	fprintf(stderr, "fbfree: Can't open frame buffer\n");
+    if ((fbp = fb_open(args.framebuffer, 0, 0)) == FB_NULL) {
+	bu_flog(stderr, "fbfree: Can't open frame buffer\n");
 	return 1;
     }
     return fb_free(fbp);
