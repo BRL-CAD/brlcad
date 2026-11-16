@@ -1388,9 +1388,19 @@ test_opt_bgcolor(void)
 static void
 test_opt_help(void)
 {
+    char *help;
+
     reset_globals();
     MAKE_ARGV(av, "rt", "-h");
     CALL_GET_ARGS(av, 0);   /* expect 0 = help */
+
+    help = rt_arg_help("rt");
+    CHECK(help && strstr(help, "Output:\n") &&
+	!strstr(help, "Grid and cells:\n") &&
+	!strstr(help, "Diagnostics and performance:\n"),
+	"ordinary help visibility");
+    if (help)
+	bu_free(help, "rt help test");
 
     reset_globals();
     MAKE_ARGV(av2, "rt", "-?");
@@ -1399,6 +1409,20 @@ test_opt_help(void)
     reset_globals();
     MAKE_ARGV(av3, "rt", "--help");
     CALL_GET_ARGS(av3, 0);
+
+    reset_globals();
+    MAKE_ARGV(av4, "rt", "--help=all");
+    CALL_GET_ARGS(av4, 0);
+    help = rt_arg_help("rt");
+    CHECK(help && strstr(help, "Grid and cells:\n") &&
+	strstr(help, "Diagnostics and performance:\n") &&
+	!strstr(help, "space-partition"), "extended help visibility");
+    if (help)
+	bu_free(help, "extended rt help test");
+
+    reset_globals();
+    MAKE_ARGV(av5, "rt", "--help=unknown");
+    CALL_GET_ARGS(av5, -1);
 }
 
 

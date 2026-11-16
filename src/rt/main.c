@@ -259,6 +259,7 @@ int main(int argc, char *argv[])
     struct bu_vls times = BU_VLS_INIT_ZERO;
     int i;
     int objs_free_argv = 0;
+    struct bu_vls schema_output = BU_VLS_INIT_ZERO;
 
 #ifdef MPI_ENABLED
     int size;
@@ -274,6 +275,15 @@ int main(int argc, char *argv[])
     bu_setlinebuf(stdout);
     bu_setlinebuf(stderr);
     stdin_is_tty = isatty(fileno(stdin));
+
+    i = rt_arg_introspect(&schema_output, argc - 1,
+	(const char * const *)(argv + 1));
+    if (i != 0) {
+	bu_flog(i > 0 ? stdout : stderr, "%s", bu_vls_cstr(&schema_output));
+	bu_vls_free(&schema_output);
+	return i > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+    bu_vls_free(&schema_output);
 
     /* establish defaults managed by option handling */
     initialize_option_defaults();
@@ -298,8 +308,11 @@ int main(int argc, char *argv[])
 	usage(argv[0], 0);
 	return 1;
     } else if (i == 0) {
-	/* asking for help is ok */
-	usage(argv[0], 100);
+	char *help = rt_arg_help(argv[0]);
+	if (help) {
+	    bu_flog(stdout, "%s", help);
+	    bu_free(help, "rt argument help");
+	}
 	return 0;
     }
 

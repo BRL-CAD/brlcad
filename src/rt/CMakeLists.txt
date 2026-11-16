@@ -54,7 +54,7 @@ brlcad_addexec(rtscale "read-rtlog.c;rtscale.c" "Threads::Threads;librt;libdm;li
 target_include_directories(rtscale BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 add_target_deps(rtscale dm_plugins)
 
-brlcad_addexec(rt "${LIBRTUIF_SOURCES};view.c" "${OPENCL_LIBS};${RT_STD_LIBS}" FOLDER Rt)
+brlcad_addexec(rt "${LIBRTUIF_SOURCES};view.c" "${OPENCL_LIBS};${RT_STD_LIBS}" FOLDER Rt ARG_SCHEMA)
 target_include_directories(rt BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 add_target_deps(rt dm_plugins dm-txt)
 

@@ -1027,6 +1027,32 @@ static const struct bu_arg_shape rt_arg_verbose_shape = BU_ARG_SHAPE(
     BU_ARG_SHAPE_SCALAR, 0, 1, "an optional hexadecimal verbosity mask",
     rt_arg_verbose_count, NULL);
 
+static size_t
+rt_arg_attached_only(size_t UNUSED(available), const char **UNUSED(argv))
+{
+    return 0;
+}
+
+static const struct bu_arg_shape rt_arg_help_shape = BU_ARG_SHAPE(
+    BU_ARG_SHAPE_SCALAR, 0, 1, "[=all]", rt_arg_attached_only, NULL);
+
+static int
+rt_arg_help_parse(struct bu_vls *msg, const char *arg, void *storage)
+{
+    int mode = 1;
+
+    if (arg && !BU_STR_EQUAL(arg, "all")) {
+	if (msg)
+	    bu_vls_strcat(msg, "--help accepts only the optional value 'all'\n");
+	return -1;
+    }
+    if (arg)
+	mode = 2;
+    if (storage)
+	*((int *)storage) = mode;
+    return 0;
+}
+
 struct rt_arg_state {
     int execute;
     fastf_t eye_backoff;
@@ -1182,8 +1208,11 @@ static const struct bu_arg_option rt_options[] = {
 	"Space partition algorithm selector (temporarily disabled)"),
 
     /* --- Help ---------------------------------------------------------- */
-    BU_ARG_FLAG("h", "help", struct rt_arg_state, help,
-	"Print help and exit"),
+    {"h", "help", "help", "all",
+	"Print help and exit; use --help=all for advanced options",
+	BU_ARG_VALUE_CUSTOM, offsetof(struct rt_arg_state, help), rt_arg_help_parse,
+	NULL, NULL, NULL, 0, 0, NULL, BU_ARG_OPTIONAL, &rt_arg_help_shape,
+	NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
     BU_ARG_ALIAS("?", NULL, "help", 1),
 
     BU_ARG_OPTION_NULL
@@ -1197,10 +1226,51 @@ static const struct bu_arg_operand rt_operands[] = {
     BU_ARG_OPERAND_NULL
 };
 
-static const struct bu_arg_schema rt_schema = BU_ARG_SCHEMA(
+static const struct bu_arg_help_group rt_help_groups[] = {
+    BU_ARG_HELP_GROUP("Output", NULL, "output", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Image dimensions", NULL, "size", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Background and overlaps", NULL, "background", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("View and camera", NULL, "azimuth", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Grid and cells", NULL, "cell-width", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_HELP_GROUP("Rendering", NULL, "ambient", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Animation and scripting", NULL, "command", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_HELP_GROUP("Pixel selection", NULL, "single-pixel", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_HELP_GROUP("Object input", NULL, "objects-file", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_HELP_GROUP("Output format", NULL, "text-output", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_HELP_GROUP("Randomization", NULL, "rand-table-size", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_HELP_GROUP("Diagnostics and performance", NULL, "verbose", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_HELP_GROUP("Help", NULL, "help", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP_NULL
+};
+static const struct bu_arg_option_visibility rt_option_visibility[] = {
+    BU_ARG_OPTION_VISIBILITY("opencl", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY(",", BU_ARG_VISIBILITY_INTERNAL),
+    BU_ARG_OPTION_VISIBILITY_NULL
+};
+static const struct bu_arg_presentation rt_presentation =
+    BU_ARG_PRESENTATION(rt_help_groups, rt_option_visibility, NULL);
+
+static const struct bu_arg_schema rt_schema = BU_ARG_SCHEMA_PRESENTED(
     "rt", "Raytrace a BRL-CAD model", rt_options, rt_operands,
     BU_ARG_PARSE_INTERSPERSED,
-    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL), &rt_presentation);
+
+
+int
+rt_arg_introspect(struct bu_vls *output, int argc, const char * const *argv)
+{
+    const struct bu_arg_grammar grammar = {&rt_schema, NULL, NULL};
+
+    return bu_arg_introspect(output, &grammar, argc, argv);
+}
+
+
+char *
+rt_arg_help(const char *invocation)
+{
+    return bu_arg_schema_help_mode(&rt_schema, invocation,
+	want_help > 1 ? BU_ARG_HELP_EXTENDED : BU_ARG_HELP_DEFAULT);
+}
 
 
 int

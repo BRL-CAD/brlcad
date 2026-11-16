@@ -218,6 +218,9 @@ extern void color_hook(const struct bu_structparse *sp, const char *name, void *
 
 /* usage.c */
 extern void usage(const char *argv0, int verbose);
+extern int rt_arg_introspect(struct bu_vls *output, int argc,
+	const char * const *argv);
+extern char *rt_arg_help(const char *invocation);
 
 /* grid.c */
 extern int grid_setup(struct bu_vls *err);
