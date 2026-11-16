@@ -460,10 +460,10 @@ jobs:
       # 1. Generate a short-lived token using the GitHub App
       - name: Generate GitHub App Token
         id: generate_token
-        uses: tibdex/github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
-          app_id: ${{ secrets.STABLESYNC_APP_ID }}
-          private_key: ${{ secrets.STABLESYNC_APP_PRIVATE_KEY }}
+          app-id: ${{ secrets.STABLESYNC_APP_ID }}
+          private-key: ${{ secrets.STABLESYNC_APP_PRIVATE_KEY }}
 
       # 2. Checkout the repository using the App Token
       - name: Checkout Code
@@ -485,25 +485,34 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          echo "Updating STABLE branch to point to the latest successfully CI tested main SHA: ${{ github.sha }}"
-
-          # Force the local STABLE branch to point directly to the current main SHA
-          git branch -f STABLE ${{ github.sha }}
-
           # Add host key to prevent unknown host prompts (adjust port if not default 22)
           mkdir -p ~/.ssh
           ssh-keyscan -H git.brlcad.org >> ~/.ssh/known_hosts
 
-          # Add Gitea remote and push STABLE
-          echo "Updating STABLE branch on git.brlcad.org..."
           git remote add gitea git@git.brlcad.org:BRL-CAD/brlcad.git
+          git fetch origin +refs/heads/STABLE:refs/remotes/origin/STABLE
+          git fetch gitea +refs/heads/STABLE:refs/remotes/gitea/STABLE
 
-          # If this line fails (due to network or authentication), the job crashes here
-          # and the GitHub push on the next line will never execute.
-          git push gitea STABLE --force
+          # Check both remotes before updating either one.  A later CI run may
+          # already have advanced STABLE while this run was still testing.
+          for remote in origin gitea; do
+            stable_ref="refs/remotes/$remote/STABLE"
+            stable_sha=$(git rev-parse "$stable_ref")
+            if [ "$stable_sha" = "${{ github.sha }}" ]; then
+              continue
+            elif git merge-base --is-ancestor "${{ github.sha }}" "$stable_ref"; then
+              echo "$remote STABLE is already newer; skipping this run."
+              exit 0
+            elif ! git merge-base --is-ancestor "$stable_ref" "${{ github.sha }}"; then
+              echo "$remote STABLE has diverged from the tested commit." >&2
+              exit 1
+            fi
+          done
+
+          # Fast-forward pushes also reject a concurrent newer update.
+          echo "Updating STABLE to tested commit ${{ github.sha }}..."
+          git push gitea "${{ github.sha }}:refs/heads/STABLE"
           echo "git.brlcad.org update successful."
 
-          # Push the updated stable branch reference securely back to origin
-          echo "Updating GitHub STABLE branch..."
-          git push origin STABLE --force
+          git push origin "${{ github.sha }}:refs/heads/STABLE"
           echo "GitHub update successful"
