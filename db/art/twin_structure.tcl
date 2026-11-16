@@ -21,7 +21,7 @@
 units mm
 source engineering_materials.tcl
 art_engineering::make_material frames amber {all 7xxx_series}
-art_engineering::make_material skin shell 0xxx_series 0.82
+art_engineering::make_material skin shell 0xxx_series 0.72
 art_engineering::make_material engines orange 1xxx_series
 art_engineering::make_material crew steel 2xxx_series 0.85
 art_engineering::make_material controls cyan 3xxx_series

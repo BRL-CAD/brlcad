@@ -17,6 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+#include "art_glass_reference.h"
+
 float dielectric_fresnel(float cosine, float ior)
 {
     float transmitted = sqrt(max(0, 1 - (1 - cosine*cosine) / (ior*ior)));
@@ -25,10 +27,6 @@ float dielectric_fresnel(float cosine, float ior)
     return (rs*rs + rp*rp) / 2;
 }
 
-float smith_lambda(float cosine, float alpha)
-{
-    return (sqrt(1 + alpha*alpha * (1 - cosine*cosine) / (cosine*cosine)) - 1) / 2;
-}
 
 surface art_surface_reference(string in_model = "plastic",
     color in_color = color(0.3, 0.5, 0.7), float in_roughness = 0.5,
@@ -57,8 +55,7 @@ surface art_surface_reference(string in_model = "plastic",
                 float mu = (i + 0.5) / PolarCount;
                 float mu_h = sqrt((1 + mu) / 2);
                 float f = dielectric_fresnel(mu_h, in_ior);
-                float shape = 1 + (alpha*alpha - 1) * mu_h*mu_h;
-                float d = alpha*alpha / (M_PI * shape*shape);
+                float d = isotropic_ggx_distribution(mu_h, alpha);
                 float g = 1 / (1 + smith_lambda(mu, alpha));
                 color value = base * (1 - f)*(1 - f) + f * d * g / (4 * mu);
                 integral += 2 * M_PI * mu * value / PolarCount;
@@ -90,8 +87,7 @@ surface art_surface_reference(string in_model = "plastic",
     float mu_h = dot(halfway, n);
     float cosine = dot(incoming, halfway);
     float alpha = max(0.001, in_roughness*in_roughness);
-    float shape = 1 + (alpha*alpha - 1) * mu_h*mu_h;
-    float d = alpha*alpha / (M_PI * shape*shape);
+    float d = isotropic_ggx_distribution(mu_h, alpha);
     float g = 1 / (1 + smith_lambda(mu_i, alpha) + smith_lambda(mu_o, alpha));
     color value;
     if (in_model == "metal") {

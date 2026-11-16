@@ -41,4 +41,15 @@ color target_color(point position)
         0.35 + 0.25 * cos(0.11 * position[0] + 0.13 * position[1]));
 }
 
+float smith_lambda(float cosine, float alpha)
+{
+    return (sqrt(1 + alpha*alpha * (1 - cosine*cosine) / (cosine*cosine)) - 1) / 2;
+}
+
+float isotropic_ggx_distribution(float cosine, float alpha)
+{
+    float shape = 1 + (alpha*alpha - 1) * cosine*cosine;
+    return alpha*alpha / (M_PI * shape*shape);
+}
+
 #endif

@@ -1,0 +1,146 @@
+/*              A R T _ C U R V E D _ R E F E R E N C E . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+#include "art_glass_reference.h"
+
+float next_ellipsoid_hit(point position, vector direction, vector axes,
+    float minimum, float maximum)
+{
+    vector origin = vector(position) / axes;
+    vector ray = direction / axes;
+    float a = dot(ray, ray);
+    float b = dot(origin, ray);
+    float c = dot(origin, origin) - 1;
+    float discriminant = b*b - a*c;
+    if (discriminant < 0)
+        return maximum;
+    float root = sqrt(discriminant);
+    float near = (-b-root)/a;
+    float far = (-b+root)/a;
+    if (near > minimum && near < maximum)
+        return near;
+    if (far > minimum && far < maximum)
+        return far;
+    return maximum;
+}
+
+surface art_curved_reference(
+    int in_opaque_inner = 0, // 0: dielectric, 1: emitter, 2: mirror.
+    point in_center = point(0),
+    vector in_outer_axes = vector(10),
+    vector in_inner_axes = vector(5),
+    float in_outer_ior = 1.5,
+    float in_inner_ior = 2.4,
+    color in_outer_transmittance = color(1),
+    color in_inner_transmittance = color(1),
+    float in_outer_distance = 0,
+    float in_inner_distance = 0)
+{
+    int EmittingInner = 1;
+    float RayLimit = 1.0e20;
+    // Roots use shader float precision. Ignore the just-visited surface
+    // within one ten-thousandth of a model millimeter.
+    float RootTolerance = 1.0e-4;
+    // Reconstruct the primary camera ray, then solve the optical path
+    // independently of renderer intersections, BSDFs, and medium tracking.
+    float ray_length = 0;
+    if (!getattribute("path:ray_length", ray_length)) {
+        error("Missing ray length for curved optical reference");
+        Ci = 0;
+        return;
+    }
+    vector direction = normalize(I);
+    point position = P - in_center - ray_length * direction;
+    vector outer_coordinate = vector(position) / in_outer_axes;
+    vector inner_coordinate = vector(position) / in_inner_axes;
+    int inside_outer = dot(outer_coordinate, outer_coordinate) < 1;
+    int inside_inner = dot(inner_coordinate, inner_coordinate) < 1;
+    color weight = color(1);
+    int escaped = 0;
+    int MaxInterfaces = 8; // Two nested quadrics need at most four crossings.
+    for (int event = 0; event < MaxInterfaces; ++event) {
+        float outer_hit = next_ellipsoid_hit(position, direction, in_outer_axes, RootTolerance, RayLimit);
+        float inner_hit = next_ellipsoid_hit(position, direction, in_inner_axes, RootTolerance, RayLimit);
+        float distance = min(outer_hit, inner_hit);
+        if (distance == RayLimit) {
+            escaped = 1;
+            break;
+        }
+        int previous = inside_inner ? 2 : (inside_outer ? 1 : 0);
+        float ni = previous == 2 ? in_inner_ior : (previous == 1 ? in_outer_ior : 1);
+        if (previous == 2 && in_inner_distance > 0)
+            weight *= pow(in_inner_transmittance, distance/in_inner_distance);
+        else if (previous == 1 && in_outer_distance > 0)
+            weight *= pow(in_outer_transmittance, distance/in_outer_distance);
+        position += distance * direction;
+        if (inner_hit < outer_hit && in_opaque_inner) {
+            if (in_opaque_inner == EmittingInner) {
+                Ci = weight * color(0.2, 0.8, 0.1) * emission();
+                return;
+            }
+            normal reflected_normal = normalize(normal(vector(position)/(in_inner_axes*in_inner_axes)));
+            direction = reflect(direction, reflected_normal);
+            continue;
+        }
+        vector axes;
+        if (inner_hit < outer_hit) {
+            inside_inner = !inside_inner;
+            axes = in_inner_axes;
+        } else {
+            inside_outer = !inside_outer;
+            axes = in_outer_axes;
+        }
+        int next = inside_inner ? 2 : (inside_outer ? 1 : 0);
+        float nt = next == 2 ? in_inner_ior : (next == 1 ? in_outer_ior : 1);
+        normal geometric = normalize(normal(vector(position)/(axes*axes)));
+        if (dot(direction, geometric) > 0)
+            geometric = -geometric;
+        vector transmitted = refract(direction, geometric, ni/nt);
+        if (dot(transmitted, transmitted) == 0) {
+            Ci = 0;
+            return;
+        }
+        weight *= interface_radiance_transmission(ni, nt,
+            -dot(direction, geometric), -dot(transmitted, geometric));
+        direction = transmitted;
+        if (!inside_outer && !inside_inner) {
+            escaped = 1;
+            break;
+        }
+    }
+    if (!escaped) {
+        error("Curved optical reference exceeded its interface budget");
+        Ci = 0;
+        return;
+    }
+    if (in_opaque_inner) {
+        Ci = weight * color(0.4) * emission();
+        return;
+    }
+    if (direction[2] >= 0) {
+        Ci = 0;
+        return;
+    }
+    position += (-30-position[2])/direction[2] * direction;
+    if (abs(position[0]) > 200 || abs(position[1]) > 200) {
+        Ci = 0;
+        return;
+    }
+    Ci = weight * target_color(position+in_center) * emission();
+}

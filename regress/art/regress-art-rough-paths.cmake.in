@@ -1,0 +1,85 @@
+cmake_minimum_required(VERSION 3.22)
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/rough-paths-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_nested_test_commands.cmake")
+configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_refraction_reference.oso"
+  "${WORK}/shaders/art_refraction_reference.oso" COPYONLY)
+configure_file("@CMAKE_CURRENT_SOURCE_DIR@/art_rough_box.obj" "${WORK}/art_rough_box.obj" COPYONLY)
+set(TOOL "@ART_OIIOTOOL_EXECUTABLE@")
+set(NATIVE_RENDERER "@ART_APPLESEED_CLI_EXECUTABLE@")
+get_filename_component(REFERENCE_SHADER_PATH "@ART_OSL_HELPER_INCLUDE_DIR@" DIRECTORY)
+string(APPEND REFERENCE_SHADER_PATH "/appleseed")
+# The path is XML text, so spaces are preserved and reserved characters
+# must be escaped before insertion into the reference project.
+string(REPLACE "&" "&amp;" REFERENCE_SHADER_PATH "${REFERENCE_SHADER_PATH}")
+string(REPLACE "<" "&lt;" REFERENCE_SHADER_PATH "${REFERENCE_SHADER_PATH}")
+string(REPLACE ">" "&gt;" REFERENCE_SHADER_PATH "${REFERENCE_SHADER_PATH}")
+set(SIZE 16)
+set(SAMPLES 512)
+set(WORKERS 2)
+set(BOUNCES 8)
+set(VOLUME_COLOR "0.25 0.5 0.8")
+set(VOLUME_DISTANCE 20)
+set(ENVIRONMENT_POWER 0.4)
+set(DB "${WORK}/actual.g")
+run("${VEXEC}" create-material "${DB}" as_glass)
+foreach(parameter IN ITEMS "in_transmittance_amount;float 1"
+    "in_surface_transmittance;color 1 1 1"
+    "in_reflection_tint;color 1 1 1" "in_refraction_tint;color 1 1 1"
+    "in_volume_transmittance;color ${VOLUME_COLOR}"
+    "in_volume_transmittance_distance;float ${VOLUME_DISTANCE}")
+  list(GET parameter 0 name)
+  list(GET parameter 1 value)
+  run("${VEXEC}" set-material "${DB}" "OSL.param.${name}" "${value}")
+endforeach()
+set(RENDER_ARGS -P ${WORKERS} -w ${SIZE} -n ${SIZE} -p 2 -c "viewsize 0.5"
+  -c "orientation 0 0 0 1"
+  -c "set sampling=uniform samples=${SAMPLES} light_intensity=0 environment_color=white environment_intensity=${ENVIRONMENT_POWER} background_color=black max_bounces=${BOUNCES} max_glossy_bounces=${BOUNCES} max_specular_bounces=${BOUNCES} rr_min_path_length=0")
+set(MEAN_RELATIVE_BOUND 0.002)
+set(PIXEL_RELATIVE_BOUND 0.1)
+set(REFERENCE_FLOOR 0.0005)
+function(compare_paths image reference)
+  run("${TOOL}" --fail ${PIXEL_RELATIVE_BOUND} --hardfail ${PIXEL_RELATIVE_BOUND}
+    --warn ${PIXEL_RELATIVE_BOUND} --hardwarn ${PIXEL_RELATIVE_BOUND}
+    "${image}" --ch R,G,B "${reference}" --ch R,G,B --absdiff
+    "${reference}" --ch R,G,B --abs --addc ${REFERENCE_FLOOR} --div
+    --pattern constant:color=0,0,0 ${SIZE}x${SIZE} 3 --diff)
+  compare_radiance_mean("${image}" "${reference}" ${MEAN_RELATIVE_BOUND} FALSE)
+endfunction()
+run("${TOOL}" --pattern constant:color=0,0,0 ${SIZE}x${SIZE} 3 -o "${WORK}/black.exr")
+foreach(REFERENCE_IOR IN ITEMS 1.5 2)
+  run("${VEXEC}" set-material "${DB}" OSL.param.in_ior "float ${REFERENCE_IOR}")
+  foreach(REFERENCE_ROUGHNESS IN ITEMS 0.35 0.7)
+    run("${VEXEC}" set-material "${DB}" OSL.param.in_roughness "float ${REFERENCE_ROUGHNESS}")
+    foreach(location IN ITEMS outside inside)
+      if(location STREQUAL "outside")
+        set(REFERENCE_EYE_Z 40)
+      else()
+        set(REFERENCE_EYE_Z 0)
+      endif()
+      set(stem "${WORK}/${REFERENCE_IOR}-${REFERENCE_ROUGHNESS}-${location}")
+      configure_file("@CMAKE_CURRENT_SOURCE_DIR@/art_rough_box.appleseed.in" "${stem}.appleseed" @ONLY)
+      set(reference "${stem}-reference.exr")
+      run("${NATIVE_RENDERER}" --output "${reference}" "${stem}.appleseed")
+      run("${VEXEC}" check-image "${reference}" ${SIZE} ${SIZE})
+      expect_failure("${TOOL}" --fail 0.0005 --hardfail 0.0005 "${reference}" --ch R,G,B "${WORK}/black.exr" --diff)
+      foreach(object IN ITEMS cube.r mesh.r)
+        set(image "${stem}-${object}.exr")
+        run("${EXEC}" ${RENDER_ARGS} -c "eye_pt 0 0 ${REFERENCE_EYE_Z}"
+          -o "${image}" "${DB}" "${object}")
+        run("${VEXEC}" check-image "${image}" ${SIZE} ${SIZE})
+        compare_paths("${image}" "${reference}")
+      endforeach()
+    endforeach()
+  endforeach()
+endforeach()
+
+# A clear volume cannot satisfy the colored absorption reference.
+run("${VEXEC}" set-material "${DB}" OSL.param.in_volume_transmittance_distance "float 0")
+run("${EXEC}" ${RENDER_ARGS} -c "eye_pt 0 0 ${REFERENCE_EYE_Z}"
+  -o "${WORK}/wrong-absorption.exr" "${DB}" mesh.r)
+compare_radiance_mean("${WORK}/wrong-absorption.exr" "${reference}" ${MEAN_RELATIVE_BOUND} TRUE)

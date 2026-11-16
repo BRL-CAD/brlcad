@@ -33,7 +33,7 @@ foreach path [search /main_rotor -type comb] {
 }
 lappend controls tail_rot_links tail_rot_xhead
 art_engineering::make_material links cyan [lsort -unique $controls]
-art_engineering::make_material covers shell {mr_cover mr_lcover cannopy_glass laser_sight_glss lt_pylon_skin rt_pylon_skin lt_launch_case rt_launch_case 30mm_ammo_box 30mm_turret} 0.88
+art_engineering::make_material covers shell {mr_cover mr_lcover cannopy_glass laser_sight_glss lt_pylon_skin rt_pylon_skin lt_launch_case rt_launch_case 30mm_ammo_box 30mm_turret} 0.75
 comb art.context.g u havoc
 # Keep the source placements while isolating the rotor-head context.
 cp havoc art.structure.g

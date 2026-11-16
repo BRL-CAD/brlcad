@@ -1,0 +1,65 @@
+/*              A R T _ R O U G H _ F U R N A C E _ R E F E R E N C E . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+#include "art_glass_reference.h"
+
+float rough_exit_integrand(float cosine, float index_ratio, float alpha)
+{
+    // At normal incidence, a transmitting facet exists only for light
+    // directions with cosine greater than the exterior/interior index ratio.
+    if (cosine <= index_ratio)
+        return 0;
+    float half_length = sqrt(1 + index_ratio*index_ratio - 2*index_ratio*cosine);
+    float outgoing_facet = (1-index_ratio*cosine) / half_length;
+    float incoming_facet = (index_ratio-cosine) / half_length;
+    float transmitted_cosine = sqrt(max(0, 1 -
+        (1-outgoing_facet*outgoing_facet)/(index_ratio*index_ratio)));
+    float transmission = interface_transmission(1, index_ratio, outgoing_facet, transmitted_cosine);
+    float distribution = isotropic_ggx_distribution(outgoing_facet, alpha);
+    float masking = 1 / (1 + smith_lambda(cosine, alpha));
+    float denominator = outgoing_facet + index_ratio*incoming_facet;
+    // The cosine-weighted hemisphere measure cancels the BTDF cosine.
+    return 2*M_PI * transmission * distribution * masking *
+        abs(outgoing_facet*incoming_facet) / (denominator*denominator);
+}
+
+surface art_rough_furnace_reference(
+    float in_ior = 1.5,
+    float in_roughness = 0.35,
+    float in_environment = 0.4,
+    int in_intervals = 4096)
+{
+    float NormalIncidenceTolerance = 0.00001;
+    if (in_ior <= 1 || in_roughness <= 0 || in_intervals < 2 || in_intervals % 2 ||
+        abs(dot(normalize(Ng), normalize(I))) < 1-NormalIncidenceTolerance) {
+        error("Rough furnace reference requires normal incidence, dense-to-air transmission, positive roughness, and an even interval count");
+        Ci = 0;
+        return;
+    }
+    float index_ratio = 1/in_ior;
+    float alpha = max(0.001, in_roughness*in_roughness);
+    float interval_width = (1-index_ratio)/in_intervals;
+    float integral = rough_exit_integrand(index_ratio, index_ratio, alpha) +
+        rough_exit_integrand(1, index_ratio, alpha);
+    // Simpson quadrature is independent of the renderer's BSDF sampler
+    // and environment importance sampling. A refined control checks it.
+    for (int i = 1; i < in_intervals; ++i)
+        integral += (i % 2 ? 4 : 2) * rough_exit_integrand(index_ratio+i*interval_width, index_ratio, alpha);
+    Ci = color(in_environment * interval_width/3 * integral) * emission();
+}

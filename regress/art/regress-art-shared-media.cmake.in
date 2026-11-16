@@ -30,16 +30,6 @@ set(SIZE 8)
 set(TOLERANCE 0.0005)
 set(DIFF_ARGS --fail ${TOLERANCE} --hardfail ${TOLERANCE}
   --warn ${TOLERANCE} --hardwarn ${TOLERANCE})
-# Independent shader and BSDF arithmetic can straddle a binary16 rounding
-# boundary, particularly in HDR and translated scenes. Allow one relative
-# half-float step (ten fraction bits) plus the absolute arithmetic bound.
-set(HALF_RELATIVE_STEP 0.0009765625)
-function(compare_shared_transport actual reference)
-  run("${TOOL}" --fail 1 --hardfail 1 --warn 1 --hardwarn 1
-    "${actual}" "${reference}" --absdiff
-    "${reference}" --abs --mulc ${HALF_RELATIVE_STEP} --addc ${TOLERANCE} --div
-    --pattern constant:color=0,0,0,0 ${SIZE}x${SIZE} 4 --diff)
-endfunction()
 set(RENDER_ARGS -P 1 -w ${SIZE} -n ${SIZE} -c "viewsize 0.5"
   -c "set samples=1 light_intensity=0 environment_intensity=0 background_color=black max_bounces=-1 rr_min_path_length=0")
 run("${TOOL}" --pattern constant:color=0,0,0 ${SIZE}x${SIZE} 3 -o "${WORK}/black.exr")
@@ -90,7 +80,7 @@ foreach(profile IN ITEMS equal clear absorbing)
                 -c "orientation ${orientation}" -o "${image}" "${ACTUAL_DB}"
                 "${kind}.shared.${order}${suffix}.g")
               run("${VEXEC}" check-image "${image}" ${SIZE} ${SIZE})
-              compare_shared_transport("${image}" "${reference}")
+              compare_optical_transport("${image}" "${reference}")
             endforeach()
           endforeach()
         endforeach()
