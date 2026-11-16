@@ -734,6 +734,7 @@ function(BRLCAD_ADD_AGGREGATE_LIBRARY)
   endforeach()
 
   add_library(libbrlcad SHARED ${_brlcad_objs})
+  brlcad_install_rpath(libbrlcad "${LIB_DIR}")
   set_target_properties(libbrlcad PROPERTIES
     EXPORT_NAME brlcad
     FOLDER "BRL-CAD Shared Libraries"
@@ -908,6 +909,7 @@ function(
   # Handle the shared library
   if(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
     add_library(${libname} SHARED ${lsrcslist} ${L_SHARED_SRCS})
+    brlcad_install_rpath(${libname} "${LIB_DIR}")
     if(${libname} MATCHES "^lib*")
       set_target_properties(${libname} PROPERTIES PREFIX "")
     endif(${libname} MATCHES "^lib*")

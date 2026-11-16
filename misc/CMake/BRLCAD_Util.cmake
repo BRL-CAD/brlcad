@@ -227,10 +227,7 @@ function(PLUGIN_SETUP plugin_targets subdir)
     )
     # Set the RPATH target property
     if(NOT APPLE)
-      set_property(
-        TARGET ${target_name}
-        PROPERTY INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:$ORIGIN/../../${LIB_DIR}"
-      )
+      brlcad_install_rpath(${target_name} "${LIBEXEC_DIR}/${subdir}")
     else(NOT APPLE)
       # For OSX, set the INSTALL_NAME_DIR target property
       set_property(TARGET ${target_name} PROPERTY INSTALL_RPATH "@executable_path/../../${LIB_DIR}")

@@ -1,6 +1,7 @@
 set(ART_INSTALLED_PREFIX "" CACHE PATH "Installed art application and renderer prefix")
 set(ART_SCENE_TEST "" CACHE FILEPATH "Development art_scene_test fixture and image checker")
 set(LIB_DIR lib CACHE STRING "Installed library subdirectory")
+set(LIBEXEC_DIR libexec CACHE STRING "Installed plugin subdirectory")
 if(NOT IS_DIRECTORY "${ART_INSTALLED_PREFIX}")
   message(FATAL_ERROR "ART_INSTALLED_PREFIX must name an installed art application")
 endif()
@@ -30,7 +31,7 @@ unset(ART_MGED_EXECUTABLE CACHE)
 find_program(ART_MGED_EXECUTABLE NAMES mged
   HINTS "${renderer_prefix}/bin" NO_DEFAULT_PATH NO_CACHE)
 if(ART_MGED_EXECUTABLE)
-  list(APPEND installed_tests art-installed-material art-installed-plate)
+  list(APPEND installed_tests art-installed-material art-installed-plate art-installed-view)
 endif()
 foreach(test IN LISTS installed_tests)
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${test}.cmake.in"
@@ -43,10 +44,11 @@ endforeach()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
   find_program(ART_LDD_EXECUTABLE NAMES ldd REQUIRED)
+  find_program(ART_READELF_EXECUTABLE NAMES readelf llvm-readelf REQUIRED)
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/art_installed_runtime.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/art_installed_runtime.cmake" @ONLY)
   add_test(NAME art-installed-runtime COMMAND "${CMAKE_COMMAND}"
     -P "${CMAKE_CURRENT_BINARY_DIR}/art_installed_runtime.cmake")
-  set_tests_properties(art-installed-runtime PROPERTIES TIMEOUT 30 LABELS Installed
+  set_tests_properties(art-installed-runtime PROPERTIES TIMEOUT ${ART_REGRESSION_TIMEOUT} LABELS Installed
     ENVIRONMENT_MODIFICATION "${runtime_environment}")
 endif()

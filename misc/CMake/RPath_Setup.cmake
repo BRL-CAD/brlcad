@@ -37,21 +37,25 @@ function(relative_rpath outvar)
   cmake_parse_arguments(R "" "SUFFIX;LEN" "" ${ARGN})
 
   if(R_SUFFIX)
-    set(DPATH)
-    set(CPATH "${R_SUFFIX}")
-    while(NOT "${CPATH}" STREQUAL "")
-      set(DPATH "../${DPATH}")
-      get_filename_component(CPATH "${CPATH}" DIRECTORY)
-    endwhile()
+    set(install_directory "${R_SUFFIX}")
+  elseif(BIN_DIR)
+    set(install_directory "${BIN_DIR}")
   else()
-    set(DPATH "../")
-  endif(R_SUFFIX)
-
+    set(install_directory bin)
+  endif()
+  get_filename_component(object_directory "${install_directory}" ABSOLUTE
+    BASE_DIR "${CMAKE_INSTALL_PREFIX}")
+  get_filename_component(library_directory "${LIB_DIR}" ABSOLUTE
+    BASE_DIR "${CMAKE_INSTALL_PREFIX}")
+  file(RELATIVE_PATH relative_directory "${object_directory}" "${library_directory}")
   if(APPLE)
-    set(RELATIVE_RPATH ";@loader_path/${DPATH}${LIB_DIR}" PARENT_SCOPE)
-  else(APPLE)
-    set(RELATIVE_RPATH ":\$ORIGIN/${DPATH}${LIB_DIR}" PARENT_SCOPE)
-  endif(APPLE)
+    set(RELATIVE_RPATH "@loader_path")
+  else()
+    set(RELATIVE_RPATH "$ORIGIN")
+  endif()
+  if(NOT relative_directory STREQUAL "" AND NOT relative_directory STREQUAL ".")
+    string(APPEND RELATIVE_RPATH "/${relative_directory}")
+  endif()
 
   # IFF the caller tells us to, lengthen the relative path to a
   # specified length.  This is useful in scenarios where the relative
@@ -76,23 +80,21 @@ function(std_build_rpath)
 
   # Set the final install rpath
   relative_rpath(RELPATH)
-  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${RELPATH}" PARENT_SCOPE)
+  set(CMAKE_INSTALL_RPATH "${RELPATH}" PARENT_SCOPE)
 endfunction(std_build_rpath)
+
+# Shared libraries use their installed directory, which may differ from bin.
+function(brlcad_install_rpath target install_directory)
+  if(APPLE)
+    return()
+  endif()
+  relative_rpath(runtime_path SUFFIX "${install_directory}")
+  set_property(TARGET ${target} PROPERTY INSTALL_RPATH "${runtime_path}")
+endfunction()
 
 #---------------------------------------------------------------------
 # Settings for CMAKE_RPATH_BUILD that support custom manipulation of
 # external project outputs.
-
-# TODO - investigate using BUILD_RPATH and INSTALL_RPATH on a per
-# target basis for more precise control (for example, when setting
-# up paths for libs in subdirs...  not sure yet if it could be helpful
-# but should be explored.
-
-# Note in particular that BUILD_RPATH supports generator expressions,
-# in case that's of use to pull other properties on which to base
-# rpaths...
-
-# Can use set_property:  https://stackoverflow.com/a/40147991
 
 # To allow CMake to manipulate RPaths, we need to make sure they are all the
 # same length and long enough to hold the longest candidate path we will need.
@@ -190,8 +192,12 @@ function(ext_build_rpath)
   set(CMAKE_BUILD_RPATH "${BUILD_RPATH}" PARENT_SCOPE)
 
   # Set the final install rpath
-  relative_rpath(RELPATH)
-  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${RELPATH}" PARENT_SCOPE)
+  if(R_SUFFIX)
+    relative_rpath(RELPATH SUFFIX "${LIB_DIR}/${R_SUFFIX}")
+  else()
+    relative_rpath(RELPATH)
+  endif()
+  set(CMAKE_INSTALL_RPATH "${RELPATH}" PARENT_SCOPE)
 endfunction(ext_build_rpath)
 
 # Local Variables:
