@@ -6,9 +6,9 @@ brlcad_addexec(asc2dsp asc2dsp.c "libbu;${WINSOCK_LIB}" FOLDER Conv ARG_SCHEMA)
 # set the man page source property before adding the exec
 set_source_files_properties(../../../doc/docbook/system/man1/pix2asc.xml PROPERTIES EXTRA_MAN1_OUTPUTS "asc2pix.1")
 
-brlcad_addexec(asc2pix asc2pix.c libbu FOLDER Conv NO_MAN)
+brlcad_addexec(asc2pix asc2pix.c libbu FOLDER Conv NO_MAN NO_OPTIONS)
 
-brlcad_addexec(pix2asc pix2asc.c libbu FOLDER Conv)
+brlcad_addexec(pix2asc pix2asc.c libbu FOLDER Conv NO_OPTIONS)
 
 if(TARGET libtclcad)
   brlcad_addexec(asc2g asc2g.c "libtclcad;libged;libwdb;librt;libnmg;libbu;${WINSOCK_LIB};${M_LIBRARY}" FOLDER Conv)
