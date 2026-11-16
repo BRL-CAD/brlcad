@@ -50,7 +50,7 @@ Sets the display manager type to use (e.g., `ogl`, `X`, `swrast`). This correspo
 Sets the command window geometry (position and size) in standard X geometry format (e.g., `--geom 800x600+0+0`).
 
 *--ggeom* _WxH+X+Y_::
-Sets the graphics/geometry window geometry in standard X geometry format.
+Sets the 3D graphics/geometry window position and size in standard X geometry format (e.g., `--ggeom 512x512+50+50`).
 
 === Run Mode
 
@@ -65,6 +65,8 @@ Instructs _MGED_ to start in GUI (non-classic) mode. This is the default on plat
 
 *-p*, *--pipe*::
 Enables pipe mode. In this mode _MGED_ emits a `MGED_CMD_DONE <status>` sentinel to stdout after every command completes on stdin, making it suitable for use as a subprocess driven by an automated tool.
+Pipe mode may be used with the graphical interface; stdin commands update the active graphics window while command output and completion sentinels remain available to the parent process.
+Combine *-p* with *-c* when no graphical command window is wanted.
 
 *-r*, *--read-only*::
 Opens the `database.g` file in read-only mode.

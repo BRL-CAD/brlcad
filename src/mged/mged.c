@@ -2716,7 +2716,7 @@ main(int argc, char *argv[])
     BU_OPT(opt_defs[0],  "a", "attach",           "type",    bu_opt_str,      &cl.attach,           "display manager attach target");
     BU_OPT(opt_defs[1],  "d", "display",           "screen",  bu_opt_str,      &cl.dpy_string,       "Tk display and screen name");
     BU_OPT(opt_defs[2],  "r", "read-only",         "",        NULL,            &cl.read_only,        "open database read-only");
-    BU_OPT(opt_defs[3],  "p", "pipe",              "",        NULL,            &cl.pipe_mode,        "pipe mode (emit CMD_DONE sentinels)");
+    BU_OPT(opt_defs[3],  "p", "pipe",              "",        NULL,            &cl.pipe_mode,        "read commands from stdin and emit CMD_DONE sentinels");
     BU_OPT(opt_defs[4],  "c", "classic",           "",        NULL,            &cl.classic_mode,     "classic text-only mode");
     BU_OPT(opt_defs[5],  "C", "gui",               "",        NULL,            &cl.gui_mode,         "GUI (non-classic) mode");
     BU_OPT(opt_defs[6],  "b", "background",        "",        NULL,            &cl.background,       "run in background (fork)");
@@ -3333,7 +3333,9 @@ main(int argc, char *argv[])
 	/* NOTREACHED */
     }
 
-    if (s->classic_mged || !s->interactive) {
+    /* GUI pipe mode keeps standard I/O connected to the driving process
+     * instead of redirecting it into the Tk command window. */
+    if (s->classic_mged || !s->interactive || s->pipe_mode) {
 	struct stdio_data *sd;
 	BU_GET(sd, struct stdio_data);
 	sd->s = s;
