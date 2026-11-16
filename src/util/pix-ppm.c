@@ -160,8 +160,8 @@ write_ppm(FILE *fp, char *data, long width, long height, int bytes_per_pixel)
     size_t ret;
 
     if (bytes_per_pixel == 1) {
-	/* PGM magic number */
-	fprintf(fp, "P2\n");
+	/* Binary PGM magic number */
+	fprintf(fp, "P5\n");
     } else {
 	/* PPM magic number */
 	fprintf(fp, "P6\n");

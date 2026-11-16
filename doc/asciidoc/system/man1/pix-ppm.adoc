@@ -21,7 +21,7 @@ pix-ppm [-a] [-# _bytes_per_pixel_] [-s _squaresize_] [-w _file_width_] [-n _fil
 *pix-ppm* converts a *pix*(5) (or *bw*(5)) format image into a Netpbm
 PPM/PGM format image. Three-byte-per-pixel RGB input is written as a
 binary PPM (P6); single-byte-per-pixel input is written as a binary PGM
-(P2). Input is read from the named _file.pix_ or, if no file is given,
+(P5). Input is read from the named _file.pix_ or, if no file is given,
 from standard input; output is written to standard output by default.
 
 PIX and BW files carry no embedded dimensions, so the size of the input

@@ -68,6 +68,13 @@ brlcad_add_test(
     -P "${CMAKE_CURRENT_SOURCE_DIR}/test_bwfilter_verbose.cmake"
 )
 
+brlcad_add_test(
+  NAME util_pix_ppm_grayscale
+  COMMAND
+    "${CMAKE_COMMAND}" "-DPIX_PPM=$<TARGET_FILE:pix-ppm>" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/test_pix_ppm_grayscale.cmake"
+)
+
 if(TARGET argdoc)
   brlcad_add_test(
     NAME util_argdoc_schema_selection
@@ -84,6 +91,7 @@ cmakefiles(
   test_bwcrop_single_axis.cmake
   test_bwfilter_divisor.cmake
   test_bwfilter_verbose.cmake
+  test_pix_ppm_grayscale.cmake
   test_bwscale_endpoints.cmake
   test_bwstat_statistics.cmake
   test_dpix_pix_byte_order.cmake
