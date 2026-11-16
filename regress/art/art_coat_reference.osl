@@ -1,0 +1,61 @@
+/*              A R T _ C O A T _ R E F E R E N C E . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+float coat_transmission(float mu, float ior)
+{
+    if (ior == 1)
+        return 1;
+    float ct = sqrt(max(0, 1 - (1 - mu*mu) / (ior*ior)));
+    float rs = (mu - ior*ct) / (mu + ior*ct);
+    float rp = (ior*mu - ct) / (ior*mu + ct);
+    return 1 - 0.5 * (rs*rs + rp*rp);
+}
+
+surface art_coat_reference(color in_color = color(0.7, 0.5, 0.3),
+    color in_transmittance = color(0.25, 0.5, 0.8), float in_thickness = 0.4,
+    float in_ior = 1, int in_depth = 1, int in_fixed_inner = 0,
+    int in_diffuse = 0, point in_light_position = point(0, 0, 40),
+    float in_light_intensity = 1000, int in_reflection = 0,
+    float in_environment = 0.4)
+{
+    if (in_reflection) {
+        float mu = abs(dot(normalize(Ng), normalize(I)));
+        Ci = in_environment * (1 - coat_transmission(mu, in_ior)) * emission();
+        return;
+    }
+    color radiance = in_color;
+    vector incoming = normalize(in_light_position - P);
+    if (in_diffuse) {
+        float mu_i = max(dot(normalize(Ng), incoming), 0);
+        vector to_light = in_light_position - P;
+        radiance *= mu_i * in_light_intensity / (M_PI * dot(to_light, to_light));
+    }
+    for (int layer = 0; layer < in_depth; ++layer) {
+        normal n = in_fixed_inner && layer > 0 ? normal(0, 0, 1) : normalize(Ng);
+        float mu = max(abs(dot(n, normalize(I))), 1e-6);
+        radiance *= coat_transmission(mu, in_ior);
+        if (in_thickness > 0) {
+            float path = in_thickness / mu;
+            if (in_diffuse)
+                path += in_thickness / max(abs(dot(n, incoming)), 1e-6);
+            radiance *= pow(in_transmittance, path);
+        }
+    }
+    Ci = radiance * emission();
+}

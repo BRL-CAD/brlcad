@@ -1,0 +1,27 @@
+/*              A R T _ M I R R O R _ M I X T U R E . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+surface art_mirror_mixture(color in_color = color(0.5), float in_weight = 0.5)
+{
+    // Distinct normals prevent the optimizer from combining the closures.
+    // Tilting toward the view keeps both reflections outside a convex solid.
+    normal tilted = normalize(N - 0.2 * normalize(I));
+    Ci = in_color * (in_weight * reflection(N) +
+        (1 - in_weight) * reflection(tilted));
+}

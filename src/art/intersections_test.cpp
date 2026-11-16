@@ -25,6 +25,7 @@
 #include <cmath>
 #include <condition_variable>
 #include <exception>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <stdexcept>
@@ -82,10 +83,11 @@ sphere_entry(BrlcadObject &sphere)
 static bool
 check_offsets(BrlcadObject &object, const asf::Vector3d &point,
     const asf::Vector3d &incoming, const asf::Vector3d &normal, double max_offset,
-    bool transmission_hit = true)
+    bool transmission_hit = true, double incoming_distance = 0)
 {
     asf::Vector3d front, back, offset_normal;
-    object.refine_and_offset(asf::Ray3d(point, incoming), normal, front, back, offset_normal);
+    object.refine_and_offset(asf::Ray3d(point, incoming, 0, incoming_distance),
+	normal, front, back, offset_normal);
     const auto oriented = asf::dot(normal, incoming) > 0.0 ? -normal : normal;
     if (!VNEAR_EQUAL(offset_normal, oriented, INTERSECTION_TOLERANCE) ||
 	!(asf::dot(front - point, oriented) > 0.0) ||
@@ -105,8 +107,13 @@ check_offsets(BrlcadObject &object, const asf::Vector3d &point,
     transmitted.m_dir = -oriented;
     transmitted.m_tmax = INFINITY;
     const bool reflected_hit = object.intersect(reflected);
-    const bool transmitted_hit = object.intersect(transmitted);
-    if (reflected_hit || transmitted_hit != transmission_hit) {
+    asr::ProceduralObject::IntersectionResult transmitted_result;
+    object.intersect(transmitted, transmitted_result);
+    const bool transmitted_hit = transmitted_result.m_hit;
+    // A transmitted ray must reach the next exit, not re-enter this face.
+    const bool reentered = transmitted_hit &&
+	asf::dot(transmitted_result.m_geometric_normal, transmitted.m_dir) <= 0.0;
+    if (reflected_hit || transmitted_hit != transmission_hit || reentered) {
 	bu_log("Offset ray failure for %s at (%g %g %g): reflected=%d transmitted=%d expected=%d\n",
 	    object.get_name(), V3ARGS(point), reflected_hit, transmitted_hit, transmission_hit);
 	return false;
@@ -301,6 +308,15 @@ main(int argc, char **argv)
 	parameters.insert("database_path", filename).insert("object_path", "sphere.r");
 	BrlcadObject sphere("sphere", parameters);
 	ok = sphere_entry(sphere) && ok;
+	// Distant origins must not lose the small sphere discriminant when
+	// large quadratic terms cancel. Check distance and the boundary normal.
+	constexpr double FAR_ORIGIN = 1.0e8;
+	const double radial_x = std::sqrt(10.0 * 10.0 - 3.0 * 3.0);
+	const asf::Vector3d far_normal(-radial_x / 10.0, 0.3, 0);
+	ok = check_ray(sphere, asf::Vector3d(-FAR_ORIGIN, 3, 0), asf::Vector3d(1, 0, 0),
+	    0, INFINITY, true, FAR_ORIGIN - radial_x, far_normal) && ok;
+	ok = check_ray(sphere, asf::Vector3d(-FAR_ORIGIN, 3, 0), asf::Vector3d(2, 0, 0),
+	    0, INFINITY, true, (FAR_ORIGIN - radial_x) / 2, far_normal) && ok;
 	ok = check_ray(sphere, asf::Vector3d(0, 0, 0), asf::Vector3d(0, 0, 2),
 	    0, 100, true, 5, asf::Vector3d(0, 0, 1)) && ok;
 	ok = check_ray(sphere, asf::Vector3d(-20, 0, 0), asf::Vector3d(2, 0, 0),
@@ -327,6 +343,16 @@ main(int argc, char **argv)
 	parameters.insert("object_path", "origin_slab.r");
 	BrlcadObject origin_slab("origin_slab", parameters);
 	ok = check_offsets(origin_slab, asf::Vector3d(0), -grazing, asf::Vector3d(-1, 0, 0), 0.001) && ok;
+	// A long ray can reconstruct its entry point just outside the surface.
+	// Simulate one rounding step at the incoming distance, including nonunit
+	// ray directions, without depending on a particular cancellation result.
+	constexpr double INCOMING_LENGTH = 1.0e6;
+	const double reconstruction_error = std::numeric_limits<double>::epsilon() * INCOMING_LENGTH;
+	const asf::Vector3d reconstructed(-reconstruction_error, 0, 0);
+	ok = check_offsets(origin_slab, reconstructed, asf::Vector3d(1, 0, 0),
+	    asf::Vector3d(-1, 0, 0), 0.001, true, INCOMING_LENGTH) && ok;
+	ok = check_offsets(origin_slab, reconstructed, asf::Vector3d(2, 0, 0),
+	    asf::Vector3d(-1, 0, 0), 0.001, true, INCOMING_LENGTH / 2) && ok;
 	// No UV query has initialized this ARB's optional mapping data yet.
 	ok = check_parallel_uv(origin_slab) && ok;
 	parameters.insert("object_path", "slab.r");

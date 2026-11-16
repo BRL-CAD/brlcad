@@ -390,11 +390,14 @@ BrlcadObject::refine_and_offset(
     const double position_scale = std::max({std::abs(point[0]), std::abs(point[1]), std::abs(point[2])});
     const double extent = std::max({rtip->mdl_max[0] - rtip->mdl_min[0],
 	rtip->mdl_max[1] - rtip->mdl_min[1], rtip->mdl_max[2] - rtip->mdl_min[2]});
-    // Allow several rounding steps for hit-point reconstruction and placement.
-    // Object extent supplies the scale near zero, without a distance-unit floor.
+    // Hit reconstruction can cancel a distant ray origin against its travel.
+    // Include that rounding scale even when the resulting hit is near zero.
+    // Object extent supplies the scale for rays originating on the surface.
+    const double ray_scale = ray.is_finite() ? std::abs(ray.m_tmax) *
+	std::max({std::abs(ray.m_dir[0]), std::abs(ray.m_dir[1]), std::abs(ray.m_dir[2])}) : 0.0;
     constexpr double OFFSET_ROUNDING_STEPS = 8;
     const double distance = OFFSET_ROUNDING_STEPS * std::numeric_limits<double>::epsilon() *
-	(position_scale + extent);
+	(position_scale + extent + ray_scale);
     const auto displacement = distance * offset_normal;
     front = point + displacement;
     back = point - displacement;

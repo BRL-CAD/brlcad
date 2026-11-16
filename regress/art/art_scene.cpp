@@ -34,6 +34,17 @@
 #include "wdb.h"
 #include "art_test_mesh.h"
 
+static bool
+write_osl_material(struct rt_wdb *db, const char *name, struct bu_attribute_value_set *optical)
+{
+    struct bu_attribute_value_set empty;
+    bu_avs_init_empty(&empty);
+    const bool success = mk_material(db, name, "OSL test material", "", "",
+	&empty, &empty, optical, &empty) == 0;
+    bu_avs_free(&empty);
+    return success;
+}
+
 static int
 create_scene(const char *path, const char *shader, const char *output)
 {
@@ -44,6 +55,8 @@ create_scene(const char *path, const char *shader, const char *output)
     point_t center = {-15, 0, 0};
     point_t box_min = {5, -10, -10};
     point_t box_max = {25, 10, 10};
+    point_t cube_min = {-10, -10, -10};
+    point_t cube_max = {10, 10, 10};
     point_t bore_base = {15, -15, 0};
     vect_t bore_height = {0, 30, 0};
     const unsigned char red[] = {255, 32, 16};
@@ -52,6 +65,7 @@ create_scene(const char *path, const char *shader, const char *output)
     struct wmember members;
     bool success = mk_sph(db, "ball.s", center, 10) == 0 &&
 	mk_rpp(db, "box.s", box_min, box_max) == 0 &&
+	mk_rpp(db, "cube.s", cube_min, cube_max) == 0 &&
 	mk_rcc(db, "bore.s", bore_base, bore_height, 4) == 0;
 
     BU_LIST_INIT(&members.l);
@@ -68,6 +82,9 @@ create_scene(const char *path, const char *shader, const char *output)
     success = success && mk_addmember("ball.r", &members.l, NULL, WMOP_UNION) &&
 	mk_addmember("blue.g", &members.l, NULL, WMOP_UNION) &&
 	mk_lcomb(db, "all.g", &members, 0, NULL, NULL, NULL, 0) == 0;
+    BU_LIST_INIT(&members.l);
+    success = success && mk_addmember("cube.s", &members.l, NULL, WMOP_UNION) &&
+	mk_lcomb(db, "cube.r", &members, 1, "plastic", "", green, 0) == 0;
     const struct {
 	const char *solid;
 	const char *region;
@@ -111,34 +128,68 @@ create_scene(const char *path, const char *shader, const char *output)
 	mk_addmember("ball.r", &members.l, translated, WMOP_UNION) &&
 	mk_lcomb(db, "arcs.g", &members, 0, NULL, NULL, NULL, 0) == 0;
 
+    // Keep the curved test solids centered when a wide receiver sets bounds.
+    const struct { const char *source; const char *name; } centered[] = {
+	{"ball.r", "refraction_ball.g"}, {"ellipsoid.r", "refraction_ellipsoid.g"}
+    };
+    mat_t centering;
+    MAT_IDN(centering);
+    centering[MDX] = 15;
+    for (const auto &object : centered) {
+	BU_LIST_INIT(&members.l);
+	success = success && mk_addmember(object.source, &members.l, centering, WMOP_UNION) &&
+	    mk_lcomb(db, object.name, &members, 0, NULL, NULL, NULL, 0) == 0;
+    }
+
+    // The surface regression selects this region as a point-light source.
+    const point_t key_position = {0, 0, 40};
+    const unsigned char white[] = {255, 255, 255};
+    BU_LIST_INIT(&members.l);
+    success = success && mk_sph(db, "key_light.s", key_position, 0.25) == 0 &&
+	mk_addmember("key_light.s", &members.l, NULL, WMOP_UNION) &&
+	mk_lcomb(db, "key_light.r", &members, 1, "light", "bright=1", white, 0) == 0;
+
     if (shader) {
-	struct bu_attribute_value_set empty, optical;
-	bu_avs_init_empty(&empty);
+	struct bu_attribute_value_set optical;
 	bu_avs_init_empty(&optical);
 	bu_avs_add(&optical, "OSL", shader);
 	if (output)
 	    bu_avs_add(&optical, "OSL.output", output);
-	success = success && mk_material(db, "osl.material", "OSL test material", "", "",
-	    &empty, &empty, &optical, &empty) == 0;
+	success = success && write_osl_material(db, "osl.material", &optical);
 	success = success && db5_update_attribute("ball.r", "material_name", "osl.material", db->dbip) == 0 &&
 	    db5_update_attribute("box.r", "material_name", "osl.material", db->dbip) == 0 &&
-	    db5_update_attribute("ellipsoid.r", "material_name", "osl.material", db->dbip) == 0;
+	    db5_update_attribute("ellipsoid.r", "material_name", "osl.material", db->dbip) == 0 &&
+	    db5_update_attribute("cube.r", "material_name", "osl.material", db->dbip) == 0;
 	for (const auto &mesh : meshes)
 	    success = success && db5_update_attribute(mesh.region, "material_name", "osl.material", db->dbip) == 0;
 	bu_avs_free(&optical);
-	bu_avs_free(&empty);
+
+	// The receiver is selected only by the refraction regression.
+	point_t target_min = {-200, -200, -31};
+	point_t target_max = {200, 200, -30};
+	BU_LIST_INIT(&members.l);
+	success = success && mk_rpp(db, "receiver.s", target_min, target_max) == 0 &&
+	    mk_addmember("receiver.s", &members.l, NULL, WMOP_UNION) &&
+	    mk_lcomb(db, "receiver.r", &members, 1, NULL, NULL, NULL, 0) == 0;
+	bu_avs_init_empty(&optical);
+	bu_avs_add(&optical, "OSL", "art_refraction_reference");
+	bu_avs_add(&optical, "OSL.param.in_target", "int 1");
+	success = success && write_osl_material(db, "receiver.material", &optical) &&
+	    db5_update_attribute("receiver.r", "material_name", "receiver.material", db->dbip) == 0;
+	bu_avs_free(&optical);
     }
     wdb_close(db);
     return success ? 0 : 1;
 }
 
 static int
-edit_material_property(const char *path, const char *key, const char *value)
+edit_material_property(const char *path, const char *key, const char *value,
+    const char *material_name = "osl.material")
 {
     struct ged *editor = ged_open("db", path, 0);
     if (!editor)
 	return 1;
-    const char *arguments[] = {"material", value ? "set" : "remove", "osl.material", "optical", key, value};
+    const char *arguments[] = {"material", value ? "set" : "remove", material_name, "optical", key, value};
     const int argument_count = sizeof(arguments) / sizeof(arguments[0]) - (value ? 0 : 1);
     const int status = ged_exec_material(editor, argument_count, arguments);
     if (status != BRLCAD_OK)
@@ -293,7 +344,7 @@ check_image(const char *path, size_t width, size_t height, ImageCheck check)
     return 0;
 }
 
-enum class ImageComparison { Matching, Aliased, Changed };
+enum class ImageComparison { Matching, Uniform, Aliased, Changed, Mean };
 
 static int
 check_image_difference(const char *path, const char *reference_path,
@@ -310,7 +361,9 @@ check_image_difference(const char *path, const char *reference_path,
     constexpr double MAX_MATCHING_ERROR = 0.05;
     constexpr double MIN_ALIASED_RMS = 0.1;
     constexpr double MIN_CHANGED_RMS = 0.01;
+    constexpr double MAX_RELATIVE_CHANNEL_MEAN_ERROR = 0.01;
     double squared_error = 0, max_error = 0;
+    double foreground_actual[3] = {}, foreground_expected[3] = {};
     size_t geometry_pixels = 0;
     const size_t pixel_count = width * height;
     for (size_t pixel = 0; pixel < pixel_count; ++pixel) {
@@ -320,7 +373,8 @@ check_image_difference(const char *path, const char *reference_path,
 	for (size_t channel = 0; channel < 3; ++channel)
 	    background_contrast = std::max(background_contrast,
 		std::abs(expected[channel] - reference->data[channel]));
-	if (background_contrast > MIN_GEOMETRY_CONTRAST)
+	const bool foreground = background_contrast > MIN_GEOMETRY_CONTRAST;
+	if (foreground)
 	    ++geometry_pixels;
 	for (size_t channel = 0; channel < 3; ++channel) {
 	    if (!std::isfinite(actual[channel]) || !std::isfinite(expected[channel])) {
@@ -330,14 +384,34 @@ check_image_difference(const char *path, const char *reference_path,
 	    const double error = std::abs(actual[channel] - expected[channel]);
 	    squared_error += error * error;
 	    max_error = std::max(max_error, error);
+	    if (foreground) {
+		foreground_actual[channel] += actual[channel];
+		foreground_expected[channel] += expected[channel];
+	    }
 	}
     }
     const double rms = std::sqrt(squared_error / (pixel_count * 3));
-    const bool matching = comparison == ImageComparison::Matching;
+    const bool matching = comparison == ImageComparison::Matching || comparison == ImageComparison::Uniform;
     const double min_difference = comparison == ImageComparison::Aliased ? MIN_ALIASED_RMS : MIN_CHANGED_RMS;
     const bool difference_matches = matching ?
 	rms <= MAX_MATCHING_RMS && max_error <= MAX_MATCHING_ERROR : rms >= min_difference;
-    const bool enough_geometry = geometry_pixels > static_cast<size_t>(pixel_count * MIN_GEOMETRY_COVERAGE);
+    // A deliberately uniform reference has no foreground contrast to count.
+    const bool enough_geometry = comparison == ImageComparison::Uniform ||
+	geometry_pixels > static_cast<size_t>(pixel_count * MIN_GEOMETRY_COVERAGE);
+    if (comparison == ImageComparison::Mean) {
+	// Both images use the same display pipeline.  Comparing foreground
+	// channel means detects systematic bias that per-pixel noise bounds allow.
+	double max_relative_error = 0;
+	for (size_t channel = 0; channel < 3; ++channel) {
+	    const double relative_error = foreground_expected[channel] > 0 ?
+		std::abs(foreground_actual[channel] - foreground_expected[channel]) /
+		foreground_expected[channel] : INFINITY;
+	    max_relative_error = std::max(max_relative_error, relative_error);
+	}
+	bu_log("Foreground mean comparison %s: relative_error=%g geometry=%zu\n",
+	    path, max_relative_error, geometry_pixels);
+	return enough_geometry && max_relative_error <= MAX_RELATIVE_CHANNEL_MEAN_ERROR ? 0 : 1;
+    }
     bu_log("Image comparison %s: rms=%g max=%g geometry=%zu matching=%d\n",
 	path, rms, max_error, geometry_pixels, matching);
     return difference_matches && enough_geometry ? 0 : 1;
@@ -361,12 +435,17 @@ main(int argc, char **argv)
 	return edit_material_property(argv[2], argv[3], nullptr);
     if (argc == 5 && BU_STR_EQUAL(argv[1], "set-material"))
 	return edit_material_property(argv[2], argv[3], argv[4]);
+    if (argc == 6 && BU_STR_EQUAL(argv[1], "set-named-material"))
+	return edit_material_property(argv[2], argv[4], argv[5], argv[3]);
     try {
 	if (argc == 6 && (BU_STR_EQUAL(argv[1], "check-filtered-texture") ||
 	    BU_STR_EQUAL(argv[1], "check-aliased-texture") || BU_STR_EQUAL(argv[1], "check-matching-image") ||
-	    BU_STR_EQUAL(argv[1], "check-different-image"))) {
+	    BU_STR_EQUAL(argv[1], "check-different-image") || BU_STR_EQUAL(argv[1], "check-uniform-image") ||
+	    BU_STR_EQUAL(argv[1], "check-mean-image"))) {
 	    const ImageComparison comparison = BU_STR_EQUAL(argv[1], "check-aliased-texture") ? ImageComparison::Aliased :
-		BU_STR_EQUAL(argv[1], "check-different-image") ? ImageComparison::Changed : ImageComparison::Matching;
+		BU_STR_EQUAL(argv[1], "check-different-image") ? ImageComparison::Changed :
+		BU_STR_EQUAL(argv[1], "check-uniform-image") ? ImageComparison::Uniform :
+		BU_STR_EQUAL(argv[1], "check-mean-image") ? ImageComparison::Mean : ImageComparison::Matching;
 	    return check_image_difference(argv[2], argv[3], std::stoul(argv[4]), std::stoul(argv[5]), comparison);
 	}
 	if (argc == 5) {

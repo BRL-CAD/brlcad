@@ -1,0 +1,106 @@
+/*              A R T _ R E F R A C T I O N _ R E F E R E N C E . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+// Trace the two ideal interfaces analytically, without renderer queries.
+float interface_transmission(float ni, float nt, float ci, float ct)
+{
+    float rs = (ni * ci - nt * ct) / (ni * ci + nt * ct);
+    float rp = (nt * ci - ni * ct) / (nt * ci + ni * ct);
+    return 1 - 0.5 * (rs * rs + rp * rp);
+}
+
+color target_color(point position)
+{
+    return color(0.35 + 0.25 * sin(0.17 * position[0]),
+        0.35 + 0.25 * sin(0.19 * position[1]),
+        0.35 + 0.25 * cos(0.11 * position[0] + 0.13 * position[1]));
+}
+
+surface art_refraction_reference(
+    int in_target = 0,
+    float in_ior = 1.5,
+    string in_shape = "box",
+    point in_center = point(0),
+    vector in_axes = vector(10),
+    float in_target_z = -30)
+{
+    if (in_target) {
+        // A neutral receiver lets a separate emission control prove visibility.
+        Ci = (in_target == 1 ? target_color(P) : color(0.35)) * emission();
+        return;
+    }
+    vector incident = normalize(I);
+    normal entry_normal = normalize(Ng);
+    vector inside = refract(incident, entry_normal, 1 / in_ior);
+    float entry_transmission = interface_transmission(1, in_ior,
+        -dot(incident, entry_normal), -dot(inside, entry_normal));
+    vector offset = P - in_center;
+    float path_length;
+    normal exit_normal;
+    if (in_shape == "ellipsoid") {
+        vector scaled_direction = inside / in_axes;
+        path_length = -2 * dot(offset / in_axes, scaled_direction)
+            / dot(scaled_direction, scaled_direction);
+        exit_normal = normalize(normal((offset + path_length * inside) / (in_axes * in_axes)));
+    } else {
+        path_length = 2 * length(in_axes);
+        for (int axis = 0; axis < 3; ++axis) {
+            if (inside[axis] != 0) {
+                float coordinate = inside[axis] > 0 ? in_axes[axis] : -in_axes[axis];
+                float candidate = (coordinate - offset[axis]) / inside[axis];
+                if (candidate < path_length) {
+                    path_length = candidate;
+                    exit_normal = normal(0);
+                    exit_normal[axis] = inside[axis] > 0 ? 1 : -1;
+                }
+            }
+        }
+    }
+    point exit_point = P + path_length * inside;
+    vector outside = refract(inside, -exit_normal, in_ior);
+    if (dot(outside, outside) == 0 || outside[2] >= 0) {
+        Ci = 0;
+        return;
+    }
+    float exit_transmission = interface_transmission(in_ior, 1,
+        dot(inside, exit_normal), dot(outside, exit_normal));
+    // The actual receiver is a finite box, including its narrow side faces.
+    // Strongly bent rays can miss it even when they cross its top plane.
+    vector target_half_size = vector(200, 200, 0.5);
+    vector target_offset = exit_point - point(0, 0, in_target_z - 0.5);
+    float target_near = 0;
+    float target_far = length(abs(target_offset) + target_half_size) / length(outside);
+    for (int axis = 0; axis < 3; ++axis) {
+        if (outside[axis] != 0) {
+            float first = (-target_half_size[axis] - target_offset[axis]) / outside[axis];
+            float second = (target_half_size[axis] - target_offset[axis]) / outside[axis];
+            target_near = max(target_near, min(first, second));
+            target_far = min(target_far, max(first, second));
+        } else if (abs(target_offset[axis]) > target_half_size[axis]) {
+            Ci = 0;
+            return;
+        }
+    }
+    if (target_near > target_far) {
+        Ci = 0;
+        return;
+    }
+    Ci = entry_transmission * exit_transmission
+        * target_color(exit_point + target_near * outside) * emission();
+}
