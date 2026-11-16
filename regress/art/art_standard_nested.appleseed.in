@@ -25,7 +25,7 @@ information.
     <camera name="camera" model="pinhole_camera">
       <parameter name="film_dimensions" value="1 1" />
       <parameter name="horizontal_fov" value="2" />
-      <transform><matrix>1 0 0 0 0 1 0 0 0 0 1 @REFERENCE_EYE_Z@ 0 0 0 1</matrix></transform>
+      <transform><matrix>1 0 0 @REFERENCE_EYE_X@ 0 1 0 0 0 0 1 @REFERENCE_EYE_Z@ 0 0 0 1</matrix></transform>
     </camera>
     <color name="white">
       <parameter name="color_space" value="linear_rgb" />
@@ -40,8 +40,8 @@ information.
     <assembly name="assembly">
 @REFERENCE_GROUPS@
       <surface_shader name="surface_shader" model="physical_surface_shader" />
-      <object name="geometry" model="mesh_object">
-        <parameter name="filename" value="art_rough_box.obj" />
+      <object name="geometry" model="@REFERENCE_OBJECT_MODEL@">
+        @REFERENCE_OBJECT_PARAMETERS@
       </object>
 @REFERENCE_INSTANCES@
     </assembly>
