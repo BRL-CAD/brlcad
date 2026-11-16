@@ -1,0 +1,66 @@
+/*              A R T _ N O R M A L _ R E F E R E N C E . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+surface art_normal_reference(vector in_direction = vector(0, 1, 1),
+    int in_mirror_u = 0, int in_mirror_v = 0, int in_tilted = 0,
+    int in_smooth = 0, int in_chart = 0, int in_fixed_frame = 0,
+    float in_weight = 1)
+{
+    // Analytic frames of the two authored triangles on the cube's +Z face.
+    // The tilted input normal is (3,0,4)/5; these frames are exact projections.
+    normal n = in_tilted ? normal(0.6, 0, 0.8) : normal(0, 0, 1);
+    vector t, b;
+    if (P[1] <= P[0]) {
+        t = in_tilted ? vector(0.8, 0, -0.6) : vector(1, 0, 0);
+        b = vector(0, 1, 0);
+    } else if (in_tilted) {
+        t = vector(0.64, 1, -0.48) / sqrt(1.64);
+        b = vector(-0.8, 0.8, 0.6) / sqrt(1.64);
+    } else {
+        t = vector(1, 1, 0) / sqrt(2.0);
+        b = vector(-1, 1, 0) / sqrt(2.0);
+    }
+    if (in_smooth) {
+        // Equal-length radial vertex normals interpolate to normalize(P).
+        n = normalize(normal(P));
+        t = normalize(t - dot(t, n) * n);
+        b = cross(n, t);
+    }
+    if (in_chart) {
+        vector delta = vector(P - point(-15, 0, 0));
+        if (in_chart == 1) {
+            n = normalize(normal(delta));
+            t = normalize(vector(-delta[1], delta[0], 0));
+        } else {
+            // Fixture ellipsoid semi-axes are (8,10,6).
+            n = normalize(normal(delta[0] / 64, delta[1] / 100, delta[2] / 36));
+            t = normalize(vector(-0.8 * delta[1], 1.25 * delta[0], 0));
+        }
+        b = cross(n, t);
+    }
+    if (in_fixed_frame) {
+        t = vector(1, 0, 0);
+        b = vector(0, 1, 0);
+    }
+    if (in_mirror_u) t = -t;
+    if (in_mirror_v) b = -b;
+    normal mapped = normal(in_direction[0] * t + in_direction[1] * b + in_direction[2] * n);
+    mapped = normalize(mix(n, mapped, in_weight));
+    Ci = (color(0.5) + 0.5 * color(mapped)) * emission();
+}

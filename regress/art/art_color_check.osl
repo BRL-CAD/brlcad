@@ -1,0 +1,35 @@
+/*              A R T _ C O L O R _ C H E C K . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+surface art_color_check(
+    color in_color = color(0),
+    color in_expected = color(0))
+{
+    // Check linear values before display conversion and quantization.
+    // Allow the JIT's float power approximation while detecting toe errors.
+    float tolerance = 1.0e-5;
+    color difference = abs(in_color - in_expected);
+    float max_error = max(difference[0], max(difference[1], difference[2]));
+    if (!isfinite(in_color[0]) || !isfinite(in_color[1]) ||
+        !isfinite(in_color[2]) || max_error > tolerance)
+        error("Color mismatch: got (%g,%g,%g), expected (%g,%g,%g).",
+            in_color[0], in_color[1], in_color[2],
+            in_expected[0], in_expected[1], in_expected[2]);
+    Ci = in_color * emission();
+}

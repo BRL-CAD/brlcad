@@ -79,8 +79,23 @@ PNG/PIX output, single/multiple workers, and error exits.  Basic
 material-object selection and custom diffuse surface shaders are covered.
 Native primitive UVs and authored BOT UVs are covered by diagnostic
 emission shaders and exact intersection checks.  Typed single-shader
-parameters are validated and persisted through the material command.
-Networks and advanced closures remain unqualified.
+parameters and version 2 numeric and closure networks are validated and
+persisted through the material command.  Material-parent inheritance,
+per-instance overrides, and advanced closures remain unqualified.
+
+|Bump and normal-map nodes
+|Native normal-map chains preserve upstream normals when disabled.
+`regress-art-bump` checks constant height and independent analytic gradients
+on CSG and flat and smooth BOTs under both projections, including signed
+depth, zero-valued heights, degenerate footprints, and extreme unit changes.
+`regress-art-normal` checks tangent orientation, mirrored UVs, and native
+normal-map controls against analytic frames.  `regress-art-texture` checks
+fully minified raw image normal and height maps, filtering controls, and
+project relocation.  `regress-art-image-maps` checks spatial image
+orientation and magnified linear ramps against position-based references
+on flat and smooth BOTs, including reflected U/V charts, and on spheres
+and ellipsoids with full-range and transformed UVs.  LOD transitions,
+baked per-vertex tangents, and secondary rays remain unqualified.
 
 |Region instances
 |Full indexed database paths distinguish occurrences under different parents
@@ -109,8 +124,10 @@ texture renders, and selected Appleseed unit suites.  These provide
 independent renderer references; librt BOT coverage comes from `regress-art`.
 
 |Installed builds across platforms
-|The current renderer validation was performed on FreeBSD.  Linux, Windows,
-and macOS runtime qualification and relocatable installation remain open.
+|The current renderer validation was performed on FreeBSD.  Custom shader
+compilation through the selected SDK's installed helper headers and rendering
+are checked.  Linux, Windows, and macOS runtime qualification and relocatable
+installation remain open.
 |===
 
 == Basic rendering
@@ -240,7 +257,9 @@ flat and smooth authored BOTs must produce finite, positive footprints.
 The current ARB/TGC Boolean fixture must produce the zero-footprint fallback.
 These checks establish that the mapping derivatives reach OSL.  Mipmapped
 texture minification is also checked against a known reference as described
-below.  Bump and normal-map shading remain unqualified.  Rebuild procedural
+below.  Native bump gradients and normal-map network behavior are checked
+separately, including chart orientation and mirrored UVs.
+Rebuild procedural
 plugins and applications against the matching Appleseed headers and library.
 
 Visible emission is covered by the diagnostic shader, but direct light
@@ -296,6 +315,11 @@ A string contains the remaining text after `string`, including internal
 spaces; leading and trailing whitespace is trimmed.  Tcl quotes group the
 property value and are not part of the stored string.
 
+OSL inputs declared with `lockgeom=0` can read per-hit renderer data.
+Literal parameters are fallback defaults on those inputs; shader
+connections override the per-hit binding.  For example, overriding the
+normal-map `Tn` or `Bn` frame requires a vector-output connection.
+
 Unknown inputs, type mismatches, invalid values, output assignments,
 closures, structures, and arrays stop rendering before an image is written.
 Unknown `OSL.` properties and unsupported format versions also produce an
@@ -304,8 +328,44 @@ removing an input property restores those defaults.  The regression uses
 the material command to persist and reopen every supported input type,
 including a string with spaces, before checking rendered shader results.
 
-Multi-node networks, material-object parent inheritance, and per-instance
-material overrides remain planned capabilities.
+Version 2 adds shader networks.  The `OSL` shader is still the terminal
+material layer, named `material`, and retains its version 1 parameters,
+color defaults, and output rules.  Declare utility nodes with
+`OSL.node.<layer>` and set their inputs with `OSL.param.<layer>.<input>`.
+A property `OSL.connect.<destination-layer>.<input>` names its source as
+`<source-layer>.<output>`.  For example, this network feeds a utility color
+through a native Appleseed plastic shader:
+
+----
+material set paint.material optical OSL.version 2
+material set paint.material optical OSL.node.tint as_blend_color
+material set paint.material optical OSL.param.tint.in_color "color 0.2 0.4 0.6"
+material set paint.material optical OSL.param.tint.in_color2 "color 0.5 0.5 0.5"
+material set paint.material optical OSL.param.tint.in_blend_mode "string Multiply"
+material set paint.material optical OSL.connect.material.in_color tint.out_color
+----
+
+Layer names and connection endpoint names use ASCII letters, digits, and
+underscores, starting with a letter or underscore.  `material` and `surface`
+are reserved layer names.  Nodes are ordered by their dependencies;
+attribute order and lexical layer order do not control execution.  A
+connection overrides an explicit literal or default on the connected input.
+Only the terminal material receives the region-color and plastic
+compatibility defaults; utility nodes retain their shader defaults.
+
+Connections require a declared output and input of the same OSL type;
+closure-color connections are supported.  Whole arrays can connect when
+their element types and fixed lengths match.  Unsized arrays, structures,
+component connections, and implicit type conversions are unsupported.
+Only the terminal shader can be declared `surface`.  Missing nodes or endpoints,
+invalid node parameters, cycles, and nodes that do not contribute to the
+terminal material are errors.  Version 1 continues to reject network
+properties.  The regression persists and reopens multi-node numeric and
+closure networks and compares them with equivalent single-node materials
+on spheres, ellipsoids, Boolean geometry, and flat and smooth BOTs.
+
+Material-object parent inheritance and per-instance material overrides
+remain planned capabilities.
 
 Errors reported by the renderer during initialization, worker execution,
 or renderer cleanup stop the render with a nonzero exit status before
@@ -318,13 +378,271 @@ not reach the renderer error log remain under the shader's control.
 `regress-art` checks both missing-texture behaviors.
 
 
+== Native image-node failures
+
+A native `as_texture` node reports a missing named file or failed lookup as
+an OSL error by default.  `art` then exits without creating or replacing an
+image.  An unassigned filename uses the node's fill defaults.
+
+To deliberately render a fill when a named texture is unavailable, set
+`OSL.param.<node>.in_error_on_missing` to `int 0`.  The node then supplies
+`in_color`, `in_alpha`, and the raw RGB mean of `in_color` on `out_channel`.
+Fill values are used directly.  The regression checks the color and both
+scalar outputs, an empty filename, and preservation of an existing render
+when the requested image is missing.
+
+
+== Native color-texture decoding
+
+Prefer scene-linear color textures prepared before building mipmaps, with
+`as_texture.in_enable_cms` left at `0`.  For an encoded RGB source, the
+native node can explicitly decode its sampled values by enabling CMS and
+selecting `in_eotf`:
+
+[cols="1,2"]
+|===
+|Value |Input transfer
+|0 |Raw
+|1 |sRGB
+|2 |Rec.709 inverse camera transfer
+|3 |Gamma 2.2
+|4 |Gamma 2.4
+|5 |Gamma 2.6 (DCI)
+|6 |Rec.1886, normalized black and white
+|7 |Rec.2020 inverse camera transfer, 12-bit coefficients
+|===
+
+For example, select an encoded sRGB color image on a new material:
+
+----
+material create color.material "Image color"
+material set color.material optical OSL as_plastic
+material set color.material optical OSL.version 2
+material set color.material optical OSL.node.image as_texture
+material set color.material optical OSL.param.image.in_filename "string textures/color.tif"
+material set color.material optical OSL.param.image.in_enable_cms "int 1"
+material set color.material optical OSL.param.image.in_eotf "int 1"
+material set color.material optical OSL.param.image.in_rgb_primaries "string sRGB/Rec.709"
+material set color.material optical OSL.param.image.in_workingspace_rgb_primaries "string sRGB/Rec.709"
+material set color.material optical OSL.connect.material.in_color image.out_color
+material assign ball.r color.material
+----
+
+The settings are explicit; file color-space metadata does not select the
+transfer.  `in_rgb_primaries` set to `Raw` bypasses conversion of primaries
+while retaining the selected transfer.  The decoded `out_channel` uses the
+working-space luminance coefficients.  One-channel data images retain
+their scalar values, and fill colors bypass decoding.
+
+Decoding happens after the texture lookup.  It cannot correct mipmaps or
+interpolation performed on encoded values.  Convert color images to linear
+values before filtering when preparing production assets, and retain raw
+values for height and normal data.
+
+`regress-art-color` checks all eight transfers against independent linear
+RGB reference values, using constant floating-point images and raw
+primaries to isolate the transfer.  It checks invalid transfer selections,
+CMS bypass, the Rec.709 encoding helper, and the Rec.2020 decoding helper
+with both supported coefficient sets.  Checks run in the shader before
+display conversion and allow `1e-5` absolute error for float power
+approximations.  These tests cover sampled values at the toe and higher
+levels; they do not qualify conversions between primaries, HDR and
+negative-value handling, or filtering encoded color images.
+
+
+== Bump and normal-map networks
+
+Version 2 can connect native Appleseed normal nodes to a material.  For
+`as_plastic`, the input is `in_bump_normal`.  For example, add a constant
+normal-map perturbation to the material above:
+
+----
+material set paint.material optical OSL.node.bump as_bump
+material set paint.material optical OSL.param.bump.in_mode "string Normal Map"
+material set paint.material optical OSL.param.bump.in_normal_map "color 0.85 0.65 1"
+material set paint.material optical OSL.connect.material.in_bump_normal bump.out_normal
+----
+
+The map stores vector components as data in the range `[0,1]`, decoded to
+`[-1,1]`; do not apply a display-color conversion to these components.
+The native node's default coordinate system is tangent space.  A neutral
+value `(0.5,0.5,1)` preserves the surface normal.  Normals can be chained
+through another node's `in_surface_normal` input.  A constant zero bump
+value, zero bump depth, and zero normal-map weight preserve that input
+normal, including an upstream perturbation.
+
+In tangent space, red follows U and green follows V.  The frame uses the
+per-hit U tangent, projected onto the supplied normal's tangent plane; its
+orthogonal V axis follows the supplied bitangent's orientation.  This
+preserves authored UV mirrors and supports a normal supplied by an upstream
+node.  Baked maps must use a matching tangent convention.  Primitives
+without mapping derivatives need an explicit frame for controlled
+tangent-map orientation.
+
+`in_normal_map_mode` selects `Unsigned` data decoded from `[0,1]` or `Signed`
+data in `[-1,1]`.  Values are clamped to that range.  The red and green
+flip controls apply after decoding, followed by `in_normal_map_swap_rg`.
+The weight mixes the mapped vector with the input normal before
+normalization.  A zero or cancelling result, or an unusable projected U
+tangent, preserves the input normal.
+
+A missing or zero `Bn` retains the older fixed-cross-product orientation.
+For an existing map that needs that convention, connect a zero vector:
+
+----
+material set paint.material optical OSL.node.bitangent as_maya_vectorProduct
+material set paint.material optical OSL.param.bitangent.in_operation "int 0"
+material set paint.material optical OSL.param.bitangent.in_input1 "vector 0 0 0"
+material set paint.material optical OSL.connect.bump.Bn bitangent.out_output
+----
+
+The regression exercises these native nodes on a sphere and flat and smooth
+BOTs.  It requires a tilted normal map to visibly change shading and a
+disabled downstream node to match the upstream result.  These checks qualify
+network wiring and disabled-node behavior.  `regress-art-normal` also checks
+independent analytic frames on flat and smooth BOTs, reflected U/V charts,
+spheres, and ellipsoids.  It covers nonzero normal chains, signed/unsigned
+encoding, component clamps, channel controls, weighted blends, explicit
+frames at small and large scales, and degenerate inputs.
+
+In `Bump` mode, connect a scalar height output to `in_bump_value` and set
+`in_bump_depth` in the units of `in_surface_point` (the common-space surface
+position by default).  The node retains its signed depth and height
+saturation at `[-1,1]`.  Bump mapping changes the shading normal; silhouettes
+and CSG boundaries follow the original geometry.
+
+Appleseed now uses a surface-gradient perturbation of the input normal,
+preserving smooth BOT normals and previously mapped normals.  A constant
+height preserves that normal.  Zero height can still have a nonzero slope
+and is evaluated.  Absent or degenerate position footprints preserve the
+input normal, and negative depth reverses the perturbation.  The formulation
+follows Mikkelsen's _Surface Gradient-Based Bump Mapping Framework_,
+https://jcgt.org/published/0009/03/04/[equation (4)].
+
+`regress-art-bump` compares native bump output with independent analytic
+normal references on spheres, ellipsoids, Boolean geometry, and flat and
+smooth BOTs under orthographic and perspective cameras.  It checks constant
+height, affine position-based height, signed depth, a sphere UV height
+crossing zero, and missing or collinear footprints.  Scaling both position
+and depth by each of `1e-25`, `1e-12`, `1e12`, and `1e25` must preserve the
+result.  These checks cover
+first-order bump normals, including CSG surfaces without a UV footprint.
+LOD transitions, image mapping on other curved primitives, mirrored
+geometry transforms, baked per-vertex tangent compatibility, and
+secondary-ray behavior still need dedicated qualification.
+
+For an image normal map, prepare a floating-point mipmapped texture without
+color conversion, keeping its components as data.  Store it under the
+database directory, for example as `textures/normal.tx`.  In MGED:
+
+----
+material create normal.material "Image normal map"
+material set normal.material optical OSL as_plastic
+material set normal.material optical OSL.version 2
+material set normal.material optical OSL.node.image as_texture
+material set normal.material optical OSL.param.image.in_filename "string textures/normal.tx"
+material set normal.material optical OSL.param.image.in_enable_cms "int 0"
+material set normal.material optical OSL.node.bump as_bump
+material set normal.material optical OSL.param.bump.in_mode "string Normal Map"
+material set normal.material optical OSL.connect.bump.in_normal_map image.out_color
+material set normal.material optical OSL.connect.material.in_bump_normal bump.out_normal
+material assign ball.r normal.material
+----
+
+For an image height map, use `Bump` mode and connect `image.out_channel` to
+`bump.in_bump_value` instead.  A one-channel image supplies its stored value;
+the raw RGB output channel is the mean of the three components.  Set bump
+depth in model units.  Leave color management disabled for both kinds of
+data, even when the file carries color-space metadata.
+
+`regress-art-texture` uses floating-point one-texel checkers tagged as sRGB
+and prepared with box-filtered periodic mipmaps.  Under full minification,
+the normal checker averages to neutral `(0.5,0.5,1)` and the height checker
+to a constant `0.5`.  Both networks must match the original shading normals
+on spheres, ellipsoids, and flat and smooth BOTs, including reflected U/V
+charts, in orthographic and perspective views.  Zero-width filtering must
+produce a visibly different result for both maps; enabling a display
+transfer on normal data must also change the result.  A relocated project
+is rendered with the original textures unavailable.  These checks qualify
+raw data handling and full minification.
+
+Appleseed uses a lower-left texture origin: increasing U moves right and
+increasing V moves upward through the image.  Its texture system flips the
+image-row direction, which commonly runs from top to bottom.  This controls
+where a normal-map texel is sampled; red and green vector components still
+follow the geometry's U/V tangent frame described above.
+
+`regress-art-image-maps` checks spatial sampling independently of renderer
+UVs on the fixture's +Z BOT faces.  It reconstructs the authored charts from
+position and compares magnified 16-texel linear ramps with native color,
+normal-map, and height-map networks under both projections.  It also checks
+positive scaling and translation through a native UV placement node,
+including image-height gradients carried through the array connection.
+A zero-depth control must fail the same height-normal comparison.  The cases
+cover clamped linear interpolation, flat and smooth normals, and reflected U/V
+charts.  The height reference uses the ramp's known gradient, without
+screen derivatives.  A control with the opposite image-row convention must
+visibly disagree for all three networks.  These tests establish image
+orientation and these BOT magnification paths.
+
+The same regression also reconstructs sphere and ellipsoid longitude and
+elevation from position.  Full-range and transformed image maps are checked
+under both projections in oblique and near-pole views.  Color and normal
+maps use the analytic ramp values and independent tangent frames.  The
+transformed height map uses a known analytic spatial gradient.
+
+For full-range height maps, clamping and mip filtering change the slope
+near image borders.  The reference measures that filtered slope with
+central differences of texture values, holding its analytically derived
+footprint fixed.  It does not use texture output derivatives or the native
+bump implementation.  A `1/8192` UV step is checked against `1/16384` on the
+pole-facing ellipsoid.  These cases validate the sampled height gradients,
+including changed slopes at filtered borders; they do not independently
+validate the texture library's filtering algorithm.
+
+Dedicated LOD transitions, periodically wrapped seams, exact UV poles,
+image mapping on other curved primitives, and compatibility with baked
+per-vertex tangent frames remain unqualified.
+
+
+Native UV placement nodes can feed the image node through a whole
+`float[2]` connection.  For example, extend `normal.material` above:
+
+----
+material set normal.material optical OSL.param.image.in_interpolation_method "int 2"
+material set normal.material optical OSL.node.placement as_max_uv_transform
+material set normal.material optical OSL.param.placement.in_tilingU "float 0.5"
+material set normal.material optical OSL.param.placement.in_tilingV "float 0.25"
+material set normal.material optical OSL.param.placement.in_offsetU "float -0.5"
+material set normal.material optical OSL.param.placement.in_offsetV "float -1"
+material set normal.material optical OSL.connect.image.in_texture_coords placement.out_outUV
+----
+
+This node subtracts the offsets before applying the tiling multipliers and
+then wraps coordinates.  The example samples `[0.25,0.75]` in U and
+`[0.25,0.5]` in V, away from the image edges.  The regression compares color,
+normal, and height results with independent transformed charts on the same
+BOTs and projections.  It rejects mismatched array lengths, element types,
+scalar/array connections, and unsized inputs before shader execution.
+Placement rotation, placement mirroring, and baked tangent-frame changes
+remain unqualified.  Literal array assignments are still unsupported.
+
+
 == Project shader assets
 
 `art` resolves project assets relative to the database directory, including
-its `shaders` subdirectory, and also searches the selected Appleseed shader
-libraries.  Build-directory paths and the caller's working directory are
+its `shaders` subdirectory, and also searches the selected Appleseed
+`appleseed`, `max`, and `maya` shader libraries.  Build-directory paths and the caller's working directory are
 not part of the project convention.  Keep database-relative asset paths
 when moving a project to another directory.
+
+For shaders that include Appleseed helper headers, also pass
+`"-I$RENDERER_PREFIX/shaders/include"` to `oslc`.  The installed namespace
+includes the generated `appleseed/as_osl_extensions.h`.  Keep each `-I`
+joined to its directory; this compiler does not consume a separate directory
+argument.  The regression compiles a shader through the installed Maya
+helper header and renders an extension-function result against an
+independent emission reference.
 
 Shader metadata inspection follows the same ordered search paths as OSL
 execution.  A same-named compiled shader in the caller's working directory
@@ -347,7 +665,7 @@ dependency installation.  Here `RENDERER_PREFIX` identifies that installation:
 
 ----
 mkdir -p shaders
-"$RENDERER_PREFIX/bin/oslc" -I "$RENDERER_PREFIX/share/OSL/shaders" \
+"$RENDERER_PREFIX/bin/oslc" "-I$RENDERER_PREFIX/share/OSL/shaders" \
     -o shaders/painted.oso painted.osl
 ----
 
@@ -398,7 +716,7 @@ selection and anisotropic filtering use the automatic OSL derivatives,
 including the UV scaling operation.  Compile and select the preview:
 
 ----
-"$RENDERER_PREFIX/bin/oslc" -I "$RENDERER_PREFIX/share/OSL/shaders" \
+"$RENDERER_PREFIX/bin/oslc" "-I$RENDERER_PREFIX/share/OSL/shaders" \
     -o shaders/texture_preview.oso texture_preview.osl
 ----
 
@@ -426,8 +744,10 @@ The comparison bounds both RMS and maximum display-image error.  A control
 with zero UV derivatives must differ substantially, establishing that the
 check detects missing filtering.  A copied project is also rendered while
 the original texture is unavailable, exercising relative asset lookup.
-These checks qualify this minification workflow; LOD transitions, color
-conversion, alpha, and bump/normal mapping need additional coverage.
+These checks qualify this emission-preview minification workflow; LOD
+transitions, color conversion, and alpha need additional coverage.  Native
+image bump and normal-map minification is covered separately by
+`regress-art-texture`.
 
 `art` enables Appleseed's project-rooted texture lookup for both cached
 constant filenames and dynamic filenames.  A same-named file in the

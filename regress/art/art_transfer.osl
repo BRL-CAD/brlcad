@@ -1,0 +1,34 @@
+/*              A R T _ T R A N S F E R . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+#include "appleseed/color/as_transfer_functions.h"
+
+shader art_transfer(
+    color in_color = color(0),
+    string in_function = "Rec.709 encode",
+    int in_bitdepth = 12,
+    output color out_color = color(0))
+{
+    if (in_function == "Rec.709 encode")
+        out_color = Rec709_OETF(in_color);
+    else if (in_function == "Rec.2020 decode")
+        out_color = Rec2020_EOTF(in_color, in_bitdepth);
+    else
+        error("Unknown test transfer function '%s'.", in_function);
+}

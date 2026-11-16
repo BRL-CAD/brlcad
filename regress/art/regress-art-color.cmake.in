@@ -1,0 +1,82 @@
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/color-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/textures")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+foreach(shader IN ITEMS art_color_check art_transfer)
+  configure_file("@CMAKE_CURRENT_BINARY_DIR@/${shader}.oso" "${WORK}/shaders/${shader}.oso" COPYONLY)
+endforeach()
+set(RENDER_ARGS -a 270 -e 20 -P 2 -c "set samples=1" -w 16 -n 16 -p 0)
+set(DATABASE "${WORK}/color.g")
+run("${VEXEC}" create-material "${DATABASE}" art_color_check)
+run("${VEXEC}" set-material "${DATABASE}" OSL.version 2)
+run("${VEXEC}" set-material "${DATABASE}" OSL.node.image as_texture)
+run("${VEXEC}" set-material "${DATABASE}" OSL.param.image.in_filename "string textures/color.tx")
+run("${VEXEC}" set-material "${DATABASE}" OSL.param.image.in_rgb_primaries "string Raw")
+run("${VEXEC}" set-material "${DATABASE}" OSL.connect.material.in_color image.out_color)
+run("@ART_OIIOTOOL_EXECUTABLE@" --pattern "constant:color=0.02,0.18,0.8"
+  8x8 3 -d float -o "${WORK}/textures/color.tif")
+run("@ART_MAKETX_EXECUTABLE@" -d float --filter box --wrap periodic
+  -o "${WORK}/textures/color.tx" "${WORK}/textures/color.tif")
+
+# Independent linear values for a constant encoded RGB sample.  The low
+# component exercises the linear toes of sRGB, Rec.709, and Rec.2020.
+# Transfer definitions: Khronos Data Format Specification 1.4, sections 13.2-13.4.
+# https://registry.khronos.org/DataFormat/specs/1.4/dataformat.1.4.pdf
+set(EXPECTED_COLORS
+  "0.02 0.18 0.8"
+  "0.0015479876161 0.0272117809514 0.6038273388553"
+  "0.0044444444444 0.0475229462452 0.6399378181332"
+  "0.0001829220208 0.0229932049927 0.6120655998656"
+  "0.0000836511642 0.0163175146742 0.5853504664660"
+  "0.0000382541000 0.0115799987702 0.5598013818589"
+  "0.0000836511642 0.0163175146742 0.5853504664660"
+  "0.0044444444444 0.0476076920782 0.6400241590600")
+run("${VEXEC}" set-material "${DATABASE}" OSL.param.image.in_enable_cms "int 1")
+foreach(mode RANGE 0 7)
+  list(GET EXPECTED_COLORS ${mode} expected)
+  run("${VEXEC}" set-material "${DATABASE}" OSL.param.image.in_eotf "int ${mode}")
+  run("${VEXEC}" set-material "${DATABASE}" OSL.param.in_expected "color ${expected}")
+  run("${EXEC}" ${RENDER_ARGS} -o "${WORK}/transfer_${mode}.png" "${DATABASE}" mesh.r)
+endforeach()
+
+# A deliberately wrong reference proves the shader's numerical check executes.
+run("${VEXEC}" set-material "${DATABASE}" OSL.param.image.in_eotf "int 0")
+run("${VEXEC}" set-material "${DATABASE}" OSL.param.in_expected "color 0 0 0")
+expect_failure("${EXEC}" ${RENDER_ARGS} -o "${WORK}/mismatch.png" "${DATABASE}" mesh.r)
+
+# Explicit invalid transfer modes must not silently turn a texture black.
+foreach(mode IN ITEMS -1 8)
+  run("${VEXEC}" set-material "${DATABASE}" OSL.param.image.in_eotf "int ${mode}")
+  expect_failure("${EXEC}" ${RENDER_ARGS} -o "${WORK}/invalid_${mode}.png" "${DATABASE}" mesh.r)
+  if(EXISTS "${WORK}/invalid_${mode}.png")
+    message(FATAL_ERROR "An invalid transfer function published an image")
+  endif()
+endforeach()
+
+# CMS off bypasses the transfer selection entirely and preserves raw data.
+run("${VEXEC}" set-material "${DATABASE}" OSL.param.image.in_enable_cms "int 0")
+run("${VEXEC}" set-material "${DATABASE}" OSL.param.in_expected "color 0.02 0.18 0.8")
+run("${EXEC}" ${RENDER_ARGS} -o "${WORK}/raw.png" "${DATABASE}" mesh.r)
+
+# Exercise the public helpers independently of the native image node.
+set(DATABASE "${WORK}/helpers.g")
+run("${VEXEC}" create-material "${DATABASE}" art_color_check)
+run("${VEXEC}" set-material "${DATABASE}" OSL.version 2)
+run("${VEXEC}" set-material "${DATABASE}" OSL.node.transfer art_transfer)
+run("${VEXEC}" set-material "${DATABASE}" OSL.connect.material.in_color transfer.out_color)
+run("${VEXEC}" set-material "${DATABASE}" OSL.param.transfer.in_color "color 0.01 0.03 0.18")
+run("${VEXEC}" set-material "${DATABASE}" OSL.param.in_expected "color 0.045 0.1278309214696 0.4090077288642")
+run("${EXEC}" ${RENDER_ARGS} -o "${WORK}/rec709_encode.png" "${DATABASE}" mesh.r)
+run("${VEXEC}" set-material "${DATABASE}" OSL.param.transfer.in_function "string Rec.2020 decode")
+run("${VEXEC}" set-material "${DATABASE}" OSL.param.transfer.in_color "color 0.03 0.07 0.18")
+foreach(bits IN ITEMS 10 12)
+  if(bits EQUAL 10)
+    set(expected "0.0066666666667 0.0155555555556 0.0475229462452")
+  else()
+    set(expected "0.0066666666667 0.0155555555556 0.0476076920782")
+  endif()
+  run("${VEXEC}" set-material "${DATABASE}" OSL.param.transfer.in_bitdepth "int ${bits}")
+  run("${VEXEC}" set-material "${DATABASE}" OSL.param.in_expected "color ${expected}")
+  run("${EXEC}" ${RENDER_ARGS} -o "${WORK}/rec2020_decode_${bits}.png" "${DATABASE}" mesh.r)
+endforeach()

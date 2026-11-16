@@ -1,0 +1,52 @@
+/*              A R T _ B U M P _ F I E L D . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+shader art_bump_field(point in_origin = point(0), vector in_gradient = vector(0.6, 0.2, 0.1),
+    float in_span = 10, float in_depth = 5, float in_offset = 0,
+    float in_position_scale = 1, int in_position_mode = 0, int in_uv_height = 0,
+    output float out_height = 0, output point out_position = P,
+    output normal out_reference = N)
+{
+    out_height = in_offset + dot(in_gradient, vector(P - in_origin)) / in_span;
+    out_position = P * in_position_scale;
+    if (in_position_mode == 1)
+        out_position = point(P[0], 0, 0) * in_position_scale;
+    else if (in_position_mode == 2)
+        out_position = point(0);
+
+    if (in_uv_height) {
+        out_height = u - 0.75 + in_offset;
+        // The native sphere chart is azimuth / (2*pi), independent of
+        // screen derivatives. Its analytic gradient is tangent to circles.
+        vector delta = vector(P - in_origin);
+        float radius2 = delta[0] * delta[0] + delta[1] * delta[1];
+        if (radius2 > 0)
+            out_reference = normalize(N - normal(vector(-delta[1], delta[0], 0) *
+                in_depth / (2 * M_PI * radius2)));
+        return;
+    }
+
+    // For an affine height on the geometric plane, its gradient differs
+    // from the ambient gradient only along Ng. Impose tangency to N.
+    if (in_position_mode == 0 && abs(dot(Ng, N)) > 0) {
+        vector gradient = in_gradient * in_depth / in_span;
+        gradient -= vector(Ng) * dot(gradient, N) / dot(Ng, N);
+        out_reference = normalize(N - normal(gradient));
+    }
+}
