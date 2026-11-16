@@ -97,8 +97,6 @@ main(int argc, char **argv)
 	}
     }
 
-    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
-	USAGE_EXIT(*argv);
     if (argc > bu_optind) {
 	fprintf(stderr, "%s: excess argument(s) not supported\n", bu_getprogname());
 	USAGE_EXIT(*argv);
