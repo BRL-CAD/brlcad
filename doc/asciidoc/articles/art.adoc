@@ -1090,12 +1090,12 @@ Toon shader changes are compiler checked; these checks do not qualify
 their complete transport behavior. Toon is already included in the
 installed catalogue.
 
-Standard Surface's legacy coat still calls the standard OSL `microfacet`
-closure, which this renderer does not register. Enabling that coat reports
-an unsupported-closure error and saves no image. Use the separately
-qualified `as_glossy_layer` network for a coat while that legacy path is
-modernized. Maya refraction and complete subsurface transport also need
-separate qualification.
+Standard Surface's Beckmann coat and Maya Anisotropic's GGX reflection
+use the standard OSL `microfacet` closure, including selected frame
+derivatives. See <<Standard microfacet materials>> for their controls and
+qualified behavior. Standard microfacet transmission, Maya refraction,
+and complete subsurface transport still need separate implementation or
+qualification.
 
 Rough canonical GGX reflection and transmission differentiate the sampled
 microfacet normal, the selected shading frame, and the actual reflected or
