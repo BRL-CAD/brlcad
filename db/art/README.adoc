@@ -1,4 +1,4 @@
-= art material demonstrations
+= art rendering demonstrations
 
 The moss comparison uses Gary Moss's original "World on a Platter" example.
 Both images were rendered with art at 512 by 384 pixels and 64 samples per
@@ -29,7 +29,9 @@ cmake -DBRLCAD_PREFIX="${BRLCAD_PREFIX}" -DOUTPUT_DIR=moss-render \
 ----
 
 Use `-DSOURCE_DB=path/to/moss.g` when the example database is elsewhere.
-The driver copies the input database before editing it.  Its output
+The driver copies the input database before editing it.  Keep `SOURCE_DB`
+outside `OUTPUT_DIR`; the generated directory contains replaceable assets
+and logs.  This rule applies to every example driver.  Its output
 contains two material-ready databases, two PNG images, the resolved
 material report, and authoring and rendering logs.  To reopen either
 version, select `art.demo.g` in the generated database.
@@ -46,3 +48,267 @@ These previews demonstrate material authoring on an existing CSG model.
 They do not qualify general rough glass, overlapping media, or all legacy
 optical shader translations.  See the art article for the tested feature
 boundaries and the integration roadmap.
+
+== Replacing a legacy sky shell
+
+`star.g` (the Enterprise and shuttlecraft) supplies a worked sky migration.
+Its `all` assembly includes `clouds.r`, a very large spherical shell.  The
+shell uses a checker shader with both colors set to `0/0/150`: despite its
+name, this is a constant-blue backdrop, rather than a procedural cloud sky.
+
+The comparison uses the same subject-framed camera for all three images:
+
+* `star-before.png` uses rt, the original liboptical shaders, the original
+  light, and the original shell.
+* `star-after.png` uses art, retaining the ship and shuttle instances,
+  their transforms and region colors, with a polished OSL plastic surface.
+  A blue camera backdrop replaces the shell.  A white environment dome
+  supplies neutral illumination and reflections independently of that blue.
+  Warm key and cool rim point lights replace the original light's contribution.
+* `star-space.png` changes only the camera backdrop to black.  Lighting and
+  material settings remain identical to `star-after.png`.
+
+The art images illustrate material, lighting, and background authoring,
+without claiming exact translation of liboptical's plastic parameters or
+identical shading between rt and art.
+The art previews use 512 by 384 pixels and 64 samples per pixel.  Art's
+point-light proxy spheres do not appear as visible geometry.
+The point-light multiplier is calibrated for this model's millimeter
+coordinates; it is not a portable physical intensity for arbitrary models.
+The dome intensity is 0.08 and the backdrop multiplier is one.
+
+An installation needs rt and the standard `share/db/star.g` example in
+addition to art and mged.  Regenerate from a writable directory:
+
+----
+cmake -DBRLCAD_PREFIX="${BRLCAD_PREFIX}" -DOUTPUT_DIR=star-render \
+    -P "${BRLCAD_PREFIX}/share/db/art/render_star.cmake"
+----
+
+The same `SOURCE_DB`, `WIDTH`, `HEIGHT`, `SAMPLES`, and `WORKERS` options
+used by the moss example apply.  The driver copies its input twice and
+checks the expected constant-blue shader before modifying the art copy.
+It leaves the shell objects available for inspection and excludes them
+from the `art.demo.g` render selection.  The before copy retains `all`
+unchanged.  Logs, a resolved material/environment report, and a reusable
+`star-camera.view` stream accompany the images.  The `star-after.view` and
+`star-space.view` streams include the complete camera, sampling, lighting,
+and background settings.  From the output directory, rerender directly:
+
+----
+art -M -w 512 -n 384 -P 2 -o another-view.png star-after.g art.demo.g \
+    < star-after.view
+----
+
+Frame the subjects before adding the environment.  Including a surrounding
+shell in automatic bounds can make the intended subject too small.  The
+recipe obtains a camera from mged with just `ncc1701` and `shuttle` drawn,
+then uses that same saved camera for both renderers.
+
+=== Other sample sky candidates
+
+The sample databases contain two distinct legacy sky arrangements:
+
+[cols="1,1,2",options="header"]
+|===
+|Database |Sky object |Legacy arrangement
+|`galileo.g` |`clouds` |`cloud` shader on an outer sphere minus an inner sphere
+|`cray.g` |`cloud.r` |`cloud` shell, additionally clipped by `plate`
+|`world.g` |`cloud.r` |`cloud` shader on a spherical shell
+|`wave.g` |`clouds.r` |`cloud` shader on a spherical shell
+|`bldg391.g` |`cloud.r` |`cloud` shader on an offset spherical shell
+|`cube.g` |`envmap.r` |`envmap cloud`; also retains a `cloud.r.bak` shell
+|`sphflake.g` |`environ.r` |`envmap cloud`, using `light0` as its registration geometry
+|===
+
+In liboptical, an `envmap` region registers a shader for ray misses and is
+removed from the traced geometry.  Its registration geometry should not
+become an ordinary art surface.  By contrast, the `cloud` shells above
+are traced geometry.  The legacy `cloud` shader produces a UV-based color
+pattern; it does not itself describe a participating cloud volume.
+
+`sphflake.g` is a useful next environment example because its reflective
+subjects can demonstrate the same cloud pattern in the background and
+reflections.  `bldg391.g` would then demonstrate replacing a surrounding
+shell in an architectural scene.  Both need a procedural or image-based
+art environment: a constant color does not preserve their cloud pattern.
+Keep subject framing independent of the removed sky geometry, preserve
+that geometry in the authored database for inspection, and check panorama
+seams, poles, reflections, and illumination as well as camera appearance.
+These are follow-on candidates; Star is the completed sky recipe here.
+
+`earth.g` has a cloud/glass stack on `troposphere.c`.  Treat that as an
+atmosphere/material case: removing a physical layer requires separate
+analysis of the intended transparency and cloud effects.
+
+== Havoc: paint, glazing, and HDR studio lighting
+
+The Havoc comparison keeps the original helicopter geometry, including its
+Boolean regions and instance placements.  A generated scene-linear HDR
+panorama supplies broad studio lights and reflections; a separate floor
+receives the model's shadows.  All three images use art:
+
+* `havoc-before.png` retains the original region colors through the default
+  OSL plastic material.
+* `havoc-after.png` assigns olive paint, dark rotor and tire finishes, and
+  smooth refractive glass to the canopy and laser-sight glazing.
+* `havoc-detail.png` shows the same authored materials and lighting with a
+  closer camera centered on the canopy.
+
+The full-model pair uses identical geometry, camera, lighting, and sampling.
+The after version deliberately changes paint colors as well as surface
+response.  These are explicit material assignments, rather than an automatic
+translation of every legacy liboptical shader.  The original database is
+copied before authoring.  The only added geometry is the studio floor, and
+it is present in both generated databases.
+
+Regenerate using an installation containing `havoc.g`, art, mged, oiiotool,
+and the Appleseed shader library:
+
+----
+cmake -DBRLCAD_PREFIX="${BRLCAD_PREFIX}" -DOUTPUT_DIR=havoc-render \
+    -DSAMPLES=256 -P "${BRLCAD_PREFIX}/share/db/art/render_havoc.cmake"
+----
+
+The `SOURCE_DB`, `WIDTH`, `HEIGHT`, `SAMPLES`, and `WORKERS` options have the
+same meaning as in the moss example.  The supplied previews use 512 by 384
+pixels and 256 samples per pixel.  The driver generates `havoc-studio.exr`
+locally; no downloaded textures or additional shader compilation are needed.
+It creates two material-ready databases, three PNG images, complete saved
+view streams, a material inspection report, and authoring/rendering logs.
+
+Keep the HDR map beside the generated databases when moving the project.
+From that directory, render another output, including an HDR EXR if desired:
+
+----
+art -M -w 512 -n 384 -P 2 -o canopy.exr havoc-after.g art.demo.g \
+    < havoc-detail.view
+----
+
+The environment multiplier is two and the point-light multiplier is zero.
+The panorama uses linear RGB with sRGB/Rec.709 primaries.  Material color
+parameters are also scene-linear RGB.  Geometry and absorption distances use
+BRL-CAD's millimeter base coordinates.  The glass index is 1.5; volume
+transmittance is specified over 100 mm.  The canopy treatment uses the
+model's existing CSG solids and does not change their thickness.
+
+The model is framed before adding the larger floor.  The canopy close-up
+uses the same assembly and environment as the overall after image.  See the
+art article for glass and secondary-ray qualification boundaries.
+
+== m35: preserving color tables while authoring surfaces
+
+The m35 truck illustrates a database that combines a broad region-ID color
+table with explicit region colors.  The table supplies the amber paint;
+explicit gray and black colors take precedence.  The after recipe leaves
+`in_color` unspecified on its paint material, retaining those resolved
+colors while changing the specular response and roughness.
+
+Both versions include the truck's `component` assembly and four existing
+glass regions, `r682`, `r683`, `r684`, and `r685`.  These glass regions are
+unreferenced by the original `component`, `all.g`, and `cab.g` assemblies.
+The studio recipe includes them explicitly in both comparison databases.
+The input database and the original object trees remain unchanged.
+
+* `m35-before.png` uses the original region colors through default plastic,
+  including the explicitly included window solids.
+* `m35-after.png` adds polished paint, rough chrome bumper surfaces, smooth
+  metal mirrors, rubber, and smooth glass.
+* `m35-detail.png` shows the same materials and lighting around the cab.
+
+[cols="1,1"]
+|===
+|Original color treatment |Authored surfaces
+a|image::m35-before.png[m35 with default materials]
+a|image::m35-after.png[m35 with authored materials]
+|===
+
+image::m35-detail.png[m35 cab and glazing detail]
+
+The full-model pair uses identical geometry, camera, illumination, and
+sampling.  A larger floor receives shadows without affecting the saved
+camera.  Air regions remain excluded consistently with librt's default
+policy.  The supplied previews use 512 by 384 pixels and 256 samples.
+
+----
+cmake -DBRLCAD_PREFIX="${BRLCAD_PREFIX}" -DOUTPUT_DIR=m35-render \
+    -DSAMPLES=256 -P "${BRLCAD_PREFIX}/share/db/art/render_m35.cmake"
+----
+
+The usual `SOURCE_DB`, `WIDTH`, `HEIGHT`, `SAMPLES`, and `WORKERS` options
+apply.  The driver generates `m35-studio.exr`, two copied databases, three
+images, reusable view streams, and a material report.  Keep the map beside
+the databases when moving the project.  For a direct HDR cab render:
+
+----
+art -M -w 512 -n 384 -P 2 -o cab.exr m35-after.g art.demo.g \
+    < m35-detail.view
+----
+
+The environment multiplier is two and point lights are disabled.  Paint
+colors follow the database's sRGB interpretation; explicit OSL material
+colors are scene-linear RGB.  Distances use millimeters.  Glass has index
+1.5 and its volume transmittance is specified over 100 mm.  Rubber regions
+are selected by the source database's `material_id=18`; the recipe assigns
+chrome and mirror materials to the identified bumper and mirror objects.
+
+== Generic_Twin: authoring a mesh aircraft and converting its windscreen
+
+The Generic_Twin workflow uses the FAA aircraft example from
+`share/db/faa/Generic_Twin.g`, retaining its original position and assemblies.
+The before view uses the original region colors through default plastic.
+The after view authors a pearl airframe, blue wing, tail, lower-fuselage and
+engine panels, dark tires, metal rims and fan parts, and refractive cockpit
+glazing.  A separate detail view shows the cockpit treatment.  All use the
+same generated studio environment and an added floor.
+
+[cols="1,1"]
+|===
+|Default material treatment |Authored aircraft surfaces
+a|image::twin-before.png[Generic Twin with default materials]
+a|image::twin-after.png[Generic Twin with authored materials]
+|===
+
+image::twin-detail.png[Generic Twin cockpit and glazing detail]
+
+The source windscreen, `21.1.t0` under `Wind_Screen`, is an unoriented plate
+BOT with centered 50.8 mm thickness.  The studio recipe converts it in the
+copied database before making either comparison version:
+
+[source,tcl]
+----
+bot extrude --max-area-delta 0 -i 21.1.t0
+----
+
+The conversion supplies explicit entry and exit boundaries for refraction.
+The recipe requires an oriented, topologically closed result.  It retains
+the original plate thickness, disables simplification, and preserves the
+region's existing FASTGEN metadata.  Both before and after databases use
+the same converted mesh.  The input database is unchanged, and every other
+original primitive and Boolean tree is preserved.  This is explicit geometry
+authoring, rather than treating a raw plate as a refractive volume.
+
+----
+cmake -DBRLCAD_PREFIX="${BRLCAD_PREFIX}" -DOUTPUT_DIR=twin-render \
+    -DSAMPLES=256 -P "${BRLCAD_PREFIX}/share/db/art/render_twin.cmake"
+----
+
+Use `-DSOURCE_DB=path/to/Generic_Twin.g` for a database outside the installed
+FAA directory.  The usual image, sampling, and worker options apply.  The
+supplied `twin-before.png`, `twin-after.png`, and `twin-detail.png` previews
+use 512 by 384 pixels and 256 samples.  The driver creates copied databases,
+`twin-studio.exr`, complete view streams, and inspection and rendering logs.
+Keep the map with the databases.  From the generated project directory:
+
+----
+art -M -w 512 -n 384 -P 2 -o cockpit.exr twin-after.g art.demo.g \
+    < twin-detail.view
+----
+
+The environment multiplier is one and point lights are disabled.  Material
+colors are scene-linear RGB.  Geometry and absorption distances use
+millimeters.  The smooth glass index is 1.5, with volume transmittance
+specified over 1000 mm for the model's thick windscreen.
+The existing source produces nonplanar-ARB preparation warnings; the recipe
+does not repair those source solids.  See the art article for geometry,
+glass, and secondary-ray qualification boundaries.

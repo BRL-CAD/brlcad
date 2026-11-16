@@ -22,15 +22,12 @@
 units mm
 
 # Keep the light centers inside the original model bounds for auto-framing.
-foreach {name position color brightness} {
+source studio_lights.tcl
+art_demo::point_lights {
     key {-35 -35 60} 255/237/220 1
     fill {65 -45 50} 200/222/255 0.3
     rim {55 45 55} 255/255/255 0.6
-} {
-    in art.$name.s sph {*}$position 0.25
-    r art.$name.r u art.$name.s
-    attr set art.$name.r shader [list light [list bright $brightness]] color $color
-}
+} 0.25
 attr set light.r shader {light {bright 0}}
 comb art.demo.g u all.g u art.key.r u art.fill.r u art.rim.r
 puts {art demo studio ready}

@@ -84,6 +84,7 @@
 #include <cstddef>
 #include <cmath>
 #include <exception>
+#include <filesystem>
 #include <iomanip>
 #include <limits>
 #include <locale>
@@ -93,6 +94,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <system_error>
 #include <utility>
 #include <vector>
 
@@ -128,10 +130,12 @@
 #include "renderer/api/project.h"
 #include "renderer/api/rendering.h"
 #include "renderer/api/scene.h"
+#include "renderer/api/texture.h"
 #include "renderer/api/utility.h"
 
 // appleseed.foundation headers.
 #include "foundation/core/appleseed.h"
+#include "foundation/image/canvasproperties.h"
 #include "foundation/math/matrix.h"
 #include "foundation/math/scalar.h"
 #include "foundation/math/transform.h"
@@ -189,13 +193,38 @@ static int inspect_materials = 0;
 static int samples = 25;
 static double light_intensity = 200.0;
 
+namespace {
+
+enum class ArtBackgroundSource { Inherit, Color, Environment };
+
+static const char *
+art_background_source_name(ArtBackgroundSource source)
+{
+    switch (source) {
+	case ArtBackgroundSource::Color: return "color";
+	case ArtBackgroundSource::Environment: return "environment";
+	case ArtBackgroundSource::Inherit: return "inherit";
+    }
+    return "inherit";
+}
+
 struct ArtEnvironmentControls {
+    std::string map;
+    std::string map_colorspace = "linear";
+    double rotation = 0.0;
+    ArtBackgroundSource background_source = ArtBackgroundSource::Inherit;
     std::optional<std::array<double, 3>> environment_color;
     std::optional<std::array<double, 3>> background_color;
     std::optional<double> environment_intensity;
     std::optional<double> background_intensity;
+
+    bool build(renderer::Scene& scene, const foundation::SearchPaths& paths,
+	const std::array<double, 3>& legacy_color, double ambient,
+	std::ostream *report) const;
 };
-static ArtEnvironmentControls environment_controls;
+ArtEnvironmentControls environment_controls;
+
+} // namespace
 
 static bool
 art_valid_power(double value)
@@ -561,6 +590,13 @@ register_region_impl(struct db_tree_state* tsp,
     if (!builder.region_paths.insert(region_path).second)
 	return 0;
 
+    // Match librt's default air exclusion before resolving materials or objects.
+    if (tsp->ts_aircode != 0) {
+	if (builder.report)
+	    *builder.report << "air_region " << std::quoted(region_path) << " skipped\n";
+	return 0;
+    }
+
     float region_rgb[ELEMENTS_PER_VECT];
     art_region_color(tsp, region_rgb);
 
@@ -747,6 +783,126 @@ art_selected_objects(const char ***objects)
 }
 
 
+namespace {
+
+bool
+ArtEnvironmentControls::build(asr::Scene& scene, const asf::SearchPaths& paths,
+    const std::array<double, 3>& legacy_color, double ambient, std::ostream *report) const
+{
+    const auto dome_color = environment_color.value_or(legacy_color);
+    const auto backdrop_color = background_color.value_or(legacy_color);
+    const double dome_power = environment_intensity.value_or(ambient);
+    ArtBackgroundSource source = background_source;
+    if (source == ArtBackgroundSource::Inherit) {
+	const bool independent_color = background_color || background_intensity ||
+	    environment_color || environment_intensity;
+	source = map.empty() ? (independent_color ? ArtBackgroundSource::Color :
+	    ArtBackgroundSource::Environment) : (background_color ?
+	    ArtBackgroundSource::Color : ArtBackgroundSource::Environment);
+    }
+    const double backdrop_power = background_intensity.value_or(
+	source == ArtBackgroundSource::Environment ? dome_power :
+	background_color ? 1.0 : ambient);
+
+    std::string map_path;
+    if (!map.empty()) {
+	try {
+	    auto path = std::filesystem::u8path(map);
+	    if (path.is_relative())
+		path = std::filesystem::u8path(paths.get_root_path().c_str()) / path;
+	    std::error_code error;
+	    if (!std::filesystem::is_regular_file(path, error)) {
+		bu_log("art: environment map '%s' is not a readable image file\n", map.c_str());
+		return false;
+	    }
+	    map_path = std::filesystem::canonical(path).generic_u8string();
+	    auto texture = asr::DiskTexture2dFactory().create("environment_map",
+		asr::ParamArray().insert("filename", map_path)
+		    .insert("color_space", map_colorspace == "linear" ? "linear_rgb" : "srgb"),
+		paths);
+	    const auto& properties = texture->properties();
+	    if (!properties.m_canvas_width || !properties.m_canvas_height ||
+		(properties.m_channel_count != 3 && properties.m_channel_count != 4)) {
+		bu_log("art: environment map '%s' must have nonzero dimensions and RGB or RGBA channels\n", map.c_str());
+		return false;
+	    }
+	    scene.textures().insert(texture);
+	    scene.texture_instances().insert(asr::TextureInstanceFactory::create(
+		"environment_map_inst", asr::ParamArray().insert("addressing_mode", "wrap_u_clamp_v")
+		    .insert("filtering_mode", "bilinear"), "environment_map"));
+	} catch (const std::exception& error) {
+	    bu_log("art: cannot load environment map '%s': %s\n", map.c_str(), error.what());
+	    return false;
+	}
+    }
+
+    const auto add_color = [&scene](const char *name,
+	const std::array<double, 3>& color, double power) {
+	const float components[] = {
+	    static_cast<float>(color[0]), static_cast<float>(color[1]), static_cast<float>(color[2])};
+	scene.colors().insert(asr::ColorEntityFactory::create(name,
+	    asr::ParamArray().insert("color_space", "srgb").insert("multiplier", power),
+	    asr::ColorValueArray(3, components)));
+    };
+    const auto add_dome = [&](const char *name, const char *color_name, double power) {
+	asf::auto_release_ptr<asr::EnvironmentEDF> edf;
+	if (map.empty()) {
+	    add_color(color_name, dome_color, power);
+	    edf = asr::ConstantEnvironmentEDFFactory().create(name,
+		asr::ParamArray().insert("radiance", color_name));
+	} else {
+	    edf = asr::LatLongMapEnvironmentEDFFactory().create(name,
+		asr::ParamArray().insert("radiance", "environment_map_inst")
+		    .insert("radiance_multiplier", power));
+	    // Appleseed panoramas are Y-up.  Place north at +Z and rotate
+	    // the environment about BRL-CAD's +Z axis with positive azimuth.
+	    edf->transform_sequence().set_transform(0.0f,
+		asf::Transformd::from_local_to_parent(
+		    asf::Matrix4d::make_rotation_z(asf::deg_to_rad(rotation)) *
+		    asf::Matrix4d::make_rotation_x(asf::HalfPi<double>())));
+	}
+	scene.environment_edfs().insert(edf);
+    };
+    add_dome("sky_edf", "sky_radiance", dome_power);
+    if (source == ArtBackgroundSource::Color) {
+	add_color("background_radiance", backdrop_color, backdrop_power);
+	scene.environment_shaders().insert(asr::BackgroundEnvironmentShaderFactory().create(
+	    "sky_shader", asr::ParamArray().insert("color", "background_radiance")));
+    } else {
+	const char *visible_edf = "sky_edf";
+	if (background_intensity) {
+	    add_dome("background_edf", "background_environment_radiance", backdrop_power);
+	    visible_edf = "background_edf";
+	}
+	scene.environment_shaders().insert(asr::EDFEnvironmentShaderFactory().create(
+	    "sky_shader", asr::ParamArray().insert("environment_edf", visible_edf)));
+    }
+    scene.set_environment(asr::EnvironmentFactory::create("sky",
+	asr::ParamArray().insert("environment_edf", "sky_edf")
+	    .insert("environment_shader", "sky_shader")));
+
+    if (report) {
+	if (map.empty()) {
+	    *report << "environment_color " << dome_color[0] << ' ' << dome_color[1]
+		<< ' ' << dome_color[2] << " intensity " << dome_power << '\n';
+	} else {
+	    *report << "environment_map " << std::quoted(map_path) << " colorspace "
+		<< map_colorspace << " rotation " << rotation << " intensity " << dome_power << '\n';
+	}
+	*report << "background_source " << art_background_source_name(source) << '\n';
+	if (source == ArtBackgroundSource::Color) {
+	    *report << "background_color " << backdrop_color[0] << ' ' << backdrop_color[1]
+		<< ' ' << backdrop_color[2] << " intensity " << backdrop_power << '\n';
+	} else {
+	    *report << "background_environment intensity " << backdrop_power << '\n';
+	}
+    }
+    return true;
+}
+
+
+} // namespace
+
 static asf::auto_release_ptr<asr::Project>
 build_project(std::ostream *report)
 {
@@ -755,11 +911,6 @@ build_project(std::ostream *report)
 	return asf::auto_release_ptr<asr::Project>();
     }
     const std::array<double, 3> legacy_color = {background[0], background[1], background[2]};
-    const auto environment_color = environment_controls.environment_color.value_or(legacy_color);
-    const auto background_color = environment_controls.background_color.value_or(legacy_color);
-    const double environment_power = environment_controls.environment_intensity.value_or(AmbientIntensity);
-    const double background_power = environment_controls.background_intensity.value_or(
-	environment_controls.background_color ? 1.0 : AmbientIntensity);
 
     /* If user gave no sizing info at all, use 512 as default */
     struct bu_vls dimensions = BU_VLS_INIT_ZERO;
@@ -796,10 +947,7 @@ build_project(std::ostream *report)
 	*report << "project_root " << std::quoted(project->search_paths().get_root_path().c_str()) << '\n'
 	    << "shader_search_path " << std::quoted(project->search_paths().to_string_reversed(
 		asf::SearchPaths::osl_path_separator()).c_str()) << '\n';
-	*report << "environment_color " << environment_color[0] << ' ' << environment_color[1]
-	    << ' ' << environment_color[2] << " intensity " << environment_power << '\n'
-	    << "background_color " << background_color[0] << ' ' << background_color[1]
-	    << ' ' << background_color[2] << " intensity " << background_power << '\n';
+
     }
 
     // Add default configurations to the project.
@@ -855,6 +1003,9 @@ build_project(std::ostream *report)
     if (!builder.valid)
 	return asf::auto_release_ptr<asr::Project>();
     if (report) {
+	if (!environment_controls.build(scene.ref(), project->search_paths(),
+		legacy_color, AmbientIntensity, report))
+	    return asf::auto_release_ptr<asr::Project>();
 	project->set_scene(scene);
 	return project;
     }
@@ -964,43 +1115,9 @@ build_project(std::ostream *report)
     // Environment
     //------------------------------------------------------------------------
 
-    const auto add_environment_color = [&scene](const char *name,
-	const std::array<double, 3>& color, double power) {
-	const float components[] = {
-	    static_cast<float>(color[0]), static_cast<float>(color[1]), static_cast<float>(color[2])};
-	scene->colors().insert(asr::ColorEntityFactory::create(name,
-	    asr::ParamArray().insert("color_space", "srgb").insert("multiplier", power),
-	    asr::ColorValueArray(3, components)));
-    };
-    add_environment_color("sky_radiance", environment_color, environment_power);
-
-    // Create an environment EDF called "sky_edf" and insert it into the scene.
-    scene->environment_edfs().insert(
-	asr::ConstantEnvironmentEDFFactory().create(
-	    "sky_edf",
-	    asr::ParamArray()
-	    .insert("radiance", "sky_radiance")));
-
-    const bool independent_background = environment_controls.environment_color ||
-	environment_controls.environment_intensity || environment_controls.background_color ||
-	environment_controls.background_intensity;
-    if (independent_background) {
-	add_environment_color("background_radiance", background_color, background_power);
-	scene->environment_shaders().insert(asr::BackgroundEnvironmentShaderFactory().create(
-	    "sky_shader", asr::ParamArray().insert("color", "background_radiance")));
-    } else {
-	// Keep the legacy EDF background, including its AOV behavior, without overrides.
-	scene->environment_shaders().insert(asr::EDFEnvironmentShaderFactory().create(
-	    "sky_shader", asr::ParamArray().insert("environment_edf", "sky_edf")));
-    }
-
-    // Create an environment called "sky" and bind it to the scene.
-    scene->set_environment(
-	asr::EnvironmentFactory::create(
-	    "sky",
-	    asr::ParamArray()
-	    .insert("environment_edf", "sky_edf")
-	    .insert("environment_shader", "sky_shader")));
+    if (!environment_controls.build(scene.ref(), project->search_paths(),
+	    legacy_color, AmbientIntensity, nullptr))
+	return asf::auto_release_ptr<asr::Project>();
 
     //------------------------------------------------------------------------
     // Camera
@@ -1534,6 +1651,10 @@ art_cm_set(const int argc, const char **argv)
 	    bu_log("%s=%s\n", field->sp_name, bu_vls_cstr(&value));
 	    bu_vls_free(&value);
 	}
+	bu_log("environment_map=%s\nenvironment_map_colorspace=%s\nenvironment_rotation=%.17g\nbackground_source=%s\n",
+	    environment_controls.map.empty() ? "inherit" : environment_controls.map.c_str(),
+	    environment_controls.map_colorspace.c_str(), environment_controls.rotation,
+	    art_background_source_name(environment_controls.background_source));
 	art_print_color_setting("environment_color", environment_controls.environment_color ?
 	    environment_controls.environment_color->data() : nullptr);
 	art_print_color_setting("background_color", environment_controls.background_color ?
@@ -1557,9 +1678,11 @@ art_cm_set(const int argc, const char **argv)
 	const std::string argument = argv[index];
 	const size_t equal = argument.find('=');
 	// rt_do_cmd removes quotes but retains grouped whitespace in each argument.
+	// A map filename remains one string even when it contains another equals sign.
 	if (argument.find_first_of(" \t\r\n") != std::string::npos &&
 	    argument.find('"') == std::string::npos &&
-	    (equal == std::string::npos || argument.find('=', equal + 1) == std::string::npos)) {
+	    (equal == std::string::npos || argument.find('=', equal + 1) == std::string::npos ||
+	        argument.substr(0, equal) == "environment_map")) {
 	    if (equal != std::string::npos)
 		input += argument.substr(0, equal + 1);
 	    input += '"';
@@ -1607,6 +1730,37 @@ art_cm_set(const int argc, const char **argv)
 	    return art_setting_error(name, value, "expected whitespace after closing quote");
 	if (value.empty())
 	    return art_setting_error(name, value, "a value is required");
+	if (name == "environment_map") {
+	    new_environment.map = value == "inherit" ? "" : value;
+	    continue;
+	}
+	if (name == "environment_map_colorspace") {
+	    if (value != "linear" && value != "srgb")
+		return art_setting_error(name, value, "expected linear or srgb");
+	    new_environment.map_colorspace = value;
+	    continue;
+	}
+	if (name == "environment_rotation") {
+	    double number;
+	    if (!art_setting_real(value, number))
+		return art_setting_error(name, value, "expected finite rotation in degrees");
+	    const double full_circle = 360.0;
+	    new_environment.rotation = std::fmod(number, full_circle);
+	    if (new_environment.rotation < 0.0)
+		new_environment.rotation += full_circle;
+	    continue;
+	}
+	if (name == "background_source") {
+	    if (value == "inherit")
+		new_environment.background_source = ArtBackgroundSource::Inherit;
+	    else if (value == "color")
+		new_environment.background_source = ArtBackgroundSource::Color;
+	    else if (value == "environment")
+		new_environment.background_source = ArtBackgroundSource::Environment;
+	    else
+		return art_setting_error(name, value, "expected inherit, color, or environment");
+	    continue;
+	}
 	if (name == "environment_color" || name == "background_color") {
 	    auto& color = name == "environment_color" ? new_environment.environment_color :
 		new_environment.background_color;

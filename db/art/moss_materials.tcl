@@ -18,19 +18,7 @@
 # information.
 #
 
-namespace eval art_demo {
-    proc make_material {name shader parameters regions} {
-        material create $name $name
-        material set $name optical OSL $shader
-        material set $name optical OSL.output out_outColor
-        foreach {parameter value} $parameters {
-            material set $name optical OSL.param.$parameter $value
-        }
-        foreach region $regions {
-            material assign $region $name
-        }
-    }
-}
+source studio_materials.tcl
 art_demo::make_material slate.material as_plastic {
     in_color {color 0.045 0.055 0.075}
     in_specular_weight {float 0.7}

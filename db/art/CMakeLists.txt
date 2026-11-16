@@ -1,6 +1,32 @@
 set(art_example_files
   README.adoc
+  render_common.cmake
   render_moss.cmake
+  render_havoc.cmake
+  havoc_studio.tcl
+  havoc_materials.tcl
+  havoc-before.png
+  havoc-after.png
+  havoc-detail.png
+  render_m35.cmake
+  m35_studio.tcl
+  m35_materials.tcl
+  m35-before.png
+  m35-after.png
+  m35-detail.png
+  render_twin.cmake
+  twin_studio.tcl
+  twin_materials.tcl
+  twin-before.png
+  twin-after.png
+  twin-detail.png
+  render_star.cmake
+  star_sky.tcl
+  star-before.png
+  star-after.png
+  star-space.png
+  studio_lights.tcl
+  studio_materials.tcl
   moss_studio.tcl
   moss_materials.tcl
   moss-before.png

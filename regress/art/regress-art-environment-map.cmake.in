@@ -1,0 +1,264 @@
+# R E G R E S S - A R T - E N V I R O N M E N T - M A P . C M A K E
+# BRL-CAD
+#
+# Copyright (c) 2026 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/environment-map-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+set(PROJECT "${WORK}/project with spaces")
+file(MAKE_DIRECTORY "${PROJECT}/shaders" "${PROJECT}/lighting" "${WORK}/cache" "${WORK}/caller/lighting")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+set(TOOL "@ART_OIIOTOOL_EXECUTABLE@")
+foreach(shader IN ITEMS art_diffuse art_mirror_mixture art_emission)
+  configure_file("@CMAKE_CURRENT_BINARY_DIR@/${shader}.oso" "${PROJECT}/shaders/${shader}.oso" COPYONLY)
+  run("${VEXEC}" create-material "${PROJECT}/${shader}.g" "${shader}")
+  run("${VEXEC}" set-material "${PROJECT}/${shader}.g" OSL.param.in_color "color 0.5 0.5 0.5")
+endforeach()
+run("${VEXEC}" set-material "${PROJECT}/art_mirror_mixture.g" OSL.param.in_weight "float 1")
+set(CENTER 16x16+24+24)
+set(SMALL_CENTER 8x8+12+12)
+set(SMALL_CORNER 4x4+0+0)
+set(CORNER 8x8+0+0)
+set(RENDER_ARGS -P 1 -w 64 -n 64 -p 0 -A 0.4
+  -c "set samples=16 light_intensity=0 environment_intensity=1"
+  -c "viewsize 40" -c "eye_pt 0 0 40" -c "orientation 0 0 0 1")
+set(DIFF_ARGS --fail 0.002 --hardfail 0.002 --warn 0.002 --hardwarn 0.002)
+
+function(render name shader object)
+  run("${EXEC}" ${RENDER_ARGS} ${ARGN} -o "${WORK}/${name}.exr" "${PROJECT}/${shader}.g" "${object}")
+endfunction()
+function(crop image region output)
+  run("${TOOL}" "${image}" --cut "${region}" -o "${output}")
+endfunction()
+function(matches actual expected)
+  run("${TOOL}" ${DIFF_ARGS} "${actual}" "${expected}" --diff)
+endfunction()
+function(matches_region actual expected region)
+  crop("${actual}" "${region}" "${WORK}/actual.exr")
+  crop("${expected}" "${region}" "${WORK}/expected.exr")
+  matches("${WORK}/actual.exr" "${WORK}/expected.exr")
+endfunction()
+function(color_reference name color dimensions)
+  run("${TOOL}" --pattern "constant:color=${color},1" "${dimensions}" 4 -o "${WORK}/${name}.exr")
+endfunction()
+function(check_direction name eye target color)
+  render("${name}" art_emission cube.r -c "set environment_map=lighting/axes.exr"
+    -c "eye_pt ${eye}" -c "lookat_pt ${target}" ${ARGN})
+  crop("${WORK}/${name}.exr" "${CORNER}" "${WORK}/direction.exr")
+  color_reference(direction-reference "${color}" 8x8)
+  matches("${WORK}/direction.exr" "${WORK}/direction-reference.exr")
+endfunction()
+
+run("${TOOL}" --pattern constant:color=4,4,4 32x16 3 -d float -o "${PROJECT}/lighting/white.exr")
+run("${TOOL}" --pattern constant:color=0.5,0.5,0.5 32x16 3 -d float -o "${PROJECT}/lighting/gray.exr")
+run("${TOOL}" --pattern constant:color=0.5,0.5,0.5,0 32x16 4 -d float -o "${PROJECT}/lighting/rgba.exr")
+run("${TOOL}" --pattern constant:color=0,4,0 32x16 3 -d float -o "${WORK}/caller/lighting/white.exr")
+color_reference(hdr-reference "4,4,4" 8x8)
+color_reference(unit-reference "1,1,1" 4x4)
+color_reference(red-mirror-reference "0.5,0,0" 1x1)
+color_reference(linear-reference "0.5,0.5,0.5" 8x8)
+# IEC sRGB transfer at 0.5, independent of the renderer's conversion.
+color_reference(srgb-reference "0.21404114,0.21404114,0.21404114" 8x8)
+run("${TOOL}" --pattern constant:color=2,2,2,1 1x1 4 -o "${WORK}/analytic-mean.exr")
+
+# A small panorama identifies the poles and four equatorial compass directions.
+# At zero rotation, +X is U=0.5 and +Y is U=0.25; north is the top row.
+set(panorama "P3\n32 16\n255\n")
+foreach(y RANGE 0 15)
+  foreach(x RANGE 0 31)
+    if(y LESS 4)
+      set(rgb "255 0 0")
+    elseif(y GREATER 11)
+      set(rgb "0 0 255")
+    elseif(x LESS 4 OR x GREATER 27)
+      set(rgb "255 0 255")
+    elseif(x LESS 12)
+      set(rgb "255 255 0")
+    elseif(x LESS 20)
+      set(rgb "0 255 0")
+    else()
+      set(rgb "0 255 255")
+    endif()
+    string(APPEND panorama "${rgb}\n")
+  endforeach()
+endforeach()
+file(WRITE "${PROJECT}/lighting/axes.ppm" "${panorama}")
+run("${TOOL}" "${PROJECT}/lighting/axes.ppm" -d float -o "${PROJECT}/lighting/axes.exr")
+# A white polar cap ending at pi/4 illuminates a horizontal Lambertian
+# surface with albedo 0.5 at radiance one when the cap radiance is four:
+# 0.5 * 4 * sin(pi/4)^2 = 1.  The fine latitude grid bounds edge filtering.
+string(REPEAT "255 255 255\n" 32 white_row)
+string(REPEAT "0 0 0\n" 32 black_row)
+set(cap "P3\n32 128\n255\n")
+foreach(y RANGE 0 127)
+  if(y LESS 32)
+    string(APPEND cap "${white_row}")
+  else()
+    string(APPEND cap "${black_row}")
+  endif()
+endforeach()
+file(WRITE "${PROJECT}/lighting/cap.ppm" "${cap}")
+run("${TOOL}" "${PROJECT}/lighting/cap.ppm" --mulc 4 -d float -o "${PROJECT}/lighting/cap.exr")
+run("${TOOL}" --pattern constant:color=1,1,1,1 1x1 4 -o "${WORK}/cap-mean.exr")
+color_reference(black-reference "0,0,0" 16x16)
+
+check_direction(north "100 100 40" "100 100 41" "1,0,0")
+check_direction(south "100 100 -40" "100 100 -41" "0,0,1")
+check_direction(east "40 100 100" "41 100 100" "0,1,0")
+check_direction(west "-40 100 100" "-41 100 100" "1,0,1")
+check_direction(northward "100 40 100" "100 41 100" "1,1,0")
+check_direction(southward "100 -40 100" "100 -41 100" "0,1,1")
+check_direction(rotated "100 40 100" "100 41 100" "0,1,0" -c "set environment_rotation=90")
+check_direction(wrapped "100 40 100" "100 41 100" "0,1,0" -c "set environment_rotation=-270")
+matches("${WORK}/rotated.exr" "${WORK}/wrapped.exr")
+
+foreach(object IN ITEMS cube.r mesh.r)
+  foreach(shader IN ITEMS art_diffuse art_mirror_mixture)
+    set(name "${shader}-${object}")
+    render("${name}" "${shader}" "${object}" -w 32 -n 32
+      -c "set environment_map=lighting/white.exr samples=1024")
+    crop("${WORK}/${name}.exr" "${SMALL_CENTER}" "${WORK}/center.exr")
+    run("${TOOL}" "${WORK}/center.exr" --resize:filter=box 1x1 -o "${WORK}/mean.exr")
+    # One percent at HDR radiance two allows sampling and half quantization.
+    run("${TOOL}" --fail 0.02 --hardfail 0.02 "${WORK}/mean.exr" "${WORK}/analytic-mean.exr" --diff)
+  endforeach()
+  render("cap-${object}" art_diffuse "${object}" -w 32 -n 32
+    -c "set environment_map=lighting/cap.exr samples=1024")
+  crop("${WORK}/cap-${object}.exr" "${SMALL_CENTER}" "${WORK}/cap-center.exr")
+  run("${TOOL}" "${WORK}/cap-center.exr" --resize:filter=box 1x1 -o "${WORK}/cap-actual-mean.exr")
+  run("${TOOL}" --fail 0.01 --hardfail 0.01 "${WORK}/cap-actual-mean.exr" "${WORK}/cap-mean.exr" --diff)
+  render("mirror-${object}" art_mirror_mixture "${object}" -c "set environment_map=lighting/axes.exr")
+  render("analytic-mirror-${object}" art_mirror_mixture "${object}" -w 32 -n 32
+    -c "set environment_map=lighting/axes.exr samples=1024")
+  crop("${WORK}/analytic-mirror-${object}.exr" "${SMALL_CENTER}" "${WORK}/center.exr")
+  run("${TOOL}" "${WORK}/center.exr" --resize:filter=box 1x1 -o "${WORK}/mirror-mean.exr")
+  matches("${WORK}/mirror-mean.exr" "${WORK}/red-mirror-reference.exr")
+  render("black-${object}" art_mirror_mixture "${object}"
+    -c "set environment_map=lighting/axes.exr background_color=black")
+  matches_region("${WORK}/black-${object}.exr" "${WORK}/mirror-${object}.exr" "${CENTER}")
+  render("dim-${object}" art_mirror_mixture "${object}" -w 32 -n 32
+    -c "set environment_map=lighting/white.exr background_intensity=0.25 samples=1024")
+  matches_region("${WORK}/dim-${object}.exr"
+    "${WORK}/art_mirror_mixture-${object}.exr" "${SMALL_CENTER}")
+  crop("${WORK}/dim-${object}.exr" "${SMALL_CORNER}" "${WORK}/corner.exr")
+  matches("${WORK}/corner.exr" "${WORK}/unit-reference.exr")
+endforeach()
+
+render(disabled art_diffuse cube.r
+  -c "set environment_map=lighting/white.exr environment_intensity=0 background_intensity=1")
+crop("${WORK}/disabled.exr" "${CENTER}" "${WORK}/disabled-center.exr")
+matches("${WORK}/disabled-center.exr" "${WORK}/black-reference.exr")
+crop("${WORK}/disabled.exr" "${CORNER}" "${WORK}/disabled-corner.exr")
+matches("${WORK}/disabled-corner.exr" "${WORK}/hdr-reference.exr")
+
+foreach(colorspace IN ITEMS linear srgb)
+  render("${colorspace}" art_emission cube.r
+    -c "set environment_map=lighting/gray.exr environment_map_colorspace=${colorspace}")
+  crop("${WORK}/${colorspace}.exr" "${CORNER}" "${WORK}/corner.exr")
+  matches("${WORK}/corner.exr" "${WORK}/${colorspace}-reference.exr")
+endforeach()
+render(rgba art_emission cube.r -c "set environment_map=lighting/rgba.exr")
+matches("${WORK}/rgba.exr" "${WORK}/linear.exr")
+render(forced-environment art_emission cube.r
+  -c "set environment_map=lighting/rgba.exr background_color=black background_source=environment")
+matches("${WORK}/forced-environment.exr" "${WORK}/linear.exr")
+
+# Relative maps belong to the database, even with conflicting caller assets.
+run_in("${WORK}/caller" "${EXEC}" ${RENDER_ARGS} -c "set environment_map=lighting/white.exr"
+  -o "${WORK}/caller.exr" "${PROJECT}/art_emission.g" cube.r)
+render(project art_emission cube.r -c "set environment_map=lighting/white.exr")
+crop("${WORK}/project.exr" "${CORNER}" "${WORK}/project-background.exr")
+matches("${WORK}/project-background.exr" "${WORK}/hdr-reference.exr")
+matches("${WORK}/caller.exr" "${WORK}/project.exr")
+configure_file("${PROJECT}/lighting/white.exr" "${PROJECT}/lighting/white sky=day.exr" COPYONLY)
+render(quoted-map art_emission cube.r
+  -c "set environment_map=\"lighting/white sky=day.exr\"")
+matches("${WORK}/quoted-map.exr" "${WORK}/project.exr")
+file(RENAME "${PROJECT}/lighting/white.exr" "${PROJECT}/lighting/white-hidden.exr")
+expect_failure_in("${WORK}/caller" "${EXEC}" ${RENDER_ARGS}
+  -c "set environment_map=lighting/white.exr" "${PROJECT}/art_emission.g" cube.r)
+file(RENAME "${PROJECT}/lighting/white-hidden.exr" "${PROJECT}/lighting/white.exr")
+
+render(constant art_emission cube.r -c "set background_source=environment")
+file(WRITE "${WORK}/frames.view"
+  "start 0; set environment_map=lighting/white.exr background_source=environment; end;\n"
+  "start 1; set background_intensity=0.25; end;\n"
+  "start 2; clean; end;\n"
+  "start 3; set environment_map=inherit background_intensity=inherit; end;\n")
+run(INPUT_FILE "${WORK}/frames.view" "${EXEC}" ${RENDER_ARGS} -M
+  -o "${WORK}/frames.exr" "${PROJECT}/art_emission.g" cube.r)
+matches("${WORK}/frames.exr" "${WORK}/project.exr")
+render(dim-emission art_emission cube.r -c "set environment_map=lighting/white.exr background_intensity=0.25")
+matches("${WORK}/frames.1.exr" "${WORK}/dim-emission.exr")
+matches("${WORK}/frames.2.exr" "${WORK}/dim-emission.exr")
+matches("${WORK}/frames.3.exr" "${WORK}/constant.exr")
+run(INPUT_FILE "${WORK}/frames.view" "${EXEC}" ${RENDER_ARGS} -M -D 2 -K 2
+  -o "${WORK}/skip.exr" "${PROJECT}/art_emission.g" cube.r)
+matches("${WORK}/skip.2.exr" "${WORK}/dim-emission.exr")
+if(EXISTS "${WORK}/skip.exr" OR EXISTS "${WORK}/skip.1.exr")
+  message(FATAL_ERROR "Skipped map frames produced images")
+endif()
+
+run_command("${WORK}" FALSE "${EXEC}" -c "set inspect_materials=1"
+  -c "set environment_map=lighting/axes.exr environment_rotation=-270 background_source=environment background_intensity=0.5"
+  -c set "${PROJECT}/art_emission.g" cube.r)
+foreach(pattern IN ITEMS "environment_rotation=90" "background_source=environment"
+    "environment_map .*axes[.]exr.*colorspace linear rotation 90" "background_environment intensity 0[.]5")
+  if(NOT command_output MATCHES "${pattern}")
+    message(FATAL_ERROR "Missing map query/inspection '${pattern}': ${command_output}")
+  endif()
+endforeach()
+set(image "${WORK}/invalid.exr")
+foreach(setting IN ITEMS "environment_rotation=nan" "environment_rotation=90junk"
+    "environment_map_colorspace=unknown" "background_source=invalid")
+  file(WRITE "${image}" "retain existing image")
+  expect_failure_matching("invalid setting" "${EXEC}" -c "set ${setting}"
+    -o "${image}" "${PROJECT}/art_emission.g" cube.r)
+  file(READ "${image}" retained)
+  if(NOT retained STREQUAL "retain existing image")
+    message(FATAL_ERROR "Invalid map controls replaced existing output")
+  endif()
+endforeach()
+file(WRITE "${PROJECT}/lighting/corrupt.exr" "not an image")
+file(WRITE "${PROJECT}/lighting/truncated.ppm" "P6\n32 16\n255\n123")
+run("${TOOL}" --pattern constant:color=1 16x8 1 -o "${PROJECT}/lighting/gray-only.exr")
+foreach(map IN ITEMS missing.exr corrupt.exr truncated.ppm gray-only.exr .)
+  file(WRITE "${image}" "retain existing image")
+  expect_failure("${EXEC}" ${RENDER_ARGS} -c "set environment_map=lighting/${map}"
+    -o "${image}" "${PROJECT}/art_emission.g" cube.r)
+  file(READ "${image}" retained)
+  if(NOT retained STREQUAL "retain existing image")
+    message(FATAL_ERROR "Invalid map '${map}' replaced existing output")
+  endif()
+endforeach()

@@ -132,3 +132,21 @@ invalid_stream(unsupported_closedb "command '_closedb' is not supported" "_close
 if(EXISTS "${WORK}/invalid-inline.png")
   message(FATAL_ERROR "An invalid inline command produced an image")
 endif()
+
+# Air belongs to librt's excluded geometry, even with an invalid material.
+# The material walk must apply the same filter before constructing objects.
+run("${VEXEC}" attr "${DB}" set ball.r material_name missing-air-material)
+foreach(aircode IN ITEMS 1 4)
+  run("${VEXEC}" attr "${DB}" set ball.r aircode "${aircode}")
+  foreach(selection IN ITEMS ball.r instance_right.g)
+    set(name "air-${aircode}-${selection}")
+    run("${EXEC}" ${RENDER_ARGS} -o "${WORK}/${name}.png" "${DB}" "${selection}" cube.r)
+    matches("${name}" cube.r)
+    run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}" ${RENDER_ARGS}
+      -c "set inspect_materials=1" "${DB}" "${selection}" cube.r)
+    if(NOT command_output MATCHES "air_region .*ball[.]r.* skipped" OR
+        command_output MATCHES "assignment.*missing-air-material")
+      message(FATAL_ERROR "Air-region inspection did not match excluded geometry: ${command_output}")
+    endif()
+  endforeach()
+endforeach()
