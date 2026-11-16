@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+A R T _ S T A N D A R D _ N E S T E D
+BRL-CAD
+
+Copyright (c) 2026 United States Government as represented by
+the U.S. Army Research Laboratory.
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public License
+version 2.1 as published by the Free Software Foundation.
+
+This library is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this file; see the file named COPYING for more
+information.
+-->
+<project format_revision="33">
+  <search_paths><search_path>shaders</search_path></search_paths>
+  <scene>
+    <camera name="camera" model="pinhole_camera">
+      <parameter name="film_dimensions" value="1 1" />
+      <parameter name="horizontal_fov" value="2" />
+      <transform><matrix>1 0 0 0 0 1 0 0 0 0 1 @REFERENCE_EYE_Z@ 0 0 0 1</matrix></transform>
+    </camera>
+    <color name="white">
+      <parameter name="color_space" value="linear_rgb" />
+      <values>1 1 1</values>
+    </color>
+    <environment_edf name="environment_edf" model="constant_environment_edf">
+      <parameter name="radiance" value="white" />
+    </environment_edf>
+    <environment name="environment" model="generic_environment">
+      <parameter name="environment_edf" value="environment_edf" />
+    </environment>
+    <assembly name="assembly">
+@REFERENCE_GROUPS@
+      <surface_shader name="surface_shader" model="physical_surface_shader" />
+      <object name="geometry" model="mesh_object">
+        <parameter name="filename" value="art_rough_box.obj" />
+      </object>
+@REFERENCE_INSTANCES@
+    </assembly>
+    <assembly_instance name="assembly_instance" assembly="assembly" />
+  </scene>
+  <output>
+    <frame name="beauty">
+      <parameter name="camera" value="camera" />
+      <parameter name="resolution" value="@SIZE@ @SIZE@" />
+      <parameter name="tile_size" value="@SIZE@ @SIZE@" />
+      <parameter name="filter" value="blackman-harris" />
+      <parameter name="filter_size" value="1.5" />
+    </frame>
+  </output>
+  <configurations>
+    <configuration name="final" base="base_final">
+      <parameter name="lighting_engine" value="pt" />
+      <parameter name="pixel_renderer" value="uniform" />
+      <parameter name="spectrum_mode" value="rgb" />
+      <parameter name="tile_renderer" value="generic" />
+      <parameter name="rendering_threads" value="@WORKERS@" />
+      <parameters name="uniform_pixel_renderer">
+        <parameter name="samples" value="@SAMPLES@" />
+      </parameters>
+      <parameters name="pt">
+        <parameter name="max_bounces" value="@BOUNCES@" />
+        <parameter name="max_glossy_bounces" value="@BOUNCES@" />
+        <parameter name="max_specular_bounces" value="@BOUNCES@" />
+        <parameter name="rr_min_path_length" value="0" />
+        <parameter name="next_event_estimation" value="true" />
+      </parameters>
+    </configuration>
+    <configuration name="interactive" base="base_interactive" />
+  </configurations>
+</project>

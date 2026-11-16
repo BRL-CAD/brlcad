@@ -1,0 +1,130 @@
+cmake_minimum_required(VERSION 3.22)
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/standard-rough-paths-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+set(ART_COMMAND_TIMEOUT 120)
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_nested_test_commands.cmake")
+foreach(shader IN ITEMS art_standard_transmission art_canonical_glass)
+  configure_file("@CMAKE_CURRENT_BINARY_DIR@/${shader}.oso" "${WORK}/shaders/${shader}.oso" COPYONLY)
+endforeach()
+configure_file("@CMAKE_CURRENT_SOURCE_DIR@/art_rough_box.obj" "${WORK}/art_rough_box.obj" COPYONLY)
+set(TOOL "@ART_OIIOTOOL_EXECUTABLE@")
+set(NATIVE_RENDERER "@ART_APPLESEED_CLI_EXECUTABLE@")
+set(SIZE 16)
+set(SAMPLES 512)
+set(WORKERS 2)
+set(BOUNCES 16)
+set(MEAN_RELATIVE_BOUND 0.002)
+set(PIXEL_RELATIVE_BOUND 0.1)
+set(REFERENCE_FLOOR 0.0005)
+set(DB "${WORK}/actual.g")
+set(layers outer inner core)
+set(indices 1.5 2.4 1.1)
+set(priorities 1 2 3)
+run("${VEXEC}" create-nested "${DB}")
+foreach(layer ior priority IN ZIP_LISTS layers indices priorities)
+  run("${VEXEC}" set-named-material "${DB}" "${layer}.material" OSL art_standard_transmission)
+  run("${VEXEC}" set-named-material "${DB}" "${layer}.material" OSL.medium_priority "${priority}")
+  set_nested_parameter("${DB}" "${layer}" in_ior "float ${ior}")
+  # One diagonal tangent is nonparallel to all six box faces. Sharing an
+  # authored frame controls sampling variance across the geometry adapters.
+  set_nested_parameter("${DB}" "${layer}" in_tangent "vector 1 1 1")
+endforeach()
+set(RENDER_ARGS -P ${WORKERS} -w ${SIZE} -n ${SIZE} -p 2 -c "viewsize 0.5"
+  -c "orientation 0 0 0 1"
+  -c "set sampling=uniform samples=${SAMPLES} light_intensity=0 environment_color=white environment_intensity=1 background_color=black max_bounces=${BOUNCES} max_glossy_bounces=${BOUNCES} max_specular_bounces=${BOUNCES} rr_min_path_length=0")
+
+function(native_project path shader distribution alpha mode eye_z)
+  set(REFERENCE_EYE_Z "${eye_z}")
+  set(REFERENCE_GROUPS "")
+  set(REFERENCE_INSTANCES "")
+  set(scales 1 0.5 0.2)
+  foreach(layer ior priority scale IN ZIP_LISTS layers indices priorities scales)
+    set(distribution_parameter "")
+    if(shader STREQUAL "art_standard_transmission")
+      set(distribution_parameter "<parameter name=\"in_distribution\" value=\"string ${distribution}\" />")
+    endif()
+    string(APPEND REFERENCE_GROUPS "
+      <shader_group name=\"${layer}.group\">
+        <shader type=\"surface\" name=\"${shader}\" layer=\"surface\">
+          <parameter name=\"in_ior\" value=\"float ${ior}\" />
+          <parameter name=\"in_alpha\" value=\"float ${alpha}\" />
+          <parameter name=\"in_mode\" value=\"int ${mode}\" />
+          <parameter name=\"in_tangent\" value=\"vector 1 1 1\" />
+          ${distribution_parameter}
+        </shader>
+      </shader_group>
+      <material name=\"${layer}.material\" model=\"osl_material\">
+        <parameter name=\"osl_surface\" value=\"${layer}.group\" />
+        <parameter name=\"surface_shader\" value=\"surface_shader\" />
+      </material>
+")
+    string(APPEND REFERENCE_INSTANCES "
+      <object_instance name=\"${layer}\" object=\"geometry.cube\">
+        <parameter name=\"medium_priority\" value=\"${priority}\" />
+        <transform><matrix>${scale} 0 0 0 0 ${scale} 0 0 0 0 ${scale} 0 0 0 0 1</matrix></transform>
+        <assign_material slot=\"default\" side=\"front\" material=\"${layer}.material\" />
+        <assign_material slot=\"default\" side=\"back\" material=\"${layer}.material\" />
+      </object_instance>
+")
+  endforeach()
+  # Relative shader/mesh paths keep the project usable after relocation.
+  configure_file("@CMAKE_CURRENT_SOURCE_DIR@/art_standard_nested.appleseed.in" "${path}" @ONLY)
+endfunction()
+
+function(compare_paths actual reference)
+  run("${TOOL}" --fail ${PIXEL_RELATIVE_BOUND} --hardfail ${PIXEL_RELATIVE_BOUND}
+    --warn ${PIXEL_RELATIVE_BOUND} --hardwarn ${PIXEL_RELATIVE_BOUND}
+    "${actual}" --ch R,G,B "${reference}" --ch R,G,B --absdiff
+    "${reference}" --ch R,G,B --abs --addc ${REFERENCE_FLOOR} --div
+    --pattern constant:color=0,0,0 ${SIZE}x${SIZE} 3 --diff)
+  compare_radiance_mean("${actual}" "${reference}" ${MEAN_RELATIVE_BOUND} FALSE)
+endfunction()
+
+function(render_native path image)
+  run("${NATIVE_RENDERER}" --output "${image}" "${path}")
+  run("${VEXEC}" check-image "${image}" ${SIZE} ${SIZE})
+  expect_failure("${TOOL}" --fail ${REFERENCE_FLOOR} --hardfail ${REFERENCE_FLOOR}
+    "${image}" --ch R,G,B "${WORK}/black.exr" --diff)
+endfunction()
+
+run("${TOOL}" --pattern constant:color=0,0,0 ${SIZE}x${SIZE} 3 -o "${WORK}/black.exr")
+foreach(distribution IN ITEMS ggx beckmann)
+  foreach(alpha IN ITEMS 0.12 0.4)
+    foreach(mode IN ITEMS 1 2)
+      foreach(layer IN LISTS layers)
+        set_nested_parameter("${DB}" "${layer}" in_alpha "float ${alpha}")
+        set_nested_parameter("${DB}" "${layer}" in_mode "int ${mode}")
+        set_nested_parameter("${DB}" "${layer}" in_distribution "string ${distribution}")
+      endforeach()
+      foreach(z IN ITEMS 40 4)
+        set(stem "${WORK}/${distribution}-${alpha}-${mode}-${z}")
+        set(reference "${stem}-native.exr")
+        native_project("${stem}.appleseed" art_standard_transmission "${distribution}" "${alpha}" "${mode}" "${z}")
+        render_native("${stem}.appleseed" "${reference}")
+        foreach(kind IN ITEMS box mesh)
+          set(actual "${stem}-${kind}.exr")
+          # Exclude the analytic receiver from these uniform-environment paths.
+          set(objects)
+          foreach(layer IN LISTS layers)
+            list(APPEND objects "${kind}.${layer}.r")
+          endforeach()
+          run("${EXEC}" ${RENDER_ARGS} -c "eye_pt 0 0 ${z}" -o "${actual}" "${DB}" ${objects})
+          run("${VEXEC}" check-image "${actual}" ${SIZE} ${SIZE})
+          compare_paths("${actual}" "${reference}")
+        endforeach()
+        if(distribution STREQUAL "ggx" AND mode EQUAL 2)
+          set(reference "${stem}-canonical.exr")
+          native_project("${stem}-canonical.appleseed" art_canonical_glass "${distribution}" "${alpha}" "${mode}" "${z}")
+          render_native("${stem}-canonical.appleseed" "${reference}")
+          foreach(kind IN ITEMS box mesh)
+            compare_paths("${stem}-${kind}.exr" "${reference}")
+          endforeach()
+        endif()
+      endforeach()
+    endforeach()
+  endforeach()
+endforeach()

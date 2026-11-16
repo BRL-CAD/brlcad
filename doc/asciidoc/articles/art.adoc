@@ -114,8 +114,11 @@ rough diffuse.  The standard closure also implements transmission-only
 mode 1 and Fresnel-combined mode 2.  `regress-art-standard-transmission`
 compares 120 smooth, nested mode-1 paths with independent analytic references,
 including CSG, solid BOTs, mixed canonical/standard materials, both projections,
-and cameras initially within each layer.  General rough nested paths, curved
-geometry, varying frames, and filtered secondary maps need further qualification.
+and cameras initially within each layer.  `regress-art-standard-rough-paths`
+compares 32 rough nested CSG/BOT paths with native meshes and eight GGX paths
+with canonical glass.  These use common authored tangents, clear box volumes,
+and uniform lighting.  General curved rough paths, varying frames, and
+filtered secondary maps need further qualification.
 
 |Bump and normal-map nodes
 |Native normal-map chains preserve upstream normals when disabled.
@@ -2403,6 +2406,17 @@ and invalid-index cases must fail without replacing the existing output.
 Normal-incidence mirror checks additionally cover finite indices whose
 reciprocals have overflowing squares; these must render finite radiance.
 
+`regress-art-standard-rough-paths` compares complete rough transport through
+three clear concentric boxes.  Both standard modes and distributions use
+widths 0.12 and 0.4, with outside and interior cameras on CSG and solid BOTs.
+A common diagonal tangent is nonparallel to every box face and controls
+sampling variance across geometry adapters.  GGX combined mode also uses
+the canonical glass closure as an independent BSDF comparison.  Native
+projects use relative shaders and meshes with the same camera filter as
+art.  Radiance-mean differences are bounded at 0.2 percent; normalized
+per-pixel differences use the existing 10 percent budget and 0.0005
+reference floor.  These cases do not qualify general curved or textured
+paths, arbitrary inherited frames, absorption, or all light types.
 
 A Standard Surface coating normal set as a material parameter has the same
 meaning as a normal supplied by a node connection.  Zero inherits the

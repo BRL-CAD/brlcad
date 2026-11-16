@@ -49,6 +49,7 @@ set(ART_TEST_SHADER_NAMES
   art_area_exit_reference
   art_reflection_energy
   art_standard_transmission
+  art_canonical_glass
   art_mirror_mixture
   art_mirror_node
   art_surface_reference
@@ -81,6 +82,8 @@ set(ART_CURVED_FOOTPRINT_REGRESSION_TIMEOUT 1800)
 set(ART_STANDARD_MICROFACET_REGRESSION_TIMEOUT 1200)
 # Smooth nested standard closures compare 120 complete paths.
 set(ART_STANDARD_TRANSMISSION_REGRESSION_TIMEOUT 600)
+# Thirty-two rough nested paths and eight canonical-glass comparisons.
+set(ART_STANDARD_ROUGH_PATHS_REGRESSION_TIMEOUT 1200)
 # Two area emitters each qualify constant and angular photon emission.
 set(ART_DIRECTIONAL_EMISSION_REGRESSION_TIMEOUT 1200)
 # Each dielectric exit case checks clear and absorbing 16-million-photon batches.
@@ -98,6 +101,8 @@ function(art_regression_timeout name result)
     set(${result} ${ART_CURVED_FOOTPRINT_REGRESSION_TIMEOUT} PARENT_SCOPE)
   elseif(name STREQUAL "regress-art-standard-microfacet")
     set(${result} ${ART_STANDARD_MICROFACET_REGRESSION_TIMEOUT} PARENT_SCOPE)
+  elseif(name STREQUAL "regress-art-standard-rough-paths")
+    set(${result} ${ART_STANDARD_ROUGH_PATHS_REGRESSION_TIMEOUT} PARENT_SCOPE)
   elseif(name STREQUAL "regress-art-standard-transmission")
     set(${result} ${ART_STANDARD_TRANSMISSION_REGRESSION_TIMEOUT} PARENT_SCOPE)
   elseif(name STREQUAL "regress-art-rough-footprints")
@@ -180,6 +185,7 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-rough-footprints
   regress-art-standard-microfacet
   regress-art-standard-transmission
+  regress-art-standard-rough-paths
   regress-art-standard-materials
   regress-art-frame-derivatives
   regress-art-curved-footprints
@@ -226,6 +232,7 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-area-exit-bot-15.cmake.in
   regress-art-area-exit-bot-20.cmake.in
   art_rough_box.appleseed.in art_rough_box.obj art_lit_glass.appleseed.in
+  art_standard_nested.appleseed.in regress-art-standard-rough-paths.cmake.in
   regress-art-color-metadata.cmake.in
   art_initial_volume.appleseed.in regress-art-volume.cmake.in
   regress-art-volume-materials.cmake.in regress-art-volume-scattering.cmake.in
@@ -337,6 +344,7 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/rough-footprints-output"
     "${CMAKE_CURRENT_BINARY_DIR}/standard-microfacet-output"
     "${CMAKE_CURRENT_BINARY_DIR}/standard-transmission-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/standard-rough-paths-output"
     "${CMAKE_CURRENT_BINARY_DIR}/standard-materials-output"
     "${CMAKE_CURRENT_BINARY_DIR}/bundled-specular-output"
     "${CMAKE_CURRENT_BINARY_DIR}/specular-footprints-output"
