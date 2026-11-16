@@ -1,0 +1,46 @@
+cmake_minimum_required(VERSION 3.22)
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/installed-material-output/authoring project")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+set(DB "${WORK}/scene.g")
+set(REFERENCE_DB "${WORK}/reference.g")
+run("${VEXEC}" create "${DB}")
+file(WRITE "${WORK}/material.tcl" [=[
+material create paint.material Paint
+material set paint.material optical OSL as_plastic
+material set paint.material optical OSL.output out_outColor
+material set paint.material optical OSL.version 1
+material set paint.material optical OSL.param.in_color {color 0.2 0.4 0.6}
+material set paint.material optical OSL.param.in_specular_weight {float 0}
+material assign cube.r paint.material
+]=])
+run_in("${WORK}" "@ART_MGED_EXECUTABLE@" -c "${DB}" "source material.tcl")
+
+# Inspect in a new process so a successful authoring command must persist.
+run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}"
+  -c "set inspect_materials=1" "${DB}" cube.r)
+foreach(expected IN ITEMS
+    "assignment \"paint.material\" from \"/cube.r\""
+    "input \"in_color\" \"color 0.2 0.4 0.6\""
+    "input \"in_specular_weight\" \"float 0\"")
+  string(FIND "${command_output}" "${expected}" offset)
+  if(offset LESS 0)
+    message(FATAL_ERROR "Installed mged did not persist '${expected}'\n${command_output}")
+  endif()
+endforeach()
+
+run("${VEXEC}" create-material "${REFERENCE_DB}" as_plastic)
+run("${VEXEC}" set-material "${REFERENCE_DB}" OSL.param.in_color "color 0.2 0.4 0.6")
+run("${VEXEC}" set-material "${REFERENCE_DB}" OSL.param.in_specular_weight "float 0")
+set(RENDER_ARGS -a 25 -e 35 -P 2 -w 64 -n 64 -c "set samples=16")
+foreach(variant IN ITEMS actual reference)
+  if(variant STREQUAL "actual")
+    set(database "${DB}")
+  else()
+    set(database "${REFERENCE_DB}")
+  endif()
+  run("${EXEC}" ${RENDER_ARGS} -o "${WORK}/${variant}.png" "${database}" cube.r)
+endforeach()
+run("${VEXEC}" check-matching-image "${WORK}/actual.png" "${WORK}/reference.png" 64 64)

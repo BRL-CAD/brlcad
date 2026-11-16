@@ -1,0 +1,25 @@
+/*              A R T _ I N S T A N C E _ M A T E R I A L S . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+surface art_instance_materials(color in_left = color(0, 1, 0),
+    color in_right = color(0, 0, 1))
+{
+    // The two fixture spheres lie wholly on opposite sides of world X=0.
+    Ci = (P[0] < 0 ? in_left : in_right) * emission();
+}
