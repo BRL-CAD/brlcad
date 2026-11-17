@@ -34,13 +34,14 @@
 #include "bio.h"
 
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "util_arg.h"
+#include "bu/arg.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 #include "bu/log.h"
+
+#include "tile_args.h"
 
 
 int file_width = 64;	/* width of input sub-images in pixels (64) */
@@ -50,65 +51,20 @@ int scr_height = 512;	/* number of output lines (512, 1024) */
 char *base_name;		/* basename of input file(s) */
 int framenumber = 0;	/* starting frame number (default is 0) */
 
-char usage[] = "\
-Usage: pixtile [-s squareinsize] [-w file_width] [-n file_height]\n\
-	[-S squareoutsize] [-W out_width] [-N out_height]\n\
-	[-o startframe] basename [file2 ... fileN] >file.pix\n";
+static const struct bu_arg_operand pixtile_operands[] = {
+    BU_ARG_OPERAND("basename-or-file", BU_ARG_VALUE_FILE, 1,
+	BU_ARG_COUNT_UNLIMITED, "Input basename or explicit PIX files", NULL),
+    BU_ARG_OPERAND_NULL
+};
 
-int
-get_args(int argc, char **argv)
-{
-    int c;
+static const struct bu_arg_schema pixtile_schema = BU_ARG_SCHEMA(
+    "pixtile", "Paste small PIX images into one large image",
+    tile_options, pixtile_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
 
-    while ((c = bu_getopt(argc, argv, "s:w:n:S:W:N:o:h?")) != -1) {
-	switch (c) {
-	    case 's':
-		/* square input file size */
-		if (!util_arg_int_range(bu_optarg, &file_width, 1, INT_MAX, "input size"))
-		    return 0;
-		file_height = file_width;
-		break;
-	    case 'w':
-		if (!util_arg_int_range(bu_optarg, &file_width, 1, INT_MAX, "input width"))
-		    return 0;
-		break;
-	    case 'n':
-		if (!util_arg_int_range(bu_optarg, &file_height, 1, INT_MAX, "input height"))
-		    return 0;
-		break;
-	    case 'S':
-		if (!util_arg_int_range(bu_optarg, &scr_width, 1, INT_MAX, "output size"))
-		    return 0;
-		scr_height = scr_width;
-		break;
-	    case 'W':
-		if (!util_arg_int_range(bu_optarg, &scr_width, 1, INT_MAX, "output width"))
-		    return 0;
-		break;
-	    case 'N':
-		if (!util_arg_int_range(bu_optarg, &scr_height, 1, INT_MAX, "output height"))
-		    return 0;
-		break;
-	    case 'o':
-		if (!util_arg_int_range(bu_optarg, &framenumber, 0, INT_MAX, "start frame"))
-		    return 0;
-		break;
-	    default:		/* '?''h' */
-		return 0;	/* Bad, other than option '?' or 'h' */
-	}
-    }
-
-    if (isatty(fileno(stdout))) {
-	return 0;	/* Bad */
-    }
-
-    if (bu_optind >= argc) {
-	fprintf(stderr, "pixtile: basename or filename(s) missing\n");
-	return 0;	/* Bad */
-    }
-
-    return 1;		/* OK */
-}
+static const struct bu_arg_grammar pixtile_grammar = {
+    &pixtile_schema, NULL, NULL
+};
 
 
 int
@@ -127,19 +83,45 @@ main(int argc, char **argv)
     int is_stream = 0;	/* set if input is stream on stdin */
     char name[256] = {0};
     ssize_t ret;
+    struct tile_args args = {NULL, 0, 64, 64, 512, 512, 0, INT_MAX};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
+    args.self = &args;
     bu_setprogname(argv[0]);
+
+    int introspection = bu_arg_introspect(&msg, &pixtile_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&pixtile_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&pixtile_schema, "pixtile");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "pixtile help");
+	return 0;
+    }
+    if (isatty(fileno(stdout)))
+	bu_exit(1, "pixtile cannot send PIX output to a terminal\n");
+
+    file_width = (int)args.input_width;
+    file_height = (int)args.input_height;
+    scr_width = (int)args.output_width;
+    scr_height = (int)args.output_height;
+    framenumber = args.first_frame;
+    int next_operand = operand_index + 1;
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    if (!get_args(argc, argv)) {
-	(void)fputs(usage, stderr);
-	bu_exit(1, NULL);
-    }
-
-    if (bu_optind+1 == argc) {
-	base_name = argv[bu_optind];
+    if (next_operand + 1 == argc) {
+	base_name = argv[next_operand];
 	islist = 0;
 	if (base_name[0] == '-' && base_name[1] == '\0')
 	    is_stream = 1;
@@ -192,9 +174,9 @@ main(int argc, char **argv)
 	    } else {
 		if (islist) {
 		    /* See if we read all the files */
-		    if (bu_optind >= argc)
+		    if (next_operand >= argc)
 			goto done;
-		    bu_strlcpy(name, argv[bu_optind++], sizeof(name));
+		    bu_strlcpy(name, argv[next_operand++], sizeof(name));
 		} else {
 		    snprintf(name, sizeof(name), "%s.%d", base_name, framenumber);
 		}
