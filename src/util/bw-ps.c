@@ -25,15 +25,12 @@
 
 #include "common.h"
 
-#include <errno.h>
 #include <limits.h>
-#include <stdlib.h> /* for atof() */
 #include <math.h>
 #include <time.h> /* for ctime() */
 #include "bio.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "util_arg.h"
+#include "bu/arg.h"
 #include "bu/exit.h"
 
 
@@ -53,33 +50,152 @@ static size_t ypoints;
 static size_t pagewidth = 612;	/* page size in points - 8.5 inches */
 static size_t pageheight = 792;	/* 11 inches */
 
-static char Stdin[] = "stdin";
-static char *file_name;
+static const char *file_name;
 static FILE *infp;
 
-static char usage[] = "\
-Usage: bw-ps [-e] [-c] [-L]\n\
-	[-s input_squaresize] [-w input_width] [-n input_height]\n\
-	[-S inches_square] [-W inches_width] [-N inches_height] [file.bw]\n";
+struct bw_ps_args {
+    struct bw_ps_args *self;
+    int help;
+    int encapsulated;
+    int center;
+    int landscape;
+    size_t width;
+    size_t height;
+    double output_width;
+    double output_height;
+};
 
-static int
-parse_positive_double_arg(const char *arg, double *value, const char *label)
+static struct bw_ps_args *
+bw_ps_args_from_storage(void *storage)
 {
-    double _d;
-
-    if (!util_arg_double(arg, &_d, label))
-	return 0;
-    if (_d <= 0.0) {
-	bu_log("%s: %s must be positive '%s'\n", bu_getprogname(), label, arg);
-	return 0;
-    }
-
-    *value = _d;
-    return 1;
+    return storage ? *(struct bw_ps_args **)storage : NULL;
 }
 
+static int
+bw_ps_square(struct bu_vls *msg, const char *arg, void *storage, int output)
+{
+    struct bw_ps_args *args = bw_ps_args_from_storage(storage);
+
+    if (output) {
+	double value;
+	if (!bu_arg_double_from_str(msg, &value, arg))
+	    return -1;
+	if (value <= 0.0) {
+	    if (msg)
+		bu_vls_printf(msg, "value must be positive: %s", arg);
+	    return -1;
+	}
+	if (args)
+	    args->output_width = args->output_height = value;
+    } else {
+	size_t value;
+	if (!bu_arg_size_t_range_from_str(msg, &value, arg, 10, 1, SIZE_MAX))
+	    return -1;
+	if (args)
+	    args->width = args->height = value;
+    }
+    return 0;
+}
+
+static int
+bw_ps_dimension(struct bu_vls *msg, const char *arg, void *storage, int output,
+	int height_only)
+{
+    struct bw_ps_args *args = bw_ps_args_from_storage(storage);
+
+    if (output) {
+	double value;
+	if (!bu_arg_double_from_str(msg, &value, arg))
+	    return -1;
+	if (value <= 0.0) {
+	    if (msg)
+		bu_vls_printf(msg, "value must be positive: %s", arg);
+	    return -1;
+	}
+	if (args) {
+	    if (height_only)
+		args->output_height = value;
+	    else
+		args->output_width = value;
+	}
+    } else {
+	size_t value;
+	if (!bu_arg_size_t_range_from_str(msg, &value, arg, 10, 1, SIZE_MAX))
+	    return -1;
+	if (args) {
+	    if (height_only)
+		args->height = value;
+	    else
+		args->width = value;
+	}
+    }
+    return 0;
+}
+
+#define BW_PS_DIMENSION_CALLBACK(_name, _output, _height) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return bw_ps_dimension(msg, arg, storage, _output, _height); \
+    }
+
+BW_PS_DIMENSION_CALLBACK(bw_ps_input_width, 0, 0)
+BW_PS_DIMENSION_CALLBACK(bw_ps_input_height, 0, 1)
+BW_PS_DIMENSION_CALLBACK(bw_ps_output_width, 1, 0)
+BW_PS_DIMENSION_CALLBACK(bw_ps_output_height, 1, 1)
+
+static int
+bw_ps_input_square(struct bu_vls *msg, const char *arg, void *storage)
+{
+    return bw_ps_square(msg, arg, storage, 0);
+}
+
+static int
+bw_ps_output_square(struct bu_vls *msg, const char *arg, void *storage)
+{
+    return bw_ps_square(msg, arg, storage, 1);
+}
+
+static const struct bu_arg_option bw_ps_options[] = {
+    BU_ARG_FLAG("h", "help", struct bw_ps_args, help, "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("e", "encapsulated", struct bw_ps_args, encapsulated,
+	"Produce Encapsulated PostScript"),
+    BU_ARG_FLAG("c", "center", struct bw_ps_args, center,
+	"Center the image on the page"),
+    BU_ARG_FLAG("L", "landscape", struct bw_ps_args, landscape,
+	"Use landscape page orientation"),
+    BU_ARG_CUSTOM("s", "input-size", struct bw_ps_args, self,
+	bw_ps_input_square, "pixels", "Set both input dimensions"),
+    BU_ARG_CUSTOM("w", "input-width", struct bw_ps_args, self,
+	bw_ps_input_width, "pixels", "Set the input width"),
+    BU_ARG_CUSTOM("n", "input-height", struct bw_ps_args, self,
+	bw_ps_input_height, "scanlines", "Set the input height"),
+    BU_ARG_CUSTOM("S", "output-size", struct bw_ps_args, self,
+	bw_ps_output_square, "inches", "Set both output dimensions"),
+    BU_ARG_CUSTOM("W", "output-width", struct bw_ps_args, self,
+	bw_ps_output_width, "inches", "Set the output width"),
+    BU_ARG_CUSTOM("N", "output-height", struct bw_ps_args, self,
+	bw_ps_output_height, "inches", "Set the output height"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand bw_ps_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"BW input file (default: standard input)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema bw_ps_schema = BU_ARG_SCHEMA(
+    "bw-ps", "Convert a BW image to PostScript", bw_ps_options,
+    bw_ps_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar bw_ps_grammar = {
+    &bw_ps_schema, NULL, NULL
+};
+
 void
-prolog(FILE *fp, char *name, int w, int h)
+prolog(FILE *fp, const char *name, int w, int h)
 
 
 /* in points */
@@ -132,103 +248,88 @@ postlog(FILE *fp)
 }
 
 
-int
-get_args(int argc, char **argv)
+static int
+get_args(int argc, char **argv, struct bw_ps_args *args)
 {
-    int c;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int operand_index = bu_arg_schema_parse_complete(&bw_ps_schema, args,
+	&msg, argc - 1, (const char **)(argv + 1));
 
-    while ((c = bu_getopt(argc, argv, "ecLs:w:n:S:W:N:h?")) != -1) {
-	switch (c) {
-	    case 'e':
-		/* Encapsulated PostScript */
-		encapsulated++;
-		break;
-	    case 'c':
-		center = 1;
-		break;
-	    case 'L':
-		landscape = 1;
-		break;
-	    case 's':
-		/* square file size */
-		if (!util_arg_size_t_range(bu_optarg, &width, 1, SIZE_MAX, "input size"))
-		    return 0;
-		height = width;
-		break;
-	    case 'w':
-		if (!util_arg_size_t_range(bu_optarg, &width, 1, SIZE_MAX, "input width"))
-		    return 0;
-		break;
-	    case 'n':
-		if (!util_arg_size_t_range(bu_optarg, &height, 1, SIZE_MAX, "input height"))
-		    return 0;
-		break;
-	    case 'S':
-		/* square file size */
-		if (!parse_positive_double_arg(bu_optarg, &outwidth, "output size"))
-		    return 0;
-		outheight = outwidth;
-		break;
-	    case 'W':
-		if (!parse_positive_double_arg(bu_optarg, &outwidth, "output width"))
-		    return 0;
-		break;
-	    case 'N':
-		if (!parse_positive_double_arg(bu_optarg, &outheight, "output height"))
-		    return 0;
-		break;
-
-	    default:		/* 'h' '?' */
-		return 0;
-	}
+    if (operand_index < 0) {
+	bu_log("%s\n", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 0;
     }
+    bu_vls_free(&msg);
+    if (args->help)
+	return 1;
 
-    if (bu_optind >= argc) {
+    encapsulated = args->encapsulated;
+    center = args->center;
+    landscape = args->landscape;
+    width = args->width;
+    height = args->height;
+    outwidth = args->output_width;
+    outheight = args->output_height;
+
+    if (argc - operand_index - 1 == 0) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = Stdin;
+	file_name = "stdin";
 	infp = stdin;
     } else {
-	file_name = argv[bu_optind];
-	bu_optind++;
-	if (argc > bu_optind) {
-	    fprintf(stderr, "bw-ps: excess argument(s) not supported\n");
-	    return 0;
-	}
+	file_name = argv[operand_index + 1];
 	if ((infp = fopen(file_name, "rb")) == NULL) {
 	    fprintf(stderr,
 		    "bw-ps: cannot open \"%s\" for reading\n",
 		    file_name);
 	    return 0;
 	}
-	/*fileinput++;*/
     }
 
-    if (argc > bu_optind) {
-	fprintf(stderr, "bw-ps: excess argument(s) not supported\n");
-	return 0;
-    }
-
-    return 1;		/* OK */
+    return 1;
 }
 
 
 int
 main(int argc, char **argv)
 {
+    struct bw_ps_args args = {NULL, 0, 0, 0, 0, 512, 512,
+	DEFAULT_SIZE, DEFAULT_SIZE};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     size_t num = 0;
     size_t scans_per_patch, bytes_per_patch;
     size_t y;
     FILE *ofp = NULL;
+    int introspection;
+
+    args.self = &args;
 
     bu_setprogname(argv[0]);
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    if (!get_args(argc, argv)) {
-	(void)fputs(usage, stderr);
-	bu_exit (1, NULL);
+    introspection = bu_arg_introspect(&msg, &bw_ps_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    bu_vls_free(&msg);
+
+    if (!get_args(argc, argv, &args)) {
+	char *help = bu_arg_schema_help(&bw_ps_schema, "bw-ps");
+	bu_flog(stderr, "%s", help ? help : "");
+	bu_free(help, "bw-ps help");
+	return 1;
+    }
+    if (args.help) {
+	char *help = bu_arg_schema_help(&bw_ps_schema, "bw-ps");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "bw-ps help");
+	return 0;
     }
 
     ofp = stdout;

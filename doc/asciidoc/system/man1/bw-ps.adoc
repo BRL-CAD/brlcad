@@ -8,11 +8,10 @@ bw-ps - convert a black and white bw file to PostScript
 
 == SYNOPSIS
 
-[source]
-----
-bw-ps [-e] [-c] [-L] [-s _input_squaresize_] [-w _input_width_] [-n _input_height_] [-S _inches_square_] [-W _inches_width_] [-N _inches_height_] [_file.bw_] > _file.ps_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bw-ps* [_OPTION_]... [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -26,34 +25,37 @@ positioned at the lower-left of an 8.5x11 inch page.
 [[options]]
 == OPTIONS
 
-*-e*::
+*-e*, *--encapsulated*::
   Emit Encapsulated PostScript (EPSF) sized in pixels to the input
   dimensions, suitable for embedding in another document. The *-c* and
   *-L* page-layout options have no effect in this mode.
 
-*-c*::
+*-c*, *--center*::
   Center the output image on the 8.5x11 inch page.
 
-*-L*::
+*-L*, *--landscape*::
   Select landscape mode, rotating the output ninety degrees.
 
-*-s* _input_squaresize_::
+*-s* _input_squaresize_, *--input-size* _input_squaresize_::
   Set both the input width and height, in pixels (default 512).
 
-*-w* _input_width_::
+*-w* _input_width_, *--input-width* _input_width_::
   Set the input width, in pixels (default 512).
 
-*-n* _input_height_::
+*-n* _input_height_, *--input-height* _input_height_::
   Set the input height (number of scan lines), in pixels (default 512).
 
-*-S* _inches_square_::
+*-S* _inches_square_, *--output-size* _inches_square_::
   Set both the output width and height, in inches (default 6.75).
 
-*-W* _inches_width_::
+*-W* _inches_width_, *--output-width* _inches_width_::
   Set the output width, in inches (default 6.75).
 
-*-N* _inches_height_::
+*-N* _inches_height_, *--output-height* _inches_height_::
   Set the output height, in inches (default 6.75).
+
+*-h*, *-?*, *--help*::
+  Print help and exit.
 
 [[examples]]
 == EXAMPLES
