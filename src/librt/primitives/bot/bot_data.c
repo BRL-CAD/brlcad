@@ -18,7 +18,8 @@
 #include "rt/object_io.h"
 #include "rt/primitives/bot.h"
 
-#define BOT_DATA_VERSION 1u
+#define BOT_DATA_VERSION 2u
+#define BOT_DATA_VERSION_LEGACY 1u
 
 static int
 bot_data_set(struct rt_data_node *object, const char *name,
@@ -166,6 +167,59 @@ fail:
     return NULL;
 }
 
+static struct rt_data_node *
+bot_data_morphs(const struct rt_bot_internal *bot)
+{
+    const struct rt_bot_morphs *morphs = bot->morphs;
+    struct rt_data_node *object = NULL;
+    struct rt_data_node *targets = NULL;
+    size_t value_count = bot->num_vertices * ELEMENTS_PER_VECT;
+    size_t target;
+
+    if (!morphs)
+	return rt_data_null();
+    if (rt_bot_morph_validate(bot, NULL) != BRLCAD_OK)
+	return NULL;
+    object = rt_data_object();
+    targets = rt_data_array();
+    if (!object || !targets)
+	goto fail;
+    for (target = 0; target < morphs->target_count; target++) {
+	const struct rt_bot_morph_target *entry = &morphs->targets[target];
+	struct rt_data_node *description = rt_data_object();
+	if (!description ||
+	    bot_data_set(description, "name",
+		rt_data_string(bu_vls_cstr(&entry->name))) != BRLCAD_OK ||
+	    bot_data_set(description, "positions", entry->position_deltas ?
+		bot_data_doubles(entry->position_deltas, value_count) :
+		rt_data_null()) != BRLCAD_OK ||
+	    bot_data_set(description, "normals", entry->normal_deltas ?
+		bot_data_doubles(entry->normal_deltas, value_count) :
+		rt_data_null()) != BRLCAD_OK ||
+	    bot_data_set(description, "tangents", entry->tangent_deltas ?
+		bot_data_doubles(entry->tangent_deltas, value_count) :
+		rt_data_null()) != BRLCAD_OK ||
+	    rt_data_array_append(targets, description) != BRLCAD_OK) {
+	    rt_data_free(description);
+	    goto fail;
+	}
+    }
+    if (bot_data_set(object, "targets", targets) != BRLCAD_OK)
+	goto fail_owned;
+    targets = NULL;
+    if (bot_data_set(object, "weights",
+	    bot_data_doubles(morphs->weights, morphs->target_count)) != BRLCAD_OK)
+	goto fail;
+    return object;
+
+fail_owned:
+    targets = NULL;
+fail:
+    rt_data_free(targets);
+    rt_data_free(object);
+    return NULL;
+}
+
 int
 rt_bot_data_export(struct rt_data_node **result,
 	const struct rt_db_internal *intern,
@@ -215,7 +269,8 @@ rt_bot_data_export(struct rt_data_node **result,
 	bot_data_set(data, "face_uvs", bot->face_uvs ?
 	    bot_data_ints(bot->face_uvs,
 		bot->num_face_uvs * ELEMENTS_PER_VECT) : rt_data_null()) != BRLCAD_OK ||
-	bot_data_set(data, "skin", bot_data_skin(bot)) != BRLCAD_OK) {
+	bot_data_set(data, "skin", bot_data_skin(bot)) != BRLCAD_OK ||
+	bot_data_set(data, "morphs", bot_data_morphs(bot)) != BRLCAD_OK) {
 	rt_data_free(data);
 	return BRLCAD_ERROR;
     }
@@ -410,6 +465,84 @@ bot_data_read_skin(struct rt_bot_internal *bot, const struct rt_data_node *node)
     return BRLCAD_OK;
 }
 
+static int
+bot_data_read_morph_deltas(fastf_t **result, size_t value_count,
+	const struct rt_data_node *node)
+{
+    if (!result || !node)
+	return BRLCAD_ERROR;
+    *result = NULL;
+    if (rt_data_node_type(node) == RT_DATA_NULL)
+	return BRLCAD_OK;
+    if (rt_data_node_type(node) != RT_DATA_ARRAY ||
+	rt_data_array_size(node) != value_count)
+	return BRLCAD_ERROR;
+    *result = (fastf_t *)bu_malloc(value_count * sizeof(fastf_t),
+	"BOT neutral morph deltas");
+    if (bot_data_read_doubles(*result, value_count, node) != BRLCAD_OK) {
+	bu_free(*result, "BOT neutral morph deltas");
+	*result = NULL;
+	return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
+
+static int
+bot_data_read_morphs(struct rt_bot_internal *bot,
+	const struct rt_data_node *node)
+{
+    struct rt_bot_morphs *morphs;
+    const struct rt_data_node *targets;
+    const struct rt_data_node *weights;
+    size_t value_count;
+    size_t target;
+
+    if (!node || rt_data_node_type(node) == RT_DATA_NULL)
+	return (bot->bot_flags & RT_BOT_HAS_MORPHS) ? BRLCAD_ERROR : BRLCAD_OK;
+    if (rt_data_node_type(node) != RT_DATA_OBJECT || !bot->num_vertices ||
+	bot->num_vertices > SIZE_MAX / ELEMENTS_PER_VECT)
+	return BRLCAD_ERROR;
+    targets = rt_data_object_get(node, "targets");
+    weights = rt_data_object_get(node, "weights");
+    if (!targets || rt_data_node_type(targets) != RT_DATA_ARRAY ||
+	!rt_data_array_size(targets) || rt_data_array_size(targets) > UINT32_MAX ||
+	!weights || rt_data_node_type(weights) != RT_DATA_ARRAY ||
+	rt_data_array_size(weights) != rt_data_array_size(targets))
+	return BRLCAD_ERROR;
+    value_count = bot->num_vertices * ELEMENTS_PER_VECT;
+    BU_ALLOC(morphs, struct rt_bot_morphs);
+    bot->morphs = morphs;
+    morphs->target_count = rt_data_array_size(targets);
+    morphs->targets = (struct rt_bot_morph_target *)bu_calloc(
+	morphs->target_count, sizeof(struct rt_bot_morph_target),
+	"BOT neutral morph targets");
+    morphs->weights = (fastf_t *)bu_malloc(morphs->target_count *
+	sizeof(fastf_t), "BOT neutral morph weights");
+    for (target = 0; target < morphs->target_count; target++)
+	bu_vls_init(&morphs->targets[target].name);
+    if (bot_data_read_doubles(morphs->weights, morphs->target_count,
+	    weights) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    for (target = 0; target < morphs->target_count; target++) {
+	struct rt_bot_morph_target *entry = &morphs->targets[target];
+	const struct rt_data_node *description = rt_data_array_get(targets, target);
+	const char *name;
+	if (!description || rt_data_node_type(description) != RT_DATA_OBJECT)
+	    return BRLCAD_ERROR;
+	name = rt_data_get_string(rt_data_object_get(description, "name"));
+	if (!name ||
+	    bot_data_read_morph_deltas(&entry->position_deltas, value_count,
+		rt_data_object_get(description, "positions")) != BRLCAD_OK ||
+	    bot_data_read_morph_deltas(&entry->normal_deltas, value_count,
+		rt_data_object_get(description, "normals")) != BRLCAD_OK ||
+	    bot_data_read_morph_deltas(&entry->tangent_deltas, value_count,
+		rt_data_object_get(description, "tangents")) != BRLCAD_OK)
+	    return BRLCAD_ERROR;
+	bu_vls_strcpy(&entry->name, name);
+    }
+    return rt_bot_morph_validate(bot, NULL);
+}
+
 int
 rt_bot_data_import(struct rt_db_internal *intern,
 	const struct rt_data_node *data,
@@ -430,7 +563,7 @@ rt_bot_data_import(struct rt_db_internal *intern,
 
     if (!intern || !data || rt_data_node_type(data) != RT_DATA_OBJECT ||
 	rt_data_get_uint(rt_data_object_get(data, "version"), &version) != BRLCAD_OK ||
-	version != BOT_DATA_VERSION ||
+	(version != BOT_DATA_VERSION && version != BOT_DATA_VERSION_LEGACY) ||
 	rt_data_get_uint(rt_data_object_get(data, "mode"), &mode) != BRLCAD_OK ||
 	mode < RT_BOT_SURFACE || mode > RT_BOT_PLATE_NOCOS ||
 	rt_data_get_uint(rt_data_object_get(data, "orientation"),
@@ -509,7 +642,8 @@ rt_bot_data_import(struct rt_db_internal *intern,
 	bot_data_optional_ints(&candidate->face_uvs,
 	    &candidate->num_face_uvs,
 	    rt_data_object_get(data, "face_uvs")) != BRLCAD_OK ||
-	bot_data_read_skin(candidate, rt_data_object_get(data, "skin")) != BRLCAD_OK)
+	bot_data_read_skin(candidate, rt_data_object_get(data, "skin")) != BRLCAD_OK ||
+	bot_data_read_morphs(candidate, rt_data_object_get(data, "morphs")) != BRLCAD_OK)
 	goto fail;
     if (((candidate->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) != 0) !=
 	(candidate->normals && candidate->face_normals) ||

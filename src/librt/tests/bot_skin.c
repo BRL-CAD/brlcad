@@ -35,15 +35,35 @@ make_bot(struct rt_db_internal *intern)
     static const uint32_t offsets[] = {0, 1, 3, 4, 5};
     static const uint32_t indices[] = {0, 0, 1, 1, 0};
     static const fastf_t weights[] = {1.0, 0.25, 0.75, 1.0, 1.0};
+    static const fastf_t position_deltas[] = {
+	0.1, 0.0, 0.0,
+	0.2, 0.0, 0.0,
+	0.3, 0.0, 0.0,
+	0.4, 0.0, 0.0
+    };
+    static const fastf_t normal_deltas[] = {
+	0.0, 0.0, 0.1,
+	0.0, 0.0, 0.2,
+	0.0, 0.0, 0.3,
+	0.0, 0.0, 0.4
+    };
+    static const fastf_t tangent_deltas[] = {
+	0.1, 0.0, 0.0,
+	0.2, 0.0, 0.0,
+	0.3, 0.0, 0.0,
+	0.4, 0.0, 0.0
+    };
+    static const fastf_t morph_weights[] = {0.25, 0.75};
     struct rt_bot_internal *bot;
     struct rt_bot_skin *skin;
+    struct rt_bot_morphs *morphs;
 
     RT_DB_INTERNAL_INIT(intern);
     BU_ALLOC(bot, struct rt_bot_internal);
     bot->magic = RT_BOT_INTERNAL_MAGIC;
     bot->mode = RT_BOT_SURFACE;
     bot->orientation = RT_BOT_CCW;
-    bot->bot_flags = RT_BOT_HAS_SKIN;
+    bot->bot_flags = RT_BOT_HAS_SKIN | RT_BOT_HAS_MORPHS;
     bot->num_vertices = 4;
     bot->vertices = (fastf_t *)bu_malloc(sizeof(vertices), "test BOT vertices");
     memcpy(bot->vertices, vertices, sizeof(vertices));
@@ -76,6 +96,31 @@ make_bot(struct rt_db_internal *intern)
     memcpy(skin->weights, weights, sizeof(weights));
     bot->skin = skin;
 
+    BU_ALLOC(morphs, struct rt_bot_morphs);
+    morphs->target_count = 2;
+    morphs->targets = (struct rt_bot_morph_target *)bu_calloc(2,
+	sizeof(struct rt_bot_morph_target), "test BOT morph targets");
+    morphs->weights = (fastf_t *)bu_malloc(sizeof(morph_weights),
+	"test BOT morph weights");
+    memcpy(morphs->weights, morph_weights, sizeof(morph_weights));
+    bu_vls_init(&morphs->targets[0].name);
+    bu_vls_init(&morphs->targets[1].name);
+    bu_vls_strcpy(&morphs->targets[0].name, "open");
+    bu_vls_strcpy(&morphs->targets[1].name, "bend");
+    morphs->targets[0].position_deltas = (fastf_t *)bu_malloc(
+	sizeof(position_deltas), "test BOT morph position deltas");
+    memcpy(morphs->targets[0].position_deltas, position_deltas,
+	sizeof(position_deltas));
+    morphs->targets[1].normal_deltas = (fastf_t *)bu_malloc(
+	sizeof(normal_deltas), "test BOT morph normal deltas");
+    memcpy(morphs->targets[1].normal_deltas, normal_deltas,
+	sizeof(normal_deltas));
+    morphs->targets[1].tangent_deltas = (fastf_t *)bu_malloc(
+	sizeof(tangent_deltas), "test BOT morph tangent deltas");
+    memcpy(morphs->targets[1].tangent_deltas, tangent_deltas,
+	sizeof(tangent_deltas));
+    bot->morphs = morphs;
+
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_BOT;
     intern->idb_meth = &OBJ[ID_BOT];
@@ -90,11 +135,18 @@ check_bot(const struct rt_db_internal *intern)
 	(const struct rt_bot_internal *)intern->idb_ptr;
 
     if (!bot || rt_bot_skin_validate(bot, NULL) != BRLCAD_OK ||
+	rt_bot_morph_validate(bot, NULL) != BRLCAD_OK ||
 	bot->skin->joint_count != 2 || bot->skin->influence_count != 5 ||
 	!BU_STR_EQUAL(bu_vls_cstr(&bot->skin->joint_links[1]), "child") ||
 	bot->skin->vertex_offsets[2] != 3 || bot->skin->joint_indices[2] != 1 ||
 	!close_enough(bot->skin->weights[1], 0.25) ||
-	!close_enough(bot->skin->inverse_bind_matrices[1][3], -1.0))
+	!close_enough(bot->skin->inverse_bind_matrices[1][3], -1.0) ||
+	bot->morphs->target_count != 2 ||
+	!BU_STR_EQUAL(bu_vls_cstr(&bot->morphs->targets[1].name), "bend") ||
+	!close_enough(bot->morphs->weights[0], 0.25) ||
+	!close_enough(bot->morphs->targets[0].position_deltas[6], 0.3) ||
+	!close_enough(bot->morphs->targets[1].normal_deltas[11], 0.4) ||
+	!close_enough(bot->morphs->targets[1].tangent_deltas[3], 0.2))
 	return BRLCAD_ERROR;
     return BRLCAD_OK;
 }
@@ -184,11 +236,13 @@ test_copy_and_transform(void)
     struct rt_db_internal source;
     struct rt_db_internal transformed;
     const struct rt_bot_skin *source_skin;
+    const struct rt_bot_morphs *source_morphs;
     mat_t matrix = MAT_INIT_IDN;
     int result = BRLCAD_ERROR;
 
     make_bot(&source);
     source_skin = ((struct rt_bot_internal *)source.idb_ptr)->skin;
+    source_morphs = ((struct rt_bot_internal *)source.idb_ptr)->morphs;
     RT_DB_INTERNAL_INIT(&transformed);
     MAT_DELTAS(matrix, 4.0, 5.0, 6.0);
     if (OBJ[ID_BOT].ft_xform(&transformed, matrix, &source, 1, NULL) != BRLCAD_OK)
@@ -203,7 +257,9 @@ test_copy_and_transform(void)
 	MAT_DELTAS(joint_matrices[0], 4.0, 5.0, 6.0);
 	MAT_DELTAS(joint_matrices[1], 5.0, 5.0, 6.0);
 	if (source.idb_ptr || bot->skin == source_skin ||
+	    bot->morphs == source_morphs ||
 	    !close_enough(bot->vertices[0], 4.0) ||
+	    !close_enough(bot->morphs->targets[0].position_deltas[0], 0.1) ||
 	    !close_enough(bot->skin->inverse_bind_matrices[0][3], -4.0) ||
 	    !close_enough(bot->skin->inverse_bind_matrices[1][3], -5.0) ||
 	    rt_bot_skin_pose(&posed, bot, joint_matrices, 2, NULL) != BRLCAD_OK ||
@@ -240,12 +296,17 @@ test_subset_and_condense(void)
     subset = rt_bot_subset((struct rt_bot_internal *)source.idb_ptr, &face, 1);
     if (!subset || subset->num_vertices != 3 ||
 	rt_bot_skin_validate(subset, NULL) != BRLCAD_OK ||
-	subset->skin->influence_count != 4)
+	rt_bot_morph_validate(subset, NULL) != BRLCAD_OK ||
+	subset->skin->influence_count != 4 ||
+	!close_enough(subset->morphs->targets[0].position_deltas[6], 0.3))
 	goto cleanup;
     if (rt_bot_condense((struct rt_bot_internal *)source.idb_ptr) != 1 ||
 	((struct rt_bot_internal *)source.idb_ptr)->num_vertices != 3 ||
 	rt_bot_skin_validate((struct rt_bot_internal *)source.idb_ptr, NULL) != BRLCAD_OK ||
-	((struct rt_bot_internal *)source.idb_ptr)->skin->influence_count != 4)
+	rt_bot_morph_validate((struct rt_bot_internal *)source.idb_ptr, NULL) != BRLCAD_OK ||
+	((struct rt_bot_internal *)source.idb_ptr)->skin->influence_count != 4 ||
+	!close_enough(((struct rt_bot_internal *)source.idb_ptr)->morphs->
+	    targets[0].position_deltas[6], 0.3))
 	goto cleanup;
     result = BRLCAD_OK;
 
@@ -288,7 +349,8 @@ test_skin_pose(void)
 	    (const struct rt_bot_internal *)source.idb_ptr,
 	    joint_matrices, 2, NULL) != BRLCAD_OK || !posed)
 	goto cleanup;
-    if (posed->skin || (posed->bot_flags & RT_BOT_HAS_SKIN) ||
+    if (posed->skin || posed->morphs ||
+	(posed->bot_flags & (RT_BOT_HAS_SKIN | RT_BOT_HAS_MORPHS)) ||
 	!close_enough(posed->vertices[0], 0.0) ||
 	!close_enough(posed->vertices[3], 2.5) ||
 	!close_enough(posed->vertices[6], 2.0) ||
@@ -323,9 +385,13 @@ test_duplicate_and_merge(void)
     duplicate = rt_bot_dup(inputs[0]);
     merged = rt_bot_merge(2, inputs);
     if (!duplicate || !merged || duplicate->skin == inputs[0]->skin ||
+	duplicate->morphs == inputs[0]->morphs ||
 	rt_bot_skin_validate(duplicate, NULL) != BRLCAD_OK ||
+	rt_bot_morph_validate(duplicate, NULL) != BRLCAD_OK ||
 	merged->num_vertices != 8 || merged->skin->influence_count != 10 ||
-	rt_bot_skin_validate(merged, NULL) != BRLCAD_OK)
+	rt_bot_skin_validate(merged, NULL) != BRLCAD_OK ||
+	rt_bot_morph_validate(merged, NULL) != BRLCAD_OK ||
+	!close_enough(merged->morphs->targets[0].position_deltas[12], 0.1))
 	goto cleanup;
     result = BRLCAD_OK;
 

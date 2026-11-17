@@ -200,6 +200,22 @@ RT_EXPORT extern int rt_bot_skin_pose(struct rt_bot_internal **result,
 				       size_t joint_count,
 				       struct bu_vls *message);
 
+/** Validate the optional morph targets owned by a BOT. */
+RT_EXPORT extern int rt_bot_morph_validate(const struct rt_bot_internal *bot,
+	struct bu_vls *message);
+
+/** Deep-copy morph targets for a BOT with the specified vertex count. */
+RT_EXPORT extern struct rt_bot_morphs *rt_bot_morph_copy(
+	const struct rt_bot_morphs *morphs, size_t vertex_count);
+
+/** Free owned morph target storage. */
+RT_EXPORT extern void rt_bot_morph_free(struct rt_bot_morphs *morphs);
+
+/** Apply a matrix to all geometric morph deltas. */
+RT_EXPORT extern int rt_bot_morph_mat(struct rt_bot_morphs *output,
+	const struct rt_bot_morphs *input, size_t vertex_count,
+	const mat_t matrix);
+
 RT_EXPORT extern int rt_bot_same_orientation(const int *a,
 					     const int *b);
 

@@ -27,6 +27,7 @@
 
 #include "raytrace.h"
 #include "rt/geom.h"
+#include "rt/primitives/bot.h"
 
 
 /**
@@ -88,6 +89,10 @@ rt_bot_mirror(struct rt_db_internal *ip, register const plane_t plane)
 	VMOVE(pt, &bot->vertices[i*3]);
 	MAT4X3PNT(&bot->vertices[i*3], mirmat, pt);
     }
+
+    if (bot->morphs && rt_bot_morph_mat(bot->morphs, bot->morphs,
+	    bot->num_vertices, mirmat) != BRLCAD_OK)
+	return BRLCAD_ERROR;
 
     if (bot->skin && rt_bot_skin_mat(bot->skin, bot->skin, mirmat) != BRLCAD_OK)
 	return BRLCAD_ERROR;

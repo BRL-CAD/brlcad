@@ -525,8 +525,8 @@ rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size) {
 	bu_log("rt_bot_decimate_gct: invalid input\n");
 	return 0;
     }
-    if (bot->skin) {
-	bu_log("rt_bot_decimate_gct: skin remapping is not available; BOT is unchanged\n");
+    if (bot->skin || bot->morphs) {
+	bu_log("rt_bot_decimate_gct: skin and morph remapping is not available; BOT is unchanged\n");
 	return 0;
     }
     for (size_t vertex = 0; vertex < bot->num_vertices; ++vertex) {

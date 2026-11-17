@@ -46,6 +46,10 @@
 #define HLBVH_STACK_SIZE 256
 #define RT_DEFAULT_MAX_PRIMS_IN_NODE 8
 #define RT_BOT_SKIN_FORMAT_VERSION 1
+#define RT_BOT_MORPH_FORMAT_VERSION 1
+#define RT_BOT_MORPH_POSITION 0x01u
+#define RT_BOT_MORPH_NORMAL 0x02u
+#define RT_BOT_MORPH_TANGENT 0x04u
 
 static uint32_t
 bot_get_uint32(const unsigned char *cp)
@@ -223,6 +227,179 @@ bot_skin_export(unsigned char **cursor, const struct rt_bot_internal *bot,
     }
     for (i = 0; i < skin->influence_count; i++) {
 	double weight = skin->weights[i];
+	bu_cv_htond(cp, (const unsigned char *)&weight, 1);
+	cp += SIZEOF_NETWORK_DOUBLE;
+    }
+    *cursor = cp;
+}
+
+static size_t
+bot_morph_external_size(const struct rt_bot_internal *bot)
+{
+    const struct rt_bot_morphs *morphs = bot->morphs;
+    size_t value_count = bot->num_vertices * ELEMENTS_PER_VECT;
+    size_t size = 2 * SIZEOF_NETWORK_LONG;
+    size_t target;
+
+    if (morphs->target_count > (SIZE_MAX - size) / SIZEOF_NETWORK_DOUBLE)
+	return 0;
+    size += morphs->target_count * SIZEOF_NETWORK_DOUBLE;
+    for (target = 0; target < morphs->target_count; target++) {
+	const struct rt_bot_morph_target *entry = &morphs->targets[target];
+	size_t name_length = bu_vls_strlen(&entry->name);
+	size_t arrays = (entry->position_deltas ? 1 : 0) +
+	    (entry->normal_deltas ? 1 : 0) +
+	    (entry->tangent_deltas ? 1 : 0);
+	size_t array_size;
+	if (value_count > SIZE_MAX / SIZEOF_NETWORK_DOUBLE)
+	    return 0;
+	array_size = value_count * SIZEOF_NETWORK_DOUBLE;
+	if (size > SIZE_MAX - 2 * SIZEOF_NETWORK_LONG ||
+	    name_length > SIZE_MAX - size - 2 * SIZEOF_NETWORK_LONG)
+	    return 0;
+	size += 2 * SIZEOF_NETWORK_LONG + name_length;
+	if (arrays && array_size > (SIZE_MAX - size) / arrays)
+	    return 0;
+	size += arrays * array_size;
+    }
+    return size;
+}
+
+static int
+bot_morph_import(struct rt_bot_internal *bot, unsigned char **cursor,
+	size_t available)
+{
+    struct rt_bot_morphs *morphs = NULL;
+    unsigned char *cp = *cursor;
+    size_t value_count;
+    size_t target;
+
+#define BOT_MORPH_REQUIRE(_bytes) do { \
+    size_t required = (_bytes); \
+    if (required > available) goto fail; \
+    available -= required; \
+} while (0)
+
+    BOT_MORPH_REQUIRE(2 * SIZEOF_NETWORK_LONG);
+    if (bot_get_uint32(cp) != RT_BOT_MORPH_FORMAT_VERSION)
+	goto fail;
+    cp += SIZEOF_NETWORK_LONG;
+    BU_ALLOC(morphs, struct rt_bot_morphs);
+    morphs->target_count = bot_get_uint32(cp);
+    cp += SIZEOF_NETWORK_LONG;
+    if (!morphs->target_count ||
+	morphs->target_count > SIZE_MAX / sizeof(struct rt_bot_morph_target) ||
+	morphs->target_count > SIZE_MAX / sizeof(fastf_t) ||
+	!bot->num_vertices || bot->num_vertices > SIZE_MAX / ELEMENTS_PER_VECT)
+	goto fail;
+    value_count = bot->num_vertices * ELEMENTS_PER_VECT;
+    morphs->targets = (struct rt_bot_morph_target *)bu_calloc(
+	morphs->target_count, sizeof(struct rt_bot_morph_target),
+	"BOT morph targets");
+    morphs->weights = (fastf_t *)bu_malloc(morphs->target_count *
+	sizeof(fastf_t), "BOT morph weights");
+    for (target = 0; target < morphs->target_count; target++) {
+	struct rt_bot_morph_target *entry = &morphs->targets[target];
+	uint32_t flags;
+	uint32_t name_length;
+	fastf_t **arrays[3];
+	size_t array;
+	bu_vls_init(&entry->name);
+	BOT_MORPH_REQUIRE(2 * SIZEOF_NETWORK_LONG);
+	flags = bot_get_uint32(cp); cp += SIZEOF_NETWORK_LONG;
+	name_length = bot_get_uint32(cp); cp += SIZEOF_NETWORK_LONG;
+	if (!flags || (flags & ~(RT_BOT_MORPH_POSITION |
+		RT_BOT_MORPH_NORMAL | RT_BOT_MORPH_TANGENT)))
+	    goto fail;
+	BOT_MORPH_REQUIRE(name_length);
+	bu_vls_strncpy(&entry->name, (const char *)cp, name_length);
+	cp += name_length;
+	arrays[0] = &entry->position_deltas;
+	arrays[1] = &entry->normal_deltas;
+	arrays[2] = &entry->tangent_deltas;
+	for (array = 0; array < 3; array++) {
+	    uint32_t array_flag = 1u << array;
+	    size_t value;
+	    if (!(flags & array_flag))
+		continue;
+	    if (value_count > available / SIZEOF_NETWORK_DOUBLE)
+		goto fail;
+	    BOT_MORPH_REQUIRE(value_count * SIZEOF_NETWORK_DOUBLE);
+	    *arrays[array] = (fastf_t *)bu_malloc(value_count *
+		sizeof(fastf_t), "BOT morph deltas");
+	    for (value = 0; value < value_count; value++) {
+		double number;
+		bu_cv_ntohd((unsigned char *)&number, cp, 1);
+		cp += SIZEOF_NETWORK_DOUBLE;
+		(*arrays[array])[value] = number;
+	    }
+	}
+    }
+    if (morphs->target_count > available / SIZEOF_NETWORK_DOUBLE)
+	goto fail;
+    BOT_MORPH_REQUIRE(morphs->target_count * SIZEOF_NETWORK_DOUBLE);
+    for (target = 0; target < morphs->target_count; target++) {
+	double weight;
+	bu_cv_ntohd((unsigned char *)&weight, cp, 1);
+	cp += SIZEOF_NETWORK_DOUBLE;
+	morphs->weights[target] = weight;
+    }
+    bot->morphs = morphs;
+    if (rt_bot_morph_validate(bot, NULL) != BRLCAD_OK)
+	goto fail;
+    *cursor = cp;
+#undef BOT_MORPH_REQUIRE
+    return BRLCAD_OK;
+
+fail:
+    if (bot->morphs == morphs)
+	bot->morphs = NULL;
+    rt_bot_morph_free(morphs);
+#undef BOT_MORPH_REQUIRE
+    return BRLCAD_ERROR;
+}
+
+static void
+bot_morph_export(unsigned char **cursor, const struct rt_bot_internal *bot,
+	double local2mm)
+{
+    const struct rt_bot_morphs *morphs = bot->morphs;
+    unsigned char *cp = *cursor;
+    size_t value_count = bot->num_vertices * ELEMENTS_PER_VECT;
+    size_t target;
+
+    bot_put_uint32(cp, RT_BOT_MORPH_FORMAT_VERSION);
+    cp += SIZEOF_NETWORK_LONG;
+    bot_put_uint32(cp, (uint32_t)morphs->target_count);
+    cp += SIZEOF_NETWORK_LONG;
+    for (target = 0; target < morphs->target_count; target++) {
+	const struct rt_bot_morph_target *entry = &morphs->targets[target];
+	const fastf_t *arrays[3] = {entry->position_deltas,
+	    entry->normal_deltas, entry->tangent_deltas};
+	uint32_t flags = (entry->position_deltas ? RT_BOT_MORPH_POSITION : 0) |
+	    (entry->normal_deltas ? RT_BOT_MORPH_NORMAL : 0) |
+	    (entry->tangent_deltas ? RT_BOT_MORPH_TANGENT : 0);
+	size_t name_length = bu_vls_strlen(&entry->name);
+	size_t array;
+	bot_put_uint32(cp, flags); cp += SIZEOF_NETWORK_LONG;
+	bot_put_uint32(cp, (uint32_t)name_length); cp += SIZEOF_NETWORK_LONG;
+	memcpy(cp, bu_vls_cstr(&entry->name), name_length);
+	cp += name_length;
+	for (array = 0; array < 3; array++) {
+	    size_t value;
+	    if (!arrays[array])
+		continue;
+	    for (value = 0; value < value_count; value++) {
+		double number = arrays[array][value];
+		if (array == 0)
+		    number *= local2mm;
+		bu_cv_htond(cp, (const unsigned char *)&number, 1);
+		cp += SIZEOF_NETWORK_DOUBLE;
+	    }
+	}
+    }
+    for (target = 0; target < morphs->target_count; target++) {
+	double weight = morphs->weights[target];
 	bu_cv_htond(cp, (const unsigned char *)&weight, 1);
 	cp += SIZEOF_NETWORK_DOUBLE;
     }
@@ -2488,8 +2665,9 @@ rt_bot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
 
-    if (bot_ip->skin || (bot_ip->bot_flags & RT_BOT_HAS_SKIN)) {
-	bu_log("BOT skin bindings are not supported in v4 databases\n");
+    if (bot_ip->skin || bot_ip->morphs ||
+	(bot_ip->bot_flags & (RT_BOT_HAS_SKIN | RT_BOT_HAS_MORPHS))) {
+	bu_log("BOT skin and morph data are not supported in v4 databases\n");
 	return BRLCAD_ERROR;
     }
 
@@ -2600,6 +2778,9 @@ rt_bot_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
 	    return BRLCAD_ERROR;
     }
     if (tip->skin && rt_bot_skin_mat(top->skin, tip->skin, mat) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    if (tip->morphs && rt_bot_morph_mat(top->morphs, tip->morphs,
+	    tip->num_vertices, mat) != BRLCAD_OK)
 	return BRLCAD_ERROR;
 
     if (tip->vertices) {
@@ -2795,6 +2976,15 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    return BRLCAD_ERROR;
 	}
     }
+    if (bip->bot_flags & RT_BOT_HAS_MORPHS) {
+	size_t available = ep->ext_nbytes - (size_t)(cp - (unsigned char *)ep->ext_buf);
+	if (bot_morph_import(bip, &cp, available) != BRLCAD_OK) {
+	    rt_bot_internal_free(bip);
+	    bu_free(bip, "invalid BOT");
+	    ip->idb_ptr = NULL;
+	    return BRLCAD_ERROR;
+	}
+    }
 
     /* Apply transform */
     if (mat == NULL) mat = bn_mat_identity;
@@ -2821,7 +3011,9 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if ((bip->skin != NULL) != ((bip->bot_flags & RT_BOT_HAS_SKIN) != 0) ||
 	(bip->skin && (bip->skin->joint_count > UINT32_MAX ||
 	    bip->skin->influence_count > UINT32_MAX ||
-	    rt_bot_skin_validate(bip, NULL) != BRLCAD_OK)))
+	    rt_bot_skin_validate(bip, NULL) != BRLCAD_OK)) ||
+	(bip->morphs != NULL) != ((bip->bot_flags & RT_BOT_HAS_MORPHS) != 0) ||
+	(bip->morphs && rt_bot_morph_validate(bip, NULL) != BRLCAD_OK))
 	return BRLCAD_ERROR;
 
     BU_CK_EXTERNAL(ep);
@@ -2853,6 +3045,12 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     if (bip->bot_flags & RT_BOT_HAS_SKIN)
 	ep->ext_nbytes += bot_skin_external_size(bip->skin, bip->num_vertices);
+    if (bip->bot_flags & RT_BOT_HAS_MORPHS) {
+	size_t morph_size = bot_morph_external_size(bip);
+	if (!morph_size || morph_size > SIZE_MAX - ep->ext_nbytes)
+	    return BRLCAD_ERROR;
+	ep->ext_nbytes += morph_size;
+    }
 
     ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "BOT external");
 
@@ -3003,6 +3201,8 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     if (bip->bot_flags & RT_BOT_HAS_SKIN)
 	bot_skin_export(&cp, bip, local2mm);
+    if (bip->bot_flags & RT_BOT_HAS_MORPHS)
+	bot_morph_export(&cp, bip, local2mm);
 
     return 0;
 }
@@ -3190,6 +3390,9 @@ rt_bot_internal_free(struct rt_bot_internal *bot_ip)
 
     rt_bot_skin_free(bot_ip->skin);
     bot_ip->skin = NULL;
+
+    rt_bot_morph_free(bot_ip->morphs);
+    bot_ip->morphs = NULL;
 }
 
 
@@ -3264,6 +3467,13 @@ rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_interna
     for (i = 0; i < botip->num_normals; i++) {
 	MAT4X3VEC(pt, mat, &botip->normals[i*3]);
 	VMOVE(&botop->normals[i*3], pt);
+    }
+
+    if (botip->morphs && rt_bot_morph_mat(botop->morphs, botip->morphs,
+	    botip->num_vertices, mat) != BRLCAD_OK) {
+	if (op != ip)
+	    rt_db_free_internal(op);
+	return -1;
     }
 
     if (release && op != ip) {
@@ -4068,6 +4278,13 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		    bu_vls_printf(logstr, "Must provide at least one vertex.");
 		    return BRLCAD_ERROR;
 		}
+		if ((bot->skin || bot->morphs) &&
+		    (size_t)len != bot->num_vertices) {
+		    bu_vls_printf(logstr,
+			"cannot resize vertices while skin or morph data is present");
+		    bu_free((char *)obj_array, "obj_array");
+		    return BRLCAD_ERROR;
+		}
 		bot->num_vertices = len;
 		if (bot->vertices)
 		    bu_free(bot->vertices, "BOT vertices");
@@ -4653,8 +4870,8 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot, const struct bn_tol *tol)
 
     RT_BOT_CK_MAGIC(bot);
 
-    if (bot->skin) {
-	bu_log("rt_bot_vertex_fuse: skin bindings cannot yet be fused; BOT is unchanged\n");
+    if (bot->skin || bot->morphs) {
+	bu_log("rt_bot_vertex_fuse: skin and morph data cannot yet be fused; BOT is unchanged\n");
 	return 0;
     }
 
@@ -5020,6 +5237,37 @@ rt_bot_condense(struct rt_bot_internal *bot)
 	    influence_count * sizeof(uint32_t), "BOT skin joint indices");
 	bot->skin->weights = (fastf_t *)bu_realloc(bot->skin->weights,
 	    influence_count * sizeof(fastf_t), "BOT skin weights");
+    }
+    if (bot->morphs) {
+	for (size_t target = 0; target < bot->morphs->target_count; target++) {
+	    struct rt_bot_morph_target *entry = &bot->morphs->targets[target];
+	    fastf_t *arrays[3] = {entry->position_deltas, entry->normal_deltas,
+		entry->tangent_deltas};
+	    for (size_t array = 0; array < 3; array++) {
+		if (!arrays[array])
+		    continue;
+		for (i = 0; i < num_verts; i++) {
+		    if (remap[i] >= 0)
+			VMOVE(&arrays[array][(size_t)remap[i] * ELEMENTS_PER_VECT],
+			    &arrays[array][i * ELEMENTS_PER_VECT]);
+		}
+	    }
+	    if (entry->position_deltas)
+		entry->position_deltas = (fastf_t *)bu_realloc(
+		    entry->position_deltas,
+		    (num_verts - dead_verts) * ELEMENTS_PER_VECT * sizeof(fastf_t),
+		    "BOT morph position deltas");
+	    if (entry->normal_deltas)
+		entry->normal_deltas = (fastf_t *)bu_realloc(
+		    entry->normal_deltas,
+		    (num_verts - dead_verts) * ELEMENTS_PER_VECT * sizeof(fastf_t),
+		    "BOT morph normal deltas");
+	    if (entry->tangent_deltas)
+		entry->tangent_deltas = (fastf_t *)bu_realloc(
+		    entry->tangent_deltas,
+		    (num_verts - dead_verts) * ELEMENTS_PER_VECT * sizeof(fastf_t),
+		    "BOT morph tangent deltas");
+	}
     }
 
     bu_free(remap, "rt_bot_condense: remap");
@@ -6352,6 +6600,7 @@ rt_bot_merge(size_t num_bots, const struct rt_bot_internal * const *bots)
     size_t normal_offset = 0;
     size_t uv_offset = 0;
     const struct rt_bot_skin *binding = NULL;
+    const struct rt_bot_morphs *morphs = NULL;
     size_t influence_count = 0;
 
     BU_ALLOC(result, struct rt_bot_internal);
@@ -6405,23 +6654,50 @@ rt_bot_merge(size_t num_bots, const struct rt_bot_internal * const *bots)
 	if (bots[i]->skin) {
 	    size_t joint;
 	    if (rt_bot_skin_validate(bots[i], NULL) != BRLCAD_OK)
-		goto incompatible_skin;
+		goto incompatible_payload;
 	    if (!binding) {
 		binding = bots[i]->skin;
 	    } else if (binding->joint_count != bots[i]->skin->joint_count) {
-		goto incompatible_skin;
+		goto incompatible_payload;
 	    } else {
 		for (joint = 0; joint < binding->joint_count; joint++) {
 		    if (!BU_STR_EQUAL(bu_vls_cstr(&binding->joint_links[joint]),
 			    bu_vls_cstr(&bots[i]->skin->joint_links[joint])) ||
 			memcmp(binding->inverse_bind_matrices[joint],
 			    bots[i]->skin->inverse_bind_matrices[joint], sizeof(mat_t)) != 0)
-			goto incompatible_skin;
+			goto incompatible_payload;
 		}
 	    }
 	    if (bots[i]->skin->influence_count > UINT32_MAX - influence_count)
-		goto incompatible_skin;
+		goto incompatible_payload;
 	    influence_count += bots[i]->skin->influence_count;
+	}
+	if (bots[i]->morphs) {
+	    size_t target;
+	    if (rt_bot_morph_validate(bots[i], NULL) != BRLCAD_OK)
+		goto incompatible_payload;
+	    if (!morphs) {
+		morphs = bots[i]->morphs;
+	    } else if (morphs->target_count != bots[i]->morphs->target_count) {
+		goto incompatible_payload;
+	    } else {
+		for (target = 0; target < morphs->target_count; target++) {
+		    const struct rt_bot_morph_target *first = &morphs->targets[target];
+		    const struct rt_bot_morph_target *next =
+			&bots[i]->morphs->targets[target];
+		    if (!BU_STR_EQUAL(bu_vls_cstr(&first->name),
+			    bu_vls_cstr(&next->name)) ||
+			!EQUAL(morphs->weights[target],
+			    bots[i]->morphs->weights[target]) ||
+			(first->position_deltas != NULL) !=
+			    (next->position_deltas != NULL) ||
+			(first->normal_deltas != NULL) !=
+			    (next->normal_deltas != NULL) ||
+			(first->tangent_deltas != NULL) !=
+			    (next->tangent_deltas != NULL))
+			goto incompatible_payload;
+		}
+	    }
 	}
 
     }
@@ -6429,11 +6705,11 @@ rt_bot_merge(size_t num_bots, const struct rt_bot_internal * const *bots)
     if (binding) {
 	for (size_t i = 0; i < num_bots; i++) {
 	    if (!bots[i]->skin)
-		goto incompatible_skin;
+		goto incompatible_payload;
 	}
 	result->skin = rt_bot_skin_copy(binding, bots[0]->num_vertices);
 	if (!result->skin)
-	    goto incompatible_skin;
+	    goto incompatible_payload;
 	bu_free(result->skin->vertex_offsets, "BOT skin vertex offsets");
 	bu_free(result->skin->joint_indices, "BOT skin joint indices");
 	bu_free(result->skin->weights, "BOT skin weights");
@@ -6470,6 +6746,42 @@ rt_bot_merge(size_t num_bots, const struct rt_bot_internal * const *bots)
 	result->num_normals = 0;
     }
 
+    if (morphs) {
+	for (size_t i = 0; i < num_bots; i++) {
+	    if (!bots[i]->morphs)
+		goto incompatible_payload;
+	}
+	BU_ALLOC(result->morphs, struct rt_bot_morphs);
+	result->morphs->target_count = morphs->target_count;
+	result->morphs->targets = (struct rt_bot_morph_target *)bu_calloc(
+	    morphs->target_count, sizeof(struct rt_bot_morph_target),
+	    "merged BOT morph targets");
+	result->morphs->weights = (fastf_t *)bu_malloc(morphs->target_count *
+	    sizeof(fastf_t), "merged BOT morph weights");
+	memcpy(result->morphs->weights, morphs->weights,
+	    morphs->target_count * sizeof(fastf_t));
+	for (size_t target = 0; target < morphs->target_count; target++) {
+	    const struct rt_bot_morph_target *source = &morphs->targets[target];
+	    struct rt_bot_morph_target *destination =
+		&result->morphs->targets[target];
+	    bu_vls_init(&destination->name);
+	    bu_vls_vlscat(&destination->name, &source->name);
+	    if (source->position_deltas)
+		destination->position_deltas = (fastf_t *)bu_malloc(
+		    result->num_vertices * ELEMENTS_PER_VECT * sizeof(fastf_t),
+		    "merged BOT morph position deltas");
+	    if (source->normal_deltas)
+		destination->normal_deltas = (fastf_t *)bu_malloc(
+		    result->num_vertices * ELEMENTS_PER_VECT * sizeof(fastf_t),
+		    "merged BOT morph normal deltas");
+	    if (source->tangent_deltas)
+		destination->tangent_deltas = (fastf_t *)bu_malloc(
+		    result->num_vertices * ELEMENTS_PER_VECT * sizeof(fastf_t),
+		    "merged BOT morph tangent deltas");
+	}
+	result->bot_flags |= RT_BOT_HAS_MORPHS;
+    }
+
     if (!preserve_uvs) {
 	result->bot_flags &= ~RT_BOT_HAS_TEXTURE_UVS;
 	result->num_uvs = 0;
@@ -6498,6 +6810,25 @@ rt_bot_merge(size_t num_bots, const struct rt_bot_internal * const *bots)
 	const struct rt_bot_internal *input = bots[i];
 	memcpy(&result->vertices[vertex_offset * 3], input->vertices,
 	    input->num_vertices * 3 * sizeof(fastf_t));
+	if (result->morphs) {
+	    for (size_t target = 0; target < result->morphs->target_count; target++) {
+		const struct rt_bot_morph_target *source =
+		    &input->morphs->targets[target];
+		struct rt_bot_morph_target *destination =
+		    &result->morphs->targets[target];
+		size_t count = input->num_vertices * ELEMENTS_PER_VECT;
+		size_t offset = vertex_offset * ELEMENTS_PER_VECT;
+		if (source->position_deltas)
+		    memcpy(&destination->position_deltas[offset],
+			source->position_deltas, count * sizeof(fastf_t));
+		if (source->normal_deltas)
+		    memcpy(&destination->normal_deltas[offset],
+			source->normal_deltas, count * sizeof(fastf_t));
+		if (source->tangent_deltas)
+		    memcpy(&destination->tangent_deltas[offset],
+			source->tangent_deltas, count * sizeof(fastf_t));
+	    }
+	}
 	if (preserve_normals)
 	    memcpy(&result->normals[normal_offset * 3], input->normals,
 		input->num_normals * 3 * sizeof(fastf_t));
@@ -6533,8 +6864,8 @@ rt_bot_merge(size_t num_bots, const struct rt_bot_internal * const *bots)
 
     return result;
 
-incompatible_skin:
-    bu_log("rt_bot_merge: incompatible skin bindings\n");
+incompatible_payload:
+    bu_log("rt_bot_merge: incompatible skin or morph bindings\n");
 fail:
     rt_bot_internal_free(result);
     BU_PUT(result, struct rt_bot_internal);
@@ -6604,6 +6935,9 @@ rt_bot_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *i
     if ((bot->skin || (bot->bot_flags & RT_BOT_HAS_SKIN)) &&
 	rt_bot_skin_validate(bot, NULL) != BRLCAD_OK)
 	issues |= 4;
+    if ((bot->morphs || (bot->bot_flags & RT_BOT_HAS_MORPHS)) &&
+	rt_bot_morph_validate(bot, NULL) != BRLCAD_OK)
+	issues |= 8;
 
     if (issues && error_msg) {
         const char *comma = "";
@@ -6618,6 +6952,10 @@ rt_bot_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *i
 	}
 	if (issues & 4) {
 	    bu_vls_printf(error_msg, "%s{\"problem_type\":\"invalid_skin\"}", comma);
+	    comma = ",";
+        }
+	if (issues & 8) {
+	    bu_vls_printf(error_msg, "%s{\"problem_type\":\"invalid_morph\"}", comma);
         }
         bu_vls_printf(error_msg, "]");
     }
@@ -6794,6 +7132,180 @@ rt_bot_skin_copy(const struct rt_bot_skin *skin, size_t vertex_count)
     return copy;
 }
 
+C_DECL void
+rt_bot_morph_free(struct rt_bot_morphs *morphs)
+{
+    size_t target;
+
+    if (!morphs)
+	return;
+    if (morphs->targets) {
+	for (target = 0; target < morphs->target_count; target++) {
+	    struct rt_bot_morph_target *entry = &morphs->targets[target];
+	    if (BU_VLS_IS_INITIALIZED(&entry->name))
+		bu_vls_free(&entry->name);
+	    bu_free(entry->position_deltas, "BOT morph position deltas");
+	    bu_free(entry->normal_deltas, "BOT morph normal deltas");
+	    bu_free(entry->tangent_deltas, "BOT morph tangent deltas");
+	}
+    }
+    bu_free(morphs->targets, "BOT morph targets");
+    bu_free(morphs->weights, "BOT morph weights");
+    bu_free(morphs, "BOT morphs");
+}
+
+C_DECL int
+rt_bot_morph_validate(const struct rt_bot_internal *bot, struct bu_vls *message)
+{
+    const struct rt_bot_morphs *morphs;
+    size_t value_count;
+    size_t target;
+
+    if (!bot)
+	return bot_skin_error(message, "BOT is missing");
+    RT_BOT_CK_MAGIC(bot);
+    morphs = bot->morphs;
+    if ((morphs != NULL) != ((bot->bot_flags & RT_BOT_HAS_MORPHS) != 0))
+	return bot_skin_error(message, "BOT morph flag and payload disagree");
+    if (!morphs)
+	return bot_skin_error(message, "BOT morph targets are missing");
+    if (!bot->num_vertices || bot->num_vertices > SIZE_MAX / ELEMENTS_PER_VECT)
+	return bot_skin_error(message, "BOT morph vertex count is invalid");
+    if (!morphs->target_count || morphs->target_count > UINT32_MAX ||
+	!morphs->targets || !morphs->weights)
+	return bot_skin_error(message, "BOT morph target storage is invalid");
+    value_count = bot->num_vertices * ELEMENTS_PER_VECT;
+    for (target = 0; target < morphs->target_count; target++) {
+	const struct rt_bot_morph_target *entry = &morphs->targets[target];
+	size_t value;
+	if (!BU_VLS_IS_INITIALIZED(&entry->name))
+	    return bot_skin_error(message, "BOT morph target name is uninitialized");
+	if (bu_vls_strlen(&entry->name) > UINT32_MAX)
+	    return bot_skin_error(message, "BOT morph target name is too long");
+	if (!entry->position_deltas && !entry->normal_deltas &&
+	    !entry->tangent_deltas)
+	    return bot_skin_error(message, "BOT morph target has no deltas");
+	if (!isfinite(morphs->weights[target]))
+	    return bot_skin_error(message, "BOT morph weight is not finite");
+	for (value = 0; value < value_count; value++) {
+	    if ((entry->position_deltas &&
+		    !isfinite(entry->position_deltas[value])) ||
+		(entry->normal_deltas && !isfinite(entry->normal_deltas[value])) ||
+		(entry->tangent_deltas && !isfinite(entry->tangent_deltas[value])))
+		return bot_skin_error(message, "BOT morph delta is not finite");
+	}
+    }
+    if (message)
+	bu_vls_trunc(message, 0);
+    return BRLCAD_OK;
+}
+
+C_DECL struct rt_bot_morphs *
+rt_bot_morph_copy(const struct rt_bot_morphs *morphs, size_t vertex_count)
+{
+    struct rt_bot_internal validator = {0};
+    struct rt_bot_morphs *copy;
+    size_t value_count;
+    size_t target;
+
+    if (!morphs)
+	return NULL;
+    validator.magic = RT_BOT_INTERNAL_MAGIC;
+    validator.bot_flags = RT_BOT_HAS_MORPHS;
+    validator.num_vertices = vertex_count;
+    validator.morphs = (struct rt_bot_morphs *)morphs;
+    if (rt_bot_morph_validate(&validator, NULL) != BRLCAD_OK)
+	return NULL;
+    value_count = vertex_count * ELEMENTS_PER_VECT;
+    BU_ALLOC(copy, struct rt_bot_morphs);
+    copy->target_count = morphs->target_count;
+    copy->targets = (struct rt_bot_morph_target *)bu_calloc(
+	copy->target_count, sizeof(struct rt_bot_morph_target),
+	"BOT morph targets");
+    copy->weights = (fastf_t *)bu_malloc(copy->target_count *
+	sizeof(fastf_t), "BOT morph weights");
+    memcpy(copy->weights, morphs->weights,
+	copy->target_count * sizeof(fastf_t));
+    for (target = 0; target < copy->target_count; target++) {
+	const struct rt_bot_morph_target *source = &morphs->targets[target];
+	struct rt_bot_morph_target *destination = &copy->targets[target];
+	bu_vls_init(&destination->name);
+	bu_vls_vlscat(&destination->name, &source->name);
+	if (source->position_deltas) {
+	    destination->position_deltas = (fastf_t *)bu_malloc(value_count *
+		sizeof(fastf_t), "BOT morph position deltas");
+	    memcpy(destination->position_deltas, source->position_deltas,
+		value_count * sizeof(fastf_t));
+	}
+	if (source->normal_deltas) {
+	    destination->normal_deltas = (fastf_t *)bu_malloc(value_count *
+		sizeof(fastf_t), "BOT morph normal deltas");
+	    memcpy(destination->normal_deltas, source->normal_deltas,
+		value_count * sizeof(fastf_t));
+	}
+	if (source->tangent_deltas) {
+	    destination->tangent_deltas = (fastf_t *)bu_malloc(value_count *
+		sizeof(fastf_t), "BOT morph tangent deltas");
+	    memcpy(destination->tangent_deltas, source->tangent_deltas,
+		value_count * sizeof(fastf_t));
+	}
+    }
+    return copy;
+}
+
+C_DECL int
+rt_bot_morph_mat(struct rt_bot_morphs *output,
+	const struct rt_bot_morphs *input, size_t vertex_count,
+	const mat_t matrix)
+{
+    struct rt_bot_internal input_validator = {0};
+    struct rt_bot_internal output_validator = {0};
+    size_t target;
+
+    if (!output || !input || !matrix)
+	return BRLCAD_ERROR;
+    input_validator.magic = RT_BOT_INTERNAL_MAGIC;
+    input_validator.bot_flags = RT_BOT_HAS_MORPHS;
+    input_validator.num_vertices = vertex_count;
+    input_validator.morphs = (struct rt_bot_morphs *)input;
+    output_validator.magic = RT_BOT_INTERNAL_MAGIC;
+    output_validator.bot_flags = RT_BOT_HAS_MORPHS;
+    output_validator.num_vertices = vertex_count;
+    output_validator.morphs = output;
+    if (rt_bot_morph_validate(&input_validator, NULL) != BRLCAD_OK ||
+	rt_bot_morph_validate(&output_validator, NULL) != BRLCAD_OK ||
+	input->target_count != output->target_count)
+	return BRLCAD_ERROR;
+    for (target = 0; target < input->target_count; target++) {
+	const struct rt_bot_morph_target *source = &input->targets[target];
+	struct rt_bot_morph_target *destination = &output->targets[target];
+	const fastf_t *source_arrays[3] = {source->position_deltas,
+	    source->normal_deltas, source->tangent_deltas};
+	fastf_t *destination_arrays[3] = {destination->position_deltas,
+	    destination->normal_deltas, destination->tangent_deltas};
+	size_t array;
+	if ((source->position_deltas != NULL) !=
+		(destination->position_deltas != NULL) ||
+	    (source->normal_deltas != NULL) !=
+		(destination->normal_deltas != NULL) ||
+	    (source->tangent_deltas != NULL) !=
+		(destination->tangent_deltas != NULL))
+	    return BRLCAD_ERROR;
+	for (array = 0; array < 3; array++) {
+	    size_t vertex;
+	    if (!source_arrays[array])
+		continue;
+	    for (vertex = 0; vertex < vertex_count; vertex++) {
+		vect_t delta;
+		VMOVE(delta, &source_arrays[array][vertex * ELEMENTS_PER_VECT]);
+		MAT4X3VEC(&destination_arrays[array][vertex * ELEMENTS_PER_VECT],
+		    matrix, delta);
+	    }
+	}
+    }
+    return BRLCAD_OK;
+}
+
 C_DECL int
 rt_bot_skin_pose(struct rt_bot_internal **result,
 	const struct rt_bot_internal *bind_bot, const mat_t *joint_matrices,
@@ -6854,6 +7366,9 @@ rt_bot_skin_pose(struct rt_bot_internal **result,
     rt_bot_skin_free(posed->skin);
     posed->skin = NULL;
     posed->bot_flags &= ~RT_BOT_HAS_SKIN;
+    rt_bot_morph_free(posed->morphs);
+    posed->morphs = NULL;
+    posed->bot_flags &= ~RT_BOT_HAS_MORPHS;
     bu_free(posed->normals, "BOT normals");
     posed->normals = NULL;
     posed->num_normals = 0;

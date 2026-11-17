@@ -828,6 +828,21 @@ struct rt_bot_skin
     fastf_t *weights;
 };
 
+struct rt_bot_morph_target
+{
+    struct bu_vls name;
+    fastf_t *position_deltas;
+    fastf_t *normal_deltas;
+    fastf_t *tangent_deltas;
+};
+
+struct rt_bot_morphs
+{
+    size_t target_count;
+    struct rt_bot_morph_target *targets;
+    fastf_t *weights;
+};
+
 struct rt_bot_internal
 {
     uint32_t magic;
@@ -892,6 +907,7 @@ struct rt_bot_internal
 				 * [num_uvs*3] */
 
     struct rt_bot_skin *skin;   /**< @brief optional vertex skin binding */
+    struct rt_bot_morphs *morphs; /**< @brief optional vertex morph targets */
 };
 
 
@@ -929,6 +945,7 @@ struct rt_bot_list {
 #define RT_BOT_USE_FLOATS          0x04 /**< @brief Use the single precision version of "tri_specific" during prep */
 #define RT_BOT_HAS_TEXTURE_UVS     0x08 /**< @brief Has uv texture coordinates at each face vertex */
 #define RT_BOT_HAS_SKIN            0x10 /**< @brief Has a vertex skin binding */
+#define RT_BOT_HAS_MORPHS          0x20 /**< @brief Has vertex morph targets */
 #define RT_BOT_HAS_UNUSED2         0x20 /**< @brief TBD */
 #define RT_BOT_HAS_UNUSED3         0x40 /**< @brief TBD */
 #define RT_BOT_HAS_UNUSED4         0x80 /**< @brief WARNING: use this flag to denote more bits in the export serialization */
