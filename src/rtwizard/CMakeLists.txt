@@ -1,5 +1,5 @@
 if(TARGET libtclcad)
-  set(RTWIZARD_SRCS main.c animation.cpp)
+  set(RTWIZARD_SRCS main.c animation.cpp scene_query.cpp)
 
   if(HAVE_WINDOWS_H)
     # To associate an icon with the application for Windows (needed
@@ -30,10 +30,13 @@ cmakefiles(
   CMakeLists.txt
   animation.cpp
   animation.h
+  animation_plan.h
   main.c
   rtwizard.rc
   rtwizard.ico
   settings.h
+  scene_query.cpp
+  scene_query.h
 )
 
 # Local Variables:
