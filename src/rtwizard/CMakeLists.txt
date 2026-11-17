@@ -1,5 +1,5 @@
 if(TARGET libtclcad)
-  set(RTWIZARD_SRCS main.c animation.cpp scene_query.cpp)
+  set(RTWIZARD_SRCS main.c animation.cpp animation_plan.cpp preset_plan.cpp scene_query.cpp)
 
   if(HAVE_WINDOWS_H)
     # To associate an icon with the application for Windows (needed
@@ -26,14 +26,28 @@ if(TARGET libtclcad)
   )
 endif(TARGET libtclcad)
 
+if(BUILD_TESTING)
+  brlcad_addexec(
+    rtwizard_preset_plan_test
+    "preset_plan_test.cpp;animation_plan.cpp;preset_plan.cpp"
+    "libbn;libbu;${M_LIBRARY}"
+    TEST
+  )
+  brlcad_add_test(NAME rtwizard_preset_plan COMMAND rtwizard_preset_plan_test)
+endif(BUILD_TESTING)
+
 cmakefiles(
   CMakeLists.txt
   animation.cpp
   animation.h
+  animation_plan.cpp
   animation_plan.h
   main.c
   rtwizard.rc
   rtwizard.ico
+  preset_plan.cpp
+  preset_plan.h
+  preset_plan_test.cpp
   settings.h
   scene_query.cpp
   scene_query.h

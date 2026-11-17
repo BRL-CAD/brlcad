@@ -44,5 +44,12 @@ struct AnimationPlan {
     std::vector<AnimationFrame> frames;
 };
 
+void normalize_animation_vector(std::vector<double> &vector, const std::string &where);
+std::vector<double> animation_look_at_quaternion(const std::vector<double> &direction,
+    const std::vector<double> &up);
+AnimationFrame make_animation_frame(double time, double viewsize,
+    const std::vector<double> &orientation, const std::vector<double> &eye,
+    double perspective);
+
 #endif /* RTWIZARD_ANIMATION_PLAN_H */
 

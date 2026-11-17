@@ -38,6 +38,7 @@
 #include "../libbu/json.hpp"
 #include "animation.h"
 #include "animation_plan.h"
+#include "preset_plan.h"
 #include "scene_query.h"
 #include "settings.h"
 
@@ -656,245 +657,118 @@ config_strings(Tcl_Interp *interp, Tcl_Obj *config, const char *key)
     return result;
 }
 
-static void
-normalize_vector(std::vector<double> &vector, const std::string &where)
+static bool
+config_optional_double(Tcl_Interp *interp, Tcl_Obj *config, const char *key, double &result)
 {
-    double magnitude = std::sqrt(vector[0]*vector[0] + vector[1]*vector[1] + vector[2]*vector[2]);
-    if (!(magnitude > 1.0e-12)) throw std::runtime_error(where + " must be nonzero");
-    for (double &component : vector) component /= magnitude;
+    Tcl_Obj *value = config_value(interp, config, key, false);
+    if (!value) return false;
+    if (Tcl_GetDoubleFromObj(interp, value, &result) != TCL_OK || !std::isfinite(result))
+	throw std::runtime_error(std::string("animation preset '") + key + "' must be finite");
+    return true;
 }
 
-static std::vector<double>
-rotate_vector(const std::vector<double> &vector, const std::vector<double> &axis, double degrees)
+static PresetSettings
+parse_preset_settings(Tcl_Interp *interp, Tcl_Obj *config)
 {
-    double radians = degrees * DEG2RAD;
-    double cosine = std::cos(radians);
-    double sine = std::sin(radians);
-    double dot = axis[0]*vector[0] + axis[1]*vector[1] + axis[2]*vector[2];
-    std::vector<double> cross = {
-	axis[1]*vector[2] - axis[2]*vector[1],
-	axis[2]*vector[0] - axis[0]*vector[2],
-	axis[0]*vector[1] - axis[1]*vector[0]
-    };
-    return {
-	vector[0]*cosine + cross[0]*sine + axis[0]*dot*(1.0-cosine),
-	vector[1]*cosine + cross[1]*sine + axis[1]*dot*(1.0-cosine),
-	vector[2]*cosine + cross[2]*sine + axis[2]*dot*(1.0-cosine)
-    };
-}
+    PresetSettings settings;
+    settings.preset = config_string(interp, config, "preset");
+    settings.database = config_string(interp, config, "database");
+    settings.objects = config_strings(interp, config, "objects");
+    settings.duration = config_double(interp, config, "duration");
+    settings.fps = config_int(interp, config, "fps");
+    settings.frame_count = config_int(interp, config, "frames");
+    settings.cyclic_override = config_int(interp, config, "cyclic");
+    settings.plays = config_int(interp, config, "plays");
+    settings.viewsize = config_double(interp, config, "viewsize");
+    settings.perspective = config_double(interp, config, "perspective");
+    settings.orientation = config_vector(interp, config, "orientation", 4);
+    settings.eye = config_vector(interp, config, "eye", 3);
 
-static std::vector<double>
-look_at_quaternion(const std::vector<double> &direction, const std::vector<double> &up)
-{
-    vect_t forward = {direction[0], direction[1], direction[2]};
-    vect_t right, camera_up;
-    mat_t matrix;
-    quat_t quaternion;
-    VUNITIZE(forward);
-    if (up.empty()) {
-	bn_mat_lookat(matrix, forward, 0);
-    } else {
-	vect_t up_vector = {up[0], up[1], up[2]};
-	if (MAGNITUDE(up_vector) <= SMALL_FASTF) throw std::runtime_error("camera up vector must be nonzero");
-	VUNITIZE(up_vector);
-	VCROSS(right, forward, up_vector);
-	if (MAGNITUDE(right) <= SMALL_FASTF) throw std::runtime_error("camera up vector is parallel to the viewing direction");
-	VUNITIZE(right);
-	VCROSS(camera_up, right, forward);
-	MAT_IDN(matrix);
-	VMOVE(&matrix[0], right);
-	VMOVE(&matrix[4], camera_up);
-	VREVERSE(&matrix[8], forward);
+    if (settings.preset == "cut") {
+	settings.cut_steps = config_int(interp, config, "cut_steps");
+	settings.width = config_int(interp, config, "width");
+	settings.height = config_int(interp, config, "height");
+	Tcl_Obj *direction = config_value(interp, config, "cut_direction", false);
+	if (direction) {
+	    settings.direction = tcl_number_list(interp, direction, 3, "cut direction");
+	} else {
+	    quat_t quaternion = {settings.orientation[0], settings.orientation[1],
+		settings.orientation[2], settings.orientation[3]};
+	    mat_t matrix;
+	    quat_quat2mat(matrix, quaternion);
+	    settings.direction = {-matrix[8], -matrix[9], -matrix[10]};
+	}
+	normalize_animation_vector(settings.direction, "cut direction");
+	return settings;
     }
-    quat_mat2quat(quaternion, matrix);
-    return {quaternion[0], quaternion[1], quaternion[2], quaternion[3]};
+
+    if (settings.preset == "orbit") {
+	settings.angle = config_double(interp, config, "orbit_angle");
+	settings.axis = config_vector(interp, config, "orbit_axis", 3);
+	normalize_animation_vector(settings.axis, "orbit axis");
+	Tcl_Obj *center = config_value(interp, config, "orbit_center", false);
+	if (center) {
+	    settings.center = tcl_number_list(interp, center, 3, "orbit center");
+	    settings.has_center = true;
+	}
+	settings.has_radius = config_optional_double(interp, config, "orbit_radius", settings.radius);
+	settings.has_elevation = config_optional_double(interp, config, "orbit_elevation", settings.elevation);
+	return settings;
+    }
+
+    if (settings.preset == "turntable") {
+	settings.angle = config_double(interp, config, "turntable_angle");
+	settings.axis = config_vector(interp, config, "turntable_axis", 3);
+	normalize_animation_vector(settings.axis, "turntable axis");
+	settings.object = config_string(interp, config, "turntable_object");
+	if (settings.object.empty() || settings.object.find_first_of(";\r\n\t ") != std::string::npos)
+	    throw std::runtime_error("turntable object path may not contain whitespace or command separators");
+	Tcl_Obj *center = config_value(interp, config, "turntable_center", false);
+	if (center) {
+	    settings.center = tcl_number_list(interp, center, 3, "turntable center");
+	    settings.has_center = true;
+	}
+	return settings;
+    }
+
+    throw std::runtime_error("unknown animation preset '" + settings.preset + "'");
 }
 
-static AnimationFrame
-base_frame(double time, double viewsize, const std::vector<double> &orientation,
-    const std::vector<double> &eye, double perspective)
+static std::vector<double>
+scene_center(const SceneBounds &bounds)
 {
-    AnimationFrame frame;
-    frame.time = time;
-    frame.viewsize = viewsize;
-    frame.orientation = orientation;
-    frame.eye = eye;
-    frame.perspective = perspective;
-    return frame;
+    return {
+	(bounds.minimum[X]+bounds.maximum[X])/2.0,
+	(bounds.minimum[Y]+bounds.maximum[Y])/2.0,
+	(bounds.minimum[Z]+bounds.maximum[Z])/2.0
+    };
+}
+
+static PresetSceneFacts
+query_preset_scene(const PresetSettings &settings)
+{
+    PresetSceneFacts facts;
+    if (settings.preset == "cut") {
+	SceneQuery query(settings.database);
+	facts.sweep = query.projected_bounds(settings.objects, settings.direction);
+	return facts;
+    }
+    if (settings.has_center) {
+	facts.center = settings.center;
+	return facts;
+    }
+    SceneQuery query(settings.database);
+    if (settings.preset == "orbit") facts.center = scene_center(query.bounds(settings.objects));
+    else if (settings.preset == "turntable") facts.center = scene_center(query.bounds({settings.object}));
+    return facts;
 }
 
 static AnimationPlan
 plan_preset(Tcl_Interp *interp, Tcl_Obj *config)
 {
-    std::string preset = config_string(interp, config, "preset");
-    double duration = config_double(interp, config, "duration");
-    int fps = config_int(interp, config, "fps");
-    int frame_count = config_int(interp, config, "frames");
-    int cyclic_override = config_int(interp, config, "cyclic");
-    int plays = config_int(interp, config, "plays");
-    double viewsize = config_double(interp, config, "viewsize");
-    double perspective = config_double(interp, config, "perspective");
-    std::vector<double> orientation = config_vector(interp, config, "orientation", 4);
-    std::vector<double> eye = config_vector(interp, config, "eye", 3);
-    std::vector<std::string> objects = config_strings(interp, config, "objects");
-    std::string database = config_string(interp, config, "database");
-    double angle = preset == "orbit" ? config_double(interp, config, "orbit_angle") :
-	(preset == "turntable" ? config_double(interp, config, "turntable_angle") : 0.0);
-    bool cyclic = (preset == "orbit" || preset == "turntable") && std::fabs(angle) >= 360.0;
-    if (cyclic_override >= 0) cyclic = cyclic_override != 0;
-    if (preset == "cut") {
-	int cut_steps = config_int(interp, config, "cut_steps");
-	if (cut_steps >= 2) frame_count = cut_steps;
-    }
-    if (frame_count < 2) frame_count = (int)std::llround(duration * fps) + (cyclic ? 0 : 1);
-    if (!(duration > 0.0) || fps <= 0 || frame_count < 2)
-	throw std::runtime_error("animation preset requires positive duration and fps and at least two frames");
-    if (plays < 0) plays = cyclic ? 0 : 1;
-
-    AnimationPlan plan;
-    plan.duration = duration;
-    plan.fps = fps;
-    plan.cyclic = cyclic;
-    plan.plays = plays;
-    plan.frames.reserve((size_t)frame_count);
-
-    if (preset == "cut") {
-	std::vector<double> direction;
-	Tcl_Obj *configured_direction = config_value(interp, config, "cut_direction", false);
-	if (configured_direction) {
-	    direction = tcl_number_list(interp, configured_direction, 3, "cut direction");
-	} else {
-	    quat_t quaternion = {orientation[0], orientation[1], orientation[2], orientation[3]};
-	    mat_t matrix;
-	    quat_quat2mat(matrix, quaternion);
-	    direction = {-matrix[8], -matrix[9], -matrix[10]};
-	}
-	normalize_vector(direction, "cut direction");
-	SceneQuery query(database);
-	std::pair<double, double> sweep = query.projected_bounds(objects, direction);
-	double span = sweep.second - sweep.first;
-	if (!(span > 0.0)) throw std::runtime_error("rendered objects have degenerate cutting-plane bounds");
-	int width = config_int(interp, config, "width");
-	int height = config_int(interp, config, "height");
-	double epsilon = std::max({std::fabs(span) / (double)std::max(width, height), std::fabs(span) * 0.05, 1.0e-9});
-	double first = sweep.first - epsilon;
-	double last = sweep.second - epsilon;
-	for (int frame_number = 0; frame_number < frame_count; ++frame_number) {
-	    double fraction = (double)frame_number / (double)(frame_count - 1);
-	    double distance = first + fraction * (last - first);
-	    AnimationFrame frame = base_frame(duration*fraction, viewsize, orientation, eye, perspective);
-	    std::ostringstream plane;
-	    plane.precision(15);
-	    plane << direction[0]*distance << ',' << direction[1]*distance << ',' << direction[2]*distance << ','
-		<< direction[0] << ',' << direction[1] << ',' << direction[2];
-	    frame.cut_plane = plane.str();
-	    plan.frames.push_back(std::move(frame));
-	}
-	return plan;
-    }
-
-    if (preset == "orbit") {
-	std::vector<double> axis = config_vector(interp, config, "orbit_axis", 3);
-	normalize_vector(axis, "orbit axis");
-	std::vector<double> center;
-	Tcl_Obj *configured_center = config_value(interp, config, "orbit_center", false);
-	if (configured_center) center = tcl_number_list(interp, configured_center, 3, "orbit center");
-	else {
-	    SceneQuery query(database);
-	    SceneBounds bounds = query.bounds(objects);
-	    center = {(bounds.minimum[X]+bounds.maximum[X])/2.0, (bounds.minimum[Y]+bounds.maximum[Y])/2.0,
-		(bounds.minimum[Z]+bounds.maximum[Z])/2.0};
-	}
-	std::vector<double> radial = {eye[0]-center[0], eye[1]-center[1], eye[2]-center[2]};
-	double radius = std::sqrt(radial[0]*radial[0] + radial[1]*radial[1] + radial[2]*radial[2]);
-	if (radius < 1.0e-12) {
-	    std::vector<double> reference = std::fabs(axis[2]) < 0.9 ? std::vector<double>{0,0,1} : std::vector<double>{1,0,0};
-	    radial = {axis[1]*reference[2]-axis[2]*reference[1], axis[2]*reference[0]-axis[0]*reference[2], axis[0]*reference[1]-axis[1]*reference[0]};
-	    normalize_vector(radial, "orbit radial direction");
-	    radius = viewsize;
-	    for (double &component : radial) component *= radius;
-	}
-	Tcl_Obj *configured_radius = config_value(interp, config, "orbit_radius", false);
-	if (configured_radius) {
-	    if (Tcl_GetDoubleFromObj(interp, configured_radius, &radius) != TCL_OK || !(radius > 0.0))
-		throw std::runtime_error("orbit radius must be positive");
-	    normalize_vector(radial, "orbit radial direction");
-	    for (double &component : radial) component *= radius;
-	}
-	Tcl_Obj *configured_elevation = config_value(interp, config, "orbit_elevation", false);
-	if (configured_elevation) {
-	    double elevation;
-	    if (Tcl_GetDoubleFromObj(interp, configured_elevation, &elevation) != TCL_OK || !std::isfinite(elevation))
-		throw std::runtime_error("orbit elevation must be finite");
-	    elevation *= DEG2RAD;
-	    double along = radial[0]*axis[0] + radial[1]*axis[1] + radial[2]*axis[2];
-	    std::vector<double> plane = {radial[0]-along*axis[0], radial[1]-along*axis[1], radial[2]-along*axis[2]};
-	    double plane_magnitude = std::sqrt(plane[0]*plane[0] + plane[1]*plane[1] + plane[2]*plane[2]);
-	    if (plane_magnitude < 1.0e-12) {
-		std::vector<double> reference = std::fabs(axis[2]) < 0.9 ? std::vector<double>{0,0,1} : std::vector<double>{1,0,0};
-		plane = {axis[1]*reference[2]-axis[2]*reference[1], axis[2]*reference[0]-axis[0]*reference[2], axis[0]*reference[1]-axis[1]*reference[0]};
-	    }
-	    normalize_vector(plane, "orbit plane");
-	    radial = {plane[0]*radius*std::cos(elevation)+axis[0]*radius*std::sin(elevation),
-		plane[1]*radius*std::cos(elevation)+axis[1]*radius*std::sin(elevation),
-		plane[2]*radius*std::cos(elevation)+axis[2]*radius*std::sin(elevation)};
-	}
-	for (int frame_number = 0; frame_number < frame_count; ++frame_number) {
-	    double fraction = (double)frame_number / (double)(cyclic ? frame_count : frame_count-1);
-	    std::vector<double> rotated = rotate_vector(radial, axis, fraction*angle);
-	    std::vector<double> frame_eye = {center[0]+rotated[0], center[1]+rotated[1], center[2]+rotated[2]};
-	    std::vector<double> direction = {center[0]-frame_eye[0], center[1]-frame_eye[1], center[2]-frame_eye[2]};
-	    normalize_vector(direction, "orbit viewing direction");
-	    std::vector<double> camera_up = axis;
-	    std::vector<double> right = {direction[1]*axis[2]-direction[2]*axis[1],
-		direction[2]*axis[0]-direction[0]*axis[2], direction[0]*axis[1]-direction[1]*axis[0]};
-	    if (std::sqrt(right[0]*right[0]+right[1]*right[1]+right[2]*right[2]) <= SMALL_FASTF) camera_up.clear();
-	    AnimationFrame frame = base_frame(duration*fraction, viewsize, look_at_quaternion(direction, camera_up), frame_eye, perspective);
-	    plan.frames.push_back(std::move(frame));
-	}
-	return plan;
-    }
-
-    if (preset == "turntable") {
-	std::vector<double> axis = config_vector(interp, config, "turntable_axis", 3);
-	normalize_vector(axis, "turntable axis");
-	std::string object = config_string(interp, config, "turntable_object");
-	if (object.empty() || object.find_first_of(";\r\n\t ") != std::string::npos)
-	    throw std::runtime_error("turntable object path may not contain whitespace or command separators");
-	std::vector<double> center;
-	Tcl_Obj *configured_center = config_value(interp, config, "turntable_center", false);
-	if (configured_center) center = tcl_number_list(interp, configured_center, 3, "turntable center");
-	else {
-	    SceneQuery query(database);
-	    SceneBounds bounds = query.bounds({object});
-	    center = {(bounds.minimum[X]+bounds.maximum[X])/2.0, (bounds.minimum[Y]+bounds.maximum[Y])/2.0,
-		(bounds.minimum[Z]+bounds.maximum[Z])/2.0};
-	}
-	if (object[0] != '/') object.insert(object.begin(), '/');
-	for (int frame_number = 0; frame_number < frame_count; ++frame_number) {
-	    double fraction = (double)frame_number / (double)(cyclic ? frame_count : frame_count-1);
-	    double radians = fraction * angle * DEG2RAD;
-	    double cosine = std::cos(radians), sine = std::sin(radians), remainder = 1.0-cosine;
-	    double x = axis[0], y = axis[1], z = axis[2];
-	    double r00=cosine+x*x*remainder, r01=x*y*remainder-z*sine, r02=x*z*remainder+y*sine;
-	    double r10=y*x*remainder+z*sine, r11=cosine+y*y*remainder, r12=y*z*remainder-x*sine;
-	    double r20=z*x*remainder-y*sine, r21=z*y*remainder+x*sine, r22=cosine+z*z*remainder;
-	    double tx=center[0]-(r00*center[0]+r01*center[1]+r02*center[2]);
-	    double ty=center[1]-(r10*center[0]+r11*center[1]+r12*center[2]);
-	    double tz=center[2]-(r20*center[0]+r21*center[1]+r22*center[2]);
-	    AnimationFrame frame = base_frame(duration*fraction, viewsize, orientation, eye, perspective);
-	    DatabaseOperation operation;
-	    operation.type = DatabaseOperationType::Transform;
-	    operation.path = object;
-	    operation.action = "lmul";
-	    operation.values = {r00, r01, r02, tx, r10, r11, r12, ty, r20, r21, r22, tz, 0, 0, 0, 1};
-	    frame.operations.push_back(std::move(operation));
-	    plan.frames.push_back(std::move(frame));
-	}
-	return plan;
-    }
-
-    throw std::runtime_error("unknown animation preset '" + preset + "'");
+    PresetSettings settings = parse_preset_settings(interp, config);
+    PresetSceneFacts facts = query_preset_scene(settings);
+    return plan_animation_preset(settings, facts);
 }
 
 static int
@@ -1072,11 +946,11 @@ animation_json_cmd(ClientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv
 
 	    if (!look.empty()) {
 		std::vector<double> direction = {look[0]-eye[0], look[1]-eye[1], look[2]-eye[2]};
-		normalize_vector(direction, "camera viewing direction");
-		orient = look_at_quaternion(direction, up);
+		normalize_animation_vector(direction, "camera viewing direction");
+		orient = animation_look_at_quaternion(direction, up);
 	    }
 
-	    AnimationFrame frame = base_frame(time, viewsize, orient, eye, perspective);
+	    AnimationFrame frame = make_animation_frame(time, viewsize, orient, eye, perspective);
 	    frame.cut_plane = std::move(cut);
 	    frame.operations = std::move(operations);
 	    plan.frames.push_back(std::move(frame));
