@@ -71,46 +71,6 @@ proc rtimage_exec_log {cmd log_file {objects {}} {anim_commands {}}} {
     }
 }
 
-proc rtimage_bounds_center {dbfile objects} {
-    foreach {xmin xmax} [rtwizard_cut_bounds $dbfile {1 0 0} {*}$objects] break
-    foreach {ymin ymax} [rtwizard_cut_bounds $dbfile {0 1 0} {*}$objects] break
-    foreach {zmin zmax} [rtwizard_cut_bounds $dbfile {0 0 1} {*}$objects] break
-    return [list [expr {($xmin+$xmax)/2.0}] [expr {($ymin+$ymax)/2.0}] [expr {($zmin+$zmax)/2.0}]]
-}
-
-proc rtimage_rotate_vector {v axis angle_degrees} {
-    set a [vunitize $axis]
-    set r [expr {$angle_degrees * acos(-1.0) / 180.0}]
-    set c [expr {cos($r)}]
-    set s [expr {sin($r)}]
-    set dot [expr {[lindex $a 0]*[lindex $v 0]+[lindex $a 1]*[lindex $v 1]+[lindex $a 2]*[lindex $v 2]}]
-    set cross [list \
-	[expr {[lindex $a 1]*[lindex $v 2]-[lindex $a 2]*[lindex $v 1]}] \
-	[expr {[lindex $a 2]*[lindex $v 0]-[lindex $a 0]*[lindex $v 2]}] \
-	[expr {[lindex $a 0]*[lindex $v 1]-[lindex $a 1]*[lindex $v 0]}]]
-    return [list \
-	[expr {[lindex $v 0]*$c+[lindex $cross 0]*$s+[lindex $a 0]*$dot*(1.0-$c)}] \
-	[expr {[lindex $v 1]*$c+[lindex $cross 1]*$s+[lindex $a 1]*$dot*(1.0-$c)}] \
-	[expr {[lindex $v 2]*$c+[lindex $cross 2]*$s+[lindex $a 2]*$dot*(1.0-$c)}]]
-}
-
-proc rtimage_lookat_quat {direction {up {}}} {
-    set forward [vunitize $direction]
-    if {![llength $up]} { return [quat_mat2quat [mat_lookat $forward 0]] }
-    set right [vcross $forward [vunitize $up]]
-    if {[magnitude $right] < 1.0e-12} {
-	return [quat_mat2quat [mat_lookat $forward 0]]
-    }
-    set right [vunitize $right]
-    set camera_up [vcross $right $forward]
-    set m [list \
-	[lindex $right 0] [lindex $right 1] [lindex $right 2] 0 \
-	[lindex $camera_up 0] [lindex $camera_up 1] [lindex $camera_up 2] 0 \
-	[expr {-[lindex $forward 0]}] [expr {-[lindex $forward 1]}] [expr {-[lindex $forward 2]}] 0 \
-	0 0 0 1]
-    return [quat_mat2quat $m]
-}
-
 proc rtimage_frame_signature {rtimage_dict plan} {
     set dbfile [dict get $rtimage_dict _dbfile]
     set database [list [file normalize $dbfile] [file size $dbfile] \
@@ -155,134 +115,21 @@ proc rtimage_preset_plan {rtimage_dict} {
     }
     set preset [expr {[info exists ::RtWizard::wizard_state(animation_preset)] ?
 	$::RtWizard::wizard_state(animation_preset) : "cut"}]
-    set fps $::RtWizard::wizard_state(animation_fps)
-    set duration $::RtWizard::wizard_state(animation_duration)
-    set frame_count $::RtWizard::wizard_state(animation_frames)
-    set cyclic [expr {$preset in {orbit turntable} &&
-	abs($::RtWizard::wizard_state(${preset}_angle)) >= 360.0}]
-    if {[info exists ::RtWizard::wizard_state(animation_cyclic)] &&
-	$::RtWizard::wizard_state(animation_cyclic) >= 0} {
-	set cyclic $::RtWizard::wizard_state(animation_cyclic)
-    }
-    if {$frame_count < 2} { set frame_count [expr {round($duration*$fps) + ($cyclic ? 0 : 1)}] }
-    if {$frame_count < 2} { return -code error "rtwizard: animation requires at least two frames" }
-    set plays $::RtWizard::wizard_state(animation_plays)
-    if {$plays < 0} { set plays [expr {$cyclic ? 0 : 1}] }
-    set frames {}
-
-    if {$preset eq "cut"} {
-      if {[info exists ::RtWizard::wizard_state(cut_steps)] && $::RtWizard::wizard_state(cut_steps) >= 2} {
-	set frame_count $::RtWizard::wizard_state(cut_steps)
-      }
-
-      if {[info exists ::RtWizard::wizard_state(cut_direction)] &&
-	[string trim $::RtWizard::wizard_state(cut_direction)] ne ""} {
-	if {[catch {set cut_dir [vunitize $::RtWizard::wizard_state(cut_direction)]}]} {
-	    return -code error "rtwizard: cutting direction must be a non-zero XYZ vector"
+    set config [dict create database $_dbfile objects $anim_objects preset $preset \
+	width $_w height $_n viewsize $_viewsize orientation $_orientation eye $_eye_pt \
+	perspective $_perspective duration $::RtWizard::wizard_state(animation_duration) \
+	fps $::RtWizard::wizard_state(animation_fps) frames $::RtWizard::wizard_state(animation_frames) \
+	plays $::RtWizard::wizard_state(animation_plays) cyclic $::RtWizard::wizard_state(animation_cyclic) \
+	cut_steps [expr {[info exists ::RtWizard::wizard_state(cut_steps)] ? $::RtWizard::wizard_state(cut_steps) : 0}] \
+	orbit_angle $::RtWizard::wizard_state(orbit_angle) orbit_axis $::RtWizard::wizard_state(orbit_axis) \
+	turntable_object [expr {[info exists ::RtWizard::wizard_state(turntable_object)] ? $::RtWizard::wizard_state(turntable_object) : ""}] \
+	turntable_angle $::RtWizard::wizard_state(turntable_angle) turntable_axis $::RtWizard::wizard_state(turntable_axis)]
+    foreach optional {cut_direction orbit_center orbit_elevation orbit_radius turntable_center} {
+	if {[info exists ::RtWizard::wizard_state($optional)]} {
+	    dict set config $optional $::RtWizard::wizard_state($optional)
 	}
-    } else {
-	set omat [quat_quat2mat $_orientation]
-	set cut_dir [vunitize [list [expr {-[lindex $omat 8]}] \
-	    [expr {-[lindex $omat 9]}] [expr {-[lindex $omat 10]}]]]
     }
-
-      set sweep_bounds [rtwizard_cut_bounds $_dbfile $cut_dir {*}$anim_objects]
-    set sweep_min [lindex $sweep_bounds 0]
-    set sweep_max [lindex $sweep_bounds 1]
-    set sweep_span [expr {$sweep_max - $sweep_min}]
-    if {$sweep_span <= 0.0} {
-	return -code error "rtwizard: rendered objects have degenerate cutting-plane bounds"
-    }
-    # Keep the terminal slice large enough to survive rasterization while
-    # remaining approximately one output-pixel fraction of the sweep.
-    set sweep_eps [expr {max(abs($sweep_span) / double(max($_w, $_n)),
-	abs($sweep_span) * 0.05, 1.0e-9)}]
-    set sweep_first [expr {$sweep_min - $sweep_eps}]
-    set sweep_last [expr {$sweep_max - $sweep_eps}]
-      for {set frame_no 0} {$frame_no < $frame_count} {incr frame_no} {
-	set fraction [expr {double($frame_no) / double($frame_count - 1)}]
-	set plane_dist [expr {$sweep_first + $fraction * ($sweep_last - $sweep_first)}]
-	set plane_pt [vscale $cut_dir $plane_dist]
-	lappend frames [dict create time [expr {$duration*$fraction}] \
-	    viewsize $_viewsize orientation $_orientation eye_pt $_eye_pt perspective $_perspective \
-	    cut_plane [format "%.15g,%.15g,%.15g,%.15g,%.15g,%.15g" \
-		[lindex $plane_pt 0] [lindex $plane_pt 1] [lindex $plane_pt 2] \
-		[lindex $cut_dir 0] [lindex $cut_dir 1] [lindex $cut_dir 2]] anim_commands {}]
-      }
-    } elseif {$preset eq "orbit"} {
-      set axis [vunitize $::RtWizard::wizard_state(orbit_axis)]
-      if {[info exists ::RtWizard::wizard_state(orbit_center)]} {
-	set center $::RtWizard::wizard_state(orbit_center)
-      } else {
-	set center [rtimage_bounds_center $_dbfile $anim_objects]
-      }
-      set radial [list [expr {[lindex $_eye_pt 0]-[lindex $center 0]}] \
-	[expr {[lindex $_eye_pt 1]-[lindex $center 1]}] [expr {[lindex $_eye_pt 2]-[lindex $center 2]}]]
-      set radius [magnitude $radial]
-	if {$radius < 1.0e-12} {
-	    if {abs([lindex $axis 2]) < 0.9} { set reference {0 0 1} } else { set reference {1 0 0} }
-	    set radius $_viewsize
-	    set radial [vscale [vunitize [vcross $axis $reference]] $radius]
-	}
-      if {[info exists ::RtWizard::wizard_state(orbit_radius)]} {
-	set radius $::RtWizard::wizard_state(orbit_radius)
-	set radial [vscale [vunitize $radial] $radius]
-      }
-      if {[info exists ::RtWizard::wizard_state(orbit_elevation)]} {
-	set elev [expr {$::RtWizard::wizard_state(orbit_elevation)*acos(-1.0)/180.0}]
-	set along [expr {[lindex $radial 0]*[lindex $axis 0]+[lindex $radial 1]*[lindex $axis 1]+[lindex $radial 2]*[lindex $axis 2]}]
-	set plane [list [expr {[lindex $radial 0]-$along*[lindex $axis 0]}] \
-	    [expr {[lindex $radial 1]-$along*[lindex $axis 1]}] [expr {[lindex $radial 2]-$along*[lindex $axis 2]}]]
-	if {[magnitude $plane] < 1.0e-12} {
-	    if {abs([lindex $axis 2]) < 0.9} { set reference {0 0 1} } else { set reference {1 0 0} }
-	    set plane [vcross $axis $reference]
-	}
-	set radial [vadd2 [vscale [vunitize $plane] [expr {$radius*cos($elev)}]] \
-	    [vscale $axis [expr {$radius*sin($elev)}]]]
-      }
-      for {set frame_no 0} {$frame_no < $frame_count} {incr frame_no} {
-	set fraction [expr {double($frame_no) / double($cyclic ? $frame_count : $frame_count-1)}]
-	set rv [rtimage_rotate_vector $radial $axis [expr {$fraction*$::RtWizard::wizard_state(orbit_angle)}]]
-	set eye [vadd2 $center $rv]
-	set dir [vunitize [list [expr {[lindex $center 0]-[lindex $eye 0]}] \
-	    [expr {[lindex $center 1]-[lindex $eye 1]}] [expr {[lindex $center 2]-[lindex $eye 2]}]]]
-	set q [rtimage_lookat_quat $dir $axis]
-	lappend frames [dict create time [expr {$duration*$fraction}] viewsize $_viewsize \
-	    orientation $q eye_pt $eye perspective $_perspective cut_plane "" anim_commands {}]
-      }
-    } elseif {$preset eq "turntable"} {
-      set axis [vunitize $::RtWizard::wizard_state(turntable_axis)]
-	if {[regexp {[[:space:];]} $::RtWizard::wizard_state(turntable_object)]} {
-	    return -code error "rtwizard: turntable object paths may not contain whitespace or semicolons"
-	}
-	set turntable_path $::RtWizard::wizard_state(turntable_object)
-	if {[string first "/" $turntable_path] < 0} { set turntable_path "/$turntable_path" }
-      if {[info exists ::RtWizard::wizard_state(turntable_center)]} {
-	set center $::RtWizard::wizard_state(turntable_center)
-      } else {
-	set center [rtimage_bounds_center $_dbfile [list $::RtWizard::wizard_state(turntable_object)]]
-      }
-      foreach {x y z} $axis break
-      foreach {px py pz} $center break
-      for {set frame_no 0} {$frame_no < $frame_count} {incr frame_no} {
-	set fraction [expr {double($frame_no) / double($cyclic ? $frame_count : $frame_count-1)}]
-	set a [expr {$fraction*$::RtWizard::wizard_state(turntable_angle)*acos(-1.0)/180.0}]
-	set c [expr {cos($a)}]; set s [expr {sin($a)}]; set m [expr {1.0-$c}]
-	set r00 [expr {$c+$x*$x*$m}]; set r01 [expr {$x*$y*$m-$z*$s}]; set r02 [expr {$x*$z*$m+$y*$s}]
-	set r10 [expr {$y*$x*$m+$z*$s}]; set r11 [expr {$c+$y*$y*$m}]; set r12 [expr {$y*$z*$m-$x*$s}]
-	set r20 [expr {$z*$x*$m-$y*$s}]; set r21 [expr {$z*$y*$m+$x*$s}]; set r22 [expr {$c+$z*$z*$m}]
-	set tx [expr {$px-($r00*$px+$r01*$py+$r02*$pz)}]
-	set ty [expr {$py-($r10*$px+$r11*$py+$r12*$pz)}]
-	set tz [expr {$pz-($r20*$px+$r21*$py+$r22*$pz)}]
-	set cmd [format "anim %s matrix lmul %.17g %.17g %.17g %.17g %.17g %.17g %.17g %.17g %.17g %.17g %.17g %.17g 0 0 0 1" \
-	    $turntable_path $r00 $r01 $r02 $tx $r10 $r11 $r12 $ty $r20 $r21 $r22 $tz]
-	lappend frames [dict create time [expr {$duration*$fraction}] viewsize $_viewsize \
-	    orientation $_orientation eye_pt $_eye_pt perspective $_perspective cut_plane "" anim_commands [list $cmd]]
-      }
-    } else {
-      return -code error "rtwizard: unknown animation preset '$preset'"
-    }
-    return [dict create duration $duration fps $fps cyclic $cyclic plays $plays frames $frames]
+    return [rtwizard_animation_preset $config]
 }
 
 proc rtimage_animation {rtimage_dict} {

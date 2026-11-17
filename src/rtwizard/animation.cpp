@@ -28,11 +28,13 @@
 #include "vmath.h"
 #include "bn/mat.h"
 #include "bn/qmath.h"
+#include "bv/vlist.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/process.h"
 #include "bu/str.h"
 #include "bu/units.h"
+#include "raytrace.h"
 
 #include "../libbu/json.hpp"
 #include "animation.h"
@@ -54,6 +56,261 @@ struct CompiledTrack {
     std::string type;
     std::map<std::string, std::vector<JKey>> keys;
     std::map<std::string, std::string> interpolation;
+};
+
+enum class DatabaseOperationType {
+    Transform,
+    Material,
+    Color,
+    Temperature
+};
+
+struct DatabaseOperation {
+    DatabaseOperationType type;
+    std::string path;
+    std::string action;
+    std::vector<double> values;
+    std::string text;
+};
+
+struct AnimationFrame {
+    double time = 0.0;
+    double viewsize = 0.0;
+    std::vector<double> orientation;
+    std::vector<double> eye;
+    double perspective = 0.0;
+    std::string cut_plane;
+    std::vector<DatabaseOperation> operations;
+};
+
+struct AnimationPlan {
+    double duration = 0.0;
+    int fps = 0;
+    bool cyclic = false;
+    int plays = 0;
+    std::vector<AnimationFrame> frames;
+};
+
+struct SceneBounds {
+    point_t minimum;
+    point_t maximum;
+};
+
+struct BoundData {
+    point_t minimum;
+    point_t maximum;
+    bool have_bounds = false;
+    bool error = false;
+};
+
+static union tree *
+scene_bound_leaf(struct db_tree_state *tsp, const struct db_full_path *, struct rt_db_internal *ip, void *client_data)
+{
+    BoundData *data = static_cast<BoundData *>(client_data);
+    point_t minimum, maximum;
+    int status = -1;
+    union tree *tree;
+    struct soltab *solid;
+    struct soltab solid_initial = RT_SOLTAB_INIT_ZERO;
+
+    VSETALL(minimum, INFINITY);
+    VSETALL(maximum, -INFINITY);
+    if (ip->idb_meth->ft_bbox)
+	status = ip->idb_meth->ft_bbox(ip, &minimum, &maximum, tsp->ts_tol);
+    if (status < 0 && ip->idb_meth->ft_plot) {
+	struct bu_list vhead;
+	BU_LIST_INIT(&vhead);
+	if (ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol, tsp->ts_tol, NULL) >= 0 &&
+	    bv_vlist_bbox(&vhead, &minimum, &maximum, NULL, NULL) == 0)
+	    status = 0;
+    }
+    if (status < 0) {
+	data->error = true;
+	return TREE_NULL;
+    }
+
+    BU_GET(solid, struct soltab);
+    *solid = solid_initial;
+    solid->l.magic = RT_SOLTAB_MAGIC;
+    solid->l2.magic = RT_SOLTAB2_MAGIC;
+    solid->st_aradius = 1.0;
+    VMOVE(solid->st_min, minimum);
+    VMOVE(solid->st_max, maximum);
+
+    BU_GET(tree, union tree);
+    RT_TREE_INIT(tree);
+    tree->tr_op = OP_SOLID;
+    tree->tr_a.tu_stp = solid;
+    return tree;
+}
+
+static int
+scene_bound_tree(const union tree *tree, point_t minimum, point_t maximum)
+{
+    point_t right_minimum, right_maximum;
+
+    VSETALL(minimum, INFINITY);
+    VSETALL(maximum, -INFINITY);
+    VSETALL(right_minimum, INFINITY);
+    VSETALL(right_maximum, -INFINITY);
+    if (!tree) return -1;
+
+    switch (tree->tr_op) {
+	case OP_SOLID:
+	    VMOVE(minimum, tree->tr_a.tu_stp->st_min);
+	    VMOVE(maximum, tree->tr_a.tu_stp->st_max);
+	    return 0;
+	case OP_UNION:
+	case OP_XOR:
+	    if (scene_bound_tree(tree->tr_b.tb_left, minimum, maximum) < 0 ||
+		scene_bound_tree(tree->tr_b.tb_right, right_minimum, right_maximum) < 0) return -1;
+	    VMIN(minimum, right_minimum);
+	    VMAX(maximum, right_maximum);
+	    return 0;
+	case OP_INTERSECT:
+	    if (scene_bound_tree(tree->tr_b.tb_left, minimum, maximum) < 0 ||
+		scene_bound_tree(tree->tr_b.tb_right, right_minimum, right_maximum) < 0) return -1;
+	    VMAX(minimum, right_minimum);
+	    VMIN(maximum, right_maximum);
+	    return 0;
+	case OP_SUBTRACT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    return scene_bound_tree(tree->tr_b.tb_left, minimum, maximum);
+	case OP_NOT:
+	    VSETALL(minimum, -INFINITY);
+	    VSETALL(maximum, INFINITY);
+	    return 0;
+	default:
+	    return -1;
+    }
+}
+
+static void
+scene_bound_tree_clear(union tree *tree, bool keep_root)
+{
+    if (!tree) return;
+    switch (tree->tr_op) {
+	case OP_SOLID:
+	    if (tree->tr_a.tu_stp) BU_PUT(tree->tr_a.tu_stp, struct soltab);
+	    break;
+	case OP_UNION:
+	case OP_XOR:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	    scene_bound_tree_clear(tree->tr_b.tb_left, false);
+	    scene_bound_tree_clear(tree->tr_b.tb_right, false);
+	    break;
+	case OP_GUARD:
+	case OP_XNOP:
+	case OP_NOT:
+	    scene_bound_tree_clear(tree->tr_b.tb_left, false);
+	    break;
+	default:
+	    break;
+    }
+    if (keep_root) {
+	RT_TREE_INIT(tree);
+	tree->tr_op = OP_NOP;
+    } else {
+	BU_PUT(tree, union tree);
+    }
+}
+
+static union tree *
+scene_bound_region_end(struct db_tree_state *, const struct db_full_path *, union tree *tree, void *client_data)
+{
+    BoundData *data = static_cast<BoundData *>(client_data);
+    point_t minimum, maximum;
+    if (scene_bound_tree(tree, minimum, maximum) == 0) {
+	if (!data->have_bounds) {
+	    VMOVE(data->minimum, minimum);
+	    VMOVE(data->maximum, maximum);
+	    data->have_bounds = true;
+	} else {
+	    VMIN(data->minimum, minimum);
+	    VMAX(data->maximum, maximum);
+	}
+    }
+    scene_bound_tree_clear(tree, true);
+    return tree;
+}
+
+class SceneQuery {
+public:
+    explicit SceneQuery(const std::string &database)
+    {
+	database_ = db_open(database.c_str(), DB_OPEN_READONLY);
+	if (!database_ || db_dirbuild(database_) < 0) {
+	    if (database_) db_close(database_);
+	    database_ = nullptr;
+	    throw std::runtime_error("unable to open geometry database for animation planning");
+	}
+    }
+
+    ~SceneQuery()
+    {
+	if (database_) db_close(database_);
+    }
+
+    SceneQuery(const SceneQuery &) = delete;
+    SceneQuery &operator=(const SceneQuery &) = delete;
+
+    SceneBounds bounds(const std::vector<std::string> &objects) const
+    {
+	mat_t identity;
+	MAT_IDN(identity);
+	return transformed_bounds(objects, identity);
+    }
+
+    std::pair<double, double> projected_bounds(const std::vector<std::string> &objects, const std::vector<double> &direction) const
+    {
+	vect_t axis = {direction[0], direction[1], direction[2]};
+	vect_t reference, xaxis, yaxis;
+	mat_t rotation;
+	if (MAGNITUDE(axis) <= SQRT_SMALL_FASTF) throw std::runtime_error("cutting direction must be nonzero");
+	VUNITIZE(axis);
+	if (std::fabs(axis[Z]) < 0.9) VSET(reference, 0.0, 0.0, 1.0);
+	else VSET(reference, 0.0, 1.0, 0.0);
+	VCROSS(xaxis, reference, axis);
+	VUNITIZE(xaxis);
+	VCROSS(yaxis, axis, xaxis);
+	VUNITIZE(yaxis);
+	MAT_IDN(rotation);
+	VMOVE(&rotation[0], xaxis);
+	VMOVE(&rotation[4], yaxis);
+	VMOVE(&rotation[8], axis);
+	SceneBounds result = transformed_bounds(objects, rotation);
+	return {result.minimum[Z], result.maximum[Z]};
+    }
+
+private:
+    SceneBounds transformed_bounds(const std::vector<std::string> &objects, const mat_t transform) const
+    {
+	if (objects.empty()) throw std::runtime_error("animation planning requires at least one object");
+	struct db_tree_state tree_state = RT_DBTS_INIT_IDN;
+	struct bg_tess_tol tess_tol = BG_TESS_TOL_INIT_ZERO;
+	struct bn_tol tolerance = BN_TOL_INIT_TOL;
+	BoundData data;
+	std::vector<const char *> names;
+	for (const std::string &object : objects) names.push_back(object.c_str());
+	tree_state.ts_dbip = database_;
+	tree_state.ts_ttol = &tess_tol;
+	tree_state.ts_tol = &tolerance;
+	MAT_COPY(tree_state.ts_mat, transform);
+	int status = db_walk_tree(database_, (int)names.size(), names.data(), 1, &tree_state, NULL,
+		scene_bound_region_end, scene_bound_leaf, &data);
+	if (status < 0 || data.error || !data.have_bounds ||
+	    !std::isfinite(data.minimum[X]) || !std::isfinite(data.minimum[Y]) || !std::isfinite(data.minimum[Z]) ||
+	    !std::isfinite(data.maximum[X]) || !std::isfinite(data.maximum[Y]) || !std::isfinite(data.maximum[Z]))
+	    throw std::runtime_error("animation planning requires finite rendered-object bounds");
+	SceneBounds result;
+	VMOVE(result.minimum, data.minimum);
+	VMOVE(result.maximum, data.maximum);
+	return result;
+    }
+
+    struct db_i *database_ = nullptr;
 };
 
 static bool
@@ -422,8 +679,8 @@ material_string(const json &value)
     return ss.str();
 }
 
-static std::string
-matrix_command(const CompiledTrack &track, double t, double local2base)
+static DatabaseOperation
+matrix_operation(const CompiledTrack &track, double t, double local2base)
 {
     const json &definition = track.definition;
     std::string path = command_path(definition, "transform");
@@ -473,15 +730,16 @@ matrix_command(const CompiledTrack &track, double t, double local2base)
 	mat[3] += tr[0]*local2base; mat[7] += tr[1]*local2base; mat[11] += tr[2]*local2base;
     }
 
-    std::ostringstream ss;
-    ss.precision(17);
-    ss << "anim " << path << " matrix " << op;
-    for (int i = 0; i < 16; ++i) ss << ' ' << mat[i];
-    return ss.str();
+    DatabaseOperation operation;
+    operation.type = DatabaseOperationType::Transform;
+    operation.path = std::move(path);
+    operation.action = std::move(op);
+    operation.values.assign(mat, mat + 16);
+    return operation;
 }
 
-static std::string
-value_command(const CompiledTrack &track, double t)
+static DatabaseOperation
+value_operation(const CompiledTrack &track, double t)
 {
     const json &definition = track.definition;
     const std::string &type = track.type;
@@ -495,20 +753,22 @@ value_command(const CompiledTrack &track, double t)
     }
     if (keys->empty()) throw std::runtime_error(type + " track has no values");
 
-    std::ostringstream ss;
-    ss.precision(17);
+    DatabaseOperation operation;
+    operation.path = std::move(path);
     if (type == "color") {
 	json v = evaluate_keys(*keys, t, track_interpolation(track, interpolation_property));
 	std::vector<double> rgb = number_array(v, 3, "color");
-	ss << "anim " << path << " color";
-	for (double c : rgb) {
-	    if (c < 0.0 || c > 255.0) throw std::runtime_error("color channels must be in [0,255]");
-	    ss << ' ' << (int)std::lround(c);
+	operation.type = DatabaseOperationType::Color;
+	for (double &component : rgb) {
+	    if (component < 0.0 || component > 255.0) throw std::runtime_error("color channels must be in [0,255]");
+	    component = (double)std::lround(component);
 	}
+	operation.values = std::move(rgb);
     } else if (type == "temperature") {
 	json v = evaluate_keys(*keys, t, track_interpolation(track, interpolation_property));
 	if (!finite_number(v)) throw std::runtime_error("temperature must be numeric");
-	ss << "anim " << path << " temperature " << v.get<double>();
+	operation.type = DatabaseOperationType::Temperature;
+	operation.values.push_back(v.get<double>());
     } else {
 	json v = evaluate_keys(*keys, t, "step");
 	std::string op = definition.value("operation", "replace");
@@ -516,9 +776,395 @@ value_command(const CompiledTrack &track, double t)
 	std::string material = material_string(v);
 	if (material.find(';') != std::string::npos || material.find('\n') != std::string::npos || material.find('\r') != std::string::npos)
 	    throw std::runtime_error("material value may not contain command separators");
-	ss << "anim " << path << " material " << op << ' ' << material;
+	operation.type = DatabaseOperationType::Material;
+	operation.action = std::move(op);
+	operation.text = std::move(material);
     }
-    return ss.str();
+    return operation;
+}
+
+static std::string
+operation_command(const DatabaseOperation &operation)
+{
+    std::ostringstream command;
+    command.precision(17);
+    command << "anim " << operation.path;
+    switch (operation.type) {
+	case DatabaseOperationType::Transform:
+	    command << " matrix " << operation.action;
+	    for (double value : operation.values) command << ' ' << value;
+	    break;
+	case DatabaseOperationType::Material:
+	    command << " material " << operation.action << ' ' << operation.text;
+	    break;
+	case DatabaseOperationType::Color:
+	    command << " color";
+	    for (double value : operation.values) command << ' ' << (int)value;
+	    break;
+	case DatabaseOperationType::Temperature:
+	    command << " temperature " << operation.values.front();
+	    break;
+    }
+    return command.str();
+}
+
+static Tcl_Obj *
+animation_plan_obj(Tcl_Interp *interp, const AnimationPlan &plan)
+{
+    Tcl_Obj *frames = Tcl_NewListObj(0, NULL);
+    for (const AnimationFrame &frame : plan.frames) {
+	Tcl_Obj *frame_dict = Tcl_NewDictObj();
+	dict_put(interp, frame_dict, "time", Tcl_NewDoubleObj(frame.time));
+	dict_put(interp, frame_dict, "viewsize", Tcl_NewDoubleObj(frame.viewsize));
+	dict_put(interp, frame_dict, "orientation", tcl_vec(frame.orientation));
+	dict_put(interp, frame_dict, "eye_pt", tcl_vec(frame.eye));
+	dict_put(interp, frame_dict, "perspective", Tcl_NewDoubleObj(frame.perspective));
+	dict_put(interp, frame_dict, "cut_plane", Tcl_NewStringObj(frame.cut_plane.c_str(), -1));
+	Tcl_Obj *commands = Tcl_NewListObj(0, NULL);
+	for (const DatabaseOperation &operation : frame.operations) {
+	    std::string command = operation_command(operation);
+	    Tcl_ListObjAppendElement(interp, commands, Tcl_NewStringObj(command.c_str(), -1));
+	}
+	dict_put(interp, frame_dict, "anim_commands", commands);
+	Tcl_ListObjAppendElement(interp, frames, frame_dict);
+    }
+    Tcl_Obj *result = Tcl_NewDictObj();
+    dict_put(interp, result, "duration", Tcl_NewDoubleObj(plan.duration));
+    dict_put(interp, result, "fps", Tcl_NewIntObj(plan.fps));
+    dict_put(interp, result, "cyclic", Tcl_NewBooleanObj(plan.cyclic));
+    dict_put(interp, result, "plays", Tcl_NewIntObj(plan.plays));
+    dict_put(interp, result, "frames", frames);
+    return result;
+}
+
+static Tcl_Obj *
+config_value(Tcl_Interp *interp, Tcl_Obj *config, const char *key, bool required = true)
+{
+    Tcl_Obj *value = NULL;
+    Tcl_Obj *key_object = Tcl_NewStringObj(key, -1);
+    Tcl_IncrRefCount(key_object);
+    int status = Tcl_DictObjGet(interp, config, key_object, &value);
+    Tcl_DecrRefCount(key_object);
+    if (status != TCL_OK)
+	throw std::runtime_error("animation preset configuration must be a dictionary");
+    if (!value && required) throw std::runtime_error(std::string("animation preset configuration is missing '") + key + "'");
+    return value;
+}
+
+static double
+config_double(Tcl_Interp *interp, Tcl_Obj *config, const char *key)
+{
+    double value;
+    if (Tcl_GetDoubleFromObj(interp, config_value(interp, config, key), &value) != TCL_OK || !std::isfinite(value))
+	throw std::runtime_error(std::string("animation preset '") + key + "' must be finite");
+    return value;
+}
+
+static int
+config_int(Tcl_Interp *interp, Tcl_Obj *config, const char *key)
+{
+    int value;
+    if (Tcl_GetIntFromObj(interp, config_value(interp, config, key), &value) != TCL_OK)
+	throw std::runtime_error(std::string("animation preset '") + key + "' must be an integer");
+    return value;
+}
+
+static std::string
+config_string(Tcl_Interp *interp, Tcl_Obj *config, const char *key)
+{
+    return Tcl_GetString(config_value(interp, config, key));
+}
+
+static std::vector<double>
+tcl_number_list(Tcl_Interp *interp, Tcl_Obj *value, size_t count, const std::string &where)
+{
+    int object_count = 0;
+    Tcl_Obj **objects = NULL;
+    if (Tcl_ListObjGetElements(interp, value, &object_count, &objects) != TCL_OK || object_count != (int)count)
+	throw std::runtime_error(where + " must contain " + std::to_string(count) + " numbers");
+    std::vector<double> result(count);
+    for (size_t i = 0; i < count; ++i) {
+	if (Tcl_GetDoubleFromObj(interp, objects[i], &result[i]) != TCL_OK || !std::isfinite(result[i]))
+	    throw std::runtime_error(where + " must contain finite numbers");
+    }
+    return result;
+}
+
+static std::vector<double>
+config_vector(Tcl_Interp *interp, Tcl_Obj *config, const char *key, size_t count)
+{
+    return tcl_number_list(interp, config_value(interp, config, key), count, std::string("animation preset '") + key + "'");
+}
+
+static std::vector<std::string>
+config_strings(Tcl_Interp *interp, Tcl_Obj *config, const char *key)
+{
+    Tcl_Obj *value = config_value(interp, config, key);
+    int object_count = 0;
+    Tcl_Obj **objects = NULL;
+    if (Tcl_ListObjGetElements(interp, value, &object_count, &objects) != TCL_OK)
+	throw std::runtime_error(std::string("animation preset '") + key + "' must be a list");
+    std::vector<std::string> result;
+    result.reserve((size_t)object_count);
+    for (int i = 0; i < object_count; ++i) result.emplace_back(Tcl_GetString(objects[i]));
+    return result;
+}
+
+static void
+normalize_vector(std::vector<double> &vector, const std::string &where)
+{
+    double magnitude = std::sqrt(vector[0]*vector[0] + vector[1]*vector[1] + vector[2]*vector[2]);
+    if (!(magnitude > 1.0e-12)) throw std::runtime_error(where + " must be nonzero");
+    for (double &component : vector) component /= magnitude;
+}
+
+static std::vector<double>
+rotate_vector(const std::vector<double> &vector, const std::vector<double> &axis, double degrees)
+{
+    double radians = degrees * DEG2RAD;
+    double cosine = std::cos(radians);
+    double sine = std::sin(radians);
+    double dot = axis[0]*vector[0] + axis[1]*vector[1] + axis[2]*vector[2];
+    std::vector<double> cross = {
+	axis[1]*vector[2] - axis[2]*vector[1],
+	axis[2]*vector[0] - axis[0]*vector[2],
+	axis[0]*vector[1] - axis[1]*vector[0]
+    };
+    return {
+	vector[0]*cosine + cross[0]*sine + axis[0]*dot*(1.0-cosine),
+	vector[1]*cosine + cross[1]*sine + axis[1]*dot*(1.0-cosine),
+	vector[2]*cosine + cross[2]*sine + axis[2]*dot*(1.0-cosine)
+    };
+}
+
+static std::vector<double>
+look_at_quaternion(const std::vector<double> &direction, const std::vector<double> &up)
+{
+    vect_t forward = {direction[0], direction[1], direction[2]};
+    vect_t right, camera_up;
+    mat_t matrix;
+    quat_t quaternion;
+    VUNITIZE(forward);
+    if (up.empty()) {
+	bn_mat_lookat(matrix, forward, 0);
+    } else {
+	vect_t up_vector = {up[0], up[1], up[2]};
+	if (MAGNITUDE(up_vector) <= SMALL_FASTF) throw std::runtime_error("camera up vector must be nonzero");
+	VUNITIZE(up_vector);
+	VCROSS(right, forward, up_vector);
+	if (MAGNITUDE(right) <= SMALL_FASTF) throw std::runtime_error("camera up vector is parallel to the viewing direction");
+	VUNITIZE(right);
+	VCROSS(camera_up, right, forward);
+	MAT_IDN(matrix);
+	VMOVE(&matrix[0], right);
+	VMOVE(&matrix[4], camera_up);
+	VREVERSE(&matrix[8], forward);
+    }
+    quat_mat2quat(quaternion, matrix);
+    return {quaternion[0], quaternion[1], quaternion[2], quaternion[3]};
+}
+
+static AnimationFrame
+base_frame(double time, double viewsize, const std::vector<double> &orientation,
+    const std::vector<double> &eye, double perspective)
+{
+    AnimationFrame frame;
+    frame.time = time;
+    frame.viewsize = viewsize;
+    frame.orientation = orientation;
+    frame.eye = eye;
+    frame.perspective = perspective;
+    return frame;
+}
+
+static AnimationPlan
+plan_preset(Tcl_Interp *interp, Tcl_Obj *config)
+{
+    std::string preset = config_string(interp, config, "preset");
+    double duration = config_double(interp, config, "duration");
+    int fps = config_int(interp, config, "fps");
+    int frame_count = config_int(interp, config, "frames");
+    int cyclic_override = config_int(interp, config, "cyclic");
+    int plays = config_int(interp, config, "plays");
+    double viewsize = config_double(interp, config, "viewsize");
+    double perspective = config_double(interp, config, "perspective");
+    std::vector<double> orientation = config_vector(interp, config, "orientation", 4);
+    std::vector<double> eye = config_vector(interp, config, "eye", 3);
+    std::vector<std::string> objects = config_strings(interp, config, "objects");
+    std::string database = config_string(interp, config, "database");
+    double angle = preset == "orbit" ? config_double(interp, config, "orbit_angle") :
+	(preset == "turntable" ? config_double(interp, config, "turntable_angle") : 0.0);
+    bool cyclic = (preset == "orbit" || preset == "turntable") && std::fabs(angle) >= 360.0;
+    if (cyclic_override >= 0) cyclic = cyclic_override != 0;
+    if (preset == "cut") {
+	int cut_steps = config_int(interp, config, "cut_steps");
+	if (cut_steps >= 2) frame_count = cut_steps;
+    }
+    if (frame_count < 2) frame_count = (int)std::llround(duration * fps) + (cyclic ? 0 : 1);
+    if (!(duration > 0.0) || fps <= 0 || frame_count < 2)
+	throw std::runtime_error("animation preset requires positive duration and fps and at least two frames");
+    if (plays < 0) plays = cyclic ? 0 : 1;
+
+    AnimationPlan plan;
+    plan.duration = duration;
+    plan.fps = fps;
+    plan.cyclic = cyclic;
+    plan.plays = plays;
+    plan.frames.reserve((size_t)frame_count);
+
+    if (preset == "cut") {
+	std::vector<double> direction;
+	Tcl_Obj *configured_direction = config_value(interp, config, "cut_direction", false);
+	if (configured_direction) {
+	    direction = tcl_number_list(interp, configured_direction, 3, "cut direction");
+	} else {
+	    quat_t quaternion = {orientation[0], orientation[1], orientation[2], orientation[3]};
+	    mat_t matrix;
+	    quat_quat2mat(matrix, quaternion);
+	    direction = {-matrix[8], -matrix[9], -matrix[10]};
+	}
+	normalize_vector(direction, "cut direction");
+	SceneQuery query(database);
+	std::pair<double, double> sweep = query.projected_bounds(objects, direction);
+	double span = sweep.second - sweep.first;
+	if (!(span > 0.0)) throw std::runtime_error("rendered objects have degenerate cutting-plane bounds");
+	int width = config_int(interp, config, "width");
+	int height = config_int(interp, config, "height");
+	double epsilon = std::max({std::fabs(span) / (double)std::max(width, height), std::fabs(span) * 0.05, 1.0e-9});
+	double first = sweep.first - epsilon;
+	double last = sweep.second - epsilon;
+	for (int frame_number = 0; frame_number < frame_count; ++frame_number) {
+	    double fraction = (double)frame_number / (double)(frame_count - 1);
+	    double distance = first + fraction * (last - first);
+	    AnimationFrame frame = base_frame(duration*fraction, viewsize, orientation, eye, perspective);
+	    std::ostringstream plane;
+	    plane.precision(15);
+	    plane << direction[0]*distance << ',' << direction[1]*distance << ',' << direction[2]*distance << ','
+		<< direction[0] << ',' << direction[1] << ',' << direction[2];
+	    frame.cut_plane = plane.str();
+	    plan.frames.push_back(std::move(frame));
+	}
+	return plan;
+    }
+
+    if (preset == "orbit") {
+	std::vector<double> axis = config_vector(interp, config, "orbit_axis", 3);
+	normalize_vector(axis, "orbit axis");
+	std::vector<double> center;
+	Tcl_Obj *configured_center = config_value(interp, config, "orbit_center", false);
+	if (configured_center) center = tcl_number_list(interp, configured_center, 3, "orbit center");
+	else {
+	    SceneQuery query(database);
+	    SceneBounds bounds = query.bounds(objects);
+	    center = {(bounds.minimum[X]+bounds.maximum[X])/2.0, (bounds.minimum[Y]+bounds.maximum[Y])/2.0,
+		(bounds.minimum[Z]+bounds.maximum[Z])/2.0};
+	}
+	std::vector<double> radial = {eye[0]-center[0], eye[1]-center[1], eye[2]-center[2]};
+	double radius = std::sqrt(radial[0]*radial[0] + radial[1]*radial[1] + radial[2]*radial[2]);
+	if (radius < 1.0e-12) {
+	    std::vector<double> reference = std::fabs(axis[2]) < 0.9 ? std::vector<double>{0,0,1} : std::vector<double>{1,0,0};
+	    radial = {axis[1]*reference[2]-axis[2]*reference[1], axis[2]*reference[0]-axis[0]*reference[2], axis[0]*reference[1]-axis[1]*reference[0]};
+	    normalize_vector(radial, "orbit radial direction");
+	    radius = viewsize;
+	    for (double &component : radial) component *= radius;
+	}
+	Tcl_Obj *configured_radius = config_value(interp, config, "orbit_radius", false);
+	if (configured_radius) {
+	    if (Tcl_GetDoubleFromObj(interp, configured_radius, &radius) != TCL_OK || !(radius > 0.0))
+		throw std::runtime_error("orbit radius must be positive");
+	    normalize_vector(radial, "orbit radial direction");
+	    for (double &component : radial) component *= radius;
+	}
+	Tcl_Obj *configured_elevation = config_value(interp, config, "orbit_elevation", false);
+	if (configured_elevation) {
+	    double elevation;
+	    if (Tcl_GetDoubleFromObj(interp, configured_elevation, &elevation) != TCL_OK || !std::isfinite(elevation))
+		throw std::runtime_error("orbit elevation must be finite");
+	    elevation *= DEG2RAD;
+	    double along = radial[0]*axis[0] + radial[1]*axis[1] + radial[2]*axis[2];
+	    std::vector<double> plane = {radial[0]-along*axis[0], radial[1]-along*axis[1], radial[2]-along*axis[2]};
+	    double plane_magnitude = std::sqrt(plane[0]*plane[0] + plane[1]*plane[1] + plane[2]*plane[2]);
+	    if (plane_magnitude < 1.0e-12) {
+		std::vector<double> reference = std::fabs(axis[2]) < 0.9 ? std::vector<double>{0,0,1} : std::vector<double>{1,0,0};
+		plane = {axis[1]*reference[2]-axis[2]*reference[1], axis[2]*reference[0]-axis[0]*reference[2], axis[0]*reference[1]-axis[1]*reference[0]};
+	    }
+	    normalize_vector(plane, "orbit plane");
+	    radial = {plane[0]*radius*std::cos(elevation)+axis[0]*radius*std::sin(elevation),
+		plane[1]*radius*std::cos(elevation)+axis[1]*radius*std::sin(elevation),
+		plane[2]*radius*std::cos(elevation)+axis[2]*radius*std::sin(elevation)};
+	}
+	for (int frame_number = 0; frame_number < frame_count; ++frame_number) {
+	    double fraction = (double)frame_number / (double)(cyclic ? frame_count : frame_count-1);
+	    std::vector<double> rotated = rotate_vector(radial, axis, fraction*angle);
+	    std::vector<double> frame_eye = {center[0]+rotated[0], center[1]+rotated[1], center[2]+rotated[2]};
+	    std::vector<double> direction = {center[0]-frame_eye[0], center[1]-frame_eye[1], center[2]-frame_eye[2]};
+	    normalize_vector(direction, "orbit viewing direction");
+	    std::vector<double> camera_up = axis;
+	    std::vector<double> right = {direction[1]*axis[2]-direction[2]*axis[1],
+		direction[2]*axis[0]-direction[0]*axis[2], direction[0]*axis[1]-direction[1]*axis[0]};
+	    if (std::sqrt(right[0]*right[0]+right[1]*right[1]+right[2]*right[2]) <= SMALL_FASTF) camera_up.clear();
+	    AnimationFrame frame = base_frame(duration*fraction, viewsize, look_at_quaternion(direction, camera_up), frame_eye, perspective);
+	    plan.frames.push_back(std::move(frame));
+	}
+	return plan;
+    }
+
+    if (preset == "turntable") {
+	std::vector<double> axis = config_vector(interp, config, "turntable_axis", 3);
+	normalize_vector(axis, "turntable axis");
+	std::string object = config_string(interp, config, "turntable_object");
+	if (object.empty() || object.find_first_of(";\r\n\t ") != std::string::npos)
+	    throw std::runtime_error("turntable object path may not contain whitespace or command separators");
+	std::vector<double> center;
+	Tcl_Obj *configured_center = config_value(interp, config, "turntable_center", false);
+	if (configured_center) center = tcl_number_list(interp, configured_center, 3, "turntable center");
+	else {
+	    SceneQuery query(database);
+	    SceneBounds bounds = query.bounds({object});
+	    center = {(bounds.minimum[X]+bounds.maximum[X])/2.0, (bounds.minimum[Y]+bounds.maximum[Y])/2.0,
+		(bounds.minimum[Z]+bounds.maximum[Z])/2.0};
+	}
+	if (object[0] != '/') object.insert(object.begin(), '/');
+	for (int frame_number = 0; frame_number < frame_count; ++frame_number) {
+	    double fraction = (double)frame_number / (double)(cyclic ? frame_count : frame_count-1);
+	    double radians = fraction * angle * DEG2RAD;
+	    double cosine = std::cos(radians), sine = std::sin(radians), remainder = 1.0-cosine;
+	    double x = axis[0], y = axis[1], z = axis[2];
+	    double r00=cosine+x*x*remainder, r01=x*y*remainder-z*sine, r02=x*z*remainder+y*sine;
+	    double r10=y*x*remainder+z*sine, r11=cosine+y*y*remainder, r12=y*z*remainder-x*sine;
+	    double r20=z*x*remainder-y*sine, r21=z*y*remainder+x*sine, r22=cosine+z*z*remainder;
+	    double tx=center[0]-(r00*center[0]+r01*center[1]+r02*center[2]);
+	    double ty=center[1]-(r10*center[0]+r11*center[1]+r12*center[2]);
+	    double tz=center[2]-(r20*center[0]+r21*center[1]+r22*center[2]);
+	    AnimationFrame frame = base_frame(duration*fraction, viewsize, orientation, eye, perspective);
+	    DatabaseOperation operation;
+	    operation.type = DatabaseOperationType::Transform;
+	    operation.path = object;
+	    operation.action = "lmul";
+	    operation.values = {r00, r01, r02, tx, r10, r11, r12, ty, r20, r21, r22, tz, 0, 0, 0, 1};
+	    frame.operations.push_back(std::move(operation));
+	    plan.frames.push_back(std::move(frame));
+	}
+	return plan;
+    }
+
+    throw std::runtime_error("unknown animation preset '" + preset + "'");
+}
+
+static int
+animation_preset_cmd(ClientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+{
+    if (objc != 2) {
+	Tcl_SetObjResult(interp, Tcl_NewStringObj("usage: rtwizard_animation_preset configuration_dict", -1));
+	return TCL_ERROR;
+    }
+    try {
+	Tcl_SetObjResult(interp, animation_plan_obj(interp, plan_preset(interp, objv[1])));
+	return TCL_OK;
+    } catch (const std::exception &exception) {
+	Tcl_SetObjResult(interp, Tcl_NewStringObj(exception.what(), -1));
+	return TCL_ERROR;
+    }
 }
 
 static int
@@ -603,7 +1249,12 @@ animation_json_cmd(ClientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv
 	for (const json &track : root["tracks"])
 	    tracks.push_back(compile_track(track, duration));
 
-	Tcl_Obj *frame_list = Tcl_NewListObj(0, NULL);
+	AnimationPlan plan;
+	plan.duration = duration;
+	plan.fps = fps;
+	plan.cyclic = cyclic;
+	plan.plays = plays;
+	plan.frames.reserve((size_t)frame_count);
 	for (int fi = 0; fi < frame_count; ++fi) {
 	    double denom = cyclic ? (double)frame_count : (double)(frame_count - 1);
 	    double time = duration * (double)fi / denom;
@@ -614,7 +1265,7 @@ animation_json_cmd(ClientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv
 	    double viewsize = base_viewsize;
 	    double perspective = base_perspective;
 	    std::string cut;
-	    std::vector<std::string> commands;
+	    std::vector<DatabaseOperation> operations;
 
 	    for (const CompiledTrack &track : tracks) {
 		const std::string &type = track.type;
@@ -665,59 +1316,26 @@ animation_json_cmd(ClientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv
 		       << n[0]/nm << ',' << n[1]/nm << ',' << n[2]/nm;
 		    cut = cs.str();
 		} else if (type == "transform") {
-		    commands.push_back(matrix_command(track, time, local2base));
+		    operations.push_back(matrix_operation(track, time, local2base));
 		} else if (type == "material" || type == "color" || type == "temperature") {
-		    commands.push_back(value_command(track, time));
+		    operations.push_back(value_operation(track, time));
 		} else {
 		    throw std::runtime_error("unknown animation track type '" + type + "'");
 		}
 	    }
 
 	    if (!look.empty()) {
-		vect_t dir = {look[0]-eye[0], look[1]-eye[1], look[2]-eye[2]};
-		if (MAGNITUDE(dir) <= SMALL_FASTF) throw std::runtime_error("camera eye and look_at point coincide");
-		VUNITIZE(dir);
-		mat_t m; quat_t q;
-		if (up.empty()) {
-		    bn_mat_lookat(m, dir, 0);
-		} else {
-		    vect_t upv = {up[0], up[1], up[2]};
-		    vect_t right, camera_up;
-		    if (MAGNITUDE(upv) <= SMALL_FASTF) throw std::runtime_error("camera up vector must be nonzero");
-		    VUNITIZE(upv);
-		    VCROSS(right, dir, upv);
-		    if (MAGNITUDE(right) <= SMALL_FASTF) throw std::runtime_error("camera up vector is parallel to the viewing direction");
-		    VUNITIZE(right);
-		    VCROSS(camera_up, right, dir);
-		    MAT_IDN(m);
-		    VMOVE(&m[0], right);
-		    VMOVE(&m[4], camera_up);
-		    VREVERSE(&m[8], dir);
-		}
-		quat_mat2quat(q, m);
-		orient = {q[0], q[1], q[2], q[3]};
+		std::vector<double> direction = {look[0]-eye[0], look[1]-eye[1], look[2]-eye[2]};
+		normalize_vector(direction, "camera viewing direction");
+		orient = look_at_quaternion(direction, up);
 	    }
 
-	    Tcl_Obj *fd = Tcl_NewDictObj();
-	    dict_put(interp, fd, "time", Tcl_NewDoubleObj(time));
-	    dict_put(interp, fd, "viewsize", Tcl_NewDoubleObj(viewsize));
-	    dict_put(interp, fd, "orientation", tcl_vec(orient));
-	    dict_put(interp, fd, "eye_pt", tcl_vec(eye));
-	    dict_put(interp, fd, "perspective", Tcl_NewDoubleObj(perspective));
-	    dict_put(interp, fd, "cut_plane", Tcl_NewStringObj(cut.c_str(), -1));
-	    Tcl_Obj *cl = Tcl_NewListObj(0, NULL);
-	    for (const std::string &c : commands)
-		Tcl_ListObjAppendElement(interp, cl, Tcl_NewStringObj(c.c_str(), -1));
-	    dict_put(interp, fd, "anim_commands", cl);
-	    Tcl_ListObjAppendElement(interp, frame_list, fd);
+	    AnimationFrame frame = base_frame(time, viewsize, orient, eye, perspective);
+	    frame.cut_plane = std::move(cut);
+	    frame.operations = std::move(operations);
+	    plan.frames.push_back(std::move(frame));
 	}
-	Tcl_Obj *result = Tcl_NewDictObj();
-	dict_put(interp, result, "duration", Tcl_NewDoubleObj(duration));
-	dict_put(interp, result, "fps", Tcl_NewIntObj(fps));
-	dict_put(interp, result, "cyclic", Tcl_NewBooleanObj(cyclic));
-	dict_put(interp, result, "plays", Tcl_NewIntObj(plays));
-	dict_put(interp, result, "frames", frame_list);
-	Tcl_SetObjResult(interp, result);
+	Tcl_SetObjResult(interp, animation_plan_obj(interp, plan));
 	return TCL_OK;
     } catch (const std::exception &e) {
 	Tcl_SetObjResult(interp, Tcl_NewStringObj(e.what(), -1));
@@ -855,6 +1473,7 @@ extern "C" void
 rtwizard_animation_init(Tcl_Interp *interp)
 {
     (void)Tcl_CreateObjCommand(interp, "rtwizard_animation_json", animation_json_cmd, NULL, NULL);
+    (void)Tcl_CreateObjCommand(interp, "rtwizard_animation_preset", animation_preset_cmd, NULL, NULL);
     (void)Tcl_CreateObjCommand(interp, "rtwizard_save_view_keyframe", save_view_keyframe_cmd, NULL, NULL);
 }
 
