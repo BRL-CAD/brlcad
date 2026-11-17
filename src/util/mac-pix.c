@@ -43,12 +43,14 @@
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <string.h>
 #include "bio.h"
 
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "util_arg.h"
+#include "bu/arg.h"
 #include "bu/exit.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 
 
 #define MAC_HEIGHT 576	/* input height (y), in bits */
@@ -77,17 +79,36 @@ int scr_xoff = 0;
 int scr_yoff = 0;
 
 int bwflag = 0;
-char hyphen[] = "-";
-char *file_name;
+static const char *file_name;
 FILE *infp;
 
-static char usage[] = "\
-Usage: mac-pix [-c -l -b]\n\
-	[-s squareMacsize] [-w Mac_width] [-n Mac_height]\n\
-	[-x Mac_xoff] [-y Mac_yoff] [-X outp_xoff] [-Y outp_yoff]\n\
-	[-S squareoutpsize] [-W outp_width] [-N outp_height]\n\
-	[-C r/g/b] [file.mac]\n\
-       (standard output must be redirected)\n";
+struct mac_pix_args {
+    struct mac_pix_args *self;
+    int help;
+    int bw;
+};
+
+enum mac_pix_dimension {
+    MAC_PIX_INPUT_SIZE,
+    MAC_PIX_INPUT_WIDTH,
+    MAC_PIX_INPUT_HEIGHT,
+    MAC_PIX_OUTPUT_SIZE,
+    MAC_PIX_OUTPUT_WIDTH,
+    MAC_PIX_OUTPUT_HEIGHT
+};
+
+enum mac_pix_offset {
+    MAC_PIX_INPUT_X_OFFSET,
+    MAC_PIX_INPUT_Y_OFFSET,
+    MAC_PIX_OUTPUT_X_OFFSET,
+    MAC_PIX_OUTPUT_Y_OFFSET
+};
+
+static struct mac_pix_args *
+mac_pix_args_from_storage(void *storage)
+{
+    return storage ? *(struct mac_pix_args **)storage : NULL;
+}
 
 static int
 parse_color_arg(const char *arg, unsigned char *out_color)
@@ -117,119 +138,215 @@ parse_color_arg(const char *arg, unsigned char *out_color)
     return 1;
 }
 
-int
-get_args(int argc, char **argv)
+static int
+mac_pix_center(struct bu_vls *UNUSED(msg), const char *UNUSED(arg),
+	void *storage)
 {
-    int c;
+    if (mac_pix_args_from_storage(storage)) {
+	scr_xoff = (scr_width - file_width) / 2;
+	scr_yoff = (scr_height - file_height) / 2;
+    }
+    return 0;
+}
 
-    while ((c = bu_getopt(argc, argv, "clbs:w:n:x:y:X:Y:S:W:N:C:h?")) != -1) {
-	switch (c) {
-	    case 'c':
-		/* Center in output */
-		scr_xoff = (scr_width-file_width)/2;
-		scr_yoff = (scr_height-file_height)/2;
-		break;
-	    case 'b':
-		bwflag = 1;
-		break;
-	    case 'l':
-		/* "low"-res output -- track file size */
-		scr_height = scr_width = 0;
-		break;
-	    case 's':
-		/* square file size */
-		if (!util_arg_int_range(bu_optarg, &file_width, 1, INT_MAX, "Mac size"))
-		    return 0;
-		file_height = file_width;
-		break;
-	    case 'w':
-		if (!util_arg_int_range(bu_optarg, &file_width, 1, INT_MAX, "Mac width"))
-		    return 0;
-		break;
-	    case 'n':
-		if (!util_arg_int_range(bu_optarg, &file_height, 1, INT_MAX, "Mac height"))
-		    return 0;
-		break;
-	    case 'N':
-		if (!util_arg_int_range(bu_optarg, &scr_height, 1, INT_MAX, "output height"))
-		    return 0;
-		break;
-	    case 'x':
-		if (!util_arg_int(bu_optarg, &file_xoff, "Mac x offset"))
-		    return 0;
-		break;
-	    case 'X':
-		{
-		    int xoff = 0;
-		    if (!util_arg_int(bu_optarg, &xoff, "output x offset"))
-			return 0;
-		    scr_xoff += xoff;
-		}
-		break;
-	    case 'y':
-		if (!util_arg_int(bu_optarg, &file_yoff, "Mac y offset"))
-		    return 0;
-		break;
-	    case 'Y':
-		{
-		    int yoff = 0;
-		    if (!util_arg_int(bu_optarg, &yoff, "output y offset"))
-			return 0;
-		    scr_yoff += yoff;
-		}
-		break;
-	    case 'S':
-		if (!util_arg_int_range(bu_optarg, &scr_width, 1, INT_MAX, "output size"))
-		    return 0;
-		scr_height = scr_width;
-		break;
-	    case 'W':
-		if (!util_arg_int_range(bu_optarg, &scr_width, 1, INT_MAX, "output width"))
-		    return 0;
-		break;
-	    case 'C':
-		if (!parse_color_arg(bu_optarg, color)) {
-		    fprintf(stderr, "mac-pix: invalid color '%s'\n", bu_optarg);
-		    return 0;
-		}
-		break;
+static int
+mac_pix_native_size(struct bu_vls *UNUSED(msg), const char *UNUSED(arg),
+	void *storage)
+{
+    if (mac_pix_args_from_storage(storage))
+	scr_height = scr_width = 0;
+    return 0;
+}
 
-	    default:		/* '?' or 'h' will get you here */
-		return 0;
-	}
+static int
+mac_pix_dimension(struct bu_vls *msg, const char *arg, void *storage,
+	enum mac_pix_dimension dimension)
+{
+    int value;
 
-	/* enforce limits */
-	if (file_width > MAC_WIDTH)
-	    file_width = MAC_WIDTH;
-	if (file_height > MAC_HEIGHT)
-	    file_height = MAC_HEIGHT;
-	if (file_xoff < 0 || file_xoff >= MAC_WIDTH)
-	    file_xoff = 0;
-	if (file_yoff < 0 || file_yoff >= MAC_HEIGHT)
-	    file_yoff = 0;
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 1, INT_MAX))
+	return -1;
+    if (!mac_pix_args_from_storage(storage))
+	return 0;
+
+    switch (dimension) {
+	case MAC_PIX_INPUT_SIZE:
+	    file_width = value > MAC_WIDTH ? MAC_WIDTH : value;
+	    file_height = value > MAC_HEIGHT ? MAC_HEIGHT : value;
+	    break;
+	case MAC_PIX_INPUT_WIDTH:
+	    file_width = value > MAC_WIDTH ? MAC_WIDTH : value;
+	    break;
+	case MAC_PIX_INPUT_HEIGHT:
+	    file_height = value > MAC_HEIGHT ? MAC_HEIGHT : value;
+	    break;
+	case MAC_PIX_OUTPUT_SIZE:
+	    scr_width = scr_height = value;
+	    break;
+	case MAC_PIX_OUTPUT_WIDTH:
+	    scr_width = value;
+	    break;
+	case MAC_PIX_OUTPUT_HEIGHT:
+	    scr_height = value;
+	    break;
+    }
+    return 0;
+}
+
+#define MAC_PIX_DIMENSION_CALLBACK(_name, _dimension) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return mac_pix_dimension(msg, arg, storage, _dimension); \
     }
 
-    if (bu_optind >= argc) {
+MAC_PIX_DIMENSION_CALLBACK(mac_pix_input_size, MAC_PIX_INPUT_SIZE)
+MAC_PIX_DIMENSION_CALLBACK(mac_pix_input_width, MAC_PIX_INPUT_WIDTH)
+MAC_PIX_DIMENSION_CALLBACK(mac_pix_input_height, MAC_PIX_INPUT_HEIGHT)
+MAC_PIX_DIMENSION_CALLBACK(mac_pix_output_size, MAC_PIX_OUTPUT_SIZE)
+MAC_PIX_DIMENSION_CALLBACK(mac_pix_output_width, MAC_PIX_OUTPUT_WIDTH)
+MAC_PIX_DIMENSION_CALLBACK(mac_pix_output_height, MAC_PIX_OUTPUT_HEIGHT)
+
+static int
+mac_pix_offset(struct bu_vls *msg, const char *arg, void *storage,
+	enum mac_pix_offset offset)
+{
+    int value;
+
+    if (!bu_arg_integer_from_str(msg, &value, arg, 10))
+	return -1;
+    if (!mac_pix_args_from_storage(storage))
+	return 0;
+
+    switch (offset) {
+	case MAC_PIX_INPUT_X_OFFSET:
+	    file_xoff = (value < 0 || value >= MAC_WIDTH) ? 0 : value;
+	    break;
+	case MAC_PIX_INPUT_Y_OFFSET:
+	    file_yoff = (value < 0 || value >= MAC_HEIGHT) ? 0 : value;
+	    break;
+	case MAC_PIX_OUTPUT_X_OFFSET:
+	    if ((value > 0 && scr_xoff > INT_MAX - value) ||
+		(value < 0 && scr_xoff < INT_MIN - value)) {
+		if (msg)
+		    bu_vls_printf(msg, "output horizontal offset is out of range");
+		return -1;
+	    }
+	    scr_xoff += value;
+	    break;
+	case MAC_PIX_OUTPUT_Y_OFFSET:
+	    if ((value > 0 && scr_yoff > INT_MAX - value) ||
+		(value < 0 && scr_yoff < INT_MIN - value)) {
+		if (msg)
+		    bu_vls_printf(msg, "output vertical offset is out of range");
+		return -1;
+	    }
+	    scr_yoff += value;
+	    break;
+    }
+    return 0;
+}
+
+#define MAC_PIX_OFFSET_CALLBACK(_name, _offset) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return mac_pix_offset(msg, arg, storage, _offset); \
+    }
+
+MAC_PIX_OFFSET_CALLBACK(mac_pix_input_x_offset, MAC_PIX_INPUT_X_OFFSET)
+MAC_PIX_OFFSET_CALLBACK(mac_pix_input_y_offset, MAC_PIX_INPUT_Y_OFFSET)
+MAC_PIX_OFFSET_CALLBACK(mac_pix_output_x_offset, MAC_PIX_OUTPUT_X_OFFSET)
+MAC_PIX_OFFSET_CALLBACK(mac_pix_output_y_offset, MAC_PIX_OUTPUT_Y_OFFSET)
+
+static int
+mac_pix_color(struct bu_vls *msg, const char *arg, void *storage)
+{
+    unsigned char parsed_color[3];
+
+    if (!parse_color_arg(arg, parsed_color)) {
+	if (msg)
+	    bu_vls_printf(msg, "invalid RGB color '%s' (expected r/g/b)", arg);
+	return -1;
+    }
+    if (mac_pix_args_from_storage(storage))
+	memcpy(color, parsed_color, sizeof(color));
+    return 0;
+}
+
+static const struct bu_arg_option mac_pix_options[] = {
+    BU_ARG_FLAG("h", "help", struct mac_pix_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_CUSTOM_FLAG("c", "center", "center", struct mac_pix_args, self,
+	mac_pix_center, "Center the input image in the output image"),
+    BU_ARG_CUSTOM_FLAG("l", "native-size", "native-size",
+	struct mac_pix_args, self, mac_pix_native_size,
+	"Set the output dimensions from the input dimensions"),
+    BU_ARG_FLAG("b", "bw", struct mac_pix_args, bw,
+	"Write a one-byte BW image instead of a three-byte PIX image"),
+    BU_ARG_CUSTOM("s", "input-size", struct mac_pix_args, self,
+	mac_pix_input_size, "pixels", "Set both input dimensions"),
+    BU_ARG_CUSTOM("w", "input-width", struct mac_pix_args, self,
+	mac_pix_input_width, "pixels", "Set the input width"),
+    BU_ARG_CUSTOM("n", "input-height", struct mac_pix_args, self,
+	mac_pix_input_height, "scanlines", "Set the input height"),
+    BU_ARG_CUSTOM("x", "input-x-offset", struct mac_pix_args, self,
+	mac_pix_input_x_offset, "pixels", "Set the input horizontal offset"),
+    BU_ARG_CUSTOM("y", "input-y-offset", struct mac_pix_args, self,
+	mac_pix_input_y_offset, "scanlines", "Set the input vertical offset"),
+    BU_ARG_CUSTOM("X", "output-x-offset", struct mac_pix_args, self,
+	mac_pix_output_x_offset, "pixels", "Add to the output horizontal offset"),
+    BU_ARG_CUSTOM("Y", "output-y-offset", struct mac_pix_args, self,
+	mac_pix_output_y_offset, "scanlines", "Add to the output vertical offset"),
+    BU_ARG_CUSTOM("S", "output-size", struct mac_pix_args, self,
+	mac_pix_output_size, "pixels", "Set both output dimensions"),
+    BU_ARG_CUSTOM("W", "output-width", struct mac_pix_args, self,
+	mac_pix_output_width, "pixels", "Set the output width"),
+    BU_ARG_CUSTOM("N", "output-height", struct mac_pix_args, self,
+	mac_pix_output_height, "scanlines", "Set the output height"),
+    BU_ARG_CUSTOM("C", "color", struct mac_pix_args, self,
+	mac_pix_color, "r/g/b", "Set the color of active pixels"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand mac_pix_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"MacPaint input file (default: standard input)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema mac_pix_schema = BU_ARG_SCHEMA(
+    "mac-pix", "Convert a MacPaint bitmap to a PIX or BW image",
+    mac_pix_options, mac_pix_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar mac_pix_grammar = {
+    &mac_pix_schema, NULL, NULL
+};
+
+static int
+get_args(int argc, char **argv, struct mac_pix_args *args, struct bu_vls *msg)
+{
+    int operand_index = bu_arg_schema_parse_complete(&mac_pix_schema, args,
+	msg, argc - 1, (const char **)(argv + 1));
+
+    if (operand_index < 0 || args->help)
+	return operand_index >= 0;
+
+    bwflag = args->bw;
+    if (argc - operand_index - 1 == 0) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = hyphen;
+	file_name = "[stdin]";
 	infp = stdin;
     } else {
-	file_name = argv[bu_optind];
+	file_name = argv[operand_index + 1];
 	if ((infp = fopen(file_name, "rb")) == NULL) {
-	    fprintf(stderr,
-		    "mac-pix: cannot open \"%s\" for reading\n",
-		    file_name);
+	    bu_vls_printf(msg, "cannot open '%s' for reading: %s",
+		file_name, strerror(errno));
 	    return 0;
 	}
     }
-
-    if (argc > ++bu_optind) {
-	fprintf(stderr, "mac-pix: excess argument(s) not supported\n");
-	return 0;
-    }
-
-    return 1;		/* OK */
+    return 1;
 }
 
 
@@ -264,6 +381,8 @@ getbits(FILE *fp)
 int
 main(int argc, char **argv)
 {
+    struct mac_pix_args args = {NULL, 0, 0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     int c;
     int x, y;
     int x1, x2, x3;		/* x zone widths */
@@ -271,15 +390,46 @@ main(int argc, char **argv)
     int first_x;		/* x: first pixel to be output in pix[] */
     int first_y;		/* y: first pixel to be output in pix[] */
     size_t ret;
+    int introspection;
+
+    args.self = &args;
 
     bu_setprogname(argv[0]);
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    if (!get_args(argc, argv) || isatty(fileno(stdout))) {
-	(void)fputs(usage, stderr);
-	bu_exit (1, NULL);
+    introspection = bu_arg_introspect(&msg, &mac_pix_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    bu_vls_trunc(&msg, 0);
+
+    if (!get_args(argc, argv, &args, &msg)) {
+	char *help = bu_arg_schema_help(&mac_pix_schema, "mac-pix");
+	if (bu_vls_strlen(&msg))
+	    bu_flog(stderr, "mac-pix: %s\n", bu_vls_cstr(&msg));
+	bu_flog(stderr, "%s", help ? help : "");
+	bu_free(help, "mac-pix help");
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&mac_pix_schema, "mac-pix");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "mac-pix help");
+	return 0;
+    }
+    if (isatty(fileno(stdout))) {
+	char *help = bu_arg_schema_help(&mac_pix_schema, "mac-pix");
+	bu_flog(stderr, "mac-pix: standard output must be redirected\n");
+	bu_flog(stderr, "%s", help ? help : "");
+	bu_free(help, "mac-pix help");
+	return 1;
     }
 
     /* If screen size was not set, track the file size */

@@ -9,14 +9,10 @@ mac-pix - convert an Apple MacPaint bitmap into a pix(5) or bw(5) raster image
 
 == SYNOPSIS
 
-[source]
-----
-mac-pix [-c] [-l] [-b] [-s _squareMacSize_] [-w _Mac_width_] [-n _Mac_height_]
-        [-x _Mac_xoff_] [-y _Mac_yoff_] [-X _output_xoff_] [-Y _output_yoff_]
-        [-S _squareOutputSize_] [-W _output_width_] [-N _output_height_]
-        [-C _r/g/b_] [_file.mac_] > _output.pix_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*mac-pix* [_OPTION_]... [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -33,52 +29,52 @@ white (R=G=B=255), and inactive pixels and any border are black.
 [[options]]
 == OPTIONS
 
-*-c*::
+*-c*, *--center*::
   Center the input image within the output image instead of placing it at the
   lower-left corner.
 
-*-l*::
+*-l*, *--native-size*::
   Track the input size: set the output width and height to 0 so they assume the
   input dimensions.
 
-*-b*::
+*-b*, *--bw*::
   Output a single-channel *bw*(5) image instead of the default color *pix*(5).
 
-*-s* _squareMacSize_::
+*-s* _pixels_, *--input-size* _pixels_::
   Set both the input width and height to the given number of pixels.
 
-*-w* _Mac_width_::
+*-w* _pixels_, *--input-width* _pixels_::
   Set the input width in pixels (default 720, clamped to 720).
 
-*-n* _Mac_height_::
+*-n* _scanlines_, *--input-height* _scanlines_::
   Set the input height in pixels (default 576, clamped to 576).
 
-*-x* _Mac_xoff_::
+*-x* _pixels_, *--input-x-offset* _pixels_::
   Horizontal (X) offset into the input bitmap at which reading begins.
 
-*-y* _Mac_yoff_::
+*-y* _scanlines_, *--input-y-offset* _scanlines_::
   Vertical (Y) offset into the input bitmap at which reading begins.
 
-*-X* _output_xoff_::
+*-X* _pixels_, *--output-x-offset* _pixels_::
   Add a horizontal (X) offset to where the input is placed in the output.
 
-*-Y* _output_yoff_::
+*-Y* _scanlines_, *--output-y-offset* _scanlines_::
   Add a vertical (Y) offset to where the input is placed in the output.
 
-*-S* _squareOutputSize_::
+*-S* _pixels_, *--output-size* _pixels_::
   Set both the output width and height to the given number of pixels.
 
-*-W* _output_width_::
+*-W* _pixels_, *--output-width* _pixels_::
   Set the output width in pixels (default 1024).
 
-*-N* _output_height_::
+*-N* _scanlines_, *--output-height* _scanlines_::
   Set the output height in pixels (default 1024).
 
-*-C* _r/g/b_::
+*-C* _r/g/b_, *--color* _r/g/b_::
   Slash-separated red/green/blue intensities (each in [0..255]) for active
   ("on") pixels in the output (e.g. _255/0/0_ for red).
 
-*-h*, *-?*::
+*-h*, *--help*, *-?*::
   Print a usage message and exit.
 
 [[examples]]
