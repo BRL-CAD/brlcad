@@ -43,19 +43,19 @@ byte of the element for the true output to be selected.
 [[options]]
 == OPTIONS
 
-*-g*::
+*-g*, *--greater-than*::
   Select the true output where _in1_ is greater than _in2_.
 
-*-l*::
+*-l*, *--less-than*::
   Select the true output where _in1_ is less than _in2_.
 
-*-e*::
+*-e*, *--equal*::
   Select the true output where _in1_ is equal to _in2_.
 
-*-n*::
+*-n*, *--not-equal*::
   Select the true output where _in1_ is not equal to _in2_.
 
-*-a*::
+*-a*, *--approximate*::
   Approximate matching: bytes are treated as equal when they match within
   plus or minus one, useful for matting dithered backgrounds. When combined
   with *-e* or *-n* it yields approximately-equal or approximately-not-equal.
@@ -63,11 +63,11 @@ byte of the element for the true output to be selected.
   approximately-equal criterion. *-a* is a modifier only; at least one of
   *-g*, *-l*, *-e*, or *-n* must also be given.
 
-*-w* _width_in_bytes_::
+*-w* _width_in_bytes_, *--element-width* _width_in_bytes_::
   Set the width in bytes of each element. The default is 3 (the *pix*(5)
   format); use 1 to process *bw*(5) files. The width must be between 1 and 31.
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a usage message and exit.
 
 
