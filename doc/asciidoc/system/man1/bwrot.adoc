@@ -8,11 +8,10 @@ bwrot - rotate, invert, or reverse a black and white bw file
 
 == SYNOPSIS
 
-[source]
-----
-bwrot [-rifb | -a _angle_] [-# _bytes/pixel_] [-s _squaresize_] [-w _in_width_] [-n _in_height_] [-o _out.bw_] [_file.bw_] [> _out.bw_]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bwrot* [_OPTION_]... [_input-or-width_] [_legacy-height_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -22,6 +21,9 @@ black and white *bw*(5) format file. By default the input is assumed to be
 512x512; use *-w*, *-n*, or *-s* to specify other dimensions. If no input file
 is given, *bwrot* reads from standard input, and unless *-o* is used the result
 is written to standard output.
+
+For compatibility, two positional positive integers may specify the input
+width and height while the image is read from standard input.
 
 The orthogonal operations (*-r*, *-i*, *-f*, *-b*) may be combined; for example,
 *-r* and *-i* together produce a 180-degree rotation. The *-a* option performs
@@ -33,43 +35,43 @@ channels of a *pix*(5) file).
 [[options]]
 == OPTIONS
 
-*-r*::
+*-r*, *--reverse*::
   Reverse the scan lines horizontally (left to right).
 
-*-i*::
+*-i*, *--invert*::
   Invert the image vertically (top to bottom). Ignored if *-b* or *-f* is given.
 
-*-f*::
+*-f*, *--forward*::
   Rotate the image 90 degrees forward (clockwise, in lower-left-origin
   coordinates).
 
-*-b*::
+*-b*, *--backward*::
   Rotate the image 90 degrees backward (counterclockwise, in lower-left-origin
   coordinates).
 
-*-a* _angle_::
+*-a* _angle_, *--angle* _angle_::
   Rotate the image counterclockwise by an arbitrary _angle_ in degrees. This
   overrides the orthogonal rotation, inversion, and reversal flags, and requires
   the whole image to fit in the in-memory buffer.
 
-*-#* _bytes/pixel_::
+*-#* _bytes/pixel_, *--pixel-bytes* _bytes/pixel_::
   Set the number of bytes per pixel (default 1), allowing other fixed-element
   data formats to be processed.
 
-*-s* _squaresize_, *-S* _squaresize_::
+*-s* _squaresize_, *-S* _squaresize_, *--size* _squaresize_::
   Set both the input width and height to _squaresize_ pixels.
 
-*-w* _in_width_, *-W* _in_width_::
+*-w* _in_width_, *-W* _in_width_, *--width* _in_width_::
   Set the input width in pixels (default 512).
 
-*-n* _in_height_, *-N* _in_height_::
+*-n* _in_height_, *-N* _in_height_, *--height* _in_height_::
   Set the input height in scan lines (default 512).
 
-*-o* _out.bw_::
+*-o* _out.bw_, *--output* _out.bw_::
   Write output to _out.bw_. If standard output is also redirected, the same
   output is written there as well.
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a usage message and exit.
 
 
