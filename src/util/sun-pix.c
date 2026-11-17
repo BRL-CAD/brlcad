@@ -33,8 +33,8 @@
 #include "vmath.h"
 
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/malloc.h"
-#include "bu/getopt.h"
 #include "bu/log.h"
 
 /*
@@ -105,13 +105,52 @@ struct colors {
 struct colors Cmap[256];
 static size_t CMAP_MAX_INDEX = sizeof(Cmap) - 1;
 
-static char hyphen[] = "-";
-static char *file_name;
+static const char *file_name;
 static FILE *fp;
 
-char usage[] = "\
-Usage: sun-pix [-b -H -i -P -v -C] [sun.bitmap]\n\
-       (standard output must be redirected)\n";
+struct sun_pix_args {
+    int help;
+    int bw;
+    int header;
+    int invert;
+    int pure;
+    int verbose;
+    int color_map;
+};
+
+static const struct bu_arg_option sun_pix_options[] = {
+    BU_ARG_FLAG("h", "help", struct sun_pix_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("b", "bw", struct sun_pix_args, bw,
+	"Write a one-byte BW image"),
+    BU_ARG_FLAG("H", "header", struct sun_pix_args, header,
+	"Print image dimensions and exit"),
+    BU_ARG_FLAG("i", "invert", struct sun_pix_args, invert,
+	"Invert the image"),
+    BU_ARG_FLAG("P", "pure", struct sun_pix_args, pure,
+	"Read a headerless one-bit bitmap"),
+    BU_ARG_FLAG("v", "verbose", struct sun_pix_args, verbose,
+	"Print raster header fields"),
+    BU_ARG_FLAG("C", "color-map", struct sun_pix_args, color_map,
+	"Write the color map as text"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand sun_pix_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"Sun raster input file (default: standard input)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema sun_pix_schema = BU_ARG_SCHEMA(
+    "sun-pix", "Convert a Sun rasterfile to a PIX or BW image",
+    sun_pix_options, sun_pix_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar sun_pix_grammar = {
+    &sun_pix_schema, NULL, NULL
+};
 
 
 #define NET_LONG_LEN 4 /* # bytes to network long */
@@ -130,62 +169,35 @@ getlong(char *msgp)
 
 
 static int
-get_args(int argc, char **argv)
+get_args(int argc, char **argv, struct sun_pix_args *args,
+	struct bu_vls *msg)
 {
-    int c;
+    int operand_index = bu_arg_schema_parse_complete(&sun_pix_schema, args,
+	msg, argc - 1, (const char **)(argv + 1));
 
-    while ((c = bu_getopt(argc, argv, "bHiPvCh?")) != -1) {
-	switch (c) {
-	    case 'b':
-		pixout = 0;	/* bw(5) */
-		break;
-	    case 'C':
-		colorout = 1;	/* output the color map */
-		break;
-	    case 'H':
-		hflag = 1;	/* print header */
-		break;
-	    case 'i':
-		inverted = 1;
-		break;
-	    case 'P':
-		pure = 1;
-		break;
-	    case 'v':
-		verbose = 1;
-		break;
+    if (operand_index < 0 || args->help)
+	return operand_index >= 0;
 
-	    default:		/* '?' 'h' */
-		return 0;
-	}
-    }
+    pixout = !args->bw;
+    colorout = args->color_map;
+    hflag = args->header;
+    inverted = args->invert;
+    pure = args->pure;
+    verbose = args->verbose;
 
-    if (bu_optind >= argc) {
+    if (argc - operand_index - 1 == 0) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = hyphen;
+	file_name = "[stdin]";
 	fp = stdin;
     } else {
-	file_name = argv[bu_optind];
-	bu_optind++;
-	if (argc > bu_optind) {
-	    fprintf(stderr, "sun-pix: excess argument(s) not supported\n");
-	    return 0;
-	}
+	file_name = argv[operand_index + 1];
 	if ((fp = fopen(file_name, "rb")) == NULL) {
-	    fprintf(stderr,
-		    "sun-pix: cannot open \"%s\" for reading\n",
-		    file_name);
+	    bu_vls_printf(msg, "cannot open '%s' for reading", file_name);
 	    return 0;
 	}
     }
-
-    if (argc > bu_optind) {
-	fprintf(stderr, "sun-pix: excess argument(s) not supported\n");
-	return 0;
-    }
-
-    return 1;		/* OK */
+    return 1;
 }
 
 
@@ -266,12 +278,15 @@ unsigned char bits[8] = { 128, 64, 32, 16, 8, 4, 2, 1 };
 int
 main(int argc, char **argv)
 {
+    struct sun_pix_args args = {0, 0, 0, 0, 0, 0, 0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     int x;
     int off = 0;
     int on = 255;
     int width;			/* line width in bits */
     int scanbytes;		/* bytes/line (padded to 16 bits) */
     unsigned char c, cmap_idx, buf[BU_PAGE_SIZE];
+    int introspection;
 
     bu_setprogname(argv[0]);
 
@@ -279,9 +294,33 @@ main(int argc, char **argv)
     setmode(fileno(stdout), O_BINARY);
 
     fp = stdin;
-    if (!get_args(argc, argv) || (isatty(fileno(stdout)) && (hflag == 0))) {
-	(void)fputs(usage, stderr);
-	bu_exit (1, NULL);
+    introspection = bu_arg_introspect(&msg, &sun_pix_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    bu_vls_trunc(&msg, 0);
+    if (!get_args(argc, argv, &args, &msg)) {
+	char *help = bu_arg_schema_help(&sun_pix_schema, "sun-pix");
+	if (bu_vls_strlen(&msg))
+	    bu_flog(stderr, "sun-pix: %s\n", bu_vls_cstr(&msg));
+	bu_flog(stderr, "%s", help ? help : "");
+	bu_free(help, "sun-pix help");
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&sun_pix_schema, "sun-pix");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "sun-pix help");
+	return 0;
+    }
+    if (isatty(fileno(stdout)) && !hflag && !colorout) {
+	bu_flog(stderr, "sun-pix: standard output must be redirected\n");
+	return 1;
     }
     if (inverted) {
 	off = 255;
