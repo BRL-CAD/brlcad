@@ -8,11 +8,10 @@ raw-g - convert a RAW triangle geometry file to a BRL-CAD database
 
 == SYNOPSIS
 
-[source]
-----
-raw-g _RAW_file_ _database.g_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*raw-g* [_OPTION_]... _input_ _output_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -33,6 +32,15 @@ database, which is created with a title of the form "Converted from <RAW_file>".
 A summary of the conversion is printed when it completes. The resulting
 geometry can be inspected with *mged*(1) or further processed with other
 BRL-CAD converters such as *g-raw*(1).
+
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES
