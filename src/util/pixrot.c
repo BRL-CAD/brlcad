@@ -39,15 +39,12 @@
 #include "bio.h"
 
 #include "bu/app.h"
-#include "bu/getopt.h"
+#include "bu/arg.h"
 #include "bu/log.h"
-#include "util_arg.h"
 #include "bu/file.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 
-
-static const char usage[] = "\
-Usage: pixrot [-f -b -r -i -#bytes] [-s squaresize]\n\
-	[-w width] [-n height] [file.pix] > file.pix\n";
 
 /* 4 times bigger than typ. screen */
 /*#define MAXBUFBYTES (1280*1024*3*4) */
@@ -69,108 +66,182 @@ int pixbytes = 3;
 void fill_buffer(void);
 void reverse_buffer(void);
 
-static char *file_name;
 FILE *ifp, *ofp;
 
-static char hyphen[] = "-";
+struct pixrot_args {
+    struct pixrot_args *self;
+    int help;
+    int plus90;
+    int minus90;
+    int reverse;
+    int invert;
+    int width;
+    int height;
+    int pixbytes;
+};
 
-int
-get_args(int argc, char **argv)
+static struct pixrot_args *
+pixrot_args_from_storage(void *storage)
 {
-    int c;
+    return storage ? *(struct pixrot_args **)storage : NULL;
+}
 
-    while ((c = bu_getopt(argc, argv, "fbri#:s:w:n:S:W:N:h?")) != -1) {
-	switch (c) {
-	    case 'f':
-		minus90++;
-		break;
-	    case 'b':
-		plus90++;
-		break;
-	    case 'r':
-		reverse++;
-		break;
-	    case 'i':
-		invert++;
-		break;
-	    case '#':
-		if (!util_arg_int_range(bu_optarg, &pixbytes, 1, INT_MAX, "bytes-per-pixel"))
-		    return 0;
-		break;
-	    case 'S':
-	    case 's':
-		/* square size */
-		if (!util_arg_int_range(bu_optarg, &nxin, 1, INT_MAX, "input size"))
-		    return 0;
-		nyin = nxin;
-		break;
-	    case 'W':
-	    case 'w':
-		if (!util_arg_int_range(bu_optarg, &nxin, 1, INT_MAX, "input width"))
-		    return 0;
-		break;
-	    case 'N':
-	    case 'n':
-		if (!util_arg_int_range(bu_optarg, &nyin, 1, INT_MAX, "input height"))
-		    return 0;
-		break;
+static int
+pixrot_square(struct bu_vls *msg, const char *arg, void *storage)
+{
+    struct pixrot_args *args = pixrot_args_from_storage(storage);
+    int value;
 
-	    default:		/* '?' */
-		return 0;
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 1, INT_MAX))
+	return -1;
+    if (args)
+	args->width = args->height = value;
+    return 0;
+}
+
+static const struct bu_arg_option pixrot_options[] = {
+    BU_ARG_FLAG("h", "help", struct pixrot_args, help, "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("f", "forward", struct pixrot_args, minus90,
+	"Rotate 90 degrees clockwise"),
+    BU_ARG_FLAG("b", "backward", struct pixrot_args, plus90,
+	"Rotate 90 degrees counterclockwise"),
+    BU_ARG_FLAG("r", "reverse", struct pixrot_args, reverse,
+	"Reverse each scanline horizontally"),
+    BU_ARG_FLAG("i", "invert", struct pixrot_args, invert,
+	"Invert scanline order vertically"),
+    BU_ARG_INTEGER_RANGE("#", "pixel-bytes", struct pixrot_args, pixbytes,
+	1, 1, 1, INT_MAX, "count", "Set the bytes per pixel"),
+    BU_ARG_CUSTOM("s", "size", struct pixrot_args, self, pixrot_square,
+	"pixels", "Set both input dimensions"),
+    BU_ARG_ALIAS("S", NULL, "size", 1),
+    BU_ARG_INTEGER_RANGE("w", "width", struct pixrot_args, width,
+	1, 1, 1, INT_MAX, "pixels", "Set the input width"),
+    BU_ARG_ALIAS("W", NULL, "width", 1),
+    BU_ARG_INTEGER_RANGE("n", "height", struct pixrot_args, height,
+	1, 1, 1, INT_MAX, "scanlines", "Set the input height"),
+    BU_ARG_ALIAS("N", NULL, "height", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand pixrot_operands[] = {
+    BU_ARG_OPERAND("input-or-width", BU_ARG_VALUE_STRING, 0, 1,
+	"Input file, or legacy input width when followed by height", NULL),
+    BU_ARG_OPERAND_INTEGER_RANGE("legacy-height", 0, 1,
+	1, 1, 1, INT_MAX, "Legacy input height used with a positional width", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema pixrot_schema = BU_ARG_SCHEMA(
+    "pixrot", "Rotate, invert, or reverse raster pixels",
+    pixrot_options, pixrot_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar pixrot_grammar = {
+    &pixrot_schema, NULL, NULL
+};
+
+static int
+get_args(int argc, char **argv, struct pixrot_args *args)
+{
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    const char *input = "-";
+    int operand_index = bu_arg_schema_parse_complete(&pixrot_schema, args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    int operand_count;
+
+    if (operand_index < 0) {
+	bu_log("%s\n", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 0;
+    }
+    bu_vls_free(&msg);
+    if (args->help)
+	return 1;
+
+    operand_count = argc - operand_index - 1;
+    if (operand_count == 2) {
+	if (!bu_arg_integer_range_from_str(&msg, &args->width,
+		argv[operand_index + 1], 10, 1, INT_MAX) ||
+	    !bu_arg_integer_range_from_str(&msg, &args->height,
+		argv[operand_index + 2], 10, 1, INT_MAX)) {
+	    bu_log("pixrot: invalid legacy dimensions: %s\n", bu_vls_cstr(&msg));
+	    bu_vls_free(&msg);
+	    return 0;
 	}
+	bu_vls_free(&msg);
+    } else if (operand_count == 1) {
+	input = argv[operand_index + 1];
     }
 
-    /* XXX - backward compatibility hack */
-    if (bu_optind+2 == argc) {
-	if (!util_arg_int_range(argv[bu_optind++], &nxin, 1, INT_MAX, "input width"))
-	    return 0;
-	if (!util_arg_int_range(argv[bu_optind++], &nyin, 1, INT_MAX, "input height"))
-	    return 0;
-    }
-    if (bu_optind >= argc) {
-	if (isatty(fileno(stdin)))
-	    return 0;
-	file_name = hyphen;
-	ifp = stdin;
-    } else {
-	file_name = argv[bu_optind];
-	bu_optind++;
-	if (argc > bu_optind) {
-	    bu_log("pixrot: excess argument(s) not supported\n");
-	    return 0;
-	}
-	if ((ifp = fopen(file_name, "rb")) == NULL) {
-	    bu_log("pixrot: cannot open \"%s\" for reading\n", file_name);
-	    return 0;
-	}
-    }
+    nxin = args->width;
+    nyin = args->height;
+    pixbytes = args->pixbytes;
+    plus90 = args->plus90;
+    minus90 = args->minus90;
+    reverse = args->reverse;
+    invert = args->invert;
 
-    if (argc > bu_optind) {
-	bu_log("pixrot: excess argument(s) not supported\n");
+    if (!BU_STR_EQUAL(input, "-")) {
+	ifp = fopen(input, "rb");
+	if (ifp == NULL) {
+	    bu_log("pixrot: cannot open \"%s\" for reading\n", input);
+	    return 0;
+	}
+    }
+    if (isatty(fileno(ifp))) {
+	bu_log("pixrot will not read pixel data from a terminal\n");
+	return 0;
+    }
+    if (isatty(fileno(ofp))) {
+	bu_log("pixrot will not write pixel data to a terminal\n");
 	return 0;
     }
 
-    return 1;		/* OK */
+    return 1;
 }
 
 
 int
 main(int argc, char **argv)
 {
+    struct pixrot_args args = {NULL, 0, 0, 0, 0, 0, 512, 512, 3};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     int x, y, j;
     b_off_t outbyte, outplace;
     size_t ret;
+    int introspection;
+
+    args.self = &args;
 
     bu_setprogname(argv[0]);
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    if (!get_args(argc, argv) || isatty(fileno(stdout))) {
-	bu_exit(1, "%s", usage);
+    introspection = bu_arg_introspect(&msg, &pixrot_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+    bu_vls_free(&msg);
 
+    ifp = stdin;
     ofp = stdout;
+    if (!get_args(argc, argv, &args)) {
+	char *help = bu_arg_schema_help(&pixrot_schema, "pixrot");
+	bu_flog(stderr, "%s", help ? help : "");
+	bu_free(help, "pixrot help");
+	return 1;
+    }
+    if (args.help) {
+	char *help = bu_arg_schema_help(&pixrot_schema, "pixrot");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "pixrot help");
+	return 0;
+    }
 
     scanbytes = nxin * pixbytes;
     buflines = MAXBUFBYTES / scanbytes;

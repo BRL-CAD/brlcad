@@ -27,18 +27,17 @@
 
 #include "common.h"
 
-#include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
 
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "util_arg.h"
+#include "bu/arg.h"
+#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
-#include "bu/exit.h"
+#include "bu/vls.h"
 
 
 #define MAXLINE (8*1024)
@@ -81,185 +80,294 @@ int kernoffset;
 int width = DEFAULT_WIDTH;
 int height = DEFAULT_WIDTH;
 int verbose = 0;
-int dflag = 0;	/* Different divisor specified */
-int oflag = 0;	/* Different offset specified */
-
-char *file_name;
 FILE *oldfp, *curfp, *newfp;
 
-void select_filter(const char *str), dousage(void);
+struct pix3filter_args {
+    struct pix3filter_args *self;
+    int help;
+    int verbose;
+    const char *filter;
+    int divisor;
+    int offset;
+    int width;
+    int height;
+};
 
-char usage[] = "\
-Usage: pix3filter [-f type] [-v] [-d #] [-o #]\n\
-	[-s squaresize] [-w width] [-n height]\n\
-	file.pix.n | file.pix1 file.pix2 file.pix3 > file.pix\n";
-
-int
-get_args(int argc, char **argv)
+static struct pix3filter_args *
+pix3filter_args_from_storage(void *storage)
 {
-    int c;
+    return storage ? *(struct pix3filter_args **)storage : NULL;
+}
 
-    while ((c = bu_getopt(argc, argv, "vf:d:o:w:n:s:h?")) != -1) {
-	switch (c) {
-	    case 'v':
-		verbose++;
-		break;
-	    case 'f':
-		select_filter(bu_optarg);
-		break;
-	    case 'd':
-		dflag++;
-		if (!util_arg_int(bu_optarg, &kerndiv, "divisor") || kerndiv == 0)
-		    return 0;
-		break;
-	    case 'o':
-		oflag++;
-		if (!util_arg_int(bu_optarg, &kernoffset, "offset"))
-		    return 0;
-		break;
-	    case 'w':
-		if (!util_arg_int_range(bu_optarg, &width, 1, INT_MAX, "width"))
-		    return 0;
-		break;
-	    case 'n':
-		if (!util_arg_int_range(bu_optarg, &height, 1, INT_MAX, "height"))
-		    return 0;
-		break;
-	    case 's':
-		if (!util_arg_int_range(bu_optarg, &width, 1, INT_MAX, "size"))
-		    return 0;
-		height = width;
-		break;
-	    default:		/* 'h' '?' */
-		return 0;
-	}
+static int
+pix3filter_square(struct bu_vls *msg, const char *arg, void *storage)
+{
+    struct pix3filter_args *args = pix3filter_args_from_storage(storage);
+    int value;
+
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 1, MAXLINE))
+	return -1;
+    if (args)
+	args->width = args->height = value;
+    return 0;
+}
+
+static int
+pix3filter_divisor(struct bu_vls *msg, const char *arg, void *storage)
+{
+    int value;
+
+    if (!bu_arg_integer_from_str(msg, &value, arg, 10))
+	return -1;
+    if (value == 0) {
+	if (msg)
+	    bu_vls_printf(msg, "divisor must not be zero\n");
+	return -1;
     }
+    if (storage)
+	*(int *)storage = value;
+    return 0;
+}
 
-    if (bu_optind >= argc) {
-	(void) fprintf(stderr,
-		       "pix3filter: must supply a file name\n");
+static const struct bu_arg_value_keyword pix3filter_filter_values[] = {
+    {"lo", NULL, "Low-pass filter"},
+    {"hi", NULL, "High-pass filter"},
+    {"b", NULL, "Boxcar average"},
+    {"s", NULL, "Animation smear"},
+    {NULL, NULL, NULL}
+};
+
+static const struct bu_arg_option pix3filter_options[] = {
+    BU_ARG_FLAG("h", "help", struct pix3filter_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_COUNTING_FLAG("v", "verbose", struct pix3filter_args, verbose,
+	BU_ARG_VALUE_INTEGER, "Print kernel coefficients and result range diagnostics"),
+    BU_ARG_KEYWORD_VALUES("f", "filter", struct pix3filter_args, filter,
+	"type", "Select the convolution filter", pix3filter_filter_values),
+    BU_ARG_CUSTOM("d", "divisor", struct pix3filter_args, divisor,
+	pix3filter_divisor, "integer", "Override the nonzero built-in filter divisor"),
+    BU_ARG_VALUE("o", "offset", struct pix3filter_args, offset,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "integer",
+	"Override the built-in result offset"),
+    BU_ARG_INTEGER_RANGE("w", "width", struct pix3filter_args, width,
+	1, 1, 1, MAXLINE, "pixels", "Set the input width (default 512)"),
+    BU_ARG_INTEGER_RANGE("n", "height", struct pix3filter_args, height,
+	1, 1, 1, INT_MAX, "scanlines", "Set the input height (default 512)"),
+    BU_ARG_CUSTOM("s", "size", struct pix3filter_args, self,
+	pix3filter_square, "pixels", "Set both input dimensions"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand pix3filter_operands[] = {
+    BU_ARG_OPERAND("frame", BU_ARG_VALUE_FILE, 1, 3,
+	"One numbered current frame or three consecutive frames", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static int
+pix3filter_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
+{
+    size_t frame_count;
+
+    if (!result || cursor_arg < argc || result->state == BU_ARG_VALIDATE_INVALID)
+	return 0;
+
+    frame_count = bu_arg_schema_operand_count(schema, argc, argv);
+    if (frame_count == 2) {
+	result->state = BU_ARG_VALIDATE_INCOMPLETE;
+	result->token_start = argc;
+	result->token_end = argc;
+	result->expected = BU_ARG_EXPECT_OPERAND;
+	result->hint = "supply one numbered frame or three explicit frames";
+    }
+    return 0;
+}
+
+static const struct bu_arg_schema pix3filter_schema = BU_ARG_SCHEMA(
+    "pix3filter", "Apply a 3x3x3 filter to three PIX frames",
+    pix3filter_options, pix3filter_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, pix3filter_validate, NULL, NULL));
+
+static const struct bu_arg_grammar pix3filter_grammar = {
+    &pix3filter_schema, NULL, NULL
+};
+
+static int
+select_filter(const char *str, int divisor_set, int offset_set)
+{
+    int i = 0;
+
+    while (kernel[i].name != NULL && !BU_STR_EQUAL(str, kernel[i].uname))
+	i++;
+    if (kernel[i].name == NULL)
+	return 0;
+
+    kern = &kernel[i].kern[0];
+    if (!divisor_set)
+	kerndiv = kernel[i].kerndiv;
+    if (!offset_set)
+	kernoffset = kernel[i].kernoffset;
+    return 1;
+}
+
+static int
+open_explicit_frames(const char **operands)
+{
+    oldfp = fopen(operands[0], "rb");
+    if (oldfp == NULL) {
+	bu_log("pix3filter: cannot open \"%s\" for reading\n", operands[0]);
+	return 0;
+    }
+    curfp = fopen(operands[1], "rb");
+    if (curfp == NULL) {
+	bu_log("pix3filter: cannot open \"%s\" for reading\n", operands[1]);
+	fclose(oldfp);
+	oldfp = NULL;
+	return 0;
+    }
+    newfp = fopen(operands[2], "rb");
+    if (newfp == NULL) {
+	bu_log("pix3filter: cannot open \"%s\" for reading\n", operands[2]);
+	fclose(curfp);
+	fclose(oldfp);
+	curfp = NULL;
+	oldfp = NULL;
+	return 0;
+    }
+    return 1;
+}
+
+static int
+open_sequence_frames(const char *current)
+{
+    struct bu_vls path = BU_VLS_INIT_ZERO;
+    const char *separator = strrchr(current, '.');
+    int frame_number;
+    size_t stem_length;
+
+    if (!separator || !separator[1] ||
+	!bu_arg_integer_from_str(NULL, &frame_number, separator + 1, 10)) {
+	bu_log("pix3filter: no numeric frame suffix on %s\n", current);
+	return 0;
+    }
+    stem_length = (size_t)(separator - current);
+    curfp = fopen(current, "rb");
+    if (curfp == NULL) {
+	bu_log("pix3filter: cannot open \"%s\" for reading\n", current);
 	return 0;
     }
 
-    if (bu_optind + 3 <= argc) {
-	int argi = bu_optind;
-
-	if ((oldfp = fopen(argv[argi], "rb")) == NULL) {
-	    fprintf(stderr,
-		    "pix3filter: cannot open \"%s\" for reading\n",
-		    argv[argi]);
-	    return 0;
-	}
-
-	if ((curfp = fopen(argv[argi + 1], "rb")) == NULL) {
-	    fprintf(stderr,
-		    "pix3filter: cannot open \"%s\" for reading\n",
-		    argv[argi + 1]);
-	    return 0;
-	}
-
-	if ((newfp = fopen(argv[argi + 2], "rb")) == NULL) {
-	    fprintf(stderr,
-		    "pix3filter: cannot open \"%s\" for reading\n",
-		    argv[argi + 2]);
-	    return 0;
-	}
-	bu_optind = argi + 3;
-    } else {
-	int frameNumber;
-	char *idx, *working_name;
-
-	file_name = argv[bu_optind];
-	working_name = (char *)bu_malloc(strlen(file_name)+5, "working_name");
-
-	if ((curfp = fopen(file_name, "rb")) == NULL) {
-	    fprintf(stderr,
-		    "pix3filter: cannot open \"%s\" for reading\n",
-		    file_name);
-	    bu_free(working_name, "free working_name");
-	    return 0;
-	}
-	idx = file_name + strlen(file_name) -1;
-	while ((idx >= file_name) && (*idx != '.')) --idx;
-	if (idx >= file_name) {
-	    *idx = '\0';
-	    ++idx;
-	    if (!util_arg_int(idx, &frameNumber, "frame number")) {
-		bu_free(working_name, "free working_name");
-		return 0;
-	    }
-	} else {
-	    (void) fprintf(stderr,
-			   "pix3filter: no frame number on %s.\n",
-			   file_name);
-	    bu_free(working_name, "free working_name");
-	    return 0;
-	}
-
-	snprintf(working_name, strlen(file_name)+5, "%s.%d", file_name, frameNumber-1);
-	if ((oldfp = fopen(working_name, "rb")) == NULL) {
-	    if (frameNumber-1 != 0) {
-		fprintf(stderr,
-			"pix3filter: cannot open \"%s\" for reading.\n",
-			working_name);
-		bu_free(working_name, "free working_name");
-		return 0;
-	    }
-	    if ((oldfp = fopen(file_name, "rb")) == NULL) {
-		fprintf(stderr,
-			"pix3filter: cannot open \"%s\" for reading.\n",
-			file_name);
-		bu_free(working_name, "free working_name");
-		return 0;
-	    }
-	}
-
-	snprintf(working_name, strlen(file_name)+5, "%s.%d", file_name, frameNumber+1);
-	if ((newfp = fopen(working_name, "rb")) == NULL) {
-	    fprintf(stderr,
-		    "pix3filter: cannot open \"%s\" for reading.\n",
-		    working_name);
-	    bu_free(working_name, "free working_name");
-	    return 0;
-	}
-	bu_free(working_name, "free working_name");
-	bu_optind += 1;
-    }
-
-    if (isatty(fileno(stdout)))
-	return 0;
-
-    if (argc > bu_optind) {
-	fprintf(stderr, "pix3filter: excess argument(s) not supported\n");
+    bu_vls_printf(&path, "%.*s.%d", (int)stem_length, current, frame_number - 1);
+    oldfp = fopen(bu_vls_cstr(&path), "rb");
+    if (oldfp == NULL && frame_number == 1)
+	oldfp = fopen(current, "rb");
+    if (oldfp == NULL) {
+	bu_log("pix3filter: cannot open \"%s\" for reading\n", bu_vls_cstr(&path));
+	fclose(curfp);
+	curfp = NULL;
+	bu_vls_free(&path);
 	return 0;
     }
 
-    return 1;		/* OK */
+    bu_vls_sprintf(&path, "%.*s.%d", (int)stem_length, current, frame_number + 1);
+    newfp = fopen(bu_vls_cstr(&path), "rb");
+    if (newfp == NULL) {
+	bu_log("pix3filter: cannot open \"%s\" for reading\n", bu_vls_cstr(&path));
+	fclose(oldfp);
+	fclose(curfp);
+	oldfp = NULL;
+	curfp = NULL;
+	bu_vls_free(&path);
+	return 0;
+    }
+    bu_vls_free(&path);
+    return 1;
+}
+
+static int
+get_args(int argc, char **argv, struct pix3filter_args *args)
+{
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int operand_index = bu_arg_schema_parse_complete(&pix3filter_schema, args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    int operand_count;
+    int divisor_set;
+    int offset_set;
+    const char **operands;
+
+    if (operand_index < 0) {
+	bu_log("%s\n", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 0;
+    }
+    bu_vls_free(&msg);
+    if (args->help)
+	return 1;
+    if (isatty(fileno(stdout))) {
+	bu_log("pix3filter will not write pixel data to a terminal\n");
+	return 0;
+    }
+
+    divisor_set = bu_arg_schema_option_present(&pix3filter_schema,
+	(size_t)(argc - 1), (const char **)(argv + 1), "divisor");
+    offset_set = bu_arg_schema_option_present(&pix3filter_schema,
+	(size_t)(argc - 1), (const char **)(argv + 1), "offset");
+    kerndiv = args->divisor;
+    kernoffset = args->offset;
+    if (!select_filter(args->filter, divisor_set, offset_set))
+	return 0;
+
+    width = args->width;
+    height = args->height;
+    verbose = args->verbose;
+    operand_count = argc - operand_index - 1;
+    operands = (const char **)(argv + operand_index + 1);
+    return operand_count == 1 ? open_sequence_frames(operands[0]) :
+	open_explicit_frames(operands);
 }
 
 
 int
 main(int argc, char **argv)
 {
+    struct pix3filter_args args = {NULL, 0, 0, "lo", 84, 0,
+	DEFAULT_WIDTH, DEFAULT_WIDTH};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     size_t ret;
     int x, y, color;
     int value, r1, r2, r3, r4, r5, r6, r7, r8, r9;
     int max, min;
+    int introspection;
+
+    args.self = &args;
 
     bu_setprogname(argv[0]);
 
-    /* Select Default Filter (low pass) */
-    select_filter("low");
+    introspection = bu_arg_introspect(&msg, &pix3filter_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    bu_vls_free(&msg);
 
-    if (!get_args(argc, argv)) {
-	dousage();
-	bu_exit (1, NULL);
+    if (!get_args(argc, argv, &args)) {
+	char *help = bu_arg_schema_help(&pix3filter_schema, "pix3filter");
+	bu_flog(stderr, "%s", help ? help : "");
+	bu_free(help, "pix3filter help");
+	return 1;
+    }
+    if (args.help) {
+	char *help = bu_arg_schema_help(&pix3filter_schema, "pix3filter");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "pix3filter help");
+	return 0;
     }
 
-    if (width > MAXLINE) {
-	fprintf(stderr, "pix3filter:  limited to scanlines of %d\n", MAXLINE);
-	bu_exit (1, NULL);
-    }
+    setmode(fileno(stdout), O_BINARY);
 
 /*
  * Set up the pointers to the working areas.
@@ -409,53 +517,6 @@ main(int argc, char **argv)
 	fprintf(stderr, "Max = %d,  Min = %d\n", max, min);
 
     return 0;
-}
-
-
-/*
- * Looks at the command line string and selects a filter based
- * on it.
- */
-void
-select_filter(const char *str)
-{
-    int i;
-
-    i = 0;
-    while (kernel[i].name != NULL) {
-	if (bu_strncmp(str, kernel[i].uname, strlen(kernel[i].uname)) == 0)
-	    break;
-	i++;
-    }
-
-    if (kernel[i].name == NULL) {
-	/* No match, output list and exit */
-	fprintf(stderr, "Unrecognized filter type \"%s\"\n", str);
-	dousage();
-	bu_exit (3, NULL);
-    }
-
-    /* Have a match, set up that kernel */
-    kern = &kernel[i].kern[0];
-    if (dflag == 0)
-	kerndiv = kernel[i].kerndiv;
-    if (oflag == 0)
-	kernoffset = kernel[i].kernoffset;
-}
-
-
-void
-dousage(void)
-{
-    int i;
-
-    fputs(usage, stderr);
-    fprintf(stderr,"Possible arguments for -f (type):\n");
-    i = 0;
-    while (kernel[i].name != NULL) {
-	fprintf(stderr, "%-10s%s\n", kernel[i].uname, kernel[i].name);
-	i++;
-    }
 }
 
 

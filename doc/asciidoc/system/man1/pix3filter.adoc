@@ -8,11 +8,10 @@ pix3filter - apply a 3x3x3 convolution filter across three sequential pix files
 
 == SYNOPSIS
 
-[source]
-----
-pix3filter [-f type] [-v] [-d divisor] [-o offset] [-w width] [-n height] [-s squaresize] {file.pix.N | file1.pix file2.pix file3.pix} > output.pix
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pix3filter* [_OPTION_]... _frame_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -28,29 +27,32 @@ The output must be redirected; *pix3filter* refuses to write image data to a ter
 [[options]]
 == OPTIONS
 
-*-f* _type_::
-  Select the convolution kernel. Recognized types are *lo* (low pass, the default), *hi* (high pass), *b* (boxcar average), and *s* (animation smear). Each kernel has its own built-in divisor (84, 1, 53, and 69 respectively).
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-v*::
-  Verbose mode. Print the kernel coefficients to standard error before filtering, warn about result values that fall outside the 0-255 range, and report the maximum and minimum computed values when finished (useful for choosing a divisor or offset).
+*-v*, *--verbose*::
+  Print kernel coefficients and result range diagnostics. May be repeated.
 
-*-d* _divisor_::
-  Override the kernel's built-in divisor. The convolution sum is divided by this value. May not be zero.
+*-f* _type_, *--filter*=_type_::
+  Select the convolution filter. Accepted values: *lo*, *hi*, *b*, *s*.
 
-*-o* _offset_::
-  Override the kernel's built-in offset, added to each result after division. The default offset is 0.
+*-d* _integer_, *--divisor*=_integer_::
+  Override the nonzero built-in filter divisor.
 
-*-w* _width_::
-  Set the width of the input images in pixels. The default is 512.
+*-o* _integer_, *--offset*=_integer_::
+  Override the built-in result offset.
 
-*-n* _height_::
-  Set the height (number of scanlines) of the input images. The default is 512.
+*-w* _pixels_, *--width*=_pixels_::
+  Set the input width (default 512).
 
-*-s* _squaresize_::
-  Set both width and height to _squaresize_.
+*-n* _scanlines_, *--height*=_scanlines_::
+  Set the input height (default 512).
 
-*-h*, *-?*::
-  Print a usage message, including the list of available filter types, and exit.
+*-s* _pixels_, *--size*=_pixels_::
+  Set both input dimensions.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES
