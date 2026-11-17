@@ -43,6 +43,7 @@
 #include "common.h"
 
 #include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
@@ -198,7 +199,8 @@ get_args(int argc, char **argv)
 		errno = 0;
 		end = NULL;
 		parsed_width = strtol(bu_optarg, &end, 10);
-		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' || errno != 0)
+		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' ||
+		    errno != 0 || parsed_width > INT_MAX)
 		    usage("pixmatte: illegal width specified\n", 1);
 		width = (int)parsed_width;
 		if (width < 1 || width >= EL_WIDTH)
