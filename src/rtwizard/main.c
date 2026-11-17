@@ -1161,7 +1161,7 @@ rtwizard_help(struct bu_opt_desc *d)
     bu_vls_sprintf(&str, "\nUsage: rtwizard [options]\n\n");
 
     /* I/O options */
-    bu_vls_sprintf(&filtered, "h help-dev i o s w n render-spec animation-duration animation-fps animation-frames animation-plays animation-cyclic frame-dir resume cut-steps cut-direction save-view-keyframe time replace-keyframe");
+    bu_vls_sprintf(&filtered, "h help-dev i o s w n render-spec A animate animation-spec frame-dir resume");
     settings.accept = bu_vls_addr(&filtered);
     option_help = bu_opt_describe(d, &settings);
     if (option_help) {
@@ -1219,7 +1219,7 @@ rtwizard_help_dev(struct bu_opt_desc *d)
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls filtered = BU_VLS_INIT_ZERO;
     char *option_help = NULL;
-    const char *devopts = "benchmark cpu-count pid-file log-file";
+    const char *devopts = "benchmark cpu-count pid-file log-file animation-duration animation-fps animation-frames animation-plays animation-cyclic cut-steps cut-direction save-view-keyframe time replace-keyframe";
 
     bu_vls_sprintf(&str, "\nUsage: rtwizard [options]\n\n");
 
@@ -1335,13 +1335,13 @@ rtwizard_cli_overlay_prepare(int argc, char **argv, struct rtwizard_settings *s)
 
 
 static void
-rtwizard_load_render_spec(int *argcp, char ***argvp, struct rtwizard_settings *s)
+rtwizard_load_specs(int *argcp, char ***argvp, struct rtwizard_settings *s)
 {
     int argc = *argcp;
     char **argv = *argvp;
     const char *spec = NULL;
-    int spec_index = -1;
-    int spec_separate = 0;
+    const char *animate = NULL;
+    const char *animation_spec = NULL;
     int i;
     char *errmsg = NULL;
     int filtered_argc = 0;
@@ -1352,8 +1352,6 @@ rtwizard_load_render_spec(int *argcp, char ***argvp, struct rtwizard_settings *s
 	    if (i + 1 >= argc)
 		bu_exit(EXIT_FAILURE, "ERROR: --render-spec requires a filename.\n");
 	    spec = argv[i+1];
-	    spec_index = i;
-	    spec_separate = 1;
 	    i++;
 	    continue;
 	}
@@ -1361,21 +1359,59 @@ rtwizard_load_render_spec(int *argcp, char ***argvp, struct rtwizard_settings *s
 	    if (spec) bu_exit(EXIT_FAILURE, "ERROR: --render-spec may be specified only once.\n");
 	    spec = argv[i] + 14;
 	    if (!spec[0]) bu_exit(EXIT_FAILURE, "ERROR: --render-spec requires a filename.\n");
-	    spec_index = i;
+	    continue;
+	}
+	if (BU_STR_EQUAL(argv[i], "-A") || BU_STR_EQUAL(argv[i], "--animate")) {
+	    if (animate) bu_exit(EXIT_FAILURE, "ERROR: --animate may be specified only once.\n");
+	    if (i + 1 >= argc) bu_exit(EXIT_FAILURE, "ERROR: --animate requires cut, orbit, or turntable.\n");
+	    animate = argv[++i];
+	    continue;
+	}
+	if (bu_strncmp(argv[i], "--animate=", 10) == 0) {
+	    if (animate) bu_exit(EXIT_FAILURE, "ERROR: --animate may be specified only once.\n");
+	    animate = argv[i] + 10;
+	    if (!animate[0]) bu_exit(EXIT_FAILURE, "ERROR: --animate requires cut, orbit, or turntable.\n");
+	    continue;
+	}
+	if (BU_STR_EQUAL(argv[i], "--animation-spec")) {
+	    if (animation_spec) bu_exit(EXIT_FAILURE, "ERROR: --animation-spec may be specified only once.\n");
+	    if (i + 1 >= argc) bu_exit(EXIT_FAILURE, "ERROR: --animation-spec requires a filename.\n");
+	    animation_spec = argv[++i];
+	    continue;
+	}
+	if (bu_strncmp(argv[i], "--animation-spec=", 17) == 0) {
+	    if (animation_spec) bu_exit(EXIT_FAILURE, "ERROR: --animation-spec may be specified only once.\n");
+	    animation_spec = argv[i] + 17;
+	    if (!animation_spec[0]) bu_exit(EXIT_FAILURE, "ERROR: --animation-spec requires a filename.\n");
 	}
     }
-    if (!spec)
-	return;
-    if (rtwizard_spec_apply(spec, s, &errmsg) != 0) {
-	bu_exit(EXIT_FAILURE, "ERROR: %s\n", errmsg ? errmsg : "unable to load render specification");
+    if (spec) {
+	if (rtwizard_spec_apply(spec, s, &errmsg) != 0)
+	    bu_exit(EXIT_FAILURE, "ERROR: %s\n", errmsg ? errmsg : "unable to load render specification");
+	if (errmsg) bu_free(errmsg, "render spec error");
+	errmsg = NULL;
     }
-    if (errmsg) bu_free(errmsg, "render spec error");
+    if (animate) {
+	bu_vls_strcpy(s->animation_preset, animate);
+	bu_vls_trunc(s->animation_file, 0);
+    }
+    if (animation_spec) {
+	if (rtwizard_animation_spec_apply(animation_spec, s, &errmsg) != 0)
+	    bu_exit(EXIT_FAILURE, "ERROR: %s\n", errmsg ? errmsg : "unable to load animation specification");
+	if (errmsg) bu_free(errmsg, "animation spec error");
+    }
     rtwizard_cli_overlay_prepare(argc, argv, s);
 
     argv[filtered_argc++] = argv[0];
     for (i = 1; i < argc; i++) {
-	if (i == spec_index) {
-	    if (spec_separate) i++;
+	if (BU_STR_EQUAL(argv[i], "--render-spec") || BU_STR_EQUAL(argv[i], "-A") ||
+	    BU_STR_EQUAL(argv[i], "--animate") || BU_STR_EQUAL(argv[i], "--animation-spec")) {
+	    i++;
+	    continue;
+	}
+	if (bu_strncmp(argv[i], "--render-spec=", 14) == 0 ||
+	    bu_strncmp(argv[i], "--animate=", 10) == 0 ||
+	    bu_strncmp(argv[i], "--animation-spec=", 17) == 0) {
 	    continue;
 	}
 	argv[filtered_argc++] = argv[i];
@@ -1397,7 +1433,7 @@ main(int argc, char **argv)
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     struct bu_vls info_msg = BU_VLS_INIT_ZERO;
     struct rtwizard_settings *s = rtwizard_settings_create();
-    struct bu_opt_desc d[50];
+    struct bu_opt_desc d[52];
 
     BU_OPT(d[0],  "h", "help",          "",             NULL,            &need_help,     "Print options help and exit");
     BU_OPT(d[1],  "",  "help-dev",      "",             NULL,            &need_help_dev, "Print development and programmatic options.");
@@ -1458,13 +1494,15 @@ main(int argc, char **argv)
     BU_OPT(d[46], "",  "time",          "<seconds>",     &bu_opt_fastf_t, &s->keyframe_time, "Keyframe time for --save-view-keyframe");
     BU_OPT(d[47], "",  "replace-keyframe", "",           NULL,            &s->replace_keyframe, "Replace an existing camera keyframe at --time");
     BU_OPT(d[48], "",  "animation-cyclic", "0|1",        &bu_opt_int,     &s->animation_cyclic, "Exclude a duplicate animation endpoint");
-    BU_OPT_NULL(d[49]);
+    BU_OPT(d[49], "A", "animate",       "cut|orbit|turntable", &bu_opt_vls, s->animation_preset, "Apply a standard animation preset");
+    BU_OPT(d[50], "",  "animation-spec", "<file.json>",  &bu_opt_vls,     s->animation_file, "Customize animation using an animation-only JSON specification");
+    BU_OPT_NULL(d[51]);
 
     /* initialize progname for run-time resource finding */
     bu_setprogname(argv[0]);
     av0 = argv[0];
 
-    rtwizard_load_render_spec(&argc, &argv, s);
+    rtwizard_load_specs(&argc, &argv, s);
 
     /* Change the working directory to BU_DIR_HOME if we are invoking
      * without any arguments. */
@@ -1574,13 +1612,10 @@ main(int argc, char **argv)
 	!BU_STR_EQUAL(bu_vls_addr(s->animation_preset), "orbit") &&
 	!BU_STR_EQUAL(bu_vls_addr(s->animation_preset), "turntable"))
 	bu_exit(EXIT_FAILURE, "ERROR: animation preset must be cut, orbit, or turntable.\n");
-    if (BU_STR_EQUAL(bu_vls_addr(s->animation_preset), "turntable") && !bu_vls_strlen(s->turntable_object))
-	bu_exit(EXIT_FAILURE, "ERROR: turntable animation requires animation.options.turntable_object.\n");
-
     /* Presets have simple defaults.  For track files, zero remains an
      * intentional sentinel so timing is read from the JSON specification. */
     if (bu_vls_strlen(s->animation_preset)) {
-	if (s->animation_fps == 0) s->animation_fps = 10;
+	if (s->animation_fps == 0) s->animation_fps = 24;
 	if (NEAR_ZERO(s->animation_duration, SMALL_FASTF)) s->animation_duration = 5.0;
     }
 

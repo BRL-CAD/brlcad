@@ -721,7 +721,7 @@ parse_preset_settings(Tcl_Interp *interp, Tcl_Obj *config)
 	settings.axis = config_vector(interp, config, "turntable_axis", 3);
 	normalize_animation_vector(settings.axis, "turntable axis");
 	settings.object = config_string(interp, config, "turntable_object");
-	if (settings.object.empty() || settings.object.find_first_of(";\r\n\t ") != std::string::npos)
+	if (!settings.object.empty() && settings.object.find_first_of(";\r\n\t ") != std::string::npos)
 	    throw std::runtime_error("turntable object path may not contain whitespace or command separators");
 	Tcl_Obj *center = config_value(interp, config, "turntable_center", false);
 	if (center) {
@@ -759,7 +759,10 @@ query_preset_scene(const PresetSettings &settings)
     }
     SceneQuery query(settings.database);
     if (settings.preset == "orbit") facts.center = scene_center(query.bounds(settings.objects));
-    else if (settings.preset == "turntable") facts.center = scene_center(query.bounds({settings.object}));
+    else if (settings.preset == "turntable") {
+	std::vector<std::string> objects = settings.object.empty() ? settings.objects : std::vector<std::string>{settings.object};
+	facts.center = scene_center(query.bounds(objects));
+    }
     return facts;
 }
 
@@ -833,8 +836,10 @@ animation_json_cmd(ClientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv
 	    root = animation;
 	} else {
 	    check_keys(root, {"schema", "version", "units", "timing", "tracks"}, "animation");
-	    if (root.value("schema", "") != "brlcad.rtwizard.animation" || root.value("version", 0) != 1)
-		throw std::runtime_error("unsupported animation schema or version");
+	    if (root.contains("schema") && root.value("schema", "") != "brlcad.rtwizard.animation")
+		throw std::runtime_error("unsupported animation schema");
+	    if (root.contains("version") && root.value("version", 0) != 1)
+		throw std::runtime_error("unsupported animation version");
 	}
 	check_keys(root, {"schema", "version", "preset", "units", "timing", "options", "tracks"}, "animation");
 	if (root.contains("schema") && root.value("schema", "") != "brlcad.rtwizard.animation")
@@ -1182,6 +1187,56 @@ set_string(struct bu_vls *target, const json &value, const std::string &where)
 }
 
 static void
+apply_animation(const json &animation, const fs::path &source_path, struct rtwizard_settings *settings)
+{
+    check_keys(animation, {"schema", "version", "preset", "units", "timing", "options", "tracks"}, "animation");
+    if (animation.contains("schema") && animation.value("schema", "") != "brlcad.rtwizard.animation")
+	throw std::runtime_error("animation schema must be brlcad.rtwizard.animation");
+    if (animation.contains("version") && animation.value("version", 0) != 1)
+	throw std::runtime_error("animation version must be 1");
+    if (animation.contains("preset") && animation.contains("tracks"))
+	throw std::runtime_error("animation may contain a preset or tracks, not both");
+
+    if (animation.contains("preset")) {
+	set_string(settings->animation_preset, animation["preset"], "animation.preset");
+	bu_vls_trunc(settings->animation_file, 0);
+    }
+    if (animation.contains("tracks")) {
+	bu_vls_trunc(settings->animation_preset, 0);
+	bu_vls_strcpy(settings->animation_file, source_path.string().c_str());
+    }
+    if (!bu_vls_strlen(settings->animation_preset) && !bu_vls_strlen(settings->animation_file))
+	throw std::runtime_error("animation requires --animate, a preset, or tracks");
+    if (animation.contains("options") && !bu_vls_strlen(settings->animation_preset))
+	throw std::runtime_error("animation options require a preset");
+
+    if (animation.contains("timing")) {
+	const json &timing = animation["timing"];
+	check_keys(timing, {"duration", "fps", "frames", "cyclic", "plays"}, "animation.timing");
+	if (timing.contains("duration")) settings->animation_duration = number_value(timing["duration"], "animation.timing.duration");
+	if (timing.contains("fps")) settings->animation_fps = integer_value(timing["fps"], "animation.timing.fps");
+	if (timing.contains("frames")) settings->animation_frames = integer_value(timing["frames"], "animation.timing.frames");
+	if (timing.contains("cyclic")) settings->animation_cyclic = boolean_value(timing, "cyclic", "animation.timing") ? 1 : 0;
+	if (timing.contains("plays")) settings->animation_plays = integer_value(timing["plays"], "animation.timing.plays");
+    }
+    if (animation.contains("options")) {
+	const json &options = animation["options"];
+	check_keys(options, {"cut_direction", "orbit_angle", "orbit_axis", "orbit_center", "orbit_elevation", "orbit_radius",
+		"turntable_object", "turntable_angle", "turntable_axis", "turntable_center"}, "animation.options");
+	if (options.contains("cut_direction")) { vector_value(settings->cut_direction, options["cut_direction"], 3, "animation.options.cut_direction"); settings->cut_direction_set = 1; }
+	if (options.contains("orbit_angle")) settings->orbit_angle = number_value(options["orbit_angle"], "animation.options.orbit_angle");
+	if (options.contains("orbit_axis")) vector_value(settings->orbit_axis, options["orbit_axis"], 3, "animation.options.orbit_axis");
+	if (options.contains("orbit_center")) vector_value(settings->orbit_center, options["orbit_center"], 3, "animation.options.orbit_center");
+	if (options.contains("orbit_elevation")) settings->orbit_elevation = number_value(options["orbit_elevation"], "animation.options.orbit_elevation");
+	if (options.contains("orbit_radius")) settings->orbit_radius = number_value(options["orbit_radius"], "animation.options.orbit_radius");
+	if (options.contains("turntable_object")) set_string(settings->turntable_object, options["turntable_object"], "animation.options.turntable_object");
+	if (options.contains("turntable_angle")) settings->turntable_angle = number_value(options["turntable_angle"], "animation.options.turntable_angle");
+	if (options.contains("turntable_axis")) vector_value(settings->turntable_axis, options["turntable_axis"], 3, "animation.options.turntable_axis");
+	if (options.contains("turntable_center")) vector_value(settings->turntable_center, options["turntable_center"], 3, "animation.options.turntable_center");
+    }
+}
+
+static void
 apply_render_spec(const char *path, struct rtwizard_settings *settings)
 {
     std::ifstream in(path);
@@ -1279,41 +1334,7 @@ apply_render_spec(const char *path, struct rtwizard_settings *settings)
     }
 
     if (root.contains("animation")) {
-	const json &animation = root["animation"];
-	check_keys(animation, {"schema", "version", "preset", "units", "timing", "options", "tracks"}, "animation");
-	if (animation.contains("schema") && animation.value("schema", "") != "brlcad.rtwizard.animation")
-	    throw std::runtime_error("embedded animation schema must be brlcad.rtwizard.animation");
-	if (animation.contains("version") && animation.value("version", 0) != 1)
-	    throw std::runtime_error("embedded animation version must be 1");
-	if (!animation.contains("preset") && !animation.contains("tracks")) throw std::runtime_error("animation requires a preset or tracks");
-	if (animation.contains("preset") && animation.contains("tracks")) throw std::runtime_error("animation may contain a preset or tracks, not both");
-	if (animation.contains("options") && !animation.contains("preset")) throw std::runtime_error("animation options require a preset");
-	if (animation.contains("timing")) {
-	    const json &timing = animation["timing"];
-	    check_keys(timing, {"duration", "fps", "frames", "cyclic", "plays"}, "animation.timing");
-	    if (timing.contains("duration")) settings->animation_duration = number_value(timing["duration"], "animation.timing.duration");
-	    if (timing.contains("fps")) settings->animation_fps = integer_value(timing["fps"], "animation.timing.fps");
-	    if (timing.contains("frames")) settings->animation_frames = integer_value(timing["frames"], "animation.timing.frames");
-	    if (timing.contains("cyclic")) settings->animation_cyclic = boolean_value(timing, "cyclic", "animation.timing") ? 1 : 0;
-	    if (timing.contains("plays")) settings->animation_plays = integer_value(timing["plays"], "animation.timing.plays");
-	}
-	if (animation.contains("options")) {
-	    const json &options = animation["options"];
-	    check_keys(options, {"cut_direction", "orbit_angle", "orbit_axis", "orbit_center", "orbit_elevation", "orbit_radius",
-		    "turntable_object", "turntable_angle", "turntable_axis", "turntable_center"}, "animation.options");
-	    if (options.contains("cut_direction")) { vector_value(settings->cut_direction, options["cut_direction"], 3, "animation.options.cut_direction"); settings->cut_direction_set = 1; }
-	    if (options.contains("orbit_angle")) settings->orbit_angle = number_value(options["orbit_angle"], "animation.options.orbit_angle");
-	    if (options.contains("orbit_axis")) vector_value(settings->orbit_axis, options["orbit_axis"], 3, "animation.options.orbit_axis");
-	    if (options.contains("orbit_center")) vector_value(settings->orbit_center, options["orbit_center"], 3, "animation.options.orbit_center");
-	    if (options.contains("orbit_elevation")) settings->orbit_elevation = number_value(options["orbit_elevation"], "animation.options.orbit_elevation");
-	    if (options.contains("orbit_radius")) settings->orbit_radius = number_value(options["orbit_radius"], "animation.options.orbit_radius");
-	    if (options.contains("turntable_object")) set_string(settings->turntable_object, options["turntable_object"], "animation.options.turntable_object");
-	    if (options.contains("turntable_angle")) settings->turntable_angle = number_value(options["turntable_angle"], "animation.options.turntable_angle");
-	    if (options.contains("turntable_axis")) vector_value(settings->turntable_axis, options["turntable_axis"], 3, "animation.options.turntable_axis");
-	    if (options.contains("turntable_center")) vector_value(settings->turntable_center, options["turntable_center"], 3, "animation.options.turntable_center");
-	}
-	if (animation.contains("preset")) set_string(settings->animation_preset, animation["preset"], "animation.preset");
-	if (animation.contains("tracks")) bu_vls_strcpy(settings->animation_file, spec_path.string().c_str());
+	apply_animation(root["animation"], spec_path, settings);
     }
 }
 
@@ -1325,6 +1346,25 @@ rtwizard_spec_apply(const char *path, struct rtwizard_settings *settings, char *
     if (!path || !settings) return -1;
     try {
 	apply_render_spec(path, settings);
+	if (errmsg) *errmsg = NULL;
+	return 0;
+    } catch (const std::exception &e) {
+	if (errmsg) *errmsg = bu_strdup(e.what());
+	return -1;
+    }
+}
+
+extern "C" int
+rtwizard_animation_spec_apply(const char *path, struct rtwizard_settings *settings, char **errmsg)
+{
+    if (!path || !settings) return -1;
+    try {
+	std::ifstream in(path);
+	if (!in) throw std::runtime_error(std::string("unable to open animation specification '") + path + "'");
+	json animation;
+	in >> animation;
+	fs::path spec_path = fs::absolute(fs::path(path)).lexically_normal();
+	apply_animation(animation, spec_path, settings);
 	if (errmsg) *errmsg = NULL;
 	return 0;
     } catch (const std::exception &e) {

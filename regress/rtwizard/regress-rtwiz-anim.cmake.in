@@ -24,6 +24,9 @@ set(SPEC_CONTROL "${TEST_DIR}/rtwizard_spec_control.pix")
 set(ORBIT_SPEC "${TEST_DIR}/rtwizard_orbit_spec.json")
 set(ORBIT "${TEST_DIR}/rtwizard_orbit.apng")
 set(ORBIT_PREFIX "${TEST_DIR}/rtwizard_orbit_frame_")
+set(ANIMATION_SPEC "${TEST_DIR}/rtwizard_animation_spec.json")
+set(ANIMATION_OVERLAY "${TEST_DIR}/rtwizard_animation_overlay.apng")
+set(ANIMATION_OVERLAY_PREFIX "${TEST_DIR}/rtwizard_animation_overlay_frame_")
 set(TRACK_SPEC "${TEST_DIR}/rtwizard_track_spec.json")
 set(TRACK_ANIM "${TEST_DIR}/rtwizard_track.apng")
 set(TRACK_PREFIX "${TEST_DIR}/rtwizard_track_frame_")
@@ -33,7 +36,8 @@ set(TURNTABLE_ANIM "${TEST_DIR}/rtwizard_turntable.apng")
 set(TURNTABLE_DIR "${TEST_DIR}/rtwizard_turntable_frames")
 file(TO_CMAKE_PATH "${SRCFILE}" SRCFILE_JSON)
 file(REMOVE "${ANIM}" "${STILL}" "${FIRST}" "${LAST}" "${SPEC}" "${SPEC_STILL}" "${SPEC_OVERRIDE}" "${SPEC_CONTROL}"
-  "${ORBIT_SPEC}" "${ORBIT}" "${TRACK_SPEC}" "${TRACK_ANIM}" "${CAPTURE_SPEC}"
+  "${ORBIT_SPEC}" "${ORBIT}" "${ANIMATION_SPEC}" "${ANIMATION_OVERLAY}"
+  "${TRACK_SPEC}" "${TRACK_ANIM}" "${CAPTURE_SPEC}"
   "${TURNTABLE_SPEC}" "${TURNTABLE_ANIM}")
 file(REMOVE_RECURSE "${TURNTABLE_DIR}")
 file(GLOB OLD_FRAMES "${PREFIX}*")
@@ -43,7 +47,7 @@ endif()
 
 execute_process(
   COMMAND "${RTWIZ}" --no-gui -i "${SRCFILE}" -o "${ANIM}"
-          -c component -s 64 --cut-steps 3 --benchmark
+          -c component -s 64 --animate cut --animation-frames 3 --benchmark
   RESULT_VARIABLE anim_result
   OUTPUT_VARIABLE anim_log
   ERROR_VARIABLE anim_log
@@ -167,6 +171,24 @@ if(orbit_result OR orbit_extract_result OR NOT ORBIT_FRAME_COUNT EQUAL 3)
   message(FATAL_ERROR "Orbit render specification failed or produced ${ORBIT_FRAME_COUNT} frames:\n${orbit_log}\n${orbit_extract_log}")
 endif()
 
+# A normal rendering invocation can add a preset and customize only its
+# animation settings with a compact overlay.
+file(WRITE "${ANIMATION_SPEC}" "{
+  \"timing\": {\"duration\": 1, \"fps\": 2, \"frames\": 2},
+  \"options\": {\"orbit_angle\": 90}
+}\n")
+execute_process(
+  COMMAND "${RTWIZ}" --no-gui -i "${SRCFILE}" -o "${ANIMATION_OVERLAY}"
+          -c component -s 32 --benchmark --animate orbit --animation-spec "${ANIMATION_SPEC}"
+  RESULT_VARIABLE overlay_result OUTPUT_VARIABLE overlay_log ERROR_VARIABLE overlay_log)
+execute_process(COMMAND "${ICV_EXEC}" anim extract "${ANIMATION_OVERLAY}" "${ANIMATION_OVERLAY_PREFIX}"
+  RESULT_VARIABLE overlay_extract_result OUTPUT_VARIABLE overlay_extract_log ERROR_VARIABLE overlay_extract_log)
+file(GLOB ANIMATION_OVERLAY_FRAMES "${ANIMATION_OVERLAY_PREFIX}*_ctrl.png")
+list(LENGTH ANIMATION_OVERLAY_FRAMES ANIMATION_OVERLAY_FRAME_COUNT)
+if(overlay_result OR overlay_extract_result OR NOT ANIMATION_OVERLAY_FRAME_COUNT EQUAL 2)
+  message(FATAL_ERROR "Animation overlay failed or produced ${ANIMATION_OVERLAY_FRAME_COUNT} frames:\n${overlay_log}\n${overlay_extract_log}")
+endif()
+
 # Exercise a general, interpolated camera track rather than a preset.
 file(WRITE "${TRACK_SPEC}" "{
   \"schema\": \"brlcad.rtwizard.render\",
@@ -252,7 +274,7 @@ file(WRITE "${TURNTABLE_SPEC}" "{
   \"animation\": {
     \"preset\": \"turntable\",
     \"timing\": {\"duration\": 1, \"fps\": 2, \"frames\": 2, \"cyclic\": false},
-    \"options\": {\"turntable_object\": \"component\", \"turntable_angle\": 90}
+    \"options\": {\"turntable_angle\": 90}
   }
 }\n")
 execute_process(COMMAND "${RTWIZ}" --render-spec "${TURNTABLE_SPEC}"
@@ -295,7 +317,8 @@ if(rerender_result OR rerender_log MATCHES "Using existing frame" OR
 endif()
 
 file(REMOVE "${ANIM}" "${STILL}" "${FIRST}" "${LAST}" "${SPEC}" "${SPEC_STILL}" "${SPEC_OVERRIDE}" "${SPEC_CONTROL}"
-  "${ORBIT_SPEC}" "${ORBIT}" "${TRACK_SPEC}" "${TRACK_ANIM}" "${CAPTURE_SPEC}"
+  "${ORBIT_SPEC}" "${ORBIT}" "${ANIMATION_SPEC}" "${ANIMATION_OVERLAY}"
+  "${TRACK_SPEC}" "${TRACK_ANIM}" "${CAPTURE_SPEC}"
   "${TURNTABLE_SPEC}" "${TURNTABLE_ANIM}"
-  ${FRAMES} ${ORBIT_FRAMES} ${TRACK_FRAMES})
+  ${FRAMES} ${ORBIT_FRAMES} ${ANIMATION_OVERLAY_FRAMES} ${TRACK_FRAMES})
 file(REMOVE_RECURSE "${TURNTABLE_DIR}")

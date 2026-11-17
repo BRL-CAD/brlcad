@@ -90,15 +90,15 @@ test_turntable_operation()
     PresetSettings settings = base_settings("turntable");
     settings.angle = 90.0;
     settings.axis = {0.0, 0.0, 1.0};
-    settings.object = "model";
+    settings.objects = {"model/body", "model/wheel", "ground"};
     PresetSceneFacts facts;
     facts.center = {1.0, 2.0, 3.0};
     AnimationPlan plan = plan_animation_preset(settings, facts);
-    if (plan.frames.size() != 3 || plan.frames.back().operations.size() != 1) {
+    if (plan.frames.size() != 3 || plan.frames.back().operations.size() != 2) {
 	std::cerr << "turntable operation count is incorrect\n";
 	return 1;
     }
-    const DatabaseOperation &operation = plan.frames.back().operations.front();
+    const DatabaseOperation &operation = plan.frames.back().operations.back();
     if (operation.path != "/model" || operation.action != "lmul" || operation.values.size() != 16) {
 	std::cerr << "turntable operation is incorrect\n";
 	return 1;

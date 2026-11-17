@@ -23,6 +23,9 @@ void rtwizard_animation_init(Tcl_Interp *interp);
 /* Load a declarative render specification into initialized settings. */
 int rtwizard_spec_apply(const char *path, struct rtwizard_settings *settings, char **errmsg);
 
+/* Overlay an animation-only JSON specification on initialized settings. */
+int rtwizard_animation_spec_apply(const char *path, struct rtwizard_settings *settings, char **errmsg);
+
 #ifdef __cplusplus
 }
 #endif

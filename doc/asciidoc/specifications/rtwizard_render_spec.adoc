@@ -26,6 +26,52 @@ Unknown fields are errors.  This makes misspellings visible and permits a
 future version to assign new meanings without silently changing an old
 render.
 
+== Adding animation to a normal render
+
+The common workflow keeps the usual RtWizard database, object, view, style,
+and output options and adds one animation option:
+
+[source,bash]
+----
+rtwizard -i vehicle.g -c vehicle -o overview.apng --animate orbit
+rtwizard -i vehicle.g -c vehicle -o turntable.apng --animate turntable
+rtwizard -i vehicle.g -c vehicle -o cutaway.apng --animate cut
+----
+
+`--animate` (short form `-A`) accepts `cut`, `orbit`, or `turntable`.  Presets
+default to five seconds at 24 frames per second.  Orbit and turntable use a
+360-degree cyclic sweep and omit the duplicate final frame.  Orbit targets
+the combined rendered-object bounds.  Turntable rotates the unique top-level
+roots of the rendered object paths around their combined bounds center.
+
+Use `--animation-spec` to customize the selected preset without restating the
+normal render:
+
+[source,bash]
+----
+rtwizard -i vehicle.g -c vehicle -o overview.apng \
+  --animate orbit --animation-spec overview-animation.json
+----
+
+An animation-only overlay may contain `timing` and `options`; it may also
+contain `preset` instead of using `--animate`:
+
+[source,json]
+----
+{
+  "timing": { "duration": 8, "fps": 30, "plays": 0 },
+  "options": {
+    "orbit_axis": [0, 1, 0],
+    "orbit_angle": 180,
+    "orbit_center": [0, 0, 20]
+  }
+}
+----
+
+If the animation specification contains `tracks`, those tracks replace the
+preset.  Remaining command-line timing options are applied after the JSON
+overlay and therefore take final precedence.
+
 == Complete still-image example
 
 [source,json]

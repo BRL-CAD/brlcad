@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -66,6 +67,21 @@ perpendicular_reference(const std::vector<double> &axis)
 	axis[2]*reference[0] - axis[0]*reference[2],
 	axis[0]*reference[1] - axis[1]*reference[0]
     };
+}
+
+static std::vector<std::string>
+turntable_paths(const PresetSettings &settings)
+{
+    if (!settings.object.empty()) return {settings.object};
+    std::set<std::string> roots;
+    for (std::string object : settings.objects) {
+	while (!object.empty() && object[0] == '/') object.erase(object.begin());
+	size_t separator = object.find('/');
+	if (separator != std::string::npos) object.erase(separator);
+	if (!object.empty()) roots.insert('/' + object);
+    }
+    if (roots.empty()) throw std::runtime_error("turntable animation requires at least one rendered object");
+    return {roots.begin(), roots.end()};
 }
 
 static AnimationPlan
@@ -190,10 +206,12 @@ plan_turntable(const PresetSettings &settings, const PresetSceneFacts &facts,
     normalize_animation_vector(axis, "turntable axis");
     const std::vector<double> &center = facts.center;
     if (center.size() != 3) throw std::runtime_error("turntable planning requires a scene center");
-    if (settings.object.empty() || settings.object.find_first_of(";\r\n\t ") != std::string::npos)
+
+    if (!settings.object.empty() && settings.object.find_first_of(";\r\n\t ") != std::string::npos)
 	throw std::runtime_error("turntable object path may not contain whitespace or command separators");
-    std::string object = settings.object;
-    if (object[0] != '/') object.insert(object.begin(), '/');
+    std::vector<std::string> objects = turntable_paths(settings);
+    for (std::string &object : objects)
+	if (object[0] != '/') object.insert(object.begin(), '/');
     for (int frame_number = 0; frame_number < frame_count; ++frame_number) {
 	double fraction = (double)frame_number / (double)(cyclic ? frame_count : frame_count-1);
 	double radians = fraction * settings.angle * DEG2RAD;
@@ -209,12 +227,14 @@ plan_turntable(const PresetSettings &settings, const PresetSceneFacts &facts,
 	double tz=center[2]-(r20*center[0]+r21*center[1]+r22*center[2]);
 	AnimationFrame frame = make_animation_frame(settings.duration*fraction, settings.viewsize,
 	    settings.orientation, settings.eye, settings.perspective);
-	DatabaseOperation operation;
-	operation.type = DatabaseOperationType::Transform;
-	operation.path = object;
-	operation.action = "lmul";
-	operation.values = {r00, r01, r02, tx, r10, r11, r12, ty, r20, r21, r22, tz, 0, 0, 0, 1};
-	frame.operations.push_back(std::move(operation));
+	for (const std::string &object : objects) {
+	    DatabaseOperation operation;
+	    operation.type = DatabaseOperationType::Transform;
+	    operation.path = object;
+	    operation.action = "lmul";
+	    operation.values = {r00, r01, r02, tx, r10, r11, r12, ty, r20, r21, r22, tz, 0, 0, 0, 1};
+	    frame.operations.push_back(std::move(operation));
+	}
 	plan.frames.push_back(std::move(frame));
     }
     return plan;
