@@ -13,7 +13,7 @@ verbose_add_subdirectory("src/conv" ply)
 verbose_add_subdirectory("src/conv" raw)
 verbose_add_subdirectory("src/conv" vdeck)
 
-brlcad_addexec(asc-nmg nmg/asc-nmg.c "libwdb;${M_LIBRARY}" FOLDER Conv)
+brlcad_addexec(asc-nmg nmg/asc-nmg.c "libwdb;${M_LIBRARY}" FOLDER Conv ARG_SCHEMA)
 
 brlcad_addexec(bot_dump bot_dump.c "libged;librt" FOLDER Conv)
 
@@ -35,7 +35,7 @@ brlcad_addexec(csg-g csg/csg-g.c "libwdb;librt;libbu" FOLDER Conv)
 
 brlcad_addexec(g-scad csg/g-scad.c "libwdb;librt;libnmg;libbu;${M_LIBRARY}" FOLDER Conv)
 
-brlcad_addexec(dbupgrade dbupgrade.c "libwdb;librt;libbu" FOLDER Conv)
+brlcad_addexec(dbupgrade dbupgrade.c "libwdb;librt;libbu" FOLDER Conv ARG_SCHEMA)
 
 brlcad_addexec(dxf-g dxf/dxf-g.c "libwdb;librt;libnmg;libbn;libbu;${M_LIBRARY}" FOLDER Conv)
 

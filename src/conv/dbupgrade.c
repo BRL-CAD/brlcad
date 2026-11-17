@@ -36,30 +36,60 @@
 
 #include "vmath.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
+#include "bu/arg.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "bn.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 
 
-void
-usage(const char *name)
-{
-    bu_log("Usage: %s [-f] input.g output.g\n", name);
-}
+struct dbupgrade_args {
+    int help;
+    int force;
+    int revert;
+};
+
+static const struct bu_arg_option dbupgrade_options[] = {
+    BU_ARG_FLAG("h", "help", struct dbupgrade_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("f", "force", struct dbupgrade_args, force,
+	"Force conversion when the database version normally prevents it"),
+    BU_ARG_FLAG("r", "revert", struct dbupgrade_args, revert,
+	"Write a version 4 database instead of upgrading to version 5"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand dbupgrade_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 1, 1,
+	"Input BRL-CAD database", NULL),
+    BU_ARG_OPERAND("output", BU_ARG_VALUE_FILE, 1, 1,
+	"Output BRL-CAD database", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema dbupgrade_schema = BU_ARG_SCHEMA(
+    "dbupgrade", "Upgrade or revert a BRL-CAD geometry database",
+    dbupgrade_options, dbupgrade_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar dbupgrade_grammar = {
+    &dbupgrade_schema, NULL, NULL
+};
 
 
 int
 main(int argc, char **argv)
 {
+    struct dbupgrade_args args = {0, 0, 0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     char name[17] = {0};
-    const char *argv0 = argv[0];
-    int flag_force = 0;
-    int flag_revert = 0;
-    int i;
-    int in_arg;
-    int out_arg;
+    const char *input;
+    const char *output;
     int in_version;
+    int introspection;
+    int operand_index;
     long errors = 0;
     struct bn_tol tol;
     struct bu_vls colortab = BU_VLS_INIT_ZERO;
@@ -68,7 +98,31 @@ main(int argc, char **argv)
     struct directory *dp = NULL;
     struct rt_wdb *fp = NULL;
 
-    bu_setprogname(argv0);
+    bu_setprogname(argv[0]);
+
+    introspection = bu_arg_introspect(&msg, &dbupgrade_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    operand_index = bu_arg_schema_parse_complete(&dbupgrade_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_log("%s\n", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&dbupgrade_schema, "dbupgrade");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "dbupgrade help");
+	return 0;
+    }
+    input = argv[operand_index + 1];
+    output = argv[operand_index + 2];
 
     /* this tolerance structure is only used for converting polysolids to BOT's
      * use zero distance to avoid losing any polysolid facets
@@ -79,49 +133,22 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    while ((i = bu_getopt(argc, argv, "rfh?")) != -1) {
-	switch (i) {
-	    case 'r':
-		/* undocumented option to revert to an old db version
-		 * currently, can only revert to db version 4
-		 */
-		flag_revert = 1;
-		break;
-	    case 'f':
-		flag_force = 1;
-		break;
-	    default:
-		usage(argv0);
-		return 1;
-	}
-    }
-    argc -= bu_optind;
-    argv += bu_optind;
-
-    if (argc != 2) {
-	usage(argv0);
-	return 1;
+    if (!bu_file_exists(input, NULL)) {
+	bu_exit(1, "ERROR: Input file (%s) does not exist\n", input);
+    } else if (bu_file_exists(output, NULL)) {
+	bu_exit(1, "ERROR: Output file (%s) already exists\n", output);
     }
 
-    in_arg = 0;
-    out_arg = 1;
-
-    if (!bu_file_exists(argv[in_arg], NULL)) {
-	bu_exit(1, "ERROR: Input file (%s) does not exist\n", argv[in_arg]);
-    } else if (bu_file_exists(argv[out_arg], NULL)) {
-	bu_exit(1, "ERROR: Output file (%s) already exists\n", argv[out_arg]);
-    }
-
-    if ((dbip = db_open(argv[in_arg], DB_OPEN_READONLY)) == DBI_NULL) {
-	perror(argv[in_arg]);
+    if ((dbip = db_open(input, DB_OPEN_READONLY)) == DBI_NULL) {
+	perror(input);
 	return 2;
     }
     in_version = db_version(dbip);
 
-    if (!flag_revert) {
-	if (in_version == 5 && !flag_force) {
+    if (!args.revert) {
+	if (in_version == 5 && !args.force) {
 	    bu_log("WARNING: This database (%s) is already at the current version.\n",
-		   argv[in_arg]);
+		   input);
 	    bu_log("         Run with -f to force upgrade (v5->v5) or -r to revert (v5->v4).\n");
 	    bu_log("Halting.\n");
 	    return 5;
@@ -130,24 +157,24 @@ main(int argc, char **argv)
 	    bu_log("ERROR: Input database version (%d) not recognized!\n", in_version);
 	    return 4;
 	}
-	if ((fp = wdb_fopen(argv[out_arg])) == NULL) {
-	    bu_log("ERROR: Failed to open the output database (%s)\n", argv[out_arg]);
-	    perror(argv[out_arg]);
+	if ((fp = wdb_fopen(output)) == NULL) {
+	    bu_log("ERROR: Failed to open the output database (%s)\n", output);
+	    perror(output);
 	    return 3;
 	}
     } else {
-	if (in_version != 5 && !flag_force) {
+	if (in_version != 5 && !args.force) {
 	    bu_log("WARNING: Can only revert from database version 5\n");
 	    bu_log("         Run with -f and -r to force revert (v4->v4).\n");
 	    bu_log("Halting.\n");
 	    return 6;
 	}
-	if ((dbip4 = db_create(argv[out_arg], 4)) == DBI_NULL) {
-	    bu_log("ERROR: Failed to create the output database (%s)\n", argv[out_arg]);
+	if ((dbip4 = db_create(output, 4)) == DBI_NULL) {
+	    bu_log("ERROR: Failed to create the output database (%s)\n", output);
 	    return 3;
 	}
 	if ((fp = wdb_dbopen(dbip4, RT_WDB_TYPE_DB_DISK)) == RT_WDB_NULL) {
-	    bu_log("ERROR: Failed to open the v4 output database (%s)\n", argv[out_arg]);
+	    bu_log("ERROR: Failed to open the v4 output database (%s)\n", output);
 	    return 4;
 	}
     }
@@ -176,7 +203,7 @@ main(int argc, char **argv)
 	int id;
 	int ret;
 
-	if (flag_revert && dp->d_major_type != DB5_MAJORTYPE_BRLCAD) {
+	if (args.revert && dp->d_major_type != DB5_MAJORTYPE_BRLCAD) {
 	    bu_log("\t%s not supported in version 4 databases, not converted\n",
 		   dp->d_namep);
 	    continue;

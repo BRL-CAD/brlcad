@@ -8,11 +8,10 @@ dbupgrade - upgrade a BRL-CAD geometry database to the current version
 
 == SYNOPSIS
 
-[source]
-----
-dbupgrade [-f] [-r] [-h] [-?] input.g output.g
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*dbupgrade* [_OPTION_]... _input_ _output_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -37,19 +36,17 @@ reported on standard error and the remaining objects are still written.
 [[options]]
 == OPTIONS
 
-*-f*::
-  Force the operation.  Normally *dbupgrade* halts with a warning if the input
-  is already at the current version (an upgrade) or is not v5 (a revert).  This
-  option forces the conversion to proceed anyway (e.g. v5 to v5, applying only
-  the geometry-type updates).
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-r*::
-  Revert the database to the older v4 format instead of upgrading.  The input
-  must be a v5 database (unless combined with *-f*).  Objects that have no v4
-  equivalent are skipped and reported.
+*-f*, *--force*::
+  Force conversion when the database version normally prevents it.
 
-*-h*, *-?*::
-  Print a usage message and exit.
+*-r*, *--revert*::
+  Write a version 4 database instead of upgrading to version 5.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

@@ -34,7 +34,9 @@
 #include "bio.h"
 #include "vmath.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
+#include "bu/arg.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "rt/geom.h"
@@ -43,11 +45,33 @@
 static int ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, const char *reg_name, const char *grp_name, struct bu_list *vlfree);
 static void descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext);
 
-void
-usage(void)
-{
-	bu_log("Usage: asc-nmg [filein] [fileout] ; use - for stdin\n");
-}
+struct asc_nmg_args {
+    int help;
+};
+
+static const struct bu_arg_option asc_nmg_options[] = {
+    BU_ARG_FLAG("h", "help", struct asc_nmg_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand asc_nmg_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"ASCII NMG input file, or - for standard input", NULL),
+    BU_ARG_OPERAND("output", BU_ARG_VALUE_FILE, 0, 1,
+	"Output BRL-CAD database (default nmg.g)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema asc_nmg_schema = BU_ARG_SCHEMA(
+    "asc-nmg", "Convert an ASCII NMG description to a BRL-CAD database",
+    asc_nmg_options, asc_nmg_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar asc_nmg_grammar = {
+    &asc_nmg_schema, NULL, NULL
+};
 
 /*
  *	Get ascii input file and output file names.
@@ -55,30 +79,58 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-    char		*afile = NULL;
+    struct asc_nmg_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    const char		*afile = "-";
     const char		*bfile = "nmg.g";
     FILE		*fpin;
     struct rt_wdb	*fpout;
     struct bu_list *vlfree = &rt_vlfree;
-
-    if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) {
-	usage();
-	bu_exit(1, NULL);
-    }
-
-    if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1) {
-	usage();
-    }
+    int introspection;
+    int operand_count;
+    int operand_index;
 
     bu_setprogname(argv[0]);
 
+    introspection = bu_arg_introspect(&msg, &asc_nmg_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    operand_index = bu_arg_schema_parse_complete(&asc_nmg_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_log("%s\n", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&asc_nmg_schema, "asc-nmg");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "asc-nmg help");
+	return 0;
+    }
+    operand_count = argc - operand_index - 1;
+    if (operand_count > 0)
+	afile = argv[operand_index + 1];
+    if (operand_count > 1)
+	bfile = argv[operand_index + 2];
+    if (operand_count == 0 && isatty(fileno(stdin))) {
+	char *help = bu_arg_schema_help(&asc_nmg_schema, "asc-nmg");
+	bu_flog(stderr, "%s", help ? help : "");
+	bu_free(help, "asc-nmg help");
+	return 1;
+    }
+
     /* Get ascii NMG input file name. */
-    if (bu_optind >= argc || (int)(*argv[1]) == '-') {
+    if (BU_STR_EQUAL(afile, "-")) {
 	fpin = stdin;
 	setmode(fileno(fpin), O_BINARY);
 	bu_log("%s: will be reading from stdin\n",argv[0]);
     } else {
-	afile = argv[bu_optind];
 	if ((fpin = fopen(afile, "rb")) == NULL) {
 	    fprintf(stderr,
 		    "%s: cannot open %s for reading\n",
@@ -89,9 +141,6 @@ main(int argc, char **argv)
     }
 
     /* Get BRL-CAD output data base name. */
-    bu_optind++;
-    if (bu_optind < argc)
-	bfile = argv[bu_optind];
     if ((fpout = wdb_fopen(bfile)) == NULL) {
 	fprintf(stderr, "%s: cannot open %s for writing\n",
 		argv[0], bfile);

@@ -8,10 +8,10 @@ asc-nmg - convert an ASCII NMG description to a BRL-CAD database
 
 == SYNOPSIS
 
-[source]
-----
-asc-nmg [-h | -?] [filein | -] [fileout]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*asc-nmg* [_OPTION_]... [_input_] [_output_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -70,9 +70,11 @@ closed shell. Each run of *asc-nmg* produces a single NMG object.
 [[options]]
 == OPTIONS
 
-*-h*, *-?*::
-  Print a usage message and exit. (*asc-nmg* takes no other options; all
-  remaining arguments are interpreted as file names.)
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES
