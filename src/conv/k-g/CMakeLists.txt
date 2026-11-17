@@ -11,7 +11,7 @@ set(k-g_soure_files
   sphere.cpp
   )
 
-BRLCAD_ADDEXEC(k-g "${k-g_soure_files}" "libwdb;librt;libbu" FOLDER Conv)
+BRLCAD_ADDEXEC(k-g "${k-g_soure_files}" "libwdb;librt;libbu" FOLDER Conv NO_OPTIONS)
 
 set(k-g_ignore_files
   bot.h
