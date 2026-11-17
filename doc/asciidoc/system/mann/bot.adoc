@@ -8,240 +8,35 @@ bot - Perform operations on a Bag of Triangles (BoT) primitive.
 
 == SYNOPSIS
 
-[source]
-----
-bot [-h] [-v] [-V] [-C r/g/b] {subcommand} {subcommand arguments}
-----
-
-
-
-[source]
-----
-check [{degen_faces | extra_edges | flipped_edges | manifold | open_edges | solid}] {objname}
-----
-
-
-
-[source]
-----
-chull {input_bot} {output_bot}
-----
-
-[source]
-----
-condense {input_bot} [output_bot]
-----
-
-
-
-[source]
-----
-decimate [--help] [-c error] [-n error] [-e length] [-f size] [-t tolerance] {input_bot} [output_bot]
-----
-
-[source]
-----
-dump [options] [bot ...]
-----
-
-[source]
-----
-exterior [options] {input_bot} [output_bot]
-----
-
-
-
-[source]
-----
-dump [--help] [-b] [-n] [-F] [-m directory | -o file] [-t dxf|glb|gltf|obj|sat|stl] [-u units] [--materials | --no-materials] [{input_bot} ...]
-----
-
-
-
-[source]
-----
-extrude [--help] [-q] [-R] [-F] [-i | -C] [--max-area-delta ratio] [--min-tri-delta ratio] {input_bot} [output_name]
-----
-
-[source]
-----
-face-fuse {input_bot} [output_bot]
-----
-
-
-
-[source]
-----
-flip {objname}
-----
-
-
-
-[source]
-----
-get {faces | minEdge | maxEdge | orientation | type | thickness | vertices} {objname}
-----
-
-[source]
-----
-info {objname} [V|F] [index ...]
-----
-
-
-
-[source]
-----
-isect {objname} {objname2}
-----
-
-[source]
-----
-fuse [-s|-p] {input_bot} [output_bot]
-----
-
-[source]
-----
-merge {output_bot} {input_bot} [input_bot ...]
-----
-
-[source]
-----
-normals [-t angle_tolerance] {input_bot} [output_bot]
-----
-
-[source]
-----
-pca {input_bot} [output_bot]
-----
-
-[source]
-----
-pick {objname} {V|E|F} [ray]
-----
-
-[source]
-----
-plot {objname} {face_index} [face_index ...]
-----
-
-
-
-[source]
-----
-info {objname} [F | V] [index_or_range ...]
-----
-
-[source]
-----
-repair [options] {input_bot} [input_bot ...]
-----
-
-
-
-[source]
-----
-pick {objname} {E | F | V} [--first] [px py pz dx dy dz]
-----
-
-
-
-[source]
-----
-remesh [--help] [--vdb] [-o output_name] {input_bot} [output_name]
-----
-
-
-
-[source]
-----
-repair [--help] [-p percent] [-a area] [-o output_name] {input_bot} [{input_bot} ...]
-----
-
-
-
-[source]
-----
-set {orientation | type | thickness} {objname} {value}
-----
-
-
-
-[source]
-----
-smooth [--help] [-c [0|1|2]] [-d [0|1|2]] [-e error] [-E error] [-I positive_integer] {input_bot} [output_bot]
-----
-
-
-
-[source]
-----
-split [-h] [--grp {name}] {objname}
-----
-
-
-
-[source]
-----
-stat {objname}
-----
-
-[source]
-----
-strip {input_bot} {output_bot}
-----
-
-[source]
-----
-sort {triangles_per_piece} {objname} [objname ...]
-----
-
-
-
-[source]
-----
-subd [--help] [-A [1|2|3|4|5]] [-l positive_integer] {input_bot} [output_bot]
-----
-
-
-
-[source]
-----
-sync {objname}
-----
-
-[source]
-----
-vertex {objname} [index ...]
-----
-
-[source]
-----
-vertex-fuse {input_bot} [output_bot]
-----
-
-
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bot* [_OPTION_]... _SUBCOMMAND_ [_ARGUMENT_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
 
-The *bot* command allows the user to initiate and number of subcommands on BoT primitives.
+The *bot* command performs inspection and editing operations on BoT primitives.
 
 
 [[options]]
 == OPTIONS
 
+// BEGIN GENERATED BU_ARG OPTIONS
 *-h*, *--help*::
-Print help.
+  Print command help.
 
 *-v*, *--verbose*::
-Turn on verbose output.
+  Increase output detail. May be repeated.
 
 *-V*, *--visualize*::
-Visualize results when supported by the selected subcommand.
+  Visualize results when supported.
 
-*-C* _r/g/b_, *--color* _r/g/b_::
-Set the RGB plotting color used by visualization-oriented subcommands.
+*-C* _r/g/b_, *--color*=_r/g/b_::
+  Plotting color.
+
+// END GENERATED BU_ARG OPTIONS
+
 The color may be written as _r/g/b_, _r,g,b_, _r;g;b_, or as three separate
 values (_r g b_).
 
@@ -249,6 +44,101 @@ values (_r g b_).
 [[subcommands]]
 == SUBCOMMANDS
 
+// BEGIN GENERATED BU_ARG SUBCOMMANDS
+*check*::
+Check BoT topology and geometry.
+
+*chull*::
+Generate a convex hull.
+
+*condense*::
+Remove unreferenced BoT vertices.
+
+*decimate*::
+Reduce BoT triangle count.
+
+*dump*::
+Export BoT geometry.
+
+*exterior*::
+Extract exterior BoT faces.
+
+*extrude*::
+Extrude a plate-mode BoT.
+
+*face-fuse*::
+Remove duplicate BoT faces.
+
+*flip*::
+Reverse BoT orientation.
+
+*get*::
+Query BoT properties.
+
+*info*::
+Report BoT vertex and face information.
+
+*isect*::
+Intersect BoT geometry.
+
+*fuse*::
+Heal coincident BoT topology through an NMG conversion.
+
+*merge*::
+Merge BoT objects.
+
+*normals*::
+Compute and store BoT surface normals.
+
+*pca*::
+Analyze BoT principal components.
+
+*pick*::
+Pick BoT elements.
+
+*plot*::
+Plot BoT diagnostic faces.
+
+*remesh*::
+Create a remeshed version of a BoT.
+
+*repair*::
+Repair manifold BoT geometry.
+
+*set*::
+Set BoT properties.
+
+*smooth*::
+Smooth a BoT.
+
+*split*::
+Split disconnected BoT components.
+
+*stat*::
+Report BoT statistics.
+
+*strip*::
+Remove degenerate-volume triangles from a BoT.
+
+*sort*::
+Group adjacent BoT faces for ray tracing.
+
+*subd*::
+Subdivide a BoT.
+
+*sync*::
+Synchronize BoT orientation.
+
+*vertex*::
+Report BoT vertex coordinates.
+
+*vertex-fuse*::
+Merge BoT vertices within the database tolerance.
+
+// END GENERATED BU_ARG SUBCOMMANDS
+
+[[subcommand_details]]
+== SUBCOMMAND DETAILS
 
 *check*::
 Performs a topology or geometry check on the provided BoT. With only an object
@@ -287,9 +177,6 @@ Specifies the GCT feature size.
 Specifies the simple-decimator vertex merge tolerance.
 
 
-
-*dump*::
-Exports BoT geometry to DXF, glTF, OBJ, SAT, or STL files.
 
 *exterior*::
 Extracts the outward-facing shell of a solid BoT.
@@ -342,11 +229,6 @@ current viewport ray, or to the explicit six-coordinate ray `px py pz dx dy
 dz`. `--first` chooses the first comparable edge or vertex along the ray; it
 is not valid with face picks.
 
-*info*::
-Reports detailed vertex or face information, optionally restricted to selected
-indices.
-
-
 *isect*::
 Tests if the two provided BoTs intersect (work in progress).
 
@@ -369,9 +251,6 @@ distinct from *smooth*, which changes vertex positions.
 *pca*::
 Computes principal axes and optionally writes a transformed output BoT.
 
-*pick*::
-Identifies the vertex, edge, or face nearest an interrogation ray.
-
 *plot*::
 Plots selected faces from a BoT in the current view.
 
@@ -389,10 +268,6 @@ each input is repaired in place. `-o`/`--output-name` writes a repaired copy
 and consequently requires exactly one input. `-p`/`--max-hole-percent` accepts
 a percentage from 0 through 100; `-a`/`--max-hole-area` supplies a nonnegative
 absolute limit in millimetres.
-
-*repair*::
-Attempts to produce valid manifold solid meshes from flawed input BoTs.
-
 
 *set*::
 Sets the specified property of the provided BoT. Properties that can be set are

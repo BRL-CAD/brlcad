@@ -8,12 +8,19 @@ bot_condense - deprecated compatibility command for *bot condense*
 
 == SYNOPSIS
 
-[source]
-----
-bot condense input_bot [output_bot]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bot_condense* [_OPTION_]... _new_bot_ _old_bot_
+// END GENERATED BU_ARG SYNOPSIS
 
-Compatibility form: `bot_condense output_bot input_bot`.
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print command help.
+
+// END GENERATED BU_ARG OPTIONS
 
 == DESCRIPTION
 

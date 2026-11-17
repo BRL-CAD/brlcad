@@ -8,12 +8,19 @@ bot_vertex_fuse - deprecated compatibility command for *bot vertex-fuse*
 
 == SYNOPSIS
 
-[source]
-----
-bot vertex-fuse input_bot [output_bot]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bot_vertex_fuse* [_OPTION_]... _new_bot_ _old_bot_
+// END GENERATED BU_ARG SYNOPSIS
 
-Compatibility form: `bot_vertex_fuse output_bot input_bot`.
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print command help.
+
+// END GENERATED BU_ARG OPTIONS
 
 == DESCRIPTION
 

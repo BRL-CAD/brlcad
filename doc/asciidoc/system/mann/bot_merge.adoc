@@ -8,12 +8,19 @@ bot_merge - deprecated compatibility command for *bot merge*
 
 == SYNOPSIS
 
-[source]
-----
-bot merge output_bot input_bot [input_bot ...]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bot_merge* [_OPTION_]... _destination_ _source_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
-Compatibility form: `bot_merge output_bot input_bot [input_bot ...]`.
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print command help.
+
+// END GENERATED BU_ARG OPTIONS
 
 == DESCRIPTION
 

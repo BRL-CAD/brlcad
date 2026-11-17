@@ -8,15 +8,10 @@ bot dump - export Bag-of-Triangles (BOT) geometry to a mesh file format
 
 == SYNOPSIS
 
-[source]
-----
-bot dump [-b] [-n|--normals] [-F|--full-precision]
-         [-m|--output-directory dir] [-o|--output-file file]
-         [-t dxf|glb|gltf|obj|sat|stl] [-u unit]
-         [--materials|--no-materials]
-         [bot1 bot2 ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bot_dump* [_OPTION_]... [_bot_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -35,43 +30,44 @@ Output formats supported:
 [[options]]
 == OPTIONS
 
+// BEGIN GENERATED BU_ARG OPTIONS
 *-h*, *--help*::
-Print command help.
+  Print command help.
 
 *-b*::
-Write output in binary format where supported (e.g., binary STL, binary glTF/GLB).
+  Use binary output when the selected format supports it.
 
 *-n*, *--normals*::
-Write per-vertex normals if the output format supports them.
+  Write normals when the selected format supports them.
+
+*-m* _directory_, *--output-directory*=_directory_::
+  Write one file per BoT into this directory.
+
+*-o* _file_, *--output-file*=_file_::
+  Write to this output file.
+
+*-t* _format_::
+  Select dxf, glb, gltf, obj, sat, or stl output. Accepted values: *dxf*, *glb*, *gltf*, *obj*, *sat*, *stl*.
+
+*-u* _units_::
+  Scale exported coordinates to these units.
 
 *-F*, *--full-precision*::
-Write full floating-point precision for coordinate values where supported.
-glTF and GLB require standard single-precision coordinates and reject
-this option.
-
-*-m dir*, *--output-directory dir*::
-Write each BOT to a separate file in the specified directory `dir`. Mutually exclusive with `-o`.
-
-*-o file*, *--output-file file*::
-Write all output to the single specified `file`. Mutually exclusive with `-m`.
-
-*-t fmt*::
-Specify the output format type. Accepted values: `dxf`, `glb`, `gltf`, `obj`, `sat`, `stl`. Default is `stl`.
-
-*-u unit*::
-Specify the output units for coordinate values (e.g., `mm`, `cm`, `in`, `ft`). Defaults to the database's native units.
-
-*--materials*::
-Export resolved color and material information when the selected format supports it. This is the default behavior for supported formats.
-
-*--no-materials*::
-Disable color and material export and write geometry only.
+  Write full floating-point precision (nonstandard for glTF).
 
 *--displayed*::
-Export displayed geometry.
+  Write displayed geometry.
 
 *--viewdata*::
-Include non-geometry view data in formats that support it.
+  Write non-geometry view data.
+
+*--materials*::
+  Write material and color information.
+
+*--no-materials*::
+  Do not write material or color information.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

@@ -8,11 +8,10 @@ bot decimate - Reduce the number of triangles in a BoT.
 
 == SYNOPSIS
 
-[source]
-----
-bot decimate [-f feature_size] [-c maximum_chord_error] [-n maximum_normal_error] [-e minimum_edge_length] {input_bot} [output_bot]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bot_decimate* [_OPTION_]... _new_bot_ _current_bot_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
