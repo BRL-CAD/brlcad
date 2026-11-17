@@ -40,6 +40,7 @@ ged_bot_merge_core(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp, *new_dp;
     struct rt_db_internal intern;
     struct rt_bot_internal **bots;
+    struct bu_attribute_value_set attributes;
     int i, idx;
     static const char *usage = "bot_dest bot1_src [botn_src]";
 
@@ -56,6 +57,8 @@ ged_bot_merge_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
+    GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, BRLCAD_ERROR);
+    bu_avs_init_empty(&attributes);
     bots = (struct rt_bot_internal **)bu_calloc(argc - 1, sizeof(struct rt_bot_internal *), "bot internal");
 
     /* read in all the bots */
@@ -73,6 +76,8 @@ ged_bot_merge_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	bots[idx] = (struct rt_bot_internal *)intern.idb_ptr;
+	if (!idx)
+	    bu_avs_merge(&attributes, &intern.idb_avs);
 
 	intern.idb_ptr = (void *)0;
 	rt_db_free_internal(&intern);
@@ -83,6 +88,7 @@ ged_bot_merge_core(struct ged *gedp, int argc, const char *argv[])
 
     if (idx == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s: No BOT solids given.\n", argv[0]);
+	bu_avs_free(&attributes);
 	bu_free(bots, "bots");
 	return BRLCAD_ERROR;
     }
@@ -93,6 +99,25 @@ ged_bot_merge_core(struct ged *gedp, int argc, const char *argv[])
     intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_BOT;
     intern.idb_meth = &OBJ[ID_BOT];
     intern.idb_ptr = rt_bot_merge(idx, (const struct rt_bot_internal * const *)(bots));
+
+    if (!intern.idb_ptr) {
+	bu_vls_printf(gedp->ged_result_str,
+		"%s: input BoTs are incompatible or too large to merge\n", argv[0]);
+	for (i = 0; i < idx; ++i) {
+	    struct rt_db_internal input_internal;
+	    RT_DB_INTERNAL_INIT(&input_internal);
+	    input_internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	    input_internal.idb_minor_type = ID_BOT;
+	    input_internal.idb_meth = &OBJ[ID_BOT];
+	    input_internal.idb_ptr = bots[i];
+	    rt_db_free_internal(&input_internal);
+	}
+	bu_avs_free(&attributes);
+	bu_free(bots, "bots");
+	return BRLCAD_ERROR;
+    }
+    bu_avs_merge(&intern.idb_avs, &attributes);
+    bu_avs_free(&attributes);
 
     GED_DB_DIRADD(gedp, new_dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type, BRLCAD_ERROR);
     GED_DB_PUT_INTERN(gedp, new_dp, &intern, BRLCAD_ERROR);

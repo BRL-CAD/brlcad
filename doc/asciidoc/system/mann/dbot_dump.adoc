@@ -20,9 +20,9 @@ dbot_dump [-b] [-n|--normals] [-F|--full-precision]
 [[description]]
 == DESCRIPTION
 
-The *dbot_dump* command exports the currently *displayed* BOT (Bag-of-Triangles) objects to an external mesh file. Unlike *bot_dump*, which takes explicit object names or operates on all BOTs in the database, *dbot_dump* operates on the set of objects currently drawn in the MGED display.
+The *dbot_dump* command exports the currently *displayed* BOT (Bag-of-Triangles) objects to an external mesh file. Unlike *bot dump*, which takes explicit object names or operates on all BOTs in the database, *dbot_dump* operates on the set of objects currently drawn in the MGED display.
 
-It automatically passes `--displayed`, `--viewdata`, and `--materials` to the underlying bot_dump implementation:
+It automatically passes `--displayed`, `--viewdata`, and `--materials` to the underlying *bot dump* implementation:
 
 * *--displayed* — restricts export to currently drawn objects.
 * *--viewdata* — writes view-related metadata alongside the geometry output.
@@ -30,7 +30,7 @@ It automatically passes `--displayed`, `--viewdata`, and `--materials` to the un
 
 No BOT names are taken as arguments; the set of objects to export is determined by the display list.
 
-All other options are identical to *bot_dump*, including `--no-materials` to explicitly suppress color/material export.
+All other options are identical to *bot dump*, including `--no-materials` to explicitly suppress color/material export.
 
 === Options
 
@@ -86,7 +86,7 @@ Exports all currently drawn BOT objects to Wavefront OBJ format, including displ
 [[see_also]]
 == SEE ALSO
 
-*bot_dump*(nged), *who*(nged), *draw*(nged)
+*bot dump*(nged), *who*(nged), *draw*(nged)
 
 
 [[author]]

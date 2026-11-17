@@ -266,11 +266,20 @@ package require Itk
     proc ::adjust {args} {eval $BotEditor::_ adjust $args}
     proc ::bb {args} {eval $BotEditor::_ bb $args}
     proc ::bot {args} {eval $BotEditor::_ bot $args}
-    proc ::bot_condense {args} {eval $BotEditor::_ bot_condense $args}
-    proc ::bot_decimate {args} {eval $BotEditor::_ bot_decimate $args}
-    proc ::bot_face_fuse {args} {eval $BotEditor::_ bot_face_fuse $args}
-    proc ::bot_face_sort {args} {eval $BotEditor::_ bot_face_sort $args}
-    proc ::bot_vertex_fuse {args} {eval $BotEditor::_ bot_vertex_fuse $args}
+    proc ::bot_condense {args} {
+	eval $BotEditor::_ bot condense [lindex $args end] [lindex $args end-1]
+    }
+    proc ::bot_decimate {args} {
+	set options [lrange $args 0 end-2]
+	eval $BotEditor::_ bot decimate $options [lindex $args end] [lindex $args end-1]
+    }
+    proc ::bot_face_fuse {args} {
+	eval $BotEditor::_ bot face-fuse [lindex $args end] [lindex $args end-1]
+    }
+    proc ::bot_face_sort {args} {eval $BotEditor::_ bot sort $args}
+    proc ::bot_vertex_fuse {args} {
+	eval $BotEditor::_ bot vertex-fuse [lindex $args end] [lindex $args end-1]
+    }
     proc ::cp {args} {eval $BotEditor::_ cp $args}
     proc ::draw {args} {eval $BotEditor::_ draw $args}
     proc ::kill {args} {eval $BotEditor::_ kill $args}

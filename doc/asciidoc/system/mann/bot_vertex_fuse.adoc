@@ -4,48 +4,32 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-bot_vertex_fuse - Used to eliminate duplicate vertices from a BOT solid.
+bot_vertex_fuse - deprecated compatibility command for *bot vertex-fuse*
 
 == SYNOPSIS
 
 [source]
 ----
-bot_vertex_fuse {new_bot_solid} {old_bot_primitive>}
+bot vertex-fuse input_bot [output_bot]
 ----
 
+Compatibility form: `bot_vertex_fuse output_bot input_bot`.
 
-[[description]]
 == DESCRIPTION
 
-Used to eliminate duplicate vertices from a BOT solid. It returns the number of vertices eliminated. No tolerance is used, so the vertices must match exactly to be considered duplicates.
+*bot vertex-fuse* merges vertices whose positions are equal within the
+database tolerance and updates face references.  If _output_bot_ is omitted,
+the result is written to _input_bot-out_vertex_fuse.bot_.
 
+The *bot_vertex_fuse* name and output-first ordering are deprecated as of
+BRL-CAD 7.48 and are retained during the formal deprecation period.
 
-[[examples]]
-== EXAMPLES
-
-The example shows the use of the *bot_vertex_fuse* command to eliminate duplicate vertices from a BOT solid and store the result in a new BOT primitive.
-
-.Eliminating duplicate vertices from a primitive and storing the result in a new BOT primitive.
-====
+== EXAMPLE
 
 [source,console]
 ----
-mged> bot_vertex_fuse bot1_fused bot1_original
+mged> bot vertex-fuse bot1_original bot1_fused
 ----
-Eliminates any duplicate vertices from the primitive named __bot1_original__ and stores the result in the new BOT primitive named __bot1_fused__.
 
-
-
-====
-
-
-[[author]]
 == AUTHOR
-
 BRL-CAD Team
-
-
-[[bug_reports]]
-== BUG REPORTS
-
-Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -2325,26 +2325,23 @@ namespace delete ::ArcherCoreBootstrap
 # necessary and puts the pieces in a new group.
 #
 ::itcl::body ArcherCore::bot_split2 {_bot} {
-    set new_bots [gedCmd bot_split $_bot]
-
-    set blist [lindex $new_bots 0]
-    set bname [lindex $blist 0]
-    set bots [lindex $blist 1]
-    if {[llength $bots] == 0} {
-	return ""
-    }
-
-    set backup "$bname.bak"
+    set backup "$_bot.bak"
     if {[gedCmd exists $backup]} {
 	gedCmd make_name -s 0
 	set backup [gedCmd make_name $backup]
     }
 
-    gedCmd mv $bname $backup
-    eval gedCmd g $bname $bots
-    gedCmd erase $bname
+    gedCmd mv $_bot $backup
+    if {[catch {gedCmd bot split --grp $_bot $backup} split_result]} {
+	gedCmd mv $backup $_bot
+	return -code error $split_result
+    }
+    if {[string match "BoT is fully connected*" $split_result]} {
+	gedCmd mv $backup $_bot
+	return ""
+    }
 
-    return [list $bname $backup]
+    return [list $_bot $backup]
 }
 
 
@@ -3448,7 +3445,7 @@ namespace delete ::ArcherCoreBootstrap
 		set mStatusStr "erase $path"
 	    } \
 	    $COMP_PICK_BOT_FLIP_MODE { \
-		catch {bot_flip $path}
+		catch {bot flip $path}
 		redrawObj $path
 	    } \
 	    $COMP_PICK_BOT_SPLIT_MODE { \
@@ -3474,7 +3471,7 @@ namespace delete ::ArcherCoreBootstrap
 		SetNormalCursor $this
 	    } \
 	    $COMP_PICK_BOT_SYNC_MODE { \
-		catch {bot_sync $path}
+		catch {bot sync $path}
 		redrawObj $path
 	    }
     }
@@ -6163,47 +6160,51 @@ namespace delete ::ArcherCoreBootstrap
 }
 
 ::itcl::body ArcherCore::bot_condense {args} {
-    eval gedWrapper bot_condense 0 0 1 1 $args
+    gedWrapper bot 0 0 1 1 condense [lindex $args end] [lindex $args end-1]
 }
 
 ::itcl::body ArcherCore::bot_decimate {args} {
-    eval gedWrapper bot_decimate 0 0 1 1 $args
+    set options [lrange $args 0 end-2]
+    eval gedWrapper bot 0 0 1 1 decimate $options [lindex $args end] [lindex $args end-1]
 }
 
 ::itcl::body ArcherCore::bot_face_fuse {args} {
-    eval gedWrapper bot_face_fuse 0 0 1 1 $args
+    gedWrapper bot 0 0 1 1 face-fuse [lindex $args end] [lindex $args end-1]
 }
 
 ::itcl::body ArcherCore::bot_face_sort {args} {
-    eval gedWrapper bot_face_sort 1 0 1 1 $args
+    eval gedWrapper bot 1 0 1 1 sort $args
 }
 
 ::itcl::body ArcherCore::bot_flip {args} {
-    eval gedWrapper bot_flip 1 0 1 0 $args
+    eval gedWrapper bot 1 0 1 0 flip $args
 }
 
 ::itcl::body ArcherCore::bot_fuse {args} {
-    eval gedWrapper bot_fuse 0 0 1 2 $args
+    set options [lrange $args 0 end-2]
+    eval gedWrapper bot 0 0 1 2 fuse $options [lindex $args end] [lindex $args end-1]
 }
 
 ::itcl::body ArcherCore::bot_merge {args} {
-    eval gedWrapper bot_merge 1 0 1 1 $args
+    eval gedWrapper bot 1 0 1 1 merge $args
 }
 
 ::itcl::body ArcherCore::bot_smooth {args} {
-    eval gedWrapper bot_smooth 0 0 1 1 $args
+    set options [lrange $args 0 end-2]
+    eval gedWrapper bot 0 0 1 1 normals $options [lindex $args end] [lindex $args end-1]
 }
 
 ::itcl::body ArcherCore::bot_split {args} {
+    # Preserve the legacy top-level output hierarchy during deprecation.
     eval gedWrapper bot_split 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::bot_sync {args} {
-    eval gedWrapper bot_sync 1 0 1 0 $args
+    eval gedWrapper bot 1 0 1 0 sync $args
 }
 
 ::itcl::body ArcherCore::bot_vertex_fuse {args} {
-    eval gedWrapper bot_vertex_fuse 0 0 1 1 $args
+    gedWrapper bot 0 0 1 1 vertex-fuse [lindex $args end] [lindex $args end-1]
 }
 
 ::itcl::body ArcherCore::brep {args} {

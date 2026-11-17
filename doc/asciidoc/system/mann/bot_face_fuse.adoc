@@ -4,48 +4,33 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-bot_face_fuse - Eliminates duplicate faces from a BOT solid.
+bot_face_fuse - deprecated compatibility command for *bot face-fuse*
 
 == SYNOPSIS
 
 [source]
 ----
-bot_face_fuse {new_bot_primitive} {old_bot_primitive}
+bot face-fuse input_bot [output_bot]
 ----
 
+Compatibility form: `bot_face_fuse output_bot input_bot`.
 
-[[description]]
 == DESCRIPTION
 
-Eliminates duplicate faces from a BOT solid. It returns the number of faces eliminated.
+*bot face-fuse* removes duplicate faces while preserving plate thickness and
+face mode, surface normals, texture coordinates, and object attributes.  If
+the output name is omitted, the result is written to
+_input_bot-out_face_fuse.bot_.
 
+The *bot_face_fuse* name and its output-first ordering are deprecated as of
+BRL-CAD 7.48 and are retained only for the formal compatibility period.
 
-[[examples]]
-== EXAMPLES
-
-The example demonstrates the use of the *bot_face_fuse* command to eliminate duplicate faces from a BOT primitive.
-
-.Removing duplicate faces from one BOT and storing the results in a new BOT primitive.
-====
+== EXAMPLE
 
 [source,console]
 ----
-mged> bot_face_fuse bot1_fused bot1_original
+mged> bot face-fuse bot1_original bot1_fused
 ----
-Eliminates any duplicate faces from the primitive named __bot1_original__ and stores the result in the new BOT primitive named __bot1_fused__.
 
-
-
-====
-
-
-[[author]]
 == AUTHOR
-
 BRL-CAD Team
-
-
-[[bug_reports]]
-== BUG REPORTS
-
-Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

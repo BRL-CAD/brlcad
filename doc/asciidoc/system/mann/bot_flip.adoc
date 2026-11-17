@@ -4,22 +4,22 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-bot_flip - Reverse (i.e. flip) all the facet normals within a BOT primitive.
+bot flip - Reverse all facet normals within a BoT primitive.
 
 == SYNOPSIS
 
 [source]
 ----
-bot_flip {bot} [bot2 bot3]...
+bot flip {bot} [bot2 bot3]...
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Reverse (i.e. flip) all the facet normals within a BOT primitive. When viewing a BOT with the MGED 'e -m1' or 'draw -m1' command, if all the exterior facets are black and all interior facets are shaded (red by default), then this command will flip the normals resulting in all exterior facets to become shaded and all interior facets to become black. It is recommended to run the commands 'bot_vertex_fuse' then 'bot_face_fuse' before running 'bot_flip'.
+Reverse all facet normals within a BOT primitive. When viewing a BOT with the MGED 'e -m1' or 'draw -m1' command, if all the exterior facets are black and all interior facets are shaded (red by default), then this command will flip the normals resulting in all exterior facets becoming shaded and all interior facets becoming black. It is recommended to run *bot vertex-fuse* and *bot face-fuse* before *bot flip*.
 
-Note: using the *bot_flip* will toggle the orientation of right and left-handed BOT primitives. The orientation of unoriented BOT primitives will not change.
+The command toggles the orientation of right and left-handed BOT primitives. The orientation of unoriented BOT primitives will not change.  The legacy *bot_flip* spelling is deprecated as of BRL-CAD 7.48.
 
 [[examples]]
 == EXAMPLES
@@ -28,7 +28,7 @@ Note: using the *bot_flip* will toggle the orientation of right and left-handed 
 ====
 [source,console]
 ----
-mged> bot_flip imported_shell.bot
+mged> bot flip imported_shell.bot
 ----
 
 Reverses every facet normal in _imported_shell.bot_, which is a common follow-up after finding that the model's outside faces render as backfaces in shaded mode.

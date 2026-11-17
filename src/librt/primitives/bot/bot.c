@@ -4676,106 +4676,57 @@ rt_bot_same_orientation(const int *a, const int *b)
 int
 rt_bot_face_fuse(struct rt_bot_internal *bot)
 {
-    size_t num_faces;
-    size_t i, j, k, l;
-    int count = 0;
-
     RT_BOT_CK_MAGIC(bot);
+    if (bot->num_faces > INT_MAX)
+	return -1;
 
-    num_faces = bot->num_faces;
-    for (i = 0; i < num_faces; i++) {
-	j = i + 1;
-
-	while (j<num_faces) {
-	    /* each pass through this loop either increments j or
-	     * decrements num_faces
-	     */
-	    int match = 0;
-	    int elim;
-
-	    for (k = i * 3; k < (i+1) * 3; k++) {
-		for (l = j * 3; l < (j+1) * 3; l++) {
-		    if (bot->faces[k] == bot->faces[l]) {
-			match++;
+    int *keep = (int *)bu_calloc(bot->num_faces, sizeof(int),
+	"BOT face fuse selection");
+    size_t keep_count = 0;
+    for (size_t candidate = 0; candidate < bot->num_faces; ++candidate) {
+	int duplicate = 0;
+	for (size_t selected = 0; selected < keep_count && !duplicate; ++selected) {
+	    size_t original = (size_t)keep[selected];
+	    int matches = 0;
+	    for (size_t candidate_corner = 0; candidate_corner < 3; ++candidate_corner) {
+		for (size_t original_corner = 0; original_corner < 3; ++original_corner) {
+		    if (bot->faces[candidate * 3 + candidate_corner] ==
+			bot->faces[original * 3 + original_corner]) {
+			matches++;
 			break;
 		    }
 		}
 	    }
-
-	    if (match != 3) {
-		j++;
+	    if (matches != 3)
 		continue;
-	    }
-
-	    /* these two faces have the same vertices */
-	    elim = -1;
-	    switch (bot->mode) {
-		case RT_BOT_PLATE:
-		case RT_BOT_PLATE_NOCOS:
-		    /* check the face thickness and face mode */
-		    if (!ZERO(bot->thickness[i] - bot->thickness[j]) ||
-			(BU_BITTEST(bot->face_mode, i)?1:0) != (BU_BITTEST(bot->face_mode, j)?1:0))
-			break;
-		    /* fall through */
-		case RT_BOT_SOLID:
-		case RT_BOT_SURFACE:
-		    if (bot->orientation == RT_BOT_UNORIENTED) {
-			/* faces are identical, so eliminate one */
-			elim = j;
-		    } else {
-			/* need to check orientation */
-			if (rt_bot_same_orientation(&bot->faces[i*3], &bot->faces[j*3]))
-			    elim = j;
-		    }
-		    break;
-		default:
-		    bu_bomb("bot_face_condense: Unrecognized BOT mode!!!\n");
-		    break;
-	    }
-
-	    if (elim == -1) {
-		j++;
-		continue;
-	    }
-
-	    /* we are eliminating face number "elim" */
-	    for (l = elim; l < num_faces - 1; l++) {
-		VMOVE(&bot->faces[l*3], &bot->faces[(l+1)*3]);
-	    }
-
 	    if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
-		for (l = elim; l < num_faces - 1; l++) {
-		    bot->thickness[l] = bot->thickness[l+1];
-		    if (BU_BITTEST(bot->face_mode, l+1))
-			BU_BITSET(bot->face_mode, l);
-		    else
-			BU_BITCLR(bot->face_mode, l);
-		}
+		if (!ZERO(bot->thickness[original] - bot->thickness[candidate]) ||
+		    (BU_BITTEST(bot->face_mode, original) ? 1 : 0) !=
+		    (BU_BITTEST(bot->face_mode, candidate) ? 1 : 0))
+		    continue;
 	    }
-	    num_faces--;
+	    duplicate = bot->orientation == RT_BOT_UNORIENTED ||
+		rt_bot_same_orientation(&bot->faces[original * 3],
+		    &bot->faces[candidate * 3]);
 	}
+	if (!duplicate)
+	    keep[keep_count++] = (int)candidate;
     }
 
-    count = bot->num_faces - num_faces;
-
-    if (count) {
-	bot->num_faces = num_faces;
-	bot->faces = (int *)bu_realloc(bot->faces, num_faces*3*sizeof(int), "BOT faces realloc");
-	if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
-	    struct bu_bitv *new_mode;
-
-	    bot->thickness = (fastf_t *)bu_realloc(bot->thickness, num_faces*sizeof(fastf_t), "BOT thickness realloc");
-	    new_mode = bu_bitv_new(num_faces);
-	    for (l = 0; l < num_faces; l++) {
-		if (BU_BITTEST(bot->face_mode, l))
-		    BU_BITSET(new_mode, l);
-	    }
-	    if (bot->face_mode)
-		bu_free(bot->face_mode, "BOT face_mode");
-	    bot->face_mode = new_mode;
-	}
+    int count = (int)(bot->num_faces - keep_count);
+    if (!count) {
+	bu_free(keep, "BOT face fuse selection");
+	return 0;
     }
 
+    struct rt_bot_internal *result = rt_bot_subset(bot, keep, keep_count);
+    bu_free(keep, "BOT face fuse selection");
+    if (!result)
+	return -1;
+
+    rt_bot_internal_free(bot);
+    *bot = *result;
+    BU_PUT(result, struct rt_bot_internal);
     return count;
 }
 
@@ -4946,9 +4897,11 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 {
     fastf_t *centers = (fastf_t *)NULL;	/* triangle centers, used when all else fails */
     int *new_faces = (int *)NULL;	/* the sorted list of faces to be attached to the BOT at the end of this routine */
+    int *new_sources = (int *)NULL;	/* original face index for each sorted face */
     int *new_norms = (int *)NULL;	/* the sorted list of vertex normals corresponding to the "new_faces" list */
     int *old_faces = (int *)NULL;	/* a copy of the original face list from the BOT */
     int *piece = (int *)NULL;		/* a small face list, for just the faces in the current piece */
+    int *piece_sources = (int *)NULL;	/* original face index for each piece face */
     int *piece_norms = (int *)NULL;	/* vertex normals for faces in the current piece */
     int *piece_verts = (int *)NULL;	/* a list of vertices in the current piece (each vertex appears only once) */
     unsigned char *vert_count;		/* an array used to hold the number of piece vertices that appear in each BOT face */
@@ -4960,11 +4913,21 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
     size_t j = 0;
 
     RT_BOT_CK_MAGIC(bot);
+    if (!tris_per_piece ||
+	((bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) &&
+	 !bot->thickness) ||
+	((bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) &&
+	 (!bot->face_normals || bot->num_face_normals != bot->num_faces)) ||
+	((bot->bot_flags & RT_BOT_HAS_TEXTURE_UVS) &&
+	 (!bot->face_uvs || bot->num_face_uvs != bot->num_faces)))
+	return 1;
 
     /* allocate memory for all the data */
     new_faces = (int *)bu_calloc(bot->num_faces * 3, sizeof(int), "new_faces");
+    new_sources = (int *)bu_calloc(bot->num_faces, sizeof(int), "new face sources");
     old_faces = (int *)bu_calloc(bot->num_faces * 3, sizeof(int), "old_faces");
     piece = (int *)bu_calloc(tris_per_piece * 3, sizeof(int), "piece");
+    piece_sources = (int *)bu_calloc(tris_per_piece, sizeof(int), "piece face sources");
     vert_count = (unsigned char *)bu_malloc(bot->num_faces * sizeof(unsigned char), "vert_count");
     piece_verts = (int *)bu_malloc((tris_per_piece * 3 + 1) * sizeof(int), "piece_verts");
     centers = (fastf_t *)NULL;
@@ -5005,6 +4968,7 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 
 	/* copy that face to start the piece */
 	VMOVE(piece, &old_faces[cur_face*3]);
+	piece_sources[0] = (int)cur_face;
 	if (bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
 	    VMOVE(piece_norms, &bot->face_normals[cur_face*3]);
 	}
@@ -5025,6 +4989,7 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 	     */
 	    for (j = 0; j < piece_len; j++) {
 		VMOVE(&new_faces[new_face_count*3], &piece[j*3]);
+		new_sources[new_face_count] = piece_sources[j];
 		if (bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
 		    VMOVE(&new_norms[new_face_count*3], &piece_norms[j*3]);
 		}
@@ -5071,6 +5036,7 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 		if (vert_count[i] > 1) {
 		    /* add this face to the piece */
 		    VMOVE(&piece[piece_len*3], &old_faces[i*3]);
+		    piece_sources[piece_len] = (int)i;
 		    if (bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
 			VMOVE(&piece_norms[piece_len*3], &bot->face_normals[i*3]);
 		    }
@@ -5091,6 +5057,7 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 			/* copy this piece to the "new_faces" list */
 			for (j = 0; j < piece_len; j++) {
 			    VMOVE(&new_faces[new_face_count*3], &piece[j*3]);
+			    new_sources[new_face_count] = piece_sources[j];
 			    if (bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
 				VMOVE(&new_norms[new_face_count*3], &piece_norms[j*3]);
 			    }
@@ -5125,6 +5092,7 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 
 		/* Add this face to the current piece */
 		VMOVE(&piece[piece_len*3], &old_faces[face_to_add*3]);
+		piece_sources[piece_len] = (int)face_to_add;
 		if (bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
 		    VMOVE(&piece_norms[piece_len*3], &bot->face_normals[face_to_add*3]);
 		}
@@ -5144,6 +5112,7 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 		    /* copy this piece to the "new_faces" list */
 		    for (j = 0; j < piece_len; j++) {
 			VMOVE(&new_faces[new_face_count*3], &piece[j*3]);
+			new_sources[new_face_count] = piece_sources[j];
 			if (bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
 			    VMOVE(&new_norms[new_face_count*3], &piece_norms[j*3]);
 			}
@@ -5174,6 +5143,7 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 		     */
 		    if (vert_count[i] == max_verts) {
 			VMOVE(&piece[piece_len*3], &old_faces[i*3]);
+			piece_sources[piece_len] = (int)i;
 			if (bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
 			    VMOVE(&piece_norms[piece_len*3], &bot->face_normals[i*3]);
 			}
@@ -5188,6 +5158,7 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 			    /* copy this piece to the "new_faces" list */
 			    for (j = 0; j < piece_len; j++) {
 				VMOVE(&new_faces[new_face_count*3], &piece[j*3]);
+				new_sources[new_face_count] = piece_sources[j];
 				if (bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
 				    VMOVE(&new_norms[new_face_count*3], &piece_norms[j*3]);
 				}
@@ -5207,6 +5178,7 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 
     bu_free(old_faces, "old_faces");
     bu_free(piece, "piece");
+    bu_free(piece_sources, "piece face sources");
     bu_free(vert_count, "vert_count");
     bu_free(piece_verts, "piece_verts");
     if (centers) {
@@ -5218,7 +5190,32 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
     if (new_face_count != bot->num_faces) {
 	bu_log("new_face_count = %zu, should be %zu\n", new_face_count, bot->num_faces);
 	bu_free(new_faces, "new_faces");
+	bu_free(new_sources, "new face sources");
+	bu_free(new_norms, "new_norms");
+	bu_free(piece_norms, "piece_norms");
 	return 1;
+    }
+
+    fastf_t *new_thickness = NULL;
+    struct bu_bitv *new_face_mode = NULL;
+    int *new_face_uvs = NULL;
+    if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
+	new_thickness = (fastf_t *)bu_calloc(bot->num_faces,
+	    sizeof(fastf_t), "sorted BOT thickness");
+	new_face_mode = bu_bitv_new(bot->num_faces);
+	for (i = 0; i < bot->num_faces; ++i) {
+	    size_t source = (size_t)new_sources[i];
+	    new_thickness[i] = bot->thickness[source];
+	    if (bot->face_mode && BU_BITTEST(bot->face_mode, source))
+		BU_BITSET(new_face_mode, i);
+	}
+    }
+    if (bot->face_uvs && bot->num_face_uvs == bot->num_faces) {
+	new_face_uvs = (int *)bu_calloc(bot->num_faces, 3 * sizeof(int),
+	    "sorted BOT face UVs");
+	for (i = 0; i < bot->num_faces; ++i)
+	    VMOVE(&new_face_uvs[i * 3],
+		&bot->face_uvs[(size_t)new_sources[i] * 3]);
     }
 
     if (bot->faces)
@@ -5226,12 +5223,26 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 
     bot->faces = new_faces;
 
+    if (new_thickness) {
+	bu_free(bot->thickness, "BOT thickness");
+	bu_free(bot->face_mode, "BOT face mode");
+	bot->thickness = new_thickness;
+	bot->face_mode = new_face_mode;
+    }
+
+    if (new_face_uvs) {
+	bu_free(bot->face_uvs, "BOT face UVs");
+	bot->face_uvs = new_face_uvs;
+    }
+
     if (bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
 	bu_free(piece_norms, "piece_norms");
 	if (bot->face_normals)
 	    bu_free(bot->face_normals, "bot->face_normals");
 	bot->face_normals = new_norms;
     }
+
+    bu_free(new_sources, "new face sources");
 
     return 0;
 }
@@ -6112,127 +6123,135 @@ rt_bot_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 struct rt_bot_internal *
 rt_bot_merge(size_t num_bots, const struct rt_bot_internal * const *bots)
 {
-    struct rt_bot_internal *result;
-    size_t avail_vert, avail_face;
-    size_t i, face;
-    int *reverse_flags;
-
-    /* create a new bot */
+    struct rt_bot_internal *result = NULL;
     BU_ALLOC(result, struct rt_bot_internal);
-    result->mode = 0;
-    result->orientation = RT_BOT_UNORIENTED;
-    result->bot_flags = 0;
-    result->num_vertices = 0;
-    result->num_faces = 0;
-    result->faces = (int *)0;
-    result->vertices = (fastf_t *)0;
-    result->thickness = (fastf_t *)0;
-    result->face_mode = (struct bu_bitv *)0;
-    result->num_normals = 0;
-    result->normals = (fastf_t *)0;
-    result->num_face_normals = 0;
-    result->face_normals = 0;
     result->magic = RT_BOT_INTERNAL_MAGIC;
 
     if (!num_bots)
 	return result;
+    if (!bots || !bots[0])
+	goto fail;
 
-    for (i = 0; i < num_bots; ++i) {
+    result->mode = bots[0]->mode;
+    result->orientation = RT_BOT_UNORIENTED;
+    result->bot_flags = bots[0]->bot_flags;
+    int preserve_normals = 1;
+    int preserve_uvs = 1;
+    for (size_t i = 0; i < num_bots; ++i) {
+	if (!bots[i])
+	    goto fail;
 	RT_BOT_CK_MAGIC(bots[i]);
-
+	if (bots[i]->mode != result->mode) {
+	    bu_log("rt_bot_merge(): all BoTs must use the same mode\n");
+	    goto fail;
+	}
+	if (bots[i]->num_vertices > (size_t)INT_MAX - result->num_vertices) {
+	    bu_log("rt_bot_merge(): merged vertex count exceeds BoT index capacity\n");
+	    goto fail;
+	}
+	if (bots[i]->num_normals > (size_t)INT_MAX - result->num_normals) {
+	    bu_log("rt_bot_merge(): merged normal count exceeds BoT index capacity\n");
+	    goto fail;
+	}
+	if (bots[i]->num_uvs > (size_t)INT_MAX - result->num_uvs) {
+	    bu_log("rt_bot_merge(): merged UV count exceeds BoT index capacity\n");
+	    goto fail;
+	}
 	result->num_vertices += bots[i]->num_vertices;
 	result->num_faces += bots[i]->num_faces;
-    }
-
-    reverse_flags = (int *)bu_calloc(num_bots, sizeof(int), "reverse_flags");
-
-    for (i = 0; i < num_bots; ++i) {
-	/* check for surface normals */
-	if (result->mode) {
-	    if (result->mode != bots[i]->mode) {
-		bu_log("rt_bot_merge(): Warning: not all bots share same mode\n");
-	    }
-	} else {
-	    result->mode = bots[i]->mode;
-	}
-
-	if (bots[i]->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) result->bot_flags |= RT_BOT_HAS_SURFACE_NORMALS;
-	if (bots[i]->bot_flags & RT_BOT_USE_NORMALS) result->bot_flags |= RT_BOT_USE_NORMALS;
-
-	if (result->orientation) {
-	    if (bots[i]->orientation == RT_BOT_UNORIENTED) {
-		result->orientation = RT_BOT_UNORIENTED;
-	    } else {
-		reverse_flags[i] = 1; /* set flag to reverse order of faces */
-	    }
-	} else {
-	    result->orientation = bots[i]->orientation;
+	preserve_normals = preserve_normals &&
+	    (bots[i]->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) &&
+	    bots[i]->normals && bots[i]->num_normals && bots[i]->face_normals &&
+	    bots[i]->num_face_normals == bots[i]->num_faces;
+	preserve_uvs = preserve_uvs &&
+	    (bots[i]->bot_flags & RT_BOT_HAS_TEXTURE_UVS) &&
+	    bots[i]->uvs && bots[i]->num_uvs && bots[i]->face_uvs &&
+	    bots[i]->num_face_uvs == bots[i]->num_faces;
+	result->num_normals += bots[i]->num_normals;
+	result->num_uvs += bots[i]->num_uvs;
+	if ((result->mode == RT_BOT_PLATE || result->mode == RT_BOT_PLATE_NOCOS) &&
+	    !bots[i]->thickness) {
+	    bu_log("rt_bot_merge(): plate BoTs must define face thickness\n");
+	    goto fail;
 	}
     }
 
+    if (!preserve_normals) {
+	result->bot_flags &= ~(RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS);
+	result->num_normals = 0;
+    }
 
-    result->vertices = (fastf_t *)bu_calloc(result->num_vertices*3, sizeof(fastf_t), "verts");
-    result->faces = (int *)bu_calloc(result->num_faces*3, sizeof(int), "verts");
+    if (!preserve_uvs) {
+	result->bot_flags &= ~RT_BOT_HAS_TEXTURE_UVS;
+	result->num_uvs = 0;
+    }
+
+    result->vertices = (fastf_t *)bu_calloc(result->num_vertices, 3 * sizeof(fastf_t), "BOT merge vertices");
+    result->faces = (int *)bu_calloc(result->num_faces, 3 * sizeof(int), "BOT merge faces");
 
     if (result->mode == RT_BOT_PLATE || result->mode == RT_BOT_PLATE_NOCOS) {
-	result->thickness = (fastf_t *)bu_calloc(result->num_faces, sizeof(fastf_t), "thickness");
-	result->face_mode = (struct bu_bitv *)bu_calloc(result->num_faces, sizeof(struct bu_bitv), "face_mode");
+	result->thickness = (fastf_t *)bu_calloc(result->num_faces, sizeof(fastf_t), "BOT merge thickness");
+	result->face_mode = bu_bitv_new(result->num_faces);
     }
 
-    avail_vert = 0;
-    avail_face = 0;
+    if (preserve_normals) {
+	result->normals = (fastf_t *)bu_calloc(result->num_normals, 3 * sizeof(fastf_t), "BOT merge normals");
+	result->num_face_normals = result->num_faces;
+	result->face_normals = (int *)bu_calloc(result->num_faces, 3 * sizeof(int), "BOT merge face normals");
+    }
+    if (preserve_uvs) {
+	result->uvs = (fastf_t *)bu_calloc(result->num_uvs, 3 * sizeof(fastf_t), "BOT merge UVs");
+	result->num_face_uvs = result->num_faces;
+	result->face_uvs = (int *)bu_calloc(result->num_faces, 3 * sizeof(int), "BOT merge face UVs");
+    }
 
+    size_t vertex_offset = 0;
+    size_t face_offset = 0;
+    size_t normal_offset = 0;
+    size_t uv_offset = 0;
+    for (size_t i = 0; i < num_bots; ++i) {
+	const struct rt_bot_internal *input = bots[i];
+	memcpy(&result->vertices[vertex_offset * 3], input->vertices,
+	    input->num_vertices * 3 * sizeof(fastf_t));
+	if (preserve_normals)
+	    memcpy(&result->normals[normal_offset * 3], input->normals,
+		input->num_normals * 3 * sizeof(fastf_t));
+	if (preserve_uvs)
+	    memcpy(&result->uvs[uv_offset * 3], input->uvs,
+		input->num_uvs * 3 * sizeof(fastf_t));
 
-    for (i = 0; i < num_bots; ++i) {
-	/* copy the vertices */
-	memcpy(&result->vertices[3*avail_vert], bots[i]->vertices, bots[i]->num_vertices*3*sizeof(fastf_t));
-
-	/* copy/convert the faces, potentially maintaining a common orientation */
-	if (result->orientation != RT_BOT_UNORIENTED && reverse_flags[i]) {
-	    /* copy and reverse */
-	    for (face=0; face < bots[i]->num_faces; face++) {
-		/* copy the 3 verts of this face and convert to new index */
-		result->faces[avail_face*3+face*3+2] = bots[i]->faces[face*3  ] + avail_vert;
-		result->faces[avail_face*3+face*3+1] = bots[i]->faces[face*3+1] + avail_vert;
-		result->faces[avail_face*3+face*3  ] = bots[i]->faces[face*3+2] + avail_vert;
-
-		if (result->mode == RT_BOT_PLATE || result->mode == RT_BOT_PLATE_NOCOS) {
-		    if (bots[i]->thickness)
-			result->thickness[avail_face+face] = bots[i]->thickness[face];
-		    if (bots[i]->face_mode)
-			result->face_mode[avail_face+face] = bots[i]->face_mode[face];
-		}
+	int reverse = input->orientation != RT_BOT_UNORIENTED;
+	for (size_t face = 0; face < input->num_faces; ++face) {
+	    size_t output_face = face_offset + face;
+	    for (size_t corner = 0; corner < 3; ++corner) {
+		size_t input_corner = reverse ? 2 - corner : corner;
+		result->faces[output_face * 3 + corner] =
+		    input->faces[face * 3 + input_corner] + (int)vertex_offset;
+		if (preserve_normals)
+		    result->face_normals[output_face * 3 + corner] =
+			input->face_normals[face * 3 + input_corner] + (int)normal_offset;
+		if (preserve_uvs)
+		    result->face_uvs[output_face * 3 + corner] =
+			input->face_uvs[face * 3 + input_corner] + (int)uv_offset;
 	    }
-	} else {
-	    /* just copy */
-	    for (face=0; face < bots[i]->num_faces; face++) {
-		/* copy the 3 verts of this face and convert to new index */
-		result->faces[avail_face*3+face*3  ] = bots[i]->faces[face*3  ] + avail_vert;
-		result->faces[avail_face*3+face*3+1] = bots[i]->faces[face*3+1] + avail_vert;
-		result->faces[avail_face*3+face*3+2] = bots[i]->faces[face*3+2] + avail_vert;
-
-		if (result->mode == RT_BOT_PLATE || result->mode == RT_BOT_PLATE_NOCOS) {
-		    if (bots[i]->thickness)
-			result->thickness[avail_face+face] = bots[i]->thickness[face];
-		    if (bots[i]->face_mode)
-			result->face_mode[avail_face+face] = bots[i]->face_mode[face];
-		}
-	    }
-	}
-
-	/* copy surface normals */
-	if (result->bot_flags == RT_BOT_HAS_SURFACE_NORMALS) {
-	    bu_log("not yet copying surface normals\n");
-	    if (bots[i]->bot_flags == RT_BOT_HAS_SURFACE_NORMALS) {
-	    } else {
+	    if (result->thickness) {
+		result->thickness[output_face] = input->thickness[face];
+		if (input->face_mode && BU_BITTEST(input->face_mode, face))
+		    BU_BITSET(result->face_mode, output_face);
 	    }
 	}
-
-	avail_vert += bots[i]->num_vertices;
-	avail_face += bots[i]->num_faces;
+	vertex_offset += input->num_vertices;
+	face_offset += input->num_faces;
+	normal_offset += input->num_normals;
+	uv_offset += input->num_uvs;
     }
 
     return result;
+
+fail:
+    rt_bot_internal_free(result);
+    BU_PUT(result, struct rt_bot_internal);
+    return NULL;
 }
 
 C_DECL const char *

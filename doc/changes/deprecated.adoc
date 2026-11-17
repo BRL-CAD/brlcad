@@ -14,6 +14,31 @@ generally listed for reference.
 Items marked with a "'" (single quote) are undocumented and may be
 removed at any time.
 
+== 7.48
+
+libged commands
+
+	bot_condense -> bot condense
+	bot_decimate -> bot decimate
+	bot_dump -> bot dump
+	bot_exterior -> bot exterior
+	bot_face_fuse -> bot face-fuse
+	bot_face_sort -> bot sort
+	bot_flip -> bot flip
+	bot_fuse -> bot fuse
+	bot_merge -> bot merge
+	bot_smooth -> bot normals
+	bot_sync -> bot sync
+	bot_vertex_fuse -> bot vertex-fuse
+
+	The top-level compatibility commands remain available for at least two
+	minor releases and 90 days after the 7.48 release announcement.  New
+	scripts and interactive workflows should use the bot subcommand forms.
+	Copy-producing subcommands use input-first ordering and accept an optional
+	output name.  The legacy commands retain their historical output-first
+	ordering during the deprecation window.
+	[deprecated 7.48]
+
 == 7.46
 
 include/bg/trimesh.h

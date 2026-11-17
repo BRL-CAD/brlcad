@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-bot_extrude - Generate a volumetric BoT to explicitly represent the volume claimed by plate mode BoT.
+bot extrude - Generate a volumetric BoT representing a plate-mode BoT.
 
 == SYNOPSIS
 

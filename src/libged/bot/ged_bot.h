@@ -88,6 +88,20 @@ extern int ged_find_bot_edge_nearest_pnt_core(struct ged *gedp, int argc, const 
 extern int ged_get_bot_edges_core(struct ged *gedp, int argc, const char *argv[]);
 extern int ged_dbot_dump_core(struct ged *gedp, int argc, const char **argv);
 
+extern int ged_bot_condense_compat(struct ged *gedp, int argc, const char **argv);
+extern int ged_bot_decimate_compat(struct ged *gedp, int argc, const char **argv);
+extern int ged_bot_dump_compat(struct ged *gedp, int argc, const char **argv);
+extern int ged_bot_exterior_compat(struct ged *gedp, int argc, const char **argv);
+extern int ged_bot_face_fuse_compat(struct ged *gedp, int argc, const char **argv);
+extern int ged_bot_face_sort_compat(struct ged *gedp, int argc, const char **argv);
+extern int ged_bot_flip_compat(struct ged *gedp, int argc, const char **argv);
+extern int ged_bot_fuse_compat(struct ged *gedp, int argc, const char **argv);
+extern int ged_bot_merge_compat(struct ged *gedp, int argc, const char **argv);
+extern int ged_bot_smooth_compat(struct ged *gedp, int argc, const char **argv);
+extern int ged_bot_split_compat(struct ged *gedp, int argc, const char **argv);
+extern int ged_bot_sync_compat(struct ged *gedp, int argc, const char **argv);
+extern int ged_bot_vertex_fuse_compat(struct ged *gedp, int argc, const char **argv);
+
 
 extern int _bot_cmd_decimate(void* bs, int argc, const char** argv);
 

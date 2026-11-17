@@ -171,7 +171,8 @@ check_output_bot(struct ged *gedp, const char *name, unsigned char mode,
 
 
 static void
-check_decimated_bot(struct ged *gedp, const char *name)
+check_preserved_bot(struct ged *gedp, const char *name,
+	unsigned char orientation)
 {
     struct directory *dp = db_lookup(gedp->dbip, name, LOOKUP_QUIET);
     CHECK(dp != RT_DIR_NULL, "expected decimated BOT does not exist");
@@ -187,8 +188,8 @@ check_decimated_bot(struct ged *gedp, const char *name)
     struct rt_bot_internal *bot = (struct rt_bot_internal *)internal.idb_ptr;
     CHECK(bot->mode == RT_BOT_PLATE_NOCOS,
 	"decimation did not preserve plate mode");
-    CHECK(bot->orientation == RT_BOT_CCW,
-	"decimation did not preserve orientation");
+    CHECK(bot->orientation == orientation,
+	"BOT operation produced the wrong orientation");
     CHECK(bot->bot_flags == (RT_BOT_HAS_SURFACE_NORMALS |
 	    RT_BOT_USE_NORMALS | RT_BOT_USE_FLOATS |
 	    RT_BOT_HAS_TEXTURE_UVS),
@@ -313,21 +314,70 @@ main(int argc, char **argv)
     };
     CHECK(ged_exec_bot(gedp, 6, decimate_argv) == BRLCAD_OK,
 	"metadata-preserving bot decimate command failed");
-    check_decimated_bot(gedp, "plate.decimated");
+    check_preserved_bot(gedp, "plate.decimated", RT_BOT_CCW);
 
     const char *gct_decimate_argv[] = {
 	"bot", "decimate", "-f", "0.00001", "plate.bot", "plate.gct"
     };
     CHECK(ged_exec_bot(gedp, 6, gct_decimate_argv) == BRLCAD_OK,
 	"metadata-preserving GCT bot decimate command failed");
-    check_decimated_bot(gedp, "plate.gct");
+    check_preserved_bot(gedp, "plate.gct", RT_BOT_CCW);
 
     const char *old_decimate_argv[] = {
 	"bot", "decimate", "-e", "0.00001", "plate.bot", "plate.old"
     };
     CHECK(ged_exec_bot(gedp, 6, old_decimate_argv) == BRLCAD_OK,
 	"metadata-preserving legacy bot decimate method failed");
-    check_decimated_bot(gedp, "plate.old");
+    check_preserved_bot(gedp, "plate.old", RT_BOT_CCW);
+
+    const char *condense_argv[] = {
+	"bot", "condense", "plate.bot", "plate.condensed"
+    };
+    CHECK(ged_exec_bot(gedp, 4, condense_argv) == BRLCAD_OK,
+	"bot condense command failed");
+    check_preserved_bot(gedp, "plate.condensed", RT_BOT_CCW);
+
+    const char *default_condense_argv[] = {
+	"bot", "condense", "default.bot"
+    };
+    CHECK(ged_exec_bot(gedp, 3, default_condense_argv) == BRLCAD_OK,
+	"bot condense default output command failed");
+    CHECK(db_lookup(gedp->dbip, "default.bot-out_condense.bot",
+	    LOOKUP_QUIET) != RT_DIR_NULL,
+	"bot condense did not create its documented default output");
+
+    const char *vertex_fuse_argv[] = {
+	"bot", "vertex-fuse", "plate.bot", "plate.vertex-fused"
+    };
+    CHECK(ged_exec_bot(gedp, 4, vertex_fuse_argv) == BRLCAD_OK,
+	"bot vertex-fuse command failed");
+    check_preserved_bot(gedp, "plate.vertex-fused", RT_BOT_CCW);
+
+    const char *face_fuse_argv[] = {
+	"bot", "face-fuse", "plate.bot", "plate.face-fused"
+    };
+    CHECK(ged_exec_bot(gedp, 4, face_fuse_argv) == BRLCAD_OK,
+	"bot face-fuse command failed");
+    check_preserved_bot(gedp, "plate.face-fused", RT_BOT_CCW);
+
+    const char *merge_argv[] = {
+	"bot", "merge", "plate.merged", "plate.bot"
+    };
+    CHECK(ged_exec_bot(gedp, 4, merge_argv) == BRLCAD_OK,
+	"bot merge command failed");
+    check_preserved_bot(gedp, "plate.merged", RT_BOT_UNORIENTED);
+
+    const char *sort_argv[] = {"bot", "sort", "2", "plate.merged"};
+    CHECK(ged_exec_bot(gedp, 4, sort_argv) == BRLCAD_OK,
+	"bot sort command failed");
+    check_preserved_bot(gedp, "plate.merged", RT_BOT_UNORIENTED);
+
+    const char *normals_argv[] = {
+	"bot", "normals", "-t", "60", "plate.bot", "plate.normals"
+    };
+    CHECK(ged_exec_bot(gedp, 6, normals_argv) == BRLCAD_OK,
+	"bot normals command failed");
+    check_preserved_bot(gedp, "plate.normals", RT_BOT_CCW);
 
     const char *legacy_argv[] = {"bot_split", "legacy.bot"};
     CHECK(ged_exec_bot_split(gedp, 2, legacy_argv) == BRLCAD_OK,

@@ -4,65 +4,33 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-bot_merge - merge multiple BOT meshes into a single BOT object
+bot_merge - deprecated compatibility command for *bot merge*
 
 == SYNOPSIS
 
 [source]
 ----
-bot_merge bot_dest bot1_src [botn_src ...]
+bot merge output_bot input_bot [input_bot ...]
 ----
 
+Compatibility form: `bot_merge output_bot input_bot [input_bot ...]`.
 
-[[description]]
 == DESCRIPTION
 
-The *bot_merge* command combines two or more BOT (Bag-of-Triangles) primitive objects into a single new BOT named `bot_dest`. All source BOTs (`bot1_src`, `botn_src`, ...) are merged by concatenating their vertex and face lists. The source objects are not modified or deleted.
+*bot merge* combines the vertex and face arrays of one or more BoTs into a
+new object.  Input vertices are not fused; use *bot vertex-fuse* afterward if
+coincident vertices should be combined.  Inputs should have compatible modes
+and orientation semantics.
 
-At least one source BOT must be specified in addition to the destination name.
+The *bot_merge* command name is deprecated as of BRL-CAD 7.48 and is retained
+during the formal deprecation period.
 
-NOTE: *bot_merge* concatenates vertex lists without fusing shared vertices. If the input BOTs share vertices at the same position, those vertices will be duplicated in the result. Use *bot_fuse* afterward to merge duplicate vertices.
+== EXAMPLE
 
-[[examples]]
-== EXAMPLES
-
-.Merge two BOTs
-====
 [source,console]
 ----
-mged> bot_merge combined.bot left_half.bot right_half.bot
+mged> bot merge combined.bot left.bot right.bot
 ----
 
-Creates `combined.bot` by merging the vertex and face lists from `left_half.bot` and `right_half.bot`.
-====
-
-.Merge multiple BOTs and clean up
-====
-[source,console]
-----
-mged> bot_merge raw_merged.bot part1.bot part2.bot part3.bot
-----
-[source,console]
-----
-mged> bot_fuse fused_merged.bot raw_merged.bot
-----
-
-Merges three BOTs into one, then fuses duplicate vertices to produce a clean mesh.
-====
-
-[[see_also]]
-== SEE ALSO
-
-*bot_fuse*(nged), *bot_dump*(nged)
-
-
-[[author]]
 == AUTHOR
-
 BRL-CAD Team
-
-
-[[bug_reports]]
-== BUG REPORTS
-
-Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

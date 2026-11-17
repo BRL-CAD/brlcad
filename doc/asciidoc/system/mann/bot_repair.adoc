@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-bot_repair - Given an existing BoT object as input, try to generate a manifold solid mesh.
+bot repair - Try to generate a manifold solid mesh from an existing BoT.
 
 == SYNOPSIS
 

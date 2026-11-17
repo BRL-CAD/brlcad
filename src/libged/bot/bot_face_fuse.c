@@ -71,7 +71,14 @@ ged_bot_face_fuse_core(struct ged *gedp, int argc, const char *argv[])
     bot = (struct rt_bot_internal *)intern.idb_ptr;
     RT_BOT_CK_MAGIC(bot);
 
-    (void) rt_bot_face_fuse(bot);
+    int count = rt_bot_face_fuse(bot);
+    if (count < 0) {
+	rt_db_free_internal(&intern);
+	bu_vls_printf(gedp->ged_result_str, "%s: failed to fuse faces in %s\n",
+		argv[0], argv[2]);
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(gedp->ged_result_str, "Fused %d faces\n", count);
 
     GED_DB_DIRADD(gedp, new_dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type, BRLCAD_ERROR);
     GED_DB_PUT_INTERN(gedp, new_dp, &intern, BRLCAD_ERROR);

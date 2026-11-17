@@ -1756,12 +1756,11 @@ x 					delete character
 |<<autoview,autoview>>
 |<<bev,bev>>
 |<<bo,bo>>
-|<<bot_condense,bot_condense>>
-|<<bot_decimate,bot_decimate>>
-|<<bot_face_fuse,bot_face_fuse>>
-|<<bot_face_sort,bot_face_sort>>
-|<<bot_face_fuse,bot_face_fuse>>
-|<<bot_vertex_fuse,bot_vertex_fuse>>
+|<<bot_condense,bot condense>>
+|<<bot_decimate,bot decimate>>
+|<<bot_face_fuse,bot face-fuse>>
+|<<bot_face_sort,bot sort>>
+|<<bot_vertex_fuse,bot vertex-fuse>>
 |<<build_region,build_region>>
 |<<c,c>>
 |<<cat,cat>>
@@ -2496,9 +2495,9 @@ Examples:
 
 **
 
-bot_condense new_bot_primitive old_bot_primitive
+bot condense input_bot [output_bot]
 
-The “bot_condense” command is used to eliminate unused vertices from a BOT primitive. It returns the number of vertices eliminated.
+The “bot condense” command eliminates unused vertices from a BOT primitive. If no output name is supplied, it writes the result to _input_bot-out_condense.bot_.
 
 **
 
@@ -2506,19 +2505,19 @@ Examples:
 
 ``
 
-mged> bot_condense bot1_condensed bot1_original
+mged> bot condense bot1_original bot1_condensed
 
 – Eliminate any unused vertices from the primitive named __bot1_original__ and store the result in the new BOT primitive named bot1_condensed.
 
 **
 
-bot_decimate c maximum_chord_error n maximum_normal_error e minimum_edge_length new_bot_primitive old_bot_primitive
+bot decimate [-c maximum_chord_error] [-n maximum_normal_error] [-e minimum_edge_length] input_bot [output_bot]
 
-The “bot_decimate” command reduces the number of triangles in the __old_bot_primitive__ and saves the results to the __new_bot_primitive__. The reduction is accomplished through an edge decimation algorithm. Only changes that do not violate the specified constraints are performed. The __maximum_chord_error__ parameter specifies the maximum distance allowed between the original surface and the surface of the new BOT primitive in the current editing units. The __maximum_normal_error__ specifies the maximum change in surface normal (degrees) between the old and new surfaces. The __minimum_edge_length__ specifies the length of the longest edge that will be decimated. At least one constraint must be supplied. If more than one constraint is specified, then only operations that satisfy all the constraints are performed.
+The “bot decimate” command reduces the number of triangles in the __input_bot__ and saves the result to the optional __output_bot__. The reduction is accomplished through an edge decimation algorithm. Only changes that do not violate the specified constraints are performed. The __maximum_chord_error__ parameter specifies the maximum distance allowed between the original surface and the surface of the new BOT primitive in the current editing units. The __maximum_normal_error__ specifies the maximum change in surface normal (degrees) between the old and new surfaces. The __minimum_edge_length__ specifies the length of the longest edge that will be decimated. At least one constraint must be supplied. If more than one constraint is specified, then only operations that satisfy all the constraints are performed.
 
 Examples:
 
-mged> bot_decimate -c 0.5 -n 10.0 bot.new abot
+mged> bot decimate -c 0.5 -n 10.0 abot bot.new
 
 – Create a new BOT primitive named _bot.new_ by reducing the number of triangles
 
@@ -2534,17 +2533,17 @@ command on its own BOT output will result in a final BOT primitive that has
 
 unknown relationships to the original BOT primitive. For example:
 
-mged> bot_decimate -c 10.0 bot_b bot_a
+mged> bot decimate -c 10.0 bot_a bot_b
 
-mged> bot_decimate -c 10.0 bot_c bot_b
+mged> bot decimate -c 10.0 bot_b bot_c
 
 – This sequence of commands will produce primitive “bot_c” with up to 20.0 units
 
 of chord error between “bot_a” and “bot_c”.
 
-mged> bot_decimate -c 10.0 bot_b bot_a
+mged> bot decimate -c 10.0 bot_a bot_b
 
-mged> bot_decimate -n 5.0 bot_c bot_b
+mged> bot decimate -n 5.0 bot_b bot_c
 
 – This sequence of commands will produce primitive “bot_c” with no guaranteed
 
@@ -2552,43 +2551,43 @@ relationships to “bot_a”.
 
 **
 
-bot_face_fuse new_bot_primitive old_bot_primitive
+bot face-fuse input_bot [output_bot]
 
-The “bot_face_fuse” command is used to eliminate duplicate faces from a BOT solid. It returns the number of faces eliminated.
+The “bot face-fuse” command eliminates duplicate faces from a BOT solid. If no output name is supplied, it writes the result to _input_bot-out_face_fuse.bot_.
 
 Examples:
 
 ``
 
-mged> bot_face_fuse bot1_fused bot1_original
+mged> bot face-fuse bot1_original bot1_fused
 
 – Eliminate any duplicate faces from the primitive named __bot1_original__ and store the result in the new BOT primitive named bot1_fused.
 
 **
 
-bot_face_sort triangles_per_piece bot_primitive1 [bot_primitive2 bot_primitive3 …]
+bot sort triangles_per_piece bot_primitive1 [bot_primitive2 bot_primitive3 …]
 
-The “bot_face_sort” command is used to sort the list of triangles that constitutes the BOT primitive to optimize it for raytracing with the specified number of triangles per piece. Most BRL-CAD primitives are treated as a single object when a model is being prepared for raytracing, but BOT primitives are normally broken into “pieces” to improve performance. The raytracer normally uses four triangles per piece.
+The “bot sort” command sorts the list of triangles that constitutes the BOT primitive to optimize it for raytracing with the specified number of triangles per piece. Most BRL-CAD primitives are treated as a single object when a model is being prepared for raytracing, but BOT primitives are normally broken into “pieces” to improve performance. The raytracer normally uses four triangles per piece.
 
 Examples:
 
 ``
 
-mged> bot_face_sort 4 bot1 bot2
+mged> bot sort 4 bot1 bot2
 
 – Sort the faces of _bot1_ and _bot2_ to optimize them for raytracing with four triangles per piece.
 
 **
 
-bot_vertex_fuse __new_bot_solid old_bot_primitive__
+bot vertex-fuse input_bot [output_bot]
 
-The “bot_vertex_fuse” command is used to eliminate duplicate vertices from a BOT solid. It returns the number of vertices eliminated. No tolerance is used, so the vertices must match exactly to be considered duplicates.
+The “bot vertex-fuse” command merges duplicate vertices in a BOT solid using the database tolerance. If no output name is supplied, it writes the result to _input_bot-out_vertex_fuse.bot_.
 
 Examples:
 
 ``
 
-mged> bot_vertex_fuse bot1_fused bot1_original
+mged> bot vertex-fuse bot1_original bot1_fused
 
 – Eliminate any duplicate vertices from the primitive named __bot1_original__ and store the result in the new BOT primitive named bot1_fused.
 

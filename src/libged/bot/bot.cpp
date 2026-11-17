@@ -1265,17 +1265,203 @@ _bot_cmd_info(void *bs, int argc, const char **argv)
 }
 
 
+typedef int (*bot_legacy_func_t)(struct ged *, int, const char **);
+
+
+static int
+_bot_copy_command(void *bs, int argc, const char **argv, const char *name,
+	const char *purpose, const char *suffix, bot_legacy_func_t command)
+{
+    struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
+    struct ged *gedp = gb->gedp;
+    struct bu_vls usage = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&usage, "bot %s input_bot [output_bot]", name);
+    if (_bot_cmd_msgs(bs, argc, argv, bu_vls_cstr(&usage), purpose)) {
+	bu_vls_free(&usage);
+	return BRLCAD_OK;
+    }
+    bu_vls_free(&usage);
+
+    argc--; argv++;
+    if (argc < 1 || argc > 2) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: bot %s input_bot [output_bot]", name);
+	return BRLCAD_ERROR;
+    }
+
+    struct bu_vls output = BU_VLS_INIT_ZERO;
+    if (argc == 2)
+	bu_vls_sprintf(&output, "%s", argv[1]);
+    else
+	bu_vls_sprintf(&output, "%s-out_%s.bot", argv[0], suffix);
+
+    const char *av[3] = {name, bu_vls_cstr(&output), argv[0]};
+    int ret = command(gedp, 3, av);
+    bu_vls_free(&output);
+    return ret;
+}
+
+
+extern "C" int
+_bot_cmd_condense(void *bs, int argc, const char **argv)
+{
+    return _bot_copy_command(bs, argc, argv, "condense",
+	"Remove unreferenced vertices", "condense", ged_bot_condense_core);
+}
+
+
+extern "C" int
+_bot_cmd_face_fuse(void *bs, int argc, const char **argv)
+{
+    return _bot_copy_command(bs, argc, argv, "face-fuse",
+	"Remove duplicate faces", "face_fuse", ged_bot_face_fuse_core);
+}
+
+
+extern "C" int
+_bot_cmd_vertex_fuse(void *bs, int argc, const char **argv)
+{
+    return _bot_copy_command(bs, argc, argv, "vertex-fuse",
+	"Merge vertices within the database tolerance", "vertex_fuse",
+	ged_bot_vertex_fuse_core);
+}
+
+
+extern "C" int
+_bot_cmd_sort(void *bs, int argc, const char **argv)
+{
+    const char *usage = "bot sort triangles_per_piece bot [bot ...]";
+    const char *purpose = "Group adjacent faces for ray tracing";
+    if (_bot_cmd_msgs(bs, argc, argv, usage, purpose))
+	return BRLCAD_OK;
+    return ged_bot_face_sort_core(((struct _ged_bot_info *)bs)->gedp, argc, argv);
+}
+
+
+extern "C" int
+_bot_cmd_merge(void *bs, int argc, const char **argv)
+{
+    const char *usage = "bot merge output_bot input_bot [input_bot ...]";
+    const char *purpose = "Merge BoT objects";
+    if (_bot_cmd_msgs(bs, argc, argv, usage, purpose))
+	return BRLCAD_OK;
+    return ged_bot_merge_core(((struct _ged_bot_info *)bs)->gedp, argc, argv);
+}
+
+
+extern "C" int
+_bot_cmd_normals(void *bs, int argc, const char **argv)
+{
+    struct ged *gedp = ((struct _ged_bot_info *)bs)->gedp;
+    const char *usage = "bot normals [-t angle] input_bot [output_bot]";
+    const char *purpose = "Compute and store surface normals";
+    if (_bot_cmd_msgs(bs, argc, argv, usage, purpose))
+	return BRLCAD_OK;
+
+    argc--; argv++;
+    const char *angle = NULL;
+    if (argc > 1 && BU_STR_EQUAL(argv[0], "-t")) {
+	if (argc < 3) {
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s", usage);
+	    return BRLCAD_ERROR;
+	}
+	angle = argv[1];
+	argc -= 2; argv += 2;
+    }
+    if (argc < 1 || argc > 2) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s", usage);
+	return BRLCAD_ERROR;
+    }
+
+    struct bu_vls output = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&output, "%s", argc == 2 ? argv[1] : argv[0]);
+    const char *av[5] = {"normals", "-t", angle, bu_vls_cstr(&output), argv[0]};
+    const char *plain_av[3] = {"normals", bu_vls_cstr(&output), argv[0]};
+    int ret = angle ? ged_bot_smooth_core(gedp, 5, av) :
+	ged_bot_smooth_core(gedp, 3, plain_av);
+    bu_vls_free(&output);
+    return ret;
+}
+
+
+extern "C" int
+_bot_cmd_fuse(void *bs, int argc, const char **argv)
+{
+    struct ged *gedp = ((struct _ged_bot_info *)bs)->gedp;
+    const char *usage = "bot fuse [-s|-p] input_bot [output_bot]";
+    const char *purpose = "Heal coincident BoT topology through an NMG conversion";
+    if (_bot_cmd_msgs(bs, argc, argv, usage, purpose))
+	return BRLCAD_OK;
+
+    argc--; argv++;
+    const char *option = NULL;
+    if (argc && (BU_STR_EQUAL(argv[0], "-s") || BU_STR_EQUAL(argv[0], "-p"))) {
+	option = argv[0];
+	argc--; argv++;
+    }
+    if (argc < 1 || argc > 2) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s", usage);
+	return BRLCAD_ERROR;
+    }
+
+    struct bu_vls output = BU_VLS_INIT_ZERO;
+    if (argc == 2)
+	bu_vls_sprintf(&output, "%s", argv[1]);
+    else
+	bu_vls_sprintf(&output, "%s-out_fuse.bot", argv[0]);
+    const char *av[4] = {"fuse", option, bu_vls_cstr(&output), argv[0]};
+    const char *plain_av[3] = {"fuse", bu_vls_cstr(&output), argv[0]};
+    int ret = option ? ged_bot_fuse_core(gedp, 4, av) :
+	ged_bot_fuse_core(gedp, 3, plain_av);
+    bu_vls_free(&output);
+    return ret;
+}
+
+
+static int
+_bot_deprecated(struct ged *gedp, int argc, const char **argv,
+	const char *replacement, const char *since, bot_legacy_func_t command)
+{
+    bu_log("WARNING: '%s' is deprecated as of BRL-CAD %s and will remain "
+	"available for at least two minor releases and 90 days; use '%s'.\n",
+	argv[0], since, replacement);
+    return command(gedp, argc, argv);
+}
+
+#define BOT_COMPAT_WRAPPER(_name, _replacement, _since, _func) \
+extern "C" int ged_##_name##_compat(struct ged *gedp, int argc, const char **argv) \
+{ return _bot_deprecated(gedp, argc, argv, _replacement, _since, _func); }
+
+BOT_COMPAT_WRAPPER(bot_condense, "bot condense", "7.48", ged_bot_condense_core)
+BOT_COMPAT_WRAPPER(bot_decimate, "bot decimate", "7.48", ged_bot_decimate_core)
+BOT_COMPAT_WRAPPER(bot_dump, "bot dump", "7.48", ged_bot_dump_core)
+BOT_COMPAT_WRAPPER(bot_exterior, "bot exterior", "7.48", ged_bot_exterior)
+BOT_COMPAT_WRAPPER(bot_face_fuse, "bot face-fuse", "7.48", ged_bot_face_fuse_core)
+BOT_COMPAT_WRAPPER(bot_face_sort, "bot sort", "7.48", ged_bot_face_sort_core)
+BOT_COMPAT_WRAPPER(bot_flip, "bot flip", "7.48", ged_bot_flip_core)
+BOT_COMPAT_WRAPPER(bot_fuse, "bot fuse", "7.48", ged_bot_fuse_core)
+BOT_COMPAT_WRAPPER(bot_merge, "bot merge", "7.48", ged_bot_merge_core)
+BOT_COMPAT_WRAPPER(bot_smooth, "bot normals", "7.48", ged_bot_smooth_core)
+BOT_COMPAT_WRAPPER(bot_split, "bot split", "7.46", ged_bot_split_core)
+BOT_COMPAT_WRAPPER(bot_sync, "bot sync", "7.48", ged_bot_sync_core)
+BOT_COMPAT_WRAPPER(bot_vertex_fuse, "bot vertex-fuse", "7.48", ged_bot_vertex_fuse_core)
+
+
 const struct bu_cmdtab _bot_cmds[] = {
     { "check",      _bot_cmd_check},
     { "chull",      _bot_cmd_chull},
+    { "condense",   _bot_cmd_condense},
     { "decimate",   _bot_cmd_decimate},
     { "dump",       _bot_cmd_dump},
     { "exterior",   _bot_cmd_exterior},
     { "extrude",    _bot_cmd_extrude},
+    { "face-fuse",  _bot_cmd_face_fuse},
     { "flip",       _bot_cmd_flip},
     { "get",        _bot_cmd_get},
     { "info",       _bot_cmd_info},
     { "isect",      _bot_cmd_isect},
+    { "fuse",       _bot_cmd_fuse},
+    { "merge",      _bot_cmd_merge},
+    { "normals",    _bot_cmd_normals},
     { "pca",        _bot_cmd_pca},
     { "pick",       _bot_cmd_pick},
     { "plot",       _bot_cmd_plot},
@@ -1286,9 +1472,11 @@ const struct bu_cmdtab _bot_cmds[] = {
     { "split",      _bot_cmd_split},
     { "stat",       _bot_cmd_stat},
     { "strip",      _bot_cmd_strip},
+    { "sort",       _bot_cmd_sort},
     { "subd",       _bot_cmd_subd},
     { "sync",       _bot_cmd_sync},
     { "vertex",     _bot_cmd_vertex},
+    { "vertex-fuse", _bot_cmd_vertex_fuse},
     { (char *)NULL,      NULL}
 };
 
@@ -1387,7 +1575,7 @@ ged_bot_core(struct ged *gedp, int argc, const char *argv[])
     argc = argc - cmd_pos;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    if (gb.visualize || BU_STR_EQUAL(argv[cmd_pos], "plot")) {
+    if (gb.visualize || BU_STR_EQUAL(argv[0], "plot")) {
 	GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
 	gb.vbp = bv_vlblock_init(gb.vlfree, 32);
     }
@@ -1419,19 +1607,19 @@ bot_cleanup:
 
 #define GED_BOT_COMMANDS(X, XID) \
     X(bot,              ged_bot_core,                      GED_CMD_DEFAULT) \
-    X(bot_condense,     ged_bot_condense_core,             GED_CMD_DEFAULT) \
-    X(bot_decimate,     ged_bot_decimate_core,             GED_CMD_DEFAULT) \
-    X(bot_dump,         ged_bot_dump_core,                 GED_CMD_DEFAULT) \
-    X(bot_exterior,     ged_bot_exterior,                  GED_CMD_DEFAULT) \
-    X(bot_face_fuse,    ged_bot_face_fuse_core,            GED_CMD_DEFAULT) \
-    X(bot_face_sort,    ged_bot_face_sort_core,            GED_CMD_DEFAULT) \
-    X(bot_flip,         ged_bot_flip_core,                 GED_CMD_DEFAULT) \
-    X(bot_fuse,         ged_bot_fuse_core,                 GED_CMD_DEFAULT) \
-    X(bot_merge,        ged_bot_merge_core,                GED_CMD_DEFAULT) \
-    X(bot_smooth,       ged_bot_smooth_core,               GED_CMD_DEFAULT) \
-    X(bot_split,        ged_bot_split_core,                GED_CMD_DEFAULT) \
-    X(bot_sync,         ged_bot_sync_core,                 GED_CMD_DEFAULT) \
-    X(bot_vertex_fuse,  ged_bot_vertex_fuse_core,          GED_CMD_DEFAULT) \
+    X(bot_condense,     ged_bot_condense_compat,           GED_CMD_DEFAULT) \
+    X(bot_decimate,     ged_bot_decimate_compat,           GED_CMD_DEFAULT) \
+    X(bot_dump,         ged_bot_dump_compat,               GED_CMD_DEFAULT) \
+    X(bot_exterior,     ged_bot_exterior_compat,           GED_CMD_DEFAULT) \
+    X(bot_face_fuse,    ged_bot_face_fuse_compat,          GED_CMD_DEFAULT) \
+    X(bot_face_sort,    ged_bot_face_sort_compat,          GED_CMD_DEFAULT) \
+    X(bot_flip,         ged_bot_flip_compat,               GED_CMD_DEFAULT) \
+    X(bot_fuse,         ged_bot_fuse_compat,               GED_CMD_DEFAULT) \
+    X(bot_merge,        ged_bot_merge_compat,              GED_CMD_DEFAULT) \
+    X(bot_smooth,       ged_bot_smooth_compat,             GED_CMD_DEFAULT) \
+    X(bot_split,        ged_bot_split_compat,              GED_CMD_DEFAULT) \
+    X(bot_sync,         ged_bot_sync_compat,               GED_CMD_DEFAULT) \
+    X(bot_vertex_fuse,  ged_bot_vertex_fuse_compat,        GED_CMD_DEFAULT) \
     X(dbot_dump,        ged_dbot_dump_core,                GED_CMD_DEFAULT) \
     X(find_bot_edge,    ged_find_bot_edge_nearest_pnt_core, GED_CMD_DEFAULT) \
     X(find_bot_pnt,     ged_find_bot_pnt_nearest_pnt_core,  GED_CMD_DEFAULT) \

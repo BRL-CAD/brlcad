@@ -4,13 +4,13 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-bot_decimate - Reduces the number of triangles in the __old_bot_primitive__ and saves the results to the __new_bot_primitive__.
+bot decimate - Reduce the number of triangles in a BoT.
 
 == SYNOPSIS
 
 [source]
 ----
-bot_decimate [-f feature_size] [-c maximum_chord_error] [-n maximum_normal_error] [-e minimum_edge_length] {new_bot_primitive} {old_bot_primitive}
+bot decimate [-f feature_size] [-c maximum_chord_error] [-n maximum_normal_error] [-e minimum_edge_length] {input_bot} [output_bot]
 ----
 
 
@@ -23,7 +23,8 @@ Reduces the number of triangles in the __old_bot_primitive__ and saves the resul
 [[examples]]
 == EXAMPLES
 
-These examples demonstrate the use of the *bot_decimate* command to create new primitives by reducing the number of triangles within certain constraints.
+The legacy *bot_decimate* command and its output-first ordering are deprecated
+as of BRL-CAD 7.48.  These examples use *bot decimate* and input-first order.
 
 .Decimate Specifying Chord Error and Max Normal Error
 ====
@@ -32,7 +33,7 @@ Creating a new BOT primitive by reducing the number of triangles in the old BOT 
 
 [source,console]
 ----
-mged> bot_decimate -c 0.5 -n 10.0 bot.new abot
+mged> bot decimate -c 0.5 -n 10.0 abot bot.new
 ----
 Creates a new BOT primitive named _bot.new_ by reducing the number of triangles in _abot_ while keeping the resulting surface within 0.5 units of the surface of _abot_ and keeping the surface normals within 10 degrees.
 +
@@ -41,14 +42,14 @@ Note that the constraints specified only relate the output BOT primitive to the 
 
 [source,console]
 ----
-mged> bot_decimate -c 10.0 bot_b bot_a
+mged> bot decimate -c 10.0 bot_a bot_b
 ----
 
 
 
 [source,console]
 ----
-mged> bot_decimate -c 10.0 bot_c bot_b
+mged> bot decimate -c 10.0 bot_b bot_c
 ----
 
 +
@@ -57,14 +58,14 @@ This sequence of commands will produce primitive __bot_c__ with up to 20.0 units
 
 [source,console]
 ----
-mged> bot_decimate -c 10.0 bot_b bot_a
+mged> bot decimate -c 10.0 bot_a bot_b
 ----
 
 
 
 [source,console]
 ----
-mged> bot_decimate -n 5.0 bot_c bot_b
+mged> bot decimate -n 5.0 bot_b bot_c
 ----
 
 +

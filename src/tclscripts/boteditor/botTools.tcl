@@ -115,10 +115,10 @@ package require Itk
     pack $itk_component(nb) -expand yes -fill both
 }
 
-# convenience method for uniformly running bot_* commands
+# convenience method for uniformly running bot subcommands
 ::itcl::body BotTools::runBotCmd {cmd args} {
     mv $bot $bot.old
-    eval $cmd $args $bot $bot.old
+    eval bot $cmd $args $bot.old $bot
     kill $bot.old
 }
 
@@ -347,9 +347,9 @@ package require Itk
     if {[set $condense]} {
 
 	# run command
-	print "bot_condense"
+	print "bot condense"
 	eval $itk_option(-beforecommand)
-	$this runBotCmd bot_condense
+	$this runBotCmd condense
 	eval $itk_option(-aftercommand)
 
 	# unset option - shouldn't need to do this more than once
@@ -358,9 +358,9 @@ package require Itk
     if {[set $vertices]} {
 
 	# run command
-	print "bot_vertex_fuse"
+	print "bot vertex-fuse"
 	eval $itk_option(-beforecommand)
-	$this runBotCmd bot_vertex_fuse
+	$this runBotCmd vertex-fuse
 	eval $itk_option(-aftercommand)
 
 	# unset option - shouldn't need to do this more than once
@@ -369,9 +369,9 @@ package require Itk
     if {[set $faces]} {
 
 	# run command
-	print "bot_face_fuse"
+	print "bot face-fuse"
 	eval $itk_option(-beforecommand)
-	$this runBotCmd bot_face_fuse
+	$this runBotCmd face-fuse
 	eval $itk_option(-aftercommand)
 
 	# unset option - shouldn't need to do this more than once
@@ -393,9 +393,9 @@ package require Itk
 ::itcl::body BotTools::sortFaces {} {
     set size [set ::${itk_interior}GroupsEntry]
 
-    print "bot_face_sort $size"
+    print "bot sort $size"
     eval $itk_option(-beforecommand)
-    bot_face_sort $size $bot
+    bot sort $size $bot
     eval $itk_option(-aftercommand)
     print "done"
 }
@@ -618,9 +618,9 @@ package require Itk
     $itk_component(decimate) configure -state disabled
 
     # run command
-    print "bot_decimate $args"
+    print "bot decimate $args"
     eval $itk_option(-beforecommand)
-    runBotCmd "bot_decimate $args"
+    runBotCmd "decimate $args"
     eval $itk_option(-aftercommand)
     print "done"
 

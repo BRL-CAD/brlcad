@@ -27,6 +27,11 @@ check {degen_faces | extra_edges | flipped_edges | open_edges | solid} {objname}
 chull {input_bot} {output_bot}
 ----
 
+[source]
+----
+condense {input_bot} [output_bot]
+----
+
 
 
 [source]
@@ -34,11 +39,26 @@ chull {input_bot} {output_bot}
 decimate [-f #] [-e #] {input_bot} {output_bot}
 ----
 
+[source]
+----
+dump [options] [bot ...]
+----
+
+[source]
+----
+exterior [options] {input_bot} [output_bot]
+----
+
 
 
 [source]
 ----
 extrude {input_bot} {output_bot}
+----
+
+[source]
+----
+face-fuse {input_bot} [output_bot]
 ----
 
 
@@ -55,6 +75,11 @@ flip {objname}
 get {faces | minEdge | maxEdge | orientation | type | vertices} {objname}
 ----
 
+[source]
+----
+info {objname} [V|F] [index ...]
+----
+
 
 
 [source]
@@ -62,11 +87,46 @@ get {faces | minEdge | maxEdge | orientation | type | vertices} {objname}
 isect {objname} {objname2}
 ----
 
+[source]
+----
+fuse [-s|-p] {input_bot} [output_bot]
+----
+
+[source]
+----
+merge {output_bot} {input_bot} [input_bot ...]
+----
+
+[source]
+----
+normals [-t angle_tolerance] {input_bot} [output_bot]
+----
+
+[source]
+----
+pca {input_bot} [output_bot]
+----
+
+[source]
+----
+pick {objname} {V|E|F} [ray]
+----
+
+[source]
+----
+plot {objname} {face_index} [face_index ...]
+----
+
 
 
 [source]
 ----
 remesh {input_bot} {output_bot}
+----
+
+[source]
+----
+repair [options] {input_bot} [input_bot ...]
 ----
 
 
@@ -97,6 +157,16 @@ split [-h] [--grp {name}] {objname}
 stat {objname}
 ----
 
+[source]
+----
+strip {input_bot} {output_bot}
+----
+
+[source]
+----
+sort {triangles_per_piece} {objname} [objname ...]
+----
+
 
 
 [source]
@@ -109,6 +179,16 @@ subd [-A [1|2|3|4|5]] [-l #] {input_bot} {output_bot}
 [source]
 ----
 sync {objname}
+----
+
+[source]
+----
+vertex {objname} [index ...]
+----
+
+[source]
+----
+vertex-fuse {input_bot} [output_bot]
 ----
 
 
@@ -147,6 +227,10 @@ Performs the requested check on the provided solid. Checks are __degen_faces__, 
 *chull*::
 Generates the BoT's convex hull and store it in an object.
 
+*condense*::
+Removes vertices not referenced by any face.  The input is copied to the
+specified output, or to _input_bot-out_condense.bot_ when no output is given.
+
 
 *decimate*::
 Decimates the BoT. The default error metric is Quadric.
@@ -159,11 +243,22 @@ Specifies the features size (implies use of GCT decimater)
 *-e #*::
 Specifies the maximum allowed error introduced by decimation (OpenMesh).
 
+*dump*::
+Exports BoT geometry to DXF, glTF, OBJ, SAT, or STL files.
+
+*exterior*::
+Extracts the outward-facing shell of a solid BoT.
+
 
 
 
 *extrude*::
 Generates an ARB6 representation of the specified plate mode BoT object
+
+*face-fuse*::
+Removes duplicate faces while preserving face-indexed plate, normal, and
+texture data.  The input is copied to the specified output, or to
+_input_bot-out_face_fuse.bot_ when no output is given.
 
 
 *flip*::
@@ -173,13 +268,45 @@ Flips the BoT triangle normal directions (turns the BoT "inside out"). This will
 *get*::
 Returns the requested parameter of the provided BoT solid. Valid parameters are _faces_, _minEdge_, _maxEdge_, _orientation_, _type_, or _vertices_.
 
+*info*::
+Reports detailed vertex or face information, optionally restricted to selected
+indices.
+
 
 *isect*::
 Tests if the two provided BoTs intersect (work in progress).
 
+*fuse*::
+Heals coincident topology through an NMG conversion.  Use *-s* to display open
+edges or *-p* to write them to a plot file.  This rebuilding operation may
+discard BoT-specific face data; prefer *vertex-fuse* and *face-fuse* for
+targeted duplicate removal.
+
+*merge*::
+Combines the geometry of one or more BoTs into a new output BoT without
+fusing coincident vertices.
+
+*normals*::
+Computes and stores surface normals.  The *-t* option specifies the maximum
+angle in degrees across which adjacent face normals are averaged.  If no
+output is specified, the input object is updated in place.  This operation is
+distinct from *smooth*, which changes vertex positions.
+
+*pca*::
+Computes principal axes and optionally writes a transformed output BoT.
+
+*pick*::
+Identifies the vertex, edge, or face nearest an interrogation ray.
+
+*plot*::
+Plots selected faces from a BoT in the current view.
+
 
 *remesh*::
 Creates a new meshed version of the provided object.
+
+*repair*::
+Attempts to produce valid manifold solid meshes from flawed input BoTs.
 
 
 *set*::
@@ -230,6 +357,13 @@ automatically generated name, an explicitly specified name is not incremented;
 the command reports an error without writing any output if the name already
 exists.
 
+*sort*::
+Reorders faces into adjacent groups of _triangles_per_piece_ to improve
+ray-tracing piece locality.  Objects are modified in place.
+
+*strip*::
+Removes triangles that form degenerate volume and writes a new BoT.
+
 
 *stat*::
 Returns information about the provided BoT.
@@ -251,6 +385,14 @@ Specifies the level of subdivision refinement iterations. Note that the number o
 
 *sync*::
 Synchronizes connected BoT triangle orientations.
+
+*vertex*::
+Reports the coordinates of all vertices or selected vertex indices.
+
+*vertex-fuse*::
+Merges vertices equal within the database tolerance and updates all face
+references.  The input is copied to the specified output, or to
+_input_bot-out_vertex_fuse.bot_ when no output is given.
 
 
 

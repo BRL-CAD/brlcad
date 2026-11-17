@@ -85,13 +85,13 @@ opendb bots.g y
 make sph sph
 facetize sph.volume.rh.bot sph
 cp sph.volume.rh.bot sph.volume.lh.bot
-bot_flip sph.volume.lh.bot
+bot flip sph.volume.lh.bot
 bot set orientation sph.volume.lh.bot cw
-bot_merge sph.volume.no.bot sph.volume.rh.bot
-bot_vertex_fuse sph.vertex.fused.volume.no.bot sph.volume.no.bot
-bot_face_fuse sph.face.fused.volume.no.bot sph.vertex.fused.volume.no.bot
+bot merge sph.volume.no.bot sph.volume.rh.bot
+bot vertex-fuse sph.volume.no.bot sph.vertex.fused.volume.no.bot
+bot face-fuse sph.vertex.fused.volume.no.bot sph.face.fused.volume.no.bot
 cp sph.face.fused.volume.no.bot sph.sync.volume.no.bot
-bot_sync sph.sync.volume.no.bot
+bot sync sph.sync.volume.no.bot
 EOF
 
 # begin validation checks
@@ -120,17 +120,17 @@ if test "x`echo $rh`" != "xrh" ; then
 fi
 lh="`$MGED -c bots.g get sph.volume.lh.bot orient 2>&1 | grep -v Using`"
 if test "x`echo $lh`" != "xlh" ; then
-    log "ERROR: left-hand BoT orientation (bot_flip) failure [$lh]"
+    log "ERROR: left-hand BoT orientation (bot flip) failure [$lh]"
     FAILED="`expr $FAILED + 1`"
 fi
 no="`$MGED -c bots.g get sph.volume.no.bot orient 2>&1 | grep -v Using`"
 if test "x`echo $no`" != "xno" ; then
-    log "ERROR: merged BoT orientation (bot_merge) failure [$no]"
+    log "ERROR: merged BoT orientation (bot merge) failure [$no]"
     FAILED="`expr $FAILED + 1`"
 fi
 sync="`$MGED -c bots.g get sph.sync.volume.no.bot orient 2>&1 | grep -v Using`"
 if test "x`echo $no`" != "xno" ; then
-    log "ERROR: synced BoT orientation (bot_sync) failure [$no]"
+    log "ERROR: synced BoT orientation (bot sync) failure [$no]"
     FAILED="`expr $FAILED + 1`"
 fi
 
@@ -140,7 +140,7 @@ fi
 unfused_vertices="`$MGED -c bots.g get sph.volume.rh.bot V 2>&1`"
 refused_vertices="`$MGED -c bots.g get sph.sync.volume.no.bot V 2>&1`"
 if test "x$unfused_vertices" != "x$refused_vertices" ; then
-    log "ERROR: BoT fuse (bot_vertex_fuse+bot_face_fuse) failure"
+    log "ERROR: BoT fuse (bot vertex-fuse + bot face-fuse) failure"
     FAILED="`expr $FAILED + 1`"
 fi
 

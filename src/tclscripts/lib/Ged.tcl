@@ -1316,15 +1316,16 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::bot_condense {args} {
-    eval $mGed bot_condense $args
+    $mGed bot condense [lindex $args end] [lindex $args end-1]
 }
 
 ::itcl::body cadwidgets::Ged::bot_decimate {args} {
-    eval $mGed bot_decimate $args
+    set options [lrange $args 0 end-2]
+    eval $mGed bot decimate $options [lindex $args end] [lindex $args end-1]
 }
 
 ::itcl::body cadwidgets::Ged::bot_dump {args} {
-    eval $mGed bot_dump $args
+    eval $mGed bot dump $args
 }
 
 ::itcl::body cadwidgets::Ged::bot_edge_split {args} {
@@ -1332,11 +1333,11 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::bot_face_fuse {args} {
-    eval $mGed bot_face_fuse $args
+    $mGed bot face-fuse [lindex $args end] [lindex $args end-1]
 }
 
 ::itcl::body cadwidgets::Ged::bot_face_sort {args} {
-    eval $mGed bot_face_sort $args
+    eval $mGed bot sort $args
 }
 
 ::itcl::body cadwidgets::Ged::bot_face_split {args} {
@@ -1344,32 +1345,35 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::bot_flip {args} {
-    eval $mGed bot_flip $args
+    eval $mGed bot flip $args
 }
 
 ::itcl::body cadwidgets::Ged::bot_fuse {args} {
-    eval $mGed bot_fuse $args
+    set options [lrange $args 0 end-2]
+    eval $mGed bot fuse $options [lindex $args end] [lindex $args end-1]
 }
 
 ::itcl::body cadwidgets::Ged::bot_merge {args} {
-    eval $mGed bot_merge $args
+    eval $mGed bot merge $args
 }
 
 ::itcl::body cadwidgets::Ged::bot_smooth {args} {
-    eval $mGed bot_smooth $args
+    set options [lrange $args 0 end-2]
+    eval $mGed bot normals $options [lindex $args end] [lindex $args end-1]
 }
 
 ::itcl::body cadwidgets::Ged::bot_split {args} {
     set mRayNeedGettrees 1
+    # Preserve the legacy top-level output hierarchy during deprecation.
     eval $mGed bot_split $args
 }
 
 ::itcl::body cadwidgets::Ged::bot_sync {args} {
-    eval $mGed bot_sync $args
+    eval $mGed bot sync $args
 }
 
 ::itcl::body cadwidgets::Ged::bot_vertex_fuse {args} {
-    eval $mGed bot_vertex_fuse $args
+    $mGed bot vertex-fuse [lindex $args end] [lindex $args end-1]
 }
 
 ::itcl::body cadwidgets::Ged::bounds {args} {
@@ -6207,16 +6211,16 @@ package provide cadwidgets::Ged 1.0
 			For input, source is a file name and dest is an object name.
 			For output source is an object name and dest is a file name.
 			Only uniform array binary objects (major_type=u) are currently supported}}
-    $help add bot_condense	{{new_bot old_bot} {create a new bot by condensing the old bot}}
-    $help add bot_decimate	{{[options] new_bot old_bot} {create a new bot by decimating the old bot}}
-    $help add bot_dump	{{[-b] [-n] [-F] [-m directory] [-o file] [-t dxf|glb|gltf|obj|sat|stl] [-u units] [--materials|--no-materials] [bot1 bot2 ...]\n} {dump the specified bots}}
-    $help add bot_face_fuse	{{new_bot old_bot} {eliminate duplicate faces in a BOT}}
-    $help add bot_face_sort	{{triangles_per_piece bot_solid1 [bot_solid2 bot_solid3 ...]} {sort the facelist of BOT solids to optimize ray trace performance for a particular number of triangles per raytrace piece}}
-    $help add bot_fuse		{{new_bot old_bot} {eliminate duplicate points in a BOT}}
-    $help add bot_merge		{{bot_dest bot1_src [botn_src]} {merge the specified bots into bot_dest}}
-    $help add bot_smooth	{{[-t norm_tolerance_degrees] new_bot old_bot} {calculate vertex normals for BOT primitive}}
-    $help add bot_split		{{bot} {split the bot}}
-    $help add bot_vertex_fuse	{{new_bot old_bot} {}}
+    $help add bot_condense	{{new_bot old_bot} {deprecated; use bot condense old_bot new_bot}}
+    $help add bot_decimate	{{[options] new_bot old_bot} {deprecated; use bot decimate old_bot new_bot}}
+    $help add bot_dump	{{[options] [bot ...]} {deprecated; use bot dump}}
+    $help add bot_face_fuse	{{new_bot old_bot} {deprecated; use bot face-fuse old_bot new_bot}}
+    $help add bot_face_sort	{{triangles_per_piece bot_solid1 [bot_solid2 ...]} {deprecated; use bot sort}}
+    $help add bot_fuse		{{[-s|-p] new_bot old_bot} {deprecated; use bot fuse old_bot new_bot}}
+    $help add bot_merge		{{bot_dest bot1_src [botn_src]} {deprecated; use bot merge}}
+    $help add bot_smooth	{{[-t angle] new_bot old_bot} {deprecated; use bot normals old_bot new_bot}}
+    $help add bot_split		{{bot} {deprecated; use bot split}}
+    $help add bot_vertex_fuse	{{new_bot old_bot} {deprecated; use bot vertex-fuse old_bot new_bot}}
     $help add brep	{{cmds} {Usage: brep brep obj [command|brepname|suffix] commands:
 	info - return count information for specific BREP
 	info S [index] - return information for specific BREP 'surface'

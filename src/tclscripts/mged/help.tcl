@@ -92,12 +92,12 @@ set mged_help_data(bo)	{{{-i major_type minor_type | -o} dest source}
 	For input, source is a file name and dest is an object name.
 	For output source is an object name and dest is a file name.
 	Only uniform array binary objects (major_type=u) are currently supported}}
-set mged_help_data(bot_condense) {{new_bot_solid old_bot_solid} {remove unreferenced vertices in a BOT solid}}
-set mged_help_data(bot_decimate)  $helplib_data(wdb_bot_decimate)
-set mged_help_data(bot_face_fuse) {{new_bot_solid old_bot_solid} {eliminate duplicate faces in a BOT solid}}
-set mged_help_data(bot_face_sort) $helplib_data(wdb_bot_face_sort)
-set mged_help_data(bot_smooth)  $helplib_data(wdb_bot_smooth)
-set mged_help_data(bot_vertex_fuse) {{new_bot_solid old_bot_solid} {fuse duplicate vertices in a BOT solid}}
+set mged_help_data(bot_condense) {{new_bot_solid old_bot_solid} {deprecated; use bot condense old_bot_solid new_bot_solid}}
+set mged_help_data(bot_decimate)  {{[options] new_bot old_bot} {deprecated; use bot decimate old_bot new_bot}}
+set mged_help_data(bot_face_fuse) {{new_bot_solid old_bot_solid} {deprecated; use bot face-fuse old_bot_solid new_bot_solid}}
+set mged_help_data(bot_face_sort) {{triangles_per_piece bot_solid1 [bot_solid2 ...]} {deprecated; use bot sort}}
+set mged_help_data(bot_smooth)  {{[-t angle] new_bot old_bot} {deprecated; use bot normals}}
+set mged_help_data(bot_vertex_fuse) {{new_bot_solid old_bot_solid} {deprecated; use bot vertex-fuse old_bot_solid new_bot_solid}}
 set mged_help_data(build_region) {{[-a region_number] tag start end} {build a region from solids matching RE "tag.s*"}}
 set mged_help_data(c)		$helplib_data(wdb_comb_std)
 set mged_help_data(cat)		$helplib_data(wdb_cat)

@@ -4,50 +4,33 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-bot_condense - Used to eliminate unused vertices from a BOT primitive.
+bot_condense - deprecated compatibility command for *bot condense*
 
 == SYNOPSIS
 
 [source]
 ----
-bot_condense {new_bot_primitive} {old_bot_primitive}
+bot condense input_bot [output_bot]
 ----
 
+Compatibility form: `bot_condense output_bot input_bot`.
 
-[[description]]
 == DESCRIPTION
 
-Used to eliminate unused vertices from a BOT primitive. It returns the number of vertices eliminated.
+*bot condense* removes vertices not referenced by any face.  If _output_bot_
+is omitted, the result is written to _input_bot-out_condense.bot_.  The source
+object is not modified.
 
+The *bot_condense* name is deprecated as of BRL-CAD 7.48.  It remains
+available during the formal deprecation period for existing scripts, but new
+usage should use *bot condense* and its input-first argument order.
 
-[[examples]]
-== EXAMPLES
-
-The examples shows the use of the *bot_condense* command to eliminate unused vertices from a BOT primitive and store the result in a new BOT primitive.
-
-.Basic Condensing
-====
-Eliminating unused vertices from a primitive named __bot1_original__ and storing the result in a new primitive named __bot1_condensed__.
-
+== EXAMPLE
 
 [source,console]
 ----
-mged> bot_condense bot1_condensed bot1_original
+mged> bot condense bot1_original bot1_condensed
 ----
-The unused vertices were deleted from bot1_original and the result was saved in bot1_condensed.
 
-
-
-====
-
-
-[[author]]
 == AUTHOR
-
-Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
-
-
-[[bug_reports]]
-== BUG REPORTS
-
-Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
+BRL-CAD Team

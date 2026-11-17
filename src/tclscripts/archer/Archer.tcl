@@ -1375,7 +1375,7 @@ package provide Archer 1.0
 
 	    incr flip_count
 	    append flip_string "$item "
-	    $itk_component(ged) bot_flip $item
+	    $itk_component(ged) bot flip $item
 	} else {
 	    # Set orientation back to original setting
 	    if {$save_orient != "no"} {
@@ -1559,7 +1559,7 @@ package provide Archer 1.0
 	    continue
 	}
 	append ret_string "$bot "
-	catch {gedCmd bot_sync $bot}
+	catch {gedCmd bot sync $bot}
 
 	set percent [format "%.2f" [expr {$icount / double($nitems)}]]
 	if {$percent > $last_percent} {
