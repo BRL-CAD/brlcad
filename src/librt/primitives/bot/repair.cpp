@@ -512,8 +512,8 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
 	!bot->num_faces || bot->num_vertices > INT_MAX ||
 	bot->num_faces > INT_MAX || !bot->vertices || !bot->faces)
 	return -1;
-    if (bot->skin) {
-	bu_log("rt_bot_repair: skin remapping is not available; BOT is unchanged\n");
+    if (bot->skin || bot->morphs) {
+	bu_log("rt_bot_repair: skin and morph remapping is not available; BOT is unchanged\n");
 	return -1;
     }
     for (size_t face_corner = 0; face_corner < bot->num_faces * 3;
@@ -786,8 +786,9 @@ bot_from_faces(const struct rt_bot_internal *original,
 	    source_faces, face_count))
 	goto fail;
 
-    if (original->skin && face_count) {
-	std::vector<int> new_to_old(result->num_vertices, -1);
+    std::vector<int> new_to_old;
+    if ((original->skin || original->morphs) && face_count) {
+	new_to_old.resize(result->num_vertices, -1);
 	for (size_t output_face = 0; output_face < face_count; ++output_face) {
 	    for (size_t corner = 0; corner < 3; ++corner) {
 		int old_vertex = replacement_faces ?
@@ -800,6 +801,9 @@ bot_from_faces(const struct rt_bot_internal *original,
 		new_to_old[(size_t)new_vertex] = old_vertex;
 	    }
 	}
+    }
+
+    if (original->skin && face_count) {
 	if (rt_bot_skin_validate(original, NULL) != BRLCAD_OK)
 	    goto fail;
 	BU_ALLOC(result->skin, struct rt_bot_skin);
@@ -846,6 +850,59 @@ bot_from_faces(const struct rt_bot_internal *original,
 	    goto fail;
     } else if (!face_count) {
 	result->bot_flags &= ~RT_BOT_HAS_SKIN;
+    }
+
+    if (original->morphs && face_count) {
+	if (rt_bot_morph_validate(original, NULL) != BRLCAD_OK)
+	    goto fail;
+	BU_ALLOC(result->morphs, struct rt_bot_morphs);
+	result->morphs->target_count = original->morphs->target_count;
+	result->morphs->targets = (struct rt_bot_morph_target *)bu_calloc(
+	    result->morphs->target_count, sizeof(struct rt_bot_morph_target),
+	    "BOT subset morph targets");
+	result->morphs->weights = (fastf_t *)bu_malloc(
+	    result->morphs->target_count * sizeof(fastf_t),
+	    "BOT subset morph weights");
+	memcpy(result->morphs->weights, original->morphs->weights,
+	    result->morphs->target_count * sizeof(fastf_t));
+	for (size_t target = 0; target < result->morphs->target_count; ++target) {
+	    const struct rt_bot_morph_target *source =
+		&original->morphs->targets[target];
+	    struct rt_bot_morph_target *destination =
+		&result->morphs->targets[target];
+	    bu_vls_init(&destination->name);
+	    bu_vls_vlscat(&destination->name, &source->name);
+	    if (source->position_deltas)
+		destination->position_deltas = (fastf_t *)bu_malloc(
+		    result->num_vertices * ELEMENTS_PER_VECT * sizeof(fastf_t),
+		    "BOT subset morph position deltas");
+	    if (source->normal_deltas)
+		destination->normal_deltas = (fastf_t *)bu_malloc(
+		    result->num_vertices * ELEMENTS_PER_VECT * sizeof(fastf_t),
+		    "BOT subset morph normal deltas");
+	    if (source->tangent_deltas)
+		destination->tangent_deltas = (fastf_t *)bu_malloc(
+		    result->num_vertices * ELEMENTS_PER_VECT * sizeof(fastf_t),
+		    "BOT subset morph tangent deltas");
+	    for (size_t vertex = 0; vertex < result->num_vertices; ++vertex) {
+		if (new_to_old[vertex] < 0)
+		    goto fail;
+		size_t old_vertex = (size_t)new_to_old[vertex];
+		if (source->position_deltas)
+		    VMOVE(&destination->position_deltas[vertex * ELEMENTS_PER_VECT],
+			&source->position_deltas[old_vertex * ELEMENTS_PER_VECT]);
+		if (source->normal_deltas)
+		    VMOVE(&destination->normal_deltas[vertex * ELEMENTS_PER_VECT],
+			&source->normal_deltas[old_vertex * ELEMENTS_PER_VECT]);
+		if (source->tangent_deltas)
+		    VMOVE(&destination->tangent_deltas[vertex * ELEMENTS_PER_VECT],
+			&source->tangent_deltas[old_vertex * ELEMENTS_PER_VECT]);
+	    }
+	}
+	if (rt_bot_morph_validate(result, NULL) != BRLCAD_OK)
+	    goto fail;
+    } else if (!face_count) {
+	result->bot_flags &= ~RT_BOT_HAS_MORPHS;
     }
 
     return result;
@@ -1012,6 +1069,15 @@ rt_bot_dup(const struct rt_bot_internal *obot)
     if (obot->skin) {
 	bot->skin = rt_bot_skin_copy(obot->skin, obot->num_vertices);
 	if (!bot->skin) {
+	    rt_bot_internal_free(bot);
+	    BU_PUT(bot, struct rt_bot_internal);
+	    return NULL;
+	}
+    }
+
+    if (obot->morphs) {
+	bot->morphs = rt_bot_morph_copy(obot->morphs, obot->num_vertices);
+	if (!bot->morphs) {
 	    rt_bot_internal_free(bot);
 	    BU_PUT(bot, struct rt_bot_internal);
 	    return NULL;

@@ -708,6 +708,12 @@ ecmd_bot_esplit(struct rt_edit *s)
 	(struct rt_bot_internal *)s->es_int.idb_ptr;
     RT_BOT_CK_MAGIC(bot);
 
+    if (bot->skin || bot->morphs) {
+	bu_vls_printf(s->log_str,
+	    "ERROR: BOT edge splitting does not yet remap skin or morph data\n");
+	return BRLCAD_ERROR;
+    }
+
     int v0 = b->bot_verts[0];
     int v1 = b->bot_verts[1];
     if (v0 < 0 || v1 < 0 || v0 == v1 ||
@@ -804,6 +810,12 @@ ecmd_bot_fsplit(struct rt_edit *s)
     struct rt_bot_internal *bot =
 	(struct rt_bot_internal *)s->es_int.idb_ptr;
     RT_BOT_CK_MAGIC(bot);
+
+    if (bot->skin || bot->morphs) {
+	bu_vls_printf(s->log_str,
+	    "ERROR: BOT face splitting does not yet remap skin or morph data\n");
+	return BRLCAD_ERROR;
+    }
 
     int v0 = b->bot_verts[0];
     int v1 = b->bot_verts[1];

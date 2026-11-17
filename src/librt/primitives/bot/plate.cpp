@@ -251,6 +251,9 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
     if (!obot || !bot)
 	return 1;
 
+    if (bot->skin || bot->morphs)
+	return 1;
+
     if (bot->mode != RT_BOT_PLATE)
 	return 1;
 
