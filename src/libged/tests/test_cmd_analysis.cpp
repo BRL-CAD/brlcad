@@ -1809,6 +1809,43 @@ main(int ac, char *av[])
 	validation.state == BU_ARG_VALIDATE_INVALID,
 	"bot extrude should report a definite mode conflict before operands are complete");
     ged_cmd_validate_result_clear(&validation);
+    CHECK(ged_cmd_validate(gedp, "bot condense all.g condensed.bot",
+	std::strlen("bot condense all.g condensed.bot"), &validation) == 0 &&
+	validation.state == BU_ARG_VALIDATE_VALID,
+	"bot condense should validate its input-first copy form");
+    ged_cmd_validate_result_clear(&validation);
+    CHECK(ged_cmd_validate(gedp, "bot merge merged.bot all.g tor",
+	std::strlen("bot merge merged.bot all.g tor"), &validation) == 0 &&
+	validation.state == BU_ARG_VALIDATE_VALID,
+	"bot merge should validate one or more input objects");
+    ged_cmd_validate_result_clear(&validation);
+    CHECK(ged_cmd_validate(gedp, "bot normals --tolerance-angle nope all.g",
+	std::strlen("bot normals --tolerance-angle nope all.g"), &validation) == 0 &&
+	validation.state == BU_ARG_VALIDATE_INVALID,
+	"bot normals should reject an invalid tolerance angle");
+    ged_cmd_validate_result_clear(&validation);
+    CHECK(ged_cmd_validate(gedp, "bot sort 0 all.g",
+	std::strlen("bot sort 0 all.g"), &validation) == 0 &&
+	validation.state == BU_ARG_VALIDATE_INVALID,
+	"bot sort should require a positive triangle count");
+    ged_cmd_validate_result_clear(&validation);
+    CHECK(ged_cmd_validate(gedp, "bot vertex-fuse all.g fused.bot",
+	std::strlen("bot vertex-fuse all.g fused.bot"), &validation) == 0 &&
+	validation.state == BU_ARG_VALIDATE_VALID,
+	"bot vertex-fuse should validate its input-first copy form");
+    ged_cmd_validate_result_clear(&validation);
+    completion_count = ged_cmd_complete_result(gedp, "bot fuse --show",
+	std::strlen("bot fuse --show"), &completion_result);
+    CHECK(find_completion(completion_result.completion_candidates,
+	(int)completion_result.completion_count, "--show-open-edges") != NULL,
+	"bot fuse should complete its canonical show-open-edges option");
+    ged_cmd_completion_result_clear(&completion_result);
+    CHECK(ged_cmd_validate(gedp,
+	"bot fuse --show-open-edges --plot-open-edges all.g",
+	std::strlen("bot fuse --show-open-edges --plot-open-edges all.g"),
+	&validation) == 0 && validation.state == BU_ARG_VALIDATE_INVALID,
+	"bot fuse should reject conflicting open-edge output modes");
+    ged_cmd_validate_result_clear(&validation);
     completion_count = ged_cmd_complete_result(gedp, "bot repair -o output.bot",
 	std::strlen("bot repair -o output.bot"), &completion_result);
     CHECK(find_completion(completion_result.completion_candidates,
@@ -5019,7 +5056,7 @@ main(int ac, char *av[])
 	const char *material_bad_import_av[] = {"material", "import", "density.txt"};
 	const char *material_remove_group_av[] = {"material", "remove", "native_schema_material", "physical", "density"};
 	const char *material_destroy_av[] = {"material", "destroy", "native_schema_material"};
-	const char *facetize_help_av[] = {"facetize", "--help"};
+	const char *facetize_help_av[] = {"facetize", "--help=all"};
 	const char *clone_help_av[] = {"clone", "--help"};
 	const char *arb_legacy_create_av[] = {"arb", "native_schema_arb_legacy", "35", "25"};
 	const char *arb_modern_create_av[] = {"arb", "create", "native_schema_arb_modern", "35", "25"};
