@@ -8,11 +8,10 @@ bwmod - arithmetically modify pixel values in black and white bw file
 
 == SYNOPSIS
 
-[source]
-----
-bwmod [-c] [-a val] [-s val] [-m val] [-d val] [-A] [-e val] [-r val] [-S val] [-M val] [-O val] [-X val] [-R] [-t] [file.bw] > file2.bw
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bwmod* [_OPTION_]... [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -27,47 +26,50 @@ Note that this command can also be applied to color *pix*(5) files, but no disti
 [[options]]
 == OPTIONS
 
-*-c*::
+*-c*, *--signed*::
   Store intermediate results as signed characters. Command-line arguments remain in floating-point format. This is useful when one wishes to take advantage of the wrap-around characteristics of binary mathematics.
 
-*-a* _val_::
+*-a* _val_, *--add* _val_::
   Add _val_.
 
-*-s* _val_::
+*-s* _val_, *--subtract* _val_::
   Subtract _val_.
 
-*-m* _val_::
+*-m* _val_, *--multiply* _val_::
   Multiply by _val_.
 
-*-d* _val_::
+*-d* _val_, *--divide* _val_::
   Divide by _val_.
 
-*-A*::
+*-A*, *--absolute*::
   Take the absolute value.
 
-*-e* _val_::
+*-e* _val_, *--exponent* _val_::
   Exponentiate (raise to the power of _val_).
 
-*-r* _val_::
+*-r* _val_, *--root* _val_::
   Take the _val_-th root.
 
-*-S* _val_::
+*-S* _val_, *--shift* _val_::
   Shift by _val_ bits. If _val_ is positive, this performs a left-shift using the C `<<` operator; if _val_ is negative, this performs a right-shift using the C `>>` operator by -_val_ bits. This is a bitwise operation. Before it is applied, both the pixel value and _val_ are truncated to integers. Unless *-c* is in effect, the resulting new value will be placed back into a floating-point representation.
 
-*-M* _val_::
+*-M* _val_, *--and* _val_::
   Perform a bitwise AND operation with _val_ (automatically truncates to integer before operation).
 
-*-O* _val_::
+*-O* _val_, *--or* _val_::
   Perform a bitwise inclusive OR operation with _val_ (automatically truncates to integer before operation).
 
-*-X* _val_::
+*-X* _val_, *--xor* _val_::
   Perform a bitwise exclusive OR (XOR) operation with _val_ (automatically truncates to integer before operation).
 
-*-R*::
+*-R*, *--round*::
   Round to the nearest integer.
 
-*-t*::
+*-t*, *--truncate*::
   Truncate to integer. (Note: Truncation is automatically applied for the bitwise options *-S*, *-M*, *-O*, and *-X*).
+
+*-h*, *-?*, *--help*::
+  Print help and exit.
 
 
 [[examples]]
