@@ -8,11 +8,13 @@ nirt - Runs the NIRT program that is distributed with BRL-CAD to intersect a sin
 
 == SYNOPSIS
 
-[source]
-----
-nirt [nirt_args]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*nirt* [_OPTION_]... [_arguments_ ...]
+*nirt* [_OPTION_]... [_arguments_ ...]
+*nirt* [_OPTION_]... [_arguments_ ...]
+*nirt* [_OPTION_]... [_arguments_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

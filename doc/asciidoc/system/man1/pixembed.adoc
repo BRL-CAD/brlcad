@@ -8,12 +8,10 @@ pixembed - embed a pix image in a larger frame, replicating border pixels
 
 == SYNOPSIS
 
-[source]
-----
-pixembed [-b border_inset] [-s squareinsize] [-w inwidth] [-n inheight]
-         [-S squareoutsize] [-W outwidth] [-N outheight] [in.pix] > out.pix
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixembed* [_OPTION_]... [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

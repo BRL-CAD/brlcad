@@ -8,15 +8,15 @@ constraint - manage parametric geometric constraints stored on database objects
 
 == SYNOPSIS
 
-[source]
-----
-constraint set object key [expression_parts ...]
-constraint get constraint_name1 [constraint_name2 ...]
-constraint show constraint_name1 [constraint_name2 ...]
-constraint eval constraint_name1 [constraint_name2 ...]
-constraint help [command]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*constraint*
+*constraint set* _object_ _constraint_name_ [_expression_ ...]
+*constraint get* _objects_ ...
+*constraint show* _objects_ ...
+*constraint eval* _objects_ ...
+*constraint help* [(*set* | *get* | *show* | *eval* | *help*)]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,10 @@ pmat - get or set the perspective projection matrix
 
 == SYNOPSIS
 
-[source]
-----
-pmat
-pmat "m0 m1 m2 ... m15"
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pmat* [_matrix_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,20 +8,17 @@ select - Returns displayed items or BOT vertices within a specified screen-space
 
 == SYNOPSIS
 
-Legacy screen-space form:
-
-[source]
-----
-select [-b bot] [-p] [-z vminz] vx vy {vr | vw vh}
-----
-
-Selection-set form (when the GED new command form is enabled):
-
-[source]
-----
-select [-h|--help] [-S|--set name] {add|clear|collapse|expand|list|rm} [args]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*select* [_OPTION_]... _coordinates_ ...
+*select* [_OPTION_]...
+*select add* _paths_ ...
+*select clear* [_set_name_pattern_]
+*select collapse* [_set_name_pattern_]
+*select expand* [_set_name_pattern_]
+*select list* [_set_name_pattern_]
+*select rm* _paths_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

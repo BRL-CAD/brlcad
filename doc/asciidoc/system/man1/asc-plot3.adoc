@@ -8,11 +8,10 @@ asc-plot3 - produce Plot3 instructions from ASCII representation
 
 == SYNOPSIS
 
-[source]
-----
-asc-plot3 [-h | --help] [_file.in_ [_file.plot3_]]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*asc-plot3* [_OPTION_]... [_input_] [_output_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

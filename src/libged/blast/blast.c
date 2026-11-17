@@ -25,6 +25,7 @@
 
 #include <string.h>
 
+#include "bu/arg.h"
 #include "ged.h"
 
 /*
@@ -145,9 +146,38 @@ blast_grammar_analyze(struct ged *gedp, const char *input,
 
 
 static char *
+blast_grammar_json_for(const char *name)
+{
+    struct bu_vls output = BU_VLS_INIT_ZERO;
+    char *draw = ged_cmd_schema_json("draw");
+
+    if (!draw)
+	return NULL;
+    bu_vls_printf(&output,
+	"{\"schema_version\":%d,\"kind\":\"native_forms\",\"name\":",
+	BU_ARG_SCHEMA_JSON_VERSION);
+    bu_arg_json_string(&output, name);
+    bu_vls_strcat(&output,
+	",\"help\":\"Clear the display and draw objects\",\"forms\":["
+	"{\"name\":\"draw\",\"help\":\"Draw-compatible arguments\",\"grammar\":");
+    bu_vls_strcat(&output, draw);
+    bu_vls_strcat(&output, "}]}");
+    bu_free(draw, "draw command schema JSON");
+    return bu_vls_strgrab(&output);
+}
+
+
+static char *
+B_grammar_json(void)
+{
+    return blast_grammar_json_for("B");
+}
+
+
+static char *
 blast_grammar_json(void)
 {
-    return bu_strdup("{\"kind\":\"delegated_grammar\",\"delegate\":\"draw\",\"help\":\"Clear the display and draw objects\"}");
+    return blast_grammar_json_for("blast");
 }
 
 
@@ -169,6 +199,12 @@ blast_grammar_help(const char *invocation)
 }
 
 
+static const struct ged_cmd_grammar B_grammar = {
+    "B", "Clear the display and draw objects", blast_grammar_validate,
+    blast_grammar_analyze, B_grammar_json, blast_grammar_lint, NULL,
+    blast_grammar_help
+};
+
 static const struct ged_cmd_grammar blast_grammar = {
     "blast", "Clear the display and draw objects", blast_grammar_validate,
     blast_grammar_analyze, blast_grammar_json, blast_grammar_lint, NULL,
@@ -176,7 +212,7 @@ static const struct ged_cmd_grammar blast_grammar = {
 };
 
 #define GED_BLAST_COMMANDS(X, XID) \
-    X(B, ged_blast_core, GED_CMD_DEFAULT, &blast_grammar) \
+    X(B, ged_blast_core, GED_CMD_DEFAULT, &B_grammar) \
     X(blast, ged_blast_core, GED_CMD_DEFAULT, &blast_grammar)
 
 GED_DECLARE_COMMAND_SET_WITH_GRAMMAR(GED_BLAST_COMMANDS)

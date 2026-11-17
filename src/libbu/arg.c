@@ -5816,6 +5816,11 @@ cmd_tree_node_describe_json(struct bu_vls *out, const struct bu_arg_tree_node *n
     }
     bu_vls_strcat(out, "],\"child_phase\":");
     bu_arg_json_string(out, cmd_tree_phase_name(node->child_phase));
+    bu_vls_strcat(out, ",\"man_page\":");
+    if (node->man_page)
+	bu_arg_json_string(out, node->man_page);
+    else
+	bu_vls_strcat(out, "null");
     bu_vls_strcat(out, ",\"subcommands\":[");
     if (node->subcommands) {
 	for (size_t i = 0; node->subcommands[i].schema; i++) {
@@ -6743,6 +6748,15 @@ cmd_tree_lint_nodes(const struct bu_arg_tree_node *nodes, struct bu_vls *msgs,
 	    node->child_phase != BU_ARG_TREE_CHILD_AFTER_FIXED_OPERANDS) {
 	    if (msgs)
 		bu_vls_printf(msgs, "native command tree child \"%s\" has an invalid child phase\n",
+		    node->schema->name ? node->schema->name : "");
+	    failures++;
+	}
+	if (node->man_page && (!node->man_page[0] ||
+		strchr(node->man_page, '/') || strchr(node->man_page, '\\') ||
+		strchr(node->man_page, '.'))) {
+	    if (msgs)
+		bu_vls_printf(msgs,
+		    "native command tree child \"%s\" has an invalid man page stem\n",
 		    node->schema->name ? node->schema->name : "");
 	    failures++;
 	}

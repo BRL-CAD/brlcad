@@ -8,11 +8,10 @@ arot - Performs a rotation about the specified axis (_x y z_) using screen units
 
 == SYNOPSIS
 
-[source]
-----
-arot {x} {y} {z} {angle}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*arot* _axis_and_angle_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

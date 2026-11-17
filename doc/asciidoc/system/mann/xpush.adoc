@@ -8,11 +8,10 @@ xpush - "Pushes" the effects of transformation matrices in the paths, from the s
 
 == SYNOPSIS
 
-[source]
-----
-xpush {object}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*xpush* _object_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

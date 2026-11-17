@@ -8,11 +8,10 @@ mirror - Mirrors a shape or combination across a given axis.
 
 == SYNOPSIS
 
-[source]
-----
-mirror [-p x/y/z] [-d x/y/z] [-x|-y|-z] [-o offset] from_object to_object [axis]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*mirror* [_OPTION_]... _source_object_ _output_object_ [(*x* | *y* | *z*)]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

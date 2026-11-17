@@ -8,11 +8,10 @@ plot3stat - print statistics about a plot3 format file
 
 == SYNOPSIS
 
-[source]
-----
-plot3stat [-v | --verbose] [_unix_plot.plot3_]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*plot3stat* [_OPTION_]... [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

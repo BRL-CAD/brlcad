@@ -8,17 +8,25 @@ lod - configure Level of Detail (LOD) drawing
 
 == SYNOPSIS
 
-[source]
-----
-lod
-lod [--help]
-lod [0|1]
-lod csg|mesh [0|1]
-lod cache [clear [all_files]|exists]
-lod scale|point_scale|curve_scale [factor]
-lod bot_threshold [face_count]
-view lod [same arguments]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*lod* [_OPTION_]...
+*lod* [_OPTION_]... (*0* | *1*)
+*lod* [_OPTION_]... (*csg* | *mesh*) [(*0* | *1*)]
+*lod* [_OPTION_]... *cache*
+*lod* [_OPTION_]... *cache* *clear* [*all_files*]
+*lod* [_OPTION_]... *cache* *exists*
+*lod* [_OPTION_]... (*scale* | *point_scale* | *curve_scale*) [_factor_]
+*lod* [_OPTION_]... *bot_threshold* [_face_count_]
+// END GENERATED BU_ARG SYNOPSIS
+
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[description]]
 == DESCRIPTION

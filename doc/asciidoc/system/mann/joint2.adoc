@@ -8,11 +8,10 @@ joint2 - process animation edit commands for joints
 
 == SYNOPSIS
 
-[source]
-----
-joint2 solid_name selection replace selection_name startx starty startz dirx diry dirz
-joint2 solid_name selection translate selection_name dx dy dz
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*joint2* _object_ *selection* [_arguments_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,10 @@ u-bw - convert unsigned shorts to unsigned chars (8-bit bw data)
 
 == SYNOPSIS
 
-[source]
-----
-u-bw [-l | --low-byte] < u_shorts > bwfile
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*u-bw* [_OPTION_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

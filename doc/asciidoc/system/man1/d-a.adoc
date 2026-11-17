@@ -9,11 +9,10 @@ d-a - convert double-precision binary numbers to ASCII
 
 == SYNOPSIS
 
-[source]
-----
-d-a [-n] < doubles > ascii
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*d-a* [_OPTION_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

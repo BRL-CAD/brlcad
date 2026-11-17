@@ -8,13 +8,10 @@ vdraw - Allows drawing of lines and polygons (optionally with per vertex normals
 
 == SYNOPSIS
 
-[source]
-----
-vdraw {write|insert|delete|read|send|params|open|vlist} [args]
-vdraw vlist list
-vdraw vlist delete list_name
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*vdraw* _SUBCOMMAND_ [_ARGUMENT_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

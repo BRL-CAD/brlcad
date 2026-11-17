@@ -8,11 +8,10 @@ npush - push matrices down a tree hierarchy
 
 == SYNOPSIS
 
-[source]
-----
-npush [-h] [-?] [-v] [-f] [-x] [-r] [-s] [-d max_depth] [-L] [-D] {arg1 [arg2]...}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*npush* [_OPTION_]... _objects_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

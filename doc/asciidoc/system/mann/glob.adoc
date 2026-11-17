@@ -8,10 +8,10 @@ glob - returns a list of objects specified by expression
 
 == SYNOPSIS
 
-[source]
-----
-glob "command_string"
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*glob* _command_string_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

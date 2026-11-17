@@ -8,11 +8,10 @@ title - Returns the title string for the current database or, if used with an ar
 
 == SYNOPSIS
 
-[source]
-----
-title [string]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*title* [_title_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

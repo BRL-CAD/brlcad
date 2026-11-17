@@ -8,11 +8,10 @@ pixcolors - count or list the distinct colors used in a pix image
 
 == SYNOPSIS
 
-[source]
-----
-pixcolors [-v|--verbose] [file.pix]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixcolors* [_OPTION_]... [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

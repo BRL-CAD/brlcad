@@ -9,12 +9,10 @@ step-g - import an ISO 10303 STEP file into a BRL-CAD geometry database
 
 == SYNOPSIS
 
-[source]
-----
-step-g [options] input.step output.g
-step-g [options] (-o output.g | -O output.g) input.step
-step-g -D [options] input.step
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*step-g* [_OPTION_]... _input.step_ [_output.g_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

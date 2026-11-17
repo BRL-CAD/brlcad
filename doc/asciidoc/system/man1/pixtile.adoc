@@ -8,12 +8,10 @@ pixtile - paste small images together into one large image
 
 == SYNOPSIS
 
-[source]
-----
-pixtile [-s squareinsize] [-w file_width] [-n file_height] [-S squareoutsize] [-W out_width] [-N out_height] [-o startframe] basename > file.pix
-pixtile [-s squareinsize] [-w file_width] [-n file_height] [-S squareoutsize] [-W out_width] [-N out_height] file1 file2 ... fileN > file.pix
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixtile* [_OPTION_]... _basename-or-file_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

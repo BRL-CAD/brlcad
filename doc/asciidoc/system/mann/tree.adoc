@@ -8,11 +8,10 @@ tree - Lists the contents of the specified _objects_ in a tree-like format that 
 
 == SYNOPSIS
 
-[source]
-----
-tree [-a] [-c] [-v ...] [-d depth] [-i spaces] [-o file] [object ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*tree* [_OPTION_]... [_objects_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

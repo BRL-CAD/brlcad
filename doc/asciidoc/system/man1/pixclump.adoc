@@ -8,11 +8,10 @@ pixclump - quantize the colors in a pix(5) stream to a specified set
 
 == SYNOPSIS
 
-[source]
-----
-pixclump [-c _R/G/B_] [-f _color_file_] [-x _debug_flags_] [infile.pix [outfile.pix]]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixclump* [_OPTION_]... [_input_] [_output_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,10 @@ find_pipe_pnt - find and identify a PIPE point
 
 == SYNOPSIS
 
-[source]
-----
-find_pipe_pnt pipe "view_x view_y view_z"
-find_pipe_pnt pipe view_x view_y view_z
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*find_pipe_pnt* _pipe_ _point_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

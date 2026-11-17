@@ -8,65 +8,22 @@ mater - Assigns shader parameters, RGB color, and inheritance to an existing com
 
 == SYNOPSIS
 
-[source]
-----
-mater [-s] {combination} [shader_parameters  [RGB  [inheritance]]]
-----
-
-
-[source]
-----
-mater {-d} {source}
-----
-
-
-[source]
-----
-mater {-d} {clear}
-----
-
-
-[source]
-----
-mater {-d} {import} [-v] {file.density}
-----
-
-
-[source]
-----
-mater {-d} {export} {file.density}
-----
-
-
-[source]
-----
-mater {-d} {validate} {file.density}
-----
-
-
-[source]
-----
-mater {-d} {get} [--tol <tolerance>] [--id [[>|<][=]id]|[id pattern]] [--density [[>|<][=]val] [--name pattern] [pattern]
-----
-
-
-[source]
-----
-mater {-d} {set} {id,density,name}
-----
-
-
-[source]
-----
-mater {-d} {map} {--ids-from-names} {-d density_file} {-m map_file} [density_file] [map_file]
-----
-
-
-[source]
-----
-mater {-d} {map} {--names-from-ids} [density_file]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*mater* _SUBCOMMAND_ [_ARGUMENT_]...
+*mater* [_OPTION_]...
+*mater audit* [_density_file_]
+*mater clear*
+*mater export* _density_file_
+*mater get* [_OPTION_]... [_pattern_ ...]
+*mater import* [_OPTION_]... _density_file_
+*mater map* [_OPTION_]... (*--ids-from-names* | *--names-from-ids*) [_file_ ...]
+*mater set* _record_ ...
+*mater source*
+*mater validate* _density_file_
+*mater* [_OPTION_]... [_shader_argument_ ...]
+*mater* [_OPTION_]... [_shader_argument_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -134,9 +91,12 @@ mapping operation.
 == OPTIONS
 
 // BEGIN GENERATED BU_ARG OPTIONS
-=== Shared options
+=== mater options
 
-Applies to *mater density get* and *mater get*.
+*-d*::
+  Select density-table management mode.
+
+=== mater get options
 
 *--id*=_id-or-pattern_::
   Match a material id, range, or glob pattern.
@@ -150,16 +110,12 @@ Applies to *mater density get* and *mater get*.
 *--tol*=_tolerance_::
   Density equality tolerance (default is BN_TOL_DIST).
 
-=== Shared options
-
-Applies to *mater density import* and *mater import*.
+=== mater import options
 
 *-v*::
   Validate the density file before importing it.
 
-=== Shared options
-
-Applies to *mater density map* and *mater map*.
+=== mater map options
 
 *--ids-from-names*::
   Assign material_id values from material_name attributes.
@@ -172,11 +128,6 @@ Applies to *mater density map* and *mater map*.
 
 *-m* _file_, *--map-file*=_file_::
   Use this material-name mapping file.
-
-=== mater options
-
-*-d*::
-  Select density-table management mode.
 
 === mater options
 

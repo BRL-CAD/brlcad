@@ -8,11 +8,10 @@ pixsaturate - adjust the color saturation of a pix file
 
 == SYNOPSIS
 
-[source]
-----
-pixsaturate [-h | --help] _saturation_ < infile.pix > outfile.pix
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixsaturate* [_OPTION_]... _saturation_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

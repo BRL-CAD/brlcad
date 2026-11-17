@@ -8,11 +8,10 @@ imod - modify a stream of short integers with arithmetic operations
 
 == SYNOPSIS
 
-[source]
-----
-imod [-a add] [-s sub] [-m mult] [-d div] [-A] [-e exp] [-r root] [file.s] > output.s
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*imod* [_OPTION_]... [_file_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,10 @@ simulate - a Bullet-based physics simulator for MGED
 
 == SYNOPSIS
 
-[source]
-----
-simulate [options]... path duration
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*simulate* [_OPTION_]... _path_ _duration_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

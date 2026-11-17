@@ -8,12 +8,10 @@ comb_std, c - create or modify a combination using standard Boolean notation
 
 == SYNOPSIS
 
-[source]
-----
-comb_std comb_name [op1 object1 [op2 object2 ...]]
-c comb_name [op1 object1 [op2 object2 ...]]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*comb_std* [_OPTION_]... _combination_ [_boolean_expression_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

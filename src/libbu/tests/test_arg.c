@@ -694,8 +694,8 @@ static const struct bu_arg_schema view_root_schema =
     BU_ARG_SCHEMA_BOUND("view", "View command fixture", NULL, NULL,
 	BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, NULL, NULL, NULL, NULL);
 static const struct bu_arg_tree_node view_subcommands[] = {
-    BU_ARG_TREE_NODE(&packed_quaternion_schema, NULL, NULL,
-	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE_DOC(&packed_quaternion_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL, "view_orient"),
     BU_ARG_TREE_NODE_NULL
 };
 static const struct bu_arg_tree view_tree =
@@ -1593,6 +1593,7 @@ main(int UNUSED(argc), char **argv)
 	bu_vls_trunc(&output, 0);
 	if (bu_arg_introspect(&output, &tree_grammar, 1, request) != 1 ||
 	    !strstr(bu_vls_cstr(&output), "\"kind\":\"native_tree\"") ||
+	    !strstr(bu_vls_cstr(&output), "\"man_page\":\"view_orient\"") ||
 	    bu_arg_introspect(&output, &forms_grammar, 1, request) != 1 ||
 	    !strstr(bu_vls_cstr(&output), "\"kind\":\"native_forms\"") ||
 	    bu_arg_introspect(&output, &invalid_grammar, 1, request) != -1 ||

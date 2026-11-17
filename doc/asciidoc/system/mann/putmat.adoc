@@ -8,11 +8,10 @@ putmat - Replaces the existing transformation matrix in the combination specifie
 
 == SYNOPSIS
 
-[source]
-----
-putmat comb_name/member_name [I | m0 m1 m2 m3 ... m15]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*putmat* _arc_ [_matrix_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

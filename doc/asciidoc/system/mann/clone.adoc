@@ -10,23 +10,10 @@ place the copies in the database with automatically generated names.
 
 == SYNOPSIS
 
-[source]
-----
-clone [pattern] [options]... {object}...
-----
-
-The optional positional _pattern_ keyword selects the geometric layout
-of the produced copies:
-
-[horizontal]
-*lin*  :: linear (single-axis) — the default
-*rect* :: rectangular grid
-*sph*  :: spherical pattern
-*cyl*  :: cylindrical pattern
-
-The pattern keyword may appear anywhere on the command line; option
-position relative to it does not matter. Omitting the keyword is
-identical to using *lin*.
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*clone* [_OPTION_]... [(*lin* | *rect* | *sph* | *cyl*) ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 == DESCRIPTION
 

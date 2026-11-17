@@ -602,6 +602,7 @@ GED_EXPORT extern const struct bu_arg_schema ged_view_native_schema;
 GED_EXPORT extern const struct bu_arg_schema ged_view2_native_schema;
 GED_EXPORT extern const struct bu_arg_schema ged_view_knob_schema;
 GED_EXPORT extern const struct bu_arg_schema ged_view_lod_schema;
+GED_EXPORT extern const struct bu_arg_forms ged_view_lod_forms;
 GED_EXPORT extern char *ged_view_lod_grammar_json(void);
 GED_EXPORT extern char *ged_view_lod_help(const char *invocation);
 GED_EXPORT extern int ged_view_lod_core(struct ged *gedp, struct bview *view,

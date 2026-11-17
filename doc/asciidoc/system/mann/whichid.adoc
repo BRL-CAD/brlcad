@@ -8,11 +8,10 @@ whichid - Reports information relating to usage of the region_id property on reg
 
 == SYNOPSIS
 
-[source]
-----
-whichid [options ...] {ident[-ident]}...
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*whichid* [_OPTION_]... _id_range_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

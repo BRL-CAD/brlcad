@@ -8,11 +8,10 @@ saveview - Write the current MGED view and displayed objects to an executable ra
 
 == SYNOPSIS
 
-[source]
-----
-saveview [-e command] [-i input.g] [-l logfile] [-o output] filename [args]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*saveview* [_OPTION_]... _script_ [_rt_arguments_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

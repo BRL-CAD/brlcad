@@ -8,16 +8,14 @@ edarb - edit ARB primitive faces, edges, and vertices
 
 == SYNOPSIS
 
-[source]
-----
-edarb edgedir  arb edge delta_x delta_y delta_z
-edarb edgedir  arb edge rot fb
-edarb extrude  arb face distance
-edarb facedef  arb face [a|b|c|d parameters]
-edarb mirface  arb face axis
-edarb permute  arb tuple
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*edarb*
+*edarb edgedir* _arguments_ ...
+*edarb extrude* _arguments_ ...
+*edarb mirror* _arguments_ ...
+*edarb permute* _arguments_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

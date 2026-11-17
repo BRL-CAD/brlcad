@@ -8,11 +8,10 @@ rtarea - Calculate exposed, presented and centers of surface areas (MGED Command
 
 == SYNOPSIS
 
-[source]
-----
-rtarea [options]...
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rtarea* [_arguments_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

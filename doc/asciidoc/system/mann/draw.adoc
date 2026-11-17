@@ -8,13 +8,10 @@ draw - Adds _objects_ to the display list so that they will appear on the displa
 
 == SYNOPSIS
 
-[source]
-----
-draw [-A attribute name/value pairs] [-s] [-A -o attribute name/value pairs] [-C#/#/#] [-L #] [-R] [-S] [-m1] {objects}
-
-draw [--mode 0|1|2|3|4|5] [options] {objects}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*draw* [_OPTION_]... _paths_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

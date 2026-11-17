@@ -8,11 +8,10 @@ rtwizard - composite BRL-CAD images from color, ghost, and edge-line renderings
 
 == SYNOPSIS
 
-[source]
-----
-rtwizard [options] [-i] _geometry.g_ [-o] _output.{pix|png}_ [object ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rtwizard* [_OPTION_]... [_input-or-object_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

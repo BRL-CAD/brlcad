@@ -8,11 +8,10 @@ fbgamma - load a gamma correcting colormap
 
 == SYNOPSIS
 
-[source]
-----
-fbgamma [-H | --high-resolution] [-o | --overlay] [-i | --image] [-F device | --framebuffer device] (gamma | red-gamma green-gamma blue-gamma)
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*fbgamma* [_OPTION_]... _gamma_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

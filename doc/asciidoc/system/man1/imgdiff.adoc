@@ -9,11 +9,10 @@ imgdiff - compare two images and report or visualize their differences
 
 == SYNOPSIS
 
-[source]
-----
-imgdiff [options] img1 img2 [output]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*imgdiff* [_OPTION_]... _img1_ _img2_ [_output_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

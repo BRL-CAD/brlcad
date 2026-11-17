@@ -8,11 +8,10 @@ rrt - Executes the specified _program_ with the provided _options_ and includes 
 
 == SYNOPSIS
 
-[source]
-----
-rrt {program} [options]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rrt* [_raytrace_arguments_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

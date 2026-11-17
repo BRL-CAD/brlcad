@@ -8,11 +8,10 @@ perspective - get or set the view perspective angle
 
 == SYNOPSIS
 
-[source]
-----
-perspective
-perspective angle
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*perspective* [_angle_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

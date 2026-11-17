@@ -8,12 +8,10 @@ pixbackgnd - generate a pix(5) shaded background
 
 == SYNOPSIS
 
-[source]
-----
-pixbackgnd [-H] [-i] [-s squaresize] [-w width] [-n height] [-t title_height] [-a top_inten] [-b bottom_inten] hue saturation > file.pix
-pixbackgnd [-H] [-i] [-s squaresize] [-w width] [-n height] [-t title_height] [-a top_inten] [-b bottom_inten] red green blue > file.pix
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixbackgnd* [_OPTION_]... _component_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,12 +8,10 @@ bwdiff - compare two black and white files
 
 == SYNOPSIS
 
-[source]
-----
-bwdiff [-b | --background] [-m | --magnitude | -g | --greater |
-       -l | --less | -e | --equal | -n | --not-equal] _file1_ _file2_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bwdiff* [_OPTION_]... _file1_ _file2_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

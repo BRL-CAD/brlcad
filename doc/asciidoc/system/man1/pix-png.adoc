@@ -8,11 +8,10 @@ pix-png - convert a BRL-CAD PIX image to a PNG image
 
 == SYNOPSIS
 
-[source]
-----
-pix-png [-a | --autosize] [-w _file_width_ | --width _file_width_] [-n _file_height_ | --height _file_height_] [-s _squaresize_ | --size _squaresize_] [-g _gamma_ | --gamma _gamma_] [-o _file.png_ | --output _file.png_] [_file.pix_] [> _file.png_]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pix-png* [_OPTION_]... [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

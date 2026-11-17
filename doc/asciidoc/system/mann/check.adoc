@@ -8,11 +8,10 @@ check - Check is a geometry analysis tool.
 
 == SYNOPSIS
 
-[source]
-----
-check sub-command [options] [objects]...
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*check* _SUBCOMMAND_ [_ARGUMENT_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

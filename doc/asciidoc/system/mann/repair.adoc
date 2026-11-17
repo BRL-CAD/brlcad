@@ -8,11 +8,10 @@ repair - Attempts to repair invalid data in the __name__ object.
 
 == SYNOPSIS
 
-[source]
-----
-repair [-o output_obj] {name}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*repair* [_OPTION_]... _object_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

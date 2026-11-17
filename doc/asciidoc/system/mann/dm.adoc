@@ -9,17 +9,10 @@ dm - Interact with display-manager instances.
 
 == SYNOPSIS
 
-[source]
-----
-dm [-h] [-v] subcommand [args]
-dm attach [--dm name] [--view name] type [name]
-dm bg [color [color]]
-dm debug [level]
-dm get [--dm name] [variable ...]
-dm set [--dm name] [variable [value]]
-dm {width | height | type} [name]
-dm {types | list | initmsg}
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*dm* [_OPTION_]... _SUBCOMMAND_ [_ARGUMENT_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

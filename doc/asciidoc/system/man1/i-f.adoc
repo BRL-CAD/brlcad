@@ -8,11 +8,10 @@ i-f - convert 16-bit short integers to floats
 
 == SYNOPSIS
 
-[source]
-----
-i-f [-n | scale] < shorts > floats
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*i-f* [_OPTION_]... [_scale_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

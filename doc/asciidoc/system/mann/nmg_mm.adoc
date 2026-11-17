@@ -8,10 +8,10 @@ nmg_mm - create a new empty NMG model
 
 == SYNOPSIS
 
-[source]
-----
-nmg_mm name
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*nmg_mm* _name_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

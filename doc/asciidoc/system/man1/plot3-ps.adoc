@@ -8,14 +8,10 @@ plot3-ps - convert a plot3 UnixPlot file to PostScript
 
 == SYNOPSIS
 
-[source]
-----
-plot3-ps [-e|--encapsulated] [-c|--center]
-         [-s|-S|--size _inches_]
-         [-w|-W|--width _inches_]
-         [-n|-N|--height _inches_] [_file.plot3_]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*plot3-ps* [_OPTION_]... [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

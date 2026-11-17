@@ -9,11 +9,10 @@ graph - generate a database hierarchy graph
 
 == SYNOPSIS
 
-[source]
-----
-graph [options] output.svg
-graph --igraph [show|positions]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*graph* [_OPTION_]... _output_or_operation_
+// END GENERATED BU_ARG SYNOPSIS
 
 == DESCRIPTION
 

@@ -8,11 +8,10 @@ debuglib - Allows the user to set or check the debug flags used by _librt_.
 
 == SYNOPSIS
 
-[source]
-----
-debuglib [hex_code]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*debuglib* [_mask_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -9,11 +9,10 @@ c-d - extract components from complex double-precision data
 
 == SYNOPSIS
 
-[source]
-----
-c-d [-r] [-i] [-m] [-p] [-z] < complex_data > doubles
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*c-d* [_OPTION_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

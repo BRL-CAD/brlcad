@@ -8,11 +8,10 @@ rmat - get or set the view rotation matrix
 
 == SYNOPSIS
 
-[source]
-----
-rmat
-rmat "m0 m1 m2 ... m15"
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rmat* [_matrix_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

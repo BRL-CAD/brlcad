@@ -8,10 +8,10 @@ savekey - append current view as a keyframe to an animation script file
 
 == SYNOPSIS
 
-[source]
-----
-savekey file [time]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*savekey* _output_file_ [_time_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

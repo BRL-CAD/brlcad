@@ -8,11 +8,10 @@ double-asc - convert a stream of IEEE doubles to ASCII text
 
 == SYNOPSIS
 
-[source]
-----
-double-asc [-a | --autosize] [-c | --cells] [-f _format_ | --format _format_] [-s _squaresize_ | --size _squaresize_] [-w _width_ | --width _width_] [-n _height_ | --height _height_] [-# _depth_ | --depth _depth_] [_file.d_]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*double-asc* [_OPTION_]... [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

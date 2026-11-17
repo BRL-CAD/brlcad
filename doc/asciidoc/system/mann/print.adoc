@@ -8,10 +8,10 @@ print - print a summary of the current view parameters
 
 == SYNOPSIS
 
-[source]
-----
-print
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*print*
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

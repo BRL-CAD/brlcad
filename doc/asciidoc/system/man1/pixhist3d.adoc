@@ -8,11 +8,10 @@ pixhist3d - display RGB color space utilization
 
 == SYNOPSIS
 
-[source]
-----
-pixhist3d [-h|-?|--help] [file.pix]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixhist3d* [_OPTION_]... [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

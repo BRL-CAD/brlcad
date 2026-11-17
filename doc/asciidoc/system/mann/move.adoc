@@ -8,11 +8,10 @@ move, mv - rename a database object
 
 == SYNOPSIS
 
-[source]
-----
-move from to
-mv from to
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*move* _source_object_ _output_object_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

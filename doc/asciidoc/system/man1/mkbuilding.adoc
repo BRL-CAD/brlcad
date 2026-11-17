@@ -9,10 +9,10 @@ mkbuilding - generate parametric buildings and building parts
 
 == SYNOPSIS
 
-[source]
-----
-mkbuilding [options] [output.g]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*mkbuilding* [_OPTION_]... [_output.g_]
+// END GENERATED BU_ARG SYNOPSIS
 
 == DESCRIPTION
 

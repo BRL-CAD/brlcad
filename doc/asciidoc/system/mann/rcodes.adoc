@@ -8,11 +8,10 @@ rcodes - Reads the specified file and assigns the region attributes to the regio
 
 == SYNOPSIS
 
-[source]
-----
-rcodes {file_name}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rcodes* _input_file_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

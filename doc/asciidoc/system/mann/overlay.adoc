@@ -8,12 +8,11 @@ overlay - Plots the specified UNIX __plot_file__ in the MGED display.
 
 == SYNOPSIS
 
-[source]
-----
-overlay [options] file
-overlay -F [-i] [-c] [-z] [-X #] [-Y #] [-w #] [-n #] [-S #] [--format fmt] {img_file}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*overlay* [_OPTION_]... *-h* [_raw_arguments_ ...]
+*overlay* [_OPTION_]... _input_file_ [_view_object_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

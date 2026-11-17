@@ -8,11 +8,10 @@ i - Adds __obj_name__ to the end of the combination named __comb_name__. The _op
 
 == SYNOPSIS
 
-[source]
-----
-i {obj_name comb_name} [operation]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*i* _object_ _combination_ [(*u* | *-* | *+*)]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

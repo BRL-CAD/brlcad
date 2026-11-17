@@ -8,10 +8,10 @@ illum - illuminate object
 
 == SYNOPSIS
 
-[source]
-----
-illum [-n] object
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*illum* [_OPTION_]... _object_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

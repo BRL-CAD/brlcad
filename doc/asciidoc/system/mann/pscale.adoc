@@ -8,10 +8,10 @@ pscale - scale a scalar or vector attribute of a primitive
 
 == SYNOPSIS
 
-[source]
-----
-pscale [-r] obj attribute sf
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pscale* [_OPTION_]... _object_ _attribute_ _scale_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

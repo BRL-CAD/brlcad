@@ -8,11 +8,16 @@ t - Alternate command name for *ls*.
 
 == SYNOPSIS
 
-[source]
-----
-t [-A -o -a -c -r -s -p -l -q -H -S] [objects]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*t* [_OPTION_]... *-h* [_raw_arguments_ ...]
+*t* [_OPTION_]... *-A*
+*t* [_OPTION_]... *-r* [_objects_ ...]
+*t* [_OPTION_]... *-p* [_objects_ ...]
+*t* [_OPTION_]... *-c* [_objects_ ...]
+*t* [_OPTION_]... *-a* [_objects_ ...]
+*t* [_OPTION_]... [_objects_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

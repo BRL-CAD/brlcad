@@ -8,11 +8,10 @@ plot3-plot3 - convert an extended UnixPlot file to a simple UnixPlot file
 
 == SYNOPSIS
 
-[source]
-----
-plot3-plot3 [-v | --verbose] [-S | --scale] < _unix_plot_ > _unix_plot_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*plot3-plot3* [_OPTION_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

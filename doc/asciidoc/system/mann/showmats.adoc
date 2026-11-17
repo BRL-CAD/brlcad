@@ -8,11 +8,10 @@ showmats - Lists the transformation matrices encountered along the specified pat
 
 == SYNOPSIS
 
-[source]
-----
-showmats [-a] {path}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*showmats* [_OPTION_]... _path_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

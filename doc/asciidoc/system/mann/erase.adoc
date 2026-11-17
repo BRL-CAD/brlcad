@@ -8,15 +8,15 @@ erase - Deletes the specified list of objects from the MGED display.
 
 == SYNOPSIS
 
-[source]
-----
-erase object [object ...]
-erase -r object [object ...]
-erase -A attr value [attr value ...]
-erase -o -A attr value [attr value ...]
-erase [--view name] [--mode number] object [object ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*erase* [_OPTION_]... *-A*
+*erase* [_OPTION_]... _objects_ ...
+*erase* [_OPTION_]... _objects_ ...
+*erase* [_OPTION_]... *-A*
+*erase* [_OPTION_]... _objects_ ...
+*erase* [_OPTION_]... _objects_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -44,7 +44,9 @@ legacy *-r*, *-A*, and *-o* modes are not available in the new command form.
 == OPTIONS
 
 // BEGIN GENERATED BU_ARG OPTIONS
-=== erase options
+=== Shared options
+
+Applies to *erase* and *erase*.
 
 *-r*::
   Erase all displayed paths associated with each object.
@@ -55,7 +57,9 @@ legacy *-r*, *-A*, and *-o* modes are not available in the new command form.
 *-o*::
   In attribute mode, match any supplied pair.
 
-=== erase options
+=== Shared options
+
+Applies to *erase* and *erase*.
 
 *-V* _name_, *--view*=_name_::
   Specify the independent view to modify.

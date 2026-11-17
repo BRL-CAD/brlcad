@@ -8,11 +8,10 @@ grid - control the display grid and snap-to-grid behavior
 
 == SYNOPSIS
 
-[source]
-----
-grid parameter [value ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*grid* _SUBCOMMAND_ [_ARGUMENT_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,10 @@ hide - Sets the hidden flag for the specified objects.
 
 == SYNOPSIS
 
-[source]
-----
-hide {objects}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*hide* _objects_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

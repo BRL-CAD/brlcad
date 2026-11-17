@@ -8,11 +8,10 @@ exit - Alternate command name for *quit*.
 
 == SYNOPSIS
 
-[source]
-----
-exit
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*exit*
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

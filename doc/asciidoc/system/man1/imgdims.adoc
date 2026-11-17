@@ -9,13 +9,10 @@ imgdims - guess the width and height of an image file
 
 == SYNOPSIS
 
-[source]
-----
-imgdims [-n|--believe-name | -s|--believe-stat]
-        [-#|--bytes-per-pixel _bytes_per_pixel_] _file_name_
-imgdims [-#|--bytes-per-pixel _bytes_per_pixel_] _num_bytes_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*imgdims* [_OPTION_]... _file-or-byte-count_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

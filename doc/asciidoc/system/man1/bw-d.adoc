@@ -9,11 +9,10 @@ bw-d - convert black-and-white unsigned bytes to double-precision binary
 
 == SYNOPSIS
 
-[source]
-----
-bw-d [-n | scale] < unsigned_chars > doubles
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bw-d* [_OPTION_]... [_scale_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

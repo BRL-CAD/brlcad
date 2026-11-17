@@ -8,10 +8,10 @@ mat_mul - multiply two 4x4 matrices
 
 == SYNOPSIS
 
-[source]
-----
-mat_mul matA matB
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*mat_mul* _matrices_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

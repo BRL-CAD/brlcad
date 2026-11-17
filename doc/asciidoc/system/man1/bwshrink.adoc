@@ -8,13 +8,10 @@ bwshrink - shrink a black and white bw file
 
 == SYNOPSIS
 
-[source]
-----
-bwshrink [-u|--undersample] [-w|--width _in_width_]
-         [-n|--height _in_height_] [-s|--size _squaresize_]
-         [-f|--factor _shrink_factor_] [_infile.bw_] > _outfile.bw_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bwshrink* [_OPTION_]... [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

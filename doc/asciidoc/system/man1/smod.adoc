@@ -8,11 +8,10 @@ smod - modify intensities in a stream of 16-bit signed short integers
 
 == SYNOPSIS
 
-[source]
-----
-smod [-a add] [-s sub] [-m mult] [-d div] [-A] [-e exp] [-r root] [file.s] > output.s
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*smod* [_OPTION_]... [_file_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

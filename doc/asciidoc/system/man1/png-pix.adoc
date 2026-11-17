@@ -8,11 +8,10 @@ png-pix - convert a PNG image to a BRL-CAD pix image
 
 == SYNOPSIS
 
-[source]
-----
-png-pix [-v | --verbose] [png_input_file] > pix_output_file
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*png-pix* [_OPTION_]... [_png-input-file_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

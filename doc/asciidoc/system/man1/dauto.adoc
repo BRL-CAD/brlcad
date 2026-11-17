@@ -8,11 +8,10 @@ dauto - compute the unbiased autocorrelation function of a stream of doubles
 
 == SYNOPSIS
 
-[source]
-----
-dauto [window-size] < input.doubles > output.doubles
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*dauto* [_OPTION_]... [_window-size_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

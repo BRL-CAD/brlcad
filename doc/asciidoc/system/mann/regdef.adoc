@@ -8,11 +8,10 @@ regdef - Sets the default region attributes used by the *r* and *c* commands whe
 
 == SYNOPSIS
 
-[source]
-----
-regdef {regionID} [airID [los% [materialID]]]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*regdef* _item_air_los_material_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

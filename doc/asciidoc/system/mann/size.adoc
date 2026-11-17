@@ -8,11 +8,10 @@ size - Sets the size of the current viewing cube to the specified __view_size__ 
 
 == SYNOPSIS
 
-[source]
-----
-size [view_size]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*size* [_size_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

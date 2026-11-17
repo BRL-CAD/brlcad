@@ -8,29 +8,13 @@ process - List and manage currently running subprocesses.
 
 == SYNOPSIS
 
-[source]
-----
-process
-----
-
-
-[source]
-----
-process list
-----
-
-
-[source]
-----
-process pabort {pid}...
-----
-
-
-[source]
-----
-process gabort {glob}...
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*process*
+*process list*
+*process pabort* _process_ids_ ...
+*process gabort* _command_patterns_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

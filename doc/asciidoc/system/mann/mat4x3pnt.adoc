@@ -8,10 +8,10 @@ mat4x3pnt - transform a 3D point by a 4x4 matrix
 
 == SYNOPSIS
 
-[source]
-----
-mat4x3pnt matrix "x y z"
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*mat4x3pnt* _matrix_ _point_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

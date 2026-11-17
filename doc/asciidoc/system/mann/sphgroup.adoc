@@ -8,10 +8,10 @@ sphgroup - create a group of all regions whose centers fall inside a sphere
 
 == SYNOPSIS
 
-[source]
-----
-sphgroup gname target_sphere.s
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*sphgroup* _group_name_ _target_sphere_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

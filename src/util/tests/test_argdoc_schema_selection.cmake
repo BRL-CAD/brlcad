@@ -78,6 +78,49 @@ file(
       ]}
     ],
     "operands": []
+  },
+  {
+    "schema_version": 1,
+    "kind": "native",
+    "name": "constrained",
+    "parse_policy": "options_first",
+    "options": [
+      {"short": "f", "long": "file", "canonical": "file", "alias_of": "", "argument": "path", "argument_requirement": "required", "hidden": false},
+      {"short": "l", "long": "length", "canonical": "length", "alias_of": "", "argument": "bytes", "argument_requirement": "required", "hidden": false}
+    ],
+    "operands": [
+      {"name": "output", "type": "file", "min": 0, "max": 1},
+      {"name": "object", "type": "db_object", "min": 1, "max": null}
+    ],
+    "constraints": [
+      {"kind": "option_count", "condition": "always", "options": ["file", "length"], "min": 1, "max": 1, "hint": "select one input"}
+    ]
+  },
+  {
+    "schema_version": 1,
+    "kind": "native",
+    "name": "cased",
+    "parse_policy": "options_first",
+    "options": [
+      {"short": "i", "long": "input", "canonical": "input", "alias_of": "", "argument_requirement": "none", "hidden": false},
+      {"short": "o", "long": "output", "canonical": "output", "alias_of": "", "argument_requirement": "none", "hidden": false}
+    ],
+    "operands": [],
+    "operand_cases": [
+      {"name": "input", "condition": "any_option_present", "options": ["input"], "schema": {"options": [], "operands": [{"name": "source", "min": 1, "max": 1}], "constraints": []}},
+      {"name": "output", "condition": "all_options_present", "options": ["input", "output"], "schema": {"options": [], "operands": [{"name": "destination", "min": 1, "max": 1}], "constraints": []}}
+    ]
+  },
+  {
+    "schema_version": 1,
+    "kind": "native",
+    "name": "keyworded",
+    "parse_policy": "options_first",
+    "options": [],
+    "operands": [
+      {"name": "mode", "type": "keyword", "min": 1, "max": 1, "values": ["mesh", "csg"]},
+      {"name": "enabled", "type": "keyword", "min": 0, "max": 1, "values": ["0", "1"]}
+    ]
   }
 ]
 ]=]
@@ -91,6 +134,28 @@ execute_process(
 )
 if(NOT selection_result EQUAL 0)
   message(FATAL_ERROR "argdoc selected a nested schema: ${selection_error}")
+endif()
+
+execute_process(
+  COMMAND "${ARGDOC}" --render --schema "${schema_file}" --name parent --path list
+  OUTPUT_VARIABLE path_render
+  RESULT_VARIABLE path_render_result
+  ERROR_VARIABLE path_render_error
+)
+if(NOT path_render_result EQUAL 0)
+  message(FATAL_ERROR "argdoc could not select a command-tree path: ${path_render_error}")
+endif()
+string(FIND "${path_render}" "*parent list* [_OPTION_]..." path_synopsis)
+if(path_synopsis EQUAL -1)
+  message(FATAL_ERROR "argdoc did not preserve the selected command-tree invocation")
+endif()
+
+execute_process(
+  COMMAND "${ARGDOC}" --render --schema "${schema_file}" --name parent --path missing
+  RESULT_VARIABLE missing_path_result
+)
+if(missing_path_result EQUAL 0)
+  message(FATAL_ERROR "argdoc accepted a missing command-tree path")
 endif()
 
 file(WRITE "${page_file}" "*-c* _object_::\nExpression primary.\n\n_object_ *-beq* _object_::\nExpression operator.\n")
@@ -125,6 +190,81 @@ endif()
 string(FIND "${symbolic_render}" "`-*` _value_::" symbolic_term)
 if(symbolic_term EQUAL -1)
   message(FATAL_ERROR "argdoc did not render the symbolic short option canonically")
+endif()
+
+execute_process(
+  COMMAND "${ARGDOC}" --render --schema "${schema_file}" --name constrained
+  OUTPUT_VARIABLE constrained_render
+  RESULT_VARIABLE constrained_render_result
+  ERROR_VARIABLE constrained_render_error
+)
+if(NOT constrained_render_result EQUAL 0)
+  message(FATAL_ERROR "argdoc could not render a constrained synopsis: ${constrained_render_error}")
+endif()
+string(FIND "${constrained_render}" "[verse]\n*constrained* [_OPTION_]... (*-f* _path_ | *-l* _bytes_) [_output_] _object_ ..." constrained_synopsis)
+if(constrained_synopsis EQUAL -1)
+  message(FATAL_ERROR "argdoc did not render a standards-aware constrained synopsis")
+endif()
+
+execute_process(
+  COMMAND "${ARGDOC}" --render --schema "${schema_file}" --name cased
+  OUTPUT_VARIABLE cased_render
+  RESULT_VARIABLE cased_render_result
+  ERROR_VARIABLE cased_render_error
+)
+if(NOT cased_render_result EQUAL 0)
+  message(FATAL_ERROR "argdoc could not render operand cases: ${cased_render_error}")
+endif()
+string(FIND "${cased_render}" "*cased* [_OPTION_]... *-i* _source_\n*cased* [_OPTION_]... *-i* *-o* _destination_" cased_synopsis)
+if(cased_synopsis EQUAL -1)
+  message(FATAL_ERROR "argdoc did not render operand cases as separate synopsis forms")
+endif()
+
+execute_process(
+  COMMAND "${ARGDOC}" --render --schema "${schema_file}" --name keyworded
+  OUTPUT_VARIABLE keyworded_render
+  RESULT_VARIABLE keyworded_render_result
+  ERROR_VARIABLE keyworded_render_error
+)
+if(NOT keyworded_render_result EQUAL 0)
+  message(FATAL_ERROR "argdoc could not render keyword operands: ${keyworded_render_error}")
+endif()
+string(FIND "${keyworded_render}" "*keyworded* (*mesh* | *csg*) [(*0* | *1*)]" keyworded_synopsis)
+if(keyworded_synopsis EQUAL -1)
+  message(FATAL_ERROR "argdoc did not render literal keyword alternatives canonically")
+endif()
+
+file(WRITE "${page_file}" "= CONSTRAINED(1)\n\n== SYNOPSIS\n\n[source]\n----\nconstrained [options]\n----\n\n[[options]]\n== OPTIONS\n\n*-f* _path_, *--file*=_path_::\nInput file.\n\n*-l* _bytes_, *--length*=_bytes_::\nInput length.\n")
+execute_process(
+  COMMAND "${ARGDOC}" --update --schema "${schema_file}" --name constrained --man-page "${page_file}"
+  RESULT_VARIABLE synopsis_update_result
+  ERROR_VARIABLE synopsis_update_error
+)
+if(NOT synopsis_update_result EQUAL 0)
+  message(FATAL_ERROR "argdoc could not insert a generated synopsis: ${synopsis_update_error}")
+endif()
+file(READ "${page_file}" updated_page)
+string(FIND "${updated_page}" "// BEGIN GENERATED BU_ARG SYNOPSIS\n[verse]\n*constrained*" inserted_synopsis)
+string(FIND "${updated_page}" "[[options]]\n== OPTIONS" preserved_anchor)
+string(FIND "${updated_page}" "*-f* _path_, *--file*=_path_::" preserved_options)
+if(inserted_synopsis EQUAL -1 OR preserved_anchor EQUAL -1 OR preserved_options EQUAL -1)
+  message(FATAL_ERROR "argdoc did not insert synopsis while preserving the following section")
+endif()
+
+file(WRITE "${page_file}" "= KEYWORDED(1)\n\n== NAME\nkeyworded - test command\n\n[[description]]\n== DESCRIPTION\n\nManual prose.\n")
+execute_process(
+  COMMAND "${ARGDOC}" --update --schema "${schema_file}" --name keyworded --man-page "${page_file}"
+  RESULT_VARIABLE missing_synopsis_result
+  ERROR_VARIABLE missing_synopsis_error
+)
+if(NOT missing_synopsis_result EQUAL 0)
+  message(FATAL_ERROR "argdoc could not add a missing synopsis section: ${missing_synopsis_error}")
+endif()
+file(READ "${page_file}" inserted_page)
+string(FIND "${inserted_page}" "== SYNOPSIS\n\n// BEGIN GENERATED BU_ARG SYNOPSIS" inserted_section)
+string(FIND "${inserted_page}" "[[description]]\n== DESCRIPTION\n\nManual prose." preserved_description)
+if(inserted_section EQUAL -1 OR preserved_description EQUAL -1)
+  message(FATAL_ERROR "argdoc did not add a synopsis while preserving the description")
 endif()
 
 execute_process(
@@ -187,6 +327,46 @@ if(unsupported_version_result EQUAL 0)
   message(FATAL_ERROR "argdoc accepted an unsupported schema_version")
 endif()
 
+set(large_tree_children "")
+foreach(child_index RANGE 1 11)
+  if(NOT child_index EQUAL 1)
+    string(APPEND large_tree_children ",")
+  endif()
+  string(APPEND large_tree_children
+    "{\"schema\":{\"name\":\"child${child_index}\",\"options\":[],\"operands\":[]},\"subcommands\":[]}")
+endforeach()
+file(WRITE "${version_schema}"
+  "{\"schema_version\":1,\"kind\":\"native_tree\",\"root\":{\"name\":\"large\",\"options\":[],\"operands\":[]},\"child_phase\":\"after_options\",\"subcommands\":[${large_tree_children}]}\n")
+execute_process(
+  COMMAND "${ARGDOC}" --render --schema "${version_schema}"
+  OUTPUT_VARIABLE large_tree_render
+  RESULT_VARIABLE large_tree_result
+  ERROR_VARIABLE large_tree_error
+)
+if(NOT large_tree_result EQUAL 0)
+  message(FATAL_ERROR "argdoc could not render a large command tree: ${large_tree_error}")
+endif()
+string(FIND "${large_tree_render}" "*large* _SUBCOMMAND_ [_ARGUMENT_]..." large_tree_summary)
+string(FIND "${large_tree_render}" "*large child1*" large_tree_detail)
+if(large_tree_summary EQUAL -1 OR NOT large_tree_detail EQUAL -1)
+  message(FATAL_ERROR "argdoc did not summarize a large command tree")
+endif()
+file(WRITE "${page_file}"
+  "= LARGE(1)\n\n== SYNOPSIS\n\n[source]\n----\nlarge\n----\n\n== SUBCOMMANDS\n\n// BEGIN GENERATED BU_ARG SUBCOMMANDS\nstale\n// END GENERATED BU_ARG SUBCOMMANDS\n\n== DESCRIPTION\n")
+execute_process(
+  COMMAND "${ARGDOC}" --update --schema "${version_schema}" --man-page "${page_file}"
+  RESULT_VARIABLE large_tree_update_result
+  ERROR_VARIABLE large_tree_update_error
+)
+if(NOT large_tree_update_result EQUAL 0)
+  message(FATAL_ERROR "argdoc could not update a command-tree summary: ${large_tree_update_error}")
+endif()
+file(READ "${page_file}" large_tree_page)
+string(FIND "${large_tree_page}" "*child1*::\nNo description." child_summary)
+if(child_summary EQUAL -1)
+  message(FATAL_ERROR "argdoc did not generate command-tree child summaries")
+endif()
+
 file(MAKE_DIRECTORY "${audit_dir}")
 file(
   WRITE "${audit_schema}"
@@ -194,13 +374,30 @@ file(
 [
   {
     "schema_version": 1,
-    "kind": "native",
-    "name": "documented",
-    "parse_policy": "options_first",
-    "options": [
-      {"short": "v", "long": "verbose", "canonical": "verbose", "alias_of": "", "argument_requirement": "none", "hidden": false}
-    ],
-    "operands": []
+    "kind": "native_tree",
+    "root": {
+      "name": "documented",
+      "parse_policy": "options_first",
+      "options": [
+        {"short": "v", "long": "verbose", "canonical": "verbose", "alias_of": "", "argument_requirement": "none", "hidden": false}
+      ],
+      "operands": []
+    },
+    "child_phase": "after_options",
+    "subcommands": [
+      {
+        "schema": {
+          "name": "list",
+          "parse_policy": "options_first",
+          "options": [
+            {"short": "q", "long": "quiet", "canonical": "quiet", "alias_of": "", "argument_requirement": "none", "hidden": false}
+          ],
+          "operands": []
+        },
+        "man_page": "documented_list",
+        "subcommands": []
+      }
+    ]
   },
   {
     "schema_version": 1,
@@ -214,16 +411,22 @@ file(
 ]=]
 )
 file(WRITE "${audit_dir}/documented.adoc" "*-v*, *--verbose*::\nVerbose output.\n")
+file(WRITE "${audit_dir}/documented_list.adoc" "*-q*, *--quiet*::\nQuiet output.\n")
 file(WRITE "${audit_exemptions}" "internal\tInternal test command.\n")
 execute_process(
   COMMAND
     "${ARGDOC}" --audit-directory "${audit_dir}"
     --allow-undocumented "${audit_exemptions}" --schema "${audit_schema}"
   RESULT_VARIABLE audit_result
+  OUTPUT_VARIABLE audit_output
   ERROR_VARIABLE audit_error
 )
 if(NOT audit_result EQUAL 0)
   message(FATAL_ERROR "argdoc directory audit failed: ${audit_error}")
+endif()
+string(FIND "${audit_output}" "Checked 2 man pages" split_page_count)
+if(split_page_count EQUAL -1)
+  message(FATAL_ERROR "argdoc did not audit the command-tree subcommand page")
 endif()
 
 file(WRITE "${audit_exemptions}" "")

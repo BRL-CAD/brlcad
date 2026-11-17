@@ -8,12 +8,13 @@ zap - erase all displayed objects from the graphics window
 
 == SYNOPSIS
 
-[source]
-----
-zap [options]
-Z [options]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*zap*
+*zap* [_OPTION_]...
+*zap*
+*zap* [_OPTION_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

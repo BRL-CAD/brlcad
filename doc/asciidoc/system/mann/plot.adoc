@@ -8,12 +8,10 @@ plot - Creates a UNIX plot of the current MGED display.
 
 == SYNOPSIS
 
-[source]
-----
-plot [-2|-3] [-f] [-g] [-z] output_file
-plot [-2|-3] [-f] [-g] [-z] | filter [filter_argument ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*plot* [_OPTION_]... _output_ [_filter_arguments_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,10 +8,10 @@ bwfilter - apply a 3x3 kernel filter to a black and white bw image
 
 == SYNOPSIS
 
-[source]
-----
-bwfilter [-v | --verbose] [-f _type_ | --filter _type_] [-d _div_ | --divisor _div_] [-O _offset_ | --offset _offset_] [-s _squaresize_ | --size _squaresize_] [-w _width_ | --width _width_] [-n _height_ | --height _height_] [-o _out_file.bw_ | --output _out_file.bw_] [_file.bw_]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bwfilter* [_OPTION_]... [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

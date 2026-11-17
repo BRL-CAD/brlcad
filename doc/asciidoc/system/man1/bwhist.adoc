@@ -8,11 +8,10 @@ bwhist - display a histogram of a black and white bw file on a framebuffer
 
 == SYNOPSIS
 
-[source]
-----
-bwhist [-v|--verbose] [file.bw]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bwhist* [_OPTION_]... [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

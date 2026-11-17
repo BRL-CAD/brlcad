@@ -8,16 +8,10 @@ gcv - geometry format converter
 
 == SYNOPSIS
 
-[source]
-----
-gcv [options] [--input-format _fmt_] [--output-format _fmt_] _input_file_ _output_file_
-----
-
-[source]
-----
-gcv [options] -i _input_file_ -o _output_file_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*gcv* [_OPTION_]... [_argument_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

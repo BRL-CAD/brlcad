@@ -8,10 +8,10 @@ nmg_kill_f - remove a face from an NMG solid by index
 
 == SYNOPSIS
 
-[source]
-----
-nmg_kill_f nmg_name F id
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*nmg_kill_f* _nmg_ _face_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

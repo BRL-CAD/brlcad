@@ -8,14 +8,10 @@ man - displays a manual page graphically or as formatted text.
 
 == SYNOPSIS
 
-[source]
-----
-man [manual_page [section]]
-man [-g | --gui] [manual_page [section]]
-man [--no-gui | --dump] [--width columns] [-L language] [-S section] [manual_page [section]]
-man [-h | --help]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*man* [_OPTION_]... [_manual_page_] [_trailing_section_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

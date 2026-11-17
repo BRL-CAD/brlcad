@@ -8,10 +8,11 @@ human - generate human models based on parameters like height
 
 == SYNOPSIS
 
-[source]
-----
-human [options]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*human* [_OPTION_]... *-h* [_raw_arguments_ ...]
+*human* [_OPTION_]... [_top-level-name_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

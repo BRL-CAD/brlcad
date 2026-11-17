@@ -8,11 +8,10 @@ rt - Executes the BRL-CAD _rt_ program with the default options of "-s512 -M."
 
 == SYNOPSIS
 
-[source]
-----
-rt [options] [-- objects]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rt* [_arguments_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

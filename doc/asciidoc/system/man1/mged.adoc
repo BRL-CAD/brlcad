@@ -8,11 +8,10 @@ mged - multi-display interactive combinatorial solid geometry editor
 
 == SYNOPSIS
 
-[source]
-----
-mged [options] [_database.g_ [_command_]]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*mged* [_OPTION_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

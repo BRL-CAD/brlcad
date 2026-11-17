@@ -8,56 +8,18 @@ material - Used to create, change, retrieve, assign, import, or view materials a
 
 == SYNOPSIS
 
-[source]
-----
-material assign {object_name} {material_name}
-----
-
-[source]
-----
-material create {object_name} {material_name}
-----
-
-[source]
-----
-material destroy {material_object}
-----
-
-[source]
-----
-material get {material_object} {name | parent | source}
-----
-
-[source]
-----
-material get {material_object} {physical | mechanical | optical | thermal} {property_name}
-----
-
-[source]
-----
-material set {material_object} {name | parent | source} {property_value}
-----
-
-[source]
-----
-material set {material_object} {physical | mechanical | optical | thermal} {property_name} {property_value}
-----
-
-[source]
-----
-material remove {material_object} {name | parent | source}
-----
-
-[source]
-----
-material remove {material_object} {physical | mechanical | optical | thermal} {property_name}
-----
-
-[source]
-----
-material import (--id | --name) {file_name}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*material*
+*material assign* _object_ _material_name_
+*material create* _material_object_ _material_name_
+*material destroy* _material_object_
+*material get* _material_object_ (*name* | *parent* | *source* | *physical* | *mechanical* | *optical* | *thermal*) [_group_property_]
+*material import* [_OPTION_]... (*--id* | *--name*) _density_table_
+*material remove* _material_object_ (*name* | *parent* | *source* | *physical* | *mechanical* | *optical* | *thermal*) [_group_property_]
+*material set* _material_object_ (*name* | *parent* | *source* | *physical* | *mechanical* | *optical* | *thermal*) _property_or_value_ [_group_value_]
+*material help*
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

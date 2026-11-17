@@ -8,11 +8,10 @@ center - Positions the center of the _mged_ viewing cube at the specified model 
 
 == SYNOPSIS
 
-[source]
-----
-center [x y z]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*center* [_center_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,10 @@ which_shader - list all combinations using a given shader
 
 == SYNOPSIS
 
-[source]
-----
-which_shader [-s] shader_name(s)
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*which_shader* [_OPTION_]... _shader_patterns_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

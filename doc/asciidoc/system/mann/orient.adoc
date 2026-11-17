@@ -8,11 +8,10 @@ orient, orientation - set the view rotation from a quaternion
 
 == SYNOPSIS
 
-[source]
-----
-orient x y z w
-orient "x y z w"
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*orient* _quaternion_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,10 @@ nmg_collapse - Simplifies an existing __nmg_shape__ by a process of edge decimat
 
 == SYNOPSIS
 
-[source]
-----
-nmg_collapse {old_nmg_shape new_nmg_shape maximum_error_dist} [minimum_angle]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*nmg_collapse* _nmg_ _new_name_ _max_error_ [_min_angle_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,10 @@ cat - Displays a brief description of each item in the list of _objects_.
 
 == SYNOPSIS
 
-[source]
-----
-cat object [object ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*cat* _objects_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

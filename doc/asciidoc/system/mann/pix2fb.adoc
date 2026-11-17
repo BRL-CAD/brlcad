@@ -8,10 +8,10 @@ pix2fb - display a raw pixel file on the framebuffer
 
 == SYNOPSIS
 
-[source]
-----
-pix2fb [options] [file.pix]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pix2fb* [_OPTION_]... [_input_file_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

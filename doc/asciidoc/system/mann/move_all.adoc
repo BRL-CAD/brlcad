@@ -8,13 +8,10 @@ move_all, mvall - rename an object and update all references throughout the data
 
 == SYNOPSIS
 
-[source]
-----
-move_all [-n] from to
-move_all [-n] -f mapping_file
-mvall [-n] from to
-mvall [-n] -f mapping_file
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*move_all* [_OPTION_]... [_source_object_] [_output_object_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

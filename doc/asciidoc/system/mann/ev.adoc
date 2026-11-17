@@ -8,11 +8,10 @@ ev - Evaluates the _objects_ specified by tessellating all primitive shapes in t
 
 == SYNOPSIS
 
-[source]
-----
-ev [-dfnrstuvwST] [-P #] [-C #/#/#] {objects} []
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*ev* _paths_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,10 @@ x - report the currently displayed solids and vector list information
 
 == SYNOPSIS
 
-[source]
-----
-x [level]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*x* [_OPTION_]... [_detail_level_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

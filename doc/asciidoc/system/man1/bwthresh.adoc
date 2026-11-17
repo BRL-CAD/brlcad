@@ -8,10 +8,10 @@ bwthresh - threshold a black-and-white bw file into intensity bins
 
 == SYNOPSIS
 
-[source]
-----
-bwthresh [-h | --help] _threshold_... < _file.bw_ > _output.bw_
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bwthresh* [_OPTION_]... _threshold_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

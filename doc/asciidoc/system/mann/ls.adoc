@@ -8,12 +8,16 @@ ls - The command with no _object_ argument lists the name of every object in the
 
 == SYNOPSIS
 
-[source]
-----
-ls [-a -c -r -s -p -l -q -H -S] [objects]
-ls --attributes [--or] [-a -c -r -s -p -l -q -H -S] attribute value [attribute value ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*ls* [_OPTION_]... *-h* [_raw_arguments_ ...]
+*ls* [_OPTION_]... *-A*
+*ls* [_OPTION_]... *-r* [_objects_ ...]
+*ls* [_OPTION_]... *-p* [_objects_ ...]
+*ls* [_OPTION_]... *-c* [_objects_ ...]
+*ls* [_OPTION_]... *-a* [_objects_ ...]
+*ls* [_OPTION_]... [_objects_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

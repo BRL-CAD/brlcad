@@ -742,8 +742,8 @@ GED_VIEW_TREE_CHILDREN(GED_VIEW_TREE_SCHEMA)
 	BU_ARG_TREE_CHILD_AFTER_OPTIONS, _func),
 static const struct bu_arg_tree_node view_tree_subcommands[] = {
     GED_VIEW_TREE_CHILDREN(GED_VIEW_TREE_NODE)
-    BU_ARG_TREE_NODE(&ged_faceplate_native_schema, NULL, ged_faceplate_subcommands,
-	BU_ARG_TREE_CHILD_AFTER_OPTIONS, _view_cmd_faceplate),
+    BU_ARG_TREE_NODE_DOC(&ged_faceplate_native_schema, NULL, ged_faceplate_subcommands,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, _view_cmd_faceplate, "view_faceplate"),
     BU_ARG_TREE_NODE(&view_vZ_native_schema, NULL, NULL,
 	BU_ARG_TREE_CHILD_AFTER_OPTIONS, _view_cmd_vZ),
     BU_ARG_TREE_NODE_NULL

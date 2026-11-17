@@ -8,15 +8,10 @@ pixrect - extract a rectangular region from a color pix file
 
 == SYNOPSIS
 
-[source]
-----
-pixrect [-s|--input-size _squaresize_] [-w|--input-width _width_]
-        [-n|--input-height _height_] [-S|--output-size _out_squaresize_]
-        [-W|--output-width _out_width_] [-N|--output-height _out_height_]
-        [-x|--x-origin _xorig_] [-y|--y-origin _yorig_]
-        [-o|--output _out_file.pix_] [_file.pix_] [> _out_file.pix_]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixrect* [_OPTION_]... [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

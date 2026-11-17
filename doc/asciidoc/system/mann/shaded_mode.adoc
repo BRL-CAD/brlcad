@@ -8,11 +8,10 @@ shaded_mode - Changes the default behavior of *draw*, *e*, and *B* to use the _-
 
 == SYNOPSIS
 
-[source]
-----
-shaded_mode {0|1|2}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*shaded_mode* [(*0* | *1* | *2*)]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

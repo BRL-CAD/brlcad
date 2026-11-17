@@ -8,11 +8,10 @@ expand - Performs matching of the _shell globbing pattern_ with the names of all
 
 == SYNOPSIS
 
-[source]
-----
-expand {globbing_expression}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*expand* _expressions_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

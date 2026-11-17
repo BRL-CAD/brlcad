@@ -8,12 +8,10 @@ garbage_collect - Eliminates unused space in a BRL-CAD database file.
 
 == SYNOPSIS
 
-[source]
-----
-garbage_collect [-h | --help]
-garbage_collect [-c | --confirm]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*garbage_collect* [_OPTION_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

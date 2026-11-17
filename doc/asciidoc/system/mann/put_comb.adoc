@@ -8,11 +8,10 @@ put_comb - Insert combinations and regions - allows definition of both boolean e
 
 == SYNOPSIS
 
-[source]
-----
-put_comb {comb_name} {color} {shader} {inherit} {boolean_expr} {is_region} [region_id air_id material_id los]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*put_comb* _combination_ _color_ _shader_ _inherit_ _boolean_expression_ _is_region_ [_region_fields_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

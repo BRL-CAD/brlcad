@@ -8,11 +8,10 @@ pixhalve - reduce the resolution of a color pix file by one half
 
 == SYNOPSIS
 
-[source]
-----
-pixhalve [-a] [-s squaresize] [-w file_width] [-n file_height] [file.pix] > outfile.pix
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixhalve* [_OPTION_]... [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,10 @@ isize - return the inverse of the current view size
 
 == SYNOPSIS
 
-[source]
-----
-isize
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*isize*
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

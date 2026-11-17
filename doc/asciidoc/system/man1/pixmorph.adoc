@@ -8,11 +8,10 @@ pixmorph - feature-based morph between two pix(5) images
 
 == SYNOPSIS
 
-[source]
-----
-pixmorph [-w|--width _width_] [-n|--height _height_] _picA.pix_ _picB.pix_ _linesfile_ _warpfrac_ _dissolvefrac_ > _out.pix_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixmorph* [_OPTION_]... _first-image_ _second-image_ _lines-file_ _warp-fraction_ _dissolve-fraction_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

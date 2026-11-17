@@ -8,11 +8,10 @@ comb_color - Changes the color of a combination.
 
 == SYNOPSIS
 
-[source]
-----
-comb_color {combination_name r g b}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*comb_color* _combination_ _red_ _green_ _blue_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

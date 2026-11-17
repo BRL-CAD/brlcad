@@ -8,11 +8,10 @@ l - Displays a verbose description about the specified list of objects.
 
 == SYNOPSIS
 
-[source]
-----
-l [-t] [-v] [-r] {objects}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*l* [_OPTION_]... _objects_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

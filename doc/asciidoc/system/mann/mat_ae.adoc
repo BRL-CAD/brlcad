@@ -8,10 +8,10 @@ mat_ae - compute a rotation matrix from azimuth and elevation angles
 
 == SYNOPSIS
 
-[source]
-----
-mat_ae azimuth elevation
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*mat_ae* _angles_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,10 @@ e - Adds the objects in the argument list to the display list so that they will 
 
 == SYNOPSIS
 
-[source]
-----
-e [-A attribute name/value pairs] [-s] [-A -oattribute name/value pairs] [-C#/#/#] [-m1] {objects}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*e* [_OPTION_]... _paths_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

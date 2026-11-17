@@ -8,11 +8,10 @@ debug - Allows the user to set or check the flags used by BRL-CAD libraries to e
 
 == SYNOPSIS
 
-[source]
-----
-debug [-h] [-l [lib]] [-C [lib]] [-V [val]] [lib [flag]]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*debug* [_arguments_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

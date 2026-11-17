@@ -8,11 +8,10 @@ bot repair - Try to generate a manifold solid mesh from an existing BoT.
 
 == SYNOPSIS
 
-[source]
-----
-bot repair [-h] [-a #] [-p #] [-o output_obj] {input_bot}...
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bot repair* [_OPTION_]... _input_bot_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -36,18 +35,20 @@ Note that this command will _not_ (currently) perform any work on plate mode or 
 == OPTIONS
 
 
-*-a* _#_::
-Specify an absolute maximum area in mm for a hole size on which repair will be attempted. Unset by default. Overrides the *p* if specified.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print command help.
 
+*-p* _percent_, *--max-hole-percent*=_percent_::
+  Maximum hole area as a percentage of mesh area.
 
-*-h*::
-Print command help.
+*-a* _area_, *--max-hole-area*=_area_::
+  Maximum hole area in mm.
 
+*-o* _name_, *--output-name*=_name_::
+  Output object name instead of overwriting the input.
 
-*-p* _#_::
-Specify the largest viable hole size for repair as a percentage (0-100) of the mesh area. By default the limit is set to 5 percent. 0 and 100 are interpreted as attempting to fill all holes, which may produce unexpected results. If the *a* is specified it overrides this option.
-
-
+// END GENERATED BU_ARG OPTIONS
 
 
 [[examples]]

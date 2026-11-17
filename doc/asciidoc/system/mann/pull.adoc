@@ -8,11 +8,10 @@ pull - Pulls the effects of all transformation matrices that appear in any combi
 
 == SYNOPSIS
 
-[source]
-----
-pull [objects]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pull* [_OPTION_]... _object_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -9,11 +9,10 @@ d-f - convert double-precision floats to single-precision floats
 
 == SYNOPSIS
 
-[source]
-----
-d-f [-n | scale] < doubles > floats
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*d-f* [_OPTION_]... [_scale_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

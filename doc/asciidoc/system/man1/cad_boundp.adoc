@@ -8,11 +8,10 @@ cad_boundp - find bounding polygon of a two-dimensional view
 
 == SYNOPSIS
 
-[source]
-----
-cad_boundp [-i _input_ | --input _input_] [-o _output_ | --output _output_] [-t _tolerance_ | --tolerance _tolerance_] [-v | --segments]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*cad_boundp* [_OPTION_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

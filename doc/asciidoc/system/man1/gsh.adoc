@@ -8,11 +8,10 @@ gsh - BRL-CAD geometry shell for interacting with .g database files
 
 == SYNOPSIS
 
-[source]
-----
-gsh [options] [model.g] [command [args ...]]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*gsh* [_OPTION_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

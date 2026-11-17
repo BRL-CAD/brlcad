@@ -8,10 +8,10 @@ region - create or modify a region combination with boolean operations
 
 == SYNOPSIS
 
-[source]
-----
-region reg_name op obj [op obj ...]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*region* _output_region_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

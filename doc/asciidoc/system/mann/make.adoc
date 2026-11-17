@@ -8,13 +8,12 @@ make - Creates a __new_shape__ of the indicated type.
 
 == SYNOPSIS
 
-[source]
-----
-make [-o x/y/z] [-s scale] new_shape type
-make -t
-make -h
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*make* [_OPTION_]... *-h* [_raw_arguments_ ...]
+*make* [_OPTION_]... *-t*
+*make* [_OPTION_]... _name_ _primitive_type_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

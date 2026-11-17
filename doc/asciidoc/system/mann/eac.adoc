@@ -8,11 +8,10 @@ eac - Adds all the regions in the current model that have one of the aircodes in
 
 == SYNOPSIS
 
-[source]
-----
-eac {air_code(s)}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*eac* _air_codes_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

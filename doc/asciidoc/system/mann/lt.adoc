@@ -8,11 +8,10 @@ lt - Generates a list of the child objects of a combination.
 
 == SYNOPSIS
 
-[source]
-----
-lt [char]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*lt* [_OPTION_]... _object_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

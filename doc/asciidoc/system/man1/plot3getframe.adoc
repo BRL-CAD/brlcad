@@ -8,11 +8,10 @@ plot3getframe - extract one frame from a multi-frame plot3 file
 
 == SYNOPSIS
 
-[source]
-----
-plot3getframe [-v | --verbose] _desired_frame_ < _unix_plot_ > _frame_plot_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*plot3getframe* [_OPTION_]... _frame_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

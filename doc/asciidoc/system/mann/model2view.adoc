@@ -8,11 +8,10 @@ model2view - convert model coordinates to view (screen) coordinates
 
 == SYNOPSIS
 
-[source]
-----
-model2view
-model2view x y z
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*model2view* [_point_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,10 @@ concat - merge objects from an external database file into the current database
 
 == SYNOPSIS
 
-[source]
-----
-concat [options] file.g [affix]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*concat* [_OPTION_]... _database_file_ [_affix_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

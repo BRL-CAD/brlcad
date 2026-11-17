@@ -8,13 +8,10 @@ aet, ae - get or set the view orientation as azimuth, elevation, and twist
 
 == SYNOPSIS
 
-[source]
-----
-aet
-aet [-i] az el [tw]
-aet [-i] "az el [tw]"
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*aet* [_OPTION_]... [_angles_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

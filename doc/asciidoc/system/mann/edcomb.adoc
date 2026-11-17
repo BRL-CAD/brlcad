@@ -8,11 +8,10 @@ edcomb - Allows the user to modify the attributes of a combination.
 
 == SYNOPSIS
 
-[source]
-----
-edcomb {combname} [regionflag regionID airID los% materialID]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*edcomb* _combination_ _region_flag_ _region_fields_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

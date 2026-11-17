@@ -8,11 +8,10 @@ sv - Moves the view center to (_x, y, z_).
 
 == SYNOPSIS
 
-[source]
-----
-sv {x y} [z]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*sv* _coordinates_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

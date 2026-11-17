@@ -8,11 +8,10 @@ gchecker - generate geometry overlap data for the MGED Overlap Tool
 
 == SYNOPSIS
 
-[source]
-----
-gchecker [-d] [-v] [-f] [-h] file.g [objects ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*gchecker* [_OPTION_]... _file.g_ [_objects_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

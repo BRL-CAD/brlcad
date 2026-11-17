@@ -8,10 +8,10 @@ mat_scale_about_pnt - generate a uniform scale matrix centered on a point
 
 == SYNOPSIS
 
-[source]
-----
-mat_scale_about_pnt "x y z" scale
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*mat_scale_about_pnt* _point_ _scale_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

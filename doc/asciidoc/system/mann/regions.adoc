@@ -8,11 +8,10 @@ regions - write a region and Boolean member summary table to a file
 
 == SYNOPSIS
 
-[source]
-----
-regions file object(s)
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*regions* _output_file_ _objects_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

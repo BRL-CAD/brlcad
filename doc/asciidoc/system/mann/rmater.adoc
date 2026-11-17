@@ -8,11 +8,10 @@ rmater - Reads the specified _file_ and sets the combination shader, color, and 
 
 == SYNOPSIS
 
-[source]
-----
-rmater {file}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rmater* _input_file_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,12 @@ bot extrude - Generate a volumetric BoT representing a plate-mode BoT.
 
 == SYNOPSIS
 
-[source]
-----
-bot extrude [-h] [-q] [-i] [-R] [-C] [-F] {input_bot} [output_bot]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bot extrude* [_OPTION_]... *-i* _input_bot_
+*bot extrude* [_OPTION_]... *-C* _input_bot_ [_output_name_]
+*bot extrude* [_OPTION_]... _input_bot_ _output_name_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -30,30 +31,32 @@ The most problematic plate mode BoTs to represent as volumes are those with view
 == OPTIONS
 
 
-*-h|--help*::
-Print help and exit.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print command help.
 
+*-q*, *--quiet*::
+  Suppress output messages.
 
-*-q|--quiet*::
-Suppress messages reporting the status of the generation process.
+*-i*, *--in-place*::
+  Overwrite the input BoT.
 
+*-R*, *--round-edges*::
+  Apply rounding to outer BoT edges.
 
-*-i|--in-place*::
-Replace the input BoT with the generated volumetric output. (Destructive.)
+*-C*, *--comb*::
+  Write a CSG tree rather than a volumetric BoT.
 
+*-F*, *--force*::
+  Allow conversion of view-dependent source geometry.
 
-*-R|--round-edges*::
-Represent outer edges of plate mode BoT with cylinderical approximations.
+*--max-area-delta*=_ratio_::
+  Maximum surface-area change while simplifying.
 
+*--min-tri-delta*=_ratio_::
+  Minimum triangle-count reduction while simplifying.
 
-*-C|--comb*::
-Return a CSG tree of implicit shapes rather than an evaluated BoT.
-
-
-*-F|--force*::
-Produce a volumetric BoT output even if the input BoT's parameters indicate it is a view dependent solid.
-
-
+// END GENERATED BU_ARG OPTIONS
 
 
 [[examples]]

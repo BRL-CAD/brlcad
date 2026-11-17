@@ -8,14 +8,10 @@ bwrect - extract a rectangle from a black and white bw file
 
 == SYNOPSIS
 
-[source]
-----
-bwrect [-s|--input-size _squaresize_] [-w|--input-width _width_]
-       [-n|--input-height _height_] [-S|--output-size _out_squaresize_]
-       [-W|--output-width _out_width_] [-N|--output-height _out_height_]
-       [-x|--x-origin _xorig_] [-y|--y-origin _yorig_]
-       [-o|--output _out_file.bw_] [_file.bw_] [> _out_file.bw_]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bwrect* [_OPTION_]... [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

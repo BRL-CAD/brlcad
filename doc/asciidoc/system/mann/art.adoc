@@ -8,11 +8,10 @@ art - Executes the BRL-CAD _art_ program.
 
 == SYNOPSIS
 
-[source]
-----
-art [options] [--objects]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*art* [_arguments_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

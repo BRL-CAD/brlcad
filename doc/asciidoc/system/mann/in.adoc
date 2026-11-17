@@ -8,11 +8,10 @@ in - Allows the user to type in the arguments needed to create a shape with the 
 
 == SYNOPSIS
 
-[source]
-----
-in [[-f] | [-s]] [new_shape_name] [shape_type] {parameters}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*in* _name_ _primitive_type_ [_parameters_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

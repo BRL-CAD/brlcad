@@ -8,11 +8,10 @@ fbclear - clear the framebuffer display to a background color
 
 == SYNOPSIS
 
-[source]
-----
-fbclear [r g b]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*fbclear* [_color_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

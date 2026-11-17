@@ -8,11 +8,10 @@ tol - Used with no arguments, *tol* lists the current tolerance settings.
 
 == SYNOPSIS
 
-[source]
-----
-tol [keyword [tolerance]] ...
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*tol* [_tolerances_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

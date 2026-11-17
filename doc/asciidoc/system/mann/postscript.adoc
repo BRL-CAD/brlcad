@@ -8,11 +8,10 @@ postscript - Temporarily attaches the _Postscript_ display manager and outputs t
 
 == SYNOPSIS
 
-[source]
-----
-postscript [-a author] [-b] [-c r/g/b] [-f font] [-s size] [-t title] [-x offset] [-y offset] output_file
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*postscript* [_OPTION_]... _output_file_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

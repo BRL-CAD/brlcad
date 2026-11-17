@@ -8,11 +8,10 @@ plot3-asc - convert a binary plot3 stream to an editable ASCII listing
 
 == SYNOPSIS
 
-[source]
-----
-plot3-asc [-v | --verbose] [_unix_plot_]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*plot3-asc* [_OPTION_]... [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

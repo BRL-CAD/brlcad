@@ -8,11 +8,10 @@ pathlist - Lists all existing paths that start from the specified combinations a
 
 == SYNOPSIS
 
-[source]
-----
-pathlist [-n|--noleaf] combination
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pathlist* [_OPTION_]... _object_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

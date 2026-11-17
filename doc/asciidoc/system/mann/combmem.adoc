@@ -8,11 +8,10 @@ combmem - get or set combination member transformation matrices in decomposed fo
 
 == SYNOPSIS
 
-[source]
-----
-combmem [-i type] [-r type] comb [op1 name1 az1 el1 tw1 x1 y1 z1 sa1 sx1 sy1 sz1 ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*combmem* [_OPTION_]... _combination_ [_member_records_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

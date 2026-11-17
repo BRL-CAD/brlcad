@@ -8,11 +8,10 @@ c - Creates a BRL-CAD combination with the name __combination_name__.
 
 == SYNOPSIS
 
-[source]
-----
-c [-c] [-r] {combination_name} [Boolean_expression]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*c* [_OPTION_]... _combination_ [_boolean_expression_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

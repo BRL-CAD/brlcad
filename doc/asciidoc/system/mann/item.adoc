@@ -8,11 +8,10 @@ item - Sets the values of ident_number, aircode, material_code, and LOS for the 
 
 == SYNOPSIS
 
-[source]
-----
-item {region_name} {regionID [airID [materialID [los%]]]}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*item* _region_ _ident_ [_air_material_los_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

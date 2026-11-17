@@ -8,11 +8,10 @@ viewdir - Returns the direction vector using the current azimuth and elevation (
 
 == SYNOPSIS
 
-[source]
-----
-viewdir [-i]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*viewdir* [_OPTION_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

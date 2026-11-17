@@ -35,31 +35,11 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-static const struct bu_arg_form ged_lod_native_forms[] = {
-    BU_ARG_FORM("action_grammar", "Level-of-detail action grammar",
-	&ged_view_lod_schema, NULL),
-    BU_ARG_FORM_NULL
-};
-
-
-static const struct bu_arg_form *
-ged_lod_select_native_form(const struct bu_arg_forms *forms,
-	size_t UNUSED(argc), const char * const *UNUSED(argv),
-	void *UNUSED(context))
-{
-    return &forms->forms[0];
-}
-
-static const struct bu_arg_forms ged_lod_forms =
-    BU_ARG_FORMS("lod", "Manage level-of-detail drawing settings",
-	ged_lod_native_forms, ged_lod_select_native_form);
-
-
 static int
 ged_lod_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
 	struct ged_cmd_validate_result *result)
 {
-    return ged_cmd_native_forms_validate(gedp, &ged_lod_forms, input,
+    return ged_cmd_native_forms_validate(gedp, &ged_view_lod_forms, input,
 	cursor_pos, result);
 }
 
@@ -68,7 +48,7 @@ static int
 ged_lod_grammar_analyze(struct ged *gedp, const char *input,
 	struct ged_cmd_analysis *analysis)
 {
-    return ged_cmd_native_forms_analyze(gedp, &ged_lod_forms, input,
+    return ged_cmd_native_forms_analyze(gedp, &ged_view_lod_forms, input,
 	analysis);
 }
 
@@ -76,7 +56,7 @@ ged_lod_grammar_analyze(struct ged *gedp, const char *input,
 static int
 ged_lod_grammar_lint(struct bu_vls *msgs)
 {
-    return ged_cmd_native_forms_lint(&ged_lod_forms, msgs);
+    return ged_cmd_native_forms_lint(&ged_view_lod_forms, msgs);
 }
 
 static char *

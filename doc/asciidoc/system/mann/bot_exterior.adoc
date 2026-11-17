@@ -8,12 +8,10 @@ bot exterior - Reduce a BoT solid to only its exterior (outward-facing) faces.
 
 == SYNOPSIS
 
-[source]
-----
-bot exterior [options] {input_bot} [output_name]
-bot_exterior [options] {input_bot} [output_name]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bot_exterior* [_OPTION_]... _input_bot_ [_output_name_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

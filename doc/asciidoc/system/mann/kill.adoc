@@ -8,11 +8,11 @@ kill - Deletes specified _objects_ from the current database.
 
 == SYNOPSIS
 
-[source]
-----
-kill [-f] [-n] [-q] {objects}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*kill* [_OPTION_]... *-f* _objects_ ...
+*kill* [_OPTION_]... _objects_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

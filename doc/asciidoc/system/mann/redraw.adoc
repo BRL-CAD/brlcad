@@ -8,11 +8,10 @@ redraw - refresh the display geometry for currently displayed objects
 
 == SYNOPSIS
 
-[source]
-----
-redraw
-redraw path [path ...]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*redraw* [_OPTION_]... [_paths_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,10 +8,11 @@ make_name - make a unique name
 
 == SYNOPSIS
 
-[source]
-----
-make_name template | -s [num]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*make_name* [_OPTION_]... *-s* [_[num]_]
+*make_name* [_OPTION_]... _template_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

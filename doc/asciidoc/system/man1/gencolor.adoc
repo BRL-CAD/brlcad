@@ -9,13 +9,10 @@ gencolor - output a repeated pattern of byte values
 
 == SYNOPSIS
 
-[source]
-----
-gencolor [-p|--pix | -b|--bw] [-r|--repeat _count_]
-         [-s|--size _squaresize_] [-w|--width _width_]
-         [-n|--height _height_] [_val1_ ... _valN_] > _output_file_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*gencolor* [_OPTION_]... [_byte_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

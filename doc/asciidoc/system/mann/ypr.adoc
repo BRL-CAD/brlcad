@@ -8,12 +8,10 @@ ypr - get or set the view orientation as yaw, pitch, and roll angles
 
 == SYNOPSIS
 
-[source]
-----
-ypr
-ypr yaw pitch roll
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*ypr* _components_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

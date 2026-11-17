@@ -8,11 +8,10 @@ decompose - Processes an NMG shape and produces a series of new _NMG_ shapes con
 
 == SYNOPSIS
 
-[source]
-----
-decompose {NMG_shape} [prefix]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*decompose* _nmg_ [_prefix_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

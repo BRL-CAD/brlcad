@@ -8,11 +8,10 @@ fbgrid - draw a calibration grid on a frame buffer
 
 == SYNOPSIS
 
-[source]
-----
-fbgrid [-c | --clear] [-b | --binary | -d | --decimal | -o | --old-style] [-F device | --framebuffer device] [--size pixels] [--width pixels] [--height pixels]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*fbgrid* [_OPTION_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,12 +8,10 @@ dsel - selectively keep or skip doubles from a data stream
 
 == SYNOPSIS
 
-[source]
-----
-dsel _keep_ < input.doubles > output.doubles
-dsel _skip_ _keep_ [_skip_ _keep_ ...] < input.doubles > output.doubles
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*dsel* [_OPTION_]... _count_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

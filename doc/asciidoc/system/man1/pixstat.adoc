@@ -8,11 +8,10 @@ pixstat - list statistics related to a color pix image
 
 == SYNOPSIS
 
-[source]
-----
-pixstat [-v|--verbose] [file.pix]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixstat* [_OPTION_]... [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

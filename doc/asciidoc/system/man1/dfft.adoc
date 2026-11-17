@@ -8,11 +8,10 @@ dfft - compute fast Fourier transforms of a stream of doubles
 
 == SYNOPSIS
 
-[source]
-----
-dfft [-clpLAN] [-d _dB_] [_width_] < doubles > spectrum
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*dfft* [_OPTION_]... [_width_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

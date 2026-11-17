@@ -9,11 +9,10 @@ d-u - convert double-precision binary numbers to 16-bit unsigned shorts
 
 == SYNOPSIS
 
-[source]
-----
-d-u [-n | scale] < doubles > unsigned_shorts
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*d-u* [_OPTION_]... [_scale_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,10 @@ facetize - Creates __new_object__ using __old_object__ as a guide, creating an e
 
 == SYNOPSIS
 
-[source]
-----
-facetize [-h] [-v] [-q] [-n] [-r] [-j jobs] [-s suffix] [-p prefix] [--in-place] [--max-time #] [--max-pnts #] [--resume] [--methods m1,m2,...] [--method-opts "METHOD opt1=val opt2=val..."] [--no-empty] [--log-file filename] [--nmg-booleval] [--disable-fixup] [--perturb] [--no-perturb] [--perturb-sa-tol #] [--perturb-vol-tol #] [--tolerate-failures] [-B -t threshold] {old_object new_object}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*facetize* [_OPTION_]... [_object_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

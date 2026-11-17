@@ -8,11 +8,10 @@ rselect - Returns displayed items or BOT vertices within the previously defined 
 
 == SYNOPSIS
 
-[source]
-----
-rselect [-b bot] [-p] [-z vminz]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rselect* [_OPTION_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

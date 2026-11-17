@@ -8,11 +8,10 @@ fbclear - clear a frame buffer to a color
 
 == SYNOPSIS
 
-[source]
-----
-fbclear [-c | --reset] [-F framebuffer | --framebuffer framebuffer] [--size pixels] [--width pixels] [--height pixels] [gray | red green blue]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*fbclear* [_OPTION_]... [_color_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

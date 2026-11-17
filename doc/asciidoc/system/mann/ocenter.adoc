@@ -8,12 +8,10 @@ ocenter - get or set the center point of an object's bounding box
 
 == SYNOPSIS
 
-[source]
-----
-ocenter object
-ocenter object x y z
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*ocenter* _object_ [_center_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

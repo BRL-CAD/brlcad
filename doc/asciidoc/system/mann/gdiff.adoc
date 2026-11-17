@@ -8,11 +8,10 @@ gdiff - a BRL-CAD differential geometry comparator
 
 == SYNOPSIS
 
-[source]
-----
-gdiff [options]... left_object right_object
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*gdiff* [_OPTION_]... _left_object_ _right_object_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

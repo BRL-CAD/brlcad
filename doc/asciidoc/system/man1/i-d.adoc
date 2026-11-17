@@ -8,11 +8,10 @@ i-d - convert 16-bit short integers to doubles
 
 == SYNOPSIS
 
-[source]
-----
-i-d [-n | scale] < shorts > doubles
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*i-d* [_OPTION_]... [_scale_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

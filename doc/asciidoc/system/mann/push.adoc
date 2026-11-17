@@ -8,11 +8,10 @@ push - Forces the effects of all transformation matrices that appear in any comb
 
 == SYNOPSIS
 
-[source]
-----
-push [objects]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*push* [_OPTION_]... _objects_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

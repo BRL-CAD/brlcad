@@ -9,11 +9,10 @@ d2-c - merge two double files into one complex file
 
 == SYNOPSIS
 
-[source]
-----
-d2-c _real_file_ _imag_file_ > _complex_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*d2-c* [_OPTION_]... _real-file_ _imaginary-file_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

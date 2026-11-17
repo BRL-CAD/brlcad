@@ -8,11 +8,10 @@ q - Short command name for *quit*.
 
 == SYNOPSIS
 
-[source]
-----
-q
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*q*
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

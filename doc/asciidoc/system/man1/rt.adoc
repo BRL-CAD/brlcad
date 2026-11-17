@@ -9,10 +9,8 @@ rt - raytrace an mged model, giving a shaded picture
 == SYNOPSIS
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
-[source]
-----
-rt [options] [_model.g_] [_object_ ...]
-----
+[verse]
+*rt* [_OPTION_]... [_model.g_] [_object_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

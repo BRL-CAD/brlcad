@@ -8,11 +8,10 @@ adc - Controls the angle/distance cursor.
 
 == SYNOPSIS
 
-[source]
-----
-adc [-i] subcommand
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*adc* [_OPTION_]... _SUBCOMMAND_ [_ARGUMENT_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

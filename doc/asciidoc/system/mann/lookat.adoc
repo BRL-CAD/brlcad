@@ -8,11 +8,10 @@ lookat - Adjusts the current view in MGED such that the eye is looking in the di
 
 == SYNOPSIS
 
-[source]
-----
-lookat {x y z}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*lookat* _components_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

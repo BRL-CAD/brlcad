@@ -657,7 +657,11 @@ typedef int (*bu_arg_tree_execute_t)(void *context, int argc, const char *argv[]
  * One native command-tree node.  The schema is the node's only syntax/help
  * source; its name is the canonical child spelling.  aliases, when needed,
  * add accepted child spellings without duplicating the schema.  A node may
- * own further children and an optional executor.
+ * own further children and an optional executor.  man_page names a manual
+ * page stem documenting this subtree.  The stem begins with the owning root
+ * command name and an underscore (for example, view_faceplate); this also
+ * disambiguates subtrees shared by multiple roots.  NULL leaves the subtree
+ * on its parent page or intentionally undocumented as a separate page.
  */
 struct bu_arg_tree_node {
     const struct bu_arg_schema *schema;
@@ -665,6 +669,7 @@ struct bu_arg_tree_node {
     const struct bu_arg_tree_node *subcommands;
     bu_arg_tree_child_phase_t child_phase;
     bu_arg_tree_execute_t execute;
+    const char *man_page;
 };
 
 
@@ -884,8 +889,11 @@ BU_EXPORT extern int bu_arg_integer_pair_optional_validate(size_t argc,
 #define BU_ARG_SHAPE(_kind, _min, _max, _description, _count, _variants) \
     {_kind, _min, _max, _description, _count, _variants}
 #define BU_ARG_VALIDATE_RESULT_NULL {BU_ARG_VALIDATE_UNKNOWN, 0, 0, BU_ARG_EXPECT_NONE, NULL, 0, NULL, BU_ARG_VALUE_UNKNOWN, NULL, NULL}
-#define BU_ARG_TREE_NODE(_schema, _aliases, _children, _phase, _execute) {_schema, _aliases, _children, _phase, _execute}
-#define BU_ARG_TREE_NODE_NULL {NULL, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL}
+#define BU_ARG_TREE_NODE(_schema, _aliases, _children, _phase, _execute) \
+    {_schema, _aliases, _children, _phase, _execute, NULL}
+#define BU_ARG_TREE_NODE_DOC(_schema, _aliases, _children, _phase, _execute, _man_page) \
+    {_schema, _aliases, _children, _phase, _execute, _man_page}
+#define BU_ARG_TREE_NODE_NULL {NULL, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL, NULL}
 #define BU_ARG_TREE(_root, _children, _phase) {_root, _children, _phase}
 #define BU_ARG_FORM(_name, _help, _schema, _tree) {_name, _help, _schema, _tree}
 #define BU_ARG_FORM_NULL {NULL, NULL, NULL, NULL}

@@ -8,11 +8,10 @@ killrefs - Removes all references to the specified _objects_ from all combinatio
 
 == SYNOPSIS
 
-[source]
-----
-killrefs [-n] {objects}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*killrefs* [_OPTION_]... _objects_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,10 @@ vrot - Rotates the view on the current geometry display window.
 
 == SYNOPSIS
 
-[source]
-----
-vrot {xrot yrot zrot}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*vrot* _angles_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

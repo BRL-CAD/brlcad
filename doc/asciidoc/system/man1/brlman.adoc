@@ -8,13 +8,10 @@ brlman - manual page viewer for BRL-CAD
 
 == SYNOPSIS
 
-[source]
-----
-brlman [options] [manpage] [section]
-brlman -k keyword
-brlman -K keyword
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*brlman* [_OPTION_]... [_arguments_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

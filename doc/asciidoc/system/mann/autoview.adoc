@@ -8,11 +8,10 @@ autoview - Frames objects within the view.
 
 == SYNOPSIS
 
-[source]
-----
-autoview [-s scale] [object ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*autoview* [_OPTION_]... [_object_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,12 +8,10 @@ copy, cp - copy a database object to a new name
 
 == SYNOPSIS
 
-[source]
-----
-copy from to
-cp from to
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*copy* _source_object_ _output_object_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

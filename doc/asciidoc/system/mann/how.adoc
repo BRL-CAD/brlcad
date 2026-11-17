@@ -8,10 +8,10 @@ how - returns how an object is being displayed
 
 == SYNOPSIS
 
-[source]
-----
-how [-b] object
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*how* [_OPTION_]... _object_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

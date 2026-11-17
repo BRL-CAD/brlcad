@@ -8,11 +8,10 @@ cad_parea - compute the area of a polygon
 
 == SYNOPSIS
 
-[source]
-----
-cad_parea [-i _input_ | --input _input_] [-o _output_ | --output _output_]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*cad_parea* [_OPTION_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

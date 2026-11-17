@@ -8,11 +8,10 @@ dwin - extract sliding windows of doubles and optionally apply a window function
 
 == SYNOPSIS
 
-[source]
-----
-dwin [options] [width] [step] < input.doubles > output.doubles
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*dwin* [_OPTION_]... [_width_] [_step_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

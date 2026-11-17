@@ -8,11 +8,10 @@ bot check - Test a BoT to determine if it satisfies validity criteria.
 
 == SYNOPSIS
 
-[source]
-----
-bot check [degen_faces] [extra_edges] [flipped_edges] [manifold] [open_edges] [solid] {input_bot}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bot check* [_OPTION_]... [_check_or_bot_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -61,8 +60,13 @@ Look for unmated edges, which should not exist in a proper manifold mesh.
 *solid*::
 Run all of the checks, passing only if each individual check is successful.
 
+== OPTIONS
 
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print command help.
 
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

@@ -8,11 +8,10 @@ solids - write a full region and primitive parameter summary table to a file
 
 == SYNOPSIS
 
-[source]
-----
-solids file object(s)
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*solids* _output_file_ _objects_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,11 @@ color - Creates an entry in the database that functions as part of a color looku
 
 == SYNOPSIS
 
-[source]
-----
-color [-e] [low high r g b]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*color* [_OPTION_]... *-e*
+*color* [_OPTION_]... _low_ _high_ _red_ _green_ _blue_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

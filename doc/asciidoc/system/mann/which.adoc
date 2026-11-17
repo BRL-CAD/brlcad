@@ -8,10 +8,10 @@ which - alias for whichid; list regions using specified region identifier(s)
 
 == SYNOPSIS
 
-[source]
-----
-which [options] region_id(s)
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*which* [_OPTION_]... _id_range_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

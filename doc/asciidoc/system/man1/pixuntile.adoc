@@ -8,12 +8,10 @@ pixuntile - break image up into separate files
 
 == SYNOPSIS
 
-[source]
-----
-pixuntile [-s _squareinsize_] [-w _in_width_] [-n _in_height_] [-S _squareoutsize_] [-W _out_width_] [-N _out_height_] [-o _startframe_] _basename_ < file.pix
-pixuntile [-s _squareinsize_] [-w _in_width_] [-n _in_height_] [-S _squareoutsize_] [-W _out_width_] [-N _out_height_] _file1_ [_file2_ ... _fileN_] < file.pix
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixuntile* [_OPTION_]... _basename-or-file_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

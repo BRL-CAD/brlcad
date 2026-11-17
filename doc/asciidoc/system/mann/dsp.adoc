@@ -8,12 +8,12 @@ dsp - query or compare DSP (Displacement Map Surface) primitive objects
 
 == SYNOPSIS
 
-[source]
-----
-dsp object xy x y
-dsp object diff obj2 [min_diff_val]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*dsp* _dsp_object_
+*dsp xy* _x_ _y_
+*dsp diff* _comparison_dsp_ [_minimum_difference_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

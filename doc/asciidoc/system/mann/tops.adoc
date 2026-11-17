@@ -8,11 +8,10 @@ tops - Displays a list of all the _top-level_ objects in the current database.
 
 == SYNOPSIS
 
-[source]
-----
-tops [-a] [-h] [-n] [-p]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*tops* [_OPTION_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

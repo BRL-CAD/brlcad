@@ -8,11 +8,10 @@ db - Provides an interface to a number of database manipulation routines.
 
 == SYNOPSIS
 
-[source]
-----
-db {command} [arguments]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*db* [_OPTION_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

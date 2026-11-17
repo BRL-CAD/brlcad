@@ -8,11 +8,10 @@ prefix - Changes the name of all the _objects_ listed by adding the specified __
 
 == SYNOPSIS
 
-[source]
-----
-prefix new_prefix object [object ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*prefix* _prefix_ _objects_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

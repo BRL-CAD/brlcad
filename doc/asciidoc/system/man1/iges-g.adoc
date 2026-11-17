@@ -9,12 +9,10 @@ iges-g - convert an IGES file to a BRL-CAD database
 
 == SYNOPSIS
 
-[source]
-----
-iges-g [--exact|--strict] [--repair _none|safe|best-effort_] [--relative-tolerance _fraction_] [--max-repair-tolerance _mm_] [--default-plate-thickness _mm_] [--report _file.json_] [-3] [-d] [-n] [-t] [-m|-p] [-N _solid_name_] [-x _rt_debug_flag_] [-X _nmg_debug_flag_] [-o _database.g_] _file.iges_ [_database.g_]
-iges-g --check-orientation _database.g_ [--report _file.json_]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*iges-g* [_OPTION_]... [_input-or-output_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

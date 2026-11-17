@@ -8,11 +8,10 @@ qray - Gets/sets _query ray_ characteristics.
 
 == SYNOPSIS
 
-[source]
-----
-qray [subcommand]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*qray* _SUBCOMMAND_ [_ARGUMENT_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

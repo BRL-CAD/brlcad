@@ -8,11 +8,10 @@ ae2dir - Returns the direction vector using the provided azimuth and elevation (
 
 == SYNOPSIS
 
-[source]
-----
-ae2dir [-i] {azimuth} {elevation}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*ae2dir* [_OPTION_]... _angles_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

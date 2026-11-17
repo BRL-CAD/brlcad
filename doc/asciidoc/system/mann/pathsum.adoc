@@ -8,11 +8,10 @@ pathsum - shared path-evaluation command related to *paths* and *listeval*
 
 == SYNOPSIS
 
-[source]
-----
-pathsum {path}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pathsum* _path_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

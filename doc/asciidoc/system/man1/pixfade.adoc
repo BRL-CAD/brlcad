@@ -8,11 +8,10 @@ pixfade - darken a pix file
 
 == SYNOPSIS
 
-[source]
-----
-pixfade [--fraction fraction] [--percentage percentage] [--maximum level] [--size pixels] [--width pixels] [--height pixels] [--output file.pix] [input.pix] [> output.pix]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixfade* [_OPTION_]... [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

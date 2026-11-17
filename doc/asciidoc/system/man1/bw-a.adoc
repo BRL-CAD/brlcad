@@ -8,13 +8,10 @@ bw-a - convert a BRL-CAD BW image to an ASCII bitmap
 
 == SYNOPSIS
 
-[source]
-----
-bw-a [-a|--autosize] [-s|--size squaresize]
-     [-w|--width file_width] [-n|--height file_height]
-     [file.bw] > file.abm
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bw-a* [_OPTION_]... [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

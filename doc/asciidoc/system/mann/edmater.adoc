@@ -8,11 +8,10 @@ edmater - Places the user in an editor ready to edit a file filled with shader a
 
 == SYNOPSIS
 
-[source]
-----
-edmater [-E editor] {combination} ...
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*edmater* [_OPTION_]... _combinations_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

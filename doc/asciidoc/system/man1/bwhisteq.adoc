@@ -8,11 +8,10 @@ bwhisteq - equalize the histogram of a black and white image
 
 == SYNOPSIS
 
-[source]
-----
-bwhisteq [-v|--verbose] file.bw > file.equalized
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bwhisteq* [_OPTION_]... _input_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

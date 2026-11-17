@@ -8,12 +8,10 @@ eye_pt - Positions the _eye point_ to the given _x, y,_ and _z_ coordinates. Wit
 
 == SYNOPSIS
 
-[source]
-----
-eye_pt
-eye_pt mx my mz
-eye_pt "mx my mz"
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*eye_pt* _point_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

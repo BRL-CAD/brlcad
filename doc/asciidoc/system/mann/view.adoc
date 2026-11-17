@@ -8,12 +8,10 @@ view, view2 - get or set view parameters (local units).
 
 == SYNOPSIS
 
-[source]
-----
-view [*-h* | *--help*] [*-v* | *--verbose*] [*-V* _name_ | *--view* _name_] _subcommand_ [_args_]
-view2 [*-h* | *--help*] [*-v* | *--verbose*] [*-V* _name_ | *--view* _name_] _subcommand_ [_args_]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*view* [_OPTION_]... _SUBCOMMAND_ [_ARGUMENT_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,14 +8,10 @@ dbot_dump - export currently displayed BOT objects to a mesh file format
 
 == SYNOPSIS
 
-[source]
-----
-dbot_dump [--help] [-b] [-n|--normals] [-F|--full-precision]
-          [-m|--output-directory dir] [-o|--output-file file]
-          [-t dxf|glb|gltf|obj|sat|stl] [-u unit]
-          [--no-materials]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*dbot_dump* [_OPTION_]... [_bot_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

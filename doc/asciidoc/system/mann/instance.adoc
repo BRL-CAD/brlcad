@@ -8,12 +8,10 @@ instance, i - add an object instance to a combination with a Boolean operator
 
 == SYNOPSIS
 
-[source]
-----
-instance obj comb [op]
-i obj comb [op]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*instance* _object_ _combination_ [(*u* | *-* | *+*)]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

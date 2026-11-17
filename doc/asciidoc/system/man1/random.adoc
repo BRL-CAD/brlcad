@@ -8,13 +8,10 @@ random - generate a random integer between two values
 
 == SYNOPSIS
 
-[source]
-----
-random [-u | --uniform] [-g | --gaussian
-       [-c center | --center center]] [-s seed | --seed seed]
-       [-v | --verbose] low high
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*random* [_OPTION_]... _low_ _high_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

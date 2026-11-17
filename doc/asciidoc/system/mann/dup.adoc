@@ -8,11 +8,10 @@ dup - Checks the specified _file_ (which is expected to contain a _BRL-CAD_ mode
 
 == SYNOPSIS
 
-[source]
-----
-dup {file} [prefix]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*dup* _database_file_ [_prefix_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,10 @@ loadview - Restore a saved MGED view and displayed object list from a saveview-s
 
 == SYNOPSIS
 
-[source]
-----
-loadview filename
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*loadview* _filename_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

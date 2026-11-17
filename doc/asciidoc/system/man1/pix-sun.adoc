@@ -8,11 +8,10 @@ pix-sun - convert a BRL-CAD PIX image to a Sun rasterfile
 
 == SYNOPSIS
 
-[source]
-----
-pix-sun [-d | --dither] [-s _squaresize_ | --size _squaresize_] [-w _width_ | --width _width_] [-n _height_ | --height _height_] < _file.pix_ > _file.ras_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pix-sun* [_OPTION_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

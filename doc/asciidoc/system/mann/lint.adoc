@@ -8,12 +8,10 @@ lint - Detect and report problems with subsets or all of a .g database.
 
 == SYNOPSIS
 
-[source]
-----
-lint [-h] [-C] [-M] [-I] [-F "filters"] [ObjectName]
-lint --raytrace [--perturb] [--raytrace-tol <frac>] [-j <jsonfile>] [ObjectName ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*lint* [_OPTION_]... [_object_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

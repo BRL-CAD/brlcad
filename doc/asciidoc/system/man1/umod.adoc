@@ -8,11 +8,10 @@ umod - apply arithmetic operations to a stream of 16-bit unsigned short integers
 
 == SYNOPSIS
 
-[source]
-----
-umod [-a add] [-s sub] [-m mult] [-d div] [-A] [-e exp] [-r root] [file.s] > output.s
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*umod* [_OPTION_]... [_file_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

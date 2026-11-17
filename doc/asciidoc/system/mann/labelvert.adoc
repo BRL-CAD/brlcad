@@ -8,11 +8,10 @@ labelvert - Labels the vertices of the indicated _objects_ with their coordinate
 
 == SYNOPSIS
 
-[source]
-----
-labelvert {objects}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*labelvert* _objects_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

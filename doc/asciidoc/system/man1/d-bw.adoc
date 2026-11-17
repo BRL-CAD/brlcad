@@ -9,11 +9,10 @@ d-bw - convert double-precision binary numbers to unsigned bytes
 
 == SYNOPSIS
 
-[source]
-----
-d-bw [-n | scale] < doubles > unsigned_chars
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*d-bw* [_OPTION_]... [_scale_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

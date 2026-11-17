@@ -8,12 +8,10 @@ rot - Rotates the view or an object by _xyz_ degrees.
 
 == SYNOPSIS
 
-[source]
-----
-rot [-m|-v] {x y z}
-rot [-m|-v] "x y z"
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rot* [_OPTION_]... _rotation_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

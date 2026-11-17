@@ -9,10 +9,10 @@ g-iges - convert a BRL-CAD database to an IGES file
 
 == SYNOPSIS
 
-[source]
-----
-g-iges [-f|-t|-m] [--flatten-brep] [-s] [-v] [-a _abs_tol_] [-r _rel_tol_] [-n _norm_tol_] [-d _dist_tol_] [-P _ncpu_] [-x _rt_debug_] [-X _nmg_debug_] [-o _output_file_] _database.g_ [_output.igs_] [_object_ ...]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*g-iges* [_OPTION_]... _database.g_ [_output-or-object_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

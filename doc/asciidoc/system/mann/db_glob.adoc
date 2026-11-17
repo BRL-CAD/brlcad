@@ -8,10 +8,10 @@ db_glob - Globs __cmd_string__ against the MGED database resulting in an expande
 
 == SYNOPSIS
 
-[source]
-----
-db_glob "command_string"
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*db_glob* _command_string_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

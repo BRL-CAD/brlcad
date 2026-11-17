@@ -8,12 +8,10 @@ bwstat - display statistics of a black and white image
 
 == SYNOPSIS
 
-[source]
-----
-bwstat [-v|--verbose] [file.bw]
-----
-
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bwstat* [_OPTION_]... [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

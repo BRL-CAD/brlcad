@@ -8,12 +8,10 @@ rotate_arb_face - rotate a face of an ARB primitive about a fixed vertex
 
 == SYNOPSIS
 
-[source]
-----
-rotate_arb_face arb face pt "rx ry rz"
-
-rotate_arb_face arb face pt rx/ry/rz
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rotate_arb_face* _arb_ _face_ _vertex_ _rotation_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

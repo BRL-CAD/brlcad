@@ -8,11 +8,10 @@ ap-pix - convert an Applicon color ink jet printer file to a pix file
 
 == SYNOPSIS
 
-[source]
-----
-ap-pix [-v | --verbose] _file.ap_ > _file.pix_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*ap-pix* [_OPTION_]... _input_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

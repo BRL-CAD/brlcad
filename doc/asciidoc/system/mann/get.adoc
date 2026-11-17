@@ -8,11 +8,10 @@ get - Retrieves parameter values of database objects.
 
 == SYNOPSIS
 
-[source]
-----
-get object_or_path [property]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*get* _object_ [_attribute_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,10 @@ solid_report - Compatibility alias for the detailed displayed-solid report.
 
 == SYNOPSIS
 
-[source]
-----
-solid_report [level]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*solid_report* [_OPTION_]... [_detail_level_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

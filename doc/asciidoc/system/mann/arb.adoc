@@ -8,13 +8,13 @@ arb - Performs operations on ARB shapes, such as creation and repair.
 
 == SYNOPSIS
 
-[source]
-----
-arb create {arb_name} {rotation} {fallback}
-
-arb repair [-h] [-t tol] [-o output_name] {arb_name} [arb_name...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*arb*
+*arb create* _name_ _rotation_ _fallback_
+*arb repair* [_OPTION_]... _input_arb_ ...
+*arb* _name_ _rotation_ _fallback_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

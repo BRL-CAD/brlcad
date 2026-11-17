@@ -8,11 +8,10 @@ echo - Echos whatever text is provided as an argument on the command line. This 
 
 == SYNOPSIS
 
-[source]
-----
-echo {text} []
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*echo* [_text_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

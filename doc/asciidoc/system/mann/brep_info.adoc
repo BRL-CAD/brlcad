@@ -8,11 +8,10 @@ brep info - Report information about components of a specified BRep solid.
 
 == SYNOPSIS
 
-[source]
-----
-brep {obj}info [C2|C3|E|F|L|SB|T|TB|V] [arguments]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*brep info* [_arguments_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

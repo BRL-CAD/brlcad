@@ -8,11 +8,10 @@ rtweight - Calculate mass, centroid, and volume of geometry using raytracing
 
 == SYNOPSIS
 
-[source]
-----
-rtweight [options]...
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rtweight* [_arguments_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

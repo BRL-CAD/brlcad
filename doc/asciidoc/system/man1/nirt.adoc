@@ -8,11 +8,10 @@ nirt - interactively ray trace a BRL-CAD geometric model
 
 == SYNOPSIS
 
-[source]
-----
-nirt [options] model.g [objects]...
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*nirt* [_OPTION_]... [_arguments_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

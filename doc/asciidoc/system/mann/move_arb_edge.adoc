@@ -8,10 +8,10 @@ move_arb_edge - move an arb's edge through pt
 
 == SYNOPSIS
 
-[source]
-----
-move_arb_edge [-r] arb edge "x y z"
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*move_arb_edge* [_OPTION_]... _arb_ _edge_ _point_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

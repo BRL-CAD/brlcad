@@ -8,13 +8,19 @@ comb - Create and manipulate BRL-CAD combination with the name __combination_nam
 
 == SYNOPSIS
 
-[source]
-----
-comb [options] {combination_name} [<operator> <member_name> ...]
-comb {combination_name} {command} [arguments ...]
-comb {command} {-C | --comb} {combination_name} [arguments ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*comb* [_OPTION_]... _combination_
+*comb* [_OPTION_]... _combination_
+*comb rm* _member_ ...
+*comb wrap*
+*comb flatten*
+*comb lift*
+*comb region*
+*comb unregion*
+*comb decimate*
+*comb* _SUBCOMMAND_ [_ARGUMENT_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -159,13 +165,6 @@ equivalent.
 
 *-h*, *--help*::
   Print command help.
-
-=== Shared options
-
-Applies to *comb rm*, *comb wrap*, *comb flatten*, *comb lift*, *comb region*, *comb unregion*, *comb decimate*, *comb u*, *comb -* and *comb +*.
-
-*-C* _combination_, *--comb*=_combination_::
-  Combination to operate on.
 
 // END GENERATED BU_ARG OPTIONS
 

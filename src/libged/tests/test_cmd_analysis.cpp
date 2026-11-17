@@ -2756,9 +2756,10 @@ main(int ac, char *av[])
 	"the B alias should delegate draw validation with its shorter command prefix");
     ged_cmd_validate_result_clear(&validation);
     schema_json = ged_cmd_schema_json("blast");
-    CHECK(schema_json && std::strstr(schema_json, "\"kind\":\"delegated_grammar\"") != NULL &&
-	std::strstr(schema_json, "\"delegate\":\"draw\"") != NULL,
-	"blast JSON should identify draw as its parser-owned delegate");
+    CHECK(schema_json && std::strstr(schema_json, "\"kind\":\"native_forms\"") != NULL &&
+	std::strstr(schema_json, "\"name\":\"draw\"") != NULL &&
+	std::strstr(schema_json, "\"long\":\"color\"") != NULL,
+	"blast JSON should publish its shared native draw form");
     bu_free(schema_json, "blast grammar JSON");
     schema_json = NULL;
 
@@ -6803,7 +6804,8 @@ main(int ac, char *av[])
 
     CHECK(ged_cmd_schema_exists("lod"), "lod should publish a native schema");
     schema_json = ged_cmd_schema_json("lod");
-    CHECK(schema_json && std::strstr(schema_json, "\"name\":\"lod\"") &&
+    CHECK(schema_json && std::strstr(schema_json, "\"kind\":\"native_forms\"") &&
+	std::strstr(schema_json, "\"name\":\"lod\"") &&
 	std::strstr(schema_json, "\"name\":\"cache\"") &&
 	std::strstr(schema_json, "bot_threshold"),
 	"lod should publish the same native action grammar as view lod");

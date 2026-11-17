@@ -8,11 +8,10 @@
 
 == SYNOPSIS
 
-[source]
-----
-3dm-g [-r] [-v] [-h] [-o output_file.g] input_file.3dm [output_file.g]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*3dm-g* [_OPTION_]... _input_file.3dm_ [_output_file.g_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

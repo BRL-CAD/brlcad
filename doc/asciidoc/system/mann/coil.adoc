@@ -8,13 +8,10 @@ coil - create a coil spring geometry object
 
 == SYNOPSIS
 
-[source]
-----
-coil [-d mean_outer_diameter] [-w wire_diameter] [-H helix_angle]
-     [-p pitch] [-n number_of_turns] [-s start_cap_type] [-e end_cap_type]
-     [-S coil_data_structure] [-l overall_length] [-L] [name]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*coil* [_OPTION_]... [_output_object_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

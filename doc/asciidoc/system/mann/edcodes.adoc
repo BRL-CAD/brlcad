@@ -11,11 +11,10 @@ the regions in the specified objects.
 
 == SYNOPSIS
 
-[source]
-----
-edcodes [-i] [-n] [-r] [-E editor] {object(s)}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*edcodes* [_OPTION_]... [_objects_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

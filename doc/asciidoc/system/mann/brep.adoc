@@ -8,11 +8,10 @@ brep - The *brep* command is the primary means in BRL-CAD for working with NURBS
 
 == SYNOPSIS
 
-[source]
-----
-brep [options] {obj} {bool | bot | bots | brep | csg | dump | flip | geo | info | intersect | pick | plate_mode | plot | repair | selection | solid | split | shrink_surfaces | tikz | topo | valid} [arguments]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*brep* [_OPTION_]... _object_ _SUBCOMMAND_ [_ARGUMENT_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

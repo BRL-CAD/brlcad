@@ -8,35 +8,15 @@ analyze - Report and/or compute analytical information about the listed objects.
 
 == SYNOPSIS
 
-[source]
-----
-analyze [options] [subcommand] [subcmd_options]...
-----
-
-
-[source]
-----
-analyze [options] summarize obj1 [obj2 ...]
-----
-
-
-[source]
-----
-analyze [options] intersect [-o output_obj] obj1 obj2 [obj3 ...]
-----
-
-
-[source]
-----
-analyze [options] subtract [-o output_obj] obj1 obj2 [obj3 ...]
-----
-
-
-[source]
-----
-analyze [options] inside obj x y z
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*analyze* [_OPTION_]...
+*analyze summarize* [_OPTION_]... _object_ ...
+*analyze inside* [_OPTION_]... _object_ _point_ ...
+*analyze intersect* [_OPTION_]... _object_ ...
+*analyze subtract* [_OPTION_]... _object_ ...
+*analyze* [_OPTION_]... _object_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

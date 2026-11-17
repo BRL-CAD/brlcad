@@ -8,10 +8,10 @@ rect - manage the rubber band selection rectangle in the view
 
 == SYNOPSIS
 
-[source]
-----
-rect subcommand [args]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rect* _SUBCOMMAND_ [_ARGUMENT_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

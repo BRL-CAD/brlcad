@@ -8,11 +8,10 @@ sync - Causes all information in memory that should be on disk to be written out
 
 == SYNOPSIS
 
-[source]
-----
-sync [] []
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*sync*
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

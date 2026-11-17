@@ -8,10 +8,11 @@ find - find all references to objects
 
 == SYNOPSIS
 
-[source]
-----
-find [-a] object [object ...]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*find* [_OPTION_]... _object_ ...
+*find* [_OPTION_]... _object_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,12 +8,10 @@ pix-alias - convert a BRL-CAD pix image to Alias(tm) pix format
 
 == SYNOPSIS
 
-[source]
-----
-pix-alias [-s|--size _pixels_] [-w|--width _pixels_]
-          [-n|--height _scanlines_] < BRLpixfile > ALIASpixfile
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pix-alias* [_OPTION_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

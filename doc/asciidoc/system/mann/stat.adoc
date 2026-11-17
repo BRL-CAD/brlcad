@@ -8,11 +8,10 @@ stat - report information about objects in a BRL-CAD database
 
 == SYNOPSIS
 
-[source]
-----
-stat [-h] [-?] [-v] [-q] [-r] [-F string] [-C type1[,type2]...] [-S type1[,type2]...] [-o filename] {glob pattern}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*stat* [_OPTION_]... _patterns_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

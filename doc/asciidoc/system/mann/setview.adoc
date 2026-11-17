@@ -8,11 +8,10 @@ setview - Sets the current view in MGED by specifying rotation angles (in degree
 
 == SYNOPSIS
 
-[source]
-----
-setview {x-angle y-angle z-angle}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*setview* _angles_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

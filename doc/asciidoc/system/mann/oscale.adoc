@@ -8,11 +8,10 @@ oscale - This command of matrix edit mode modifies the matrix to perform a unifo
 
 == SYNOPSIS
 
-[source]
-----
-oscale {scale_factor}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*oscale* _object_ _scale_factor_ [_keypoint_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,11 @@ gqa - analyze the currently open geometry database
 
 == SYNOPSIS
 
-[source]
-----
-gqa [options] [object ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*gqa* [_OPTION_]... *-h* [_raw_arguments_ ...]
+*gqa* [_OPTION_]... _objects_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

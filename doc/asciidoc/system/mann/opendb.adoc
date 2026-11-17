@@ -8,13 +8,10 @@ opendb - Open a BRL-CAD database and make it current.
 
 == SYNOPSIS
 
-[source]
-----
-opendb
-opendb [-c] [-f] [-h] [-o] filename
-opendb [--create] [--flip-endian] [--help] [--open] filename
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*opendb* [_OPTION_]... _filename_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

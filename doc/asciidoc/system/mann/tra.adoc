@@ -8,12 +8,10 @@ tra - Translates the view or an object.
 
 == SYNOPSIS
 
-[source]
-----
-tra [-m|-v] {dx} {dy} {dz}
-tra [-m|-v] "dx dy dz"
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*tra* [_OPTION_]... _translation_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

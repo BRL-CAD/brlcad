@@ -60,15 +60,19 @@ static const char *synopsis_begin = "// BEGIN GENERATED BU_ARG SYNOPSIS";
 static const char *synopsis_end = "// END GENERATED BU_ARG SYNOPSIS";
 static const char *options_begin = "// BEGIN GENERATED BU_ARG OPTIONS";
 static const char *options_end = "// END GENERATED BU_ARG OPTIONS";
+static const char *subcommands_begin = "// BEGIN GENERATED BU_ARG SUBCOMMANDS";
+static const char *subcommands_end = "// END GENERATED BU_ARG SUBCOMMANDS";
+static const size_t detailed_synopsis_limit = 10;
 
 struct settings {
-    enum class mode { check, render, update, audit } operation = mode::check;
+    enum class mode { check, render, update, audit, update_directory } operation = mode::check;
     fs::path schema_file;
     fs::path man_page;
     fs::path man_directory;
     fs::path undocumented_file;
     std::string schema_name;
     std::string invocation;
+    std::string schema_path;
     std::vector<std::string> command;
 };
 
@@ -80,6 +84,9 @@ struct schema_view {
     std::string invocation;
     const json *schema;
     bool required = true;
+    bool render = true;
+    bool summarize_subcommands = false;
+    std::string child_phase;
 };
 
 static void
@@ -88,8 +95,10 @@ usage(const char *program)
     std::cerr
 	<< "Usage: " << program
 	<< " [--check|--render|--update] [--schema file] [--man-page file]\n"
-	<< "       [--name schema-name] [--invocation text] [-- command [args ...]]\n"
-	<< "       " << program << " --audit-directory dir --allow-undocumented file\n"
+	<< "       [--name schema-name] [--path \"subcommand path\"]\n"
+	<< "       [--invocation text] [-- command [args ...]]\n"
+	<< "       " << program
+	<< " [--audit-directory|--update-directory] dir --allow-undocumented file\n"
 	<< "       [--schema file | -- command [args ...]]\n";
 }
 
@@ -204,6 +213,31 @@ append_word(const std::string &prefix, const std::string &word)
     return prefix + " " + word;
 }
 
+static size_t
+tree_schema_count(const json &grammar)
+{
+    size_t count = grammar.contains("schema") ? 1 : 0;
+    if (grammar.contains("root"))
+	count++;
+    if (grammar.contains("subcommands") && grammar.at("subcommands").is_array()) {
+	for (const json &node : grammar.at("subcommands"))
+	    count += tree_schema_count(node);
+    }
+    return count;
+}
+
+static void
+apply_tree_synopsis_policy(std::vector<schema_view> &views, size_t first,
+	const json &tree)
+{
+    if (tree_schema_count(tree) <= detailed_synopsis_limit)
+	return;
+    views[first].summarize_subcommands = true;
+    views[first].child_phase = tree.value("child_phase", std::string());
+    for (size_t i = first + 1; i < views.size(); i++)
+	views[i].render = false;
+}
+
 static void
 collect_schema_views(const json &grammar, const std::string &invocation,
 	std::vector<schema_view> &views)
@@ -217,12 +251,14 @@ collect_schema_views(const json &grammar, const std::string &invocation,
 	return;
     }
     if (kind == "native_tree") {
+	const size_t first = views.size();
 	const json &root = grammar.at("root");
 	const std::string root_invocation = invocation.empty() ?
 	    root.value("name", std::string()) : invocation;
 	views.push_back({root_invocation, &root});
 	for (const json &node : grammar.at("subcommands"))
 	    collect_schema_views(node, root_invocation, views);
+	apply_tree_synopsis_policy(views, first, grammar);
 	return;
     }
     if (kind == "native_forms") {
@@ -249,6 +285,7 @@ collect_schema_views(const json &grammar, const std::string &invocation,
 	return;
     }
     if (grammar.contains("schema")) {
+	const size_t first = views.size();
 	const json &schema = grammar.at("schema");
 	const std::string node_invocation = append_word(invocation,
 	    schema.value("name", std::string()));
@@ -256,7 +293,81 @@ collect_schema_views(const json &grammar, const std::string &invocation,
 	if (grammar.contains("subcommands")) {
 	    for (const json &node : grammar.at("subcommands"))
 		collect_schema_views(node, node_invocation, views);
+	    apply_tree_synopsis_policy(views, first, grammar);
 	}
+    }
+}
+
+static std::vector<std::string>
+split_path(const std::string &path)
+{
+    std::vector<std::string> result;
+    std::istringstream input(path);
+    std::string word;
+    while (input >> word)
+	result.push_back(word);
+    return result;
+}
+
+static const json *
+find_tree_path(const json &grammar, const std::vector<std::string> &path,
+	std::string &parent_invocation)
+{
+    if (grammar.value("kind", std::string()) != "native_tree" ||
+	!grammar.contains("root"))
+	return NULL;
+    const json *current = &grammar;
+    parent_invocation = grammar.at("root").value("name", std::string());
+    for (size_t i = 0; i < path.size(); i++) {
+	if (!current->contains("subcommands"))
+	    return NULL;
+	const json *match = NULL;
+	for (const json &node : current->at("subcommands")) {
+	    if (node.at("schema").value("name", std::string()) == path[i]) {
+		match = &node;
+		break;
+	    }
+	}
+	if (!match)
+	    return NULL;
+	current = match;
+	if (i + 1 < path.size())
+	    parent_invocation = append_word(parent_invocation, path[i]);
+    }
+    return current;
+}
+
+static void
+collect_tree_pages(const json &node, const std::string &root_name,
+	const std::vector<std::string> &parent_path,
+	std::map<std::string, std::pair<const json *, std::string>> &pages)
+{
+    if (!node.contains("subcommands") || !node.at("subcommands").is_array())
+	return;
+    for (const json &child : node.at("subcommands")) {
+	std::vector<std::string> path = parent_path;
+	path.push_back(child.at("schema").value("name", std::string()));
+	std::string parent_invocation = root_name;
+	for (size_t i = 0; i < path.size(); i++) {
+	    if (i + 1 < path.size())
+		parent_invocation = append_word(parent_invocation, path[i]);
+	}
+	const std::string man_page = child.contains("man_page") &&
+	    child.at("man_page").is_string() ?
+	    child.at("man_page").get<std::string>() : std::string();
+	const bool page_matches_root = man_page == root_name ||
+	    man_page.rfind(root_name + "_", 0) == 0;
+	if (!man_page.empty() && page_matches_root) {
+	    const fs::path page_stem(man_page);
+	    if (page_stem.has_parent_path() || page_stem.has_extension())
+		throw std::runtime_error("invalid command-tree man page stem: " +
+		    man_page);
+	    const std::string filename = man_page + ".adoc";
+	    if (!pages.emplace(filename,
+		    std::make_pair(&child, parent_invocation)).second)
+		throw std::runtime_error("duplicate command-tree man page: " + filename);
+	}
+	collect_tree_pages(child, root_name, path, pages);
     }
 }
 
@@ -499,6 +610,8 @@ render_schema_options(const json &schema, size_t group_heading_level)
 static bool
 schema_has_documented_options(const json &schema)
 {
+    if (!schema.contains("options") || !schema.at("options").is_array())
+	return false;
     for (const json &option : schema.at("options")) {
 	if (option.value("visibility", std::string()) != "internal" &&
 	    !option.value("hidden", false) &&
@@ -506,6 +619,142 @@ schema_has_documented_options(const json &schema)
 	    return true;
     }
     return false;
+}
+
+static bool
+schema_has_synopsis(const json &schema)
+{
+    return schema.contains("options") && schema.at("options").is_array() &&
+	schema.contains("operands") && schema.at("operands").is_array();
+}
+
+static const json *
+canonical_option(const json &schema, const std::string &name)
+{
+    for (const json &option : schema.at("options")) {
+	if (!option.value("alias_of", std::string()).empty() ||
+	    option.value("canonical", std::string()) != name)
+	    continue;
+	return &option;
+    }
+    return nullptr;
+}
+
+static std::string
+synopsis_option(const json &option)
+{
+    const std::string shortopt = option.value("short", std::string());
+    const std::string longopt = option.value("long", std::string());
+    const std::string spelling = !shortopt.empty() ? "-" + shortopt :
+	"--" + longopt;
+    std::string result = spelling == "-*" ? "`-*`" : "*" + spelling + "*";
+    const std::string requirement = option.value("argument_requirement",
+	std::string("none"));
+    if (requirement != "none") {
+	const std::string argument = metavariable(option);
+	if (requirement == "optional")
+	    result += " [" + argument + "]";
+	else
+	    result += " " + argument;
+    }
+    return result;
+}
+
+static std::string
+required_option_choices(const json &schema)
+{
+    if (!schema.contains("constraints") ||
+	!schema.at("constraints").is_array())
+	return std::string();
+    std::ostringstream output;
+    for (const json &constraint : schema.at("constraints")) {
+	if (constraint.value("kind", std::string()) != "option_count" ||
+	    constraint.value("condition", std::string()) != "always" ||
+	    constraint.value("min", (size_t)0) != 1 ||
+	    !constraint.contains("max") || constraint.at("max").is_null() ||
+	    constraint.value("max", (size_t)0) != 1)
+	    continue;
+	std::vector<std::string> choices;
+	for (const json &name : constraint.at("options")) {
+	    const json *option = canonical_option(schema, name.get<std::string>());
+	    if (option && option->value("visibility", std::string()) != "internal" &&
+		!option->value("hidden", false))
+		choices.push_back(synopsis_option(*option));
+	}
+	if (choices.empty())
+	    continue;
+	output << " (";
+	for (size_t i = 0; i < choices.size(); i++) {
+	    if (i)
+		output << " | ";
+	    output << choices[i];
+	}
+	output << ")";
+    }
+    return output.str();
+}
+
+static std::string
+case_options(const json &schema, const json &operand_case)
+{
+    const std::string condition = operand_case.value("condition",
+	std::string("always"));
+    if (condition != "any_option_present" &&
+	condition != "all_options_present")
+	return std::string();
+    std::vector<std::string> terms;
+    for (const json &name : operand_case.at("options")) {
+	const json *option = canonical_option(schema, name.get<std::string>());
+	if (option && option->value("visibility", std::string()) != "internal" &&
+	    !option->value("hidden", false))
+	    terms.push_back(synopsis_option(*option));
+    }
+    if (terms.empty())
+	return std::string();
+    std::ostringstream output;
+    output << " ";
+    if (condition == "any_option_present" && terms.size() > 1)
+	output << "(";
+    for (size_t i = 0; i < terms.size(); i++) {
+	if (i)
+	    output << (condition == "any_option_present" ? " | " : " ");
+	output << terms[i];
+    }
+    if (condition == "any_option_present" && terms.size() > 1)
+	output << ")";
+    return output.str();
+}
+
+static void
+render_operands(std::ostringstream &output, const json &operands)
+{
+    for (const json &operand : operands) {
+	const std::string name = operand.value("name", std::string("argument"));
+	const size_t minimum = operand.value("min", (size_t)0);
+	const bool repeated = operand.at("max").is_null() ||
+	    operand.value("max", (size_t)1) > 1;
+	std::string text;
+	if (operand.contains("values") && operand.at("values").is_array() &&
+	    !operand.at("values").empty()) {
+	    const json &values = operand.at("values");
+	    if (values.size() > 1)
+		text += "(";
+	    for (size_t i = 0; i < values.size(); i++) {
+		if (i)
+		    text += " | ";
+		text += "*" + values.at(i).get<std::string>() + "*";
+	    }
+	    if (values.size() > 1)
+		text += ")";
+	} else {
+	    text = "_" + name + "_";
+	}
+	if (repeated)
+	    text += " ...";
+	if (minimum == 0)
+	    text = "[" + text + "]";
+	output << " " << text;
+    }
 }
 
 static std::string
@@ -519,7 +768,7 @@ render_options(const std::vector<schema_view> &views)
     std::vector<option_group> groups;
     std::ostringstream output;
     for (const schema_view &view : views) {
-	if (!schema_has_documented_options(*view.schema))
+	if (!view.render || !schema_has_documented_options(*view.schema))
 	    continue;
 	std::string contents = render_schema_options(*view.schema, 3);
 	auto group = std::find_if(groups.begin(), groups.end(),
@@ -553,27 +802,77 @@ render_options(const std::vector<schema_view> &views)
 }
 
 static std::string
+render_subcommands(const json &grammar)
+{
+    if (!grammar.contains("subcommands") ||
+	!grammar.at("subcommands").is_array() ||
+	grammar.at("subcommands").empty())
+	return std::string();
+    std::ostringstream output;
+    output << subcommands_begin << "\n";
+    for (const json &node : grammar.at("subcommands")) {
+	const json &schema = node.at("schema");
+	output << "*" << schema.value("name", std::string()) << "*::\n";
+	output << sentence(schema.value("help", std::string())) << "\n\n";
+    }
+    output << subcommands_end << "\n";
+    return output.str();
+}
+
+static std::string
 render_synopsis(const std::vector<schema_view> &views)
 {
     std::ostringstream output;
-    output << synopsis_begin << "\n[source]\n----\n";
+    bool rendered = false;
     for (const schema_view &view : views) {
-	output << view.invocation;
-	if (schema_has_documented_options(*view.schema))
-	    output << " [options]";
-	for (const json &operand : view.schema->at("operands")) {
-	    const std::string name = operand.value("name", std::string("argument"));
-	    const size_t minimum = operand.value("min", (size_t)0);
-	    std::string text = "_" + name + "_";
-	    if (operand["max"].is_null() || operand.value("max", (size_t)1) > 1)
-		text += " ...";
-	    if (minimum == 0)
-		text = "[" + text + "]";
-	    output << " " << text;
+	if (!view.render || !schema_has_synopsis(*view.schema))
+	    continue;
+	if (!rendered)
+	    output << synopsis_begin << "\n[verse]\n";
+	rendered = true;
+	const bool has_options = schema_has_documented_options(*view.schema);
+	if (view.summarize_subcommands) {
+	    output << "*" << view.invocation << "*";
+	    if (view.child_phase == "first")
+		output << " _SUBCOMMAND_ [_ARGUMENT_]...";
+	    if (has_options)
+		output << " [_OPTION_]...";
+	    if (view.child_phase == "after_options")
+		output << " _SUBCOMMAND_ [_ARGUMENT_]...";
+	    output << required_option_choices(*view.schema);
+	    render_operands(output, view.schema->at("operands"));
+	    if (view.child_phase != "first" &&
+		view.child_phase != "after_options")
+		output << " _SUBCOMMAND_ [_ARGUMENT_]...";
+	    output << "\n";
+	    continue;
 	}
-	output << "\n";
+	const bool has_cases = view.schema->contains("operand_cases") &&
+	    view.schema->at("operand_cases").is_array() &&
+	    !view.schema->at("operand_cases").empty();
+	if (has_cases) {
+	    for (const json &operand_case : view.schema->at("operand_cases")) {
+		const json &case_schema = operand_case.at("schema");
+		output << "*" << view.invocation << "*";
+		if (has_options)
+		    output << " [_OPTION_]...";
+		output << case_options(*view.schema, operand_case);
+		output << required_option_choices(case_schema);
+		render_operands(output, case_schema.at("operands"));
+		output << "\n";
+	    }
+	} else {
+	    output << "*" << view.invocation << "*";
+	    if (has_options)
+		output << " [_OPTION_]...";
+	    output << required_option_choices(*view.schema);
+	    render_operands(output, view.schema->at("operands"));
+	    output << "\n";
+	}
     }
-    output << "----\n" << synopsis_end << "\n";
+    if (!rendered)
+	return std::string();
+    output << synopsis_end << "\n";
     return output.str();
 }
 
@@ -695,6 +994,46 @@ replace_region(const std::string &page, const char *begin, const char *end,
     return page.substr(0, first) + replacement + page.substr(last);
 }
 
+static size_t
+section_start(const std::string &page, size_t heading, size_t lower_bound)
+{
+    const size_t anchor = page.rfind("\n[[", heading);
+    if (anchor == std::string::npos || anchor < lower_bound)
+	return heading;
+    const size_t anchor_end = page.find('\n', anchor + 1);
+    if (anchor_end == std::string::npos || anchor_end > heading ||
+	page.find_first_not_of(" \t\r\n", anchor_end) < heading)
+	return heading;
+    return anchor + 1;
+}
+
+static std::string
+replace_synopsis(const std::string &page, const std::string &replacement)
+{
+    if (page.find(synopsis_begin) != std::string::npos)
+	return replace_region(page, synopsis_begin, synopsis_end, replacement);
+    const std::string heading = "== SYNOPSIS";
+    const size_t heading_start = page.find(heading);
+    if (heading_start == std::string::npos) {
+	const size_t description = page.find("== DESCRIPTION");
+	if (description == std::string::npos)
+	    throw std::runtime_error("man page lacks SYNOPSIS and DESCRIPTION sections");
+	const size_t insertion = section_start(page, description, 0);
+	return page.substr(0, insertion) + "== SYNOPSIS\n\n" + replacement +
+	    "\n" + page.substr(insertion);
+    }
+    const size_t heading_end = page.find('\n', heading_start + heading.size());
+    if (heading_end == std::string::npos)
+	throw std::runtime_error("man page has an unterminated SYNOPSIS heading");
+    size_t next_heading = page.find("\n== ", heading_end + 1);
+    if (next_heading == std::string::npos)
+	next_heading = page.size();
+    size_t suffix_start = next_heading < page.size() ? next_heading + 1 : next_heading;
+    suffix_start = section_start(page, suffix_start, heading_end + 1);
+    std::string suffix = page.substr(suffix_start);
+    return page.substr(0, heading_end + 1) + "\n" + replacement + "\n" + suffix;
+}
+
 static std::string
 generated_region(const std::string &page, const char *begin, const char *end)
 {
@@ -718,7 +1057,8 @@ generated_region(const std::string &page, const char *begin, const char *end)
 }
 
 static bool
-check_page(const fs::path &path, const std::vector<schema_view> &views)
+check_page(const fs::path &path, const std::vector<schema_view> &views,
+	const json *grammar = NULL)
 {
     const std::string page = slurp(path);
     std::string checked_options = page;
@@ -745,11 +1085,26 @@ check_page(const fs::path &path, const std::vector<schema_view> &views)
 	    failed = true;
 	}
     }
-    const std::string synopsis_region = generated_region(page, synopsis_begin,
-	synopsis_end);
-    if (!synopsis_region.empty() && synopsis_region != render_synopsis(views)) {
-	std::cerr << path.string() << ": generated synopsis region is stale\n";
-	failed = true;
+    const std::string expected_synopsis = render_synopsis(views);
+    if (!expected_synopsis.empty()) {
+	const std::string synopsis_region = generated_region(page, synopsis_begin,
+	    synopsis_end);
+	if (synopsis_region.empty() && page.find("== SYNOPSIS") != std::string::npos) {
+	    std::cerr << path.string() << ": missing generated synopsis region\n";
+	    failed = true;
+	} else if (!synopsis_region.empty() && synopsis_region != expected_synopsis) {
+	    std::cerr << path.string() << ": generated synopsis region is stale\n";
+	    failed = true;
+	}
+    }
+    if (grammar && page.find(subcommands_begin) != std::string::npos) {
+	const std::string expected_subcommands = render_subcommands(*grammar);
+	if (generated_region(page, subcommands_begin, subcommands_end) !=
+	    expected_subcommands) {
+	    std::cerr << path.string()
+		<< ": generated subcommand region is stale\n";
+	    failed = true;
+	}
     }
 
     for (const schema_view &view : views) {
@@ -820,8 +1175,29 @@ read_undocumented(const fs::path &path)
     return result;
 }
 
+static bool
+process_page(const fs::path &path, const std::vector<schema_view> &views,
+	settings::mode operation, const json *grammar = NULL)
+{
+    if (operation == settings::mode::update_directory) {
+	const std::string synopsis = render_synopsis(views);
+	if (!synopsis.empty()) {
+	    std::string page = slurp(path);
+	    page = replace_synopsis(page, synopsis);
+	    if (page.find(options_begin) != std::string::npos)
+		page = replace_region(page, options_begin, options_end,
+		    render_options(views));
+	    if (grammar && page.find(subcommands_begin) != std::string::npos)
+		page = replace_region(page, subcommands_begin, subcommands_end,
+		    render_subcommands(*grammar));
+	    write_file(path, page);
+	}
+    }
+    return check_page(path, views, grammar);
+}
+
 static int
-audit_directory(const json &document, const settings &config)
+process_directory(const json &document, const settings &config)
 {
     std::vector<const json *> grammars;
     if (document.is_array()) {
@@ -870,7 +1246,8 @@ audit_directory(const json &document, const settings &config)
 	auto page_entry = pages.find(filename);
 	if (page_entry != pages.end()) {
 	    checked++;
-	    failed = check_page(page_entry->second, entry.second) || failed;
+	    failed = process_page(page_entry->second, entry.second,
+		config.operation) || failed;
 	    if (undocumented.count(entry.first)) {
 		std::cerr << config.undocumented_file.string()
 		    << ": stale exemption for documented schema " << entry.first << "\n";
@@ -886,6 +1263,28 @@ audit_directory(const json &document, const settings &config)
 	}
 	used_exemptions.insert(entry.first);
     }
+
+    for (const auto &entry : published) {
+	for (const json *grammar : entry.second) {
+	    if (grammar->value("kind", std::string()) != "native_tree")
+		continue;
+	    std::map<std::string, std::pair<const json *, std::string>> tree_pages;
+	    collect_tree_pages(*grammar, entry.first, {}, tree_pages);
+	    for (const auto &tree_page : tree_pages) {
+		auto page_entry = pages.find(tree_page.first);
+		if (page_entry == pages.end())
+		    continue;
+		std::vector<schema_view> views;
+		collect_schema_views(*tree_page.second.first,
+		    tree_page.second.second, views);
+		for (size_t i = 1; i < views.size(); i++)
+		    views[i].required = false;
+		checked++;
+		failed = process_page(page_entry->second, views,
+		    config.operation, tree_page.second.first) || failed;
+	    }
+	}
+    }
     for (const auto &entry : undocumented) {
 	if (!schemas.count(entry.first)) {
 	    std::cerr << config.undocumented_file.string()
@@ -894,7 +1293,8 @@ audit_directory(const json &document, const settings &config)
 	}
     }
     if (!failed)
-	std::cout << "Checked " << checked << " man pages for " << schemas.size()
+	std::cout << (config.operation == settings::mode::update_directory ?
+	    "Updated " : "Checked ") << checked << " man pages for " << schemas.size()
 	    << " published command schemas; " << used_exemptions.size()
 	    << " schemas are explicitly undocumented\n";
     return failed ? 1 : 0;
@@ -921,14 +1321,19 @@ parse_settings(int argc, char **argv)
 	    result.operation = settings::mode::audit;
 	    result.man_directory = argv[++i];
 	}
+	else if (arg == "--update-directory" && i + 1 < argc) {
+	    result.operation = settings::mode::update_directory;
+	    result.man_directory = argv[++i];
+	}
 	else if (arg == "--allow-undocumented" && i + 1 < argc)
 	    result.undocumented_file = argv[++i];
 	else if ((arg == "--schema" || arg == "--man-page" || arg == "--name" ||
-		arg == "--invocation") && i + 1 < argc) {
+		arg == "--path" || arg == "--invocation") && i + 1 < argc) {
 	    std::string value = argv[++i];
 	    if (arg == "--schema") result.schema_file = value;
 	    if (arg == "--man-page") result.man_page = value;
 	    if (arg == "--name") result.schema_name = value;
+	    if (arg == "--path") result.schema_path = value;
 	    if (arg == "--invocation") result.invocation = value;
 	} else {
 	    throw std::runtime_error("unknown or incomplete argument: " + arg);
@@ -936,12 +1341,14 @@ parse_settings(int argc, char **argv)
     }
     if (result.schema_file.empty() == result.command.empty())
 	throw std::runtime_error("specify exactly one of --schema or a command after --");
-    if (result.operation == settings::mode::audit) {
+    if (result.operation == settings::mode::audit ||
+	result.operation == settings::mode::update_directory) {
 	if (result.man_directory.empty() || result.undocumented_file.empty())
-	    throw std::runtime_error("--audit-directory requires --allow-undocumented");
+	    throw std::runtime_error("directory operations require --allow-undocumented");
 	if (!result.man_page.empty() || !result.schema_name.empty() ||
+	    !result.schema_path.empty() ||
 	    !result.invocation.empty())
-	    throw std::runtime_error("directory audits do not accept page or schema selection");
+	    throw std::runtime_error("directory operations do not accept page or schema selection");
     } else if (result.operation != settings::mode::render && result.man_page.empty()) {
 	throw std::runtime_error("--check and --update require --man-page");
     }
@@ -963,19 +1370,32 @@ main(int argc, char **argv)
 	} else {
 	    require_supported_version(document);
 	}
-	if (config.operation == settings::mode::audit)
-	    return audit_directory(document, config);
+	if (config.operation == settings::mode::audit ||
+	    config.operation == settings::mode::update_directory)
+	    return process_directory(document, config);
 	const json *grammar = &document;
 	if (!config.schema_name.empty()) {
 	    grammar = find_named_schema(document, config.schema_name);
 	    if (!grammar)
 		throw std::runtime_error("schema not found: " + config.schema_name);
 	}
+	std::string path_invocation;
+	if (!config.schema_path.empty()) {
+	    const json *selected = find_tree_path(*grammar,
+		split_path(config.schema_path), path_invocation);
+	    if (!selected)
+		throw std::runtime_error("command-tree path not found: " +
+		    config.schema_path);
+	    grammar = selected;
+	}
 	std::vector<schema_view> views;
-	collect_schema_views(*grammar, config.invocation, views);
+	collect_schema_views(*grammar, config.invocation.empty() ?
+	    path_invocation : config.invocation, views);
 	if (views.empty())
 	    throw std::runtime_error("selected grammar has no renderable schemas");
 	std::string synopsis = render_synopsis(views);
+	if (synopsis.empty())
+	    throw std::runtime_error("selected grammar does not describe a synopsis");
 	std::string options = render_options(views);
 
 	if (config.operation == settings::mode::render) {
@@ -985,13 +1405,17 @@ main(int argc, char **argv)
 
 	std::string page = slurp(config.man_page);
 	if (config.operation == settings::mode::update) {
-	    page = replace_region(page, synopsis_begin, synopsis_end, synopsis);
-	    page = replace_region(page, options_begin, options_end, options);
+	    page = replace_synopsis(page, synopsis);
+	    if (page.find(options_begin) != std::string::npos)
+		page = replace_region(page, options_begin, options_end, options);
+	    if (page.find(subcommands_begin) != std::string::npos)
+		page = replace_region(page, subcommands_begin, subcommands_end,
+		    render_subcommands(*grammar));
 	    write_file(config.man_page, page);
 	    return 0;
 	}
 
-	return check_page(config.man_page, views) ? 1 : 0;
+	return check_page(config.man_page, views, grammar) ? 1 : 0;
     } catch (const std::exception &error) {
 	std::cerr << argv[0] << ": " << error.what() << "\n";
 	usage(argv[0]);

@@ -8,10 +8,10 @@ nmg_move_v - move an NMG vertex to a new position
 
 == SYNOPSIS
 
-[source]
-----
-nmg_move_v nmg_name V x_old y_old z_old x_new y_new z_new
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*nmg_move_v* _nmg_ _coordinates_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

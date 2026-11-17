@@ -8,11 +8,10 @@ killtree - Deletes the specified _objects_ from the current database and recursi
 
 == SYNOPSIS
 
-[source]
-----
-killtree [-a] [-f] [-n] {objects}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*killtree* [_OPTION_]... _objects_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,10 @@
 
 == SYNOPSIS
 
-[source]
-----
-3ptarb [arb_name] [x1] [y1] [z1] [x2] [y2] [z2] [x3] [y3] [z3] [x/y/z] [coord1] [coord2] [thickness]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*3ptarb* _name_ _face_points_ ... (*x* | *y* | *z*) _fourth_point_coordinates_ ... _thickness_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

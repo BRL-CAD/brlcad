@@ -8,11 +8,10 @@ wmater - Lists the shader name and parameters, RGB color, __RGB_valid__ flag, an
 
 == SYNOPSIS
 
-[source]
-----
-wmater {file} {objects}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*wmater* _output_file_ _combinations_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

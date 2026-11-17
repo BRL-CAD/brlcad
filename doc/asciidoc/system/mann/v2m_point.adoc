@@ -8,11 +8,10 @@ v2m_point - transform a point from view space to model space
 
 == SYNOPSIS
 
-[source]
-----
-v2m_point x y z
-v2m_point "x y z"
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*v2m_point* _point_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

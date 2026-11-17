@@ -8,11 +8,10 @@ debugbu - Allows the user to set or check the debug flags used by _libbu_.
 
 == SYNOPSIS
 
-[source]
-----
-debugbu [hex_code]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*debugbu* [_mask_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

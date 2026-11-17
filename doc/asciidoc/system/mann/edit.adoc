@@ -8,11 +8,20 @@ edit - Edit objects in the database by translating, rotating, scaling, and other
 
 == SYNOPSIS
 
-[source]
-----
-edit [options] [geometry_specifier] subcommand [subcommand_args]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*edit* [_OPTION_]... [_geometry_] [_operation_] [_arguments_ ...]
+*edit*
+*edit translate* [_OPTION_]... _destination_ ...
+*edit tra* _translation_ ...
+*edit rotate* [_OPTION_]... [_angle_ ...]
+*edit scale* [_OPTION_]... [_factor_ ...]
+*edit checkpoint*
+*edit revert*
+*edit reset*
+*edit mat* _element_ ...
+*edit perturb* _factor_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,10 @@ solids_on_ray - list all primitives intersected by a ray through a display point
 
 == SYNOPSIS
 
-[source]
-----
-solids_on_ray h v
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*solids_on_ray* [_screen_coordinates_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

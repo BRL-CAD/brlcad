@@ -8,10 +8,10 @@ nmg_make_v - create one or more vertices in an NMG solid
 
 == SYNOPSIS
 
-[source]
-----
-nmg_make_v nmg_name V x0 y0 z0 [x1 y1 z1 ...]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*nmg_make_v* _nmg_ _vertices_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,10 +8,10 @@ find_bot_pnt - find and identify a BOT point
 
 == SYNOPSIS
 
-[source]
-----
-find_bot_pnt [--help] bot "view_x view_y view_z"
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*find_bot_pnt* [_OPTION_]... _bot_ _view_xyz_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

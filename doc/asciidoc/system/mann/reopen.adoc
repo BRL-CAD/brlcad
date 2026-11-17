@@ -8,11 +8,10 @@ reopen - Open an existing BRL-CAD database and make it current.
 
 == SYNOPSIS
 
-[source]
-----
-reopen
-reopen filename
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*reopen* _filename_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

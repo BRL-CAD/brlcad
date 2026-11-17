@@ -8,11 +8,10 @@ r - Creates a region with the specified __region_name__.
 
 == SYNOPSIS
 
-[source]
-----
-r {region_name} {operation object}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*r* _output_region_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

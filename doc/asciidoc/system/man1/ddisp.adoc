@@ -8,11 +8,10 @@ ddisp - plot a stream of doubles on a framebuffer
 
 == SYNOPSIS
 
-[source]
-----
-ddisp [-v | -b] [-p] [-c] [width] < input.doubles
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*ddisp* [_OPTION_]... [_width_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

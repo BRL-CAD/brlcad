@@ -8,48 +8,17 @@ pnts - Creates/writes/generates a "pnts" (i.e. point cloud) primitive.
 
 == SYNOPSIS
 
-[source]
-----
-pnts {read|write|gen|tri} {subcommand arguments}
-----
-
-
-
-[source]
-----
-pnts read [-f [xyzijksrgb]] [-u unit] [--size #] {input_file} {pnts_obj}
-----
-
-
-
-[source]
-----
-write [-p #] [-f xyz] [--ply] {pnts_obj} {output_file}
-----
-
-
-
-[source]
-----
-pnts gen [-t #] [--surface] [--grid] [--rand] [--sobol] [--max-pnts #] [--max-time #] {obj} {output_pnts}
-----
-
-
-
-[source]
-----
-pnts tri [unit] [-s #] {input_pnts} {output_bot}
-----
-
-
-
-[source]
-----
-pnts tri spsr [options] {input_pnts} {output_bot}
-----
-
-
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pnts* [_OPTION_]...
+*pnts gen* [_OPTION_]... _object_ _output_pnts_
+*pnts read* [_OPTION_]... _input_file_ _output_pnts_
+*pnts tri* [_OPTION_]...
+*pnts tri unit* [_OPTION_]... _input_pnts_ _output_bot_
+*pnts tri ballpivot* [_OPTION_]... _input_pnts_ _output_bot_
+*pnts tri spsr* [_OPTION_]... _input_pnts_ _output_bot_
+*pnts write* [_OPTION_]... _input_pnts_ _output_file_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

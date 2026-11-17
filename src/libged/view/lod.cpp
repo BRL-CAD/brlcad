@@ -53,6 +53,15 @@ static const char * const ged_view_lod_actions[] = {
 static const char * const ged_view_lod_binary_values[] = {"0", "1", NULL};
 static const char * const ged_view_lod_cache_actions[] = {"clear", "exists", NULL};
 static const char * const ged_view_lod_cache_clear_actions[] = {"all_files", NULL};
+static const char * const ged_view_lod_toggle_actions[] = {"0", "1", NULL};
+static const char * const ged_view_lod_mode_actions[] = {"csg", "mesh", NULL};
+static const char * const ged_view_lod_cache[] = {"cache", NULL};
+static const char * const ged_view_lod_cache_clear[] = {"clear", NULL};
+static const char * const ged_view_lod_cache_exists[] = {"exists", NULL};
+static const char * const ged_view_lod_scale_actions[] = {
+    "scale", "point_scale", "curve_scale", NULL
+};
+static const char * const ged_view_lod_threshold_actions[] = {"bot_threshold", NULL};
 
 
 static int
@@ -303,42 +312,103 @@ extern "C" GED_EXPORT const struct bu_arg_schema ged_view_lod_schema = {
     BU_ARG_SCHEMA_META_HELP(NULL, NULL, ged_view_lod_validate, NULL, NULL)
 };
 
+static const struct bu_arg_schema ged_view_lod_query_schema =
+    BU_ARG_SCHEMA("lod", "Report level-of-detail settings", ged_view_lod_options,
+	NULL, BU_ARG_PARSE_INTERSPERSED, NULL);
+static const struct bu_arg_operand ged_view_lod_toggle_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("enabled", BU_ARG_VALUE_KEYWORD, 1, 1,
+	"Enable or disable adaptive drawing", NULL, ged_view_lod_toggle_actions),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema ged_view_lod_toggle_schema =
+    BU_ARG_SCHEMA("lod", "Enable or disable adaptive drawing", ged_view_lod_options,
+	ged_view_lod_toggle_operands, BU_ARG_PARSE_INTERSPERSED, NULL);
+static const struct bu_arg_operand ged_view_lod_mode_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("mode", BU_ARG_VALUE_KEYWORD, 1, 1,
+	"Drawing mode", NULL, ged_view_lod_mode_actions),
+    BU_ARG_OPERAND_KEYWORDS("enabled", BU_ARG_VALUE_KEYWORD, 0, 1,
+	"New mode state", NULL, ged_view_lod_binary_values),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema ged_view_lod_mode_schema =
+    BU_ARG_SCHEMA("lod", "Query or set an adaptive drawing mode",
+	ged_view_lod_options, ged_view_lod_mode_operands,
+	BU_ARG_PARSE_INTERSPERSED, NULL);
+static const struct bu_arg_operand ged_view_lod_cache_query_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("cache", BU_ARG_VALUE_KEYWORD, 1, 1,
+	"Select cache operations", NULL, ged_view_lod_cache),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema ged_view_lod_cache_query_schema =
+    BU_ARG_SCHEMA("lod", "Build the current database cache", ged_view_lod_options,
+	ged_view_lod_cache_query_operands, BU_ARG_PARSE_INTERSPERSED, NULL);
+static const struct bu_arg_operand ged_view_lod_cache_clear_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("cache", BU_ARG_VALUE_KEYWORD, 1, 1,
+	"Select cache operations", NULL, ged_view_lod_cache),
+    BU_ARG_OPERAND_KEYWORDS("clear", BU_ARG_VALUE_KEYWORD, 1, 1,
+	"Clear cached data", NULL, ged_view_lod_cache_clear),
+    BU_ARG_OPERAND_KEYWORDS("scope", BU_ARG_VALUE_KEYWORD, 0, 1,
+	"Cache clear scope", NULL, ged_view_lod_cache_clear_actions),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema ged_view_lod_cache_clear_schema =
+    BU_ARG_SCHEMA("lod", "Clear cached level-of-detail data",
+	ged_view_lod_options, ged_view_lod_cache_clear_operands,
+	BU_ARG_PARSE_INTERSPERSED, NULL);
+static const struct bu_arg_operand ged_view_lod_cache_exists_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("cache", BU_ARG_VALUE_KEYWORD, 1, 1,
+	"Select cache operations", NULL, ged_view_lod_cache),
+    BU_ARG_OPERAND_KEYWORDS("exists", BU_ARG_VALUE_KEYWORD, 1, 1,
+	"Test cache completeness", NULL, ged_view_lod_cache_exists),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema ged_view_lod_cache_exists_schema =
+    BU_ARG_SCHEMA("lod", "Test level-of-detail cache completeness",
+	ged_view_lod_options, ged_view_lod_cache_exists_operands,
+	BU_ARG_PARSE_INTERSPERSED, NULL);
+static const struct bu_arg_operand ged_view_lod_scale_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("setting", BU_ARG_VALUE_KEYWORD, 1, 1,
+	"Scale setting", NULL, ged_view_lod_scale_actions),
+    BU_ARG_OPERAND("factor", BU_ARG_VALUE_NUMBER, 0, 1,
+	"New scale factor", NULL),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema ged_view_lod_scale_schema =
+    BU_ARG_SCHEMA("lod", "Query or set a level-of-detail scale",
+	ged_view_lod_options, ged_view_lod_scale_operands,
+	BU_ARG_PARSE_INTERSPERSED, NULL);
+static const struct bu_arg_operand ged_view_lod_threshold_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("setting", BU_ARG_VALUE_KEYWORD, 1, 1,
+	"BoT threshold setting", NULL, ged_view_lod_threshold_actions),
+    BU_ARG_OPERAND_INTEGER_RANGE("face_count", 0, 1, 1, 0, 0, 0,
+	"New nonnegative face threshold", NULL),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema ged_view_lod_threshold_schema =
+    BU_ARG_SCHEMA("lod", "Query or set the BoT face threshold",
+	ged_view_lod_options, ged_view_lod_threshold_operands,
+	BU_ARG_PARSE_INTERSPERSED, NULL);
+static const struct bu_arg_form ged_view_lod_native_forms[] = {
+    BU_ARG_FORM("query", "Report all settings", &ged_view_lod_query_schema, NULL),
+    BU_ARG_FORM("toggle", "Enable or disable adaptive drawing", &ged_view_lod_toggle_schema, NULL),
+    BU_ARG_FORM("mode", "Query or set mesh or CSG drawing", &ged_view_lod_mode_schema, NULL),
+    BU_ARG_FORM("cache", "Build the current cache", &ged_view_lod_cache_query_schema, NULL),
+    BU_ARG_FORM("cache_clear", "Clear cached data", &ged_view_lod_cache_clear_schema, NULL),
+    BU_ARG_FORM("cache_exists", "Test cache completeness", &ged_view_lod_cache_exists_schema, NULL),
+    BU_ARG_FORM("scale", "Query or set a scale factor", &ged_view_lod_scale_schema, NULL),
+    BU_ARG_FORM("threshold", "Query or set the BoT threshold",
+	&ged_view_lod_threshold_schema, NULL),
+    BU_ARG_FORM_NULL
+};
+extern "C" GED_EXPORT const struct bu_arg_forms ged_view_lod_forms =
+    BU_ARG_FORMS("lod", "Manage level-of-detail drawing settings",
+	ged_view_lod_native_forms, NULL);
+
 
 extern "C" GED_EXPORT char *
 ged_view_lod_grammar_json(void)
 {
-    struct bu_vls out = BU_VLS_INIT_ZERO;
-
-    /* The action vocabulary is owned by the same static sets used by the
-     * executable validator.  The generic flat-schema JSON can describe the
-     * raw tail, but it cannot express this conditional mini-language. */
-    bu_vls_strcat(&out,
-	"{\"name\":\"lod\",\"kind\":\"native_action_grammar\","
-	"\"help\":\"Manage level-of-detail drawing settings\",\"actions\":[");
-    for (size_t i = 0; ged_view_lod_actions[i]; i++) {
-	if (i)
-	    bu_vls_putc(&out, ',');
-	bu_vls_printf(&out, "{\"name\":\"%s\"", ged_view_lod_actions[i]);
-	if (BU_STR_EQUAL(ged_view_lod_actions[i], "csg") ||
-	    BU_STR_EQUAL(ged_view_lod_actions[i], "mesh")) {
-	    bu_vls_strcat(&out, ",\"values\":[\"0\",\"1\"]");
-	} else if (BU_STR_EQUAL(ged_view_lod_actions[i], "cache")) {
-	    bu_vls_strcat(&out,
-		",\"actions\":[{\"name\":\"clear\",\"values\":[\"all_files\"]},"
-		"{\"name\":\"exists\"}]");
-	} else if (BU_STR_EQUAL(ged_view_lod_actions[i], "scale") ||
-	    BU_STR_EQUAL(ged_view_lod_actions[i], "point_scale") ||
-	    BU_STR_EQUAL(ged_view_lod_actions[i], "curve_scale")) {
-	    bu_vls_strcat(&out, ",\"value_type\":\"number\"");
-	} else if (BU_STR_EQUAL(ged_view_lod_actions[i], "bot_threshold")) {
-	    bu_vls_strcat(&out, ",\"value_type\":\"nonnegative_integer\"");
-	}
-	bu_vls_putc(&out, '}');
-    }
-    bu_vls_strcat(&out, "]}");
-    char *json = bu_vls_strdup(&out);
-    bu_vls_free(&out);
-    return json;
+    return bu_arg_forms_describe_json(&ged_view_lod_forms);
 }
 
 

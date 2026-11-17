@@ -6,6 +6,13 @@
 == NAME
 screen_grab - grab the current screen or view and save it to a file
 
+== SYNOPSIS
+
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*screen_grab* [_OPTION_]... [_output_file_]
+// END GENERATED BU_ARG SYNOPSIS
+
 == DESCRIPTION
 
 The *screen_grab* command is an alias for the *screengrab* command. See *screengrab*(nged) for full documentation.

@@ -8,11 +8,10 @@ edcolor - Puts the user into an editor to edit a file that has been filled with 
 
 == SYNOPSIS
 
-[source]
-----
-edcolor [-E editor]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*edcolor* [_OPTION_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

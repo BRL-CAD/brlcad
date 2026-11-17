@@ -8,10 +8,10 @@ nmg_kill_v - remove a vertex from an NMG solid by coordinates
 
 == SYNOPSIS
 
-[source]
-----
-nmg_kill_v nmg_name V x y z
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*nmg_kill_v* _nmg_ _vertex_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

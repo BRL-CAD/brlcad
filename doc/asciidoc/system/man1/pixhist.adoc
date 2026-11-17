@@ -8,11 +8,10 @@ pixhist - display a color histogram of a pix file on a framebuffer
 
 == SYNOPSIS
 
-[source]
-----
-pixhist [-v|--verbose] [file.pix]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixhist* [_OPTION_]... [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

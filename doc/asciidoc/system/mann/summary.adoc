@@ -8,13 +8,10 @@ summary - The *summary* command with no arguments lists the number of primitive 
 
 == SYNOPSIS
 
-[source]
-----
-summary
-summary [prg]*
-summary [-o | --obj] {object}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*summary* [_OPTION_]... [_object_or_legacy_type_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,10 @@ pixblend - blend two pix(5) or bw(5) images
 
 == SYNOPSIS
 
-[source]
-----
-pixblend [-r value | -i value] [-s seed] [-S] [-g gvalue] file1.pix file2.pix > out.pix
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixblend* [_OPTION_]... _first-input_ _second-input_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
