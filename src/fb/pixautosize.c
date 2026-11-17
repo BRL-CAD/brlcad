@@ -29,72 +29,57 @@
 
 #include "common.h"
 
-#include <errno.h>
 #include <limits.h>
-#include <stdlib.h>
 
-#include "vmath.h"
-#include "bu/app.h"
-#include "bu/getopt.h"
 #include "bu/arg.h"
+#include "bu/app.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "bn.h"
 #include "dm.h"
 
 
-static int bytes_per_sample = 3;
-static int file_length = 0;
-static char *file_name;
+struct pixautosize_args {
+    int help;
+    int bytes_per_sample;
+    const char *file_name;
+    int file_length;
+};
 
-static size_t width;
-static size_t height;
+static const struct bu_arg_option pixautosize_options[] = {
+    BU_ARG_FLAG("h", "help", struct pixautosize_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_INTEGER_RANGE("b", "bytes-per-sample", struct pixautosize_args,
+	bytes_per_sample, 1, 1, 1, INT_MAX, "bytes",
+	"Set the number of bytes in each image sample"),
+    BU_ARG_VALUE("f", "file", struct pixautosize_args, file_name,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "path",
+	"Determine dimensions from a file's length"),
+    BU_ARG_INTEGER_RANGE("l", "file-length", struct pixautosize_args,
+	file_length, 1, 1, 1, INT_MAX, "bytes",
+	"Determine dimensions from an explicit byte count"),
+    BU_ARG_OPTION_NULL
+};
 
-static int
-parse_positive_int(const char *arg, int *value, const char *label)
-{
-    struct bu_vls msg = BU_VLS_INIT_ZERO;
-    int valid = bu_arg_integer_range_from_str(&msg, value, arg, 10, 1, INT_MAX);
+static const char * const pixautosize_sources[] = {
+    "file", "file-length", NULL
+};
 
-    if (!valid)
-	bu_log("%s: %s: %s\n", bu_getprogname(), label, bu_vls_cstr(&msg));
-    bu_vls_free(&msg);
-    return valid;
-}
+static const struct bu_arg_constraint pixautosize_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS,
+	pixautosize_sources, 1, 1, "select exactly one image-size source"),
+    BU_ARG_CONSTRAINT_NULL
+};
 
-static char usage[] = "\
-Usage:	pixautosize [-b bytes_per_sample] [-f file_name]\n\
-or	pixautosize [-b bytes_per_sample] [-l file_length]\n";
+static const struct bu_arg_schema pixautosize_schema = BU_ARG_SCHEMA(
+    "pixautosize", "Determine standard image dimensions",
+    pixautosize_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, pixautosize_constraints, NULL, NULL, NULL));
 
-int
-get_args(int argc, char **argv)
-{
-    int c;
-
-    while ((c = bu_getopt(argc, argv, "b:f:l:h?")) != -1) {
-	switch (c) {
-	    case 'b':
-		if (!parse_positive_int(bu_optarg, &bytes_per_sample, "bytes_per_sample"))
-		    return 0;
-		break;
-	    case 'f':
-		file_name = bu_optarg;
-		break;
-	    case 'l':
-		if (!parse_positive_int(bu_optarg, &file_length, "file_length"))
-		    return 0;
-		break;
-	    default:		/* '?' 'h' */
-		return 0;
-	}
-    }
-
-    if (argc > bu_optind) {
-	fprintf(stderr, "pixautosize: excess argument(s) not supported\n");
-	return 0;
-    }
-
-    return 1;		/* OK */
-}
+static const struct bu_arg_grammar pixautosize_grammar = {
+    &pixautosize_schema, NULL, NULL
+};
 
 
 int
@@ -102,33 +87,44 @@ main(int argc, char **argv)
 {
     int ret = 0;
     int nsamp;
+    size_t width = 0;
+    size_t height = 0;
+    struct pixautosize_args args = {0, 3, NULL, 0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
-    if (!get_args(argc, argv)) {
-	(void)fputs(usage, stderr);
+
+    int introspection = bu_arg_introspect(&msg, &pixautosize_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    if (bu_arg_schema_parse_complete(&pixautosize_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1)) < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
 	return 1;
     }
-
-    if (file_name && file_length > 0) {
-	fprintf(stderr, "pixautosize: specify either -f file_name or -l file_length, not both\n");
-	(void)fputs(usage, stderr);
-	return 1;
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&pixautosize_schema, "pixautosize");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "pixautosize help");
+	return 0;
     }
 
-    if (!file_name && file_length <= 0) {
-	(void)fputs(usage, stderr);
-	return 1;
-    }
-
-    if (file_name) {
-	if (!fb_common_file_size(&width, &height, file_name, bytes_per_sample)) {
-	    fprintf(stderr, "pixautosize: unable to autosize file '%s'\n", file_name);
+    if (args.file_name) {
+	if (!fb_common_file_size(&width, &height, args.file_name,
+		args.bytes_per_sample)) {
+	    bu_log("pixautosize: unable to autosize file '%s'\n", args.file_name);
 	    ret = 1;		/* ERROR */
 	}
     } else {
-	nsamp = file_length/bytes_per_sample;
+	nsamp = args.file_length / args.bytes_per_sample;
 	if (!fb_common_image_size(&width, &height, nsamp)) {
-	    fprintf(stderr, "pixautosize: unable to autosize nsamples=%d\n", nsamp);
+	    bu_log("pixautosize: unable to autosize nsamples=%d\n", nsamp);
 	    ret = 2;		/* ERROR */
 	}
     }

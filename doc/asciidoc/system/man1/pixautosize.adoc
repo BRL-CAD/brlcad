@@ -38,19 +38,19 @@ status is returned.
 [[options]]
 == OPTIONS
 
-*-b* _bytes_per_sample_::
+*-b* _bytes_per_sample_, *--bytes-per-sample* _bytes_per_sample_::
   Number of bytes used per sample (pixel). Must be a positive integer.
   Defaults to 3.
 
-*-f* _file_name_::
+*-f* _file_name_, *--file* _file_name_::
   Determine the size from the length of the named file. Mutually
   exclusive with *-l*.
 
-*-l* _file_length_::
+*-l* _file_length_, *--file-length* _file_length_::
   Determine the size from an explicit file length in bytes. Must be a
   positive integer. Mutually exclusive with *-f*.
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a usage message and exit.
 
 [[examples]]
