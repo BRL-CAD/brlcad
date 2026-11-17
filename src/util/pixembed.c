@@ -29,13 +29,14 @@
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <string.h>
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "util_arg.h"
-#include "bu/malloc.h"
 #include "bu/exit.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 
 
 unsigned char *obuf;
@@ -43,7 +44,6 @@ unsigned char *obuf;
 int scanlen;			/* length of infile (and buffer) scanlines */
 
 FILE *buffp;
-static char *file_name;
 
 size_t xin = 512;
 size_t yin = 512;
@@ -56,86 +56,115 @@ size_t inbase;
 
 void load_buffer(void), write_buffer(void);
 
-static char usage[] = "\
-Usage: pixembed [-b border_inset] \n\
-	[-s squareinsize] [-w inwidth] [-n inheight]\n\
-	[-S squareoutsize] [-W outwidth] [-N outheight] [in.pix] > out.pix\n";
+struct pixembed_args {
+    struct pixembed_args *self;
+    int help;
+    size_t border_inset;
+    size_t input_width;
+    size_t input_height;
+    size_t output_width;
+    size_t output_height;
+};
 
-char hyphen[] = "-";
+enum pixembed_dimension {
+    PIXEMBED_INPUT_SIZE,
+    PIXEMBED_INPUT_WIDTH,
+    PIXEMBED_INPUT_HEIGHT,
+    PIXEMBED_OUTPUT_SIZE,
+    PIXEMBED_OUTPUT_WIDTH,
+    PIXEMBED_OUTPUT_HEIGHT
+};
 
-int
-get_args(int argc, char **argv)
+static int
+pixembed_dimension(struct bu_vls *msg, const char *arg, void *storage,
+	enum pixembed_dimension dimension)
 {
-    int c;
+    struct pixembed_args *args = storage ?
+	*(struct pixembed_args **)storage : NULL;
+    size_t value;
 
-    while ((c = bu_getopt(argc, argv, "b:s:w:n:S:W:N:h?")) != -1) {
-	switch (c) {
-	    case 'b':
-		if (!util_arg_size_t_range(bu_optarg, &border_inset, 0, SIZE_MAX, "border inset"))
-		    return 0;
-		break;
-	    case 'S':
-		/* square size */
-		if (!util_arg_size_t_range(bu_optarg, &xout, 1, SIZE_MAX, "output size"))
-		    return 0;
-		yout = xout;
-		break;
-	    case 's':
-		/* square size */
-		if (!util_arg_size_t_range(bu_optarg, &xin, 1, SIZE_MAX, "input size"))
-		    return 0;
-		yin = xin;
-		break;
-	    case 'W':
-		if (!util_arg_size_t_range(bu_optarg, &xout, 1, SIZE_MAX, "output width"))
-		    return 0;
-		break;
-	    case 'w':
-		if (!util_arg_size_t_range(bu_optarg, &xin, 1, SIZE_MAX, "input width"))
-		    return 0;
-		break;
-	    case 'N':
-		if (!util_arg_size_t_range(bu_optarg, &yout, 1, SIZE_MAX, "output height"))
-		    return 0;
-		break;
-	    case 'n':
-		if (!util_arg_size_t_range(bu_optarg, &yin, 1, SIZE_MAX, "input height"))
-		    return 0;
-		break;
-
-	    default:		/* 'h' '?' */
-		return 0;
-	}
-    }
-
-    if (bu_optind >= argc) {
-	if (isatty(fileno(stdin)))
-	    return 0;
-	file_name = hyphen;
-	buffp = stdin;
-    } else {
-	file_name = argv[bu_optind];
-	bu_optind++;
-	if (argc > bu_optind) {
-	    fprintf(stderr, "pixembed: excess argument(s) not supported\n");
-	    return 0;
-	}
-	if ((buffp = fopen(file_name, "rb")) == NULL) {
-	    fprintf(stderr,
-		    "pixembed: cannot open \"%s\" for reading\n",
-		    file_name);
-	    return 0;
-	}
-    }
-
-    if (argc > bu_optind) {
-	fprintf(stderr, "pixembed: excess argument(s) not supported\n");
+    if (!bu_arg_size_t_range_from_str(msg, &value, arg, 10, 1, SIZE_MAX))
+	return -1;
+    if (!args)
 	return 0;
-    }
 
-    return 1;		/* OK */
+    if (dimension == PIXEMBED_INPUT_SIZE ||
+	dimension == PIXEMBED_INPUT_WIDTH)
+	args->input_width = value;
+    if (dimension == PIXEMBED_INPUT_SIZE ||
+	dimension == PIXEMBED_INPUT_HEIGHT)
+	args->input_height = value;
+    if (dimension == PIXEMBED_OUTPUT_SIZE ||
+	dimension == PIXEMBED_OUTPUT_WIDTH)
+	args->output_width = value;
+    if (dimension == PIXEMBED_OUTPUT_SIZE ||
+	dimension == PIXEMBED_OUTPUT_HEIGHT)
+	args->output_height = value;
+    return 0;
 }
 
+#define PIXEMBED_DIMENSION_CALLBACK(_name, _dimension) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return pixembed_dimension(msg, arg, storage, _dimension); \
+    }
+
+PIXEMBED_DIMENSION_CALLBACK(pixembed_input_size, PIXEMBED_INPUT_SIZE)
+PIXEMBED_DIMENSION_CALLBACK(pixembed_input_width, PIXEMBED_INPUT_WIDTH)
+PIXEMBED_DIMENSION_CALLBACK(pixembed_input_height, PIXEMBED_INPUT_HEIGHT)
+PIXEMBED_DIMENSION_CALLBACK(pixembed_output_size, PIXEMBED_OUTPUT_SIZE)
+PIXEMBED_DIMENSION_CALLBACK(pixembed_output_width, PIXEMBED_OUTPUT_WIDTH)
+PIXEMBED_DIMENSION_CALLBACK(pixembed_output_height, PIXEMBED_OUTPUT_HEIGHT)
+
+static int
+pixembed_border_inset(struct bu_vls *msg, const char *arg, void *storage)
+{
+    struct pixembed_args *args = storage ?
+	*(struct pixembed_args **)storage : NULL;
+    size_t value;
+
+    if (!bu_arg_size_t_range_from_str(msg, &value, arg, 10, 0, SIZE_MAX))
+	return -1;
+    if (args)
+	args->border_inset = value;
+    return 0;
+}
+
+static const struct bu_arg_option pixembed_options[] = {
+    BU_ARG_FLAG("h", "help", struct pixembed_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_CUSTOM("b", "border-inset", struct pixembed_args, self,
+	pixembed_border_inset, "pixels", "Inset the replicated border sample"),
+    BU_ARG_CUSTOM("s", "input-size", struct pixembed_args, self,
+	pixembed_input_size, "pixels", "Set both input dimensions"),
+    BU_ARG_CUSTOM("w", "input-width", struct pixembed_args, self,
+	pixembed_input_width, "pixels", "Set the input image width"),
+    BU_ARG_CUSTOM("n", "input-height", struct pixembed_args, self,
+	pixembed_input_height, "pixels", "Set the input image height"),
+    BU_ARG_CUSTOM("S", "output-size", struct pixembed_args, self,
+	pixembed_output_size, "pixels", "Set both output dimensions"),
+    BU_ARG_CUSTOM("W", "output-width", struct pixembed_args, self,
+	pixembed_output_width, "pixels", "Set the output image width"),
+    BU_ARG_CUSTOM("N", "output-height", struct pixembed_args, self,
+	pixembed_output_height, "pixels", "Set the output image height"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand pixembed_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"PIX input file; standard input when omitted", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema pixembed_schema = BU_ARG_SCHEMA(
+    "pixembed", "Embed a PIX image in a larger frame",
+    pixembed_options, pixembed_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar pixembed_grammar = {
+    &pixembed_schema, NULL, NULL
+};
 
 int
 main(int argc, char **argv)
@@ -145,16 +174,53 @@ main(int argc, char **argv)
     size_t top_margin;
     size_t i;
     size_t y;
+    struct pixembed_args args = {NULL, 0, 0, 512, 512, 512, 512};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
+    args.self = &args;
     bu_setprogname(argv[0]);
 
-    setmode(fileno(stdin), O_BINARY);
-    setmode(fileno(stdout), O_BINARY);
-
-    if (!get_args(argc, argv) || isatty(fileno(stdout))) {
-	(void)fputs(usage, stderr);
-	bu_exit (1, NULL);
+    int introspection = bu_arg_introspect(&msg, &pixembed_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+    int operand_index = bu_arg_schema_parse_complete(&pixembed_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&pixembed_schema, "pixembed");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "pixembed help");
+	return 0;
+    }
+    if (isatty(fileno(stdout)))
+	bu_exit(1, "pixembed cannot send PIX output to a terminal\n");
+
+    xin = args.input_width;
+    yin = args.input_height;
+    xout = args.output_width;
+    yout = args.output_height;
+    border_inset = args.border_inset;
+
+    if (operand_index < argc - 1) {
+	const char *path = argv[operand_index + 1];
+	buffp = fopen(path, "rb");
+	if (!buffp)
+	    bu_exit(1, "pixembed: cannot open \"%s\" for reading: %s\n",
+		path, strerror(errno));
+    } else {
+	if (isatty(fileno(stdin)))
+	    bu_exit(1, "pixembed requires an input file or redirected input\n");
+	buffp = stdin;
+    }
+
+    setmode(fileno(buffp), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     if (xout < xin || yout < yin) {
 	fprintf(stderr, "pixembed: output size must be at least the input size\n");
@@ -192,6 +258,8 @@ main(int argc, char **argv)
     for (y = 0; y < top_margin + border_inset; y++)
 	write_buffer();
 
+    if (buffp != stdin && fclose(buffp) == EOF)
+	bu_exit(1, "pixembed: error closing input\n");
     bu_free(obuf, "obuf");
 
     return 0;
