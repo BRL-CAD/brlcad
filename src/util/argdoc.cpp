@@ -1245,9 +1245,19 @@ process_directory(const json &document, const settings &config)
 	const std::string filename = entry.first + ".adoc";
 	auto page_entry = pages.find(filename);
 	if (page_entry != pages.end()) {
+	    const json *root_grammar = NULL;
+	    const auto published_entry = published.find(entry.first);
+	    if (published_entry != published.end()) {
+		for (const json *grammar : published_entry->second) {
+		    if (grammar->value("kind", std::string()) == "native_tree") {
+			root_grammar = grammar;
+			break;
+		    }
+		}
+	    }
 	    checked++;
 	    failed = process_page(page_entry->second, entry.second,
-		config.operation) || failed;
+		config.operation, root_grammar) || failed;
 	    if (undocumented.count(entry.first)) {
 		std::cerr << config.undocumented_file.string()
 		    << ": stale exemption for documented schema " << entry.first << "\n";

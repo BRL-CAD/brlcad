@@ -410,9 +410,26 @@ file(
 ]
 ]=]
 )
-file(WRITE "${audit_dir}/documented.adoc" "*-v*, *--verbose*::\nVerbose output.\n")
-file(WRITE "${audit_dir}/documented_list.adoc" "*-q*, *--quiet*::\nQuiet output.\n")
+file(WRITE "${audit_dir}/documented.adoc"
+  "= DOCUMENTED(1)\n\n== SYNOPSIS\n\n[source]\n----\ndocumented\n----\n\n== DESCRIPTION\nDocumented command.\n\n*-v*, *--verbose*::\nVerbose output.\n\n// BEGIN GENERATED BU_ARG SUBCOMMANDS\nstale\n// END GENERATED BU_ARG SUBCOMMANDS\n")
+file(WRITE "${audit_dir}/documented_list.adoc"
+  "= DOCUMENTED_LIST(1)\n\n== SYNOPSIS\n\n[source]\n----\ndocumented list\n----\n\n== DESCRIPTION\nList command.\n\n*-q*, *--quiet*::\nQuiet output.\n")
 file(WRITE "${audit_exemptions}" "internal\tInternal test command.\n")
+execute_process(
+  COMMAND
+    "${ARGDOC}" --update-directory "${audit_dir}"
+    --allow-undocumented "${audit_exemptions}" --schema "${audit_schema}"
+  RESULT_VARIABLE audit_update_result
+  ERROR_VARIABLE audit_update_error
+)
+if(NOT audit_update_result EQUAL 0)
+  message(FATAL_ERROR "argdoc directory update failed: ${audit_update_error}")
+endif()
+file(READ "${audit_dir}/documented.adoc" audit_root_page)
+string(FIND "${audit_root_page}" "*list*::\nNo description." audit_root_child)
+if(audit_root_child EQUAL -1)
+  message(FATAL_ERROR "argdoc did not update the root command-tree subcommand region")
+endif()
 execute_process(
   COMMAND
     "${ARGDOC}" --audit-directory "${audit_dir}"
