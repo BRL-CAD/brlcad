@@ -8,16 +8,11 @@ bwscale - change the size of a black and white bw image
 
 == SYNOPSIS
 
-[source]
-----
-bwscale [-r] [-s _squareinsize_] [-w _inwidth_] [-n _inheight_] [-S _squareoutsize_] [-W _outwidth_] [-N _outheight_] [_in.bw_] > _out.bw_
-----
-
-[source]
-----
-bwscale _in.bw_ _inwidth_ _inheight_ _outwidth_ _outheight_ > _out.bw_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bwscale* [_OPTION_]... [_input_]
+*bwscale* [_OPTION_]... _input_ _input-width_ _input-height_ _output-width_ _output-height_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -38,28 +33,28 @@ cannot stretch one axis while compressing the other.
 [[options]]
 == OPTIONS
 
-*-r*::
+*-r*, *--replicate*::
   Scale up by pixel replication (nearest-neighbor) instead of bilinear interpolation.
 
-*-s* _squareinsize_::
+*-s* _squareinsize_, *--input-size* _squareinsize_::
   Set both the input width and height to _squareinsize_ pixels.
 
-*-w* _inwidth_::
+*-w* _inwidth_, *--input-width* _inwidth_::
   Set the input width in pixels (default 512).
 
-*-n* _inheight_::
+*-n* _inheight_, *--input-height* _inheight_::
   Set the input height in pixels (default 512).
 
-*-S* _squareoutsize_::
+*-S* _squareoutsize_, *--output-size* _squareoutsize_::
   Set both the output width and height to _squareoutsize_ pixels.
 
-*-W* _outwidth_::
+*-W* _outwidth_, *--output-width* _outwidth_::
   Set the output width in pixels (default 512).
 
-*-N* _outheight_::
+*-N* _outheight_, *--output-height* _outheight_::
   Set the output height in pixels (default 512).
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a usage message and exit.
 
 As a backward-compatibility convenience, the input file and all four dimensions
