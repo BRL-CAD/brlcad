@@ -43,6 +43,7 @@ __declspec(dllimport) int __stdcall SetHandleInformation(void *, unsigned long, 
 #include "bu/app.h"
 #include "bu/color.h"
 #include "bu/file.h"
+#include "bu/hash.h"
 #include "bu/mime.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
@@ -58,96 +59,11 @@ __declspec(dllimport) int __stdcall SetHandleInformation(void *, unsigned long, 
 #include "tclcad.h"
 
 #include "animation.h"
+#include "settings.h"
 
 #define RTWIZARD_HAVE_GUI 0
 
 #define RTWIZARD_SIZE_DEFAULT 512
-
-#define RTWIZARD_MAGIC 0x72747769 /**< rtwi */
-
-
-struct rtwizard_settings {
-    uint32_t magic;
-
-    int use_gui;
-    int no_gui;
-    int verbose;
-
-    struct bu_ptbl *color;
-    struct bu_ptbl *ghost;
-    struct bu_ptbl *line;
-
-    struct bu_vls *input_file;
-    struct bu_vls *output_file;
-    struct bu_vls *fb_dev;
-    int port;
-    struct bu_vls *log_file;
-    struct bu_vls *pid_file;
-
-    /* Declarative render and animation specifications */
-    struct bu_vls *render_spec;
-    struct bu_vls *animation_file;
-    struct bu_vls *animation_preset;
-    struct bu_vls *frame_dir;
-    double animation_duration;
-    int animation_frames;
-    int animation_plays;
-    int animation_cyclic;
-    int resume;
-
-    double orbit_angle;
-    vect_t orbit_axis;
-    vect_t orbit_center;
-    double orbit_elevation;
-    double orbit_radius;
-
-    struct bu_vls *turntable_object;
-    double turntable_angle;
-    vect_t turntable_axis;
-    vect_t turntable_center;
-
-    struct bu_vls *save_view_keyframe;
-    double keyframe_time;
-    int replace_keyframe;
-
-    size_t width;
-    int width_set;
-    size_t height;
-    int height_set;
-    size_t size; /* Assumes square - width and height - overridden by width and height */
-    int size_set;
-
-    struct bu_color *bkg_color;
-    struct bu_color *line_color;
-    struct bu_color *non_line_color;
-
-    double ghost_intensity;
-    int occlusion;
-    int benchmark;
-    int cpus;
-
-    /* Cutting plane animation */
-    int cut_steps;
-    int animation_fps;
-    vect_t cut_direction;
-    int cut_direction_set;
-
-    /* Raytrace enhancements */
-    int ao_samples;
-    double ao_radius;
-
-    /* View model */
-    double viewsize;
-    quat_t orientation;
-    vect_t eye_pt;
-
-    /* View settings */
-    double az, el, tw;
-    double perspective;
-    double zoom;
-    vect_t center;
-
-};
 
 static int
 rtwizard_setup_ipc(Tcl_Interp *interp)
@@ -257,6 +173,7 @@ rtwizard_settings_create(void)
     s->height_set = 0;
     s->size = RTWIZARD_SIZE_DEFAULT;
     s->size_set = 0;
+    s->image_type = '\0';
 
     s->use_gui = 0;
     s->no_gui = 0;
@@ -956,6 +873,46 @@ rtwizard_image_valid_cmd(ClientData UNUSED(client_data), Tcl_Interp *interp, int
 }
 
 
+static int
+rtwizard_file_hash_cmd(ClientData UNUSED(client_data), Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+{
+    static const size_t buffer_size = 64 * 1024;
+    unsigned char *buffer;
+    struct bu_data_hash128_state *state;
+    bu_h128_t digest;
+    FILE *stream;
+    size_t bytes_read;
+
+    if (objc != 2) {
+	Tcl_SetObjResult(interp, Tcl_NewStringObj("usage: rtwizard_file_hash file", -1));
+	return TCL_ERROR;
+    }
+    stream = fopen(Tcl_GetString(objv[1]), "rb");
+    if (!stream) {
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf("unable to open '%s' for hashing", Tcl_GetString(objv[1])));
+	return TCL_ERROR;
+    }
+    buffer = (unsigned char *)bu_malloc(buffer_size, "file hash buffer");
+    state = bu_data_hash128_create();
+    while ((bytes_read = fread(buffer, 1, buffer_size, stream)) > 0)
+	bu_data_hash128_update(state, buffer, bytes_read);
+    if (ferror(stream)) {
+	bu_data_hash128_destroy(state);
+	bu_free(buffer, "file hash buffer");
+	fclose(stream);
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf("unable to read '%s' for hashing", Tcl_GetString(objv[1])));
+	return TCL_ERROR;
+    }
+    digest = bu_data_hash128_val(state);
+    bu_data_hash128_destroy(state);
+    bu_free(buffer, "file hash buffer");
+    fclose(stream);
+    Tcl_SetObjResult(interp, Tcl_ObjPrintf("%016llx%016llx",
+	(unsigned long long)digest.w[1], (unsigned long long)digest.w[0]));
+    return TCL_OK;
+}
+
+
 struct rtwizard_bound_data {
     point_t bmin;
     point_t bmax;
@@ -1440,7 +1397,7 @@ rtwizard_help(struct bu_opt_desc *d)
     bu_vls_sprintf(&str, "\nUsage: rtwizard [options]\n\n");
 
     /* I/O options */
-    bu_vls_sprintf(&filtered, "h help-dev i o s w n render-spec animation animation-file animation-duration animation-fps animation-frames animation-plays animation-cyclic frame-dir resume cut-steps cut-direction orbit-angle orbit-axis orbit-center orbit-elevation orbit-radius turntable-object turntable-angle turntable-axis turntable-center save-view-keyframe time replace-keyframe");
+    bu_vls_sprintf(&filtered, "h help-dev i o s w n render-spec animation-duration animation-fps animation-frames animation-plays animation-cyclic frame-dir resume cut-steps cut-direction save-view-keyframe time replace-keyframe");
     settings.accept = bu_vls_addr(&filtered);
     option_help = bu_opt_describe(d, &settings);
     if (option_help) {
@@ -1580,50 +1537,41 @@ rtwizard_argv_has_option(int argc, char **argv, const char *shortopt, const char
 }
 
 
-static const char *
-rtwizard_short_option(const char *longopt)
-{
-    if (BU_STR_EQUAL(longopt, "--input-file")) return "-i";
-    if (BU_STR_EQUAL(longopt, "--output-file")) return "-o";
-    if (BU_STR_EQUAL(longopt, "--size")) return "-s";
-    if (BU_STR_EQUAL(longopt, "--width")) return "-w";
-    if (BU_STR_EQUAL(longopt, "--height")) return "-n";
-    if (BU_STR_EQUAL(longopt, "--type")) return "-t";
-    if (BU_STR_EQUAL(longopt, "--color-objects")) return "-c";
-    if (BU_STR_EQUAL(longopt, "--line-objects")) return "-l";
-    if (BU_STR_EQUAL(longopt, "--ghost-objects")) return "-g";
-    if (BU_STR_EQUAL(longopt, "--azimuth")) return "-a";
-    if (BU_STR_EQUAL(longopt, "--elevation")) return "-e";
-    if (BU_STR_EQUAL(longopt, "--zoom")) return "-z";
-    if (BU_STR_EQUAL(longopt, "--perspective")) return "-P";
-    if (BU_STR_EQUAL(longopt, "--background-color")) return "-C";
-    if (BU_STR_EQUAL(longopt, "--ghost-intensity")) return "-G";
-    if (BU_STR_EQUAL(longopt, "--occlusion")) return "-O";
-    if (BU_STR_EQUAL(longopt, "--fbserv-device")) return "-d";
-    if (BU_STR_EQUAL(longopt, "--fbserv-port")) return "-p";
-    if (BU_STR_EQUAL(longopt, "--verbose")) return "-v";
-    return NULL;
-}
-
-
-static int
-rtwizard_spec_option_takes_arg(const char *opt)
-{
-    return !(BU_STR_EQUAL(opt, "--benchmark") ||
-	    BU_STR_EQUAL(opt, "--gui") ||
-	    BU_STR_EQUAL(opt, "--no-gui") ||
-	    BU_STR_EQUAL(opt, "--resume") ||
-	    BU_STR_EQUAL(opt, "--replace-keyframe"));
-}
-
-
-/* Expand a render specification before normal option parsing.  Spec options
- * are placed first.  Explicit command-line instances suppress their JSON
- * counterpart because bu_opt_vls intentionally concatenates repeated string
- * options.  This also gives object role lists replace rather than append
- * semantics. */
 static void
-rtwizard_expand_render_spec(int *argcp, char ***argvp)
+rtwizard_obj_table_clear(struct bu_ptbl *table)
+{
+    size_t i;
+    for (i = 0; i < BU_PTBL_LEN(table); i++)
+	bu_free((char *)BU_PTBL_GET(table, i), "rtwizard object name");
+    bu_ptbl_reset(table);
+}
+
+
+static void
+rtwizard_cli_overlay_prepare(int argc, char **argv, struct rtwizard_settings *s)
+{
+    if (rtwizard_argv_has_option(argc, argv, "-c", "--color-objects")) rtwizard_obj_table_clear(s->color);
+    if (rtwizard_argv_has_option(argc, argv, "-g", "--ghost-objects")) rtwizard_obj_table_clear(s->ghost);
+    if (rtwizard_argv_has_option(argc, argv, "-l", "--line-objects")) rtwizard_obj_table_clear(s->line);
+
+    if (rtwizard_argv_has_option(argc, argv, "-i", "--input-file")) bu_vls_trunc(s->input_file, 0);
+    if (rtwizard_argv_has_option(argc, argv, "-o", "--output-file")) bu_vls_trunc(s->output_file, 0);
+    if (rtwizard_argv_has_option(argc, argv, "-d", "--fbserv-device")) bu_vls_trunc(s->fb_dev, 0);
+    if (rtwizard_argv_has_option(argc, argv, NULL, "--log-file")) bu_vls_trunc(s->log_file, 0);
+    if (rtwizard_argv_has_option(argc, argv, NULL, "--pid-file")) bu_vls_trunc(s->pid_file, 0);
+    if (rtwizard_argv_has_option(argc, argv, NULL, "--frame-dir")) bu_vls_trunc(s->frame_dir, 0);
+
+    if (rtwizard_argv_has_option(argc, argv, NULL, "--cut-steps")) {
+	bu_vls_trunc(s->animation_file, 0);
+	bu_vls_strcpy(s->animation_preset, "cut");
+    }
+    if (rtwizard_argv_has_option(argc, argv, NULL, "--gui")) s->no_gui = 0;
+    if (rtwizard_argv_has_option(argc, argv, NULL, "--no-gui")) s->use_gui = 0;
+}
+
+
+static void
+rtwizard_load_render_spec(int *argcp, char ***argvp, struct rtwizard_settings *s)
 {
     int argc = *argcp;
     char **argv = *argvp;
@@ -1631,75 +1579,45 @@ rtwizard_expand_render_spec(int *argcp, char ***argvp)
     int spec_index = -1;
     int spec_separate = 0;
     int i;
-    int sac = 0;
-    char **sav = NULL;
     char *errmsg = NULL;
-    char **merged;
-    int mac = 0;
-    int cli_animation = rtwizard_argv_has_option(argc, argv, NULL, "--animation") ||
-	rtwizard_argv_has_option(argc, argv, NULL, "--animation-file") ||
-	rtwizard_argv_has_option(argc, argv, NULL, "--cut-steps");
-    int cli_gui = rtwizard_argv_has_option(argc, argv, NULL, "--gui");
-    int cli_no_gui = rtwizard_argv_has_option(argc, argv, NULL, "--no-gui");
+    int filtered_argc = 0;
 
     for (i = 1; i < argc; i++) {
 	if (BU_STR_EQUAL(argv[i], "--render-spec")) {
+	    if (spec) bu_exit(EXIT_FAILURE, "ERROR: --render-spec may be specified only once.\n");
 	    if (i + 1 >= argc)
 		bu_exit(EXIT_FAILURE, "ERROR: --render-spec requires a filename.\n");
 	    spec = argv[i+1];
 	    spec_index = i;
 	    spec_separate = 1;
-	    break;
+	    i++;
+	    continue;
 	}
 	if (bu_strncmp(argv[i], "--render-spec=", 14) == 0) {
+	    if (spec) bu_exit(EXIT_FAILURE, "ERROR: --render-spec may be specified only once.\n");
 	    spec = argv[i] + 14;
+	    if (!spec[0]) bu_exit(EXIT_FAILURE, "ERROR: --render-spec requires a filename.\n");
 	    spec_index = i;
-	    break;
 	}
     }
     if (!spec)
 	return;
-    if (rtwizard_spec_to_argv(spec, &sac, &sav, &errmsg) != 0) {
+    if (rtwizard_spec_apply(spec, s, &errmsg) != 0) {
 	bu_exit(EXIT_FAILURE, "ERROR: %s\n", errmsg ? errmsg : "unable to load render specification");
     }
+    if (errmsg) bu_free(errmsg, "render spec error");
+    rtwizard_cli_overlay_prepare(argc, argv, s);
 
-    merged = (char **)bu_calloc((size_t)argc + (size_t)sac + 1, sizeof(char *), "merged rtwizard argv");
-    merged[mac++] = argv[0];
-    for (i = 0; i < sac; i++) {
-	int skip = 0;
-	if (bu_strncmp(sav[i], "--", 2) == 0 &&
-	    rtwizard_argv_has_option(argc, argv, rtwizard_short_option(sav[i]), sav[i])) {
-	    skip = 1;
-	}
-	if (cli_animation && (BU_STR_EQUAL(sav[i], "--animation") ||
-		BU_STR_EQUAL(sav[i], "--animation-file"))) {
-	    skip = 1;
-	}
-	/* These two flags are alternate values of one setting. */
-	if ((cli_gui && BU_STR_EQUAL(sav[i], "--no-gui")) ||
-	    (cli_no_gui && BU_STR_EQUAL(sav[i], "--gui")))
-	    skip = 1;
-	if (skip) {
-	    if (rtwizard_spec_option_takes_arg(sav[i]) && i + 1 < sac) i++;
-	    continue;
-	}
-	merged[mac++] = bu_strdup(sav[i]);
-    }
-    /* Retain the option itself so the resolved path is available to Tcl and
-     * to view-keyframe capture. */
-    merged[mac++] = bu_strdup("--render-spec");
-    merged[mac++] = bu_strdup(spec);
+    argv[filtered_argc++] = argv[0];
     for (i = 1; i < argc; i++) {
 	if (i == spec_index) {
 	    if (spec_separate) i++;
 	    continue;
 	}
-	merged[mac++] = argv[i];
+	argv[filtered_argc++] = argv[i];
     }
-    rtwizard_spec_argv_free(sac, sav);
-    if (errmsg) bu_free(errmsg, "render spec error");
-    *argcp = mac;
-    *argvp = merged;
+    argv[filtered_argc] = NULL;
+    *argcp = filtered_argc;
 }
 
 
@@ -1707,7 +1625,6 @@ int
 main(int argc, char **argv)
 {
     char *av0;
-    char type = '\0';
     int i = 0;
     int need_help = 0;
     int need_help_dev = 0;
@@ -1716,7 +1633,7 @@ main(int argc, char **argv)
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     struct bu_vls info_msg = BU_VLS_INIT_ZERO;
     struct rtwizard_settings *s = rtwizard_settings_create();
-    struct bu_opt_desc d[61];
+    struct bu_opt_desc d[50];
 
     BU_OPT(d[0],  "h", "help",          "",             NULL,            &need_help,     "Print options help and exit");
     BU_OPT(d[1],  "",  "help-dev",      "",             NULL,            &need_help_dev, "Print development and programmatic options.");
@@ -1729,7 +1646,7 @@ main(int argc, char **argv)
     BU_OPT(d[6],  "n", "height",        "#",            &opt_height,     s,              "Output image height (overrides -s)");
 
     /* VISUALIZATION OPTIONS */
-    BU_OPT(d[7],  "t", "type",          "A|B|C|D|E|F",  &opt_letter,     &type,          "Specify RtWizard picture type");
+    BU_OPT(d[7],  "t", "type",          "A|B|C|D|E|F",  &opt_letter,     &s->image_type, "Specify RtWizard picture type");
     BU_OPT(d[8],  "c", "color-objects", "<obj_list>",   &opt_objs,       s->color,       "List of color objects (e.g., -c obj1,obj2)");
     BU_OPT(d[9],  "l", "line-objects",  "<obj_list>",   &opt_objs,       s->line,        "List of line objects");
     BU_OPT(d[10], "g", "ghost-objects", "<obj_list>",   &opt_objs,       s->ghost,       "List of ghost objects");
@@ -1768,33 +1685,22 @@ main(int argc, char **argv)
     BU_OPT(d[37], "",  "ao-samples",    "#",            &bu_opt_int,     &s->ao_samples, "Ambient occlusion samples per ray");
     BU_OPT(d[38], "",  "ao-radius",     "<float>",      &bu_opt_fastf_t, &s->ao_radius,  "Ambient occlusion maximum radius");
     BU_OPT(d[39], "",  "render-spec",   "<file.json>",  &bu_opt_vls,     s->render_spec, "Load a complete declarative render specification");
-    BU_OPT(d[40], "",  "animation",     "cut|orbit|turntable", &bu_opt_vls, s->animation_preset, "Select an animation preset");
-    BU_OPT(d[41], "",  "animation-file","<file.json>",  &bu_opt_vls,     s->animation_file, "Load animation tracks from a render specification");
-    BU_OPT(d[42], "",  "animation-duration", "<seconds>", &bu_opt_fastf_t, &s->animation_duration, "Animation duration in seconds");
-    BU_OPT(d[43], "",  "animation-frames", "#",          &bu_opt_int,     &s->animation_frames, "Exact animation frame count");
-    BU_OPT(d[44], "",  "animation-plays", "#",           &bu_opt_int,     &s->animation_plays, "APNG play count (0 means indefinite)");
-    BU_OPT(d[45], "",  "frame-dir",     "<directory>",   &bu_opt_vls,     s->frame_dir, "Preserve numbered PNG animation frames");
-    BU_OPT(d[46], "",  "resume",        "",              NULL,            &s->resume, "Resume using valid frames in --frame-dir");
-    BU_OPT(d[47], "",  "orbit-angle",   "<degrees>",     &bu_opt_fastf_t, &s->orbit_angle, "Orbit angle");
-    BU_OPT(d[48], "",  "orbit-axis",    "<vector>",      &bu_opt_vect_t,  &s->orbit_axis, "Orbit axis");
-    BU_OPT(d[49], "",  "orbit-center",  "<point>",       &bu_opt_vect_t,  &s->orbit_center, "Orbit target center");
-    BU_OPT(d[50], "",  "orbit-elevation", "<degrees>",   &bu_opt_fastf_t, &s->orbit_elevation, "Camera elevation above the orbit plane");
-    BU_OPT(d[51], "",  "orbit-radius",  "<distance>",    &bu_opt_fastf_t, &s->orbit_radius, "Camera distance from orbit center");
-    BU_OPT(d[52], "",  "turntable-object", "<path>",      &bu_opt_vls,     s->turntable_object, "Database path rotated by the turntable preset");
-    BU_OPT(d[53], "",  "turntable-angle", "<degrees>",    &bu_opt_fastf_t, &s->turntable_angle, "Turntable rotation angle");
-    BU_OPT(d[54], "",  "turntable-axis", "<vector>",      &bu_opt_vect_t,  &s->turntable_axis, "Turntable axis");
-    BU_OPT(d[55], "",  "turntable-center", "<point>",     &bu_opt_vect_t,  &s->turntable_center, "Turntable pivot");
-    BU_OPT(d[56], "",  "save-view-keyframe", "<file.json>", &bu_opt_vls, s->save_view_keyframe, "Create or append a camera view keyframe");
-    BU_OPT(d[57], "",  "time",          "<seconds>",     &bu_opt_fastf_t, &s->keyframe_time, "Keyframe time for --save-view-keyframe");
-    BU_OPT(d[58], "",  "replace-keyframe", "",           NULL,            &s->replace_keyframe, "Replace an existing camera keyframe at --time");
-    BU_OPT(d[59], "",  "animation-cyclic", "0|1",        &bu_opt_int,     &s->animation_cyclic, "Exclude a duplicate animation endpoint");
-    BU_OPT_NULL(d[60]);
+    BU_OPT(d[40], "",  "animation-duration", "<seconds>", &bu_opt_fastf_t, &s->animation_duration, "Animation duration in seconds");
+    BU_OPT(d[41], "",  "animation-frames", "#",          &bu_opt_int,     &s->animation_frames, "Exact animation frame count");
+    BU_OPT(d[42], "",  "animation-plays", "#",           &bu_opt_int,     &s->animation_plays, "APNG play count (0 means indefinite)");
+    BU_OPT(d[43], "",  "frame-dir",     "<directory>",   &bu_opt_vls,     s->frame_dir, "Preserve numbered PNG animation frames");
+    BU_OPT(d[44], "",  "resume",        "",              NULL,            &s->resume, "Resume using valid frames in --frame-dir");
+    BU_OPT(d[45], "",  "save-view-keyframe", "<file.json>", &bu_opt_vls, s->save_view_keyframe, "Create or append a camera view keyframe");
+    BU_OPT(d[46], "",  "time",          "<seconds>",     &bu_opt_fastf_t, &s->keyframe_time, "Keyframe time for --save-view-keyframe");
+    BU_OPT(d[47], "",  "replace-keyframe", "",           NULL,            &s->replace_keyframe, "Replace an existing camera keyframe at --time");
+    BU_OPT(d[48], "",  "animation-cyclic", "0|1",        &bu_opt_int,     &s->animation_cyclic, "Exclude a duplicate animation endpoint");
+    BU_OPT_NULL(d[49]);
 
     /* initialize progname for run-time resource finding */
     bu_setprogname(argv[0]);
     av0 = argv[0];
 
-    rtwizard_expand_render_spec(&argc, &argv);
+    rtwizard_load_render_spec(&argc, &argv, s);
 
     /* Change the working directory to BU_DIR_HOME if we are invoking
      * without any arguments. */
@@ -1844,8 +1750,8 @@ main(int argc, char **argv)
 	bu_exit(EXIT_SUCCESS, NULL);
     }
 
-    if (type != '\0') {
-	bu_log("Image type: %c\n", type);
+    if (s->image_type != '\0') {
+	bu_log("Image type: %c\n", s->image_type);
     }
 
     if (s->use_gui && s->no_gui) {
@@ -1898,14 +1804,14 @@ main(int argc, char **argv)
     if (s->cut_steps && !bu_vls_strlen(s->animation_preset) && !bu_vls_strlen(s->animation_file))
 	bu_vls_strcpy(s->animation_preset, "cut");
     if (bu_vls_strlen(s->animation_preset) && bu_vls_strlen(s->animation_file))
-	bu_exit(EXIT_FAILURE, "ERROR: --animation and --animation-file are mutually exclusive.\n");
+	bu_exit(EXIT_FAILURE, "ERROR: a render specification may not contain both a preset and tracks.\n");
     if (bu_vls_strlen(s->animation_preset) &&
 	!BU_STR_EQUAL(bu_vls_addr(s->animation_preset), "cut") &&
 	!BU_STR_EQUAL(bu_vls_addr(s->animation_preset), "orbit") &&
 	!BU_STR_EQUAL(bu_vls_addr(s->animation_preset), "turntable"))
-	bu_exit(EXIT_FAILURE, "ERROR: --animation must be cut, orbit, or turntable.\n");
+	bu_exit(EXIT_FAILURE, "ERROR: animation preset must be cut, orbit, or turntable.\n");
     if (BU_STR_EQUAL(bu_vls_addr(s->animation_preset), "turntable") && !bu_vls_strlen(s->turntable_object))
-	bu_exit(EXIT_FAILURE, "ERROR: --animation turntable requires --turntable-object.\n");
+	bu_exit(EXIT_FAILURE, "ERROR: turntable animation requires animation.options.turntable_object.\n");
 
     /* Presets have simple defaults.  For track files, zero remains an
      * intentional sentinel so timing is read from the JSON specification. */
@@ -1932,8 +1838,17 @@ main(int argc, char **argv)
 	bu_exit(EXIT_FAILURE, "ERROR: ambient occlusion samples and radius may not be negative.\n");
     if (s->cut_direction_set && MAGNITUDE(s->cut_direction) <= SQRT_SMALL_FASTF)
 	bu_exit(EXIT_FAILURE, "ERROR: --cut-direction must be a non-zero vector.\n");
+    if (!isfinite(s->orbit_angle) || !isfinite(s->turntable_angle))
+	bu_exit(EXIT_FAILURE, "ERROR: animation angles must be finite.\n");
     if (MAGNITUDE(s->orbit_axis) <= SQRT_SMALL_FASTF || MAGNITUDE(s->turntable_axis) <= SQRT_SMALL_FASTF)
 	bu_exit(EXIT_FAILURE, "ERROR: orbit and turntable axes must be non-zero vectors.\n");
+    if (!isfinite(s->orbit_axis[0]) || !isfinite(s->orbit_axis[1]) || !isfinite(s->orbit_axis[2]) ||
+	!isfinite(s->turntable_axis[0]) || !isfinite(s->turntable_axis[1]) || !isfinite(s->turntable_axis[2]))
+	bu_exit(EXIT_FAILURE, "ERROR: orbit and turntable axes must be finite.\n");
+    if (s->orbit_radius < DBL_MAX && (!(s->orbit_radius > 0.0) || !isfinite(s->orbit_radius)))
+	bu_exit(EXIT_FAILURE, "ERROR: orbit radius must be positive and finite.\n");
+    if (s->orbit_elevation < DBL_MAX && !isfinite(s->orbit_elevation))
+	bu_exit(EXIT_FAILURE, "ERROR: orbit elevation must be finite.\n");
     {
 	int have_animation = bu_vls_strlen(s->animation_preset) || bu_vls_strlen(s->animation_file);
 	if (have_animation && !bu_vls_strlen(s->output_file) && !bu_vls_strlen(s->frame_dir) && !s->use_gui)
@@ -1946,7 +1861,7 @@ main(int argc, char **argv)
 	bu_exit(EXIT_FAILURE, "ERROR: .apng, .avi, and .mjpg outputs require an animation option.\n");
     }
 
-    if (!s->use_gui && !rtwizard_info_sufficient(&info_msg, s, type)) {
+    if (!s->use_gui && !rtwizard_info_sufficient(&info_msg, s, s->image_type)) {
 	if ((!s->use_gui) && (!s->no_gui)) {
 	    s->use_gui = 1;
 	} else {
@@ -1984,6 +1899,8 @@ main(int argc, char **argv)
 		rtwizard_cut_bounds_cmd, NULL, NULL);
 	(void)Tcl_CreateObjCommand(interp, "rtwizard_image_valid",
 		rtwizard_image_valid_cmd, NULL, NULL);
+	(void)Tcl_CreateObjCommand(interp, "rtwizard_file_hash",
+		rtwizard_file_hash_cmd, NULL, NULL);
 	rtwizard_animation_init(interp);
 
 	/* Normalize .g and output image file paths, since they're to be used
@@ -2051,10 +1968,10 @@ main(int argc, char **argv)
 	/* launch gui */
     } else {
 	/* Check that we know enough to make an image. */
-	if (!rtwizard_info_sufficient(NULL, s, type)) {
+	if (!rtwizard_info_sufficient(NULL, s, s->image_type)) {
 	    /* If we *can* launch the GUI in this situation, do it */
 	    if (s->no_gui) {
-		bu_exit(EXIT_FAILURE, "ERROR: Image type %c specified, but supplied inputs are insufficient for generating a type %c image.\n", type, type);
+		bu_exit(EXIT_FAILURE, "ERROR: Image type %c specified, but supplied inputs are insufficient for generating a type %c image.\n", s->image_type, s->image_type);
 	    } else {
 		/* Launch GUI */
 	    }

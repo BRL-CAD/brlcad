@@ -111,6 +111,36 @@ proc rtimage_lookat_quat {direction {up {}}} {
     return [quat_mat2quat $m]
 }
 
+proc rtimage_frame_signature {rtimage_dict plan} {
+    set dbfile [dict get $rtimage_dict _dbfile]
+    set database [list [file normalize $dbfile] [file size $dbfile] \
+	[file mtime $dbfile] [rtwizard_file_hash $dbfile]]
+    set render_state {}
+    foreach key {_w _n _viewsize _orientation _eye_pt _perspective _bgcolor _ecolor
+	_necolor _occmode _gamma _benchmark_mode _color_objects _ghost_objects
+	_edge_objects _ao_samples _ao_radius} {
+	if {[dict exists $rtimage_dict $key]} {
+	    dict set render_state $key [dict get $rtimage_dict $key]
+	}
+    }
+    return [list rtwizard-frame-set-v2 $database $render_state $plan]
+}
+
+proc rtimage_write_atomic {path contents} {
+    set temporary "${path}.tmp-[pid]"
+    try {
+	set stream [open $temporary wb]
+	try {
+	    puts -nonewline $stream $contents
+	} finally {
+	    close $stream
+	}
+	file rename -force $temporary $path
+    } finally {
+	catch {file delete -force $temporary}
+    }
+}
+
 proc rtimage_preset_plan {rtimage_dict} {
     foreach param [dict keys $rtimage_dict] {
 	set $param [dict get $rtimage_dict $param]
@@ -121,7 +151,7 @@ proc rtimage_preset_plan {rtimage_dict} {
 
     set anim_objects [lsort -unique [concat $_color_objects $_ghost_objects $_edge_objects]]
     if {![llength $anim_objects]} {
-	return -code error "rtwizard: no objects available for cutting-plane animation bounds"
+	return -code error "rtwizard: no objects available for animation bounds"
     }
     set preset [expr {[info exists ::RtWizard::wizard_state(animation_preset)] ?
 	$::RtWizard::wizard_state(animation_preset) : "cut"}]
@@ -280,6 +310,42 @@ proc rtimage_animation {rtimage_dict} {
 	set keep_dir $::RtWizard::wizard_state(frame_dir)
 	file mkdir $keep_dir
     }
+    set resume_requested [expr {
+	[info exists ::RtWizard::wizard_state(resume_animation)] &&
+	$::RtWizard::wizard_state(resume_animation)}]
+    set frame_generation ""
+    if {$keep_dir ne ""} {
+	set frames [dict get $plan frames]
+	set frame_count [llength $frames]
+	if {!$resume_requested} {
+	    for {set frame_no 0} {$frame_no < $frame_count} {incr frame_no} {
+		set existing [file join $keep_dir [format "frame-%06d.png" $frame_no]]
+		if {[file exists $existing]} {
+		    return -code error "rtwizard: frame already exists: $existing (use --resume)"
+		}
+	    }
+	}
+	set signature [rtimage_frame_signature $rtimage_dict $plan]
+	set manifest_file [file join $keep_dir .rtwizard-frames]
+	if {$resume_requested && [file exists $manifest_file]} {
+	    set stream [open $manifest_file rb]
+	    try {
+		set manifest [read $stream]
+	    } finally {
+		close $stream
+	    }
+	    if {![catch {dict get $manifest signature} old_signature] &&
+		$old_signature eq $signature &&
+		![catch {dict get $manifest generation} old_generation]} {
+		set frame_generation $old_generation
+	    }
+	}
+	if {$frame_generation eq ""} {
+	    set frame_generation "[pid]-[clock microseconds]"
+	    rtimage_write_atomic $manifest_file [dict create \
+		signature $signature generation $frame_generation]
+	}
+    }
     set output_tmp ""
     try {
 	set frames [dict get $plan frames]
@@ -287,17 +353,22 @@ proc rtimage_animation {rtimage_dict} {
 	for {set frame_no 0} {$frame_no < $frame_count} {incr frame_no} {
 	    if {$keep_dir ne ""} {
 		set frame_file [file join $keep_dir [format "frame-%06d.png" $frame_no]]
+		set frame_marker "${frame_file}.rtwizard"
 		if {[file exists $frame_file]} {
-		    if {[info exists ::RtWizard::wizard_state(resume_animation)] &&
-			$::RtWizard::wizard_state(resume_animation) &&
+		    set marker_generation ""
+		    if {$resume_requested && [file exists $frame_marker]} {
+			set marker_stream [open $frame_marker rb]
+			try {
+			    set marker_generation [read $marker_stream]
+			} finally {
+			    close $marker_stream
+			}
+		    }
+		    if {$resume_requested && $marker_generation eq $frame_generation &&
 			[rtwizard_image_valid $frame_file $_w $_n]} {
 			puts "Using existing frame [expr {$frame_no + 1}]/$frame_count"
 			lappend animation_frames $frame_file
 			continue
-		    }
-		    if {![info exists ::RtWizard::wizard_state(resume_animation)] ||
-			!$::RtWizard::wizard_state(resume_animation)} {
-			return -code error "rtwizard: frame already exists: $frame_file (use --resume)"
 		    }
 		}
 	    } else {
@@ -313,8 +384,13 @@ proc rtimage_animation {rtimage_dict} {
 	    rtimage $rtimage_dict
 	    if {$keep_dir ne ""} {
 		set frame_tmp "${frame_file}.tmp-[pid]"
-		exec [file join [bu_dir bin] fb-png] -w $_w -n $_n -F $_port $frame_tmp 2>@1
-		file rename -force $frame_tmp $frame_file
+		try {
+		    exec [file join [bu_dir bin] fb-png] -w $_w -n $_n -F $_port $frame_tmp 2>@1
+		    file rename -force $frame_tmp $frame_file
+		} finally {
+		    catch {file delete -force $frame_tmp}
+		}
+		rtimage_write_atomic $frame_marker $frame_generation
 	    } else {
 		exec [file join [bu_dir bin] fb-pix] -w $_w -n $_n -F $_port $frame_file 2>@1
 	    }
@@ -646,8 +722,7 @@ proc rtimage {rtimage_dict} {
 	#puts "RTEDGE: $cmd"
 	
 	# Run rtedge to generate the full-color version of the ghost image
-	# !!! manually write an rtedge log
-	rtimage_exec_log $cmd rtedge.log $_edge_objects $_anim_commands
+	rtimage_exec_log $cmd $_log_file $_edge_objects $_anim_commands
     }
 
     catch {file delete -force $tgi}

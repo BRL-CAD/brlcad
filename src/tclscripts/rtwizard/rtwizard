@@ -345,9 +345,13 @@ if {[info exists ::use_gui]} {
 
    set save_only 0
    if {[info exists ::RtWizard::wizard_state(save_view_keyframe)]} {
+      set capture_local2base 1.0
+      if {![catch {set capture_units [db units -s]}] && $capture_units ne ""} {
+	 set capture_local2base [bu_units_conversion $capture_units]
+      }
       rtwizard_save_view_keyframe $::RtWizard::wizard_state(save_view_keyframe) \
 	  $::RtWizard::wizard_state(keyframe_time) $::RtWizard::wizard_state(replace_keyframe) \
-	  $eye_pt $orientation $viewsize $::RtWizard::wizard_state(perspective)
+	  $eye_pt $orientation $viewsize $::RtWizard::wizard_state(perspective) $capture_local2base
       puts "Saved view keyframe at $::RtWizard::wizard_state(keyframe_time) seconds to $::RtWizard::wizard_state(save_view_keyframe)"
       set save_only 1
    }

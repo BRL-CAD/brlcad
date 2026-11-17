@@ -27,14 +27,13 @@ set(ORBIT_PREFIX "${TEST_DIR}/rtwizard_orbit_frame_")
 set(TRACK_SPEC "${TEST_DIR}/rtwizard_track_spec.json")
 set(TRACK_ANIM "${TEST_DIR}/rtwizard_track.apng")
 set(TRACK_PREFIX "${TEST_DIR}/rtwizard_track_frame_")
-set(TRACK_DIRECT "${TEST_DIR}/rtwizard_track_direct.apng")
-set(TRACK_DIRECT_PREFIX "${TEST_DIR}/rtwizard_track_direct_frame_")
+set(CAPTURE_SPEC "${TEST_DIR}/rtwizard_capture_spec.json")
 set(TURNTABLE_SPEC "${TEST_DIR}/rtwizard_turntable_spec.json")
 set(TURNTABLE_ANIM "${TEST_DIR}/rtwizard_turntable.apng")
 set(TURNTABLE_DIR "${TEST_DIR}/rtwizard_turntable_frames")
 file(TO_CMAKE_PATH "${SRCFILE}" SRCFILE_JSON)
 file(REMOVE "${ANIM}" "${STILL}" "${FIRST}" "${LAST}" "${SPEC}" "${SPEC_STILL}" "${SPEC_OVERRIDE}" "${SPEC_CONTROL}"
-  "${ORBIT_SPEC}" "${ORBIT}" "${TRACK_SPEC}" "${TRACK_ANIM}" "${TRACK_DIRECT}"
+  "${ORBIT_SPEC}" "${ORBIT}" "${TRACK_SPEC}" "${TRACK_ANIM}" "${CAPTURE_SPEC}"
   "${TURNTABLE_SPEC}" "${TURNTABLE_ANIM}")
 file(REMOVE_RECURSE "${TURNTABLE_DIR}")
 file(GLOB OLD_FRAMES "${PREFIX}*")
@@ -98,19 +97,19 @@ if(last_convert_result OR stat_result OR stat_log MATCHES "Min[ \t]+255[ \t]+255
 endif()
 
 # A render specification can provide the complete still-image invocation.
-# A later scalar command-line option must override the value in the file.
+# Later scalar and object-list command-line options override file values.
 file(WRITE "${SPEC}" "{
   \"schema\": \"brlcad.rtwizard.render\",
   \"version\": 1,
   \"database\": \"${SRCFILE_JSON}\",
-  \"objects\": {\"color\": [\"component\"]},
+  \"objects\": {\"color\": [\"not, the component\"]},
   \"image\": {\"size\": 64, \"type\": \"A\"},
   \"output\": {\"file\": \"rtwizard_spec_still.pix\"},
   \"view\": {\"azimuth\": 35, \"elevation\": 25, \"zoom\": 1.5},
   \"runtime\": {\"benchmark\": true, \"no_gui\": true}
 }\n")
 execute_process(
-  COMMAND "${RTWIZ}" --render-spec "${SPEC}" --size 48 --output-file "${SPEC_OVERRIDE}"
+  COMMAND "${RTWIZ}" --render-spec "${SPEC}" --size 48 --output-file "${SPEC_OVERRIDE}" -c component
   RESULT_VARIABLE spec_result OUTPUT_VARIABLE spec_log ERROR_VARIABLE spec_log
 )
 execute_process(
@@ -122,6 +121,25 @@ execute_process(COMMAND "${PIXCMP_EXEC}" "${SPEC_OVERRIDE}" "${SPEC_CONTROL}"
   RESULT_VARIABLE spec_compare_result OUTPUT_VARIABLE spec_compare_log ERROR_VARIABLE spec_compare_log)
 if(spec_result OR control_result OR spec_compare_result OR EXISTS "${SPEC_STILL}")
   message(FATAL_ERROR "Render-spec still or CLI override failed:\n${spec_log}\n${spec_compare_log}")
+endif()
+
+# Schema type errors must fail during direct JSON loading with a useful field
+# name rather than leaking through to option parsing.
+file(WRITE "${SPEC}" "{
+  \"schema\": \"brlcad.rtwizard.render\",
+  \"version\": 1,
+  \"image\": {\"width\": \"wide\"}
+}\n")
+execute_process(COMMAND "${RTWIZ}" --render-spec "${SPEC}"
+  RESULT_VARIABLE malformed_result OUTPUT_VARIABLE malformed_log ERROR_VARIABLE malformed_log)
+if(NOT malformed_result OR NOT malformed_log MATCHES "image.width")
+  message(FATAL_ERROR "Malformed render-spec field was not rejected clearly:\n${malformed_log}")
+endif()
+
+execute_process(COMMAND "${RTWIZ}" --render-spec "${SPEC}" --render-spec "${SPEC}"
+  RESULT_VARIABLE duplicate_result OUTPUT_VARIABLE duplicate_log ERROR_VARIABLE duplicate_log)
+if(NOT duplicate_result OR NOT duplicate_log MATCHES "only once")
+  message(FATAL_ERROR "Duplicate --render-spec was not rejected clearly:\n${duplicate_log}")
 endif()
 
 # Exercise the orbit preset and persistent frame directory.
@@ -191,19 +209,34 @@ if(track_result OR track_extract_result OR NOT TRACK_FRAME_COUNT EQUAL 2)
   message(FATAL_ERROR "General camera track failed or produced ${TRACK_FRAME_COUNT} frames:\n${track_log}\n${track_extract_log}")
 endif()
 
-# The animation-only entry point must honor timing.frames from the same
-# general render specification without relying on render-spec expansion.
+# Capturing into an existing look-at animation preserves its units and adds a
+# separate orientation camera track rather than creating an invalid mixed one.
+file(WRITE "${CAPTURE_SPEC}" "{
+  \"schema\": \"brlcad.rtwizard.render\",
+  \"version\": 1,
+  \"animation\": {
+    \"units\": \"m\",
+    \"timing\": {\"duration\": 1, \"fps\": 2},
+    \"tracks\": [{
+      \"type\": \"camera\",
+      \"keyframes\": [
+        {\"time\": 0, \"eye\": [1, -1, 1], \"look_at\": [0, 0, 0]},
+        {\"time\": 1, \"eye\": [-1, -1, 1], \"look_at\": [0, 0, 0]}
+      ]
+    }]
+  }
+}\n")
 execute_process(
-  COMMAND "${RTWIZ}" --no-gui -i "${SRCFILE}" -o "${TRACK_DIRECT}" -c component
-          -t A -s 32 --benchmark --animation-file "${TRACK_SPEC}"
-  RESULT_VARIABLE track_direct_result OUTPUT_VARIABLE track_direct_log ERROR_VARIABLE track_direct_log)
-execute_process(COMMAND "${ICV_EXEC}" anim extract "${TRACK_DIRECT}" "${TRACK_DIRECT_PREFIX}"
-  RESULT_VARIABLE track_direct_extract_result
-  OUTPUT_VARIABLE track_direct_extract_log ERROR_VARIABLE track_direct_extract_log)
-file(GLOB TRACK_DIRECT_FRAMES "${TRACK_DIRECT_PREFIX}*_ctrl.png")
-list(LENGTH TRACK_DIRECT_FRAMES TRACK_DIRECT_FRAME_COUNT)
-if(track_direct_result OR track_direct_extract_result OR NOT TRACK_DIRECT_FRAME_COUNT EQUAL 2)
-  message(FATAL_ERROR "Direct animation-file timing failed or produced ${TRACK_DIRECT_FRAME_COUNT} frames:\n${track_direct_log}\n${track_direct_extract_log}")
+  COMMAND "${RTWIZ}" --no-gui -i "${SRCFILE}" -c component -t A -s 32 --benchmark
+          --save-view-keyframe "${CAPTURE_SPEC}" --time 0.5
+  RESULT_VARIABLE capture_result OUTPUT_VARIABLE capture_log ERROR_VARIABLE capture_log)
+file(READ "${CAPTURE_SPEC}" CAPTURE_JSON)
+string(JSON CAPTURE_UNITS GET "${CAPTURE_JSON}" animation units)
+string(JSON CAPTURE_TRACK_COUNT LENGTH "${CAPTURE_JSON}" animation tracks)
+string(JSON CAPTURE_ORIENTATION GET "${CAPTURE_JSON}" animation tracks 1 keyframes 0 orientation)
+if(capture_result OR NOT CAPTURE_UNITS STREQUAL "m" OR
+    NOT CAPTURE_TRACK_COUNT EQUAL 2 OR CAPTURE_ORIENTATION STREQUAL "")
+  message(FATAL_ERROR "View-keyframe capture did not preserve units and camera representation:\n${capture_log}")
 endif()
 
 # A turntable animates the model, not the camera.  Its two persistent frames
@@ -235,8 +268,34 @@ if(TURNTABLE_FIRST_HASH STREQUAL TURNTABLE_LAST_HASH)
   message(FATAL_ERROR "Turntable did not change the rendered model between frames")
 endif()
 
+# Resume reuses frames only while the database and complete render plan match.
+file(READ "${TURNTABLE_SPEC}" TURNTABLE_JSON)
+string(REPLACE
+  "\"frame_dir\": \"rtwizard_turntable_frames\""
+  "\"frame_dir\": \"rtwizard_turntable_frames\", \"resume\": true"
+  TURNTABLE_RESUME_JSON "${TURNTABLE_JSON}")
+file(WRITE "${TURNTABLE_SPEC}" "${TURNTABLE_RESUME_JSON}")
+execute_process(COMMAND "${RTWIZ}" --render-spec "${TURNTABLE_SPEC}"
+  RESULT_VARIABLE resume_result OUTPUT_VARIABLE resume_log ERROR_VARIABLE resume_log)
+if(resume_result OR NOT resume_log MATCHES "Using existing frame 2/2")
+  message(FATAL_ERROR "Matching persistent frames were not reused:\n${resume_log}")
+endif()
+
+string(REPLACE
+  "\"turntable_angle\": 90"
+  "\"turntable_angle\": 45"
+  TURNTABLE_CHANGED_JSON "${TURNTABLE_RESUME_JSON}")
+file(WRITE "${TURNTABLE_SPEC}" "${TURNTABLE_CHANGED_JSON}")
+execute_process(COMMAND "${RTWIZ}" --render-spec "${TURNTABLE_SPEC}"
+  RESULT_VARIABLE rerender_result OUTPUT_VARIABLE rerender_log ERROR_VARIABLE rerender_log)
+file(SHA256 "${TURNTABLE_LAST}" TURNTABLE_CHANGED_HASH)
+if(rerender_result OR rerender_log MATCHES "Using existing frame" OR
+    TURNTABLE_CHANGED_HASH STREQUAL TURNTABLE_LAST_HASH)
+  message(FATAL_ERROR "Changed animation plan reused stale persistent frames:\n${rerender_log}")
+endif()
+
 file(REMOVE "${ANIM}" "${STILL}" "${FIRST}" "${LAST}" "${SPEC}" "${SPEC_STILL}" "${SPEC_OVERRIDE}" "${SPEC_CONTROL}"
-  "${ORBIT_SPEC}" "${ORBIT}" "${TRACK_SPEC}" "${TRACK_ANIM}" "${TRACK_DIRECT}"
+  "${ORBIT_SPEC}" "${ORBIT}" "${TRACK_SPEC}" "${TRACK_ANIM}" "${CAPTURE_SPEC}"
   "${TURNTABLE_SPEC}" "${TURNTABLE_ANIM}"
-  ${FRAMES} ${ORBIT_FRAMES} ${TRACK_FRAMES} ${TRACK_DIRECT_FRAMES})
+  ${FRAMES} ${ORBIT_FRAMES} ${TRACK_FRAMES})
 file(REMOVE_RECURSE "${TURNTABLE_DIR}")

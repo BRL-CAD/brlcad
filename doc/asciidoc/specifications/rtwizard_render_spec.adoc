@@ -245,8 +245,9 @@ separators.  These restrictions keep the format declarative.
 
 If `output.frame_dir` is set, each completed frame is atomically stored as
 `frame-NNNNNN.png`.  Existing frames are an error unless `output.resume` is
-true.  Resume accepts only readable images with the requested dimensions and
-rerenders invalid ones.  The final animation is also written when
+true.  Resume accepts only readable images whose provenance marker matches the
+database and complete render plan, and rerenders stale or invalid ones.  The
+final animation is also written when
 `output.file` is present.
 
 An interactively selected or command-line view can be captured into a render
@@ -258,7 +259,8 @@ rtwizard -i vehicle.g -c all -a 25 -e 15 \
   --save-view-keyframe vehicle.json --time 2.5
 ----
 
-The command creates the file if necessary and appends a camera keyframe in
-millimeters.  A duplicate time is rejected; add `--replace-keyframe` to
-replace it.  Capturing multiple views is a convenient way to author a camera
-track without calculating eye points or quaternions.
+The command creates the file if necessary and appends a camera keyframe.  New
+animations use millimeters; an existing animation keeps its declared units and
+the captured values are converted accordingly.  A duplicate time is rejected;
+add `--replace-keyframe` to update it.  Capturing multiple views is a convenient
+way to author a camera track without calculating eye points or quaternions.

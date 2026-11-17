@@ -33,6 +33,7 @@ cmakefiles(
   main.c
   rtwizard.rc
   rtwizard.ico
+  settings.h
 )
 
 # Local Variables:

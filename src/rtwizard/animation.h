@@ -10,6 +10,8 @@
 
 #include "tcl.h"
 
+struct rtwizard_settings;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -18,11 +20,8 @@ extern "C" {
  * specifications and capture camera keyframes. */
 void rtwizard_animation_init(Tcl_Interp *interp);
 
-/* Convert a declarative render specification into ordinary rtwizard options.
- * General animation tracks retain the specification path for later typed
- * evaluation.  The caller owns the returned vector. */
-int rtwizard_spec_to_argv(const char *path, int *argc, char ***argv, char **errmsg);
-void rtwizard_spec_argv_free(int argc, char **argv);
+/* Load a declarative render specification into initialized settings. */
+int rtwizard_spec_apply(const char *path, struct rtwizard_settings *settings, char **errmsg);
 
 #ifdef __cplusplus
 }

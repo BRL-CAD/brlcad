@@ -103,7 +103,7 @@ preferred.
   Produce a cutting-plane animation containing exactly this many frames.
   The value must be at least 2.  The first frame is just before clipping
   begins and the last is just before the rendered bounds are fully clipped.
-  This is the compatibility shorthand for `--animation cut` with an exact
+  This is a compatibility shorthand for the JSON `cut` preset with an exact
   frame count.
 
 *--cut-direction* _x/y/z_::
@@ -114,18 +114,8 @@ preferred.
 *--animation-fps* _#_::
   Animation playback rate in frames per second (default 10).
 
-*--animation* _cut|orbit|turntable_::
-  Select an easy animation preset.  Orbit moves the camera while the model
-  stays fixed; turntable moves a specified model path while the camera stays
-  fixed.
-
-*--animation-file* _file.json_::
-  Read general animation tracks from a version 1 RtWizard render
-  specification.  Usually *--render-spec* is more convenient because it can
-  also supply the other render settings.
-
 *--animation-duration* _seconds_::
-  Animation duration (preset default 5).  Overrides JSON timing when given.
+  Override the JSON animation duration in seconds.  The preset default is 5.
 
 *--animation-frames* _#_::
   Exact number of frames.  If omitted, it is derived from duration and fps.
@@ -143,39 +133,9 @@ preferred.
   may be used with or without a final *-o* animation.
 
 *--resume*::
-  Reuse readable, correctly sized frames already in *--frame-dir*.  Without
+  Reuse frames whose provenance marker matches the current database and
+  complete render plan.  Stale or invalid frames are rendered again.  Without
   this option, an existing numbered frame is an error.
-
-*--orbit-angle* _degrees_::
-  Camera sweep for the orbit preset (default 360).
-
-*--orbit-axis* _x/y/z_::
-  Model-space orbit axis (default 0/0/1).
-
-*--orbit-center* _x/y/z_::
-  Fixed look-at target.  Defaults to the combined rendered-object bounds
-  center.
-
-*--orbit-elevation* _degrees_::
-  Camera elevation above the plane normal to the orbit axis.  If omitted,
-  the initial eye's elevation is preserved.
-
-*--orbit-radius* _distance_::
-  Camera distance from the orbit center.  If omitted, the initial eye's
-  distance is preserved.
-
-*--turntable-object* _path_::
-  Database object or full path rotated by the turntable preset.  Required
-  for that preset.
-
-*--turntable-angle* _degrees_::
-  Model rotation sweep (default 360).
-
-*--turntable-axis* _x/y/z_::
-  Model-space turntable axis (default 0/0/1).
-
-*--turntable-center* _x/y/z_::
-  Rotation pivot.  Defaults to the turntable object's bounds center.
 
 *--save-view-keyframe* _file.json_::
   Save the resolved view as a camera keyframe in a render specification and
@@ -345,14 +305,12 @@ be combined with the animation options.
 ====
 [source,bash]
 ----
-rtwizard --no-gui -i vehicle.g -c all -o overview.apng \
-         --animation orbit --orbit-axis 0/0/1 --orbit-elevation 20 \
-         --animation-duration 8 --animation-fps 24 \
-         --frame-dir overview-frames
+rtwizard --render-spec vehicle-overview.json
 ----
 Moves the camera through a full circle around the rendered bounds center,
-looking at that center throughout.  The model does not move.  Add *--resume*
-to a later identical invocation to reuse valid frames.
+looking at that center throughout.  The JSON specification selects the orbit
+preset and its axis, elevation, timing, output, and persistent frame directory.
+Set `output.resume` to true for a later identical invocation to reuse frames.
 ====
 
 .Complete render recipe
