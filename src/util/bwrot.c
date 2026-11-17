@@ -468,7 +468,7 @@ main(int argc, char **argv)
 	    for (x = nxin; x > 0; x--) {
 		obp = obuf;
 		bp = &buffer[ (x-1)*pixbytes ];
-		for (y = firsty+1; (ssize_t)y < lasty; y++) {
+		for (y = 0; y < buflines; y++) {
 		    for (j = 0; j < pixbytes; j++)
 			*obp++ = *bp++;
 		    bp += scanbytes - pixbytes;
