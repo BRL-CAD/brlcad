@@ -71,11 +71,9 @@
 #include "bu/getopt.h"
 #include "bu/opt.h"
 #include "bu/exit.h"
+#include "bu/malloc.h"
 #include "dm.h"
 
-
-#define MAX_LINE (8*1024)	/* Max pixels/line */
-static unsigned char scanline[3*MAX_LINE];	/* 1 scanline pixel buffer */
 
 static char *framebuffer = NULL;
 
@@ -230,6 +228,7 @@ main(int argc, char **argv)
 {
     int x, y;
     struct fb *fbp;
+    unsigned char *scanline;
 
     bu_setprogname(argv[0]);
 
@@ -244,6 +243,8 @@ main(int argc, char **argv)
     /* Get the screen size we were actually given */
     scr_width = fb_getwidth(fbp);
     scr_height = fb_getheight(fbp);
+    scanline = (unsigned char *)bu_calloc((size_t)scr_width,
+	sizeof(RGBpixel), "scanline");
 
     /*
      * Operation is bottom-to-top.
@@ -302,6 +303,7 @@ main(int argc, char **argv)
 	    break;
     }
     fb_close(fbp);
+    bu_free(scanline, "scanline");
     return 0;
 }
 
