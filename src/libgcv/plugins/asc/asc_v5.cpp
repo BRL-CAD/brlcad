@@ -22,6 +22,9 @@
 #include "vmath.h"
 
 #include <cctype>
+#include <cerrno>
+#include <cmath>
+#include <cstdlib>
 #include <fstream>
 #include <string>
 #include <cstring>
@@ -109,6 +112,64 @@ asc_list_text(const char *text)
     return normalized;
 }
 
+static int
+asc_set_attributes(struct db_i *database, int count, const char **arguments)
+{
+    if (count < 3 || count % 2 == 0) return BRLCAD_ERROR;
+    struct directory *entry = db_lookup(database, arguments[2], LOOKUP_QUIET);
+    if (!entry) return BRLCAD_ERROR;
+    bu_attribute_value_set attributes;
+    bu_avs_init_empty(&attributes);
+    if (db5_get_attributes(database, &attributes, entry)) {
+	bu_avs_free(&attributes);
+	return BRLCAD_ERROR;
+    }
+    for (int i = 3; i + 1 < count; i += 2)
+	bu_avs_add(&attributes, arguments[i], arguments[i + 1]);
+    db5_standardize_avs(&attributes);
+    int flags = entry->d_flags;
+    if (flags & RT_DIR_COMB) {
+	flags &= ~RT_DIR_REGION;
+	if (bu_avs_get(&attributes, "region")) flags |= RT_DIR_REGION;
+    }
+    const bool global = BU_STR_EQUAL(entry->d_namep, DB5_GLOBAL_OBJECT_NAME);
+    std::string title;
+    std::string colors;
+    double scale = database->dbi_local2base;
+    if (global) {
+	const char *value = bu_avs_get(&attributes, "title");
+	title = value ? value : database->dbi_title;
+	value = bu_avs_get(&attributes, "units");
+	if (value) {
+	    char *end = NULL;
+	    errno = 0;
+	    scale = std::strtod(value, &end);
+	    while (isspace((unsigned char)*end)) ++end;
+	    if (end == value || *end || errno == ERANGE || !std::isfinite(scale) || scale <= 0) {
+		bu_avs_free(&attributes);
+		return BRLCAD_ERROR;
+	    }
+	}
+	value = bu_avs_get(&attributes, "regionid_colortable");
+	if (value) colors = value;
+    }
+    if (db5_update_attributes(entry, &attributes, database)) {
+	bu_avs_free(&attributes);
+	return BRLCAD_ERROR;
+    }
+    entry->d_flags = flags;
+    if (global) {
+	if (db_update_ident(database, title.c_str(), scale) < 0) return BRLCAD_ERROR;
+	db_mater_free(database);
+	if (!colors.empty()) {
+	    char *copy = bu_strdup(colors.c_str());
+	    db5_import_color_table(database, copy);
+	    bu_free(copy, "ASC color table");
+	}
+    }
+    return BRLCAD_OK;
+}
+
 /* Note - in its full generality, a "v5 ASCII BRL-CAD geometry file" may
  * technically be a completely arbitrary Tcl script. For this plugin we
  * assume only commands that g2asc emits: color, title, units, attr, put.
@@ -154,8 +215,11 @@ asc_read_v5(struct gcv_context *context, const struct gcv_opts *UNUSED(options),
 	    break;
 	}
 	int result = BRLCAD_ERROR;
-	if (BU_STR_EQUAL(arguments[0], "attr"))
-	    result = rt_cmd_attr(&messages, context->dbip, count, arguments);
+	if (BU_STR_EQUAL(arguments[0], "attr")) {
+	    /* Serialized names are literal, including pattern characters. */
+	    result = count > 1 && BU_STR_EQUAL(arguments[1], "set") ?
+		asc_set_attributes(context->dbip, count, arguments) : rt_cmd_attr(&messages, context->dbip, count, arguments);
+	}
 	else if (BU_STR_EQUAL(arguments[0], "color"))
 	    result = rt_cmd_color(&messages, context->dbip, count, arguments);
 	else if (BU_STR_EQUAL(arguments[0], "put"))

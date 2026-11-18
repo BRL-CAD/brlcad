@@ -20,6 +20,7 @@ if(TARGET gcv-asc)
   endif()
   brlcad_add_test(NAME gcv_asc_dispatch COMMAND test_gcv_asc_script dispatch)
   brlcad_add_test(NAME gcv_asc_parser COMMAND test_gcv_asc_script parser)
+  brlcad_add_test(NAME gcv_asc_attributes COMMAND test_gcv_asc_script attributes)
 endif()
 
 cmakefiles(CMakeLists.txt test_context.c)

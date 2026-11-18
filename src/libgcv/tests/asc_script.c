@@ -31,6 +31,7 @@
 #include "gcv.h"
 #include "rt/db_attr.h"
 #include "rt/db_io.h"
+#include "rt/mater.h"
 
 /* A setup error must not satisfy a test expecting a converter failure. */
 static int
@@ -102,7 +103,7 @@ attribute_value(struct gcv_context *context, const char *name, const char *key, 
     bu_avs_init_empty(&attributes);
     if (!db5_get_attributes(context->dbip, &attributes, entry)) {
 	const char *actual = bu_avs_get(&attributes, key);
-	equal = actual && BU_STR_EQUAL(actual, expected);
+	equal = expected ? actual && BU_STR_EQUAL(actual, expected) : !actual;
     }
     bu_avs_free(&attributes);
     return equal;
@@ -161,6 +162,52 @@ parser_test(void)
     return failures ? 1 : 0;
 }
 
+static int
+attributes_test(void)
+{
+    struct gcv_context context;
+    const char *text =
+	"title initial\n"
+	"put {part*} ell V {0 0 0} A {1 0 0} B {0 1 0} C {0 0 1}\n"
+	"put part-one ell V {0 0 0} A {1 0 0} B {0 1 0} C {0 0 1}\n"
+	"attr set {part*} note {literal target}\n"
+	"put grouped comb region no tree {l part*}\n"
+	"attr set grouped region R region_id 17\n"
+	"attr set _GLOBAL title {attribute title} units 3.7 regionid_colortable {{100 200 10 20 30}}\n"
+	"units cm\n";
+    const char *invalid = "attr set _GLOBAL title invalid units not-units\n";
+    const struct directory *region;
+    const struct mater *color;
+    int failures = 0;
+    gcv_context_init(&context);
+    if (read_script(&context, text, strlen(text)) != 1 ||
+	!attribute_value(&context, "part*", "note", "literal target") ||
+	!attribute_value(&context, "part-one", "note", NULL)) {
+	bu_log("ASC attribute assignment did not use a literal object name\n");
+	++failures;
+    }
+    region = db_lookup(context.dbip, "grouped", LOOKUP_QUIET);
+    if (!region || !(region->d_flags & RT_DIR_REGION)) {
+	bu_log("ASC region attributes did not refresh directory flags\n");
+	++failures;
+    }
+    color = db_mater_head(context.dbip);
+    if (!BU_STR_EQUAL(context.dbip->dbi_title, "attribute title") ||
+	!EQUAL(context.dbip->dbi_local2base, 10) || !EQUAL(context.dbip->dbi_base2local, 0.1) ||
+	!color || color->mt_low != 100 || color->mt_high != 200 ||
+	color->mt_r != 10 || color->mt_g != 20 || color->mt_b != 30) {
+	bu_log("ASC global attributes did not refresh cached database state\n");
+	++failures;
+    }
+    if (read_script(&context, invalid, strlen(invalid)) != 0 ||
+	!attribute_value(&context, DB5_GLOBAL_OBJECT_NAME, "title", "attribute title")) {
+	bu_log("ASC accepted an invalid global unit scale or changed its attributes\n");
+	++failures;
+    }
+    gcv_context_destroy(&context);
+    return failures ? 1 : 0;
+}
+
 int
 main(int argc, const char **argv)
 {
@@ -168,6 +215,7 @@ main(int argc, const char **argv)
     if (argc != 2) return 1;
     if (BU_STR_EQUAL(argv[1], "dispatch")) return dispatch_test();
     if (BU_STR_EQUAL(argv[1], "parser")) return parser_test();
+    if (BU_STR_EQUAL(argv[1], "attributes")) return attributes_test();
     return 1;
 }
 
