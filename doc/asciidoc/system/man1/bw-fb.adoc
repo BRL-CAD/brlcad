@@ -8,11 +8,12 @@ bw-fb - display a black and white bw image on a framebuffer
 
 == SYNOPSIS
 
-[source]
-----
-bw-fb [-aiczRGB] [-F framebuffer] [-s squarefilesize] [-w file_width] [-n file_height] [-S squarescrsize] [-W scr_width] [-N scr_height] [-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff] [infile.bw]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bw-fb* [*-a*] [*-i*] [*-c*] [*-z*] [*-R*] [*-G*] [*-B*] [*-F* _device_] [*-s* _pixels_]
+      [*-w* _pixels_] [*-n* _scanlines_] [*-x* _pixels_] [*-y* _scanlines_] [*-X* _pixels_]
+      [*-Y* _scanlines_] [*-S* _pixels_] [*-W* _pixels_] [*-N* _scanlines_] [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -23,47 +24,69 @@ bw-fb [-aiczRGB] [-F framebuffer] [-s squarefilesize] [-w file_width] [-n file_h
 [[options]]
 == OPTIONS
 
-*-F* _framebuffer_::
-Explicitly specify the framebuffer to use.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-a*::
-Causes the program to attempt to autosize. A table of common image sizes is consulted, and if any match the size of the input file, then the width and height values associated with that size will be used. By default, the _bw_ file (and, automatically, the requested framebuffer size) is assumed to be 512x512 pixels.
+*-a*, *--autosize*::
+  Derive dimensions from a named input file.
 
-*-i*::
-Output the image from top to bottom. Customarily, _bw_ files are stored bottom to top, so this inverts the image.
+*-i*, *--invert*::
+  Display scanlines from top to bottom.
 
-*-c*::
-Clear the screen before the image is displayed. The default behavior is to overwrite the current image with the new image without clearing the screen.
+*-c*, *--clear*::
+  Clear the framebuffer before writing.
 
-*-z*::
-Zoom and center on the image being displayed to make it fill the display area.
+*-z*, *--zoom*::
+  Zoom and center the displayed image.
 
-*-R*, *-G*, *-B*::
-Select individual color planes (red, green, or blue, respectively) into which the image will be loaded. One or more can be given. By default all three colors are written with the _bw_ pixel value.
+*-R*, *--red*::
+  Write the BW values to the red plane.
 
-*-w* _file_width_::
-Specifies the width of each scanline in the input file, in pixels.
+*-G*, *--green*::
+  Write the BW values to the green plane.
 
-*-n* _file_height_::
-Specifies the height in scanlines of the input file.
+*-B*, *--blue*::
+  Write the BW values to the blue plane.
 
-*-s* _squarefilesize_::
-Sets both the file width and file height to the given size.
+*-F* _device_, *--framebuffer*=_device_::
+  Select the framebuffer instead of the FB_FILE environment default.
 
-*-W* _scr_width_::
-Specifies the width of the display device.
+*-s* _pixels_, *--input-size*=_pixels_::
+  Set both input dimensions.
 
-*-N* _scr_height_::
-Specifies the height of the display device.
+*-w* _pixels_, *--input-width*=_pixels_::
+  Set the input scanline width.
 
-*-S* _squarescrsize_::
-Sets both the display width and display height to the given size. If no display dimensions are provided, the display device uses the dimensions of the input file.
+*-n* _scanlines_, *--input-height*=_scanlines_::
+  Set the input image height.
 
-*-x* _file_xoff_, *-y* _file_yoff_::
-Offset into the file by the given amounts. The coordinate system for these offsets is first quadrant, with the origin at the lower left corner of the image.
+*-x* _pixels_, *--input-x-offset*=_pixels_::
+  Skip pixels from the left of each input scanline.
 
-*-X* _scr_xoff_, *-Y* _scr_yoff_::
-Offset onto the screen by the given amounts. The coordinate system for these offsets is first quadrant, with the origin at the lower left corner of the image.
+*-y* _scanlines_, *--input-y-offset*=_scanlines_::
+  Skip scanlines from the bottom of the input.
+
+*-X* _pixels_, *--screen-x-offset*=_pixels_::
+  Offset the image horizontally on the framebuffer.
+
+*-Y* _scanlines_, *--screen-y-offset*=_scanlines_::
+  Offset the image vertically on the framebuffer.
+
+*-S* _pixels_, *--framebuffer-size*=_pixels_::
+  Set both framebuffer dimensions.
+
+*-W* _pixels_, *--framebuffer-width*=_pixels_::
+  Set the framebuffer width.
+
+*-N* _scanlines_, *--framebuffer-height*=_scanlines_::
+  Set the framebuffer height.
+
+// END GENERATED BU_ARG OPTIONS
+
+If none of the red, green, or blue plane options is selected, *bw-fb*
+writes the BW value to all three planes. Input and framebuffer offsets use
+a first-quadrant coordinate system with the origin at the lower-left corner.
 
 
 [[format]]
