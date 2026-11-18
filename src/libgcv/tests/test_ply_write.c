@@ -38,7 +38,10 @@
 #ifdef GCV_PLY_TEST_WRITE_FAILURE
 #include "../plugins/ply/rply.h"
 
-enum ply_test_failure { PLY_TEST_NONE, PLY_TEST_HEADER, PLY_TEST_VALUE, PLY_TEST_CLOSE, PLY_TEST_TESSELLATION };
+enum ply_test_failure {
+    PLY_TEST_NONE, PLY_TEST_HEADER, PLY_TEST_VALUE, PLY_TEST_CLOSE,
+    PLY_TEST_TESSELLATION, PLY_TEST_BOOLEAN
+};
 static enum ply_test_failure ply_test_failure;
 static int ply_test_injected;
 static size_t ply_test_regions_before_failure;
@@ -77,18 +80,33 @@ ply_test_close(p_ply output)
     return status;
 }
 
+static int
+ply_test_region_failure(enum ply_test_failure failure)
+{
+    if (ply_test_failure != failure) return 0;
+    if (ply_test_regions_before_failure) {
+	--ply_test_regions_before_failure;
+	return 0;
+    }
+    ply_test_failure = PLY_TEST_NONE;
+    ply_test_injected = 1;
+    return 1;
+}
+
 static void
 ply_test_triangulation(struct model *model, struct bu_list *vlfree, const struct bn_tol *tolerance)
 {
-    if (ply_test_failure == PLY_TEST_TESSELLATION) {
-	if (!ply_test_regions_before_failure) {
-	    ply_test_failure = PLY_TEST_NONE;
-	    ply_test_injected = 1;
-	    bu_bomb("PLY test: tessellation failed after an earlier region succeeded\n");
-	}
-	--ply_test_regions_before_failure;
-    }
+    if (ply_test_region_failure(PLY_TEST_TESSELLATION))
+	bu_bomb("PLY test: tessellation failed after an earlier region succeeded\n");
     nmg_triangulate_model(model, vlfree, tolerance);
+}
+
+static union tree *
+ply_test_boolean(union tree *tree, struct bu_list *vlfree, const struct bn_tol *tolerance)
+{
+    if (ply_test_region_failure(PLY_TEST_BOOLEAN))
+	bu_bomb("PLY test: Boolean evaluation failed after an earlier region succeeded\n");
+    return nmg_booltree_evaluate(tree, vlfree, tolerance);
 }
 
 /* A successful close must not hide an earlier library write failure. */
@@ -96,11 +114,13 @@ ply_test_triangulation(struct model *model, struct bu_list *vlfree, const struct
 #define ply_write ply_test_write_value
 #define ply_close ply_test_close
 #define nmg_triangulate_model ply_test_triangulation
+#define nmg_booltree_evaluate ply_test_boolean
 #include "../plugins/ply/ply_write.c"
 #undef ply_write
 #undef ply_write_header
 #undef ply_close
 #undef nmg_triangulate_model
+#undef nmg_booltree_evaluate
 #endif
 
 static const struct gcv_filter *
@@ -380,6 +400,9 @@ failure_test(const char *mode, const char *full_device)
     } else if (BU_STR_EQUAL(mode, "tessellation")) {
 	ply_test_failure = PLY_TEST_TESSELLATION;
 	ply_test_regions_before_failure = 1;
+    } else if (BU_STR_EQUAL(mode, "boolean-error")) {
+	ply_test_failure = PLY_TEST_BOOLEAN;
+	ply_test_regions_before_failure = 1;
 #endif
     } else {
 	valid = 0;
@@ -395,7 +418,7 @@ failure_test(const char *mode, const char *full_device)
     }
 #endif
     if (valid && (empty || BU_STR_EQUAL(mode, "objects") || BU_STR_EQUAL(mode, "type") ||
-	    BU_STR_EQUAL(mode, "tessellation"))) {
+	    BU_STR_EQUAL(mode, "tessellation") || BU_STR_EQUAL(mode, "boolean-error"))) {
 	char contents[sizeof(marker)] = {0};
 	file = fopen(path, "rb");
 	valid = file && fread(contents, 1, sizeof(marker) - 1, file) == sizeof(marker) - 1 &&
@@ -433,7 +456,8 @@ main(int argc, const char **argv)
 #ifdef GCV_PLY_TEST_WRITE_FAILURE
     if (argc == 2 && (BU_STR_EQUAL(argv[1], "header") || BU_STR_EQUAL(argv[1], "value") ||
 	    BU_STR_EQUAL(argv[1], "header-separate") || BU_STR_EQUAL(argv[1], "value-separate") ||
-	    BU_STR_EQUAL(argv[1], "close-separate") || BU_STR_EQUAL(argv[1], "tessellation")))
+	    BU_STR_EQUAL(argv[1], "close-separate") || BU_STR_EQUAL(argv[1], "tessellation") ||
+	    BU_STR_EQUAL(argv[1], "boolean-error")))
 	return failure_test(argv[1], NULL);
 #endif
     if (argc == 2 && BU_STR_EQUAL(argv[1], "separate-open")) return failure_test(argv[1], NULL);

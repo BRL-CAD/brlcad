@@ -464,16 +464,16 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 
 
 static union tree *
-process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct bu_list *vlfree)
+process_boolean(union tree **curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct bu_list *vlfree, struct conversion_state *state)
 {
-    static union tree *ret_tree = TREE_NULL;
+    union tree *volatile ret_tree = TREE_NULL;
 
     /* Begin bomb protection */
     if (!BU_SETJUMP) {
 	/* try */
 
 	(void)nmg_model_fuse(*tsp->ts_m, vlfree, tsp->ts_tol);
-	ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol);
+	ret_tree = nmg_booltree_evaluate(*curtree, vlfree, tsp->ts_tol);
     } else {
 	/* catch */
 	char *name = db_path_to_string(pathp);
@@ -485,7 +485,10 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	nmg_isect2d_final_cleanup();
 
 	/* Release the tree memory & input regions */
-	db_free_tree(curtree);/* Does an nmg_kr() */
+	db_free_tree(*curtree);/* Does an nmg_kr() */
+	*curtree = TREE_NULL;
+	ret_tree = TREE_NULL;
+	state->failed = 1;
 
 	/* Get rid of (m)any other intermediate structures */
 	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC) {
@@ -546,7 +549,13 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 	bu_free(name, "region path");
     }
 
-    ret_tree = process_boolean(curtree, tsp, pathp, pstate->vlfree);
+    ret_tree = process_boolean(&curtree, tsp, pathp, pstate->vlfree, pstate);
+    if (!curtree) {
+	BU_ALLOC(curtree, union tree);
+	RT_TREE_INIT(curtree);
+	curtree->tr_op = OP_NOP;
+	return curtree;
+    }
 
     if (ret_tree) {
 	r = ret_tree->tr_d.td_r;
