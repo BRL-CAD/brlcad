@@ -54,7 +54,7 @@ target_include_directories(fbpoint BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..
 add_target_deps(fbpoint dm_plugins)
 brlcad_addexec(fbstretch "fbstretch.c;ioutil.c" libdm FOLDER Fb)
 add_target_deps(fbstretch dm_plugins)
-brlcad_addexec(fbzoom fbzoom.c "libdm" FOLDER Fb)
+brlcad_addexec(fbzoom fbzoom.c "libdm" FOLDER Fb ARG_SCHEMA)
 target_include_directories(fbzoom BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio)
 add_target_deps(fbzoom dm_plugins)
 brlcad_addexec(gif-fb "gif-fb.c;ioutil.c" libdm FOLDER Fb)
