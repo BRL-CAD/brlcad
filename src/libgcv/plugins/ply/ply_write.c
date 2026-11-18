@@ -634,6 +634,21 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
     struct conversion_state state;
     struct db_tree_state tree_state;
     p_ply ply_fp = NULL;
+    int status = 0;
+    const struct ply_write_options *output_options = (const struct ply_write_options *)options_data;
+
+    if (!gcv_options->num_objects) {
+	bu_log("PLY writer: no objects to export\n");
+	return 0;
+    }
+    if (!BU_STR_EQUAL(output_options->type, "asc") && !BU_STR_EQUAL(output_options->type, "le") &&
+	!BU_STR_EQUAL(output_options->type, "be") && !BU_STR_EQUAL(output_options->type, "de")) {
+	bu_log("PLY writer: unsupported storage type %s\n", output_options->type);
+	return 0;
+    }
+    for (size_t i = 0; i < gcv_options->num_objects; ++i)
+	if (db_lookup(context->dbip, gcv_options->object_names[i], LOOKUP_NOISY) == RT_DIR_NULL)
+	    return 0;
 
     memset(&state, 0, sizeof(state));
     state.gcv_options = gcv_options;
@@ -705,14 +720,6 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
 	    tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
 	bu_log("Calculational tolerances:\n\tdist = %g mm perp = %g\n",
 	    tree_state.ts_tol->dist, tree_state.ts_tol->perp);
-    }
-
-    /* Verify that all the specified objects are valid - if one or
-     * more of them are not, bail
-     */
-    for (size_t j = 0; j < gcv_options->num_objects; j++) {
-	if (db_lookup(state.dbip, gcv_options->object_names[j], LOOKUP_NOISY) == RT_DIR_NULL)
-	    bu_exit(1, "ERROR: invalid object\n");
     }
 
     /* Quickly get number of regions. I did this over dynamically
@@ -829,6 +836,7 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
         bu_log("  dist [-D]    %g\n", tol.dist);
     }
 
+    status = state.cur_region > 0;
 free_all:
     /* Release dynamic storage */
     if (state.f_regs)
@@ -839,12 +847,12 @@ free_all:
 	bu_free(state.v_regs, "state.v_regs");
     if (state.v_tbl_regs)
 	bu_free(state.v_tbl_regs, "state.v_tbl_regs");
-    if (ply_fp)
-        ply_close(ply_fp);
+    if (ply_fp && !ply_close(ply_fp))
+	status = 0;
     nmg_km(state.the_model);
     rt_vlist_cleanup();
 
-    return 1;
+    return status;
 }
 
 /* filter setup */

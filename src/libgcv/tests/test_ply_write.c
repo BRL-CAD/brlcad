@@ -156,6 +156,20 @@ check_geometry(struct gcv_context *context)
 }
 
 static int
+round_trip(struct gcv_context *source, const struct gcv_filter *writer, const char *path, const char *type)
+{
+    const char *arguments[] = {"-t", type};
+    struct gcv_context imported;
+    gcv_context_init(&imported);
+    const struct gcv_filter *reader = find_filter(GCV_FILTER_READ, BU_MIME_MODEL_PLY, NULL, &imported);
+    int valid = gcv_execute(source, writer, NULL, 2, arguments, path) == 1 && reader &&
+	gcv_execute(&imported, reader, NULL, 0, NULL, path) == 1 && check_geometry(&imported);
+    if (!valid) bu_log("PLY %s export/import changed geometry or failed\n", type);
+    gcv_context_destroy(&imported);
+    return valid;
+}
+
+static int
 geometry_test(int joined)
 {
     struct gcv_context source;
@@ -169,17 +183,69 @@ geometry_test(int joined)
     else if (fclose(file)) valid = 0;
     const struct gcv_filter *writer = find_filter(GCV_FILTER_WRITE, BU_MIME_MODEL_PLY, NULL, &source);
     if (!writer) valid = 0;
-    for (size_t mode = 0; valid && mode < sizeof(types) / sizeof(types[0]); ++mode) {
-	const char *arguments[] = {"-t", types[mode]};
-	struct gcv_context imported;
-	gcv_context_init(&imported);
-	const struct gcv_filter *reader = find_filter(GCV_FILTER_READ, BU_MIME_MODEL_PLY, NULL, &imported);
-	valid = gcv_execute(&source, writer, NULL, 2, arguments, path) == 1 && reader &&
-	    gcv_execute(&imported, reader, NULL, 0, NULL, path) == 1 && check_geometry(&imported);
-	if (!valid) bu_log("PLY %s export/import changed geometry or failed\n", types[mode]);
-	gcv_context_destroy(&imported);
-    }
+    for (size_t mode = 0; valid && mode < sizeof(types) / sizeof(types[0]); ++mode)
+	valid = round_trip(&source, writer, path, types[mode]);
     if (path[0]) bu_file_delete(path);
+    gcv_context_destroy(&source);
+    return valid ? 0 : 1;
+}
+
+static int
+failure_test(const char *mode, const char *full_device)
+{
+    struct gcv_context source;
+    struct gcv_opts options;
+    struct bu_vls unavailable = BU_VLS_INIT_ZERO;
+    char path[MAXPATHLEN] = {0};
+    const char *arguments[] = {"-t", "asc"};
+    const char *missing_object[] = {"missing.r"};
+    const char marker[] = "existing output\n";
+    gcv_context_init(&source);
+    gcv_opts_default(&options);
+    int empty = BU_STR_EQUAL(mode, "empty");
+    int valid = empty || create_geometry(&source, 0);
+    FILE *file = bu_temp_file(path, sizeof(path));
+    if (!file) valid = 0;
+    else {
+	int written = fwrite(marker, 1, sizeof(marker) - 1, file) == sizeof(marker) - 1;
+	int closed = fclose(file) == 0;
+	if (!written || !closed) valid = 0;
+    }
+    const struct gcv_filter *writer = find_filter(GCV_FILTER_WRITE, BU_MIME_MODEL_PLY, NULL, &source);
+    if (!writer) valid = 0;
+    const char *target = path;
+    if (BU_STR_EQUAL(mode, "open")) {
+	/* A regular file cannot serve as the parent directory. */
+	bu_vls_printf(&unavailable, "%s/mesh.ply", path);
+	target = bu_vls_cstr(&unavailable);
+    } else if (BU_STR_EQUAL(mode, "type")) {
+	arguments[1] = "unsupported";
+    } else if (BU_STR_EQUAL(mode, "objects")) {
+	options.object_names = missing_object;
+	options.num_objects = 1;
+    } else if (empty) {
+	options.verbosity_level = 1;
+    } else if (BU_STR_EQUAL(mode, "close") && full_device) {
+	target = full_device;
+    } else {
+	valid = 0;
+    }
+    if (valid && gcv_execute(&source, writer, &options, 2, arguments, target) != 0) {
+	bu_log("PLY writer did not reject %s failure\n", mode);
+	valid = 0;
+    }
+    if (valid && (empty || BU_STR_EQUAL(mode, "objects") || BU_STR_EQUAL(mode, "type"))) {
+	char contents[sizeof(marker)] = {0};
+	file = fopen(path, "rb");
+	valid = file && fread(contents, 1, sizeof(marker) - 1, file) == sizeof(marker) - 1 &&
+	    BU_STR_EQUAL(contents, marker) && fgetc(file) == EOF && !ferror(file);
+	if (file && fclose(file)) valid = 0;
+	if (!valid) bu_log("PLY writer changed existing output before rejecting %s\n", mode);
+    }
+    if (valid && empty) valid = create_geometry(&source, 0);
+    if (valid) valid = round_trip(&source, writer, path, "asc");
+    if (path[0]) bu_file_delete(path);
+    bu_vls_free(&unavailable);
     gcv_context_destroy(&source);
     return valid ? 0 : 1;
 }
@@ -191,6 +257,10 @@ main(int argc, const char **argv)
     bu_setprogname(argv[0]);
     if (argc == 2 && BU_STR_EQUAL(argv[1], "geometry")) return geometry_test(0);
     if (argc == 2 && BU_STR_EQUAL(argv[1], "boolean")) return geometry_test(1);
+    if (argc == 2 && (BU_STR_EQUAL(argv[1], "open") || BU_STR_EQUAL(argv[1], "type") ||
+	    BU_STR_EQUAL(argv[1], "objects") || BU_STR_EQUAL(argv[1], "empty")))
+	return failure_test(argv[1], NULL);
+    if (argc == 3 && BU_STR_EQUAL(argv[1], "close")) return failure_test(argv[1], argv[2]);
     if (argc != 1) return 1;
     gcv_context_init(&context);
     const struct gcv_filter *writer = find_filter(GCV_FILTER_WRITE, BU_MIME_MODEL_PLY, NULL, &context);
