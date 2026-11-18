@@ -86,7 +86,7 @@ brlcad_addexec(obj-g "${obj-g_SRCS}" "libbu;libbn;librt;libnmg;libwdb;libwfobj;$
 target_include_directories(obj-g PRIVATE ${BRLCAD_SOURCE_DIR}/src/libgcv/plugins/obj)
 target_include_directories(obj-g PRIVATE ${BRLCAD_SOURCE_DIR}/src/libgcv/plugins/obj/wfobj)
 
-brlcad_addexec(g-voxel g-voxel.c "librt;libbu;libwdb;libanalyze;" FOLDER Conv)
+brlcad_addexec(g-voxel g-voxel.c "librt;libbu;libwdb;libanalyze;" FOLDER Conv ARG_SCHEMA)
 
 if(BRLCAD_ENABLE_OPENVDB)
   brlcad_addexec(g-vdb g-vdb.cpp "librt;libbu;libwdb;libanalyze;OpenVDB::openvdb" FOLDER Conv)
