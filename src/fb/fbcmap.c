@@ -34,21 +34,24 @@
 
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "fb_arg.h"
+#include "bu/exit.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/snooze.h"
 #include "dm.h"
 #include "pkg.h"
 
 
-static char *framebuffer = NULL;
-static int scr_width = 0;
-static int scr_height = 0;
-
-
-static int flavor = 0;
+struct fbcmap_args {
+    struct fbcmap_args *self;
+    int help;
+    const char *framebuffer;
+    int width;
+    int height;
+    int flavor;
+};
 
 static unsigned char utah_cmap[256] = {
     0,  4,  9, 13, 17, 21, 25, 29, 32, 36, 39, 42, 45, 48, 51, 54,
@@ -590,101 +593,145 @@ unsigned char utah9[256*3] = {
     255, 255, 255,
 };
 
-static int
-pars_Argv(int argc, char **argv)
-{
-    int c;
-    int remaining = 0;
+enum fbcmap_dimension {
+    FBCMAP_SIZE,
+    FBCMAP_WIDTH,
+    FBCMAP_HEIGHT
+};
 
-    while ((c = bu_getopt(argc, argv, "F:s:S:w:W:n:N:h?")) != -1) {
-	switch (c) {
-	    case 'F':
-		framebuffer = bu_optarg;
-		break;
-	    case 'S':
-	    case 's':
-		/* square file size */
-		if (!fb_arg_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen size"))
-		    return 0;
-		scr_height = scr_width;
-		break;
-	    case 'w':
-	    case 'W':
-		if (!fb_arg_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen width"))
-		    return 0;
-		break;
-	    case 'n':
-	    case 'N':
-		if (!fb_arg_int_range(bu_optarg, &scr_height, 0, INT_MAX, "screen height"))
-		    return 0;
-		break;
-	    default :
-		return 0;
-	}
+static int
+fbcmap_dimension_value(struct bu_vls *msg, const char *arg, void *storage,
+	enum fbcmap_dimension dimension)
+{
+    struct fbcmap_args *args = storage ? *(struct fbcmap_args **)storage : NULL;
+    int value;
+
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 0, INT_MAX))
+	return -1;
+    if (args) {
+	if (dimension == FBCMAP_SIZE)
+	    args->width = args->height = value;
+	else if (dimension == FBCMAP_WIDTH)
+	    args->width = value;
+	else
+	    args->height = value;
     }
-    remaining = argc - bu_optind;
-    if (remaining > 1) {
-	fprintf(stderr, "fbcmap: excess argument(s) not supported\n");
-	return 0;
-    }
-    if (remaining == 1) {
-	if (!fb_arg_int_range(argv[bu_optind], &flavor, 0, INT_MAX, "map number"))
-	    return 0;
-    }
-    return 1;
+    return 0;
 }
 
+#define FBCMAP_DIMENSION_CALLBACK(_name, _dimension) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return fbcmap_dimension_value(msg, arg, storage, _dimension); \
+    }
 
-static void
-usage(void)
+FBCMAP_DIMENSION_CALLBACK(fbcmap_size, FBCMAP_SIZE)
+FBCMAP_DIMENSION_CALLBACK(fbcmap_width, FBCMAP_WIDTH)
+FBCMAP_DIMENSION_CALLBACK(fbcmap_height, FBCMAP_HEIGHT)
+
+static const struct bu_arg_option fbcmap_options[] = {
+    BU_ARG_FLAG("h", "help", struct fbcmap_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_VALUE("F", "framebuffer", struct fbcmap_args, framebuffer,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Select the framebuffer instead of the FB_FILE environment default"),
+    BU_ARG_CUSTOM("s", "size", struct fbcmap_args, self, fbcmap_size,
+	"pixels", "Set both dimensions; zero selects the device default"),
+    BU_ARG_ALIAS("S", NULL, "size", 1),
+    BU_ARG_CUSTOM("w", "width", struct fbcmap_args, self, fbcmap_width,
+	"pixels", "Set the width; zero selects the device default"),
+    BU_ARG_ALIAS("W", NULL, "width", 1),
+    BU_ARG_CUSTOM("n", "height", struct fbcmap_args, self, fbcmap_height,
+	"scanlines", "Set the height; zero selects the device default"),
+    BU_ARG_ALIAS("N", NULL, "height", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_value_keyword fbcmap_values[] = {
+    {"0", NULL, "Linear identity map (default)"},
+    {"1", NULL, "Reverse-linear photographic negative"},
+    {"2", NULL, "Polaroid 809/891 print-film correction"},
+    {"3", NULL, "Linear map with the low 100 entries black"},
+    {"4", NULL, "Amplified middle range for dim images"},
+    {"5", NULL, "University of Utah gamma correction"},
+    {"6", NULL, "Full-intensity color deltas"},
+    {"8", NULL, "Ikcmap 8 false-color map"},
+    {"9", NULL, "Ikcmap 9 false-color map"},
+    {"10", NULL, "Solid black"},
+    {"11", NULL, "Solid white"},
+    {"12", NULL, "18 percent neutral grey"},
+    {NULL, NULL, NULL}
+};
+
+static const struct bu_arg_operand fbcmap_operands[] = {
+    BU_ARG_OPERAND_KEYWORD_VALUES("map-number", BU_ARG_VALUE_KEYWORD, 0, 1,
+	"Built-in color map number (default: 0)", NULL, fbcmap_values),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema fbcmap_schema = BU_ARG_SCHEMA(
+    "fbcmap", "Load a built-in color map onto a framebuffer",
+    fbcmap_options, fbcmap_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar fbcmap_grammar = {
+    &fbcmap_schema, NULL, NULL
+};
+
+
+static int
+fbcmap_help(FILE *stream, int status)
 {
-    (void) fprintf(stderr, "Usage: fbcmap [-F framebuffer]\n");
-    (void) fprintf(stderr, "	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n");
-    (void) fprintf(stderr, "	[map_number]\n");
-    (void) fprintf(stderr,
-		   "Color map #0, linear (standard).\n");
-    (void) fprintf(stderr,
-		   "Color map #1, reverse-linear (negative).\n");
-    (void) fprintf(stderr,
-		   "Color map #2, corrected for POLAROID 809/891 film.\n");
-    (void) fprintf(stderr,
-		   "Color map #3, low 100 entries black.\n");
-    (void) fprintf(stderr,
-		   "Color map #4, amplify middle range to boost dim pictures.\n");
-    (void) fprintf(stderr,
-		   "Color map #5, University of Utah's gamma correcting map.\n");
-    (void) fprintf(stderr, "Color map #6, color deltas.\n");
-    (void) fprintf(stderr, "Color map #8, ikcmap 8.\n");
-    (void) fprintf(stderr, "Color map #9, ikcmap 9.\n");
-    (void) fprintf(stderr, "Color map #10, solid black.\n");
-    (void) fprintf(stderr, "Color map #11, solid white.\n");
-    (void) fprintf(stderr, "Color map #12, 18%% neutral grey.\n");
-    bu_exit(1, NULL);
+    char *help = bu_arg_schema_help(&fbcmap_schema, "fbcmap");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "fbcmap help");
+    return status;
 }
 
 int
 main(int argc, char **argv)
 {
+    struct fbcmap_args args = {NULL, 0, NULL, 0, 0, 0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     int i;
     int fudge;
     ColorMap cmap;
     ColorMap *cp = &cmap;
     struct fb *fbp;
+    args.self = &args;
 
     bu_setprogname(argv[0]);
+    int introspection = bu_arg_introspect(&msg, &fbcmap_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&fbcmap_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return fbcmap_help(stdout, 0);
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
+	return fbcmap_help(stderr, 1);
+    if (operand_index < argc - 1 &&
+	!bu_arg_integer_from_str(NULL, &args.flavor, argv[operand_index + 1], 10))
+	bu_exit(1, "fbcmap: internal map-number validation mismatch\n");
 
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
     bu_snooze(BU_SEC2USEC(1));
 
-    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
-	usage();
-    if (! pars_Argv(argc, argv))
-	usage();
-
-    if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == NULL)
+    if ((fbp = fb_open(args.framebuffer, args.width, args.height)) == NULL)
 	return 1;
 
-    switch (flavor) {
+    switch (args.flavor) {
 
 	case 0 : /* Standard - Linear color map */
 	    (void) fprintf(stderr, "Color map #0, linear (standard).\n");
@@ -821,11 +868,8 @@ main(int argc, char **argv)
 	    break;
 
 	default:
-	    (void) fprintf(stderr,
-			   "Color map #%d, flavor not implemented!\n",
-			   flavor);
-	    usage();
-	    return 1;
+	    bu_exit(1, "fbcmap: internal map-number validation mismatch: %d\n",
+		args.flavor);
     }
     fb_wmap(fbp, cp);
     return fb_close(fbp);
