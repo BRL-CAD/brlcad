@@ -112,7 +112,7 @@ brlcad_addexec(g-x3d g-x3d.c "librt;libnmg;libbu;${M_LIBRARY}" FOLDER Conv)
 
 brlcad_addexec(nastran-g nastran-g.c "libwdb;librt;libnmg;libbu;${M_LIBRARY}" FOLDER Conv)
 
-brlcad_addexec(shp-g "shp/shp-g.c;shp/shapelib/safileio.c;shp/shapelib/shpopen.c" "libwdb;librt;libbu" FOLDER Conv)
+brlcad_addexec(shp-g "shp/shp-g.c;shp/shapelib/safileio.c;shp/shapelib/shpopen.c" "libwdb;librt;libbu" FOLDER Conv ARG_SCHEMA)
 # disable warnings on shapelib 3rd party sources
 set_source_files_properties(shp/shapelib/safileio.c shp/shapelib/shpopen.c PROPERTIES COMPILE_FLAGS "-w")
   

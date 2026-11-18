@@ -25,14 +25,12 @@
 
 #include "common.h"
 
-#include <ctype.h>
-#include <errno.h>
-#include <limits.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/vls.h"
@@ -43,32 +41,72 @@
 #include "./shapelib/shapefil.h"
 
 
-static void
-usage(const char *argv0)
-{
-    bu_log("Usage: %s [-v] [-d] [-x rt_debug_flag] shapefile [output.g]\n", argv0);
-    bu_log("	where shapefile is a Shapefile prefix or file.shp shape format file\n");
-    bu_log("	and output.g is the name of the BRL-CAD database file being output to.\n");
-    bu_log("	The -v option prints verbose conversion progress information.\n");
-    bu_log("	The -d option prints additional diagnostic debugging information.\n");
-    bu_log("	The -x option specifies an RT debug flags (see raytrace.h).\n");
-}
+struct shp_g_debug_mask {
+    unsigned int value;
+    int set;
+};
 
+struct shp_g_args {
+    int help;
+    int debug;
+    int verbose;
+    struct shp_g_debug_mask rt_debug;
+};
 
 static int
-parse_debug_mask(const char *arg, unsigned int *mask)
+shp_g_debug_mask_parse(struct bu_vls *msg, const char *arg, void *storage)
 {
-    char *end = NULL;
-    unsigned long value;
+    struct shp_g_debug_mask *mask = (struct shp_g_debug_mask *)storage;
+    unsigned int value;
 
-    if (!arg || !mask || arg[0] == '-' || isspace((unsigned char)arg[0]))
-	return 0;
-    errno = 0;
-    value = strtoul(arg, &end, 16);
-    if (errno != 0 || end == arg || *end != '\0' || value > UINT_MAX)
-	return 0;
-    *mask = (unsigned int)value;
-    return 1;
+    if (!bu_arg_unsigned_integer_from_str(msg, &value, arg, 16))
+	return -1;
+    if (mask) {
+	mask->value = value;
+	mask->set = 1;
+    }
+    return 0;
+}
+
+static const struct bu_arg_option shp_g_options[] = {
+    BU_ARG_FLAG("h", "help", struct shp_g_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("v", "verbose", struct shp_g_args, verbose,
+	"Print shapefile type, shape count, bounds, per-shape details, "
+	"and loop-orientation summary"),
+    BU_ARG_FLAG("d", "debug", struct shp_g_args, debug,
+	"Print diagnostics for missing shapes and corrected loop winding"),
+    BU_ARG_CUSTOM("x", "rt-debug", struct shp_g_args, rt_debug,
+	shp_g_debug_mask_parse, "mask",
+	"Set librt hexadecimal debug flags (see RT_DEBUG in raytrace.h)"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand shp_g_operands[] = {
+    BU_ARG_OPERAND("shapefile", BU_ARG_VALUE_FILE, 1, 1,
+	"Input Shapefile prefix or .shp file", NULL),
+    BU_ARG_OPERAND("output.g", BU_ARG_VALUE_FILE, 0, 1,
+	"Output BRL-CAD database", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema shp_g_schema = BU_ARG_SCHEMA(
+    "shp-g", "Convert an Esri Shapefile to a BRL-CAD database",
+    shp_g_options, shp_g_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar shp_g_grammar = {
+    &shp_g_schema, NULL, NULL
+};
+
+static int
+shp_g_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&shp_g_schema, "shp-g");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "shp-g help");
+    return status;
 }
 
 
@@ -150,7 +188,11 @@ make_shape(struct rt_wdb *fd, int verbose, int debug, size_t idx, size_t num, po
 int
 main(int argc, char *argv[])
 {
-    int opt;
+    struct shp_g_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    const char * const *operands;
+    int introspection;
+    int operand_index;
     size_t i;
     const char *argv0 = argv[0];
     struct rt_wdb *fd_out;
@@ -176,35 +218,32 @@ main(int argc, char *argv[])
 
     bu_setprogname(argv[0]);
 
-    if (argc < 2) {
-	usage(argv0);
-	bu_exit(1, NULL);
+    introspection = bu_arg_introspect(&msg, &shp_g_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+    operand_index = bu_arg_schema_parse_complete(&shp_g_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return shp_g_help(stdout, 0);
 
-    while ((opt = bu_getopt(argc, argv, "dx:v")) != -1) {
-	switch (opt) {
-	    case 'd':
-		opt_debug = 1;
-		break;
-	    case 'x':
-		if (!parse_debug_mask(bu_optarg, &rt_debug)) {
-		    usage(argv0);
-		    bu_exit(1, "Invalid RT debug flag: %s\n", bu_optarg);
-		}
-		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
-		bu_log("\n");
-		break;
-	    case 'v':
-		opt_verbose++;
-		break;
-	    default:
-		usage(argv0);
-		bu_exit(1, NULL);
-		break;
-	}
+    opt_debug = args.debug;
+    opt_verbose = args.verbose;
+    if (args.rt_debug.set) {
+	rt_debug = args.rt_debug.value;
+	bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
+	bu_log("\n");
     }
-    argv += bu_optind;
-    argc -= bu_optind;
+    operands = (const char * const *)(argv + operand_index + 1);
 
     if (opt_verbose)
 	bu_log("Verbose output enabled.\n");
@@ -212,18 +251,12 @@ main(int argc, char *argv[])
     if (opt_debug)
 	bu_log("Debugging output enabled.\n");
 
-    /* validate input/output file specifiers */
-    if (argc < 1) {
-	usage(argv0);
-	bu_exit(1, "ERROR: Missing input and output file names\n");
-    }
+    bu_vls_strcat(&vls_in, operands[0]);
 
-    bu_vls_strcat(&vls_in, argv[0]);
-
-    if (argc < 2) {
-	bu_vls_printf(&vls_out, "%s.g", argv[0]);
+    if (argc - operand_index - 1 < 2) {
+	bu_vls_printf(&vls_out, "%s.g", operands[0]);
     } else {
-	bu_vls_strcat(&vls_out, argv[1]);
+	bu_vls_strcat(&vls_out, operands[1]);
     }
 
     if (opt_verbose) {
