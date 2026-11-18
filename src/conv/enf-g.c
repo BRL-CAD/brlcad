@@ -627,6 +627,8 @@ main(int argc, char *argv[])
 		tmp = atof(bu_optarg);
 		if (tmp <= 0.0)
 		    bu_exit(1, "%s: Illegal tolerance (%g), must be > 0.0\n", progname, tmp);
+		local_tol = tmp;
+		local_tol_sq = local_tol * local_tol;
 		break;
 	    case 'n':	/* part name list */
 		part_name_file = bu_optarg;
