@@ -26,19 +26,17 @@
 
 #include "common.h"
 
-#include <errno.h>
 #include <limits.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/color.h"
-#include "bu/str.h"
 #include "bu/exit.h"
-#include "bu/getopt.h"
-#include "fb_arg.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "vmath.h"
 #include "dm.h"
 #define LIBTERMIO_IMPLEMENTATION
@@ -57,8 +55,127 @@ int Run = 1;		/* Tells when to stop the main loop */
 
 void SimpleInput(void);
 
-const char usage[] = "\
-Usage: fbpoint [-F framebuffer] [-s squaresize] [-w width] [-n height] [-x[prefix]] [-y[prefix]] [initialx initially]\n";
+struct fbpoint_axis_output {
+    int requested;
+    const char *prefix;
+};
+
+struct fbpoint_args {
+    struct fbpoint_args *self;
+    int help;
+    const char *framebuffer;
+    int width;
+    int height;
+    struct fbpoint_axis_output x_output;
+    struct fbpoint_axis_output y_output;
+};
+
+enum fbpoint_dimension {
+    FBPOINT_SIZE,
+    FBPOINT_WIDTH,
+    FBPOINT_HEIGHT
+};
+
+static struct fbpoint_args *
+fbpoint_args_from_storage(void *storage)
+{
+    return storage ? *(struct fbpoint_args **)storage : NULL;
+}
+
+static int
+fbpoint_dimension_value(struct bu_vls *msg, const char *arg, void *storage,
+	enum fbpoint_dimension dimension)
+{
+    struct fbpoint_args *args = fbpoint_args_from_storage(storage);
+    int value;
+
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 1, INT_MAX))
+	return -1;
+    if (args) {
+	if (dimension == FBPOINT_SIZE)
+	    args->width = args->height = value;
+	else if (dimension == FBPOINT_WIDTH)
+	    args->width = value;
+	else
+	    args->height = value;
+    }
+    return 0;
+}
+
+#define FBPOINT_DIMENSION_CALLBACK(_name, _dimension) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return fbpoint_dimension_value(msg, arg, storage, _dimension); \
+    }
+
+FBPOINT_DIMENSION_CALLBACK(fbpoint_size, FBPOINT_SIZE)
+FBPOINT_DIMENSION_CALLBACK(fbpoint_width, FBPOINT_WIDTH)
+FBPOINT_DIMENSION_CALLBACK(fbpoint_height, FBPOINT_HEIGHT)
+
+static int
+fbpoint_axis_output(struct bu_vls *UNUSED(msg), const char *arg, void *storage)
+{
+    struct fbpoint_axis_output *output =
+	(struct fbpoint_axis_output *)storage;
+
+    if (output) {
+	output->requested++;
+	if (arg && arg[0])
+	    output->prefix = arg;
+    }
+    return 0;
+}
+
+static const struct bu_arg_option fbpoint_options[] = {
+    BU_ARG_FLAG("h", "help", struct fbpoint_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_VALUE("F", "framebuffer", struct fbpoint_args, framebuffer,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Select the framebuffer instead of the FB_FILE environment default"),
+    BU_ARG_CUSTOM("s", "size", struct fbpoint_args, self, fbpoint_size,
+	"pixels", "Set both framebuffer dimensions (default 512)"),
+    BU_ARG_ALIAS("S", NULL, "size", 1),
+    BU_ARG_CUSTOM("w", "width", struct fbpoint_args, self, fbpoint_width,
+	"pixels", "Set the framebuffer width (default 512)"),
+    BU_ARG_ALIAS("W", NULL, "width", 1),
+    BU_ARG_CUSTOM("n", "height", struct fbpoint_args, self, fbpoint_height,
+	"scanlines", "Set the framebuffer height (default 512)"),
+    BU_ARG_ALIAS("N", NULL, "height", 1),
+    BU_ARG_ATTACHED_OPTIONAL("x", "x-coordinate", "x-coordinate",
+	struct fbpoint_args, x_output, fbpoint_axis_output, "prefix",
+	"Write only the x coordinate, optionally preceded by an attached prefix"),
+    BU_ARG_ATTACHED_OPTIONAL("y", "y-coordinate", "y-coordinate",
+	struct fbpoint_args, y_output, fbpoint_axis_output, "prefix",
+	"Write only the y coordinate, optionally preceded by an attached prefix"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand fbpoint_operands[] = {
+    BU_ARG_OPERAND("initial-x", BU_ARG_VALUE_INTEGER, 0, 1,
+	"Initial x coordinate; the framebuffer center is the default", NULL),
+    BU_ARG_OPERAND("initial-y", BU_ARG_VALUE_INTEGER, 0, 1,
+	"Initial y coordinate; the framebuffer center is the default", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema fbpoint_schema = BU_ARG_SCHEMA(
+    "fbpoint", "Point at and identify framebuffer coordinates",
+    fbpoint_options, fbpoint_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar fbpoint_grammar = {
+    &fbpoint_schema, NULL, NULL
+};
+
+static int
+fbpoint_help(FILE *stream, int status)
+{
+    char *schema_help = bu_arg_schema_help(&fbpoint_schema, "fbpoint");
+    bu_flog(stream, "%s", schema_help ? schema_help : "");
+    bu_free(schema_help, "fbpoint help");
+    return status;
+}
 
 static const char *help = "\
 Char:   Command:                                                \r\n\
@@ -142,101 +259,43 @@ SimpleInput(void)	/* ==== get keyboard input.	*/
 int
 main(int argc, char **argv)
 {
-    int c;
-    int width, height;
-    int xflag = 0;
-    int yflag = 0;
-
-    const char *framebuffer = NULL;
-    const char *xprefix = NULL;
-    const char *yprefix = NULL;
-    const char null_str = '\0';
+    struct fbpoint_args args = {NULL, 0, NULL, 512, 512,
+	{0, NULL}, {0, NULL}};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int operand_index;
+    int operand_count;
+    args.self = &args;
 
     bu_setprogname(argv[0]);
 
-    setbuf(stderr, (char *)malloc(BUFSIZ));
-    width = height = 512;
+    setbuf(stderr, (char *)bu_malloc(BUFSIZ, "fbpoint stderr buffer"));
     curX = curY = -1;
-
-    while ((c = bu_getopt(argc, argv, "F:s:w:n:S:W:N:x::y::h?")) != -1) {
-	if (bu_optopt == '?')
-	    c = 'h';
-	switch(c) {
-	    case 'F':
-		framebuffer = bu_optarg;
-		break;
-	    case 's':
-	    case 'S':
-		if (!fb_arg_int_range(bu_optarg, &width, 1, INT_MAX, "screen size")) {
-		    fprintf(stderr, "%s", usage);
-		    return 1;
-		}
-		height = width;
-		break;
-	    case 'w':
-	    case 'W':
-		if (!fb_arg_int_range(bu_optarg, &width, 1, INT_MAX, "screen width")) {
-		    fprintf(stderr, "%s", usage);
-		    return 1;
-		}
-		break;
-	    case 'n':
-	    case 'N':
-		if (!fb_arg_int_range(bu_optarg, &height, 1, INT_MAX, "screen height")) {
-		    fprintf(stderr, "%s", usage);
-		    return 1;
-		}
-		break;
-	    case 'x':
-		xflag++;
-		if (bu_optarg && *bu_optarg != '\0')
-		    xprefix = bu_optarg;
-		break;
-	    case 'y':
-		yflag++;
-		if (bu_optarg && *bu_optarg != '\0')
-		    yprefix = bu_optarg;
-		break;
-	    case 'h':
-		fprintf(stderr, "%s", usage);
-		return 0;
-	    default:
-		fprintf(stderr, "ERROR: argument missing or bad option specified\n");
-		fprintf(stderr, "%s", usage);
-		return 1;
-	}
+    int introspection = bu_arg_introspect(&msg, &fbpoint_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
-    argc -= bu_optind;
-    argv += bu_optind;
-
-    /*
-     * Check for optional starting coordinate.
-     * Test for bad flags while we're at it.
-     */
-    if (argc > 2) {
-	fprintf(stderr, "%s: expected at most 2 positional arguments, got %d\n", bu_getprogname(), argc);
-	bu_exit(1, "%s", usage);
+    operand_index = bu_arg_schema_parse_complete(&fbpoint_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
     }
-    if (argc > 0) {
-	if (!fb_arg_int(argv[0], &curX, "initial x")) {
-	    fprintf(stderr, "%s", usage);
-	    return 1;
-	}
-    }
-    if (argc > 1) {
-	if (!fb_arg_int(argv[1], &curY, "initial y")) {
-	    fprintf(stderr, "%s", usage);
-	    return 1;
-	}
-    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return fbpoint_help(stdout, 0);
+    operand_count = argc - 1 - operand_index;
+    if (operand_count > 0 &&
+	!bu_arg_integer_from_str(NULL, &curX, argv[operand_index + 1], 10))
+	bu_exit(1, "fbpoint: internal initial-x validation mismatch\n");
+    if (operand_count > 1 &&
+	!bu_arg_integer_from_str(NULL, &curY, argv[operand_index + 2], 10))
+	bu_exit(1, "fbpoint: internal initial-y validation mismatch\n");
 
-    /* fix up pointers for printf */
-    if (xprefix == NULL)
-	xprefix = &null_str;
-    if (yprefix == NULL)
-	yprefix = &null_str;
-
-    if ((fbp = fb_open(framebuffer, width, height)) == NULL)
+    if ((fbp = fb_open(args.framebuffer, args.width, args.height)) == NULL)
 	bu_exit(12, "Unable to open framebuffer\n");
 
     JumpSpeed = fb_getwidth(fbp)/16;
@@ -279,12 +338,14 @@ main(int argc, char **argv)
     reset_Tty(0);
 
     /* write final location on stdout */
-    if (xflag != 0 && yflag == 0)
-	printf("%s%d\n", xprefix, curX);
-    else if (yflag != 0 && xflag == 0)
-	printf("%s%d\n", yprefix, curY);
+    if (args.x_output.requested && !args.y_output.requested)
+	printf("%s%d\n", args.x_output.prefix ? args.x_output.prefix : "", curX);
+    else if (args.y_output.requested && !args.x_output.requested)
+	printf("%s%d\n", args.y_output.prefix ? args.y_output.prefix : "", curY);
     else
-	printf("%s%d %s%d\n", xprefix, curX, yprefix, curY);
+	printf("%s%d %s%d\n",
+	    args.x_output.prefix ? args.x_output.prefix : "", curX,
+	    args.y_output.prefix ? args.y_output.prefix : "", curY);
 
     fb_close(fbp);
     return 0;

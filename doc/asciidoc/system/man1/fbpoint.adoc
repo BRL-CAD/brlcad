@@ -8,11 +8,11 @@ fbpoint - point at and identify framebuffer coordinates
 
 == SYNOPSIS
 
-[source]
-----
-fbpoint [-F framebuffer] [-s squaresize] [-w width] [-n height]
-        [-x[prefix]] [-y[prefix]] [initialx [initialy]]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*fbpoint* [*-F* _device_] [*-s* _pixels_] [*-w* _pixels_] [*-n* _scanlines_] [*-x*[_prefix_]]
+        [*-y*[_prefix_]] [_initial-x_] [_initial-y_]
+// END GENERATED BU_ARG SYNOPSIS
 
 
 [[description]]
@@ -42,31 +42,34 @@ passing the result as an argument to another program.
 [[options]]
 == OPTIONS
 
-*-F* _framebuffer_::
-  Explicitly specify the framebuffer device to open.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-s* _squaresize_::
-  Set both the width and height of the framebuffer to _squaresize_
-  pixels (default 512). *-S* is an equivalent synonym.
+*-F* _device_, *--framebuffer*=_device_::
+  Select the framebuffer instead of the FB_FILE environment default.
 
-*-w* _width_::
-  Set the framebuffer width in pixels (default 512). *-W* is an
-  equivalent synonym.
+*-s* _pixels_, *--size*=_pixels_::
+  Set both framebuffer dimensions (default 512).
 
-*-n* _height_::
-  Set the framebuffer height in pixels (default 512). *-N* is an
-  equivalent synonym.
+*-w* _pixels_, *--width*=_pixels_::
+  Set the framebuffer width (default 512).
 
-*-x*[_prefix_]::
-  Write only the x coordinate on exit. If the optional _prefix_ string
-  is given immediately after the flag, it is prepended to the value.
+*-n* _scanlines_, *--height*=_scanlines_::
+  Set the framebuffer height (default 512).
 
-*-y*[_prefix_]::
-  Write only the y coordinate on exit. If the optional _prefix_ string
-  is given immediately after the flag, it is prepended to the value.
+*-x*[_prefix_], *--x-coordinate*[=_prefix_]::
+  Write only the x coordinate, optionally preceded by an attached prefix.
 
-*-h*::
-  Print a usage message and exit. *-?* is an equivalent synonym.
+*-y*[_prefix_], *--y-coordinate*[=_prefix_]::
+  Write only the y coordinate, optionally preceded by an attached prefix.
+
+// END GENERATED BU_ARG OPTIONS
+
+The uppercase *-S*, *-W*, and *-N* spellings remain accepted as hidden
+compatibility aliases. The attached-prefix forms preserve the historical
+*-x-X* and *-y-Y* usage; a separated word is an initial coordinate, not a
+prefix.
 
 [[examples]]
 == EXAMPLES
