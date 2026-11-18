@@ -965,8 +965,17 @@ setup(int argc, char **argv)
 	}
 	bu_free(ifname,"ifname alloc from bu_file_realpath");
 	if (autosize) {
-	    if ( !fb_common_file_size((size_t *)&width, (size_t *)&height, argv[bu_optind], 1)) {
+	    size_t autosize_width;
+	    size_t autosize_height;
+
+	    if (!fb_common_file_size(&autosize_width, &autosize_height,
+		    argv[bu_optind], 1)) {
 		(void) fprintf(stderr, "halftone: unable to autosize.\n");
+	    } else if (autosize_width > LONG_MAX || autosize_height > LONG_MAX) {
+		bu_exit(1, "halftone: autosized dimensions exceed supported range.\n");
+	    } else {
+		width = (long int)autosize_width;
+		height = (long int)autosize_height;
 	    }
 	}
     }
