@@ -31,9 +31,11 @@
 #include "gcv.h"
 #include "raytrace.h"
 
-static const char ordered[] =
-    "ply\nformat ascii 1.0\nelement vertex 3\nproperty float x\nproperty float y\nproperty float z\n"
-    "element face 1\nproperty list uchar int vertex_indices\nend_header\n"
+#define PLY_TEST_HEADER(index_type) \
+    "ply\nformat ascii 1.0\nelement vertex 3\nproperty float x\nproperty float y\nproperty float z\n" \
+    "element face 1\nproperty list uchar " index_type " vertex_indices\nend_header\n"
+
+static const char ordered[] = PLY_TEST_HEADER("int")
     "1 2 3\n4 2 3\n1 5 3\n3 0 1 2\n";
 static const char reordered[] =
     "ply\nformat ascii 1.0\nelement vertex 3\nproperty float z\nproperty float x\nproperty float y\n"
@@ -60,9 +62,9 @@ read_fixture(struct gcv_context *context, const char *path, const char *scale)
 }
 
 static int
-check_triangle(struct gcv_context *context, const char *path, double scale)
+check_mesh(struct gcv_context *context, const char *path, size_t vertices, const fastf_t *expected,
+    size_t faces, const int *expected_faces, double scale)
 {
-    const fastf_t expected[] = {1, 2, 3, 4, 2, 3, 1, 5, 3};
     struct bu_vls name = BU_VLS_INIT_ZERO;
     struct rt_db_internal object;
     struct directory *entry;
@@ -73,19 +75,35 @@ check_triangle(struct gcv_context *context, const char *path, double scale)
     if (entry && rt_db_get_internal(&object, entry, context->dbip, NULL) >= 0) {
 	if (object.idb_type == ID_BOT) {
 	    const struct rt_bot_internal *bot = (const struct rt_bot_internal *)object.idb_ptr;
-	    valid = bot->num_vertices == 3 && bot->num_faces == 1;
+	    valid = bot->num_vertices == vertices && bot->num_faces == faces;
 	    if (valid) {
-		for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i)
+		for (size_t i = 0; i < vertices * 3; ++i)
 		    if (!EQUAL(bot->vertices[i], expected[i] * scale)) valid = 0;
-		for (int i = 0; i < 3; ++i)
-		    if (bot->faces[i] != i) valid = 0;
+		for (size_t face = 0; face < faces; ++face) {
+		    int matched = 0;
+		    for (size_t rotation = 0; rotation < 3; ++rotation) {
+			int same = 1;
+			for (size_t vertex = 0; vertex < 3; ++vertex)
+			    if (bot->faces[face * 3 + (vertex + rotation) % 3] != expected_faces[face * 3 + vertex]) same = 0;
+			matched |= same;
+		    }
+		    if (!matched) valid = 0;
+		}
 	    }
 	}
 	rt_db_free_internal(&object);
     }
-    if (!valid) bu_log("PLY import changed triangle geometry for %s\n", bu_vls_cstr(&name));
+    if (!valid) bu_log("PLY import changed mesh geometry for %s\n", bu_vls_cstr(&name));
     bu_vls_free(&name);
     return valid;
+}
+
+static int
+check_triangle(struct gcv_context *context, const char *path, double scale)
+{
+    const fastf_t vertices[] = {1, 2, 3, 4, 2, 3, 1, 5, 3};
+    const int faces[] = {0, 1, 2};
+    return check_mesh(context, path, 3, vertices, 1, faces, scale);
 }
 
 static int
@@ -120,12 +138,102 @@ done:
     return failed;
 }
 
+static size_t
+mesh_count(struct gcv_context *context)
+{
+    struct directory *entry;
+    size_t count = 0;
+    FOR_ALL_DIRECTORY_START(entry, context->dbip) {
+	if (entry->d_major_type == DB5_MAJORTYPE_BRLCAD && entry->d_minor_type == ID_BOT) ++count;
+    } FOR_ALL_DIRECTORY_END;
+    return count;
+}
+
+static int
+errors_test(void)
+{
+    struct gcv_context context;
+    char path[MAXPATHLEN] = {0};
+    char original[MAXPATHLEN] = {0};
+    struct bu_vls missing = BU_VLS_INIT_ZERO;
+    const char *invalid[] = {
+	"", "unrelated text\n",
+	PLY_TEST_HEADER("int") "1 2 3\n4 2 3\n1 5 3\n3 0 1 99\n",
+	PLY_TEST_HEADER("int") "1 2 3\n4 2 3\n1 5 3\n3 0 1 -1\n",
+	PLY_TEST_HEADER("float") "1 2 3\n4 2 3\n1 5 3\n3 0 1 0.25\n",
+	PLY_TEST_HEADER("double") "1 2 3\n4 2 3\n1 5 3\n3 0 1 1e-100\n",
+	PLY_TEST_HEADER("int") "nan 2 3\n4 2 3\n1 5 3\n3 0 1 2\n",
+	PLY_TEST_HEADER("int") "1 2 3\n4 2 3\n1 5 3\n3 0 1\n",
+	PLY_TEST_HEADER("int") "1 2 3\n4 2 3\n1 5 3\n2 0 1\n",
+	("ply\nformat ascii 1.0\nelement vertex 3\nproperty float x\nproperty float z\n"
+	"element face 1\nproperty list uchar int vertex_indices\nend_header\n1 3\n4 3\n1 3\n3 0 1 2\n")
+    };
+    int failed = 0;
+    gcv_context_init(&context);
+    if (!write_fixture(original, ordered) || read_fixture(&context, original, "1") != 1 ||
+	db_update_ident(context.dbip, "keep title", 10) < 0) {
+	failed = 1;
+	goto done;
+    }
+    for (size_t i = 0; i < sizeof(invalid) / sizeof(invalid[0]); ++i) {
+	if (!write_fixture(path, invalid[i])) {
+	    failed = 1;
+	    goto done;
+	}
+	if (read_fixture(&context, path, "1") != 0 || mesh_count(&context) != 1 ||
+	    !BU_STR_EQUAL(context.dbip->dbi_title, "keep title") || !EQUAL(context.dbip->dbi_local2base, 10)) {
+	    bu_log("PLY reader accepted invalid input or changed the destination for case %zu\n", i);
+	    failed = 1;
+	}
+	bu_file_delete(path);
+	path[0] = '\0';
+    }
+    bu_vls_printf(&missing, "%s/missing.ply", original);
+    if (read_fixture(&context, bu_vls_cstr(&missing), "1") != 0) {
+	bu_log("PLY reader did not return failure for an input-open error\n");
+	failed = 1;
+    }
+    if (!check_triangle(&context, original, 1) || !write_fixture(path, ordered) ||
+	read_fixture(&context, path, "2") != 1 || !check_triangle(&context, path, 2)) {
+	bu_log("PLY reader did not preserve geometry or recover after input failure\n");
+	failed = 1;
+    }
+done:
+    if (path[0]) bu_file_delete(path);
+    if (original[0]) bu_file_delete(original);
+    bu_vls_free(&missing);
+    gcv_context_destroy(&context);
+    return failed;
+}
+
+static int
+topology_test(void)
+{
+    struct gcv_context context;
+    char path[MAXPATHLEN] = {0};
+    const fastf_t vertices[] = {1, 2, 3, 4, 2, 3, 4, 5, 3, 1, 5, 3, 1, 2, 6};
+    const int faces[] = {0, 1, 2, 0, 2, 3, 0, 3, 4};
+    const char *text =
+	"ply\nformat ascii 1.0\nelement vertex 5\nproperty float x\nproperty float y\nproperty float z\n"
+	"element face 2\nproperty list uchar int vertex_indices\nend_header\n"
+	"1 2 3\n4 2 3\n4 5 3\n1 5 3\n1 2 6\n4 0 1 2 3\n3 0 3 4\n";
+    int failed;
+    gcv_context_init(&context);
+    failed = !write_fixture(path, text) || read_fixture(&context, path, "1") != 1 ||
+	!check_mesh(&context, path, 5, vertices, 3, faces, 1);
+    if (path[0]) bu_file_delete(path);
+    gcv_context_destroy(&context);
+    return failed;
+}
+
 int
 main(int argc, const char **argv)
 {
     bu_setprogname(argv[0]);
     if (argc != 2) return 1;
     if (BU_STR_EQUAL(argv[1], "state")) return state_test();
+    if (BU_STR_EQUAL(argv[1], "errors")) return errors_test();
+    if (BU_STR_EQUAL(argv[1], "topology")) return topology_test();
     return 1;
 }
 

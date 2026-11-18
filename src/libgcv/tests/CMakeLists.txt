@@ -33,6 +33,8 @@ if(TARGET gcv-ply)
     add_dependencies(test_gcv_ply_read gcv-ply)
   endif()
   brlcad_add_test(NAME gcv_ply_read_state COMMAND test_gcv_ply_read state)
+  brlcad_add_test(NAME gcv_ply_read_errors COMMAND test_gcv_ply_read errors)
+  brlcad_add_test(NAME gcv_ply_read_topology COMMAND test_gcv_ply_read topology)
 endif()
 
 cmakefiles(CMakeLists.txt test_context.c)
