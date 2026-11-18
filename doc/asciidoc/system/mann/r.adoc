@@ -10,7 +10,7 @@ r - Creates a region with the specified __region_name__.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*r* _output_region_
+*r* _output_region_ (*u* | *-* | *+*) _member_ [((*u* | *-* | *+*) _member_) ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

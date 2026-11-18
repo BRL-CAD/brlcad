@@ -837,14 +837,11 @@ operand_case_options(const json &schema)
 }
 
 static std::vector<std::string>
-operand_terms(const json &operands)
+operand_atoms(const json &operands)
 {
     std::vector<std::string> result;
     for (const json &operand : operands) {
 	const std::string name = operand.value("name", std::string("argument"));
-	const size_t minimum = operand.value("min", (size_t)0);
-	const bool repeated = operand.at("max").is_null() ||
-	    operand.value("max", (size_t)1) > 1;
 	std::string text;
 	if (operand.contains("values") && operand.at("values").is_array() &&
 	    !operand.at("values").empty()) {
@@ -861,11 +858,59 @@ operand_terms(const json &operands)
 	} else {
 	    text = "_" + name + "_";
 	}
+	result.push_back(text);
+    }
+    return result;
+}
+
+static std::vector<std::string>
+operand_terms(const json &operands)
+{
+    std::vector<std::string> result;
+    const std::vector<std::string> atoms = operand_atoms(operands);
+    for (size_t i = 0; i < operands.size(); i++) {
+	const json &operand = operands.at(i);
+	const size_t minimum = operand.value("min", (size_t)0);
+	const bool repeated = operand.at("max").is_null() ||
+	    operand.value("max", (size_t)1) > 1;
+	std::string text = atoms.at(i);
 	if (repeated)
 	    text += " ...";
 	if (minimum == 0)
 	    text = "[" + text + "]";
 	result.push_back(text);
+    }
+    return result;
+}
+
+static std::vector<std::string>
+operand_group_terms(const json &schema)
+{
+    std::vector<std::string> result;
+    if (!schema.contains("operand_groups") ||
+	!schema.at("operand_groups").is_array())
+	return result;
+    for (const json &group : schema.at("operand_groups")) {
+	if (!group.contains("roles") || !group.at("roles").is_array() ||
+	    group.at("roles").empty())
+	    continue;
+	const std::vector<std::string> roles = operand_atoms(group.at("roles"));
+	std::string sequence;
+	for (const std::string &role : roles) {
+	    if (!sequence.empty())
+		sequence += " ";
+	    sequence += role;
+	}
+	const size_t minimum = group.value("min", (size_t)0);
+	for (size_t i = 0; i < minimum; i++)
+	    result.push_back(sequence);
+	if (group.at("max").is_null()) {
+	    result.push_back("[(" + sequence + ") ...]");
+	    continue;
+	}
+	const size_t maximum = group.value("max", minimum);
+	for (size_t i = minimum; i < maximum; i++)
+	    result.push_back("[" + sequence + "]");
     }
     return result;
 }
@@ -999,6 +1044,7 @@ render_synopsis(const std::vector<schema_view> &views)
 		terms.push_back("_SUBCOMMAND_ [_ARGUMENT_]...");
 	    append_terms(terms, required_option_choices(*view.schema));
 	    append_terms(terms, operand_terms(view.schema->at("operands")));
+	    append_terms(terms, operand_group_terms(*view.schema));
 	    if (view.child_phase != "first" &&
 		view.child_phase != "after_options")
 		terms.push_back("_SUBCOMMAND_ [_ARGUMENT_]...");
@@ -1019,6 +1065,7 @@ render_synopsis(const std::vector<schema_view> &views)
 		append_terms(terms, case_options(*view.schema, operand_case));
 		append_terms(terms, required_option_choices(case_schema));
 		append_terms(terms, operand_terms(case_schema.at("operands")));
+		append_terms(terms, operand_group_terms(case_schema));
 		render_synopsis_form(output, view.invocation, terms);
 	    }
 	} else {
@@ -1026,6 +1073,7 @@ render_synopsis(const std::vector<schema_view> &views)
 	    if (has_options)
 		append_terms(terms, synopsis_options(*view.schema, {}));
 	    append_terms(terms, operand_terms(view.schema->at("operands")));
+	    append_terms(terms, operand_group_terms(*view.schema));
 	    render_synopsis_form(output, view.invocation, terms);
 	}
     }

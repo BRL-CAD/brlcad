@@ -2977,13 +2977,15 @@ cmd_schema_usage(const struct bu_arg_schema *schema, const char *invocation,
 	for (size_t gi = 0; schema->operand_groups[gi].name; gi++) {
 	    const struct bu_arg_operand_group *group = &schema->operand_groups[gi];
 	    struct bu_vls atom = BU_VLS_INIT_ZERO;
-	    bu_vls_putc(&atom, '(');
+	    if (group->max_count != 1)
+		bu_vls_putc(&atom, '(');
 	    for (size_t ri = 0; group->roles && group->roles[ri].name; ri++) {
 		if (ri)
 		    bu_vls_putc(&atom, ' ');
 		bu_vls_strcat(&atom, group->roles[ri].name);
 	    }
-	    bu_vls_putc(&atom, ')');
+	    if (group->max_count != 1)
+		bu_vls_putc(&atom, ')');
 	    cmd_schema_usage_atom(&out, bu_vls_cstr(&atom), group->min_count,
 		group->max_count);
 	    bu_vls_free(&atom);
@@ -3114,7 +3116,7 @@ bu_arg_schema_help_mode(const struct bu_arg_schema *schema, const char *invocati
 		schema->operands[i].help ? schema->operands[i].help : "");
     }
     if (schema->operand_groups && schema->operand_groups[0].name) {
-	bu_vls_strcat(&out, "\nRepeated groups:\n");
+	bu_vls_strcat(&out, "\nOperand groups:\n");
 	for (size_t gi = 0; schema->operand_groups[gi].name; gi++) {
 	    const struct bu_arg_operand_group *group = &schema->operand_groups[gi];
 	    bu_vls_printf(&out, "  %-34s %s\n", group->name,

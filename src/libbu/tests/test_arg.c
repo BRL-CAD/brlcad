@@ -1317,7 +1317,7 @@ main(int UNUSED(argc), char **argv)
 		"Usage: combined [options] target [(operation member) ...]\n") ||
 	    !strstr(help, "Full native-schema declaration fixture") ||
 	    !strstr(help, "Options:\n") || !strstr(help, "-s") ||
-	    !strstr(help, "Operands:\n") || !strstr(help, "Repeated groups:\n") ||
+	    !strstr(help, "Operands:\n") || !strstr(help, "Operand groups:\n") ||
 	    !strstr(help, "Constraints:\n") ||
 	    !strstr(help, "The short option may appear once") ||
 	    !grouped_help || !strstr(grouped_help, "Accepted values:\n") ||

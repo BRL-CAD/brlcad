@@ -42,6 +42,26 @@ file(
     "terminal_options": ["help"],
     "operands": [
       {"name": "input", "type": "file", "min": 1, "max": 1}
+    ],
+    "operand_groups": [
+      {"name": "coordinates", "min": 0, "max": 1, "roles": [
+        {"name": "x", "type": "integer"},
+        {"name": "y", "type": "integer"}
+      ]}
+    ]
+  },
+  {
+    "schema_version": 1,
+    "kind": "native",
+    "name": "repeated-group",
+    "parse_policy": "options_first",
+    "options": [],
+    "operands": [],
+    "operand_groups": [
+      {"name": "assignment", "min": 1, "max": null, "roles": [
+        {"name": "key", "type": "string"},
+        {"name": "value", "type": "string"}
+      ]}
     ]
   },
   {
@@ -214,11 +234,25 @@ execute_process(
 if(NOT detailed_render_result EQUAL 0)
   message(FATAL_ERROR "argdoc could not render a detailed synopsis: ${detailed_render_error}")
 endif()
-string(FIND "${detailed_render}" "*detailed* [*-v*]... [*-o* _file_] [*-x*[_text_]] _input_" detailed_synopsis)
+string(FIND "${detailed_render}" "*detailed* [*-v*]... [*-o* _file_] [*-x*[_text_]] _input_ [_x_ _y_]" detailed_synopsis)
 string(FIND "${detailed_render}" "*-x*[_text_], *--prefix*[=_text_]" detailed_attached)
 string(FIND "${detailed_render}" "*detailed* [*-h*]" detailed_help)
 if(detailed_synopsis EQUAL -1 OR detailed_attached EQUAL -1 OR NOT detailed_help EQUAL -1)
   message(FATAL_ERROR "argdoc did not render explicit nonterminal options canonically")
+endif()
+
+execute_process(
+  COMMAND "${ARGDOC}" --render --schema "${schema_file}" --name repeated-group
+  OUTPUT_VARIABLE repeated_group_render
+  RESULT_VARIABLE repeated_group_render_result
+  ERROR_VARIABLE repeated_group_render_error
+)
+if(NOT repeated_group_render_result EQUAL 0)
+  message(FATAL_ERROR "argdoc could not render a repeated operand group: ${repeated_group_render_error}")
+endif()
+string(FIND "${repeated_group_render}" "*repeated-group* _key_ _value_ [(_key_ _value_) ...]" repeated_group_synopsis)
+if(repeated_group_synopsis EQUAL -1)
+  message(FATAL_ERROR "argdoc did not render a repeated operand group canonically")
 endif()
 
 execute_process(

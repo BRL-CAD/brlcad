@@ -10,7 +10,7 @@ region - create or modify a region combination with boolean operations
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*region* _output_region_
+*region* _output_region_ (*u* | *-* | *+*) _member_ [((*u* | *-* | *+*) _member_) ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

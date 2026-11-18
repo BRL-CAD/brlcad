@@ -11,6 +11,7 @@ comb - Create and manipulate BRL-CAD combination with the name __combination_nam
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
 *comb* [*-c* | *-r*] [*-d*] [*-w* | *-f* | *-l*] [*-S*] _combination_
+     [((*u* | *-* | *+*) _member_) ...]
 *comb* [*-h*] _combination_
 *comb rm* _member_ ...
 *comb wrap*

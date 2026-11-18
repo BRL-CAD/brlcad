@@ -10,7 +10,7 @@ adjust - Adjusts parameters of a solid.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*adjust* _object_
+*adjust* _object_ _attribute_ _value_ [(_attribute_ _value_) ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

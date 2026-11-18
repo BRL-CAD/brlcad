@@ -11,7 +11,7 @@ t - Alternate command name for *ls*.
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
 *t* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] *-h* [_raw_arguments_ ...]
-*t* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] *-A*
+*t* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] *-A* _attribute_ _value_ [(_attribute_ _value_) ...]
 *t* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] *-r* [_objects_ ...]
 *t* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] *-p* [_objects_ ...]
 *t* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] *-c* [_objects_ ...]

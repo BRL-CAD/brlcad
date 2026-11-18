@@ -11,7 +11,7 @@ ls - The command with no _object_ argument lists the name of every object in the
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
 *ls* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] *-h* [_raw_arguments_ ...]
-*ls* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] *-A*
+*ls* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] *-A* _attribute_ _value_ [(_attribute_ _value_) ...]
 *ls* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] *-r* [_objects_ ...]
 *ls* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] *-p* [_objects_ ...]
 *ls* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] *-c* [_objects_ ...]
