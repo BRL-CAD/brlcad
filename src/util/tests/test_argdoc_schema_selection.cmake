@@ -22,10 +22,48 @@ file(
           "options": [
             {"short": "h", "long": "help", "canonical": "help", "alias_of": "", "argument_requirement": "none", "hidden": false}
           ],
+          "terminal_options": ["help"],
           "operands": []
         }
       }
     ]
+  },
+  {
+    "schema_version": 1,
+    "kind": "native",
+    "name": "detailed",
+    "parse_policy": "options_first",
+    "options": [
+      {"short": "h", "long": "help", "canonical": "help", "alias_of": "", "argument_requirement": "none", "hidden": false},
+      {"short": "v", "long": "verbose", "canonical": "verbose", "alias_of": "", "argument_requirement": "none", "hidden": false, "repeat": true},
+      {"short": "o", "long": "output", "canonical": "output", "alias_of": "", "argument": "file", "argument_requirement": "required", "hidden": false}
+    ],
+    "terminal_options": ["help"],
+    "operands": [
+      {"name": "input", "type": "file", "min": 1, "max": 1}
+    ]
+  },
+  {
+    "schema_version": 1,
+    "kind": "native",
+    "name": "large-flat",
+    "parse_policy": "options_first",
+    "options": [
+      {"short": "a", "canonical": "a"},
+      {"short": "b", "canonical": "b"},
+      {"short": "c", "canonical": "c"},
+      {"short": "d", "canonical": "d"},
+      {"short": "e", "canonical": "e"},
+      {"short": "f", "canonical": "f"},
+      {"short": "g", "canonical": "g"},
+      {"short": "i", "canonical": "i"},
+      {"short": "j", "canonical": "j"},
+      {"short": "k", "canonical": "k"},
+      {"short": "l", "canonical": "l"},
+      {"short": "m", "canonical": "m"},
+      {"short": "n", "canonical": "n"}
+    ],
+    "operands": []
   },
   {
     "schema_version": 1,
@@ -145,9 +183,39 @@ execute_process(
 if(NOT path_render_result EQUAL 0)
   message(FATAL_ERROR "argdoc could not select a command-tree path: ${path_render_error}")
 endif()
-string(FIND "${path_render}" "*parent list* [_OPTION_]..." path_synopsis)
+string(FIND "${path_render}" "*parent list*\n" path_synopsis)
 if(path_synopsis EQUAL -1)
   message(FATAL_ERROR "argdoc did not preserve the selected command-tree invocation")
+endif()
+
+execute_process(
+  COMMAND "${ARGDOC}" --render --schema "${schema_file}" --name detailed
+  OUTPUT_VARIABLE detailed_render
+  RESULT_VARIABLE detailed_render_result
+  ERROR_VARIABLE detailed_render_error
+)
+if(NOT detailed_render_result EQUAL 0)
+  message(FATAL_ERROR "argdoc could not render a detailed synopsis: ${detailed_render_error}")
+endif()
+string(FIND "${detailed_render}" "*detailed* [*-v*]... [*-o* _file_] _input_" detailed_synopsis)
+string(FIND "${detailed_render}" "*detailed* [*-h*]" detailed_help)
+if(detailed_synopsis EQUAL -1 OR NOT detailed_help EQUAL -1)
+  message(FATAL_ERROR "argdoc did not render explicit nonterminal options canonically")
+endif()
+
+execute_process(
+  COMMAND "${ARGDOC}" --render --schema "${schema_file}" --name large-flat
+  OUTPUT_VARIABLE large_flat_render
+  RESULT_VARIABLE large_flat_render_result
+  ERROR_VARIABLE large_flat_render_error
+)
+if(NOT large_flat_render_result EQUAL 0)
+  message(FATAL_ERROR "argdoc could not render a large flat schema: ${large_flat_render_error}")
+endif()
+string(FIND "${large_flat_render}" "*large-flat* [*-a*] [*-b*] [*-c*] [*-d*] [*-e*] [*-f*] [*-g*] [*-i*] [*-j*] [*-k*] [*-l*] [*-m*]\n           [*-n*]" large_flat_synopsis)
+string(FIND "${large_flat_render}" "[_OPTION_]" large_flat_summary)
+if(large_flat_synopsis EQUAL -1 OR NOT large_flat_summary EQUAL -1)
+  message(FATAL_ERROR "argdoc did not wrap all options in a large flat schema")
 endif()
 
 execute_process(
@@ -201,7 +269,7 @@ execute_process(
 if(NOT constrained_render_result EQUAL 0)
   message(FATAL_ERROR "argdoc could not render a constrained synopsis: ${constrained_render_error}")
 endif()
-string(FIND "${constrained_render}" "[verse]\n*constrained* [_OPTION_]... (*-f* _path_ | *-l* _bytes_) [_output_] _object_ ..." constrained_synopsis)
+string(FIND "${constrained_render}" "[verse]\n*constrained* (*-f* _path_ | *-l* _bytes_) [_output_] _object_ ..." constrained_synopsis)
 if(constrained_synopsis EQUAL -1)
   message(FATAL_ERROR "argdoc did not render a standards-aware constrained synopsis")
 endif()
@@ -215,7 +283,7 @@ execute_process(
 if(NOT cased_render_result EQUAL 0)
   message(FATAL_ERROR "argdoc could not render operand cases: ${cased_render_error}")
 endif()
-string(FIND "${cased_render}" "*cased* [_OPTION_]... *-i* _source_\n*cased* [_OPTION_]... *-i* *-o* _destination_" cased_synopsis)
+string(FIND "${cased_render}" "*cased* *-i* _source_\n*cased* *-i* *-o* _destination_" cased_synopsis)
 if(cased_synopsis EQUAL -1)
   message(FATAL_ERROR "argdoc did not render operand cases as separate synopsis forms")
 endif()

@@ -62,7 +62,8 @@ static const char *options_begin = "// BEGIN GENERATED BU_ARG OPTIONS";
 static const char *options_end = "// END GENERATED BU_ARG OPTIONS";
 static const char *subcommands_begin = "// BEGIN GENERATED BU_ARG SUBCOMMANDS";
 static const char *subcommands_end = "// END GENERATED BU_ARG SUBCOMMANDS";
-static const size_t detailed_synopsis_limit = 10;
+static const size_t synopsis_width = 100;
+static const size_t detailed_tree_limit = 10;
 
 struct settings {
     enum class mode { check, render, update, audit, update_directory } operation = mode::check;
@@ -230,7 +231,7 @@ static void
 apply_tree_synopsis_policy(std::vector<schema_view> &views, size_t first,
 	const json &tree)
 {
-    if (tree_schema_count(tree) <= detailed_synopsis_limit)
+    if (tree_schema_count(tree) <= detailed_tree_limit)
 	return;
     views[first].summarize_subcommands = true;
     views[first].child_phase = tree.value("child_phase", std::string());
@@ -660,19 +661,74 @@ synopsis_option(const json &option)
     return result;
 }
 
-static std::string
+static std::set<std::string>
+terminal_options(const json &schema)
+{
+    std::set<std::string> result;
+    if (!schema.contains("terminal_options") ||
+	!schema.at("terminal_options").is_array())
+	return result;
+    for (const json &name : schema.at("terminal_options"))
+	result.insert(name.get<std::string>());
+    return result;
+}
+
+static bool
+is_required_choice(const json &constraint)
+{
+    return constraint.value("kind", std::string()) == "option_count" &&
+	constraint.value("condition", std::string()) == "always" &&
+	constraint.value("min", (size_t)0) == 1 &&
+	constraint.contains("max") && !constraint.at("max").is_null() &&
+	constraint.value("max", (size_t)0) == 1;
+}
+
+static std::set<std::string>
+required_choice_options(const json &schema)
+{
+    std::set<std::string> result;
+    if (!schema.contains("constraints") ||
+	!schema.at("constraints").is_array())
+	return result;
+    for (const json &constraint : schema.at("constraints")) {
+	if (!is_required_choice(constraint))
+	    continue;
+	for (const json &name : constraint.at("options"))
+	    result.insert(name.get<std::string>());
+    }
+    return result;
+}
+
+static std::vector<std::string>
+synopsis_options(const json &schema, const std::set<std::string> &required)
+{
+    const std::set<std::string> terminal = terminal_options(schema);
+    std::vector<std::string> result;
+    for (const json &option : schema.at("options")) {
+	const std::string canonical = option.value("canonical", std::string());
+	if (option.value("visibility", std::string()) == "internal" ||
+	    option.value("hidden", false) ||
+	    !option.value("alias_of", std::string()).empty() ||
+	    terminal.find(canonical) != terminal.end() ||
+	    required.find(canonical) != required.end())
+	    continue;
+	std::string term = "[" + synopsis_option(option) + "]";
+	if (option.value("repeat", false))
+	    term += "...";
+	result.push_back(term);
+    }
+    return result;
+}
+
+static std::vector<std::string>
 required_option_choices(const json &schema)
 {
     if (!schema.contains("constraints") ||
 	!schema.at("constraints").is_array())
-	return std::string();
-    std::ostringstream output;
+	return {};
+    std::vector<std::string> result;
     for (const json &constraint : schema.at("constraints")) {
-	if (constraint.value("kind", std::string()) != "option_count" ||
-	    constraint.value("condition", std::string()) != "always" ||
-	    constraint.value("min", (size_t)0) != 1 ||
-	    !constraint.contains("max") || constraint.at("max").is_null() ||
-	    constraint.value("max", (size_t)0) != 1)
+	if (!is_required_choice(constraint))
 	    continue;
 	std::vector<std::string> choices;
 	for (const json &name : constraint.at("options")) {
@@ -683,25 +739,26 @@ required_option_choices(const json &schema)
 	}
 	if (choices.empty())
 	    continue;
-	output << " (";
+	std::string term = "(";
 	for (size_t i = 0; i < choices.size(); i++) {
 	    if (i)
-		output << " | ";
-	    output << choices[i];
+		term += " | ";
+	    term += choices[i];
 	}
-	output << ")";
+	term += ")";
+	result.push_back(term);
     }
-    return output.str();
+    return result;
 }
 
-static std::string
+static std::vector<std::string>
 case_options(const json &schema, const json &operand_case)
 {
     const std::string condition = operand_case.value("condition",
 	std::string("always"));
     if (condition != "any_option_present" &&
 	condition != "all_options_present")
-	return std::string();
+	return {};
     std::vector<std::string> terms;
     for (const json &name : operand_case.at("options")) {
 	const json *option = canonical_option(schema, name.get<std::string>());
@@ -710,24 +767,40 @@ case_options(const json &schema, const json &operand_case)
 	    terms.push_back(synopsis_option(*option));
     }
     if (terms.empty())
-	return std::string();
-    std::ostringstream output;
-    output << " ";
-    if (condition == "any_option_present" && terms.size() > 1)
-	output << "(";
+	return {};
+    if (condition == "all_options_present" || terms.size() == 1)
+	return terms;
+    std::string group = "(";
     for (size_t i = 0; i < terms.size(); i++) {
 	if (i)
-	    output << (condition == "any_option_present" ? " | " : " ");
-	output << terms[i];
+	    group += " | ";
+	group += terms[i];
     }
-    if (condition == "any_option_present" && terms.size() > 1)
-	output << ")";
-    return output.str();
+    group += ")";
+    return {group};
 }
 
-static void
-render_operands(std::ostringstream &output, const json &operands)
+static std::set<std::string>
+operand_case_options(const json &schema)
 {
+    std::set<std::string> result;
+    if (!schema.contains("operand_cases") ||
+	!schema.at("operand_cases").is_array())
+	return result;
+    for (const json &operand_case : schema.at("operand_cases")) {
+	if (!operand_case.contains("options") ||
+	    !operand_case.at("options").is_array())
+	    continue;
+	for (const json &name : operand_case.at("options"))
+	    result.insert(name.get<std::string>());
+    }
+    return result;
+}
+
+static std::vector<std::string>
+operand_terms(const json &operands)
+{
+    std::vector<std::string> result;
     for (const json &operand : operands) {
 	const std::string name = operand.value("name", std::string("argument"));
 	const size_t minimum = operand.value("min", (size_t)0);
@@ -753,8 +826,54 @@ render_operands(std::ostringstream &output, const json &operands)
 	    text += " ...";
 	if (minimum == 0)
 	    text = "[" + text + "]";
-	output << " " << text;
+	result.push_back(text);
     }
+    return result;
+}
+
+static void
+append_terms(std::vector<std::string> &destination,
+	const std::vector<std::string> &source)
+{
+    destination.insert(destination.end(), source.begin(), source.end());
+}
+
+static void
+render_synopsis_form(std::ostringstream &output, const std::string &invocation,
+	const std::vector<std::string> &terms)
+{
+    const std::string prefix = "*" + invocation + "*";
+    const std::string indent(invocation.size() + 1, ' ');
+    std::string line = prefix;
+
+    for (const std::string &term : terms) {
+	std::vector<std::string> fragments = {term};
+	if (!term.empty() && term.size() + indent.size() > synopsis_width &&
+	    term.front() == '(' && term.back() == ')') {
+	    const std::string separator = " | ";
+	    size_t begin = 0;
+	    fragments.clear();
+	    while (begin < term.size()) {
+		size_t end = term.find(separator, begin);
+		if (end == std::string::npos) {
+		    fragments.push_back(term.substr(begin));
+		    break;
+		}
+		fragments.push_back(term.substr(begin, end - begin) + " |");
+		begin = end + separator.size();
+	    }
+	}
+	for (const std::string &fragment : fragments) {
+	    if (line != prefix &&
+		line.size() + fragment.size() + 1 > synopsis_width) {
+		output << line << "\n";
+		line = indent + fragment;
+	    } else {
+		line += " " + fragment;
+	    }
+	}
+    }
+    output << line << "\n";
 }
 
 static std::string
@@ -832,42 +951,47 @@ render_synopsis(const std::vector<schema_view> &views)
 	rendered = true;
 	const bool has_options = schema_has_documented_options(*view.schema);
 	if (view.summarize_subcommands) {
-	    output << "*" << view.invocation << "*";
+	    std::vector<std::string> terms;
 	    if (view.child_phase == "first")
-		output << " _SUBCOMMAND_ [_ARGUMENT_]...";
+		terms.push_back("_SUBCOMMAND_ [_ARGUMENT_]...");
 	    if (has_options)
-		output << " [_OPTION_]...";
+		terms.push_back("[_OPTION_]...");
 	    if (view.child_phase == "after_options")
-		output << " _SUBCOMMAND_ [_ARGUMENT_]...";
-	    output << required_option_choices(*view.schema);
-	    render_operands(output, view.schema->at("operands"));
+		terms.push_back("_SUBCOMMAND_ [_ARGUMENT_]...");
+	    append_terms(terms, required_option_choices(*view.schema));
+	    append_terms(terms, operand_terms(view.schema->at("operands")));
 	    if (view.child_phase != "first" &&
 		view.child_phase != "after_options")
-		output << " _SUBCOMMAND_ [_ARGUMENT_]...";
-	    output << "\n";
+		terms.push_back("_SUBCOMMAND_ [_ARGUMENT_]...");
+	    render_synopsis_form(output, view.invocation, terms);
 	    continue;
 	}
 	const bool has_cases = view.schema->contains("operand_cases") &&
 	    view.schema->at("operand_cases").is_array() &&
 	    !view.schema->at("operand_cases").empty();
 	if (has_cases) {
+	    const std::set<std::string> case_option_names =
+		operand_case_options(*view.schema);
 	    for (const json &operand_case : view.schema->at("operand_cases")) {
 		const json &case_schema = operand_case.at("schema");
-		output << "*" << view.invocation << "*";
+		std::set<std::string> required = required_choice_options(*view.schema);
+		std::vector<std::string> terms;
+		required.insert(case_option_names.begin(), case_option_names.end());
 		if (has_options)
-		    output << " [_OPTION_]...";
-		output << case_options(*view.schema, operand_case);
-		output << required_option_choices(case_schema);
-		render_operands(output, case_schema.at("operands"));
-		output << "\n";
+		    append_terms(terms, synopsis_options(*view.schema, required));
+		append_terms(terms, case_options(*view.schema, operand_case));
+		append_terms(terms, required_option_choices(case_schema));
+		append_terms(terms, operand_terms(case_schema.at("operands")));
+		render_synopsis_form(output, view.invocation, terms);
 	    }
 	} else {
-	    output << "*" << view.invocation << "*";
+	    std::vector<std::string> terms;
 	    if (has_options)
-		output << " [_OPTION_]...";
-	    output << required_option_choices(*view.schema);
-	    render_operands(output, view.schema->at("operands"));
-	    output << "\n";
+		append_terms(terms, synopsis_options(*view.schema,
+		    required_choice_options(*view.schema)));
+	    append_terms(terms, required_option_choices(*view.schema));
+	    append_terms(terms, operand_terms(view.schema->at("operands")));
+	    render_synopsis_form(output, view.invocation, terms);
 	}
     }
     if (!rendered)
