@@ -45,9 +45,7 @@
 
 
 static png_color_16 def_backgrd={ 0, 0, 0, 0, 0 };
-static unsigned char **scanline;	/* 1 scanline pixel buffer */
-static int scanbytes;		/* # of bytes of scanline */
-static int scanpix;		/* # of pixels of scanline */
+static unsigned char **scanline;	/* image row pointers */
 
 static int multiple_lines = 0;	/* Streamlined operation */
 
@@ -195,6 +193,7 @@ main(int argc, char **argv)
     struct fb *fbp;
     int i;
     int xout, yout, m, xstart;
+    int block_writes;
     png_structp png_p;
     png_infop info_p;
     char header[8];
@@ -304,12 +303,13 @@ main(int argc, char **argv)
     png_read_update_info(png_p, info_p);
 
     /* allocate memory for image */
-    image = (unsigned char *)bu_calloc(1, file_width*file_height*3, "image");
+    image = (unsigned char *)bu_calloc(1,
+	file_width*file_height*sizeof(RGBpixel), "image");
 
     /* create rows array */
     scanline = (unsigned char **)bu_calloc(file_height, sizeof(unsigned char *), "scanline");
     for (i=0; i<file_height; i++)
-	scanline[i] = image+(i*file_width*3);
+	scanline[i] = image+((file_height-i-1)*file_width*sizeof(RGBpixel));
 
     png_read_image(png_p, scanline);
 
@@ -353,7 +353,6 @@ main(int argc, char **argv)
     if (xout < 0)
 	bu_exit(0, NULL);			/* off screen */
     V_MIN(xout, (file_width-file_xoff));
-    scanpix = xout;				/* # pixels on scanline */
 
     if (inverse)
 	scr_yoff = (-scr_yoff);
@@ -364,13 +363,10 @@ main(int argc, char **argv)
     V_MIN(yout, (file_height-file_yoff));
 
     /* Only in the simplest case use multi-line writes */
-    if (!one_line_only && multiple_lines > 0 && !inverse && !zoom &&
+    block_writes = !one_line_only && multiple_lines > 0 && !inverse && !zoom &&
+	scr_xoff >= 0 && scr_yoff >= 0 &&
 	xout == file_width && file_xoff == 0 &&
-	file_width <= scr_width) {
-	scanpix *= multiple_lines;
-    }
-
-    scanbytes = scanpix * sizeof(RGBpixel);
+	file_width <= scr_width;
 
     if (clear) {
 	fb_clear(fbp, PIXEL_NULL);
@@ -392,23 +388,25 @@ main(int argc, char **argv)
 	}
     }
 
-    if (multiple_lines) {
-	/* Bottom to top with multi-line reads & writes */
-	int height=file_height;
+    if (block_writes) {
+	/* Bottom to top with multi-line writes */
+	unsigned char *rows = image+(file_yoff*file_width*sizeof(RGBpixel));
 	for (y = scr_yoff; y < scr_yoff + yout; y += multiple_lines) {
+	    int height = multiple_lines;
 	    /* Don't over-write */
 	    if (y + height > scr_yoff + yout)
 		height = scr_yoff + yout - y;
 	    if (height <= 0) break;
 	    m = fb_writerect(fbp, scr_xoff, y,
 			     file_width, height,
-			     scanline[file_yoff++]);
+			     rows);
 	    if (m != file_width*height) {
 		fprintf(stderr,
 			"png-fb: fb_writerect(x=%d, y=%d, w=%d, h=%d) failure, ret=%d, s/b=%d\n",
 			scr_xoff, y,
-			file_width, height, m, scanbytes);
+			file_width, height, m, file_width*height);
 	    }
+	    rows += height*file_width*sizeof(RGBpixel);
 	}
     } else if (!inverse) {
 	/* Normal way -- bottom to top */
