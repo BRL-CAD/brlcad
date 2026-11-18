@@ -9,22 +9,22 @@ halftone - convert a black and white image to a halftoned black and white image
 
 == SYNOPSIS
 
-[source]
-----
-halftone [-R] [-S] [-a] [-s _squaresize_] [-w _width_] [-n _height_] [-B _contrast_] [-I _levels_] [-M _method_] [-T _x1 y1 x2 y2 ..._] [-D _debug_level_] [_file.bw_]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*halftone* [*-a*] [*-s* _pixels_] [*-w* _pixels_] [*-n* _scanlines_] [*-B* _beta_] [*-I* _count_]
+         [*-M* _number_] [*-R*] [*-S*] [*-T* _x y ..._] [*-D* _level_] [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
 
 *halftone* reads a black and white image in *bw*(5) format from the
 named file (or from standard input if no file is given) and writes a
-halftoned *bw*(5) image to standard output.  Halftoning reduces the
-number of distinct intensity levels (256 by default down to 2, that is
-black and white) while using dithering to preserve as much apparent
-shading and detail as possible.  Several dithering algorithms are
-available via the *-M* option, ranging from Floyd-Steinberg error
-diffusion to ordered halftone screens.
+halftoned *bw*(5) image to standard output.  Halftoning reduces the 256
+possible input intensities to two output levels by default (black and white)
+while using dithering to preserve as much apparent shading and detail as
+possible.  Several dithering algorithms are available via the *-M* option,
+ranging from Floyd-Steinberg error diffusion to ordered halftone screens.
 
 The output is itself a *bw*(5) file whose pixels take a limited set of
 values; each output level is scaled to the range 0 to 255 (as 255 /
@@ -32,66 +32,52 @@ values; each output level is scaled to the range 0 to 255 (as 255 /
 such as *bw-pix*(1).  The dithering algorithms are drawn largely from
 _Digital Halftoning_ by Robert Ulichney.
 
+The *-T* option fits a cubic spline through one or more increasing X Y
+control-point pairs, with every coordinate in the range 0 through 255.  That
+spline maps input intensities before dithering.  Without *-T*, the mapping is
+the straight line from 0 0 through 255 255.
+
 [[options]]
 == OPTIONS
 
-*-s* _squaresize_::
-  Set both the width and height of the input image to _squaresize_
-  pixels.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-w* _width_::
-  Set the width of the input image in pixels.  The default is 512.
+*-a*, *--autosize*::
+  Infer dimensions from a named input file.
 
-*-n* _height_::
-  Set the height of the input image in scanlines.  The default is 512.
+*-s* _pixels_, *--size*=_pixels_::
+  Set both image dimensions.
 
-*-a*::
-  Automatically determine the input image dimensions from the file
-  name or file size.  Automatic sizing cannot be used with pipes or
-  standard input.
+*-w* _pixels_, *--width*=_pixels_::
+  Set image width (default: 512).
 
-*-B* _contrast_::
-  Floating-point beta coefficient applied by a Laplacian edge
-  sharpening filter before dithering.  The default is 0.0, which
-  disables sharpening.
+*-n* _scanlines_, *--height*=_scanlines_::
+  Set image height (default: 512).
 
-*-I* _levels_::
-  Number of output intensity levels.  The default is 2 (1-bit
-  black/white) and the maximum is 256.
+*-B* _beta_, *--sharpen*=_beta_::
+  Set the finite Laplacian sharpening coefficient (default: 0).
 
-*-M* _method_::
-  Select the halftoning method:
-+
---
-  *0*;; Floyd-Steinberg error diffusion (default)
-  *1*;; 45-degree classical clustered-dot halftone screen
-  *2*;; simple thresholding dither
-  *3*;; 0-degree dispersed-dot halftone screen
---
-+
-A value outside the range 0-3 is reported and reset to the default (0).
+*-I* _count_, *--levels*=_count_::
+  Set output intensity levels from 2 through 256.
 
-*-R*::
-  Add random noise to the dither threshold.  This can break up
-  repeating screen patterns and improve the appearance of the output.
+*-M* _number_, *--method*=_number_::
+  Select 0 Floyd-Steinberg, 1 45-degree classic, 2 threshold, or 3 0-degree dispersed.
 
-*-S*::
-  Use a serpentine scan path, reversing direction on every other row
-  instead of always scanning left to right.  This option only has an
-  effect with Floyd-Steinberg error diffusion (*-M 0*); it is ignored
-  for the other methods.
+*-R*, *--randomize*::
+  Add random noise to dither thresholds.
 
-*-T* _x1 y1 x2 y2 ..._::
-  Define a tone-scale mapping from a list of integer coordinate pairs
-  (each in the range 0 to 255).  A cubic spline is fit through the
-  points to map input intensities to output intensities.  The default
-  mapping is the straight line equivalent to *-T* _0 0 255 255_.
+*-S*, *--serpentine*::
+  Reverse alternate Floyd-Steinberg scanlines (ignored by other methods).
 
-*-D* _debug_level_::
-  Set the debug level.  A value of 9 emits all debugging messages.
+*-T* _x y ..._, *--tone-map*=_x y ..._::
+  Fit a cubic tone map through increasing 0..255 X Y control points.
 
-*-h*, *-?*::
-  Print a usage message and exit.
+*-D* _level_, *--debug*=_level_::
+  Set diagnostic level (9 enables all messages).
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES
