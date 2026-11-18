@@ -8,14 +8,13 @@ pixborder - add a 1-pixel-wide border to regions of a specified color
 
 == SYNOPSIS
 
-[source]
-----
-pixborder [-a] [-b 'R G B'] [-e 'R G B'] [-i 'R G B'] [-t 'R G B']
-          [-B 'H S V'] [-E 'H S V'] [-I 'H S V'] [-T 'H S V']
-          [-x _left_edge_] [-y _bottom_edge_] [-X _right_edge_] [-Y _top_edge_]
-          [-s _squaresize_] [-w _file_width_] [-n _file_height_] [_file.pix_]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixborder* [*-a*] [*-b* _red green blue_] [*-B* _hue saturation value_] [*-e* _red green blue_]
+          [*-E* _hue saturation value_] [*-i* _red green blue_] [*-I* _hue saturation value_]
+          [*-t* _red green blue_] [*-T* _hue saturation value_] [*-s* _pixels_] [*-w* _pixels_]
+          [*-n* _pixels_] [*-x* _column_] [*-X* _column_] [*-y* _row_] [*-Y* _row_] [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -34,63 +33,68 @@ above, below) has the exterior color. If only one color is specified, a pixel is
 on the boundary when it matches (or, for an exterior-only specification, does not
 match) that color and at least one neighbor differs accordingly.
 
-Colors may be given in RGB (channels in {0..255}) or HSV (with _H_ in [0, 360)
-and _S_, _V_ in [0, 1]). A symmetric per-channel tolerance (*-t* or *-T*) lets
-nearby colors be treated as the nominal interior or exterior color.
+Colors may be given in RGB (channels in {0..255}) or HSV (with _H_ in [0, 360]
+and _S_, _V_ in [0, 1]); a hue of 360 is equivalent to 0. A symmetric
+per-channel tolerance (*-t* or *-T*) lets nearby colors be treated as the
+nominal interior or exterior color.
 
 
 [[options]]
 == OPTIONS
 
-*-a*::
-  Autosize: guess the input dimensions from the file (only works for a named
-  *pix*(5) file, not standard input).
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-b* _'R G B'_::
-  Set the border color in RGB. Default is 1 1 1.
+*-a*, *--autosize*::
+  Infer dimensions from a named input file.
 
-*-B* _'H S V'_::
-  Set the border color in HSV.
+*-b* _red green blue_, *--border-rgb*=_red green blue_::
+  Set the RGB border color using channels from 0 to 255 (default: 1 1 1).
 
-*-e* _'R G B'_::
-  Set the exterior (background) color in RGB. Default is 1 1 1.
+*-B* _hue saturation value_, *--border-hsv*=_hue saturation value_::
+  Set the HSV border color (H 0..360; S and V 0..1).
 
-*-E* _'H S V'_::
-  Set the exterior (background) color in HSV.
+*-e* _red green blue_, *--exterior-rgb*=_red green blue_::
+  Set the RGB exterior color using channels from 0 to 255 (default: 1 1 1).
 
-*-i* _'R G B'_::
-  Set the interior (region) color in RGB. Default is 255 255 255.
+*-E* _hue saturation value_, *--exterior-hsv*=_hue saturation value_::
+  Set the HSV exterior color (H 0..360; S and V 0..1).
 
-*-I* _'H S V'_::
-  Set the interior (region) color in HSV.
+*-i* _red green blue_, *--interior-rgb*=_red green blue_::
+  Set the RGB interior color using channels from 0 to 255 (default: 255 255 255).
 
-*-t* _'R G B'_::
-  Set a symmetric per-channel RGB tolerance for color matching. Default is 0 0 0.
+*-I* _hue saturation value_, *--interior-hsv*=_hue saturation value_::
+  Set the HSV interior color (H 0..360; S and V 0..1).
 
-*-T* _'H S V'_::
-  Set a symmetric per-channel HSV tolerance for color matching.
+*-t* _red green blue_, *--rgb-tolerance*=_red green blue_::
+  Set per-channel RGB matching tolerance from 0 to 255 (default: 0 0 0).
 
-*-s* _squaresize_::
-  Set both the input width and height to _squaresize_ pixels.
+*-T* _hue saturation value_, *--hsv-tolerance*=_hue saturation value_::
+  Set HSV matching tolerance (H 0..360; S and V 0..1).
 
-*-w* _file_width_::
-  Set the input width in pixels. Default is 512.
+*-s* _pixels_, *--size*=_pixels_::
+  Set both image dimensions.
 
-*-n* _file_height_::
-  Set the input height in pixels. Default is 512.
+*-w* _pixels_, *--width*=_pixels_::
+  Set image width (default: 512).
 
-*-x* _left_edge_::
-  Restrict changes to pixels at or to the right of this column. Default is 0.
+*-n* _pixels_, *--height*=_pixels_::
+  Set image height (default: 512).
 
-*-X* _right_edge_::
-  Restrict changes to pixels at or to the left of this column. Default is the
-  rightmost column.
+*-x* _column_, *--left*=_column_::
+  Set the leftmost processed column (default: 0).
 
-*-y* _bottom_edge_::
-  Restrict changes to pixels at or above this row. Default is 0.
+*-X* _column_, *--right*=_column_::
+  Set the rightmost processed column (default: image edge).
 
-*-Y* _top_edge_::
-  Restrict changes to pixels at or below this row. Default is the topmost row.
+*-y* _row_, *--bottom*=_row_::
+  Set the lowest processed row (default: 0).
+
+*-Y* _row_, *--top*=_row_::
+  Set the highest processed row (default: image edge).
+
+// END GENERATED BU_ARG OPTIONS
 
 
 [[examples]]
