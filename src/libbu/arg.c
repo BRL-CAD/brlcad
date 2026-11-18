@@ -2497,7 +2497,8 @@ bu_arg_schema_parse_complete(const struct bu_arg_schema *schema, void *data,
 	return -1;
     }
     bu_arg_validate_result_clear(&result);
-    operand_index = bu_arg_schema_parse(schema, data, msg, argc, argv);
+    effective = cmd_schema_case_view(schema, (size_t)argc, argv, &view);
+    operand_index = bu_arg_schema_parse(effective, data, msg, argc, argv);
     return operand_index < 0 ? -1 : operand_index;
 }
 

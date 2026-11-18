@@ -211,6 +211,20 @@ static const struct bu_arg_schema case_schema =
     BU_ARG_SCHEMA_CASED("case", "Option-selected operand fixture",
 	short_only_options, BU_ARG_PARSE_OPTIONS_FIRST, case_rows);
 
+static const struct bu_arg_operand case_number_operands[] = {
+    BU_ARG_OPERAND("number", BU_ARG_VALUE_NUMBER, 1, 1,
+	"A numeric value", NULL),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema_case case_number_rows[] = {
+    BU_ARG_SCHEMA_CASE_DEFAULT("number", "Supply one number",
+	case_number_operands, NULL),
+    BU_ARG_SCHEMA_CASE_NULL
+};
+static const struct bu_arg_schema case_number_schema =
+    BU_ARG_SCHEMA_CASED("case-number", "Numeric operand case fixture",
+	short_only_options, BU_ARG_PARSE_OPTIONS_FIRST, case_number_rows);
+
 
 static int
 list_mode_parse(struct bu_vls *UNUSED(msg), const char *arg, void *storage)
@@ -831,6 +845,17 @@ main(int UNUSED(argc), char **argv)
 	return 1;
     }
     bu_arg_validate_result_clear(&result);
+    {
+	const char *negative_number[] = {"-2"};
+	bu_vls_trunc(&msg, 0);
+	if (bu_arg_schema_parse_complete(&case_number_schema, &short_only_args,
+		&msg, 1, negative_number) != 0 || bu_vls_strlen(&msg) != 0) {
+	    bu_log("case-selected numeric operand was not parsed as an operand: %s\n",
+		bu_vls_cstr(&msg));
+	    bu_vls_free(&msg);
+	    return 1;
+	}
+    }
     if (bu_arg_schema_validate(&case_schema, 1, short_only, 1, &result) != 0 ||
 	result.state != BU_ARG_VALIDATE_VALID) {
 	bu_log("selected option case did not replace the default operand layout\n");
