@@ -160,6 +160,10 @@ parse_args(int ac, char **av)
 		    case 's': value_type = SHORT;
 			value_size = sizeof(short);
 			break;
+		    default:
+			bu_log("%s: unknown data type '%s'\n", bu_getprogname(),
+			       bu_optarg);
+			usage("");
 		}
 		break;
 	    case 'n':
