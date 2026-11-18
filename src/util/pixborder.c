@@ -108,7 +108,7 @@ static int read_hsv (fastf_t *hsvp, char *buf)
 
 	errno = 0;
 	tmp[i] = strtod(cp, &end);
-	if (errno != 0 || end == cp)
+	if (errno != 0 || end == cp || !isfinite(tmp[i]))
 	    return 0;
 	cp = end;
     }
