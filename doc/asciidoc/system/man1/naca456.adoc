@@ -11,12 +11,11 @@ naca456 - generate BRL-CAD wing geometry from NACA 4-, 5-, and 6-series airfoils
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
 *naca456* [*-o* _file.g_] [*-n* _name_] [*-a* _code_] [*-A* _code_] [*-m* _mode_]
-        [*--brep-surface* _mode_] [*--tip-style* _style_] [*--wing* _side_]
-        [*--tip-specification* _file.json_] [*-s* _length_] [*-r* _length_] [*-t* _length_]
-        [*-w* _degrees_] [*-d* _degrees_] [*-T* _degrees_] [*-u* _a_] [*-S* _count_] [*-c* _count_]
-        [*-x* _offset_] [*-y* _offset_] [*-z* _offset_] [*-p*] [*-f*] [*-j*]
-        [*--demo-file* _file.g_] [*--section-file* _file.tsv_] [*--full-span* _length_]
-        [*--sweep-offset* _length_]
+        [*--brep-surface* _mode_] [*--tip-style* _style_ | *--tip-specification* _file.json_]
+        [*--wing* _side_] [*-s* _length_ | *--full-span* _length_] [*-r* _length_] [*-t* _length_]
+        [*-w* _degrees_ | *--sweep-offset* _length_] [*-d* _degrees_] [*-T* _degrees_] [*-u* _a_]
+        [*-S* _count_] [*-c* _count_] [*-x* _offset_] [*-y* _offset_] [*-z* _offset_] [*-p*]
+        [*-f* | *-j*] [*--demo-file* _file.g_] [*--section-file* _file.tsv_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

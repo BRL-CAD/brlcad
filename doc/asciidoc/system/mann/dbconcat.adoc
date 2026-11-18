@@ -10,7 +10,7 @@ dbconcat - Concatenates an existing BRL-CAD database to the database currently b
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*dbconcat* [*-O*] [*-c*] [*-p*] [*-s*] [*-L*] [*-t*] [*-u*] _database_file_ [_affix_]
+*dbconcat* [*-O*] [*-c*] [*-p* | *-s*] [*-L*] [*-t*] [*-u*] _database_file_ [_affix_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

@@ -10,7 +10,7 @@ plot - Creates a UNIX plot of the current MGED display.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*plot* [*-2*] [*-3*] [*-f*] [*-g*] [*-z*] _output_ [_filter_arguments_ ...]
+*plot* [*-2* | *-3*] [*-f*] [*-g*] [*-z*] _output_ [_filter_arguments_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

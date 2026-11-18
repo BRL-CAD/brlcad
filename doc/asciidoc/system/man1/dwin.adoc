@@ -10,7 +10,7 @@ dwin - extract sliding windows of doubles and optionally apply a window function
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*dwin* [*-w*] [*-H*] [*-b*] [*-B*] [*-e*] [*-m*] [_width_] [_step_]
+*dwin* [*-w* | *-H* | *-b* | *-B*] [*-e* | *-m*] [_width_] [_step_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

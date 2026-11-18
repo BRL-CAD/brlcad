@@ -10,7 +10,7 @@ concat - merge objects from an external database file into the current database
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*concat* [*-O*] [*-c*] [*-p*] [*-s*] [*-L*] [*-t*] [*-u*] _database_file_ [_affix_]
+*concat* [*-O*] [*-c*] [*-p* | *-s*] [*-L*] [*-t*] [*-u*] _database_file_ [_affix_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

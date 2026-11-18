@@ -18,7 +18,7 @@ mater - Assigns shader parameters, RGB color, and inheritance to an existing com
 *mater get* [*--id* _id-or-pattern_] [*--density* _comparison_] [*--name* _pattern_]
           [*--tol* _tolerance_] [_pattern_ ...]
 *mater import* [*-v*] _density_file_
-*mater map* [*-d* _file_] [*-m* _file_] (*--ids-from-names* | *--names-from-ids*) [_file_ ...]
+*mater map* (*--ids-from-names* | *--names-from-ids*) [*-d* _file_] [*-m* _file_] [_file_ ...]
 *mater set* _record_ ...
 *mater source*
 *mater validate* _density_file_

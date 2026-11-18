@@ -137,6 +137,22 @@ file(
   {
     "schema_version": 1,
     "kind": "native",
+    "name": "exclusive",
+    "parse_policy": "options_first",
+    "options": [
+      {"short": "e", "long": "eia", "canonical": "eia", "alias_of": "", "argument_requirement": "none", "hidden": false},
+      {"short": "f", "long": "fcc", "canonical": "fcc", "alias_of": "", "argument_requirement": "none", "hidden": false},
+      {"short": "s", "long": "smpte", "canonical": "smpte", "alias_of": "", "argument_requirement": "none", "hidden": false},
+      {"short": "F", "long": "framebuffer", "canonical": "framebuffer", "alias_of": "", "argument": "device", "argument_requirement": "required", "hidden": false}
+    ],
+    "operands": [],
+    "constraints": [
+      {"kind": "option_count", "condition": "always", "options": ["eia", "fcc", "smpte"], "min": 0, "max": 1, "hint": "select at most one standard"}
+    ]
+  },
+  {
+    "schema_version": 1,
+    "kind": "native",
     "name": "cased",
     "parse_policy": "options_first",
     "options": [
@@ -272,6 +288,20 @@ endif()
 string(FIND "${constrained_render}" "[verse]\n*constrained* (*-f* _path_ | *-l* _bytes_) [_output_] _object_ ..." constrained_synopsis)
 if(constrained_synopsis EQUAL -1)
   message(FATAL_ERROR "argdoc did not render a standards-aware constrained synopsis")
+endif()
+
+execute_process(
+  COMMAND "${ARGDOC}" --render --schema "${schema_file}" --name exclusive
+  OUTPUT_VARIABLE exclusive_render
+  RESULT_VARIABLE exclusive_render_result
+  ERROR_VARIABLE exclusive_render_error
+)
+if(NOT exclusive_render_result EQUAL 0)
+  message(FATAL_ERROR "argdoc could not render an optional exclusive choice: ${exclusive_render_error}")
+endif()
+string(FIND "${exclusive_render}" "*exclusive* [*-e* | *-f* | *-s*] [*-F* _device_]" exclusive_synopsis)
+if(exclusive_synopsis EQUAL -1)
+  message(FATAL_ERROR "argdoc did not group optional mutually exclusive options")
 endif()
 
 execute_process(

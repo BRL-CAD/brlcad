@@ -13,8 +13,8 @@ facetize - Creates __new_object__ using __old_object__ as a guide, creating an e
 *facetize* [*-h* [_all_]] [*-v*]... [*-q*] [*-n*] [*-r*] [*-j* _count_] [*-s* _suffix_]
          [*-p* _prefix_] [*--in-place*] [*--max-time* _seconds_] [*--max-pnts* _count_] [*--resume*]
          [*--methods* _method[,method...]_] [*--method-opts* _"METHOD option=value ..."_]
-         [*--no-empty*] [*--log-file* _file_] [*--nmg-booleval*] [*--disable-fixup*] [*--perturb*]
-         [*--no-perturb*] [*-B*] [*-t* _length_] [*--perturb-sa-tol* _percent_]
+         [*--no-empty*] [*--log-file* _file_] [*--nmg-booleval*] [*--disable-fixup*]
+         [*--perturb* | *--no-perturb*] [*-B*] [*-t* _length_] [*--perturb-sa-tol* _percent_]
          [*--perturb-vol-tol* _percent_] [*--tolerate-failures*] [_object_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 

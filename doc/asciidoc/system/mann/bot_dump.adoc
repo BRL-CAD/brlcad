@@ -10,8 +10,8 @@ bot dump - export Bag-of-Triangles (BOT) geometry to a mesh file format
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bot_dump* [*-b*] [*-n*] [*-m* _directory_] [*-o* _file_] [*-t* _format_] [*-u* _units_] [*-F*]
-         [*--displayed*] [*--viewdata*] [*--materials*] [*--no-materials*] [_bot_ ...]
+*bot_dump* [*-b*] [*-n*] [*-o* _file_ | *-m* _directory_] [*-t* _format_] [*-u* _units_] [*-F*]
+         [*--displayed*] [*--viewdata*] [*--materials* | *--no-materials*] [_bot_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

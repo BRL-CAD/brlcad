@@ -674,35 +674,65 @@ terminal_options(const json &schema)
 }
 
 static bool
-is_required_choice(const json &constraint)
+is_option_choice(const json &constraint)
 {
     return constraint.value("kind", std::string()) == "option_count" &&
 	constraint.value("condition", std::string()) == "always" &&
-	constraint.value("min", (size_t)0) == 1 &&
+	constraint.value("min", (size_t)0) <= 1 &&
 	constraint.contains("max") && !constraint.at("max").is_null() &&
 	constraint.value("max", (size_t)0) == 1;
 }
 
-static std::set<std::string>
-required_choice_options(const json &schema)
+static const json *
+option_choice(const json &schema, const std::string &canonical)
 {
-    std::set<std::string> result;
     if (!schema.contains("constraints") ||
 	!schema.at("constraints").is_array())
-	return result;
+	return NULL;
     for (const json &constraint : schema.at("constraints")) {
-	if (!is_required_choice(constraint))
+	if (!is_option_choice(constraint))
 	    continue;
-	for (const json &name : constraint.at("options"))
-	    result.insert(name.get<std::string>());
+	for (const json &name : constraint.at("options")) {
+	    if (name.get<std::string>() == canonical)
+		return &constraint;
+	}
     }
-    return result;
+    return NULL;
+}
+
+static std::string
+option_choice_term(const json &schema, const json &constraint,
+	const std::set<std::string> &excluded)
+{
+    const std::set<std::string> terminal = terminal_options(schema);
+	std::vector<std::string> choices;
+	for (const json &name : constraint.at("options")) {
+	    const std::string canonical = name.get<std::string>();
+	    const json *option = canonical_option(schema, canonical);
+	    if (option && option->value("visibility", std::string()) != "internal" &&
+		!option->value("hidden", false) &&
+		terminal.find(canonical) == terminal.end() &&
+		excluded.find(canonical) == excluded.end())
+		choices.push_back(synopsis_option(*option));
+	}
+	if (choices.empty())
+	return std::string();
+	const bool required = constraint.value("min", (size_t)0) == 1;
+	std::string term = required ? "(" : "[";
+	for (size_t i = 0; i < choices.size(); i++) {
+	    if (i)
+		term += " | ";
+	    term += choices[i];
+	}
+	term += required ? ")" : "]";
+    return term;
 }
 
 static std::vector<std::string>
-synopsis_options(const json &schema, const std::set<std::string> &required)
+synopsis_options(const json &schema, const std::set<std::string> &excluded)
 {
     const std::set<std::string> terminal = terminal_options(schema);
+    std::set<const json *> rendered_choices;
     std::vector<std::string> result;
     for (const json &option : schema.at("options")) {
 	const std::string canonical = option.value("canonical", std::string());
@@ -710,8 +740,17 @@ synopsis_options(const json &schema, const std::set<std::string> &required)
 	    option.value("hidden", false) ||
 	    !option.value("alias_of", std::string()).empty() ||
 	    terminal.find(canonical) != terminal.end() ||
-	    required.find(canonical) != required.end())
+	    excluded.find(canonical) != excluded.end())
 	    continue;
+	const json *choice = option_choice(schema, canonical);
+	if (choice) {
+	    if (rendered_choices.insert(choice).second) {
+		const std::string term = option_choice_term(schema, *choice, excluded);
+		if (!term.empty())
+		    result.push_back(term);
+	    }
+	    continue;
+	}
 	std::string term = "[" + synopsis_option(option) + "]";
 	if (option.value("repeat", false))
 	    term += "...";
@@ -728,25 +767,12 @@ required_option_choices(const json &schema)
 	return {};
     std::vector<std::string> result;
     for (const json &constraint : schema.at("constraints")) {
-	if (!is_required_choice(constraint))
+	if (!is_option_choice(constraint) ||
+	    constraint.value("min", (size_t)0) != 1)
 	    continue;
-	std::vector<std::string> choices;
-	for (const json &name : constraint.at("options")) {
-	    const json *option = canonical_option(schema, name.get<std::string>());
-	    if (option && option->value("visibility", std::string()) != "internal" &&
-		!option->value("hidden", false))
-		choices.push_back(synopsis_option(*option));
-	}
-	if (choices.empty())
-	    continue;
-	std::string term = "(";
-	for (size_t i = 0; i < choices.size(); i++) {
-	    if (i)
-		term += " | ";
-	    term += choices[i];
-	}
-	term += ")";
-	result.push_back(term);
+	const std::string term = option_choice_term(schema, constraint, {});
+	if (!term.empty())
+	    result.push_back(term);
     }
     return result;
 }
@@ -974,11 +1000,9 @@ render_synopsis(const std::vector<schema_view> &views)
 		operand_case_options(*view.schema);
 	    for (const json &operand_case : view.schema->at("operand_cases")) {
 		const json &case_schema = operand_case.at("schema");
-		std::set<std::string> required = required_choice_options(*view.schema);
 		std::vector<std::string> terms;
-		required.insert(case_option_names.begin(), case_option_names.end());
 		if (has_options)
-		    append_terms(terms, synopsis_options(*view.schema, required));
+		    append_terms(terms, synopsis_options(*view.schema, case_option_names));
 		append_terms(terms, case_options(*view.schema, operand_case));
 		append_terms(terms, required_option_choices(case_schema));
 		append_terms(terms, operand_terms(case_schema.at("operands")));
@@ -987,9 +1011,7 @@ render_synopsis(const std::vector<schema_view> &views)
 	} else {
 	    std::vector<std::string> terms;
 	    if (has_options)
-		append_terms(terms, synopsis_options(*view.schema,
-		    required_choice_options(*view.schema)));
-	    append_terms(terms, required_option_choices(*view.schema));
+		append_terms(terms, synopsis_options(*view.schema, {}));
 	    append_terms(terms, operand_terms(view.schema->at("operands")));
 	    render_synopsis_form(output, view.invocation, terms);
 	}

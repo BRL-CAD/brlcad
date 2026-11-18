@@ -10,7 +10,7 @@ random - generate a random integer between two values
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*random* [*-u*] [*-g*] [*-c* _value_] [*-s* _integer_] [*-v*] _low_ _high_
+*random* [*-u* | *-g*] [*-c* _value_] [*-s* _integer_] [*-v*] _low_ _high_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
