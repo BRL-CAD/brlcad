@@ -177,7 +177,8 @@ cmd_schema_option_arg_shape(const struct bu_arg_option *option)
 	return &bu_arg_rgb_shape;
     if (option->consume == bu_arg_color_consume)
 	return &bu_arg_color_shape;
-    if (option->consume == bu_arg_vector3_consume)
+    if (option->consume == bu_arg_vector3_consume ||
+	option->consume == bu_arg_positive_vector3_consume)
 	return &bu_arg_vector3_shape;
     if (option->value_type == BU_ARG_VALUE_STRING &&
 	option->arg_requirement == BU_ARG_OPTIONAL)
@@ -468,8 +469,9 @@ bu_arg_counted_vector3_from_argv(int *count, fastf_t *xyz, size_t argc,
 }
 
 
-int
-bu_arg_vector3_consume(struct bu_vls *msg, size_t argc, const char **argv, void *storage)
+static int
+cmd_schema_vector3_consume(struct bu_vls *msg, size_t argc, const char **argv,
+	void *storage, int positive)
 {
     fastf_t xyz[3] = {0.0, 0.0, 0.0};
     int consumed = bu_arg_vector3_from_argv(xyz, argc, (const char * const *)argv);
@@ -479,9 +481,30 @@ bu_arg_vector3_consume(struct bu_vls *msg, size_t argc, const char **argv, void 
 	    bu_vls_printf(msg, "XYZ vector must be x/y/z, x,y,z, x;y;z, quoted x y z, or three finite numbers\n");
 	return -1;
     }
+    if (positive && (xyz[X] <= 0.0 || xyz[Y] <= 0.0 || xyz[Z] <= 0.0)) {
+	if (msg)
+	    bu_vls_printf(msg, "XYZ vector components must all be positive\n");
+	return -1;
+    }
     if (storage)
 	VMOVE((fastf_t *)storage, xyz);
     return 0;
+}
+
+
+int
+bu_arg_vector3_consume(struct bu_vls *msg, size_t argc, const char **argv,
+	void *storage)
+{
+    return cmd_schema_vector3_consume(msg, argc, argv, storage, 0);
+}
+
+
+int
+bu_arg_positive_vector3_consume(struct bu_vls *msg, size_t argc,
+	const char **argv, void *storage)
+{
+    return cmd_schema_vector3_consume(msg, argc, argv, storage, 1);
 }
 
 

@@ -47,6 +47,9 @@ test_scalar_readers(void)
     double double_number = 4.5;
     int boolean = 1;
     char character = 'x';
+    fastf_t vector[3] = {4.0, 5.0, 6.0};
+    const char *positive_vector[] = {"1/2/3"};
+    const char *nonpositive_vector[] = {"1", "0", "3"};
 
 #define CHECK_READER(_expression, _description) do { \
 	if (!(_expression)) { \
@@ -123,6 +126,13 @@ test_scalar_readers(void)
 	"single character");
     CHECK_READER(!bu_arg_char_from_str(NULL, &character, "quit") &&
 	character == 'q', "multiple-character transaction");
+    CHECK_READER(bu_arg_positive_vector3_consume(NULL, 1, positive_vector,
+	vector) == 0 && EQUAL(vector[X], 1.0) && EQUAL(vector[Y], 2.0) &&
+	EQUAL(vector[Z], 3.0), "positive vector reader");
+    CHECK_READER(bu_arg_positive_vector3_consume(NULL, 3,
+	nonpositive_vector, vector) < 0 && EQUAL(vector[X], 1.0) &&
+	EQUAL(vector[Y], 2.0) && EQUAL(vector[Z], 3.0),
+	"positive vector transaction");
 
 #undef CHECK_READER
     bu_vls_free(&msg);

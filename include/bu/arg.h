@@ -242,6 +242,9 @@ BU_EXPORT extern int bu_arg_vector3_from_argv(fastf_t *xyz, size_t argc,
 	const char * const *argv);
 BU_EXPORT extern int bu_arg_vector3_consume(struct bu_vls *msg, size_t argc,
 	const char **argv, void *storage);
+/** Parse the standard XYZ forms while requiring three positive components. */
+BU_EXPORT extern int bu_arg_positive_vector3_consume(struct bu_vls *msg,
+	size_t argc, const char **argv, void *storage);
 
 /**
  * Standard count-plus-vector argument shape.  It accepts an integer count
@@ -956,6 +959,9 @@ BU_EXPORT extern int bu_arg_integer_pair_optional_validate(size_t argc,
  */
 #define BU_ARG_VECTOR3(_short, _long, _record, _field, _arg, _help) \
     {_short, _long, _long, _arg, _help, BU_ARG_VALUE_VECTOR, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, bu_arg_vector3_consume, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_VECTOR3}
+/** A standard finite XYZ vector whose three components must be positive. */
+#define BU_ARG_POSITIVE_VECTOR3(_short, _long, _record, _field, _arg, _help) \
+    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_VECTOR, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, bu_arg_positive_vector3_consume, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_VECTOR3}
 #define BU_ARG_CUSTOM(_short, _long, _record, _field, _parser, _arg, _help) \
     {_short, _long, _long, _arg, _help, BU_ARG_VALUE_CUSTOM, BU_ARG_STORAGE_OFFSET(_record, _field), _parser, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
 #define BU_ARG_VALUE_VALIDATE(_short, _long, _record, _field, _type, _validator, _arg, _help) \

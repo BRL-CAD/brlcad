@@ -56,28 +56,6 @@ struct voxelize_args {
 
 
 static int
-voxelize_size_consume(struct bu_vls *msg, size_t argc, const char **argv, void *storage)
-{
-    vect_t size = VINIT_ZERO;
-    int consumed = bu_arg_vector3_from_argv(size, argc, (const char * const *)argv);
-
-    if (consumed == 0 || (size_t)consumed != argc) {
-	if (msg)
-	    bu_vls_printf(msg, "voxel size must be x/y/z, x,y,z, x;y;z, quoted x y z, or three finite numbers\n");
-	return -1;
-    }
-    if (size[X] <= 0.0 || size[Y] <= 0.0 || size[Z] <= 0.0) {
-	if (msg)
-	    bu_vls_printf(msg, "voxel dimensions must all be positive\n");
-	return -1;
-    }
-    if (storage)
-	VMOVE((fastf_t *)storage, size);
-    return 0;
-}
-
-
-static int
 voxelize_threshold_validate(struct bu_vls *msg, const char *arg)
 {
     fastf_t threshold;
@@ -90,13 +68,9 @@ voxelize_threshold_validate(struct bu_vls *msg, const char *arg)
 }
 
 
-static const struct bu_arg_shape voxelize_vector3_arg_shape = {
-    BU_ARG_SHAPE_VECTOR3, 1, 3, "packed x/y/z or three coordinates", NULL, NULL
-};
 static const struct bu_arg_option voxelize_schema_options[] = {
-    BU_ARG_OPTION_SHAPED("s", NULL, "s", struct voxelize_args, size,
-	BU_ARG_VALUE_VECTOR, "dx/dy/dz", "Positive voxel dimensions",
-	BU_ARG_REQUIRED, &voxelize_vector3_arg_shape, voxelize_size_consume),
+    BU_ARG_POSITIVE_VECTOR3("s", NULL, struct voxelize_args, size,
+	"dx/dy/dz", "Positive voxel dimensions"),
     BU_ARG_VALUE_VALIDATE("d", NULL, struct voxelize_args, detail, BU_ARG_VALUE_INTEGER, bu_arg_positive_integer_validate, "level",
 	"Positive ray-sampling detail level"),
     BU_ARG_VALUE_VALIDATE("t", NULL, struct voxelize_args, threshold, BU_ARG_VALUE_NUMBER,
