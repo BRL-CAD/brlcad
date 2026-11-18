@@ -22,11 +22,12 @@
 #include "vmath.h"
 
 #include <fstream>
-#include <sstream>
+#include <cstring>
 #include <string>
 
 #include "bio.h"
 
+#include "rt/db4.h"
 #include "rt/db_io.h"
 #include "gcv/api.h"
 #include "gcv/util.h"
@@ -48,76 +49,43 @@ asc_can_read(const char *data)
 
 
 static int
-asc_read(
-	struct gcv_context *c,
-       	const struct gcv_opts *o,
-	const void *UNUSED(o_data),
-       	const char *spath
-	)
+asc_read(struct gcv_context *context, const struct gcv_opts *options,
+    const void *UNUSED(options_data), const char *source_path)
 {
-    struct bu_vls vline = BU_VLS_INIT_ZERO;
-    int fmt = -1;
-    int ret = 1;
-    if (!c || !o || !spath) return 0;
-    std::string sline;
-    std::ifstream fs;
-    fs.open(spath);
-    if (!fs.is_open()) {
-	std::cerr << "Unable to open " << spath << " for reading, skipping\n";
-	return 1;
+    if (!context || !options || !source_path)
+	return 0;
+    std::ifstream input(source_path);
+    if (!input) {
+	bu_log("Cannot open ASC input %s\n", source_path);
+	return 0;
     }
-
-    // asc2g checked for either title or put as the first line to denote a new
-    // style asc file.
-    struct bu_vls str_title = BU_VLS_INIT_ZERO;
-    struct bu_vls str_put = BU_VLS_INIT_ZERO;
-    bu_vls_strcpy(&str_title, "title");
-    bu_vls_strcpy(&str_put, "put ");
-
-    while (std::getline(fs, sline)) {
-	std::cout << sline << "\n";
-	bu_vls_sprintf(&vline, "%s", sline.c_str());
-	bu_vls_trimspace(&vline);
-	if (!bu_vls_strlen(&vline) || bu_vls_cstr(&vline)[0] == '#') {
-	    // Comment line or empty line - skip
+    std::string line;
+    while (std::getline(input, line)) {
+	if (line.find('\0') != std::string::npos) return 0;
+	size_t first = line.find_first_not_of(" \t\r");
+	if (first == std::string::npos || line[first] == '#')
 	    continue;
+	size_t end = line.find_first_of(" \t\r", first);
+	std::string command = line.substr(first, end == std::string::npos ? end : end - first);
+	bool script = command == "title" || command == "units" || command == "put" ||
+	    command == "attr" || command == "color";
+	static const char record_types[] = {ID_IDENT, ID_SOLID, ID_COMB, ID_MEMB, ID_ARS_A, ID_ARS_B,
+	    ID_P_HEAD, ID_P_DATA, ID_COLORTAB, ID_BSOLID, ID_BSURF, DBID_PIPE, DBID_STRSOL,
+	    DBID_NMG, DBID_PARTICLE, DBID_ARBN, DBID_CLINE, DBID_BOT, DBID_EXTR, DBID_SKETCH, 0};
+	bool legacy = command.size() == 1 && strchr(record_types, command[0]);
+	if (!script && !legacy) {
+	    bu_log("Unsupported ASC syntax or initial command: %s\n", command.c_str());
+	    return 0;
 	}
-	if (fmt < 0) {
-	    // Don't have format yet - check if this is a v4 asc file or a v5
-	    // asc file.  The two are handled differently.
-	    if (!bu_vls_strncmp(&vline, &str_title, 5) || !bu_vls_strncmp(&vline, &str_put, 4)) {
-		fmt = 5;
-	    } else {
-		fmt = 4;
-	    }
-	}
-	if (fmt) {
-	    switch (fmt) {
-		case 4:
-		    fs.seekg(0);
-		    ret = asc_read_v4(c, o, fs);
-		    goto asc_cleanup;
-		    break;
-		case 5:
-		    fs.seekg(0);
-		    ret = asc_read_v5(c, o, fs);
-		    goto asc_cleanup;
-		    break;
-		default:
-		    std::cerr << "Unknown asc format version: " << fmt << "\n";
-		    break;
-	    }
-	}
+	input.clear();
+	input.seekg(0);
+	if (!input)
+	    return 0;
+	return (script ? asc_read_v5(context, options, input) : asc_read_v4(context, options, input)) == 1;
     }
-
-asc_cleanup:
-    // Not yet implemented - always return failure until we have something working...
-    bu_vls_free(&str_title);
-    bu_vls_free(&str_put);
-    bu_vls_free(&vline);
-    return ret;
+    bu_log("ASC input contains no database records: %s\n", source_path);
+    return 0;
 }
-
 
 static int
 asc_write(struct gcv_context *c, const struct gcv_opts *o,
@@ -125,11 +93,9 @@ asc_write(struct gcv_context *c, const struct gcv_opts *o,
 {
     if (!c || !o || !dest_path) return 0;
     if (db_version(c->dbip) < 5) {
-	asc_write_v4(c, o, dest_path);
-    } else {
-	asc_write_v5(c, o, dest_path);
+	return asc_write_v4(c, o, dest_path);
     }
-    return 1;
+    return asc_write_v5(c, o, dest_path);
 }
 
 
