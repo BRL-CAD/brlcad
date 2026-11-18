@@ -21,107 +21,92 @@
 #include "common.h"
 #include "vmath.h"
 
+#include <cctype>
 #include <fstream>
-#include <sstream>
 #include <string>
 #include <cstring>
 
 #include "bio.h"
 
 #include "bu/units.h"
+#include "rt/db_attr.h"
+#include "rt/mater.h"
 #include "raytrace.h"
 #include "gcv/api.h"
 #include "gcv/util.h"
 
-// NOTE: This importer must support multi-line quoted strings and multi-line
-// brace blocks. Large brep serializations can span thousands of lines.
-
-/* ----------------------------------------------------------------
- * Incremental parse state for Tcl list completeness tracking.
- * We avoid rescanning the whole accumulated buffer for each new line:
- * O(total_length) rather than O(total_length^2).
- * ---------------------------------------------------------------- */
+/* Track Tcl-list word boundaries incrementally so large serialized objects
+ * are scanned once. Quotes inside brace words are literal characters. */
 struct asc_parse_state {
     bool in_quote = false;
     bool escape = false;
-    int  brace_depth = 0;
-    bool saw_top_level_quote = false; /* true if we started a top-level quoted
-					 string (brace_depth==0 when it opened) */
+    bool word_start = true;
+    bool continued = false;
+    size_t brace_depth = 0;
 };
 
-/* Scan a fragment updating parse state. */
 static void
-asc_scan_fragment(asc_parse_state &st, const char *frag)
+asc_scan_fragment(asc_parse_state &state, const char *fragment)
 {
-    if (!frag || !*frag) return;
-
-    const char *p = frag;
-
-    /* If we are in a large top-level quoted payload (brace_depth==0, in_quote,
-     * and saw_top_level_quote) we can use a faster scan: look for an unescaped
-     * closing quote without analyzing braces. */
-    if (st.in_quote && st.brace_depth == 0 && st.saw_top_level_quote) {
-	while (*p) {
-	    char c = *p++;
-	    if (st.escape) {
-		st.escape = false;
-		continue;
+    state.continued = false;
+    for (const char *at = fragment; *at; ++at) {
+	char value = *at;
+	if (state.escape) {
+	    state.escape = false;
+	    if (value == '\n') {
+		state.continued = true;
+		if (!state.in_quote && !state.brace_depth) state.word_start = true;
 	    }
-	    if (c == '\\') {
-		st.escape = true;
-		continue;
-	    }
-	    if (c == '"') {
-		st.in_quote = false;
-		/* End of top-level quoted payload */
-		break;
-	    }
-	}
-	return;
-    }
-
-    /* General scanner */
-    for (; *p; ++p) {
-	char c = *p;
-
-	if (st.escape) {
-	    st.escape = false;
 	    continue;
 	}
-	if (c == '\\') {
-	    st.escape = true;
-	    continue;
-	}
-
-	if (st.in_quote) {
-	    if (c == '"') {
-		st.in_quote = false;
-	    }
-	    continue; /* braces ignored inside quotes */
-	}
-
-	if (c == '"') {
-	    st.in_quote = true;
-	    if (st.brace_depth == 0)
-		st.saw_top_level_quote = true;
-	    continue;
-	}
-	if (c == '{') {
-	    st.brace_depth++;
-	    continue;
-	}
-	if (c == '}') {
-	    if (st.brace_depth > 0)
-		st.brace_depth--;
-	    continue;
+	if (value == '\\') {
+	    state.escape = true;
+	    state.word_start = false;
+	} else if (state.brace_depth) {
+	    if (value == '{') ++state.brace_depth;
+	    if (value == '}') --state.brace_depth;
+	} else if (state.in_quote) {
+	    if (value == '\"') state.in_quote = false;
+	} else if (state.word_start && value == '{') {
+	    state.brace_depth = 1;
+	    state.word_start = false;
+	} else if (state.word_start && value == '\"') {
+	    state.in_quote = true;
+	    state.word_start = false;
+	} else {
+	    state.word_start = std::isspace(static_cast<unsigned char>(value)) != 0;
 	}
     }
 }
 
-static inline bool
-asc_command_complete(const asc_parse_state &st)
+static bool
+asc_command_complete(const asc_parse_state &state)
 {
-    return (!st.in_quote && st.brace_depth == 0);
+    return !state.in_quote && !state.brace_depth && !state.escape && !state.continued;
+}
+
+/* Tcl replaces continued newlines before finding words, even inside braces.
+ * List parsing alone would turn a continuation between words into an extra
+ * word beginning with a space. Preserve other backslash pairs for that parser. */
+static std::string
+asc_list_text(const char *text)
+{
+    std::string normalized;
+    for (const char *at = text; *at; ++at) {
+	if (*at == '\\' && at[1]) {
+	    if (at[1] == '\n') {
+		++at;
+		while (at[1] == ' ' || at[1] == '\t') ++at;
+		normalized += ' ';
+	    } else {
+		normalized += *at++;
+		normalized += *at;
+	    }
+	} else {
+	    normalized += *at;
+	}
+    }
+    return normalized;
 }
 
 /* Note - in its full generality, a "v5 ASCII BRL-CAD geometry file" may
@@ -129,92 +114,75 @@ asc_command_complete(const asc_parse_state &st)
  * assume only commands that g2asc emits: color, title, units, attr, put.
  */
 int
-asc_read_v5(
-	struct gcv_context *c,
-	const struct gcv_opts *UNUSED(o),
-	std::ifstream &fs
-	)
+asc_read_v5(struct gcv_context *context, const struct gcv_opts *UNUSED(options), std::ifstream &input)
 {
-    if (!c)
-	return -1;
-
-    bu_log("Reading v5...\n");
-
-    std::string sline;
-    struct bu_vls cur_line = BU_VLS_INIT_ZERO;
-    asc_parse_state pst;
-    struct rt_wdb *wdbp = wdb_dbopen(c->dbip, RT_WDB_TYPE_DB_INMEM);
-
-    while (std::getline(fs, sline)) {
-	/* Efficient append: avoid printf formatting overhead */
-	bu_vls_strcat(&cur_line, sline.c_str());
-	bu_vls_putc(&cur_line, '\n');
-
-	/* Incremental scan only for the new line */
-	asc_scan_fragment(pst, sline.c_str());
-
-	if (!asc_command_complete(pst)) {
-	    continue; /* Need more lines */
+    if (!context)
+	return 0;
+    struct rt_wdb *wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
+    if (!wdbp)
+	return 0;
+    struct bu_vls command = BU_VLS_INIT_ZERO;
+    struct bu_vls messages = BU_VLS_INIT_ZERO;
+    asc_parse_state state;
+    std::string line;
+    int status = 1;
+    while (std::getline(input, line)) {
+	if (!line.empty() && line.back() == '\r') line.pop_back();
+	if (line.find('\0') != std::string::npos) {
+	    bu_vls_strcat(&messages, "ASC text contains a NUL byte\n");
+	    status = 0;
+	    break;
 	}
-
-	/* We believe we have a complete command. Parse once. */
-	int list_c = 0;
-	char **list_v = NULL;
-	const char *cmd_str = bu_vls_cstr(&cur_line);
-	if (bu_argv_from_tcl_list(cmd_str, &list_c, (const char ***)&list_v) != 0 || list_c < 1) {
-	    bu_log("Skipping invalid Tcl list command: %s\n", cmd_str);
-	    bu_free(list_v, "tcl argv list");
-	    bu_vls_trunc(&cur_line, 0);
-	    pst = asc_parse_state(); /* reset state */
+	if (!bu_vls_strlen(&command)) {
+	    size_t first = line.find_first_not_of(" \t\r");
+	    if (first == std::string::npos || line[first] == '#')
+		continue;
+	}
+	bu_vls_strcat(&command, line.c_str());
+	bu_vls_putc(&command, '\n');
+	asc_scan_fragment(state, line.c_str());
+	asc_scan_fragment(state, "\n");
+	if (!asc_command_complete(state))
 	    continue;
+	int count = 0;
+	const char **arguments = NULL;
+	const std::string list = asc_list_text(bu_vls_cstr(&command));
+	if (bu_argv_from_tcl_list(list.c_str(), &count, &arguments) || count < 1) {
+	    bu_log("Invalid ASC command: %s", bu_vls_cstr(&command));
+	    bu_free((void *)arguments, "ASC arguments");
+	    status = 0;
+	    break;
 	}
-
-	/* Command dispatch */
-	const char *c0 = list_v[0];
-	switch (c0[0]) {
-	    case 'a':
-		if (BU_STR_EQUAL(c0, "attr")) {
-		    rt_cmd_attr(NULL, c->dbip, list_c, (const char **)list_v);
-		    break;
-		}
-		goto unknown;
-	    case 'c':
-		if (BU_STR_EQUAL(c0, "color")) {
-		    rt_cmd_color(NULL, c->dbip, list_c, (const char **)list_v);
-		    break;
-		}
-		goto unknown;
-	    case 'p':
-		if (BU_STR_EQUAL(c0, "put")) {
-		    rt_cmd_put(NULL, wdbp, list_c, (const char **)list_v);
-		    break;
-		}
-		goto unknown;
-	    case 't':
-		/* 'title' or 'units' */
-		if (c0[1] == 'i' && BU_STR_EQUAL(c0, "title")) {
-		    rt_cmd_title(NULL, c->dbip, list_c, (const char **)list_v);
-		    break;
-		} else if (c0[1] == 'u' && BU_STR_EQUAL(c0, "units")) {
-		    rt_cmd_units(NULL, c->dbip, list_c, (const char **)list_v);
-		    break;
-		}
-		goto unknown;
-	    default:
-unknown:
-		bu_log("Unknown command: %s\n", c0);
-		break;
+	int result = BRLCAD_ERROR;
+	if (BU_STR_EQUAL(arguments[0], "attr"))
+	    result = rt_cmd_attr(&messages, context->dbip, count, arguments);
+	else if (BU_STR_EQUAL(arguments[0], "color"))
+	    result = rt_cmd_color(&messages, context->dbip, count, arguments);
+	else if (BU_STR_EQUAL(arguments[0], "put"))
+	    result = rt_cmd_put(&messages, wdbp, count, arguments);
+	else if (BU_STR_EQUAL(arguments[0], "title"))
+	    result = rt_cmd_title(&messages, context->dbip, count, arguments);
+	else if (BU_STR_EQUAL(arguments[0], "units"))
+	    result = rt_cmd_units(&messages, context->dbip, count, arguments);
+	else
+	    bu_vls_printf(&messages, "Unsupported ASC command: %s\n", arguments[0]);
+	bu_free((void *)arguments, "ASC arguments");
+	if (result != BRLCAD_OK) {
+	    status = 0;
+	    break;
 	}
-
-	bu_free(list_v, "tcl argv list");
-	bu_vls_trunc(&cur_line, 0);
-	pst = asc_parse_state(); /* reset for next command */
+	bu_vls_trunc(&command, 0);
+	state = asc_parse_state();
     }
-
-    /* Incomplete trailing command (if any) is ignored */
-    bu_vls_free(&cur_line);
-
-    return 1;
+    if (input.bad() || (status && bu_vls_strlen(&command))) {
+	bu_vls_strcat(&messages, "Incomplete or unreadable ASC command\n");
+	status = 0;
+    }
+    if (bu_vls_strlen(&messages))
+	bu_log("%s", bu_vls_cstr(&messages));
+    bu_vls_free(&messages);
+    bu_vls_free(&command);
+    return status;
 }
 
 
