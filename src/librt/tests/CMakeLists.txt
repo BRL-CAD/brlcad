@@ -1,5 +1,8 @@
 set(RT_TEST_LIBS "librt;${M_LIBRARY}")
 
+brlcad_addexec(rt_db_ident_test db_ident.c "${RT_TEST_LIBS}" TEST)
+brlcad_add_test(NAME rt_db_ident COMMAND rt_db_ident_test)
+
 if(TARGET librt-static)
   brlcad_addexec(rt_static_init static_init.cpp "librt-static;${M_LIBRARY}" TEST)
   brlcad_add_test(NAME rt_static_init COMMAND rt_static_init)

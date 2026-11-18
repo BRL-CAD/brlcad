@@ -20,6 +20,7 @@
 
 #include "common.h"
 
+#include <math.h>
 #include <string.h>
 
 #include "bu/debug.h"
@@ -413,6 +414,10 @@ int db5_update_ident(struct db_i *dbip, const char *title, double local2mm)
 
     RT_CK_DBI(dbip);
 
+    if (!isfinite(local2mm) || local2mm <= 0.0)
+	return -1;
+    if (!title) title = "";
+
     if ((dp = db_lookup(dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	struct bu_external global;
 	unsigned char minor_type=0;
@@ -446,6 +451,7 @@ int db5_update_ident(struct db_i *dbip, const char *title, double local2mm)
     ret = db5_update_attributes(dp, &avs, dbip);
     bu_vls_free(&units);
     bu_avs_free(&avs);
+    if (ret < 0) return ret;
 
     /* protect from losing memory & freeing what we're about to dup */
     if (dbip->dbi_title) {
@@ -455,6 +461,8 @@ int db5_update_ident(struct db_i *dbip, const char *title, double local2mm)
     if (old_title) {
 	bu_free(old_title, "replaced dbi_title with new");
     }
+    dbip->dbi_local2base = local2mm;
+    dbip->dbi_base2local = 1.0 / local2mm;
 
     return ret;
 }

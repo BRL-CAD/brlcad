@@ -516,10 +516,8 @@ rt_cmd_units(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
     if (db_update_ident(dbip, dbip->dbi_title, loc2mm) < 0) {
 	if (msg)
 	    bu_vls_printf(msg, "rt_cmd_units:  warning - unable to stash working units into database\n");
+	return BRLCAD_ERROR;
     }
-
-    dbip->dbi_local2base = loc2mm;
-    dbip->dbi_base2local = 1.0 / loc2mm;
 
     const char *str = bu_units_string(dbip->dbi_local2base);
     if (!str) str = "Unknown_unit";

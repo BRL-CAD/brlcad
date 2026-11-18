@@ -29,6 +29,7 @@
 #include "common.h"
 
 #include <string.h>
+#include <math.h>
 #include <errno.h> /* for errno */
 #include "bio.h" /* for b_off_t */
 #include "bnetwork.h"
@@ -398,6 +399,8 @@ db_update_ident(struct db_i *dbip, const char *new_title, double local2mm)
 
     if (!new_title)
 	new_title = "";
+    if (!isfinite(local2mm) || local2mm <= 0.0)
+	return -1;
 
     if (RT_G_DEBUG&RT_DEBUG_DB)
 	bu_log("db_update_ident(%p, '%s', %g)\n", (void *)dbip, new_title, local2mm);
@@ -429,9 +432,6 @@ db_update_ident(struct db_i *dbip, const char *new_title, double local2mm)
     rec.i.i_title[0] = '\0';
     bu_strlcpy(rec.i.i_title, new_title, sizeof(rec.i.i_title));
 
-    old_title = dbip->dbi_title;
-    dbip->dbi_title = bu_strdup(new_title);
-
     if ((v4units = db_v4_get_units_code(bu_units_string(local2mm))) < 0) {
 	bu_log("db_update_ident(): \
 Due to a restriction in previous versions of the BRL-CAD database format, your\n\
@@ -443,10 +443,13 @@ You may wish to consider upgrading your database using \"dbupgrade\".\n",
     }
     rec.i.i_units = v4units;
 
-    if (old_title)
-	bu_free(old_title, "old dbi_title");
-
     put = db_put(dbip, &dir, &rec, 0, 1);
+    if (put < 0) return put;
+    old_title = dbip->dbi_title;
+    dbip->dbi_title = bu_strdup(new_title);
+    if (old_title) bu_free(old_title, "old dbi_title");
+    dbip->dbi_local2base = local2mm;
+    dbip->dbi_base2local = 1.0 / local2mm;
     return put;
 }
 
