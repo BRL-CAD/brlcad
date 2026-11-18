@@ -59,6 +59,21 @@ struct conversion_state {
     int color[4];
 };
 
+/* Generated names must not replace geometry already in the context. */
+static int
+ply_name_available(struct bu_vls *name, void *data)
+{
+    struct db_i *database = (struct db_i *)data;
+    return db_lookup(database, bu_vls_cstr(name), LOOKUP_QUIET) == RT_DIR_NULL;
+}
+
+static int
+ply_unique_name(struct db_i *database, struct bu_vls *name)
+{
+    return ply_name_available(name, database) ||
+	bu_vls_incr(name, NULL, NULL, ply_name_available, database) >= 0;
+}
+
 static int
 vertex_cb(p_ply_argument argument)
 {
@@ -190,8 +205,6 @@ ply_read_gcv(struct gcv_context *context, const struct gcv_opts *gcv_options,
     database = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
     if (!database)
 	goto cleanup;
-    if (mk_id_units(database, "Conversion from PLY format", "mm") < 0)
-	goto cleanup;
     bu_path_component(&name, source_path, BU_PATH_BASENAME);
     {
 	char *extension = strrchr(bu_vls_addr(&name), '.');
@@ -199,7 +212,12 @@ ply_read_gcv(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	    bu_vls_trunc(&name, extension - bu_vls_addr(&name));
     }
     bu_vls_strcat(&name, ".bot");
+    if (!ply_unique_name(context->dbip, &name))
+	goto cleanup;
     bu_vls_printf(&region, "%s.r", bu_vls_cstr(&name));
+    if (!ply_unique_name(context->dbip, &region) ||
+	mk_id_units(database, "Conversion from PLY format", "mm") < 0)
+	goto cleanup;
     if (mk_bot(database, bu_vls_cstr(&name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0,
 	bot.num_vertices, bot.num_faces, bot.vertices, bot.faces, NULL, NULL) ||
 	mk_addmember(bu_vls_cstr(&name), &members.l, NULL, WMOP_UNION) == WMEMBER_NULL)

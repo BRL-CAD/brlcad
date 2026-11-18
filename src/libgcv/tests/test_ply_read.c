@@ -30,6 +30,7 @@
 #include "bu/str.h"
 #include "gcv.h"
 #include "raytrace.h"
+#include "wdb.h"
 
 #define PLY_TEST_HEADER(index_type) \
     "ply\nformat ascii 1.0\nelement vertex 3\nproperty float x\nproperty float y\nproperty float z\n" \
@@ -226,6 +227,66 @@ topology_test(void)
     return failed;
 }
 
+static int
+names_test(void)
+{
+    struct gcv_context context;
+    char path[MAXPATHLEN] = {0};
+    const char *scales[] = {"1", "2", "3"};
+    struct bu_vls collision = BU_VLS_INIT_ZERO;
+    struct bu_external before = BU_EXTERNAL_INIT_ZERO;
+    struct bu_external after = BU_EXTERNAL_INIT_ZERO;
+    struct directory *entry;
+    struct rt_wdb *writer;
+    point_t center = {0, 0, 0};
+    int failed = 0;
+    gcv_context_init(&context);
+    if (!write_fixture(path, ordered)) {
+	failed = 1;
+	goto done;
+    }
+    bu_path_component(&collision, path, BU_PATH_BASENAME_EXTLESS);
+    bu_vls_strcat(&collision, ".bot.r");
+    writer = wdb_dbopen(context.dbip, RT_WDB_TYPE_DB_INMEM);
+    if (!writer || mk_sph(writer, bu_vls_cstr(&collision), center, 5) < 0) {
+	failed = 1;
+	goto done;
+    }
+    entry = db_lookup(context.dbip, bu_vls_cstr(&collision), LOOKUP_QUIET);
+    if (!entry || db_get_external(&before, entry, context.dbip) < 0) {
+	failed = 1;
+	goto done;
+    }
+    for (size_t i = 0; i < sizeof(scales) / sizeof(scales[0]); ++i) {
+	if (read_fixture(&context, path, scales[i]) != 1 || mesh_count(&context) != i + 1 ||
+	    !check_triangle(&context, path, 1)) {
+	    bu_log("PLY import reused an existing mesh name\n");
+	    failed = 1;
+	}
+	entry = db_lookup(context.dbip, bu_vls_cstr(&collision), LOOKUP_QUIET);
+	if (!entry || db_get_external(&after, entry, context.dbip) < 0 ||
+	    before.ext_nbytes != after.ext_nbytes || memcmp(before.ext_buf, after.ext_buf, before.ext_nbytes)) {
+	    bu_log("PLY import overwrote an existing object with a generated region\n");
+	    failed = 1;
+	}
+	bu_free_external(&after);
+    }
+    db_update_nref(context.dbip);
+    FOR_ALL_DIRECTORY_START(entry, context.dbip) {
+	if (entry->d_major_type == DB5_MAJORTYPE_BRLCAD && entry->d_minor_type == ID_BOT && entry->d_nref != 1) {
+	    bu_log("A generated PLY region does not reference its own mesh\n");
+	    failed = 1;
+	}
+    } FOR_ALL_DIRECTORY_END;
+done:
+    bu_free_external(&before);
+    bu_free_external(&after);
+    bu_vls_free(&collision);
+    if (path[0]) bu_file_delete(path);
+    gcv_context_destroy(&context);
+    return failed;
+}
+
 int
 main(int argc, const char **argv)
 {
@@ -234,6 +295,7 @@ main(int argc, const char **argv)
     if (BU_STR_EQUAL(argv[1], "state")) return state_test();
     if (BU_STR_EQUAL(argv[1], "errors")) return errors_test();
     if (BU_STR_EQUAL(argv[1], "topology")) return topology_test();
+    if (BU_STR_EQUAL(argv[1], "names")) return names_test();
     return 1;
 }
 
