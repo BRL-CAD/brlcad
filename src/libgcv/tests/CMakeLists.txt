@@ -27,6 +27,14 @@ if(TARGET gcv-asc)
   endif()
 endif()
 
+if(TARGET gcv-ply)
+  brlcad_addexec(test_gcv_ply_read test_ply_read.c "libgcv;librt" TEST)
+  if(TARGET test_gcv_ply_read)
+    add_dependencies(test_gcv_ply_read gcv-ply)
+  endif()
+  brlcad_add_test(NAME gcv_ply_read_state COMMAND test_gcv_ply_read state)
+endif()
+
 cmakefiles(CMakeLists.txt test_context.c)
 
 # Local Variables:

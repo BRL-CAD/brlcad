@@ -34,9 +34,11 @@
 #include "wdb.h"
 #include "rply.h"
 
-double scale_factor;                    // without refactor to callbacks there's no easy way to avoid this global
+#define PLY_COMPONENTS 3
+
 struct ply_read_options
 {
+    fastf_t scale;
     int verbose;                        /* verbose output flag */
     int debug;                          /* debug output flag */
 };
@@ -51,6 +53,7 @@ struct conversion_state
     struct rt_wdb *fd_out;	        /* Resulting BRL-CAD file */
 
     struct rt_bot_internal* bot;        /* converted bot */    
+    int current_face;
     struct wmember wm;                  /* handle for in-memory combinations */
 };
 
@@ -91,22 +94,14 @@ log_elements(p_ply ply_fp)
 static int
 vertex_cb(p_ply_argument argument)
 {
-    static int cur_vertex = -1;
-    long vert_index;
-    struct rt_bot_internal bot;
-    struct rt_bot_internal *pbot = &bot;
-    double botval = ply_get_argument_value(argument);
-    if (!ply_get_argument_user_data(argument, (void **)&pbot, &vert_index)) {
-	bu_bomb("Unable to import BOT");
-    }
-    if (vert_index == 0) {
-	cur_vertex++;
-	pbot->vertices[cur_vertex*3] = botval * scale_factor;
-    } else if (vert_index == 1) {
-	pbot->vertices[cur_vertex*3+1] = botval * scale_factor;
-    } else if (vert_index == 2) {
-	pbot->vertices[cur_vertex*3+2] = botval * scale_factor;
-    }
+    struct conversion_state *state = NULL;
+    long coordinate, vertex;
+    double value = ply_get_argument_value(argument);
+    if (!ply_get_argument_user_data(argument, (void **)&state, &coordinate) || !state ||
+	!ply_get_argument_element(argument, NULL, &vertex) || coordinate < 0 || coordinate >= PLY_COMPONENTS ||
+	vertex < 0 || (size_t)vertex >= state->bot->num_vertices)
+	return 0;
+    state->bot->vertices[(size_t)vertex * PLY_COMPONENTS + coordinate] = value * state->ply_read_options->scale;
     return 1;
 }
 
@@ -137,41 +132,41 @@ color_cb(p_ply_argument argument)
 static int
 face_cb(p_ply_argument argument)
 {
-    static int cur_face = -1;
-    
     long list_len, vert_index;
-    struct rt_bot_internal bot;
-    struct rt_bot_internal *pbot = &bot;
+    struct conversion_state *state = NULL;
+    struct rt_bot_internal *pbot;
     int botval;
     if (!ply_get_argument_property(argument, NULL, &list_len, &vert_index)) {
-	bu_bomb("Unable to import face lists");
+	return 0;
     }
     if (list_len < 3 || list_len > 4) {
 	bu_log("ignoring face with %ld vertices\n", list_len);
 	return 1;
     }
-    ply_get_argument_user_data(argument, (void **)&pbot, NULL);
+    if (!ply_get_argument_user_data(argument, (void **)&state, NULL) || !state)
+	return 0;
+    pbot = state->bot;
     botval = ply_get_argument_value(argument);
 
     switch (vert_index) {
 	case 0:
-	    cur_face++;
-	    pbot->faces[cur_face*3] = botval;
+	    state->current_face++;
+	    pbot->faces[state->current_face*3] = botval;
 	    break;
 	case 1:
-	    pbot->faces[cur_face*3+1] = botval;
+	    pbot->faces[state->current_face*3+1] = botval;
 	    break;
 	case 2:
-	    pbot->faces[cur_face*3+2] = botval;
+	    pbot->faces[state->current_face*3+2] = botval;
 	    break;
 	case 3:
 	    /* need to break this into two BOT faces */
 	    pbot->num_faces++;
 	    pbot->faces = (int *)bu_realloc(pbot->faces, pbot->num_faces * 3 * sizeof(int), "bot_faces");
-	    pbot->faces[cur_face*3+3] = botval;
-	    pbot->faces[cur_face*3+4] = pbot->faces[cur_face*3];
-	    pbot->faces[cur_face*3+5] = pbot->faces[cur_face*3+2];
-	    cur_face++;
+	    pbot->faces[state->current_face*3+3] = botval;
+	    pbot->faces[state->current_face*3+4] = pbot->faces[state->current_face*3];
+	    pbot->faces[state->current_face*3+5] = pbot->faces[state->current_face*3+2];
+	    state->current_face++;
 	    break;
 	default:
 	    /* will never execute because lists of length > 4 are not allowed */
@@ -212,14 +207,14 @@ convert_input(struct conversion_state* pstate)
     }
 
     // actual conversion starts here
-    pstate->bot->num_vertices = ply_set_read_cb(ply_fp, "vertex", "x", vertex_cb, pstate->bot, 0);
-    ply_set_read_cb(ply_fp, "vertex", "y", vertex_cb, pstate->bot, 1);
-    ply_set_read_cb(ply_fp, "vertex", "z", vertex_cb, pstate->bot, 2);
+    pstate->bot->num_vertices = ply_set_read_cb(ply_fp, "vertex", "x", vertex_cb, pstate, 0);
+    ply_set_read_cb(ply_fp, "vertex", "y", vertex_cb, pstate, 1);
+    ply_set_read_cb(ply_fp, "vertex", "z", vertex_cb, pstate, 2);
 
     ply_set_read_cb(ply_fp, "face", "red", color_cb, &irgb, 0);
     ply_set_read_cb(ply_fp, "face", "green", color_cb, &irgb, 1);
     ply_set_read_cb(ply_fp, "face", "blue", color_cb, &irgb, 2);
-    pstate->bot->num_faces = ply_set_read_cb(ply_fp, "face", "vertex_indices", face_cb, pstate->bot, 0);
+    pstate->bot->num_faces = ply_set_read_cb(ply_fp, "face", "vertex_indices", face_cb, pstate, 0);
 
     if (pstate->bot->num_faces < 1 || pstate->bot->num_vertices < 1) {
 	bu_log("This PLY file appears to contain no geometry!\n");
@@ -319,11 +314,11 @@ ply_read_create_opts(struct bu_opt_desc** options_desc, void** dest_options_data
     *dest_options_data = options_data;
     *options_desc = (struct bu_opt_desc *)bu_malloc(4 * sizeof(struct bu_opt_desc), "options_desc");
 
-    scale_factor = 1000.0;                      /* default units are meters */
+    options_data->scale = 1000.0;                      /* default units are meters */
     options_data->verbose = 0;                  /* default flag = off */
     options_data->debug = 0;                    /* default flag = off */
 
-    BU_OPT((*options_desc)[0], "s", "scale_factor", "float", bu_opt_fastf_t, &scale_factor, "specify the scale factor");
+    BU_OPT((*options_desc)[0], "s", "scale_factor", "float", bu_opt_fastf_t, &options_data->scale, "specify the scale factor");
     BU_OPT((*options_desc)[1], "v", "verbose",      "",      NULL,           &options_data->verbose,      "specify to run with verbose output");
     BU_OPT((*options_desc)[2], "d", "debug",        "",      NULL,           &options_data->debug,        "specify specify to run with debug output");
     BU_OPT_NULL((*options_desc)[3]);
@@ -342,6 +337,7 @@ ply_read_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, co
 
     struct rt_wdb *wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
 
+    state.current_face = -1;
     state.gcv_options = gcv_options;
     state.ply_read_options = (struct ply_read_options*)options_data;
     state.input_file = source_path;
