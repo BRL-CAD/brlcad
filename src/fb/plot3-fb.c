@@ -1416,6 +1416,8 @@ main(int argc, char **argv)
 	/* Read in initial screen */
 	if (fb_read(fbp, 0, 0, buffer, buffersize/sizeof(RGBpixel)) <= 0)
 	    fprintf(stderr, "plot3-fb: band read error\n");
+    } else if (single_banded) {
+	memset((char *)buffer, 0, buffersize);
     }
     if (debug)
 	fprintf(stderr, "plot3-fb output of %s\n", filename);
