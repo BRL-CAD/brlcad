@@ -36,6 +36,9 @@
 
 #include "common.h"
 
+#include <ctype.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -44,6 +47,7 @@
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/parallel.h"
+#include "bu/path.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -75,6 +79,43 @@ static struct db_tree_state	jack_tree_state;	/* includes tol & model */
 
 static int	regions_tried = 0;
 static int	regions_done = 0;
+
+
+static int
+parse_nonnegative_number(const char *arg, fastf_t *value)
+{
+    char *end = NULL;
+    double parsed;
+
+    if (!arg || !value || arg[0] == '\0' || isspace((unsigned char)arg[0]))
+	return 0;
+    errno = 0;
+    parsed = strtod(arg, &end);
+    if (errno != 0 || end == arg || *end != '\0' ||
+	!isfinite(parsed) || parsed < 0.0)
+	return 0;
+    *value = (fastf_t)parsed;
+    return 1;
+}
+
+
+static int
+parse_debug_mask(const char *arg, unsigned int *mask)
+{
+    char *end = NULL;
+    unsigned long parsed;
+
+    if (!arg || !mask || arg[0] == '\0' || arg[0] == '-' ||
+	isspace((unsigned char)arg[0]))
+	return 0;
+    errno = 0;
+    parsed = strtoul(arg, &end, 16);
+    if (errno != 0 || end == arg || *end != '\0' || parsed > UINT_MAX)
+	return 0;
+    *mask = (unsigned int)parsed;
+    return 1;
+}
+
 
 static void
 print_usage(const char *progname)
@@ -423,6 +464,7 @@ int
 main(int argc, char **argv)
 {
     char		*dot;
+    char		*database_name;
     int	c;
     double		percent;
     struct bu_vls	fig_file = BU_VLS_INIT_ZERO;
@@ -463,7 +505,8 @@ main(int argc, char **argv)
     while ((c = bu_getopt(argc, argv, optstring)) != -1) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
-		ttol.abs = atof(bu_optarg);
+		if (!parse_nonnegative_number(bu_optarg, &ttol.abs))
+		    bu_exit(1, "Invalid absolute tolerance: %s\n", bu_optarg);
 		break;
 	    case 'd':
 		debug_plots = 1;
@@ -472,16 +515,20 @@ main(int argc, char **argv)
 		no_file_output = 1;
 		break;
 	    case 'n':		/* Surface normal tolerance. */
-		ttol.norm = atof(bu_optarg);
+		if (!parse_nonnegative_number(bu_optarg, &ttol.norm))
+		    bu_exit(1, "Invalid normal tolerance: %s\n", bu_optarg);
+		ttol.norm *= DEG2RAD;
 		break;
 	    case 'p':		/* Prefix for Jack file names. */
 		prefix = bu_optarg;
 		break;
 	    case 'r':		/* Relative tolerance. */
-		ttol.rel = atof(bu_optarg);
+		if (!parse_nonnegative_number(bu_optarg, &ttol.rel))
+		    bu_exit(1, "Invalid relative tolerance: %s\n", bu_optarg);
 		break;
 	    case 'u':
-		nmg_eue_dist = atof(bu_optarg);
+		if (!parse_nonnegative_number(bu_optarg, &nmg_eue_dist))
+		    bu_exit(1, "Invalid edgeuse distance: %s\n", bu_optarg);
 		break;
 	    case 'v':
 		verbose++;
@@ -490,15 +537,18 @@ main(int argc, char **argv)
 		/* Accept the legacy option; output callbacks run serially. */
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
+		if (!parse_debug_mask(bu_optarg, &rt_debug))
+		    bu_exit(1, "Invalid RT debug flag: %s\n", bu_optarg);
 		break;
 	    case 'D':
-		tol.dist = atof(bu_optarg);
+		if (!parse_nonnegative_number(bu_optarg, &tol.dist))
+		    bu_exit(1, "Invalid calculation distance: %s\n", bu_optarg);
 		tol.dist_sq = tol.dist * tol.dist;
 		rt_pr_tol(&tol);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		if (!parse_debug_mask(bu_optarg, &nmg_debug))
+		    bu_exit(1, "Invalid NMG debug flag: %s\n", bu_optarg);
 		NMG_debug = nmg_debug;
 		break;
 	    default:
@@ -524,15 +574,11 @@ main(int argc, char **argv)
     /* Create .fig file name and open it. */
 
     /* Ignore leading path name. */
-    if ((dot = strrchr(argv[0], '/')) != (char *)NULL) {
-	if (prefix)
-	    bu_vls_strcpy(&fig_file, prefix);
-	bu_vls_strcat(&fig_file, dot+1);
-    } else {
-	if (prefix)
-	    bu_vls_strcpy(&fig_file, prefix);
-	bu_vls_strcat(&fig_file, argv[0]);
-    }
+    database_name = bu_path_basename(argv[0], NULL);
+    if (prefix)
+	bu_vls_strcpy(&fig_file, prefix);
+    bu_vls_strcat(&fig_file, database_name);
+    bu_free(database_name, "database basename");
 
     /* Get rid of any file name extension (probably .g). */
     if ((dot = strrchr(bu_vls_addr(&fig_file), '.')) != (char *)NULL)  {

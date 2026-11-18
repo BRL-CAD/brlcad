@@ -55,7 +55,7 @@ Coordinates are converted from millimeters to centimeters on output.
   Set the relative tessellation tolerance (default 0.01).
 
 *-n* _norm_tess_tol_::
-  Set the surface normal tessellation tolerance.
+  Set the surface normal tessellation tolerance in degrees.
 
 *-D* _dist_calc_tol_::
   Set the calculation distance tolerance in millimeters used when deciding
@@ -65,7 +65,7 @@ Coordinates are converted from millimeters to centimeters on output.
   Prepend _prefix_ to every generated output file name.
 
 *-P* _ncpu_::
-  Set the number of processors to use (default 1).
+  Accepted for command-line compatibility. Conversion remains serial.
 
 *-x* _rt_debug_::
   Set the librt debug flag (hexadecimal).
