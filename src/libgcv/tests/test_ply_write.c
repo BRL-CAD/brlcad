@@ -28,6 +28,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/opt.h"
+#include "bu/path.h"
 #include "bu/str.h"
 #include "gcv.h"
 #include "raytrace.h"
@@ -110,7 +111,7 @@ fail:
 }
 
 static int
-check_geometry(struct gcv_context *context)
+check_geometry(struct gcv_context *context, size_t first_region, size_t region_count)
 {
     const double coordinate_tolerance = 1.0e-3;
     struct directory *entry;
@@ -124,10 +125,11 @@ check_geometry(struct gcv_context *context)
 	if (rt_db_get_internal(&object, entry, context->dbip, NULL) < 0) return 0;
 	const struct rt_bot_internal *bot = (const struct rt_bot_internal *)object.idb_ptr;
 	unsigned matched = 0;
-	if (bot->num_vertices != TETRA_COUNT * TETRA_VERTICES || bot->num_faces != TETRA_COUNT * TETRA_FACES) valid = 0;
+	if (bot->num_vertices != region_count * TETRA_VERTICES || bot->num_faces != region_count * TETRA_FACES) valid = 0;
 	for (size_t vertex = 0; valid && vertex < bot->num_vertices; ++vertex) {
 	    int found = 0;
-	    for (size_t expected = 0; expected < TETRA_COUNT * TETRA_VERTICES; ++expected) {
+	    for (size_t expected = first_region * TETRA_VERTICES;
+		expected < (first_region + region_count) * TETRA_VERTICES; ++expected) {
 		if (VNEAR_EQUAL(bot->vertices + vertex * 3, tetrahedra + expected * 3, coordinate_tolerance)) {
 		    unsigned bit = 1U << expected;
 		    if (matched & bit) valid = 0;
@@ -148,24 +150,39 @@ check_geometry(struct gcv_context *context)
 	    VCROSS(cross, bot->vertices + indices[1] * 3, bot->vertices + indices[2] * 3);
 	    volume += VDOT(bot->vertices + indices[0] * 3, cross);
 	}
-	/* Two outward-oriented tetrahedra each enclose 1e9 / 6 cubic mm. */
-	if (!NEAR_EQUAL(volume, 2.0e9, 1.0)) valid = 0;
+	/* Each outward-oriented tetrahedron encloses 1e9 / 6 cubic mm. */
+	if (!NEAR_EQUAL(volume, region_count * 1.0e9, 1.0)) valid = 0;
 	rt_db_free_internal(&object);
     } FOR_ALL_DIRECTORY_END;
     return valid && meshes == 1;
 }
 
 static int
-round_trip(struct gcv_context *source, const struct gcv_filter *writer, const char *path, const char *type)
+read_export(const char *path, const char *type, size_t first_region, size_t region_count)
 {
-    const char *arguments[] = {"-t", type};
+    const char *format = BU_STR_EQUAL(type, "asc") ? "format ascii 1.0\n" :
+	(BU_STR_EQUAL(type, "le") ? "format binary_little_endian 1.0\n" : "format binary_big_endian 1.0\n");
+    char header[sizeof("format binary_little_endian 1.0\n")];
+    FILE *file = fopen(path, "rb");
+    int valid = file && bu_fgets(header, sizeof(header), file) && BU_STR_EQUAL(header, "ply\n") &&
+	bu_fgets(header, sizeof(header), file) && BU_STR_EQUAL(header, format);
+    if (file && fclose(file)) valid = 0;
     struct gcv_context imported;
     gcv_context_init(&imported);
     const struct gcv_filter *reader = find_filter(GCV_FILTER_READ, BU_MIME_MODEL_PLY, NULL, &imported);
-    int valid = gcv_execute(source, writer, NULL, 2, arguments, path) == 1 && reader &&
-	gcv_execute(&imported, reader, NULL, 0, NULL, path) == 1 && check_geometry(&imported);
-    if (!valid) bu_log("PLY %s export/import changed geometry or failed\n", type);
+    valid = valid && reader && gcv_execute(&imported, reader, NULL, 0, NULL, path) == 1 &&
+	check_geometry(&imported, first_region, region_count);
     gcv_context_destroy(&imported);
+    return valid;
+}
+
+static int
+round_trip(struct gcv_context *source, const struct gcv_filter *writer, const char *path, const char *type)
+{
+    const char *arguments[] = {"-t", type};
+    int valid = gcv_execute(source, writer, NULL, 2, arguments, path) == 1 &&
+	read_export(path, type, 0, TETRA_COUNT);
+    if (!valid) bu_log("PLY %s export/import changed geometry or failed\n", type);
     return valid;
 }
 
@@ -186,6 +203,45 @@ geometry_test(int joined)
     for (size_t mode = 0; valid && mode < sizeof(types) / sizeof(types[0]); ++mode)
 	valid = round_trip(&source, writer, path, types[mode]);
     if (path[0]) bu_file_delete(path);
+    gcv_context_destroy(&source);
+    return valid ? 0 : 1;
+}
+
+static int
+separate_test(void)
+{
+    struct gcv_context source;
+    struct bu_vls directory = BU_VLS_INIT_ZERO;
+    struct bu_vls basename = BU_VLS_INIT_ZERO;
+    char path[MAXPATHLEN] = {0};
+    const char *regions[] = {"first.r", "second.r"};
+    const char *types[] = {"asc", "le", "be"};
+    gcv_context_init(&source);
+    int valid = create_geometry(&source, 0);
+    FILE *file = bu_temp_file(path, sizeof(path));
+    if (!file) valid = 0;
+    else if (fclose(file)) valid = 0;
+    const struct gcv_filter *writer = find_filter(GCV_FILTER_WRITE, BU_MIME_MODEL_PLY, NULL, &source);
+    if (!writer) valid = 0;
+    bu_path_component(&directory, path, BU_PATH_DIRNAME);
+    bu_path_component(&basename, path, BU_PATH_BASENAME);
+    for (size_t mode = 0; valid && mode < sizeof(types) / sizeof(types[0]); ++mode) {
+	const char *arguments[] = {"-s", "-t", types[mode]};
+	valid = gcv_execute(&source, writer, NULL, 3, arguments, path) == 1;
+	for (size_t region = 0; region < sizeof(regions) / sizeof(regions[0]); ++region) {
+	    struct bu_vls output = BU_VLS_INIT_ZERO;
+	    bu_vls_printf(&output, "%s/%s_%s", bu_vls_cstr(&directory), regions[region], bu_vls_cstr(&basename));
+	    if (!read_export(bu_vls_cstr(&output), types[mode], region, 1)) {
+		bu_log("PLY separate output missing or incorrect: %s\n", bu_vls_cstr(&output));
+		valid = 0;
+	    }
+	    bu_file_delete(bu_vls_cstr(&output));
+	    bu_vls_free(&output);
+	}
+    }
+    if (path[0]) bu_file_delete(path);
+    bu_vls_free(&directory);
+    bu_vls_free(&basename);
     gcv_context_destroy(&source);
     return valid ? 0 : 1;
 }
@@ -257,6 +313,7 @@ main(int argc, const char **argv)
     bu_setprogname(argv[0]);
     if (argc == 2 && BU_STR_EQUAL(argv[1], "geometry")) return geometry_test(0);
     if (argc == 2 && BU_STR_EQUAL(argv[1], "boolean")) return geometry_test(1);
+    if (argc == 2 && BU_STR_EQUAL(argv[1], "separate")) return separate_test();
     if (argc == 2 && (BU_STR_EQUAL(argv[1], "open") || BU_STR_EQUAL(argv[1], "type") ||
 	    BU_STR_EQUAL(argv[1], "objects") || BU_STR_EQUAL(argv[1], "empty")))
 	return failure_test(argv[1], NULL);

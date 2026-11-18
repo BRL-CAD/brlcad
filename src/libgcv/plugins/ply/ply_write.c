@@ -32,6 +32,7 @@
 #include "gcv.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
+#include "bu/path.h"
 #include "raytrace.h"
 #include "rply.h"
 
@@ -79,6 +80,25 @@ struct conversion_state
     size_t tot_vertices;
 };
 
+
+static void
+ply_region_filename(struct bu_vls *filename, const char *output_file, const char *region_name)
+{
+    struct bu_vls directory = BU_VLS_INIT_ZERO;
+    struct bu_vls basename = BU_VLS_INIT_ZERO;
+    struct bu_vls region = BU_VLS_INIT_ZERO;
+    if (!bu_path_component(&directory, output_file, BU_PATH_DIRNAME))
+	bu_vls_strcpy(&directory, ".");
+    bu_path_component(&basename, output_file, BU_PATH_BASENAME);
+    bu_vls_strcpy(&region, region_name[0] == '/' ? region_name + 1 : region_name);
+    for (char *p = bu_vls_addr(&region); *p; ++p)
+	if (*p == '/' || *p == '\\')
+	    *p = '_';
+    bu_vls_printf(filename, "%s/%s_%s", bu_vls_cstr(&directory), bu_vls_cstr(&region), bu_vls_cstr(&basename));
+    bu_vls_free(&directory);
+    bu_vls_free(&basename);
+    bu_vls_free(&region);
+}
 
 static struct bu_hash_entry *
 write_verts(p_ply fp, struct bu_hash_tbl *t, struct conversion_state* pstate)
@@ -143,38 +163,27 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     if (pstate->ply_write_options->separate) {
 	/* Open output file */
 	char *comment;
-	unsigned int k;
-	char *region_file;
-
-	region_file = (char *) bu_calloc(strlen(region_name) + strlen(pstate->output_file), sizeof(char), "region_file");
-	sprintf(region_file, "%s_%s", region_name+1, pstate->output_file);
-	for (k = 0; k < strlen(region_file); k++) {
-	    switch (region_file[k]) {
-		case '/':
-		    region_file[k] = '_';
-		    break;
-	    }
-	}
+	struct bu_vls region_file = BU_VLS_INIT_ZERO;
+	ply_region_filename(&region_file, pstate->output_file, region_name);
 
 	/* open outputfile using specified type */
         if (!bu_strcmp(pstate->ply_write_options->type, "asc")) {
-            ply_fp = ply_create(region_file, PLY_ASCII, NULL, 0, NULL);
+            ply_fp = ply_create(bu_vls_cstr(&region_file), PLY_ASCII, NULL, 0, NULL);
         } else if (!bu_strcmp(pstate->ply_write_options->type, "le")) {
-	    ply_fp = ply_create(region_file, PLY_LITTLE_ENDIAN, NULL, 0, NULL);
+	    ply_fp = ply_create(bu_vls_cstr(&region_file), PLY_LITTLE_ENDIAN, NULL, 0, NULL);
 	} else if (!bu_strcmp(pstate->ply_write_options->type, "be")) {
-	    ply_fp = ply_create(region_file, PLY_BIG_ENDIAN, NULL, 0, NULL);
+	    ply_fp = ply_create(bu_vls_cstr(&region_file), PLY_BIG_ENDIAN, NULL, 0, NULL);
 	} else {
-	    ply_fp = ply_create(region_file, PLY_DEFAULT, NULL, 0, NULL);
+	    ply_fp = ply_create(bu_vls_cstr(&region_file), PLY_DEFAULT, NULL, 0, NULL);
 	}
+	bu_vls_free(&region_file);
 	if (!ply_fp) {
 	    bu_hash_destroy(pstate->v_tbl_regs[pstate->cur_region]);
-	    bu_free(region_file, "region_file");
 	    bu_log("ERROR: Unable to create PLY file");
 	    goto free_nmg;
 	}
 	if (!ply_add_comment(ply_fp, "converted from BRL-CAD")) {
 	    bu_hash_destroy(pstate->v_tbl_regs[pstate->cur_region]);
-	    bu_free(region_file, "region_file");
 	    bu_log("ERROR: Unable to write to PLY file");
 	    goto free_nmg;
 	}
@@ -183,7 +192,6 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	sprintf(comment, "wrote region %s", (region_name+1));
 	ply_add_comment(ply_fp, comment);
 	bu_free(comment, "comment");
-	bu_free(region_file, "region_file");
     }
 
     m = r->m_p;
