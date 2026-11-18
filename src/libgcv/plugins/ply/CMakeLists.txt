@@ -6,6 +6,11 @@ set_property(TARGET gcv-ply APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE
 validate_style(gcv-ply "${PLY_SRCS}")
 plugin_setup(gcv-ply gcv)
 
+brlcad_addexec(test_ply_close "tests/close.c;rply.c" libbu TEST)
+if(EXISTS "/dev/full")
+  brlcad_add_test(NAME gcv_ply_close_error COMMAND test_ply_close /dev/full)
+endif()
+
 cmakefiles(
    ${PLY_SRCS}
    CMakeLists.txt

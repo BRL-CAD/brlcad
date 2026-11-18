@@ -356,7 +356,8 @@ RPLY_EXPORT int ply_write_header(p_ply ply);
 RPLY_EXPORT int ply_write(p_ply ply, double value);
 
 /* ----------------------------------------------------------------------
- * Closes a PLY file handle. Releases all memory used by handle
+ * Closes a PLY file handle. Releases all memory used by handle, including
+ * when flushing or closing the file fails. The handle is no longer valid.
  *
  * ply: handle to be closed.
  *

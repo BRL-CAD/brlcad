@@ -981,6 +981,7 @@ int ply_write(p_ply ply, double value) {
 
 int ply_close(p_ply ply) {
     long i;
+    int status = 1;
     assert(ply && ply->fp);
     assert(ply->element || ply->nelements == 0);
     assert(!ply->element || ply->nelements > 0);
@@ -988,9 +989,12 @@ int ply_close(p_ply ply) {
     if (ply->io_mode == PLY_WRITE &&
       fwrite(ply->buffer, 1, ply->buffer_last, ply->fp) < ply->buffer_last) {
         ply_ferror(ply, "Error closing up");
-        return 0;
+        status = 0;
     }
-    if (ply->own_fp) fclose(ply->fp);
+    if (ply->own_fp && fclose(ply->fp)) {
+        ply_ferror(ply, "Error closing file");
+        status = 0;
+    }
     /* free all memory used by handle */
     if (ply->element) {
         for (i = 0; i < ply->nelements; i++) {
@@ -1002,7 +1006,7 @@ int ply_close(p_ply ply) {
     if (ply->obj_info) free(ply->obj_info);
     if (ply->comment) free(ply->comment);
     free(ply);
-    return 1;
+    return status;
 }
 
 /* ----------------------------------------------------------------------
