@@ -9,10 +9,10 @@ gif-fb - display a GIF image on a frame buffer
 
 == SYNOPSIS
 
-[source]
-----
-gif-fb [-c] [-o] [-v] [-z] [-F _frame_buffer_] [-i _image#_] [_gif_file_]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*gif-fb* [*-c*] [*-o*] [*-v*] [*-z*] [*-F* _device_] [*-i* _number_] [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 
 [[description]]
@@ -28,30 +28,37 @@ the available frame buffer.
 [[options]]
 == OPTIONS
 
-*-c*::
-  Force 8 bits of color resolution per R, G, and B channel, overriding the
-  color resolution declared in the GIF file.  Some non-standard GIF writers
-  require this.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-o*::
-  Overlay mode.  Skip the initial clearing of the frame buffer to the GIF
-  background color, leaving existing frame buffer contents in place.
+*-c*, *--force-color-resolution*::
+  Use eight bits for each color channel.
 
-*-v*::
-  Verbose mode.  Print information about the GIF screen, color maps, and each
-  image to standard error.
+*-o*, *--overlay*::
+  Preserve the existing framebuffer background.
 
-*-z*::
-  Zoom the frame buffer to enlarge the image as much as possible while keeping
-  a square pixel aspect ratio.
+*-v*, *--verbose*::
+  Report GIF screen, color-map, and image details.
 
-*-F* _frame_buffer_::
-  Write to the named frame buffer instead of the one given by the *FB_FILE*
-  environment variable (or the default frame buffer if *FB_FILE* is unset).
+*-z*, *--zoom*::
+  Maximize the framebuffer view with square pixels.
 
-*-i* _image#_::
-  Display only the given image (1-indexed) from a multi-image GIF, rather than
-  all images.
+*-F* _device_, *--framebuffer*=_device_::
+  Select the framebuffer device.
+
+*-i* _number_, *--image*=_number_::
+  Display only this 1-based GIF image.
+
+// END GENERATED BU_ARG OPTIONS
+
+Some non-standard GIF writers incorrectly declare their color resolution.
+Use *--force-color-resolution* to treat each red, green, and blue channel as
+eight bits.  By default, *gif-fb* clears the frame buffer to the GIF
+background color before decoding; *--overlay* preserves the existing frame
+buffer contents instead.  *--verbose* writes GIF screen, color-map, and image
+details to standard error.  *--image* selects one image from a multi-image GIF
+using a 1-based index; without it, images are displayed sequentially.
 
 [[examples]]
 == EXAMPLES

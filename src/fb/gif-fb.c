@@ -66,44 +66,38 @@
 #include "common.h"
 
 #include <assert.h>
+#include <limits.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
-#include <limits.h>
 
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/color.h"
-#include "bu/getopt.h"
-#include "bu/interrupt.h"
+#include "bu/exit.h"
+#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
-#include "bu/exit.h"
 #include "vmath.h"
 #include "dm.h"
 
 
-#define USAGE "Usage: gif-fb [-F fb_file] [-c] [-i image#] [-o] [-v] [-z] [gif_file]\n       (stdin used with '<' construct if gif_file not supplied)"
-#define OPTSTR "F:ci:ovzh?"
-
-typedef int bool_t;
-
-static bool_t clear = 1;		/* set if clear to background wanted */
-static bool_t ign_cr = 0;		/* set if 8-bit color resoln. forced */
-static bool_t verbose = 0;		/* set for GIF-file info printout */
-static bool_t do_zoom = 0;		/* set to zoom framebuffer */
+static int clear = 1;			/* set if clear to background wanted */
+static int ign_cr = 0;			/* set if 8-bit color resoln. forced */
+static int verbose = 0;			/* set for GIF-file info printout */
+static int do_zoom = 0;			/* set to zoom framebuffer */
 static int image = 0;		/* # of image to display (0 => all) */
-static char *gif_file = NULL;	/* GIF file name */
+static const char *gif_file = NULL;	/* GIF file name */
 static FILE *gfp = NULL;		/* GIF input stream handle */
-static char *fb_file = NULL;	/* frame buffer name */
+static const char *fb_file = NULL;	/* frame buffer name */
 static struct fb *fbp = FB_NULL;	/* frame buffer handle */
 static int ht;			/* virtual frame buffer height */
 static int width, height;		/* overall "screen" size */
 static int write_width;		/* used width of screen, <= width */
 static int left, top, right, bottom;	/* image boundary */
-static bool_t M_bit;			/* set if color map provided */
-static bool_t I_bit;			/* set if image interlaced */
+static int M_bit;			/* set if color map provided */
+static int I_bit;			/* set if image interlaced */
 static int cr;			/* # bits of color resolution */
 static unsigned cr_mask;		/* mask to strip all but high cr bits */
 static int g_pixel;		/* global # bits/pixel in image */
@@ -121,6 +115,60 @@ static RGBpixel *cmap;			/* bu_malloc()ed local color map */
 /* in ioutil.c */
 void Message(const char *format, ...);
 void Fatal(struct fb *fbiop, const char *format, ...);
+
+struct gif_fb_args {
+    int help;
+    int force_color_resolution;
+    int overlay;
+    int verbose;
+    int zoom;
+    const char *framebuffer;
+    int image;
+};
+
+static const struct bu_arg_option gif_fb_options[] = {
+    BU_ARG_FLAG("h", "help", struct gif_fb_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("c", "force-color-resolution", struct gif_fb_args,
+	force_color_resolution, "Use eight bits for each color channel"),
+    BU_ARG_FLAG("o", "overlay", struct gif_fb_args, overlay,
+	"Preserve the existing framebuffer background"),
+    BU_ARG_FLAG("v", "verbose", struct gif_fb_args, verbose,
+	"Report GIF screen, color-map, and image details"),
+    BU_ARG_FLAG("z", "zoom", struct gif_fb_args, zoom,
+	"Maximize the framebuffer view with square pixels"),
+    BU_ARG_VALUE("F", "framebuffer", struct gif_fb_args, framebuffer,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Select the framebuffer device"),
+    BU_ARG_INTEGER_RANGE("i", "image", struct gif_fb_args, image,
+	1, 1, 1, INT_MAX, "number", "Display only this 1-based GIF image"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand gif_fb_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"GIF input file (default standard input)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema gif_fb_schema = BU_ARG_SCHEMA(
+    "gif-fb", "Display GIF images on a framebuffer", gif_fb_options,
+    gif_fb_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar gif_fb_grammar = {
+    &gif_fb_schema, NULL, NULL
+};
+
+static int
+gif_fb_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&gif_fb_schema, "gif-fb");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "gif-fb help");
+    return status;
+}
 
 
 static void
@@ -444,6 +492,10 @@ Rasters(void)				/* process (convert) raster data */
 int
 main(int argc, char **argv)
 {
+    struct gif_fb_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int operand_index;
+
     bu_setprogname(argv[0]);
     {
 	/* Plant signal catcher. */
@@ -473,59 +525,38 @@ main(int argc, char **argv)
 		(void)signal(getsigs[i], Sig_Catcher);
     }
 
-    /* Process arguments. */
-
-    {
-	int c;
-	bool_t errors;
-
-	errors = argc == 1 && isatty(fileno(stdin));
-
-	while ((c = bu_getopt(argc, argv, OPTSTR)) != -1) {
-	    switch (c) {
-		default:	/* '?': invalid option */
-		    errors = 1;
-		    break;
-
-		case 'F':	/* -F fb_file */
-		    fb_file = bu_optarg;
-		    break;
-
-		case 'c':	/* -c */
-		    ign_cr = 1;
-		    break;
-
-		case 'i':	/* -i image# */
-		    image = atoi(bu_optarg);
-		    break;
-
-		case 'o':	/* -o */
-		    clear = 0;
-		    break;
-
-		case 'v':	/* -v */
-		    verbose = 1;
-		    break;
-		case 'z':
-		    do_zoom = 1;
-		    break;
-	    }
-	}
-
-	if (errors)
-	    Fatal(fbp, USAGE);
+    int introspection = bu_arg_introspect(&msg, &gif_fb_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+    operand_index = bu_arg_schema_parse_complete(&gif_fb_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return gif_fb_help(stdout, 0);
 
-    if (bu_optind < argc) {
-	/* gif_file */
-	if (bu_optind < argc - 1) {
-	    Message(USAGE);
-	    Fatal(fbp, "Can't handle multiple GIF files");
-	}
+    fb_file = args.framebuffer;
+    ign_cr = args.force_color_resolution;
+    clear = !args.overlay;
+    verbose = args.verbose;
+    do_zoom = args.zoom;
+    image = args.image;
 
-	if ((gfp = fopen(gif_file = argv[bu_optind], "rb")) == NULL)
+    if (argc - 1 - operand_index == 1) {
+	gif_file = argv[operand_index + 1];
+	if ((gfp = fopen(gif_file, "rb")) == NULL)
 	    Fatal(fbp, "Couldn't open GIF file \"%s\"", gif_file);
     } else {
+	if (isatty(fileno(stdin)))
+	    return gif_fb_help(stderr, 1);
 	gfp = stdin;
 	setmode(fileno(stdin), O_BINARY);
     }
