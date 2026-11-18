@@ -599,8 +599,8 @@ ply_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_dat
     BU_OPT((*options_desc)[5],  "t", "type",          "str",   bu_opt_str,     &options_data->type,      "specify the output file type (asc: ascii), (le: little endian), (be: big endian)");
     BU_OPT((*options_desc)[6],  "s", "separate",      "",      NULL,           &options_data->separate, "specify a flag to generate a separate file per object");
     BU_OPT((*options_desc)[7],  "v", "verbose",       "",      NULL,           &options_data->verbose,   "specify a flag for verbose output");
-    BU_OPT((*options_desc)[8],  "x", "rt_dubug",      "str",   bu_opt_str,     &options_data->o_file,    "specify debug script for rt_debug");
-    BU_OPT((*options_desc)[9],  "X", "nmg_debug",     "str",   bu_opt_str,     &options_data->o_file,    "specify debug script for nmg_debug");
+    BU_OPT((*options_desc)[8],  "x", "rt_debug",      "str",   bu_opt_str,     &options_data->x,         "specify debug script for rt_debug");
+    BU_OPT((*options_desc)[9],  "X", "nmg_debug",     "str",   bu_opt_str,     &options_data->X,         "specify debug script for nmg_debug");
     BU_OPT_NULL((*options_desc)[10]);
 }
 
