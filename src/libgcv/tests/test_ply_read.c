@@ -55,11 +55,17 @@ write_fixture(char path[MAXPATHLEN], const char *text)
 }
 
 static int
-read_fixture(struct gcv_context *context, const char *path, const char *scale)
+read_fixture_options(struct gcv_context *context, const char *path, const char *scale, const struct gcv_opts *options)
 {
     const struct gcv_filter *reader = find_filter(GCV_FILTER_READ, BU_MIME_MODEL_PLY, NULL, context);
     const char *arguments[] = {"-s", scale};
-    return reader ? gcv_execute(context, reader, NULL, scale ? 2 : 0, scale ? arguments : NULL, path) : -1;
+    return reader ? gcv_execute(context, reader, options, scale ? 2 : 0, scale ? arguments : NULL, path) : -1;
+}
+
+static int
+read_fixture(struct gcv_context *context, const char *path, const char *scale)
+{
+    return read_fixture_options(context, path, scale, NULL);
 }
 
 static int
@@ -287,6 +293,39 @@ done:
     return failed;
 }
 
+static int
+scale_test(void)
+{
+    struct gcv_context context;
+    struct gcv_opts options;
+    const char *local_scales[] = {"2", NULL};
+    const double global_scales[] = {3, 2};
+    const double expected[] = {6, 2000};
+    char paths[3][MAXPATHLEN] = {{0}};
+    int failed = 0;
+    gcv_context_init(&context);
+    gcv_opts_default(&options);
+    for (size_t i = 0; i < sizeof(local_scales) / sizeof(local_scales[0]); ++i) {
+	options.scale_factor = global_scales[i];
+	if (!write_fixture(paths[i], ordered) ||
+	    read_fixture_options(&context, paths[i], local_scales[i], &options) != 1 ||
+	    !check_triangle(&context, paths[i], expected[i])) {
+	    bu_log("PLY reader did not compose its unit conversion with the caller's scale\n");
+	    failed = 1;
+	}
+    }
+    options.scale_factor = 1e308;
+    if (!write_fixture(paths[2], ordered) ||
+	read_fixture_options(&context, paths[2], NULL, &options) != 0 || mesh_count(&context) != 2) {
+	bu_log("PLY reader accepted a non-finite composed scale\n");
+	failed = 1;
+    }
+    for (size_t i = 0; i < sizeof(paths) / sizeof(paths[0]); ++i)
+	if (paths[i][0]) bu_file_delete(paths[i]);
+    gcv_context_destroy(&context);
+    return failed;
+}
+
 int
 main(int argc, const char **argv)
 {
@@ -296,6 +335,7 @@ main(int argc, const char **argv)
     if (BU_STR_EQUAL(argv[1], "errors")) return errors_test();
     if (BU_STR_EQUAL(argv[1], "topology")) return topology_test();
     if (BU_STR_EQUAL(argv[1], "names")) return names_test();
+    if (BU_STR_EQUAL(argv[1], "scale")) return scale_test();
     return 1;
 }
 

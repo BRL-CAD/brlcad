@@ -51,7 +51,7 @@ struct ply_read_options {
 };
 
 struct conversion_state {
-    const struct ply_read_options *options;
+    double scale;
     struct rt_bot_internal *bot;
     size_t face_count;
     size_t face_capacity;
@@ -82,9 +82,9 @@ vertex_cb(p_ply_argument argument)
     double value = ply_get_argument_value(argument);
     if (!ply_get_argument_user_data(argument, (void **)&state, &coordinate) || !state ||
 	!ply_get_argument_element(argument, NULL, &vertex) || coordinate < 0 || coordinate >= PLY_COMPONENTS ||
-	vertex < 0 || (size_t)vertex >= state->bot->num_vertices || !isfinite(value) || !isfinite(value * state->options->scale))
+	vertex < 0 || (size_t)vertex >= state->bot->num_vertices || !isfinite(value) || !isfinite(value * state->scale))
 	return 0;
-    state->bot->vertices[(size_t)vertex * PLY_COMPONENTS + coordinate] = value * state->options->scale;
+    state->bot->vertices[(size_t)vertex * PLY_COMPONENTS + coordinate] = value * state->scale;
     return 1;
 }
 
@@ -160,11 +160,14 @@ ply_read_gcv(struct gcv_context *context, const struct gcv_opts *gcv_options,
     const unsigned char *color = NULL;
     memset(&state, 0, sizeof(state));
     memset(&bot, 0, sizeof(bot));
-    state.options = options;
     state.bot = &bot;
     state.color[0] = state.color[1] = state.color[2] = -1;
     BU_LIST_INIT(&members.l);
-    if (!options || !isfinite(options->scale) || ZERO(options->scale))
+    if (!options)
+	goto cleanup;
+    /* The format's unit conversion and the caller's additional scale compose. */
+    state.scale = options->scale * gcv_options->scale_factor;
+    if (!isfinite(state.scale) || ZERO(state.scale))
 	goto cleanup;
     input = ply_open(source_path, NULL, 0, NULL);
     if (!input || !ply_read_header(input))
