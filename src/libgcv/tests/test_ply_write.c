@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include "bu/app.h"
+#include "bu/exit.h"
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
@@ -37,9 +38,10 @@
 #ifdef GCV_PLY_TEST_WRITE_FAILURE
 #include "../plugins/ply/rply.h"
 
-enum ply_test_failure { PLY_TEST_NONE, PLY_TEST_HEADER, PLY_TEST_VALUE, PLY_TEST_CLOSE };
+enum ply_test_failure { PLY_TEST_NONE, PLY_TEST_HEADER, PLY_TEST_VALUE, PLY_TEST_CLOSE, PLY_TEST_TESSELLATION };
 static enum ply_test_failure ply_test_failure;
 static int ply_test_injected;
+static size_t ply_test_regions_before_failure;
 
 static int
 ply_test_write_header(p_ply output)
@@ -75,14 +77,30 @@ ply_test_close(p_ply output)
     return status;
 }
 
+static void
+ply_test_triangulation(struct model *model, struct bu_list *vlfree, const struct bn_tol *tolerance)
+{
+    if (ply_test_failure == PLY_TEST_TESSELLATION) {
+	if (!ply_test_regions_before_failure) {
+	    ply_test_failure = PLY_TEST_NONE;
+	    ply_test_injected = 1;
+	    bu_bomb("PLY test: tessellation failed after an earlier region succeeded\n");
+	}
+	--ply_test_regions_before_failure;
+    }
+    nmg_triangulate_model(model, vlfree, tolerance);
+}
+
 /* A successful close must not hide an earlier library write failure. */
 #define ply_write_header ply_test_write_header
 #define ply_write ply_test_write_value
 #define ply_close ply_test_close
+#define nmg_triangulate_model ply_test_triangulation
 #include "../plugins/ply/ply_write.c"
 #undef ply_write
 #undef ply_write_header
 #undef ply_close
+#undef nmg_triangulate_model
 #endif
 
 static const struct gcv_filter *
@@ -359,6 +377,9 @@ failure_test(const char *mode, const char *full_device)
 	ply_test_failure = PLY_TEST_VALUE;
     } else if (BU_STR_EQUAL(mode, "close-separate")) {
 	ply_test_failure = PLY_TEST_CLOSE;
+    } else if (BU_STR_EQUAL(mode, "tessellation")) {
+	ply_test_failure = PLY_TEST_TESSELLATION;
+	ply_test_regions_before_failure = 1;
 #endif
     } else {
 	valid = 0;
@@ -373,7 +394,8 @@ failure_test(const char *mode, const char *full_device)
 	valid = 0;
     }
 #endif
-    if (valid && (empty || BU_STR_EQUAL(mode, "objects") || BU_STR_EQUAL(mode, "type"))) {
+    if (valid && (empty || BU_STR_EQUAL(mode, "objects") || BU_STR_EQUAL(mode, "type") ||
+	    BU_STR_EQUAL(mode, "tessellation"))) {
 	char contents[sizeof(marker)] = {0};
 	file = fopen(path, "rb");
 	valid = file && fread(contents, 1, sizeof(marker) - 1, file) == sizeof(marker) - 1 &&
@@ -411,7 +433,7 @@ main(int argc, const char **argv)
 #ifdef GCV_PLY_TEST_WRITE_FAILURE
     if (argc == 2 && (BU_STR_EQUAL(argv[1], "header") || BU_STR_EQUAL(argv[1], "value") ||
 	    BU_STR_EQUAL(argv[1], "header-separate") || BU_STR_EQUAL(argv[1], "value-separate") ||
-	    BU_STR_EQUAL(argv[1], "close-separate")))
+	    BU_STR_EQUAL(argv[1], "close-separate") || BU_STR_EQUAL(argv[1], "tessellation")))
 	return failure_test(argv[1], NULL);
 #endif
     if (argc == 2 && BU_STR_EQUAL(argv[1], "separate-open")) return failure_test(argv[1], NULL);

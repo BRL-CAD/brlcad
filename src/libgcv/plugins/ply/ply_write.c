@@ -744,24 +744,6 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
 
     state.vlfree = &rt_vlfree;
 
-    if (!state.ply_write_options->separate) {
-        ply_fp = ply_output_open(&state, state.output_file);
-
-        /* verify open and writability */
-        if (!ply_fp) {
-            bu_log("ERROR: Unable to create PLY file\n");
-            goto free_all;
-        }
-        if (!ply_add_comment(ply_fp, "converted from BRL-CAD")) {
-            bu_log("ERROR: Unable to write to PLY file\n");
-            goto free_all;
-        }
-
-        state.all_colors[0] = -1;
-        state.all_colors[1] = -1;
-        state.all_colors[2] = -1;
-    }
-
     if (state.ply_write_options->verbose || state.gcv_options->verbosity_level) {
 	bu_log("Model: %s\n", gcv_options->object_names[0]);
 	bu_log("Objects:");
@@ -815,6 +797,18 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
         int fi;
         int vi;
 	double *coords;
+
+        ply_fp = ply_output_open(&state, state.output_file);
+
+        /* verify open and writability */
+        if (!ply_fp) {
+            bu_log("ERROR: Unable to create PLY file\n");
+            goto free_all;
+        }
+        if (!ply_add_comment(ply_fp, "converted from BRL-CAD")) {
+            bu_log("ERROR: Unable to write to PLY file\n");
+            goto free_all;
+        }
 
         if (!ply_output_header(ply_fp, state.tot_vertices, state.tot_polygons, state.color_info == 1, &state))
 	    goto free_all;
