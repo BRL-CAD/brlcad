@@ -25,6 +25,9 @@
 
 #include "common.h"
 
+#include <ctype.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -49,6 +52,23 @@ usage(const char *argv0)
     bu_log("	The -v option prints verbose conversion progress information.\n");
     bu_log("	The -d option prints additional diagnostic debugging information.\n");
     bu_log("	The -x option specifies an RT debug flags (see raytrace.h).\n");
+}
+
+
+static int
+parse_debug_mask(const char *arg, unsigned int *mask)
+{
+    char *end = NULL;
+    unsigned long value;
+
+    if (!arg || !mask || arg[0] == '-' || isspace((unsigned char)arg[0]))
+	return 0;
+    errno = 0;
+    value = strtoul(arg, &end, 16);
+    if (errno != 0 || end == arg || *end != '\0' || value > UINT_MAX)
+	return 0;
+    *mask = (unsigned int)value;
+    return 1;
 }
 
 
@@ -161,13 +181,16 @@ main(int argc, char *argv[])
 	bu_exit(1, NULL);
     }
 
-    while ((opt = bu_getopt(argc, argv, "dxv")) != -1) {
+    while ((opt = bu_getopt(argc, argv, "dx:v")) != -1) {
 	switch (opt) {
 	    case 'd':
 		opt_debug = 1;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *) &rt_debug);
+		if (!parse_debug_mask(bu_optarg, &rt_debug)) {
+		    usage(argv0);
+		    bu_exit(1, "Invalid RT debug flag: %s\n", bu_optarg);
+		}
 		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
 		bu_log("\n");
 		break;
