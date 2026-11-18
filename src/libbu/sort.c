@@ -383,6 +383,9 @@ bu_sort(void *a, size_t n, size_t es, int (*cmp)(const void *, const void *, voi
     size_t i, maxdepth = 0;
     int swaptype;
 
+    if (n < 2)
+	return;
+
     /* Approximate 2*ceil(lg(n + 1)) */
     for (i = n; i > 0; i >>= 1)
 	maxdepth++;

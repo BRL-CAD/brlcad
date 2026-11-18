@@ -118,6 +118,12 @@ main(int argc, char *argv[])
 
     sscanf(argv[1], "%d", &function_num);
     switch (function_num) {
+	case 11: {
+	    int singleton = 42;
+	    bu_sort(NULL, 0, sizeof(singleton), comp_1, NULL);
+	    bu_sort(&singleton, 1, sizeof(singleton), comp_1, NULL);
+	    return singleton != 42;
+	}
 	case 1:
 	    bu_sort(&arg_1, 6, sizeof(int), comp_1, NULL);
 	    for (i = 0; i < 6; i++)

@@ -407,6 +407,7 @@ brlcad_add_test(NAME bu_sort_dist_to_int_1 COMMAND bu_test test_sort 7)
 brlcad_add_test(NAME bu_sort_dist_to_int_2 COMMAND bu_test test_sort 8)
 brlcad_add_test(NAME bu_sort_fastf_empty COMMAND bu_test test_sort 9)
 brlcad_add_test(NAME bu_sort_fastf_inf COMMAND bu_test test_sort 10)
+brlcad_add_test(NAME bu_sort_empty_and_singleton COMMAND bu_test test_sort 11)
 
 #
 #  *********** test_cache.cpp tests ************
