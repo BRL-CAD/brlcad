@@ -29,7 +29,7 @@ brlcad_add_test(
     "${CMAKE_COMMAND}" "-DFBCOLOR=$<TARGET_FILE:fbcolor>" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/test_fbcolor_full_ramp.cmake"
 )
-brlcad_addexec(fbfade "fbfade.c;ioutil.c" libdm FOLDER Fb)
+brlcad_addexec(fbfade "fbfade.c;ioutil.c" libdm FOLDER Fb ARG_SCHEMA)
 add_target_deps(fbfade dm_plugins)
 brlcad_addexec(fbframe fbframe.c libdm FOLDER Fb ARG_SCHEMA)
 add_target_deps(fbframe dm_plugins)

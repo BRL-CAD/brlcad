@@ -54,30 +54,23 @@
 
 #include "common.h"
 
+#include <limits.h>
+#include <signal.h>
 #include <stdlib.h>
-#include <string.h>
-#include <stdarg.h>
 
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "bu/interrupt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "vmath.h"
 #include "dm.h"			/* BRL-CAD package libfb.a interface */
-#include "pkg.h"
 
 
-#define USAGE1 "Usage: fbfade [ -s size ] [ -w width ] [ -n height ] [ -f in_fb_file ]\n\
-[ -H ] [ -S size ] [ -W width ] [ -N height ] [ [ -F ] out_fb_file ]"
-#define OPTSTR "f:F:Hn:N:s:S:w:W:h?"
-
-
-typedef int bool_t;
-
-static bool_t hires = 0;		/* set for 1024x1024; clear for 512x512 */
-static char *in_fb_file = NULL;		/* input image name */
-static char *out_fb_file = NULL;	/* output frame buffer name */
+static int hires = 0;			/* set for 1024x1024; clear for 512x512 */
+static const char *in_fb_file = NULL;	/* input image name */
+static const char *out_fb_file = NULL;	/* output frame buffer name */
 static struct fb *fbp = FB_NULL;		/* libfb input/output handle */
 static int src_width = 0;		/* input image width */
 static int src_height = 0;		/* input image height */
@@ -87,8 +80,101 @@ static RGBpixel *pix;			/* input image */
 static RGBpixel bg = { 0, 0, 0 };	/* background */
 
 /* in ioutil.c */
-extern void Message(const char *format, ...);
 extern void Fatal(struct fb *fbiop, const char *format, ...);
+
+struct fbfade_args {
+    struct fbfade_args *self;
+    int help;
+    int hires;
+    const char *input_framebuffer;
+    const char *output_framebuffer;
+    int input_width;
+    int input_height;
+    int output_width;
+    int output_height;
+};
+
+enum fbfade_square_dimension {
+    FBFADE_INPUT_SIZE,
+    FBFADE_OUTPUT_SIZE
+};
+
+static int
+fbfade_square_size(struct bu_vls *msg, const char *arg, void *storage,
+	enum fbfade_square_dimension dimension)
+{
+    struct fbfade_args *args = storage ? *(struct fbfade_args **)storage : NULL;
+    int value;
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 1, INT_MAX))
+	return -1;
+    if (args) {
+	if (dimension == FBFADE_INPUT_SIZE)
+	    args->input_width = args->input_height = value;
+	else
+	    args->output_width = args->output_height = value;
+    }
+    return 0;
+}
+
+#define FBFADE_SQUARE_CALLBACK(_name, _dimension) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return fbfade_square_size(msg, arg, storage, _dimension); \
+    }
+
+FBFADE_SQUARE_CALLBACK(fbfade_input_size, FBFADE_INPUT_SIZE)
+FBFADE_SQUARE_CALLBACK(fbfade_output_size, FBFADE_OUTPUT_SIZE)
+
+static const struct bu_arg_option fbfade_options[] = {
+    BU_ARG_FLAG("h", "help", struct fbfade_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("H", "high-resolution", struct fbfade_args, hires,
+	"Use 1024 instead of 512 for unspecified input dimensions"),
+    BU_ARG_VALUE("f", "input-framebuffer", struct fbfade_args,
+	input_framebuffer, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Read the image to fade in from this framebuffer"),
+    BU_ARG_VALUE("F", "output-framebuffer", struct fbfade_args,
+	output_framebuffer, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Write the fade effect to this framebuffer"),
+    BU_ARG_CUSTOM("s", "input-size", struct fbfade_args, self,
+	fbfade_input_size, "pixels", "Set both input dimensions"),
+    BU_ARG_INTEGER_RANGE("w", "input-width", struct fbfade_args,
+	input_width, 1, 1, 1, INT_MAX, "pixels", "Set the input width"),
+    BU_ARG_INTEGER_RANGE("n", "input-height", struct fbfade_args,
+	input_height, 1, 1, 1, INT_MAX, "pixels", "Set the input height"),
+    BU_ARG_CUSTOM("S", "output-size", struct fbfade_args, self,
+	fbfade_output_size, "pixels", "Set both output dimensions"),
+    BU_ARG_INTEGER_RANGE("W", "output-width", struct fbfade_args,
+	output_width, 1, 1, 1, INT_MAX, "pixels", "Set the output width"),
+    BU_ARG_INTEGER_RANGE("N", "output-height", struct fbfade_args,
+	output_height, 1, 1, 1, INT_MAX, "pixels", "Set the output height"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand fbfade_operands[] = {
+    BU_ARG_OPERAND("output", BU_ARG_VALUE_STRING, 0, 1,
+	"Output framebuffer when --output-framebuffer is omitted", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema fbfade_schema = BU_ARG_SCHEMA(
+    "fbfade", "Fade a framebuffer image in or out", fbfade_options,
+    fbfade_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar fbfade_grammar = {
+    &fbfade_schema, NULL, NULL
+};
+
+static int
+fbfade_help(FILE *stream, int status)
+{
+    char *schema_help = bu_arg_schema_help(&fbfade_schema, "fbfade");
+    bu_flog(stream, "%s", schema_help ? schema_help : "");
+    bu_free(schema_help, "fbfade help");
+    return status;
+}
 
 
 static void
@@ -104,6 +190,11 @@ Sig_Catcher(int sig)
 int
 main(int argc, char **argv)
 {
+    struct fbfade_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int operand_index;
+    args.self = &args;
+
     bu_setprogname(argv[0]);
 
     /* Plant signal catcher. */
@@ -134,80 +225,42 @@ main(int argc, char **argv)
 		(void)signal(getsigs[i], Sig_Catcher);
     }
 
-    /* Process arguments. */
-    {
-	int c;
-	bool_t errors = 0;
-
-	while ((c = bu_getopt(argc, argv, OPTSTR)) != -1)
-	    switch (c) {
-		default:	/* '?': invalid option */
-		    errors = 1;
-		    break;
-
-		case 'f':	/* -f in_fb_file */
-		    in_fb_file = bu_optarg;
-		    break;
-
-		case 'F':	/* -F out_fb_file */
-		    out_fb_file = bu_optarg;
-		    break;
-
-		case 'H':	/* -H */
-		    hires = 1;
-		    break;
-
-		case 'n':	/* -n height */
-		    if ((src_height = atoi(bu_optarg)) <= 0)
-			errors = 1;
-
-		    break;
-
-		case 'N':	/* -N height */
-		    if ((dst_height = atoi(bu_optarg)) <= 0)
-			errors = 1;
-
-		    break;
-
-		case 's':	/* -s size */
-		    if ((src_height = src_width = atoi(bu_optarg)) <= 0)
-			errors = 1;
-
-		    break;
-
-		case 'S':	/* -S size */
-		    if ((dst_height = dst_width = atoi(bu_optarg)) <= 0)
-			errors = 1;
-
-		    break;
-
-		case 'w':	/* -w width */
-		    if ((src_width = atoi(bu_optarg)) <= 0)
-			errors = 1;
-
-		    break;
-
-		case 'W':	/* -W width */
-		    if ((dst_width = atoi(bu_optarg)) <= 0)
-			errors = 1;
-
-		    break;
-	    }
-
-	if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
-    	    errors = 1;
-	if (errors)
-	    Fatal(fbp, USAGE1);
+    int introspection = bu_arg_introspect(&msg, &fbfade_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+    operand_index = bu_arg_schema_parse_complete(&fbfade_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return fbfade_help(stdout, 0);
 
-    if (bu_optind < argc) {
-	/* out_fb_file */
-	if (bu_optind < argc - 1 || out_fb_file != NULL) {
-	    Message(USAGE1);
-	    Fatal(fbp, "Can't handle multiple output frame buffers!");
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
+	return fbfade_help(stderr, 1);
+
+    hires = args.hires;
+    in_fb_file = args.input_framebuffer;
+    out_fb_file = args.output_framebuffer;
+    src_width = args.input_width;
+    src_height = args.input_height;
+    dst_width = args.output_width;
+    dst_height = args.output_height;
+
+    if (argc - 1 - operand_index == 1) {
+	if (out_fb_file) {
+	    bu_flog(stderr,
+		"output framebuffer specified by both option and operand\n");
+	    return 1;
 	}
-
-	out_fb_file = argv[bu_optind];
+	out_fb_file = argv[operand_index + 1];
     }
 
     /* Open frame buffer for unbuffered input. */

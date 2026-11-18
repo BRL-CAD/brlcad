@@ -8,10 +8,11 @@ fbfade - fade a frame buffer image in or out
 
 == SYNOPSIS
 
-[source]
-----
-fbfade [-H] [-s _size_] [-w _width_] [-n _height_] [-f _in_fb_file_] [-S _size_] [-W _width_] [-N _height_] [[-F] _out_fb_file_]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*fbfade* [*-H*] [*-f* _device_] [*-F* _device_] [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_]
+       [*-S* _pixels_] [*-W* _pixels_] [*-N* _pixels_] [_output_]
+// END GENERATED BU_ARG SYNOPSIS
 
 
 [[description]]
@@ -33,39 +34,38 @@ frame buffer with fast single-pixel writes.
 [[options]]
 == OPTIONS
 
-*-H*::
-  Use 1024x1024 as the default input size instead of 512x512. Explicitly
-  specified sizes override this default.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-s* _size_::
-  Set both the width and height of the input image.
+*-H*, *--high-resolution*::
+  Use 1024 instead of 512 for unspecified input dimensions.
 
-*-w* _width_::
-  Set the input image width.
+*-f* _device_, *--input-framebuffer*=_device_::
+  Read the image to fade in from this framebuffer.
 
-*-n* _height_::
-  Set the input image height.
+*-F* _device_, *--output-framebuffer*=_device_::
+  Write the fade effect to this framebuffer.
 
-*-f* _in_fb_file_::
-  Read the image to fade in from the named frame buffer. Without this
-  option, the output fades to black.
+*-s* _pixels_, *--input-size*=_pixels_::
+  Set both input dimensions.
 
-*-S* _size_::
-  Set both the width and height of the output frame buffer.
+*-w* _pixels_, *--input-width*=_pixels_::
+  Set the input width.
 
-*-W* _width_::
-  Set the output frame buffer width.
+*-n* _pixels_, *--input-height*=_pixels_::
+  Set the input height.
 
-*-N* _height_::
-  Set the output frame buffer height.
+*-S* _pixels_, *--output-size*=_pixels_::
+  Set both output dimensions.
 
-*-F* _out_fb_file_::
-  Write to the named frame buffer instead of the one given by the
-  *FB_FILE* environment variable (or the default). When given as the
-  last argument, the *-F* flag may be omitted.
+*-W* _pixels_, *--output-width*=_pixels_::
+  Set the output width.
 
-*-h*, *-?*::
-  Print a usage message and exit.
+*-N* _pixels_, *--output-height*=_pixels_::
+  Set the output height.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES
