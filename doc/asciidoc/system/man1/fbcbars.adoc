@@ -8,10 +8,10 @@ fbcbars - display standard color bars on a framebuffer
 
 == SYNOPSIS
 
-[source]
-----
-fbcbars [-e | -f | -s] [-F framebuffer] [-S squarescrsize] [-W scr_width] [-N scr_height] [-h]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*fbcbars* [*-e* | *-f* | *-s*] [*-F* _device_] [*-S* _pixels_] [*-W* _pixels_] [*-N* _scanlines_]
+// END GENERATED BU_ARG SYNOPSIS
 
 
 [[description]]
@@ -19,33 +19,52 @@ fbcbars [-e | -f | -s] [-F framebuffer] [-S squarescrsize] [-W scr_width] [-N sc
 
 *fbcbars* displays a standard color bar scale on the currently selected framebuffer. By default, or when the *-s* option is provided, SMPTE color bars are displayed. Other supported patterns include FCC/EBU and EIA color bars. If no framebuffer is explicitly specified, the environment variable *FB_FILE* is used (see *brlcad*(1)). Ordinarily, the requested framebuffer size is the device default.
 
+[[patterns]]
+== PATTERNS
+
+The EIA pattern places -I, 100% white, Q, and black across the bottom
+quarter of the screen. The upper three quarters contain grey, yellow,
+cyan, green, magenta, red, and blue at 75% intensity.
+
+The FCC/EBU pattern fills the screen with 100% white, 75% yellow,
+75% cyan, 75% green, 75% magenta, 75% red, 75% blue, and black.
+
+The default SMPTE pattern modifies the EIA pattern by replacing the
+upper quarter of its bottom region with a reversed and shifted copy of
+the upper pattern. This region supports monitor color-demodulator
+alignment: through a dichroic blue filter, adjust the chroma phase
+until the magenta and cyan bars have equal apparent intensity.
+
 
 [[options]]
 == OPTIONS
 
-*-e*::
-	Display standard EIA color bars, arranged horizontally. The bottom quarter of the screen will be -I, 100% white, Q, black. The upper three-quarters of the screen will be seven colors at 75% intensity: grey, yellow, cyan, green, magenta, red, blue.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-f*::
-	Display FCC/EBU color bars. The entire screen will contain 8 colors: 100% white, 75% yellow, 75% cyan, 75% green, 75% magenta, 75% red, 75% blue, and black.
+*-e*, *--eia*::
+  Display EIA bars with -I, white, Q, and black below seven 75% colors.
 
-*-s*::
-	Display SMPTE color bars (the default). This is the EIA pattern with the upper quarter of the bottom quarter of the screen containing a reversed and shifted version of the upper pattern, which is very useful for aligning color demodulators in monitors. Using a dichroic blue filter, observe the magenta and cyan bars on the NTSC monitor. Adjust the phase of the chroma demodulator until they have visually equal intensity. At this point, all the other color bars will display the correct chroma.
+*-f*, *--fcc*::
+  Display full-screen FCC/EBU bars from white through 75% colors to black.
 
-*-F* _framebuffer_::
-	Explicitly specify the framebuffer to use. If this option is not provided, the environment variable *FB_FILE* is used.
+*-s*, *--smpte*::
+  Display SMPTE color-demodulator alignment bars (default).
 
-*-S* _squarescrsize_::
-	Set both the height and width of the display device to the given size.
+*-F* _device_, *--framebuffer*=_device_::
+  Select the framebuffer instead of the FB_FILE environment default.
 
-*-W* _scr_width_::
-	Specify the width of each output scanline, in pixels.
+*-S* _pixels_, *--size*=_pixels_::
+  Set both framebuffer dimensions.
 
-*-N* _scr_height_::
-	Specify the desired height in scanlines of the display device.
+*-W* _pixels_, *--width*=_pixels_::
+  Set the framebuffer width.
 
-*-h*, *-?*::
-	Print usage information and exit.
+*-N* _scanlines_, *--height*=_scanlines_::
+  Set the framebuffer height.
+
+// END GENERATED BU_ARG OPTIONS
 
 
 [[examples]]
