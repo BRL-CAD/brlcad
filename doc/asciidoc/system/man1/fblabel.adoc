@@ -8,14 +8,12 @@ fblabel - display a text string on a framebuffer
 
 == SYNOPSIS
 
-[source]
-----
-fblabel [-a] [-c] [-d] [-F framebuffer] [-f fontname] [-C r/g/b]
-        [-r red] [-g green] [-b blue]
-        [-s squaresize] [-S squaresize]
-        [-w width] [-W width] [-n height] [-N height]
-        x_position y_position text_string
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*fblabel* [*-a*] [*-c*] [*-d*] [*-F* _device_] [*-f* _name_] [*-C* _r/g/b_] [*-r* _value_]
+        [*-g* _value_] [*-b* _value_] [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_] _x-position_
+        _y-position_ _text_
+// END GENERATED BU_ARG SYNOPSIS
 
 
 [[description]]
@@ -40,51 +38,52 @@ white (255/255/255).
 [[options]]
 == OPTIONS
 
-*-a*::
-  Disable anti-aliasing. Text is rendered with hard edges rather than
-  filtered against the background image.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*[_all_], *--help*[=_all_]::
+  Print help and exit; use --help=all for compatibility options.
 
-*-c*::
-  Clear the framebuffer before drawing the text. By default the existing
-  image is preserved.
+*-a*, *--no-antialias*::
+  Render text without antialiasing.
 
-*-d*::
-  Enable debugging output to standard error.
+*-c*, *--clear*::
+  Clear the framebuffer before drawing.
 
-*-F* _framebuffer_::
-  Use the specified framebuffer device instead of FB_FILE.
+*-d*, *--debug*::
+  Print character layout diagnostics.
 
-*-f* _fontname_::
-  Use the named *vfont*-format font instead of the default _nonie.r.12_.
+*-F* _device_, *--framebuffer*=_device_::
+  Select the framebuffer device.
 
-*-C* _r/g/b_::
-  Set the text color from red, green, and blue values in the range
-  [0..255], separated by slashes. The default is white (255/255/255).
+*-f* _name_, *--font*=_name_::
+  Select a vfont font.
 
-*-r* _red_::
-  Set the red component [0..255] of the text color (backward
-  compatibility; *-C* is preferred).
+*-C* _r/g/b_, *--color*=_r/g/b_::
+  Set the text color (default 255/255/255).
 
-*-g* _green_::
-  Set the green component [0..255] of the text color (backward
-  compatibility; *-C* is preferred).
+*-r* _value_, *--red*=_value_::
+  Override the red text-color channel.
 
-*-b* _blue_::
-  Set the blue component [0..255] of the text color (backward
-  compatibility; *-C* is preferred).
+*-g* _value_, *--green*=_value_::
+  Override the green text-color channel.
 
-*-s* _squaresize_, *-S* _squaresize_::
-  Set both the width and height of the framebuffer to _squaresize_
-  pixels.
+*-b* _value_, *--blue*=_value_::
+  Override the blue text-color channel.
 
-*-w* _width_, *-W* _width_::
-  Set the framebuffer width in pixels.
+*-s* _pixels_, *--size*=_pixels_::
+  Set both framebuffer dimensions.
 
-*-n* _height_, *-N* _height_::
-  Set the framebuffer height in pixels.
+*-w* _pixels_, *--width*=_pixels_::
+  Set the framebuffer width.
 
-*-h*, *-?*::
-  Print a usage message.
+*-n* _pixels_, *--height*=_pixels_::
+  Set the framebuffer height.
+
+// END GENERATED BU_ARG OPTIONS
+
+The uppercase *-S*, *-W*, and *-N* spellings remain accepted as hidden
+compatibility aliases.  The *-r*, *-g*, and *-b* channel options are also
+retained for compatibility and are listed by *--help=all*.  When combined
+with *--color*, color settings take effect in command-line order.
 
 
 [[examples]]

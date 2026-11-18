@@ -45,7 +45,7 @@ brlcad_add_test(
   NAME fbhelp_output_stream
   COMMAND "${CMAKE_COMMAND}" "-DFBHELP=$<TARGET_FILE:fbhelp>" -P "${CMAKE_CURRENT_SOURCE_DIR}/test_fbhelp_output.cmake"
 )
-brlcad_addexec(fblabel fblabel.c libdm FOLDER Fb)
+brlcad_addexec(fblabel fblabel.c libdm FOLDER Fb ARG_SCHEMA)
 add_target_deps(fblabel dm_plugins)
 brlcad_addexec(fbline fbline.c libdm FOLDER Fb ARG_SCHEMA)
 add_target_deps(fbline dm_plugins)
