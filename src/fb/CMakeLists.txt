@@ -59,7 +59,7 @@ target_include_directories(fbzoom BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../
 add_target_deps(fbzoom dm_plugins)
 brlcad_addexec(gif-fb "gif-fb.c;ioutil.c" libdm FOLDER Fb)
 add_target_deps(gif-fb dm_plugins)
-brlcad_addexec(gif2fb gif2fb.c libdm FOLDER Fb)
+brlcad_addexec(gif2fb gif2fb.c libdm FOLDER Fb ARG_SCHEMA)
 add_target_deps(gif2fb dm_plugins)
 brlcad_addexec(pix-fb pix-fb.c libdm FOLDER Fb ARG_SCHEMA)
 add_target_deps(pix-fb dm_plugins)
