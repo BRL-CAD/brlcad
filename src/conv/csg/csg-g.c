@@ -40,7 +40,7 @@
 #include <errno.h>
 
 #include "bu/app.h"
-#include "bu/getopt.h"
+#include "bu/arg.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/path.h"
@@ -65,6 +65,37 @@ static struct wmember all_head;	/* top-level group */
 static char *buf = NULL;	/* file contents */
 static size_t buf_len = 0;	/* buffer length */
 static size_t pos = 0;		/* current parse position */
+
+struct csg_g_args {
+    int help;
+    int debug;
+};
+
+static const struct bu_arg_option csg_g_options[] = {
+    BU_ARG_FLAG("h", "help", struct csg_g_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("d", "debug", struct csg_g_args, debug,
+	"Print additional conversion diagnostics"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand csg_g_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 1, 1,
+	"OpenSCAD CSG input file", NULL),
+    BU_ARG_OPERAND("output", BU_ARG_VALUE_FILE, 1, 1,
+	"Output BRL-CAD database", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema csg_g_schema = BU_ARG_SCHEMA(
+    "csg-g", "Convert an OpenSCAD CSG export to BRL-CAD",
+    csg_g_options, csg_g_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar csg_g_grammar = {
+    &csg_g_schema, NULL, NULL
+};
 
 
 /*
@@ -2530,49 +2561,41 @@ Convert_input(void)
 }
 
 
-static void
-usage(const char *argv0)
-{
-    bu_log("Usage: %s [-d] input.csg output.g\n", argv0);
-    bu_log("	where input.csg is an OpenSCAD CSG export file\n");
-    bu_log("	(produced by: openscad -o file.csg input.scad)\n");
-    bu_log("	and output.g is the name of a BRL-CAD database file to receive the conversion.\n");
-    bu_log("	The -d option prints additional debugging information.\n");
-}
-
-
 int
 main(int argc, char *argv[])
 {
-    int c;
+    struct csg_g_args args = {0, 0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int introspection;
+    int operand_index;
     long file_size;
 
     bu_setprogname(argv[0]);
 
-    if (argc < 2) {
-	usage(argv[0]);
-	bu_exit(1, NULL);
+    introspection = bu_arg_introspect(&msg, &csg_g_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
-
-    while ((c = bu_getopt(argc, argv, "d")) != -1) {
-	switch (c) {
-	    case 'd':
-		debug = 1;
-		break;
-	    default:
-		usage(argv[0]);
-		bu_exit(1, NULL);
-		break;
-	}
+    operand_index = bu_arg_schema_parse_complete(&csg_g_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_log("%s\n", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
     }
-
-    if (bu_optind + 1 >= argc) {
-	usage(argv[0]);
-	bu_exit(1, "csg-g: need input and output file names\n");
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&csg_g_schema, "csg-g");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "csg-g help");
+	return 0;
     }
-
-    input_file = argv[bu_optind];
-    brlcad_file = argv[bu_optind + 1];
+    debug = args.debug;
+    input_file = argv[operand_index + 1];
+    brlcad_file = argv[operand_index + 2];
 
     /* Open input file and read entire contents */
     if ((fd_in = fopen(input_file, "rb")) == NULL) {
