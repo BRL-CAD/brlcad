@@ -67,7 +67,7 @@ brlcad_addexec(pixautosize pixautosize.c libdm FOLDER Fb ARG_SCHEMA)
 add_target_deps(pixautosize dm_plugins)
 brlcad_addexec(plot3-fb plot3-fb.c libdm FOLDER Fb)
 add_target_deps(plot3-fb dm_plugins)
-brlcad_addexec(png-fb png-fb.c "libdm;PNG::PNG" FOLDER Fb)
+brlcad_addexec(png-fb png-fb.c "libdm;PNG::PNG" FOLDER Fb ARG_SCHEMA)
 target_include_directories(png-fb BEFORE PRIVATE ${PNG_INCLUDE_DIRS})
 add_target_deps(png-fb dm_plugins)
 
@@ -76,7 +76,6 @@ add_target_deps(spm-fb dm_plugins)
 
 cmakefiles(
   CMakeLists.txt
-  fb_arg.h
   fbcolor.c
   fbpoint.c
   fbzoom.c
