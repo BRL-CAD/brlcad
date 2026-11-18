@@ -864,8 +864,10 @@ main(int argc, char **argv)
 		if (image <= 1) {
 		    Rasters();	/* process the raster data */
 
-		    if (image != 0)
+		    if (image != 0) {
+			image = 0;
 			goto terminate;	/* that's all, folks */
+		    }
 		} else {
 		    --image;	/* desperately seeking Susan? */
 		    Skip();	/* skip over the raster data */
