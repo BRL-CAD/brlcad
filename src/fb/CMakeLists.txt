@@ -20,7 +20,7 @@ brlcad_addexec(fbclear fbclear.c libdm FOLDER Fb ARG_SCHEMA)
 add_target_deps(fbclear dm_plugins)
 brlcad_addexec(fbcmap fbcmap.c libdm FOLDER Fb ARG_SCHEMA)
 add_target_deps(fbcmap dm_plugins)
-brlcad_addexec(fbcolor fbcolor.c "libdm" FOLDER Fb)
+brlcad_addexec(fbcolor fbcolor.c "libdm" FOLDER Fb ARG_SCHEMA)
 target_include_directories(fbcolor BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio)
 add_target_deps(fbcolor dm_plugins)
 brlcad_add_test(
