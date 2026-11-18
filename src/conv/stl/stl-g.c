@@ -34,6 +34,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
 #include "bnetwork.h"
 #include "bio.h"
 
@@ -87,6 +88,60 @@ usage(const char *argv0)
     bu_log("	The -m option sets the integer material code for all the parts (default is 0).\n");
     bu_log("	The -c option specifies the units used in the STL file (units_str may be \"in\", \"ft\", ... default is \"mm\"\n");
     bu_log("	The -x option specifies an RT debug flags (see raytrace.h).\n");
+}
+
+
+static int
+parse_integer(const char *arg, int *value)
+{
+    char *end = NULL;
+    long parsed;
+
+    if (!arg || !value || arg[0] == '\0' || isspace((unsigned char)arg[0]))
+	return 0;
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' ||
+	parsed < INT_MIN || parsed > INT_MAX)
+	return 0;
+    *value = (int)parsed;
+    return 1;
+}
+
+
+static int
+parse_positive_number(const char *arg, fastf_t *value)
+{
+    char *end = NULL;
+    double parsed;
+
+    if (!arg || !value || arg[0] == '\0' || isspace((unsigned char)arg[0]))
+	return 0;
+    errno = 0;
+    parsed = strtod(arg, &end);
+    if (errno != 0 || end == arg || *end != '\0' ||
+	!isfinite(parsed) || parsed <= 0.0)
+	return 0;
+    *value = (fastf_t)parsed;
+    return 1;
+}
+
+
+static int
+parse_debug_mask(const char *arg, unsigned int *mask)
+{
+    char *end = NULL;
+    unsigned long parsed;
+
+    if (!arg || !mask || arg[0] == '\0' || arg[0] == '-' ||
+	isspace((unsigned char)arg[0]))
+	return 0;
+    errno = 0;
+    parsed = strtoul(arg, &end, 16);
+    if (errno != 0 || end == arg || *end != '\0' || parsed > UINT_MAX)
+	return 0;
+    *mask = (unsigned int)parsed;
+    return 1;
 }
 
 
@@ -535,6 +590,8 @@ int
 main(int argc, char *argv[])
 {
     int c;
+    int initial_ident_set = 0;
+    int constant_ident_set = 0;
 
     bu_setprogname(argv[0]);
 
@@ -560,18 +617,16 @@ main(int argc, char *argv[])
     /* Get command line arguments. */
     /* Don't need to account for -h and -? ("default" takes care of them).  */
     while ((c = bu_getopt(argc, argv, "bt:i:I:m:dx:N:c:")) != -1) {
-	double tmp;
+	fastf_t tmp;
 
 	switch (c) {
 	    case 'b':	/* binary format */
 		binary = 1;
 		break;
 	    case 't':	/* tolerance */
-		tmp = atof(bu_optarg);
-		if (tmp <= 0.0) {
-		    bu_log("Tolerance must be greater then zero, using default (%g)\n",
-			   tol.dist);
-		    break;
+		if (!parse_positive_number(bu_optarg, &tmp)) {
+		    bu_log("Invalid tolerance: %s\n", bu_optarg);
+		    bu_exit(EXIT_FAILURE, NULL);
 		}
 		tol.dist = tmp;
 		tol.dist_sq = tmp * tmp;
@@ -589,24 +644,27 @@ main(int argc, char *argv[])
 		forced_name = bu_optarg;
 		break;
 	    case 'i':
-		id_no = atoi(bu_optarg);
+		if (!parse_integer(bu_optarg, &id_no))
+		    bu_exit(EXIT_FAILURE, "Invalid initial ident: %s\n", bu_optarg);
+		initial_ident_set = 1;
 		break;
 	    case  'I':
-		const_id = atoi(bu_optarg);
-		if (const_id < 0) {
+		if (!parse_integer(bu_optarg, &const_id) || const_id < 0) {
 		    bu_log("Illegal value for '-I' option, must be zero or greater!\n");
-		    usage(argv[0]);
 		    bu_exit(EXIT_FAILURE, "Illegal value for option '-I'\n");
 		}
+		constant_ident_set = 1;
 		break;
 	    case 'm':
-		mat_code = atoi(bu_optarg);
+		if (!parse_integer(bu_optarg, &mat_code))
+		    bu_exit(EXIT_FAILURE, "Invalid material code: %s\n", bu_optarg);
 		break;
 	    case 'd':
 		debug = 1;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
+		if (!parse_debug_mask(bu_optarg, &rt_debug))
+		    bu_exit(EXIT_FAILURE, "Invalid RT debug flag: %s\n", bu_optarg);
 		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
 		bu_log("\n");
 		break;
@@ -615,6 +673,13 @@ main(int argc, char *argv[])
 		bu_exit(1, NULL);
 		break;
 	}
+    }
+
+    if (initial_ident_set && constant_ident_set)
+	bu_exit(EXIT_FAILURE, "Options '-i' and '-I' may not be used together\n");
+    if (argc - bu_optind != 2) {
+	usage(argv[0]);
+	bu_exit(EXIT_FAILURE, "Expected input.stl and output.g operands\n");
     }
 
     input_file = argv[bu_optind];
