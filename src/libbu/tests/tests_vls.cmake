@@ -293,3 +293,5 @@ add_test(
   NAME bu_vls_substr_12
   COMMAND bu_test test_vls 20 "01234567890" 11 20 ""
 )
+
+brlcad_add_test(NAME bu_vls_spaces_reuse COMMAND bu_test test_vls 21)

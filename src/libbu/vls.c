@@ -724,6 +724,7 @@ bu_vls_spaces(struct bu_vls *vp, size_t cnt)
 
     memset(vp->vls_str + vp->vls_offset + vp->vls_len, ' ', cnt);
     vp->vls_len += cnt;
+    vp->vls_str[vp->vls_offset + vp->vls_len] = '\0';
 }
 
 

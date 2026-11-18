@@ -578,6 +578,29 @@ test_bu_vls_spaces(int argc, char *argv[])
 
 
 static int
+test_bu_vls_spaces_reuse(void)
+{
+    const struct {
+	const char *seed;
+	b_off_t offset;
+    } cases[] = {{"abcdef0123456789", 0}, {"prefixabcdef0123456789", sizeof("prefix") - 1}};
+    struct bu_vls value = BU_VLS_INIT_ZERO;
+    int failed = 0;
+    for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+	bu_vls_strcpy(&value, cases[i].seed);
+	bu_vls_nibble(&value, cases[i].offset);
+	bu_vls_trunc(&value, 1);
+	bu_vls_spaces(&value, 3);
+	if (!BU_STR_EQUAL(bu_vls_cstr(&value), "a   ") || strlen(bu_vls_cstr(&value)) != bu_vls_strlen(&value)) {
+	    bu_log("bu_vls_spaces left stale data after reused string %zu\n", i);
+	    failed = 1;
+	}
+    }
+    bu_vls_free(&value);
+    return failed;
+}
+
+static int
 test_bu_vls_detab(int argc, char *argv[])
 {
     char *in_string;
@@ -754,6 +777,8 @@ main(int argc, char *argv[])
 	    return test_bu_vls_prepend(argc, argv);
 	case 20:
 	    return test_bu_vls_substr(argc, argv);
+	case 21:
+	    return test_bu_vls_spaces_reuse();
     }
 
     bu_log("ERROR: function_num %d is not valid [%s]\n", function_num, argv[0]);
