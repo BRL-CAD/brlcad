@@ -9,10 +9,11 @@ loop - generate numeric or character sequences for shell loops
 
 == SYNOPSIS
 
-[source]
-----
-loop [-c] start finish [incr]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*loop* *-c* _start_ _finish_ [_increment_]
+*loop* _start_ _finish_ [_increment_]
+// END GENERATED BU_ARG SYNOPSIS
 
 
 [[description]]
@@ -23,29 +24,32 @@ loop [-c] start finish [incr]
 driving counted loops in shell scripts.
 
 The values are integers, real numbers, or characters.  By default
-*loop* prints integers; if any of _start_, _finish_, or _incr_ contains
+*loop* prints integers; if any of _start_, _finish_, or _increment_ contains
 a decimal point or otherwise parses only as a floating-point number, the
 sequence is generated and printed as real numbers (using *%g*
-formatting).  The *-c* option selects character sequences instead.
+formatting).  The *--character* option selects character sequences instead.
 
-The default _incr_ is `1` when _start_ is less than _finish_ and `-1`
+The default _increment_ is `1` when _start_ is less than _finish_ and `-1`
 when _start_ is greater than _finish_, so the sequence always runs
-toward _finish_.  An _incr_ of zero is an error.  No attempt is made to
+toward _finish_.  An _increment_ of zero is an error.  No attempt is made to
 detect or prevent infinite loops.
 
 For integer sequences, *loop* preserves zero padding: if _start_,
-_finish_, or _incr_ is written with leading zeros, the output is
+_finish_, or _increment_ is written with leading zeros, the output is
 left-padded with zeros to the width of the widest such argument (for
 example, `008` through `010`).
 
 [[options]]
 == OPTIONS
 
-*-c*::
-  Generate a character sequence.  _start_ and _finish_ are taken as
-  single characters and the output steps through the character codes
-  between them.  An optional _incr_ may be supplied but must be an
-  integer.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
+
+*-c*, *--character*::
+  Generate a sequence of single-byte characters.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

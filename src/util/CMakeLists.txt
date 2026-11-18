@@ -66,7 +66,7 @@ brlcad_addexec(imgdiff imgdiff.cpp "libicv;libbu" FOLDER Util ARG_SCHEMA)
 
 brlcad_addexec(imgdims imgdims.c "libdm;libbu" FOLDER Util ARG_SCHEMA)
 add_target_deps(imgdims dm_plugins)
-brlcad_addexec(loop loop.c libbu FOLDER Util)
+brlcad_addexec(loop loop.c libbu FOLDER Util ARG_SCHEMA)
 brlcad_addexec(lowp lowp.c libbu FOLDER Util NO_OPTIONS)
 brlcad_addexec(mac-pix mac-pix.c libbu FOLDER Util ARG_SCHEMA)
 brlcad_addexec(random random.c "libbn;libbu" FOLDER Util ARG_SCHEMA)
