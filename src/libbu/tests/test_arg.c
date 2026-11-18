@@ -207,18 +207,6 @@ static const struct bu_arg_schema case_schema =
 	short_only_options, BU_ARG_PARSE_OPTIONS_FIRST, case_rows);
 
 
-static size_t
-attached_only_tokens(size_t UNUSED(available), const char **UNUSED(argv))
-{
-    return 0;
-}
-
-
-static const struct bu_arg_shape attached_only_shape = {
-    BU_ARG_SHAPE_CUSTOM, 0, 1, "[=json]", attached_only_tokens, NULL
-};
-
-
 static int
 list_mode_parse(struct bu_vls *UNUSED(msg), const char *arg, void *storage)
 {
@@ -238,10 +226,8 @@ list_mode_parse(struct bu_vls *UNUSED(msg), const char *arg, void *storage)
 
 
 static const struct bu_arg_option test_options[] = {
-    {NULL, "list", "list", "[=json]", "List values, optionally as JSON",
-	BU_ARG_VALUE_CUSTOM, offsetof(struct test_args, list_mode), list_mode_parse,
-	NULL, NULL, NULL, 0, 0, NULL, BU_ARG_OPTIONAL,
-	&attached_only_shape, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
+    BU_ARG_ATTACHED_OPTIONAL(NULL, "list", "list", struct test_args,
+	list_mode, list_mode_parse, "json", "List values, optionally as JSON"),
     BU_ARG_OPTION_NULL
 };
 
@@ -891,6 +877,23 @@ main(int UNUSED(argc), char **argv)
 	return 1;
     }
     bu_arg_validate_result_clear(&result);
+
+    {
+	char *test_json = bu_arg_schema_describe_json(&test_schema);
+	char *test_help = bu_arg_schema_help(&test_schema, "test");
+	if (!test_json || !strstr(test_json, "\"kind\":\"attached_optional\"") ||
+	    !test_help || !strstr(test_help, "--list[=json]")) {
+	    bu_log("attached-only optional metadata was not published canonically\n");
+	    if (test_json)
+		bu_free(test_json, "test schema JSON");
+	    if (test_help)
+		bu_free(test_help, "test schema help");
+	    bu_vls_free(&msg);
+	    return 1;
+	}
+	bu_free(test_json, "test schema JSON");
+	bu_free(test_help, "test schema help");
+    }
 
     if (bu_arg_schema_validate(&test_schema, 1, marker_prefix, 0, &result) != 0 ||
 	result.state != BU_ARG_VALIDATE_INCOMPLETE ||

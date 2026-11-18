@@ -36,7 +36,8 @@ file(
     "options": [
       {"short": "h", "long": "help", "canonical": "help", "alias_of": "", "argument_requirement": "none", "hidden": false},
       {"short": "v", "long": "verbose", "canonical": "verbose", "alias_of": "", "argument_requirement": "none", "hidden": false, "repeat": true},
-      {"short": "o", "long": "output", "canonical": "output", "alias_of": "", "argument": "file", "argument_requirement": "required", "hidden": false}
+      {"short": "o", "long": "output", "canonical": "output", "alias_of": "", "argument": "file", "argument_requirement": "required", "hidden": false},
+      {"short": "x", "long": "prefix", "canonical": "prefix", "alias_of": "", "argument": "text", "argument_requirement": "optional", "hidden": false, "argument_shape": {"kind": "attached_optional", "min_tokens": 0, "max_tokens": 1}}
     ],
     "terminal_options": ["help"],
     "operands": [
@@ -213,9 +214,10 @@ execute_process(
 if(NOT detailed_render_result EQUAL 0)
   message(FATAL_ERROR "argdoc could not render a detailed synopsis: ${detailed_render_error}")
 endif()
-string(FIND "${detailed_render}" "*detailed* [*-v*]... [*-o* _file_] _input_" detailed_synopsis)
+string(FIND "${detailed_render}" "*detailed* [*-v*]... [*-o* _file_] [*-x*[_text_]] _input_" detailed_synopsis)
+string(FIND "${detailed_render}" "*-x*[_text_], *--prefix*[=_text_]" detailed_attached)
 string(FIND "${detailed_render}" "*detailed* [*-h*]" detailed_help)
-if(detailed_synopsis EQUAL -1 OR NOT detailed_help EQUAL -1)
+if(detailed_synopsis EQUAL -1 OR detailed_attached EQUAL -1 OR NOT detailed_help EQUAL -1)
   message(FATAL_ERROR "argdoc did not render explicit nonterminal options canonically")
 endif()
 

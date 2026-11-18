@@ -2916,22 +2916,6 @@ _exec_desc_cmd(struct ged *gedp, struct ged_edit_ctx *ctx,
 }
 
 
-/* The historical spelling --list-all-prim-ops=json is a separate no-value
- * switch, not an option whose following operand is a format argument.  The
- * native parser still accepts the attached form through the custom consumer,
- * while this shape keeps a bare switch from consuming a geometry name. */
-static size_t
-_edit_attached_only_arg(size_t UNUSED(available), const char **UNUSED(argv))
-{
-    return 0;
-}
-
-
-static const struct bu_arg_shape edit_attached_only_arg_shape = {
-    BU_ARG_SHAPE_CUSTOM, 0, 1, "[=json]", _edit_attached_only_arg, NULL
-};
-
-
 static int
 _parse_edit_list_all(struct bu_vls *msg, const char *arg, void *storage)
 {
@@ -2967,10 +2951,9 @@ static const struct bu_arg_option edit_options[] = {
     BU_ARG_FLAG("F", "abandon", struct ged_edit_ctx, flag_F, "Abandon: discard intermediate state, use on-disk"),
     BU_ARG_FLAG("i", "intermediate", struct ged_edit_ctx, flag_i, "Intermediate: apply to temp buffer only (no disk write)"),
     BU_ARG_FLAG(NULL, "occurrence", struct ged_edit_ctx, occurrence, "Edit the final combination arc"),
-    {NULL, "list-all-prim-ops", "list-all-prim-ops", "=json", "List all available primitive edit operations (use =json for JSON)",
-	BU_ARG_VALUE_CUSTOM, offsetof(struct ged_edit_ctx, list_all_prim_ops), _parse_edit_list_all, NULL, NULL, NULL,
-	0, 0, NULL, BU_ARG_OPTIONAL, &edit_attached_only_arg_shape, NULL, NULL,
-	BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
+    BU_ARG_ATTACHED_OPTIONAL(NULL, "list-all-prim-ops", "list-all-prim-ops",
+	struct ged_edit_ctx, list_all_prim_ops, _parse_edit_list_all, "json",
+	"List all available primitive edit operations (use =json for JSON)"),
     BU_ARG_CUSTOM("O", "option", struct ged_edit_ctx, options, _parse_ged_edit_opt, "key=value", "Pass dynamic option to edit session"),
     BU_ARG_OPTION_NULL
 };

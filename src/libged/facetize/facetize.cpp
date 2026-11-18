@@ -431,16 +431,6 @@ static const struct bu_arg_shape facetize_methods_shape = {
     BU_ARG_SHAPE_COMMA_LIST, 1, 1, "comma-separated tessellation methods", NULL, NULL
 };
 
-static size_t
-facetize_attached_only(size_t UNUSED(available), const char **UNUSED(argv))
-{
-    return 0;
-}
-
-static const struct bu_arg_shape facetize_help_shape = {
-    BU_ARG_SHAPE_SCALAR, 0, 1, "[=all]", facetize_attached_only, NULL
-};
-
 static int
 facetize_help_from_str(struct bu_vls *msg, const char *arg, void *storage)
 {
@@ -465,12 +455,9 @@ static const struct bu_arg_constraint facetize_constraints[] = {
 };
 
 static const struct bu_arg_option facetize_options[] = {
-    {"h", "help", "help", "all",
-	"Print help and exit; use --help=all for method and advanced options",
-	BU_ARG_VALUE_CUSTOM, offsetof(facetize_parse_args, print_help),
-	facetize_help_from_str, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_OPTIONAL,
-	&facetize_help_shape, NULL, NULL, BU_ARG_VALUE_RANGE_NONE,
-	BU_ARG_SHAPE_SCALAR},
+    BU_ARG_ATTACHED_OPTIONAL("h", "help", "help", facetize_parse_args,
+	print_help, facetize_help_from_str, "all",
+	"Print help and exit; use --help=all for method and advanced options"),
     BU_ARG_COUNTING_FLAG("v", "verbose", facetize_parse_args, verbosity, BU_ARG_VALUE_LONG, "Verbose output; repeat to increase detail"),
     BU_ARG_FLAG("q", "quiet", facetize_parse_args, quiet, "Suppress all output"),
     BU_ARG_FLAG("n", "nmg-output", facetize_parse_args, make_nmg, "Create N-Manifold Geometry output"),

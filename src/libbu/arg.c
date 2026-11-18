@@ -151,6 +151,11 @@ const struct bu_arg_shape bu_arg_optional_scalar_shape = {
     cmd_schema_optional_scalar_token_count, cmd_optional_scalar_arg_variants
 };
 
+static const struct bu_arg_shape cmd_attached_optional_shape = {
+    BU_ARG_SHAPE_ATTACHED_OPTIONAL, 0, 1,
+    "optional value attached to the option spelling", NULL, NULL
+};
+
 /* Standard option macros intentionally leave arg_shape NULL.  In a Windows
  * DLL consumer, the address of exported data is not a valid C static
  * initializer (MSVC C2099), and imported function addresses are not stable
@@ -170,6 +175,8 @@ cmd_schema_option_arg_shape(const struct bu_arg_option *option)
 	    return &bu_arg_color_shape;
 	case BU_ARG_SHAPE_VECTOR3:
 	    return &bu_arg_vector3_shape;
+	case BU_ARG_SHAPE_ATTACHED_OPTIONAL:
+	    return &cmd_attached_optional_shape;
 	default:
 	    break;
     }
@@ -1464,6 +1471,8 @@ cmd_schema_option_argument_count(const struct bu_arg_option *option,
 	size_t selected = shape->token_count(count, argv);
 	return selected <= count ? selected : 0;
     }
+    if (shape && shape->kind == BU_ARG_SHAPE_ATTACHED_OPTIONAL)
+	return 0;
     if (shape && shape->kind == BU_ARG_SHAPE_RGB) {
 	unsigned char rgb[3] = {0, 0, 0};
 	return (size_t)bu_rgb_from_argv(rgb, count, (const char * const *)argv);
@@ -2491,6 +2500,7 @@ cmd_schema_option_spelling(struct bu_vls *spellings, const char *name,
 	int longopt, const struct bu_arg_option *value_option)
 {
     const char *argument;
+    const struct bu_arg_shape *shape;
 
     if (!spellings || BU_STR_EMPTY(name) || !value_option)
 	return;
@@ -2500,7 +2510,11 @@ cmd_schema_option_spelling(struct bu_vls *spellings, const char *name,
     argument = value_option->argument;
     if (value_option->arg_requirement == BU_ARG_NONE || BU_STR_EMPTY(argument))
 	return;
-    if (value_option->arg_requirement == BU_ARG_OPTIONAL && argument[0] != '[')
+    shape = cmd_schema_option_arg_shape(value_option);
+    if (value_option->arg_requirement == BU_ARG_OPTIONAL &&
+	shape && shape->kind == BU_ARG_SHAPE_ATTACHED_OPTIONAL)
+	bu_vls_printf(spellings, longopt ? "[=%s]" : "[%s]", argument);
+    else if (value_option->arg_requirement == BU_ARG_OPTIONAL && argument[0] != '[')
 	bu_vls_printf(spellings, " [%s]", argument);
     else
 	bu_vls_printf(spellings, " %s", argument);
@@ -3475,6 +3489,7 @@ cmd_schema_arg_shape_name(bu_arg_shape_kind_t kind)
 	case BU_ARG_SHAPE_RGB: return "rgb";
 	case BU_ARG_SHAPE_COLOR: return "color";
 	case BU_ARG_SHAPE_VECTOR3: return "vector3";
+	case BU_ARG_SHAPE_ATTACHED_OPTIONAL: return "attached_optional";
 	case BU_ARG_SHAPE_CUSTOM: return "custom";
 	default: break;
     }
@@ -6441,6 +6456,16 @@ bu_arg_schema_lint(const struct bu_arg_schema *schema, struct bu_vls *msgs)
 		if (msgs)
 		    bu_vls_printf(msgs,
 			"%s: flag \"%s\" declares an argument shape\n",
+			path, canonical ? canonical : "");
+		failures++;
+	    }
+	    if (shape && shape->kind == BU_ARG_SHAPE_ATTACHED_OPTIONAL &&
+		(option->arg_requirement != BU_ARG_OPTIONAL ||
+		 shape->min_tokens != 0 || shape->max_tokens != 1 ||
+		 shape->token_count)) {
+		if (msgs)
+		    bu_vls_printf(msgs,
+			"%s: option \"%s\" has invalid attached-optional metadata\n",
 			path, canonical ? canonical : "");
 		failures++;
 	    }

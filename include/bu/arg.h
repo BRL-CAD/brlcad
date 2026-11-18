@@ -102,6 +102,7 @@ typedef enum {
     BU_ARG_SHAPE_RGB,
     BU_ARG_SHAPE_COLOR,
     BU_ARG_SHAPE_VECTOR3,
+    BU_ARG_SHAPE_ATTACHED_OPTIONAL,
     BU_ARG_SHAPE_CUSTOM
 } bu_arg_shape_kind_t;
 
@@ -970,6 +971,13 @@ BU_EXPORT extern int bu_arg_integer_pair_optional_validate(size_t argc,
     {_short, _long, _long, _arg, _help, BU_ARG_VALUE_KEYWORD, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, _values, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
 #define BU_ARG_OPTION_SHAPED(_short, _long, _canonical, _record, _field, _type, _arg, _help, _requirement, _shape, _consume) \
     {_short, _long, _canonical, _arg, _help, _type, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, _requirement, _shape, _consume, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
+/**
+ * An optional value accepted only when attached to its option spelling, such
+ * as -xprefix or --x=prefix.  A bare option passes NULL to the custom parser
+ * and never consumes the following word.
+ */
+#define BU_ARG_ATTACHED_OPTIONAL(_short, _long, _canonical, _record, _field, _parser, _arg, _help) \
+    {_short, _long, _canonical, _arg, _help, BU_ARG_VALUE_CUSTOM, BU_ARG_STORAGE_OFFSET(_record, _field), _parser, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_OPTIONAL, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_ATTACHED_OPTIONAL}
 #define BU_ARG_ALIAS(_short, _long, _canonical, _hidden) \
     {_short, _long, _canonical, NULL, NULL, BU_ARG_VALUE_FLAG, 0, NULL, NULL, NULL, _canonical, 0, _hidden, NULL, BU_ARG_NONE, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
 

@@ -429,6 +429,15 @@ metavariable(const json &option)
     return "_" + argument + "_";
 }
 
+static bool
+attached_optional(const json &option)
+{
+    return option.contains("argument_shape") &&
+	option.at("argument_shape").is_object() &&
+	option.at("argument_shape").value("kind", std::string()) ==
+	"attached_optional";
+}
+
 static std::string
 option_term(const json &option)
 {
@@ -443,6 +452,8 @@ option_term(const json &option)
 	std::string term = shortopt == "*" ? "`-*`" : "*-" + shortopt + "*";
 	if (requirement == "required")
 	    term += " " + argument;
+	else if (requirement == "optional" && attached_optional(option))
+	    term += "[" + argument + "]";
 	else if (requirement == "optional")
 	    term += " [" + argument + "]";
 	terms.push_back(term);
@@ -653,7 +664,9 @@ synopsis_option(const json &option)
 	std::string("none"));
     if (requirement != "none") {
 	const std::string argument = metavariable(option);
-	if (requirement == "optional")
+	if (requirement == "optional" && attached_optional(option))
+	    result += (!shortopt.empty() ? "[" : "[=") + argument + "]";
+	else if (requirement == "optional")
 	    result += " [" + argument + "]";
 	else
 	    result += " " + argument;

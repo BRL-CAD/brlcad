@@ -10,7 +10,7 @@ edit - Edit objects in the database by translating, rotating, scaling, and other
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*edit* [*-h*] [*-v*] [*-S*] [*-f*] [*-F*] [*-i*] [*--occurrence*] [*--list-all-prim-ops* [_=json_]]
+*edit* [*-h*] [*-v*] [*-S*] [*-f*] [*-F*] [*-i*] [*--occurrence*] [*--list-all-prim-ops*[=_json_]]
      [*-O* _key=value_] [_geometry_] [_operation_] [_arguments_ ...]
 *edit*
 *edit translate* [*-a* | *-r*] [*-x*] [*-y*] [*-z*] [*-n*] [*-k* _FROM_] _destination_ ...
