@@ -81,6 +81,7 @@ main(int argc, char **argv)
     struct rt_wdb	*fpout = NULL;
     size_t doti;
     int	c;
+    int free_reg_name = 0;
     int remaining;
     struct bu_list *vlfree = &rt_vlfree;
 
@@ -111,7 +112,9 @@ main(int argc, char **argv)
 	fpin = stdin;
     } else if (remaining == 2) {
 	jfile = argv[bu_optind];
-	if ((fpin = fopen(jfile, "rb")) == NULL) {
+	if (BU_STR_EQUAL(jfile, "-")) {
+	    fpin = stdin;
+	} else if ((fpin = fopen(jfile, "rb")) == NULL) {
 	    bu_exit(1, "%s: cannot open %s for reading\n",
 		    argv[0], jfile);
 	}
@@ -132,6 +135,7 @@ main(int argc, char **argv)
     if (!reg_name) {
 	reg_name = BU_STR_EQUAL(jfile, "-") ? bu_strdup("stdin") :
 	    bu_path_basename(jfile, NULL);
+	free_reg_name = 1;
 
 	/* Ignore .pss extension if it's there. */
 	doti = strlen(reg_name);
@@ -145,6 +149,8 @@ main(int argc, char **argv)
     jack_to_brlcad(fpin, fpout, reg_name, grp_name, jfile, vlfree);
     if (fpin != stdin)
 	fclose(fpin);
+    if (free_reg_name)
+	bu_free(reg_name, "region name");
     db_close(fpout->dbip);
     return 0;
 }
@@ -326,27 +332,33 @@ create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *gr
 {
     char *rname, *sname;
     int empty_model;
+    size_t name_size;
     struct shell *s;
     struct nmgregion *r;
 
-    rname = (char *)bu_malloc(sizeof(reg_name) + 3, "rname");	/* Region name. */
-    sname = (char *)bu_malloc(sizeof(reg_name) + 3, "sname");	/* Solid name. */
+    name_size = strlen(reg_name) + 3;
+    rname = (char *)bu_malloc(name_size, "rname");	/* Region name. */
+    sname = (char *)bu_malloc(name_size, "sname");	/* Solid name. */
 
-    snprintf(sname, sizeof(reg_name) + 2, "s.%s", reg_name);
+    snprintf(sname, name_size, "s.%s", reg_name);
     empty_model = nmg_kill_zero_length_edgeuses(m);
     if (empty_model) {
 	bu_log("Warning: skipping empty model.");
+	bu_free(sname, "sname");
+	bu_free(rname, "rname");
 	return 0;
     }
     nmg_rebound(m, &tol);
     r = BU_LIST_FIRST(nmgregion, &m->r_hd);
     s = BU_LIST_FIRST(shell, &r->s_hd);
     mk_bot_from_nmg(fpout, sname,  s);		/* Make BOT object. */
-    snprintf(rname, sizeof(reg_name) + 2, "r.%s", reg_name);
+    snprintf(rname, name_size, "r.%s", reg_name);
     mk_comb1(fpout, rname, sname, 1);	/* Put object in a region. */
     if (grp_name) {
 	mk_comb1(fpout, grp_name, rname, 1);	/* Region in group. */
     }
+    bu_free(sname, "sname");
+    bu_free(rname, "rname");
     return 0;
 }
 
