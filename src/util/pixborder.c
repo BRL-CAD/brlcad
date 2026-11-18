@@ -531,14 +531,6 @@ get_args (int argc, char **argv)
 	return 0;
     }
 
-    if (left_edge == -1)
-	left_edge = 0;
-    if (right_edge == -1)
-	right_edge = file_width - 1;
-    if (bottom_edge == -1)
-	bottom_edge = 0;
-    if (top_edge == -1)
-	top_edge = file_height - 1;
     return 1;
 }
 
@@ -585,6 +577,15 @@ main (int argc, char **argv)
 	} else
 	    (void) fprintf(stderr, "pixborder: unable to autosize\n");
     }
+
+    if (left_edge == -1)
+	left_edge = 0;
+    if (right_edge == -1)
+	right_edge = file_width - 1;
+    if (bottom_edge == -1)
+	bottom_edge = 0;
+    if (top_edge == -1)
+	top_edge = file_height - 1;
 
     /*
      * Allocate a 1-scanline output buffer
