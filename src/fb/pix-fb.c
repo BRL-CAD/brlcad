@@ -299,10 +299,14 @@ main(int argc, char **argv)
 	&& multiple_lines > 0
 	&& !inverse
 	&& !zoom
+	&& scr_xoff >= 0
+	&& scr_yoff >= 0
 	&& (size_t)xout == file_width
 	&& file_width <= (size_t)scr_width)
     {
 	scanpix *= multiple_lines;
+    } else {
+	multiple_lines = 0;
     }
 
     scanbytes = scanpix * sizeof(RGBpixel);
