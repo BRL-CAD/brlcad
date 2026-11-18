@@ -26,6 +26,7 @@
 
 #include "common.h"
 
+#include <math.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -33,6 +34,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/process.h"
 #include "bu/str.h"
 #include "bu/exit.h"
@@ -44,7 +46,7 @@
 #define BUF_LEN 128
 #define OPT_STRING "n:r:?"
 #define RAY_COLOR "255 255 0"
-#define print_usage() bu_exit(1, "Usage: 'show-shot [-n name] [-r radius]'\n")
+#define print_usage() bu_exit(1, "Usage: 'showshot [-n name] [-r radius]'\n")
 
 int
 main (int argc, char **argv)
@@ -60,8 +62,7 @@ main (int argc, char **argv)
     int pid;			/* Process ID for unique group name */
     point_t first_entryp = VINIT_ZERO;	/* Ray's entry into the entire geometry */
 
-    /* intentionally double for scan */
-    double ray_radius = 1.0;	/* Thickness of the RCC */
+    fastf_t ray_radius = 1.0;	/* Thickness of the RCC */
     double entryp[3] = VINIT_ZERO;	/* Ray's entry into current region */
     double exitp[3] = VINIT_ZERO;		/* Ray's exit from current region */
 
@@ -76,8 +77,16 @@ main (int argc, char **argv)
 		bu_strlcpy(rayname, bu_optarg, BUF_LEN);
 		break;
 	    case 'r':
-		if (sscanf(bu_optarg, "%lf", &ray_radius) != 1) {
-		    bu_exit(1, "Illegal radius: '%s'\n", bu_optarg);
+		{
+		    struct bu_vls msg = BU_VLS_INIT_ZERO;
+		    const char *value = bu_optarg;
+		    if (bu_opt_fastf_t(&msg, 1, &value, &ray_radius) != 1)
+			bu_exit(1, "Illegal radius '%s': %s\n", bu_optarg,
+			    bu_vls_cstr(&msg));
+		    if (!isfinite(ray_radius) || ray_radius <= 0.0)
+			bu_exit(1, "Illegal radius '%s': must be finite and positive\n",
+			    bu_optarg);
+		    bu_vls_free(&msg);
 		}
 		break;
 	    case '?':
@@ -93,7 +102,7 @@ main (int argc, char **argv)
     if (*rayname == '\0')	/* Was one given on command line? */
 	sprintf(rayname, "ray.%d", pid);
 
-    if (strlen(rayname) > NAMESIZE) {
+    if (strlen(rayname) + strlen(".s") > NAMESIZE) {
 	fprintf(stderr,
 		"Name '%s.s' for ray solid may not exceed %d characters\n",
 		rayname, NAMESIZE);
