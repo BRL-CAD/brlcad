@@ -30,6 +30,7 @@
 #include <string.h>
 
 #include "gcv.h"
+#include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/path.h"
@@ -64,8 +65,8 @@ struct conversion_state
     struct bu_list *vlfree;
 
     // globals from g-ply
-    int color_info;
-    int all_colors[3];
+    int (*region_colors)[3];
+    size_t colored_regions;
     int v_order;
     long ***f_regs;
     double ***v_regs;
@@ -234,7 +235,7 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     char *region_name = NULL;
     size_t nvertices = 0;
     size_t nfaces = 0;
-    int color[3];
+    int color[3] = {0};
     int reg_faces_pos = 0;
     p_ply ply_fp = NULL;
 
@@ -244,17 +245,18 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	pstate->failed = 1;
 	return;
     }
-    VSCALE(color, tsp->ts_mater.ma_color, 255);
-    if (!pstate->ply_write_options->separate) {
-	if (!tsp->ts_mater.ma_color_valid) {
-	    pstate->color_info = 2;
-	} else if (pstate->color_info == 0) {
-	    pstate->all_colors[0] = color[0];
-	    pstate->all_colors[1] = color[1];
-	    pstate->all_colors[2] = color[2];
-	    pstate->color_info = 1;
-	} else if (pstate->color_info == 1 && (pstate->all_colors[0] != color [0] || pstate->all_colors[1] != color [1] || pstate->all_colors[2] != color [2])) {
-	    pstate->color_info = 3;
+    if (tsp->ts_mater.ma_color_valid) {
+	struct bu_color region_color = BU_COLOR_INIT_ZERO;
+	vect_t rgb;
+	VMOVE(rgb, tsp->ts_mater.ma_color);
+	if (!bu_color_from_rgb_floats(&region_color, rgb) ||
+	    !bu_color_to_rgb_ints(&region_color, &color[0], &color[1], &color[2])) {
+	    pstate->failed = 1;
+	    return;
+	}
+	if (!pstate->ply_write_options->separate) {
+	    memcpy(pstate->region_colors[pstate->cur_region], color, sizeof(color));
+	    ++pstate->colored_regions;
 	}
     }
     NMG_CK_REGION(r);
@@ -727,7 +729,6 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
         state.output_file = state.ply_write_options->o_file;
     }
     state.dbip = context->dbip;
-    state.color_info = 0;
 
     RT_DBTS_INIT(&tree_state);
     struct bn_tol tol = state.gcv_options->calculational_tolerance;             // init tol with gcv_options defaults
@@ -779,6 +780,8 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
     if (state.ply_write_options->verbose || state.gcv_options->verbosity_level)
 	bu_log("Found %zu total regions.\n", state.tot_regions);
 
+    if (!state.ply_write_options->separate)
+	state.region_colors = (int (*)[3])bu_calloc(state.tot_regions, sizeof(*state.region_colors), "PLY region colors");
     state.f_regs = (long ***) bu_calloc(state.tot_regions, sizeof(long**), "state.f_regs");
     state.f_sizes = (int *) bu_calloc(state.tot_regions, sizeof(int), "state.f_sizes");
     state.v_regs = (double ***) bu_calloc(state.tot_regions, sizeof(double**), "state.v_regs");
@@ -802,6 +805,7 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
 	goto free_all;
 
     if (!state.ply_write_options->separate) {
+	const int output_colors = state.colored_regions == (size_t)state.cur_region;
 	int ri;
         int fi;
         int vi;
@@ -819,7 +823,7 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
             goto free_all;
         }
 
-        if (!ply_output_header(ply_fp, state.tot_vertices, state.tot_polygons, state.color_info == 1, &state))
+        if (!ply_output_header(ply_fp, state.tot_vertices, state.tot_polygons, output_colors, &state))
 	    goto free_all;
 
 	for (ri = 0; ri < state.cur_region; ri++)
@@ -838,13 +842,10 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
 		    }
 		    ply_output_value(ply_fp, coords[3], &state);
 		}
-		if (state.color_info == 0) {
-		    bu_log("ERROR: Could not find any regions");
-		    goto free_all;
-		} else if (state.color_info == 1) {
-		    ply_output_value(ply_fp, state.all_colors[0], &state);
-		    ply_output_value(ply_fp, state.all_colors[1], &state);
-		    ply_output_value(ply_fp, state.all_colors[2], &state);
+		if (output_colors) {
+		    ply_output_value(ply_fp, state.region_colors[ri][0], &state);
+		    ply_output_value(ply_fp, state.region_colors[ri][1], &state);
+		    ply_output_value(ply_fp, state.region_colors[ri][2], &state);
 		}
 	    }
 	    ply_region_free(&state, (size_t)ri);
@@ -854,12 +855,12 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
     if (state.failed)
 	goto free_all;
 
-    if (state.color_info == 1 && (state.ply_write_options->verbose || state.gcv_options->verbosity_level))
-	bu_log("Wrote color (%d, %d, %d), since all objects had the same color.\n", state.all_colors[0], state.all_colors[1], state.all_colors[2]);
-    else if (state.color_info == 2 && (state.ply_write_options->verbose || state.gcv_options->verbosity_level))
-	bu_log("No color information specified in BRL-CAD file.\n");
-    else if (state.color_info == 3 && (state.ply_write_options->verbose || state.gcv_options->verbosity_level))
-	bu_log("All objects not the same color. No color information written.\n");
+    if (!state.ply_write_options->separate && state.colored_regions) {
+	if (state.colored_regions < (size_t)state.cur_region)
+	    bu_log("PLY writer: region colors omitted because some regions have no color\n");
+	else if (state.ply_write_options->verbose || state.gcv_options->verbosity_level)
+	    bu_log("Wrote region colors as PLY face colors.\n");
+    }
 
     double percent;
     if (state.regions_tried > 0) {
@@ -889,6 +890,7 @@ free_all:
     for (size_t i = 0; i < state.tot_regions; ++i)
 	ply_region_free(&state, i);
     /* Release dynamic storage */
+    bu_free(state.region_colors, "PLY region colors");
     if (state.f_regs)
 	bu_free(state.f_regs, "state.f_regs");
     if (state.f_sizes)

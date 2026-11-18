@@ -21,6 +21,7 @@
 #include "common.h"
 
 #include <stdio.h>
+#include <math.h>
 #include <string.h>
 
 #include "bu/app.h"
@@ -35,8 +36,9 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#ifdef GCV_PLY_TEST_WRITE_FAILURE
 #include "../plugins/ply/rply.h"
+
+#ifdef GCV_PLY_TEST_WRITE_FAILURE
 
 enum ply_test_failure {
     PLY_TEST_NONE, PLY_TEST_HEADER, PLY_TEST_VALUE, PLY_TEST_CLOSE,
@@ -173,6 +175,7 @@ check_options(const struct gcv_filter *writer, int long_options)
 
 enum { TETRA_VERTICES = 4, TETRA_FACES = 4, TETRA_COUNT = 2 };
 
+static const char *const mesh_names[TETRA_COUNT] = {"first.bot", "second.bot"};
 static const char *const region_names[TETRA_COUNT] = {"first.r", "second.r"};
 
 static const fastf_t tetrahedra[TETRA_COUNT * TETRA_VERTICES * 3] = {
@@ -183,23 +186,22 @@ static const fastf_t tetrahedra[TETRA_COUNT * TETRA_VERTICES * 3] = {
 static int
 create_geometry(struct gcv_context *context, int joined)
 {
-    const char *meshes[] = {"first.bot", "second.bot"};
     const int tetra_faces[] = {0, 1, 2, 3, 0, 2, 3, 2, 1, 3, 1, 0};
     struct rt_wdb *database = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
     struct wmember members;
     BU_LIST_INIT(&members.l);
     if (!database) return 0;
-    for (size_t region = 0; region < sizeof(meshes) / sizeof(meshes[0]); ++region) {
+    for (size_t region = 0; region < TETRA_COUNT; ++region) {
 	fastf_t vertices[TETRA_VERTICES * 3];
 	int faces[TETRA_FACES * 3];
 	memcpy(vertices, tetrahedra + region * TETRA_VERTICES * 3, sizeof(vertices));
 	memcpy(faces, tetra_faces, sizeof(faces));
-	if (mk_bot(database, meshes[region], RT_BOT_SOLID, RT_BOT_CCW, 0,
+	if (mk_bot(database, mesh_names[region], RT_BOT_SOLID, RT_BOT_CCW, 0,
 		TETRA_VERTICES, TETRA_FACES, vertices, faces, NULL, NULL) < 0)
 	    goto fail;
 	if (joined) {
-	    if (!mk_addmember(meshes[region], &members.l, NULL, WMOP_UNION)) goto fail;
-	} else if (mk_comb1(database, region_names[region], meshes[region], 1) < 0) {
+	    if (!mk_addmember(mesh_names[region], &members.l, NULL, WMOP_UNION)) goto fail;
+	} else if (mk_comb1(database, region_names[region], mesh_names[region], 1) < 0) {
 	    goto fail;
 	}
     }
@@ -352,6 +354,112 @@ separate_test(void)
     return valid ? 0 : 1;
 }
 
+static const unsigned char expected_colors[TETRA_COUNT][3] = {{255, 63, 1}, {31, 128, 255}};
+
+struct ply_color_sample {
+    double x[TETRA_COUNT * TETRA_VERTICES];
+    size_t faces[TETRA_COUNT * TETRA_FACES][3];
+    double colors[TETRA_COUNT * TETRA_FACES][3];
+};
+
+static int
+sample_x(p_ply_argument argument)
+{
+    struct ply_color_sample *sample;
+    long vertex;
+    ply_get_argument_user_data(argument, (void **)&sample, NULL);
+    ply_get_argument_element(argument, NULL, &vertex);
+    if (vertex < 0 || vertex >= TETRA_COUNT * TETRA_VERTICES) return 0;
+    sample->x[vertex] = ply_get_argument_value(argument);
+    return 1;
+}
+
+static int
+sample_face(p_ply_argument argument)
+{
+    struct ply_color_sample *sample;
+    long face, length, corner;
+    double value = ply_get_argument_value(argument);
+    ply_get_argument_user_data(argument, (void **)&sample, NULL);
+    ply_get_argument_element(argument, NULL, &face);
+    ply_get_argument_property(argument, NULL, &length, &corner);
+    if (length != 3 || face < 0 || face >= TETRA_COUNT * TETRA_FACES) return 0;
+    if (corner < 0) return 1;
+    if (corner >= 3 || !isfinite(value) || value < 0 || value >= TETRA_COUNT * TETRA_VERTICES || value > floor(value))
+	return 0;
+    sample->faces[face][corner] = (size_t)value;
+    return 1;
+}
+
+static int
+sample_color(p_ply_argument argument)
+{
+    struct ply_color_sample *sample;
+    long face, component;
+    ply_get_argument_user_data(argument, (void **)&sample, &component);
+    ply_get_argument_element(argument, NULL, &face);
+    if (face < 0 || face >= TETRA_COUNT * TETRA_FACES || component < 0 || component >= 3) return 0;
+    sample->colors[face][component] = ply_get_argument_value(argument);
+    return 1;
+}
+
+static int
+check_face_colors(const char *path)
+{
+    const double second_region_min_x = 3.0;
+    struct ply_color_sample sample = {0};
+    size_t counts[TETRA_COUNT] = {0};
+    p_ply input = ply_open(path, NULL, 0, NULL);
+    if (!input) return 0;
+    int valid = ply_read_header(input) &&
+	ply_set_read_cb(input, "vertex", "x", sample_x, &sample, 0) == TETRA_COUNT * TETRA_VERTICES &&
+	ply_set_read_cb(input, "face", "vertex_indices", sample_face, &sample, 0) == TETRA_COUNT * TETRA_FACES &&
+	ply_set_read_cb(input, "face", "red", sample_color, &sample, 0) == TETRA_COUNT * TETRA_FACES &&
+	ply_set_read_cb(input, "face", "green", sample_color, &sample, 1) == TETRA_COUNT * TETRA_FACES &&
+	ply_set_read_cb(input, "face", "blue", sample_color, &sample, 2) == TETRA_COUNT * TETRA_FACES &&
+	ply_read(input);
+    if (!ply_close(input)) valid = 0;
+    for (size_t face = 0; valid && face < TETRA_COUNT * TETRA_FACES; ++face) {
+	size_t region = sample.x[sample.faces[face][0]] >= second_region_min_x ? 1 : 0;
+	++counts[region];
+	for (size_t component = 0; component < 3; ++component) {
+	    if (!EQUAL(sample.colors[face][component], expected_colors[region][component])) valid = 0;
+	    size_t corner_region = sample.x[sample.faces[face][component]] >= second_region_min_x ? 1 : 0;
+	    if (corner_region != region) valid = 0;
+	}
+    }
+    for (size_t region = 0; region < TETRA_COUNT; ++region)
+	if (counts[region] != TETRA_FACES) valid = 0;
+    return valid;
+}
+
+static int
+colors_test(void)
+{
+    struct gcv_context source;
+    char path[MAXPATHLEN] = {0};
+    const char *types[] = {"asc", "le", "be"};
+    gcv_context_init(&source);
+    int valid = create_geometry(&source, 0);
+    struct rt_wdb *database = wdb_dbopen(source.dbip, RT_WDB_TYPE_DB_INMEM);
+    if (!database) valid = 0;
+    for (size_t region = 0; valid && region < TETRA_COUNT; ++region)
+	if (mk_region1(database, region_names[region], mesh_names[region], NULL, NULL, expected_colors[region]) < 0)
+	    valid = 0;
+    FILE *file = bu_temp_file(path, sizeof(path));
+    if (!file) valid = 0;
+    else if (fclose(file)) valid = 0;
+    const struct gcv_filter *writer = select_writer(&source);
+    if (!writer) valid = 0;
+    for (size_t mode = 0; valid && mode < sizeof(types) / sizeof(types[0]); ++mode) {
+	valid = round_trip(&source, writer, path, types[mode]) && check_face_colors(path);
+	if (!valid) bu_log("PLY %s export did not retain each region's face colors\n", types[mode]);
+    }
+    if (path[0]) bu_file_delete(path);
+    gcv_context_destroy(&source);
+    return valid ? 0 : 1;
+}
+
 static int
 failure_test(const char *mode, const char *full_device)
 {
@@ -450,6 +558,7 @@ main(int argc, const char **argv)
     if (argc == 2 && BU_STR_EQUAL(argv[1], "geometry")) return geometry_test(0);
     if (argc == 2 && BU_STR_EQUAL(argv[1], "boolean")) return geometry_test(1);
     if (argc == 2 && BU_STR_EQUAL(argv[1], "separate")) return separate_test();
+    if (argc == 2 && BU_STR_EQUAL(argv[1], "colors")) return colors_test();
     if (argc == 2 && (BU_STR_EQUAL(argv[1], "open") || BU_STR_EQUAL(argv[1], "type") ||
 	    BU_STR_EQUAL(argv[1], "objects") || BU_STR_EQUAL(argv[1], "empty")))
 	return failure_test(argv[1], NULL);
