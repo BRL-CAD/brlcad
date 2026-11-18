@@ -30,17 +30,14 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <math.h>
 #include <string.h>
 #include <ctype.h>
-#include <errno.h>
-#include <limits.h>
 #include "bnetwork.h"
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/cv.h"
-#include "bu/getopt.h"
 #include "bu/path.h"
 #include "bu/units.h"
 #include "vmath.h"
@@ -51,9 +48,9 @@
 
 static struct bg_vert_tree *tree;
 static struct wmember all_head;
-static char *input_file;	/* name of the input file */
-static char *brlcad_file;	/* name of output file */
-static char *forced_name=NULL;	/* name specified on command line */
+static const char *input_file;	/* name of the input file */
+static const char *brlcad_file;	/* name of output file */
+static const char *forced_name=NULL;	/* name specified on command line */
 static struct bn_tol tol;	/* Tolerance structure */
 static int id_no=1000;		/* Ident numbers */
 static int const_id=-1;		/* Constant ident number (assigned to all regions if non-negative) */
@@ -73,75 +70,120 @@ static int bot_fcurr=0;		/* current bot face */
 #define MAX_LINE_SIZE 512
 
 
-static void
-usage(const char *argv0)
-{
-    bu_log("Usage: %s [-db] [-t tolerance] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-x rt_debug_flag] input.stl output.g\n", argv0);
-    bu_log("	where input.stl is a STereoLithography file\n");
-    bu_log("	and output.g is the name of a BRL-CAD database file to receive the conversion.\n");
-    bu_log("	The -d option prints additional debugging information.\n");
-    bu_log("	The -b option specifies that the input file is in the binary STL format (default is ASCII). \n");
-    bu_log("	The -t option specifies the minimum distance between two distinct vertices (mm).\n");
-    bu_log("	The -N option specifies a name to use for the object.\n");
-    bu_log("	The -i option sets the initial region ident number (default is 1000).\n");
-    bu_log("	The -I option sets the ident number that will be assigned to all regions (conflicts with -i).\n");
-    bu_log("	The -m option sets the integer material code for all the parts (default is 0).\n");
-    bu_log("	The -c option specifies the units used in the STL file (units_str may be \"in\", \"ft\", ... default is \"mm\"\n");
-    bu_log("	The -x option specifies an RT debug flags (see raytrace.h).\n");
-}
+struct stl_g_debug_mask {
+    unsigned int value;
+    int set;
+};
 
-
-static int
-parse_integer(const char *arg, int *value)
-{
-    char *end = NULL;
-    long parsed;
-
-    if (!arg || !value || arg[0] == '\0' || isspace((unsigned char)arg[0]))
-	return 0;
-    errno = 0;
-    parsed = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' ||
-	parsed < INT_MIN || parsed > INT_MAX)
-	return 0;
-    *value = (int)parsed;
-    return 1;
-}
-
+struct stl_g_args {
+    int help;
+    int binary;
+    int debug;
+    fastf_t tolerance;
+    const char *name;
+    int initial_ident;
+    int constant_ident;
+    int material_code;
+    const char *units;
+    struct stl_g_debug_mask rt_debug;
+};
 
 static int
-parse_positive_number(const char *arg, fastf_t *value)
+stl_g_debug_mask_parse(struct bu_vls *msg, const char *arg, void *storage)
 {
-    char *end = NULL;
-    double parsed;
+    struct stl_g_debug_mask *mask = (struct stl_g_debug_mask *)storage;
+    unsigned int value;
 
-    if (!arg || !value || arg[0] == '\0' || isspace((unsigned char)arg[0]))
-	return 0;
-    errno = 0;
-    parsed = strtod(arg, &end);
-    if (errno != 0 || end == arg || *end != '\0' ||
-	!isfinite(parsed) || parsed <= 0.0)
-	return 0;
-    *value = (fastf_t)parsed;
-    return 1;
+    if (!bu_arg_unsigned_integer_from_str(msg, &value, arg, 16))
+	return -1;
+    if (mask) {
+	mask->value = value;
+	mask->set = 1;
+    }
+    return 0;
 }
 
+static int
+stl_g_units_validate(struct bu_vls *msg, const char *arg)
+{
+    if (!ZERO(bu_units_conversion(arg)))
+	return 0;
+    if (msg)
+	bu_vls_printf(msg, "unknown length unit: %s\n", arg);
+    return -1;
+}
+
+static const struct bu_arg_option stl_g_options[] = {
+    BU_ARG_FLAG("h", "help", struct stl_g_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("b", "binary", struct stl_g_args, binary,
+	"Read binary STL instead of ASCII STL (the default)"),
+    BU_ARG_FLAG("d", "debug", struct stl_g_args, debug,
+	"Print each face and normal as it is read"),
+    BU_ARG_VALUE_VALIDATE("t", "tolerance", struct stl_g_args, tolerance,
+	BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate, "tolerance",
+	"Merge vertices within this positive distance in millimeters "
+	"(default 0.0005, as used by MGED and the raytracer)"),
+    BU_ARG_VALUE("N", "name", struct stl_g_args, name,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "object-name",
+	"Use this base name instead of the STL solid or input file name"),
+    BU_ARG_VALUE("i", "initial-ident", struct stl_g_args, initial_ident,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "ident",
+	"Set the first region ident and increment subsequent regions "
+	"(default 1000; conflicts with --constant-ident)"),
+    BU_ARG_INTEGER_RANGE("I", "constant-ident", struct stl_g_args,
+	constant_ident, 1, 0, 0, 0, "ident",
+	"Assign this nonnegative ident to every region "
+	"(conflicts with --initial-ident)"),
+    BU_ARG_VALUE("m", "material-code", struct stl_g_args, material_code,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "code",
+	"Set the GIFT material code for every region (default 0)"),
+    BU_ARG_VALUE_VALIDATE("c", "units", struct stl_g_args, units,
+	BU_ARG_VALUE_STRING, stl_g_units_validate, "unit",
+	"Interpret coordinates in a BRL-CAD length unit such as mm, cm, m, in, "
+	"or ft (default mm)"),
+    BU_ARG_CUSTOM("x", "rt-debug", struct stl_g_args, rt_debug,
+	stl_g_debug_mask_parse, "mask",
+	"Set librt hexadecimal debug flags (see RT_DEBUG in raytrace.h)"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand stl_g_operands[] = {
+    BU_ARG_OPERAND("input.stl", BU_ARG_VALUE_FILE, 1, 1,
+	"Input Stereolithography file", NULL),
+    BU_ARG_OPERAND("output.g", BU_ARG_VALUE_FILE, 1, 1,
+	"Output BRL-CAD database", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const char * const stl_g_ident_options[] = {
+    "initial-ident", "constant-ident", NULL
+};
+
+static const struct bu_arg_constraint stl_g_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT,
+	BU_ARG_CONDITION_ALWAYS, stl_g_ident_options, 0, 1,
+	"--initial-ident and --constant-ident are mutually exclusive"),
+    BU_ARG_CONSTRAINT_NULL
+};
+
+static const struct bu_arg_schema stl_g_schema = BU_ARG_SCHEMA(
+    "stl-g", "Convert Stereolithography geometry to a BRL-CAD database",
+    stl_g_options, stl_g_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, stl_g_constraints, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar stl_g_grammar = {
+    &stl_g_schema, NULL, NULL
+};
 
 static int
-parse_debug_mask(const char *arg, unsigned int *mask)
+stl_g_help(FILE *stream, int status)
 {
-    char *end = NULL;
-    unsigned long parsed;
-
-    if (!arg || !mask || arg[0] == '\0' || arg[0] == '-' ||
-	isspace((unsigned char)arg[0]))
-	return 0;
-    errno = 0;
-    parsed = strtoul(arg, &end, 16);
-    if (errno != 0 || end == arg || *end != '\0' || parsed > UINT_MAX)
-	return 0;
-    *mask = (unsigned int)parsed;
-    return 1;
+    char *help = bu_arg_schema_help(&stl_g_schema, "stl-g");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "stl-g help");
+    return status;
 }
 
 
@@ -589,9 +631,11 @@ Convert_input(void)
 int
 main(int argc, char *argv[])
 {
-    int c;
-    int initial_ident_set = 0;
-    int constant_ident_set = 0;
+    struct stl_g_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    const char * const *operands;
+    int introspection;
+    int operand_index;
 
     bu_setprogname(argv[0]);
 
@@ -609,87 +653,56 @@ main(int argc, char *argv[])
 
     conv_factor = 1.0;	/* default */
 
-    if (argc < 2) {
-	usage(argv[0]);
-	bu_exit(1, NULL);
+    args.tolerance = tol.dist;
+    args.initial_ident = id_no;
+    args.constant_ident = const_id;
+    args.material_code = mat_code;
+
+    introspection = bu_arg_introspect(&msg, &stl_g_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    operand_index = bu_arg_schema_parse_complete(&stl_g_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return stl_g_help(stdout, 0);
+
+    binary = args.binary;
+    debug = args.debug;
+    tol.dist = args.tolerance;
+    tol.dist_sq = tol.dist * tol.dist;
+    forced_name = args.name;
+    id_no = args.initial_ident;
+    const_id = args.constant_ident;
+    mat_code = args.material_code;
+    if (args.units) {
+	conv_factor = bu_units_conversion(args.units);
+	bu_log("Converting units from %s to mm (conversion factor is %g)\n",
+		args.units, conv_factor);
+    }
+    if (args.rt_debug.set) {
+	rt_debug = args.rt_debug.value;
+	bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
+	bu_log("\n");
     }
 
-    /* Get command line arguments. */
-    /* Don't need to account for -h and -? ("default" takes care of them).  */
-    while ((c = bu_getopt(argc, argv, "bt:i:I:m:dx:N:c:")) != -1) {
-	fastf_t tmp;
-
-	switch (c) {
-	    case 'b':	/* binary format */
-		binary = 1;
-		break;
-	    case 't':	/* tolerance */
-		if (!parse_positive_number(bu_optarg, &tmp)) {
-		    bu_log("Invalid tolerance: %s\n", bu_optarg);
-		    bu_exit(EXIT_FAILURE, NULL);
-		}
-		tol.dist = tmp;
-		tol.dist_sq = tmp * tmp;
-		break;
-	    case 'c':	/* convert from units */
-		conv_factor = bu_units_conversion(bu_optarg);
-		if (ZERO(conv_factor)) {
-		    bu_log("Illegal units: (%s)\n", bu_optarg);
-		    bu_exit(EXIT_FAILURE, "Illegal units!\n");
-		}
-		else
-		    bu_log("Converting units from %s to mm (conversion factor is %g)\n", bu_optarg, conv_factor);
-		break;
-	    case 'N':	/* force a name on this object */
-		forced_name = bu_optarg;
-		break;
-	    case 'i':
-		if (!parse_integer(bu_optarg, &id_no))
-		    bu_exit(EXIT_FAILURE, "Invalid initial ident: %s\n", bu_optarg);
-		initial_ident_set = 1;
-		break;
-	    case  'I':
-		if (!parse_integer(bu_optarg, &const_id) || const_id < 0) {
-		    bu_log("Illegal value for '-I' option, must be zero or greater!\n");
-		    bu_exit(EXIT_FAILURE, "Illegal value for option '-I'\n");
-		}
-		constant_ident_set = 1;
-		break;
-	    case 'm':
-		if (!parse_integer(bu_optarg, &mat_code))
-		    bu_exit(EXIT_FAILURE, "Invalid material code: %s\n", bu_optarg);
-		break;
-	    case 'd':
-		debug = 1;
-		break;
-	    case 'x':
-		if (!parse_debug_mask(bu_optarg, &rt_debug))
-		    bu_exit(EXIT_FAILURE, "Invalid RT debug flag: %s\n", bu_optarg);
-		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
-		bu_log("\n");
-		break;
-	    default:
-		usage(argv[0]);
-		bu_exit(1, NULL);
-		break;
-	}
-    }
-
-    if (initial_ident_set && constant_ident_set)
-	bu_exit(EXIT_FAILURE, "Options '-i' and '-I' may not be used together\n");
-    if (argc - bu_optind != 2) {
-	usage(argv[0]);
-	bu_exit(EXIT_FAILURE, "Expected input.stl and output.g operands\n");
-    }
-
-    input_file = argv[bu_optind];
+    operands = (const char * const *)(argv + operand_index + 1);
+    input_file = operands[0];
     if ((fd_in=fopen(input_file, "rb")) == NULL) {
 	bu_log("Cannot open input file (%s)\n", input_file);
 	perror(argv[0]);
 	bu_exit(1, NULL);
     }
-    bu_optind++;
-    brlcad_file = argv[bu_optind];
+    brlcad_file = operands[1];
     if ((fd_out=wdb_fopen(brlcad_file)) == NULL) {
 	bu_log("Cannot open BRL-CAD file (%s)\n", brlcad_file);
 	perror(argv[0]);

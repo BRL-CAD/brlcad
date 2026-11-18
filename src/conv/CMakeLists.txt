@@ -66,7 +66,7 @@ brlcad_addexec(g-off off/g-off.c "librt;libnmg;libbu" FOLDER Conv)
 
 brlcad_addexec(off-g off/off-g.c "libwdb;librt;libnmg;libbu" FOLDER Conv ARG_SCHEMA)
 
-brlcad_addexec(stl-g stl/stl-g.c "libwdb;librt;libbu;${WINSOCK_LIB}" FOLDER Conv)
+brlcad_addexec(stl-g stl/stl-g.c "libwdb;librt;libbu;${WINSOCK_LIB}" FOLDER Conv ARG_SCHEMA)
 
 brlcad_addexec(g-stl stl/g-stl.c "librt;libgcv;libnmg;libbu;${WINSOCK_LIB}" FOLDER Conv)
 add_dependencies(g-stl gcv_plugins)
