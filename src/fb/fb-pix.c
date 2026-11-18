@@ -144,6 +144,13 @@ Usage: fb-pix [-i -c] [-F framebuffer]\n\
 
     setmode(fileno(stdout), O_BINARY);
 
+    if ((fbp = fb_open(framebuffer, screen_width, screen_height)) == NULL) {
+	bu_exit(12, NULL);
+    }
+
+    V_MIN(screen_height, fb_getheight(fbp));
+    V_MIN(screen_width, fb_getwidth(fbp));
+
     scanpix = screen_width;
     scanbytes = scanpix * sizeof(RGBpixel);
     if ((scanline = (unsigned char *)malloc(scanbytes)) == RGBPIXEL_NULL) {
@@ -151,13 +158,6 @@ Usage: fb-pix [-i -c] [-F framebuffer]\n\
 		"fb-pix:  malloc(%d) failure\n", scanbytes);
 	bu_exit(2, NULL);
     }
-
-    if ((fbp = fb_open(framebuffer, screen_width, screen_height)) == NULL) {
-	bu_exit(12, NULL);
-    }
-
-    V_MIN(screen_height, fb_getheight(fbp));
-    V_MIN(screen_width, fb_getwidth(fbp));
 
     if (crunch) {
 	if (fb_rmap(fbp, &cmap) == -1) {
