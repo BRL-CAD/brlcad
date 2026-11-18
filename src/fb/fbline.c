@@ -28,16 +28,14 @@
 
 #include "common.h"
 
-#include <errno.h>
 #include <limits.h>
-#include <stdlib.h>
-#include <ctype.h>
 
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/color.h"
-#include "bu/getopt.h"
-#include "fb_arg.h"
 #include "bu/exit.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "vmath.h"
 #include "dm.h"
 #include "pkg.h"
@@ -62,7 +60,7 @@ struct stroke {
     short de;			/* increment for `e' */
 }; /* rasterization descriptor */
 
-static char *framebuffer = NULL;
+static const char *framebuffer = NULL;
 struct fb *fbp;			/* Current framebuffer */
 
 static int screen_width = 512;	/* default input width */
@@ -71,13 +69,116 @@ static int clear = 0;
 
 RGBpixel pixcolor = { 255, 255, 255 };
 
-static int fbx1, fby1, fbx2, fby2;
+struct fbline_args {
+    struct fbline_args *self;
+    int help;
+    int clear;
+    const char *framebuffer;
+    int width;
+    int height;
+    int red;
+    int green;
+    int blue;
+};
 
+enum fbline_dimension {
+    FBLINE_SIZE,
+    FBLINE_WIDTH,
+    FBLINE_HEIGHT
+};
 
-static char usage[] = "\
-Usage: fbline [-c ] [-F framebuffer]\n\
-	[-S squaresize] [-W screen_width] [-N screen_height]\n\
-	[-r red] [-g green] [-b blue] x1 y1 x2 y2\n";
+static struct fbline_args *
+fbline_args_from_storage(void *storage)
+{
+    return storage ? *(struct fbline_args **)storage : NULL;
+}
+
+static int
+fbline_dimension_value(struct bu_vls *msg, const char *arg, void *storage,
+	enum fbline_dimension dimension)
+{
+    struct fbline_args *args = fbline_args_from_storage(storage);
+    int value;
+
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 1, INT_MAX))
+	return -1;
+    if (args) {
+	if (dimension == FBLINE_SIZE)
+	    args->width = args->height = value;
+	else if (dimension == FBLINE_WIDTH)
+	    args->width = value;
+	else
+	    args->height = value;
+    }
+    return 0;
+}
+
+#define FBLINE_DIMENSION_CALLBACK(_name, _dimension) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return fbline_dimension_value(msg, arg, storage, _dimension); \
+    }
+
+FBLINE_DIMENSION_CALLBACK(fbline_size, FBLINE_SIZE)
+FBLINE_DIMENSION_CALLBACK(fbline_width, FBLINE_WIDTH)
+FBLINE_DIMENSION_CALLBACK(fbline_height, FBLINE_HEIGHT)
+
+static const struct bu_arg_option fbline_options[] = {
+    BU_ARG_FLAG("h", "help", struct fbline_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("c", "clear", struct fbline_args, clear,
+	"Clear the framebuffer before drawing"),
+    BU_ARG_VALUE("F", "framebuffer", struct fbline_args, framebuffer,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Select the framebuffer instead of the FB_FILE environment default"),
+    BU_ARG_CUSTOM("s", "size", struct fbline_args, self, fbline_size,
+	"pixels", "Set both framebuffer dimensions"),
+    BU_ARG_ALIAS("S", NULL, "size", 1),
+    BU_ARG_CUSTOM("w", "width", struct fbline_args, self, fbline_width,
+	"pixels", "Set the framebuffer width"),
+    BU_ARG_ALIAS("W", NULL, "width", 1),
+    BU_ARG_CUSTOM("n", "height", struct fbline_args, self, fbline_height,
+	"scanlines", "Set the framebuffer height"),
+    BU_ARG_ALIAS("N", NULL, "height", 1),
+    BU_ARG_INTEGER_RANGE("r", "red", struct fbline_args, red,
+	1, 0, 1, 255, "level", "Set the red color component (default 255)"),
+    BU_ARG_INTEGER_RANGE("g", "green", struct fbline_args, green,
+	1, 0, 1, 255, "level", "Set the green color component (default 255)"),
+    BU_ARG_INTEGER_RANGE("b", "blue", struct fbline_args, blue,
+	1, 0, 1, 255, "level", "Set the blue color component (default 255)"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand fbline_operands[] = {
+    BU_ARG_OPERAND_INTEGER_RANGE("x1", 1, 1, 1, SHRT_MIN, 1, SHRT_MAX,
+	"Starting x coordinate", NULL),
+    BU_ARG_OPERAND_INTEGER_RANGE("y1", 1, 1, 1, SHRT_MIN, 1, SHRT_MAX,
+	"Starting y coordinate", NULL),
+    BU_ARG_OPERAND_INTEGER_RANGE("x2", 1, 1, 1, SHRT_MIN, 1, SHRT_MAX,
+	"Ending x coordinate", NULL),
+    BU_ARG_OPERAND_INTEGER_RANGE("y2", 1, 1, 1, SHRT_MIN, 1, SHRT_MAX,
+	"Ending y coordinate", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema fbline_schema = BU_ARG_SCHEMA(
+    "fbline", "Draw a colored line on a framebuffer",
+    fbline_options, fbline_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar fbline_grammar = {
+    &fbline_schema, NULL, NULL
+};
+
+static int
+fbline_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&fbline_schema, "fbline");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "fbline help");
+    return status;
+}
 
 
 
@@ -177,75 +278,46 @@ BuildStr(struct coords *pt1, struct coords *pt2)
 
 
 int
-get_args(int argc, char **argv)
-{
-
-    int c;
-
-    while ((c = bu_getopt(argc, argv, "S:s:W:w:N:n:cF:r:g:b:h?")) != -1) {
-	switch (c) {
-	    case 'S':
-	    case 's':
-		if (!fb_arg_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen size"))
-		    return 0;
-		screen_height = screen_width;
-		break;
-	    case 'W':
-	    case 'w':
-		if (!fb_arg_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen width"))
-		    return 0;
-		break;
-	    case 'N':
-	    case 'n':
-		if (!fb_arg_int_range(bu_optarg, &screen_height, 1, INT_MAX, "screen height"))
-		    return 0;
-		break;
-	    case 'c':
-		clear = 1;
-		break;
-	    case 'F':
-		framebuffer = bu_optarg;
-		break;
-	    case 'r':
-		if (!fb_arg_uchar(bu_optarg, &pixcolor[RED], "red value"))
-		    return 0;
-		break;
-	    case 'g':
-		if (!fb_arg_uchar(bu_optarg, &pixcolor[GRN], "green value"))
-		    return 0;
-		break;
-	    case 'b':
-		if (!fb_arg_uchar(bu_optarg, &pixcolor[BLU], "blue value"))
-		    return 0;
-		break;
-	    default:		/* '?' */
-		return 0;
-	}
-    }
-
-    if (argc - bu_optind != 4)
-	return 0;		/* BAD */
-    if (!fb_arg_int_range(argv[bu_optind++], &fbx1, SHRT_MIN, SHRT_MAX, "x1")
-	|| !fb_arg_int_range(argv[bu_optind++], &fby1, SHRT_MIN, SHRT_MAX, "y1")
-	|| !fb_arg_int_range(argv[bu_optind++], &fbx2, SHRT_MIN, SHRT_MAX, "x2")
-	|| !fb_arg_int_range(argv[bu_optind++], &fby2, SHRT_MIN, SHRT_MAX, "y2"))
-	return 0;
-
-    return 1;		/* OK */
-}
-
-
-int
 main(int argc, char **argv)
 {
+    struct fbline_args args = {NULL, 0, 0, NULL, 512, 512, 255, 255, 255};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct coords start, end;
+    int operand_index;
+    int x1, y1, x2, y2;
+    args.self = &args;
 
     bu_setprogname(argv[0]);
-
-    if (!get_args(argc, argv)) {
-	fputs(usage, stderr);
-	bu_exit(1, NULL);
+    int introspection = bu_arg_introspect(&msg, &fbline_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+    operand_index = bu_arg_schema_parse_complete(&fbline_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return fbline_help(stdout, 0);
+    if (!bu_arg_integer_from_str(NULL, &x1, argv[operand_index + 1], 10) ||
+	!bu_arg_integer_from_str(NULL, &y1, argv[operand_index + 2], 10) ||
+	!bu_arg_integer_from_str(NULL, &x2, argv[operand_index + 3], 10) ||
+	!bu_arg_integer_from_str(NULL, &y2, argv[operand_index + 4], 10))
+	bu_exit(1, "fbline: internal coordinate validation mismatch\n");
+
+    framebuffer = args.framebuffer;
+    screen_width = args.width;
+    screen_height = args.height;
+    clear = args.clear;
+    pixcolor[RED] = (unsigned char)args.red;
+    pixcolor[GRN] = (unsigned char)args.green;
+    pixcolor[BLU] = (unsigned char)args.blue;
 
     if ((fbp = fb_open(framebuffer, screen_width, screen_height)) == NULL)
 	bu_exit(12, NULL);
@@ -256,10 +328,10 @@ main(int argc, char **argv)
     screen_width = fb_getwidth(fbp);
     screen_height = fb_getheight(fbp);
 
-    start.x = fbx1;
-    start.y = fby1;
-    end.x = fbx2;
-    end.y = fby2;
+    start.x = (short)x1;
+    start.y = (short)y1;
+    end.x = (short)x2;
+    end.y = (short)y2;
     edgelimit(&start);
     edgelimit(&end);
     BuildStr(&start, &end);	/* pixels */

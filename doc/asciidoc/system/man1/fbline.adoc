@@ -8,11 +8,11 @@ fbline - draw a colored line on a framebuffer
 
 == SYNOPSIS
 
-[source]
-----
-fbline [-c] [-F framebuffer] [-s squaresize] [-w width] [-n height]
-       [-r red] [-g green] [-b blue] x1 y1 x2 y2
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*fbline* [*-c*] [*-F* _device_] [*-s* _pixels_] [*-w* _pixels_] [*-n* _scanlines_] [*-r* _level_]
+       [*-g* _level_] [*-b* _level_] _x1_ _y1_ _x2_ _y2_
+// END GENERATED BU_ARG SYNOPSIS
 
 
 [[description]]
@@ -35,34 +35,38 @@ Use *fbpoint*(1) to interactively determine endpoint coordinates.
 [[options]]
 == OPTIONS
 
-*-c*::
-  Clear the framebuffer before drawing. By default the line is drawn
-  over the existing image.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-F* _framebuffer_::
-  Explicitly specify the framebuffer device.
+*-c*, *--clear*::
+  Clear the framebuffer before drawing.
 
-*-s* _squaresize_::
-  Set both the width and height of the framebuffer to _squaresize_
-  pixels. Also available as *-S*.
+*-F* _device_, *--framebuffer*=_device_::
+  Select the framebuffer instead of the FB_FILE environment default.
 
-*-w* _width_::
-  Set the framebuffer width in pixels. Also available as *-W*.
+*-s* _pixels_, *--size*=_pixels_::
+  Set both framebuffer dimensions.
 
-*-n* _height_::
-  Set the framebuffer height in pixels. Also available as *-N*.
+*-w* _pixels_, *--width*=_pixels_::
+  Set the framebuffer width.
 
-*-r* _red_::
-  Red component [0..255] of the line color (default 255).
+*-n* _scanlines_, *--height*=_scanlines_::
+  Set the framebuffer height.
 
-*-g* _green_::
-  Green component [0..255] of the line color (default 255).
+*-r* _level_, *--red*=_level_::
+  Set the red color component (default 255).
 
-*-b* _blue_::
-  Blue component [0..255] of the line color (default 255).
+*-g* _level_, *--green*=_level_::
+  Set the green color component (default 255).
 
-*-h*::
-  Print a usage message and exit. Also available as *-?*.
+*-b* _level_, *--blue*=_level_::
+  Set the blue color component (default 255).
+
+// END GENERATED BU_ARG OPTIONS
+
+The uppercase *-S*, *-W*, and *-N* spellings remain accepted as hidden
+compatibility aliases. By default, the line is drawn over the existing image.
 
 
 [[examples]]

@@ -47,7 +47,7 @@ brlcad_add_test(
 )
 brlcad_addexec(fblabel fblabel.c libdm FOLDER Fb)
 add_target_deps(fblabel dm_plugins)
-brlcad_addexec(fbline fbline.c libdm FOLDER Fb)
+brlcad_addexec(fbline fbline.c libdm FOLDER Fb ARG_SCHEMA)
 add_target_deps(fbline dm_plugins)
 brlcad_addexec(fbpoint fbpoint.c "libdm;libbu;libpkg" FOLDER Fb)
 target_include_directories(fbpoint BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio)
