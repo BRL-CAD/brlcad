@@ -37,7 +37,7 @@
 #include "bio.h"
 
 #include "bu/app.h"
-#include "bu/getopt.h"
+#include "bu/arg.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
@@ -59,6 +59,41 @@ static struct bn_tol tol;		/* tolerance */
 static struct bg_tess_tol ttol;		/* tessellation tolerance */
 static int solid_count = 0;		/* statistics */
 static int comb_count = 0;
+
+struct g_scad_args {
+    int help;
+    int debug;
+    const char *output;
+};
+
+static const struct bu_arg_option g_scad_options[] = {
+    BU_ARG_FLAG("h", "help", struct g_scad_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("d", "debug", struct g_scad_args, debug,
+	"Print additional conversion diagnostics"),
+    BU_ARG_VALUE("o", "output", struct g_scad_args, output,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "output.scad",
+	"Write OpenSCAD output to a file instead of standard output"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand g_scad_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 1, 1,
+	"Input BRL-CAD database", NULL),
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1,
+	BU_ARG_COUNT_UNLIMITED, "Database object to export", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema g_scad_schema = BU_ARG_SCHEMA(
+    "g-scad", "Convert BRL-CAD objects to OpenSCAD", g_scad_options,
+    g_scad_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar g_scad_grammar = {
+    &g_scad_schema, NULL, NULL
+};
 
 
 /*
@@ -1126,22 +1161,16 @@ emit_object(const char *name)
 }
 
 
-static void
-usage(const char *argv0)
-{
-    bu_log("Usage: %s [-d] [-o output.scad] input.g object [object ...]\n", argv0);
-    bu_log("	where input.g is a BRL-CAD database\n");
-    bu_log("	and object(s) are the top-level objects to export.\n");
-    bu_log("	The -d option prints additional debugging information.\n");
-    bu_log("	The -o option specifies the output file (default: stdout).\n");
-}
-
-
 int
 main(int argc, char *argv[])
 {
-    int c, i;
-    const char *output_file = NULL;
+    struct g_scad_args args = {0, 0, NULL};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    const char *input_file;
+    int introspection;
+    int object_index;
+    int operand_index;
+    int i;
 
     bu_setprogname(argv[0]);
 
@@ -1156,53 +1185,47 @@ main(int argc, char *argv[])
     ttol.rel = 0.01;
     ttol.norm = 0.0;
 
-    if (argc < 3) {
-	usage(argv[0]);
-	bu_exit(1, NULL);
+    introspection = bu_arg_introspect(&msg, &g_scad_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
-
-    while ((c = bu_getopt(argc, argv, "do:")) != -1) {
-	switch (c) {
-	    case 'd':
-		debug = 1;
-		break;
-	    case 'o':
-		output_file = bu_optarg;
-		break;
-	    default:
-		usage(argv[0]);
-		bu_exit(1, NULL);
-		break;
-	}
+    operand_index = bu_arg_schema_parse_complete(&g_scad_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_log("%s\n", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
     }
-
-    if (bu_optind >= argc) {
-	usage(argv[0]);
-	bu_exit(1, "g-scad: need input file and object names\n");
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&g_scad_schema, "g-scad");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "g-scad help");
+	return 0;
     }
+    debug = args.debug;
+    input_file = argv[operand_index + 1];
+    object_index = operand_index + 2;
 
     /* Open BRL-CAD database */
-    dbip = db_open(argv[bu_optind], DB_OPEN_READONLY);
+    dbip = db_open(input_file, DB_OPEN_READONLY);
     if (dbip == DBI_NULL) {
-	bu_log("Cannot open BRL-CAD file (%s)\n", argv[bu_optind]);
+	bu_log("Cannot open BRL-CAD file (%s)\n", input_file);
 	bu_exit(1, NULL);
     }
     if (db_dirbuild(dbip)) {
-	bu_log("db_dirbuild failed on %s\n", argv[bu_optind]);
+	bu_log("db_dirbuild failed on %s\n", input_file);
 	bu_exit(1, NULL);
-    }
-    bu_optind++;
-
-    if (bu_optind >= argc) {
-	usage(argv[0]);
-	bu_exit(1, "g-scad: need object name(s)\n");
     }
 
     /* Open output */
-    if (output_file) {
-	fd_out = fopen(output_file, "w");
+    if (args.output) {
+	fd_out = fopen(args.output, "w");
 	if (!fd_out) {
-	    bu_log("Cannot open output file (%s)\n", output_file);
+	    bu_log("Cannot open output file (%s)\n", args.output);
 	    perror("g-scad");
 	    bu_exit(1, NULL);
 	}
@@ -1211,10 +1234,10 @@ main(int argc, char *argv[])
     }
 
     fprintf(fd_out, "// Converted from BRL-CAD by g-scad\n");
-    fprintf(fd_out, "// Source: %s\n\n", argv[bu_optind - 1]);
+    fprintf(fd_out, "// Source: %s\n\n", input_file);
 
     /* Process each named object */
-    for (i = bu_optind; i < argc; i++) {
+    for (i = object_index; i < argc; i++) {
 	bu_log("Exporting: %s\n", argv[i]);
 	emit_object(argv[i]);
     }
@@ -1222,7 +1245,7 @@ main(int argc, char *argv[])
     bu_log("Export complete: %d solids, %d combinations\n",
 	   solid_count, comb_count);
 
-    if (output_file)
+    if (args.output)
 	fclose(fd_out);
 
     db_close(dbip);

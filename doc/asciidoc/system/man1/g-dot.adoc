@@ -8,11 +8,10 @@ g-dot - convert a BRL-CAD database to the DOT graph language
 
 == SYNOPSIS
 
-[source]
-----
-g-dot [-o output.dot] input.g [object1 ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*g-dot* [_OPTION_]... _input_ [_object_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -35,15 +34,14 @@ Graphviz (`dot`), Tulip, or OmniGraffle.
 [[options]]
 == OPTIONS
 
-*-o* _output.dot_::
-  Write the DOT output to _output.dot_ instead of standard output. If
-  the file already exists, output is appended to it.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-h*::
-  Print a usage message and exit.
+*-o* _output.dot_, *--output*=_output.dot_::
+  Write or append DOT output to a file instead of standard output.
 
-*-?*::
-  Print a usage message and exit.
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES
@@ -64,7 +62,7 @@ then uses the Graphviz *dot* program to render it as a PNG image.
 [source,console]
 ----
 $ mged -c moss.g <<< 'q' >/dev/null 2>&1
-g-dot moss.g | dot -Tsvg -o moss.svg
+$ g-dot moss.g | dot -Tsvg -o moss.svg
 ----
 Exports all top-level objects of `moss.g` and pipes the DOT stream
 directly into Graphviz to produce an SVG without an intermediate file.
