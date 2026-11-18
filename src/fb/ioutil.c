@@ -42,7 +42,7 @@ VMessage(const char *format, va_list ap)
     struct bu_vls str = BU_VLS_INIT_ZERO;
     char *tmp_basename = bu_path_basename(bu_getprogname(), NULL);
 
-    bu_vls_printf(&str, format, ap);
+    bu_vls_vprintf(&str, format, ap);
     bu_log("%s: %s\n", tmp_basename, bu_vls_addr(&str));
 
     bu_vls_free(&str);
