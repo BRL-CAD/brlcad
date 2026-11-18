@@ -5,7 +5,7 @@ if(MSVC)
 endif(MSVC)
 brlcad_addexec(bw-fb bw-fb.c libdm FOLDER Fb)
 add_target_deps(bw-fb dm_plugins)
-brlcad_addexec(fb-bw fb-bw.c libdm FOLDER Fb)
+brlcad_addexec(fb-bw fb-bw.c libdm FOLDER Fb ARG_SCHEMA)
 add_target_deps(fb-bw dm_plugins)
 brlcad_addexec(fb-fb fb-fb.c libdm FOLDER Fb)
 add_target_deps(fb-fb dm_plugins)
@@ -71,7 +71,7 @@ brlcad_addexec(png-fb png-fb.c "libdm;PNG::PNG" FOLDER Fb)
 target_include_directories(png-fb BEFORE PRIVATE ${PNG_INCLUDE_DIRS})
 add_target_deps(png-fb dm_plugins)
 
-brlcad_addexec(spm-fb spm-fb.c "libdm;libbn" FOLDER Fb)
+brlcad_addexec(spm-fb spm-fb.c "libdm;libbn" FOLDER Fb ARG_SCHEMA)
 add_target_deps(spm-fb dm_plugins)
 
 cmakefiles(

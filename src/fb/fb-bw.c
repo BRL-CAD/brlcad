@@ -29,139 +29,162 @@
 
 #include <errno.h>
 #include <limits.h>
-#include <stdlib.h>
 
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/color.h"
-#include "bu/getopt.h"
-#include "fb_arg.h"
 #include "bu/exit.h"
+#include "bu/log.h"
 #include "bu/malloc.h"
 #include "vmath.h"
 #include "dm.h"
 
-int height;
-int width;
-int inverse;
-int scr_xoff, scr_yoff;
+struct fb_bw_args {
+    struct fb_bw_args *self;
+    int help;
+    int inverse;
+    const char *framebuffer;
+    int x_offset;
+    int y_offset;
+    int width;
+    int height;
+};
 
-char *framebuffer = NULL;
-const char *file_name;
-FILE *outfp;
-
-int
-get_args(int argc, char **argv)
+static int
+fb_bw_size(struct bu_vls *msg, const char *arg, void *storage)
 {
-    int c;
+    int size;
+    struct fb_bw_args *args = storage ? *(struct fb_bw_args **)storage : NULL;
 
-    while ((c = bu_getopt(argc, argv, "iF:X:Y:s:w:n:h?")) != -1) {
-	switch (c) {
-	    case 'i':
-		inverse = 1;
-		break;
-	    case 'F':
-		framebuffer = bu_optarg;
-		break;
-	    case 'X':
-		if (!fb_arg_int_range(bu_optarg, &scr_xoff, 0, INT_MAX, "screen x offset"))
-		    return 0;
-		break;
-	    case 'Y':
-		if (!fb_arg_int_range(bu_optarg, &scr_yoff, 0, INT_MAX, "screen y offset"))
-		    return 0;
-		break;
-	    case 's':
-		/* square size */
-		if (!fb_arg_int_range(bu_optarg, &width, 1, INT_MAX, "image size"))
-		    return 0;
-		height = width;
-		break;
-	    case 'w':
-		if (!fb_arg_int_range(bu_optarg, &width, 1, INT_MAX, "image width"))
-		    return 0;
-		break;
-	    case 'n':
-		if (!fb_arg_int_range(bu_optarg, &height, 1, INT_MAX, "image height"))
-		    return 0;
-		break;
-
-	    default:		/* '?' 'h' */
-		return 0;
-	}
+    if (!bu_arg_integer_range_from_str(msg, &size, arg, 10, 1, INT_MAX))
+	return -1;
+    if (args) {
+	args->width = size;
+	args->height = size;
     }
-
-    if (bu_optind >= argc) {
-	if (isatty(fileno(stdout)))
-	    return 0;
-	file_name = "-";
-	outfp = stdout;
-	setmode(fileno(stdout), O_BINARY);
-    } else {
-	file_name = argv[bu_optind];
-	if ((outfp = fopen(file_name, "wb")) == NULL) {
-	    fprintf(stderr,
-		    "fb-bw: cannot open \"%s\" for writing\n",
-		    file_name);
-	    return 0;
-	}
-    }
-
-    if (argc > ++bu_optind) {
-	fprintf(stderr, "fb-bw: excess argument(s) not supported\n");
-	return 0;
-    }
-
-    return 1;		/* OK */
+    return 0;
 }
+
+static const struct bu_arg_option fb_bw_options[] = {
+    BU_ARG_FLAG("h", "help", struct fb_bw_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("i", "inverse", struct fb_bw_args, inverse,
+	"Use an upper-left origin and read scanlines from top to bottom"),
+    BU_ARG_VALUE("F", "framebuffer", struct fb_bw_args, framebuffer,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Select the framebuffer device instead of the configured default"),
+    BU_ARG_INTEGER_RANGE("X", "x-offset", struct fb_bw_args, x_offset,
+	1, 0, 1, INT_MAX, "pixels", "Set the starting framebuffer X coordinate"),
+    BU_ARG_INTEGER_RANGE("Y", "y-offset", struct fb_bw_args, y_offset,
+	1, 0, 1, INT_MAX, "pixels", "Set the starting framebuffer Y coordinate"),
+    BU_ARG_CUSTOM("s", "size", struct fb_bw_args, self, fb_bw_size,
+	"pixels", "Set both output dimensions (default: 512)"),
+    BU_ARG_INTEGER_RANGE("w", "width", struct fb_bw_args, width,
+	1, 1, 1, INT_MAX, "pixels", "Set the output width (default: 512)"),
+    BU_ARG_INTEGER_RANGE("n", "height", struct fb_bw_args, height,
+	1, 1, 1, INT_MAX, "pixels", "Set the output height (default: 512)"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand fb_bw_operands[] = {
+    BU_ARG_OPERAND("output", BU_ARG_VALUE_FILE, 0, 1,
+	"BW output file (default: standard output)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema fb_bw_schema = BU_ARG_SCHEMA(
+    "fb-bw", "Save a framebuffer image as a BRL-CAD BW image",
+    fb_bw_options, fb_bw_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar fb_bw_grammar = {
+    &fb_bw_schema, NULL, NULL
+};
 
 
 int
 main(int argc, char **argv)
 {
+    struct fb_bw_args args = {NULL, 0, 0, NULL, 0, 0, 512, 512};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct fb *fbp;
     unsigned char *inbuf;
     unsigned char *obuf;
+    const char *file_name = "-";
+    FILE *outfp = stdout;
 
     int x, y;
     int xin, yin;		/* number of screen output lines */
 
-    char usage[] = "Usage: fb-bw [-i] [-F framebuffer]\n\
-	[-X scr_xoff] [-Y scr_yoff]\n\
-	[-s squaresize] [-w width] [-n height] [file.bw]\n";
-
-    height = width = 512;		/* Defaults */
+    args.self = &args;
 
     bu_setprogname(argv[0]);
+    int introspection = bu_arg_introspect(&msg, &fb_bw_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&fb_bw_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&fb_bw_schema, "fb-bw");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "fb-bw help");
+	return 0;
+    }
 
-    if (!get_args(argc, argv)) {
-	(void)fputs(usage, stderr);
-	bu_exit(1, NULL);
+    if (operand_index < argc - 1) {
+	file_name = argv[operand_index + 1];
+	outfp = fopen(file_name, "wb");
+	if (!outfp) {
+	    bu_flog(stderr, "fb-bw: cannot open \"%s\" for writing: %s\n",
+		file_name, strerror(errno));
+	    return 1;
+	}
+    } else {
+	if (isatty(fileno(stdout))) {
+	    char *help = bu_arg_schema_help(&fb_bw_schema, "fb-bw");
+	    bu_flog(stderr, "%s", help ? help : "");
+	    bu_free(help, "fb-bw help");
+	    return 1;
+	}
+	setmode(fileno(stdout), O_BINARY);
     }
 
     /* Open Display Device */
-    if ((fbp = fb_open(framebuffer, width, height)) == NULL) {
-	fprintf(stderr, "fb_open failed\n");
+    if ((fbp = fb_open(args.framebuffer, args.width, args.height)) == NULL) {
+	bu_flog(stderr, "fb_open failed\n");
 	bu_exit(1, NULL);
     }
 
-    inbuf = (unsigned char *)bu_malloc((size_t)width * sizeof(RGBpixel),
+    inbuf = (unsigned char *)bu_malloc((size_t)args.width * sizeof(RGBpixel),
 	"fb-bw input scanline");
-    obuf = (unsigned char *)bu_malloc((size_t)width, "fb-bw output scanline");
+    obuf = (unsigned char *)bu_malloc((size_t)args.width,
+	"fb-bw output scanline");
 
     /* determine "reasonable" behavior */
-    xin = fb_getwidth(fbp) - scr_xoff;
-    CLAMP(xin, 0, width);
-    yin = fb_getheight(fbp) - scr_yoff;
-    CLAMP(yin, 0, height);
+    xin = fb_getwidth(fbp) - args.x_offset;
+    CLAMP(xin, 0, args.width);
+    yin = fb_getheight(fbp) - args.y_offset;
+    CLAMP(yin, 0, args.height);
 
-    for (y = scr_yoff; y < scr_yoff + yin; y++) {
+    for (y = args.y_offset; y < args.y_offset + yin; y++) {
 	size_t ret;
-	if (inverse) {
-	    (void)fb_read(fbp, scr_xoff, fb_getheight(fbp)-1-y, inbuf, xin);
+	if (args.inverse) {
+	    (void)fb_read(fbp, args.x_offset, fb_getheight(fbp)-1-y, inbuf, xin);
 	} else {
-	    (void)fb_read(fbp, scr_xoff, y, inbuf, xin);
+	    (void)fb_read(fbp, args.x_offset, y, inbuf, xin);
 	}
 	for (x = 0; x < xin; x++) {
 	    obuf[x] = (((int)inbuf[3*x+RED]) + ((int)inbuf[3*x+GRN])

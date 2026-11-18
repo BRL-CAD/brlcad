@@ -8,11 +8,11 @@ fb-bw - save a framebuffer image in a black and white bw file
 
 == SYNOPSIS
 
-[source]
-----
-fb-bw [-h] [-i] [-F framebuffer] [-X scr_xoff] [-Y scr_yoff] [-s squaresize] [-w width] [-n height] [file.bw]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*fb-bw* [*-i*] [*-F* _device_] [*-X* _pixels_] [*-Y* _pixels_] [*-s* _pixels_] [*-w* _pixels_]
+      [*-n* _pixels_] [_output_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -25,29 +25,32 @@ By default, a first quadrant coordinate system is used (origin in the lower left
 [[options]]
 == OPTIONS
 
-*-F* _framebuffer_::
-Explicitly specify the framebuffer device. If not set, the environment variable `FB_FILE` is used to select the display device (see *brlcad*(1)). If `FB_FILE` is also not set, the default device for the system will be used.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-s* _squaresize_::
-Set both the output file width and height to the given _squaresize_. The default size is 512x512 pixels.
+*-i*, *--inverse*::
+  Use an upper-left origin and read scanlines from top to bottom.
 
-*-w* _width_::
-Set the output file width.
+*-F* _device_, *--framebuffer*=_device_::
+  Select the framebuffer device instead of the configured default.
 
-*-n* _height_::
-Set the output file height.
+*-X* _pixels_, *--x-offset*=_pixels_::
+  Set the starting framebuffer X coordinate.
 
-*-X* _scr_xoff_::
-Set the starting X coordinate (offset) on the screen.
+*-Y* _pixels_, *--y-offset*=_pixels_::
+  Set the starting framebuffer Y coordinate.
 
-*-Y* _scr_yoff_::
-Set the starting Y coordinate (offset) on the screen.
+*-s* _pixels_, *--size*=_pixels_::
+  Set both output dimensions (default: 512).
 
-*-i*::
-Use a fourth quadrant coordinate system (origin at the upper left corner of the screen) instead of the default first quadrant (origin at the lower left). This changes both the origin offset coordinates and the storage order.
+*-w* _pixels_, *--width*=_pixels_::
+  Set the output width (default: 512).
 
-*-h* / *-?*::
-Print a help message and exit.
+*-n* _pixels_, *--height*=_pixels_::
+  Set the output height (default: 512).
+
+// END GENERATED BU_ARG OPTIONS
 
 
 [[examples]]
