@@ -39,6 +39,7 @@
 #include "common.h"
 
 #include <errno.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -82,7 +83,8 @@ parse_positive_size_arg(const char *arg, size_t *out_value, const char *label)
 
     errno = 0;
     value = strtoull(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value == 0) {
+    if (errno != 0 || end == arg || *end != '\0' || value == 0 ||
+	value > (unsigned long long int)SIZE_MAX) {
 	fprintf(stderr, "%s: invalid %s '%s'\n", progname, label, arg);
 	return 0;
     }
@@ -765,6 +767,9 @@ main(int ac, char *av[])
     if (isatty(fileno(stdout)))
 	usage("Redirect standard output\n");
 
+    if (xdim > SIZE_MAX / ydim || xdim * ydim > SIZE_MAX / sizeof(*buf))
+	bu_exit(1, "%s: dimensions %zu x %zu exceed the addressable output size\n",
+		bu_getprogname(), xdim, ydim);
     count = xdim * ydim;
     buf = (unsigned short *)bu_malloc(sizeof(*buf) * count, "buf");
 
