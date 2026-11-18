@@ -250,206 +250,91 @@ asc_read_v5(struct gcv_context *context, const struct gcv_opts *UNUSED(options),
 }
 
 
-static char *tclified_name=NULL;
-static size_t tclified_name_buffer_len=0;
-
-/* Escape '{' and '}' characters in any string (static buffer return). */
-char *
-tclify_name(const char *name)
+static std::string
+tcl_word(const char *value)
 {
-    const char *src=name;
-    char *dest;
-
-    size_t max_len=2 * strlen(name) + 1;
-
-    if (max_len < 2) {
-	return (char *)NULL;
-    }
-
-    if (max_len > tclified_name_buffer_len) {
-	tclified_name_buffer_len = max_len;
-	tclified_name = (char *)bu_realloc(tclified_name, tclified_name_buffer_len, "tclified_name buffer");
-    }
-
-    dest = tclified_name;
-
-    while (*src) {
-	if (*src == '{' || *src == '}') {
-	    *dest++ = '\\';
+    std::string quoted = "\"";
+    for (const char *at = value; *at; ++at) {
+	switch (*at) {
+	    case '\\': quoted += "\\\\"; break;
+	    case '\"': quoted += "\\\""; break;
+	    case '$': case '[': case ']': quoted += '\\'; quoted += *at; break;
+	    case '\n': quoted += "\\n"; break;
+	    case '\r': quoted += "\\r"; break;
+	    case '\t': quoted += "\\t"; break;
+	    default: quoted += *at; break;
 	}
-	*dest++ = *src++;
     }
-    *dest = '\0';
-
-    return tclified_name;
+    quoted += '\"';
+    return quoted;
 }
 
+static bool
+write_attributes(FILE *output, const char *name, const bu_attribute_value_set &attributes, bool global)
+{
+    bool started = false;
+    for (size_t i = 0; i < attributes.count; ++i) {
+	const auto &attribute = attributes.avp[i];
+	if (!attribute.name[0] || (global && (BU_STR_EQUAL(attribute.name, "title") || BU_STR_EQUAL(attribute.name, "units"))))
+	    continue;
+	if (!started) {
+	    if (fprintf(output, "attr set %s", tcl_word(name).c_str()) < 0) return false;
+	    started = true;
+	}
+	if (fprintf(output, " %s %s", tcl_word(attribute.name).c_str(), tcl_word(attribute.value).c_str()) < 0)
+	    return false;
+    }
+    return (!started || fputc('\n', output) != EOF) && !ferror(output);
+}
 
 int
-asc_write_v5(
-	struct gcv_context *c,
-	const struct gcv_opts *UNUSED(o),
-	const char *dest_path
-	)
+asc_write_v5(struct gcv_context *context, const struct gcv_opts *UNUSED(options), const char *destination)
 {
-    FILE *v5ofp = NULL;
-    if (!dest_path) return 0;
-
-    struct db_i	*dbip = c->dbip;
-    struct directory *dp;
-    const char *u;
-
-    // TODO - eventually we should be able to do this behind the scenes, but
-    // for a first cut don't add the extra complication
-    if (db_version(dbip) == 4) {
-	bu_log("Attempting to write v5 asc output with a v4 database - first run db_upgrade to produce a v5 file\n");
-	return 0;
-    }
-
-    v5ofp = fopen(dest_path, "wb");
-    if (!v5ofp) {
-	bu_log("Could not open %s for writing.\n", dest_path);
-	return 0;
-    }
-
-    /* write out the title and units special */
-    /* title and units */
-    if (dbip->dbi_title[0]) {
-	fprintf(v5ofp, "title {%s}\n", tclify_name(dbip->dbi_title));
-    } else {
-	fprintf(v5ofp, "title {Untitled BRL-CAD Database}\n");
-    }
-    u = bu_units_string(dbip->dbi_local2base);
-    if (u) {
-	fprintf(v5ofp, "units %s\n", u);
-    }
-    FOR_ALL_DIRECTORY_START(dp, dbip) {
-	struct rt_db_internal	intern;
-	struct bu_attribute_value_set *avs=NULL;
-
-	if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY && dp->d_minor_type == 0) {
-	    const char *value;
-	    struct bu_attribute_value_set g_avs;
-
-	    if (db5_get_attributes(dbip, &g_avs, dp)) {
-		bu_log("Failed to find any attributes on _GLOBAL\n");
-		continue;
-	    }
-
-	    if (g_avs.count) {
-		int printedHeader = 0;
-		for (unsigned int i = 0; i < g_avs.count; i++) {
-		    if (bu_strncmp(g_avs.avp[i].name, "title", 6) == 0) {
-			continue;
-		    } else if (bu_strncmp(g_avs.avp[i].name, "units", 6) == 0) {
-			continue;
-		    } else if (bu_strncmp(g_avs.avp[i].name, "regionid_colortable", 19) == 0) {
-			continue;
-		    } else if (strlen(g_avs.avp[i].name) <= 0) {
-			continue;
-		    }
-		    if (printedHeader == 0) {
-			fprintf(v5ofp, "attr set {_GLOBAL}");
-			printedHeader = 1;
-		    }
-		    fprintf(v5ofp, " {%s} {%s}", g_avs.avp[i].name, g_avs.avp[i].value);
-		}
-		if (printedHeader == 1)
-		    fprintf(v5ofp, "\n");
-	    }
-
-	    value = bu_avs_get(&g_avs, "regionid_colortable");
-	    if (!value) {
-		bu_avs_free(&g_avs);
-		continue;
-	    }
-
-	    /* TODO - do this without Tcl */
-#if 0
-	    size_t list_len;
-	    list = Tcl_NewStringObj(value, -1);
-	    {
-		int llen;
-		if (Tcl_ListObjLength(interp, list, &llen) != TCL_OK) {
-		    bu_log("Failed to get length of region color table!!\n");
-		    continue;
-		}
-		list_len = (size_t)llen;
-	    }
-	    for (i = 0; i < list_len; i++) {
-		if (Tcl_ListObjIndex(interp, list, i, &obj) != TCL_OK) {
-		    bu_log("Cannot get entry %d from the color table!!\n",
-			    i);
-		    continue;
-		}
-		fprintf(v5ofp, "color %s\n",
-			Tcl_GetStringFromObj(obj, NULL));
-	    }
-#endif
-	    bu_avs_free(&g_avs);
+    if (!context || !destination || db_version(context->dbip) != 5) return 0;
+    FILE *output = fopen(destination, "wb");
+    if (!output) return 0;
+    struct db_i *database = context->dbip;
+    /* A numeric scale also preserves valid units absent from the unit table. */
+    int status = fprintf(output, "title %s\n", tcl_word(database->dbi_title).c_str()) >= 0 &&
+	fprintf(output, "units %.17gmm\n", database->dbi_local2base) >= 0;
+    struct directory *entry;
+    FOR_ALL_DIRECTORY_START(entry, database) {
+	if (!status) break;
+	if (entry->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY && BU_STR_EQUAL(entry->d_namep, DB5_GLOBAL_OBJECT_NAME)) {
+	    bu_attribute_value_set attributes;
+	    bu_avs_init_empty(&attributes);
+	    status = !db5_get_attributes(database, &attributes, entry) &&
+		write_attributes(output, entry->d_namep, attributes, true);
+	    bu_avs_free(&attributes);
 	    continue;
 	}
-
-	if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0) {
-	    bu_log("Unable to read '%s', skipping\n", dp->d_namep);
-	    continue;
+	struct rt_db_internal object;
+	RT_DB_INTERNAL_INIT(&object);
+	if (rt_db_get_internal(&object, entry, database, NULL) < 0) {
+	    bu_log("Cannot read ASC output object %s\n", entry->d_namep);
+	    status = 0;
+	    break;
 	}
-	if (!intern.idb_meth->ft_get) {
-	    bu_log("Unable to get '%s' (unimplemented), skipping\n", dp->d_namep);
-	    rt_db_free_internal(&intern);
-	    continue;
-	}
-
-	if (dp->d_flags & RT_DIR_COMB) {
-	    struct bu_vls logstr = BU_VLS_INIT_ZERO;
-
-	    if (intern.idb_meth->ft_get(&logstr, &intern, "tree") != 0) {
-		rt_db_free_internal(&intern);
-		bu_log("Unable to export '%s', skipping: %s\n", dp->d_namep, bu_vls_cstr(&logstr));
-		bu_vls_free(&logstr);
-		continue;
-	    }
-	    if (dp->d_flags & RT_DIR_REGION) {
-		fprintf(v5ofp, "put {%s} comb region yes tree {%s}\n",
-			tclify_name(dp->d_namep),
-			bu_vls_cstr(&logstr));
-	    } else {
-		fprintf(v5ofp, "put {%s} comb region no tree {%s}\n",
-			tclify_name(dp->d_namep),
-			bu_vls_cstr(&logstr));
-	    }
-	    bu_vls_free(&logstr);
+	struct bu_vls description = BU_VLS_INIT_ZERO;
+	bool combination = (entry->d_flags & RT_DIR_COMB) != 0;
+	if (!object.idb_meth->ft_get || object.idb_meth->ft_get(&description, &object, combination ? "tree" : NULL)) {
+	    bu_log("Cannot serialize ASC object %s: %s\n", entry->d_namep, bu_vls_cstr(&description));
+	    status = 0;
+	} else if (combination) {
+	    status = fprintf(output, "put %s comb region %s tree %s\n", tcl_word(entry->d_namep).c_str(),
+		entry->d_flags & RT_DIR_REGION ? "yes" : "no", tcl_word(bu_vls_cstr(&description)).c_str()) >= 0;
 	} else {
-	    struct bu_vls logstr = BU_VLS_INIT_ZERO;
-
-	    if ((dp->d_minor_type != ID_CONSTRAINT) && (intern.idb_meth->ft_get(&logstr, &intern, NULL) != 0)) {
-		rt_db_free_internal(&intern);
-		bu_log("Unable to export '%s', skipping: %s\n", dp->d_namep, bu_vls_cstr(&logstr));
-		bu_vls_free(&logstr);
-		continue;
-	    }
-	    fprintf(v5ofp, "put {%s} %s\n",
-		    tclify_name(dp->d_namep),
-		    bu_vls_cstr(&logstr));
-	    bu_vls_free(&logstr);
+	    status = bu_vls_strlen(&description) && fprintf(output, "put %s %s\n",
+		tcl_word(entry->d_namep).c_str(), bu_vls_cstr(&description)) >= 0;
 	}
-	avs = &intern.idb_avs;
-	if (avs->magic == BU_AVS_MAGIC && avs->count > 0) {
-	    fprintf(v5ofp, "attr set {%s}", tclify_name(dp->d_namep));
-	    for (unsigned int i = 0; i < avs->count; i++) {
-		if (strlen(avs->avp[i].name) <= 0) {
-		    continue;
-		}
-		fprintf(v5ofp, " {%s} {%s}", avs->avp[i].name, avs->avp[i].value);
-	    }
-	    fprintf(v5ofp, "\n");
-	}
-	rt_db_free_internal(&intern);
+	if (status && object.idb_avs.magic == BU_AVS_MAGIC)
+	    status = write_attributes(output, entry->d_namep, object.idb_avs, false);
+	bu_vls_free(&description);
+	rt_db_free_internal(&object);
     } FOR_ALL_DIRECTORY_END;
-
-    fclose(v5ofp);
-
-    return 1;
+    status = status && !ferror(output);
+    if (fclose(output)) status = 0;
+    return status;
 }
 
 // Local Variables:

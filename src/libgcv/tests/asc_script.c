@@ -32,6 +32,14 @@
 #include "rt/db_attr.h"
 #include "rt/db_io.h"
 #include "rt/mater.h"
+#include "wdb.h"
+
+static int
+asc_operation(struct gcv_context *context, enum gcv_filter_type type, const char *path)
+{
+    const struct gcv_filter *filter = find_filter(type, BU_MIME_MODEL_VND_BRLCAD_PLUS_ASC, NULL, context);
+    return filter ? gcv_execute(context, filter, NULL, 0, NULL, path) : -1;
+}
 
 /* A setup error must not satisfy a test expecting a converter failure. */
 static int
@@ -44,9 +52,7 @@ read_script(struct gcv_context *context, const char *text, size_t length)
     int written = fwrite(text, 1, length, file) == length;
     int closed = !fclose(file);
     if (written && closed) {
-	const struct gcv_filter *reader = find_filter(GCV_FILTER_READ,
-	    BU_MIME_MODEL_VND_BRLCAD_PLUS_ASC, NULL, context);
-	if (reader) status = gcv_execute(context, reader, NULL, 0, NULL, path);
+	status = asc_operation(context, GCV_FILTER_READ, path);
     }
     bu_file_delete(path);
     return status;
@@ -62,7 +68,6 @@ dispatch_test(void)
     const char *invalid[] = {"", "# no database records\n", "unsupported command\n"};
     int failures = 0;
     FILE *file;
-    const struct gcv_filter *writer;
     gcv_context_init(&context);
     if (read_script(&context, text, strlen(text)) != 1 ||
 	!BU_STR_EQUAL(context.dbip->dbi_title, "dispatch title")) {
@@ -81,8 +86,7 @@ dispatch_test(void)
 	goto done;
     }
     bu_vls_printf(&destination, "%s/output.asc", path);
-    writer = find_filter(GCV_FILTER_WRITE, BU_MIME_MODEL_VND_BRLCAD_PLUS_ASC, NULL, &context);
-    if (!writer || gcv_execute(&context, writer, NULL, 0, NULL, bu_vls_cstr(&destination))) {
+    if (asc_operation(&context, GCV_FILTER_WRITE, bu_vls_cstr(&destination)) != 0) {
 	bu_log("ASC dispatch did not propagate an output-open failure\n");
 	++failures;
     }
@@ -208,14 +212,117 @@ attributes_test(void)
     return failures ? 1 : 0;
 }
 
+static int
+roundtrip_test(void)
+{
+    struct gcv_context source, imported;
+    char path[MAXPATHLEN] = {0};
+    const char *name = "odd{sphere}\"\\$[*]";
+    const char *key = "odd{key}\"\\$[*]";
+    const char *value = "quote \" slash \\ newline\nsecond line\t$[command] {unclosed";
+    const char *title = "Title with \" { } \\ $[text]\nnext line";
+    const double scale = 3.7;
+    point_t center = {1, 2, 3};
+    struct rt_wdb *writer;
+    struct directory *entry;
+    struct rt_db_internal object;
+    FILE *file;
+    int failures = 0;
+    int close_status;
+    gcv_context_init(&source);
+    gcv_context_init(&imported);
+    file = bu_temp_file(path, sizeof(path));
+    if (!file) {
+	failures = 1;
+	goto done;
+    }
+    close_status = fclose(file);
+    if (close_status) {
+	failures = 1;
+	goto done;
+    }
+    writer = wdb_dbopen(source.dbip, RT_WDB_TYPE_DB_INMEM);
+    if (!writer || db_update_ident(source.dbip, title, scale) < 0 ||
+	mk_sph(writer, name, center, 2) < 0 || mk_comb1(writer, "grouped", name, 1) < 0 ||
+	db5_update_attribute(name, key, value, source.dbip) ||
+	db5_update_attribute(DB5_GLOBAL_OBJECT_NAME, key, value, source.dbip) ||
+	db5_update_attribute(DB5_GLOBAL_OBJECT_NAME, "regionid_colortable", "{100 200 10 20 30}", source.dbip)) {
+	bu_log("Could not prepare the ASC serialization fixture\n");
+	failures = 1;
+	goto done;
+    }
+    if (asc_operation(&source, GCV_FILTER_WRITE, path) != 1 ||
+	asc_operation(&imported, GCV_FILTER_READ, path) != 1 ||
+	!BU_STR_EQUAL(imported.dbip->dbi_title, title) || !EQUAL(imported.dbip->dbi_local2base, scale) ||
+	!attribute_value(&imported, name, key, value) ||
+	!attribute_value(&imported, DB5_GLOBAL_OBJECT_NAME, key, value) ||
+	!attribute_value(&imported, DB5_GLOBAL_OBJECT_NAME, "regionid_colortable", "{100 200 10 20 30}")) {
+	bu_log("ASC round trip changed literal names, metadata or units\n");
+	failures = 1;
+	goto done;
+    }
+    entry = db_lookup(imported.dbip, "grouped", LOOKUP_QUIET);
+    if (!entry || !(entry->d_flags & RT_DIR_REGION)) {
+	bu_log("ASC round trip lost a region\n");
+	failures = 1;
+	goto done;
+    }
+    entry = db_lookup(imported.dbip, name, LOOKUP_QUIET);
+    if (!entry || rt_db_get_internal(&object, entry, imported.dbip, NULL) < 0) {
+	failures = 1;
+	goto done;
+    }
+    if (object.idb_type != ID_ELL) {
+	failures = 1;
+    } else {
+	const struct rt_ell_internal *ellipsoid = (const struct rt_ell_internal *)object.idb_ptr;
+	if (!VNEAR_EQUAL(ellipsoid->v, center, SMALL_FASTF) || !EQUAL(MAGNITUDE(ellipsoid->a), 2)) {
+	    bu_log("ASC round trip changed sphere geometry\n");
+	    failures = 1;
+	}
+    }
+    rt_db_free_internal(&object);
+    gcv_context_destroy(&imported);
+    gcv_context_init(&imported);
+    if (db_update_ident(source.dbip, "", scale) < 0 ||
+	asc_operation(&source, GCV_FILTER_WRITE, path) != 1 ||
+	asc_operation(&imported, GCV_FILTER_READ, path) != 1 || imported.dbip->dbi_title[0]) {
+	bu_log("ASC serialization did not preserve an empty title\n");
+	failures = 1;
+    }
+done:
+    if (path[0]) bu_file_delete(path);
+    gcv_context_destroy(&imported);
+    gcv_context_destroy(&source);
+    return failures;
+}
+
+static int
+write_failure_test(const char *path)
+{
+    struct gcv_context context;
+    point_t center = {0, 0, 0};
+    struct rt_wdb *writer;
+    int failed;
+    gcv_context_init(&context);
+    writer = wdb_dbopen(context.dbip, RT_WDB_TYPE_DB_INMEM);
+    failed = !writer || mk_sph(writer, "sphere", center, 1) < 0 ||
+	asc_operation(&context, GCV_FILTER_WRITE, path) != 0;
+    if (failed) bu_log("ASC writer did not report a delayed output failure\n");
+    gcv_context_destroy(&context);
+    return failed;
+}
+
 int
 main(int argc, const char **argv)
 {
     bu_setprogname(argv[0]);
+    if (argc == 3 && BU_STR_EQUAL(argv[1], "write-failure")) return write_failure_test(argv[2]);
     if (argc != 2) return 1;
     if (BU_STR_EQUAL(argv[1], "dispatch")) return dispatch_test();
     if (BU_STR_EQUAL(argv[1], "parser")) return parser_test();
     if (BU_STR_EQUAL(argv[1], "attributes")) return attributes_test();
+    if (BU_STR_EQUAL(argv[1], "roundtrip")) return roundtrip_test();
     return 1;
 }
 
