@@ -850,6 +850,13 @@ rt_comb_export4(
     comb = (struct rt_comb_internal *)ip->idb_ptr;
     RT_CK_COMB(comb);
 
+    if (comb->region_flag && (comb->region_id < SHRT_MIN || comb->region_id > SHRT_MAX ||
+	comb->aircode < SHRT_MIN || comb->aircode > SHRT_MAX || comb->GIFTmater < SHRT_MIN ||
+	comb->GIFTmater > SHRT_MAX || comb->los < SHRT_MIN || comb->los > SHRT_MAX)) {
+	bu_log("V4 cannot represent region identifiers or codes outside the signed short range\n");
+	return -1;
+    }
+
     if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
 	db_non_union_push(comb->tree);
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
