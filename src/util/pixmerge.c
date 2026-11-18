@@ -38,20 +38,20 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu/app.h"
-#include "bu/getopt.h"
 #include "bu/arg.h"
+#include "bu/app.h"
+#include "bu/exit.h"
+#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
-#include "bu/exit.h"
 
 
 #define EL_WIDTH 32 /* Max width of one element */
 
 static int width = 3;
 
-static char *f1_name;
-static char *f2_name;
+static const char *f1_name;
+static const char *f2_name;
 static FILE *f1;
 static FILE *f2;
 
@@ -73,163 +73,256 @@ static char *b1;			/* fg input buffer */
 static char *b2;			/* bg input buffer */
 static char *b3;			/* output buffer */
 
-static char usage[] = "\
-Usage: pixmerge [-g -l -e -n] [-w bytes_wide] [-C r/g/b]\n\
-	foreground.pix [background.pix] > out.pix\n\
-	(stdout must go to a file or pipe)\n";
-
 static int
-parse_const_arg(const char *arg, int component_count, unsigned char *out_values)
+parse_const_arg(struct bu_vls *msg, const char *arg, int component_count,
+	unsigned char *out_values)
 {
-    int i = 0;
+    unsigned char parsed[EL_WIDTH] = {0};
+    int parsed_count = 0;
     const char *cp = arg;
 
-    for (i = 0; i < component_count; i++) {
+    if (!arg || !arg[0]) {
+	if (msg)
+	    bu_vls_strcat(msg, "constant requires at least one component\n");
+	return 0;
+    }
+
+    while (*cp) {
 	char *end = NULL;
 	long int value;
 
-	if (*cp == '\0') {
-	    fprintf(stderr, "pixmerge: constant requires %d component(s)\n", component_count);
+	if (parsed_count >= EL_WIDTH - 1) {
+	    if (msg)
+		bu_vls_printf(msg, "constant accepts at most %d components\n",
+		    EL_WIDTH - 1);
 	    return 0;
 	}
-
 	errno = 0;
 	value = strtol(cp, &end, 10);
 	if (errno != 0 || end == cp || value < 0 || value > UCHAR_MAX) {
-	    fprintf(stderr, "pixmerge: invalid constant component '%s'\n", cp);
+	    if (msg)
+		bu_vls_printf(msg, "invalid constant component: %s\n", cp);
 	    return 0;
 	}
-	out_values[i] = (unsigned char)value;
-
-	if (i == component_count - 1) {
-	    if (*end != '\0') {
-		fprintf(stderr, "pixmerge: invalid constant '%s'\n", arg);
-		return 0;
-	    }
-	} else {
-	    if (*end != '/') {
-		fprintf(stderr, "pixmerge: constant requires %d component(s)\n", component_count);
-		return 0;
-	    }
-	    cp = end + 1;
+	parsed[parsed_count++] = (unsigned char)value;
+	if (*end == '\0')
+	    break;
+	if (*end != '/' || !end[1]) {
+	    if (msg)
+		bu_vls_printf(msg, "invalid constant: %s\n", arg);
+	    return 0;
 	}
+	cp = end + 1;
     }
 
+    if (component_count > 0 && parsed_count != component_count) {
+	if (msg)
+	    bu_vls_printf(msg, "constant requires %d component(s)\n",
+		component_count);
+	return 0;
+    }
+    if (out_values)
+	memcpy(out_values, parsed, (size_t)parsed_count);
     return 1;
 }
 
-int
-get_args(int argc, char **argv)
+struct pixmerge_args {
+    struct pixmerge_args *self;
+    int help;
+    int greater;
+    int less;
+    int equal;
+    int not_equal;
+    int width;
+    int seen_const;
+    unsigned char constant[EL_WIDTH];
+};
+
+static struct pixmerge_args *
+pixmerge_args_from_storage(void *storage)
 {
-    int c;
-    int seen_formula = 0;
+    return storage ? *(struct pixmerge_args **)storage : NULL;
+}
 
-    while ((c = bu_getopt(argc, argv, "glenw:C:c:h?")) != -1) {
-	switch (c) {
-	    case 'g':
-		wanted |= GT;
-		seen_formula = 1;
-		break;
-	    case 'l':
-		wanted |= LT;
-		seen_formula = 1;
-		break;
-	    case 'e':
-		wanted |= EQ;
-		seen_formula = 1;
-		break;
-	    case 'n':
-		wanted |= NE;
-		seen_formula = 1;
-		break;
-	    case 'w':
-		{
-		    struct bu_vls msg = BU_VLS_INIT_ZERO;
-		    if (!bu_arg_integer_range_from_str(&msg, &width, bu_optarg, 10, 1, INT_MAX)) {
-			bu_log("%s: element width: %s\n", bu_getprogname(), bu_vls_cstr(&msg));
-			bu_vls_free(&msg);
-			(void)fputs(usage, stderr);
-			bu_exit(1, NULL);
-		    }
-		    bu_vls_free(&msg);
-		}
-		if (width < 1 || width >= EL_WIDTH){
-		    (void)fputs("pixmerge: illegal width specified\n",stderr);
-		    (void)fputs(usage, stderr);
-		    bu_exit (1, NULL);
-		}
-		break;
-	    case 'C':
-	    case 'c':	/* backward compatibility */
-		{
-		    if (!parse_const_arg(bu_optarg, width, pconst))
-			return 0;
-		}
-		seen_const = 1;
-		break;
+static int
+pixmerge_constant(struct bu_vls *msg, const char *arg, void *storage)
+{
+    struct pixmerge_args *args = pixmerge_args_from_storage(storage);
+    unsigned char constant[EL_WIDTH] = {0};
+    int component_count = args ? args->width : 0;
 
-	    default:		/* '?' 'h' */
-		return 0;
-	}
+    if (!parse_const_arg(msg, arg, component_count, constant))
+	return -1;
+    if (args) {
+	memcpy(args->constant, constant, (size_t)component_count);
+	args->seen_const = 1;
     }
+    return 0;
+}
 
-    if (seen_formula) {
-	/* If seen_const is 1, we omit the bg argument in the command string. */
-	if (bu_optind+2-seen_const > argc) return 0;
-    } else {
-	if (bu_optind+1 > argc) return 0;
-	/* "wanted" is 0 if arrive here, unless APPROX had been activated */
-	wanted |= GT;
-	seen_const = 1;		/* Default is const of 0/0/0 */
-    }
+static const struct bu_arg_option pixmerge_options[] = {
+    BU_ARG_FLAG("h", "help", struct pixmerge_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("g", "greater", struct pixmerge_args, greater,
+	"Select foreground bytes greater than background bytes"),
+    BU_ARG_FLAG("l", "less", struct pixmerge_args, less,
+	"Select foreground bytes less than background bytes"),
+    BU_ARG_FLAG("e", "equal", struct pixmerge_args, equal,
+	"Select foreground bytes equal to background bytes"),
+    BU_ARG_FLAG("n", "not-equal", struct pixmerge_args, not_equal,
+	"Select foreground bytes unequal to background bytes"),
+    BU_ARG_INTEGER_RANGE("w", "width", struct pixmerge_args, width,
+	1, 1, 1, EL_WIDTH - 1, "bytes",
+	"Set element width in bytes (default: 3; use 1 for BW data)"),
+    BU_ARG_CUSTOM("C", "constant", struct pixmerge_args, self,
+	pixmerge_constant, "values",
+	"Compare against exactly width slash-separated byte values (0-255) instead of a background stream"),
+    BU_ARG_ALIAS("c", NULL, "constant", 1),
+    BU_ARG_OPTION_NULL
+};
 
-    f1_name = argv[bu_optind++];
-    if (BU_STR_EQUAL(f1_name, "-"))
-	f1 = stdin;
-    else if ((f1 = fopen(f1_name, "rb")) == NULL) {
-	perror(f1_name);
-	fprintf(stderr,
-		"pixmerge: cannot open \"%s\" for reading\n",
-		f1_name);
+static const struct bu_arg_operand pixmerge_operands[] = {
+    BU_ARG_OPERAND("foreground", BU_ARG_VALUE_FILE, 1, 1,
+	"Foreground image or - for standard input", NULL),
+    BU_ARG_OPERAND("background", BU_ARG_VALUE_FILE, 0, 1,
+	"Background image or - for standard input", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static int
+pixmerge_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
+{
+    size_t operand_count;
+    size_t required_count;
+    int has_formula;
+    int has_constant;
+
+    if (!result || cursor_arg < argc || result->state == BU_ARG_VALIDATE_INVALID)
+	return 0;
+
+    operand_count = bu_arg_schema_operand_count(schema, argc, argv);
+    has_formula =
+	bu_arg_schema_option_present(schema, argc, argv, "greater") ||
+	bu_arg_schema_option_present(schema, argc, argv, "less") ||
+	bu_arg_schema_option_present(schema, argc, argv, "equal") ||
+	bu_arg_schema_option_present(schema, argc, argv, "not-equal");
+    has_constant = bu_arg_schema_option_present(schema, argc, argv, "constant");
+    required_count = has_formula && !has_constant ? 2 : 1;
+
+    if (operand_count == required_count)
+	return 0;
+
+    if (operand_count < required_count) {
+	bu_arg_validate_result_set(result, BU_ARG_VALIDATE_INCOMPLETE, argc,
+	    BU_ARG_EXPECT_OPERAND, BU_ARG_VALUE_FILE,
+	    "supply a background image when comparing two streams", NULL);
 	return 0;
     }
 
-    if (!seen_const) {
-	f2_name = argv[bu_optind++];
-	if (BU_STR_EQUAL(f2_name, "-"))
-	    f2 = stdin;
-	else if ((f2 = fopen(f2_name, "rb")) == NULL) {
-	    perror(f2_name);
-	    fprintf(stderr,
-		"pixmerge: cannot open \"%s\" for reading\n",
-		f2_name);
-	    return 0;
-	}
-    }
+    bu_arg_validate_result_set(result, BU_ARG_VALIDATE_INVALID, argc - 1,
+	BU_ARG_EXPECT_NONE, BU_ARG_VALUE_FILE,
+	"a background image is not accepted with this option form", NULL);
+    return 0;
+}
 
-    if (argc > bu_optind) {
-	fprintf(stderr, "pixmerge: excess argument(s) not supported\n");
+static const struct bu_arg_schema pixmerge_schema = BU_ARG_SCHEMA(
+    "pixmerge", "Merge image streams using per-element comparisons",
+    pixmerge_options, pixmerge_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, pixmerge_validate, NULL, NULL));
+
+static const struct bu_arg_grammar pixmerge_grammar = {
+    &pixmerge_schema, NULL, NULL
+};
+
+static int
+pixmerge_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&pixmerge_schema, "pixmerge");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "pixmerge help");
+    return status;
+}
+
+static int
+pixmerge_open_input(const char *name, FILE **stream)
+{
+    if (BU_STR_EQUAL(name, "-")) {
+	*stream = stdin;
+	return 1;
+    }
+    *stream = fopen(name, "rb");
+    if (!*stream) {
+	perror(name);
+	bu_flog(stderr, "pixmerge: cannot open \"%s\" for reading\n", name);
 	return 0;
     }
-
-    return 1;		/* OK */
+    return 1;
 }
 
 
 int
 main(int argc, char **argv)
 {
+    struct pixmerge_args args = {NULL, 0, 0, 0, 0, 0, 3, 0, {0}};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int introspection;
+    int operand_index;
     size_t ret;
 
+    args.self = &args;
+
     bu_setprogname(argv[0]);
+
+    introspection = bu_arg_introspect(&msg, &pixmerge_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    operand_index = bu_arg_schema_parse_complete(&pixmerge_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return pixmerge_help(stdout, 0);
+    if (isatty(fileno(stdout)))
+	return pixmerge_help(stderr, 1);
+
+    width = args.width;
+    seen_const = args.seen_const;
+    memcpy(pconst, args.constant, sizeof(pconst));
+    if (args.greater)
+	wanted |= GT;
+    if (args.less)
+	wanted |= LT;
+    if (args.equal)
+	wanted |= EQ;
+    if (args.not_equal)
+	wanted |= NE;
+    if (!wanted) {
+	wanted = GT;
+	seen_const = 1;
+    }
+
+    f1_name = argv[operand_index + 1];
+    if (!pixmerge_open_input(f1_name, &f1))
+	return 1;
+    if (!seen_const) {
+	f2_name = argv[operand_index + 2];
+	if (!pixmerge_open_input(f2_name, &f2))
+	    return 1;
+    }
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    if (!get_args(argc, argv) || isatty(fileno(stdout))) {
-	(void)fputs(usage, stderr);
-	bu_exit (1, NULL);
-    }
     fprintf(stderr, "pixmerge: Selecting foreground when fg ");
     if (wanted & LT) fputc('<', stderr);
     if (wanted & EQ) fputc('=', stderr);
