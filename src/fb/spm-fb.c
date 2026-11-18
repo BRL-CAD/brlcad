@@ -143,7 +143,7 @@ spm_square(bn_spm_map_t *mapp)
 
     for (y = 0; y < scr_height; y++) {
 	for (x = 0; x < scr_width; x++) {
-	    bn_spm_read(mapp, &scanline[x],
+	    bn_spm_read(mapp, &scanline[x * sizeof(RGBpixel)],
 			(double)x/(double)scr_width,
 			(double)y/(double)scr_height);
 	}

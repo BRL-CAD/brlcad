@@ -38,14 +38,9 @@
 #include "bu/getopt.h"
 #include "bu/opt.h"
 #include "bu/exit.h"
+#include "bu/malloc.h"
 #include "vmath.h"
 #include "dm.h"
-
-
-#define LINELEN 8192
-
-static unsigned char inbuf[LINELEN*3];
-static unsigned char obuf[LINELEN];
 
 int height;
 int width;
@@ -126,6 +121,8 @@ int
 main(int argc, char **argv)
 {
     struct fb *fbp;
+    unsigned char *inbuf;
+    unsigned char *obuf;
 
     int x, y;
     int xin, yin;		/* number of screen output lines */
@@ -148,6 +145,10 @@ main(int argc, char **argv)
 	fprintf(stderr, "fb_open failed\n");
 	bu_exit(1, NULL);
     }
+
+    inbuf = (unsigned char *)bu_malloc((size_t)width * sizeof(RGBpixel),
+	"fb-bw input scanline");
+    obuf = (unsigned char *)bu_malloc((size_t)width, "fb-bw output scanline");
 
     /* determine "reasonable" behavior */
     xin = fb_getwidth(fbp) - scr_xoff;
@@ -172,6 +173,8 @@ main(int argc, char **argv)
     }
 
     fb_close(fbp);
+    bu_free(obuf, "fb-bw output scanline");
+    bu_free(inbuf, "fb-bw input scanline");
     return 0;
 }
 
