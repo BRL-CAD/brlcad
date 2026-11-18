@@ -98,7 +98,8 @@ parse_double_arg(const char *arg, double *out_value, const char *label, int requ
 
     errno = 0;
     *out_value = strtod(arg, &end);
-    if (errno != 0 || end == arg || *end != '\0' || (require_positive && *out_value <= 0.0)) {
+    if (errno != 0 || end == arg || *end != '\0' || !isfinite(*out_value) ||
+	(require_positive && *out_value <= 0.0)) {
 	fprintf(stderr, "%s: invalid %s '%s'\n", progname, label, arg);
 	return 0;
     }
@@ -116,7 +117,7 @@ parse_vec3_arg(const char *arg, double *out_values, const char *label)
     for (i = 0; i < 3; i++) {
 	errno = 0;
 	out_values[i] = strtod(component, &end);
-	if (errno != 0 || end == component) {
+	if (errno != 0 || end == component || !isfinite(out_values[i])) {
 	    fprintf(stderr, "%s: invalid %s '%s'\n", progname, label, arg);
 	    return 0;
 	}
