@@ -32,13 +32,13 @@
 #include <math.h>
 
 #include "bio.h"   /* for isatty */
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "util_arg.h"
-#include "bu/str.h"
-#include "bu/log.h"
-#include "bu/file.h"
 #include "bu/cv.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 #include "vmath.h"
 #include "bv/plot3.h"
 #include "bn.h"
@@ -77,55 +77,41 @@ void two_dcoord_out(FILE *fp, fastf_t *m);
 void three_dcoord_out(FILE *fp, fastf_t *m);
 
 static int
-parse_six_doubles(const char *arg, double *out_values)
+parse_doubles(struct bu_vls *msg, const char *arg, double *out_values,
+    size_t value_count, const char *label)
 {
-    int i = 0;
+    double parsed[16];
     char *end = NULL;
     const char *cp = arg;
 
-    for (i = 0; i < 6; i++) {
+    if (!arg || !out_values || value_count > 16)
+	return 0;
+
+    for (size_t i = 0; i < value_count; i++) {
 	while (isspace((unsigned char)*cp))
 	    cp++;
 	if (*cp == '\0')
-	    return 0;
+	    goto invalid;
 
 	errno = 0;
-	out_values[i] = strtod(cp, &end);
-	if (errno != 0 || end == cp || !isfinite(out_values[i]))
-	    return 0;
+	parsed[i] = strtod(cp, &end);
+	if (errno != 0 || end == cp || !isfinite(parsed[i]))
+	    goto invalid;
 	cp = end;
     }
 
     while (isspace((unsigned char)*cp))
 	cp++;
+    if (*cp != '\0')
+	goto invalid;
+    memcpy(out_values, parsed, value_count * sizeof(double));
+    return 1;
 
-    return (*cp == '\0');
-}
-
-static int
-parse_sixteen_doubles(const char *arg, double *out_values)
-{
-    int i = 0;
-    char *end = NULL;
-    const char *cp = arg;
-
-    for (i = 0; i < 16; i++) {
-	while (isspace((unsigned char)*cp))
-	    cp++;
-	if (*cp == '\0')
-	    return 0;
-
-	errno = 0;
-	out_values[i] = strtod(cp, &end);
-	if (errno != 0 || end == cp || !isfinite(out_values[i]))
-	    return 0;
-	cp = end;
-    }
-
-    while (isspace((unsigned char)*cp))
-	cp++;
-
-    return (*cp == '\0');
+invalid:
+    if (msg)
+	bu_vls_printf(msg, "%s requires exactly %zu finite numbers\n",
+	    label, value_count);
+    return 0;
 }
 
 
@@ -230,192 +216,277 @@ getshort(FILE *fp)
 }
 
 
-int
-get_args(int argc, char **argv)
+struct plot3rot_args {
+    struct plot3rot_args *self;
+    int help;
+    int verbose;
+};
+
+enum plot3rot_transform {
+    PLOT3ROT_AZIMUTH,
+    PLOT3ROT_ELEVATION,
+    PLOT3ROT_X_ROTATE,
+    PLOT3ROT_Y_ROTATE,
+    PLOT3ROT_Z_ROTATE,
+    PLOT3ROT_X_TRANSLATE,
+    PLOT3ROT_Y_TRANSLATE,
+    PLOT3ROT_Z_TRANSLATE,
+    PLOT3ROT_SCALE
+};
+
+static int
+plot3rot_transform_parse(struct bu_vls *msg, const char *arg, void *storage,
+	enum plot3rot_transform transform)
 {
-    int c;
-    mat_t tmp, m;
-    int i;
-    double mtmp[16];
+    mat_t tmp, previous;
+    double value;
 
-    MAT_IDN(rmat);
-    scale = 1.0;
+    if (!bu_arg_double_from_str(msg, &value, arg))
+	return -1;
+    if (transform == PLOT3ROT_SCALE && ZERO(value)) {
+	if (msg)
+	    bu_vls_strcat(msg, "scale factor must be nonzero\n");
+	return -1;
+    }
+    if (!storage)
+	return 0;
 
-    while ((c = bu_getopt(argc, argv, "S:m:vMga:e:x:y:z:X:Y:Z:s:h?")) != -1) {
-	switch (c) {
-	    case 'M':
-		/* take model RPP from space() command */
-		rpp++;
-		Mflag = 1;		/* don't rebound */
-		break;
-	    case 'g':
-		bn_mat_angles(tmp, -90.0, 0.0, -90.0);
-		MAT_COPY(m, rmat);
-		bn_mat_mul(rmat, tmp, m);
-		break;
-	    case 'a':
-		if (!util_arg_double(bu_optarg, &mtmp[0], "azimuth"))
-		    return 0;
-		bn_mat_angles(tmp, 0.0, 0.0, -mtmp[0]);
-		MAT_COPY(m, rmat);
-		bn_mat_mul(rmat, tmp, m);
-		rpp++;
-		break;
-	    case 'e':
-		if (!util_arg_double(bu_optarg, &mtmp[0], "elevation"))
-		    return 0;
-		bn_mat_angles(tmp, 0.0, -mtmp[0], 0.0);
-		MAT_COPY(m, rmat);
-		bn_mat_mul(rmat, tmp, m);
-		rpp++;
-		break;
-	    case 'x':
-		if (!util_arg_double(bu_optarg, &mtmp[0], "x rotation"))
-		    return 0;
-		bn_mat_angles(tmp, mtmp[0], 0.0, 0.0);
-		MAT_COPY(m, rmat);
-		bn_mat_mul(rmat, tmp, m);
-		break;
-	    case 'y':
-		if (!util_arg_double(bu_optarg, &mtmp[0], "y rotation"))
-		    return 0;
-		bn_mat_angles(tmp, 0.0, mtmp[0], 0.0);
-		MAT_COPY(m, rmat);
-		bn_mat_mul(rmat, tmp, m);
-		break;
-	    case 'z':
-		if (!util_arg_double(bu_optarg, &mtmp[0], "z rotation"))
-		    return 0;
-		bn_mat_angles(tmp, 0.0, 0.0, mtmp[0]);
-		MAT_COPY(m, rmat);
-		bn_mat_mul(rmat, tmp, m);
-		break;
-	    case 'm':
-		if (!parse_sixteen_doubles(bu_optarg, mtmp)) {
-		    bu_log("plot3rot: invalid matrix specification '%s'\n", bu_optarg);
-		    bu_exit (1, NULL);
-		}
-
-		/* Now copy the array of doubles into mat. */
-		for (i=0; i < 16; i++) {
-		    rmat[i] = mtmp[i];
-		}
-		break;
-	    case 'X':
-		MAT_IDN(tmp);
-		if (!util_arg_double(bu_optarg, &tmp[MDX], "x translation"))
-		    return 0;
-		MAT_COPY(m, rmat);
-		bn_mat_mul(rmat, tmp, m);
-		break;
-	    case 'Y':
-		MAT_IDN(tmp);
-		if (!util_arg_double(bu_optarg, &tmp[MDY], "y translation"))
-		    return 0;
-		MAT_COPY(m, rmat);
-		bn_mat_mul(rmat, tmp, m);
-		break;
-	    case 'Z':
-		MAT_IDN(tmp);
-		if (!util_arg_double(bu_optarg, &tmp[MDZ], "z translation"))
-		    return 0;
-		MAT_COPY(m, rmat);
-		bn_mat_mul(rmat, tmp, m);
-		break;
-	    case 's':
-		if (!util_arg_double(bu_optarg, &mtmp[0], "scale factor") || ZERO(mtmp[0]))
-		    return 0;
-		scale *= mtmp[0];
-		/*
-		 * If rpp flag has already been set, defer
-		 * application of scale until after the
-		 * xlate to space-center, in model_rpp().
-		 * Otherwise, do it here, in the sequence
-		 * seen in the arg list.
-		 */
-		if (!rpp) {
-		    MAT_IDN(tmp);
-		    tmp[15] = 1./scale;
-		    MAT_COPY(m, rmat);
-		    bn_mat_mul(rmat, tmp, m);
-		    scale = 1.0;
-		}
-		break;
-	    case 'v':
-		verbose++;
-		break;
-	    case 'S':
-		if (!parse_six_doubles(bu_optarg, mtmp)) {
-		    bu_log("plot3rot: invalid space specification '%s'\n", bu_optarg);
-		    return 0;
-		}
-		VSET(forced_space_min, mtmp[0], mtmp[1], mtmp[2]);
-		VSET(forced_space_max, mtmp[3], mtmp[4], mtmp[5]);
-
-		/* Write it now, in case input does not have one */
-		pdv_3space(stdout, forced_space_min, forced_space_max);
-		forced_space = 1;
-		break;
-	    default:		/* 'h' '?' */
-		return 0;	/* Bad, unless 'h' or '?' is used */
-	}
+    switch (transform) {
+	case PLOT3ROT_AZIMUTH:
+	    bn_mat_angles(tmp, 0.0, 0.0, -value);
+	    rpp++;
+	    break;
+	case PLOT3ROT_ELEVATION:
+	    bn_mat_angles(tmp, 0.0, -value, 0.0);
+	    rpp++;
+	    break;
+	case PLOT3ROT_X_ROTATE:
+	    bn_mat_angles(tmp, value, 0.0, 0.0);
+	    break;
+	case PLOT3ROT_Y_ROTATE:
+	    bn_mat_angles(tmp, 0.0, value, 0.0);
+	    break;
+	case PLOT3ROT_Z_ROTATE:
+	    bn_mat_angles(tmp, 0.0, 0.0, value);
+	    break;
+	case PLOT3ROT_X_TRANSLATE:
+	    MAT_IDN(tmp);
+	    tmp[MDX] = value;
+	    break;
+	case PLOT3ROT_Y_TRANSLATE:
+	    MAT_IDN(tmp);
+	    tmp[MDY] = value;
+	    break;
+	case PLOT3ROT_Z_TRANSLATE:
+	    MAT_IDN(tmp);
+	    tmp[MDZ] = value;
+	    break;
+	case PLOT3ROT_SCALE:
+	    scale *= value;
+	    if (rpp)
+		return 0;
+	    MAT_IDN(tmp);
+	    tmp[15] = 1.0 / scale;
+	    scale = 1.0;
+	    break;
     }
 
+    MAT_COPY(previous, rmat);
+    bn_mat_mul(rmat, tmp, previous);
+    return 0;
+}
 
-    if (isatty(fileno(stdout))
-	|| (isatty(fileno(stdin)) && (bu_optind >= argc))) {
-	return 0;	/* Bad */
+#define PLOT3ROT_TRANSFORM_PARSER(_name, _transform) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return plot3rot_transform_parse(msg, arg, storage, _transform); \
     }
 
-    return 1;		/* OK */
+PLOT3ROT_TRANSFORM_PARSER(plot3rot_azimuth, PLOT3ROT_AZIMUTH)
+PLOT3ROT_TRANSFORM_PARSER(plot3rot_elevation, PLOT3ROT_ELEVATION)
+PLOT3ROT_TRANSFORM_PARSER(plot3rot_x_rotate, PLOT3ROT_X_ROTATE)
+PLOT3ROT_TRANSFORM_PARSER(plot3rot_y_rotate, PLOT3ROT_Y_ROTATE)
+PLOT3ROT_TRANSFORM_PARSER(plot3rot_z_rotate, PLOT3ROT_Z_ROTATE)
+PLOT3ROT_TRANSFORM_PARSER(plot3rot_x_translate, PLOT3ROT_X_TRANSLATE)
+PLOT3ROT_TRANSFORM_PARSER(plot3rot_y_translate, PLOT3ROT_Y_TRANSLATE)
+PLOT3ROT_TRANSFORM_PARSER(plot3rot_z_translate, PLOT3ROT_Z_TRANSLATE)
+PLOT3ROT_TRANSFORM_PARSER(plot3rot_scale, PLOT3ROT_SCALE)
+
+static int
+plot3rot_model_space(struct bu_vls *UNUSED(msg), const char *UNUSED(arg),
+	void *storage)
+{
+    if (storage) {
+	rpp++;
+	Mflag = 1;
+    }
+    return 0;
+}
+
+static int
+plot3rot_mged_view(struct bu_vls *UNUSED(msg), const char *UNUSED(arg),
+	void *storage)
+{
+    if (storage) {
+	mat_t tmp, previous;
+	bn_mat_angles(tmp, -90.0, 0.0, -90.0);
+	MAT_COPY(previous, rmat);
+	bn_mat_mul(rmat, tmp, previous);
+    }
+    return 0;
+}
+
+static int
+plot3rot_matrix(struct bu_vls *msg, const char *arg, void *storage)
+{
+    double values[16];
+
+    if (!parse_doubles(msg, arg, values, 16, "matrix"))
+	return -1;
+    if (storage) {
+	for (size_t i = 0; i < 16; i++)
+	    rmat[i] = values[i];
+    }
+    return 0;
+}
+
+static int
+plot3rot_space(struct bu_vls *msg, const char *arg, void *storage)
+{
+    double values[6];
+
+    if (!parse_doubles(msg, arg, values, 6, "space"))
+	return -1;
+    if (storage) {
+	VSET(forced_space_min, values[0], values[1], values[2]);
+	VSET(forced_space_max, values[3], values[4], values[5]);
+	pdv_3space(stdout, forced_space_min, forced_space_max);
+	forced_space = 1;
+    }
+    return 0;
+}
+
+static const struct bu_arg_option plot3rot_options[] = {
+    BU_ARG_FLAG("h", "help", struct plot3rot_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_CUSTOM_FLAG("M", "model-space", "model-space",
+	struct plot3rot_args, self, plot3rot_model_space,
+	"Auto-center and fit a rotation-invariant model space"),
+    BU_ARG_CUSTOM_FLAG("g", "mged-view", "mged-view",
+	struct plot3rot_args, self, plot3rot_mged_view,
+	"Convert MGED front-view coordinates to display coordinates"),
+    BU_ARG_CUSTOM("a", "azimuth", struct plot3rot_args, self,
+	plot3rot_azimuth, "degrees", "Rotate by view azimuth and auto-center"),
+    BU_ARG_CUSTOM("e", "elevation", struct plot3rot_args, self,
+	plot3rot_elevation, "degrees", "Rotate by view elevation and auto-center"),
+    BU_ARG_CUSTOM("x", "x-rotate", struct plot3rot_args, self,
+	plot3rot_x_rotate, "degrees", "Rotate about the X axis"),
+    BU_ARG_CUSTOM("y", "y-rotate", struct plot3rot_args, self,
+	plot3rot_y_rotate, "degrees", "Rotate about the Y axis"),
+    BU_ARG_CUSTOM("z", "z-rotate", struct plot3rot_args, self,
+	plot3rot_z_rotate, "degrees", "Rotate about the Z axis"),
+    BU_ARG_CUSTOM("X", "x-translate", struct plot3rot_args, self,
+	plot3rot_x_translate, "distance", "Translate along the X axis"),
+    BU_ARG_CUSTOM("Y", "y-translate", struct plot3rot_args, self,
+	plot3rot_y_translate, "distance", "Translate along the Y axis"),
+    BU_ARG_CUSTOM("Z", "z-translate", struct plot3rot_args, self,
+	plot3rot_z_translate, "distance", "Translate along the Z axis"),
+    BU_ARG_CUSTOM("s", "scale", struct plot3rot_args, self,
+	plot3rot_scale, "factor", "Apply a nonzero scale factor"),
+    BU_ARG_CUSTOM("m", "matrix", struct plot3rot_args, self,
+	plot3rot_matrix, "matrix", "Replace the accumulated transform with a quoted 4x4 matrix"),
+    BU_ARG_CUSTOM("S", "space", struct plot3rot_args, self,
+	plot3rot_space, "bounds", "Emit and force quoted min-x min-y min-z max-x max-y max-z bounds"),
+    BU_ARG_COUNTING_FLAG("v", "verbose", struct plot3rot_args, verbose,
+	BU_ARG_VALUE_INTEGER, "Print transformation and space diagnostics"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand plot3rot_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, BU_ARG_COUNT_UNLIMITED,
+	"Plot input file or - for standard input", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema plot3rot_schema = BU_ARG_SCHEMA(
+    "plot3rot", "Rotate, translate, and scale Plot3 streams",
+    plot3rot_options, plot3rot_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar plot3rot_grammar = {
+    &plot3rot_schema, NULL, NULL
+};
+
+static int
+plot3rot_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&plot3rot_schema, "plot3rot");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "plot3rot help");
+    return status;
 }
 
 
 int
 main(int argc, char **argv)
 {
+    struct plot3rot_args args = {NULL, 0, 0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     FILE *fp=NULL;
-
-    static char opts[] = "\
-   -x# -y# -z#    Rotation about axis in degrees\n\
-   -X# -Y# -Z#    Translation along axis\n\
-   -s#            Scale factor\n\
-   -a# -e#        Azimuth/Elevation from front view\n\
-		  (usually first, in this order, implies -M)\n\
-   -g             MGED front view to display coordinates (usually last)\n\
-   -M             Autoscale space command like RT model RPP\n\
-   -m#            Takes a 4X4 matrix as an argument\n\
-   -v             Verbose\n\
-   -S#            Space: takes a quoted string of six floats\n";
+    int introspection;
+    int operand_index;
 
     bu_setprogname(argv[0]);
+    args.self = &args;
+    MAT_IDN(rmat);
+    scale = 1.0;
+
+    introspection = bu_arg_introspect(&msg, &plot3rot_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    if (!get_args(argc, argv)) {
-	fputs("Usage: plot3rot [options] [file1 ... fileN] > file.plot3\n", stderr);
-
-	(void)fputs(opts, stderr);
-	bu_exit (1, NULL);
+    operand_index = bu_arg_schema_parse_complete(&plot3rot_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
     }
+    bu_vls_free(&msg);
+    if (args.help)
+	return plot3rot_help(stdout, 0);
+    if (isatty(fileno(stdout)) ||
+	(isatty(fileno(stdin)) && operand_index >= argc - 1))
+	return plot3rot_help(stderr, 1);
+
+    verbose = args.verbose;
 
     if (verbose) {
 	bn_mat_print("rmat", rmat);
     }
 
-    if (bu_optind < argc) {
-	while (bu_optind < argc) {
+    if (operand_index < argc - 1) {
+	int arg_index = operand_index + 1;
+	while (arg_index < argc) {
 	    if (fp != NULL && fp != stdin)
 		fclose(fp);
-	    if (BU_STR_EQUAL(argv[bu_optind], "-"))
+	    if (BU_STR_EQUAL(argv[arg_index], "-"))
 		fp = stdin;
-	    else if ((fp = fopen(argv[bu_optind], "rb")) == NULL) {
-		bu_log("plot3rot: can't open \"%s\"\n", argv[bu_optind]);
+	    else if ((fp = fopen(argv[arg_index], "rb")) == NULL) {
+		bu_log("plot3rot: can't open \"%s\"\n", argv[arg_index]);
+		arg_index++;
 		continue;
 	    }
 	    dofile(fp);
-	    bu_optind++;
+	    arg_index++;
 	}
     } else {
 	dofile(stdin);
