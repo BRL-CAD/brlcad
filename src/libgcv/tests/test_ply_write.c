@@ -20,12 +20,18 @@
 
 #include "common.h"
 
+#include <stdio.h>
+#include <string.h>
+
 #include "bu/app.h"
+#include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/opt.h"
 #include "bu/str.h"
 #include "gcv.h"
+#include "raytrace.h"
+#include "wdb.h"
 
 static const char *
 option_string(const struct bu_opt_desc *options, const char *shortopt)
@@ -63,12 +69,129 @@ check_options(const struct gcv_filter *writer, int long_options)
     return valid;
 }
 
+
+enum { TETRA_VERTICES = 4, TETRA_FACES = 4, TETRA_COUNT = 2 };
+
+static const fastf_t tetrahedra[TETRA_COUNT * TETRA_VERTICES * 3] = {
+    1000, 0, 0, 0, 1000, 0, 0, 0, 1000, 0, 0, 0,
+    4000, 0, 0, 3000, 1000, 0, 3000, 0, 1000, 3000, 0, 0
+};
+
+static int
+create_geometry(struct gcv_context *context, int joined)
+{
+    const char *meshes[] = {"first.bot", "second.bot"};
+    const char *regions[] = {"first.r", "second.r"};
+    const int tetra_faces[] = {0, 1, 2, 3, 0, 2, 3, 2, 1, 3, 1, 0};
+    struct rt_wdb *database = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
+    struct wmember members;
+    BU_LIST_INIT(&members.l);
+    if (!database) return 0;
+    for (size_t region = 0; region < sizeof(meshes) / sizeof(meshes[0]); ++region) {
+	fastf_t vertices[TETRA_VERTICES * 3];
+	int faces[TETRA_FACES * 3];
+	memcpy(vertices, tetrahedra + region * TETRA_VERTICES * 3, sizeof(vertices));
+	memcpy(faces, tetra_faces, sizeof(faces));
+	if (mk_bot(database, meshes[region], RT_BOT_SOLID, RT_BOT_CCW, 0,
+		TETRA_VERTICES, TETRA_FACES, vertices, faces, NULL, NULL) < 0)
+	    goto fail;
+	if (joined) {
+	    if (!mk_addmember(meshes[region], &members.l, NULL, WMOP_UNION)) goto fail;
+	} else if (mk_comb1(database, regions[region], meshes[region], 1) < 0) {
+	    goto fail;
+	}
+    }
+    if (joined)
+	return mk_lcomb(database, "joined.r", &members, 1, NULL, NULL, NULL, 0) >= 0;
+    return 1;
+fail:
+    mk_freemembers(&members.l);
+    return 0;
+}
+
+static int
+check_geometry(struct gcv_context *context)
+{
+    const double coordinate_tolerance = 1.0e-3;
+    struct directory *entry;
+    size_t meshes = 0;
+    int valid = 1;
+    FOR_ALL_DIRECTORY_START(entry, context->dbip) {
+	if (entry->d_major_type != DB5_MAJORTYPE_BRLCAD || entry->d_minor_type != ID_BOT)
+	    continue;
+	struct rt_db_internal object;
+	++meshes;
+	if (rt_db_get_internal(&object, entry, context->dbip, NULL) < 0) return 0;
+	const struct rt_bot_internal *bot = (const struct rt_bot_internal *)object.idb_ptr;
+	unsigned matched = 0;
+	if (bot->num_vertices != TETRA_COUNT * TETRA_VERTICES || bot->num_faces != TETRA_COUNT * TETRA_FACES) valid = 0;
+	for (size_t vertex = 0; valid && vertex < bot->num_vertices; ++vertex) {
+	    int found = 0;
+	    for (size_t expected = 0; expected < TETRA_COUNT * TETRA_VERTICES; ++expected) {
+		if (VNEAR_EQUAL(bot->vertices + vertex * 3, tetrahedra + expected * 3, coordinate_tolerance)) {
+		    unsigned bit = 1U << expected;
+		    if (matched & bit) valid = 0;
+		    matched |= bit;
+		    found = 1;
+		    break;
+		}
+	    }
+	    if (!found) valid = 0;
+	}
+	double volume = 0;
+	for (size_t face = 0; valid && face < bot->num_faces; ++face) {
+	    const int *indices = bot->faces + face * 3;
+	    for (size_t corner = 0; corner < 3; ++corner)
+		if (indices[corner] < 0 || (size_t)indices[corner] >= bot->num_vertices) valid = 0;
+	    if (!valid) break;
+	    vect_t cross;
+	    VCROSS(cross, bot->vertices + indices[1] * 3, bot->vertices + indices[2] * 3);
+	    volume += VDOT(bot->vertices + indices[0] * 3, cross);
+	}
+	/* Two outward-oriented tetrahedra each enclose 1e9 / 6 cubic mm. */
+	if (!NEAR_EQUAL(volume, 2.0e9, 1.0)) valid = 0;
+	rt_db_free_internal(&object);
+    } FOR_ALL_DIRECTORY_END;
+    return valid && meshes == 1;
+}
+
+static int
+geometry_test(int joined)
+{
+    struct gcv_context source;
+    char path[MAXPATHLEN] = {0};
+    const char *types[] = {"asc", "le", "be"};
+    int valid;
+    gcv_context_init(&source);
+    valid = create_geometry(&source, joined);
+    FILE *file = bu_temp_file(path, sizeof(path));
+    if (!file) valid = 0;
+    else if (fclose(file)) valid = 0;
+    const struct gcv_filter *writer = find_filter(GCV_FILTER_WRITE, BU_MIME_MODEL_PLY, NULL, &source);
+    if (!writer) valid = 0;
+    for (size_t mode = 0; valid && mode < sizeof(types) / sizeof(types[0]); ++mode) {
+	const char *arguments[] = {"-t", types[mode]};
+	struct gcv_context imported;
+	gcv_context_init(&imported);
+	const struct gcv_filter *reader = find_filter(GCV_FILTER_READ, BU_MIME_MODEL_PLY, NULL, &imported);
+	valid = gcv_execute(&source, writer, NULL, 2, arguments, path) == 1 && reader &&
+	    gcv_execute(&imported, reader, NULL, 0, NULL, path) == 1 && check_geometry(&imported);
+	if (!valid) bu_log("PLY %s export/import changed geometry or failed\n", types[mode]);
+	gcv_context_destroy(&imported);
+    }
+    if (path[0]) bu_file_delete(path);
+    gcv_context_destroy(&source);
+    return valid ? 0 : 1;
+}
+
 int
 main(int argc, const char **argv)
 {
     struct gcv_context context;
-    (void)argc;
     bu_setprogname(argv[0]);
+    if (argc == 2 && BU_STR_EQUAL(argv[1], "geometry")) return geometry_test(0);
+    if (argc == 2 && BU_STR_EQUAL(argv[1], "boolean")) return geometry_test(1);
+    if (argc != 1) return 1;
     gcv_context_init(&context);
     const struct gcv_filter *writer = find_filter(GCV_FILTER_WRITE, BU_MIME_MODEL_PLY, NULL, &context);
     int valid = writer && writer->create_opts_fn && writer->free_opts_fn;

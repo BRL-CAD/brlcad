@@ -368,14 +368,16 @@ free_nmg:
 }
 
 
-static void
+static int
 process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp, struct conversion_state* pstate)
 {
+    volatile int completed = 0;
     if (!BU_SETJUMP) {
 	/* try */
 
 	/* Write the facetized region to the output file */
 	nmg_to_ply(r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp, pstate);
+	completed = 1;
     } else {
 	/* catch */
 
@@ -398,6 +400,7 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 	/* Now, make a new, clean model structure for next pass. */
 	*tsp->ts_m = nmg_mm();
     }  BU_UNSETJUMP;
+    return completed;
 }
 
 
@@ -454,6 +457,8 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     union tree *ret_tree;
     struct bu_list vhead;
     struct nmgregion *r;
+    struct model *result_model = NULL;
+    int shared_model = 0;
 
     RT_CK_FULL_PATH(pathp);
     RT_CK_TREE(curtree);
@@ -476,8 +481,11 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
     pstate->regions_tried++;
 
-    if (pstate->ply_write_options->verbose || pstate->gcv_options->verbosity_level)
-	bu_log("Attempting to process region %s\n", db_path_to_string(pathp));
+    if (pstate->ply_write_options->verbose || pstate->gcv_options->verbosity_level) {
+	char *name = db_path_to_string(pathp);
+	bu_log("Attempting to process region %s\n", name);
+	bu_free(name, "region path");
+    }
 
     ret_tree = process_boolean(curtree, tsp, pathp, pstate->vlfree);
 
@@ -493,6 +501,11 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     pstate->regions_converted++;
 
     if (r != (struct nmgregion *)NULL) {
+	/* Tessellated leaves own models independent of the tree-state model. */
+	result_model = r->m_p;
+	shared_model = result_model == *tsp->ts_m;
+	struct db_tree_state region_state = *tsp;
+	region_state.ts_m = &result_model;
 	struct shell *s;
 	int empty_region=0;
 	int empty_model=0;
@@ -514,28 +527,33 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
 	/* kill zero length edgeuses */
 	if (!empty_region) {
-	    empty_model = nmg_kill_zero_length_edgeuses(*tsp->ts_m);
+	    empty_model = nmg_kill_zero_length_edgeuses(result_model);
 	}
 
 	if (!empty_region && !empty_model) {
-	    process_triangulation(r, pathp, tsp, pstate);
-
-	    pstate->regions_written++;
+	    /* Zero-length edge cleanup can remove the region even when other
+	     * regions keep the model alive. Never reuse a removed region. */
+	    int present = 0;
+	    struct nmgregion *candidate;
+	    for (BU_LIST_FOR(candidate, nmgregion, &result_model->r_hd))
+		if (candidate == r) present = 1;
+	    if (present && process_triangulation(r, pathp, &region_state, pstate))
+		pstate->regions_written++;
+	    else
+		ret_tree->tr_d.td_r = NULL;
+	} else if (empty_model) {
+	    ret_tree->tr_d.td_r = NULL;
 	}
-
-	if (!empty_model)
-	    nmg_kr(r);
     }
 
-    /*
-     * Dispose of original tree, so that all associated dynamic memory
-     * is released now, not at the end of all regions.  A return of
-     * TREE_NULL from this routine signals an error, and there is no
-     * point to adding _another_ message to our output, so we need to
-     * cons up an OP_NOP node to return.
+    /* The tree owns the result region, but its tessellation model must be
+     * released separately. Return an empty node so the walk retains neither.
      */
-
-    db_free_tree(curtree); /* Does an nmg_kr() */
+    db_free_tree(curtree);
+    if (shared_model)
+	*tsp->ts_m = result_model;
+    else if (result_model)
+	nmg_km(result_model);
 
     BU_ALLOC(curtree, union tree);
     RT_TREE_INIT(curtree);
