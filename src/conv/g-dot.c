@@ -404,7 +404,7 @@ main(int ac, char *av[])
 	fclose(in);
 
     if (out != stdout)
-	fclose(stdout);
+	fclose(out);
 
     return 0;
 }
