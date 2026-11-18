@@ -27,77 +27,76 @@
 
 #include "common.h"
 
-#include <stdlib.h>
-
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "dm.h"
 
+struct fb_fb_args {
+    int help;
+    int verbose;
+    const char *output_framebuffer;
+};
 
-static int verbose;
+static const struct bu_arg_option fb_fb_options[] = {
+    BU_ARG_FLAG("h", "help", struct fb_fb_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_COUNTING_FLAG("v", "verbose", struct fb_fb_args, verbose,
+	BU_ARG_VALUE_FLAG, "Increase progress reporting"),
+    BU_ARG_VALUE("F", "output-framebuffer", struct fb_fb_args,
+	output_framebuffer, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Select the output framebuffer instead of the configured default"),
+    BU_ARG_OPTION_NULL
+};
 
-static char *in_fb_name;
-static char *out_fb_name;
+static const struct bu_arg_operand fb_fb_option_output_operands[] = {
+    BU_ARG_OPERAND("input-framebuffer", BU_ARG_VALUE_STRING, 1, 1,
+	"Source framebuffer device", NULL),
+    BU_ARG_OPERAND_NULL
+};
 
-static int scr_width = 0;		/* screen tracks file if not given */
-static int scr_height = 0;
+static const struct bu_arg_operand fb_fb_positional_output_operands[] = {
+    BU_ARG_OPERAND("input-framebuffer", BU_ARG_VALUE_STRING, 1, 1,
+	"Source framebuffer device", NULL),
+    BU_ARG_OPERAND("output-framebuffer", BU_ARG_VALUE_STRING, 0, 1,
+	"Destination framebuffer device (default: configured framebuffer)", NULL),
+    BU_ARG_OPERAND_NULL
+};
 
-static char usage[] = "\
-Usage: fb-fb [-v] [-F output_framebuffer]\n\
-       or\n\
-       fb-fb [-v] input_framebuffer [output_framebuffer]\n";
+static const char * const fb_fb_output_option[] = {"output-framebuffer", NULL};
+static const struct bu_arg_schema_case fb_fb_cases[] = {
+    BU_ARG_SCHEMA_CASE("option-output", "Name the output with -F",
+	BU_ARG_CONDITION_ANY_OPTION_PRESENT, fb_fb_output_option,
+	fb_fb_option_output_operands, NULL),
+    BU_ARG_SCHEMA_CASE_DEFAULT("positional-output",
+	"Name the output as an optional second operand",
+	fb_fb_positional_output_operands, NULL),
+    BU_ARG_SCHEMA_CASE_NULL
+};
 
-int
-get_args(int argc, char **argv)
-{
-    int c;
-    int out_fb_from_flag = 0;
+static const struct bu_arg_schema fb_fb_schema = BU_ARG_SCHEMA(
+    "fb-fb", "Copy one framebuffer image to another framebuffer",
+    fb_fb_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, fb_fb_cases));
 
-    while ((c = bu_getopt(argc, argv, "vF:h?")) != -1) {
-	switch (c) {
-	    case 'F':
-		out_fb_name = bu_optarg;
-		out_fb_from_flag = 1;
-		break;
-	    case 'v':
-		verbose++;
-		break;
-
-	    default:		/* 'h' '?' */
-		return 0;
-	}
-    }
-
-    if (bu_optind >= argc) {
-	return 0;		/* missing input framebuffer */
-    }
-    in_fb_name = argv[bu_optind++];
-
-    if (bu_optind >= argc) {
-	return 1;	/* OK */
-    }
-    if (out_fb_from_flag) {
-	fprintf(stderr, "fb-fb: output framebuffer specified by both -F and positional argument\n");
-	return 0;
-    }
-    out_fb_name = argv[bu_optind++];
-
-    if (argc > bu_optind) {
-	fprintf(stderr, "fb-fb: excess argument(s) not supported\n");
-	return 0;
-    }
-
-    return 1;		/* OK */
-}
+static const struct bu_arg_grammar fb_fb_grammar = {
+    &fb_fb_schema, NULL, NULL
+};
 
 
 int
 main(int argc, char **argv)
 {
+    struct fb_fb_args args = {0, 0, NULL};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     int y;
     struct fb *in_fbp, *out_fbp;
+    const char *in_fb_name;
+    const char *out_fb_name;
+    int scr_width;
+    int scr_height;
     int n, m;
     int height;
 
@@ -107,19 +106,40 @@ main(int argc, char **argv)
     int streamline;             /* # scanlines to do at once */
 
     bu_setprogname(argv[0]);
-
-    if (!get_args(argc, argv)) {
-	(void)fputs(usage, stderr);
-	bu_exit(1, NULL);
+    int introspection = bu_arg_introspect(&msg, &fb_fb_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&fb_fb_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&fb_fb_schema, "fb-fb");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "fb-fb help");
+	return 0;
     }
 
-    if (verbose)
-	fprintf(stderr, "fb-fb: infb=%s, outfb=%s\n", in_fb_name,
-		out_fb_name ? out_fb_name : "(default)");
+    in_fb_name = argv[operand_index + 1];
+    out_fb_name = args.output_framebuffer;
+    if (!out_fb_name && operand_index + 2 < argc)
+	out_fb_name = argv[operand_index + 2];
+
+    if (args.verbose)
+	bu_flog(stderr, "fb-fb: infb=%s, outfb=%s\n", in_fb_name,
+	    out_fb_name ? out_fb_name : "(default)");
 
     if ((in_fbp = fb_open(in_fb_name, 0, 0)) == NULL) {
 	if (in_fb_name)
-	    fprintf(stderr, "fb-fb: unable to open input '%s'\n", in_fb_name);
+	    bu_flog(stderr, "fb-fb: unable to open input '%s'\n", in_fb_name);
 	bu_exit(12, NULL);
     }
 
@@ -127,31 +147,26 @@ main(int argc, char **argv)
     scr_width = fb_getwidth(in_fbp);
     scr_height = fb_getheight(in_fbp);
 
-    if (verbose)
-	fprintf(stderr, "fb-fb: width=%d height=%d\n", scr_width, scr_height);
+    if (args.verbose)
+	bu_flog(stderr, "fb-fb: width=%d height=%d\n", scr_width, scr_height);
 
     if ((out_fbp = fb_open(out_fb_name, scr_width, scr_height)) == FB_NULL) {
 	if (out_fb_name)
-	    fprintf(stderr, "fb-fb: unable to open output '%s'\n", out_fb_name);
+	    bu_flog(stderr, "fb-fb: unable to open output '%s'\n", out_fb_name);
 	bu_exit(12, NULL);
     }
 
     scanpix = scr_width;			/* # pixels on scanline */
     streamline = 64;			/* # scanlines per block */
     scanbytes = scanpix * streamline * sizeof(RGBpixel);
-    if ((scanline = (unsigned char *)malloc(scanbytes)) == RGBPIXEL_NULL) {
-	fprintf(stderr,
-		"fb-fb:  malloc(%d) failure for scanline buffer\n",
-		scanbytes);
-	bu_exit(2, NULL);
-    }
+    scanline = (unsigned char *)bu_malloc((size_t)scanbytes, "scanline");
 
     /* Bottom to top with multi-line reads & writes */
     for (y = 0; y < scr_height; y += streamline) {
 	if (y+streamline > scr_height)
 	    streamline = scr_height-y;
-	if (verbose)
-	    fprintf(stderr, "fb-fb: y=%d, nlines=%d\n", y, streamline);
+	if (args.verbose)
+	    bu_flog(stderr, "fb-fb: y=%d, nlines=%d\n", y, streamline);
 	n = fb_readrect(in_fbp, 0, y, scr_width, streamline,
 			scanline);
 	if (n <= 0) break;
@@ -163,14 +178,13 @@ main(int argc, char **argv)
 	m = fb_writerect(out_fbp, 0, y, scr_width, height,
 			 scanline);
 	if (m != scr_width*height)
-	    fprintf(stderr,
+	    bu_flog(stderr,
 		    "fb-fb: fb_writerect(x=0, y=%d, w=%d, h=%d) failure, ret=%d, s/b=%d\n",
 		    y, scr_width, height, m, scanbytes);
     }
     fb_close(in_fbp);
     fb_close(out_fbp);
-    if (scanline)
-	bu_free(scanline, "scanline");
+    bu_free(scanline, "scanline");
     return 0;
 }
 

@@ -8,11 +8,11 @@ fb-fb - copy a framebuffer image to another framebuffer
 
 == SYNOPSIS
 
-[source]
-----
-fb-fb [-v] [-F _output_framebuffer_] _input_framebuffer_
-fb-fb [-v] _input_framebuffer_ [_output_framebuffer_]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*fb-fb* [*-v*]... *-F* _device_ _input-framebuffer_
+*fb-fb* [*-v*]... _input-framebuffer_ [_output-framebuffer_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -24,22 +24,22 @@ size is taken from the input framebuffer.
 The output device may be named either with the *-F* option or as a
 second positional argument, but not both. If no output is given, the
 default framebuffer is used (typically set by the *FB_FILE* environment
-variable). The same conventions apply to the input when it is omitted,
-though an input framebuffer is normally required.
+variable). The input framebuffer must always be named explicitly.
 
 [[options]]
 == OPTIONS
 
-*-v*::
-  Verbose mode. Print the input and output device names, the detected
-  width and height, and per-block progress to standard error.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-F* _output_framebuffer_::
-  Specify the output framebuffer device. Mutually exclusive with the
-  positional output argument.
+*-v*, *--verbose*::
+  Increase progress reporting. May be repeated.
 
-*-h*, *-?*::
-  Print a usage message and exit.
+*-F* _device_, *--output-framebuffer*=_device_::
+  Select the output framebuffer instead of the configured default.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES
