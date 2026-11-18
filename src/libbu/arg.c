@@ -2840,6 +2840,51 @@ cmd_schema_usage_operand(struct bu_vls *out, const struct bu_arg_operand *operan
 
 
 static void
+cmd_schema_usage_case_options(struct bu_vls *out,
+	const struct bu_arg_schema *schema,
+	const struct bu_arg_schema_case *cmd_case)
+{
+    size_t option_count = 0;
+
+    if (!out || !schema || !cmd_case ||
+	(cmd_case->condition != BU_ARG_CONDITION_ANY_OPTION_PRESENT &&
+	 cmd_case->condition != BU_ARG_CONDITION_ALL_OPTIONS_PRESENT))
+	return;
+    while (cmd_case->options && cmd_case->options[option_count])
+	option_count++;
+    if (!option_count)
+	return;
+    if (cmd_case->condition == BU_ARG_CONDITION_ANY_OPTION_PRESENT &&
+	option_count > 1)
+	bu_vls_strcat(out, " (");
+    for (size_t i = 0; i < option_count; i++) {
+	const struct bu_arg_option *option = cmd_schema_find_canonical(schema,
+	    cmd_case->options[i]);
+	struct bu_vls spelling = BU_VLS_INIT_ZERO;
+
+	if (cmd_case->condition == BU_ARG_CONDITION_ANY_OPTION_PRESENT && i)
+	    bu_vls_putc(out, '|');
+	else if (cmd_case->condition == BU_ARG_CONDITION_ALL_OPTIONS_PRESENT ||
+	    option_count == 1)
+	    bu_vls_putc(out, ' ');
+	if (option) {
+	    if (!BU_STR_EMPTY(option->shortopt))
+		cmd_schema_option_spelling(&spelling, option->shortopt, 0, option);
+	    else
+		cmd_schema_option_spelling(&spelling, option->longopt, 1, option);
+	} else {
+	    bu_vls_printf(&spelling, "--%s", cmd_case->options[i]);
+	}
+	bu_vls_strcat(out, bu_vls_cstr(&spelling));
+	bu_vls_free(&spelling);
+    }
+    if (cmd_case->condition == BU_ARG_CONDITION_ANY_OPTION_PRESENT &&
+	option_count > 1)
+	bu_vls_putc(out, ')');
+}
+
+
+static void
 cmd_schema_help_arg_variants(struct bu_vls *out, int *heading,
 	const char *label, const struct bu_arg_shape *shape)
 {
@@ -2867,7 +2912,7 @@ cmd_schema_help_arg_variants(struct bu_vls *out, int *heading,
 
 static char *
 cmd_schema_usage(const struct bu_arg_schema *schema, const char *invocation,
-	bu_arg_help_mode_t mode)
+	bu_arg_help_mode_t mode, const struct bu_arg_schema_case *active_case)
 {
     struct bu_vls out = BU_VLS_INIT_ZERO;
     int have_options = 0;
@@ -2883,7 +2928,7 @@ cmd_schema_usage(const struct bu_arg_schema *schema, const char *invocation,
 	    view.operands = cmd_case->operands;
 	    view.operand_groups = cmd_case->operand_groups;
 	    view.validation.cases = NULL;
-	    case_usage = cmd_schema_usage(&view, invocation, mode);
+	    case_usage = cmd_schema_usage(&view, invocation, mode, cmd_case);
 	    if (case_usage) {
 		bu_vls_strcat(&out, case_usage);
 		bu_free(case_usage, "command case usage");
@@ -2909,6 +2954,7 @@ cmd_schema_usage(const struct bu_arg_schema *schema, const char *invocation,
     }
     if (have_options)
 	bu_vls_strcat(&out, " [options]");
+    cmd_schema_usage_case_options(&out, schema, active_case);
     if (schema->operands) {
 	for (size_t i = 0; schema->operands[i].name; i++)
 	    cmd_schema_usage_operand(&out, &schema->operands[i]);
@@ -2939,7 +2985,7 @@ cmd_schema_usage(const struct bu_arg_schema *schema, const char *invocation,
 char *
 bu_arg_schema_usage(const struct bu_arg_schema *schema, const char *invocation)
 {
-    return cmd_schema_usage(schema, invocation, BU_ARG_HELP_DEFAULT);
+    return cmd_schema_usage(schema, invocation, BU_ARG_HELP_DEFAULT, NULL);
 }
 
 
@@ -3031,7 +3077,7 @@ bu_arg_schema_help_mode(const struct bu_arg_schema *schema, const char *invocati
 
     if (!schema)
 	return NULL;
-    usage = cmd_schema_usage(schema, invocation, mode);
+    usage = cmd_schema_usage(schema, invocation, mode, NULL);
     if (usage) {
 	bu_vls_strcat(&out, usage);
 	bu_free(usage, "command schema usage");

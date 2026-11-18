@@ -848,6 +848,8 @@ main(int UNUSED(argc), char **argv)
 	char *case_help = bu_arg_schema_help(&case_schema, "case");
 	if (!case_json || !strstr(case_json, "\"operand_cases\":[{") ||
 	    !case_help || !strstr(case_help, "Forms:") ||
+	    !strstr(case_help, "Usage: case [options] -s\n") ||
+	    !strstr(case_help, "Usage: case [options] value\n") ||
 	    !strstr(case_help, "when -s") ||
 	    bu_arg_schema_lint(&case_schema, &msg) != 0) {
 	    bu_log("operand case JSON, help, or lint omitted declared alternatives\n");
