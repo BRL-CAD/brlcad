@@ -215,7 +215,6 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout, struct bu_list *vlfree)
     bu_vls_free(&sname);
     bu_vls_free(&rname);
 
-    nmg_km(m);
     return 0;
 }
 
