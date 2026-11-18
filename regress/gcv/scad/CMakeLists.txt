@@ -26,8 +26,16 @@ gcv_regress_util(
   EXPECTED_FILE_SIZE_DELTA "2400"
 )
 
+if(TARGET gcv)
+  brlcad_add_test(NAME gcv_scad_assert COMMAND ${CMAKE_COMMAND}
+    "-DGCV=$<TARGET_FILE:gcv>" "-DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/assert"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/assert.cmake")
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/assert")
+endif()
+
 cmakefiles(
   CMakeLists.txt
+  assert.cmake
   primitives.scad
   control.scad
   functions.scad

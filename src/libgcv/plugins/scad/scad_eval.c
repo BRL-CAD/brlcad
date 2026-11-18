@@ -1637,8 +1637,10 @@ exec_builtin(struct scad_state *st, struct env *env, const char *name,
     if (BU_STR_EQUAL(name, "assert")) {
 	if (nargs >= 1) {
 	    struct scad_value c = eval_expr(st, env, args[0].value);
-	    if (!v_true(&c))
+	    if (!v_true(&c)) {
 		bu_log("scad: assertion failed\n");
+		st->aborted = 1;
+	    }
 	    scad_value_free(&c);
 	}
 	exec_body(st, env, body, nbody, into);

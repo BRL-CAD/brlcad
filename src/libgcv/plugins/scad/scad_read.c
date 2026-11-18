@@ -179,8 +179,10 @@ scad_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	goto done;
     }
 
-    if (scad_run(&st, prog, nprog) < 0)
-	bu_log("scad: evaluation aborted; partial geometry may be produced\n");
+    if (scad_run(&st, prog, nprog) < 0) {
+	bu_log("scad: evaluation failed\n");
+	goto done;
+    }
 
     emit_root = st.root_only ? st.root_only : st.root;
     ok = scad_emit(&st, emit_root);
