@@ -35,8 +35,11 @@
 
 /* interface headers */
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/endian.h"
-#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/vls.h"
 #include "wdb.h"
 #include "raytrace.h"
 
@@ -51,22 +54,59 @@ struct mesh {
 };
 
 
-static const char usage[] = "[-v] [-y] [-s scale] [-f] [-o out_file] tgm.g object\n";
+struct g_var_args {
+    int help;
+    int verbose;
+    int y_up;
+    int flip_normals;
+    fastf_t scale;
+    const char *output;
+};
 
-static void
-print_usage(const char *progname)
-{
-    bu_exit(1, "Usage: %s %s", progname, usage);
-}
+static const struct bu_arg_option g_var_options[] = {
+    BU_ARG_FLAG("h", "help", struct g_var_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("v", "verbose", struct g_var_args, verbose,
+	"Report mesh conversion progress"),
+    BU_ARG_FLAG("y", "y-up", struct g_var_args, y_up,
+	"Convert BRL-CAD Z-up coordinates to Y-up"),
+    BU_ARG_FLAG("f", "flip-normals", struct g_var_args, flip_normals,
+	"Reverse face winding and computed normals"),
+    BU_ARG_VALUE("s", "scale", struct g_var_args, scale,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "factor",
+	"Scale output vertices (default 0.001)"),
+    BU_ARG_VALUE("o", "output", struct g_var_args, output,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file",
+	"Write binary mesh output to a file instead of standard output"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand g_var_operands[] = {
+    BU_ARG_OPERAND("database", BU_ARG_VALUE_FILE, 1, 1,
+	"Input BRL-CAD database", NULL),
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1, 1,
+	"Database object to export", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema g_var_schema = BU_ARG_SCHEMA(
+    "g-var", "Export BRL-CAD BOT geometry as a vertex array mesh",
+    g_var_options, g_var_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar g_var_grammar = {
+    &g_var_schema, NULL, NULL
+};
 
 
 static int verbose = 0;
 static int yup = 0;
 static int flip_normals = 0;
-static float scale = 0.001f;
-static char *out_file = NULL;
-static char *db_file = NULL;
-static char *object = NULL;
+static fastf_t scale = 0.001;
+static const char *out_file = NULL;
+static const char *db_file = NULL;
+static const char *object = NULL;
 
 static FILE *fp_out;
 
@@ -401,48 +441,46 @@ void write_mesh_data(void)
 
 int main(int argc, char *argv[])
 {
-    int c;
-    struct directory* dp;
+    struct g_var_args args = {0, 0, 0, 0, 0.001, NULL};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int introspection;
+    int operand_index;
+    struct directory *dp;
     struct db_i *dbip;
 
     /* setup BRL-CAD environment */
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
 
-    /* process command line arguments */
-    while ((c = bu_getopt(argc, argv, "vo:ys:fh?")) != -1) {
-	switch (c) {
-	    case 'v':
-		verbose++;
-		break;
-
-	    case 'o':
-		out_file = bu_optarg;
-		break;
-
-	    case 'y':
-		yup++;
-		break;
-
-	    case 's':
-		sscanf(bu_optarg, "%f", &scale);
-		break;
-
-	    case 'f':
-		flip_normals++;
-		break;
-
-	    default:
-		print_usage(argv[0]);
-	}
+    introspection = bu_arg_introspect(&msg, &g_var_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
-    /* param check */
-    if (bu_optind+1 >= argc)
-	print_usage(argv[0]);
+    operand_index = bu_arg_schema_parse_complete(&g_var_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_log("%s\n", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&g_var_schema, "g-var");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "g-var help");
+	return 0;
+    }
 
-    /* get database filename and object */
-    db_file = argv[bu_optind++];
-    object = argv[bu_optind];
+    verbose = args.verbose;
+    yup = args.y_up;
+    flip_normals = args.flip_normals;
+    scale = args.scale;
+    out_file = args.output;
+    db_file = argv[operand_index + 1];
+    object = argv[operand_index + 2];
 
     /* open BRL-CAD database */
     if ((dbip = db_open(db_file, DB_OPEN_READONLY)) == DBI_NULL) {

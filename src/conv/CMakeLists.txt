@@ -40,7 +40,7 @@ brlcad_addexec(dbupgrade dbupgrade.c "libwdb;librt;libbu" FOLDER Conv ARG_SCHEMA
 brlcad_addexec(dxf-g dxf/dxf-g.c "libwdb;librt;libnmg;libbn;libbu;${M_LIBRARY}" FOLDER Conv)
 
 if(BRLCAD_ENABLE_TCL)
-  brlcad_addexec(enf-g enf-g.c "libwdb;${TCL_LIBRARY};${M_LIBRARY}" FOLDER Conv)
+  brlcad_addexec(enf-g enf-g.c "libwdb;${TCL_LIBRARY};${M_LIBRARY}" FOLDER Conv ARG_SCHEMA)
   target_include_directories(enf-g SYSTEM PRIVATE ${TCL_INCLUDE_PATH})
 else(BRLCAD_ENABLE_TCL)
   cmakefiles(enf-g.c)
@@ -104,7 +104,7 @@ brlcad_addexec(rpatch patch/rpatch.c "librt;libbu" FOLDER Conv)
 
 brlcad_addexec(tankill-g tankill/tankill-g.c "libwdb;librt;libnmg;libbu" FOLDER Conv)
 
-brlcad_addexec(g-var g-var.c "librt;libbu;${M_LIBRARY}" FOLDER Conv)
+brlcad_addexec(g-var g-var.c "librt;libbu;${M_LIBRARY}" FOLDER Conv ARG_SCHEMA)
 
 brlcad_addexec(g-vrml g-vrml.c "librt;libnmg;libbu;${M_LIBRARY}" FOLDER Conv)
 

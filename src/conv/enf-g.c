@@ -38,7 +38,9 @@
 #include "bio.h"
 
 #include "bu/app.h"
-#include "bu/getopt.h"
+#include "bu/arg.h"
+#include "bu/malloc.h"
+#include "bu/vls.h"
 #include "rt/db4.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -55,7 +57,7 @@ static struct rt_wdb *fd_out;
 static fastf_t local_tol;
 static fastf_t local_tol_sq;
 static int ident;
-static char *part_name_file=NULL;
+static const char *part_name_file=NULL;
 static int use_part_name_hash=0;
 static int max_name_len=0;
 static Tcl_HashTable htbl;
@@ -95,6 +97,52 @@ static int *part_tris=NULL;		/* list of triangles for current part */
 static size_t max_tri=0;		/* number of triangles currently malloced */
 static size_t curr_tri=0;		/* number of triangles currently being used */
 static char progname[]="enf-g";
+
+struct enf_g_args {
+    int help;
+    int verbose;
+    int starting_ident;
+    fastf_t tolerance;
+    const char *part_name_file;
+    int name_length;
+};
+
+static const struct bu_arg_option enf_g_options[] = {
+    BU_ARG_FLAG("h", "help", struct enf_g_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("v", "verbose", struct enf_g_args, verbose,
+	"Report objects as they are written"),
+    BU_ARG_VALUE("i", "starting-ident", struct enf_g_args, starting_ident,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "ident",
+	"Set the first region ident (default 1000)"),
+    BU_ARG_VALUE_VALIDATE("t", "tolerance", struct enf_g_args, tolerance,
+	BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate, "millimeters",
+	"Set the positive vertex merge distance"),
+    BU_ARG_VALUE("n", "part-name-file", struct enf_g_args, part_name_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file",
+	"Read part-number-to-name mappings from a file"),
+    BU_ARG_INTEGER_RANGE("l", "name-length", struct enf_g_args, name_length,
+	1, 5, 0, 0, "characters", "Limit generated object name length"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand enf_g_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 1, 1,
+	"Input Elysium Neutral File", NULL),
+    BU_ARG_OPERAND("output", BU_ARG_VALUE_FILE, 1, 1,
+	"Output BRL-CAD database", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema enf_g_schema = BU_ARG_SCHEMA(
+    "enf-g", "Convert Elysium Neutral File facets to BRL-CAD",
+    enf_g_options, enf_g_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar enf_g_grammar = {
+    &enf_g_schema, NULL, NULL
+};
 
 #define TRI_BLOCK 512			/* number of triangles to malloc per call */
 
@@ -207,13 +255,6 @@ add_triangle(int v[3])
 
     /* increment count */
     curr_tri++;
-}
-
-
-void
-Usage(void)
-{
-    bu_log("Usage: %s [-i starting_ident] [-t tolerance] [-l name_length_limit] [-n part_number_to_name_list] [-v] input_facets_file output_brlcad_file.g\n", progname);
 }
 
 
@@ -599,68 +640,57 @@ Assembly_import(int id_start)
 int
 main(int argc, char *argv[])
 {
+    struct enf_g_args args = {0, 0, 1000, BN_TOL_DIST, NULL, 0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     char line[MAX_LINE_SIZE];
-    char *input_file, *output_file;
+    const char *input_file, *output_file;
     FILE *fd_parts;
     struct obj_info **top_level_assems = NULL;
     int top_level_assem_count = 0;
     int curr_top_level = -1;
-    fastf_t tmp;
+    int introspection;
+    int operand_index;
     int id;
-    int c;
 
     bu_setprogname(argv[0]);
 
-    local_tol = BN_TOL_DIST;
+    introspection = bu_arg_introspect(&msg, &enf_g_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    operand_index = bu_arg_schema_parse_complete(&enf_g_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_log("%s\n", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&enf_g_schema, "enf-g");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "enf-g help");
+	return 0;
+    }
+
+    verbose = args.verbose;
+    ident = args.starting_ident;
+    local_tol = args.tolerance;
     local_tol_sq = local_tol * local_tol;
-    ident = 1000;
-
-    while ((c=bu_getopt(argc, argv, "vi:t:n:l:h?")) != -1) {
-	switch (c) {
-	    case 'v':	/* verbose */
-		verbose = 1;
-		break;
-	    case 'i':	/* starting ident number */
-		ident = atoi(bu_optarg);
-		break;
-	    case 't':	/* tolerance */
-		tmp = atof(bu_optarg);
-		if (tmp <= 0.0)
-		    bu_exit(1, "%s: Illegal tolerance (%g), must be > 0.0\n", progname, tmp);
-		local_tol = tmp;
-		local_tol_sq = local_tol * local_tol;
-		break;
-	    case 'n':	/* part name list */
-		part_name_file = bu_optarg;
-		use_part_name_hash = 1;
-		break;
-	    case 'l':	/* max name length */
-		max_name_len = atoi(bu_optarg);
-		if (max_name_len < 5)
-		    bu_exit(1, "%s: Unreasonable name length limitation\n", progname);
-		break;
-	    default:
-		Usage();
-		bu_exit(1, NULL);
-	}
-    }
-
-    if (argc - bu_optind != 2) {
-	bu_log("Not enough arguments!! (need at least input & output file names)\n");
-	Usage();
-	bu_exit(1, NULL);
-    }
-
-    input_file = bu_strdup(argv[bu_optind]);
+    part_name_file = args.part_name_file;
+    use_part_name_hash = part_name_file != NULL;
+    max_name_len = args.name_length;
+    input_file = argv[operand_index + 1];
+    output_file = argv[operand_index + 2];
 
     if ((fd_in=fopen(input_file, "rb")) == NULL) {
 	bu_log("%s: Cannot open %s for reading\n", progname, input_file);
 	perror(argv[0]);
 	bu_exit(1, NULL);
     }
-
-    output_file = bu_strdup(argv[bu_optind+1]);
-
     if ((fd_out=wdb_fopen(output_file)) == NULL) {
 	bu_log("%s: Cannot open %s for writing\n", progname, output_file);
 	perror(argv[0]);
