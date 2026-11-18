@@ -114,7 +114,8 @@ main(int argc, char **argv)
     }
 
     if (verbose)
-	fprintf(stderr, "fb-fb: infb=%s, outfb=%s\n", in_fb_name, out_fb_name);
+	fprintf(stderr, "fb-fb: infb=%s, outfb=%s\n", in_fb_name,
+		out_fb_name ? out_fb_name : "(default)");
 
     if ((in_fbp = fb_open(in_fb_name, 0, 0)) == NULL) {
 	if (in_fb_name)
