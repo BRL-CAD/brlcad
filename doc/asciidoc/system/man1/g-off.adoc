@@ -65,7 +65,7 @@ tessellation-based tools.
   String prepended to every generated output file name.
 
 *-P* _ncpu_::
-  Number of CPUs to use. Default is 1.
+  Accepted for command-line compatibility. Conversion remains serial.
 
 *-x* _rt_debug_::
   Set the librt debug flag (hexadecimal).
