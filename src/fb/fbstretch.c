@@ -71,39 +71,32 @@
 
 #include "common.h"
 
-#include <stdlib.h>
 #include <assert.h>
-#include <string.h>
-#include <stdarg.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdlib.h>
 
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/color.h"
-#include "bu/getopt.h"
-#include "bu/interrupt.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/str.h"
 #include "dm.h"			/* BRL-CAD package libfb.a interface */
 
 
-#define USAGE1 "fbstretch [ -s size ] [ -w width ] [ -n height ]"
-#define USAGE2 "\t[ -f in_fb_file ] [ -a ] [ -v ] [ -x x_sc ] [ -y y_sc ]"
-#define USAGE3 "\t[ -S size ] [ -W width ] [ -N height ] [ [ -F ] out_fb_file ]"
-#define OPTSTR "af:F:n:N:s:S:vw:W:x:y:h?"
 #define EPSILON 0.0001			/* fudge for converting float to int */
 
-typedef int bool_t;
-
-static bool_t sample = 0;		/* set: sampling; clear: averaging */
-static bool_t verbose = 0;		/* set for size info printout */
-static float x_scale = -1.0;		/* horizontal scaling factor */
-static float y_scale = -1.0;		/* vertical scaling factor */
-static bool_t x_compress;		/* set if compressing horizontally */
-static bool_t y_compress;		/* set if compressing vertically */
-static char *src_file = NULL;		/* source frame buffer name */
+static int sample = 0;			/* set: sampling; clear: averaging */
+static int verbose = 0;			/* set for size info printout */
+static fastf_t x_scale = -1.0;		/* horizontal scaling factor */
+static fastf_t y_scale = -1.0;		/* vertical scaling factor */
+static int x_compress;			/* set if compressing horizontally */
+static int y_compress;			/* set if compressing vertically */
+static const char *src_file = NULL;	/* source frame buffer name */
 static struct fb *src_fbp = FB_NULL;	/* source frame buffer handle */
-static char *dst_file = NULL;		/* destination frame buffer name */
+static const char *dst_file = NULL;	/* destination frame buffer name */
 static struct fb *dst_fbp = FB_NULL;	/* destination frame buffer handle */
 static int src_width = 512;
 static int src_height = 512;		/* source image size */
@@ -115,6 +108,128 @@ static unsigned char *dst_buf;		/* calloc()ed output scan line buffer */
 /* in ioutil.c */
 extern void Message(const char *format, ...);
 extern void Fatal(struct fb *fbiop, const char *format, ...);
+
+struct fbstretch_args {
+    struct fbstretch_args *self;
+    int help;
+    int sample;
+    int verbose;
+    const char *input_framebuffer;
+    const char *output_framebuffer;
+    int input_width;
+    int input_height;
+    int output_width;
+    int output_height;
+    fastf_t x_scale;
+    fastf_t y_scale;
+};
+
+enum fbstretch_square_dimension {
+    FBSTRETCH_INPUT_SIZE,
+    FBSTRETCH_OUTPUT_SIZE
+};
+
+static int
+fbstretch_square_size(struct bu_vls *msg, const char *arg, void *storage,
+	enum fbstretch_square_dimension dimension)
+{
+    struct fbstretch_args *args = storage ?
+	*(struct fbstretch_args **)storage : NULL;
+    int value;
+
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 1, INT_MAX))
+	return -1;
+    if (args) {
+	if (dimension == FBSTRETCH_INPUT_SIZE)
+	    args->input_width = args->input_height = value;
+	else
+	    args->output_width = args->output_height = value;
+    }
+    return 0;
+}
+
+#define FBSTRETCH_SQUARE_CALLBACK(_name, _dimension) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return fbstretch_square_size(msg, arg, storage, _dimension); \
+    }
+
+FBSTRETCH_SQUARE_CALLBACK(fbstretch_input_size, FBSTRETCH_INPUT_SIZE)
+FBSTRETCH_SQUARE_CALLBACK(fbstretch_output_size, FBSTRETCH_OUTPUT_SIZE)
+
+static int
+fbstretch_scale(struct bu_vls *msg, const char *arg, void *storage)
+{
+    fastf_t value;
+
+    if (!bu_arg_number_from_str(msg, &value, arg))
+	return -1;
+    if (value <= 0.0) {
+	if (msg)
+	    bu_vls_printf(msg, "scale factor must be positive: %s\n", arg);
+	return -1;
+    }
+    if (storage)
+	*((fastf_t *)storage) = value;
+    return 0;
+}
+
+static const struct bu_arg_option fbstretch_options[] = {
+    BU_ARG_FLAG("h", "help", struct fbstretch_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("a", "sample", struct fbstretch_args, sample,
+	"Sample pixels instead of averaging during compression"),
+    BU_ARG_FLAG("v", "verbose", struct fbstretch_args, verbose,
+	"Report effective image sizes and scale factors"),
+    BU_ARG_VALUE("f", "input-framebuffer", struct fbstretch_args,
+	input_framebuffer, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Read the source image from this framebuffer or PIX file"),
+    BU_ARG_VALUE("F", "output-framebuffer", struct fbstretch_args,
+	output_framebuffer, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Write the scaled image to this framebuffer"),
+    BU_ARG_CUSTOM("s", "input-size", struct fbstretch_args, self,
+	fbstretch_input_size, "pixels", "Set both input dimensions"),
+    BU_ARG_INTEGER_RANGE("w", "input-width", struct fbstretch_args,
+	input_width, 1, 1, 1, INT_MAX, "pixels", "Set the input width"),
+    BU_ARG_INTEGER_RANGE("n", "input-height", struct fbstretch_args,
+	input_height, 1, 1, 1, INT_MAX, "pixels", "Set the input height"),
+    BU_ARG_CUSTOM("S", "output-size", struct fbstretch_args, self,
+	fbstretch_output_size, "pixels", "Set both output dimensions"),
+    BU_ARG_INTEGER_RANGE("W", "output-width", struct fbstretch_args,
+	output_width, 1, 1, 1, INT_MAX, "pixels", "Set the output width"),
+    BU_ARG_INTEGER_RANGE("N", "output-height", struct fbstretch_args,
+	output_height, 1, 1, 1, INT_MAX, "pixels", "Set the output height"),
+    BU_ARG_CUSTOM("x", "x-scale", struct fbstretch_args, x_scale,
+	fbstretch_scale, "factor", "Set the horizontal scale factor"),
+    BU_ARG_CUSTOM("y", "y-scale", struct fbstretch_args, y_scale,
+	fbstretch_scale, "factor", "Set the vertical scale factor"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand fbstretch_operands[] = {
+    BU_ARG_OPERAND("output", BU_ARG_VALUE_STRING, 0, 1,
+	"Output framebuffer when --output-framebuffer is omitted", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema fbstretch_schema = BU_ARG_SCHEMA(
+    "fbstretch", "Scale a framebuffer image", fbstretch_options,
+    fbstretch_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar fbstretch_grammar = {
+    &fbstretch_schema, NULL, NULL
+};
+
+static int
+fbstretch_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&fbstretch_schema, "fbstretch");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "fbstretch help");
+    return status;
+}
 
 
 static void
@@ -147,6 +262,16 @@ Sig_Catcher(int sig)
 int
 main(int argc, char **argv)
 {
+    struct fbstretch_args args = {
+	.input_width = 512,
+	.input_height = 512,
+	.x_scale = -1.0,
+	.y_scale = -1.0
+    };
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int operand_index;
+    args.self = &args;
+
     bu_setprogname(argv[0]);
 
     /* Plant signal catcher. */
@@ -177,105 +302,44 @@ main(int argc, char **argv)
 		(void)signal(getsigs[i], Sig_Catcher);
     }
 
-    /* Process arguments. */
-    {
-	int c;
-	bool_t errors = 0;
-
-	while ((c = bu_getopt(argc, argv, OPTSTR)) != -1)
-	    switch (c) {
-		default:	/* '?': invalid option */
-		    errors = 1;
-		    break;
-
-		case 'a':	/* -a */
-		    sample = 1;
-		    break;
-
-		case 'f':	/* -f in_struct fb */
-		    src_file = bu_optarg;
-		    break;
-
-		case 'F':	/* -F out_struct fb */
-		    dst_file = bu_optarg;
-		    break;
-
-		case 'n':	/* -n height */
-		    if ((src_height = atoi(bu_optarg)) <= 0)
-			errors = 1;
-
-		    break;
-
-		case 'N':	/* -N height */
-		    if ((dst_height = atoi(bu_optarg)) <= 0)
-			errors = 1;
-
-		    break;
-
-		case 's':	/* -s size */
-		    if ((src_height = src_width = atoi(bu_optarg))
-			<= 0
-			)
-			errors = 1;
-
-		    break;
-
-		case 'S':	/* -S size */
-		    if ((dst_height = dst_width = atoi(bu_optarg))
-			<= 0
-			)
-			errors = 1;
-
-		    break;
-
-		case 'v':
-		    verbose = 1;
-		    break;
-
-		case 'w':	/* -w width */
-		    if ((src_width = atoi(bu_optarg)) <= 0)
-			errors = 1;
-
-		    break;
-
-		case 'W':	/* -W width */
-		    if ((dst_width = atoi(bu_optarg)) <= 0)
-			errors = 1;
-
-		    break;
-
-		case 'x':	/* -x x_scale */
-		    if ((x_scale = atof(bu_optarg)) <= 0) {
-			Message("Nonpositive x scale factor");
-			errors = 1;
-		    }
-
-		    break;
-
-		case 'y':	/* -y y_scale */
-		    if ((y_scale = atof(bu_optarg)) <= 0) {
-			Message("Nonpositive y scale factor");
-			errors = 1;
-		    }
-
-		    break;
-	    }
-
-	if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
-	    errors = 1;
-
-	if (errors)
-	    bu_exit(1, "Usage: %s\n%s\n%s\n", USAGE1, USAGE2, USAGE3);
+    int introspection = bu_arg_introspect(&msg, &fbstretch_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+    operand_index = bu_arg_schema_parse_complete(&fbstretch_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return fbstretch_help(stdout, 0);
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
+	return fbstretch_help(stderr, 1);
 
-    if (bu_optind < argc) {
-	/* dst_file */
-	if (bu_optind < argc - 1 || dst_file != NULL) {
-	    bu_log("Usage: %s\n%s\n%s", USAGE1, USAGE2, USAGE3);
-	    Stretch_Fatal("Can't handle multiple output frame buffers!");
+    sample = args.sample;
+    verbose = args.verbose;
+    src_file = args.input_framebuffer;
+    dst_file = args.output_framebuffer;
+    src_width = args.input_width;
+    src_height = args.input_height;
+    dst_width = args.output_width;
+    dst_height = args.output_height;
+    x_scale = args.x_scale;
+    y_scale = args.y_scale;
+
+    if (argc - 1 - operand_index == 1) {
+	if (dst_file) {
+	    bu_flog(stderr,
+		"output framebuffer specified by both option and operand\n");
+	    return 1;
 	}
-
-	dst_file = argv[bu_optind];
+	dst_file = argv[operand_index + 1];
     }
 
     if (dst_file == NULL)

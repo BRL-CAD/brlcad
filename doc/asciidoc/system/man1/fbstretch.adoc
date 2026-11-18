@@ -8,12 +8,12 @@ fbstretch - stretch a frame buffer image
 
 == SYNOPSIS
 
-[source]
-----
-fbstretch [-a] [-v] [-s _size_] [-w _width_] [-n _height_] [-f _in_fb_]
-          [-x _x_scale_] [-y _y_scale_]
-          [-S _size_] [-W _width_] [-N _height_] [[-F] _out_fb_]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*fbstretch* [*-a*] [*-v*] [*-f* _device_] [*-F* _device_] [*-s* _pixels_] [*-w* _pixels_]
+          [*-n* _pixels_] [*-S* _pixels_] [*-W* _pixels_] [*-N* _pixels_] [*-x* _factor_]
+          [*-y* _factor_] [_output_]
+// END GENERATED BU_ARG SYNOPSIS
 
 
 [[description]]
@@ -26,58 +26,54 @@ The default input image size is 512 by 512. Explicitly specified sizes override 
 [[options]]
 == OPTIONS
 
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-f* _input_image_name_::
-Inputs the image to be displayed from the specified frame buffer or *pix*(5) file, instead of modifying the output frame buffer in place. This option may not work if input and output frame buffers are the same device.
+*-a*, *--sample*::
+  Sample pixels instead of averaging during compression.
 
+*-v*, *--verbose*::
+  Report effective image sizes and scale factors.
 
-*-s* _input_square_size_::
-Specifies input image width and height.
+*-f* _device_, *--input-framebuffer*=_device_::
+  Read the source image from this framebuffer or PIX file.
 
+*-F* _device_, *--output-framebuffer*=_device_::
+  Write the scaled image to this framebuffer.
 
-*-w* _input_width_::
-Specifies input image width.
+*-s* _pixels_, *--input-size*=_pixels_::
+  Set both input dimensions.
 
+*-w* _pixels_, *--input-width*=_pixels_::
+  Set the input width.
 
-*-n* _input_height_::
-Specifies input image height.
+*-n* _pixels_, *--input-height*=_pixels_::
+  Set the input height.
 
+*-S* _pixels_, *--output-size*=_pixels_::
+  Set both output dimensions.
 
-*-a*::
-(no averaging) Specifies that output pixels will be sampled from the input, instead of being computed by averaging RGB values.
+*-W* _pixels_, *--output-width*=_pixels_::
+  Set the output width.
 
+*-N* _pixels_, *--output-height*=_pixels_::
+  Set the output height.
 
-*-v*::
-(verbose) Causes actual sizes and scale factors used to be printed on the standard error output.
+*-x* _factor_, *--x-scale*=_factor_::
+  Set the horizontal scale factor.
 
+*-y* _factor_, *--y-scale*=_factor_::
+  Set the vertical scale factor.
 
-*-x* _horizontal_scale_factor_::
-Scales the image by the specified factor in the horizontal direction; the default is the ratio of requested output to input widths, if specified, otherwise 1.
+// END GENERATED BU_ARG OPTIONS
 
-
-*-y* _vertical_scale_factor_::
-Scales the image by the specified factor in the vertical direction; the default is the ratio of requested output to input heights, if specified, otherwise 1.
-
-
-*-S* _output_square_size_::
-Specifies output frame buffer width and height.
-
-
-*-W* _output_width_::
-Specifies output frame buffer width.
-
-
-*-N* _output_height_::
-Specifies output frame buffer height.
-
-
-*-F* _output_frame_buffer_name_::
-Outputs to the specified framebuffer instead of the one specified
-by the `FB_FILE` environment variable. If this is the last option,
-the *-F* prefix is optional.
-
-*-h*, *-?*::
-Print a usage message and exit.
+The input named by *--input-framebuffer* may be either a framebuffer device
+or a *pix*(5) file.  If an axis scale is omitted, it is derived from the
+requested output and input dimensions when both are specified, and otherwise
+defaults to 1.  Scale factors must be finite and positive.  A trailing
+_output_ operand is equivalent to *--output-framebuffer*; specifying both is
+an error.
 
 
 
