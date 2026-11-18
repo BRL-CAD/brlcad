@@ -17,7 +17,7 @@ brlcad_addexec(picket_fence picket_fence.c "libwdb;${M_LIBRARY}" FOLDER Shapes)
 brlcad_addexec(tire tire.c "libged;libwdb" FOLDER Shapes)
 brlcad_addexec(window window.c libwdb FOLDER Shapes)
 brlcad_addexec(window_frame window_frame.c libwdb FOLDER Shapes)
-brlcad_addexec(wire wire.c "libwdb;${M_LIBRARY}" FOLDER Shapes)
+brlcad_addexec(wire wire.c "libwdb;${M_LIBRARY}" FOLDER Shapes NO_OPTIONS)
 
 cmakefiles(fence.h)
 cmakefiles(CMakeLists.txt)

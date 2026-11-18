@@ -422,7 +422,7 @@ endif()
 # need to be terminated due to excessive runtime length or infinite looping.
 # It is NOT intended be run directly by users (although it CAN be so run
 # for debugging purposes if necessary.)
-brlcad_addexec(ged_exec ged_exec.cpp libged NO_MAN)
+brlcad_addexec(ged_exec ged_exec.cpp libged NO_MAN NO_OPTIONS)
 
 add_subdirectory(tests)
 
