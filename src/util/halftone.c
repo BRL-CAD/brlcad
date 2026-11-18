@@ -902,7 +902,12 @@ setup(int argc, char **argv)
 		--bu_optind;
 		for (i=bu_optind; i < argc && (isdigit((int)*argv[i]) ||
 					       (*argv[i] == '-' && isdigit((int)(*(argv[i]+1))))); i++);
-		if ((c=i-bu_optind) % 2) {
+		c = i - bu_optind;
+		if (c < 2) {
+		    fprintf(stderr, "At least one tone-map coordinate pair is required.\n");
+		    bu_exit(1, NULL);
+		}
+		if (c % 2) {
 		    fprintf(stderr, "Missing Y coordinate for tone map.\n");
 		    bu_exit(1, NULL);
 		}
@@ -917,6 +922,12 @@ setup(int argc, char **argv)
 			bu_free(Xlist, "Xlist");
 			bu_free(Ylist, "Ylist");
 			bu_exit(1, NULL);
+		    }
+		    if (xval < 0 || xval > 255 || yval < 0 || yval > 255 ||
+			(j > 0 && xval <= Xlist[j-1])) {
+			bu_free(Xlist, "Xlist");
+			bu_free(Ylist, "Ylist");
+			bu_exit(1, "Tone-map coordinates must be 0 through 255 with increasing X values.\n");
 		    }
 		    Xlist[j] = (int)xval;
 		    Ylist[j] = (int)yval;
