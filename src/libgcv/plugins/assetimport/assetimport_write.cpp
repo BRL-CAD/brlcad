@@ -38,6 +38,7 @@
 
 /* assimp headers */
 #include <assimp/scene.h>
+#include <assimp/metadata.h>
 #include <assimp/Exporter.hpp>
 
 typedef struct assetimport_write_options {
@@ -548,7 +549,9 @@ assetimport_write(struct gcv_context *context, const struct gcv_opts *gcv_option
     for (size_t i = 0; i < state.mats.size(); i++)
 	state.scene->mMaterials[i+1] = state.mats[i];
 
-    state.scene->mMetaData = NULL;
+    /* The PBRT exporter expects a collection even without scene metadata. */
+    if (BU_STR_EQUAL(fmt_desc->id, "pbrt"))
+	state.scene->mMetaData = new aiMetadata();
 
     if (!validate_assimp_scene(state.scene)) {
 	ret = 0;

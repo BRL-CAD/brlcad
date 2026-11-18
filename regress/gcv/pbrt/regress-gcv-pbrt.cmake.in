@@ -1,0 +1,23 @@
+# Copyright (c) 2026 United States Government as represented by
+# the U.S. Army Research Laboratory.
+# SPDX-License-Identifier: BSD-2-Clause
+
+set(INPUT_FILE "@CMAKE_CURRENT_SOURCE_DIR@/../tetra.g")
+set(OUTPUT_FILE "@CMAKE_CURRENT_BINARY_DIR@/scene.pbrt")
+string(REPLACE "\\" "" GCV_EXEC "${EXEC}")
+file(REMOVE "${OUTPUT_FILE}")
+execute_process(COMMAND "${GCV_EXEC}" --input-format=g --output-format=assetimport
+  "${INPUT_FILE}" "${OUTPUT_FILE}"
+  RESULT_VARIABLE status OUTPUT_VARIABLE output ERROR_VARIABLE messages)
+if(messages MATCHES "Non-supported file format [(]pbrt[)]")
+  message(STATUS "PBRT exporter unavailable in this SDK build")
+  return()
+endif()
+if(NOT status EQUAL 0 OR NOT EXISTS "${OUTPUT_FILE}")
+  message(FATAL_ERROR "PBRT export failed (${status}): ${output}\n${messages}")
+endif()
+file(READ "${OUTPUT_FILE}" scene)
+if(NOT scene MATCHES "WorldBegin" OR NOT scene MATCHES "trianglemesh")
+  message(FATAL_ERROR "PBRT export did not contain scene geometry")
+endif()
+file(REMOVE "${OUTPUT_FILE}")
