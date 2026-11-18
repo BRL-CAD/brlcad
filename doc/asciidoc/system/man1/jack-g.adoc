@@ -9,11 +9,10 @@ jack-g - convert a Jack Psurf file to a BRL-CAD database
 
 == SYNOPSIS
 
-[source]
-----
-jack-g [-r region] [-g group] [jack_db] [brlcad_db]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*jack-g* [*-r* _name_] [*-g* _name_] [_input.pss_] _output.g_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -39,17 +38,17 @@ created.
 [[options]]
 == OPTIONS
 
-*-r* _region_::
-  Name the BRL-CAD region created for the converted surface.  If not
-  specified, the region name is derived from the input file name (with
-  any leading path and trailing `.pss` extension removed).
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-g* _group_::
-  Add the converted region to a BRL-CAD group of this name, creating
-  the group if necessary.
+*-r* _name_, *--region*=_name_::
+  Name the generated BRL-CAD region; default to the input basename without .pss, or stdin.
 
-*-h*, *-?*::
-  Print a usage message and exit.
+*-g* _name_, *--group*=_name_::
+  Add the generated region to this BRL-CAD group, creating it if necessary.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES
