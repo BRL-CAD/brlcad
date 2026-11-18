@@ -8,10 +8,11 @@ plot3-fb - display a 3-D UNIX plot file on a framebuffer
 
 == SYNOPSIS
 
-[source]
-----
-plot3-fb [-d] [-o|-O] [-i] [-t _thickness_] [-F _framebuffer_] [-s|-S _squaresize_] [-w|-W _width_] [-n|-N _height_] [_file.plot3_]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*plot3-fb* [*-d*]... [*-o*] [*-i*] [*-t* _pixels_] [*-F* _device_] [*-s* _pixels_] [*-w* _pixels_]
+         [*-n* _pixels_] [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 
 [[description]]
@@ -36,36 +37,49 @@ with *plot3rot*(1) if true clipping or reorientation is desired.
 [[options]]
 == OPTIONS
 
-*-d*::
-  Emit a verbose debugging stream to standard error, listing every UNIX plot
-  command and the resulting framebuffer coordinates. Repeating *-d* increases
-  the verbosity.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-o*, *-O*::
-  Overlay mode. Rasterize on top of the image already in the framebuffer
-  rather than over a cleared background.
+*-d*, *--debug*::
+  Increase diagnostic output. May be repeated.
 
-*-i*::
-  Immediate mode. Plot each rasterized pixel as soon as it is computed instead
-  of buffering scanlines into bands. Useful for quick feedback on small plots,
-  but generally more expensive in CPU time.
+*-o*, *--overlay*::
+  Preserve the existing framebuffer background.
 
-*-t* _thickness_::
-  Thicken every line perpendicular to its length to _thickness_ pixels
-  (minimum 1). A line is never made wider than it is long. Helpful when
-  recording to video, where single-pixel lines are hard to resolve.
+*-i*, *--immediate*::
+  Draw pixels immediately instead of buffering scanlines.
 
-*-F* _framebuffer_::
-  Use the named framebuffer device instead of the one in `FB_FILE`.
+*-t* _pixels_, *--thickness*=_pixels_::
+  Set the line thickness.
 
-*-s* _squaresize_, *-S* _squaresize_::
-  Set both the width and height of the display to _squaresize_ pixels.
+*-F* _device_, *--framebuffer*=_device_::
+  Select the framebuffer device.
 
-*-w* _width_, *-W* _width_::
-  Set the display width to _width_ pixels.
+*-s* _pixels_, *--size*=_pixels_::
+  Set both framebuffer dimensions.
 
-*-n* _height_, *-N* _height_::
-  Set the display height to _height_ pixels.
+*-w* _pixels_, *--width*=_pixels_::
+  Set the framebuffer width.
+
+*-n* _pixels_, *--height*=_pixels_::
+  Set the framebuffer height.
+
+// END GENERATED BU_ARG OPTIONS
+
+Repeating *--debug* increases the amount of command and framebuffer-coordinate
+information written to standard error.  *--immediate* plots each rasterized
+pixel as soon as it is computed instead of buffering scanlines into bands; it
+can provide quicker feedback for small plots, but generally costs more CPU
+time.  *--overlay* preserves the existing framebuffer image rather than
+rasterizing over a cleared background.
+
+*--thickness* widens each line perpendicular to its direction, up to the
+line's length.  This can make single-pixel lines easier to resolve when
+recording video.  *--framebuffer* overrides the `FB_FILE` environment
+variable.  Dimension options are processed in command-line order, so a later
+*--width* or *--height* can override one dimension set by *--size*, and a
+later *--size* resets both dimensions.
 
 [[examples]]
 == EXAMPLES
