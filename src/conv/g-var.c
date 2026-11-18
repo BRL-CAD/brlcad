@@ -487,6 +487,8 @@ int main(int argc, char *argv[])
 
     /* finish */
     dealloc_mesh_list();
+    if (fp_out != stdout)
+	fclose(fp_out);
     db_close(dbip);
     return 0;
 }
