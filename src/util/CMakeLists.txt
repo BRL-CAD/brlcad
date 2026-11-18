@@ -134,7 +134,7 @@ target_include_directories(png-pix BEFORE PRIVATE ${PNG_INCLUDE_DIRS})
 brlcad_addexec(sun-pix sun-pix.c libbu FOLDER Util ARG_SCHEMA)
 brlcad_addexec(terrain terrain.c "libbn;libbu;${M_LIBRARY}" FOLDER Util)
 add_subdirectory(ttcp)
-brlcad_addexec(wavelet wavelet.c "libdm;libbn;libbu" FOLDER Util)
+brlcad_addexec(wavelet wavelet.c "libdm;libbn;libbu" FOLDER Util ARG_SCHEMA)
 add_target_deps(wavelet dm_plugins)
 
 install(PROGRAMS morphedit.tcl DESTINATION bin)
