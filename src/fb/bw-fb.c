@@ -281,7 +281,9 @@ main(int argc, char **argv)
     }
 
     /* Test for simplest case */
-    if (inverse == 0 && file_xoff == 0 && file_yoff == 0 && scr_xoff+file_width <= (unsigned)fb_getwidth(fbp)) {
+    if (inverse == 0 && file_xoff == 0 && file_yoff == 0 &&
+	scr_xoff >= 0 && scr_yoff >= 0 &&
+	scr_xoff+file_width <= (unsigned)fb_getwidth(fbp)) {
 	unsigned char *buf;
 	int npix = file_width * yout;
 
