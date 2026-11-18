@@ -34,6 +34,68 @@
 #include "raytrace.h"
 #include "wdb.h"
 
+#ifdef GCV_PLY_TEST_WRITE_FAILURE
+#include "../plugins/ply/rply.h"
+
+enum ply_test_failure { PLY_TEST_NONE, PLY_TEST_HEADER, PLY_TEST_VALUE, PLY_TEST_CLOSE };
+static enum ply_test_failure ply_test_failure;
+static int ply_test_injected;
+
+static int
+ply_test_write_header(p_ply output)
+{
+    if (ply_test_failure == PLY_TEST_HEADER) {
+	ply_test_failure = PLY_TEST_NONE;
+	ply_test_injected = 1;
+	return 0;
+    }
+    return ply_write_header(output);
+}
+
+static int
+ply_test_write_value(p_ply output, double value)
+{
+    if (ply_test_failure == PLY_TEST_VALUE) {
+	ply_test_failure = PLY_TEST_NONE;
+	ply_test_injected = 1;
+	return 0;
+    }
+    return ply_write(output, value);
+}
+
+static int
+ply_test_close(p_ply output)
+{
+    int status = ply_close(output);
+    if (ply_test_failure == PLY_TEST_CLOSE) {
+	ply_test_failure = PLY_TEST_NONE;
+	ply_test_injected = 1;
+	return 0;
+    }
+    return status;
+}
+
+/* A successful close must not hide an earlier library write failure. */
+#define ply_write_header ply_test_write_header
+#define ply_write ply_test_write_value
+#define ply_close ply_test_close
+#include "../plugins/ply/ply_write.c"
+#undef ply_write
+#undef ply_write_header
+#undef ply_close
+#endif
+
+static const struct gcv_filter *
+select_writer(struct gcv_context *context)
+{
+#ifdef GCV_PLY_TEST_WRITE_FAILURE
+    (void)context;
+    return &gcv_conv_ply_write;
+#else
+    return find_filter(GCV_FILTER_WRITE, BU_MIME_MODEL_PLY, NULL, context);
+#endif
+}
+
 static const char *
 option_string(const struct bu_opt_desc *options, const char *shortopt)
 {
@@ -73,6 +135,8 @@ check_options(const struct gcv_filter *writer, int long_options)
 
 enum { TETRA_VERTICES = 4, TETRA_FACES = 4, TETRA_COUNT = 2 };
 
+static const char *const region_names[TETRA_COUNT] = {"first.r", "second.r"};
+
 static const fastf_t tetrahedra[TETRA_COUNT * TETRA_VERTICES * 3] = {
     1000, 0, 0, 0, 1000, 0, 0, 0, 1000, 0, 0, 0,
     4000, 0, 0, 3000, 1000, 0, 3000, 0, 1000, 3000, 0, 0
@@ -82,7 +146,6 @@ static int
 create_geometry(struct gcv_context *context, int joined)
 {
     const char *meshes[] = {"first.bot", "second.bot"};
-    const char *regions[] = {"first.r", "second.r"};
     const int tetra_faces[] = {0, 1, 2, 3, 0, 2, 3, 2, 1, 3, 1, 0};
     struct rt_wdb *database = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
     struct wmember members;
@@ -98,7 +161,7 @@ create_geometry(struct gcv_context *context, int joined)
 	    goto fail;
 	if (joined) {
 	    if (!mk_addmember(meshes[region], &members.l, NULL, WMOP_UNION)) goto fail;
-	} else if (mk_comb1(database, regions[region], meshes[region], 1) < 0) {
+	} else if (mk_comb1(database, region_names[region], meshes[region], 1) < 0) {
 	    goto fail;
 	}
     }
@@ -198,7 +261,7 @@ geometry_test(int joined)
     FILE *file = bu_temp_file(path, sizeof(path));
     if (!file) valid = 0;
     else if (fclose(file)) valid = 0;
-    const struct gcv_filter *writer = find_filter(GCV_FILTER_WRITE, BU_MIME_MODEL_PLY, NULL, &source);
+    const struct gcv_filter *writer = select_writer(&source);
     if (!writer) valid = 0;
     for (size_t mode = 0; valid && mode < sizeof(types) / sizeof(types[0]); ++mode)
 	valid = round_trip(&source, writer, path, types[mode]);
@@ -207,30 +270,37 @@ geometry_test(int joined)
     return valid ? 0 : 1;
 }
 
+static void
+separate_output_path(struct bu_vls *output, const char *path, size_t region)
+{
+    struct bu_vls directory = BU_VLS_INIT_ZERO;
+    struct bu_vls basename = BU_VLS_INIT_ZERO;
+    bu_path_component(&directory, path, BU_PATH_DIRNAME);
+    bu_path_component(&basename, path, BU_PATH_BASENAME);
+    bu_vls_printf(output, "%s/%s_%s", bu_vls_cstr(&directory), region_names[region], bu_vls_cstr(&basename));
+    bu_vls_free(&directory);
+    bu_vls_free(&basename);
+}
+
 static int
 separate_test(void)
 {
     struct gcv_context source;
-    struct bu_vls directory = BU_VLS_INIT_ZERO;
-    struct bu_vls basename = BU_VLS_INIT_ZERO;
     char path[MAXPATHLEN] = {0};
-    const char *regions[] = {"first.r", "second.r"};
     const char *types[] = {"asc", "le", "be"};
     gcv_context_init(&source);
     int valid = create_geometry(&source, 0);
     FILE *file = bu_temp_file(path, sizeof(path));
     if (!file) valid = 0;
     else if (fclose(file)) valid = 0;
-    const struct gcv_filter *writer = find_filter(GCV_FILTER_WRITE, BU_MIME_MODEL_PLY, NULL, &source);
+    const struct gcv_filter *writer = select_writer(&source);
     if (!writer) valid = 0;
-    bu_path_component(&directory, path, BU_PATH_DIRNAME);
-    bu_path_component(&basename, path, BU_PATH_BASENAME);
     for (size_t mode = 0; valid && mode < sizeof(types) / sizeof(types[0]); ++mode) {
 	const char *arguments[] = {"-s", "-t", types[mode]};
 	valid = gcv_execute(&source, writer, NULL, 3, arguments, path) == 1;
-	for (size_t region = 0; region < sizeof(regions) / sizeof(regions[0]); ++region) {
+	for (size_t region = 0; region < TETRA_COUNT; ++region) {
 	    struct bu_vls output = BU_VLS_INIT_ZERO;
-	    bu_vls_printf(&output, "%s/%s_%s", bu_vls_cstr(&directory), regions[region], bu_vls_cstr(&basename));
+	    separate_output_path(&output, path, region);
 	    if (!read_export(bu_vls_cstr(&output), types[mode], region, 1)) {
 		bu_log("PLY separate output missing or incorrect: %s\n", bu_vls_cstr(&output));
 		valid = 0;
@@ -240,8 +310,6 @@ separate_test(void)
 	}
     }
     if (path[0]) bu_file_delete(path);
-    bu_vls_free(&directory);
-    bu_vls_free(&basename);
     gcv_context_destroy(&source);
     return valid ? 0 : 1;
 }
@@ -253,7 +321,8 @@ failure_test(const char *mode, const char *full_device)
     struct gcv_opts options;
     struct bu_vls unavailable = BU_VLS_INIT_ZERO;
     char path[MAXPATHLEN] = {0};
-    const char *arguments[] = {"-t", "asc"};
+    const char *arguments[] = {"-t", "asc", "-s"};
+    int separate = strstr(mode, "separate") != NULL;
     const char *missing_object[] = {"missing.r"};
     const char marker[] = "existing output\n";
     gcv_context_init(&source);
@@ -267,10 +336,10 @@ failure_test(const char *mode, const char *full_device)
 	int closed = fclose(file) == 0;
 	if (!written || !closed) valid = 0;
     }
-    const struct gcv_filter *writer = find_filter(GCV_FILTER_WRITE, BU_MIME_MODEL_PLY, NULL, &source);
+    const struct gcv_filter *writer = select_writer(&source);
     if (!writer) valid = 0;
     const char *target = path;
-    if (BU_STR_EQUAL(mode, "open")) {
+    if (BU_STR_EQUAL(mode, "open") || BU_STR_EQUAL(mode, "separate-open")) {
 	/* A regular file cannot serve as the parent directory. */
 	bu_vls_printf(&unavailable, "%s/mesh.ply", path);
 	target = bu_vls_cstr(&unavailable);
@@ -283,13 +352,27 @@ failure_test(const char *mode, const char *full_device)
 	options.verbosity_level = 1;
     } else if (BU_STR_EQUAL(mode, "close") && full_device) {
 	target = full_device;
+#ifdef GCV_PLY_TEST_WRITE_FAILURE
+    } else if (BU_STR_EQUAL(mode, "header") || BU_STR_EQUAL(mode, "header-separate")) {
+	ply_test_failure = PLY_TEST_HEADER;
+    } else if (BU_STR_EQUAL(mode, "value") || BU_STR_EQUAL(mode, "value-separate")) {
+	ply_test_failure = PLY_TEST_VALUE;
+    } else if (BU_STR_EQUAL(mode, "close-separate")) {
+	ply_test_failure = PLY_TEST_CLOSE;
+#endif
     } else {
 	valid = 0;
     }
-    if (valid && gcv_execute(&source, writer, &options, 2, arguments, target) != 0) {
+    if (valid && gcv_execute(&source, writer, &options, separate ? 3 : 2, arguments, target) != 0) {
 	bu_log("PLY writer did not reject %s failure\n", mode);
 	valid = 0;
     }
+#ifdef GCV_PLY_TEST_WRITE_FAILURE
+    if (valid && !ply_test_injected) {
+	bu_log("PLY write failure was not exercised\n");
+	valid = 0;
+    }
+#endif
     if (valid && (empty || BU_STR_EQUAL(mode, "objects") || BU_STR_EQUAL(mode, "type"))) {
 	char contents[sizeof(marker)] = {0};
 	file = fopen(path, "rb");
@@ -300,6 +383,14 @@ failure_test(const char *mode, const char *full_device)
     }
     if (valid && empty) valid = create_geometry(&source, 0);
     if (valid) valid = round_trip(&source, writer, path, "asc");
+    if (separate) {
+	for (size_t region = 0; region < TETRA_COUNT; ++region) {
+	    struct bu_vls output = BU_VLS_INIT_ZERO;
+	    separate_output_path(&output, path, region);
+	    bu_file_delete(bu_vls_cstr(&output));
+	    bu_vls_free(&output);
+	}
+    }
     if (path[0]) bu_file_delete(path);
     bu_vls_free(&unavailable);
     gcv_context_destroy(&source);
@@ -317,10 +408,17 @@ main(int argc, const char **argv)
     if (argc == 2 && (BU_STR_EQUAL(argv[1], "open") || BU_STR_EQUAL(argv[1], "type") ||
 	    BU_STR_EQUAL(argv[1], "objects") || BU_STR_EQUAL(argv[1], "empty")))
 	return failure_test(argv[1], NULL);
+#ifdef GCV_PLY_TEST_WRITE_FAILURE
+    if (argc == 2 && (BU_STR_EQUAL(argv[1], "header") || BU_STR_EQUAL(argv[1], "value") ||
+	    BU_STR_EQUAL(argv[1], "header-separate") || BU_STR_EQUAL(argv[1], "value-separate") ||
+	    BU_STR_EQUAL(argv[1], "close-separate")))
+	return failure_test(argv[1], NULL);
+#endif
+    if (argc == 2 && BU_STR_EQUAL(argv[1], "separate-open")) return failure_test(argv[1], NULL);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "close")) return failure_test(argv[1], argv[2]);
     if (argc != 1) return 1;
     gcv_context_init(&context);
-    const struct gcv_filter *writer = find_filter(GCV_FILTER_WRITE, BU_MIME_MODEL_PLY, NULL, &context);
+    const struct gcv_filter *writer = select_writer(&context);
     int valid = writer && writer->create_opts_fn && writer->free_opts_fn;
     if (valid)
 	valid = check_options(writer, 0) && check_options(writer, 1);

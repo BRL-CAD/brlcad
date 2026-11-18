@@ -43,7 +43,7 @@ struct ply_write_options
     double norm;                               /* surface normal tessolation tolerance */
     double dist;                               /* distance calculation tolerance */
     char* o_file;                              /* output file name */
-    char* type;                                /* storage type */
+    const char *type;                           /* storage type */
     int separate;                              /* flag to not merge all objects into one ply file */
     int verbose;                               /* flag for verbose output */
     char* x;                                   /* rt_debug */
@@ -78,8 +78,36 @@ struct conversion_state
     size_t tot_regions;
     size_t tot_polygons;
     size_t tot_vertices;
+    int failed;
+    e_ply_storage_mode storage_mode;
 };
 
+
+static void
+ply_output_error(p_ply output, const char *message)
+{
+    struct conversion_state *state = NULL;
+    if (output && ply_get_ply_user_data(output, (void **)&state, NULL) && state)
+	state->failed = 1;
+    bu_log("PLY writer: %s\n", message);
+}
+
+static e_ply_storage_mode
+ply_output_storage_mode(const char *type)
+{
+    if (!type || BU_STR_EQUAL(type, "de")) return PLY_DEFAULT;
+    if (BU_STR_EQUAL(type, "asc")) return PLY_ASCII;
+    if (BU_STR_EQUAL(type, "le")) return PLY_LITTLE_ENDIAN;
+    if (BU_STR_EQUAL(type, "be")) return PLY_BIG_ENDIAN;
+    bu_log("PLY writer: unsupported storage type %s\n", type);
+    return PLY_INVALID_STORAGE;
+}
+
+static p_ply
+ply_output_open(struct conversion_state *state, const char *filename)
+{
+    return ply_create(filename, state->storage_mode, ply_output_error, 0, state);
+}
 
 static void
 ply_region_filename(struct bu_vls *filename, const char *output_file, const char *region_name)
@@ -100,19 +128,87 @@ ply_region_filename(struct bu_vls *filename, const char *output_file, const char
     bu_vls_free(&region);
 }
 
+static p_ply
+ply_output_region_open(struct conversion_state *state, const char *region_name)
+{
+    struct bu_vls filename = BU_VLS_INIT_ZERO;
+    struct bu_vls comment = BU_VLS_INIT_ZERO;
+    ply_region_filename(&filename, state->output_file, region_name);
+    p_ply output = ply_output_open(state, bu_vls_cstr(&filename));
+    bu_vls_printf(&comment, "wrote region %s", region_name);
+    if (output && (!ply_add_comment(output, "converted from BRL-CAD") || !ply_add_comment(output, bu_vls_cstr(&comment))))
+	state->failed = 1;
+    bu_vls_free(&filename);
+    bu_vls_free(&comment);
+    return output;
+}
+
+static void
+ply_output_value(p_ply output, double value, struct conversion_state *state)
+{
+    if (!state->failed && !ply_write(output, value))
+	state->failed = 1;
+}
+
+static int
+ply_output_header(p_ply output, size_t vertices, size_t faces, int colors, struct conversion_state *state)
+{
+    if (vertices >= INT_MAX || faces >= INT_MAX ||
+	!ply_add_element(output, "vertex", (long)vertices) ||
+	!ply_add_scalar_property(output, "x", PLY_FLOAT) ||
+	!ply_add_scalar_property(output, "y", PLY_FLOAT) ||
+	!ply_add_scalar_property(output, "z", PLY_FLOAT) ||
+	!ply_add_element(output, "face", (long)faces) ||
+	!ply_add_list_property(output, "vertex_indices", PLY_UCHAR, PLY_UINT) ||
+	(colors && (!ply_add_scalar_property(output, "red", PLY_UCHAR) ||
+	 !ply_add_scalar_property(output, "green", PLY_UCHAR) || !ply_add_scalar_property(output, "blue", PLY_UCHAR))) ||
+	!ply_write_header(output)) {
+	state->failed = 1;
+	return 0;
+    }
+    return 1;
+}
+
+static void
+ply_region_free(struct conversion_state *state, size_t region)
+{
+    if (region >= state->tot_regions)
+	return;
+    size_t faces = state->f_sizes ? (size_t)state->f_sizes[region] : 0;
+    if (state->f_regs && state->f_regs[region]) {
+	for (size_t i = 0; i < faces; ++i)
+	    bu_free(state->f_regs[region][i], "PLY face indices");
+	bu_free(state->f_regs[region], "PLY region faces");
+	state->f_regs[region] = NULL;
+    }
+    if (state->v_regs && state->v_regs[region]) {
+	for (size_t i = 0; i < faces * 3; ++i)
+	    bu_free(state->v_regs[region][i], "PLY vertex coordinates");
+	bu_free(state->v_regs[region], "PLY region vertices");
+	state->v_regs[region] = NULL;
+    }
+    if (state->v_tbl_regs && state->v_tbl_regs[region]) {
+	bu_hash_destroy(state->v_tbl_regs[region]);
+	state->v_tbl_regs[region] = NULL;
+    }
+    if (state->f_sizes)
+	state->f_sizes[region] = 0;
+}
+
+
 static struct bu_hash_entry *
 write_verts(p_ply fp, struct bu_hash_tbl *t, struct conversion_state* pstate)
 {
+    const double millimeters_per_meter = 1000.0;
     struct bu_hash_entry *v_entry = bu_hash_next(t, NULL);
     while (v_entry) {
-	/* TODO: determine if possible with new libbu hash API? */
 	double *coords = (double *)(bu_hash_value(v_entry, NULL));
 	if (!coords) return v_entry;
 
 	/* PLY files are usually in meters */
-	ply_write(fp, coords[0] / 1000);
-	ply_write(fp, coords[1] / 1000);
-	ply_write(fp, coords[2] / 1000);
+	ply_output_value(fp, coords[0] / millimeters_per_meter, pstate);
+	ply_output_value(fp, coords[1] / millimeters_per_meter, pstate);
+	ply_output_value(fp, coords[2] / millimeters_per_meter, pstate);
 
 	/* keeping track of the order in which the vertices are input,
 	 * to write the faces
@@ -142,6 +238,12 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     int reg_faces_pos = 0;
     p_ply ply_fp = NULL;
 
+    if (pstate->failed)
+	return;
+    if ((size_t)pstate->cur_region >= pstate->tot_regions) {
+	pstate->failed = 1;
+	return;
+    }
     VSCALE(color, tsp->ts_mater.ma_color, 255);
     if (!pstate->ply_write_options->separate) {
 	if (!tsp->ts_mater.ma_color_valid) {
@@ -161,37 +263,9 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     region_name = db_path_to_string(pathp);
 
     if (pstate->ply_write_options->separate) {
-	/* Open output file */
-	char *comment;
-	struct bu_vls region_file = BU_VLS_INIT_ZERO;
-	ply_region_filename(&region_file, pstate->output_file, region_name);
-
-	/* open outputfile using specified type */
-        if (!bu_strcmp(pstate->ply_write_options->type, "asc")) {
-            ply_fp = ply_create(bu_vls_cstr(&region_file), PLY_ASCII, NULL, 0, NULL);
-        } else if (!bu_strcmp(pstate->ply_write_options->type, "le")) {
-	    ply_fp = ply_create(bu_vls_cstr(&region_file), PLY_LITTLE_ENDIAN, NULL, 0, NULL);
-	} else if (!bu_strcmp(pstate->ply_write_options->type, "be")) {
-	    ply_fp = ply_create(bu_vls_cstr(&region_file), PLY_BIG_ENDIAN, NULL, 0, NULL);
-	} else {
-	    ply_fp = ply_create(bu_vls_cstr(&region_file), PLY_DEFAULT, NULL, 0, NULL);
-	}
-	bu_vls_free(&region_file);
-	if (!ply_fp) {
-	    bu_hash_destroy(pstate->v_tbl_regs[pstate->cur_region]);
-	    bu_log("ERROR: Unable to create PLY file");
+	ply_fp = ply_output_region_open(pstate, region_name);
+	if (!ply_fp || pstate->failed)
 	    goto free_nmg;
-	}
-	if (!ply_add_comment(ply_fp, "converted from BRL-CAD")) {
-	    bu_hash_destroy(pstate->v_tbl_regs[pstate->cur_region]);
-	    bu_log("ERROR: Unable to write to PLY file");
-	    goto free_nmg;
-	}
-
-	comment = (char *) bu_calloc(strlen(region_name) + 14, sizeof(char), "comment");
-	sprintf(comment, "wrote region %s", (region_name+1));
-	ply_add_comment(ply_fp, comment);
-	bu_free(comment, "comment");
     }
 
     m = r->m_p;
@@ -230,7 +304,6 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
      * integer limit
      */
     if (nfaces >= INT_MAX) {
-	bu_hash_destroy(pstate->v_tbl_regs[pstate->cur_region]);
 	bu_log("ERROR: Number of faces (%zu) exceeds integer limit!\n", nfaces);
 	goto free_nmg;
     }
@@ -254,10 +327,12 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		struct edgeuse *eu;
 		int v_ind_pos = 0;
-		pstate->f_regs[pstate->cur_region][reg_faces_pos] = (long *) bu_calloc(3, sizeof(long), "v_ind");
 		NMG_CK_LOOPUSE(lu);
 		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		    continue;
+		if ((size_t)reg_faces_pos >= nfaces)
+		    goto free_nmg;
+		pstate->f_regs[pstate->cur_region][reg_faces_pos] = (long *)bu_calloc(3, sizeof(long), "v_ind");
 
 		if (pstate->ply_write_options->verbose || pstate->gcv_options->verbosity_level)
 		    bu_log("\tfacet:\n");
@@ -266,6 +341,8 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 
 		    v = eu->vu_p->v_p;
 		    NMG_CK_VERTEX(v);
+		    if (v_ind_pos >= 3)
+			goto free_nmg;
 		    pstate->f_regs[pstate->cur_region][reg_faces_pos][v_ind_pos] = v->index;
 		    if (pstate->ply_write_options->verbose || pstate->gcv_options->verbosity_level)
 			bu_log("\t\t(%g %g %g)\n", V3ARGS(v->vg_p->coord));
@@ -279,11 +356,6 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 			nvertices++;
 		    }
 
-		    if (v_ind_pos > 2) {
-			bu_log("ERROR: Too many vertices per face!\n");
-			goto free_nmg;
-		    }
-		    pstate->f_regs[pstate->cur_region][reg_faces_pos][v_ind_pos] = v->index;
 		    v_ind_pos++;
 		}
 		if ((size_t)reg_faces_pos >= nfaces) {
@@ -296,7 +368,6 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     }
 
     if (nvertices >= INT_MAX) {
-	bu_hash_destroy(pstate->v_tbl_regs[pstate->cur_region]);
 	bu_log("ERROR: Number of vertices (%zu) exceeds integer limit!\n", nvertices);
 	goto free_nmg;
     }
@@ -306,73 +377,52 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	size_t vi;
 	double *coords;
 
-	ply_add_element(ply_fp, "vertex", nvertices);
-	ply_add_scalar_property(ply_fp, "x", PLY_FLOAT);
-	ply_add_scalar_property(ply_fp, "y", PLY_FLOAT);
-	ply_add_scalar_property(ply_fp, "z", PLY_FLOAT);
-	ply_add_element(ply_fp, "face", nfaces);
-	ply_add_list_property(ply_fp, "vertex_indices", PLY_UCHAR, PLY_UINT);
-	if (tsp->ts_mater.ma_color_valid) {
-	    ply_add_scalar_property(ply_fp, "red", PLY_UCHAR);
-	    ply_add_scalar_property(ply_fp, "green", PLY_UCHAR);
-	    ply_add_scalar_property(ply_fp, "blue", PLY_UCHAR);
-	}
-	ply_write_header(ply_fp);
+	if (!ply_output_header(ply_fp, nvertices, nfaces, tsp->ts_mater.ma_color_valid, pstate))
+	    goto free_nmg;
 
 	if (write_verts(ply_fp, pstate->v_tbl_regs[pstate->cur_region], pstate)) {
-	    bu_hash_destroy(pstate->v_tbl_regs[pstate->cur_region]);
 	    bu_log("ERROR: No coordinates found for vertex!\n");
 	    goto free_nmg;
 	}
 	for (fi = 0; fi < nfaces; fi++) {
-	    ply_write(ply_fp, 3);
+	    ply_output_value(ply_fp, 3, pstate);
 	    for (vi = 0; vi < 3; vi++) {
 		coords = (double *)bu_hash_get(pstate->v_tbl_regs[pstate->cur_region], (const unsigned char *)(pstate->f_regs[pstate->cur_region][fi] + vi), sizeof(long));
 		if (!coords) {
 		    bu_log("ERROR: No vertex found for face with index %ld!\n", pstate->f_regs[pstate->cur_region][fi][vi]);
 		    goto free_nmg;
 		}
-		ply_write(ply_fp, coords[3]);
+		ply_output_value(ply_fp, coords[3], pstate);
 	    }
 	    if(tsp->ts_mater.ma_color_valid) {
-		ply_write(ply_fp, color[0]);
-		ply_write(ply_fp, color[1]);
-		ply_write(ply_fp, color[2]);
+		ply_output_value(ply_fp, color[0], pstate);
+		ply_output_value(ply_fp, color[1], pstate);
+		ply_output_value(ply_fp, color[2], pstate);
 	    }
-	    bu_free(pstate->f_regs[pstate->cur_region][fi], "v_ind");
+
 	}
 
         pstate->v_order = 0;    // reset index for next file
-        ply_close(ply_fp);      
+        if (!ply_close(ply_fp))
+	    pstate->failed = 1;
+	ply_fp = NULL;
     }
 
     pstate->tot_polygons += nfaces;
     pstate->tot_vertices += nvertices;
 
-    if (pstate->ply_write_options->separate) {
-	bu_hash_destroy(pstate->v_tbl_regs[pstate->cur_region]);
-	bu_free(pstate->f_regs[pstate->cur_region], "reg_faces");
-    }
+    if (pstate->ply_write_options->separate)
+	ply_region_free(pstate, (size_t)pstate->cur_region);
     bu_free(region_name, "region_name");
     pstate->cur_region++;
     return;
 
 free_nmg:
+    pstate->failed = 1;
     if (ply_fp)
 	ply_close(ply_fp);
-    if (region_name)
-	bu_free(region_name, "region_name");
-    if (pstate->f_regs)
-	bu_free(pstate->f_regs, "pstate->f_regs");
-    if (pstate->f_sizes)
-	bu_free(pstate->f_sizes, "pstate->f_sizes");
-    if (pstate->v_regs)
-	bu_free(pstate->v_regs, "pstate->v_regs");
-    if (pstate->v_tbl_regs)
-	bu_free(pstate->v_tbl_regs, "pstate->v_tbl_regs");
-    nmg_km(pstate->the_model);
-    rt_vlist_cleanup();
-    bu_exit(1, NULL);
+    bu_free(region_name, "region_name");
+    ply_region_free(pstate, (size_t)pstate->cur_region);
 }
 
 
@@ -387,6 +437,7 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 	nmg_to_ply(r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp, pstate);
 	completed = 1;
     } else {
+	pstate->failed = 1;
 	/* catch */
 
 	char *sofar;
@@ -545,10 +596,10 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 	    struct nmgregion *candidate;
 	    for (BU_LIST_FOR(candidate, nmgregion, &result_model->r_hd))
 		if (candidate == r) present = 1;
-	    if (present && process_triangulation(r, pathp, &region_state, pstate))
-		pstate->regions_written++;
-	    else
+	    if (!present || !process_triangulation(r, pathp, &region_state, pstate))
 		ret_tree->tr_d.td_r = NULL;
+	    else if (!pstate->failed)
+		pstate->regions_written++;
 	} else if (empty_model) {
 	    ret_tree->tr_d.td_r = NULL;
 	}
@@ -581,19 +632,23 @@ count_regions(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUS
 
 /* taken from g-tankill.c */
 static union tree *
-region_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *UNUSED(curtree), void *UNUSED(client_data))
+region_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *curtree, void *client_data)
 {
-    bu_exit(1, "ERROR; region stub called, this shouldn't happen.\n");
-    return (union tree *)NULL; /* just to keep the compilers happy */
+    struct conversion_state *state = (struct conversion_state *)client_data;
+    state->failed = 1;
+    bu_log("PLY writer: unexpected region callback while counting regions\n");
+    return curtree;
 }
 
 
 /* taken from g-tankill.c */
 static union tree *
-leaf_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), struct rt_db_internal *UNUSED(ip), void *UNUSED(client_data))
+leaf_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), struct rt_db_internal *UNUSED(ip), void *client_data)
 {
-    bu_exit(1, "ERROR: leaf stub called, this shouldn't happen.\n");
-    return (union tree *)NULL; /* just to keep the compilers happy */
+    struct conversion_state *state = (struct conversion_state *)client_data;
+    state->failed = 1;
+    bu_log("PLY writer: unexpected leaf callback while counting regions\n");
+    return TREE_NULL;
 }
 
 static void
@@ -643,15 +698,9 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
     struct db_tree_state tree_state;
     p_ply ply_fp = NULL;
     int status = 0;
-    const struct ply_write_options *output_options = (const struct ply_write_options *)options_data;
 
     if (!gcv_options->num_objects) {
 	bu_log("PLY writer: no objects to export\n");
-	return 0;
-    }
-    if (!BU_STR_EQUAL(output_options->type, "asc") && !BU_STR_EQUAL(output_options->type, "le") &&
-	!BU_STR_EQUAL(output_options->type, "be") && !BU_STR_EQUAL(output_options->type, "de")) {
-	bu_log("PLY writer: unsupported storage type %s\n", output_options->type);
 	return 0;
     }
     for (size_t i = 0; i < gcv_options->num_objects; ++i)
@@ -660,7 +709,10 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
 
     memset(&state, 0, sizeof(state));
     state.gcv_options = gcv_options;
-    state.ply_write_options = (struct ply_write_options*)options_data;
+    state.ply_write_options = (const struct ply_write_options *)options_data;
+    state.storage_mode = ply_output_storage_mode(state.ply_write_options->type);
+    if (state.storage_mode == PLY_INVALID_STORAGE)
+	return 0;
     state.output_file = dest_path;
     if (state.ply_write_options->o_file) {        // check if user explicitly set with -o
         state.output_file = state.ply_write_options->o_file;
@@ -693,16 +745,7 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
     state.vlfree = &rt_vlfree;
 
     if (!state.ply_write_options->separate) {
-        /* open outputfile using specified type */
-        if (!bu_strcmp(state.ply_write_options->type, "asc")) {
-            ply_fp = ply_create(state.output_file, PLY_ASCII, NULL, 0, NULL);
-        } else if (!bu_strcmp(state.ply_write_options->type, "le")) {
-	    ply_fp = ply_create(state.output_file, PLY_LITTLE_ENDIAN, NULL, 0, NULL);
-	} else if (!bu_strcmp(state.ply_write_options->type, "be")) {
-	    ply_fp = ply_create(state.output_file, PLY_BIG_ENDIAN, NULL, 0, NULL);
-	} else {
-	    ply_fp = ply_create(state.output_file, PLY_DEFAULT, NULL, 0, NULL);
-	}
+        ply_fp = ply_output_open(&state, state.output_file);
 
         /* verify open and writability */
         if (!ply_fp) {
@@ -764,24 +807,17 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
     if (state.ply_write_options->verbose || state.gcv_options->verbosity_level)
 	bu_log("Found %d nmg regions.\n", state.cur_region);
 
+    if (state.failed || !state.cur_region)
+	goto free_all;
+
     if (!state.ply_write_options->separate) {
 	int ri;
         int fi;
         int vi;
 	double *coords;
 
-        ply_add_element(ply_fp, "vertex", state.tot_vertices);
-        ply_add_scalar_property(ply_fp, "x", PLY_FLOAT);
-        ply_add_scalar_property(ply_fp, "y", PLY_FLOAT);
-        ply_add_scalar_property(ply_fp, "z", PLY_FLOAT);
-        ply_add_element(ply_fp, "face", state.tot_polygons);
-        ply_add_list_property(ply_fp, "vertex_indices", PLY_UCHAR, PLY_UINT);
-        if (state.color_info == 1) {
-            ply_add_scalar_property(ply_fp, "red", PLY_UCHAR);
-            ply_add_scalar_property(ply_fp, "green", PLY_UCHAR);
-            ply_add_scalar_property(ply_fp, "blue", PLY_UCHAR);
-        }
-        ply_write_header(ply_fp);
+        if (!ply_output_header(ply_fp, state.tot_vertices, state.tot_polygons, state.color_info == 1, &state))
+	    goto free_all;
 
 	for (ri = 0; ri < state.cur_region; ri++)
 	    if (write_verts(ply_fp, state.v_tbl_regs[ri], &state)) {
@@ -790,29 +826,30 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
 	    }
 	for (ri = 0; ri < state.cur_region; ri++) {
 	    for (fi = 0; fi < state.f_sizes[ri]; fi++) {
-		ply_write(ply_fp, 3);
+		ply_output_value(ply_fp, 3, &state);
 		for (vi = 0; vi < 3; vi++) {
 		    coords = (double *)bu_hash_get(state.v_tbl_regs[ri], (const unsigned char *)(state.f_regs[ri][fi] + vi), sizeof(long));
 		    if (!coords) {
 			bu_log("ERROR: No vertex found for face with index %ld!\n", state.f_regs[ri][fi][vi]);
 			goto free_all;
 		    }
-		    ply_write(ply_fp, coords[3]);
+		    ply_output_value(ply_fp, coords[3], &state);
 		}
 		if (state.color_info == 0) {
 		    bu_log("ERROR: Could not find any regions");
 		    goto free_all;
 		} else if (state.color_info == 1) {
-		    ply_write(ply_fp, state.all_colors[0]);
-		    ply_write(ply_fp, state.all_colors[1]);
-		    ply_write(ply_fp, state.all_colors[2]);
+		    ply_output_value(ply_fp, state.all_colors[0], &state);
+		    ply_output_value(ply_fp, state.all_colors[1], &state);
+		    ply_output_value(ply_fp, state.all_colors[2], &state);
 		}
-		bu_free(state.f_regs[ri][fi], "v_ind");
 	    }
-	    bu_free(state.f_regs[ri], "reg_faces");
-	    bu_hash_destroy(state.v_tbl_regs[ri]);
+	    ply_region_free(&state, (size_t)ri);
 	}
     }
+
+    if (state.failed)
+	goto free_all;
 
     if (state.color_info == 1 && (state.ply_write_options->verbose || state.gcv_options->verbosity_level))
 	bu_log("Wrote color (%d, %d, %d), since all objects had the same color.\n", state.all_colors[0], state.all_colors[1], state.all_colors[2]);
@@ -844,8 +881,10 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
         bu_log("  dist [-D]    %g\n", tol.dist);
     }
 
-    status = state.cur_region > 0;
+    status = !state.failed && state.cur_region > 0;
 free_all:
+    for (size_t i = 0; i < state.tot_regions; ++i)
+	ply_region_free(&state, i);
     /* Release dynamic storage */
     if (state.f_regs)
 	bu_free(state.f_regs, "state.f_regs");
@@ -860,7 +899,7 @@ free_all:
     nmg_km(state.the_model);
     rt_vlist_cleanup();
 
-    return status;
+    return status && !state.failed;
 }
 
 /* filter setup */
