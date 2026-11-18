@@ -91,7 +91,7 @@ parse_six_doubles(const char *arg, double *out_values)
 
 	errno = 0;
 	out_values[i] = strtod(cp, &end);
-	if (errno != 0 || end == cp)
+	if (errno != 0 || end == cp || !isfinite(out_values[i]))
 	    return 0;
 	cp = end;
     }
@@ -117,7 +117,7 @@ parse_sixteen_doubles(const char *arg, double *out_values)
 
 	errno = 0;
 	out_values[i] = strtod(cp, &end);
-	if (errno != 0 || end == cp)
+	if (errno != 0 || end == cp || !isfinite(out_values[i]))
 	    return 0;
 	cp = end;
     }
