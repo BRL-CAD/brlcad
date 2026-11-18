@@ -2575,7 +2575,7 @@ main(int argc, char *argv[])
     brlcad_file = argv[bu_optind + 1];
 
     /* Open input file and read entire contents */
-    if ((fd_in = fopen(input_file, "r")) == NULL) {
+    if ((fd_in = fopen(input_file, "rb")) == NULL) {
 	bu_log("Cannot open input file (%s)\n", input_file);
 	perror("csg-g");
 	bu_exit(1, NULL);
