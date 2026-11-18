@@ -1244,8 +1244,7 @@ vrml_write(struct gcv_context *context, const struct gcv_opts *gcv_options, cons
 	return 0;
     }
 
-    struct db_tree_state initial_tree_state;
-    RT_DBTS_INIT(&initial_tree_state);
+    RT_DBTS_INIT(&tree_state);
     tree_state.ts_tol = &gcv_options->calculational_tolerance;
     tree_state.ts_ttol = &gcv_options->tessellation_tolerance;
     tree_state.ts_m = &the_model;
