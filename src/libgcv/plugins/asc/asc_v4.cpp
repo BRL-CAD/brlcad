@@ -2133,9 +2133,10 @@ combdump(struct ascv4_wstate *s)	/* Print out Combination record information */
     mcount = 0;
     while (1) {
 	BU_GET(mp, struct mchain);
-	if (fread((char *)&mp->r, sizeof(mp->r), 1, s->ifp) != 1
-	     || feof(s->ifp))
+	if (fread((char *)&mp->r, sizeof(mp->r), 1, s->ifp) != 1) {
+	    BU_PUT(mp, struct mchain);
 	    break;
+	}
 	if (mp->r.u_id != ID_MEMB) {
 	    ret_mp = mp;	/* Handle it later */
 	    break;
@@ -2211,18 +2212,12 @@ combdump(struct ascv4_wstate *s)	/* Print out Combination record information */
      */
     while (BU_LIST_WHILE(mp, mchain, &head)) {
 	membdump(s, &mp->r);
-    }
-
-    // bu_list_free style cleanup
-    struct bu_list *p;
-    while (BU_LIST_WHILE(p, bu_list, &head)) {
-	BU_LIST_DEQUEUE(p);
-	mp = (struct mchain *)p;
+	BU_LIST_DEQUEUE(&mp->l);
 	BU_PUT(mp, struct mchain);
     }
 
     if (ret_mp) {
-	memcpy((char *)&s->record, (char *)&ret_mp->r, sizeof(record));
+	memcpy((char *)&s->record, (char *)&ret_mp->r, sizeof(s->record));
 	BU_PUT(ret_mp, struct mchain);
 	return 1;
     }
@@ -2588,6 +2583,10 @@ asc_write_v4(
 	return 0;
     }
 
+    if (bu_fseek(s->ifp, 0, SEEK_SET) || fread(&s->record, sizeof(s->record), 1, s->ifp) != 1) {
+	ascv4_wdestroy(s);
+	return 0;
+    }
 top:
     do {
 	/* A v4 record is already in the input buffer */
@@ -2662,8 +2661,12 @@ top:
     }  while (fread((char *)&s->record, sizeof s->record, 1, s->ifp) == 1  &&
 	    !feof(s->ifp));
 
+    int status = !ferror(s->ifp) && !ferror(s->ofp);
+    if (fclose(s->ofp))
+	status = 0;
+    s->ofp = NULL;
     ascv4_wdestroy(s);
-    return 1;
+    return status;
 }
 
 // Local Variables:

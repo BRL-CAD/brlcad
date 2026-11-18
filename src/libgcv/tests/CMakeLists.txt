@@ -7,6 +7,15 @@ brlcad_add_test(NAME bottess_test COMMAND test_bottess)
 brlcad_addexec(test_gcv_context test_context.c libgcv NO_INSTALL)
 brlcad_add_test(NAME gcv_context_test COMMAND test_gcv_context)
 
+if(TARGET gcv-asc)
+  brlcad_addexec(test_gcv_asc_legacy asc_legacy.c "libgcv;libwdb;librt" TEST)
+  if(TARGET test_gcv_asc_legacy)
+    add_dependencies(test_gcv_asc_legacy gcv-asc)
+  endif()
+  brlcad_add_test(NAME gcv_asc_legacy COMMAND test_gcv_asc_legacy)
+  set_tests_properties(gcv_asc_legacy PROPERTIES TIMEOUT 10)
+endif()
+
 cmakefiles(CMakeLists.txt test_context.c)
 
 # Local Variables:
