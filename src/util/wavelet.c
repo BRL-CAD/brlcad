@@ -85,6 +85,38 @@ size_t limit = 0;
 int decomp_recon;
 
 static int
+is_power_of_two(size_t value)
+{
+    return value && !(value & (value - 1));
+}
+
+static int
+wavelet_configuration_valid(void)
+{
+    if (!is_power_of_two(width)) {
+	bu_log("%s: width must be a power of two\n", bu_getprogname());
+	return 0;
+    }
+    if (img_space == 2 && width != height) {
+	bu_log("%s: a two-dimensional transform requires equal width and height\n",
+	       bu_getprogname());
+	return 0;
+    }
+    if (!is_power_of_two(limit) || limit > width) {
+	bu_log("%s: transform limit must be a power of two no greater than the width\n",
+	       bu_getprogname());
+	return 0;
+    }
+    if (decomp_recon == RECONSTRUCT &&
+	(!is_power_of_two(avg_size) || avg_size >= limit)) {
+	bu_log("%s: average size must be a power of two smaller than the transform limit\n",
+	       bu_getprogname());
+	return 0;
+    }
+    return 1;
+}
+
+static int
 parse_size_arg(const char *arg, size_t *out_value, const char *label, int allow_zero)
 {
     return bu_opt_scan_size_t_range(arg, out_value, allow_zero ? 0 : 1, SIZE_MAX, label);
@@ -276,11 +308,6 @@ wlt_decompose_2d(void)
 	fprintf(stderr, "2D decompose:\n\tdatatype_size:%lu channels:%lu width:%lu height:%lu limit:%lu\n", (long unsigned)value_size, (long unsigned)channels, (long unsigned)width, (long unsigned)height, (long unsigned)limit);
 
 
-    if (width != height) {
-	fprintf(stderr, "Two dimensional decomposition requires square image\n");
-	bu_exit(1, "%zu x %zu image specified\n", width, height);
-    }
-
     if (fread(buf, scanline_size, height, stdin) != height) {
 	bu_exit(1, "read error getting %zu x %zu bytes\n", scanline_size, height);
     }
@@ -388,11 +415,6 @@ wlt_reconstruct_2d(void)
     if (debug)
 	fprintf(stderr, "2D reconstruct:\n\tdatatype_size:%lu channels:%lu width:%lu height:%lu limit:%lu\n", (long unsigned)value_size, (long unsigned)channels, (long unsigned)width, (long unsigned)height, (long unsigned)limit);
 
-    if (width != height) {
-	fprintf(stderr, "Two dimensional decomposition requires square image\n");
-	bu_exit(1, "%zu x %zu image specified\n", width, height);
-    }
-
     if (fread(buf, scanline_size, height, stdin) != height) {
 	bu_exit(1, "read error getting %zu x %zu bytes\n", scanline_size, height);
     }
@@ -450,6 +472,8 @@ main(int ac, char **av)
 	/* set some defaults */
 	if (avg_size == 0) avg_size = width;
 	if (limit == 0) limit = 1;
+	if (!wavelet_configuration_valid())
+	    return 1;
 
 	if (img_space == 1) wlt_decompose_1d();
 	else wlt_decompose_2d();
@@ -458,6 +482,8 @@ main(int ac, char **av)
 	/* set some defaults */
 	if (avg_size == 0) avg_size = 1;
 	if (limit == 0) limit = width;
+	if (!wavelet_configuration_valid())
+	    return 1;
 
 	if (img_space == 1) wlt_reconstruct_1d();
 	else wlt_reconstruct_2d();
