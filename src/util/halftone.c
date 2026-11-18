@@ -884,9 +884,10 @@ setup(int argc, char **argv)
 		    long int levels = 0;
 		    if (!parse_positive_long_arg(bu_optarg, &levels, "level count"))
 			bu_exit(1, usage);
+		    if (levels < 2 || levels > 256)
+			bu_exit(1, "halftone: level count must be from 2 through 256.\n");
 		    Levels = (int)levels - 1;
 		}
-		V_MAX(Levels, 1);
 		break;
 /*
  * Tone scale processing is a little strange.  The -T option is followed
