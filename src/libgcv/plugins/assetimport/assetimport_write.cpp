@@ -492,6 +492,20 @@ assetimport_write(struct gcv_context *context, const struct gcv_opts *gcv_option
 	return 0;
     }
 
+    std::string output_path = dest_path ? dest_path : "";
+    if (BU_STR_EQUAL(fmt_desc->id, "pbrt")) {
+	/* The SDK rebuilds the filename with a lowercase .pbrt suffix. */
+	const std::string extension = ".pbrt";
+	if (output_path.size() < extension.size() ||
+	    output_path.compare(output_path.size() - extension.size(), extension.size(), extension)) {
+	    bu_log("The SDK PBRT writer requires a .pbrt destination suffix\n");
+	    return 0;
+	}
+	/* Keep the SDK's parent nonempty for bare names and root paths. */
+	const size_t separator = output_path.find_last_of("/\\");
+	output_path.insert(separator == std::string::npos ? 0 : separator + 1, "./");
+    }
+
     /* generate aiScene from .g */
     state.scene = new aiScene();
     state.scene->mRootNode = new aiNode();
@@ -557,7 +571,7 @@ assetimport_write(struct gcv_context *context, const struct gcv_opts *gcv_option
 	ret = 0;
     } else {
 	/* export. The fourth argument is an Assimp postprocess flag mask, not scene->mFlags. */
-	aiReturn airet = exporter.Export(state.scene, fmt_desc->id, dest_path, 0);
+	aiReturn airet = exporter.Export(state.scene, fmt_desc->id, output_path, 0);
 	if (airet != AI_SUCCESS) {
 	    bu_log("ERROR: %s\n", exporter.GetErrorString());
 	    ret = 0;
