@@ -694,7 +694,8 @@ parse_args(int ac, char **av, void (**terrain_func)(unsigned short *))
 		    usage("");
 		break;
 	    case 'f':
-		switch (*bu_optarg) {
+		switch (bu_optarg[0] != '\0' && bu_optarg[1] == '\0' ?
+			bu_optarg[0] : '\0') {
 		    case 'L':
 			*terrain_func = &func_lunar;
 			break;
