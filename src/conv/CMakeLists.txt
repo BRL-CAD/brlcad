@@ -64,7 +64,7 @@ brlcad_addexec(g-jack jack/g-jack.c "librt;libnmg;libbu" FOLDER Conv)
 
 brlcad_addexec(g-off off/g-off.c "librt;libnmg;libbu" FOLDER Conv)
 
-brlcad_addexec(off-g off/off-g.c "libwdb;librt;libnmg;libbu" FOLDER Conv)
+brlcad_addexec(off-g off/off-g.c "libwdb;librt;libnmg;libbu" FOLDER Conv ARG_SCHEMA)
 
 brlcad_addexec(stl-g stl/stl-g.c "libwdb;librt;libbu;${WINSOCK_LIB}" FOLDER Conv)
 

@@ -9,11 +9,10 @@ off-g - convert a DEC Object File Format model to a BRL-CAD database
 
 == SYNOPSIS
 
-[source]
-----
-off-g _file.off_ _database.g_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*off-g* [_OPTION_]... _input_ _output_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -38,6 +37,15 @@ one face per line listing an edge count followed by the 1-based vertex
 indices of that face. Per-face planes are fit and the faces are glued
 into a single NMG shell. See *g-off*(1) for the inverse conversion and
 *mged*(1) for working with the resulting database.
+
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES
