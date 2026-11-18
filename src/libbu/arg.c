@@ -1314,6 +1314,13 @@ cmd_schema_set_value(const struct bu_arg_option *option, void *data, const char 
 	case BU_ARG_VALUE_INTEGER:
 	{
 	    int value;
+	    if (option->arg_requirement == BU_ARG_NONE) {
+		if (option->repeat)
+		    (*((int *)storage))++;
+		else
+		    *((int *)storage) = 1;
+		return 0;
+	    }
 	    if (!bu_arg_integer_from_str(NULL, &value, arg, 0)) {
 		if (msg)
 		    bu_vls_printf(msg, "invalid integer for --%s: %s\n", cmd_schema_option_name(option), arg);

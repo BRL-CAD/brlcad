@@ -390,7 +390,7 @@ struct bu_arg_option {
     bu_arg_value_validate_t validate;
     const char *semantic_provider;
     const char *alias_of;
-    /* A repeatable flag accumulates occurrences in its int storage field. */
+    /* A repeatable flag accumulates occurrences in its integer storage field. */
     int repeat;
     int hidden;
     const char * const *value_keywords;
@@ -922,7 +922,7 @@ BU_EXPORT extern int bu_arg_integer_pair_optional_validate(size_t argc,
 /** Compact option declaration helpers. */
 #define BU_ARG_FLAG(_short, _long, _record, _field, _help) \
     {_short, _long, _long, NULL, _help, BU_ARG_VALUE_FLAG, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_NONE, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-/** A no-argument flag whose int storage field counts occurrences. */
+/** A no-argument flag whose int or long storage field counts occurrences. */
 #define BU_ARG_COUNTING_FLAG(_short, _long, _record, _field, _type, _help) \
     {_short, _long, _long, NULL, _help, _type, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 1, 0, NULL, BU_ARG_NONE, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
 /**

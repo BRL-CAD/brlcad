@@ -28,6 +28,11 @@ struct short_only_args {
     int selected;
 };
 
+struct counting_args {
+    int verbose;
+    long quiet;
+};
+
 static int custom_calls = 0;
 
 static int cannot_bypass_structure(const struct bu_arg_schema *, size_t,
@@ -277,6 +282,18 @@ static const struct bu_arg_schema test_schema =
     BU_ARG_SCHEMA_BOUND("test", "Native command-schema regression fixture",
 	test_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST, NULL, NULL, NULL,
 	test_context_validate);
+
+static const struct bu_arg_option counting_options[] = {
+    BU_ARG_COUNTING_FLAG("v", "verbose", struct counting_args, verbose,
+	BU_ARG_VALUE_INTEGER, "Increase verbosity"),
+    BU_ARG_COUNTING_FLAG("q", "quiet", struct counting_args, quiet,
+	BU_ARG_VALUE_LONG, "Increase quiet level"),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_schema counting_schema = BU_ARG_SCHEMA(
+    "counting", "Counting flag fixture", counting_options, NULL,
+    BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
 
 static const struct bu_arg_schema failing_schema =
     BU_ARG_SCHEMA_EXTERNAL("failing", "Failure transaction fixture", NULL,
@@ -705,6 +722,7 @@ main(int UNUSED(argc), char **argv)
     struct bu_arg_validate_result result = BU_ARG_VALIDATE_RESULT_NULL;
     struct test_args args = {0, 0};
     struct short_only_args short_only_args = {0};
+    struct counting_args counting_args = {0, 0};
     int context_calls = 0;
 
     const char *bare[] = {"--list"};
@@ -736,6 +754,7 @@ main(int UNUSED(argc), char **argv)
     const char *relation_complete[] = {"--dependent", "--required", "word"};
     const char *relation_conflict[] = {"--conflict", "--required"};
     const char *occurrence_duplicate[] = {"-dd"};
+    const char *counting[] = {"-vv", "-v", "--verbose", "-qq"};
     const char *terminal_help[] = {"--help"};
     const char *terminal_help_extra[] = {"--help", "ignored", "arguments"};
     const char *terminal_version_extra[] = {"--version", "ignored"};
@@ -752,6 +771,15 @@ main(int UNUSED(argc), char **argv)
 
     if (test_scalar_readers())
 	return 1;
+
+    if (bu_arg_schema_parse_complete(&counting_schema, &counting_args, &msg,
+	    4, counting) != 4 || counting_args.verbose != 4 ||
+	counting_args.quiet != 2) {
+	bu_log("integer or long counting flags did not accumulate occurrences: %s\n",
+	    bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
 
     {
 	int transaction_failure = 0;
