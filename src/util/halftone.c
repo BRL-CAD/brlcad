@@ -131,7 +131,7 @@ parse_double_arg(const char *arg, double *out_value, const char *label)
 
     errno = 0;
     *out_value = strtod(arg, &end);
-    if (errno != 0 || end == arg || *end != '\0') {
+    if (errno != 0 || end == arg || *end != '\0' || !isfinite(*out_value)) {
 	fprintf(stderr, "halftone: invalid %s '%s'\n", label, arg);
 	return 0;
     }
