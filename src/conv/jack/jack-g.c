@@ -42,6 +42,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/path.h"
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"
@@ -74,12 +75,13 @@ print_usage(const char *progname)
 int
 main(int argc, char **argv)
 {
-    char		*base, *bfile, *grp_name, *reg_name;
+    char		*bfile, *grp_name, *reg_name;
     const char *jfile;
     FILE		*fpin;
     struct rt_wdb	*fpout = NULL;
     size_t doti;
     int	c;
+    int remaining;
     struct bu_list *vlfree = &rt_vlfree;
 
     bu_setprogname(argv[0]);
@@ -103,24 +105,21 @@ main(int argc, char **argv)
 	}
     }
 
-    /* Get Jack psurf input file name. */
-    if (bu_optind >= argc) {
+    remaining = argc - bu_optind;
+    if (remaining == 1) {
 	jfile = "-";
 	fpin = stdin;
-    } else {
+    } else if (remaining == 2) {
 	jfile = argv[bu_optind];
 	if ((fpin = fopen(jfile, "rb")) == NULL) {
 	    bu_exit(1, "%s: cannot open %s for reading\n",
 		    argv[0], jfile);
 	}
-    }
-
-    /* Get BRL-CAD output data base name. */
-    bu_optind++;
-    if (bu_optind >= argc) {
+    } else {
 	print_usage(argv[0]);
     }
-    bfile = argv[bu_optind];
+
+    bfile = argv[argc - 1];
     if ((fpout = wdb_fopen(bfile)) == NULL) {
 	bu_exit(1, "%s: cannot open %s for writing\n",
 		argv[0], bfile);
@@ -131,14 +130,8 @@ main(int argc, char **argv)
 
     /* Make default region name if none given. */
     if (!reg_name) {
-	/* Ignore leading path info. */
-	base = strrchr(argv[1], '/');
-	if (base)
-	    base++;
-	else
-	    base = argv[1];
-	reg_name = (char *)bu_malloc(sizeof(base)+1, "reg_name");
-	bu_strlcpy(reg_name, base, sizeof(base)+1);
+	reg_name = BU_STR_EQUAL(jfile, "-") ? bu_strdup("stdin") :
+	    bu_path_basename(jfile, NULL);
 
 	/* Ignore .pss extension if it's there. */
 	doti = strlen(reg_name);
@@ -150,7 +143,8 @@ main(int argc, char **argv)
     }
 
     jack_to_brlcad(fpin, fpout, reg_name, grp_name, jfile, vlfree);
-    fclose(fpin);
+    if (fpin != stdin)
+	fclose(fpin);
     db_close(fpout->dbip);
     return 0;
 }
