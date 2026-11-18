@@ -754,6 +754,7 @@ main(int ac, char *av[])
     void (*terrain_func)(unsigned short *);
 
     bu_setprogname(av[0]);
+    setmode(fileno(stdout), O_BINARY);
 
     terrain_func = NULL;
     arg_count = parse_args(ac, av, &terrain_func);
