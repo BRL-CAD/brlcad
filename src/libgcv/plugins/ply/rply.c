@@ -1318,6 +1318,8 @@ static int ply_read_word(p_ply ply) {
         t = strspn(BFIRST(ply), " \n\r\t");
         /* check if all buffer was made of blanks */
         if (t >= BSIZE(ply)) {
+            /* Discard blanks so a full buffer has room for new input. */
+            BSKIP(ply, t);
             if (!BREFILL(ply)) {
                 ply_ferror(ply, "Unexpected end of file");
                 return 0;

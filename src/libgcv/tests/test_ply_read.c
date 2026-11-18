@@ -326,6 +326,49 @@ scale_test(void)
     return failed;
 }
 
+static int
+whitespace_test(void)
+{
+    struct gcv_context context;
+    char paths[3][MAXPATHLEN] = {{0}};
+    struct bu_vls text = BU_VLS_INIT_ZERO;
+    const size_t padding_bytes = 64 * 1024;
+    const char *body = strstr(ordered, "end_header\n") + strlen("end_header\n");
+    int failed = 0;
+    gcv_context_init(&context);
+    /* Exercise whitespace spanning several refill blocks in headers and data. */
+    bu_vls_strcat(&text, "ply\n");
+    bu_vls_spaces(&text, padding_bytes);
+    bu_vls_strcat(&text, ordered + strlen("ply\n"));
+    if (!write_fixture(paths[0], bu_vls_cstr(&text)) || read_fixture(&context, paths[0], "1") != 1 ||
+	!check_triangle(&context, paths[0], 1)) {
+	bu_log("PLY reader failed to skip header whitespace across refill blocks\n");
+	failed = 1;
+    }
+    bu_vls_trunc(&text, 0);
+    bu_vls_strncat(&text, ordered, body - ordered);
+    bu_vls_spaces(&text, padding_bytes);
+    bu_vls_strcat(&text, body);
+    if (!write_fixture(paths[1], bu_vls_cstr(&text)) || read_fixture(&context, paths[1], "1") != 1 ||
+	!check_triangle(&context, paths[1], 1)) {
+	bu_log("PLY reader failed to skip data whitespace across refill blocks\n");
+	failed = 1;
+    }
+    bu_vls_trunc(&text, 0);
+    bu_vls_strncat(&text, ordered, body - ordered);
+    bu_vls_spaces(&text, padding_bytes);
+    if (!write_fixture(paths[2], bu_vls_cstr(&text)) || read_fixture(&context, paths[2], "1") != 0 ||
+	mesh_count(&context) != 2) {
+	bu_log("PLY reader did not reject missing data after whitespace\n");
+	failed = 1;
+    }
+    for (size_t i = 0; i < sizeof(paths) / sizeof(paths[0]); ++i)
+	if (paths[i][0]) bu_file_delete(paths[i]);
+    bu_vls_free(&text);
+    gcv_context_destroy(&context);
+    return failed;
+}
+
 int
 main(int argc, const char **argv)
 {
@@ -336,6 +379,7 @@ main(int argc, const char **argv)
     if (BU_STR_EQUAL(argv[1], "topology")) return topology_test();
     if (BU_STR_EQUAL(argv[1], "names")) return names_test();
     if (BU_STR_EQUAL(argv[1], "scale")) return scale_test();
+    if (BU_STR_EQUAL(argv[1], "whitespace")) return whitespace_test();
     return 1;
 }
 

@@ -37,6 +37,7 @@ if(TARGET gcv-ply)
   brlcad_add_test(NAME gcv_ply_read_topology COMMAND test_gcv_ply_read topology)
   brlcad_add_test(NAME gcv_ply_read_names COMMAND test_gcv_ply_read names)
   brlcad_add_test(NAME gcv_ply_read_scale COMMAND test_gcv_ply_read scale)
+  brlcad_add_test(NAME gcv_ply_read_whitespace COMMAND test_gcv_ply_read whitespace)
 endif()
 
 cmakefiles(CMakeLists.txt test_context.c)
