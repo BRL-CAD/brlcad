@@ -19,8 +19,11 @@
  */
 #include "common.h"
 
+#include <limits.h>
+
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "analyze.h"
 
 
@@ -30,6 +33,31 @@ struct voxelizeData
     fastf_t threshold;
     fastf_t bbMin[3];
 };
+
+
+static int
+parse_voxel_size(const char *arg, fastf_t size[3])
+{
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    const char *argv[] = {arg};
+    vect_t parsed;
+    int consumed;
+
+    consumed = bu_opt_vect_t(&msg, 1, argv, parsed);
+    if (consumed != 1) {
+	if (bu_vls_strlen(&msg) > 0)
+	    bu_log("%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 0;
+    }
+    bu_vls_free(&msg);
+    if (parsed[0] <= 0.0 || parsed[1] <= 0.0 || parsed[2] <= 0.0) {
+	bu_log("%s: voxel dimensions must be positive\n", bu_getprogname());
+	return 0;
+    }
+    VMOVE(size, parsed);
+    return 1;
+}
 
 
 /**
@@ -92,32 +120,30 @@ main(int argc, char **argv)
 
     bu_optind = 1;
     while ((c = bu_getopt(argc, (char * const *)argv, (const char *)"s:d:t:")) != -1) {
-	double scan[3];
-
 	switch (c) {
 	    case 's':
-		if (sscanf(bu_optarg, "%lf %lf %lf",
-			   &scan[0],
-			   &scan[1],
-			   &scan[2]) != 3) {
+		if (!parse_voxel_size(bu_optarg, dataValues.voxelSize)) {
 		    bu_exit(1, "Usage: %s %s", argv[0], usage);
-		} else {
-		    /* convert from double to fastf_t */
-		    VMOVE(dataValues.voxelSize, scan);
 		}
 		break;
 
 	    case 'd':
-		if (sscanf(bu_optarg, "%d", &levelOfDetail) != 1) {
+		if (!bu_opt_scan_int_range(bu_optarg, &levelOfDetail, 1,
+			INT_MAX, "detail level")) {
 		    bu_exit(1, "Usage: %s %s", argv[0], usage);
 		}
 		break;
 
-	    case 't':
-		if (sscanf(bu_optarg, "%lf", &dataValues.threshold) != 1) {
+	    case 't': {
+		double threshold;
+
+		if (!bu_opt_scan_double_range(bu_optarg, &threshold, 0.0, 1.0,
+			"fill threshold")) {
 		    bu_exit(1, "Usage: %s %s", argv[0], usage);
 		}
+		dataValues.threshold = (fastf_t)threshold;
 		break;
+	    }
 
 	    default:
 		bu_exit(1, "Usage: %s %s", argv[0], usage);
