@@ -11,7 +11,7 @@ off-g - convert a DEC Object File Format model to a BRL-CAD database
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*off-g* [_OPTION_]... _input_ _output_
+*off-g* _input_ _output_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

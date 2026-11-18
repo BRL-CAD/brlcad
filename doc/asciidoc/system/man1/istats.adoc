@@ -10,7 +10,7 @@ istats - compute basic statistics of a stream of short integers
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*istats* [_OPTION_]... [_file_]
+*istats* [_file_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

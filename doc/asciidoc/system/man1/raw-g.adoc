@@ -10,7 +10,7 @@ raw-g - convert a RAW triangle geometry file to a BRL-CAD database
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*raw-g* [_OPTION_]... _input_ _output_
+*raw-g* _input_ _output_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

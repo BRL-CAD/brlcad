@@ -10,7 +10,8 @@ bwfilter - apply a 3x3 kernel filter to a black and white bw image
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bwfilter* [_OPTION_]... [_input_]
+*bwfilter* [*-v*] [*-f* _type_] [*-d* _integer_] [*-O* _integer_] [*-s* _pixels_] [*-w* _pixels_]
+         [*-n* _pixels_] [*-o* _file_] [_input_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

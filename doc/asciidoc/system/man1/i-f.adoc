@@ -10,7 +10,7 @@ i-f - convert 16-bit short integers to floats
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*i-f* [_OPTION_]... [_scale_]
+*i-f* [*-n*] [_scale_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

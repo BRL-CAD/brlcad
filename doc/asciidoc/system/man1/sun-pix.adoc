@@ -10,7 +10,7 @@ sun-pix - convert a Sun rasterfile (screendump) into a pix(5) or bw(5) image
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*sun-pix* [_OPTION_]... [_input_]
+*sun-pix* [*-b*] [*-H*] [*-i*] [*-P*] [*-v*] [*-C*] [_input_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

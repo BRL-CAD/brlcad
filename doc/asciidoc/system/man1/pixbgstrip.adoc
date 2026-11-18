@@ -10,7 +10,8 @@ pixbgstrip - strip a uniform background color from a pix(5) file
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pixbgstrip* [_OPTION_]... [_input_]
+*pixbgstrip* [*-a*] [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_] [*-t* _difference_]
+           [*-x* _pixel_] [_input_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

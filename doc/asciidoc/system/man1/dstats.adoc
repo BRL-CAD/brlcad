@@ -10,7 +10,7 @@ dstats - compute basic statistics of a stream of doubles
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*dstats* [_OPTION_]... [_file.doubles_]
+*dstats* [_file.doubles_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

@@ -10,7 +10,8 @@ bwrot - rotate, invert, or reverse a black and white bw file
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bwrot* [_OPTION_]... [_input-or-width_] [_legacy-height_]
+*bwrot* [*-f*] [*-b*] [*-r*] [*-i*] [*-#* _count_] [*-a* _degrees_] [*-s* _pixels_] [*-w* _pixels_]
+      [*-n* _scanlines_] [*-o* _file_] [_input-or-width_] [_legacy-height_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

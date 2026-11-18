@@ -10,7 +10,7 @@ saveview - Write the current MGED view and displayed objects to an executable ra
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*saveview* [_OPTION_]... _script_ [_rt_arguments_ ...]
+*saveview* [*-e* _program_] [*-i* _file_] [*-l* _file_] [*-o* _file_] _script_ [_rt_arguments_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

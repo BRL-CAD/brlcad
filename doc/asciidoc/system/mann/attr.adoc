@@ -10,7 +10,7 @@ attr - Used to create, change, retrieve, or view attributes of database objects.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*attr* [_OPTION_]...
+*attr* [*-c* _separator_]
 *attr set* _object_pattern_ [_attributes_ ...]
 *attr get* _object_pattern_ [_attributes_ ...]
 *attr show* _object_pattern_ [_attributes_ ...]

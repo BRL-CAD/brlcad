@@ -10,7 +10,7 @@ ply-g - convert a Stanford PLY file to a BRL-CAD database
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*ply-g* [_OPTION_]... _input_ _output_
+*ply-g* [*-s* _factor_] [*-d*] [*-v*] _input_ _output_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

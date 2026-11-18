@@ -10,7 +10,7 @@ bwthresh - threshold a black-and-white bw file into intensity bins
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bwthresh* [_OPTION_]... _threshold_ ...
+*bwthresh* _threshold_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

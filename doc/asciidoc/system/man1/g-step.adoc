@@ -11,8 +11,11 @@ g-step - export a BRL-CAD database as an ISO 10303 STEP file
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*g-step* [_OPTION_]... *--list-schemas*
-*g-step* [_OPTION_]... _input.g_ [_object_ ...]
+*g-step* [*--schema* _AP_] [*--native-csg*] [*--output-units* _UNIT_] [*--angle-units* _UNIT_]
+       [*--uncertainty* _VALUE_] [*--strict*] [*--report* _FILE_] [*-o* _FILE_] *--list-schemas*
+*g-step* [*--schema* _AP_] [*--native-csg*] [*--output-units* _UNIT_] [*--angle-units* _UNIT_]
+       [*--uncertainty* _VALUE_] [*--strict*] [*--report* _FILE_] [*-o* _FILE_] _input.g_
+       [_object_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

@@ -10,7 +10,7 @@ bw-a - convert a BRL-CAD BW image to an ASCII bitmap
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bw-a* [_OPTION_]... [_input_]
+*bw-a* [*-a*] [*-s* _pixels_] [*-w* _pixels_] [*-n* _scanlines_] [_input_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

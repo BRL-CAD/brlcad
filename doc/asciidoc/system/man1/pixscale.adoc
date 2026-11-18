@@ -10,8 +10,10 @@ pixscale - change the size of a color pix file
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pixscale* [_OPTION_]... [_input_]
-*pixscale* [_OPTION_]... _input_ _input-width_ _input-height_ _output-width_ _output-height_
+*pixscale* [*-r*] [*-s* _pixels_] [*-w* _pixels_] [*-n* _scanlines_] [*-S* _pixels_] [*-W* _pixels_]
+         [*-N* _scanlines_] [_input_]
+*pixscale* [*-r*] [*-s* _pixels_] [*-w* _pixels_] [*-n* _scanlines_] [*-S* _pixels_] [*-W* _pixels_]
+         [*-N* _scanlines_] _input_ _input-width_ _input-height_ _output-width_ _output-height_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

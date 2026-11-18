@@ -10,7 +10,7 @@ push - Forces the effects of all transformation matrices that appear in any comb
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*push* [_OPTION_]... _objects_ ...
+*push* [*-P* _processors_] [*-d*] _objects_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

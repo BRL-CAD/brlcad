@@ -10,7 +10,7 @@ move_arb_edge - move an arb's edge through pt
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*move_arb_edge* [_OPTION_]... _arb_ _edge_ _point_
+*move_arb_edge* [*-r*] _arb_ _edge_ _point_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

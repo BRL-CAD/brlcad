@@ -10,7 +10,7 @@ mvall - Changes the name of __old_name__ to __new_name__ wherever it occurs in t
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*mvall* [_OPTION_]... [_source_object_] [_output_object_]
+*mvall* [*-n*] [*-f* _file_] [_source_object_] [_output_object_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

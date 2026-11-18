@@ -10,7 +10,7 @@ dfft - compute fast Fourier transforms of a stream of doubles
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*dfft* [_OPTION_]... [_width_]
+*dfft* [*-d* _dB_] [*-l*] [*-c*] [*-p*] [*-N*] [*-L*] [*-A*] [_width_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

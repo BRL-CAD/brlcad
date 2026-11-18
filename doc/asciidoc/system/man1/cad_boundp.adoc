@@ -10,7 +10,7 @@ cad_boundp - find bounding polygon of a two-dimensional view
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*cad_boundp* [_OPTION_]...
+*cad_boundp* [*-i* _file_] [*-o* _file_] [*-t* _distance_] [*-v*]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

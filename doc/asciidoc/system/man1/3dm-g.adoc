@@ -10,7 +10,7 @@
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*3dm-g* [_OPTION_]... _input_file.3dm_ [_output_file.g_]
+*3dm-g* [*-r*] [*-v*]... [*-o* _file.g_] _input_file.3dm_ [_output_file.g_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

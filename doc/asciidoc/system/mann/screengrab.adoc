@@ -10,7 +10,7 @@ screengrab - Save the current MGED display visual or framebuffer contents to an 
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*screengrab* [_OPTION_]... [_output_file_]
+*screengrab* [*-h*] [*-F*] [*-D* _name_] [*--format* _format_] [_output_file_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

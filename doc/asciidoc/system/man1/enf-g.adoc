@@ -10,7 +10,8 @@ enf-g - convert an Elysium Neutral File (ENF) to a BRL-CAD database
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*enf-g* [_OPTION_]... _input_ _output_
+*enf-g* [*-v*] [*-i* _ident_] [*-t* _millimeters_] [*-n* _file_] [*-l* _characters_] _input_
+      _output_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

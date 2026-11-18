@@ -10,7 +10,7 @@ pipe_move_pnt - Move a control point of a PIPE primitive.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pipe_move_pnt* [_OPTION_]... _pipe_ _segment_ _point_
+*pipe_move_pnt* [*-r*] _pipe_ _segment_ _point_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

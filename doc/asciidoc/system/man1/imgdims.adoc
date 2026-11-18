@@ -11,7 +11,7 @@ imgdims - guess the width and height of an image file
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*imgdims* [_OPTION_]... _file-or-byte-count_
+*imgdims* [*-n*] [*-s*] [*-#* _bytes_] _file-or-byte-count_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

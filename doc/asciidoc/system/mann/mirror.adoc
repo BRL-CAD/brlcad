@@ -10,7 +10,8 @@ mirror - Mirrors a shape or combination across a given axis.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*mirror* [_OPTION_]... _source_object_ _output_object_ [(*x* | *y* | *z*)]
+*mirror* [*-h*] [*-p* _x/y/z_] [*-d* _x/y/z_] [*-x*] [*-y*] [*-z*] [*-o* _offset_] _source_object_
+       _output_object_ [(*x* | *y* | *z*)]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

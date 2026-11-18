@@ -11,7 +11,7 @@ gencolor - output a repeated pattern of byte values
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*gencolor* [_OPTION_]... [_byte_ ...]
+*gencolor* [*-r* _count_] [*-p*] [*-b*] [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_] [_byte_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

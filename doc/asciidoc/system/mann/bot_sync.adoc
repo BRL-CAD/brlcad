@@ -10,7 +10,7 @@ bot sync - Synchronize connected facet orientations within a BoT.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bot_sync* [_OPTION_]... _bot_ ...
+*bot_sync* _bot_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[options]]

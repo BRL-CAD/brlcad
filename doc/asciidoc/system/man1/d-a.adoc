@@ -11,7 +11,7 @@ d-a - convert double-precision binary numbers to ASCII
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*d-a* [_OPTION_]...
+*d-a* [*-n*]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

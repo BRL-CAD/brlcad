@@ -11,7 +11,10 @@ imgdiff - compare two images and report or visualize their differences
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*imgdiff* [_OPTION_]... _img1_ _img2_ [_output_]
+*imgdiff* [*-o* _file_] [*-n* _prefix_] [*--width-img1* _pixels_] [*--height-img1* _pixels_]
+        [*--width-img2* _pixels_] [*--height-img2* _pixels_] [*--format-img1* _format_]
+        [*--format-img2* _format_] [*--output-format* _format_] [*-A*] [*-m*] _img1_ _img2_
+        [_output_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

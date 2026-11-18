@@ -13,7 +13,7 @@ the regions in the specified objects.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*edcodes* [_OPTION_]... [_objects_ ...]
+*edcodes* [*-E* _editor_] [*-i*] [*-n*] [*-r*] [_objects_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

@@ -10,7 +10,7 @@ l - Displays a verbose description about the specified list of objects.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*l* [_OPTION_]... _objects_ ...
+*l* [*-r*] [*-t*] [*-v*]... _objects_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

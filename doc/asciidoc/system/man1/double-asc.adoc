@@ -10,7 +10,8 @@ double-asc - convert a stream of IEEE doubles to ASCII text
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*double-asc* [_OPTION_]... [_input_]
+*double-asc* [*-a*] [*-c*] [*-f* _format_] [*-s* _pixels_] [*-w* _pixels_] [*-n* _scanlines_]
+           [*-#* _count_] [_input_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

@@ -10,7 +10,7 @@ bot_merge - deprecated compatibility command for *bot merge*
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bot_merge* [_OPTION_]... _destination_ _source_ ...
+*bot_merge* _destination_ _source_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[options]]

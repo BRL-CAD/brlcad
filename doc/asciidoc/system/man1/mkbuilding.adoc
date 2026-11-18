@@ -11,7 +11,11 @@ mkbuilding - generate parametric buildings and building parts
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*mkbuilding* [_OPTION_]... [_output.g_]
+*mkbuilding* [*-o* _file.g_] [*-s* _file.json_] [*-p* _name_] [*-n* _name_] [*-t* _OSM-value_]
+           [*-L* _count_] [*-W* _meters_] [*-D* _meters_] [*-H* _meters_] [*-R* _shape_]
+           [*--roof-height* _meters_] [*--wall-thickness* _meters_] [*--structure* _system_]
+           [*--no-auto-openings*] [*-f*] [*-j*] [*--validate-only*] [*--effective-spec* _file.json_]
+           [*--demo-file* _file.g_] [*--schema*] [*--list-types*] [*--list-roofs*] [_output.g_]
 // END GENERATED BU_ARG SYNOPSIS
 
 == DESCRIPTION

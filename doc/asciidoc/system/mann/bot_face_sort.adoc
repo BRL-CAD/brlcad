@@ -10,7 +10,7 @@ bot_face_sort - deprecated compatibility command for *bot sort*
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bot_face_sort* [_OPTION_]... _triangles_per_piece_ _bot_ ...
+*bot_face_sort* _triangles_per_piece_ _bot_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[options]]

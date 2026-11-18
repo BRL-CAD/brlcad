@@ -12,7 +12,9 @@ arrange - creates patterned arrangements of database objects; the nest style pac
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
 *arrange*
-*arrange nest* [_OPTION_]... _output_ _container_ _objects_ ...
+*arrange nest* [*-h*] [*-n*] [*-C*] [*-d* _2|3_] [*-a* _x|y|z_] [*-s* _size_] [*-c* _distance_]
+             [*-o* _mode_] [*-q* _level_] [*-g* _x,y,z_] [*--value* _name=value_] _output_
+             _container_ _objects_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 == DESCRIPTION

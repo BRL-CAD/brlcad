@@ -10,7 +10,8 @@ pixrot - rotate, invert, or reverse a color pix file
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pixrot* [_OPTION_]... [_input-or-width_] [_legacy-height_]
+*pixrot* [*-f*] [*-b*] [*-r*] [*-i*] [*-#* _count_] [*-s* _pixels_] [*-w* _pixels_]
+       [*-n* _scanlines_] [_input-or-width_] [_legacy-height_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

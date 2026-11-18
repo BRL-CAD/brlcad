@@ -10,7 +10,7 @@ pixshrink - shrink a color pix file by an integer factor
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pixshrink* [_OPTION_]... [_input_]
+*pixshrink* [*-u*] [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_] [*-f* _integer_] [_input_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

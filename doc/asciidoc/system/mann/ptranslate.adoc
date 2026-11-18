@@ -10,7 +10,7 @@ ptranslate - translate a vector attribute of a primitive
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*ptranslate* [_OPTION_]... _object_ _attribute_ _translation_
+*ptranslate* [*-r*] _object_ _attribute_ _translation_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

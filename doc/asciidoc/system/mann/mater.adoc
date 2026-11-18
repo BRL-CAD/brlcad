@@ -11,18 +11,19 @@ mater - Assigns shader parameters, RGB color, and inheritance to an existing com
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
 *mater* _SUBCOMMAND_ [_ARGUMENT_]...
-*mater* [_OPTION_]...
+*mater* [*-d*]
 *mater audit* [_density_file_]
 *mater clear*
 *mater export* _density_file_
-*mater get* [_OPTION_]... [_pattern_ ...]
-*mater import* [_OPTION_]... _density_file_
-*mater map* [_OPTION_]... (*--ids-from-names* | *--names-from-ids*) [_file_ ...]
+*mater get* [*--id* _id-or-pattern_] [*--density* _comparison_] [*--name* _pattern_]
+          [*--tol* _tolerance_] [_pattern_ ...]
+*mater import* [*-v*] _density_file_
+*mater map* [*-d* _file_] [*-m* _file_] (*--ids-from-names* | *--names-from-ids*) [_file_ ...]
 *mater set* _record_ ...
 *mater source*
 *mater validate* _density_file_
-*mater* [_OPTION_]... [_shader_argument_ ...]
-*mater* [_OPTION_]... [_shader_argument_ ...]
+*mater* [*-s*] [_shader_argument_ ...]
+*mater* [*-d*] [*-s*] [_shader_argument_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

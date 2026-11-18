@@ -10,7 +10,7 @@ bb - Report dimensional information about objects using Bounding Boxes
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bb* [_OPTION_]... _objects_ ...
+*bb* [*-c* _name_] [*-d*] [*-m*] [*-e*] [*-q*] [*-u*] [*-v*] [*-o*] [*-t*] _objects_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

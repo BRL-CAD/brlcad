@@ -10,7 +10,7 @@ bev - Performs the operations indicated in the __Boolean_formula__ and stores th
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bev* [_OPTION_]... _output_object_ _input_object_
+*bev* [*-t*] _output_object_ _input_object_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

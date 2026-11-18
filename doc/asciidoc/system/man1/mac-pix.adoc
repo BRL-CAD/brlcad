@@ -11,7 +11,9 @@ mac-pix - convert an Apple MacPaint bitmap into a pix(5) or bw(5) raster image
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*mac-pix* [_OPTION_]... [_input_]
+*mac-pix* [*-c*] [*-l*] [*-b*] [*-s* _pixels_] [*-w* _pixels_] [*-n* _scanlines_] [*-x* _pixels_]
+        [*-y* _scanlines_] [*-X* _pixels_] [*-Y* _scanlines_] [*-S* _pixels_] [*-W* _pixels_]
+        [*-N* _scanlines_] [*-C* _r/g/b_] [_input_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

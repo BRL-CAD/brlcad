@@ -10,7 +10,7 @@ units - Sets the units being used in _mged_. Without arguments, returns the curr
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*units* [_OPTION_]... [(*um* | *mm* | *cm* | *m* | *km* | *in* | *ft* | *yd* | *mi*)]
+*units* [*-s*] [*-t*] [(*um* | *mm* | *cm* | *m* | *km* | *in* | *ft* | *yd* | *mi*)]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

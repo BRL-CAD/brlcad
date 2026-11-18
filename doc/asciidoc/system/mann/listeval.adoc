@@ -10,7 +10,7 @@ listeval - Displays primitive shape parameters after applying the accumulated tr
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*listeval* [_OPTION_]... _path_ ...
+*listeval* [*-t*] _path_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

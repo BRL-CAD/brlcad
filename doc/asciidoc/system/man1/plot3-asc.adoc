@@ -10,7 +10,7 @@ plot3-asc - convert a binary plot3 stream to an editable ASCII listing
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*plot3-asc* [_OPTION_]... [_input_]
+*plot3-asc* [*-v*] [_input_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

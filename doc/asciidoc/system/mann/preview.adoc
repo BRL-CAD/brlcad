@@ -10,7 +10,8 @@ preview - Allows the user to _preview_ animation scripts in MGED.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*preview* [_OPTION_]... _rt_script_file_
+*preview* [*-d* _seconds_] [*-e*] [*-v*] [*-D* _frame_] [*-K* _frame_] [*-o* _image_name.ext_]
+        _rt_script_file_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

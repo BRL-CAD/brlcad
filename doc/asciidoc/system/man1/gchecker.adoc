@@ -10,7 +10,7 @@ gchecker - generate geometry overlap data for the MGED Overlap Tool
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*gchecker* [_OPTION_]... _file.g_ [_objects_ ...]
+*gchecker* [*-d*] [*-v*] [*-f*] _file.g_ [_objects_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

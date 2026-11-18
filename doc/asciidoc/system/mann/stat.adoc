@@ -10,7 +10,8 @@ stat - report information about objects in a BRL-CAD database
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*stat* [_OPTION_]... _patterns_ ...
+*stat* [*-v*]... [*-q*]... [*-r*] [*-F* _expression_] [*-C* _columns_] [*-S* _columns_]
+     [*-o* _file_] _patterns_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

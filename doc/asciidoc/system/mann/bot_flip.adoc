@@ -10,7 +10,7 @@ bot flip - Reverse all facet normals within a BoT primitive.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bot_flip* [_OPTION_]... _bot_ ...
+*bot_flip* _bot_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[options]]

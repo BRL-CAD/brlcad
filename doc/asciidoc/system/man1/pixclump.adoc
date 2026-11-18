@@ -10,7 +10,7 @@ pixclump - quantize the colors in a pix(5) stream to a specified set
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pixclump* [_OPTION_]... [_input_] [_output_]
+*pixclump* [*-c* _R/G/B_]... [*-f* _file_] [*-x* _hex-mask_] [_input_] [_output_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

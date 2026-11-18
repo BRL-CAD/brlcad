@@ -11,7 +11,7 @@ u-f - convert binary unsigned shorts to floats
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*u-f* [_OPTION_]... [_scale_]
+*u-f* [*-n*] [_scale_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

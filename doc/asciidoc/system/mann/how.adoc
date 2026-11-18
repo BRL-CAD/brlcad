@@ -10,7 +10,7 @@ how - returns how an object is being displayed
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*how* [_OPTION_]... _object_
+*how* [*-b*] _object_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

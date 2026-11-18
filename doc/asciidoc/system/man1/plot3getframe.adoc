@@ -10,7 +10,7 @@ plot3getframe - extract one frame from a multi-frame plot3 file
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*plot3getframe* [_OPTION_]... _frame_
+*plot3getframe* [*-v*] _frame_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

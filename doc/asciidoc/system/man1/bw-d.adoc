@@ -11,7 +11,7 @@ bw-d - convert black-and-white unsigned bytes to double-precision binary
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bw-d* [_OPTION_]... [_scale_]
+*bw-d* [*-n*] [_scale_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

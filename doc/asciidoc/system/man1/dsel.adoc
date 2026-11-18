@@ -10,7 +10,7 @@ dsel - selectively keep or skip doubles from a data stream
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*dsel* [_OPTION_]... _count_ ...
+*dsel* _count_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

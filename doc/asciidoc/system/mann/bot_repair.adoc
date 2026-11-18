@@ -10,7 +10,7 @@ bot repair - Try to generate a manifold solid mesh from an existing BoT.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bot repair* [_OPTION_]... _input_bot_ ...
+*bot repair* [*-p* _percent_] [*-a* _area_] [*-o* _name_] _input_bot_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

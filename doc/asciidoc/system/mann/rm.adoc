@@ -10,7 +10,7 @@ rm - safely delete database objects, force-delete objects, or remove a child fro
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*rm* [_OPTION_]... _objects_ ...
+*rm* [*-f*] [*-r*] [*-n*] [*-h*] _objects_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

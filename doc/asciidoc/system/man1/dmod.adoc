@@ -10,7 +10,8 @@ dmod - apply arithmetic operations to a stream of doubles
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*dmod* [_OPTION_]... [_file_]
+*dmod* [*-a* _value_] [*-s* _value_] [*-m* _value_] [*-d* _value_] [*-A*] [*-e* _value_]
+     [*-r* _value_] [_file_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

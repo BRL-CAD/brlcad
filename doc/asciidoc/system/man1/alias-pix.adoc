@@ -10,7 +10,7 @@ alias-pix - convert an Alias(tm) pix image to a BRL-CAD PIX(5) image
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*alias-pix* [_OPTION_]...
+*alias-pix* [*-v*]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

@@ -10,7 +10,7 @@ asc-plot3 - produce Plot3 instructions from ASCII representation
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*asc-plot3* [_OPTION_]... [_input_] [_output_]
+*asc-plot3* [_input_] [_output_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

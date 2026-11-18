@@ -10,7 +10,8 @@ pix3filter - apply a 3x3x3 convolution filter across three sequential pix files
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pix3filter* [_OPTION_]... _frame_ ...
+*pix3filter* [*-v*]... [*-f* _type_] [*-d* _integer_] [*-o* _integer_] [*-w* _pixels_]
+           [*-n* _scanlines_] [*-s* _pixels_] _frame_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

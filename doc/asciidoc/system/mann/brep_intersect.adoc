@@ -10,7 +10,8 @@ brep intersect - Intersect components of specified BRep solids.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*brep intersect* _other_object_ _first_index_ _second_index_ [(*PP* | *PC* | *PS* | *CC* | *CS* | *SS*)]
+*brep intersect* _other_object_ _first_index_ _second_index_
+               [(*PP* | *PC* | *PS* | *CC* | *CS* | *SS*)]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

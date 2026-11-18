@@ -10,7 +10,7 @@ whichair - Reports information relating to usage of air codes on regions.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*whichair* [_OPTION_]... _id_range_ ...
+*whichair* [*-s*] [*-V*] [*-U*] [*--root* _object_] _id_range_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

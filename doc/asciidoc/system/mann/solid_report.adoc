@@ -10,7 +10,7 @@ solid_report - Compatibility alias for the detailed displayed-solid report.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*solid_report* [_OPTION_]... [_detail_level_]
+*solid_report* [*-h*] [*-V* _name_] [*-m* _number_] [_detail_level_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

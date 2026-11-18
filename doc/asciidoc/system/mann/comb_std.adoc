@@ -10,7 +10,7 @@ comb_std, c - create or modify a combination using standard Boolean notation
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*comb_std* [_OPTION_]... _combination_ [_boolean_expression_ ...]
+*comb_std* [*-c*] [*-r*] [*-?*] _combination_ [_boolean_expression_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

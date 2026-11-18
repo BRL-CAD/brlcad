@@ -10,7 +10,7 @@ bwhisteq - equalize the histogram of a black and white image
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bwhisteq* [_OPTION_]... _input_
+*bwhisteq* [*-v*] _input_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

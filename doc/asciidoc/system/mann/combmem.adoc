@@ -10,7 +10,7 @@ combmem - get or set combination member transformation matrices in decomposed fo
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*combmem* [_OPTION_]... _combination_ [_member_records_ ...]
+*combmem* [*-i* _type_] [*-r* _type_] _combination_ [_member_records_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

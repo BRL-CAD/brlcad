@@ -10,7 +10,10 @@ simulate - a Bullet-based physics simulator for MGED
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*simulate* [_OPTION_]... _path_ _duration_
+*simulate* [*--debug* _mode_] [*--steps* _count_] [*--plot* _prefix_] [*--resume*]... [*-o* _file_]
+         [*--width* _pixels_] [*--height* _pixels_] [*--fps* _count_] [*--view-quat* _x,y,z,w_]
+         [*--view-ae* _az,el_] [*--view-eye* _x,y,z_] [*--view-center* _x,y,z_]
+         [*--view-size* _size_] _path_ _duration_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

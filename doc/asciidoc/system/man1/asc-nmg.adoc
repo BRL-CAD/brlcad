@@ -10,7 +10,7 @@ asc-nmg - convert an ASCII NMG description to a BRL-CAD database
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*asc-nmg* [_OPTION_]... [_input_] [_output_]
+*asc-nmg* [_input_] [_output_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

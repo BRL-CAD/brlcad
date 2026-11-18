@@ -10,10 +10,22 @@ nirt - Runs the NIRT program that is distributed with BRL-CAD to intersect a sin
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*nirt* [_OPTION_]... [_arguments_ ...]
-*nirt* [_OPTION_]... [_arguments_ ...]
-*nirt* [_OPTION_]... [_arguments_ ...]
-*nirt* [_OPTION_]... [_arguments_ ...]
+*nirt* [*-h*] [*-A* _name_] [*-M*] [*-b*] [*-c*] [*-e* _script_] [*-f* _format_] [*-E*] [*-L*]
+     [*-s*] [*-v*] [*-H* _n_] [*-u* _n_] [*-O* _action_] [*-x* _value_] [*-X* _value_]
+     [*--center* _x,y,z_] [*--plotfile* _filename_] [*--color_odd* _r/g/b_] [*--color_even* _r/g/b_]
+     [*--color_gap* _r/g/b_] [*--color_ovlp* _r/g/b_] [*-B*] [_arguments_ ...]
+*nirt* [*-h*] [*-A* _name_] [*-M*] [*-b*] [*-c*] [*-e* _script_] [*-f* _format_] [*-E*] [*-L*]
+     [*-s*] [*-v*] [*-H* _n_] [*-u* _n_] [*-O* _action_] [*-x* _value_] [*-X* _value_]
+     [*--center* _x,y,z_] [*--plotfile* _filename_] [*--color_odd* _r/g/b_] [*--color_even* _r/g/b_]
+     [*--color_gap* _r/g/b_] [*--color_ovlp* _r/g/b_] [*-B*] [_arguments_ ...]
+*nirt* [*-h*] [*-A* _name_] [*-M*] [*-b*] [*-c*] [*-e* _script_] [*-f* _format_] [*-E*] [*-L*]
+     [*-s*] [*-v*] [*-H* _n_] [*-u* _n_] [*-O* _action_] [*-x* _value_] [*-X* _value_]
+     [*--center* _x,y,z_] [*--plotfile* _filename_] [*--color_odd* _r/g/b_] [*--color_even* _r/g/b_]
+     [*--color_gap* _r/g/b_] [*--color_ovlp* _r/g/b_] [*-B*] [_arguments_ ...]
+*nirt* [*-h*] [*-A* _name_] [*-M*] [*-b*] [*-c*] [*-e* _script_] [*-f* _format_] [*-E*] [*-L*]
+     [*-s*] [*-v*] [*-H* _n_] [*-u* _n_] [*-O* _action_] [*-x* _value_] [*-X* _value_]
+     [*--center* _x,y,z_] [*--plotfile* _filename_] [*--color_odd* _r/g/b_] [*--color_even* _r/g/b_]
+     [*--color_gap* _r/g/b_] [*--color_ovlp* _r/g/b_] [*-B*] [_arguments_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

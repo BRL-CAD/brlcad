@@ -10,7 +10,7 @@ repair - Attempts to repair invalid data in the __name__ object.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*repair* [_OPTION_]... _object_
+*repair* [*-o* _name_] [*--options-json*] [*-t* _distance_] [*-p* _percent_] [*-a* _area_] _object_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

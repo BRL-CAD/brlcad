@@ -10,7 +10,7 @@ fbgamma - load a gamma correcting colormap
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*fbgamma* [_OPTION_]... _gamma_ ...
+*fbgamma* [*-H*] [*-o*] [*-i*] [*-F* _device_] _gamma_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

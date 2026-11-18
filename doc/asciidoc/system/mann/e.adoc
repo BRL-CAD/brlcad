@@ -10,7 +10,9 @@ e - Adds the objects in the argument list to the display list so that they will 
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*e* [_OPTION_]... _paths_ ...
+*e* [*-h*] [*-m* _0..5_] [*--wireframe*] [*--shaded*] [*--shaded-all*] [*-E*] [*--hidden-line*]
+  [*-A*] [*-t* _level_] [*-L* _count_] [*-S*] [*--no-dash*] [*-C* _color_] [*--line-width* _pixels_]
+  [*-R*] [*-V* _name_] _paths_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

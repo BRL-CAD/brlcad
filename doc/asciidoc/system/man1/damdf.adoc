@@ -10,7 +10,7 @@ damdf - compute the average magnitude difference function of a stream of doubles
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*damdf* [_OPTION_]... [_window-size_]
+*damdf* [_window-size_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

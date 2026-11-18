@@ -10,7 +10,7 @@ rot - Rotates the view or an object by _xyz_ degrees.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*rot* [_OPTION_]... _rotation_ ...
+*rot* [*-m*] [*-v*] _rotation_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

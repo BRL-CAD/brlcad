@@ -10,7 +10,8 @@ pixuntile - break image up into separate files
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pixuntile* [_OPTION_]... _basename-or-file_ ...
+*pixuntile* [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_] [*-S* _pixels_] [*-W* _pixels_]
+          [*-N* _pixels_] [*-o* _integer_] _basename-or-file_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

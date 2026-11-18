@@ -10,7 +10,8 @@ g-obj - convert BRL-CAD geometry to a Wavefront OBJ file
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*g-obj* [_OPTION_]... _brlcad_db.g_ _object_ ...
+*g-obj* [*-i*] [*-m*] [*-u*] [*-v*] [*-a* _#_] [*-n* _#_] [*-D* _#_] [*-x* _level_] [*-X* _level_]
+      [*-e* _error_file_] [*-o* _output.obj_] [*-P* _#_] [*-r* _#_] _brlcad_db.g_ _object_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

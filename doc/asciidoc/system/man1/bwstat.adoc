@@ -10,7 +10,7 @@ bwstat - display statistics of a black and white image
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bwstat* [_OPTION_]... [_input_]
+*bwstat* [*-v*] [_input_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

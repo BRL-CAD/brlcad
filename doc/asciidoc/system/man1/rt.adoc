@@ -10,7 +10,13 @@ rt - raytrace an mged model, giving a shaded picture
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*rt* [_OPTION_]... [_model.g_] [_object_ ...]
+*rt* [*-o* _file_] [*-O* _file_] [*-F* _fb_] [*-s* _#_] [*-w* _#_] [*-n* _#_] [*-C* _#/#/#_] [*-W*]
+   [*-r*] [*-R*] [*-a* _deg_] [*-e* _deg_] [*-p* _deg_] [*-E* _#_] [*-V* _#[:#]_] [*-M*] [*-g* _mm_]
+   [*-G* _mm_] [*-j* _xmin,ymin,xmax,ymax_] [*-k* _xdir,ydir,zdir,dist | x,y,z,nx,ny,nz | x,y,z_]
+   [*-A* _#_] [*-l* _#[,args]_] [*-m* _d,r,g,b_] [*-i*] [*-t*] [*-S*] [*-H* _#_] [*-J* _#_]
+   [*-u* _units_] [*-U* _#_] [*-T* _#[/#]_] [*-z* _#_] [*-c* _cmd_] [*-d* _file_] [*-D* _#_]
+   [*-K* _#_] [*-b* _index|"x y"_] [*-Q* _x,y_] [*-I* _file_] [*-+* _t_] [*-q* _#_] [*-v* [_[#]_]]
+   [*-x* _#_] [*-X* _#_] [*-N* _#_] [*-!* _#_] [*-P* _#_] [*-B*] [_model.g_] [_object_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

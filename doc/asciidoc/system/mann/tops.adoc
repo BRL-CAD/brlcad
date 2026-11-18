@@ -10,7 +10,7 @@ tops - Displays a list of all the _top-level_ objects in the current database.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*tops* [_OPTION_]...
+*tops* [*-a*] [*-h*] [*-n*] [*-p*]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

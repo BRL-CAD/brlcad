@@ -10,7 +10,8 @@ ps - Alternate command name for *postscript*.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*ps* [_OPTION_]... _output_file_
+*ps* [*-a* _author_] [*-b*] [*-c* _r/g/b_] [*-f* _font_] [*-s* _size_] [*-t* _title_]
+   [*-x* _offset_] [*-y* _offset_] _output_file_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

@@ -10,7 +10,7 @@ dpeak - find the dominant peak in each window of a stream of doubles
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*dpeak* [_OPTION_]... [_window-size_]
+*dpeak* [_window-size_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

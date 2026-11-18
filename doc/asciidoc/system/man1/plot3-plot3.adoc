@@ -10,7 +10,7 @@ plot3-plot3 - convert an extended UnixPlot file to a simple UnixPlot file
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*plot3-plot3* [_OPTION_]...
+*plot3-plot3* [*-v*] [*-S*]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

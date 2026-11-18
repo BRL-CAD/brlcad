@@ -10,7 +10,7 @@ tree - Lists the contents of the specified _objects_ in a tree-like format that 
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*tree* [_OPTION_]... [_objects_ ...]
+*tree* [*-a*] [*-c*] [*-o* _file_] [*-i* _spaces_] [*-d* _depth_] [*-v*]... [_objects_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

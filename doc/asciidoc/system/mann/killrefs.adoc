@@ -10,7 +10,7 @@ killrefs - Removes all references to the specified _objects_ from all combinatio
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*killrefs* [_OPTION_]... _objects_ ...
+*killrefs* [*-n*] _objects_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

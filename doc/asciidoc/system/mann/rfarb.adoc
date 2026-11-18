@@ -10,7 +10,8 @@ rfarb - Creates a new ARB8 shape based on rotation and fallback angles.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*rfarb* _name_ _known_point_ ... _angles_ ... (*x* | *y* | *z*) _point_1_ ... (*x* | *y* | *z*) _point_2_ ... (*x* | *y* | *z*) _point_3_ ... _thickness_
+*rfarb* _name_ _known_point_ ... _angles_ ... (*x* | *y* | *z*) _point_1_ ... (*x* | *y* | *z*)
+      _point_2_ ... (*x* | *y* | *z*) _point_3_ ... _thickness_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

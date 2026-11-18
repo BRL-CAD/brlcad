@@ -10,7 +10,7 @@ pixcolors - count or list the distinct colors used in a pix image
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pixcolors* [_OPTION_]... [_input_]
+*pixcolors* [*-v*] [_input_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

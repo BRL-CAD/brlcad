@@ -10,7 +10,7 @@ bot check - Test a BoT to determine if it satisfies validity criteria.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bot check* [_OPTION_]... [_check_or_bot_ ...]
+*bot check* [_check_or_bot_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

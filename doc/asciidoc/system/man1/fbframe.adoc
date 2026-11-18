@@ -10,7 +10,7 @@ fbframe - draw a colored border around a framebuffer
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*fbframe* [_OPTION_]...
+*fbframe* [*-F* _device_] [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

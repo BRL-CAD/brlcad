@@ -10,7 +10,8 @@ png2fb - load a PNG image into the current display framebuffer
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*png2fb* [_OPTION_]... [_input_file_]
+*png2fb* [*-1*] [*-m* _lines_] [*-g* _gamma_] [*-H*] [*-i*] [*-c*] [*-v*] [*-z*] [*-x* _pixels_]
+       [*-y* _pixels_] [*-X* _pixels_] [*-Y* _pixels_] [*-h*] [_input_file_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

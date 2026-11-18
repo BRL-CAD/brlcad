@@ -10,7 +10,7 @@ bw-pix - convert a black and white image, or three color channels, to a color pi
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bw-pix* [_OPTION_]... [_file_ ...]
+*bw-pix* [*-o* _filename_] [_file_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

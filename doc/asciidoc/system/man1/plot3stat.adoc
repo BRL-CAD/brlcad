@@ -10,7 +10,7 @@ plot3stat - print statistics about a plot3 format file
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*plot3stat* [_OPTION_]... [_input_]
+*plot3stat* [*-v*] [_input_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

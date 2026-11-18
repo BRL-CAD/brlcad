@@ -10,9 +10,12 @@ bot extrude - Generate a volumetric BoT representing a plate-mode BoT.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bot extrude* [_OPTION_]... *-i* _input_bot_
-*bot extrude* [_OPTION_]... *-C* _input_bot_ [_output_name_]
-*bot extrude* [_OPTION_]... _input_bot_ _output_name_
+*bot extrude* [*-q*] [*-R*] [*-F*] [*--max-area-delta* _ratio_] [*--min-tri-delta* _ratio_] *-i*
+            _input_bot_
+*bot extrude* [*-q*] [*-R*] [*-F*] [*--max-area-delta* _ratio_] [*--min-tri-delta* _ratio_] *-C*
+            _input_bot_ [_output_name_]
+*bot extrude* [*-q*] [*-R*] [*-F*] [*--max-area-delta* _ratio_] [*--min-tri-delta* _ratio_]
+            _input_bot_ _output_name_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

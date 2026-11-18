@@ -10,7 +10,7 @@ killall - Deletes the specified _objects_ from the current database and removes 
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*killall* [_OPTION_]... _objects_ ...
+*killall* [*-n*] _objects_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

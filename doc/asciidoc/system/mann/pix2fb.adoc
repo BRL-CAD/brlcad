@@ -10,7 +10,9 @@ pix2fb - display a raw pixel file on the framebuffer
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pix2fb* [_OPTION_]... [_input_file_]
+*pix2fb* [*-1*] [*-m* _lines_] [*-a*] [*-i*] [*-c*] [*-z*] [*-s* _pixels_] [*-w* _pixels_]
+       [*-n* _pixels_] [*-x* _pixels_] [*-y* _pixels_] [*-X* _pixels_] [*-Y* _pixels_]
+       [*-S* _pixels_] [*-W* _pixels_] [*-N* _pixels_] [*-p* _seconds_] [*-h*] [_input_file_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

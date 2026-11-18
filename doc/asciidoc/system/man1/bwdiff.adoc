@@ -10,7 +10,7 @@ bwdiff - compare two black and white files
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bwdiff* [_OPTION_]... _file1_ _file2_
+*bwdiff* [*-b*] [*-m*] [*-g*] [*-l*] [*-e*] [*-n*] _file1_ _file2_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

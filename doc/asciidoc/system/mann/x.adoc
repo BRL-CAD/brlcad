@@ -10,7 +10,7 @@ x - report the currently displayed solids and vector list information
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*x* [_OPTION_]... [_detail_level_]
+*x* [*-h*] [*-V* _name_] [*-m* _number_] [_detail_level_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

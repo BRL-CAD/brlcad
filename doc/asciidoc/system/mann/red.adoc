@@ -10,7 +10,7 @@ red - Creates a file describing the specified combination and starts an editor f
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*red* [_OPTION_]... _combination_
+*red* [*-E* _editor_] [*-f*] _combination_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

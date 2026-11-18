@@ -10,7 +10,7 @@ qvrot - Adjusts the current MGED viewing direction such that the eye is position
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*qvrot* [_OPTION_]... _axis_and_angle_ ...
+*qvrot* [*-i*] _axis_and_angle_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

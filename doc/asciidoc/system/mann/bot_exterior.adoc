@@ -10,7 +10,9 @@ bot exterior - Reduce a BoT solid to only its exterior (outward-facing) faces.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bot_exterior* [_OPTION_]... _input_bot_ [_output_name_]
+*bot_exterior* [*-i*] [*--visibility-threshold* _ratio_] [*-c* _percent_]
+             [*--per-face-budget* _seconds_] [*-v*] [*-f*] [*--voxel-size* _size_] _input_bot_
+             [_output_name_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

@@ -10,7 +10,7 @@ pixstat - list statistics related to a color pix image
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pixstat* [_OPTION_]... [_input_]
+*pixstat* [*-v*] [_input_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

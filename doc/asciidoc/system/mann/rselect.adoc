@@ -10,7 +10,7 @@ rselect - Returns displayed items or BOT vertices within the previously defined 
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*rselect* [_OPTION_]...
+*rselect* [*-b* _bot_] [*-p*] [*-z* _vminz_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

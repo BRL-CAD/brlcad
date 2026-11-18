@@ -10,8 +10,8 @@ make_name - make a unique name
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*make_name* [_OPTION_]... *-s* [_[num]_]
-*make_name* [_OPTION_]... _template_
+*make_name* *-s* [_[num]_]
+*make_name* _template_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

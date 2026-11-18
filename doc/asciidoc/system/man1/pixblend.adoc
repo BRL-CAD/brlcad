@@ -10,7 +10,8 @@ pixblend - blend two pix(5) or bw(5) images
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pixblend* [_OPTION_]... _first-input_ _second-input_
+*pixblend* [*-r* _value_] [*-i* _value_] [*-s* _seed_] [*-S*] [*-g* _gvalue_] _first-input_
+         _second-input_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

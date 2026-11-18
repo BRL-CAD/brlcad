@@ -10,12 +10,14 @@ edit - Edit objects in the database by translating, rotating, scaling, and other
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*edit* [_OPTION_]... [_geometry_] [_operation_] [_arguments_ ...]
+*edit* [*-h*] [*-v*] [*-S*] [*-f*] [*-F*] [*-i*] [*--occurrence*] [*--list-all-prim-ops* [_=json_]]
+     [*-O* _key=value_] [_geometry_] [_operation_] [_arguments_ ...]
 *edit*
-*edit translate* [_OPTION_]... _destination_ ...
+*edit translate* [*-a*] [*-r*] [*-x*] [*-y*] [*-z*] [*-n*] [*-k* _FROM_] _destination_ ...
 *edit tra* _translation_ ...
-*edit rotate* [_OPTION_]... [_angle_ ...]
-*edit scale* [_OPTION_]... [_factor_ ...]
+*edit rotate* [*-R*] [*-x*] [*-y*] [*-z*] [*-o*] [*-n*] [*-k* _FROM_] [*-a* _TO_] [*-r* _TO_]
+            [*-c* _CENTER_] [*-O* _ORIGIN_] [*-d* _ANGLE_] [_angle_ ...]
+*edit scale* [*-k* _FROM_] [*-a* _TO_] [*-r* _TO_] [*-c* _CENTER_] [*-n*] [_factor_ ...]
 *edit checkpoint*
 *edit revert*
 *edit reset*

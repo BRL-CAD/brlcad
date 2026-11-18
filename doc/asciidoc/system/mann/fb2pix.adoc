@@ -10,7 +10,7 @@ fb2pix - write a framebuffer image to a .pix file
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*fb2pix* [_OPTION_]... [_output_file_]
+*fb2pix* [*-c*] [*-i*] [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_] [*-h*] [_output_file_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

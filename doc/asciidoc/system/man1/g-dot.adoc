@@ -10,7 +10,7 @@ g-dot - convert a BRL-CAD database to the DOT graph language
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*g-dot* [_OPTION_]... _input_ [_object_ ...]
+*g-dot* [*-o* _output.dot_] _input_ [_object_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

@@ -10,7 +10,8 @@ gcv - geometry format converter
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*gcv* [_OPTION_]... [_argument_ ...]
+*gcv* [*-i* _file_] [*-o* _file_] [*--input-format* _format_] [*--output-format* _format_]
+    [*-I* _option ..._] [*-O* _option ..._] [*-B* _option ..._] [_argument_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

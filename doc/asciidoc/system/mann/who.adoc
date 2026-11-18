@@ -10,12 +10,12 @@ who - Lists the top-level objects that are currently displayed.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*who* [_OPTION_]... [(*real* | *phony* | *both*)]
+*who* [*-h*] [(*real* | *phony* | *both*)]
 *who*
-*who solids* [_OPTION_]... [_detail_level_]
-*who* [_OPTION_]...
+*who solids* [*-h*] [_detail_level_]
+*who* [*-h*] [*-V* _name_] [*-m* _number_] [*-E*]
 *who*
-*who solids* [_OPTION_]... [_detail_level_]
+*who solids* [*-h*] [*-V* _name_] [*-m* _number_] [_detail_level_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

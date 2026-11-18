@@ -10,7 +10,7 @@ dir2ae - Returns the azimuth and elevation (AE) using the provided direction vec
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*dir2ae* [_OPTION_]... _direction_ ...
+*dir2ae* [*-i*] _direction_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

@@ -10,7 +10,7 @@ fbhelp - describe how to select a frame buffer and list available devices
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*fbhelp* [_OPTION_]...
+*fbhelp* [*-F* _device_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

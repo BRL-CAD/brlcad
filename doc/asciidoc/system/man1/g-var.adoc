@@ -11,7 +11,7 @@ g-var - convert BRL-CAD BOT geometry to an OpenGL vertex array mesh
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*g-var* [_OPTION_]... _database_ _object_
+*g-var* [*-v*] [*-y*] [*-f*] [*-s* _factor_] [*-o* _file_] _database_ _object_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

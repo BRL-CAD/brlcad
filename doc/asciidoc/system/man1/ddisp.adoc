@@ -10,7 +10,7 @@ ddisp - plot a stream of doubles on a framebuffer
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*ddisp* [_OPTION_]... [_width_]
+*ddisp* [*-v*] [*-b*] [*-p*] [*-c*] [_width_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

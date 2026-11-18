@@ -10,7 +10,7 @@ plot3-ps - convert a plot3 UnixPlot file to PostScript
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*plot3-ps* [_OPTION_]... [_input_]
+*plot3-ps* [*-e*] [*-c*] [*-s* _inches_] [*-w* _inches_] [*-n* _inches_] [_input_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

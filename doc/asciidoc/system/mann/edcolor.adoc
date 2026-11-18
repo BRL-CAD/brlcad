@@ -10,7 +10,7 @@ edcolor - Puts the user into an editor to edit a file that has been filled with 
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*edcolor* [_OPTION_]...
+*edcolor* [*-E* _editor_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

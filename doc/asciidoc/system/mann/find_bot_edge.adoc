@@ -10,7 +10,7 @@ find_bot_edge - find and identify a BOT (Bag of Triangles) edge
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*find_bot_edge* [_OPTION_]... _bot_ _view_xyz_
+*find_bot_edge* _bot_ _view_xyz_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

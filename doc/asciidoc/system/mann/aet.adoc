@@ -10,7 +10,7 @@ aet, ae - get or set the view orientation as azimuth, elevation, and twist
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*aet* [_OPTION_]... [_angles_ ...]
+*aet* [*-i*] [_angles_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

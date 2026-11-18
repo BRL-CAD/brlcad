@@ -10,7 +10,7 @@ g-scad - BRL-CAD to OpenSCAD Translator (BRL-CAD to SCAD)
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*g-scad* [_OPTION_]... _input_ _object_ ...
+*g-scad* [*-d*] [*-o* _output.scad_] _input_ _object_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

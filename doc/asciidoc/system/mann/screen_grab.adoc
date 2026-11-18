@@ -10,7 +10,7 @@ screen_grab - grab the current screen or view and save it to a file
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*screen_grab* [_OPTION_]... [_output_file_]
+*screen_grab* [*-h*] [*-F*] [*-D* _name_] [*--format* _format_] [_output_file_]
 // END GENERATED BU_ARG SYNOPSIS
 
 == DESCRIPTION

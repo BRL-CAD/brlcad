@@ -10,7 +10,7 @@ db - Provides an interface to a number of database manipulation routines.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*db* [_OPTION_]...
+*db* [*-h*]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

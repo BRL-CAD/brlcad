@@ -10,7 +10,8 @@ lc - Lists codes (i.e. region attributes) 'region_id', 'material_id', 'los', 'ai
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*lc* [_OPTION_]... _group_
+*lc* [*-d*]... [*-m*]... [*-s*]... [*-r*]... [*-z*]... [*-0*]... [*-1*]... [*-2*]... [*-3*]...
+   [*-4*]... [*-5*]... [*-f* _file_] _group_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

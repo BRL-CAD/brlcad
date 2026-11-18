@@ -10,7 +10,7 @@ fbfree - free resources associated with a frame buffer
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*fbfree* [_OPTION_]...
+*fbfree* [*-F* _device_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

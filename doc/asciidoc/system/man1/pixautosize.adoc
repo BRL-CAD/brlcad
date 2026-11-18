@@ -10,7 +10,7 @@ pixautosize - guess the width and height of a standard-size image file
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pixautosize* [_OPTION_]... (*-f* _path_ | *-l* _bytes_)
+*pixautosize* [*-b* _bytes_] (*-f* _path_ | *-l* _bytes_)
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

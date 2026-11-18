@@ -11,7 +11,7 @@ d-bw - convert double-precision binary numbers to unsigned bytes
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*d-bw* [_OPTION_]... [_scale_]
+*d-bw* [*-n*] [_scale_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

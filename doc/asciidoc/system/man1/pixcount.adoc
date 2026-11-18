@@ -10,7 +10,7 @@ pixcount - count occurrences of each unique pixel color in an image stream
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pixcount* [_OPTION_]... [_input_] [_output_]
+*pixcount* [*-#* _bytes_] [_input_] [_output_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

@@ -10,7 +10,8 @@ pixtile - paste small images together into one large image
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pixtile* [_OPTION_]... _basename-or-file_ ...
+*pixtile* [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_] [*-S* _pixels_] [*-W* _pixels_]
+        [*-N* _pixels_] [*-o* _integer_] _basename-or-file_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

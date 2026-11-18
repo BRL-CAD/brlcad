@@ -10,7 +10,7 @@ bw-png - convert a BRL-CAD BW format image to a PNG (Portable Network Graphics) 
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bw-png* [_OPTION_]... [_input_]
+*bw-png* [*-a*] [*-s* _pixels_] [*-w* _pixels_] [*-n* _scanlines_] [_input_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

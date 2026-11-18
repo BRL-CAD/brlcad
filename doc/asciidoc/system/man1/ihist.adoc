@@ -10,7 +10,7 @@ ihist - compute a histogram and bit statistics for a stream of short integers
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*ihist* [_OPTION_]...
+*ihist* [*-v*]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

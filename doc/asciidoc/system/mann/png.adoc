@@ -10,7 +10,7 @@ png - Writes the current display to a PNG image file.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*png* [_OPTION_]... _output_file_
+*png* [*-c* _r/g/b_] [*-s* _pixels_] _output_file_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

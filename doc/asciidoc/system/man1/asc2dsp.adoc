@@ -10,7 +10,7 @@ asc2dsp - convert an ASCII displacement map file to BRL-CAD binary dsp format
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*asc2dsp* [_OPTION_]... _file.asc_ _file.dsp_
+*asc2dsp* _file.asc_ _file.dsp_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

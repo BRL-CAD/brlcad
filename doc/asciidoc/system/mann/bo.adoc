@@ -10,9 +10,11 @@ bo - Creates or retrieves binary opaque objects.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bo* [_OPTION_]... *-i* (*-i* | *-o*) *u* (*f* | *d* | *c* | *s* | *i* | *l* | *C* | *S* | *I* | *L* | *hf* | *hd* | *hc* | *hs* | *hi* | *hl* | *hC* | *hS* | *hI* | *hL* | *nf* | *nd* | *nc* | *ns* | *ni* | *nl* | *nC* | *nS* | *nI* | *nL*) _output_object_ _input_file_
-*bo* [_OPTION_]... *-o* (*-i* | *-o*) _output_file_ _input_object_
-*bo* [_OPTION_]... (*-i* | *-o*)
+*bo* *-i* (*-i* | *-o*) *u* (*f* | *d* | *c* | *s* | *i* | *l* | *C* | *S* | *I* | *L* | *hf* |
+   *hd* | *hc* | *hs* | *hi* | *hl* | *hC* | *hS* | *hI* | *hL* | *nf* | *nd* | *nc* | *ns* | *ni* |
+   *nl* | *nC* | *nS* | *nI* | *nL*) _output_object_ _input_file_
+*bo* *-o* (*-i* | *-o*) _output_file_ _input_object_
+*bo* (*-i* | *-o*)
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

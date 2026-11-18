@@ -10,7 +10,7 @@ move_all, mvall - rename an object and update all references throughout the data
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*move_all* [_OPTION_]... [_source_object_] [_output_object_]
+*move_all* [*-n*] [*-f* _file_] [_source_object_] [_output_object_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

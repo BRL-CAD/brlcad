@@ -10,7 +10,7 @@ pixinterp2x - interpolate a color pix file to twice the original resolution
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pixinterp2x* [_OPTION_]... [_input_]
+*pixinterp2x* [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_] [_input_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

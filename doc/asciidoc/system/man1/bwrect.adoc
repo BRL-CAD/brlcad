@@ -10,7 +10,8 @@ bwrect - extract a rectangle from a black and white bw file
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bwrect* [_OPTION_]... [_input_]
+*bwrect* [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_] [*-S* _pixels_] [*-W* _pixels_]
+       [*-N* _pixels_] [*-x* _pixels_] [*-y* _pixels_] [*-o* _file_] [_input_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

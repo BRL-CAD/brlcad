@@ -10,7 +10,7 @@ i-d - convert 16-bit short integers to doubles
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*i-d* [_OPTION_]... [_scale_]
+*i-d* [*-n*] [_scale_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

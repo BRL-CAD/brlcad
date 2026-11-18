@@ -11,7 +11,11 @@ iges-g - convert an IGES file to a BRL-CAD database
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*iges-g* [_OPTION_]... [_input-or-output_ ...]
+*iges-g* [*-3*] [*-d*] [*-m*] [*-n*] [*-t*] [*-p*] [*-o* _FILE_] [*-N* _NAME_] [*-x* _HEX_]
+       [*-X* _HEX_] [*--exact*] [*--strict*] [*--default-plate-thickness* _MM_]
+       [*--max-repair-tolerance* _MM_] [*--relative-tolerance* _FRACTION_] [*--repair* _MODE_]
+       [*--report* _FILE_] [*--check-orientation* _FILE.g_] [*--legacy-drawings*]
+       [_input-or-output_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

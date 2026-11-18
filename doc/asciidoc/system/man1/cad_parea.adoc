@@ -10,7 +10,7 @@ cad_parea - compute the area of a polygon
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*cad_parea* [_OPTION_]...
+*cad_parea* [*-i* _file_] [*-o* _file_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

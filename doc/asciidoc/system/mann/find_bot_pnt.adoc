@@ -10,7 +10,7 @@ find_bot_pnt - find and identify a BOT point
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*find_bot_pnt* [_OPTION_]... _bot_ _view_xyz_
+*find_bot_pnt* _bot_ _view_xyz_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

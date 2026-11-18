@@ -10,7 +10,7 @@ list, l - list the attributes and parameters of database objects
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*list* [_OPTION_]... _objects_ ...
+*list* [*-r*] [*-t*] [*-v*]... _objects_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

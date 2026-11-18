@@ -10,7 +10,17 @@ mged - multi-display interactive combinatorial solid geometry editor
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*mged* [_OPTION_]...
+*mged* [*-a* _type_] [*-d* _screen_] [*-r*] [*-p*] [*-c*] [*-C*] [*-b*] [*-x* _hex_] [*-X* _hex_]
+     [*-v*] [*-h*] [*-?*] [*-o*] [*--rcfile* _file_] [*--no-rc*] [*--set* _VAR=VALUE_]
+     [*--rset* _ARGS_] [*--use-air*] [*--no-use-air*] [*--dlist*] [*--no-dlist*] [*--faceplate*]
+     [*--no-faceplate*] [*--predictor*] [*--no-predictor*] [*--linewidth* _#_] [*--linestyle* _s|d_]
+     [*--perspective* _#_] [*--eye-sep-dist* _#_] [*--port* _#_] [*--coords* _m|v_]
+     [*--rotate-about* _m|v|e_] [*--transform* _v|a|e_] [*--nmg-eu-dist* _#_]
+     [*--mouse-behavior* _v|a|e_] [*--predictor-advance* _#_] [*--predictor-length* _#_]
+     [*--perspective-mode* _0|1_] [*--context* _0|1_] [*--sliders* _0|1_] [*--hot-key* _#_]
+     [*--fb-overlay* _0|1|2_] [*--dm-type* _type_] [*--geom* _WxH+X+Y_] [*--ggeom* _WxH+X+Y_]
+     [*--grid-draw* _0|1_] [*--grid-snap* _0|1_] [*--grid-rh* _#_] [*--grid-rv* _#_]
+     [*--grid-mrh* _#_] [*--grid-mrv* _#_] [*--bg* _R G B_] [*--geo-color* _R G B_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

@@ -11,8 +11,11 @@ icv - convert, compare, and report information for image formats
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*icv* [_OPTION_]... [_path_ ...]
-*icv* [_OPTION_]... _img1_ _img2_
+*icv* [*-i* _file_] [*-o* _file_] [*-w* _pixels_] [*-n* _pixels_] [*--input-format* _format_]
+    [*--output-format* _format_] [_path_ ...]
+*icv* [*-o* _file_] [*--output-format* _format_] [*--format-img1* _format_]
+    [*--format-img2* _format_] [*--width-img1* _pixels_] [*--height-img1* _pixels_]
+    [*--width-img2* _pixels_] [*--height-img2* _pixels_] _img1_ _img2_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

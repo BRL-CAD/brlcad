@@ -11,7 +11,7 @@ f-d - convert single-precision floats to double-precision floats
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*f-d* [_OPTION_]... [_scale_]
+*f-d* [*-n*] [_scale_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

@@ -11,7 +11,7 @@ g2asc - convert a BRL-CAD geometry database from binary to ASCII
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*g2asc* [_OPTION_]... _file.g_ _file.asc_
+*g2asc* _file.g_ _file.asc_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

@@ -10,7 +10,8 @@ pixfilter - apply a 3x3 kernel filter to a color pix file
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pixfilter* [_OPTION_]... [_input_]
+*pixfilter* [*-v*]... [*-f* _type_] [*-d* _integer_] [*-o* _integer_] [*-s* _pixels_]
+          [*-w* _pixels_] [*-n* _pixels_] [_input_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

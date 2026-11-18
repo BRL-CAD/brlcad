@@ -10,7 +10,7 @@ illum - illuminate object
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*illum* [_OPTION_]... _object_
+*illum* [*-n*] _object_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

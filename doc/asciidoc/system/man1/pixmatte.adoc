@@ -10,7 +10,8 @@ pixmatte - matte (merge) two pix(5) or bw(5) images by a formula
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pixmatte* [_OPTION_]... _input-1_ _input-2_ _true-output_ _false-output_
+*pixmatte* [*-g*] [*-l*] [*-e*] [*-n*] [*-a*] [*-w* _bytes_] _input-1_ _input-2_ _true-output_
+         _false-output_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

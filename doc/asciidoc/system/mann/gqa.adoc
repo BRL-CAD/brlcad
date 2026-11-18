@@ -10,8 +10,14 @@ gqa - analyze the currently open geometry database
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*gqa* [_OPTION_]... *-h* [_raw_arguments_ ...]
-*gqa* [_OPTION_]... _objects_ ...
+*gqa* [*-A* _types_] [*-a* _azimuth_] [*-d*] [*-e* _elevation_] [*-f* _file_] [*-g* _spacing_]
+    [*-G*] [*-n* _hits_] [*-N* _views_] [*-p* _prefix_] [*-P* _cpus_] [*-q*] [*-r*] [*-S* _samples_]
+    [*-t* _tolerance_] [*-U* _use_air_] [*-u* _units_] [*-v*] [*-V* _tolerance_] [*-W* _tolerance_]
+    *-h* [_raw_arguments_ ...]
+*gqa* [*-A* _types_] [*-a* _azimuth_] [*-d*] [*-e* _elevation_] [*-f* _file_] [*-g* _spacing_]
+    [*-G*] [*-n* _hits_] [*-N* _views_] [*-p* _prefix_] [*-P* _cpus_] [*-q*] [*-r*] [*-S* _samples_]
+    [*-t* _tolerance_] [*-U* _use_air_] [*-u* _units_] [*-v*] [*-V* _tolerance_] [*-W* _tolerance_]
+    _objects_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

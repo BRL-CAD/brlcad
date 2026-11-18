@@ -10,7 +10,7 @@ dconv - fast FFT-based convolution of a double-precision data stream
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*dconv* [_OPTION_]... _filter-file_
+*dconv* _filter-file_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

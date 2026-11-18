@@ -10,7 +10,7 @@ ustats - compute basic statistics of a stream of unsigned short integers
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*ustats* [_OPTION_]... [_file_]
+*ustats* [_file_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

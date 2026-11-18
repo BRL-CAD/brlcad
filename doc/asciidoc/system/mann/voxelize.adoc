@@ -10,7 +10,7 @@ voxelize - Takes as input a primitive or a collection of primitives, __old_obj__
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*voxelize* [_OPTION_]... _output_object_ _input_objects_ ...
+*voxelize* [*-s* _dx/dy/dz_] [*-d* _level_] [*-t* _fraction_] _output_object_ _input_objects_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

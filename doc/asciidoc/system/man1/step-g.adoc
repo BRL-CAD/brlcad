@@ -11,7 +11,11 @@ step-g - import an ISO 10303 STEP file into a BRL-CAD geometry database
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*step-g* [_OPTION_]... _input.step_ [_output.g_]
+*step-g* [*-D*] [*-v*] [*--exact*] [*--strict*] [*--reject-invalid-objs*] [*--skip-open-shells*]
+       [*--abs-tol* _MM_] [*--budget-scale* _FACTOR_] [*--item-budget* _SECONDS_]
+       [*--no-item-budget*] [*--stall-timeout* _SECONDS_] [*--repair* _MODE_] [*--report* _FILE_]
+       [*-f*] [*-O* _FILE_] [*-o* _FILE_] [*-S* _FILE_] [*--schema* _AP_] [*-e* _ID[,ID...]_]
+       [*-j* _N_] _input.step_ [_output.g_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

@@ -10,7 +10,7 @@ summary - The *summary* command with no arguments lists the number of primitive 
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*summary* [_OPTION_]... [_object_or_legacy_type_]
+*summary* [*-o* _object_] [_object_or_legacy_type_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

@@ -10,7 +10,7 @@ keep - Copies the _objects_ specified to the __keep_file__.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*keep* [_OPTION_]... _file_ _objects_ ...
+*keep* [*-R*] _file_ _objects_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

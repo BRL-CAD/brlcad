@@ -10,7 +10,8 @@ pixfade - darken a pix file
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pixfade* [_OPTION_]... [_input_]
+*pixfade* [*-p* _percentage_] [*-f* _fraction_] [*-m* _level_] [*-s* _pixels_] [*-w* _pixels_]
+        [*-n* _pixels_] [*-o* _file.pix_] [_input_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

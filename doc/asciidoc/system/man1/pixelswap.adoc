@@ -10,7 +10,8 @@ pixelswap - interchange two pixel colors in a pix image
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pixelswap* [_OPTION_]... _source-red_ _source-green_ _source-blue_ _replacement-red_ _replacement-green_ _replacement-blue_
+*pixelswap* [*-d* _bytes_] _source-red_ _source-green_ _source-blue_ _replacement-red_
+          _replacement-green_ _replacement-blue_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

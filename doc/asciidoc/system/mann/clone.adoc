@@ -12,7 +12,11 @@ place the copies in the database with automatically generated names.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*clone* [_OPTION_]... [(*lin* | *rect* | *sph* | *cyl*) ...]
+*clone* [*-h*] [*-i* _number_] [*-c*]... [*--depth* _mode_] [*--xpush*] [*-g* _name_]
+      [*-s* _search replacement_] [*-n* _N|AXIS=N_] [*-d* _D|AXIS=D_] [*--start* _V|AXIS=V_]
+      [*--list* _AXIS=v1,v2,..._] [*-O* _x y z_] [*-p* _x y z_] [*--align* _keys_]
+      [*--dir* _axis x y z_] [*-t* _x y z_] [*-r* _x y z_] [*-a* _count x y z_] [*-b* _count x y z_]
+      [*-m* _axis distance_] [(*lin* | *rect* | *sph* | *cyl*) ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 == DESCRIPTION

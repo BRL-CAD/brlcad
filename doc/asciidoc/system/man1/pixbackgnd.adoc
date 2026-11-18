@@ -10,7 +10,8 @@ pixbackgnd - generate a pix(5) shaded background
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pixbackgnd* [_OPTION_]... _component_ ...
+*pixbackgnd* [*-H*] [*-i*] [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_] [*-t* _lines_]
+           [*-a* _value_] [*-b* _value_] _component_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

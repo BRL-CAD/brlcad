@@ -10,7 +10,7 @@ u-d - convert unsigned shorts to doubles
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*u-d* [_OPTION_]... [_scale_]
+*u-d* [*-n*] [_scale_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

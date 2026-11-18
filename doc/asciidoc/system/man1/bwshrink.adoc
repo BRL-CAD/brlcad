@@ -10,7 +10,7 @@ bwshrink - shrink a black and white bw file
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bwshrink* [_OPTION_]... [_input_]
+*bwshrink* [*-u*] [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_] [*-f* _integer_] [_input_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

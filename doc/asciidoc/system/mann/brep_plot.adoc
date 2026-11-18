@@ -10,7 +10,10 @@ brep plot - Plot specific components of brep objects in a 3D scene.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*brep plot* (*C2* | *C3* | *E* | *F* | *F2d* | *FSBB* | *FSBB2d* | *FTBB* | *FTBB2d* | *FTD* | *I* | *L* | *L2d* | *S* | *SCV* | *SK* | *SK2d* | *SN* | *SUV* | *SUVP* | *T* | *T2d* | *V* | *CDT* | *CDT2d* | *CDTm2d* | *CDTp2d* | *CDTw* | *CDTn* | *CDTn2d* | *CDTnw*) [_indices_ ...]
+*brep plot* (*C2* | *C3* | *E* | *F* | *F2d* | *FSBB* | *FSBB2d* | *FTBB* | *FTBB2d* | *FTD* | *I* |
+          *L* | *L2d* | *S* | *SCV* | *SK* | *SK2d* | *SN* | *SUV* | *SUVP* | *T* | *T2d* | *V* |
+          *CDT* | *CDT2d* | *CDTm2d* | *CDTp2d* | *CDTw* | *CDTn* | *CDTn2d* | *CDTnw*)
+          [_indices_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

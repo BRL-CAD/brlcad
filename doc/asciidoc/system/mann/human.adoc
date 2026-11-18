@@ -10,8 +10,20 @@ human - generate human models based on parameters like height
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*human* [_OPTION_]... *-h* [_raw_arguments_ ...]
-*human* [_OPTION_]... [_top-level-name_]
+*human* [*-A*] [*-b*] [*-H* _inches_] [*-L*] [*-m*] [*-n* _name_] [*-N* _count_] [*-p* _percent_]
+      [*-s* _pose_] [*-t*] [*-T*] [*-v*] [*-V*] [*-1* _inches_] [*-2* _inches_] [*-3* _inches_]
+      [*-4* _inches_] [*-5* _inches_] [*-6* _inches_] [*-7* _inches_] [*-8* _inches_]
+      [*-9* _inches_] [*-0* _inches_] [*-=* _inches_] [*-+* _inches_] [*-_* _inches_]
+      [*-Q* _inches_] [*-~* _inches_] [`-*` _inches_] [*-!* _inches_] [*-^* _inches_]
+      [*-%* _inches_] [*-$* _inches_] [*-#* _inches_] [*-@* _inches_] [*-Z* _inches_]
+      [*-Y* _inches_] [*-W* _inches_] *-h* [_raw_arguments_ ...]
+*human* [*-A*] [*-b*] [*-H* _inches_] [*-L*] [*-m*] [*-n* _name_] [*-N* _count_] [*-p* _percent_]
+      [*-s* _pose_] [*-t*] [*-T*] [*-v*] [*-V*] [*-1* _inches_] [*-2* _inches_] [*-3* _inches_]
+      [*-4* _inches_] [*-5* _inches_] [*-6* _inches_] [*-7* _inches_] [*-8* _inches_]
+      [*-9* _inches_] [*-0* _inches_] [*-=* _inches_] [*-+* _inches_] [*-_* _inches_]
+      [*-Q* _inches_] [*-~* _inches_] [`-*` _inches_] [*-!* _inches_] [*-^* _inches_]
+      [*-%* _inches_] [*-$* _inches_] [*-#* _inches_] [*-@* _inches_] [*-Z* _inches_]
+      [*-Y* _inches_] [*-W* _inches_] [_top-level-name_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

@@ -10,7 +10,7 @@ move_arb_face - move an arb's face through pt
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*move_arb_face* [_OPTION_]... _arb_ _face_ _point_
+*move_arb_face* [*-r*] _arb_ _face_ _point_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

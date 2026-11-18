@@ -10,7 +10,7 @@ which_shader - list all combinations using a given shader
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*which_shader* [_OPTION_]... _shader_patterns_ ...
+*which_shader* [*-s*] _shader_patterns_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

@@ -10,7 +10,7 @@ fbclear - clear a frame buffer to a color
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*fbclear* [_OPTION_]... [_color_ ...]
+*fbclear* [*-c*] [*-F* _device_] [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_] [_color_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

@@ -10,7 +10,7 @@ redraw - refresh the display geometry for currently displayed objects
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*redraw* [_OPTION_]... [_paths_ ...]
+*redraw* [*-V* _name_] [_paths_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

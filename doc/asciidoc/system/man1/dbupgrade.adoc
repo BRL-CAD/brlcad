@@ -10,7 +10,7 @@ dbupgrade - upgrade a BRL-CAD geometry database to the current version
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*dbupgrade* [_OPTION_]... _input_ _output_
+*dbupgrade* [*-f*] [*-r*] _input_ _output_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

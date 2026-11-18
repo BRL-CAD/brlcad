@@ -10,7 +10,7 @@ pscale - scale a scalar or vector attribute of a primitive
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pscale* [_OPTION_]... _object_ _attribute_ _scale_
+*pscale* [*-r*] _object_ _attribute_ _scale_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

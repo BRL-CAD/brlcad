@@ -10,7 +10,8 @@ man - displays a manual page graphically or as formatted text.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*man* [_OPTION_]... [_manual_page_] [_trailing_section_]
+*man* [*-h*] [*-g*] [*--no-gui*] [*--width* _columns_] [*-L* _code_] [*-S* _section_]
+    [_manual_page_] [_trailing_section_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

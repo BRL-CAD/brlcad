@@ -10,7 +10,7 @@ fbgrid - draw a calibration grid on a frame buffer
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*fbgrid* [_OPTION_]...
+*fbgrid* [*-c*] [*-b*] [*-d*] [*-o*] [*-F* _device_] [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

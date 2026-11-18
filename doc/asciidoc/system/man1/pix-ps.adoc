@@ -10,7 +10,8 @@ pix-ps - convert a color pix file to PostScript
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pix-ps* [_OPTION_]... [_input_]
+*pix-ps* [*-e*] [*-c*] [*-l*] [*-L*] [*-s* _pixels_] [*-w* _pixels_] [*-n* _scanlines_]
+       [*-S* _inches_] [*-W* _inches_] [*-N* _inches_] [_input_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

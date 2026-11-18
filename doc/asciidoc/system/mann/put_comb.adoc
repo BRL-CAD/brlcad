@@ -10,7 +10,8 @@ put_comb - Insert combinations and regions - allows definition of both boolean e
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*put_comb* _combination_ _color_ _shader_ _inherit_ _boolean_expression_ _is_region_ [_region_fields_ ...]
+*put_comb* _combination_ _color_ _shader_ _inherit_ _boolean_expression_ _is_region_
+         [_region_fields_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

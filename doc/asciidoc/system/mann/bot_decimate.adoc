@@ -10,7 +10,7 @@ bot decimate - Reduce the number of triangles in a BoT.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bot_decimate* [_OPTION_]... _new_bot_ _current_bot_
+*bot_decimate* [*-c* _error_] [*-n* _error_] [*-e* _length_] [*-f* _size_] _new_bot_ _current_bot_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

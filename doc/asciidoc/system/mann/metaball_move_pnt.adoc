@@ -10,7 +10,7 @@ metaball_move_pnt - Move a control point of a METABALL primitive.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*metaball_move_pnt* [_OPTION_]... _metaball_ _point_index_ _point_ ...
+*metaball_move_pnt* [*-r*] _metaball_ _point_index_ _point_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

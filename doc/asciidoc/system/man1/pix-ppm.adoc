@@ -11,7 +11,8 @@ pix-ppm - convert a BRL-CAD PIX or BW image to a PPM/PGM image
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pix-ppm* [_OPTION_]... [_input_]
+*pix-ppm* [*-a*] [*-#* _count_] [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_] [*-o* _file_]
+        [_input_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

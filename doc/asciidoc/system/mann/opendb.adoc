@@ -10,7 +10,7 @@ opendb - Open a BRL-CAD database and make it current.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*opendb* [_OPTION_]... _filename_
+*opendb* [*-c*] [*-f*] [*-h*] [*-o*] _filename_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

@@ -11,7 +11,8 @@ graph - generate a database hierarchy graph
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*graph* [_OPTION_]... _output_or_operation_
+*graph* [*--tree*] [*--skip-routing*] [*--depth* _depth_] [*--root-obj* _object_]... [*--igraph*]
+      _output_or_operation_
 // END GENERATED BU_ARG SYNOPSIS
 
 == DESCRIPTION

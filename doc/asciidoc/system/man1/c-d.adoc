@@ -11,7 +11,7 @@ c-d - extract components from complex double-precision data
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*c-d* [_OPTION_]...
+*c-d* [*-r*] [*-i*] [*-m*] [*-p*] [*-z*]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

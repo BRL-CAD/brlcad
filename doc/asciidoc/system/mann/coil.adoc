@@ -10,7 +10,8 @@ coil - create a coil spring geometry object
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*coil* [_OPTION_]... [_output_object_]
+*coil* [*-d* _diameter_] [*-w* _diameter_] [*-H* _angle_] [*-p* _pitch_] [*-n* _turns_]
+     [*-s* _type_] [*-e* _type_] [*-S* _section_] [*-l* _length_] [*-L*] [*-h*] [_output_object_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

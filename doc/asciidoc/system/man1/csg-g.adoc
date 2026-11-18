@@ -10,7 +10,7 @@ csg-g - OpenSCAD CSG Translator (CSG to BRL-CAD)
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*csg-g* [_OPTION_]... _input_ _output_
+*csg-g* [*-d*] _input_ _output_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

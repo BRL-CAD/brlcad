@@ -10,7 +10,7 @@ pathlist - Lists all existing paths that start from the specified combinations a
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pathlist* [_OPTION_]... _object_
+*pathlist* [*-n*] _object_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

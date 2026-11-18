@@ -10,7 +10,7 @@ bwhist - display a histogram of a black and white bw file on a framebuffer
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bwhist* [_OPTION_]... [_input_]
+*bwhist* [*-v*] [_input_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

@@ -10,14 +10,21 @@ pnts - Creates/writes/generates a "pnts" (i.e. point cloud) primitive.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pnts* [_OPTION_]...
-*pnts gen* [_OPTION_]... _object_ _output_pnts_
-*pnts read* [_OPTION_]... _input_file_ _output_pnts_
-*pnts tri* [_OPTION_]...
-*pnts tri unit* [_OPTION_]... _input_pnts_ _output_bot_
-*pnts tri ballpivot* [_OPTION_]... _input_pnts_ _output_bot_
-*pnts tri spsr* [_OPTION_]... _input_pnts_ _output_bot_
-*pnts write* [_OPTION_]... _input_pnts_ _output_file_
+*pnts* [*-h*]
+*pnts gen* [*-h*] [*-t* _distance_] [*--surface*] [*--grid*] [*--rand*] [*--sobol*]
+         [*--max-pnts* _number_] [*--max-time* _seconds_] _object_ _output_pnts_
+*pnts read* [*-h*] [*-f* _format_] [*-u* _unit_] [*--size* _size_] _input_file_ _output_pnts_
+*pnts tri* [*-h*]
+*pnts tri unit* [*-h*] [*-s* _scale_] _input_pnts_ _output_bot_
+*pnts tri ballpivot* [*-h*] [*-r* _radius_] [*--radii* _r1,r2,..._] _input_pnts_ _output_bot_
+*pnts tri spsr* [*-h*] [*--degree* _number_] [*--btype* _number_] [*--depth* _number_]
+              [*--kerneldepth* _number_] [*--iterations* _number_] [*--full-depth* _number_]
+              [*--base-depth* _number_] [*--base-vcycles* _number_] [*--max-mem* _number_]
+              [*--threads* _number_] [*--samples-per-node* _number_] [*--scale* _number_]
+              [*--width* _number_] [*--confidence* _number_] [*--confidence-bias* _number_]
+              [*--cg-accuracy* _number_] [*--point-weight* _number_] [*--nonmanifold* _number_]
+              [*--linearfit* _number_] [*--exact* _number_] _input_pnts_ _output_bot_
+*pnts write* [*-h*] [*-p* _digits_] [*--ply*] [*-f* _fields_] _input_pnts_ _output_file_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

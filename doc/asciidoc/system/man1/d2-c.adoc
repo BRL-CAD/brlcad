@@ -11,7 +11,7 @@ d2-c - merge two double files into one complex file
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*d2-c* [_OPTION_]... _real-file_ _imaginary-file_
+*d2-c* _real-file_ _imaginary-file_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

@@ -10,7 +10,7 @@ u-bw - convert unsigned shorts to unsigned chars (8-bit bw data)
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*u-bw* [_OPTION_]...
+*u-bw* [*-l*]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

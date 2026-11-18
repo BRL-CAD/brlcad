@@ -11,7 +11,7 @@ get_bot_edges - list the edges of a BOT primitive
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*get_bot_edges* [_OPTION_]... _bot_
+*get_bot_edges* _bot_
 // END GENERATED BU_ARG SYNOPSIS
 
 == DESCRIPTION

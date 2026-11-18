@@ -10,7 +10,7 @@ gsh - BRL-CAD geometry shell for interacting with .g database files
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*gsh* [_OPTION_]...
+*gsh* [*-h*] [*-v*] [*--new-cmds*] [*--completion-mode* _mode_] [*--command-schema* _command|all_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

@@ -10,7 +10,8 @@ pix-bw - convert a color pix image into a black and white bw image
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pix-bw* [_OPTION_]... [_input_]
+*pix-bw* [*-e* _scheme_] [*-R* _weight_] [*-G* _weight_] [*-B* _weight_] [*-s* _pixels_]
+       [*-w* _pixels_] [*-n* _pixels_] [*-o* _file.bw_] [_input_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

@@ -10,7 +10,7 @@ bot split - Split a BoT into edge-connected components.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*bot_split* [_OPTION_]... _bot_ ...
+*bot_split* _bot_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[options]]

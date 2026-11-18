@@ -10,7 +10,7 @@ ae - Sets the view orientation for the _mged_ display by rotating the eye point 
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*ae* [_OPTION_]... [_angles_ ...]
+*ae* [*-i*] [_angles_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

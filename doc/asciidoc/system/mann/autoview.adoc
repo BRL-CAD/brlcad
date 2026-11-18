@@ -10,7 +10,7 @@ autoview - Frames objects within the view.
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*autoview* [_OPTION_]... [_object_ ...]
+*autoview* [*-h*] [*--all-objs*] [*-s* _number_] [*-V* _name_] [_object_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

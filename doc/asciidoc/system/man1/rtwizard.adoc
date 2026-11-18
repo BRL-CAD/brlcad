@@ -10,7 +10,16 @@ rtwizard - composite BRL-CAD images from color, ghost, and edge-line renderings
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*rtwizard* [_OPTION_]... [_input-or-object_ ...]
+*rtwizard* [*--help-dev*] [*-i* _filename_] [*-o* _filename_] [*-s* _pixels_] [*-w* _pixels_]
+         [*-n* _pixels_] [*-t* _A|B|C|D|E|F_] [*-c* _object-list_] [*-l* _object-list_]
+         [*-g* _object-list_] [*-a* _degrees_] [*-e* _degrees_] [*--twist* _degrees_]
+         [*-z* _factor_] [*--center* _x/y/z_] [*--eye_pt* _x/y/z_] [*--viewsize* _size_]
+         [*--orientation* _quaternion_] [*-P* _degrees_] [*-C* _color_] [*--line-color* _color_]
+         [*--non-line-color* _color_] [*-G* _value_] [*-O* _mode_] [*--gui*] [*--no-gui*]
+         [*-d* _device_] [*-p* _port_] [*--benchmark*] [*--cpu-count* _count_]
+         [*--pid-file* _filename_] [*--log-file* _filename_] [*-v* _level_] [*--cut-steps* _count_]
+         [*--cut-direction* _x/y/z_] [*--animation-fps* _fps_] [*--ao-samples* _count_]
+         [*--ao-radius* _radius_] [_input-or-object_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

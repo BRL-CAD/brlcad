@@ -10,7 +10,8 @@ pixmorph - feature-based morph between two pix(5) images
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*pixmorph* [_OPTION_]... _first-image_ _second-image_ _lines-file_ _warp-fraction_ _dissolve-fraction_
+*pixmorph* [*-w* _pixels_] [*-n* _pixels_] _first-image_ _second-image_ _lines-file_ _warp-fraction_
+         _dissolve-fraction_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

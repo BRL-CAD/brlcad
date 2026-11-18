@@ -10,7 +10,7 @@ dauto2 - compute the center-clipped autocorrelation function of doubles
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*dauto2* [_OPTION_]... [_window-size_]
+*dauto2* [_window-size_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]

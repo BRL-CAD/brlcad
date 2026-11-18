@@ -10,9 +10,9 @@ editit - open a file in an external text editor
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*editit* [_OPTION_]... *-h* [_file_]
-*editit* [_OPTION_]... *-f* _file_
-*editit* [_OPTION_]... _file_
+*editit* [*-e* _editstring_] *-h* [_file_]
+*editit* [*-e* _editstring_] *-f* _file_
+*editit* [*-e* _editstring_] _file_
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
