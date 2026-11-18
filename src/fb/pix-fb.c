@@ -26,7 +26,6 @@
 
 #include "common.h"
 
-#include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
 #ifdef HAVE_SYS_TYPES_H
@@ -41,9 +40,8 @@
 
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "fb_arg.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
 #include "bu/exit.h"
@@ -52,16 +50,13 @@
 #include "vmath.h"
 #include "dm.h"
 
-#include "pkg.h"
-
-
 static unsigned char *scanline;	/* 1 scanline pixel buffer */
 static int scanbytes;		/* # of bytes of scanline */
 static int scanpix;		/* # of pixels of scanline */
 
 static int multiple_lines = 0;	/* Streamlined operation */
 
-static char *framebuffer = NULL;
+static const char *framebuffer = NULL;
 static const char *file_name;
 static int infd;
 
@@ -81,126 +76,165 @@ static int one_line_only = 0;	/* insist on 1-line writes */
 static int pause_sec = 0; 	/* Pause that many seconds before
 				   closing the FB and exiting */
 
-static char usage[] = "\
-Usage: pix-fb [-a -i -c -z -1] [-m #lines] [-F framebuffer]\n\
-	[-s squarefilesize] [-w file_width] [-n file_height]\n\
-	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
-	[-S squarescrsize] [-W scr_width] [-N scr_height] [-p seconds]\n\
-	[file.pix]\n";
+struct pix_fb_args {
+    struct pix_fb_args *self;
+    int help;
+    int one_line_only;
+    int multiple_lines;
+    int autosize;
+    int inverse;
+    int clear;
+    int zoom;
+    const char *framebuffer;
+    int pause_sec;
+    size_t file_width;
+    size_t file_height;
+    int file_xoff;
+    int file_yoff;
+    int screen_xoff;
+    int screen_yoff;
+    int screen_width;
+    int screen_height;
+};
 
-int
-get_args(int argc, char **argv)
+enum pix_fb_dimension {
+    PIX_FB_FILE_SIZE,
+    PIX_FB_FILE_WIDTH,
+    PIX_FB_FILE_HEIGHT,
+    PIX_FB_SCREEN_SIZE
+};
+
+static struct pix_fb_args *
+pix_fb_args_from_storage(void *storage)
 {
-    int c;
+    return storage ? *(struct pix_fb_args **)storage : NULL;
+}
 
-    while ((c = bu_getopt(argc, argv, "1m:aiczF:p:s:w:n:x:y:X:Y:S:W:N:h?")) != -1) {
-	switch (c) {
-	    case '1':
-		one_line_only = 1;
-		break;
-	    case 'm':
-		if (!fb_arg_int_range(bu_optarg, &multiple_lines, 0, INT_MAX, "line count"))
-		    return 0;
-		break;
-	    case 'a':
-		autosize = 1;
-		break;
-	    case 'i':
-		inverse = 1;
-		break;
-	    case 'c':
-		clear = 1;
-		break;
-	    case 'z':
-		zoom = 1;
-		break;
-	    case 'F':
-		framebuffer = bu_optarg;
-		break;
-	    case 's':
-		/* square file size */
-		if (!fb_arg_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "file size"))
-		    return 0;
-		file_height = file_width;
-		autosize = 0;
-		break;
-	    case 'w':
-		if (!fb_arg_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "file width"))
-		    return 0;
-		autosize = 0;
-		break;
-	    case 'n':
-		if (!fb_arg_size_t_range(bu_optarg, &file_height, 1, SIZE_MAX, "file height"))
-		    return 0;
-		autosize = 0;
-		break;
-	    case 'x':
-		if (!fb_arg_int_range(bu_optarg, &file_xoff, 0, INT_MAX, "file x offset"))
-		    return 0;
-		break;
-	    case 'y':
-		if (!fb_arg_int_range(bu_optarg, &file_yoff, 0, INT_MAX, "file y offset"))
-		    return 0;
-		break;
-	    case 'X':
-		if (!fb_arg_int(bu_optarg, &scr_xoff, "screen x offset"))
-		    return 0;
-		break;
-	    case 'Y':
-		if (!fb_arg_int(bu_optarg, &scr_yoff, "screen y offset"))
-		    return 0;
-		break;
-	    case 'S':
-		if (!fb_arg_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen size"))
-		    return 0;
-		scr_height = scr_width;
-		break;
-	    case 'W':
-		if (!fb_arg_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen width"))
-		    return 0;
-		break;
-	    case 'N':
-		if (!fb_arg_int_range(bu_optarg, &scr_height, 0, INT_MAX, "screen height"))
-		    return 0;
-		break;
-	    case 'p':
-		if (!fb_arg_int_range(bu_optarg, &pause_sec, 0, INT_MAX, "pause duration"))
-		    return 0;
-		break;
+static int
+pix_fb_autosize(struct bu_vls *UNUSED(msg), const char *UNUSED(arg),
+	void *storage)
+{
+    struct pix_fb_args *args = pix_fb_args_from_storage(storage);
+    if (args)
+	args->autosize = 1;
+    return 0;
+}
 
-	    default:		/* '?' */
-		return 0;
-	}
-    }
+static int
+pix_fb_dimension_value(struct bu_vls *msg, const char *arg, void *storage,
+	enum pix_fb_dimension dimension)
+{
+    struct pix_fb_args *args = pix_fb_args_from_storage(storage);
 
-    if (bu_optind >= argc) {
-	if (isatty(fileno(stdin)))
-	    return 0;
-	file_name = "-";
-	infd = fileno(stdin);
-	setmode(fileno(stdin), O_BINARY);
-    } else {
-	char *ifname;
-	file_name = argv[bu_optind];
-	ifname = bu_file_realpath(file_name, NULL);
-	if ((infd = open(ifname, O_RDONLY|O_BINARY)) < 0) {
-	    perror(ifname);
-	    fprintf(stderr,
-		    "pix-fb: cannot open \"%s(canonical %s)\" for reading\n",
-		    file_name, ifname);
-	    bu_free(ifname, "ifname alloc from bu_file_realpath");
-	    bu_exit(1, NULL);
-	}
-	bu_free(ifname, "ifname alloc from bu_file_realpath");
-	fileinput++;
-    }
-
-    if (argc > ++bu_optind) {
-	fprintf(stderr, "pix-fb: excess argument(s) not supported\n");
+    if (dimension == PIX_FB_SCREEN_SIZE) {
+	int value;
+	if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 0, INT_MAX))
+	    return -1;
+	if (args)
+	    args->screen_width = args->screen_height = value;
 	return 0;
     }
 
-    return 1;		/* OK */
+    size_t value;
+    if (!bu_arg_size_t_range_from_str(msg, &value, arg, 10, 1, SIZE_MAX))
+	return -1;
+    if (args) {
+	if (dimension == PIX_FB_FILE_SIZE)
+	    args->file_width = args->file_height = value;
+	else if (dimension == PIX_FB_FILE_WIDTH)
+	    args->file_width = value;
+	else
+	    args->file_height = value;
+	args->autosize = 0;
+    }
+    return 0;
+}
+
+#define PIX_FB_DIMENSION_CALLBACK(_name, _dimension) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return pix_fb_dimension_value(msg, arg, storage, _dimension); \
+    }
+
+PIX_FB_DIMENSION_CALLBACK(pix_fb_file_size, PIX_FB_FILE_SIZE)
+PIX_FB_DIMENSION_CALLBACK(pix_fb_file_width, PIX_FB_FILE_WIDTH)
+PIX_FB_DIMENSION_CALLBACK(pix_fb_file_height, PIX_FB_FILE_HEIGHT)
+PIX_FB_DIMENSION_CALLBACK(pix_fb_screen_size, PIX_FB_SCREEN_SIZE)
+
+static const struct bu_arg_option pix_fb_options[] = {
+    BU_ARG_FLAG("h", "help", struct pix_fb_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("1", "one-line", struct pix_fb_args, one_line_only,
+	"Force one scanline per framebuffer write"),
+    BU_ARG_INTEGER_RANGE("m", "multiple-lines", struct pix_fb_args,
+	multiple_lines, 1, 0, 1, INT_MAX, "scanlines",
+	"Write blocks containing this many scanlines"),
+    BU_ARG_CUSTOM_FLAG("a", "autosize", "autosize", struct pix_fb_args,
+	self, pix_fb_autosize, "Derive dimensions from a named input file"),
+    BU_ARG_FLAG("i", "invert", struct pix_fb_args, inverse,
+	"Display scanlines from top to bottom"),
+    BU_ARG_FLAG("c", "clear", struct pix_fb_args, clear,
+	"Clear the framebuffer before writing"),
+    BU_ARG_FLAG("z", "zoom", struct pix_fb_args, zoom,
+	"Zoom and center the displayed image"),
+    BU_ARG_VALUE("F", "framebuffer", struct pix_fb_args, framebuffer,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Select the framebuffer instead of the FB_FILE environment default"),
+    BU_ARG_INTEGER_RANGE("p", "pause", struct pix_fb_args, pause_sec,
+	1, 0, 1, INT_MAX, "seconds",
+	"Wait before closing the framebuffer"),
+    BU_ARG_CUSTOM("s", "input-size", struct pix_fb_args, self,
+	pix_fb_file_size, "pixels", "Set both input dimensions"),
+    BU_ARG_CUSTOM("w", "input-width", struct pix_fb_args, self,
+	pix_fb_file_width, "pixels", "Set the input scanline width"),
+    BU_ARG_CUSTOM("n", "input-height", struct pix_fb_args, self,
+	pix_fb_file_height, "scanlines", "Set the input image height"),
+    BU_ARG_INTEGER_RANGE("x", "input-x-offset", struct pix_fb_args,
+	file_xoff, 1, 0, 1, INT_MAX, "pixels",
+	"Skip pixels from the left of each input scanline"),
+    BU_ARG_INTEGER_RANGE("y", "input-y-offset", struct pix_fb_args,
+	file_yoff, 1, 0, 1, INT_MAX, "scanlines",
+	"Skip scanlines from the bottom of the input"),
+    BU_ARG_VALUE("X", "screen-x-offset", struct pix_fb_args, screen_xoff,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "pixels",
+	"Offset the image horizontally on the framebuffer"),
+    BU_ARG_VALUE("Y", "screen-y-offset", struct pix_fb_args, screen_yoff,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "scanlines",
+	"Offset the image vertically on the framebuffer"),
+    BU_ARG_CUSTOM("S", "framebuffer-size", struct pix_fb_args, self,
+	pix_fb_screen_size, "pixels", "Set both framebuffer dimensions"),
+    BU_ARG_INTEGER_RANGE("W", "framebuffer-width", struct pix_fb_args,
+	screen_width, 1, 0, 1, INT_MAX, "pixels",
+	"Set the framebuffer width"),
+    BU_ARG_INTEGER_RANGE("N", "framebuffer-height", struct pix_fb_args,
+	screen_height, 1, 0, 1, INT_MAX, "scanlines",
+	"Set the framebuffer height"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand pix_fb_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"PIX input file (default: standard input)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema pix_fb_schema = BU_ARG_SCHEMA(
+    "pix-fb", "Display a BRL-CAD PIX image on a framebuffer", pix_fb_options,
+    pix_fb_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar pix_fb_grammar = {
+    &pix_fb_schema, NULL, NULL
+};
+
+static int
+pix_fb_help(FILE *stream, int status)
+{
+    char *schema_help = bu_arg_schema_help(&pix_fb_schema, "pix-fb");
+    bu_flog(stream, "%s", schema_help ? schema_help : "");
+    bu_free(schema_help, "pix-fb help");
+    return status;
 }
 
 
@@ -232,16 +266,75 @@ skipbytes(int fd, b_off_t num)
 int
 main(int argc, char **argv)
 {
+    struct pix_fb_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     int y;
     struct fb *fbp;
     int xout, yout, n, m, xstart, xskip;
+    int operand_index;
+    args.self = &args;
+    args.file_width = 512;
+    args.file_height = 512;
 
     bu_setprogname(argv[0]);
-
-    if (!get_args(argc, argv)) {
-	(void)fputs(usage, stderr);
-	bu_exit(1, NULL);
+    int introspection = bu_arg_introspect(&msg, &pix_fb_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+    operand_index = bu_arg_schema_parse_complete(&pix_fb_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return pix_fb_help(stdout, 0);
+
+    if (argc - 1 - operand_index == 1) {
+	char *canonical;
+	file_name = argv[operand_index + 1];
+	canonical = bu_file_realpath(file_name, NULL);
+	infd = open(canonical, O_RDONLY|O_BINARY);
+	if (infd < 0) {
+	    bu_flog(stderr,
+		"pix-fb: cannot open \"%s\" (canonical \"%s\") for reading\n",
+		file_name, canonical);
+	    bu_free(canonical, "canonical input path");
+	    return 1;
+	}
+	bu_free(canonical, "canonical input path");
+	fileinput = 1;
+    } else {
+	if (isatty(fileno(stdin))) {
+	    bu_flog(stderr, "pix-fb requires an input file or redirected input\n");
+	    return pix_fb_help(stderr, 1);
+	}
+	file_name = "-";
+	infd = fileno(stdin);
+	setmode(infd, O_BINARY);
+    }
+
+    one_line_only = args.one_line_only;
+    multiple_lines = args.multiple_lines;
+    autosize = args.autosize;
+    inverse = args.inverse;
+    clear = args.clear;
+    zoom = args.zoom;
+    framebuffer = args.framebuffer;
+    pause_sec = args.pause_sec;
+    file_width = args.file_width;
+    file_height = args.file_height;
+    file_xoff = args.file_xoff;
+    file_yoff = args.file_yoff;
+    scr_xoff = args.screen_xoff;
+    scr_yoff = args.screen_yoff;
+    scr_width = args.screen_width;
+    scr_height = args.screen_height;
 
     /* autosize input? */
     if (fileinput && autosize) {

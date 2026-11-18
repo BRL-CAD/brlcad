@@ -8,11 +8,13 @@ pix-fb - display a pix format RGB image on a framebuffer
 
 == SYNOPSIS
 
-[source]
-----
-pix-fb [-a] [-i] [-c] [-z] [-1] [-m _#lines_] [-F _framebuffer_] [-s _squarefilesize_] [-w _file_width_] [-n _file_height_] [-S _squarescrsize_] [-W _scr_width_] [-N _scr_height_] [-x _file_xoff_] [-y _file_yoff_] [-X _scr_xoff_] [-Y _scr_yoff_] [-p _seconds_] [_file.pix_]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pix-fb* [*-1*] [*-m* _scanlines_] [*-a*] [*-i*] [*-c*] [*-z*] [*-F* _device_] [*-p* _seconds_]
+       [*-s* _pixels_] [*-w* _pixels_] [*-n* _scanlines_] [*-x* _pixels_] [*-y* _scanlines_]
+       [*-X* _pixels_] [*-Y* _scanlines_] [*-S* _pixels_] [*-W* _pixels_] [*-N* _scanlines_]
+       [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -26,59 +28,80 @@ To go the other direction (save a framebuffer image to a *pix*(5) file), use *fb
 [[options]]
 == OPTIONS
 
-*-a*::
-  Autosize the input. The file's byte count is compared against a table of common image dimensions and the matching width and height are used. Requires file input (not a pipe).
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-i*::
-  Invert the image, displaying it top-to-bottom. Since *pix*(5) files are stored bottom-to-top, this turns the image upside down.
+*-1*, *--one-line*::
+  Force one scanline per framebuffer write.
 
-*-c*::
-  Clear the framebuffer before displaying. By default the new image overwrites whatever is already on screen without clearing.
+*-m* _scanlines_, *--multiple-lines*=_scanlines_::
+  Write blocks containing this many scanlines.
 
-*-z*::
-  Zoom and center the image to fill the display, using integer zoom factors via the framebuffer library's fb_view() routine.
+*-a*, *--autosize*::
+  Derive dimensions from a named input file.
 
-*-1*::
-  Force one scanline per write using *fb_write*(3). This is the default and overrides *-m*.
+*-i*, *--invert*::
+  Display scanlines from top to bottom.
 
-*-m* _#lines_::
-  Write the image in rectangular blocks of _#lines_ scanlines using *fb_writerect*(3). This can be significantly faster on some framebuffers. Only used in the simplest non-inverted, non-zoomed, full-width case.
+*-c*, *--clear*::
+  Clear the framebuffer before writing.
 
-*-F* _framebuffer_::
-  Use the named _framebuffer_ device instead of the one given by *FB_FILE*.
+*-z*, *--zoom*::
+  Zoom and center the displayed image.
 
-*-s* _squarefilesize_::
-  Set both the input width and height to _squarefilesize_ pixels (disables autosizing).
+*-F* _device_, *--framebuffer*=_device_::
+  Select the framebuffer instead of the FB_FILE environment default.
 
-*-w* _file_width_::
-  Set the input scanline width, in pixels (disables autosizing).
+*-p* _seconds_, *--pause*=_seconds_::
+  Wait before closing the framebuffer.
 
-*-n* _file_height_::
-  Set the input height, in scanlines (disables autosizing).
+*-s* _pixels_, *--input-size*=_pixels_::
+  Set both input dimensions.
 
-*-S* _squarescrsize_::
-  Set both the screen width and height to _squarescrsize_ pixels.
+*-w* _pixels_, *--input-width*=_pixels_::
+  Set the input scanline width.
 
-*-W* _scr_width_::
-  Set the screen width, in pixels.
+*-n* _scanlines_, *--input-height*=_scanlines_::
+  Set the input image height.
 
-*-N* _scr_height_::
-  Set the screen height, in pixels.
+*-x* _pixels_, *--input-x-offset*=_pixels_::
+  Skip pixels from the left of each input scanline.
 
-*-x* _file_xoff_::
-  Skip _file_xoff_ pixels in from the left edge of the input. Origin is the lower-left corner.
+*-y* _scanlines_, *--input-y-offset*=_scanlines_::
+  Skip scanlines from the bottom of the input.
 
-*-y* _file_yoff_::
-  Skip _file_yoff_ scanlines up from the bottom of the input.
+*-X* _pixels_, *--screen-x-offset*=_pixels_::
+  Offset the image horizontally on the framebuffer.
 
-*-X* _scr_xoff_::
-  Offset the image _scr_xoff_ pixels horizontally on the screen (may be negative).
+*-Y* _scanlines_, *--screen-y-offset*=_scanlines_::
+  Offset the image vertically on the framebuffer.
 
-*-Y* _scr_yoff_::
-  Offset the image _scr_yoff_ pixels vertically on the screen (may be negative).
+*-S* _pixels_, *--framebuffer-size*=_pixels_::
+  Set both framebuffer dimensions.
 
-*-p* _seconds_::
-  Pause _seconds_ seconds before closing the framebuffer and exiting.
+*-W* _pixels_, *--framebuffer-width*=_pixels_::
+  Set the framebuffer width.
+
+*-N* _scanlines_, *--framebuffer-height*=_scanlines_::
+  Set the framebuffer height.
+
+// END GENERATED BU_ARG OPTIONS
+
+The input dimension options disable autosizing when they occur after
+*--autosize*.  A later *--autosize* option re-enables it, so option order is
+significant.  Autosizing requires a named input file; it is not available for
+redirected standard input.
+
+*--one-line* overrides *--multiple-lines* regardless of option order.  Block
+writes are used only for non-inverted, non-zoomed, full-width transfers and can
+be significantly faster on some framebuffers.
+
+Input offsets are nonnegative and measured from the lower-left corner of the
+input.  Framebuffer offsets use the same origin but may be negative.  A zero
+framebuffer width or height tracks the corresponding input dimension.  Zooming
+uses equal integer factors in both directions to preserve the image aspect
+ratio.
 
 [[examples]]
 == EXAMPLES
