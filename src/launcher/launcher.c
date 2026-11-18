@@ -31,19 +31,63 @@
 #include "common.h"
 
 #include <stdio.h>
-#include <string.h>
 
-#include "bu.h"
+#include "bu/arg.h"
+#include "bu/app.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/vls.h"
 
 #include "launcher.h"
 
 
-static const char *usage =
-    "Usage: brlcad-launcher [options]\n"
-    "  -t, --text    force the console (text) menu\n"
-    "  -g, --gui     force the graphical (windowed) menu\n"
-    "  -l, --list    list discovered applications and exit\n"
-    "  -h, --help    show this help and exit\n";
+struct launcher_args {
+    int help;
+    int force_text;
+    int force_gui;
+    int list;
+};
+
+static const struct bu_arg_option launcher_options[] = {
+    BU_ARG_FLAG("h", "help", struct launcher_args, help,
+	"Print help and exit"),
+    BU_ARG_FLAG("t", "text", struct launcher_args, force_text,
+	"Force the console menu"),
+    BU_ARG_FLAG("g", "gui", struct launcher_args, force_gui,
+	"Request the graphical menu; report failure and use the console fallback"),
+    BU_ARG_FLAG("l", "list", struct launcher_args, list,
+	"List discovered applications and their availability, then exit"),
+    BU_ARG_OPTION_NULL
+};
+
+static const char * const launcher_interface_options[] = {
+    "text", "gui", NULL
+};
+
+static const struct bu_arg_constraint launcher_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT,
+	BU_ARG_CONDITION_ALWAYS, launcher_interface_options, 0, 1,
+	"select at most one interface mode"),
+    BU_ARG_CONSTRAINT_NULL
+};
+
+static const struct bu_arg_schema launcher_schema = BU_ARG_SCHEMA(
+    "brlcad-launcher", "Discover and start BRL-CAD applications",
+    launcher_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, launcher_constraints, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar launcher_grammar = {
+    &launcher_schema, NULL, NULL
+};
+
+static int
+launcher_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&launcher_schema, "brlcad-launcher");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "launcher help");
+    return status;
+}
 
 
 static void
@@ -65,35 +109,35 @@ list_apps(struct app_registry *r)
 int
 main(int argc, char *argv[])
 {
+    struct launcher_args args = {0};
     struct app_registry reg;
-    int force_text = 0;
-    int force_gui = 0;
-    int do_list = 0;
-    int i;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int introspection;
 
     bu_setprogname(argv[0]);
 
-    for (i = 1; i < argc; i++) {
-	if (BU_STR_EQUAL(argv[i], "-t") || BU_STR_EQUAL(argv[i], "--text")) {
-	    force_text = 1;
-	} else if (BU_STR_EQUAL(argv[i], "-g") || BU_STR_EQUAL(argv[i], "--gui")) {
-	    force_gui = 1;
-	} else if (BU_STR_EQUAL(argv[i], "-l") || BU_STR_EQUAL(argv[i], "--list")) {
-	    do_list = 1;
-	} else if (BU_STR_EQUAL(argv[i], "-h") || BU_STR_EQUAL(argv[i], "--help")) {
-	    fputs(usage, stdout);
-	    return 0;
-	} else {
-	    fprintf(stderr, "brlcad-launcher: unknown option '%s'\n\n", argv[i]);
-	    fputs(usage, stderr);
-	    return 1;
-	}
+    introspection = bu_arg_introspect(&msg, &launcher_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+
+    if (bu_arg_schema_parse_complete(&launcher_schema, &args, &msg,
+	    argc - 1, (const char **)(argv + 1)) < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return launcher_help(stdout, 0);
 
     app_registry_init(&reg);
     app_registry_load(&reg);
 
-    if (do_list) {
+    if (args.list) {
 	list_apps(&reg);
 	app_registry_free(&reg);
 	return 0;
@@ -101,12 +145,12 @@ main(int argc, char *argv[])
 
     /* Prefer the graphical menu; fall back to the console menu if no window is
      * available (headless session, no windowed framebuffer backend, etc.). */
-    if (!force_text) {
+    if (!args.force_text) {
 	if (ui_fb_run(&reg) == 0) {
 	    app_registry_free(&reg);
 	    return 0;
 	}
-	if (force_gui)
+	if (args.force_gui)
 	    fprintf(stderr, "brlcad-launcher: no graphical framebuffer available; using text menu.\n");
     }
 
