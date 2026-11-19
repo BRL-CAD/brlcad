@@ -33,8 +33,6 @@ char *
 bu_path_dirname(const char *cp)
 {
     char *ret;
-    char *found_dslash;
-    char *found_fslash;
     size_t len;
     const char DSLASH[2] = {BU_DIR_SEPARATOR, '\0'};
     const char FSLASH[2] = {'/', '\0'};
@@ -68,23 +66,20 @@ bu_path_dirname(const char *cp)
 	len--;
     }
 
-    /* If no slashes remain, return "." */
-    found_dslash = strrchr(ret, BU_DIR_SEPARATOR);
-    found_fslash = strrchr(ret, '/');
-    if (!found_dslash && !found_fslash) {
+    char *separator = strrchr(ret, BU_DIR_SEPARATOR);
+    char *forward_slash = strrchr(ret, '/');
+    if (forward_slash && (!separator || forward_slash > separator))
+	separator = forward_slash;
+    if (!separator) {
 	bu_free(ret, "bu_path_dirname");
 	return bu_strdup(DOT);
     }
 
-    /* Remove trailing slash, unless it's at front */
-    if (found_dslash == ret || found_fslash == ret) {
-	ret[1] = '\0';          /* ret == BU_DIR_SEPARATOR || "/" */
-    } else {
-	if (found_dslash)
-	    *found_dslash = '\0';
-	if (found_fslash)
-	    *found_fslash = '\0';
-    }
+    /* Keep the separator when the parent is the root. */
+    if (separator == ret)
+	ret[1] = '\0';
+    else
+	*separator = '\0';
 
     return ret;
 }
