@@ -15,7 +15,7 @@ verbose_add_subdirectory("src/conv" vdeck)
 
 brlcad_addexec(asc-nmg nmg/asc-nmg.c "libwdb;${M_LIBRARY}" FOLDER Conv ARG_SCHEMA)
 
-brlcad_addexec(bot_dump bot_dump.c "libged;librt" FOLDER Conv)
+brlcad_addexec(bot_dump bot_dump.c "libged;librt" FOLDER Conv ARG_SCHEMA)
 
 set(
   comgeom-g_SRCS

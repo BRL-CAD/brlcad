@@ -36,11 +36,11 @@ All other options are identical to *bot dump*, including `--no-materials` to exp
 *-h*, *--help*::
   Print command help.
 
-*-b*::
-  Use binary output when the selected format supports it.
+*-b*, *--binary*::
+  Write binary output when supported; glTF binary output uses GLB.
 
 *-n*, *--normals*::
-  Write normals when the selected format supports them.
+  Write normals when supported (OBJ; intrinsic in STL).
 
 *-m* _directory_, *--output-directory*=_directory_::
   Write one file per BoT into this directory.
@@ -48,11 +48,11 @@ All other options are identical to *bot dump*, including `--no-materials` to exp
 *-o* _file_, *--output-file*=_file_::
   Write to this output file.
 
-*-t* _format_::
-  Select dxf, glb, gltf, obj, sat, or stl output. Accepted values: *dxf*, *glb*, *gltf*, *obj*, *sat*, *stl*.
+*-t* _format_, *--format*=_format_::
+  Select the mesh format; otherwise infer it from the output name or default to STL. Accepted values: *dxf*, *glb*, *gltf*, *obj*, *sat*, *stl*.
 
-*-u* _units_::
-  Scale exported coordinates to these units.
+*-u* _units_, *--units*=_units_::
+  Convert internal millimeters to these output units.
 
 *-F*, *--full-precision*::
   Write full floating-point precision (nonstandard for glTF).
