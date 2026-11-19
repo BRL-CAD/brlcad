@@ -2,7 +2,7 @@ add_subdirectory(ref)
 
 add_definitions(-DCONSOLE)
 
-brlcad_addexec(pixcmp pixcmp.c libbu)
+brlcad_addexec(pixcmp pixcmp.c libbu ARG_SCHEMA)
 brlcad_add_test(
   NAME bench_pixcmp_tolerance
   COMMAND
