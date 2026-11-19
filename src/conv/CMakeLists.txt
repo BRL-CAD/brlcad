@@ -54,7 +54,7 @@ add_dependencies(g-dxf gcv_plugins)
 brlcad_addexec(g-egg g-egg.c "libwdb;libgcv;libnmg" FOLDER Conv)
 add_dependencies(g-egg gcv_plugins)
 
-brlcad_addexec(g-nff g-nff.c "libwdb;libnmg;${M_LIBRARY}" FOLDER Conv)
+brlcad_addexec(g-nff g-nff.c "libwdb;libnmg;${M_LIBRARY}" FOLDER Conv ARG_SCHEMA)
 
 brlcad_addexec(fast4-g fast4-g.c "libwdb;librt;libnmg;libbu;${M_LIBRARY}" FOLDER Conv)
 

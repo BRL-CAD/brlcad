@@ -28,32 +28,185 @@
 #include "common.h"
 
 /* system headers */
-#include <ctype.h>
-#include <errno.h>
-#include <limits.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
 
 /* interface headers */
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/file.h"
-#include "bu/getopt.h"
-#include "bu/parallel.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 
-static const char *usage =
-    "[-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n"
-    "[-e error_file ] [-D dist_calc_tol] [-o output.nff] database.g object(s)\n";
+
+struct g_nff_args {
+    struct g_nff_args *self;
+    int help;
+    int verbose;
+    int inches_compat;
+    fastf_t absolute_tolerance;
+    fastf_t relative_tolerance;
+    fastf_t normal_tolerance;
+    fastf_t distance_tolerance;
+    int distance_tolerance_set;
+    unsigned int rt_debug;
+    unsigned int nmg_debug;
+    const char *error_file;
+    const char *output_file;
+};
+
+enum g_nff_tolerance_kind {
+    G_NFF_ABSOLUTE_TOLERANCE,
+    G_NFF_NORMAL_TOLERANCE,
+    G_NFF_DISTANCE_TOLERANCE
+};
+
+static struct g_nff_args *
+g_nff_args_from_storage(void *storage)
+{
+    return storage ? *(struct g_nff_args **)storage : NULL;
+}
+
+static int
+g_nff_tolerance_consume(struct bu_vls *msg, size_t argc, const char **argv,
+	void *storage, enum g_nff_tolerance_kind kind)
+{
+    struct g_nff_args *args = g_nff_args_from_storage(storage);
+    fastf_t value;
+
+    if (argc != 1 || bu_arg_nonnegative_number_validate(msg, argv[0]) < 0 ||
+	!bu_arg_number_from_str(msg, &value, argv[0]))
+	return -1;
+    if (!args)
+	return 0;
+
+    switch (kind) {
+	case G_NFF_ABSOLUTE_TOLERANCE:
+	    args->absolute_tolerance = value;
+	    args->relative_tolerance = 0.0;
+	    break;
+	case G_NFF_NORMAL_TOLERANCE:
+	    args->normal_tolerance = value * DEG2RAD;
+	    args->relative_tolerance = 0.0;
+	    break;
+	case G_NFF_DISTANCE_TOLERANCE:
+	    args->distance_tolerance = value;
+	    args->distance_tolerance_set = 1;
+	    break;
+    }
+    return 0;
+}
+
+#define G_NFF_TOLERANCE_CONSUMER(_name, _kind) \
+    static int _name(struct bu_vls *msg, size_t argc, const char **argv, \
+	    void *storage) \
+    { \
+	return g_nff_tolerance_consume(msg, argc, argv, storage, _kind); \
+    }
+
+G_NFF_TOLERANCE_CONSUMER(g_nff_absolute_tolerance_consume,
+    G_NFF_ABSOLUTE_TOLERANCE)
+G_NFF_TOLERANCE_CONSUMER(g_nff_normal_tolerance_consume,
+    G_NFF_NORMAL_TOLERANCE)
+G_NFF_TOLERANCE_CONSUMER(g_nff_distance_tolerance_consume,
+    G_NFF_DISTANCE_TOLERANCE)
+
+static const struct bu_arg_option g_nff_options[] = {
+    BU_ARG_FLAG("h", "help", struct g_nff_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("v", "verbose", struct g_nff_args, verbose,
+	"Report detailed conversion progress"),
+    BU_ARG_OPTION_SHAPED("a", "absolute-tolerance", "absolute-tolerance",
+	struct g_nff_args, self, BU_ARG_VALUE_NUMBER, "distance",
+	"Set nonnegative maximum chord deviation in millimeters and clear "
+	"relative tolerance",
+	BU_ARG_REQUIRED, NULL, g_nff_absolute_tolerance_consume),
+    BU_ARG_VALUE_VALIDATE("r", "relative-tolerance", struct g_nff_args,
+	relative_tolerance, BU_ARG_VALUE_NUMBER,
+	bu_arg_nonnegative_number_validate, "fraction",
+	"Set nonnegative tolerance as a fraction of the bounding box "
+	"(default 0.01)"),
+    BU_ARG_OPTION_SHAPED("n", "normal-tolerance", "normal-tolerance",
+	struct g_nff_args, self, BU_ARG_VALUE_NUMBER, "degrees",
+	"Set nonnegative surface-normal tolerance in degrees and clear "
+	"relative tolerance",
+	BU_ARG_REQUIRED, NULL, g_nff_normal_tolerance_consume),
+    BU_ARG_OPTION_SHAPED("D", "distance-tolerance", "distance-tolerance",
+	struct g_nff_args, self, BU_ARG_VALUE_NUMBER, "distance",
+	"Set nonnegative vertex-coincidence distance in millimeters "
+	"(default 0.0005)",
+	BU_ARG_REQUIRED, NULL, g_nff_distance_tolerance_consume),
+    BU_ARG_VALUE("e", "error-file", struct g_nff_args, error_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "warnings.log",
+	"Write Boolean-elimination warnings to this file instead of standard "
+	"error"),
+    BU_ARG_VALUE("x", "rt-debug", struct g_nff_args, rt_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set librt hexadecimal debug flags"),
+    BU_ARG_VALUE("X", "nmg-debug", struct g_nff_args, nmg_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set libnmg hexadecimal debug flags"),
+    BU_ARG_VALUE("o", "output", struct g_nff_args, output_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "output.nff",
+	"Write the converted geometry and generated view to this NFF file"),
+    BU_ARG_FLAG("i", "inches", struct g_nff_args, inches_compat,
+	"Accepted for compatibility; output remains in model coordinates"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand g_nff_operands[] = {
+    BU_ARG_OPERAND("database.g", BU_ARG_VALUE_FILE, 1, 1,
+	"Input BRL-CAD database", NULL),
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1,
+	BU_ARG_COUNT_UNLIMITED, "Database object to convert", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const char * const g_nff_required_options[] = {
+    "output", NULL
+};
+
+static const struct bu_arg_constraint g_nff_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT,
+	BU_ARG_CONDITION_ALWAYS, g_nff_required_options, 1, 1,
+	"--output is required"),
+    BU_ARG_CONSTRAINT_NULL
+};
+
+static const struct bu_arg_option_visibility g_nff_option_visibility[] = {
+    BU_ARG_OPTION_VISIBILITY("inches", BU_ARG_VISIBILITY_INTERNAL),
+    BU_ARG_OPTION_VISIBILITY_NULL
+};
+
+static const struct bu_arg_presentation g_nff_presentation =
+    BU_ARG_PRESENTATION(NULL, g_nff_option_visibility, NULL);
+
+static const struct bu_arg_schema g_nff_schema = BU_ARG_SCHEMA_PRESENTED(
+    "g-nff", "Convert BRL-CAD geometry to Neutral File Format",
+    g_nff_options, g_nff_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, g_nff_constraints, NULL, NULL, NULL),
+    &g_nff_presentation);
+
+static const struct bu_arg_grammar g_nff_grammar = {
+    &g_nff_schema, NULL, NULL
+};
+
+static int
+g_nff_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&g_nff_schema, "g-nff");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "g-nff help");
+    return status;
+}
 
 static int NMG_debug;			/* saved arg of -X, for longjmp handling */
 static int verbose;
-static char *output_file = NULL;	/* output filename */
-static char *error_file = NULL;		/* error filename */
 static FILE *fp;			/* temp Output file pointer */
 static FILE *fpe;			/* Error file pointer */
 static struct db_i *dbip;
@@ -72,48 +225,6 @@ static point_t model_max;
 static point_t model_min;
 
 #define COPY_BUF_SIZE 512
-
-static void
-print_usage(const char *progname)
-{
-    bu_exit(1, "Usage: %s %s", progname, usage);
-}
-
-
-static int
-parse_nonnegative_number(const char *arg, fastf_t *value)
-{
-    char *end = NULL;
-    double parsed;
-
-    if (!arg || !value || arg[0] == '\0' || isspace((unsigned char)arg[0]))
-	return 0;
-    errno = 0;
-    parsed = strtod(arg, &end);
-    if (errno != 0 || end == arg || *end != '\0' ||
-	!isfinite(parsed) || parsed < 0.0)
-	return 0;
-    *value = (fastf_t)parsed;
-    return 1;
-}
-
-
-static int
-parse_debug_mask(const char *arg, unsigned int *mask)
-{
-    char *end = NULL;
-    unsigned long parsed;
-
-    if (!arg || !mask || arg[0] == '\0' || arg[0] == '-' ||
-	isspace((unsigned char)arg[0]))
-	return 0;
-    errno = 0;
-    parsed = strtoul(arg, &end, 16);
-    if (errno != 0 || end == arg || *end != '\0' || parsed > UINT_MAX)
-	return 0;
-    *mask = (unsigned int)parsed;
-    return 1;
-}
 
 
 static void
@@ -389,7 +500,12 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 int
 main(int argc, char *argv[])
 {
+    struct g_nff_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    struct bu_list *vlfree = &rt_vlfree;
     FILE *fpf = NULL;	/* final output file */
+    const char *error_file;
+    const char *output_file;
     point_t model_center;
     vect_t view_dir;
     vect_t model_diag;
@@ -399,9 +515,10 @@ main(int argc, char *argv[])
     point_t light_loc;
     char buf[COPY_BUF_SIZE];
     size_t read_size;
-    int c;
     double percent;
     int i;
+    int introspection;
+    int operand_index;
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
@@ -427,65 +544,45 @@ main(int argc, char *argv[])
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    the_model = nmg_mm();
-    struct bu_list *vlfree = &rt_vlfree;
+    args.self = &args;
+    args.absolute_tolerance = ttol.abs;
+    args.relative_tolerance = ttol.rel;
+    args.normal_tolerance = ttol.norm;
+    args.distance_tolerance = tol.dist;
 
-    /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:n:o:r:vx:D:X:e:ih?")) != -1) {
-	switch (c) {
-	    case 'a':		/* Absolute tolerance. */
-		if (!parse_nonnegative_number(bu_optarg, &ttol.abs))
-		    bu_exit(1, "Invalid absolute tolerance: %s\n", bu_optarg);
-		ttol.rel = 0.0;
-		break;
-	    case 'n':		/* Surface normal tolerance. */
-		if (!parse_nonnegative_number(bu_optarg, &ttol.norm))
-		    bu_exit(1, "Invalid normal tolerance: %s\n", bu_optarg);
-		ttol.norm *= DEG2RAD;
-		ttol.rel = 0.0;
-		break;
-	    case 'o':		/* Output file name. */
-		output_file = bu_optarg;
-		break;
-	    case 'r':		/* Relative tolerance. */
-		if (!parse_nonnegative_number(bu_optarg, &ttol.rel))
-		    bu_exit(1, "Invalid relative tolerance: %s\n", bu_optarg);
-		break;
-	    case 'v':
-		verbose++;
-		break;
-	    case 'x':
-		if (!parse_debug_mask(bu_optarg, &rt_debug))
-		    bu_exit(1, "Invalid RT debug flag: %s\n", bu_optarg);
-		break;
-	    case 'D':
-		if (!parse_nonnegative_number(bu_optarg, &tol.dist))
-		    bu_exit(1, "Invalid distance tolerance: %s\n", bu_optarg);
-		tol.dist_sq = tol.dist * tol.dist;
-		rt_pr_tol(&tol);
-		break;
-	    case 'X':
-		if (!parse_debug_mask(bu_optarg, &nmg_debug))
-		    bu_exit(1, "Invalid NMG debug flag: %s\n", bu_optarg);
-		NMG_debug = nmg_debug;
-		break;
-	    case 'e':		/* Error file name. */
-		error_file = bu_optarg;
-		break;
-	    case 'i':
-		/* Accept the legacy option; output retains model coordinates. */
-		break;
-	    default:
-		print_usage(argv[0]);
-		break;
-	}
+    introspection = bu_arg_introspect(&msg, &g_nff_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+    operand_index = bu_arg_schema_parse_complete(&g_nff_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return g_nff_help(stdout, 0);
 
-    if (bu_optind+1 >= argc)
-	print_usage(argv[0]);
+    verbose = args.verbose;
+    output_file = args.output_file;
+    error_file = args.error_file;
+    ttol.abs = args.absolute_tolerance;
+    ttol.rel = args.relative_tolerance;
+    ttol.norm = args.normal_tolerance;
+    tol.dist = args.distance_tolerance;
+    tol.dist_sq = tol.dist * tol.dist;
+    rt_debug = args.rt_debug;
+    nmg_debug = args.nmg_debug;
+    NMG_debug = nmg_debug;
+    if (args.distance_tolerance_set)
+	rt_pr_tol(&tol);
 
-    if (!output_file)
-	bu_exit(1, "No output file specified!\n");
+    the_model = nmg_mm();
 
     /* Open output file */
     if ((fpf = fopen(output_file, "wb+")) == NULL) {
@@ -506,8 +603,8 @@ main(int argc, char *argv[])
     }
 
     /* Open BRL-CAD database */
-    argc -= bu_optind;
-    argv += bu_optind;
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
     if ((dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[0]);
 	bu_exit(1, "ERROR: unable to open geometry database file (%s)\n", argv[0]);
