@@ -28,6 +28,9 @@
 #include "common.h"
 
 /* system headers */
+#include <ctype.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -35,6 +38,7 @@
 
 /* interface headers */
 #include "bu/app.h"
+#include "bu/file.h"
 #include "bu/getopt.h"
 #include "bu/parallel.h"
 #include "vmath.h"
@@ -73,6 +77,42 @@ static void
 print_usage(const char *progname)
 {
     bu_exit(1, "Usage: %s %s", progname, usage);
+}
+
+
+static int
+parse_nonnegative_number(const char *arg, fastf_t *value)
+{
+    char *end = NULL;
+    double parsed;
+
+    if (!arg || !value || arg[0] == '\0' || isspace((unsigned char)arg[0]))
+	return 0;
+    errno = 0;
+    parsed = strtod(arg, &end);
+    if (errno != 0 || end == arg || *end != '\0' ||
+	!isfinite(parsed) || parsed < 0.0)
+	return 0;
+    *value = (fastf_t)parsed;
+    return 1;
+}
+
+
+static int
+parse_debug_mask(const char *arg, unsigned int *mask)
+{
+    char *end = NULL;
+    unsigned long parsed;
+
+    if (!arg || !mask || arg[0] == '\0' || arg[0] == '-' ||
+	isspace((unsigned char)arg[0]))
+	return 0;
+    errno = 0;
+    parsed = strtoul(arg, &end, 16);
+    if (errno != 0 || end == arg || *end != '\0' || parsed > UINT_MAX)
+	return 0;
+    *mask = (unsigned int)parsed;
+    return 1;
 }
 
 
@@ -394,32 +434,39 @@ main(int argc, char *argv[])
     while ((c = bu_getopt(argc, argv, "a:n:o:r:vx:D:X:e:ih?")) != -1) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
-		ttol.abs = atof(bu_optarg);
+		if (!parse_nonnegative_number(bu_optarg, &ttol.abs))
+		    bu_exit(1, "Invalid absolute tolerance: %s\n", bu_optarg);
 		ttol.rel = 0.0;
 		break;
 	    case 'n':		/* Surface normal tolerance. */
-		ttol.norm = atof(bu_optarg);
+		if (!parse_nonnegative_number(bu_optarg, &ttol.norm))
+		    bu_exit(1, "Invalid normal tolerance: %s\n", bu_optarg);
+		ttol.norm *= DEG2RAD;
 		ttol.rel = 0.0;
 		break;
 	    case 'o':		/* Output file name. */
 		output_file = bu_optarg;
 		break;
 	    case 'r':		/* Relative tolerance. */
-		ttol.rel = atof(bu_optarg);
+		if (!parse_nonnegative_number(bu_optarg, &ttol.rel))
+		    bu_exit(1, "Invalid relative tolerance: %s\n", bu_optarg);
 		break;
 	    case 'v':
 		verbose++;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
+		if (!parse_debug_mask(bu_optarg, &rt_debug))
+		    bu_exit(1, "Invalid RT debug flag: %s\n", bu_optarg);
 		break;
 	    case 'D':
-		tol.dist = atof(bu_optarg);
+		if (!parse_nonnegative_number(bu_optarg, &tol.dist))
+		    bu_exit(1, "Invalid distance tolerance: %s\n", bu_optarg);
 		tol.dist_sq = tol.dist * tol.dist;
 		rt_pr_tol(&tol);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		if (!parse_debug_mask(bu_optarg, &nmg_debug))
+		    bu_exit(1, "Invalid NMG debug flag: %s\n", bu_optarg);
 		NMG_debug = nmg_debug;
 		break;
 	    case 'e':		/* Error file name. */
@@ -507,6 +554,15 @@ main(int argc, char *argv[])
     nmg_km(the_model);
     rt_vlist_cleanup();
     db_close(dbip);
+    if (fpe != stderr)
+	fclose(fpe);
+
+    if (tot_polygons == 0) {
+	fclose(fp);
+	fclose(fpf);
+	bu_file_delete(output_file);
+	bu_exit(1, "No triangles were generated; no NFF output written.\n");
+    }
 
     /* write view information in the NFF file */
     fprintf(fpf, "v\n");

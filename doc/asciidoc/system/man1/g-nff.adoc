@@ -31,7 +31,8 @@ output so the result can be rendered directly.
   Specify the output NFF file name. This option is required.
 
 *-i*::
-  Treat the output as being in inches. The default is millimeters.
+  Accept the legacy inches option for compatibility. Output coordinates remain
+  in the model's native units.
 
 *-a* _abs_tol_::
   Specify the absolute tessellation tolerance in millimeters. Setting this
@@ -50,7 +51,8 @@ output so the result can be rendered directly.
   deciding whether two points are coincident.
 
 *-e* _error_file_::
-  Redirect error messages to _error_file_ instead of standard error.
+  Write warnings about regions eliminated by Boolean evaluation to
+  _error_file_ instead of standard error.
 
 *-v*::
   Enable verbose progress reporting.
