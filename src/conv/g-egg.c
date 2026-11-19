@@ -29,22 +29,11 @@
 
 #include "common.h"
 
-/* system headers */
-#include <errno.h>
-#include <limits.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <ctype.h>
-#include <math.h>
-#include <string.h>
 #include "bio.h"
 
-#include "gcv.h"
-
 /* interface headers */
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -59,66 +48,184 @@ struct egg_conv_data {
 };
 
 
-static void
-usage(const char *argv0)
+struct g_egg_args {
+    struct g_egg_args *self;
+    int help;
+    int verbose;
+    int marching_cubes;
+    int cpu_count;
+    int bottess_compat;
+    fastf_t absolute_tolerance;
+    fastf_t relative_tolerance;
+    fastf_t normal_tolerance;
+    fastf_t distance_tolerance;
+    int distance_tolerance_set;
+    unsigned int rt_debug;
+    unsigned int nmg_debug;
+    const char *output_file;
+};
+
+enum g_egg_tolerance_kind {
+    G_EGG_ABSOLUTE_TOLERANCE,
+    G_EGG_NORMAL_TOLERANCE,
+    G_EGG_DISTANCE_TOLERANCE
+};
+
+static struct g_egg_args *
+g_egg_args_from_storage(void *storage)
 {
-    bu_log("Usage: %s [-v8] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n", argv0);
-    bu_log("[-D dist_calc_tol] [-P 1] [-o output_file_name.egg] brlcad_db.g object(s)\n");
-    bu_exit(1, NULL);
+    return storage ? *(struct g_egg_args **)storage : NULL;
 }
 
-
 static int
-parse_nonnegative_number(const char *arg, fastf_t *value)
+g_egg_tolerance_consume(struct bu_vls *msg, size_t argc, const char **argv,
+	void *storage, enum g_egg_tolerance_kind kind)
 {
-    char *end = NULL;
-    double parsed;
+    struct g_egg_args *args = g_egg_args_from_storage(storage);
+    fastf_t value;
 
-    if (!arg || !value || arg[0] == '\0' || isspace((unsigned char)arg[0]))
+    if (argc != 1 || bu_arg_nonnegative_number_validate(msg, argv[0]) < 0 ||
+	!bu_arg_number_from_str(msg, &value, argv[0]))
+	return -1;
+    if (!args)
 	return 0;
-    errno = 0;
-    parsed = strtod(arg, &end);
-    if (errno != 0 || end == arg || *end != '\0' ||
-	!isfinite(parsed) || parsed < 0.0)
-	return 0;
-    *value = (fastf_t)parsed;
-    return 1;
+
+    switch (kind) {
+	case G_EGG_ABSOLUTE_TOLERANCE:
+	    args->absolute_tolerance = value;
+	    args->relative_tolerance = 0.0;
+	    break;
+	case G_EGG_NORMAL_TOLERANCE:
+	    args->normal_tolerance = value * DEG2RAD;
+	    args->relative_tolerance = 0.0;
+	    break;
+	case G_EGG_DISTANCE_TOLERANCE:
+	    args->distance_tolerance = value;
+	    args->distance_tolerance_set = 1;
+	    break;
+    }
+    return 0;
 }
 
+#define G_EGG_TOLERANCE_CONSUMER(_name, _kind) \
+    static int _name(struct bu_vls *msg, size_t argc, const char **argv, \
+	    void *storage) \
+    { \
+	return g_egg_tolerance_consume(msg, argc, argv, storage, _kind); \
+    }
+
+G_EGG_TOLERANCE_CONSUMER(g_egg_absolute_tolerance_consume,
+    G_EGG_ABSOLUTE_TOLERANCE)
+G_EGG_TOLERANCE_CONSUMER(g_egg_normal_tolerance_consume,
+    G_EGG_NORMAL_TOLERANCE)
+G_EGG_TOLERANCE_CONSUMER(g_egg_distance_tolerance_consume,
+    G_EGG_DISTANCE_TOLERANCE)
 
 static int
-parse_debug_mask(const char *arg, unsigned int *mask)
+g_egg_serial_consume(struct bu_vls *msg, size_t argc, const char **argv,
+	void *storage)
 {
-    char *end = NULL;
-    unsigned long parsed;
+    struct g_egg_args *args = g_egg_args_from_storage(storage);
+    int count;
 
-    if (!arg || !mask || arg[0] == '\0' || arg[0] == '-' ||
-	isspace((unsigned char)arg[0]))
-	return 0;
-    errno = 0;
-    parsed = strtoul(arg, &end, 16);
-    if (errno != 0 || end == arg || *end != '\0' || parsed > UINT_MAX)
-	return 0;
-    *mask = (unsigned int)parsed;
-    return 1;
+    if (argc != 1 ||
+	!bu_arg_integer_range_from_str(msg, &count, argv[0], 10, 1, 1))
+	return -1;
+    if (args)
+	args->cpu_count = count;
+    return 0;
 }
 
+static int
+g_egg_bottess_reject(struct bu_vls *msg, const char *UNUSED(arg),
+	void *UNUSED(storage))
+{
+    if (msg)
+	bu_vls_printf(msg, "Experimental bottess EGG output is not supported.\n");
+    return -1;
+}
+
+static const struct bu_arg_option g_egg_options[] = {
+    BU_ARG_FLAG("h", "help", struct g_egg_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("v", "verbose", struct g_egg_args, verbose,
+	"Report detailed conversion settings"),
+    BU_ARG_FLAG("8", "marching-cubes", struct g_egg_args, marching_cubes,
+	"Use marching cubes instead of NMG Boolean evaluation"),
+    BU_ARG_OPTION_SHAPED("a", "absolute-tolerance", "absolute-tolerance",
+	struct g_egg_args, self, BU_ARG_VALUE_NUMBER, "distance",
+	"Set nonnegative maximum chord deviation in millimeters and clear "
+	"relative tolerance",
+	BU_ARG_REQUIRED, NULL, g_egg_absolute_tolerance_consume),
+    BU_ARG_VALUE_VALIDATE("r", "relative-tolerance", struct g_egg_args,
+	relative_tolerance, BU_ARG_VALUE_NUMBER,
+	bu_arg_nonnegative_number_validate, "fraction",
+	"Set nonnegative tolerance as a fraction of the bounding box "
+	"(default 0.01)"),
+    BU_ARG_OPTION_SHAPED("n", "normal-tolerance", "normal-tolerance",
+	struct g_egg_args, self, BU_ARG_VALUE_NUMBER, "degrees",
+	"Set nonnegative surface-normal tolerance in degrees and clear "
+	"relative tolerance",
+	BU_ARG_REQUIRED, NULL, g_egg_normal_tolerance_consume),
+    BU_ARG_OPTION_SHAPED("D", "distance-tolerance", "distance-tolerance",
+	struct g_egg_args, self, BU_ARG_VALUE_NUMBER, "distance",
+	"Set nonnegative vertex-coincidence distance in millimeters "
+	"(default 0.0005)",
+	BU_ARG_REQUIRED, NULL, g_egg_distance_tolerance_consume),
+    BU_ARG_VALUE("x", "rt-debug", struct g_egg_args, rt_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set librt hexadecimal debug flags"),
+    BU_ARG_VALUE("X", "nmg-debug", struct g_egg_args, nmg_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set libnmg hexadecimal debug flags"),
+    BU_ARG_VALUE("o", "output", struct g_egg_args, output_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "output.egg",
+	"Write EGG data to this file instead of standard output"),
+    BU_ARG_OPTION_SHAPED("P", NULL, "processors-compat",
+	struct g_egg_args, self, BU_ARG_VALUE_INTEGER, "1",
+	"Accepted for compatibility; EGG output is serial",
+	BU_ARG_REQUIRED, NULL, g_egg_serial_consume),
+    BU_ARG_CUSTOM_FLAG("9", NULL, "bottess-compat", struct g_egg_args,
+	bottess_compat, g_egg_bottess_reject,
+	"Rejected compatibility spelling for the retired bottess evaluator"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand g_egg_operands[] = {
+    BU_ARG_OPERAND("database.g", BU_ARG_VALUE_FILE, 1, 1,
+	"Input BRL-CAD database", NULL),
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1,
+	BU_ARG_COUNT_UNLIMITED, "Database object to convert", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_option_visibility g_egg_option_visibility[] = {
+    BU_ARG_OPTION_VISIBILITY("processors-compat", BU_ARG_VISIBILITY_INTERNAL),
+    BU_ARG_OPTION_VISIBILITY("bottess-compat", BU_ARG_VISIBILITY_INTERNAL),
+    BU_ARG_OPTION_VISIBILITY_NULL
+};
+
+static const struct bu_arg_presentation g_egg_presentation =
+    BU_ARG_PRESENTATION(NULL, g_egg_option_visibility, NULL);
+
+static const struct bu_arg_schema g_egg_schema = BU_ARG_SCHEMA_PRESENTED(
+    "g-egg", "Convert BRL-CAD geometry to Panda3D EGG format",
+    g_egg_options, g_egg_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL),
+    &g_egg_presentation);
+
+static const struct bu_arg_grammar g_egg_grammar = {
+    &g_egg_schema, NULL, NULL
+};
 
 static int
-parse_cpu_count(const char *arg, int *count)
+g_egg_help(FILE *stream, int status)
 {
-    char *end = NULL;
-    long parsed;
-
-    if (!arg || !count || arg[0] == '\0' || isspace((unsigned char)arg[0]))
-	return 0;
-    errno = 0;
-    parsed = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' ||
-	parsed < 1 || parsed > INT_MAX)
-	return 0;
-    *count = (int)parsed;
-    return 1;
+    char *help = bu_arg_schema_help(&g_egg_schema, "g-egg");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "g-egg help");
+    return status;
 }
 
 
@@ -239,15 +346,17 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
 int
 main(int argc, char *argv[])
 {
-    int verbose = 0;
-    int ncpu = 1;			/* Number of processors */
-    char *output_file = NULL;	/* output filename */
+    struct g_egg_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    const char *output_file;
     struct db_i *dbip;
     struct model *the_model;
     struct bg_tess_tol ttol;		/* tessellation tolerance in mm */
     struct db_tree_state tree_state;	/* includes tol & model */
 
-    int i, use_mc = 0;
+    int i;
+    int introspection;
+    int operand_index;
     struct egg_conv_data conv_data;
     struct gcv_region_end_data gcvwriter = {nmg_to_egg, NULL, NULL};
 
@@ -279,66 +388,46 @@ main(int argc, char *argv[])
 
     conv_data.tot_polygons = 0;
 
-    /* make empty NMG model */
-    the_model = nmg_mm();
     conv_data.vlfree = &rt_vlfree;
 
-    /* Get command line arguments. */
-    while ((i = bu_getopt(argc, argv, "a:89n:o:r:vx:D:P:X:h?")) != -1) {
-	switch (i) {
-	    case 'a':		/* Absolute tolerance. */
-		if (!parse_nonnegative_number(bu_optarg, &ttol.abs))
-		    bu_exit(1, "Invalid absolute tolerance: %s\n", bu_optarg);
-		ttol.rel = 0.0;
-		break;
-	    case 'n':		/* Surface normal tolerance. */
-		if (!parse_nonnegative_number(bu_optarg, &ttol.norm))
-		    bu_exit(1, "Invalid normal tolerance: %s\n", bu_optarg);
-		ttol.norm *= DEG2RAD;
-		ttol.rel = 0.0;
-		break;
-	    case 'o':		/* Output file name. */
-		output_file = bu_optarg;
-		break;
-	    case 'r':		/* Relative tolerance. */
-		if (!parse_nonnegative_number(bu_optarg, &ttol.rel))
-		    bu_exit(1, "Invalid relative tolerance: %s\n", bu_optarg);
-		break;
-	    case 'v':
-		verbose++;
-		break;
-	    case 'P':
-		if (!parse_cpu_count(bu_optarg, &ncpu))
-		    bu_exit(1, "Invalid CPU count: %s\n", bu_optarg);
-		if (ncpu != 1)
-		    bu_exit(1, "Parallel EGG output is not supported; use -P 1.\n");
-		break;
-	    case 'x':
-		if (!parse_debug_mask(bu_optarg, &rt_debug))
-		    bu_exit(1, "Invalid RT debug flag: %s\n", bu_optarg);
-		break;
-	    case 'D':
-		if (!parse_nonnegative_number(bu_optarg, &conv_data.tol.dist))
-		    bu_exit(1, "Invalid distance tolerance: %s\n", bu_optarg);
-		conv_data.tol.dist_sq = conv_data.tol.dist * conv_data.tol.dist;
-		rt_pr_tol(&conv_data.tol);
-		break;
-	    case 'X':
-		if (!parse_debug_mask(bu_optarg, &nmg_debug))
-		    bu_exit(1, "Invalid NMG debug flag: %s\n", bu_optarg);
-		break;
-	    case '8':
-		use_mc = 1;
-		break;
-	    case '9':
-		bu_exit(1, "Experimental bottess EGG output is not supported.\n");
-	    default:
-		usage(argv[0]);
-	}
-    }
+    args.self = &args;
+    args.cpu_count = 1;
+    args.absolute_tolerance = ttol.abs;
+    args.relative_tolerance = ttol.rel;
+    args.normal_tolerance = ttol.norm;
+    args.distance_tolerance = conv_data.tol.dist;
 
-    if (bu_optind+1 >= argc)
-	usage(argv[0]);
+    introspection = bu_arg_introspect(&msg, &g_egg_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    operand_index = bu_arg_schema_parse_complete(&g_egg_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return g_egg_help(stdout, 0);
+
+    output_file = args.output_file;
+    ttol.abs = args.absolute_tolerance;
+    ttol.rel = args.relative_tolerance;
+    ttol.norm = args.normal_tolerance;
+    conv_data.tol.dist = args.distance_tolerance;
+    conv_data.tol.dist_sq = conv_data.tol.dist * conv_data.tol.dist;
+    rt_debug = args.rt_debug;
+    nmg_debug = args.nmg_debug;
+    if (args.distance_tolerance_set)
+	rt_pr_tol(&conv_data.tol);
+
+    /* make empty NMG model */
+    the_model = nmg_mm();
 
     conv_data.fp = stdout;
     if (output_file) {
@@ -349,10 +438,8 @@ main(int argc, char *argv[])
     }
 
     /* Open brl-cad database */
-    argc -= bu_optind;
-    argv += bu_optind;
-    if (argc < 2 || argv[0] == NULL || argv[1] == NULL)
-	usage(argv[0]);
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
 
     gcvwriter.write_region = nmg_to_egg;
 
@@ -367,7 +454,7 @@ main(int argc, char *argv[])
     BN_CK_TOL(tree_state.ts_tol);
     BG_CK_TESS_TOL(tree_state.ts_ttol);
 
-    if (verbose) {
+    if (args.verbose) {
 	bu_log("Model: %s\n", argv[0]);
 	bu_log("Objects:");
 	for (i=1; i<argc; i++)
@@ -391,11 +478,11 @@ main(int argc, char *argv[])
 	(void) db_walk_tree(dbip,		/* db_i */
 			    1,		/* argc */
 			    (const char **)(++argv), /* argv */
-			    ncpu,		/* ncpu */
+			    args.cpu_count,	/* ncpu */
 			    &tree_state,	/* state */
 			    NULL,		/* start func */
-			    use_mc?gcv_region_end_mc:gcv_region_end,	/* end func */
-			    use_mc?NULL:rt_booltree_leaf_tess, /* leaf func */
+			    args.marching_cubes?gcv_region_end_mc:gcv_region_end,	/* end func */
+			    args.marching_cubes?NULL:rt_booltree_leaf_tess, /* leaf func */
 			    (void *)&gcvwriter);  /* client_data */
 	fprintf(conv_data.fp, "}\n");
     }

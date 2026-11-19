@@ -51,7 +51,7 @@ brlcad_addexec(g-dot g-dot.c "libged;libbu" FOLDER Conv ARG_SCHEMA)
 brlcad_addexec(g-dxf dxf/g-dxf.c "librt;libgcv;libnmg;libbu" FOLDER Conv)
 add_dependencies(g-dxf gcv_plugins)
 
-brlcad_addexec(g-egg g-egg.c "libwdb;libgcv;libnmg" FOLDER Conv)
+brlcad_addexec(g-egg g-egg.c "libwdb;libgcv;libnmg" FOLDER Conv ARG_SCHEMA)
 add_dependencies(g-egg gcv_plugins)
 
 brlcad_addexec(g-nff g-nff.c "libwdb;libnmg;${M_LIBRARY}" FOLDER Conv ARG_SCHEMA)

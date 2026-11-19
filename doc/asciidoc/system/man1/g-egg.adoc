@@ -9,10 +9,11 @@ g-egg - convert BRL-CAD geometry to a Panda3D EGG file
 
 == SYNOPSIS
 
-[source]
-----
-g-egg [-v8] [-x _rt_debug_] [-X _nmg_debug_] [-a _abs_tol_] [-r _rel_tol_] [-n _norm_tol_] [-D _dist_tol_] [-P 1] [-o _output.egg_] _database.g_ _object_ [_object ..._]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*g-egg* [*-v*] [*-8*] [*-a* _distance_] [*-r* _fraction_] [*-n* _degrees_] [*-D* _distance_]
+      [*-x* _mask_] [*-X* _mask_] [*-o* _output.egg_] _database.g_ _object_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -30,43 +31,38 @@ standard error on completion.
 [[options]]
 == OPTIONS
 
-*-a* _abs_tol_::
-  Absolute tessellation tolerance, in mm. Setting this disables the
-  relative tolerance.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-r* _rel_tol_::
-  Relative tessellation tolerance, as a fraction of the bounding box.
-  The default is 0.01.
+*-v*, *--verbose*::
+  Report detailed conversion settings.
 
-*-n* _norm_tol_::
-  Surface normal tessellation tolerance, in degrees. Setting this
-  disables the relative tolerance.
+*-8*, *--marching-cubes*::
+  Use marching cubes instead of NMG Boolean evaluation.
 
-*-D* _dist_tol_::
-  Calculational distance tolerance, in mm, used when deciding whether
-  vertices are coincident.
+*-a* _distance_, *--absolute-tolerance*=_distance_::
+  Set nonnegative maximum chord deviation in millimeters and clear relative tolerance.
 
-*-P* *1*::
-  Request serial conversion explicitly. Parallel output is not supported
-  because EGG records are written to one shared stream.
+*-r* _fraction_, *--relative-tolerance*=_fraction_::
+  Set nonnegative tolerance as a fraction of the bounding box (default 0.01).
 
-*-o* _output.egg_::
-  Write output to the named file instead of standard output.
+*-n* _degrees_, *--normal-tolerance*=_degrees_::
+  Set nonnegative surface-normal tolerance in degrees and clear relative tolerance.
 
-*-8*::
-  Use the marching cubes algorithm for facetization.
+*-D* _distance_, *--distance-tolerance*=_distance_::
+  Set nonnegative vertex-coincidence distance in millimeters (default 0.0005).
 
-*-v*::
-  Verbose output (printed to standard error).
+*-x* _mask_, *--rt-debug*=_mask_::
+  Set librt hexadecimal debug flags.
 
-*-x* _rt_debug_::
-  Set the librt debugging flags (a hexadecimal bit vector).
+*-X* _mask_, *--nmg-debug*=_mask_::
+  Set libnmg hexadecimal debug flags.
 
-*-X* _nmg_debug_::
-  Set the NMG debugging flags (a hexadecimal bit vector).
+*-o* _output.egg_, *--output*=_output.egg_::
+  Write EGG data to this file instead of standard output.
 
-*-h*, *-?*::
-  Print the usage message and exit.
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES
