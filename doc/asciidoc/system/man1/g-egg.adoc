@@ -11,7 +11,7 @@ g-egg - convert BRL-CAD geometry to a Panda3D EGG file
 
 [source]
 ----
-g-egg [-v89] [-x _rt_debug_] [-X _nmg_debug_] [-a _abs_tol_] [-r _rel_tol_] [-n _norm_tol_] [-D _dist_tol_] [-P _ncpu_] [-o _output.egg_] _database.g_ _object_ [_object ..._]
+g-egg [-v8] [-x _rt_debug_] [-X _nmg_debug_] [-a _abs_tol_] [-r _rel_tol_] [-n _norm_tol_] [-D _dist_tol_] [-P 1] [-o _output.egg_] _database.g_ _object_ [_object ..._]
 ----
 
 [[description]]
@@ -46,17 +46,15 @@ standard error on completion.
   Calculational distance tolerance, in mm, used when deciding whether
   vertices are coincident.
 
-*-P* _ncpu_::
-  Number of CPUs to use during tessellation.
+*-P* *1*::
+  Request serial conversion explicitly. Parallel output is not supported
+  because EGG records are written to one shared stream.
 
 *-o* _output.egg_::
   Write output to the named file instead of standard output.
 
 *-8*::
   Use the marching cubes algorithm for facetization.
-
-*-9*::
-  Use the experimental "bottess" algorithm for facetization.
 
 *-v*::
   Verbose output (printed to standard error).

@@ -30,6 +30,8 @@
 #include "common.h"
 
 /* system headers */
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -60,9 +62,63 @@ struct egg_conv_data {
 static void
 usage(const char *argv0)
 {
-    bu_log("Usage: %s [-v89] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n", argv0);
-    bu_log("[-D dist_calc_tol] [-P #_of_CPUs] [-o output_file_name.egg] brlcad_db.g object(s)\n");
+    bu_log("Usage: %s [-v8] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n", argv0);
+    bu_log("[-D dist_calc_tol] [-P 1] [-o output_file_name.egg] brlcad_db.g object(s)\n");
     bu_exit(1, NULL);
+}
+
+
+static int
+parse_nonnegative_number(const char *arg, fastf_t *value)
+{
+    char *end = NULL;
+    double parsed;
+
+    if (!arg || !value || arg[0] == '\0' || isspace((unsigned char)arg[0]))
+	return 0;
+    errno = 0;
+    parsed = strtod(arg, &end);
+    if (errno != 0 || end == arg || *end != '\0' ||
+	!isfinite(parsed) || parsed < 0.0)
+	return 0;
+    *value = (fastf_t)parsed;
+    return 1;
+}
+
+
+static int
+parse_debug_mask(const char *arg, unsigned int *mask)
+{
+    char *end = NULL;
+    unsigned long parsed;
+
+    if (!arg || !mask || arg[0] == '\0' || arg[0] == '-' ||
+	isspace((unsigned char)arg[0]))
+	return 0;
+    errno = 0;
+    parsed = strtoul(arg, &end, 16);
+    if (errno != 0 || end == arg || *end != '\0' || parsed > UINT_MAX)
+	return 0;
+    *mask = (unsigned int)parsed;
+    return 1;
+}
+
+
+static int
+parse_cpu_count(const char *arg, int *count)
+{
+    char *end = NULL;
+    long parsed;
+
+    if (!arg || !count || arg[0] == '\0' || isspace((unsigned char)arg[0]))
+	return 0;
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' ||
+	parsed < 1 || parsed > INT_MAX)
+	return 0;
+    *count = (int)parsed;
+    return 1;
 }
 
 
@@ -191,7 +247,7 @@ main(int argc, char *argv[])
     struct bg_tess_tol ttol;		/* tessellation tolerance in mm */
     struct db_tree_state tree_state;	/* includes tol & model */
 
-    int i, use_mc = 0, use_bottess = 0;
+    int i, use_mc = 0;
     struct egg_conv_data conv_data;
     struct gcv_region_end_data gcvwriter = {nmg_to_egg, NULL, NULL};
 
@@ -231,42 +287,51 @@ main(int argc, char *argv[])
     while ((i = bu_getopt(argc, argv, "a:89n:o:r:vx:D:P:X:h?")) != -1) {
 	switch (i) {
 	    case 'a':		/* Absolute tolerance. */
-		ttol.abs = atof(bu_optarg);
+		if (!parse_nonnegative_number(bu_optarg, &ttol.abs))
+		    bu_exit(1, "Invalid absolute tolerance: %s\n", bu_optarg);
 		ttol.rel = 0.0;
 		break;
 	    case 'n':		/* Surface normal tolerance. */
-		ttol.norm = atof(bu_optarg);
+		if (!parse_nonnegative_number(bu_optarg, &ttol.norm))
+		    bu_exit(1, "Invalid normal tolerance: %s\n", bu_optarg);
+		ttol.norm *= DEG2RAD;
 		ttol.rel = 0.0;
 		break;
 	    case 'o':		/* Output file name. */
 		output_file = bu_optarg;
 		break;
 	    case 'r':		/* Relative tolerance. */
-		ttol.rel = atof(bu_optarg);
+		if (!parse_nonnegative_number(bu_optarg, &ttol.rel))
+		    bu_exit(1, "Invalid relative tolerance: %s\n", bu_optarg);
 		break;
 	    case 'v':
 		verbose++;
 		break;
 	    case 'P':
-		ncpu = atoi(bu_optarg);
+		if (!parse_cpu_count(bu_optarg, &ncpu))
+		    bu_exit(1, "Invalid CPU count: %s\n", bu_optarg);
+		if (ncpu != 1)
+		    bu_exit(1, "Parallel EGG output is not supported; use -P 1.\n");
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
+		if (!parse_debug_mask(bu_optarg, &rt_debug))
+		    bu_exit(1, "Invalid RT debug flag: %s\n", bu_optarg);
 		break;
 	    case 'D':
-		conv_data.tol.dist = atof(bu_optarg);
+		if (!parse_nonnegative_number(bu_optarg, &conv_data.tol.dist))
+		    bu_exit(1, "Invalid distance tolerance: %s\n", bu_optarg);
 		conv_data.tol.dist_sq = conv_data.tol.dist * conv_data.tol.dist;
 		rt_pr_tol(&conv_data.tol);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		if (!parse_debug_mask(bu_optarg, &nmg_debug))
+		    bu_exit(1, "Invalid NMG debug flag: %s\n", bu_optarg);
 		break;
 	    case '8':
 		use_mc = 1;
 		break;
 	    case '9':
-		use_bottess = 1;
-		break;
+		bu_exit(1, "Experimental bottess EGG output is not supported.\n");
 	    default:
 		usage(argv[0]);
 	}
@@ -329,7 +394,7 @@ main(int argc, char *argv[])
 			    ncpu,		/* ncpu */
 			    &tree_state,	/* state */
 			    NULL,		/* start func */
-			    use_mc?gcv_region_end_mc:use_bottess?gcv_bottess_region_end:gcv_region_end,	/* end func */
+			    use_mc?gcv_region_end_mc:gcv_region_end,	/* end func */
 			    use_mc?NULL:rt_booltree_leaf_tess, /* leaf func */
 			    (void *)&gcvwriter);  /* client_data */
 	fprintf(conv_data.fp, "}\n");
