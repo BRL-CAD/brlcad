@@ -84,23 +84,31 @@
 /**
  * shorthand declaration of a printf-style functions
  */
+#if defined(__MINGW32__) && defined(__GNUC__) && !defined(__clang__)
+/* MinGW GCC's default archetype checks the legacy Microsoft CRT dialect. */
+#  define _BU_PRINTF_FORMAT __gnu_printf__
+#  define _BU_SCANF_FORMAT __gnu_scanf__
+#else
+#  define _BU_PRINTF_FORMAT __printf__
+#  define _BU_SCANF_FORMAT __scanf__
+#endif
 #ifdef HAVE_PRINTF12_ATTRIBUTE
-#  define _BU_ATTR_PRINTF12 __attribute__((__format__ (__printf__, 1, 2)))
+#  define _BU_ATTR_PRINTF12 __attribute__((__format__ (_BU_PRINTF_FORMAT, 1, 2)))
 #elif !defined(_BU_ATTR_PRINTF12)
 #  define _BU_ATTR_PRINTF12
 #endif
 #ifdef HAVE_PRINTF23_ATTRIBUTE
-#  define _BU_ATTR_PRINTF23 __attribute__((__format__ (__printf__, 2, 3)))
+#  define _BU_ATTR_PRINTF23 __attribute__((__format__ (_BU_PRINTF_FORMAT, 2, 3)))
 #elif !defined(_BU_ATTR_PRINTF23)
 #  define _BU_ATTR_PRINTF23
 #endif
 #ifdef HAVE_PRINTF34_ATTRIBUTE
-#  define _BU_ATTR_PRINTF34 __attribute__((__format__ (__printf__, 3, 4)))
+#  define _BU_ATTR_PRINTF34 __attribute__((__format__ (_BU_PRINTF_FORMAT, 3, 4)))
 #elif !defined(_BU_ATTR_PRINTF34)
 #  define _BU_ATTR_PRINTF34
 #endif
 #ifdef HAVE_SCANF23_ATTRIBUTE
-#  define _BU_ATTR_SCANF23 __attribute__((__format__ (__scanf__, 2, 3)))
+#  define _BU_ATTR_SCANF23 __attribute__((__format__ (_BU_SCANF_FORMAT, 2, 3)))
 #elif !defined(_BU_ATTR_SCANF23)
 #  define _BU_ATTR_SCANF23
 #endif

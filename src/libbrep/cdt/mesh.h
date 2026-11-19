@@ -832,7 +832,7 @@ public:
     ON_Plane best_fit_plane(std::set<triangle_t> &ts);
     double max_tri_angle(ON_Plane &plane, std::set<triangle_t> &ts);
 
-    friend int cdt_test_local_defects(void);
+    friend BREP_EXPORT int cdt_test_local_defects(void);
 
 private:
     struct chart_source;

@@ -50,6 +50,11 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct cmdtab *ctp = (struct cmdtab *)clientData;
     MGED_CK_CMD(ctp);
+#ifdef _WIN32
+    (void)interp;
+    (void)argc;
+    (void)argv;
+#else
     struct mged_state *s = ctp->s;
 
     static vect_t last;
@@ -58,7 +63,6 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     char tol_str[32] = {0};
     int is_empty = 1;
 
-#ifndef _WIN32
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     struct bv_scene_obj *sp;

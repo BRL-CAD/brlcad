@@ -1226,7 +1226,7 @@ botbld(void)
 	bu_fgets(buf, BUFSIZE, ifp);
 	bu_sscanf(buf, "%zu: %le %le %le", &j, &a[0], &a[1], &a[2]);
 	if (i != j) {
-	    bu_log("Vertices out of order in solid %s (expecting %lu, found %lu)\n",
+	    bu_log("Vertices out of order in solid %s (expecting %zu, found %zu)\n",
 		   my_name, i, j);
 	    bu_free((char *)vertices, "botbld: vertices");
 	    bu_log("Skipping this solid!\n");

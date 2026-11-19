@@ -349,7 +349,11 @@ master_networking(void *ptr)
 #endif
     fd_set readfds;
     int port=0, master_socket=0, highest_fd=0, new_socket=0, error=0;
-    unsigned int addrlen = 0;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    int addrlen;
+#else
+    socklen_t addrlen;
+#endif
     uint8_t op = 0;
     uint16_t endian = 0;
 
@@ -397,6 +401,8 @@ master_networking(void *ptr)
 	if (master_listener_result == 0 && observer_listener_result == 0) {
 #ifdef HAVE_WORKING_DAEMON_FUNCTION
 	    daemon(0, 0);
+#elif defined(_WIN32) && !defined(__CYGWIN__)
+	    bu_exit(1, "ADRT daemon mode is unavailable on Windows.\n");
 #else
 	    switch(fork()) {
 	    case 0:

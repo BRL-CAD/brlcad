@@ -216,7 +216,7 @@ set(CMAKE_FIND_USE_PACKAGE_REGISTRY FALSE)
 # Prepare to manage and build BRL-CAD's external dependencies. Specifies a
 # specific commit hash to use in the 'bext' repository.
 include(BRLCAD_ExternalDeps)
-brlcad_bext_init(d2ff7dd644bc8d2c7290003f7024b017e14fe653)
+brlcad_bext_init(fe810b4937ad39206556af7fc3d2f1275f531747)
 
 #---------------------------------------------------------------------
 # Define various utilities.
@@ -1978,17 +1978,17 @@ brlcad_check_library(SOLARIS_LEXER l yyless)
 
 # Grumble... find_library doesn't find ws2_32.  Until we come up with
 # working tests for these, set them by hand
-if(MSVC)
-  set(COMCTL32_LIBRARY comctl32.lib)
-  set(IMM32_LIBRARY imm32.lib)
+if(WIN32)
+  set(COMCTL32_LIBRARY comctl32)
+  set(IMM32_LIBRARY imm32)
   # TODO - mged and adrt call this specific OpenGL library out - why doesn't
   # OPENGL_LIBRARIES do the trick?
-  set(OPENGL32_LIBRARY opengl32.lib)
-  set(PSAPI_LIB psapi.lib)
-  set(RPCRT_LIB rpcrt4.lib)
-  set(WINSOCK_LIB ws2_32.lib)
+  set(OPENGL32_LIBRARY opengl32)
+  set(PSAPI_LIB psapi)
+  set(RPCRT_LIB rpcrt4)
+  set(WINSOCK_LIB ws2_32)
   set(WS2_32_LIBRARY ws2_32)
-else(MSVC)
+else()
   set(COMCTL32_LIBRARY "")
   set(IMM32_LIBRARY "")
   set(OPENGL32_LIBRARY "")
@@ -1996,7 +1996,7 @@ else(MSVC)
   set(RPCRT_LIB "")
   set(WINSOCK_LIB "")
   set(WS2_32_LIBRARY "")
-endif(MSVC)
+endif()
 
 # *******************************************************************
 if(BRLCAD_PRINT_MSGS)
@@ -2115,12 +2115,16 @@ _brlcad_include_probe(uuid.h HAVE_UUID_H) # for uuid_generate() on BSD
 _brlcad_include_probe(unistd.h HAVE_UNISTD_H)
 _brlcad_include_probe(uuid/uuid.h HAVE_UUID_UUID_H) # for uuid_generate() on Mac & Linux
 
-# TODO - this test is failing on the github runner???
-#BRLCAD_INCLUDE_FILE(windows.h HAVE_WINDOWS_H) # for QueryPerformanceCounter() on Windows
-if(MSVC)
+# Native Windows compilers provide the Win32 API used by the console, file,
+# and timing implementations.
+if(WIN32)
   brlcad_deferred_define("HAVE_WINDOWS_H 1")
   set(HAVE_WINDOWS_H 1)
-endif(MSVC)
+  if(MINGW)
+    _brlcad_include_probe(winsock.h HAVE_WINSOCK_H)
+    _brlcad_include_probe(winsock2.h HAVE_WINSOCK2_H)
+  endif()
+endif()
 
 # custom sys/sysctl.h test due to BSDisms when compiling
 _brlcad_srccompile_probe(HAVE_SYS_SYSCTL_H

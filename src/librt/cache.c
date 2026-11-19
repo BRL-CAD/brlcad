@@ -44,6 +44,7 @@
 #include "bu/path.h"
 #include "bu/process.h"
 #include "bu/datetime.h"
+#include "bu/snooze.h"
 #include "bu/str.h"
 #include "bu/uuid.h"
 #include "rt/db_attr.h"
@@ -676,7 +677,7 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 
 	while (tmp_file_size != final_file_size && final_file_size > checkpnt_size && check_cnt < 3) {
 	    checkpnt_size = final_file_size;
-	    sleep(1);
+	    bu_snooze(BU_SEC2USEC(1));
 	    final_file_size = bu_file_size(path);
 	    check_cnt++;
 	}

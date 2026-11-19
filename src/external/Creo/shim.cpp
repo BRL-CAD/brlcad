@@ -17,6 +17,7 @@
 
 #include "common.h"
 
+#include <cstdint>
 #include <cstring>
 
 #include "shim.h"
@@ -376,7 +377,7 @@ extern "C" void ProWstringToString(char *destination, wchar_t *source)
         return;
     if (source) {
         while (source[index] != L'\0') {
-            destination[index] = source[index] >= 0 && source[index] <= 0x7f ?
+            destination[index] = static_cast<std::uintmax_t>(source[index]) <= 0x7f ?
                                      (char)source[index] : '?';
             ++index;
         }

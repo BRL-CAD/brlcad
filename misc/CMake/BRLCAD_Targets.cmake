@@ -1026,7 +1026,13 @@ function(
     else(L_STATIC)
       set(libstatic ${libname}-static)
     endif(L_STATIC)
-    add_library(${libstatic} STATIC ${lsrcslist} ${L_STATIC_SRCS})
+    # Native Windows shared objects contain imports from dependent DLLs.
+    # Compile the static variant against its own dependency interfaces.
+    if(WIN32)
+      add_library(${libstatic} STATIC ${srcslist} ${L_STATIC_SRCS})
+    else()
+      add_library(${libstatic} STATIC ${lsrcslist} ${L_STATIC_SRCS})
+    endif()
     if(${libstatic} MATCHES "^lib*")
       set_target_properties(${libstatic} PROPERTIES PREFIX "")
     endif(${libstatic} MATCHES "^lib*")

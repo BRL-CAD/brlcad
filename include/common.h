@@ -59,7 +59,7 @@
  * exist everywhere. The range is [0, 1).
  */
 #  if !defined(HAVE_DRAND48) && !defined(drand48)
-#    define drand48() ((double)rand() / (double)(RAND_MAX + 1))
+#    define drand48() (rand() / (RAND_MAX + 1.0))
 #    define HAVE_DRAND48 1
 #    define srand48(seed) (srand(seed))
 #    define HAVE_DECL_DRAND48 1
@@ -506,7 +506,7 @@ typedef _TCHAR TCHAR;
 /* Avoid -Wundef warnings for system headers that use __STDC_VERSION__ without
  * checking if it's defined.
  */
-#if !defined(__STDC_VERSION__)
+#if !defined(__cplusplus) && !defined(__STDC_VERSION__)
 #  define __STDC_VERSION__ 0
 #endif
 
@@ -668,7 +668,7 @@ typedef _TCHAR TCHAR;
  * define them away so code including the *_EXPORT header logic won't
  * fail.
  */
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 #  define COMPILER_DLLEXPORT __declspec(dllexport)
 #  define COMPILER_DLLIMPORT __declspec(dllimport)
 #elif defined(__GNUC__) || defined(__clang__)

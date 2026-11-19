@@ -32,6 +32,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cerrno>
+#include <cinttypes>
 #include <cstddef>
 #include <ctime>
 #include <vector>
@@ -148,9 +149,9 @@ _try_pipe(struct pkg_conn **parent_end, struct pkg_conn **child_end,
     if (ce == PKC_ERROR || ce == PKC_NULL) { pkg_close(pe); return -1; }
 
     snprintf(ce->pkc_addr, sizeof(ce->pkc_addr),
-             "pipe_win:%I64x,%I64x",
-             (unsigned __int64)(intptr_t)hReadPC,
-             (unsigned __int64)(intptr_t)hWriteCP);
+             "pipe_win:%" PRIx64 ",%" PRIx64,
+             (uint64_t)(uintptr_t)hReadPC,
+             (uint64_t)(uintptr_t)hWriteCP);
     _pkg_build_addr_env(ce);
     snprintf(pe->pkc_addr, sizeof(pe->pkc_addr), "pipe_parent:%d,%d", cp_r, pc_w);
     _pkg_build_addr_env(pe);
@@ -205,7 +206,11 @@ _try_tcp(struct pkg_conn **parent_end, struct pkg_conn **child_end,
 {
     int lsock, csock, psock;
     struct sockaddr_in sa, bound, csa, peer;
+#ifdef _WIN32
+    int blen, plen;
+#else
     socklen_t blen, plen;
+#endif
     int port;
     int opt = 1;
 
@@ -579,10 +584,10 @@ pkg_connect_addr(const char *addr, const struct pkg_switch *switchp, pkg_errlog 
     }
 
     if (strncmp(addr, "pipe_win:", 9) == 0) {
-        unsigned __int64 hr64 = 0, hw64 = 0;
-        if (sscanf(addr + 9, "%I64x,%I64x", &hr64, &hw64) == 2) {
-            HANDLE hRead  = (HANDLE)(intptr_t)hr64;
-            HANDLE hWrite = (HANDLE)(intptr_t)hw64;
+        uint64_t hr64 = 0, hw64 = 0;
+        if (sscanf(addr + 9, "%" SCNx64 ",%" SCNx64, &hr64, &hw64) == 2) {
+            HANDLE hRead  = (HANDLE)(uintptr_t)hr64;
+            HANDLE hWrite = (HANDLE)(uintptr_t)hw64;
             int rfd = _open_osfhandle((intptr_t)hRead,  _O_RDONLY | _O_BINARY);
             int wfd = _open_osfhandle((intptr_t)hWrite, _O_WRONLY | _O_BINARY);
             if (rfd >= 0 && wfd >= 0) {

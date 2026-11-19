@@ -259,13 +259,6 @@ fail:
 }
 
 
-static void
-sigkid(int UNUSED(pid))
-{
-    exit(0);
-}
-
-
 /*
  * Note: unlike sgi_xmit_scanlines, this function updates an arbitrary
  * rectangle of the frame buffer
@@ -404,7 +397,7 @@ wgl_xmit_scanlines(struct fb *ifp, int ybase, int nlines, int xbase, int npix)
 }
 
 
-LONG WINAPI
+static LRESULT WINAPI
 MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     /* When the framebuffer is in interactive mode, input events are reported
@@ -606,12 +599,7 @@ static int
 wgl_open(struct fb *ifp, const char *file, int width, int height)
 {
     static char title[128];
-    int mode,  ret;
-    HWND hwnd;
-    HDC hdc;
-    HGLRC glxc;
-    HINSTANCE hinstance;
-    DWORD Dword;
+    int mode;
     WNDCLASS wndclass;
     int gotvisual;
 
@@ -719,7 +707,7 @@ wgl_open(struct fb *ifp, const char *file, int width, int height)
 
     /* Register the frame class */
     wndclass.style         = 0;
-    wndclass.lpfnWndProc   = (WNDPROC)MainWndProc;
+    wndclass.lpfnWndProc   = MainWndProc;
     wndclass.cbClsExtra    = 0;
     wndclass.cbWndExtra    = 0;
     wndclass.hInstance     = Tk_GetHINSTANCE();
@@ -729,7 +717,7 @@ wgl_open(struct fb *ifp, const char *file, int width, int height)
     wndclass.lpszMenuName  = "Win OpenGL";
     wndclass.lpszClassName = "Win OpenGL";
 
-    ret = RegisterClass (&wndclass);
+    RegisterClass(&wndclass);
 
     titleBarHeight = GetSystemMetrics(SM_CYCAPTION);
     borderWidth = GetSystemMetrics(SM_CYFRAME);
@@ -748,12 +736,7 @@ wgl_open(struct fb *ifp, const char *file, int width, int height)
 	NULL /* pointer to window-creation data */
 	);
 
-    Dword = GetLastError();
-
-    hinstance=Tk_GetHINSTANCE();
-    hwnd = WGL(ifp)->hwnd;
     WGL(ifp)->hdc = GetDC(WGL(ifp)->hwnd);
-    hdc = WGL(ifp)->hdc;
 
 
     /* Choose an appropriate visual. */
@@ -764,7 +747,6 @@ wgl_open(struct fb *ifp, const char *file, int width, int height)
     }
 
     WGL(ifp)->glxc = wglCreateContext(WGL(ifp)->hdc);
-    glxc = WGL(ifp)->glxc;
 
     /* count windows */
     wgl_nwindows++;
@@ -1665,19 +1647,19 @@ wgl_help(struct fb *ifp)
 
 
 static int
-wgl_setcursor(struct fb *ifp,
-	      const unsigned char *bits,
-	      int xbits,
-	      int ybits,
-	      int xorig,
-	      int yorig)
+wgl_setcursor(struct fb *UNUSED(ifp),
+	      const unsigned char *UNUSED(bits),
+	      int UNUSED(xbits),
+	      int UNUSED(ybits),
+	      int UNUSED(xorig),
+	      int UNUSED(yorig))
 {
     return 0;
 }
 
 
 static int
-wgl_cursor(struct fb *ifp, int mode, int x, int y)
+wgl_cursor(struct fb *UNUSED(ifp), int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
     return 0;
 }
@@ -1778,7 +1760,7 @@ wgl_do_event(struct fb *ifp)
 
 
 static void
-expose_callback(struct fb *ifp, int eventPtr)
+expose_callback(struct fb *ifp, int UNUSED(eventPtr))
 {
     struct fb_clip *clp;
 

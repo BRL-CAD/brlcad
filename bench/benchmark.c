@@ -463,7 +463,7 @@ main(int ac, char *av[])
 	if (bu_str_true(getenv("CLOBBER"))) {
 	    bu_log("About to wipe out all benchmark images and log files in %s\n", bu_getcwd(cwd, MAXPATHLEN));
 	    bu_log("Send SIGINT (type ^C) within 5 seconds to abort\n");
-	    sleep(5);
+	    bu_snooze(BU_SEC2USEC(5));
 	} else {
 	    bu_log("Deleting most benchmark images and log files in %s\n", bu_getcwd(cwd, MAXPATHLEN));
 	    bu_log("Running '%s clobber' will remove run logs.\n", av[0]);

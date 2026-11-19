@@ -46,6 +46,7 @@ bu_dlopen(const char *path, int mode)
 #ifdef HAVE_DLOPEN
     return dlopen(path, mode);
 #elif defined(_WIN32)
+    (void)mode;
     return LoadLibrary(path);
 #else
     bu_log("dlopen not supported\n");
@@ -59,7 +60,13 @@ bu_dlsym(void *handle, const char *symbol)
 #ifdef HAVE_DLOPEN
     return dlsym(handle, symbol);
 #elif defined(_WIN32)
-    return GetProcAddress(handle, symbol);
+    FARPROC proc = GetProcAddress((HMODULE)handle, symbol);
+    if (!proc)
+	return NULL;
+    /* Win32 function and data pointers have the same representation. */
+    void *address;
+    memcpy(&address, &proc, sizeof(address));
+    return address;
 #else
     bu_log("dlsym not supported\n");
     return NULL;
@@ -110,7 +117,7 @@ bu_dlunload(void)
 #ifdef HAVE_DLOPEN
 	ret += dlclose(handles[n_handles-1]);
 #elif defined(_WIN32)
-	ret += !FreeLibrary(handles[n_handles-1]);
+	ret += !FreeLibrary((HMODULE)handles[n_handles-1]);
 #endif
 	handles[n_handles-1] = NULL;
 	n_handles--;

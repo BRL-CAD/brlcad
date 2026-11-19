@@ -609,6 +609,7 @@ render_shader_load_plugin(const char *filename)
     s->dlh = lh;
     return s->name;
 #else
+    (void)filename;
     bu_log("No plugin support.\n");
     return NULL;
 #endif
@@ -656,6 +657,8 @@ LOADED:
 
     bu_log("Could not find shader \"%s\"\n", name);
 #else
+    (void)r;
+    (void)name;
     bu_log("No plugin support.\n");
 #endif
     return -1;

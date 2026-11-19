@@ -404,9 +404,9 @@ if (LIBGED_STATIC_CORE)
   endif()
 
 
-  # On Windows, prevent the linker from stripping "unused" static command
+  # With the Microsoft linker, retain "unused" static command
   # registration symbols
-  if(HAVE_WINDOWS_H)
+  if(MSVC)
     target_link_options(libged PRIVATE "/OPT:NOREF")
     if (TARGET libged-static)
       target_link_options(libged-static PRIVATE "/OPT:NOREF")

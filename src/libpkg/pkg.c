@@ -127,7 +127,8 @@ struct pkg_conn *pkg_open_fds(int rfd, int wfd, const struct pkg_switch *switchp
  */
 #ifdef HAVE_WINSOCK_H
 static int _pkg_read_win(int d, void *buf, int nbytes) {
-    HANDLE h = (HANDLE)_get_osfhandle(d);
+    intptr_t osfd = _get_osfhandle(d);
+    HANDLE h = (HANDLE)osfd;
     if (h != INVALID_HANDLE_VALUE && GetFileType(h) == FILE_TYPE_PIPE) {
         DWORD nr = 0;
         if (!ReadFile(h, buf, (DWORD)nbytes, &nr, NULL))
@@ -137,7 +138,8 @@ static int _pkg_read_win(int d, void *buf, int nbytes) {
     return recv((SOCKET)(uintptr_t)d, (char *)buf, nbytes, 0);
 }
 static int _pkg_send_win(int d, const void *buf, int nbytes) {
-    HANDLE h = (HANDLE)_get_osfhandle(d);
+    intptr_t osfd = _get_osfhandle(d);
+    HANDLE h = (HANDLE)osfd;
     if (h != INVALID_HANDLE_VALUE && GetFileType(h) == FILE_TYPE_PIPE) {
         DWORD nw = 0;
         if (!WriteFile(h, buf, (DWORD)nbytes, &nw, NULL))
@@ -855,12 +857,13 @@ static int
 _pkg_permserver_impl(struct in_addr iface, const char *service, const char *protocol, int backlog, void (*errlog)(const char *msg))
 {
     struct servent *sp;
-    int pkg_listenfd;
 #ifdef HAVE_WINSOCK_H
+    SOCKET pkg_listenfd;
     SOCKADDR_IN saServer;
     WORD wVersionRequested;		/* initialize Windows socket networking, increment reference count */
     WSADATA wsaData;
 #else
+    int pkg_listenfd;
     struct sockaddr_in sinme;
 #  ifdef HAVE_SYS_UN_H
     struct sockaddr_un sunme;		/* UNIX Domain */
@@ -933,7 +936,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 	return -1;
     }
 
-    return pkg_listenfd;
+    return (int)pkg_listenfd;
 
 #else /* !HAVE_WINSOCK_H */
 
@@ -1061,6 +1064,23 @@ pkg_permserver(const char *service, const char *protocol, int backlog, void (*er
 }
 
 
+#ifdef FIONBIO
+static int
+pkg_set_nonblocking(int fd, int enabled)
+{
+#  ifdef HAVE_WINSOCK_H
+    u_long mode = (u_long)enabled;
+    int result = ioctlsocket((SOCKET)(uintptr_t)fd, FIONBIO, &mode);
+    if (result == SOCKET_ERROR)
+	errno = WSAGetLastError();
+    return result;
+#  else
+    return ioctl(fd, FIONBIO, &enabled);
+#  endif
+}
+#endif
+
+
 static struct pkg_conn *
 pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog)(const char *msg), int nodelay)
 {
@@ -1087,21 +1107,17 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog)(const cha
     if (errlog == NULL)
 	errlog = _pkg_errlog;
 
-#ifdef FIONBIO
-    if (nodelay) {
-	int onoff;
-	onoff = 1;
-	if (ioctl(fd, FIONBIO, &onoff) < 0)
-	    _pkg_perror(errlog, "pkg_getclient: FIONBIO 1");
-    }
-#endif
-
 #ifdef HAVE_WINSOCK_H
     wVersionRequested = MAKEWORD(1, 1);
     if (WSAStartup(wVersionRequested, &wsaData) != 0) {
 	_pkg_perror(errlog, "pkg_open: could not find a usable WinSock DLL");
 	return PKC_ERROR;
     }
+#endif
+
+#ifdef FIONBIO
+    if (nodelay && pkg_set_nonblocking(fd, 1) < 0)
+	_pkg_perror(errlog, "pkg_getclient: FIONBIO 1");
 #endif
 
     do  {
@@ -1133,11 +1149,9 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog)(const cha
     }  while (s2 < 0);
 #ifdef FIONBIO
     if (nodelay) {
-	int onoff2;
-	onoff2 = 0;
-	if (ioctl(fd, FIONBIO, &onoff2) < 0)
+	if (pkg_set_nonblocking(fd, 0) < 0)
 	    _pkg_perror(errlog, "pkg_getclient: FIONBIO 2");
-	if (ioctl(s2, FIONBIO, &onoff2) < 0)
+	if (pkg_set_nonblocking(s2, 0) < 0)
 	    _pkg_perror(errlog, "pkg_getclient: FIONBIO 3");
     }
 #endif

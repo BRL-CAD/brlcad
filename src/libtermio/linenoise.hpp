@@ -143,8 +143,10 @@
 #define isatty _isatty
 #define write win32_write
 #define read _read
+#ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4996)
+#endif
 #endif
 #include <algorithm>
 #include <cctype>
@@ -343,7 +345,7 @@ WCHAR suffix;               // escape sequence suffix
 int   es_argc;              // escape sequence args count
 int   es_argv[MAX_ARG];     // escape sequence args
 WCHAR Pt_arg[MAX_PATH * 2]; // text parameter for Operating System Command
-int   Pt_len;
+size_t Pt_len;
 BOOL  shifted;
 
 
@@ -1772,8 +1774,8 @@ inline int unicodeReadUTF8Char(int fd, char* buf, int* cp)
  * not able to understand basic escape sequences. */
 inline bool isUnsupportedTerm(void)
 {
-    static const char *unsupported_term[] = {"dumb","cons25","emacs",NULL};
 #ifndef _WIN32
+    static const char *unsupported_term[] = {"dumb","cons25","emacs",NULL};
     char *term = getenv("TERM");
     int j;
 
@@ -1831,6 +1833,7 @@ inline bool enableRawMode(int fd)
     if (tcsetattr(fd,TCSAFLUSH, &raw) < 0) goto fatal;
     rawmode = true;
 #else
+    (void)fd;
     if (!atexit_registered) {
 	/* Cleanup them at exit */
 	atexit(linenoiseAtExit);
@@ -1874,6 +1877,7 @@ fatal:
 inline void disableRawMode(int fd)
 {
 #ifdef _WIN32
+    (void)fd;
     if (ln_win32_vt_enabled && ln_win32_vt_orig_out) {
 	/* Restore original console output mode */
 	SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), ln_win32_vt_orig_out);
@@ -1922,6 +1926,8 @@ inline int getCursorPosition(int ifd, int ofd)
 inline int getColumns(int ifd, int ofd)
 {
 #ifdef _WIN32
+    (void)ifd;
+    (void)ofd;
     CONSOLE_SCREEN_BUFFER_INFO b;
 
     if (!GetConsoleScreenBufferInfo(hOut, &b)) return 80;
@@ -2838,7 +2844,9 @@ inline std::string Readline(const char *prompt)
 #undef isatty
 #undef write
 #undef read
+#ifdef _MSC_VER
 #pragma warning(pop)
+#endif
 #endif
 
 #endif /* __LINENOISE_HPP */

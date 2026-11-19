@@ -362,10 +362,8 @@ drawisoUCheckForTrim(const SurfaceTree* st, struct bu_list *vlfree, struct bv_vl
 	ctree->getLeavesRight(m_trims_right, pt, tol);
     }
 
-    int cnt = 1;
-    //bu_log("V - %f\n", pt.x);
     trim_hits.clear();
-    for (std::list<const BRNode*>::const_iterator i = m_trims_right.begin(); i != m_trims_right.end(); i++, cnt++) {
+    for (std::list<const BRNode*>::const_iterator i = m_trims_right.begin(); i != m_trims_right.end(); i++) {
 	const BRNode* br = *i;
 
 	point_t bmin, bmax;
@@ -374,7 +372,6 @@ drawisoUCheckForTrim(const SurfaceTree* st, struct bu_list *vlfree, struct bv_vl
 	    if (((bmin[Y] - tol) <= pt[Y]) && (pt[Y] <= (bmax[Y]+tol))) { //if check trim and in BBox
 		fastf_t u = br->getCurveEstimateOfU(pt[Y], tol);
 		trim_hits.push_back(u);
-		//bu_log("%d U %d - %f pt %f, %f bmin %f, %f  bmax %f, %f\n", br->m_face->m_face_index, cnt, u, pt.x, pt.y, bmin[X], bmin[Y], bmax[X], bmax[Y]);
 	    }
 	}
     }
@@ -412,10 +409,6 @@ drawisoUCheckForTrim(const SurfaceTree* st, struct bu_list *vlfree, struct bv_vl
 	  }
 	  VMOVE(pt2, p);
 
-	  //bu_log(
-	  //		"\t\t%d from center  %f %f 0.0 to center %f %f 0.0\n",
-	  //		cnt++, x, v, x + deltax, v);
-
 	  BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
 	  BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
 	  }
@@ -446,10 +439,6 @@ drawisoUCheckForTrim(const SurfaceTree* st, struct bu_list *vlfree, struct bv_vl
 			p = surf->PointAt(x + deltax, pt.y);
 		    }
 		    VMOVE(pt2, p);
-
-		    //				bu_log(
-		    //						"\t\t%d from center  %f %f 0.0 to center %f %f 0.0\n",
-		    //						cnt++, x, v, x + deltax, v);
 
 		    BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
 		    BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
@@ -489,9 +478,8 @@ drawisoVCheckForTrim(const SurfaceTree* st, struct bu_list *vlfree, struct bv_vl
 	ctree->getLeavesAbove(m_trims_above, pt, tol);
     }
 
-    int cnt = 1;
     trim_hits.clear();
-    for (std::list<const BRNode*>::const_iterator i = m_trims_above.begin(); i != m_trims_above.end(); i++, cnt++) {
+    for (std::list<const BRNode*>::const_iterator i = m_trims_above.begin(); i != m_trims_above.end(); i++) {
 	const BRNode* br = *i;
 
 	point_t bmin, bmax;
@@ -501,7 +489,6 @@ drawisoVCheckForTrim(const SurfaceTree* st, struct bu_list *vlfree, struct bv_vl
 	    if (((bmin[X] - tol) <= pt[X]) && (pt[X] <= (bmax[X]+tol))) { //if check trim and in BBox
 		fastf_t v = br->getCurveEstimateOfV(pt[X], tol);
 		trim_hits.push_back(v);
-		//bu_log("%d V %d - %f pt %f, %f bmin %f, %f  bmax %f, %f\n", br->m_face->m_face_index, cnt, v, pt.x, pt.y, bmin[X], bmin[Y], bmax[X], bmax[Y]);
 	    }
 	}
     }
@@ -540,10 +527,6 @@ drawisoVCheckForTrim(const SurfaceTree* st, struct bu_list *vlfree, struct bv_vl
 	  }
 	  VMOVE(pt2, p);
 
-	  //bu_log(
-	  //		"\t\t%d from center  %f %f 0.0 to center %f %f 0.0\n",
-	  //		cnt++, u, y, u, y + deltay);
-
 	  BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
 	  BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
 	  }
@@ -575,9 +558,6 @@ drawisoVCheckForTrim(const SurfaceTree* st, struct bu_list *vlfree, struct bv_vl
 			p = surf->PointAt(pt.x, y + deltay);
 		    }
 		    VMOVE(pt2, p);
-
-		    //bu_log("\t\t%d from center  %f %f 0.0 to center %f %f 0.0\n",
-		    //		cnt++, u, y, u, y + deltay);
 
 		    BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
 		    BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);

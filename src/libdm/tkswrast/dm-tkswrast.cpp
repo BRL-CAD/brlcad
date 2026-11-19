@@ -96,6 +96,7 @@ tkswrast_black_pixel(Tk_Window tkwin)
 #ifdef TKSWRAST_X11
     return BlackPixelOfScreen(Tk_Screen(tkwin));
 #else
+    (void)tkwin;
     return 0;
 #endif
 }

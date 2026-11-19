@@ -88,7 +88,7 @@ void nl_should_not_have_reached(const char* file, int line) {
 
 #ifdef WIN32
 NLdouble nlCurrentTime(void) {
-    return (NLdouble)GetTickCount() / 1000.0 ;
+    return GetTickCount() / 1000.0;
 }
 #else
 double nlCurrentTime(void) {

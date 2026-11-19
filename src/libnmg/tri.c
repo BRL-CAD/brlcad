@@ -1957,13 +1957,13 @@ nmg_triangulate_rm_holes(struct faceuse *fu, struct bu_list *tbl2d, struct bu_li
      * find an existing vertex.
      */
     if (0) {
-	bu_log("nmg_triangulate_rm_holes(): hole-loopuse lu1 0x%lx no cut found\n", (unsigned long)(uintptr_t)lu1);
+	bu_log("nmg_triangulate_rm_holes(): hole-loopuse lu1 %p no cut found\n", (void *)lu1);
 	for (BU_LIST_FOR(lu_tmp, loopuse, &fu->lu_hd)) {
 	    for (BU_LIST_FOR(eu_tmp, edgeuse, &lu_tmp->down_hd)) {
-		bu_log("nmg_triangulate_rm_holes(): lu_p = 0x%lx lu_orient = %d fu_p = 0x%lx vu_p = 0x%lx eu_p = 0x%lx v_p = 0x%lx vg_p = 0x%lx 3D coord = %g %g %g\n",
-		       (uintptr_t)lu_tmp, lu_tmp->orientation, (uintptr_t)lu_tmp->up.fu_p,
-		       (uintptr_t)eu_tmp->vu_p, (uintptr_t)eu_tmp, (uintptr_t)eu_tmp->vu_p->v_p,
-		       (uintptr_t)eu_tmp->vu_p->v_p->vg_p, V3ARGS(eu_tmp->vu_p->v_p->vg_p->coord));
+		bu_log("nmg_triangulate_rm_holes(): lu_p = %p lu_orient = %d fu_p = %p vu_p = %p eu_p = %p v_p = %p vg_p = %p 3D coord = %g %g %g\n",
+		       (void *)lu_tmp, lu_tmp->orientation, (void *)lu_tmp->up.fu_p,
+		       (void *)eu_tmp->vu_p, (void *)eu_tmp, (void *)eu_tmp->vu_p->v_p,
+		       (void *)eu_tmp->vu_p->v_p->vg_p, V3ARGS(eu_tmp->vu_p->v_p->vg_p->coord));
 
 	    }
 	}
@@ -2036,8 +2036,8 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
 		    nmg_klu(lu);
 		    killed_lu = 1;
 		    if (nmg_debug & NMG_DEBUG_TRI) {
-			bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- killed loopuse 0x%lx with %d vertices\n",
-			       (uintptr_t)fu, (uintptr_t)lu_tmp, edgeuse_vert_count);
+			bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse %p -- killed loopuse %p with %d vertices\n",
+			       (void *)fu, (void *)lu_tmp, edgeuse_vert_count);
 		    }
 		}
 	    } else if ((BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) &&
@@ -2047,12 +2047,12 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
 		nmg_klu(lu);
 		killed_lu = 1;
 		if (nmg_debug & NMG_DEBUG_TRI) {
-		    bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- killed single vertex loopuse 0x%lx\n",
-			   (uintptr_t)fu, (uintptr_t)lu_tmp);
+		    bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse %p -- killed single vertex loopuse %p\n",
+			   (void *)fu, (void *)lu_tmp);
 		}
 	    } else {
-		bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- unknown loopuse content\n",
-		       (uintptr_t)fu);
+		bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse %p -- unknown loopuse content\n",
+		       (void *)fu);
 		bu_bomb("nmg_triangulate_rm_degen_loopuse(): unknown loopuse content\n");
 	    }
 
@@ -2063,13 +2063,13 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
 		}
 
 		if (nmg_debug & NMG_DEBUG_TRI) {
-		    bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- %d loopuse remain in faceuse after killing loopuse 0x%lx\n",
-			   (uintptr_t)fu, loopuse_count_tmp, (uintptr_t)lu_tmp);
+		    bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse %p -- %d loopuse remain in faceuse after killing loopuse %p\n",
+			   (void *)fu, loopuse_count_tmp, (void *)lu_tmp);
 		}
 		if (loopuse_count_tmp < 1) {
 		    if (nmg_debug & NMG_DEBUG_TRI) {
-			bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- contains no loopuse\n",
-			       (uintptr_t)fu);
+			bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse %p -- contains no loopuse\n",
+			       (void *)fu);
 		    }
 		    ret = 1;
 		    goto out;
@@ -2132,8 +2132,8 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
 		if (unique_vertex_cnt < 3) {
 		    nmg_klu(lu);
 		    if (nmg_debug & NMG_DEBUG_TRI) {
-			bu_log("killed loopuse 0x%lx with %d vertices (i.e. < 3 unique vertices)\n",
-			       (uintptr_t)lu_tmp, edgeuse_vert_count);
+			bu_log("killed loopuse %p with %d vertices (i.e. < 3 unique vertices)\n",
+			       (void *)lu_tmp, edgeuse_vert_count);
 
 		    }
 		    loopuse_count_tmp = 0;
@@ -2142,7 +2142,7 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
 		    }
 
 		    if (nmg_debug & NMG_DEBUG_TRI) {
-			bu_log("nmg_triangulate_rm_degen_loopuse(): %d remaining loopuse in faceuse after killing loopuse 0x%lx\n", loopuse_count_tmp, (uintptr_t)lu_tmp);
+			bu_log("nmg_triangulate_rm_degen_loopuse(): %d remaining loopuse in faceuse after killing loopuse %p\n", loopuse_count_tmp, (void *)lu_tmp);
 		    }
 		    if (loopuse_count_tmp < 1) {
 			if (nmg_debug & NMG_DEBUG_TRI) {
@@ -3357,8 +3357,8 @@ nmg_triangulate_fu(struct faceuse *fu, struct bu_list *vlfree, const struct bn_t
     NMG_GET_FU_NORMAL(fu_normal, fu);
 
     if (nmg_debug & NMG_DEBUG_TRI) {
-	bu_log("---------------- Triangulate face fu_p = 0x%lx fu Normal = %g %g %g\n",
-	       (uintptr_t)fu, V3ARGS(fu_normal));
+	bu_log("---------------- Triangulate face fu_p = %p fu Normal = %g %g %g\n",
+	       (void *)fu, V3ARGS(fu_normal));
     }
 
     if (nmg_debug & NMG_DEBUG_TRI) {
@@ -3494,8 +3494,8 @@ nmg_triangulate_fu(struct faceuse *fu, struct bu_list *vlfree, const struct bn_t
 		    cut = 1;
 		} else if (ccw_result == -1) {
 		    /* true when loopuse rotation is cw or unknown */
-		    bu_log("nmg_triangulate_fu(): lu = 0x%lx ccw_result = %d\n",
-			   (uintptr_t)lu, ccw_result);
+		    bu_log("nmg_triangulate_fu(): lu = %p ccw_result = %d\n",
+			   (void *)lu, ccw_result);
 		    vert_count = 0;
 		    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 			vert_count++;

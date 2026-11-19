@@ -197,9 +197,12 @@ main(int ac, char *av[])
 	if (!bu_file_writable(bu_vls_cstr(&fname))) {
 	    bu_exit(1, "%s [FAIL] test file %s not readable after bu_fchmod(777)\n", av[0], bu_vls_cstr(&fname));
 	}
+#ifndef _WIN32
+	/* Windows does not provide POSIX execute mode bits. */
 	if (!bu_file_executable(bu_vls_cstr(&fname))) {
 	    bu_exit(1, "%s [FAIL] test file %s not executable after bu_fchmod(777)\n", av[0], bu_vls_cstr(&fname));
 	}
+#endif
     }
 
     bu_vls_sprintf(&fname, "%s/bu_file_1", tdir);

@@ -43,10 +43,10 @@
 
 #ifdef HAVE_WINDOWS_H
 int APIENTRY
-WinMain(HINSTANCE hInstance,
-	HINSTANCE hPrevInstance,
-	LPSTR lpszCmdLine,
-	int nCmdShow)
+WinMain(HINSTANCE UNUSED(hInstance),
+	HINSTANCE UNUSED(hPrevInstance),
+	LPSTR UNUSED(lpszCmdLine),
+	int UNUSED(nCmdShow))
 {
     int argc = __argc;
     char **argv = __argv;

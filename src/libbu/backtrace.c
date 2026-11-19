@@ -81,6 +81,7 @@ extern int fileno(FILE*);
 #endif
 
 
+#ifndef HAVE_WINDOWS_H
 /* local buffer so we don't have to worry as much about stack stomping */
 static char buffer[BU_PAGE_SIZE] = {0};
 
@@ -107,6 +108,7 @@ static char path_lldb[MAXPATHLEN] = {0};
 static char debugger_args[3][MAXPATHLEN] = { {0}, {0}, {0} };
 static const char *locate_debugger = NULL;
 static int have_gdb = 0, have_lldb = 0;
+#endif
 
 
 #ifdef HAVE_WINDOWS_H
@@ -310,6 +312,7 @@ execinfo_backtrace(FILE *fp)
 }
 
 
+#ifndef HAVE_WINDOWS_H
 /* SIGINT+SIGCHLD handler for backtrace() */
 static void
 backtrace_interrupt(int UNUSED(signum))
@@ -602,6 +605,7 @@ debugger_backtrace(int processid, char args[][MAXPATHLEN], int fd)
 
     exit(0);
 }
+#endif
 
 
 int
@@ -622,6 +626,10 @@ bu_backtrace_app(FILE *fp, const char *argv0)
 	return 1;
     }
 
+#ifdef HAVE_WINDOWS_H
+    (void)argv0;
+    return 0;
+#else
     /* check if GNU debugger (gdb) exists */
     if ((locate_debugger = bu_which("gdb"))) {
 	bu_strlcpy(path_gdb, locate_debugger, MAXPATHLEN);
@@ -747,6 +755,7 @@ bu_backtrace_app(FILE *fp, const char *argv0)
     fflush(fp);
 
     return 1;
+#endif
 }
 
 int

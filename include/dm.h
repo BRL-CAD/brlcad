@@ -29,6 +29,7 @@
 #include "common.h"
 
 #include "vmath.h"
+#include "bu/log.h"
 #include "bu/vls.h"
 #include "bn.h"
 #include "bv.h"
@@ -493,7 +494,9 @@ DM_EXPORT extern int fb_wpixel(struct fb *ifp, unsigned char *pp);
 DM_EXPORT extern int fb_flush(struct fb *ifp);
 DM_EXPORT extern int fb_configure_window(struct fb *, int, int);
 DM_EXPORT extern int fb_refresh(struct fb *ifp, int x, int y, int w, int h);
-#if !defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  define fb_log bu_log
+#else
 DM_EXPORT extern void fb_log(const char *fmt, ...) _BU_ATTR_PRINTF12;
 #endif
 DM_EXPORT extern int fb_null(struct fb *ifp);

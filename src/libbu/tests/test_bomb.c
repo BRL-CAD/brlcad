@@ -156,11 +156,11 @@ test_bomb_hook_lifecycle(void)
 static int
 test_bomb_capture_child(const char *self_path)
 {
+#if defined(HAVE_UNISTD_H) && defined(HAVE_SYS_WAIT_H)
     int errors = 0;
     const char *message = "expected direct bomb";
     struct bu_vls stderr_text = BU_VLS_INIT_ZERO;
 
-#ifdef HAVE_UNISTD_H
     if (self_path && self_path[0] != '\0') {
 	const char *child_argv[4] = {self_path, "test_bomb", "bomb-child", NULL};
 	char buffer[512] = {0};
@@ -230,13 +230,13 @@ test_bomb_capture_child(const char *self_path)
 	}
 	bu_vls_free(&trace_file);
     }
-#else
-    (void)self_path;
-#endif
-
     bu_vls_free(&stderr_text);
 
     return errors;
+#else
+    (void)self_path;
+    return 0;
+#endif
 }
 
 

@@ -107,20 +107,22 @@ bn_spm_init(int N, int elsize)
 }
 
 
+static unsigned char *
+spm_pixel(const bn_spm_map_t *mapp, double u, double v)
+{
+    int y = v * mapp->ny;
+    int x = u * mapp->nx[y];
+    return &mapp->xbin[y][x * mapp->elsize];
+}
+
+
 void
 bn_spm_read(register bn_spm_map_t *mapp, register unsigned char *valp, double u, double v)
 {
-    int x, y;
-    register unsigned char *cp;
-    register int i;
-
     BN_CK_SPM_MAP(mapp);
 
-    y = v * mapp->ny;
-    x = u * mapp->nx[y];
-    cp = &(mapp->xbin[y][x*mapp->elsize]);
-
-    i = mapp->elsize;
+    unsigned char *cp = spm_pixel(mapp, u, v);
+    int i = mapp->elsize;
     while (i-- > 0) {
 	*valp++ = *cp++;
     }
@@ -130,17 +132,10 @@ bn_spm_read(register bn_spm_map_t *mapp, register unsigned char *valp, double u,
 void
 bn_spm_write(register bn_spm_map_t *mapp, register unsigned char *valp, double u, double v)
 {
-    int x, y;
-    register unsigned char *cp;
-    register int i;
-
     BN_CK_SPM_MAP(mapp);
 
-    y = v * mapp->ny;
-    x = u * mapp->nx[y];
-    cp = &(mapp->xbin[y][x*mapp->elsize]);
-
-    i = mapp->elsize;
+    unsigned char *cp = spm_pixel(mapp, u, v);
+    int i = mapp->elsize;
     while (i-- > 0) {
 	*cp++ = *valp++;
     }
@@ -328,6 +323,9 @@ bn_spm_pix_save(bn_spm_map_t *mapp, const char *filename, int nx, int ny)
 
     BN_CK_SPM_MAP(mapp);
 
+    if (mapp->elsize != (int)sizeof(pixel))
+	return -1;
+
     if (BU_STR_EQUAL(filename, "-"))
 	fp = stdout;
     else {
@@ -340,7 +338,7 @@ bn_spm_pix_save(bn_spm_map_t *mapp, const char *filename, int nx, int ny)
 
     for (y = 0; y < ny; y++) {
 	for (x = 0; x < nx; x++) {
-	    bn_spm_read(mapp, pixel, (double)x/(double)nx, (double)y/(double)ny);
+	    memcpy(pixel, spm_pixel(mapp, (double)x/(double)nx, (double)y/(double)ny), sizeof(pixel));
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
 	    got = (int)fwrite((char *)pixel, sizeof(pixel), 1, fp);	/* res_syscall */
 	    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */

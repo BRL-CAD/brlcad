@@ -402,10 +402,6 @@ int fb_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, co
 }
 
 
-#define Malloc_Bomb(_bytes_)					\
-    fb_log("\"%s\"(%d) : allocation of %lu bytes failed.\n",	\
-	   __FILE__, __LINE__, _bytes_)
-
 /**
  * Disk interface enable flag.  Used so the remote daemon
  * can turn off the disk interface.

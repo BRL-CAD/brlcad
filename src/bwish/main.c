@@ -180,7 +180,7 @@ Cad_Exit(int status)
 }
 
 
-#ifdef BWISH
+#if defined(BWISH) && !defined(HAVE_WINDOWS_H)
 static void
 displayWarning(
     const char *msg,            /* Message to be displayed. */
@@ -199,10 +199,10 @@ displayWarning(
 
 #if defined(BWISH) && defined(HAVE_WINDOWS_H)
 int APIENTRY
-WinMain(HINSTANCE hInstance,
-	HINSTANCE hPrevInstance,
-	LPSTR lpszCmdLine,
-	int nCmdShow)
+WinMain(HINSTANCE UNUSED(hInstance),
+	HINSTANCE UNUSED(hPrevInstance),
+	LPSTR UNUSED(lpszCmdLine),
+	int UNUSED(nCmdShow))
 {
     char **argv;
     int argc;

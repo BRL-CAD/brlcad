@@ -458,11 +458,13 @@ static void finish(int sig)
     bu_exit(EXIT_FAILURE, "Collected signal %d, aborting!\n", sig);
 }
 
+#if defined(SIGUSR1) || defined(SIGINFO)
 static void info(int UNUSED(sig))
 {
 	/* something to display info about clients, threads and port. */
     return;
 }
+#endif
 
 static void help(void)
 {

@@ -52,7 +52,8 @@ bu_gethostname(char *result, size_t hostlen)
      * before the hostname can be retrieved.
      */
     WSADATA wsaData;
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+    int winsock_started = WSAStartup(MAKEWORD(2, 2), &wsaData) == 0;
+    if (!winsock_started)
 	bu_log("ERROR: unable to initialize networking\n");
 #endif
 
@@ -85,20 +86,20 @@ bu_gethostname(char *result, size_t hostlen)
      */
 #ifdef HAVE_WINSOCK_H
     if (BU_STR_EMPTY(hostname)) {
-	TCHAR buffer[MAXPATHLEN] = {0};
-	if (GetComputerName(buffer, (LPDWORD)MAXPATHLEN) == 0) {
-	    bu_strlcpy(hostname, buffer, hostlen);
-	}
+	DWORD length = (DWORD)sizeof(hostname);
+	if (!GetComputerNameA(hostname, &length))
+	    hostname[0] = '\0';
     }
 #endif /* HAVE_WINSOCK_H */
 
     if (BU_STR_EMPTY(hostname)) {
 	/* non-NULL fallback */
-	bu_strlcpy(hostname, "unknown", hostlen);
+	bu_strlcpy(hostname, "unknown", sizeof(hostname));
     }
 
 #ifdef HAVE_WINSOCK_H
-    WSACleanup();
+    if (winsock_started)
+	WSACleanup();
 #endif
 
     if (!BU_STR_EMPTY(hostname))

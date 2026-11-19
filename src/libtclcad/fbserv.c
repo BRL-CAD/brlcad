@@ -30,6 +30,7 @@
 
 #include "common.h"
 
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -82,15 +83,15 @@ new_client_handler(ClientData clientData, int UNUSED(port))
     struct pkg_conn *pcp = NULL;
 
 #ifdef USE_TCL_CHAN
-    uintptr_t pfd = (uintptr_t)fbslp->fbsl_fd;
-    if (Tcl_GetChannelHandle(chan, TCL_READABLE, (ClientData *)&pfd) != TCL_OK)
+    /* Tcl owns the channel.  The package connection still uses an int. */
+    ClientData handle;
+    if (Tcl_GetChannelHandle(chan, TCL_READABLE, &handle) != TCL_OK ||
+	    (uintptr_t)handle > INT_MAX) {
+	Tcl_Close((Tcl_Interp *)fbsp->fbs_interp, chan);
 	return;
+    }
     cdata = (void *)chan;
-    // TODO - we need the uintptr_t above, or we introduce stack corruption on
-    // Windows.  Less certain about why we're casting back to int and using
-    // it for fbs_makeconn...  presumably it's not really a valid pkc_fd, so
-    // does it make sense to assign it there?
-    pcp = fbs_makeconn((int)pfd, pswitch);
+    pcp = fbs_makeconn((int)(uintptr_t)handle, pswitch);
 #else
     pcp = pkg_accept(fbslp->fbsl_listener, pswitch, comm_error, 0);
 #endif
@@ -148,7 +149,8 @@ C_DECL void
 tclcad_open_server_handler(struct fbserv_obj *fbsp)
 {
 #ifdef USE_TCL_CHAN
-    Tcl_GetChannelHandle(fbsp->fbs_listener.fbsl_chan, TCL_READABLE, (ClientData *)&fbsp->fbs_listener.fbsl_fd);
+    /* Tcl_OpenTcpServer already registered the accept callback. */
+    (void)fbsp;
 #else
     Tcl_CreateFileHandler(fbsp->fbs_listener.fbsl_fd, TCL_READABLE, (Tcl_FileProc *)new_client_handler, (ClientData)&fbsp->fbs_listener);
 #endif
@@ -159,9 +161,7 @@ tclcad_close_server_handler(struct fbserv_obj *fbsp)
 {
 #ifdef USE_TCL_CHAN
     if (fbsp->fbs_listener.fbsl_chan != NULL) {
-	Tcl_ChannelProc *callback = (Tcl_ChannelProc *)new_client_handler;
-	Tcl_DeleteChannelHandler(fbsp->fbs_listener.fbsl_chan, callback, (ClientData)fbsp->fbs_listener.fbsl_fd);
-	Tcl_Close((Tcl_Interp *)fbsp->fbs_interp, fbsp->fbs_listener.fbsl_chan);
+	Tcl_Close((Tcl_Interp *)fbsp->fbs_interp, (Tcl_Channel)fbsp->fbs_listener.fbsl_chan);
 	fbsp->fbs_listener.fbsl_chan = NULL;
     }
 #else
@@ -177,10 +177,10 @@ tclcad_open_client_handler(struct fbserv_obj *fbsp, int i, void *UNUSED(data))
 #endif
 {
 #ifdef USE_TCL_CHAN
-    fbsp->fbs_clients[i].fbsc_chan = (Tcl_Channel)data;
-    fbsp->fbs_clients[i].fbsc_handler = fbs_existing_client_handler;
-    Tcl_CreateChannelHandler(fbsp->fbs_clients[i].fbsc_chan, TCL_READABLE,
-	    fbsp->fbs_clients[i].fbsc_handler, (ClientData)&fbsp->fbs_clients[i]);
+    Tcl_Channel channel = (Tcl_Channel)data;
+    fbsp->fbs_clients[i].fbsc_chan = channel;
+    Tcl_CreateChannelHandler(channel, TCL_READABLE,
+	    fbs_existing_client_handler, (ClientData)&fbsp->fbs_clients[i]);
 #else
     Tcl_CreateFileHandler(fbsp->fbs_clients[i].fbsc_fd, TCL_READABLE,
 	    fbs_existing_client_handler, (ClientData)&fbsp->fbs_clients[i]);
@@ -191,9 +191,11 @@ C_DECL void
 tclcad_close_client_handler(struct fbserv_obj *fbsp, int sub)
 {
 #ifdef USE_TCL_CHAN
-    Tcl_DeleteChannelHandler(fbsp->fbs_clients[sub].fbsc_chan, fbsp->fbs_clients[sub].fbsc_handler, (ClientData)fbsp->fbs_clients[sub].fbsc_fd);
+    Tcl_Channel channel = (Tcl_Channel)fbsp->fbs_clients[sub].fbsc_chan;
+    Tcl_DeleteChannelHandler(channel,
+	    fbs_existing_client_handler, (ClientData)&fbsp->fbs_clients[sub]);
 
-    Tcl_Close((Tcl_Interp *)fbsp->fbs_interp, fbsp->fbs_clients[sub].fbsc_chan);
+    Tcl_Close((Tcl_Interp *)fbsp->fbs_interp, channel);
     fbsp->fbs_clients[sub].fbsc_chan = NULL;
 #else
     Tcl_DeleteFileHandler(fbsp->fbs_clients[sub].fbsc_fd);
@@ -232,7 +234,8 @@ tcl_ipc_poll_win(ClientData cd)
     {
 	int fd = fbscp->fbsc_fd;
 	int has_data = 0;
-	HANDLE h = (fd >= 0) ? (HANDLE)_get_osfhandle(fd) : INVALID_HANDLE_VALUE;
+	intptr_t handle = (fd >= 0) ? _get_osfhandle(fd) : -1;
+	HANDLE h = (HANDLE)handle;
 	if (h != INVALID_HANDLE_VALUE) {
 	    DWORD avail = 0;
 	    if (PeekNamedPipe(h, NULL, 0, NULL, &avail, NULL) && avail > 0)

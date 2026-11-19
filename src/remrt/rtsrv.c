@@ -29,6 +29,9 @@
 #include <string.h>
 #include <stdarg.h>
 #include <ctype.h>
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  include <process.h>
+#endif
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
@@ -580,7 +583,11 @@ ph_restart(struct pkg_conn *UNUSED(pc), char *buf)
 	fprintf(stderr, "ph_restart %s\n", buf);
     bu_log("Restarting\n");
     pkg_close(pcsrv);
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    _execvp(original_argv[0], (const char * const *)original_argv);
+#else
     execvp(original_argv[0], original_argv);
+#endif
     /* should not reach */
     bu_argv_free(original_argc, original_argv);
     perror("rtsrv");

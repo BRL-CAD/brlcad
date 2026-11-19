@@ -129,7 +129,15 @@ compare_bu_to_system_basename(const char *input)
     char *sys_out = get_system_output(input);
     char *bu_out = get_bu_output(input);
 
-    if (BU_STR_EQUAL(sys_out, bu_out)) {
+    int match = BU_STR_EQUAL(sys_out, bu_out);
+#ifdef _WIN32
+    /* Both forms designate the current drive's root. */
+    if (sys_out && sys_out[0] && bu_out[0] &&
+	strspn(sys_out, "/\\") == 1 && sys_out[1] == '\0' &&
+	strspn(bu_out, "/\\") == 1 && bu_out[1] == '\0')
+	match = 1;
+#endif
+    if (match) {
 	bu_log("%24s -> %24s [PASSED]\n", input, bu_out);
 	bu_free(bu_out, "bu output");
 	bu_free(sys_out, "system output");

@@ -26,6 +26,7 @@
 #include "common.h"
 
 #include <limits.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -35,6 +36,10 @@
 #include "bu/interrupt.h"
 #include "bu/parallel.h"
 #include "optical/photonmap.h"
+
+#if defined(HAVE_ALARM) && defined(SIGALRM)
+#  define PHOTONMAP_USE_ALARM 1
+#endif
 
 #if defined(HAVE_SRAND48) && !defined(HAVE_DECL_SRAND48)
 extern void srand48(long int seedval);
@@ -1092,7 +1097,7 @@ build_irradiance_cache(int pid, struct PNode *Node, struct application *ap, int 
     if (!Node->C) {
 	ICSize++;
 	Node->C++;
-#ifndef HAVE_ALARM
+#ifndef PHOTONMAP_USE_ALARM
 	if (!(ICSize%(PMap[PM_GLOBAL]->MaxPhotons/8)))
 	    bu_log("    Irradiance Cache Progress: %d%%\n", (int)(0.5+100.0*ICSize/PMap[PM_GLOBAL]->MaxPhotons));
 #endif
@@ -1116,7 +1121,7 @@ BuildIrradianceCache(int pid, struct PNode *Node, struct application *ap)
 }
 
 
-#ifdef HAVE_ALARM
+#ifdef PHOTONMAP_USE_ALARM
 static int starttime = 0;
 void
 alarmhandler(int sig)
@@ -1146,7 +1151,7 @@ alarmhandler(int sig)
 void
 IrradianceThread(int pid, void *arg)
 {
-#ifdef HAVE_ALARM
+#ifdef PHOTONMAP_USE_ALARM
     starttime = time(NULL);
     signal(SIGALRM, alarmhandler);
     alarm(60);

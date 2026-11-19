@@ -688,13 +688,17 @@ addclient(struct pkg_conn *pc)
     struct frame *fr;
     struct ihost *ihp;
     int on = 1;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    int fromlen;
+#else
     socklen_t fromlen;
+#endif
     struct sockaddr_in from;
     int fd;
 
     fd = pkg_get_read_fd(pc);
 
-    fromlen = (socklen_t) sizeof (from);
+    fromlen = sizeof(from);
 
     if (getpeername(fd, (struct sockaddr *)&from, &fromlen) < 0) {
 	perror("getpeername");

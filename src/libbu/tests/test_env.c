@@ -56,7 +56,7 @@ shrink_path(struct bu_vls *tp, const char *lp)
     char sp[MAXPATHLEN];
     char *llp = bu_strdup(lp);
     DWORD r = GetShortPathNameA(llp, sp, MAXPATHLEN);
-    bu_log("r: %d  sp:%s llp: %s\n", r, sp, llp);
+    bu_log("r: %lu  sp:%s llp: %s\n", r, sp, llp);
     if (r != 0 && r < MAXPATHLEN) {
 	// Unless short path call failed, use sp
 	bu_vls_sprintf(tp, "%s", sp);

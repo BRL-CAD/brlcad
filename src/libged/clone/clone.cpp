@@ -123,7 +123,7 @@ struct NameCache {
 };
 
 /* NOTE: avoid using SPH — it is #defined as 11 in rt/db4.h */
-enum class PatternMode { LINEAR, RECT, SPHERICAL, CYL };
+enum class PatternMode { LINEAR, RECTANGULAR, SPHERICAL, CYL };
 enum class DepthMode   {
     TOP,        /**< lightweight wrapper comb {obj [mat]} — geometry shared  */
     REGIONS,    /**< copy combs down to regions; share primitives; mat at    */
@@ -1846,7 +1846,7 @@ pattern_axes(PatternMode p)
 {
     switch (p) {
 	case PatternMode::LINEAR:    return lin_axes;
-	case PatternMode::RECT:      return rect_axes;
+	case PatternMode::RECTANGULAR: return rect_axes;
 	case PatternMode::SPHERICAL: return sph_axes;
 	case PatternMode::CYL:       return cyl_axes;
     }
@@ -1858,7 +1858,7 @@ pattern_name(PatternMode p)
 {
     switch (p) {
 	case PatternMode::LINEAR:    return "lin";
-	case PatternMode::RECT:      return "rect";
+	case PatternMode::RECTANGULAR: return "rect";
 	case PatternMode::SPHERICAL: return "sph";
 	case PatternMode::CYL:       return "cyl";
     }
@@ -1869,7 +1869,7 @@ static PatternMode
 parse_pattern_keyword(const char *tok)
 {
     if (BU_STR_EQUAL(tok, "lin"))  return PatternMode::LINEAR;
-    if (BU_STR_EQUAL(tok, "rect")) return PatternMode::RECT;
+    if (BU_STR_EQUAL(tok, "rect")) return PatternMode::RECTANGULAR;
     if (BU_STR_EQUAL(tok, "sph"))  return PatternMode::SPHERICAL;
     if (BU_STR_EQUAL(tok, "cyl"))  return PatternMode::CYL;
     return (PatternMode)-1;
@@ -2245,7 +2245,7 @@ clone_parse_args(struct ged *gedp, int argc, const char **argv,
 	return nullptr;
     };
 
-    if (state->pattern == PatternMode::RECT) {
+    if (state->pattern == PatternMode::RECTANGULAR) {
 	const ResolvedAxis *ax = find_ax("x");
 	const ResolvedAxis *ay = find_ax("y");
 	const ResolvedAxis *az = find_ax("z");
@@ -2525,7 +2525,7 @@ ged_clone_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    break;
 	}
-	case PatternMode::RECT:
+	case PatternMode::RECTANGULAR:
 	    top_names = run_pattern_rect(&state);
 	    for (auto& n : top_names)
 		bu_vls_printf(gedp->ged_result_str, "%s ", n.c_str());

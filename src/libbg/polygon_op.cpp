@@ -56,7 +56,8 @@ bg_find_polygon_area(struct bg_polygon *gpoly, fastf_t sf, plane_t *vp, fastf_t 
 	poly.resize(n);
 	for (k = 0; k < n; k++) {
 	    fastf_t fx, fy;
-	    bg_plane_closest_pt(&fx, &fy, vp, &gpoly->contour[j].point[k]);
+	    if (bg_plane_closest_pt(&fx, &fy, vp, &gpoly->contour[j].point[k]))
+		return 0.0;
 
 	    poly[k].X = (ClipperLib::long64)(fx * sf);
 	    poly[k].Y = (ClipperLib::long64)(fy * sf);

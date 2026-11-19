@@ -88,7 +88,8 @@ timer_filetime(const FILETIME *kernel_time, const FILETIME *user_time)
 #endif
 
 
-#if defined(CLOCK_PROCESS_CPUTIME_ID) || defined(CLOCK_THREAD_CPUTIME_ID)
+#if (!defined(HAVE_GETPROCESSTIMES) && defined(CLOCK_PROCESS_CPUTIME_ID)) || \
+    (!defined(HAVE_GETTHREADTIMES) && !defined(HAVE_MACH_THREAD_CPUTIME) && defined(CLOCK_THREAD_CPUTIME_ID))
 static int64_t
 timer_timespec(const struct timespec *time_val)
 {

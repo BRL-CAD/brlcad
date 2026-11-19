@@ -419,7 +419,11 @@ void tienet_master_connect_slaves(fd_set *readfds)
 int tienet_master_listener(void *UNUSED(ptr))
 {
     struct sockaddr_in master, slave;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    int addrlen;
+#else
     socklen_t addrlen;
+#endif
     fd_set readfds;
     tienet_master_socket_t *sock, *tmp;
     int r, master_socket, slave_socket, slave_ver_key;

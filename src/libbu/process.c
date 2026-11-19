@@ -68,7 +68,7 @@ extern pid_t wait(int *);
 int
 bu_pid(void)
 {
-#ifdef HAVE_UNISTD_H
+#ifndef _WIN32
     return getpid();
 #else
     return (int)GetCurrentProcessId();
@@ -434,7 +434,7 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
     (*pinfo)->argv[argc] = (char *)NULL;	// sanity check
 
     int merged_output = (opts & BU_PROCESS_OUT_EQ_ERR);
-#ifdef HAVE_UNISTD_H
+#ifndef _WIN32
     int pret;
     int pid;
     int pipe_in[2] = {-1, -1};
@@ -642,13 +642,12 @@ process_create_fail:
     if ((*pinfo)->fd_in < 0)
 	goto process_create_fail;
     pipe_inDup = NULL;
-    int err_fd = _open_osfhandle((intptr_t)pipe_errDup, 0);
-    if (err_fd < 0)
+    (*pinfo)->fd_err = _open_osfhandle((intptr_t)pipe_errDup, 0);
+    if ((*pinfo)->fd_err < 0)
 	goto process_create_fail;
     pipe_errDup = NULL;
-    (*pinfo)->fd_err = err_fd;
     if (merged_output) {
-	(*pinfo)->fd_out = err_fd;
+	(*pinfo)->fd_out = (*pinfo)->fd_err;
     } else {
 	(*pinfo)->fd_out = _open_osfhandle((intptr_t)pipe_outDup, 0);
 	if ((*pinfo)->fd_out < 0)

@@ -27,6 +27,7 @@
 
 #include "common.h"
 
+#include <inttypes.h>
 #include <string.h>
 #include "bio.h"
 
@@ -91,7 +92,8 @@ db_preorder_traverse(struct directory *dp,
     RT_CK_DBI(dtp->dbip);
 
     if (RT_G_DEBUG & RT_DEBUG_DB)
-	bu_log("db_preorder_traverse(%s) %p, %p, comb_enter=0x%lx, comb_exit=0x%lx, leaf=0x%lx, client_data=%p\n",
+	bu_log("db_preorder_traverse(%s) %p, %p, comb_enter=0x%" PRIxPTR ", comb_exit=0x%" PRIxPTR
+	       ", leaf=0x%" PRIxPTR ", client_data=%p\n",
 	       dp->d_namep,
 	       (void *)dtp->dbip, (void *)dp,
 	       (uintptr_t)dtp->comb_enter_func, (uintptr_t)dtp->comb_exit_func, (uintptr_t)dtp->leaf_func,
@@ -201,7 +203,7 @@ db_treewalk_basic(struct db_i *dbip,
     }
 
     if (RT_G_DEBUG&RT_DEBUG_DB) {
-	bu_log("db_treewalk_basic(%s) %p, %p, comb=0x%lx, leaf=0x%lx, client_data=%p\n",
+	bu_log("db_treewalk_basic(%s) %p, %p, comb=0x%" PRIxPTR ", leaf=0x%" PRIxPTR ", client_data=%p\n",
 	       dp->d_namep, (void *)dbip, (void *)dp,
 	       (uintptr_t)comb_func, (uintptr_t)leaf_func,
 	       client_data);

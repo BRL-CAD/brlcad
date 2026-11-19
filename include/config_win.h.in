@@ -81,8 +81,6 @@
 #define HAVE_WINSOCK2_H		1
 #define HAVE_WINSOCK_H		1
 
-#define fb_log bu_log
-
 #define HAVE_X11_TYPES 1
 
 #define YY_NO_UNISTD_H		1

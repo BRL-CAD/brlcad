@@ -120,6 +120,16 @@ extern struct _axes_state default_axes_state;
 extern struct _rubber_band default_rubber_band;
 
 #ifdef HAVE_PIPE
+static int
+mged_create_output_pipe(int fds[2])
+{
+#ifdef HAVE_WINDOWS_H
+    return _pipe(fds, 256, _O_TEXT);
+#else
+    return pipe(fds);
+#endif
+}
+
 /* these two file descriptors are where we store fileno(stdout) and
  * fileno(stderr) during graphical startup so that we may restore them
  * when we're done (which is needed so atexit() calls to bu_log() will
@@ -223,7 +233,8 @@ static Tcl_Channel
 mged_dup_file_channel(int fd, int mode)
 {
 #ifdef HAVE_WINDOWS_H
-    HANDLE source = (HANDLE)_get_osfhandle(fd);
+    intptr_t file_handle = _get_osfhandle(fd);
+    HANDLE source = (HANDLE)file_handle;
     HANDLE duplicate = INVALID_HANDLE_VALUE;
 
     if (source == INVALID_HANDLE_VALUE ||
@@ -3236,10 +3247,10 @@ main(int argc, char *argv[])
 		/* we're going to close out stdout/stderr as we
 		 * proceed in GUI mode, so create some pipes.
 		 */
-		result = pipe(pipe_out);
+		result = mged_create_output_pipe(pipe_out);
 		if (result == -1)
 		    perror("pipe");
-		result = pipe(pipe_err);
+		result = mged_create_output_pipe(pipe_err);
 		if (result == -1)
 		    perror("pipe");
 #endif  /* HAVE_PIPE */
@@ -3494,8 +3505,10 @@ main(int argc, char *argv[])
 	     * _get_osfhandle() to obtain the correct Windows HANDLE from the
 	     * CRT fd.  On POSIX the fd is cast directly, as before. */
 #ifdef HAVE_WINDOWS_H
-	    out_chan = Tcl_MakeFileChannel((ClientData)_get_osfhandle(pipe_out[0]), TCL_READABLE);
-	    err_chan = Tcl_MakeFileChannel((ClientData)_get_osfhandle(pipe_err[0]), TCL_READABLE);
+	    intptr_t out_handle = _get_osfhandle(pipe_out[0]);
+	    intptr_t err_handle = _get_osfhandle(pipe_err[0]);
+	    out_chan = Tcl_MakeFileChannel((ClientData)out_handle, TCL_READABLE);
+	    err_chan = Tcl_MakeFileChannel((ClientData)err_handle, TCL_READABLE);
 #else
 	    out_chan = Tcl_MakeFileChannel((ClientData)(size_t)pipe_out[0], TCL_READABLE);
 	    err_chan = Tcl_MakeFileChannel((ClientData)(size_t)pipe_err[0], TCL_READABLE);

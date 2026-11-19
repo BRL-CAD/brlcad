@@ -104,7 +104,9 @@ fd_set select_list;			/* master copy */
 int max_fd;
 
 
+#ifdef HAVE_SYSLOG_H
 static int use_syslog;	/* error messages to stderr if 0 */
+#endif
 
 static char *framebuffer = NULL;	/* frame buffer name */
 static int width = 0;		/* use default size */
@@ -584,6 +586,7 @@ main_loop(void)
 }
 
 
+#ifndef _WIN32
 static void
 init_syslog(void)
 {
@@ -597,6 +600,7 @@ init_syslog(void)
 #  endif
 #endif
 }
+#endif
 
 
 int

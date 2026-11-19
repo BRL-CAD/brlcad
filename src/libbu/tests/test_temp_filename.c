@@ -145,7 +145,7 @@ main(int argc, char *argv[])
 	    bu_temp_file_name(under_size, 5);
 	    // validate
 	    if (strlen(under_size) != 4)    /* buffer size -1 */
-		bu_exit(EXIT_FAILURE, "temp_filename failure: expected size [%d], got [%ld]]\n", 4, strlen(under_size));
+		bu_exit(EXIT_FAILURE, "temp_filename failure: expected size [%d], got [%zu]\n", 4, strlen(under_size));
 
 	} else if (!bu_strcmp(curr, "binary")) {
 	    if (temp_file_binary())

@@ -624,7 +624,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
     *obot = rbot;
 
     if (!quiet_mode)
-	bu_log("Extrusion has %ld vertices and %ld faces\n", rbot->num_vertices, rbot->num_faces);
+        bu_log("Extrusion has %zu vertices and %zu faces\n", rbot->num_vertices, rbot->num_faces);
 
     if (input_bot != bot) {
 	rt_bot_internal_free(bot);

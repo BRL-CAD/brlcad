@@ -196,7 +196,7 @@ rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt
 	std::set<int>::iterator p_it;
 	for (p_it = tinfo.problem_indices.begin(); p_it != tinfo.problem_indices.end(); ++p_it) {
 	    int ind = *p_it;
-	    bu_ptbl_ins(ofaces, (long *)(long)ind);
+	    bu_ptbl_ins(ofaces, (long *)(intptr_t)ind);
 	}
     }
 
@@ -336,7 +336,7 @@ rt_bot_csg_miss_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struc
 	std::set<int>::iterator p_it;
 	for (p_it = ninfo.problem_indices.begin(); p_it != ninfo.problem_indices.end(); ++p_it) {
 	    int ind = *p_it;
-	    bu_ptbl_ins(ofaces, (long *)(long)ind);
+	    bu_ptbl_ins(ofaces, (long *)(intptr_t)ind);
 	}
     }
 

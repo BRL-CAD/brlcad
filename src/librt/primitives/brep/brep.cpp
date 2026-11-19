@@ -1624,12 +1624,9 @@ plotisoUCheckForTrim(struct bu_list *vlfree, struct bu_list *vhead, const Surfac
 	ctree->getLeavesRight(m_trims_right, pt, tol);
     }
 
-    int cnt = 1;
-
-    //bu_log("V - %f\n", pt.x);
     trim_hits.clear();
     std::list<const BRNode *>::const_iterator i;
-    for (i = m_trims_right.begin(); i != m_trims_right.end(); i++, cnt++) {
+    for (i = m_trims_right.begin(); i != m_trims_right.end(); i++) {
 	const BRNode* br = *i;
 
 	point_t bmin, bmax;
@@ -1638,7 +1635,6 @@ plotisoUCheckForTrim(struct bu_list *vlfree, struct bu_list *vhead, const Surfac
 	    if (((bmin[Y] - tol) <= pt[Y]) && (pt[Y] <= (bmax[Y] + tol))) { //if check trim and in BBox
 		fastf_t u = br->getCurveEstimateOfU(pt[Y], tol);
 		trim_hits.push_back(u);
-		//bu_log("%d U %d - %f pt %f, %f bmin %f, %f bmax %f, %f\n", br->m_face->m_face_index, cnt, u, pt.x, pt.y, bmin[X], bmin[Y], bmax[X], bmax[Y]);
 	    }
 	}
     }
@@ -1648,7 +1644,6 @@ plotisoUCheckForTrim(struct bu_list *vlfree, struct bu_list *vhead, const Surfac
 
     int hit_cnt = trim_hits.size();
 
-    //cnt = 1;
     //bu_log("\tplotisoUCheckForTrim: hit_cnt %d from center  %f %f 0.0 to center %f %f 0.0\n", hit_cnt, from, v , to, v);
 
     if ((hit_cnt > 0) && ((hit_cnt % 2) == 0)) {
@@ -1677,10 +1672,6 @@ plotisoUCheckForTrim(struct bu_list *vlfree, struct bu_list *vhead, const Surfac
 			p = surf->PointAt(x + deltax, pt.y);
 		    }
 		    VMOVE(pt2, p);
-
-		    //				bu_log(
-		    //						"\t\t%d from center  %f %f 0.0 to center %f %f 0.0\n",
-		    //						cnt++, x, v, x + deltax, v);
 
 		    BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
 		    BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
@@ -1719,10 +1710,9 @@ plotisoVCheckForTrim(struct bu_list *vlfree, struct bu_list *vhead, const Surfac
 	ctree->getLeavesAbove(m_trims_above, pt, tol);
     }
 
-    int cnt = 1;
     trim_hits.clear();
     for (std::list<const BRNode*>::const_iterator i = m_trims_above.begin(); i
-	     != m_trims_above.end(); i++, cnt++) {
+	     != m_trims_above.end(); i++) {
 	const BRNode* br = *i;
 
 	point_t bmin, bmax;
@@ -1732,7 +1722,6 @@ plotisoVCheckForTrim(struct bu_list *vlfree, struct bu_list *vhead, const Surfac
 	    if (((bmin[X] - tol) <= pt[X]) && (pt[X] <= (bmax[X] + tol))) { //if check trim and in BBox
 		fastf_t v = br->getCurveEstimateOfV(pt[X], tol);
 		trim_hits.push_back(v);
-		//bu_log("%d V %d - %f pt %f, %f bmin %f, %f bmax %f, %f\n", br->m_face->m_face_index, cnt, v, pt.x, pt.y, bmin[X], bmin[Y], bmax[X], bmax[Y]);
 	    }
 	}
     }
@@ -1740,7 +1729,6 @@ plotisoVCheckForTrim(struct bu_list *vlfree, struct bu_list *vhead, const Surfac
     trim_hits.unique(near_equal);
 
     size_t hit_cnt = trim_hits.size();
-    //cnt = 1;
 
     //bu_log("\tplotisoVCheckForTrim: hit_cnt %d from center  %f %f 0.0 to center %f %f 0.0\n", hit_cnt, u, from, u, to);
 
@@ -1768,9 +1756,6 @@ plotisoVCheckForTrim(struct bu_list *vlfree, struct bu_list *vhead, const Surfac
 			p = surf->PointAt(pt.x, y + deltay);
 		    }
 		    VMOVE(pt2, p);
-
-		    //bu_log("\t\t%d from center  %f %f 0.0 to center %f %f 0.0\n",
-		    //		cnt++, u, y, u, y + deltay);
 
 		    BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
 		    BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);

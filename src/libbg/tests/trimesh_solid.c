@@ -16,6 +16,8 @@
 
 #include "common.h"
 
+#include <string.h>
+
 #include "bu/app.h"
 #include "bu/malloc.h"
 #include "bg/trimesh.h"
@@ -97,6 +99,34 @@ test_free_helpers(void)
 }
 
 
+static int
+test_hanging_nodes(void)
+{
+    fastf_t vertices[] = {
+	0.0, 0.0, 0.0,
+	10.0, 0.0, 0.0,
+	5.0, 0.0, 0.0,
+	0.0, 10.0, 0.0,
+	0.0, -10.0, 0.0
+    };
+    int faces[] = {0, 1, 3, 0, 4, 2, 2, 4, 1};
+    const int triangle_edges[] = {0, 1, 0, 3, 1, 3};
+    const int split_edges[] = {0, 2, 0, 3, 0, 4, 1, 2, 1, 3, 1, 4};
+    struct bg_trimesh_solid_errors errors = BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
+
+    int failed = bg_trimesh_hanging_nodes(5, 1, vertices, faces, &errors) != 0 ||
+	errors.unmatched.count != 3 || !errors.unmatched.edges ||
+	memcmp(errors.unmatched.edges, triangle_edges, sizeof(triangle_edges)) != 0;
+    bg_free_trimesh_solid_errors(&errors);
+
+    failed |= bg_trimesh_hanging_nodes(5, 3, vertices, faces, &errors) != 1 ||
+	errors.unmatched.count != 6 || !errors.unmatched.edges ||
+	memcmp(errors.unmatched.edges, split_edges, sizeof(split_edges)) != 0;
+    bg_free_trimesh_solid_errors(&errors);
+    return failed;
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -104,5 +134,5 @@ main(int argc, char **argv)
     if (argc != 1)
 	return 1;
 
-    return test_solid_diagnostics() || test_free_helpers();
+    return test_solid_diagnostics() || test_free_helpers() || test_hanging_nodes();
 }

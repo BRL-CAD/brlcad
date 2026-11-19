@@ -6124,6 +6124,13 @@ struct rt_bot_internal *
 rt_bot_merge(size_t num_bots, const struct rt_bot_internal * const *bots)
 {
     struct rt_bot_internal *result = NULL;
+    int preserve_normals = 1;
+    int preserve_uvs = 1;
+    size_t vertex_offset = 0;
+    size_t face_offset = 0;
+    size_t normal_offset = 0;
+    size_t uv_offset = 0;
+
     BU_ALLOC(result, struct rt_bot_internal);
     result->magic = RT_BOT_INTERNAL_MAGIC;
 
@@ -6135,8 +6142,6 @@ rt_bot_merge(size_t num_bots, const struct rt_bot_internal * const *bots)
     result->mode = bots[0]->mode;
     result->orientation = RT_BOT_UNORIENTED;
     result->bot_flags = bots[0]->bot_flags;
-    int preserve_normals = 1;
-    int preserve_uvs = 1;
     for (size_t i = 0; i < num_bots; ++i) {
 	if (!bots[i])
 	    goto fail;
@@ -6205,10 +6210,6 @@ rt_bot_merge(size_t num_bots, const struct rt_bot_internal * const *bots)
 	result->face_uvs = (int *)bu_calloc(result->num_faces, 3 * sizeof(int), "BOT merge face UVs");
     }
 
-    size_t vertex_offset = 0;
-    size_t face_offset = 0;
-    size_t normal_offset = 0;
-    size_t uv_offset = 0;
     for (size_t i = 0; i < num_bots; ++i) {
 	const struct rt_bot_internal *input = bots[i];
 	memcpy(&result->vertices[vertex_offset * 3], input->vertices,

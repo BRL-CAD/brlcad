@@ -46,15 +46,16 @@ struct FacetContext {
 union tree *
 evaluate_boolean(struct db_tree_state *state, union tree *tree, int *failed)
 {
-    union tree *result = nullptr;
     const uint32_t debug = nmg_debug;
-    if (!BU_SETJUMP) {
-	nmg_model_fuse(*state->ts_m, &rt_vlfree, state->ts_tol);
-	result = nmg_booltree_evaluate(tree, &rt_vlfree, state->ts_tol);
-    } else {
+    if (BU_SETJUMP) {
 	*failed = 1;
 	nmg_debug = debug;
+	BU_UNSETJUMP;
+	return nullptr;
     }
+
+    nmg_model_fuse(*state->ts_m, &rt_vlfree, state->ts_tol);
+    union tree *result = nmg_booltree_evaluate(tree, &rt_vlfree, state->ts_tol);
     BU_UNSETJUMP;
     return *failed ? nullptr : result;
 }
@@ -100,14 +101,16 @@ facet_leaf(struct db_tree_state *state, const struct db_full_path *path,
 	context->failed = true;
 	return empty_tree();
     }
-    union tree *result = nullptr;
     const uint32_t debug = nmg_debug;
-    if (!BU_SETJUMP)
-	result = rt_booltree_leaf_tess(state, path, internal, &rt_vlfree);
-    else {
+
+    if (BU_SETJUMP) {
 	context->failed = true;
 	nmg_debug = debug;
+	BU_UNSETJUMP;
+	return empty_tree();
     }
+
+    union tree *result = rt_booltree_leaf_tess(state, path, internal, &rt_vlfree);
     BU_UNSETJUMP;
     if (!result) {
 	context->failed = true;

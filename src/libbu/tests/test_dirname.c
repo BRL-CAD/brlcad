@@ -72,7 +72,19 @@ automatic_test(const char *input)
     else
 	res = bu_path_dirname(buf_input);
 
-    if (BU_STR_EQUAL(res, ans)) {
+    int match = BU_STR_EQUAL(res, ans);
+#ifdef _WIN32
+    /* The CRT may change slash direction or retain repeated root slashes. */
+    if (ans && res && ans[0] && res[0]) {
+	if ((strspn(ans, "/\\") == strlen(ans) &&
+	     strspn(res, "/\\") == strlen(res)) ||
+	    (strlen(ans) == 3 && strlen(res) == 3 && ans[0] == res[0] &&
+	     ans[1] == ':' && res[1] == ':' &&
+	     strspn(ans + 2, "/\\") == 1 && strspn(res + 2, "/\\") == 1))
+	    match = 1;
+    }
+#endif
+    if (match) {
 	printf("%24s -> %24s [PASSED]\n", input, res);
 	pass = 1;
     } else {

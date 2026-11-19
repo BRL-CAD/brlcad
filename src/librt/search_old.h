@@ -57,8 +57,6 @@
 
 #include "common.h"
 
-#include <sys/types.h> /* for gid_t */
-
 #include "bu/ptbl.h"
 #include "raytrace.h"
 
@@ -99,7 +97,6 @@ struct db_plan_old_t {
     enum db_search_old_ntype type;		/* plan node type */
     struct bu_ptbl *plans;              /* set of all allocated plans */
     union {
-	gid_t _g_data;			/* gid */
 	struct {
 	    unsigned int _f_flags;
 	    unsigned int _f_mask;

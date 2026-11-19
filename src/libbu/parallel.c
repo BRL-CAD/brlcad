@@ -102,13 +102,11 @@
 /*
  * multithread support built on POSIX Threads (pthread) library.
  */
-#ifdef HAVE_PTHREAD_H
-#  include <pthread.h>
-#  define rt_thread_t pthread_t
-#endif
-
 #ifdef _WIN32
 #  define rt_thread_t HANDLE
+#elif defined(HAVE_PTHREAD_H)
+#  include <pthread.h>
+#  define rt_thread_t pthread_t
 #endif
 
 #include "bio.h"
@@ -802,7 +800,7 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 	bu_log("bu_parallel(): %zu threads created.  %zud threads exited.\n", nthreadc, nthreade);
 #  endif	/* SUNOS */
 
-#  if defined(HAVE_PTHREAD_H)
+#  if defined(HAVE_PTHREAD_H) && !defined(_WIN32)
 
     /* Create the posix threads.
      *
@@ -892,7 +890,7 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 	thread_context[i].thread_handle = thread;
 
 	if (thread == NULL) {
-	    bu_log("bu_parallel(): Error in CreateThread, Win32 error code %d.\n", GetLastError());
+	    bu_log("bu_parallel(): Error in CreateThread, Win32 error code %lu.\n", GetLastError());
 	    parallel_mapping(PARALLEL_PUT, thread_context[i].cpu_id, 0);
 	} else {
 	    nthreadc++;
@@ -941,7 +939,7 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 
 	if ((ret = CloseHandle(worker->thread_handle) == 0)) {
 	    /* Thread didn't close properly if return value is zero; don't retry and potentially loop forever.  */
-	    bu_log("bu_parallel(): Error closing thread %zu of %zu, Win32 error code %d.\n", nthreade, nthreadc, GetLastError());
+	    bu_log("bu_parallel(): Error closing thread %zu of %zu, Win32 error code %lu.\n", nthreade, nthreadc, GetLastError());
 	}
 
 	nthreade++;

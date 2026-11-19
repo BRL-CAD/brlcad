@@ -1094,12 +1094,11 @@ void test_random_rgb_pattern() {
     EXPECT_TRUE(ok && err == rle::Error::OK);
 
     std::vector<uint8_t> readback;
-    uint32_t rw, rh;
-    bool has_alpha;
+    uint32_t rw = 0, rh = 0;
 
     fp = fopen("test_random_rgb.rle", "rb");
     EXPECT_TRUE(fp != nullptr);
-    ok = rle::read_rgb(fp, readback, rw, rh, &has_alpha, nullptr, err);
+    ok = rle::read_rgb(fp, readback, rw, rh, nullptr, nullptr, err);
     fclose(fp);
     EXPECT_TRUE(ok && err == rle::Error::OK);
     EXPECT_EQ(rw, W);
@@ -1134,8 +1133,8 @@ void test_random_rgba_pattern() {
     EXPECT_TRUE(ok && err == rle::Error::OK);
 
     std::vector<uint8_t> readback;
-    uint32_t rw, rh;
-    bool has_alpha;
+    uint32_t rw = 0, rh = 0;
+    bool has_alpha = false;
 
     fp = fopen("test_random_rgba.rle", "rb");
     EXPECT_TRUE(fp != nullptr);

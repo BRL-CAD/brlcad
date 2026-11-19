@@ -107,6 +107,9 @@ main(int argc, const char *argv[])
 	// 1000 writes to stdout and stderr
 	const int STDOUT_WRITE_CNT = 1000;
 
+	// Keep the writes interleaved even when a pipe is smaller than the
+	// stdio buffer and the parent alternates reads between the streams.
+	setvbuf(stdout, NULL, _IONBF, 0);
 	for (int i = 0; i < STDOUT_WRITE_CNT; i++) {
 	    fprintf(stdout, "out: %s[%d]\n", lorem_25, i);
 	    fprintf(stderr, "err: %s[%d]\n", lorem_25, i);

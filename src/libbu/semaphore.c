@@ -36,6 +36,8 @@
 
 #include "./parallel.h"
 
+#if defined(HAVE_PTHREAD_H) && (!defined(_WIN32) || defined(__CYGWIN__))
+#  define BU_PTHREAD_SEMAPHORES 1
 static void
 sem_bomb(int eno) {
     switch (eno) {
@@ -61,6 +63,7 @@ sem_bomb(int eno) {
 	    bu_bomb("fatal semaphore acquisition failure");
     }
 }
+#endif
 
 
 /*
@@ -82,7 +85,7 @@ static mutext_t bu_init_lock = SEMAPHORE_INIT;
 /*
  * multithread support built on POSIX Threads (pthread) library.
  */
-#elif defined(HAVE_PTHREAD_H)
+#elif defined(BU_PTHREAD_SEMAPHORES)
 #  include <pthread.h>
 #  define SEMAPHORE_INIT PTHREAD_MUTEX_INITIALIZER
 struct bu_semaphores {
@@ -207,7 +210,7 @@ bu_semaphore_init(unsigned int nsemaphores)
 	bu_bomb("fatal semaphore acquisition failure");
     }
 
-#  elif defined(HAVE_PTHREAD_H)
+#  elif defined(BU_PTHREAD_SEMAPHORES)
     int ret = pthread_mutex_lock(&bu_init_lock);
     if (ret) {
 	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_lock() failed on init lock\n");
@@ -269,7 +272,7 @@ bu_semaphore_free(void)
 	}
     }
 
-#  elif defined(HAVE_PTHREAD_H)
+#  elif defined(BU_PTHREAD_SEMAPHORES)
     for (i = 0; i < initialized; i++) {
 	if (pthread_mutex_destroy(&bu_semaphores[i].mu)) {
 	    fprintf(stderr, "bu_semaphore_free(): pthread_mutex_destroy() failed on [%d] of [%d]\n", i+1, initialized);
@@ -311,7 +314,7 @@ bu_semaphore_acquire(unsigned int i)
     }
 #  endif
 
-#  if defined(HAVE_PTHREAD_H)
+#  if defined(BU_PTHREAD_SEMAPHORES)
     int ret = pthread_mutex_lock(&bu_semaphores[i].mu);
     if (ret) {
 	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_lock() failed on [%d]\n", i);
@@ -352,7 +355,7 @@ bu_semaphore_release(unsigned int i)
     }
 #  endif
 
-#  if defined(HAVE_PTHREAD_H)
+#  if defined(BU_PTHREAD_SEMAPHORES)
     int ret = pthread_mutex_unlock(&bu_semaphores[i].mu);
     if (ret) {
 	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_unlock() failed on [%d]\n", i);

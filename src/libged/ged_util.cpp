@@ -1307,7 +1307,7 @@ _ged_editit(struct ged *gedp, const char *editstring, const char *filename)
     if (!gedp)
 	return 0;
 
-#ifdef HAVE_UNISTD_H
+#if defined(HAVE_UNISTD_H) && (!defined(_WIN32) || defined(__CYGWIN__))
     int xpid = 0;
     int status = 0;
 #endif
@@ -1406,7 +1406,7 @@ _ged_editit(struct ged *gedp, const char *editstring, const char *filename)
     s3 = signal(SIGQUIT, SIG_IGN);
 #endif
 
-#ifdef HAVE_UNISTD_H
+#if defined(HAVE_UNISTD_H) && (!defined(_WIN32) || defined(__CYGWIN__))
     if ((pid = fork()) < 0) {
 	perror("fork");
 	ret = 0;
@@ -1425,8 +1425,8 @@ _ged_editit(struct ged *gedp, const char *editstring, const char *filename)
 
 	{
 #if defined(_WIN32) && !defined(__CYGWIN__)
-	    STARTUPINFO si = {0};
-	    PROCESS_INFORMATION pi = {0};
+	    STARTUPINFO si = {};
+	    PROCESS_INFORMATION pi = {};
 	    si.cb = sizeof(STARTUPINFO);
 	    si.lpReserved = NULL;
 	    si.lpReserved2 = NULL;
@@ -1500,7 +1500,7 @@ _ged_editit(struct ged *gedp, const char *editstring, const char *filename)
 	}
     }
 
-#ifdef HAVE_UNISTD_H
+#if defined(HAVE_UNISTD_H) && (!defined(_WIN32) || defined(__CYGWIN__))
     /* wait for the editor to terminate */
     while ((xpid = wait(&status)) >= 0) {
 	if (xpid == pid) {

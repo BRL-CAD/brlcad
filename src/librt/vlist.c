@@ -442,9 +442,8 @@ rt_label_vlist_verts(struct bv_vlblock *vbp, struct bu_list *src, mat_t mat, dou
     for (BU_LIST_FOR(vp, bv_vlist, src)) {
 	register int i;
 	register int nused = vp->nused;
-	register int *cmd = vp->cmd;
 	register point_t *pt = vp->pt;
-	for (i = 0; i < nused; i++, cmd++, pt++) {
+	for (i = 0; i < nused; i++, pt++) {
 	    /* XXX Skip polygon markers? */
 	    sprintf(label, " %g, %g, %g",
 		    (*pt)[0]*mm2local, (*pt)[1]*mm2local, (*pt)[2]*mm2local);

@@ -4339,10 +4339,9 @@ conv_features( struct ug_state *s, tag_t solid_tag, char *part_name, char *refse
     }
 
 
+    unsigned char color[3];
     UF_func( UF_DISP_ask_color_count( &color_count ) );
     if ( disp_props.color > 0 && disp_props.color < color_count ) {
-	unsigned char color[3];
-
 	UF_func( UF_DISP_ask_color( disp_props.color, UF_DISP_rgb_model, &color_name, rgb_double ) );
 	UF_free( color_name );
 	for ( i=0; i<3; i++ ) {

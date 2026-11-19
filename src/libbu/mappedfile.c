@@ -76,7 +76,7 @@
 
 
 static void *
-win_mmap(void *start, size_t length, int prot, int flags, int fd, b_off_t offset, void **handle)
+win_mmap(size_t length, int prot, int flags, int fd, b_off_t offset, void **handle)
 {
     if (prot & ~(PROT_READ | PROT_WRITE | PROT_EXEC))
 	return MAP_FAILED;
@@ -107,8 +107,10 @@ win_mmap(void *start, size_t length, int prot, int flags, int fd, b_off_t offset
     HANDLE mmap_fd, h;
     if (fd == -1)
 	mmap_fd = INVALID_HANDLE_VALUE;
-    else
-	mmap_fd = (HANDLE)_get_osfhandle(fd);
+    else {
+	intptr_t file_handle = _get_osfhandle(fd);
+	mmap_fd = (HANDLE)file_handle;
+    }
     h = CreateFileMapping(mmap_fd, NULL, flProtect, DWORD_HI(end), DWORD_LO(end), NULL);
     if (h == NULL) {
 	return MAP_FAILED;
@@ -135,7 +137,7 @@ win_mmap(void *start, size_t length, int prot, int flags, int fd, b_off_t offset
 
 
 static int
-win_munmap(void *addr, size_t length, void *hv)
+win_munmap(void *addr, void *hv)
 {
     HANDLE h = (HANDLE)hv;
     UnmapViewOfFile(addr);
@@ -373,7 +375,7 @@ bu_open_mapped_file(const char *name, const char *appl)
     mp->buf = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 #elif defined(HAVE_WINDOWS_H)
     /* FIXME: shouldn't need to preserve handle */
-    mp->buf = win_mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0, &(mp->handle));
+    mp->buf = win_mmap(sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0, &(mp->handle));
 #endif /* HAVE_SYS_MMAN_H */
     bu_semaphore_release(BU_SEM_SYSCALL);
 
@@ -444,7 +446,7 @@ fail:
 #if defined(HAVE_SYS_MMAN_H)
 	    munmap(mp->buf, (size_t)mp->buflen);
 #elif defined(HAVE_WINDOWS_H)
-	    win_munmap(mp->buf, (size_t)mp->buflen, mp->handle);
+	    win_munmap(mp->buf, mp->handle);
 #endif
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 	} else if (mp->buf != MAP_FAILED) {
@@ -519,7 +521,7 @@ bu_free_mapped_files(int verbose)
 	    ret = munmap(mp->buf, (size_t)mp->buflen);
 #else
 #  ifdef HAVE_WINDOWS_H
-	    ret = win_munmap(mp->buf, (size_t)mp->buflen, mp->handle);
+	    ret = win_munmap(mp->buf, mp->handle);
 #  endif
 #endif
 	    bu_semaphore_release(BU_SEM_SYSCALL);

@@ -59,7 +59,12 @@ bu_path_dirname(const char *cp)
 
     /* A sequence of trailing slashes don't count */
     len = strlen(ret);
-    while (len > 1
+    size_t root_len = 1;
+    if (BU_DIR_SEPARATOR == '\\' && len >= 3
+	&& isalpha((unsigned char)ret[0]) && ret[1] == ':'
+	&& (ret[2] == BU_DIR_SEPARATOR || ret[2] == '/'))
+	root_len = 3;
+    while (len > root_len
 	   && (ret[len-1] == BU_DIR_SEPARATOR
 	       || ret[len-1] == '/')) {
 	ret[len-1] = '\0';
@@ -75,9 +80,13 @@ bu_path_dirname(const char *cp)
 	return bu_strdup(DOT);
     }
 
+    /* Treat mixed or repeated separators as a single boundary. */
+    while (separator > ret
+	   && (separator[-1] == BU_DIR_SEPARATOR || separator[-1] == '/'))
+	separator--;
     /* Keep the separator when the parent is the root. */
-    if (separator == ret)
-	ret[1] = '\0';
+    if (separator == ret + root_len - 1)
+	separator[1] = '\0';
     else
 	*separator = '\0';
 

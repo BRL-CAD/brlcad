@@ -110,6 +110,20 @@ cmp_result_desc(const void *a, const void *b, void *UNUSED(data))
     return 0;
 }
 
+static int
+timed_tess(struct model *m, struct rt_db_internal *intern,
+	   const struct bg_tess_tol *ttol, const struct bn_tol *tol)
+{
+    struct nmgregion *region = NULL;
+    if (BU_SETJUMP) {
+	BU_UNSETJUMP;
+	return -1;
+    }
+    int result = rt_obj_tess(&region, m, intern, ttol, tol);
+    BU_UNSETJUMP;
+    return result;
+}
+
 
 /* ------------------------------------------------------------------ */
 /* main                                                                 */
@@ -281,31 +295,17 @@ main(int argc, char *argv[])
 	}
 
 	struct model      *m   = nmg_mm();
-	struct nmgregion  *r   = NULL;
-	int                ret = -1;
 	long               nf  = 0;
 	long               nv  = 0;
-	int                bombed = 0;
 
 	int64_t t0 = bu_gettime();
-
-	if (!BU_SETJUMP) {
-	    ret = rt_obj_tess(&r, m, &intern, &ttol, &tol);
-	} else {
-	    BU_UNSETJUMP;
-	    bombed = 1;
-	}
-	BU_UNSETJUMP;
-
+	int ret = timed_tess(m, &intern, &ttol, &tol);
 	int64_t t1 = bu_gettime();
 	double elapsed_ms = (double)(t1 - t0) / 1000.0;
 
-	if (!bombed && ret == 0 && m != NULL) {
+	if (ret == 0 && m != NULL)
 	    count_nmg_mesh(m, &nf, &nv);
-	    nmg_km(m);
-	} else {
-	    nmg_km(m);
-	}
+	nmg_km(m);
 
 	rt_db_free_internal(&intern);
 
@@ -315,7 +315,7 @@ main(int argc, char *argv[])
 	tr->time_ms = elapsed_ms;
 	tr->nfaces  = nf;
 	tr->nverts  = nv;
-	tr->failed  = (bombed || ret != 0) ? 1 : 0;
+	tr->failed  = (ret != 0) ? 1 : 0;
 
     } FOR_ALL_DIRECTORY_END
 

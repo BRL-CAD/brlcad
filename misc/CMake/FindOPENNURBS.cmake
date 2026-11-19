@@ -164,7 +164,7 @@ if(OPENNURBS_FOUND)
     list(APPEND _OPENNURBS_STATIC_DEPS Threads::Threads)
 
     if(WIN32)
-      list(APPEND _OPENNURBS_STATIC_DEPS Rpcrt4 Shlwapi Usp10)
+      list(APPEND _OPENNURBS_STATIC_DEPS Rpcrt4 Shlwapi Usp10 dwrite)
     elseif(UUID_LIBRARIES)
       list(APPEND _OPENNURBS_STATIC_DEPS ${UUID_LIBRARIES})
     endif()

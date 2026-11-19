@@ -27,6 +27,11 @@
 
 #include "bu/defines.h"
 
+#if defined(__MINGW32__)
+/* MinGW's Winsock headers declare ntohll() and htonll() inline. */
+#  include "bnetwork.h"
+#endif
+
 __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
@@ -153,13 +158,15 @@ __BEGIN_DECLS
 /**
  * provide for 64-bit network/host conversions using ntohl()
  */
-#if !defined(HAVE_NTOHLL) && !defined(ntohll)
-#  define ntohll(_val) ((bu_byteorder() == BU_LITTLE_ENDIAN) ?				\
+#if !defined(__MINGW32__)
+#  if !defined(HAVE_NTOHLL) && !defined(ntohll)
+#    define ntohll(_val) ((bu_byteorder() == BU_LITTLE_ENDIAN) ?				\
 			((((uint64_t)ntohl((_val))) << 32) + ntohl((_val) >> 32)) : \
 			(_val)) /* sorry pdp-endian */
-#endif
-#if !defined(HAVE_HTONLL) && !defined(htonll)
-#  define htonll(_val) ntohll(_val)
+#  endif
+#  if !defined(HAVE_HTONLL) && !defined(htonll)
+#    define htonll(_val) ntohll(_val)
+#  endif
 #endif
 
 

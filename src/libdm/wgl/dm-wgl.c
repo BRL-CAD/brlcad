@@ -58,9 +58,6 @@
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
-static int wgl_actively_drawing;
-static int wgl_choose_visual();
-
 /* Display Manager package interface */
 #define IRBOUND	4095.9	/* Max magnification in Rot matrix */
 
@@ -300,7 +297,7 @@ wgl_viable(const char *UNUSED(dpy_string))
  * The starting position of the beam is as specified.
  */
 static int
-wgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect)
+wgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
 {
     struct wgl_vars *privars = (struct wgl_vars *)dmp->i->dm_vars.priv_vars;
     if (dmp->i->dm_debugLevel)
@@ -323,14 +320,12 @@ wgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size
  * OpenGL
  */
 static int
-wgl_choose_visual(struct dm *dmp,
-		  Tk_Window tkwin)
+wgl_choose_visual(struct dm *dmp)
 {
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
     struct dm_wglvars *pubvars = (struct dm_wglvars *)dmp->i->dm_vars.pub_vars;
     int iPixelFormat;
     PIXELFORMATDESCRIPTOR pfd;
-    BOOL good;
 
     /* Try to satisfy the above desires with a color visual of the
      * greatest depth */
@@ -338,22 +333,9 @@ wgl_choose_visual(struct dm *dmp,
     memset(&pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
 
     iPixelFormat = GetPixelFormat(pubvars->hdc);
+
     if (iPixelFormat) {
-	LPVOID buf;
-
-	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
-		      FORMAT_MESSAGE_FROM_SYSTEM |
-		      FORMAT_MESSAGE_IGNORE_INSERTS,
-		      NULL,
-		      GetLastError(),
-		      MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		      (LPTSTR)&buf,
-		      0,
-		      NULL);
-	bu_log("wgl_choose_visual: failed to get the pixel format\n");
-	bu_log("wgl_choose_visual: %s", buf);
-	LocalFree(buf);
-
+	bu_log("wgl_choose_visual: the window already has pixel format %d\n", iPixelFormat);
 	return 0;
     }
 
@@ -367,11 +349,7 @@ wgl_choose_visual(struct dm *dmp,
 
     mvars->zbuf = 1;
     iPixelFormat = ChoosePixelFormat(pubvars->hdc, &pfd);
-    good = SetPixelFormat(pubvars->hdc, iPixelFormat, &pfd);
-
-    if (good)
-	return 1;
-	return 0;
+    return SetPixelFormat(pubvars->hdc, iPixelFormat, &pfd) != FALSE;
 }
 
 
@@ -1167,7 +1145,7 @@ wgl_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
     hdc = GetDC(hwnd);
     pubvars->hdc = hdc;
 
-    gotvisual = wgl_choose_visual(dmp, pubvars->xtkwin);
+    gotvisual = wgl_choose_visual(dmp);
     if (!gotvisual) {
 	bu_log("wgl_open: Can't get an appropriate visual.\n");
 	(void)wgl_close(dmp);
@@ -1240,20 +1218,12 @@ wgl_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
     gl_setLight(dmp, mvars->lighting_on);
 
     if (!wglMakeCurrent((HDC)NULL, (HGLRC)NULL)) {
-	LPVOID buf;
-
-	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
-		FORMAT_MESSAGE_FROM_SYSTEM |
-		FORMAT_MESSAGE_IGNORE_INSERTS,
-		NULL,
-		GetLastError(),
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		(LPTSTR)&buf,
-		0,
-		NULL);
-	bu_log("wgl_open: Couldn't release the current context.\n");
-	bu_log("wgl_open: %s", buf);
-	LocalFree(buf);
+	DWORD err = GetLastError();
+	char message[512];
+	bu_log("wgl_open: Couldn't release the current context (error %lu).\n", (unsigned long)err);
+	if (FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL, err, 0, message, sizeof(message), NULL))
+	    bu_log("wgl_open: %s", message);
 
 	return DM_NULL;
     }

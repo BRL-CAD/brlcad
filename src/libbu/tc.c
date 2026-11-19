@@ -307,7 +307,9 @@ bu_cnd_wait(bu_cnd_t *cond, bu_mtx_t *mtx)
 
 typedef DWORD tss_t;
 typedef void(*tss_dtor_t)(void *val);
+#if defined(_MSC_VER)
 #define _Thread_local __declspec(thread)
+#endif
 #define TSS_DTOR_ITERATIONS (4)
 
 struct TinyCThreadTSSData {
@@ -383,6 +385,9 @@ PIMAGE_TLS_CALLBACK p_thread_callback = _tinycthread_tss_callback;
 #else
 #pragma const_seg()
 #endif
+#elif defined(__MINGW32__)
+static PIMAGE_TLS_CALLBACK const p_thread_callback
+    __attribute__((section(".CRT$XLB"), used)) = _tinycthread_tss_callback;
 #endif
 #endif /* defined(HAVE_WINDOWS_H) */
 

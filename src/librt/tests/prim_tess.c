@@ -331,6 +331,64 @@ struct conv_attempt {
 /* Manifold / mesh quality validation                                   */
 /* ------------------------------------------------------------------ */
 
+static int
+guarded_tess(struct nmgregion **region, struct model *m,
+	     struct rt_db_internal *ip, const struct bg_tess_tol *ttol,
+	     const struct bn_tol *tol, int *result)
+{
+    if (BU_SETJUMP) {
+	BU_UNSETJUMP;
+	return 0;
+    }
+    *result = rt_obj_tess(region, m, ip, ttol, tol);
+    BU_UNSETJUMP;
+    return 1;
+}
+
+static int
+guarded_nmg_to_bot(struct rt_bot_internal **bot, struct model *m,
+		   struct bu_list *vlfree, const struct bn_tol *tol)
+{
+    if (BU_SETJUMP) {
+	BU_UNSETJUMP;
+	return 0;
+    }
+    *bot = nmg_mdl_to_bot(m, vlfree, tol);
+    BU_UNSETJUMP;
+    return 1;
+}
+
+static int
+guarded_metrics(fastf_t *area, fastf_t *volume, const struct rt_db_internal *ip)
+{
+    if (BU_SETJUMP) {
+	BU_UNSETJUMP;
+	return 0;
+    }
+    const struct rt_functab *ft = &OBJ[ip->idb_minor_type];
+    if (ft->ft_surf_area)
+	ft->ft_surf_area(area, ip);
+    if (ft->ft_volume)
+	ft->ft_volume(volume, ip);
+    BU_UNSETJUMP;
+    return 1;
+}
+
+static void
+guarded_crofton(fastf_t *area, fastf_t *volume, const struct rt_db_internal *ip)
+{
+    if (BU_SETJUMP) {
+	BU_UNSETJUMP;
+	if (area)
+	    *area = 0.0;
+	if (volume)
+	    *volume = 0.0;
+	return;
+    }
+    rt_crofton_sample(area, volume, ip, NULL);
+    BU_UNSETJUMP;
+}
+
 /**
  * Validate the mesh quality of a tessellated NMG model.
  *
@@ -405,16 +463,13 @@ check_nmg_mesh(const char *label, struct model *m,
      * nmg_edge_g_fuse(), an O(N²) scan over all edge-geometry structs that
      * becomes catastrophically slow for large DSP meshes (134k+ triangles). */
     struct rt_bot_internal *bot = NULL;
-    if (!BU_SETJUMP) {
-	bot = nmg_mdl_to_bot(m, vlfree, tol);
-    } else {
-	BU_UNSETJUMP;
+    if (!guarded_nmg_to_bot(&bot, m, vlfree, tol)) {
 	if (!quiet)
 	    fprintf(stderr,
 		    "  MESH: %-44s  nmg_mdl_to_bot() bombed [FAIL]\n",
 		    label);
 	return 0;
-    } BU_UNSETJUMP;
+    }
 
     if (!bot || bot->num_faces == 0) {
 	if (bot) {
@@ -500,20 +555,12 @@ check_nmg_mesh(const char *label, struct model *m,
     if (passed && ip &&
 	ip->idb_minor_type >= 0 && ip->idb_minor_type < ID_MAXIMUM) {
 
-	const struct rt_functab *ft = &OBJ[ip->idb_minor_type];
-
-	if (!BU_SETJUMP) {
-	    if (ft->ft_surf_area)
-		ft->ft_surf_area(&analytic_sa, ip);
-	    if (ft->ft_volume)
-		ft->ft_volume(&analytic_v, ip);
-	} else {
-	    BU_UNSETJUMP;
+	if (!guarded_metrics(&analytic_sa, &analytic_v, ip)) {
 	    analytic_sa = -1.0;
 	    analytic_v = -1.0;
 	    if (!quiet)
 		fprintf(stderr, "  METRICS: %-44s  analytic query bombed, using NA/fallback\n", label);
-	} BU_UNSETJUMP;
+	}
 
 	/* crofton_from_ip() requires ip->idb_meth to export the primitive to
 	 * an in-memory database; hand-crafted test IPs may leave this field
@@ -526,22 +573,12 @@ check_nmg_mesh(const char *label, struct model *m,
 		ip_meth.idb_meth = &OBJ[ip_meth.idb_minor_type];
 	    if (analytic_sa <= 0.0) {
 		fastf_t croft_sa = 0.0;
-		if (!BU_SETJUMP) {
-		    rt_crofton_sample(&croft_sa, NULL, &ip_meth, NULL);
-		} else {
-		    BU_UNSETJUMP;
-		    croft_sa = 0.0;
-		} BU_UNSETJUMP;
+		guarded_crofton(&croft_sa, NULL, &ip_meth);
 		if (croft_sa > 0.0) analytic_sa = croft_sa;
 	    }
 	    if (analytic_v <= 0.0) {
 		fastf_t croft_v = 0.0;
-		if (!BU_SETJUMP) {
-		    rt_crofton_sample(NULL, &croft_v, &ip_meth, NULL);
-		} else {
-		    BU_UNSETJUMP;
-		    croft_v = 0.0;
-		} BU_UNSETJUMP;
+		guarded_crofton(NULL, &croft_v, &ip_meth);
 		if (croft_v > 0.0) analytic_v = croft_v;
 	    }
 	}
@@ -759,14 +796,11 @@ eval_tess(const char *label, struct rt_db_internal *ip,
     struct nmgregion *r = NULL;
 
     int ret = -1;
-    if (!BU_SETJUMP) {
-        ret = rt_obj_tess(&r, m, ip, ttol, tol);
-    } else {
-        BU_UNSETJUMP;
+    if (!guarded_tess(&r, m, ip, ttol, tol, &ret)) {
         nmg_km(m);
         bu_list_free(&vlfree);
         return 0;
-    } BU_UNSETJUMP;
+    }
 
     if (ret != 0 || r == NULL) {
         nmg_km(m);
@@ -4089,7 +4123,7 @@ scan_input_g(const char *g_path, const char *g_root)
 	    }
 	}
 
-	/* Tessellate - wrap in BU_SETJUMP to catch bu_bomb() */
+	/* Guard tessellation against bu_bomb(). */
 	struct model *m = nmg_mm();
 	struct nmgregion *r = NULL;
 
@@ -4097,17 +4131,14 @@ scan_input_g(const char *g_path, const char *g_root)
 	fflush(stderr);
 
 	int ret = -1;
-	if (!BU_SETJUMP) {
-	    ret = rt_obj_tess(&r, m, &intern, &ttol, &tol);
-	} else {
-	    BU_UNSETJUMP;
+	if (!guarded_tess(&r, m, &intern, &ttol, &tol, &ret)) {
 	    fprintf(stderr, "  TESS-BOMB %-32s  (bu_bomb in tess)\n", dp->d_namep);
 	    n_tess_fail++;
 	    failures++;
 	    nmg_km(m);
 	    rt_db_free_internal(&intern);
 	    continue;
-	} BU_UNSETJUMP;
+	}
 
 	if (ret != 0 || r == NULL) {
 	    /* For PART primitives: sphere-type and degenerate (|H|≤tol.dist)

@@ -31,7 +31,6 @@
 
 
 #include "common.h"
-#include "vmath.h"
 
 #include <cmath>
 #include <fstream>
@@ -50,6 +49,10 @@
 #include "cpl_multiproc.h"
 #include "ogr_spatialref.h"
 #include "vrtdataset.h"
+
+/* GDAL uses EQUAL for case-insensitive strings in its own headers. */
+#undef EQUAL
+#include "vmath.h"
 
 #include "bu/app.h"
 #include "bu/env.h"

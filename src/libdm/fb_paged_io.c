@@ -41,11 +41,6 @@
 #define PAGE_PIXELS (((PAGE_BYTES/sizeof(RGBpixel))/ifp->i->if_width) *ifp->i->if_width)
 #define PAGE_SCANS (ifp->i->if_ppixels/ifp->i->if_width)
 
-#define Malloc_Bomb(_bytes_)					\
-    fb_log("\"%s\"(%d) : allocation of %lu bytes failed.\n",	\
-	   __FILE__, __LINE__, _bytes_)
-
-
 static int
 _fb_pgout(register struct fb *ifp)
 {
@@ -133,9 +128,10 @@ fb_ioinit(register struct fb *ifp)
 	ifp->i->if_ppixels = PAGE_PIXELS;	/* Pixels/page.	*/
 	if (ifp->i->if_ppixels > ifp->i->if_width * ifp->i->if_height)
 	    ifp->i->if_ppixels = ifp->i->if_width * ifp->i->if_height;
-	if ((ifp->i->if_pbase = (unsigned char *)malloc(ifp->i->if_ppixels * sizeof(RGBpixel)))
+	size_t bytes = ifp->i->if_ppixels * sizeof(RGBpixel);
+	if ((ifp->i->if_pbase = (unsigned char *)malloc(bytes))
 	    == PIXEL_NULL) {
-	    Malloc_Bomb(ifp->i->if_ppixels * sizeof(RGBpixel));
+	    fb_log("\"%s\"(%d) : allocation of %zu bytes failed.\n", __FILE__, __LINE__, bytes);
 	    return -1;
 	}
     }

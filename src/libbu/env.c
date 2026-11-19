@@ -124,6 +124,7 @@ mem_page_size(size_t *memsz)
 }
 
 
+#ifndef HAVE_WINDOWS_H
 static int
 mem_pages_to_bytes(uint64_t pages, size_t *memsz)
 {
@@ -133,6 +134,7 @@ mem_pages_to_bytes(uint64_t pages, size_t *memsz)
 	return -1;
     return mem_size_from_uint64(pages * (uint64_t)page_size, memsz);
 }
+#endif
 
 
 static ssize_t

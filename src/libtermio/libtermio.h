@@ -254,7 +254,7 @@ clr_Echo(int fd)
     (void)tcsetattr(fd, TCSANOW, &curr_tio[fd]);
 #endif
 #ifdef HAVE_CONIO_H
-    /* nothing to do */
+    (void)fd;
 #endif
     return;
 }
@@ -326,7 +326,7 @@ set_Cbreak(int fd)
     (void)tcsetattr(fd, TCSANOW, &curr_tio[fd]);
 #endif
 #ifdef HAVE_CONIO_H
-    /* concept doesn't exist */
+    (void)fd;
 #endif
     return;
 }
@@ -356,7 +356,7 @@ set_Raw(int fd)
     (void)tcsetattr(fd, TCSANOW, &curr_tio[fd]);
 #endif
 #ifdef HAVE_CONIO_H
-    /* nothing to do, raw is default */
+    (void)fd;
 #endif
     return;
 }
@@ -591,7 +591,8 @@ void termio_enable_vt_output(int fd_out){
 int
 termio_is_terminal(int fd)
 {
-    HANDLE handle = (HANDLE)_get_osfhandle(fd);
+    intptr_t file_handle = _get_osfhandle(fd);
+    HANDLE handle = (HANDLE)file_handle;
     DWORD mode;
     if (handle == INVALID_HANDLE_VALUE)
 	return 0;
@@ -619,7 +620,8 @@ termio_is_terminal(int fd)
 int
 termio_has_vt_output(int fd)
 {
-    HANDLE handle = (HANDLE)_get_osfhandle(fd);
+    intptr_t file_handle = _get_osfhandle(fd);
+    HANDLE handle = (HANDLE)file_handle;
     DWORD mode;
     if (GetConsoleMode(handle, &mode))
 	return (mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING) != 0;

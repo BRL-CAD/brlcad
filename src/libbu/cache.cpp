@@ -143,7 +143,10 @@ bu_cache_open(const char *cache_db, int create, size_t max_cache_size)
     // Set up LMDB environments
     if (mdb_env_create(&c->i->env))
 	goto bu_context_fail;
-    if (mdb_env_set_maxreaders(c->i->env, mreaders))
+    unsigned int default_readers;
+    if (mdb_env_get_maxreaders(c->i->env, &default_readers))
+	goto bu_context_close_fail;
+    if (mreaders > default_readers && mdb_env_set_maxreaders(c->i->env, mreaders))
 	goto bu_context_close_fail;
 
     // mapsize is supposed to be a multiple of the OS page size
@@ -152,8 +155,10 @@ bu_cache_open(const char *cache_db, int create, size_t max_cache_size)
     if (mdb_env_set_mapsize(c->i->env, msize))
 	goto bu_context_close_fail;
 
-    // Need to call mdb_env_sync() at appropriate points.
-    if (mdb_env_open(c->i->env, cdb, MDB_NOSYNC, 0664))
+    // Release reader slots with their transactions, even when the thread
+    // that read the cache is part of a long-lived worker pool.
+    // MDB_NOSYNC requires mdb_env_sync() at the appropriate points.
+    if (mdb_env_open(c->i->env, cdb, MDB_NOSYNC | MDB_NOTLS, 0664))
 	goto bu_context_close_fail;
 
     // Do the initial dbi setup.  Opening with a write transaction
@@ -249,7 +254,7 @@ cache_get_read_txn(struct bu_cache *c, struct bu_cache_txn **t)
 
 	// Check if timeout exceeded
 	auto now = std::chrono::steady_clock::now();
-	if (now - start > timeout) {
+	if (txn_ret == MDB_READERS_FULL && now - start > timeout) {
 	    // Timed out
 	    bu_log("Error - txn acquisition timed out!\n");
 	    return NULL;

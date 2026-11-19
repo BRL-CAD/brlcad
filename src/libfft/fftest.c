@@ -48,8 +48,6 @@ display(COMPLEX *dat, int num)
 int
 main(int ac, char *av[])
 {
-    extern void cfft(COMPLEX *, int);
-    extern void icfft(COMPLEX *, int);
 
     int i;
 

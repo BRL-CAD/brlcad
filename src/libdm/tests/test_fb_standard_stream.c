@@ -29,16 +29,14 @@
 int
 main(int argc, char **argv)
 {
-    const char *paths[] = {"/dev/stdout", "/dev/stderr"};
-    size_t i;
-
     bu_setprogname(argv[0]);
     (void)argc;
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
     return 0;
 #else
-    for (i = 0; i < sizeof(paths) / sizeof(paths[0]); ++i) {
+    const char *paths[] = {"/dev/stdout", "/dev/stderr"};
+    for (size_t i = 0; i < sizeof(paths) / sizeof(paths[0]); ++i) {
 	struct fb *fbp = fb_open(paths[i], 1, 1);
 	if (fbp == FB_NULL) {
 	    fprintf(stderr, "failed to open %s as a framebuffer\n", paths[i]);

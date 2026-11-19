@@ -46,6 +46,20 @@ struct FacetizeNmgBooleanState {
     union tree *tree = NULL;
 };
 
+// Keep the jump in a frame that has no C++ owners to unwind.
+template <typename Operation>
+static bool
+run_guarded_nmg(const Operation &operation)
+{
+    if (BU_SETJUMP) {
+	BU_UNSETJUMP;
+	return false;
+    }
+    operation();
+    BU_UNSETJUMP;
+    return true;
+}
+
 static union tree *
 facetize_nmg_region_end(struct db_tree_state *tsp,
 	const struct db_full_path *pathp, union tree *current_tree,
@@ -116,17 +130,15 @@ facetize_nmg_compute(struct ged *gedp,
 	input_argv.push_back(input_name.c_str());
 
     int walk_result = BRLCAD_ERROR;
-    if (!BU_SETJUMP) {
+    if (!run_guarded_nmg([&] {
 	walk_result = db_walk_tree(gedp->dbip, (int)input_argv.size(),
 		input_argv.data(), 1, &initial_state, NULL,
 		facetize_nmg_region_end, facetize_nmg_leaf, &state);
-    } else {
-	BU_UNSETJUMP;
+    })) {
 	bu_log("NMG tree tessellation bombed while processing %s\n",
 		request.output_name.c_str());
 	return BRLCAD_ERROR;
     }
-    BU_UNSETJUMP;
 
     if (walk_result < 0 || !state.tree) {
 	if (state.tree)
@@ -136,20 +148,18 @@ facetize_nmg_compute(struct ged *gedp,
     }
 
     int boolean_result = BRLCAD_ERROR;
-    if (!BU_SETJUMP) {
+    if (!run_guarded_nmg([&] {
 	boolean_result = nmg_boolean(state.tree, nmg_model, &rt_vlfree,
 		&wdbp->wdb_tol);
 	if (boolean_result == 0) {
 	    NMG_CK_REGION(state.tree->tr_d.td_r);
 	    state.tree->tr_d.td_r = NULL;
 	}
-    } else {
-	BU_UNSETJUMP;
+    })) {
 	bu_log("NMG Boolean evaluation bombed while processing %s\n",
 		request.output_name.c_str());
 	return BRLCAD_ERROR;
     }
-    BU_UNSETJUMP;
 
     if (boolean_result != 0) {
 	db_free_tree(state.tree);
@@ -164,16 +174,14 @@ facetize_nmg_compute(struct ged *gedp,
     }
 
     struct rt_bot_internal *bot = NULL;
-    if (!BU_SETJUMP) {
+    if (!run_guarded_nmg([&] {
 	bot = static_cast<struct rt_bot_internal *>(
 		nmg_mdl_to_bot(nmg_model, &rt_vlfree, &wdbp->wdb_tol));
-    } else {
-	BU_UNSETJUMP;
+    })) {
 	bu_log("NMG-to-BoT conversion bombed while processing %s\n",
 		request.output_name.c_str());
 	return BRLCAD_ERROR;
     }
-    BU_UNSETJUMP;
 
     nmg_km(nmg_model);
     if (!bot)

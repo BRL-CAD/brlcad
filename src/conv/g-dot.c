@@ -89,12 +89,12 @@ dot_comb(struct db_i *dbip, struct directory *dp, void *out)
 
     if (comb->region_flag) {
 	long hash = gdot_hash((uint8_t *)dp->d_namep, strlen(dp->d_namep));
-	if (bu_ptbl_ins_unique(&(o->regions), (long *)hash) == -1) {
+	if (bu_ptbl_ins_unique(&(o->regions), (long *)(uintptr_t)hash) == -1) {
 	    fprintf(o->outfp, "\t\"%s\" [ color=blue shape=box3d ];\n", dp->d_namep);
 	}
     } else {
 	long hash = gdot_hash((uint8_t *)dp->d_namep, strlen(dp->d_namep));
-	if (bu_ptbl_ins_unique(&(o->groups), (long *)hash) == -1) {
+	if (bu_ptbl_ins_unique(&(o->groups), (long *)(uintptr_t)hash) == -1) {
 	    fprintf(o->outfp, "\t\"%s\" [ color=green ];\n", dp->d_namep);
 	}
     }
@@ -169,7 +169,7 @@ dot_leaf(struct db_i *UNUSED(dbip), struct directory *dp, void *out)
 	return;
 
     hash = gdot_hash((uint8_t *)dp->d_namep, strlen(dp->d_namep));
-    if (bu_ptbl_ins_unique(&(o->primitives), (long *)hash) == -1) {
+    if (bu_ptbl_ins_unique(&(o->primitives), (long *)(uintptr_t)hash) == -1) {
 	fprintf(o->outfp, "\t\"%s\" [ color=red shape=box rank=min ];\n", dp->d_namep);
     }
 

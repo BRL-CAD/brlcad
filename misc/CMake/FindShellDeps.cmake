@@ -44,6 +44,11 @@
 
 set(_SHELL_PROGRAM_HINTS)
 set(_SHELL_EXEC_HINTS)
+if(MINGW AND CMAKE_HOST_WIN32)
+  # When configured in an MSYS2 shell, use its shell for test scripts so
+  # their redirected streams stay within one MSYS runtime.
+  find_program(SH_EXEC NAMES sh dash bash PATHS ENV PATH NO_DEFAULT_PATH DOC "path to shell executable")
+endif()
 if(WIN32)
   # Git for Windows is a common source of POSIX command-line tools on Windows.
   # Search its default install locations when the tools are not already on PATH.

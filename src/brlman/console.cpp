@@ -26,7 +26,9 @@
 #include <cstdio>
 #include <cstdlib>
 
-#define NOMINMAX
+#ifndef NOMINMAX
+#  define NOMINMAX
+#endif
 #define LIBTERMIO_IMPLEMENTATION
 #include "libtermio.h"
 

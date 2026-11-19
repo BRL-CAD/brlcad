@@ -35,7 +35,7 @@
 
 
 void do_bending(struct rt_wdb *fp, const char *name, point_t (*pts), int npts, double bend, double od);
-void pr_pipe(const char *name, struct wdb_pipe_pnt *head);
+void pr_pipe(const char *name, struct bu_list *head);
 
 struct wdb_pipe_pnt pipeA[] = {
     {
@@ -139,7 +139,7 @@ main(int argc, char **argv)
     for (i=0; i<pipeA_npts; i++) {
 	BU_LIST_INSERT(&head, &pipeA[i].l);
     }
-    pr_pipe("pipe1", (struct wdb_pipe_pnt *)&head);
+    pr_pipe("pipe1", &head);
     if ((i = mk_pipe(outfp, "pipe1", &head)) < 0)
 	fprintf(stderr, "mk_pipe(%s) returns %d\n", "pipe1", i);
 
@@ -162,7 +162,7 @@ do_bending(struct rt_wdb *fp, const char *name, point_t (*pts), int npts, double
 	mk_add_pipe_pnt(&head, pts[i], od, 0.0, bend);
     }
 
-    pr_pipe(name, (struct wdb_pipe_pnt *)&head);
+    pr_pipe(name, &head);
 
     if ((i = mk_pipe(fp, name, &head)) < 0)
 	fprintf(stderr, "mk_pipe(%s) error %d\n", name, i);
@@ -174,12 +174,12 @@ do_bending(struct rt_wdb *fp, const char *name, point_t (*pts), int npts, double
 
 
 void
-pr_pipe(const char *name, struct wdb_pipe_pnt *head)
+pr_pipe(const char *name, struct bu_list *head)
 {
     struct wdb_pipe_pnt *psp;
 
     fprintf(stderr, "\n--- %s:\n", name);
-    for (BU_LIST_FOR(psp, wdb_pipe_pnt, &head->l)) {
+    for (BU_LIST_FOR(psp, wdb_pipe_pnt, head)) {
 	fprintf(stderr, "id=%g od=%g, coord=(%g, %g, %g), bend radius=%g\n",
 		psp->pp_id, psp->pp_od,
 		psp->pp_coord[X],

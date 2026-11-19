@@ -284,10 +284,10 @@ file_access(const char *path, int access_level)
     struct stat sb;
 
     /* 0 is root or Windows user */
-    uid_t uid = 0;
+    decltype(sb.st_uid) uid = 0;
 
     /* 0 is wheel or Windows group */
-    gid_t gid = 0;
+    decltype(sb.st_gid) gid = 0;
 
     if (UNLIKELY(!path || (path[0] == '\0'))) {
 	return 0;
@@ -318,7 +318,7 @@ file_access(const char *path, int access_level)
     gid = getegid();
 #endif
 
-    bool we_own = ((uid_t)sb.st_uid == uid);
+    bool we_own = (sb.st_uid == uid);
     if (we_own) {
 	switch (access_level) {
 	    case R_OK:
@@ -339,7 +339,7 @@ file_access(const char *path, int access_level)
 	};
     }
 
-    bool in_grp = ((gid_t)sb.st_gid == gid);
+    bool in_grp = (sb.st_gid == gid);
     /* search group database to see if we're in the file's group */
 #if defined(HAVE_PWD_H) && defined (HAVE_GRP_H)
     if (!in_grp) {

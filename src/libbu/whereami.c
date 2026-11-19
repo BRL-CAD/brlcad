@@ -89,6 +89,7 @@ extern "C" {
 #endif
 
 /* LIBBU fallback implementation */
+#ifndef _WIN32
 static
 int _bu_getExecutablePath(char* out, int capacity, int* dirname_length)
 {
@@ -134,6 +135,7 @@ int _bu_getExecutablePath(char* out, int capacity, int* dirname_length)
 
     return length;
 }
+#endif
 
 
 #if defined(_WIN32)
