@@ -148,6 +148,20 @@ main(int ac, char *av[])
 	bu_exit(EXIT_FAILURE, "Could not open %s", input_file);
 
     s_av[0] = "bot";
+    s_av[1] = "dump";
+    s_av[2] = "-t";
+    s_av[3] = "invalid-format";
+    if (ged_exec_bot(gedp, 4, s_av) == BRLCAD_OK)
+	bu_exit(EXIT_FAILURE, "Invalid output format was accepted");
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    s_av[2] = "-u";
+    s_av[3] = "invalid-units";
+    if (ged_exec_bot(gedp, 4, s_av) == BRLCAD_OK)
+	bu_exit(EXIT_FAILURE, "Invalid output units were accepted");
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    s_av[0] = "bot";
     s_av[1] = "check";
     s_av[2] = "manifold";
     s_av[3] = "arb4.bot";

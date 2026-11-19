@@ -46,6 +46,7 @@ main(int argc, char *argv[])
     int i, j;
     int db_index;
     int c;
+    int ret;
     const char **av;
     struct ged *gedp;
 
@@ -75,8 +76,9 @@ main(int argc, char *argv[])
 
     av = (const char **)bu_calloc(argc, sizeof(char *), "alloc argv copy");
 
+    av[0] = "bot_dump";
     db_index = bu_optind;
-    for (i = j = 0; i < argc; ++i) {
+    for (i = 1, j = 1; i < argc; ++i) {
 	if (i == db_index)
 	    continue;
 
@@ -89,13 +91,13 @@ main(int argc, char *argv[])
 	print_usage(argv[0]);
     }
 
-    (void)ged_exec_bot_dump(gedp, j, av);
+    ret = ged_exec_bot_dump(gedp, j, av);
     if (bu_vls_strlen(gedp->ged_result_str) > 0)
 	bu_log("%s", bu_vls_addr(gedp->ged_result_str));
     ged_close(gedp);
     bu_free((void *)av, "free argv copy");
 
-    return 0;
+    return ret == BRLCAD_OK ? 0 : 1;
 }
 
 

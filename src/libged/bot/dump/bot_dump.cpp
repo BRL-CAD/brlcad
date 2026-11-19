@@ -417,7 +417,7 @@ bot_fmt_ext(enum otype o, int UNUSED(binary))
 }
 
 static int
-bot_opt_fmt(struct bu_vls *UNUSED(msg), size_t argc, const char **argv, void *set_var)
+bot_opt_fmt(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     enum otype *otype = (enum otype *)set_var;
     if (!otype)
@@ -430,14 +430,17 @@ bot_opt_fmt(struct bu_vls *UNUSED(msg), size_t argc, const char **argv, void *se
 
     (*otype) = bot_fmt_type(argv[0]);
 
-    if ((*otype) == OTYPE_UNSET)
+    if ((*otype) == OTYPE_UNSET) {
+	if (msg)
+	    bu_vls_printf(msg, "unknown output format: %s\n", argv[0]);
 	return -1;
+    }
 
     return 1;
 }
 
 static int
-bot_opt_unit(struct bu_vls *UNUSED(msg), size_t argc, const char **argv, void *set_var)
+bot_opt_unit(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     double *cfactor = (double *)set_var;
     if (!cfactor)
@@ -450,10 +453,11 @@ bot_opt_unit(struct bu_vls *UNUSED(msg), size_t argc, const char **argv, void *s
 
     (*cfactor) = bu_units_conversion(argv[0]);
     if (ZERO(*cfactor)) {
-	(*cfactor) = 1.0;
-    } else {
-	(*cfactor) = 1.0 / (*cfactor);
+	if (msg)
+	    bu_vls_printf(msg, "unknown output units: %s\n", argv[0]);
+	return -1;
     }
+    (*cfactor) = 1.0 / (*cfactor);
 
     return 1;
 }
@@ -664,7 +668,12 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     /* parse standard options */
-    int opt_ret = bu_opt_parse(NULL, argc, argv, od);
+    int opt_ret = bu_opt_parse(gedp->ged_result_str, argc, argv, od);
+
+    if (opt_ret < 0) {
+	bot_client_data_cleanup(d);
+	return BRLCAD_ERROR;
+    }
 
     if (print_help) {
 	_ged_cmd_help(gedp, usage, od);
