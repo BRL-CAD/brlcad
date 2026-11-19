@@ -6,6 +6,13 @@ toc::[]
 The interfaces listed here have completed their deprecation or minimally impacting transition and are now obsolete.
 
 == 7.48.0
+include/gcv/util.h
+	gcv_bottess_region_end and gcv_bottess removed.  The experimental
+	bottess implementation was incomplete, had no active callers, and
+	could not produce converter output.  GCV_TESS_BOTTESS remains reserved
+	to preserve the numeric value of GCV_TESS_MARCHING_CUBES.
+	[deprecated N/A]
+
 include/rt/edit.h and include/rt/functab.h
 	The recently introduced primitive edit descriptor API now assigns
 	stable command names and presentation metadata directly in its

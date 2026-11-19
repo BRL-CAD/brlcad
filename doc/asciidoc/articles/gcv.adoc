@@ -290,8 +290,6 @@ BRL-CAD provides the `db_walk_tree()` function for traversing the database in hi
 |===
 |`gcv_region_end()`
 |Apply Boolean evaluation to region-level tessellated meshes using the default NMG Boolean evaluator, replacing each region-level node and its subtree of tessellated leaf meshes with a single BoT structure that is then passed to the specified callback. The `client_data` pointer should point to a `struct gcv_region_end_data`. The individual leaf nodes must already be tessellated into BoTs. This can be done by specifying a `leaf_func` such as `rt_booltree_leaf_tess()`. In the case of failure, an error message is emitted via `bu_log()` and the callback is not invoked. Any use of `bu_bomb()` produced by the callback is trapped and an error message is displayed while continuing the tree walk.
-|`gcv_bottess_region_end()`
-|Boolean evaluator roughly based on UnBBoolean's j3dbool (and associated papers). Does not take a callback.
 |`gcv_region_end_mc()`
 |Experimental variant of `gcv_region_end()` based on the marching-cubes algorithm. Tessellates leaves internally and does not require a `leaf_func`.
 |===
@@ -588,7 +586,7 @@ The `gcv_opts` struct stores generic options applying to many filters, detailed 
 |`tessellation_tolerance`
 |Tessellation tolerance. The default value is: `abs = 0.0` `rel = 1.0e-2` `norm = 0.0` 
 |`tessellation_algorithm`
-|Specify use of either the default, marching-cubes, or bottess-based tessellation algorithm.
+|Specify use of either the default or marching-cubes tessellation algorithm.
 |`max_cpus`
 |Maximum number of processors to utilize where possible. Default is `0`, specifying the maximum available during execution.
 |`num_objects`

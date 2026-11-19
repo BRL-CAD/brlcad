@@ -3,12 +3,10 @@ add_subdirectory(plugins)
 
 set(
   LIBGCV_SOURCES
-  bottess.c
   facetize.c
   gcv.c
   region_end.c
   region_end_mc.c
-  tri_intersect.c
 )
 
 # Note - libgcv_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
@@ -31,7 +29,7 @@ set_property(
 
 add_subdirectory(tests)
 
-set(GCV_IGNORE_FILES CMakeLists.txt NOTES soup.h tri_intersect.h)
+set(GCV_IGNORE_FILES CMakeLists.txt NOTES)
 cmakefiles(${GCV_IGNORE_FILES})
 
 distclean(${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake)
