@@ -43,6 +43,7 @@
 
 #include "bu/parallel.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "vmath.h"
 #include "bn/mat.h"
 #include "raytrace.h"
@@ -479,6 +480,7 @@ parse_args(struct ged *gedp, int ac, char *av[])
 {
     int c;
     int i;
+    int views;
     double a;
     char *p;
 
@@ -657,7 +659,10 @@ parse_args(struct ged *gedp, int ac, char *av[])
 		break;
 
 	    case 'N':
-		num_views = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &views, 1, 3,
+			"view count"))
+		    return -1;
+		num_views = views;
 		break;
 	    case 'p':
 		plot_prefix = bu_optarg;
