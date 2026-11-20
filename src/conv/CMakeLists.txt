@@ -100,7 +100,7 @@ endif(BRLCAD_ENABLE_OPENVDB)
 
 brlcad_addexec(patch-g patch/patch-g.c "libwdb;librt;libnmg;libbu;${M_LIBRARY}" FOLDER Conv)
 
-brlcad_addexec(rpatch patch/rpatch.c "librt;libbu" FOLDER Conv)
+brlcad_addexec(rpatch patch/rpatch.c "librt;libbu" FOLDER Conv ARG_SCHEMA)
 
 brlcad_addexec(tankill-g tankill/tankill-g.c "libwdb;librt;libnmg;libbu" FOLDER Conv)
 
