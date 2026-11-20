@@ -9,13 +9,12 @@ g-shell-rect - build a triangulated shell from a BRL-CAD model by raytracing
 
 == SYNOPSIS
 
-[source]
-----
-g-shell-rect [-b] [-n] [-i _initial_ray_dir_] [-g _cell_size_] [-R _edge_tol_]
-             [-a "_tol min_x min_y min_z max_x max_y max_z_"] [-p _plotfile_]
-             [-d _debug_level_] [-X _nmg_debug_] -o _output.g_ _database.g_ _object_ ...
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*g-shell-rect* [*-b*] [*-n*] [*-i* _axis_] [*-a* _specification_] [*-R* _distance_] [*-p* _file_]
+             [*-d* _level_] [*-g* _millimeters_] (*-o* _output.g_) [*-X* _mask_] _database.g_
+             _object_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -41,50 +40,41 @@ as *g-stl*(1) or *g-obj*(1).
 [[options]]
 == OPTIONS
 
-*-o* _output.g_::
-  Name of the BRL-CAD geometry file to create. This option is required.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-b*::
-  Output a BOT (Bag of Triangles) primitive instead of the default NMG
-  (Non-Manifold Geometry) solid.
+*-b*, *--bot*::
+  Write a Bag of Triangles instead of an NMG solid.
 
-*-n*::
-  Skip the refinement stage. Only the initial coarse shell built from the
-  first and last ray intersections is produced; no rays are fired from the
-  secondary and tertiary axis directions.
+*-n*, *--no-refine*::
+  Skip the additional ray grids used to refine the initial shell.
 
-*-i* _initial_ray_dir_::
-  Force the initial ray direction. Valid values are _X_, _Y_, or _Z_
-  (case insensitive). By default the direction presenting the largest
-  bounding-box area is chosen.
+*-i* _axis_, *--initial-direction*=_axis_::
+  Force the initial ray direction instead of selecting the largest projected area. Accepted values: *x*, *y*, *z*.
 
-*-g* _cell_size_::
-  Grid cell spacing in millimeters, controlling resolution. The default
-  is 50.
+*-a* _specification_, *--refine-box*=_specification_::
+  Add a refinement box as: tolerance min-x min-y min-z max-x max-y max-z; may be repeated.
 
-*-R* _edge_tol_::
-  Enable edge breaking (refinement) and set the edge tolerance used when
-  subdividing faces. The default is 0.
+*-R* _distance_, *--edge-tolerance*=_distance_::
+  Set the nonnegative edge-breaking tolerance (default: 0).
 
-*-a* "_tol min_x min_y min_z max_x max_y max_z_"::
-  Add a refinement bounding box (RPP). The single quoted argument supplies
-  seven whitespace- or comma-separated numbers: an edge tolerance to use
-  inside the box followed by the minimum and maximum XYZ corners. May be
-  repeated to add several boxes.
+*-p* _file_, *--plot-file*=_file_::
+  Write a vdraw-style plot of edge-breaking refinement steps.
 
-*-p* _plotfile_::
-  Write a *vdraw*-style plot file recording the edge-breaking refinement
-  steps, useful for debugging the refinement.
+*-d* _level_, *--debug*=_level_::
+  Set the nonnegative diagnostic level.
 
-*-d* _debug_level_::
-  Set the application debugging level. Higher integers produce more
-  diagnostic output.
+*-g* _millimeters_, *--cell-size*=_millimeters_::
+  Set the ray-grid spacing (default: 50 mm).
 
-*-X* _nmg_debug_::
-  Set the NMG library debug flags. The value is read as hexadecimal.
+*-o* _output.g_, *--output*=_output.g_::
+  Write the generated shell to this BRL-CAD database.
 
-*-h*, *-?*::
-  Print a usage message and exit.
+*-X* _mask_, *--nmg-debug*=_mask_::
+  Set the NMG hexadecimal debug flags.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES
