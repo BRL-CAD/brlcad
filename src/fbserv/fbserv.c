@@ -77,9 +77,9 @@
 #include "bio.h"
 
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/color.h"
 #include "bu/exit.h"
-#include "bu/getopt.h"
 #include "bu/interrupt.h"
 /* bu/ipc.h removed - transport handled by libpkg */
 #include "bu/log.h"
@@ -109,7 +109,7 @@ int max_fd;
 static int use_syslog;	/* error messages to stderr if 0 */
 #endif
 
-static char *framebuffer = NULL;	/* frame buffer name */
+static const char *framebuffer = NULL;	/* frame buffer name */
 static int width = 0;		/* use default size */
 static int height = 0;
 static int port = 0;
@@ -213,113 +213,198 @@ fbserv_conn_idx(struct pkg_conn *pcp)
     return -1;
 }
 
-/* Hidden args: -p<port_num> -F<frame_buffer> */
-static char usage[] = "\
-Usage: fbserv port_num\n\
-	  (for a stand-alone daemon)\n\
-   or  fbserv [-v] [-T] [-A] [-{sS} squaresize]\n\
-	  [-{wW} width] [-{nN} height] -p port_num -F frame_buffer\n\
-	  (for a single-frame-buffer server)\n\
-          (if '-p' and '-F' are both omitted, port_num and frame_buffer\n\
-           must appear in that order)\n\
-   or  fbserv [-v] [-A] [-F frame_buffer] -I ipc_addr\n\
-	  (for local IPC mode; -p is ignored)\n\
-  -T  enable TLS encryption (requires OpenSSL build)\n\
-  -A  strict auth: reject clients that do not send MSG_FBAUTH\n\
-  -I  use the libpkg IPC address ipc_addr instead of binding TCP\n\
-\n\
-Token authentication (works with or without TLS):\n\
-  Set FBSERV_TOKEN=<64-hex-chars> before starting fbserv to use a\n\
-  pre-known token instead of having one auto-generated.  The same\n\
-  token must be set in FBSERV_TOKEN for every client (e.g. rt, pix-fb)\n\
-  that connects to this server.\n\
-  If FBSERV_TOKEN is NOT set, fbserv generates a fresh token at\n\
-  startup and prints it to stderr.\n\
-";
+struct fbserv_args {
+    struct fbserv_args *self;
+    int help;
+    int verbose;
+    int enable_tls;
+    int require_auth;
+    const char *ipc_address;
+    const char *framebuffer;
+    int width;
+    int height;
+    int port;
+};
 
 static int
-parse_int_arg(const char *arg, int minimum, int maximum, const char *label,
-	int *value)
+fbserv_size(struct bu_vls *msg, const char *arg, void *storage)
 {
-    char *end = NULL;
-    long parsed;
+    struct fbserv_args *args = storage ? *(struct fbserv_args **)storage : NULL;
+    int value;
 
-    errno = 0;
-    parsed = strtol(arg, &end, 10);
-    if (errno == ERANGE || end == arg || *end || parsed < minimum ||
-	    parsed > maximum) {
-	bu_log("fbserv: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-    *value = (int)parsed;
-    return 1;
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 0, INT_MAX))
+	return -1;
+    if (args)
+	args->width = args->height = value;
+    return 0;
 }
 
-int
-get_args(int argc, char **argv)
+static const struct bu_arg_option fbserv_options[] = {
+    BU_ARG_FLAG("h", "help", struct fbserv_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("v", "verbose", struct fbserv_args, verbose,
+	"Enable verbose status output"),
+    BU_ARG_FLAG("T", "tls", struct fbserv_args, enable_tls,
+	"Enable TLS encryption; FBSERV_TLS has the same effect (requires an "
+	"OpenSSL-enabled build)"),
+    BU_ARG_FLAG("A", "require-auth", struct fbserv_args, require_auth,
+	"Reject clients that do not present the shared authentication token"),
+    BU_ARG_VALUE("I", "ipc", struct fbserv_args, ipc_address,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "address",
+	"Use an opaque libpkg IPC address instead of TCP; -p is ignored"),
+    BU_ARG_VALUE("F", "framebuffer", struct fbserv_args, framebuffer,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Open and retain this framebuffer device"),
+    BU_ARG_CUSTOM("s", "size", struct fbserv_args, self, fbserv_size,
+	"pixels", "Set both framebuffer dimensions"),
+    BU_ARG_ALIAS("S", NULL, "size", 1),
+    BU_ARG_INTEGER_RANGE("w", "width", struct fbserv_args, width,
+	1, 0, 1, INT_MAX, "pixels", "Set the framebuffer width"),
+    BU_ARG_ALIAS("W", NULL, "width", 1),
+    BU_ARG_INTEGER_RANGE("n", "height", struct fbserv_args, height,
+	1, 0, 1, INT_MAX, "pixels", "Set the framebuffer height"),
+    BU_ARG_ALIAS("N", NULL, "height", 1),
+    BU_ARG_INTEGER_RANGE("p", "port", struct fbserv_args, port,
+	1, 0, 1, 65535, "port",
+	"Set the TCP listener port; values below 1024 are offset by 5559"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand fbserv_no_operands[] = {
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_operand fbserv_framebuffer_operand[] = {
+    BU_ARG_OPERAND("framebuffer", BU_ARG_VALUE_STRING, 0, 1,
+	"Framebuffer device to open and retain", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_operand fbserv_port_operand[] = {
+    BU_ARG_OPERAND_INTEGER_RANGE("port", 1, 1, 1, 0, 1, 65535,
+	"TCP listener port", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_operand fbserv_default_operands[] = {
+    BU_ARG_OPERAND_INTEGER_RANGE("port", 1, 1, 1, 0, 1, 65535,
+	"TCP listener port", NULL),
+    BU_ARG_OPERAND("framebuffer", BU_ARG_VALUE_STRING, 0, 1,
+	"Framebuffer device to open and retain", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const char * const fbserv_ipc_framebuffer_options[] = {
+    "ipc", "framebuffer", NULL
+};
+static const char * const fbserv_ipc_options[] = {"ipc", NULL};
+static const char * const fbserv_port_framebuffer_options[] = {
+    "port", "framebuffer", NULL
+};
+static const char * const fbserv_port_options[] = {"port", NULL};
+static const char * const fbserv_framebuffer_options[] = {"framebuffer", NULL};
+
+static const struct bu_arg_schema_case fbserv_cases[] = {
+    BU_ARG_SCHEMA_CASE("ipc-framebuffer-option",
+	"Use IPC and name the framebuffer with -F",
+	BU_ARG_CONDITION_ALL_OPTIONS_PRESENT, fbserv_ipc_framebuffer_options,
+	fbserv_no_operands, NULL),
+    BU_ARG_SCHEMA_CASE("ipc", "Use IPC with an optional framebuffer operand",
+	BU_ARG_CONDITION_ALL_OPTIONS_PRESENT, fbserv_ipc_options,
+	fbserv_framebuffer_operand, NULL),
+    BU_ARG_SCHEMA_CASE("tcp-options",
+	"Name the TCP port and framebuffer with options",
+	BU_ARG_CONDITION_ALL_OPTIONS_PRESENT, fbserv_port_framebuffer_options,
+	fbserv_no_operands, NULL),
+    BU_ARG_SCHEMA_CASE("port-option", "Name the TCP port with -p",
+	BU_ARG_CONDITION_ALL_OPTIONS_PRESENT, fbserv_port_options,
+	fbserv_framebuffer_operand, NULL),
+    BU_ARG_SCHEMA_CASE("framebuffer-option", "Name the framebuffer with -F",
+	BU_ARG_CONDITION_ALL_OPTIONS_PRESENT, fbserv_framebuffer_options,
+	fbserv_port_operand, NULL),
+    BU_ARG_SCHEMA_CASE_DEFAULT("positional", "Name the TCP port positionally",
+	fbserv_default_operands, NULL),
+    BU_ARG_SCHEMA_CASE_NULL
+};
+
+static const struct bu_arg_schema fbserv_schema = BU_ARG_SCHEMA(
+    "fbserv", "Serve a framebuffer to remote or local clients",
+    fbserv_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, fbserv_cases));
+
+static const struct bu_arg_grammar fbserv_grammar = {
+    &fbserv_schema, NULL, NULL
+};
+
+static int
+fbserv_help(FILE *stream, int status)
 {
-    int c;
-    int enable_tls = 0;
+    char *help = bu_arg_schema_help(&fbserv_schema, "fbserv");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "fbserv help");
+    return status;
+}
 
-    while ((c = bu_getopt(argc, argv, "vTAI:F:s:w:n:S:W:N:p:h?")) != -1) {
-	switch (c) {
-	    case 'v':
-		verbose = 1;
-		break;
-	    case 'T':
-		enable_tls = 1;
-		break;
-	    case 'A':
-		require_auth = 1;
-		break;
-	    case 'I':
-		ipc_addr_flag = bu_optarg;
-		port_set = 1;   /* suppress "no port" usage error */
-		break;
-	    case 'F':
-		framebuffer = bu_optarg;
-		break;
-	    case 's':
-	    case 'S':
-		if (!parse_int_arg(bu_optarg, 0, INT_MAX, "square size", &width))
-		    return 0;
-		height = width;
-		break;
-	    case 'w':
-	    case 'W':
-		if (!parse_int_arg(bu_optarg, 0, INT_MAX, "width", &width))
-		    return 0;
-		break;
-	    case 'n':
-	    case 'N':
-		if (!parse_int_arg(bu_optarg, 0, INT_MAX, "height", &height))
-		    return 0;
-		break;
-	    case 'p':
-		if (!parse_int_arg(bu_optarg, 0, 65535, "port", &port))
-		    return 0;
-		port_set = 1;
-		break;
+static int
+fbserv_parse_args(int argc, char **argv)
+{
+    struct fbserv_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    const char **operands;
+    size_t operand_count;
+    size_t cursor = 0;
+    int operand_index;
 
-	    default:		/* '?' */
-		return 0;
-	}
+    args.self = &args;
+    args.width = width;
+    args.height = height;
+    args.port = -1;
+    operand_index = bu_arg_schema_parse_complete(&fbserv_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return -1;
     }
-    /* If no "-p port", port comes from 1st extra */
-    if ((bu_optind < argc) && (port_set == 0)) {
-	if (!parse_int_arg(argv[bu_optind++], 0, 65535, "port", &port))
-	    return 0;
+    if (args.help) {
+	bu_vls_free(&msg);
+	return fbserv_help(stdout, 0);
+    }
+
+    verbose = args.verbose;
+    use_tls = args.enable_tls;
+    require_auth = args.require_auth;
+    ipc_addr_flag = args.ipc_address;
+    framebuffer = args.framebuffer;
+    width = args.width;
+    height = args.height;
+    operands = (const char **)argv + operand_index + 1;
+    operand_count = (size_t)(argc - operand_index - 1);
+
+    if (ipc_addr_flag) {
 	port_set = 1;
+	if (!framebuffer && operand_count)
+	    framebuffer = operands[0];
+    } else {
+	if (args.port >= 0) {
+	    port = args.port;
+	    port_set = 1;
+	} else {
+	    if (!bu_arg_integer_range_from_str(&msg, &port, operands[cursor++],
+		    10, 0, 65535)) {
+		bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+		bu_vls_free(&msg);
+		return -1;
+	    }
+	    port_set = 1;
+	}
+	if (!framebuffer && cursor < operand_count)
+	    framebuffer = operands[cursor];
     }
-    /* If no "-F framebuffer", fb comes from 2nd extra */
-    if ((bu_optind < argc) && (framebuffer == NULL)) {
-	framebuffer = argv[bu_optind++];
-    }
-    if (argc > bu_optind)
-	return 0;	/* print usage */
 
-    use_tls = enable_tls;
-    return 1;		/* OK */
+    bu_vls_free(&msg);
+    return 1;
 }
 
 
@@ -631,7 +716,21 @@ init_syslog(void)
 int
 main(int argc, char **argv)
 {
+    struct bu_vls schema_output = BU_VLS_INIT_ZERO;
+    int introspection;
+    int parse_status;
+
     bu_setprogname(argv[0]);
+
+    introspection = bu_arg_introspect(&schema_output, &fbserv_grammar,
+	argc - 1, (const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s",
+	    bu_vls_cstr(&schema_output));
+	bu_vls_free(&schema_output);
+	return introspection > 0 ? 0 : 1;
+    }
+    bu_vls_free(&schema_output);
 
 #define PORTSZ 32
     char portname[PORTSZ];
@@ -669,11 +768,9 @@ main(int argc, char **argv)
     }
 #endif
 
-    /* for now, make them set a port_num, for usage message */
-    if (!get_args(argc, argv) || !port_set) {
-	(void)fputs(usage, stderr);
-	return 1;
-    }
+    parse_status = fbserv_parse_args(argc, argv);
+    if (parse_status <= 0)
+	return parse_status < 0 ? 1 : 0;
 
     /* Session authentication token.
      * If FBSERV_TOKEN is already set in the environment, use that value
