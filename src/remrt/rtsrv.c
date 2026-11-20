@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -176,13 +178,47 @@ int debug = 0;		/* 0=off, 1=debug, 2=verbose */
  */
 static char srv_auth_token[REMRT_AUTH_TOKEN_LEN + 1] = {0};
 
-char srv_usage[] = "Usage: rtsrv [-d] [-S token] [-I ipc-addr] control-host tcp-port [cmd]\n"
-		   "       rtsrv [-d] [-S token]  -I ipc-addr\n";
+char srv_usage[] = "Usage: rtsrv [-d] [-S token] [-x hex_flags] [-X hex_flags] [-I ipc-addr] control-host tcp-port [cmd]\n"
+		   "       rtsrv [-d] [-S token] [-x hex_flags] [-X hex_flags] -I ipc-addr\n";
 
 /* forward declarations for log/bomb hook helpers defined later in this file */
 static int rtsrv_log_hook(void *clientdata, void *str);
 static int rtsrv_bomb_hook(void *clientdata, void *str);
 static void rtsrv_install_log_hook(void);
+
+static int
+rtsrv_parse_hex_mask(const char *arg, unsigned int *mask)
+{
+    unsigned long value;
+    char *end = NULL;
+
+    if (!arg || !arg[0] || !mask)
+	return 0;
+
+    errno = 0;
+    value = strtoul(arg, &end, 16);
+    if (errno == ERANGE || end == arg || *end != '\0' || value > UINT_MAX)
+	return 0;
+
+    *mask = (unsigned int)value;
+    return 1;
+}
+
+static int
+rtsrv_valid_auth_token(const char *token)
+{
+    size_t i;
+
+    if (!token || strlen(token) != REMRT_AUTH_TOKEN_LEN)
+	return 0;
+
+    for (i = 0; i < REMRT_AUTH_TOKEN_LEN; i++) {
+	if (!isxdigit((unsigned char)token[i]))
+	    return 0;
+    }
+
+    return 1;
+}
 
 __END_DECLS
 
@@ -205,15 +241,21 @@ main(int argc, char **argv)
 	if (BU_STR_EQUAL(argv[1], "-d")) {
 	    debug++;
 	} else if (BU_STR_EQUAL(argv[1], "-x")) {
-	    sscanf(argv[2], "%x", (unsigned int *)&rt_debug);
+	    if (argc < 3 || !rtsrv_parse_hex_mask(argv[2], &rt_debug)) {
+		fprintf(stderr, "rtsrv: -x requires a hexadecimal librt debug mask\n");
+		return 3;
+	    }
 	    argc--; argv++;
 	} else if (BU_STR_EQUAL(argv[1], "-X")) {
-	    sscanf(argv[2], "%x", (unsigned int *)&optical_debug);
+	    if (argc < 3 || !rtsrv_parse_hex_mask(argv[2], &optical_debug)) {
+		fprintf(stderr, "rtsrv: -X requires a hexadecimal optical debug mask\n");
+		return 3;
+	    }
 	    argc--; argv++;
 	} else if (BU_STR_EQUAL(argv[1], "-S")) {
 	    /* Session authentication token from remrt */
-	    if (argc < 3) {
-		fprintf(stderr, "%s", srv_usage);
+	    if (argc < 3 || !rtsrv_valid_auth_token(argv[2])) {
+		fprintf(stderr, "rtsrv: -S requires a 64-character hexadecimal token\n");
 		return 3;
 	    }
 	    bu_strlcpy(srv_auth_token, argv[2],
