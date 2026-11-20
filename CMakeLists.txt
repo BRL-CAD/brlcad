@@ -2278,6 +2278,7 @@ _brlcad_func_probe(FUNC _strtoi64 VAR HAVE__STRTOI64)
 _brlcad_func_probe(FUNC alarm VAR HAVE_ALARM)
 _brlcad_func_probe(FUNC asinh VAR HAVE_ASINH LIBS ${M_LIBRARY})
 _brlcad_func_probe(FUNC confstr VAR HAVE_CONFSTR) # darwin/mac/linux
+_brlcad_func_probe(FUNC closefrom VAR HAVE_CLOSEFROM)
 _brlcad_func_probe(FUNC dlopen VAR HAVE_DLOPEN)
 _brlcad_func_probe(FUNC dladdr VAR HAVE_DLADDR)
 _brlcad_func_probe(FUNC drand48 VAR HAVE_DRAND48)

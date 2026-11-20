@@ -59,6 +59,7 @@
 static const int64_t PROCESS_POLL_INTERVAL_USEC = 1000;
 static const int64_t PROCESS_COMPLETION_TIMEOUT_USEC = 5000000;
 static const int64_t PROCESS_NONBLOCKING_CALL_LIMIT_USEC = 1000000;
+static const int PROCESS_DESCENDANT_SLEEP_MS = 10000;
 
 
 static int
@@ -107,6 +108,7 @@ struct process_func_test_data {
     int ret;
     int sleep_ms;
     int do_abort;
+    int descendant_sleep_ms;
 };
 
 static int
@@ -138,6 +140,15 @@ process_func_callback(void *data)
 	return tdata->ret;
     if (tdata->sleep_ms > 0)
 	(void)bu_snooze((int64_t)tdata->sleep_ms * 1000);
+    if (tdata->descendant_sleep_ms > 0) {
+	pid_t descendant = fork();
+	if (descendant < 0)
+	    return PROCESS_ERROR;
+	if (descendant == 0) {
+	    (void)bu_snooze((int64_t)tdata->descendant_sleep_ms * 1000);
+	    _exit(0);
+	}
+    }
     if (tdata->do_abort)
 	abort();
 
@@ -189,7 +200,7 @@ test_func_capture(const char *cmd)
     struct bu_vls out = BU_VLS_INIT_ZERO;
     struct bu_vls err = BU_VLS_INIT_ZERO;
     struct bu_process_func_info info = {-1, 0, 0, 0, &out, &err};
-    struct process_func_test_data data = {"Howdy stdout!\n", "Howdy stderr!\n", 7, 0, 0};
+    struct process_func_test_data data = {"Howdy stdout!\n", "Howdy stderr!\n", 7, 0, 0, 0};
     int ret = bu_process_func(&info, process_func_callback, &data, 0, BU_PROCESS_DEFAULT);
 
     if (ret != 7 || info.exit_code != 7 || info.signaled || info.signal_num || info.timed_out) {
@@ -227,7 +238,7 @@ test_func_merge(const char *cmd)
 #else
     struct bu_vls out = BU_VLS_INIT_ZERO;
     struct bu_process_func_info info = {-1, 0, 0, 0, &out, NULL};
-    struct process_func_test_data data = {"Howdy stdout!\n", "Howdy stderr!\n", 0, 0, 0};
+    struct process_func_test_data data = {"Howdy stdout!\n", "Howdy stderr!\n", 0, 0, 0, 0};
     int ret = bu_process_func(&info, process_func_callback, &data, 0, BU_PROCESS_OUT_EQ_ERR);
 
     if (ret != 0 || info.exit_code != 0 || info.signaled || info.signal_num || info.timed_out) {
@@ -255,7 +266,7 @@ test_func_abort(const char *cmd)
     return PROCESS_PASS;
 #else
     struct bu_process_func_info info = {-1, 0, 0, 0, NULL, NULL};
-    struct process_func_test_data data = {NULL, NULL, 0, 0, 1};
+    struct process_func_test_data data = {NULL, NULL, 0, 0, 1, 0};
     int ret = bu_process_func(&info, process_func_callback, &data, 0, BU_PROCESS_DEFAULT);
 
     if (ret != ERROR_PROCESS_ABORTED || !info.signaled || info.timed_out) {
@@ -276,11 +287,42 @@ test_func_timeout(const char *cmd)
     return PROCESS_PASS;
 #else
     struct bu_process_func_info info = {-1, 0, 0, 0, NULL, NULL};
-    struct process_func_test_data data = {NULL, NULL, 9, 250, 0};
+    struct process_func_test_data data = {NULL, NULL, 9, 250, 0, 0};
     int ret = bu_process_func(&info, process_func_callback, &data, 25, BU_PROCESS_DEFAULT);
 
     if (ret != ERROR_PROCESS_ABORTED || !info.timed_out) {
 	fprintf(stderr, "bu_process_test[\"func_timeout\"] - timeout was not reported correctly\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+#endif
+}
+
+
+static int
+test_func_descendant_timeout(const char *cmd)
+{
+    (void)cmd;
+#ifdef _WIN32
+    return PROCESS_PASS;
+#else
+    struct bu_vls out = BU_VLS_INIT_ZERO;
+    struct bu_process_func_info info = {-1, 0, 0, 0, &out, NULL};
+    struct process_func_test_data data = {NULL, NULL, 0, 0, 0,
+	PROCESS_DESCENDANT_SLEEP_MS};
+    int64_t start_time = bu_gettime();
+    int ret = bu_process_func(&info, process_func_callback, &data, 25,
+	BU_PROCESS_DEFAULT);
+    int64_t elapsed = bu_gettime() - start_time;
+    bu_vls_free(&out);
+
+    if (ret != ERROR_PROCESS_ABORTED || !info.timed_out) {
+	fprintf(stderr, "bu_process_test[\"func_descendant_timeout\"] - timeout was not reported correctly\n");
+	return PROCESS_FAIL;
+    }
+    if (elapsed > PROCESS_NONBLOCKING_CALL_LIMIT_USEC) {
+	fprintf(stderr, "bu_process_test[\"func_descendant_timeout\"] - inherited output pipe blocked timeout handling\n");
 	return PROCESS_FAIL;
     }
 
@@ -696,6 +738,42 @@ test_argument_roundtrip(const char *cmd)
 }
 
 
+static int
+test_create_environment(const char *cmd)
+{
+    const char *run_av[] = {cmd, "environment", NULL};
+    const char *env_overrides[] = {
+	"BU_PROCESS_TEST_ENV=first",
+	"BU_PROCESS_TEST_ENV=child",
+	NULL
+    };
+    const struct bu_process_create_info create_info = {BU_PROCESS_DEFAULT, env_overrides, NULL, 0};
+    struct bu_process *process = NULL;
+    char output[32] = {0};
+
+    bu_setenv("BU_PROCESS_TEST_ENV", "parent", 1);
+    bu_process_create_ex(&process, run_av, &create_info);
+    if (!process) {
+	bu_setenv("BU_PROCESS_TEST_ENV", "", 1);
+	return PROCESS_FAIL;
+    }
+
+    int count = bu_process_read_n(process, BU_PROCESS_STDOUT,
+	(int)sizeof(output) - 1, output);
+    int status = bu_process_wait_n(&process, 0);
+    const char *parent_value = getenv("BU_PROCESS_TEST_ENV");
+    int result = PROCESS_PASS;
+    if (count <= 0 || status != 0 || !BU_STR_EQUAL(output, "child") ||
+	!parent_value || !BU_STR_EQUAL(parent_value, "parent")) {
+	fprintf(stderr, "bu_process_test[\"create_environment\"] - child or parent environment mismatch\n");
+	result = PROCESS_FAIL;
+    }
+
+    bu_setenv("BU_PROCESS_TEST_ENV", "", 1);
+    return result;
+}
+
+
 /* tests:   process reports alive
  *  bu_process_alive()
  *  bu_pid_alive()
@@ -1009,6 +1087,7 @@ ProcessTest tests[] = {
     {"func_merge", test_func_merge},
     {"func_abort", test_func_abort},
     {"func_timeout", test_func_timeout},
+    {"func_descendant_timeout", test_func_descendant_timeout},
     {"read", test_read},
     {"read_flood", test_read_flood},
     {"ids", test_ids},
@@ -1016,6 +1095,7 @@ ProcessTest tests[] = {
     {"abort", test_abort},
     {"args", test_all_args},
     {"argument_roundtrip", test_argument_roundtrip},
+    {"create_environment", test_create_environment},
     {"alive", test_alive},
     {"poll_status", test_poll_status},
     {"wait_status", test_wait_status},

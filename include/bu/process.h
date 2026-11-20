@@ -52,6 +52,23 @@ typedef enum {
     BU_PROCESS_HIDE_WINDOW = 0x2,   // (Windows only)hide creation window if process would normally spawn one
 } bu_process_opts;
 
+/**
+ * Optional process creation settings.
+ *
+ * env_overrides is a NULL-terminated array of NAME=VALUE strings applied to
+ * the child's environment without changing the parent's environment.
+ * inherit_fds lists additional descriptors the child must inherit beyond its
+ * standard input, output, and error streams.  On Windows, their underlying
+ * handles must already have HANDLE_FLAG_INHERIT set; this function does not
+ * mutate caller-owned handle flags.
+ */
+struct bu_process_create_info {
+    int opts;
+    const char * const *env_overrides;
+    const int *inherit_fds;
+    size_t inherit_fd_count;
+};
+
 #ifndef ERROR_PROCESS_ABORTED
 // have a consistent 'aborted' return code on cross-platforms
 #define ERROR_PROCESS_ABORTED 1067L
@@ -100,6 +117,16 @@ struct bu_process_func_info {
 BU_EXPORT extern void bu_process_create(struct bu_process **pinfo, const char **argv, int process_creation_opts);
 
 /**
+ * @brief Create a subprocess with child-specific environment and descriptor
+ * inheritance settings.
+ *
+ * @param[out] pinfo - newly allocated process handle, or NULL if setup fails
+ * @param[in] argv - NULL-terminated command line arguments
+ * @param[in] create_info - optional creation settings; NULL selects defaults
+ */
+BU_EXPORT extern void bu_process_create_ex(struct bu_process **pinfo, const char **argv, const struct bu_process_create_info *create_info);
+
+/**
  * @brief Run a callback in a subprocess and wait for it to complete.
  *
  * The callback runs in an isolated child process.  On POSIX
@@ -131,15 +158,17 @@ BU_EXPORT extern int bu_process_func(struct bu_process_func_info *info, bu_proce
 
 
 /**
- * @brief wait for a sub-process to complete, release all process
- * allocations, and release the process itself.
+ * @brief wait for a sub-process to complete and release it after it is reaped.
  *
- * @param[in,out] pinfo - address of the process handle; set to NULL on return
+ * @param[in,out] pinfo - address of the process handle; set to NULL after the
+ * process is reaped or released for platform-managed cleanup
  * @param[in] wtime - maximum wait time (in ms) before forcibly stopping the
  * process.  A value of 0 waits indefinitely
  *
  * @return
- * 0 on success; ERROR_PROCESS_ABORTED for aborted process; Otherwise, platform specific exit status
+ * 0 on success; ERROR_PROCESS_ABORTED for aborted process; -1 if termination
+ * could not be confirmed within the grace period; otherwise, a
+ * platform-specific exit status
  */
 BU_EXPORT extern int bu_process_wait_n(struct bu_process **pinfo, int wtime);
 
