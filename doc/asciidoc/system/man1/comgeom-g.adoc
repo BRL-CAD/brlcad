@@ -8,11 +8,10 @@ comgeom-g - convert GIFT COMGEOM model into MGED database
 
 == SYNOPSIS
 
-[source]
-----
-comgeom-g [-h] [-?] [-d debug_lvl] [-v version_num] [-s name_suffix] input_file output_file
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*comgeom-g* [*-d* _level_] [*-v* _version_] [*-s* _suffix_] _input-file_ _output.g_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -27,16 +26,16 @@ In the resulting database, a high-level group all.g is created. The units used i
 [[options]]
 == OPTIONS
 
-*-d* _debug_lvl_::
+*-d* _level_, *--debug-level* _level_::
   Set the debug/verbosity level. By default (level 0) the program reports only the title, units, and major errors. Any nonzero level enables verbose status reports describing the expected file layout and the progress of the conversion, which is useful for large or problematic models.
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a usage summary and exit.
 
-*-s* _name_suffix_::
+*-s* _suffix_, *--name-suffix* _suffix_::
   Append the specified suffix to the names of all generated solids, regions, and groups (but not the top-level all.g group). Any leading period must be included in the suffix. The suffix is limited to 15 characters.
 
-*-v* _input_vers#_::
+*-v* _version_, *--input-version* _version_::
   Specify the COMGEOM input format version. The default is version 5 (cg5); version 4 is also supported. Version 1 selects the DoE MORSE/RAFFLE format (believed to be the original MAGIC format). Any other value is rejected.
 
 

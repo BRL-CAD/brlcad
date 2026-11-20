@@ -27,7 +27,7 @@ set(
   comgeom/solid.c
   comgeom/tools.c
 )
-brlcad_addexec(comgeom-g "${comgeom-g_SRCS}" "libwdb;libbn;libbu;${M_LIBRARY}" FOLDER Conv)
+brlcad_addexec(comgeom-g "${comgeom-g_SRCS}" "libwdb;libbn;libbu;${M_LIBRARY}" FOLDER Conv ARG_SCHEMA)
 
 brlcad_addexec(conv-vg2g conv-vg2g.c "libbu" FOLDER Conv NO_OPTIONS)
 
