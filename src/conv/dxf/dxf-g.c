@@ -3203,7 +3203,7 @@ main(int argc, char *argv[])
 	}
     }
 
-    if (argc - bu_optind < 2) {
+    if (argc - bu_optind != 2) {
 	bu_exit(1, "%s", usage);
     }
 
