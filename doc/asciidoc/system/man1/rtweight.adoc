@@ -10,10 +10,9 @@ rtweight - calculate mass, volume, and centroid of geometry via ray tracing
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*rtweight* [*-o* _file_] [*-O* _file_] [*-F* _fb_] [*-s* _#_] [*-w* _#_] [*-n* _#_] [*-C* _#/#/#_]
-         [*-W*] [*-r*] [*-R*] [*-a* _deg_] [*-e* _deg_] [*-p* _deg_] [*-E* _#_] [*-V* _#[:#]_]
-         [*-M*] [*-A* _#_] [*-l* _#[,args]_] [*-m* _d,r,g,b_] [*-i*] [*-t*] [*-S*] [*-H* _#_]
-         [*-J* _#_] [*-u* _units_] [*-U* _#_] [*-T* _#[/#]_] [_model.g_] [_object_ ...]
+*rtweight* [*-o* _file_] [*-F* _fb_] [*-s* _#_] [*-w* _#_] [*-n* _#_] [*-r*] [*-R*] [*-a* _deg_]
+         [*-e* _deg_] [*-p* _deg_] [*-E* _#_] [*-V* _#[:#]_] [*-M*] [*-S*] [*-H* _#_] [*-J* _#_]
+         [*-U* _#_] [*-T* _#[/#]_] [_model.g_] [_object_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
@@ -57,10 +56,7 @@ here.
 === Output
 
 *-o* _file_, *--output*=_file_::
-  Output image file (e.g. image.pix or image.png).
-
-*-O* _file_, *--output-double*=_file_::
-  Output double-precision .dpix file.
+  Write weights and moments to this file.
 
 *-F* _fb_, *--framebuffer*=_fb_::
   Render to named framebuffer (see FB_FILE).
@@ -78,14 +74,8 @@ here.
 
 === Background and overlaps
 
-*-C* _#/#/#_, *--background*=_#/#/#_::
-  Background color R/G/B (0-255 or 0.0-1.0).
-
-*-W*, *--white-background*::
-  White background (255/255/254).
-
-*-r*, *--report-overlaps*::
-  Report overlapping region names (on by default).
+*-r*, *--region-mass*::
+  Report the mass of each region verbosely.
 
 *-R*, *--no-overlap-report*::
   Suppress overlap region name reports.
@@ -126,21 +116,6 @@ here.
 
 === Rendering
 
-*-A* _#_, *--ambient*=_#_::
-  Ambient light intensity as a fraction 0.0-1.0.
-
-*-l* _#[,args]_, *--light-model*=_#[,args]_::
-  Select lighting model (default 0; use -l7,... for photon mapping).
-
-*-m* _d,r,g,b_, *--haze*=_d,r,g,b_::
-  Atmospheric haze: density and RGB color (e.g. 2.5e-8,.75,.95,.99).
-
-*-i*, *--incremental*::
-  Incremental (progressive) rendering.
-
-*-t*, *--top-down*::
-  Render top-to-bottom (default is bottom-up).
-
 *-S*, *--stereo*::
   Stereo viewing (left eye = red, right eye = blue).
 
@@ -149,9 +124,6 @@ here.
 
 *-J* _#_, *--jitter*=_#_::
   Ray jitter bit vector (1=cell jitter, 2=frame shift, 3=both).
-
-*-u* _units_, *--units*=_units_::
-  Display units ("model" uses model-space units).
 
 *-U* _#_, *--use-air*=_#_::
   Whether librt retains air-coded regions (0=off default, 1=on).
@@ -168,7 +140,7 @@ here.
   Execute an rt script command before raytracing.
 
 *-d* _file_, *--density-file*=_file_::
-  Density definitions file.
+  Read material density definitions from this file.
 
 *-D* _#_, *--start-frame*=_#_::
   Starting frame number for animation.

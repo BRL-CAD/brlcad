@@ -10,10 +10,10 @@ rthide - ray-trace a model and write a hidden-line UNIX-Plot file
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*rthide* [*-o* _file_] [*-O* _file_] [*-F* _fb_] [*-s* _#_] [*-w* _#_] [*-n* _#_] [*-C* _#/#/#_]
-       [*-W*] [*-r*] [*-R*] [*-a* _deg_] [*-e* _deg_] [*-p* _deg_] [*-E* _#_] [*-V* _#[:#]_] [*-M*]
-       [*-A* _#_] [*-l* _#[,args]_] [*-m* _d,r,g,b_] [*-i*] [*-t*] [*-S*] [*-H* _#_] [*-J* _#_]
-       [*-u* _units_] [*-U* _#_] [*-T* _#[/#]_] [_model.g_] [_object_ ...]
+*rthide* [*-o* _file_] [*-F* _fb_] [*-s* _#_] [*-w* _#_] [*-n* _#_] [*-C* _#/#/#_] [*-W*] [*-r*]
+       [*-R*] [*-a* _deg_] [*-e* _deg_] [*-p* _deg_] [*-E* _#_] [*-V* _#[:#]_] [*-M*]
+       [*-A* _degrees_] [*-S*] [*-H* _#_] [*-J* _#_] [*-U* _#_] [*-T* _#[/#]_] [_model.g_]
+       [_object_ ...]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
@@ -50,10 +50,7 @@ described first below.
 === Output
 
 *-o* _file_, *--output*=_file_::
-  Output image file (e.g. image.pix or image.png).
-
-*-O* _file_, *--output-double*=_file_::
-  Output double-precision .dpix file.
+  Write hidden lines to a UNIX plot file (default stdout).
 
 *-F* _fb_, *--framebuffer*=_fb_::
   Render to named framebuffer (see FB_FILE).
@@ -119,20 +116,8 @@ described first below.
 
 === Rendering
 
-*-A* _#_, *--ambient*=_#_::
-  Ambient light intensity as a fraction 0.0-1.0.
-
-*-l* _#[,args]_, *--light-model*=_#[,args]_::
-  Select lighting model (default 0; use -l7,... for photon mapping).
-
-*-m* _d,r,g,b_, *--haze*=_d,r,g,b_::
-  Atmospheric haze: density and RGB color (e.g. 2.5e-8,.75,.95,.99).
-
-*-i*, *--incremental*::
-  Incremental (progressive) rendering.
-
-*-t*, *--top-down*::
-  Render top-to-bottom (default is bottom-up).
+*-A* _degrees_, *--angle*=_degrees_::
+  Set the surface-normal angle threshold (default 5 degrees).
 
 *-S*, *--stereo*::
   Stereo viewing (left eye = red, right eye = blue).
@@ -142,9 +127,6 @@ described first below.
 
 *-J* _#_, *--jitter*=_#_::
   Ray jitter bit vector (1=cell jitter, 2=frame shift, 3=both).
-
-*-u* _units_, *--units*=_units_::
-  Display units ("model" uses model-space units).
 
 *-U* _#_, *--use-air*=_#_::
   Whether librt retains air-coded regions (0=off default, 1=on).
@@ -159,9 +141,6 @@ described first below.
 
 *-c* _cmd_, *--command*=_cmd_::
   Execute an rt script command before raytracing.
-
-*-d* _file_, *--density-file*=_file_::
-  Density definitions file.
 
 *-D* _#_, *--start-frame*=_#_::
   Starting frame number for animation.

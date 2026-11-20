@@ -1257,20 +1257,371 @@ static const struct bu_arg_schema rt_schema = BU_ARG_SCHEMA_PRESENTED(
     BU_ARG_PARSE_INTERSPERSED,
     BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL), &rt_presentation);
 
+enum { RT_ARG_ENABLED_UNCHANGED = -1 };
+
+struct rt_arg_option_override {
+    const char *option;
+    const char *canonical;
+    const char *longopt;
+    const char *argument;
+    const char *help;
+    int enabled;
+};
+
+struct rt_arg_profile {
+    const char *program;
+    const char *help;
+    const struct rt_arg_option_override *overrides;
+    const char * const *active_specialized_options;
+};
+
+#define RT_ARG_OVERRIDE(_option, _canonical, _long, _argument, _help) \
+    {_option, _canonical, _long, _argument, _help, RT_ARG_ENABLED_UNCHANGED}
+#define RT_ARG_HELP_OVERRIDE(_option, _argument, _help) \
+    RT_ARG_OVERRIDE(_option, NULL, NULL, _argument, _help)
+#define RT_ARG_INACTIVE(_option) \
+    {_option, NULL, NULL, NULL, NULL, 0}
+#define RT_ARG_OVERRIDE_NULL \
+    {NULL, NULL, NULL, NULL, NULL, RT_ARG_ENABLED_UNCHANGED}
+
+static const char * const rt_specialized_options[] = {
+    "output-double", "ambient", "light-model", "haze", "incremental",
+    "top-down", "units", "density-file", NULL
+};
+static const char * const rt_renderer_options[] = {
+    "output-double", "ambient", "light-model", "haze", "incremental",
+    "top-down", NULL
+};
+static const char * const rtarea_options[] = {"incremental", "units", NULL};
+static const char * const rtedge_options[] = {"incremental", "top-down", NULL};
+static const char * const rthide_options[] = {"ambient", NULL};
+static const char * const rtsil_options[] = {"incremental", "top-down", NULL};
+static const char * const rtweight_options[] = {"density-file", NULL};
+static const char * const rtxray_options[] = {
+    "ambient", "light-model", "incremental", "top-down", NULL
+};
+static const char * const rtdepth_options[] = {"incremental", "top-down", NULL};
+
+static const struct rt_arg_option_override rtarea_overrides[] = {
+    RT_ARG_HELP_OVERRIDE("units", "units",
+	"Set reported area and length units (default mm)"),
+    RT_ARG_HELP_OVERRIDE("use-air", "#",
+	"Include air regions in area analysis (default 1)"),
+    RT_ARG_OVERRIDE("command", "area-control", "area-control", "command",
+	"Set rtarea auxiliary controls (see rtarea(1))"),
+    RT_ARG_INACTIVE("background"),
+    RT_ARG_INACTIVE("white-background"),
+    RT_ARG_OVERRIDE_NULL
+};
+
+static const struct rt_arg_option_override rtcheck_overrides[] = {
+    RT_ARG_HELP_OVERRIDE("output", "file",
+	"Write overlap geometry to a UNIX plot file"),
+    RT_ARG_OVERRIDE("report-overlaps", "unique-overlaps", "unique-overlaps",
+	NULL, "Report only unique overlaps"),
+    RT_ARG_INACTIVE("background"),
+    RT_ARG_INACTIVE("white-background"),
+    RT_ARG_OVERRIDE_NULL
+};
+
+static const struct rt_arg_option_override rtedge_overrides[] = {
+    RT_ARG_OVERRIDE("command", "edge-control", "edge-control", "command",
+	"Set edge-detection controls (see rtedge(1))"),
+    RT_ARG_OVERRIDE_NULL
+};
+
+static const struct rt_arg_option_override rtg3_overrides[] = {
+    RT_ARG_HELP_OVERRIDE("output", "file",
+	"Write GIFT-3 shotlines to this file (default stdout)"),
+    RT_ARG_HELP_OVERRIDE("use-air", "#",
+	"Include air regions in shotline output (default 1)"),
+    RT_ARG_OVERRIDE("command", "g3-control", "g3-control", "command",
+	"Set GIFT-3 shotline controls (see rtg3(1))"),
+    RT_ARG_INACTIVE("background"),
+    RT_ARG_INACTIVE("white-background"),
+    RT_ARG_OVERRIDE_NULL
+};
+
+static const struct rt_arg_option_override rthide_overrides[] = {
+    RT_ARG_HELP_OVERRIDE("output", "file",
+	"Write hidden lines to a UNIX plot file (default stdout)"),
+    RT_ARG_OVERRIDE("ambient", "angle", "angle", "degrees",
+	"Set the surface-normal angle threshold (default 5 degrees)"),
+    RT_ARG_OVERRIDE_NULL
+};
+
+static const struct rt_arg_option_override rtsil_overrides[] = {
+    RT_ARG_HELP_OVERRIDE("output", "file",
+	"Write the binary silhouette image to this file"),
+    RT_ARG_OVERRIDE("command", "silhouette-control", "silhouette-control",
+	"command", "Set silhouette foreground and background intensities"),
+    RT_ARG_OVERRIDE_NULL
+};
+
+static const struct rt_arg_option_override rtweight_overrides[] = {
+    RT_ARG_HELP_OVERRIDE("output", "file",
+	"Write weights and moments to this file"),
+    RT_ARG_HELP_OVERRIDE("density-file", "file",
+	"Read material density definitions from this file"),
+    RT_ARG_OVERRIDE("report-overlaps", "region-mass", "region-mass", NULL,
+	"Report the mass of each region verbosely"),
+    RT_ARG_INACTIVE("background"),
+    RT_ARG_INACTIVE("white-background"),
+    RT_ARG_OVERRIDE_NULL
+};
+
+static const struct rt_arg_option_override rtxray_overrides[] = {
+    RT_ARG_HELP_OVERRIDE("output", "file",
+	"Write the pseudo X-ray image to this file"),
+    RT_ARG_OVERRIDE("ambient", "contrast", "contrast", "factor",
+	"Set the contrast boost (default 2.0; values above 1 may clip)"),
+    RT_ARG_OVERRIDE("light-model", "output-mode", "output-mode", "mode",
+	"Select 0 for line-buffered grayscale or 1 for double path lengths"),
+    RT_ARG_INACTIVE("background"),
+    RT_ARG_INACTIVE("white-background"),
+    RT_ARG_OVERRIDE_NULL
+};
+
+static const struct rt_arg_option_override rtdepth_overrides[] = {
+    RT_ARG_HELP_OVERRIDE("output", "file",
+	"Write the grayscale depth image to this file"),
+    RT_ARG_INACTIVE("background"),
+    RT_ARG_INACTIVE("white-background"),
+    RT_ARG_OVERRIDE_NULL
+};
+
+static const struct rt_arg_profile rt_arg_profiles[] = {
+    {"rt", "Raytrace a BRL-CAD model", NULL, rt_renderer_options},
+    {"rtarea", "Compute exposed and presented surface areas", rtarea_overrides, rtarea_options},
+    {"rtcheck", "Detect and plot overlapping geometry", rtcheck_overrides, NULL},
+    {"rtedge", "Render an edge image", rtedge_overrides, rtedge_options},
+    {"rtg3", "Write GIFT-3 shotline data", rtg3_overrides, NULL},
+    {"rthide", "Write hidden lines as UNIX plot data", rthide_overrides, rthide_options},
+    {"rtsil", "Render a binary silhouette image", rtsil_overrides, rtsil_options},
+    {"rtweight", "Calculate mass, volume, and centroid", rtweight_overrides, rtweight_options},
+    {"rtxray", "Render a pseudo X-ray image", rtxray_overrides, rtxray_options},
+    {"rtdepth", "Render a grayscale depth image", rtdepth_overrides, rtdepth_options},
+    {"remrt", "Distribute raytracing across network workers", NULL, rt_renderer_options},
+    {NULL, NULL, NULL, NULL}
+};
+
+struct rt_arg_schema_instance {
+    struct bu_arg_schema schema;
+    struct bu_arg_presentation presentation;
+    struct bu_arg_option *options;
+    struct bu_arg_help_group *groups;
+    struct bu_arg_option_visibility *visibility;
+    struct bu_vls name;
+};
+
+static const struct rt_arg_profile *
+rt_arg_profile_find(const char *program)
+{
+    size_t i;
+
+    if (!program)
+	return NULL;
+    for (i = 0; rt_arg_profiles[i].program; i++) {
+	if (BU_STR_EQUAL(program, rt_arg_profiles[i].program))
+	    return &rt_arg_profiles[i];
+    }
+    return NULL;
+}
+
+static const struct rt_arg_option_override *
+rt_arg_profile_override(const struct rt_arg_profile *profile,
+	const char *option)
+{
+    size_t i;
+
+    if (!profile || !profile->overrides || !option)
+	return NULL;
+    for (i = 0; profile->overrides[i].option; i++)
+	if (BU_STR_EQUAL(option, profile->overrides[i].option))
+	    return &profile->overrides[i];
+    return NULL;
+}
+
+static int
+rt_arg_profile_option_active(const struct rt_arg_profile *profile,
+	const char *option)
+{
+    const struct rt_arg_option_override *override;
+    size_t i;
+
+    if (!profile || !option)
+	return 1;
+    override = rt_arg_profile_override(profile, option);
+    if (override && override->enabled == 0)
+	return 0;
+    for (i = 0; rt_specialized_options[i]; i++) {
+	if (BU_STR_EQUAL(option, rt_specialized_options[i]))
+	    break;
+    }
+    if (!rt_specialized_options[i])
+	return 1;
+    if (!profile->active_specialized_options)
+	return 0;
+    for (i = 0; profile->active_specialized_options[i]; i++)
+	if (BU_STR_EQUAL(option, profile->active_specialized_options[i]))
+	    return 1;
+    return 0;
+}
+
+static const char *
+rt_arg_profile_canonical(const struct rt_arg_profile *profile,
+	const char *canonical)
+{
+    const struct rt_arg_option_override *override;
+
+    override = rt_arg_profile_override(profile, canonical);
+    return override && override->canonical ? override->canonical : canonical;
+}
+
+static size_t
+rt_arg_option_index(const char *canonical, size_t option_count)
+{
+    size_t i;
+
+    for (i = 0; i < option_count; i++) {
+	if (!rt_options[i].alias_of && BU_STR_EQUAL(
+		bu_arg_option_canonical(&rt_options[i]), canonical))
+	    return i;
+    }
+    return option_count;
+}
+
+static void
+rt_arg_schema_instance_init(struct rt_arg_schema_instance *instance)
+{
+    const struct rt_arg_profile *profile;
+    size_t base_group_count = 0;
+    size_t base_option_count = 0;
+    size_t base_visibility_count = 0;
+    size_t group_count = 0;
+    size_t option_count = 0;
+    size_t visibility_count = 0;
+    size_t i;
+
+    memset(instance, 0, sizeof(*instance));
+    bu_vls_init(&instance->name);
+    instance->schema = rt_schema;
+    instance->presentation = rt_presentation;
+
+    if (bu_path_component(&instance->name, bu_getprogname(),
+	    BU_PATH_BASENAME_EXTLESS) && bu_vls_strlen(&instance->name) > 0)
+	instance->schema.name = bu_vls_cstr(&instance->name);
+    profile = rt_arg_profile_find(instance->schema.name);
+    if (profile && profile->help)
+	instance->schema.help = profile->help;
+
+    while (bu_arg_option_is_valid(&rt_options[base_option_count]))
+	base_option_count++;
+    instance->options = (struct bu_arg_option *)bu_calloc(
+	base_option_count + 1, sizeof(struct bu_arg_option),
+	"RT argument options");
+    for (i = 0; i < base_option_count; i++) {
+	const char *canonical = rt_options[i].alias_of ? rt_options[i].alias_of :
+	    bu_arg_option_canonical(&rt_options[i]);
+	if (!rt_arg_profile_option_active(profile, canonical))
+	    continue;
+	instance->options[option_count++] = rt_options[i];
+    }
+
+    if (profile && profile->overrides) {
+	for (i = 0; profile->overrides[i].option; i++) {
+	    const struct rt_arg_option_override *override = &profile->overrides[i];
+	    size_t oi;
+
+	    for (oi = 0; oi < option_count; oi++) {
+		struct bu_arg_option *option = &instance->options[oi];
+		if (option->alias_of || !BU_STR_EQUAL(
+			bu_arg_option_canonical(option), override->option))
+		    continue;
+		if (override->canonical)
+		    option->canonical = override->canonical;
+		if (override->longopt)
+		    option->longopt = override->longopt;
+		if (override->argument)
+		    option->argument = override->argument;
+		if (override->help)
+		    option->help = override->help;
+		break;
+	    }
+	}
+    }
+
+    while (rt_help_groups[base_group_count].name)
+	base_group_count++;
+    instance->groups = (struct bu_arg_help_group *)bu_calloc(
+	base_group_count + 1, sizeof(struct bu_arg_help_group),
+	"RT argument groups");
+    for (i = 0; i < base_group_count; i++) {
+	size_t oi = rt_arg_option_index(rt_help_groups[i].first_option,
+	    base_option_count);
+	size_t end = i + 1 < base_group_count ?
+	    rt_arg_option_index(rt_help_groups[i + 1].first_option,
+		base_option_count) : base_option_count;
+
+	for (; oi < end; oi++) {
+	    const char *canonical;
+	    if (rt_options[oi].alias_of)
+		continue;
+	    canonical = bu_arg_option_canonical(&rt_options[oi]);
+	    if (!rt_arg_profile_option_active(profile, canonical))
+		continue;
+	    instance->groups[group_count] = rt_help_groups[i];
+	    instance->groups[group_count].first_option =
+		rt_arg_profile_canonical(profile, canonical);
+	    group_count++;
+	    break;
+	}
+    }
+
+    while (rt_option_visibility[base_visibility_count].option)
+	base_visibility_count++;
+    instance->visibility = (struct bu_arg_option_visibility *)bu_calloc(
+	base_visibility_count + 1, sizeof(struct bu_arg_option_visibility),
+	"RT argument visibility");
+    for (i = 0; i < base_visibility_count; i++) {
+	if (!rt_arg_profile_option_active(profile,
+		rt_option_visibility[i].option))
+	    continue;
+	instance->visibility[visibility_count] = rt_option_visibility[i];
+	instance->visibility[visibility_count].option =
+	    rt_arg_profile_canonical(profile, rt_option_visibility[i].option);
+	visibility_count++;
+    }
+
+    instance->presentation.groups = instance->groups;
+    instance->presentation.option_visibility = instance->visibility;
+    instance->schema.options = instance->options;
+    instance->schema.presentation = &instance->presentation;
+}
+
+static void
+rt_arg_schema_instance_free(struct rt_arg_schema_instance *instance)
+{
+    bu_free(instance->visibility, "RT argument visibility");
+    bu_free(instance->groups, "RT argument groups");
+    bu_free(instance->options, "RT argument options");
+    bu_vls_free(&instance->name);
+}
+
 
 int
 rt_arg_introspect(struct bu_vls *output, int argc, const char * const *argv)
 {
-    struct bu_arg_schema schema = rt_schema;
-    struct bu_arg_grammar grammar = {&schema, NULL, NULL};
-    struct bu_vls name = BU_VLS_INIT_ZERO;
+    struct rt_arg_schema_instance instance;
+    struct bu_arg_grammar grammar;
     int ret;
 
-    if (bu_path_component(&name, bu_getprogname(),
-	    BU_PATH_BASENAME_EXTLESS) && bu_vls_strlen(&name) > 0)
-	schema.name = bu_vls_cstr(&name);
+    rt_arg_schema_instance_init(&instance);
+    grammar.schema = &instance.schema;
+    grammar.tree = NULL;
+    grammar.forms = NULL;
     ret = bu_arg_introspect(output, &grammar, argc, argv);
-    bu_vls_free(&name);
+    rt_arg_schema_instance_free(&instance);
     return ret;
 }
 
@@ -1278,8 +1629,14 @@ rt_arg_introspect(struct bu_vls *output, int argc, const char * const *argv)
 char *
 rt_arg_help(const char *invocation)
 {
-    return bu_arg_schema_help_mode(&rt_schema, invocation,
+    struct rt_arg_schema_instance instance;
+    char *help;
+
+    rt_arg_schema_instance_init(&instance);
+    help = bu_arg_schema_help_mode(&instance.schema, invocation,
 	want_help > 1 ? BU_ARG_HELP_EXTENDED : BU_ARG_HELP_DEFAULT);
+    rt_arg_schema_instance_free(&instance);
+    return help;
 }
 
 
@@ -1291,6 +1648,7 @@ get_args(int argc, const char *argv[])
     int i;
     struct bu_vls msgs = BU_VLS_INIT_ZERO;
     const char **opt_argv = NULL;
+    struct rt_arg_schema_instance instance;
     struct rt_arg_state args = {0};
 
     /* Reset per-call state (supports re-entrant calls from cm_opt in do.c) */
@@ -1318,7 +1676,8 @@ get_args(int argc, const char *argv[])
     for (i = 0; i < argc - 1; i++)
 	opt_argv[i] = argv[i + 1];
 
-    operand_index = bu_arg_schema_parse(&rt_schema, &args, &msgs,
+    rt_arg_schema_instance_init(&instance);
+    operand_index = bu_arg_schema_parse(&instance.schema, &args, &msgs,
 	argc - 1, opt_argv);
     if (bu_vls_strlen(&msgs) > 0)
 	bu_log("%s", bu_vls_cstr(&msgs));
@@ -1326,6 +1685,7 @@ get_args(int argc, const char *argv[])
 
     if (operand_index < 0) {
 	bu_free(opt_argv, "rt argument copy");
+	rt_arg_schema_instance_free(&instance);
 	return -1;
     }
 
@@ -1343,6 +1703,7 @@ get_args(int argc, const char *argv[])
     /* Help requested */
     if (want_help) {
 	bu_free(opt_argv, "rt argument copy");
+	rt_arg_schema_instance_free(&instance);
 	return 0;
     }
 
@@ -1361,6 +1722,7 @@ get_args(int argc, const char *argv[])
     }
 
     bu_free(opt_argv, "rt argument copy");
+    rt_arg_schema_instance_free(&instance);
 
     /* Sanity checks */
     if (aspect <= 0.0)
