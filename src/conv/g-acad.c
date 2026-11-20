@@ -280,9 +280,11 @@ process_region(const struct db_full_path *pathp, union tree *curtree, struct db_
 	/* try */
 
 	union tree *ret_tree;
+	char *region_path = db_path_to_string(pathp);
 
-	printf("Attempting to process region %s\n", db_path_to_string(pathp));
-	fflush(stdout);
+	fprintf(fpe, "Attempting to process region %s\n", region_path);
+	bu_free(region_path, "region path");
+	fflush(fpe);
 	ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol);
 	if (ret_tree != curtree) {
 	    db_free_tree(curtree);
@@ -372,9 +374,10 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 	r = ret_tree->tr_d.td_r;
     else {
 	if (verbose) {
-	    printf("\tNothing left of this region after Boolean evaluation\n");
+	    char *region_path = db_path_to_string(pathp);
 	    fprintf(fpe, "WARNING: Nothing left after Boolean evaluation: %s\n",
-		    db_path_to_string(pathp));
+		    region_path);
+	    bu_free(region_path, "region path");
 	    fflush(fpe);
 	}
 	regions_written++; /* don't count as a failure */
@@ -467,7 +470,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
 	npercent = (float)(regions_converted * 100) / regions_tried;
 	tpercent = (float)(regions_written * 100) / regions_tried;
-	printf("Tried %zu regions, %zu conv. to NMG's %zu conv. to tri. nmgper = %.2f%% triper = %.2f%% \n",
+	fprintf(fpe, "Tried %zu regions, %zu conv. to NMG's %zu conv. to tri. nmgper = %.2f%% triper = %.2f%% \n",
 	       regions_tried, regions_converted, regions_written, npercent, tpercent);
     }
 
@@ -641,13 +644,13 @@ main(int argc, char **argv)
 
     if (regions_tried>0) {
 	percent = ((double)regions_converted * 100) / regions_tried;
-	printf("Tried %zu regions, %zu converted to NMG's successfully.  %g%%\n",
+	fprintf(fpe, "Tried %zu regions, %zu converted to NMG's successfully.  %g%%\n",
 	       regions_tried, regions_converted, percent);
     }
 
     if (regions_tried > 0) {
 	percent = ((double)regions_written * 100) / regions_tried;
-	printf("                  %zu triangulated successfully. %g%%\n",
+	fprintf(fpe, "                  %zu triangulated successfully. %g%%\n",
 	       regions_written, percent);
     }
 
