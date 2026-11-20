@@ -25,8 +25,6 @@
 
 #include "common.h"
 
-#include <errno.h>
-#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -51,9 +49,12 @@
 #include "bresource.h"
 #include "bsocket.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/file.h"
 /* bu/ipc.h removed - transport handled by libpkg */
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/process.h"
 #include "bu/snooze.h"
@@ -167,8 +168,8 @@ struct pkg_switch pkgswitch[] = {
 
 
 struct pkg_conn *pcsrv;	/* PKG connection to server */
-char *control_host;	/* name of host running controller */
-char *tcp_port;		/* TCP port on control_host */
+const char *control_host;	/* name of host running controller */
+const char *tcp_port;		/* TCP port on control_host */
 int debug = 0;		/* 0=off, 1=debug, 2=verbose */
 
 /*
@@ -178,8 +179,14 @@ int debug = 0;		/* 0=off, 1=debug, 2=verbose */
  */
 static char srv_auth_token[REMRT_AUTH_TOKEN_LEN + 1] = {0};
 
-char srv_usage[] = "Usage: rtsrv [-d] [-S token] [-x hex_flags] [-X hex_flags] [-I ipc-addr] control-host tcp-port [cmd]\n"
-		   "       rtsrv [-d] [-S token] [-x hex_flags] [-X hex_flags] -I ipc-addr\n";
+struct rtsrv_args {
+    int help;
+    int debug;
+    unsigned int rt_debug_mask;
+    unsigned int optical_debug_mask;
+    const char *auth_token;
+    const char *ipc_addr;
+};
 
 /* forward declarations for log/bomb hook helpers defined later in this file */
 static int rtsrv_log_hook(void *clientdata, void *str);
@@ -187,37 +194,91 @@ static int rtsrv_bomb_hook(void *clientdata, void *str);
 static void rtsrv_install_log_hook(void);
 
 static int
-rtsrv_parse_hex_mask(const char *arg, unsigned int *mask)
-{
-    unsigned long value;
-    char *end = NULL;
-
-    if (!arg || !arg[0] || !mask)
-	return 0;
-
-    errno = 0;
-    value = strtoul(arg, &end, 16);
-    if (errno == ERANGE || end == arg || *end != '\0' || value > UINT_MAX)
-	return 0;
-
-    *mask = (unsigned int)value;
-    return 1;
-}
-
-static int
-rtsrv_valid_auth_token(const char *token)
+rtsrv_auth_token_validate(struct bu_vls *msg, const char *token)
 {
     size_t i;
 
-    if (!token || strlen(token) != REMRT_AUTH_TOKEN_LEN)
-	return 0;
-
-    for (i = 0; i < REMRT_AUTH_TOKEN_LEN; i++) {
-	if (!isxdigit((unsigned char)token[i]))
-	    return 0;
+    if (!token || strlen(token) != REMRT_AUTH_TOKEN_LEN) {
+	if (msg)
+	    bu_vls_printf(msg, "session token must contain exactly %d hexadecimal characters\n",
+		REMRT_AUTH_TOKEN_LEN);
+	return -1;
     }
 
-    return 1;
+    for (i = 0; i < REMRT_AUTH_TOKEN_LEN; i++) {
+	if (!isxdigit((unsigned char)token[i])) {
+	    if (msg)
+		bu_vls_printf(msg, "session token contains a non-hexadecimal character\n");
+	    return -1;
+	}
+    }
+
+    return 0;
+}
+
+static const struct bu_arg_option rtsrv_options[] = {
+    BU_ARG_FLAG("h", "help", struct rtsrv_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_COUNTING_FLAG("d", "debug", struct rtsrv_args, debug,
+	BU_ARG_VALUE_FLAG,
+	"Stay in the foreground instead of daemonizing and enable protocol tracing written to standard error"),
+    BU_ARG_VALUE("x", "rt-debug", struct rtsrv_args, rt_debug_mask,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set the librt hexadecimal debug flags, with the same meaning as rt -x"),
+    BU_ARG_VALUE("X", "optical-debug", struct rtsrv_args, optical_debug_mask,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set the optical-shader hexadecimal debug flags, with the same meaning as rt -X"),
+    BU_ARG_VALUE_VALIDATE("S", "session-token", struct rtsrv_args, auth_token,
+	BU_ARG_VALUE_STRING, rtsrv_auth_token_validate, "token",
+	"Authenticate with the 64-character hexadecimal token printed by remrt; launched workers normally receive it automatically"),
+    BU_ARG_VALUE("I", "ipc-address", struct rtsrv_args, ipc_addr,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "address",
+	"Connect through the supplied local IPC channel instead of TCP; an address may also be inherited through PKG_ADDR"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand rtsrv_ipc_operands[] = {
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_operand rtsrv_tcp_operands[] = {
+    BU_ARG_OPERAND("control-host", BU_ARG_VALUE_STRING, 1, 1,
+	"Host running the remrt dispatcher", NULL),
+    BU_ARG_OPERAND("tcp-port", BU_ARG_VALUE_STRING, 1, 1,
+	"TCP port number or service used by the remrt dispatcher", NULL),
+    BU_ARG_OPERAND("command", BU_ARG_VALUE_STRING, 0, 1,
+	"Single command to send before exiting", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const char * const rtsrv_ipc_options[] = {"ipc-address", NULL};
+static const struct bu_arg_schema_case rtsrv_cases[] = {
+    BU_ARG_SCHEMA_CASE("ipc", "Connect through an explicit IPC channel",
+	BU_ARG_CONDITION_ANY_OPTION_PRESENT, rtsrv_ipc_options,
+	rtsrv_ipc_operands, NULL),
+    BU_ARG_SCHEMA_CASE_DEFAULT("tcp", "Connect to a remrt TCP dispatcher",
+	rtsrv_tcp_operands, NULL),
+    BU_ARG_SCHEMA_CASE_NULL
+};
+
+static const struct bu_arg_schema rtsrv_schema = BU_ARG_SCHEMA(
+    "rtsrv", "Run a remote ray-tracing worker for remrt", rtsrv_options,
+    NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, rtsrv_cases));
+
+static const struct bu_arg_grammar rtsrv_grammar = {
+    &rtsrv_schema, NULL, NULL
+};
+
+static int
+rtsrv_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&rtsrv_schema, "rtsrv");
+
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "rtsrv help");
+    return status;
 }
 
 __END_DECLS
@@ -225,70 +286,65 @@ __END_DECLS
 int
 main(int argc, char **argv)
 {
+    struct rtsrv_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    const char * const *operands;
+    size_t operand_count;
+    int introspection;
     int n;
+    int operand_index;
     pkg_mux_t *input_mux = NULL;
-    const char *ipc_addr = NULL;   /* set by -I flag; enables IPC mode */
 
     bu_setprogname(argv[0]);
 
-    if (argc < 2) {
-	fprintf(stderr, "%s", srv_usage);
-	return 1;
+    introspection = bu_arg_introspect(&msg, &rtsrv_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+
+    operand_index = bu_arg_schema_parse(&rtsrv_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 3;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return rtsrv_help(stdout, 0);
+
+    operands = (const char * const *)(argv + operand_index + 1);
+    operand_count = (size_t)(argc - operand_index - 1);
+    if ((args.ipc_addr && operand_count != 0) ||
+	(!args.ipc_addr && operand_count != 0 &&
+	 operand_count != 2 && operand_count != 3))
+	return rtsrv_help(stderr, 2);
+
     original_argc = argc;
     original_argv = bu_argv_dup(argc, (const char **)argv);
-    while (argc > 1 && argv[1][0] == '-') {
-	if (BU_STR_EQUAL(argv[1], "-d")) {
-	    debug++;
-	} else if (BU_STR_EQUAL(argv[1], "-x")) {
-	    if (argc < 3 || !rtsrv_parse_hex_mask(argv[2], &rt_debug)) {
-		fprintf(stderr, "rtsrv: -x requires a hexadecimal librt debug mask\n");
-		return 3;
-	    }
-	    argc--; argv++;
-	} else if (BU_STR_EQUAL(argv[1], "-X")) {
-	    if (argc < 3 || !rtsrv_parse_hex_mask(argv[2], &optical_debug)) {
-		fprintf(stderr, "rtsrv: -X requires a hexadecimal optical debug mask\n");
-		return 3;
-	    }
-	    argc--; argv++;
-	} else if (BU_STR_EQUAL(argv[1], "-S")) {
-	    /* Session authentication token from remrt */
-	    if (argc < 3 || !rtsrv_valid_auth_token(argv[2])) {
-		fprintf(stderr, "rtsrv: -S requires a 64-character hexadecimal token\n");
-		return 3;
-	    }
-	    bu_strlcpy(srv_auth_token, argv[2],
-		       sizeof(srv_auth_token));
-	    argc--; argv++;
-	} else if (BU_STR_EQUAL(argv[1], "-I")) {
-	    /* IPC connection address supplied by remrt via -I <addr>.
-	     * When present, no host/port positional args are needed.  */
-	    if (argc < 3) {
-		fprintf(stderr, "%s", srv_usage);
-		return 3;
-	    }
-	    ipc_addr = argv[2];
-	    argc--; argv++;
-	} else {
-	    fprintf(stderr, "%s", srv_usage);
-	    return 3;
-	}
-	argc--; argv++;
-    }
+    debug = args.debug;
+    rt_debug = args.rt_debug_mask;
+    optical_debug = args.optical_debug_mask;
+    if (args.auth_token)
+	bu_strlcpy(srv_auth_token, args.auth_token, sizeof(srv_auth_token));
 
     /* Determine IPC mode: -I flag takes explicit precedence; fall back to
      * the PKG_ADDR environment variable (PKG_ADDR_ENVVAR) set by
      * the parent before fork() (see add_host_local() in remrt.c).         */
     {
-	if (ipc_addr) {
-	    pcsrv = pkg_connect_addr(ipc_addr, pkgswitch, NULL);
+	if (args.ipc_addr) {
+	    pcsrv = pkg_connect_addr(args.ipc_addr, pkgswitch, NULL);
 	    if (pcsrv == PKC_ERROR || pcsrv == PKC_NULL) {
-		fprintf(stderr, "rtsrv: pkg_connect_addr(%s) failed\n", ipc_addr);
+		fprintf(stderr, "rtsrv: pkg_connect_addr(%s) failed\n", args.ipc_addr);
 		return 1;
 	    }
-	} else {
+	} else if (operand_count == 0) {
 	    pcsrv = pkg_connect_env(pkgswitch, NULL);
+	} else {
+	    pcsrv = PKC_ERROR;
 	}
 
 	if (pcsrv != PKC_ERROR && pcsrv != PKC_NULL) {
@@ -298,19 +354,17 @@ main(int argc, char **argv)
 	     * pkg_connect_addr/env wraps the already-inherited fd into a
 	     * pkg_conn so the rest of the code is transport-agnostic. */
 	    if (debug) {
-		const char *active_addr = ipc_addr ? ipc_addr : getenv(PKG_ADDR_ENVVAR);
+		const char *active_addr = args.ipc_addr ? args.ipc_addr : getenv(PKG_ADDR_ENVVAR);
 		fprintf(stderr, "rtsrv: IPC mode active (addr=%s)\n",
 			active_addr ? active_addr : "unknown");
 	    }
 	} else {
 	    /* Normal TCP mode */
-	    if (argc != 3 && argc != 4) {
-		fprintf(stderr, "%s", srv_usage);
-		return 2;
-	    }
+	    if (operand_count != 2 && operand_count != 3)
+		return rtsrv_help(stderr, 2);
 
-	    control_host = argv[1];
-	    tcp_port = argv[2];
+	    control_host = operands[0];
+	    tcp_port = operands[1];
 
 	    /* Note that the LIBPKG error logger can not be
 	     * "bu_log", as that can cause bu_log to be entered recursively.
@@ -363,9 +417,9 @@ main(int argc, char **argv)
     (void)signal(SIGPIPE, SIG_IGN);
 #endif
 
-    if (argc == 4) {
+    if (operand_count == 3) {
 	/* Slip one command to dispatcher */
-	(void)pkg_send(MSG_CMD, argv[3], strlen(argv[3])+1, pcsrv);
+	(void)pkg_send(MSG_CMD, operands[2], strlen(operands[2])+1, pcsrv);
 
 	/* Prevent chasing the package with an immediate TCP close */
 	bu_snooze(BU_SEC2USEC(1));

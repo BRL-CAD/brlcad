@@ -21,7 +21,7 @@ if(OpenSSL_FOUND OR OPENSSL_FOUND)
   target_compile_definitions(remrt PRIVATE HAVE_OPENSSL_RAND_H=1 HAVE_OPENSSL_SSL_H=1)
 endif()
 
-brlcad_addexec(rtsrv "../rt/usage.cpp;../rt/view.c;../rt/do.c;../rt/grid.c;../rt/heatgraph.c;../rt/opt.c;../rt/scanline.c;../rt/worker.c;rtsrv.c" "libdm;liboptical;libpkg;libicv")
+brlcad_addexec(rtsrv "../rt/usage.cpp;../rt/view.c;../rt/do.c;../rt/grid.c;../rt/heatgraph.c;../rt/opt.c;../rt/scanline.c;../rt/worker.c;rtsrv.c" "libdm;liboptical;libpkg;libicv" ARG_SCHEMA)
 target_include_directories(rtsrv BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 set_property(TARGET rtsrv APPEND PROPERTY COMPILE_DEFINITIONS "RTSRV")
 target_link_libraries(rtsrv ${WINSOCK_LIB})
