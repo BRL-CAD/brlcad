@@ -23,20 +23,67 @@
 
 #include "common.h"
 
-#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
 
 #include "vmath.h"
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/vls.h"
 #include "raytrace.h"
 #include "wdb.h"
 
-#if defined(HAVE_ISNAN) && !defined(HAVE_DECL_ISNAN) && !defined(isnan) && !defined(__cplusplus)
-extern int isnan(double x);
-#endif
+struct picket_fence_args {
+    int help;
+    int round_posts;
+};
+
+static const struct bu_arg_option picket_fence_options[] = {
+    BU_ARG_FLAG("r", "round-posts", struct picket_fence_args, round_posts,
+	"Add a round post at each waypoint"),
+    BU_ARG_FLAG("h", "help", struct picket_fence_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 0),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand picket_fence_operands[] = {
+    BU_ARG_OPERAND("filename", BU_ARG_VALUE_FILE, 1, 1,
+	"Output BRL-CAD database", NULL),
+    BU_ARG_OPERAND("prefix", BU_ARG_VALUE_STRING, 1, 1,
+	"Generated object name prefix", NULL),
+    BU_ARG_OPERAND_VALIDATE("height", BU_ARG_VALUE_NUMBER, 1, 1,
+	bu_arg_positive_number_validate, "Positive fence height in millimeters",
+	NULL),
+    BU_ARG_OPERAND_VALIDATE("spacing", BU_ARG_VALUE_NUMBER, 1, 1,
+	bu_arg_nonnegative_number_validate,
+	"Non-negative picket spacing in millimeters", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_operand picket_fence_waypoint_roles[] = {
+    BU_ARG_OPERAND("x", BU_ARG_VALUE_NUMBER, 1, 1, "X coordinate", NULL),
+    BU_ARG_OPERAND("y", BU_ARG_VALUE_NUMBER, 1, 1, "Y coordinate", NULL),
+    BU_ARG_OPERAND("z", BU_ARG_VALUE_NUMBER, 1, 1, "Z coordinate", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_operand_group picket_fence_operand_groups[] = {
+    BU_ARG_OPERAND_GROUP("waypoint", picket_fence_waypoint_roles, 2,
+	BU_ARG_COUNT_UNLIMITED, "Fence path waypoints"),
+    BU_ARG_OPERAND_GROUP_NULL
+};
+
+static const struct bu_arg_schema picket_fence_schema = BU_ARG_SCHEMA(
+    "picket_fence", "Create fence geometry along a three-dimensional path",
+    picket_fence_options, picket_fence_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(picket_fence_operand_groups, NULL, NULL, NULL,
+	NULL));
+
+static const struct bu_arg_grammar picket_fence_grammar = {
+    &picket_fence_schema, NULL, NULL
+};
 
 
 int
@@ -105,37 +152,48 @@ main(int argc, char *argv[])
     fastf_t zstep;
     unsigned char matcolor[3] = {0, 0, 0};
 
-    int post = 0;
+    struct picket_fence_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
-    if (argc < 11) {
-	fprintf(stderr, "Usage: picket_fence <filename> <prefix> <height> <spacing> [-r] <x0> <y0> <z0> ... <xn> <yn> <zn>\n");
-	fprintf(stderr, "       (for <xn> <yn> <zn>, need n >= 1)");
-	bu_exit(1,      "       (units mm)\n");
+    int introspection = bu_arg_introspect(&msg, &picket_fence_grammar,
+	argc - 1, (const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
 
-    bu_strlcpy(prefix, argv[2], sizeof(prefix));
-
-    height = (fastf_t)atof(argv[3]);
-    if (height <= 0)
-	bu_exit(1, "Invalid argument, height must be a positive value\n");
-
-    ps = atof(argv[4]);
-    if (ps < 0)
-	bu_exit(1, "Invalid argument, spacing must be non-negative\n");
-
-    if (BU_STR_EQUAL(argv[5], "-r")) {
-	post = 1;
-	argc--; argv++;
+    argc--;
+    argv++;
+    int operand_index = bu_arg_schema_parse_complete(&picket_fence_schema,
+	&args, &msg, argc, (const char **)argv);
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&picket_fence_schema, "picket_fence");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "picket_fence help");
+	return 0;
     }
 
-    fp_db = wdb_fopen(argv[1]);
+    argc -= operand_index;
+    argv += operand_index;
+    bu_strlcpy(prefix, argv[1], sizeof(prefix));
+
+    if (!bu_arg_number_from_str(NULL, &height, argv[2]) ||
+	!bu_arg_number_from_str(NULL, &ps, argv[3]))
+	bu_exit(1, "Internal error converting validated fence dimensions\n");
+
+    fp_db = wdb_fopen(argv[0]);
     if (fp_db == NULL) {
-	perror(argv[1]);
+	perror(argv[0]);
 	bu_exit(2, NULL);
     }
     mk_id(fp_db, "Picket Fence");
 
-    argc-=5; argv+=5; /* chomp, leave just the waypoints */
+    argc -= 4;
+    argv += 4;
 
     BU_LIST_INIT(&wm.l);
     BU_LIST_INIT(&wm2.l);
@@ -143,14 +201,13 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&swm.l);
 
     for (j = 0; j < (argc / 3) - 1; j++) {
-	x_0 = (fastf_t)atof(argv[0 + (3 * j)]);
-	y_0 = (fastf_t)atof(argv[1 + (3 * j)]);
-	z_0 = (fastf_t)atof(argv[2 + (3 * j)]);
-	x_1 = (fastf_t)atof(argv[3 + (3 * j)]);
-	y_1 = (fastf_t)atof(argv[4 + (3 * j)]);
-	z_1 = (fastf_t)atof(argv[5 + (3 * j)]);
-	if (isnan(x_0) || isnan(y_0) || isnan(z_0) || isnan(x_1) || isnan(y_1) || isnan(z_1))
-	    bu_exit(1, "Invalid argument, position is not a valid coordinate\n");
+	if (!bu_arg_number_from_str(NULL, &x_0, argv[0 + (3 * j)]) ||
+	    !bu_arg_number_from_str(NULL, &y_0, argv[1 + (3 * j)]) ||
+	    !bu_arg_number_from_str(NULL, &z_0, argv[2 + (3 * j)]) ||
+	    !bu_arg_number_from_str(NULL, &x_1, argv[3 + (3 * j)]) ||
+	    !bu_arg_number_from_str(NULL, &y_1, argv[4 + (3 * j)]) ||
+	    !bu_arg_number_from_str(NULL, &z_1, argv[5 + (3 * j)]))
+	    bu_exit(1, "Internal error converting validated waypoint coordinates\n");
 
 	width = sqrt(((x_1 - x_0) * (x_1 - x_0)) + ((y_1 - y_0) * (y_1 - y_0)));
 	pwidth = ((fastf_t)width /
@@ -184,7 +241,7 @@ main(int argc, char *argv[])
 	mk_addmember(bu_vls_cstr(&w1name), &wm.l, NULL, WMOP_SUBTRACT);
 	mk_addmember(bu_vls_cstr(&w2name), &wm.l, NULL, WMOP_SUBTRACT);
 
-	if (post) {
+	if (args.round_posts) {
 	    bu_vls_sprintf(&name, "%spost_c.s", prefix);
 	    mk_tgc(fp_db, bu_vls_cstr(&name), c0, c0h, c0a, c0b, c0c, c0d);
 	    mk_addmember(bu_vls_cstr(&name), &wm.l, NULL, WMOP_UNION);

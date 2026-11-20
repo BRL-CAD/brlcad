@@ -8,11 +8,11 @@ window_frame - create a BRL-CAD geometry database of rounded window frames
 
 == SYNOPSIS
 
-[source]
-----
-window_frame [-f_name.g_] [-n_#_] [-H_#_] [-w_#_] [-d_#_] [-r_#_] [-i_#_]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*window_frame* [*-f* _database.g_] [*-n* _count_] [*-H* _height_] [*-w* _width_] [*-d* _depth_]
+             [*-r* _radius_] [*-i* _material-width_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -26,9 +26,8 @@ Up to 256 identically sized frames may be generated in a single run. All
 dimensions are in millimeters. If invoked with no arguments, *window_frame*
 prints usage information and prompts interactively for each parameter;
 otherwise the values are taken from the command-line options below. Each
-option's value must be attached directly to its flag with no intervening space
-(for example *-H1618*, not *-H 1618*). Unspecified numeric values default to
-zero.
+short-option value may be attached or separated (for example, either
+*-H1618* or *-H 1618*). Unspecified numeric values default to zero.
 
 The resulting geometry can be inspected or rendered with the usual BRL-CAD
 tools such as *mged*(1) and *rt*(1).
@@ -36,29 +35,29 @@ tools such as *mged*(1) and *rt*(1).
 [[options]]
 == OPTIONS
 
-*-f*_name.g_::
+*-f* _name.g_, *--output* _name.g_::
   Name of the BRL-CAD *.g* database to create (256 characters max).
 
-*-n*_#_::
-  Number of window frames to create (up to 256).
+*-n* _count_, *--count* _count_::
+  Number of window frames to create, from 1 through 256.
 
-*-H*_#_::
-  Height of the window frame in millimeters.
+*-H* _height_, *--height* _height_::
+  Positive height of the window frame in millimeters.
 
-*-w*_#_::
-  Width of the window frame in millimeters.
+*-w* _width_, *--width* _width_::
+  Positive width of the window frame in millimeters.
 
-*-d*_#_::
-  Depth of the window frame in millimeters.
+*-d* _depth_, *--depth* _depth_::
+  Positive depth of the window frame in millimeters.
 
-*-r*_#_::
-  Radius of the rounded corners in millimeters.
+*-r* _radius_, *--radius* _radius_::
+  Positive radius of the rounded corners in millimeters.
 
-*-i*_#_::
-  Actual width of the frame material itself in millimeters.
+*-i* _material-width_, *--material-width* _material-width_::
+  Positive width of the frame material itself in millimeters.
 
-*-h*, *-?*::
-  Print a help/usage message and exit.
+*-h*, *--help*::
+  Print help and exit. The compatibility spelling *-?* behaves the same.
 
 [[examples]]
 == EXAMPLES

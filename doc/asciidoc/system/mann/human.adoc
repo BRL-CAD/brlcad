@@ -11,19 +11,9 @@ human - generate human models based on parameters like height
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
 *human* [*-A*] [*-b*] [*-H* _inches_] [*-L*] [*-m*] [*-n* _name_] [*-N* _count_] [*-p* _percent_]
-      [*-s* _pose_] [*-t*] [*-T*] [*-v*] [*-V*] [*-1* _inches_] [*-2* _inches_] [*-3* _inches_]
-      [*-4* _inches_] [*-5* _inches_] [*-6* _inches_] [*-7* _inches_] [*-8* _inches_]
-      [*-9* _inches_] [*-0* _inches_] [*-=* _inches_] [*-+* _inches_] [*-_* _inches_]
-      [*-Q* _inches_] [*-~* _inches_] [`-*` _inches_] [*-!* _inches_] [*-^* _inches_]
-      [*-%* _inches_] [*-$* _inches_] [*-#* _inches_] [*-@* _inches_] [*-Z* _inches_]
-      [*-Y* _inches_] [*-W* _inches_] *-h* [_raw_arguments_ ...]
+      [*-s* _pose_] [*-t*] [*-T*] [*-v*] [*-V*] *-h*[_all_] [_raw_arguments_ ...]
 *human* [*-A*] [*-b*] [*-H* _inches_] [*-L*] [*-m*] [*-n* _name_] [*-N* _count_] [*-p* _percent_]
-      [*-s* _pose_] [*-t*] [*-T*] [*-v*] [*-V*] [*-1* _inches_] [*-2* _inches_] [*-3* _inches_]
-      [*-4* _inches_] [*-5* _inches_] [*-6* _inches_] [*-7* _inches_] [*-8* _inches_]
-      [*-9* _inches_] [*-0* _inches_] [*-=* _inches_] [*-+* _inches_] [*-_* _inches_]
-      [*-Q* _inches_] [*-~* _inches_] [`-*` _inches_] [*-!* _inches_] [*-^* _inches_]
-      [*-%* _inches_] [*-$* _inches_] [*-#* _inches_] [*-@* _inches_] [*-Z* _inches_]
-      [*-Y* _inches_] [*-W* _inches_] [_top-level-name_]
+      [*-s* _pose_] [*-t*] [*-T*] [*-v*] [*-V*] [_top-level-name_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
@@ -37,43 +27,43 @@ It calculates body proportions based on target height, percentile, and stance/po
 == OPTIONS
 
 // BEGIN GENERATED BU_ARG OPTIONS
-*-A*::
+*-A*, *--automatic*::
   Use automatic default dimensions.
 
-*-b*::
+*-b*, *--bounding-boxes*::
   Draw bounding boxes.
 
-*-H* _inches_::
+*-H* _inches_, *--height*=_inches_::
   Set total height.
 
-*-L*, *-l*::
+*-L*, *--location*, *-l*::
   Set location interactively.
 
-*-m*::
+*-m*, *--manual*::
   Use interactive manual sizing.
 
-*-n* _name_::
+*-n* _name_, *--name*=_name_::
   Set top-level object name.
 
-*-N* _count_::
+*-N* _count_, *--grid-size*=_count_::
   Set squared troop formation size.
 
-*-p* _percent_::
+*-p* _percent_, *--percentile*=_percent_::
   Set percentile (1 through 99).
 
-*-s* _pose_::
+*-s* _pose_, *--stance*=_pose_::
   Set stance.
 
-*-t*::
+*-t*, *--write-stats*::
   Write bounding-box dimensions.
 
-*-T*::
+*-T*, *--read-stats*::
   Read bounding-box dimensions.
 
-*-v*::
+*-v*, *--write-measurements*::
   Write all human measurements.
 
-*-V*::
+*-V*, *--read-measurements*::
   Read all human measurements.
 
 *-1* _inches_::
@@ -151,8 +141,8 @@ It calculates body proportions based on target height, percentile, and stance/po
 *-W* _inches_::
   Set pelvis depth.
 
-*-h*, *-?*::
-  Print command help.
+*-h*[_all_], *--help*[=_all_]::
+  Print command help; use --help=all for measurement options.
 
 // END GENERATED BU_ARG OPTIONS
 

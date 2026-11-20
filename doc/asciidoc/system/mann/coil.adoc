@@ -11,7 +11,7 @@ coil - create a coil spring geometry object
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
 *coil* [*-d* _diameter_] [*-w* _diameter_] [*-H* _angle_] [*-p* _pitch_] [*-n* _turns_]
-     [*-s* _type_] [*-e* _type_] [*-S* _section_] [*-l* _length_] [*-L*] [*-h*] [_output_object_]
+     [*-s* _type_] [*-e* _type_] [*-S* _section_] [*-l* _length_] [*-L*] [_output_object_]
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
@@ -25,37 +25,37 @@ All dimensional parameters are in the current working units unless otherwise not
 == OPTIONS
 
 // BEGIN GENERATED BU_ARG OPTIONS
-*-d* _diameter_::
+*-d* _diameter_, *--mean-diameter*=_diameter_::
   Mean outer diameter.
 
-*-w* _diameter_::
+*-w* _diameter_, *--wire-diameter*=_diameter_::
   Wire diameter.
 
-*-H* _angle_::
+*-H* _angle_, *--helix-angle*=_angle_::
   Helix angle.
 
-*-p* _pitch_::
+*-p* _pitch_, *--pitch*=_pitch_::
   Pitch.
 
-*-n* _turns_::
+*-n* _turns_, *--turns*=_turns_::
   Number of turns.
 
-*-s* _type_::
+*-s* _type_, *--start-cap*=_type_::
   Start cap type (0 through 3).
 
-*-e* _type_::
+*-e* _type_, *--end-cap*=_type_::
   End cap type (0 through 3).
 
-*-S* _section_::
+*-S* _section_, *--section*=_section_::
   Section: turns,diameter,wire,angle,pitch,handedness.
 
-*-l* _length_::
+*-l* _length_, *--overall-length*=_length_::
   Overall length.
 
-*-L*::
+*-L*, *--left-handed*::
   Use left-handed winding.
 
-*-h*::
+*-h*, *--help*::
   Print command usage.
 
 // END GENERATED BU_ARG OPTIONS

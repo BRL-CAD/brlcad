@@ -5757,8 +5757,8 @@ main(int ac, char *av[])
 	    {"edcolor", "?", "help"},
 	    {"editit", "?", "help"},
 	    {"gqa", "?", "h"},
-	    {"human", "?", "h"},
-	    {"human", "l", "L"},
+	    {"human", "?", "help"},
+	    {"human", "l", "location"},
 	    {"ls", "s", "primitives"},
 	    {"make", "H", "help"},
 	    {"make", "?", "help"},
@@ -6650,9 +6650,9 @@ main(int ac, char *av[])
     schema_json = ged_cmd_schema_json("human");
     CHECK(schema_json &&
 	std::strstr(schema_json,
-	    "\"short\":\"?\",\"long\":\"\",\"canonical\":\"h\",\"alias_of\":\"h\"") &&
+	    "\"short\":\"?\",\"long\":\"\",\"canonical\":\"help\",\"alias_of\":\"help\"") &&
 	std::strstr(schema_json,
-	    "\"short\":\"l\",\"long\":\"\",\"canonical\":\"L\",\"alias_of\":\"L\""),
+	    "\"short\":\"l\",\"long\":\"\",\"canonical\":\"location\",\"alias_of\":\"location\""),
 	"human should publish its grouped help and typed location aliases");
     bu_free(schema_json, "human schema json");
     schema_json = NULL;

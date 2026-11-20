@@ -8,11 +8,11 @@ picket_fence - create a BRL-CAD database of a picket fence following 3D waypoint
 
 == SYNOPSIS
 
-[source]
-----
-picket_fence filename prefix height spacing [-r] x0 y0 z0 ... xn yn zn
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*picket_fence* [*-r*] _filename_ _prefix_ _height_ _spacing_ _x_ _y_ _z_ _x_ _y_ _z_
+             [(_x_ _y_ _z_) ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -37,10 +37,12 @@ The result can be viewed and edited with *mged*(1).
 [[options]]
 == OPTIONS
 
-*-r*::
+*-r*, *--round-posts*::
   Add a round post (a cylinder) at each waypoint in addition to the default
-  square posts. The flag, when present, must appear immediately after the
-  _spacing_ argument and before the first coordinate.
+  square posts.
+
+*-h*, *-?*, *--help*::
+  Print command help and exit.
 
 
 [[examples]]

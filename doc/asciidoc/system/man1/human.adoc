@@ -8,11 +8,13 @@ human - generate BRL-CAD human body models
 
 == SYNOPSIS
 
-[source]
-----
-human [options] [top_level_object_name]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*human* [*-A*] [*-b*] [*-H* _inches_] [*-L*] [*-m*] [*-n* _name_] [*-N* _count_] [*-p* _percent_]
+      [*-s* _pose_] [*-t*] [*-T*] [*-v*] [*-V*] *-h*[_all_] [_raw_arguments_ ...]
+*human* [*-A*] [*-b*] [*-H* _inches_] [*-L*] [*-m*] [*-n* _name_] [*-N* _count_] [*-p* _percent_]
+      [*-s* _pose_] [*-t*] [*-T*] [*-v*] [*-V*] [_top-level-name_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -35,37 +37,37 @@ edited with *mged*(1) or rendered with *rt*(1).
 [[options]]
 == OPTIONS
 
-*-A*::
+*-A*, *--automatic*::
   AutoMake defaults; generate a standard 50th-percentile human model.
 
-*-m*::
+*-m*, *--manual*::
   Manual sizing mode; prompt interactively for the dimensions of every
   body part, in inches.
 
-*-H* _#_::
+*-H* _inches_, *--height*=_inches_::
   Set the overall height of the model, in inches. Values below 1 are
   rejected and the default height of 68 inches is used instead.
 
-*-L*, *-l*::
+*-L*, *-l*, *--location*::
   Prompt interactively for the X, Y, and Z coordinates (in inches) of the
   model's center point, measured at the feet. The default location is the
   origin.
 
-*-b*::
+*-b*, *--bounding-boxes*::
   Generate bounding boxes for each body part of the model.
 
-*-n* _name_::
+*-n* _name_, *--name*=_name_::
   Set the bounding region (top-level object) name. The default is
   _Body.c_. A name given as the final positional argument overrides this.
 
-*-N* _#_::
+*-N* _count_, *--grid-size*=_count_::
   Set the number of models to generate. The value is squared, producing an
   _N_ by _N_ grid of human models. Values of 1 or less default to a 4x4
   (16-model) formation. In this multi-model mode the individual models are
   named using the top-level name as a prefix (e.g. _Body.c0_, _Body.c1_,
   ...) and are all gathered under a top-level combination named _Crowd.c_.
 
-*-s* _#_::
+*-s* _pose_, *--stance*=_pose_::
   Set the model's stance. Supported values are: +
   0 - Stand +
   1 - Sit +
@@ -75,34 +77,110 @@ edited with *mged*(1) or rendered with *rt*(1).
   5 - Captain +
   999 - Custom (prompts interactively for limb angles)
 
-*-p* _#_::
+*-p* _percent_, *--percentile*=_percent_::
   Set the percentile of the model, clamped to the range 1-99. This option
   is parsed but not yet implemented and currently has no effect on the
   generated dimensions.
 
-*-t*::
+*-t*, *--write-stats*::
   Write bounding-box dimensions (height, width, depth) of the model to a
   file named _stats.txt_.
 
-*-T*::
+*-T*, *--read-stats*::
   Read bounding-box dimensions from a file named _stats.txt_ to override
   the computed values.
 
-*-v*::
+*-v*, *--write-measurements*::
   Write a verbose record of every measurement and setting used to build
   the model to a file named _verbose.txt_.
 
-*-V*::
+*-V*, *--read-measurements*::
   Read all model dimensions from a file named _verbose.txt_.
 
-*-h*, *-?*::
-  Print a usage message and exit.
+*-h*[_all_], *-?*[_all_], *--help*[=_all_]::
+  Print a usage message and exit. The optional value _all_ includes the
+  advanced measurement options.
 
-In addition, *human* accepts a set of single-character "wizard" options
-(the digits _0_-_9_ and the symbols _= + _ * ^ % $ # @ ! ~ Q Z Y W_), each
-taking a numeric argument that sets one individual body measurement in
-inches. These are intended for use by automated front ends and are not
-meant to be supplied directly.
+=== Advanced Measurement Options
+
+The following single-character options set individual body measurements in
+inches. They are intended primarily for automated front ends and are shown by
+*--help=all* rather than the default help output.
+
+*-1* _inches_::
+  Set head size.
+
+*-2* _inches_::
+  Set neck length.
+
+*-3* _inches_::
+  Set neck width.
+
+*-4* _inches_::
+  Set upper torso length.
+
+*-5* _inches_::
+  Set lower torso length.
+
+*-6* _inches_::
+  Set shoulder width.
+
+*-7* _inches_::
+  Set abdomen width.
+
+*-8* _inches_::
+  Set pelvis width.
+
+*-9* _inches_::
+  Set upper arm width.
+
+*-0* _inches_::
+  Set upper arm length.
+
+*-=* _inches_::
+  Set lower arm length.
+
+*-+* _inches_::
+  Set elbow width.
+
+*-_* _inches_::
+  Set wrist width.
+
+*-Q* _inches_::
+  Set hand length.
+
+*-~* _inches_::
+  Set hand width.
+
+`-*` _inches_::
+  Set thigh length.
+
+*-!* _inches_::
+  Set thigh width.
+
+*-^* _inches_::
+  Set calf length.
+
+*-%* _inches_::
+  Set knee width.
+
+*-$* _inches_::
+  Set foot length.
+
+*-#* _inches_::
+  Set ankle width.
+
+*-@* _inches_::
+  Set toe width.
+
+*-Z* _inches_::
+  Set shoulder depth.
+
+*-Y* _inches_::
+  Set abdomen depth.
+
+*-W* _inches_::
+  Set pelvis depth.
 
 [[examples]]
 == EXAMPLES

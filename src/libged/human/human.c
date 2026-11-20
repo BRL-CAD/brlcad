@@ -85,6 +85,7 @@
 #include <limits.h>
 
 #include "bu/arg.h"
+#include "bu/malloc.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -1713,36 +1714,51 @@ human_opt_calf_length(struct bu_vls *msg, const char *arg, void *set_var)
     return ret;
 }
 
+static int
+human_opt_help(struct bu_vls *msg, const char *arg, void *set_var)
+{
+    if (arg && !BU_STR_EQUAL(arg, "all")) {
+	if (msg)
+	    bu_vls_strcat(msg, "--help accepts only the optional value 'all'\n");
+	return -1;
+    }
+    if (set_var)
+	*((int *)set_var) = arg ? 2 : 1;
+    return 0;
+}
+
 #define HUMAN_INCH_OPTION(_short, _field, _help) \
     BU_ARG_CUSTOM(_short, NULL, struct human_args, _field, human_opt_inches, \
 	"inches", _help)
 static const struct bu_arg_option human_options[] = {
-    BU_ARG_CUSTOM_FLAG("A", NULL, "A", struct human_args, self,
+    BU_ARG_CUSTOM_FLAG("A", "automatic", "automatic", struct human_args, self,
 	human_opt_auto, "Use automatic default dimensions"),
-    BU_ARG_CUSTOM_FLAG("b", NULL, "b", struct human_args, self,
-	human_opt_boxes, "Draw bounding boxes"),
-    BU_ARG_CUSTOM("H", NULL, struct human_args, self, human_opt_height,
+    BU_ARG_CUSTOM_FLAG("b", "bounding-boxes", "bounding-boxes",
+	struct human_args, self, human_opt_boxes, "Draw bounding boxes"),
+    BU_ARG_CUSTOM("H", "height", struct human_args, self, human_opt_height,
 	"inches", "Set total height"),
-    BU_ARG_CUSTOM_FLAG("L", NULL, "L", struct human_args, self,
+    BU_ARG_CUSTOM_FLAG("L", "location", "location", struct human_args, self,
 	human_opt_location, "Set location interactively"),
-    BU_ARG_ALIAS("l", NULL, "L", 0),
-    BU_ARG_CUSTOM_FLAG("m", NULL, "m", struct human_args, self,
+    BU_ARG_ALIAS("l", NULL, "location", 0),
+    BU_ARG_CUSTOM_FLAG("m", "manual", "manual", struct human_args, self,
 	human_opt_manual, "Use interactive manual sizing"),
-    BU_ARG_VALUE("n", NULL, struct human_args, name, BU_ARG_VALUE_STRING,
+    BU_ARG_VALUE("n", "name", struct human_args, name, BU_ARG_VALUE_STRING,
 	BU_ARG_REQUIRED, "name", "Set top-level object name"),
-    BU_ARG_VALUE("N", NULL, struct human_args, soldiers, BU_ARG_VALUE_INTEGER,
-	BU_ARG_REQUIRED, "count", "Set squared troop formation size"),
-    BU_ARG_VALUE("p", NULL, struct human_args, percent, BU_ARG_VALUE_INTEGER,
-	BU_ARG_REQUIRED, "percent", "Set percentile (1 through 99)"),
-    BU_ARG_VALUE("s", NULL, struct human_args, pose, BU_ARG_VALUE_INTEGER,
+    BU_ARG_VALUE("N", "grid-size", struct human_args, soldiers,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "count",
+	"Set squared troop formation size"),
+    BU_ARG_VALUE("p", "percentile", struct human_args, percent,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "percent",
+	"Set percentile (1 through 99)"),
+    BU_ARG_VALUE("s", "stance", struct human_args, pose, BU_ARG_VALUE_INTEGER,
 	BU_ARG_REQUIRED, "pose", "Set stance"),
-    BU_ARG_FLAG("t", NULL, struct human_args, textwrite,
+    BU_ARG_FLAG("t", "write-stats", struct human_args, textwrite,
 	"Write bounding-box dimensions"),
-    BU_ARG_FLAG("T", NULL, struct human_args, textread,
+    BU_ARG_FLAG("T", "read-stats", struct human_args, textread,
 	"Read bounding-box dimensions"),
-    BU_ARG_FLAG("v", NULL, struct human_args, verbwrite,
+    BU_ARG_FLAG("v", "write-measurements", struct human_args, verbwrite,
 	"Write all human measurements"),
-    BU_ARG_FLAG("V", NULL, struct human_args, verbread,
+    BU_ARG_FLAG("V", "read-measurements", struct human_args, verbread,
 	"Read all human measurements"),
     HUMAN_INCH_OPTION("1", head_size, "Set head size"),
     HUMAN_INCH_OPTION("2", neck_length, "Set neck length"),
@@ -1772,8 +1788,10 @@ static const struct bu_arg_option human_options[] = {
     HUMAN_INCH_OPTION("Z", shoulder_depth, "Set shoulder depth"),
     HUMAN_INCH_OPTION("Y", ab_depth, "Set abdomen depth"),
     HUMAN_INCH_OPTION("W", pelvis_depth, "Set pelvis depth"),
-    BU_ARG_FLAG("h", NULL, struct human_args, help, "Print command help"),
-    BU_ARG_ALIAS("?", NULL, "h", 0),
+    BU_ARG_ATTACHED_OPTIONAL("h", "help", "help", struct human_args, help,
+	human_opt_help, "all",
+	"Print command help; use --help=all for measurement options"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
     BU_ARG_OPTION_NULL
 };
 #undef HUMAN_INCH_OPTION
@@ -1787,7 +1805,7 @@ static const struct bu_arg_operand human_help_operands[] = {
 	BU_ARG_COUNT_UNLIMITED, "Arguments ignored when requesting help", NULL),
     BU_ARG_OPERAND_NULL
 };
-static const char * const human_help_option[] = {"h", NULL};
+static const char * const human_help_option[] = {"help", NULL};
 static const struct bu_arg_schema_case human_cases[] = {
     BU_ARG_SCHEMA_CASE("help", "Display command help",
 	BU_ARG_CONDITION_ANY_OPTION_PRESENT, human_help_option,
@@ -1796,9 +1814,43 @@ static const struct bu_arg_schema_case human_cases[] = {
 	human_operands, NULL),
     BU_ARG_SCHEMA_CASE_NULL
 };
-static const struct bu_arg_schema human_cmd_schema =
-    BU_ARG_SCHEMA_CASED("human", "Generate a parameterized human model",
-	human_options, BU_ARG_PARSE_OPTIONS_FIRST, human_cases);
+static const struct bu_arg_option_visibility human_option_visibility[] = {
+    BU_ARG_OPTION_VISIBILITY("1", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("2", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("3", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("4", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("5", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("6", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("7", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("8", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("9", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("0", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("=", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("+", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("_", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("Q", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("~", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("*", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("!", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("^", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("%", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("$", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("#", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("@", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("Z", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("Y", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("W", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY_NULL
+};
+static const struct bu_arg_presentation human_presentation =
+    BU_ARG_PRESENTATION(NULL, human_option_visibility, NULL);
+#define HUMAN_SCHEMA_METADATA \
+    NULL, {NULL, NULL, NULL, human_cases, BU_ARG_TERMINAL_HELP, NULL, 0}
+static const struct bu_arg_schema human_cmd_schema = BU_ARG_SCHEMA_PRESENTED(
+    "human", "Generate a parameterized human model", human_options, NULL,
+    BU_ARG_PARSE_OPTIONS_FIRST, HUMAN_SCHEMA_METADATA,
+    &human_presentation);
+#undef HUMAN_SCHEMA_METADATA
 
 /* Process command line arguments, all 43 of them */
 static int
@@ -1861,7 +1913,12 @@ read_args(struct ged *gedp, int argc, const char **argv, char *topLevel,
 	argv += operand_index;
     }
     if (args.help) {
-	ged_cmd_help_append(gedp->ged_result_str, command, command);
+	char *help = bu_arg_schema_help_mode(&human_cmd_schema, command,
+	    args.help > 1 ? BU_ARG_HELP_EXTENDED : BU_ARG_HELP_DEFAULT);
+	if (help) {
+	    bu_vls_strcat(gedp->ged_result_str, help);
+	    bu_free(help, "human command help");
+	}
 	return GED_HELP;
     }
     dude->textwrite = args.textwrite;
