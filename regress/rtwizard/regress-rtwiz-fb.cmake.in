@@ -1,0 +1,74 @@
+# Values set at CMake configure time
+set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
+set(INPUTFILE "@INPUT_FILE@")
+set(BIN_DIR "@BIN_DIR@")
+set(HAVE_TLS "@RTWIZARD_HAVE_TLS@")
+
+string(REPLACE "\\" "" RTWIZ "${EXEC}")
+if(NOT EXISTS "${RTWIZ}")
+  message(FATAL_ERROR "rtwizard not found at ${RTWIZ}")
+endif()
+
+get_filename_component(BDIR "${RTWIZ}" DIRECTORY)
+string(REGEX REPLACE "${BIN_DIR}$" "" RDIR "${BDIR}")
+set(SRCFILE "${RDIR}/${INPUTFILE}")
+
+function(rtwizard_fb_render transport)
+  set(image "${CBDIR}/rtwizard_fb_${transport}.pix")
+  set(log "${CBDIR}/rtwizard_fb_${transport}.log")
+  file(REMOVE "${image}" "${log}")
+
+  if(transport STREQUAL "ipc")
+    set(transport_args --fbserv-device /dev/mem)
+  else()
+    set(transport_args --fbserv-port 0)
+  endif()
+
+  set(command_prefix)
+  if(transport STREQUAL "tls")
+    set(command_prefix "${CMAKE_COMMAND}" -E env FBSERV_TLS=1)
+  endif()
+
+  execute_process(
+    COMMAND
+      ${command_prefix}
+      "${RTWIZ}"
+      --no-gui
+      --input-file "${SRCFILE}"
+      --output-file "${image}"
+      --color-objects all.g
+      --type A
+      --benchmark
+      --size 8
+      --log-file "${log}"
+      ${transport_args}
+    RESULT_VARIABLE render_result
+    OUTPUT_VARIABLE render_stdout
+    ERROR_VARIABLE render_stderr
+  )
+  if(render_result OR NOT EXISTS "${image}" OR NOT EXISTS "${log}")
+    message(
+      FATAL_ERROR
+      "RtWizard ${transport} framebuffer render failed (${render_result}):\n${render_stdout}\n${render_stderr}"
+    )
+  endif()
+
+  file(READ "${log}" render_log)
+  if(transport STREQUAL "ipc")
+    if(NOT render_log MATCHES "Starting managed framebuffer server over local IPC|Local framebuffer IPC is unavailable")
+      message(FATAL_ERROR "RtWizard did not attempt local IPC before TCP fallback:\n${render_log}")
+    endif()
+  else()
+    if(render_log MATCHES "local IPC" OR NOT render_log MATCHES "TCP framebuffer server")
+      message(FATAL_ERROR "RtWizard did not honor explicit TCP framebuffer selection:\n${render_log}")
+    endif()
+  endif()
+
+  file(REMOVE "${image}" "${log}")
+endfunction()
+
+rtwizard_fb_render(ipc)
+rtwizard_fb_render(tcp)
+if(HAVE_TLS)
+  rtwizard_fb_render(tls)
+endif()

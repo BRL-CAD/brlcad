@@ -36,6 +36,8 @@ image interactively.  Given sufficient options on the command line it runs
 non-interactively, which is useful for scripting and bulk rendering.  If a
 command line invocation lacks enough information to produce the requested
 image, *rtwizard* falls back to the GUI unless *--no-gui* is given.
+The command-line renderer does not require Tcl.  The graphical interface is
+available only in builds configured with Tcl/Tk support.
 
 The kind of image produced is governed by the *--type* option, or inferred
 from which object lists are supplied.  The six picture types are:
@@ -185,14 +187,20 @@ preferred.
   after image generation.
 
 *-p* _#_, *--fbserv-port* _#_::
-  TCP port for the *fbserv*(1) framebuffer.  An existing framebuffer server
-  may be reused; in that case *rtwizard* leaves it open after rendering.
+  Force TCP framebuffer transport on the specified port instead of local
+  IPC.  An existing TCP framebuffer server may be reused; in that case
+  *rtwizard* leaves it open after rendering.
 
 *--benchmark*::
   Benchmark mode: disable randomness for reproducible timing.
 
 *--cpu-count* _#_::
   Number of CPUs to use.
+
+*--process-timeout* _seconds_::
+  Maximum runtime for each rendering subprocess.  If the limit is reached,
+  rtwizard terminates the subprocess and reports an error.  A value of zero
+  disables the deadline (default 0).
 
 *--pid-file* _filename_::
   File used for tracking process IDs.

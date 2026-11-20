@@ -1,0 +1,57 @@
+set render_size 64
+set expected_bytes [expr {$render_size * $render_size * 3}]
+set render_file [file join [pwd] ert.pix]
+set framebuffer_file [file join [pwd] ert-fb.pix]
+set timeout_ms 30000
+
+proc read_binary_file {path} {
+    set channel [open $path rb]
+    set contents [read $channel]
+    close $channel
+    return $contents
+}
+
+proc wait_for_render {render_file expected_bytes timeout_ms} {
+    set deadline [expr {[clock milliseconds] + $timeout_ms}]
+    while {[clock milliseconds] < $deadline} {
+	update
+	if {[file exists $render_file] &&
+	    [file size $render_file] == $expected_bytes} {
+	    return
+	}
+	after 25
+    }
+    set actual_bytes 0
+    if {[file exists $render_file]} {
+	set actual_bytes [file size $render_file]
+    }
+    error "FAIL: ERT output has $actual_bytes bytes, expected $expected_bytes"
+}
+
+proc wait_for_framebuffer {render_file framebuffer_file timeout_ms} {
+    set expected [read_binary_file $render_file]
+    binary scan $expected H* expected_hex
+    if {![regexp {[1-9a-f]} $expected_hex]} {
+	error "FAIL: ERT produced a blank image"
+    }
+    set deadline [expr {[clock milliseconds] + $timeout_ms}]
+    while {[clock milliseconds] < $deadline} {
+	update
+	screengrab -F --format pix $framebuffer_file
+	if {[read_binary_file $framebuffer_file] eq $expected} {
+	    return
+	}
+	after 25
+    }
+    error "FAIL: embedded framebuffer did not receive the ERT image"
+}
+
+attach -s $render_size swrast
+make ert.s sph
+draw ert.s
+autoview
+file delete -force $render_file $framebuffer_file
+ert -P 1 -H 0 -o $render_file
+wait_for_render $render_file $expected_bytes $timeout_ms
+wait_for_framebuffer $render_file $framebuffer_file $timeout_ms
+puts "PASS headless ERT framebuffer render"

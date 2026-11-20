@@ -452,9 +452,19 @@ proc do_Raytrace { id prog_name} {
     }
 
     winset $rt_control($id,cooked_src)
-    set rt_cmd $prog_name
+    set use_ert 0
+    if {$prog_name eq "_mged_rt" && $rt_control(has_embedded_fb) &&
+	[winfo exists $rt_control($id,half_baked_dest)] &&
+	$rt_control($id,cooked_src) eq $rt_control($id,half_baked_dest)} {
+	set use_ert 1
+    }
+    if {$use_ert} {
+	set rt_cmd ert
+    } else {
+	set rt_cmd $prog_name
+    }
 
-    if {$rt_control($id,cooked_dest) != ""} {
+    if {!$use_ert && $rt_control($id,cooked_dest) != ""} {
 	append rt_cmd " -F$rt_control($id,cooked_dest)"
     }
 

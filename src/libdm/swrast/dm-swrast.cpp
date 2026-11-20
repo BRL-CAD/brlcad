@@ -243,6 +243,15 @@ swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
 
     dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
+    if (dmp->i->dm_width > 0)
+	privars->v->gv_width = dmp->i->dm_width;
+    else
+	dmp->i->dm_width = privars->v->gv_width;
+    if (dmp->i->dm_height > 0)
+	privars->v->gv_height = dmp->i->dm_height;
+    else
+	dmp->i->dm_height = privars->v->gv_height;
+
     if (bu_vls_strlen(&dmp->i->dm_pathName) == 0)
 	bu_vls_printf(&dmp->i->dm_pathName, ".dm_swrast%d", count);
     ++count;

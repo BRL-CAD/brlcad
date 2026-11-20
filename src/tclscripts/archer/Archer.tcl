@@ -1080,7 +1080,6 @@ package provide Archer 1.0
 
 	$itk_component(rtcntrl) configure -fb_enabled 1
 
-	set port [$itk_component(ged) listen 0]
     } elseif {$len == 5} {
 	set fh [lindex $_batch_list 0]
 	set port [lindex $_batch_list 1]
@@ -1107,7 +1106,7 @@ package provide Archer 1.0
 
     if {$mTreeMode == $TREE_MODE_TREE} {
 	if {$len == 0} {
-	    eval $itk_component(ged) rtwizard -C [list $bcolor] -w $w -n $n -p $port -c $mColorObjects
+	    eval $itk_component(ged) rtwizard -C [list $bcolor] -w $w -n $n -c $mColorObjects
 	} else {
 	    puts $fh "catch {exec \"$rtwizname\" --no-gui --input $dbname -C [list $bcolor] -w $w -n $n -p $port -c $mColorObjects --viewsize $viewsize --orientation [list $orientation] --eye_pt [list $eye_pt]}"
 	}
@@ -1124,7 +1123,7 @@ package provide Archer 1.0
 			--eye_pt [list $eye_pt] \
 			-C [list $bcolor] --line-color [list $ecolor] \
 			--non-line-color [list $necolor] \
-			-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
+			-w $w -n $n -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
 				 -G $mRtWizardGhostIntensity -O $mRtWizardOccMode
 		} else {
 		    $itk_component(ged) refresh_off
@@ -1148,7 +1147,7 @@ package provide Archer 1.0
 			--eye_pt [list $eye_pt] \
 			-C [list $bcolor] --line-color [list $ecolor] \
 			--non-line-color [list $necolor] \
-			-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
+			-w $w -n $n -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
 			-G $mRtWizardGhostIntensity -O $mRtWizardOccMode]
 		}
 	    } else {
@@ -1157,7 +1156,7 @@ package provide Archer 1.0
 		    eval $itk_component(ged) rtwizard \
 			--eye_pt [list $eye_pt] \
 			-C [list $bcolor] --line-color [list $ecolor] \
-			-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
+			-w $w -n $n -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
 			-G $mRtWizardGhostIntensity -O $mRtWizardOccMode
 		}  {
 		    $itk_component(ged) refresh_off
@@ -1180,7 +1179,7 @@ package provide Archer 1.0
 		    eval $itk_component(ged) rtwizard \
 			--eye_pt [list $eye_pt] \
 			-C [list $bcolor] --line-color [list $ecolor] \
-			-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
+			-w $w -n $n -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
 			-G $mRtWizardGhostIntensity -O $mRtWizardOccMode
 		}
 	    }

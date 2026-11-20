@@ -39,17 +39,22 @@
 
 #include "../ged_private.h"
 
-int
-_ged_run_rtwizard(struct ged *gedp, int cmd_len, const char **gd_rt_cmd)
+static int
+_ged_run_rtwizard(struct ged *gedp, int cmd_len, const char **gd_rt_cmd,
+    const struct bu_process_create_info *create_info)
 {
     struct ged_subprocess *run_rtp;
     struct bu_process *p;
 
     /* rtwizard reports progress on stderr, but merging also prevents an
      * unobserved stdout pipe from filling while the event loop watches it. */
-    bu_process_create(&p, (const char **)gd_rt_cmd, BU_PROCESS_OUT_EQ_ERR);
+    struct bu_process_create_info process_info = {0};
+    if (create_info)
+	process_info = *create_info;
+    process_info.opts |= BU_PROCESS_OUT_EQ_ERR;
+    bu_process_create_ex(&p, (const char **)gd_rt_cmd, &process_info);
 
-    if (bu_process_pid(p) == -1) {
+    if (!p || bu_process_pid(p) == -1) {
 	bu_vls_printf(gedp->ged_result_str, "\nunable to successfully launch subprocess: ");
 	for (int i = 0; i < cmd_len; i++) {
 	    bu_vls_printf(gedp->ged_result_str, "%s ", gd_rt_cmd[i]);
@@ -83,6 +88,7 @@ ged_rtwizard_core(struct ged *gedp, int argc, const char *argv[])
     char **vp;
     int i;
     char pstring[32];
+    char fbstring[32];
     int args;
     quat_t quat;
     vect_t eye_model;
@@ -94,6 +100,9 @@ ged_rtwizard_core(struct ged *gedp, int argc, const char *argv[])
     int gd_rt_cmd_len = 0;
     int ret = BRLCAD_OK;
     int default_objs = 1;
+    int use_embedded_fb = 1;
+    int using_ipc = 0;
+    char **fb_target_arg = NULL;
 
     const char *bin;
     char rtscript[256] = {0};
@@ -110,6 +119,13 @@ ged_rtwizard_core(struct ged *gedp, int argc, const char *argv[])
      * object default: the geometry in the active view.  Explicit role lists
      * continue to take precedence. */
     for (i = 1; i < argc; i++) {
+	if (BU_STR_EQUAL(argv[i], "-o") || BU_STR_EQUAL(argv[i], "--output") ||
+	    BU_STR_EQUAL(argv[i], "-d") || BU_STR_EQUAL(argv[i], "--fbserv-device") ||
+	    BU_STR_EQUAL(argv[i], "-p") || BU_STR_EQUAL(argv[i], "--fbserv-port") ||
+	    bu_strncmp(argv[i], "--output=", 9) == 0 ||
+	    bu_strncmp(argv[i], "--fbserv-device=", 18) == 0 ||
+	    bu_strncmp(argv[i], "--fbserv-port=", 14) == 0)
+	    use_embedded_fb = 0;
 	if (BU_STR_EQUAL(argv[i], "-c") || BU_STR_EQUAL(argv[i], "--color-objects") ||
 	    BU_STR_EQUAL(argv[i], "-l") || BU_STR_EQUAL(argv[i], "--line-objects") ||
 	    BU_STR_EQUAL(argv[i], "-g") || BU_STR_EQUAL(argv[i], "--ghost-objects") ||
@@ -117,7 +133,6 @@ ged_rtwizard_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_strncmp(argv[i], "--line-objects=", 15) == 0 ||
 	    bu_strncmp(argv[i], "--ghost-objects=", 16) == 0) {
 	    default_objs = 0;
-	    break;
 	}
     }
 
@@ -126,12 +141,17 @@ ged_rtwizard_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    if (use_embedded_fb && !gedp->ged_fbs)
+	use_embedded_fb = 0;
+
     if (gedp->ged_gvp->gv_perspective > 0)
 	/* rtwizard --no_gui -perspective p -i db.g --viewsize size --orientation "A B C D" --eye_pt "X Y Z" */
-	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2 + 2 + (default_objs ? (int)ged_who_argc(gedp) : 0);
+	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2 + 2 +
+	    (use_embedded_fb ? 2 : 0) + (default_objs ? (int)ged_who_argc(gedp) : 0);
     else
 	/* rtwizard --no_gui -i db.g --viewsize size --orientation "A B C D" --eye_pt "X Y Z" */
-	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2 + (default_objs ? (int)ged_who_argc(gedp) : 0);
+	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2 +
+	    (use_embedded_fb ? 2 : 0) + (default_objs ? (int)ged_who_argc(gedp) : 0);
 
     gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
@@ -168,6 +188,12 @@ ged_rtwizard_core(struct ged *gedp, int argc, const char *argv[])
     *vp++ = "-i";
     *vp++ = gedp->dbip->dbi_filename;
 
+    if (use_embedded_fb) {
+	*vp++ = "-p";
+	fb_target_arg = vp;
+	*vp++ = "0";
+    }
+
     /* Append all args */
     for (i = 1; i < argc; i++)
 	*vp++ = (char *)argv[i];
@@ -188,7 +214,45 @@ ged_rtwizard_core(struct ged *gedp, int argc, const char *argv[])
 
     gd_rt_cmd_len = vp - gd_rt_cmd;
 
-    ret = _ged_run_rtwizard(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd);
+    struct bu_process_create_info create_info = {0};
+    const char *env_overrides[3] = {NULL, NULL, NULL};
+    int inherit_fds[2] = {-1, -1};
+    char auth_env[sizeof("FBSERV_TOKEN=") +
+	sizeof(gedp->ged_fbs->fbs_auth_token)] = {0};
+    if (use_embedded_fb) {
+	if (gedp->ged_fbs->fbs_open_ipc_client_handler &&
+	    _ged_open_fbs_ipc(gedp, &create_info, env_overrides,
+		inherit_fds) == BRLCAD_OK) {
+	    using_ipc = 1;
+	} else {
+	    struct fbserv_obj *fbs = gedp->ged_fbs;
+	    if (!fbs->fbs_is_listening || !fbs->fbs_listen_on_port ||
+		!fbs->fbs_open_server_handler || fbs_open(fbs, 0) != BRLCAD_OK) {
+		bu_vls_printf(gedp->ged_result_str,
+		    "could not open embedded framebuffer server\n");
+		ret = BRLCAD_ERROR;
+		goto rtwizard_cleanup;
+	    }
+	    snprintf(fbstring, sizeof(fbstring), "%d",
+		fbs->fbs_listener.fbsl_port);
+	    *fb_target_arg = fbstring;
+	    create_info = (struct bu_process_create_info){0};
+	    if (_ged_configure_fbs_auth(gedp, &create_info, env_overrides,
+		auth_env, sizeof(auth_env)) != BRLCAD_OK) {
+		bu_vls_printf(gedp->ged_result_str,
+		    "could not configure embedded framebuffer authentication\n");
+		ret = BRLCAD_ERROR;
+		goto rtwizard_cleanup;
+	    }
+	}
+    }
+
+    ret = _ged_run_rtwizard(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd,
+	use_embedded_fb ? &create_info : NULL);
+
+rtwizard_cleanup:
+    if (using_ipc)
+	fbs_close_ipc_child(gedp->ged_fbs);
 
     bu_free(gd_rt_cmd, "free gd_rt_cmd");
 

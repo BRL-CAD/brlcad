@@ -2026,19 +2026,19 @@ _ged_rt_write(struct ged *gedp,
 }
 
 int
-_ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv, int stdout_is_txt, int *pid_ctx, bu_clbk_t end_clbk, void *end_clbk_data)
+_ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv, int stdout_is_txt, int *pid_ctx, bu_clbk_t end_clbk, void *end_clbk_data, const struct bu_process_create_info *create_info)
 {
     FILE *fp_in;
     vect_t eye_model;
     struct ged_subprocess *run_rtp;
     struct bu_process *p = NULL;
 
-    bu_process_create(&p, gd_rt_cmd, BU_PROCESS_DEFAULT);
+    bu_process_create_ex(&p, gd_rt_cmd, create_info);
 
     if (pid_ctx)
-	*pid_ctx = bu_process_pid(p);
+	*pid_ctx = p ? bu_process_pid(p) : -1;
 
-    if (bu_process_pid(p) == -1) {
+    if (!p || bu_process_pid(p) == -1) {
 	bu_vls_printf(gedp->ged_result_str, "\nunable to successfully launch subprocess: ");
 	for (int i = 0; i < cmd_len; i++) {
 	    bu_vls_printf(gedp->ged_result_str, "%s ", gd_rt_cmd[i]);
@@ -2073,6 +2073,69 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
 	if (stdout_is_txt)
 	    (*gedp->ged_create_io_handler)(run_rtp, BU_PROCESS_STDOUT, _ged_rt_output_handler, (void *)run_rtp);
     }
+    return BRLCAD_OK;
+}
+
+
+int
+_ged_open_fbs_ipc(struct ged *gedp, struct bu_process_create_info *create_info,
+    const char *env_overrides[2], int inherit_fds[2])
+{
+    if (!gedp || !gedp->ged_fbs || !create_info || !env_overrides ||
+	!inherit_fds)
+	return BRLCAD_ERROR;
+
+    *create_info = {};
+    env_overrides[0] = NULL;
+    env_overrides[1] = NULL;
+    inherit_fds[0] = -1;
+    inherit_fds[1] = -1;
+
+    if (fbs_open_ipc(gedp->ged_fbs) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
+    }
+
+    env_overrides[0] = fbs_ipc_child_addr_env(gedp->ged_fbs);
+    env_overrides[1] = NULL;
+    create_info->env_overrides = env_overrides;
+    create_info->inherit_fd_count = fbs_ipc_child_fds(gedp->ged_fbs,
+	inherit_fds);
+    create_info->inherit_fds = inherit_fds;
+    if (env_overrides[0] && create_info->inherit_fd_count)
+	return BRLCAD_OK;
+
+    fbs_close(gedp->ged_fbs);
+    *create_info = {};
+    env_overrides[0] = NULL;
+    inherit_fds[0] = -1;
+    inherit_fds[1] = -1;
+    return BRLCAD_ERROR;
+}
+
+
+int
+_ged_configure_fbs_auth(struct ged *gedp,
+    struct bu_process_create_info *create_info,
+    const char *env_overrides[3], char *auth_env, size_t auth_env_size)
+{
+    size_t env_index;
+    const char *token;
+    int written;
+
+    if (!gedp || !gedp->ged_fbs || !create_info || !env_overrides ||
+	!auth_env || !auth_env_size)
+	return BRLCAD_ERROR;
+
+    token = fbs_generate_token(gedp->ged_fbs);
+    written = snprintf(auth_env, auth_env_size, "FBSERV_TOKEN=%s", token);
+    if (written < 0 || (size_t)written >= auth_env_size)
+	return BRLCAD_ERROR;
+
+    gedp->ged_fbs->fbs_require_auth = 1;
+    env_index = env_overrides[0] ? 1 : 0;
+    env_overrides[env_index] = auth_env;
+    env_overrides[env_index + 1] = NULL;
+    create_info->env_overrides = env_overrides;
     return BRLCAD_OK;
 }
 

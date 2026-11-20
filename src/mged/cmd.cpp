@@ -1683,6 +1683,27 @@ cmd_ged_dm_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, con
 }
 
 
+int
+cmd_ged_ert_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
+{
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    int ret = cmd_ged_dm_wrapper(clientData, interpreter, argc, argv);
+
+    if (ret == TCL_OK && !(argc == 2 &&
+	(BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "--help"))) &&
+	!mged_variables->mv_fb) {
+	mged_variables->mv_fb = 1;
+	DMP_dirty = 1;
+	dm_set_dirty(DMP, 1);
+    }
+
+    return ret;
+}
+
+
 /**
  * Screengrab wrapper: forces a render via refresh(s) so that the
  * display manager has current pixel data before we call the GED
