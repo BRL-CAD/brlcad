@@ -42,17 +42,126 @@
 
 #include "vmath.h"
 #include "bu/app.h"
+#include "bu/arg.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 #include "rt/db4.h"
 #include "raytrace.h"
 #include "wdb.h"
 
-static void
-printusage(void)
+struct bolt_args {
+    int help;
+    int type;
+    const char *output_file;
+    int count;
+    double head_diameter;
+    double head_height;
+    double washer_diameter;
+    double washer_height;
+    double stem_diameter;
+    double stem_height;
+};
+
+static const struct bu_arg_option bolt_options[] = {
+    BU_ARG_FLAG("h", "help", struct bolt_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_INTEGER_RANGE("o", "type", struct bolt_args, type,
+	1, 1, 1, 4, "1|2|3|4", "Select the bolt component combination"),
+    BU_ARG_VALUE("f", "output", struct bolt_args, output_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "database.g",
+	"Write generated geometry to this database"),
+    BU_ARG_INTEGER_RANGE("n", "count", struct bolt_args, count,
+	1, 1, 1, 256, "count", "Create this many bolts"),
+    BU_ARG_VALUE_VALIDATE(NULL, "head-diameter", struct bolt_args,
+	head_diameter, BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate,
+	"millimeters", "Set the positive bolt head diameter"),
+    BU_ARG_VALUE_VALIDATE(NULL, "head-height", struct bolt_args,
+	head_height, BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate,
+	"millimeters", "Set the positive bolt head height"),
+    BU_ARG_VALUE_VALIDATE(NULL, "washer-diameter", struct bolt_args,
+	washer_diameter, BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate,
+	"millimeters", "Set the positive washer diameter"),
+    BU_ARG_VALUE_VALIDATE(NULL, "washer-height", struct bolt_args,
+	washer_height, BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate,
+	"millimeters", "Set the positive washer height"),
+    BU_ARG_VALUE_VALIDATE(NULL, "stem-diameter", struct bolt_args,
+	stem_diameter, BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate,
+	"millimeters", "Set the positive stem diameter"),
+    BU_ARG_VALUE_VALIDATE(NULL, "stem-height", struct bolt_args,
+	stem_height, BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate,
+	"millimeters", "Set the positive stem height"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema bolt_schema = BU_ARG_SCHEMA(
+    "bolt", "Create a BRL-CAD database of bolt shapes",
+    bolt_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar bolt_grammar = {
+    &bolt_schema, NULL, NULL
+};
+
+struct bolt_legacy_option {
+    const char *prefix;
+    const char *canonical;
+};
+
+static const struct bolt_legacy_option bolt_legacy_options[] = {
+    {"-hd", "head-diameter"},
+    {"-hh", "head-height"},
+    {"-wd", "washer-diameter"},
+    {"-wh", "washer-height"},
+    {"-sd", "stem-diameter"},
+    {"-sh", "stem-height"},
+    {NULL, NULL}
+};
+
+
+static const char **
+normalize_bolt_args(int argc, char **argv)
 {
-    fprintf(stderr,"Usage: bolt  <-- (if no arguments, go into interactive mode)\n");
-    fprintf(stderr,"or\n");
-    fprintf(stderr,"Usage: bolt -o# -f name.g -n# -hd# -hh# -wd# -wh# -sd# -sh#\n");
-    fprintf(stderr,"       (units mm)\n");
+    const char **args;
+    int i;
+
+    args = (const char **)bu_calloc((size_t)(argc - 1), sizeof(char *),
+	"normalized bolt arguments");
+    for (i = 1; i < argc; i++) {
+	size_t option_index;
+
+	args[i - 1] = argv[i];
+	for (option_index = 0; bolt_legacy_options[option_index].prefix;
+	     option_index++) {
+	    const struct bolt_legacy_option *option =
+		&bolt_legacy_options[option_index];
+	    struct bu_vls normalized = BU_VLS_INIT_ZERO;
+
+	    if (bu_strncmp(argv[i], option->prefix, 3) != 0)
+		continue;
+	    bu_vls_printf(&normalized, "--%s=%s", option->canonical,
+		argv[i] + 3);
+	    args[i - 1] = bu_strdup(bu_vls_cstr(&normalized));
+	    bu_vls_free(&normalized);
+	    break;
+	}
+    }
+
+    return args;
+}
+
+
+static void
+free_normalized_bolt_args(int argc, char **argv, const char **args)
+{
+    int i;
+
+    for (i = 1; i < argc; i++) {
+	if (args[i - 1] != argv[i])
+	    bu_free((void *)args[i - 1], "normalized bolt argument");
+    }
+    bu_free((void *)args, "normalized bolt arguments");
 }
 
 
@@ -73,9 +182,7 @@ main(int argc, char **argv)
     int iopt;			/* Type of bolt to be built: 1=>bolt head,  */
 				/* 2=>head & washer; 3=>head, washer, &  */
 				/* stem; 4=>head & stem. */
-    int i, j, k;		/* Loop counters. */
-    char *temp;			/* Temporary character string. */
-    char temp1[NAME_LEN+1];	/* Temporary character string. */
+    int i;			/* Loop counter. */
 
     char solnam[9];		/* Solid name. */
     char regnam[9];		/* Region name. */
@@ -85,14 +192,16 @@ main(int argc, char **argv)
     struct wmember comb;	/* Used to make regions. */
     struct wmember comb1;	/* Used to make groups. */
     int ret;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
 
-    if (argc > 1) {
-	if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")) {
-	    printusage();
-	    return 0;
-	}
+    ret = bu_arg_introspect(&msg, &bolt_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (ret != 0) {
+	bu_flog(ret > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return ret > 0 ? 0 : 1;
     }
 
     /* Zero all dimensions of bolt. */
@@ -226,132 +335,34 @@ main(int argc, char **argv)
     /* If there are arguments do not ask any questions.  Get the */
     /* answers from the arguments. */
     else {
-	/* START # 2 */
+	struct bolt_args args = {0};
+	const char **normalized_args = normalize_bolt_args(argc, argv);
 
-	/* List of options. */
-	/*	-o# - # = 1 => bolt head */
-	/*	          2 => head & washer */
-	/*	          3 => head, washer, & stem */
-	/*	          4 => head & stem */
-	/*	-fname - name = name of .g file */
-	/*  	-n# - # = number of bolts to create */
-	/*	-hd# - # = head diameter */
-	/*	-hh# - # = head height */
-	/*	-wd# - # = washer diameter */
-	/*	-wh# - # = washer height */
-	/*	-sd# - # = stem diameter */
-	/*	-sh# - # = stem height */
-
-	for (i = 1; i < argc; i++) {
-	    /* START # 3 */
-	    /* Put argument into temporary character string. */
-	    temp = argv[i];
-
-	    if (temp[0] != '-') {
-	    	printf("bolt: illegal option %s ; missing leading '-'\n", argv[i]);
-	    	return 0;
-	    }
-
-	    /* -o - set type of bolt to make. */
-	    if (temp[1] == 'o') {
-		/* START # 4 */
-		if (temp[2] == '1')
-		    iopt = 1;
-		else if (temp[2] == '2')
-		    iopt = 2;
-		else if (temp[2] == '3')
-		    iopt = 3;
-		else if (temp[2] == '4')
-		    iopt = 4;
-	    }						/* END # 4 */
-
-	    /* -f - mged file name. */
-	    else if (temp[1] == 'f') {
-		/* START # 5 */
-		j = 2;
-		k = 0;
-		while ((temp[j] != '\0') && (k < NAME_LEN)) {
-		    /* START # 6 */
-		    filemged[k] = temp[j];
-		    j++;
-		    k++;
-		}					/* END # 6 */
-		filemged[k] = '\0';
-	    }						/* END # 5 */
-
-	    /* -n - number of bolts to be created. */
-	    else if (temp[1] == 'n') {
-		/* START # 6.05 */
-		/* Set up temporary character string, temp1. */
-		j = 2;
-		k = 0;
-		while ((temp[j] != '\0') && (k < NAME_LEN)) {
-		    temp1[k] = temp[j];
-		    j++;
-		    k++;
-		}
-		temp1[k] = '\0';
-		sscanf(temp1, "%d", &numblt);
-		if (numblt > NAME_LEN)
-		    numblt = NAME_LEN;
-	    }						/* END # 6.05 */
-
-	    /* Take care of all other arguments. */
-	    else {
-		/* START # 6.1 */
-		/* Set temporary character string, temp1. */
-		j = 3;
-		k = 0;
-		while ((temp[j] != '\0') && (k < NAME_LEN)) {
-		    temp1[k] = temp[j];
-		    j++;
-		    k++;
-		}
-		temp1[k] = '\0';
-
-		/* -hd & -hh - head diameter & height. */
-		if (temp[1] == 'h') {
-		    /* START # 7 */
-		    if (temp[2] == 'd') {
-			/* Head diameter. */
-			sscanf(temp1, "%lf", &hd);
-		    } else if (temp[2] =='h') {
-			/* Head height. */
-			sscanf(temp1, "%lf", &hh);
-		    }
-		}					/* END # 7 */
-
-		/* -wd & -wh - washer diameter & height. */
-		else if (temp[1] == 'w') {
-		    /* START # 8 */
-		    if (temp[2] == 'd') {
-			/* Washer diameter. */
-			sscanf(temp1, "%lf", &wd);
-		    } else if (temp[2] == 'h') {
-			/* Washer height. */
-			sscanf(temp1, "%lf", &wh);
-		    }
-		}					/* END # 8 */
-
-		/* -sd & -sh - stem washer diameter & height. */
-		else if (temp[1] == 's') {
-		    /* START # 9 */
-		    if (temp[2] == 'd') {
-			/* Stem diameter. */
-			sscanf(temp1, "%lf", &sd);
-		    } else if (temp[2] == 'h') {
-			/* Stem height. */
-			sscanf(temp1, "%lf", &sh);
-		    }
-		}					/* END # 9 */
-		else {
-		    printf("bolt: illegal option -- %c\n", temp[1]);
-		    printusage();
-		    return 0;
-		}
-	    }						/* END # 6.1 */
-
-	}						/* END # 3 */
+	ret = bu_arg_schema_parse_complete(&bolt_schema, &args, &msg,
+	    argc - 1, normalized_args);
+	free_normalized_bolt_args(argc, argv, normalized_args);
+	if (ret < 0)
+	    bu_exit(1, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	if (args.help) {
+	    char *help = bu_arg_schema_help(&bolt_schema, "bolt");
+	    bu_flog(stdout, "%s", help ? help : "");
+	    bu_free(help, "bolt help");
+	    return 0;
+	}
+	if (args.output_file) {
+	    if (strlen(args.output_file) > NAME_LEN)
+		bu_exit(1, "Output filename exceeds %d characters\n", NAME_LEN);
+	    bu_strlcpy(filemged, args.output_file, sizeof(filemged));
+	}
+	iopt = args.type;
+	numblt = args.count;
+	hd = args.head_diameter;
+	hh = args.head_height;
+	wd = args.washer_diameter;
+	wh = args.washer_height;
+	sd = args.stem_diameter;
+	sh = args.stem_height;
     }							/* END # 2 */
 
     /* Print out bolt dimensions. */

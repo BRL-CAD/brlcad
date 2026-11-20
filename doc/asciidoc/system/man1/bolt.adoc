@@ -8,11 +8,13 @@ bolt - create a BRL-CAD geometry database containing bolts
 
 == SYNOPSIS
 
-[source]
-----
-bolt [-o_#_] [-f_name.g_] [-n_#_] [-hd_#_] [-hh_#_] [-wd_#_] [-wh_#_] [-sd_#_] [-sh_#_]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bolt* [*-o* _1|2|3|4_] [*-f* _database.g_] [*-n* _count_] [*--head-diameter* _millimeters_]
+     [*--head-height* _millimeters_] [*--washer-diameter* _millimeters_]
+     [*--washer-height* _millimeters_] [*--stem-diameter* _millimeters_]
+     [*--stem-height* _millimeters_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -27,41 +29,49 @@ in millimeters.
 
 If invoked with no arguments, *bolt* runs interactively and prompts for
 the bolt type, output file name, count, and each required dimension.
-Otherwise every parameter is taken from the command line. Each option
-letter is immediately followed by its value with no intervening space
-(for example, *-hd30*, not *-hd 30*).
+Otherwise every parameter is taken from the command line. Historical
+attached forms such as *-hd30* remain accepted for compatibility.
 
 [[options]]
 == OPTIONS
 
-*-o*_#_::
+*-h*, *-?*, *--help*::
+  Print help and exit.
+
+*-o*, *--type* _1|2|3|4_::
   Type of bolt: 1 = head only; 2 = head and washer; 3 = head, washer,
   and stem; 4 = head and stem.
 
-*-f*_name.g_::
+*-f*, *--output* _name.g_::
   Name of the output .g database file (default bolt.g in interactive
-  mode). The value follows *-f* directly, e.g. *-fbolt.g*.
+  mode).
 
-*-n*_#_::
+*-n*, *--count* _count_::
   Number of bolts to create, from 1 to 256.
 
-*-hd*_#_::
-  Diameter of the bolt head, measured flat edge to flat edge.
+*--head-diameter* _millimeters_::
+  Diameter of the bolt head, measured flat edge to flat edge. The legacy
+  attached form *-hd*__millimeters__ is also accepted.
 
-*-hh*_#_::
-  Height of the bolt head.
+*--head-height* _millimeters_::
+  Height of the bolt head. The legacy attached form *-hh*__millimeters__ is
+  also accepted.
 
-*-wd*_#_::
-  Diameter of the washer (types 2 and 3).
+*--washer-diameter* _millimeters_::
+  Diameter of the washer (types 2 and 3). The legacy attached form
+  *-wd*__millimeters__ is also accepted.
 
-*-wh*_#_::
-  Height of the washer (types 2 and 3).
+*--washer-height* _millimeters_::
+  Height of the washer (types 2 and 3). The legacy attached form
+  *-wh*__millimeters__ is also accepted.
 
-*-sd*_#_::
-  Diameter of the bolt stem (types 3 and 4).
+*--stem-diameter* _millimeters_::
+  Diameter of the bolt stem (types 3 and 4). The legacy attached form
+  *-sd*__millimeters__ is also accepted.
 
-*-sh*_#_::
-  Height of the bolt stem (types 3 and 4).
+*--stem-height* _millimeters_::
+  Height of the bolt stem (types 3 and 4). The legacy attached form
+  *-sh*__millimeters__ is also accepted.
 
 [[examples]]
 == EXAMPLES
@@ -70,7 +80,9 @@ letter is immediately followed by its value with no intervening space
 ====
 [source,console]
 ----
-$ bolt -o3 -fbolt.g -n1 -hd30 -hh10 -wd40 -wh3 -sd12 -sh80
+$ bolt --type 3 --output bolt.g --count 1 --head-diameter 30 \
+    --head-height 10 --washer-diameter 40 --washer-height 3 \
+    --stem-diameter 12 --stem-height 80
 $ rt -o bolt.png bolt.g bolta
 ----
 This creates a single complete bolt (option 3: head, washer, and stem)

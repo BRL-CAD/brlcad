@@ -7,7 +7,7 @@ add_subdirectory(building)
 add_subdirectory(propeller)
 add_subdirectory(tree)
 
-brlcad_addexec(bolt bolt.c "libwdb;${M_LIBRARY}" FOLDER Shapes)
+brlcad_addexec(bolt bolt.c "libwdb;${M_LIBRARY}" FOLDER Shapes ARG_SCHEMA)
 brlcad_addexec(coil coil.c "libged;libwdb;${M_LIBRARY}" FOLDER Shapes ARG_SCHEMA)
 brlcad_addexec(fence fence.c "libwdb;${M_LIBRARY}" FOLDER Shapes)
 brlcad_addexec(gastank gastank.c libwdb FOLDER Shapes ARG_SCHEMA)
