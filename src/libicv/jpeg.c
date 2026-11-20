@@ -24,6 +24,7 @@
 #include <string.h>
 #include <setjmp.h>
 #include <stdio.h>
+#define JPEG_INTERNAL_OPTIONS
 #include <jpeglib.h>
 
 #include "bio.h"
@@ -32,6 +33,122 @@
 #include "bu/malloc.h"
 #include "vmath.h"
 #include "icv_private.h"
+
+/* Pixel storage and the scanline entry points below use 8-bit samples. */
+#if BITS_IN_JSAMPLE != 8
+#  error "ICV JPEG requires the 8-bit libjpeg API"
+#endif
+
+const struct bu_mime_capability *
+jpeg_capabilities(size_t *count)
+{
+    static const char *dct_features[] = {
+#ifdef D_PROGRESSIVE_SUPPORTED
+	"progressive",
+#endif
+#ifdef D_ARITH_CODING_SUPPORTED
+	"arithmetic",
+#endif
+	NULL
+    };
+    static const struct bu_mime_trait gray[] = {
+	BU_MIME_TRAIT_STRING("encoding", "binary"), BU_MIME_TRAIT_STRING("bit-depth", "8"),
+	BU_MIME_TRAIT_STRING("channels", "1"),
+	BU_MIME_TRAIT_SET("jpeg.frame-features", dct_features, sizeof(dct_features) / sizeof(dct_features[0]) - 1)};
+    static const struct bu_mime_trait rgb[] = {
+	BU_MIME_TRAIT_STRING("encoding", "binary"), BU_MIME_TRAIT_STRING("bit-depth", "8"),
+	BU_MIME_TRAIT_STRING("channels", "3"),
+	BU_MIME_TRAIT_SET("jpeg.frame-features", dct_features, sizeof(dct_features) / sizeof(dct_features[0]) - 1)};
+#ifdef D_LOSSLESS_SUPPORTED
+    static const char *lossless[] = {"lossless"};
+    /* The existing reader requests RGB output. Lossless decoding cannot
+     * perform the gray/YCbCr-to-RGB conversions used by the DCT reader. */
+    static const struct bu_mime_trait lossless_rgb[] = {
+	BU_MIME_TRAIT_STRING("encoding", "binary"), BU_MIME_TRAIT_STRING("bit-depth", "8"),
+	BU_MIME_TRAIT_STRING("channels", "3"), BU_MIME_TRAIT_STRING("color-space", "rgb"),
+	BU_MIME_TRAIT_SET("jpeg.frame-features", lossless, 1)};
+#endif
+    static const struct bu_mime_trait output[] = {
+	BU_MIME_TRAIT_STRING("encoding", "binary"), BU_MIME_TRAIT_STRING("bit-depth", "8"),
+	BU_MIME_TRAIT_STRING("channels", "3"), BU_MIME_TRAIT_STRING("color-space", "ycbcr"),
+	BU_MIME_TRAIT_STRING("jpeg.sampling-factors", "1x1,1x1,1x1"), BU_MIME_TRAIT_SET("jpeg.frame-features", NULL, 0)};
+    static const unsigned int inputs = ICV_CODEC_READ | ICV_CODEC_READ_MEM;
+    static const struct bu_mime_capability formats[] = {
+	BU_MIME_CAPABILITY("image/jpeg", NULL, 0, ICV_CODEC_METADATA),
+	{"image/jpeg", gray, sizeof(gray) / sizeof(gray[0]), inputs, BU_MIME_DEFER_INPUT_VALIDATION},
+	{"image/jpeg", rgb, sizeof(rgb) / sizeof(rgb[0]), inputs, BU_MIME_DEFER_INPUT_VALIDATION},
+#ifdef D_LOSSLESS_SUPPORTED
+	{"image/jpeg", lossless_rgb, sizeof(lossless_rgb) / sizeof(lossless_rgb[0]), inputs, BU_MIME_DEFER_INPUT_VALIDATION},
+#endif
+	BU_MIME_CAPABILITY("image/jpeg", output, sizeof(output) / sizeof(output[0]), ICV_CODEC_WRITE | ICV_CODEC_WRITE_MEM)
+    };
+    *count = sizeof(formats) / sizeof(formats[0]);
+    return formats;
+}
+
+static const char *
+jpeg_color_name(J_COLOR_SPACE color)
+{
+    switch (color) {
+	case JCS_GRAYSCALE: return "gray";
+	case JCS_RGB: return "rgb";
+	case JCS_YCbCr: return "ycbcr";
+	case JCS_CMYK: return "cmyk";
+	case JCS_YCCK: return "ycck";
+	default: return NULL;
+    }
+}
+
+static int
+jpeg_header_traits(const struct jpeg_decompress_struct *header, struct bu_mime_traits *traits)
+{
+    const char *features[3];
+    size_t feature_count = 0;
+    struct bu_vls number = BU_VLS_INIT_ZERO;
+    struct bu_vls sampling = BU_VLS_INIT_ZERO;
+    const char *color = jpeg_color_name(header->jpeg_color_space);
+    if (header->progressive_mode) features[feature_count++] = "progressive";
+    if (header->arith_code) features[feature_count++] = "arithmetic";
+    /* Lossless SOS uses a nonzero predictor and Se=0; sequential DCT uses
+     * Ss=0 and Se=63. This also works with older libjpeg public structures. */
+    if (!header->progressive_mode && header->Ss && !header->Se) features[feature_count++] = "lossless";
+    int valid = bu_mime_traits_add(traits, "encoding", "binary") &&
+	bu_mime_traits_add_set(traits, "jpeg.frame-features", features, feature_count);
+    bu_vls_printf(&number, "%d", header->data_precision);
+    valid = valid && bu_mime_traits_add(traits, "bit-depth", bu_vls_cstr(&number));
+    bu_vls_sprintf(&number, "%d", header->num_components);
+    valid = valid && bu_mime_traits_add(traits, "channels", bu_vls_cstr(&number));
+    for (int i = 0; i < header->num_components; ++i) {
+	if (i) bu_vls_putc(&sampling, ',');
+	bu_vls_printf(&sampling, "%dx%d", header->comp_info[i].h_samp_factor, header->comp_info[i].v_samp_factor);
+    }
+    valid = valid && bu_mime_traits_add(traits, "jpeg.sampling-factors", bu_vls_cstr(&sampling)) &&
+	(!color || bu_mime_traits_add(traits, "color-space", color));
+    bu_vls_free(&number);
+    bu_vls_free(&sampling);
+    return valid;
+}
+
+static int
+jpeg_input_profile(const struct jpeg_decompress_struct *header, const struct bu_mime_traits *requested, const struct bu_mime_traits *observations)
+{
+    struct bu_mime_traits observed = BU_MIME_TRAITS_INIT_ZERO;
+    size_t count;
+    const struct bu_mime_capability *formats = jpeg_capabilities(&count);
+    int supported = 0;
+    if (jpeg_header_traits(header, &observed) && bu_mime_traits_match(&observed, observations, requested))
+	for (size_t i = 0; i < count; ++i) {
+	    struct bu_mime_capability complete = formats[i];
+	    complete.flags = 0;
+	    if ((complete.operations & ICV_CODEC_READ) && bu_mime_capability_match(&complete, &observed, BU_MIME_INPUT)) {
+		supported = 1;
+		break;
+	    }
+	}
+    bu_mime_traits_free(&observed);
+    if (!supported) bu_log("JPEG: unsupported input profile or contradictory traits\n");
+    return supported;
+}
 
 struct icv_jpeg_error_mgr {
     struct jpeg_error_mgr pub;
@@ -44,6 +161,100 @@ icv_jpeg_error_exit(j_common_ptr cinfo)
     struct icv_jpeg_error_mgr *myerr = (struct icv_jpeg_error_mgr *)cinfo->err;
     (*cinfo->err->output_message)(cinfo);
     longjmp(myerr->setjmp_buffer, 1);
+}
+
+static void
+icv_jpeg_quiet(j_common_ptr UNUSED(cinfo))
+{
+}
+
+static void
+icv_jpeg_source_noop(j_decompress_ptr UNUSED(cinfo))
+{
+}
+
+static boolean
+icv_jpeg_suspend(j_decompress_ptr UNUSED(cinfo))
+{
+    return FALSE;
+}
+
+static void
+icv_jpeg_skip(j_decompress_ptr cinfo, long count)
+{
+    if (count <= 0) return;
+    size_t available = cinfo->src->bytes_in_buffer;
+    size_t consumed = (unsigned long)count > available ? available : (size_t)count;
+    cinfo->src->next_input_byte += consumed;
+    cinfo->src->bytes_in_buffer -= consumed;
+}
+
+static enum icv_metadata_status
+jpeg_prefix_header(const struct bu_mime_probe_input *input, struct bu_mime_traits *traits,
+    struct icv_image_metadata *info)
+{
+    struct jpeg_decompress_struct header;
+    struct icv_jpeg_error_mgr error;
+    struct jpeg_source_mgr source;
+    memset(&header, 0, sizeof(header));
+    header.err = jpeg_std_error(&error.pub);
+    error.pub.error_exit = icv_jpeg_error_exit;
+    error.pub.output_message = icv_jpeg_quiet;
+    if (setjmp(error.setjmp_buffer)) {
+	jpeg_destroy_decompress(&header);
+	return ICV_METADATA_ERROR;
+    }
+    jpeg_create_decompress(&header);
+    /* Suspend at the prefix boundary instead of inserting an artificial EOI.
+     * This source is inspected once, without resuming skipped segments. */
+    source.init_source = icv_jpeg_source_noop;
+    source.fill_input_buffer = icv_jpeg_suspend;
+    source.skip_input_data = icv_jpeg_skip;
+    source.resync_to_restart = jpeg_resync_to_restart;
+    source.term_source = icv_jpeg_source_noop;
+    source.bytes_in_buffer = input->size;
+    source.next_input_byte = input->data;
+    header.src = &source;
+    int status = jpeg_read_header(&header, TRUE);
+    if (status == JPEG_SUSPENDED) {
+	jpeg_destroy_decompress(&header);
+	return input->complete ? ICV_METADATA_ERROR : ICV_METADATA_INCOMPLETE;
+    }
+    int valid = jpeg_header_traits(&header, traits);
+    if (info && valid) {
+	info->width = header.image_width;
+	info->height = header.image_height;
+	info->channels = header.num_components;
+	switch (header.jpeg_color_space) {
+	    case JCS_GRAYSCALE: info->color_space = ICV_METADATA_COLOR_GRAY; break;
+	    case JCS_RGB: case JCS_YCbCr: info->color_space = ICV_METADATA_COLOR_RGB; break;
+	    case JCS_CMYK: case JCS_YCCK: info->color_space = ICV_METADATA_COLOR_CMYK; break;
+	    default: info->color_space = ICV_METADATA_COLOR_UNKNOWN; break;
+	}
+    }
+    jpeg_destroy_decompress(&header);
+    return valid ? ICV_METADATA_MATCH : ICV_METADATA_ERROR;
+}
+
+int
+jpeg_inspect(const struct bu_mime_probe_input *input, const char *UNUSED(type), struct bu_mime_traits *traits)
+{
+    /* A malformed/partial JPEG header remains recognizable by its signature.
+     * Decoder errors are reported by the operation that needs a valid file. */
+    (void)jpeg_prefix_header(input, traits, NULL);
+    return 1;
+}
+
+enum icv_metadata_status
+jpeg_metadata(const struct bu_mime_probe_input *input, const char *UNUSED(type),
+    struct icv_image_metadata *info, const struct bu_mime_traits *requested, const struct bu_mime_traits *observations)
+{
+    struct bu_mime_traits observed = BU_MIME_TRAITS_INIT_ZERO;
+    enum icv_metadata_status status = jpeg_prefix_header(input, &observed, info);
+    if (status == ICV_METADATA_MATCH && !bu_mime_traits_match(&observed, observations, requested))
+	status = ICV_METADATA_ERROR;
+    bu_mime_traits_free(&observed);
+    return status;
 }
 
 static int
@@ -253,7 +464,7 @@ jpeg_write_mem(icv_image_t *bif, unsigned char **outbuffer, size_t *outsize, int
 }
 
 icv_image_t *
-jpeg_read(FILE *fp)
+jpeg_read(FILE *fp, const struct bu_mime_traits *traits, const struct bu_mime_traits *observations)
 {
     struct jpeg_decompress_struct cinfo;
     struct icv_jpeg_error_mgr jerr;
@@ -278,6 +489,10 @@ jpeg_read(FILE *fp)
     jpeg_create_decompress(&cinfo);
     jpeg_stdio_src(&cinfo, fp);
     jpeg_read_header(&cinfo, TRUE);
+    if (!jpeg_input_profile(&cinfo, traits, observations)) {
+	jpeg_destroy_decompress(&cinfo);
+	return NULL;
+    }
     cinfo.out_color_space = JCS_RGB;
     jpeg_start_decompress(&cinfo);
 
@@ -323,7 +538,7 @@ jpeg_read(FILE *fp)
 }
 
 icv_image_t *
-jpeg_read_mem(const unsigned char *buffer, size_t size)
+jpeg_read_mem(const unsigned char *buffer, size_t size, const struct bu_mime_traits *traits, const struct bu_mime_traits *observations)
 {
     struct jpeg_decompress_struct cinfo;
     struct icv_jpeg_error_mgr jerr;
@@ -351,6 +566,10 @@ jpeg_read_mem(const unsigned char *buffer, size_t size)
     jpeg_mem_src(&cinfo, buffer, size);
 
     jpeg_read_header(&cinfo, TRUE);
+    if (!jpeg_input_profile(&cinfo, traits, observations)) {
+	jpeg_destroy_decompress(&cinfo);
+	return NULL;
+    }
     cinfo.out_color_space = JCS_RGB;
     jpeg_start_decompress(&cinfo);
 

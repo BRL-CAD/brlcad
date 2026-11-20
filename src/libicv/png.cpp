@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <new>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -39,6 +40,7 @@
 #include "icv_private.h"
 
 #include "../libbu/json.hpp"
+#include "../libbu/mime_png.h"
 
 /*
  * PNG tEXt chunk key used for the BRL-CAD scene/camera JSON record.
@@ -407,134 +409,12 @@ png_write_mem(icv_image_t *bif, unsigned char **outbuffer, size_t *outsize)
     return BRLCAD_OK;
 }
 
-extern "C" icv_image_t *
-png_read(FILE *fp)
-{
-    if (UNLIKELY(!fp))
-	return NULL;
-
-    char header[8];
-    if (fread(header, 8, 1, fp) != 1) {
-	bu_log("png-pix: ERROR: Failed while reading file header!!!\n");
-	return NULL;
-    }
-
-    if (png_sig_cmp((png_bytep)header, 0, 8)) {
-	bu_log("png-pix: This is not a PNG file!!!\n");
-	return NULL;
-    }
-
-    png_structp png_p = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-    if (!png_p) {
-	bu_log("png-pix: png_create_read_struct() failed!!\n");
-	return NULL;
-    }
-
-    png_infop info_p = png_create_info_struct(png_p);
-    if (!info_p) {
-	bu_log("png-pix: png_create_info_struct() failed!!\n");
-	return NULL;
-    }
-
-    icv_image_t *bif = NULL;
-    unsigned char *image = NULL;
-    unsigned char **rows = NULL;
-
-    if (setjmp(png_jmpbuf(png_p))) {
-	png_destroy_read_struct(&png_p, &info_p, NULL);
-	bu_log("png_read: Error reading PNG file\n");
-	if (bif) bu_free(bif, "bif");
-	if (image) bu_free(image, "image");
-	if (rows) bu_free(rows, "png rows");
-	return NULL;
-    }
-
-    BU_ALLOC(bif, struct icv_image);
-    ICV_IMAGE_INIT(bif);
-
-    png_init_io(png_p, fp);
-    png_set_sig_bytes(png_p, 8);
-    png_read_info(png_p, info_p);
-    int color_type = png_get_color_type(png_p, info_p);
-    if (color_type == PNG_COLOR_TYPE_GRAY || color_type == PNG_COLOR_TYPE_GRAY_ALPHA) {
-	png_set_gray_to_rgb(png_p);
-    }
-    png_set_expand(png_p);
-    int bit_depth = png_get_bit_depth(png_p, info_p);
-    if (bit_depth == 16) png_set_strip_16(png_p);
-
-    bif->width = png_get_image_width(png_p, info_p);
-    bif->height = png_get_image_height(png_p, info_p);
-
-    /* Read the BRL-CAD scene JSON tEXt chunk (must be done after png_read_info) */
-    {
-	png_textp text_ptr = NULL;
-	int num_text = 0;
-	if (png_get_text(png_p, info_p, &text_ptr, &num_text) > 0 && num_text > 0) {
-	    for (int i = 0; i < num_text; i++) {
-		if (!text_ptr[i].key || !text_ptr[i].text)
-		    continue;
-		if (BU_STR_EQUAL(text_ptr[i].key, ICV_PNG_KEY_SCENE)) {
-		    struct icv_render_info *ri = icv_render_info_create();
-		    if (json_to_render_info(text_ptr[i].text, ri)) {
-			bif->render_info = ri;
-		    } else {
-			icv_render_info_destroy(ri);
-		    }
-		    break;
-		}
-	    }
-	}
-    }
-
-    png_color_16p input_backgrd;
-    if (png_get_bKGD(png_p, info_p, &input_backgrd)) {
-	png_set_background(png_p, input_backgrd, PNG_BACKGROUND_GAMMA_FILE, 1, 1.0);
-    } else {
-	png_color_16 def_backgrd= { 0, 0, 0, 0, 0 };
-	png_set_background(png_p, &def_backgrd, PNG_BACKGROUND_GAMMA_FILE, 0, 1.0);
-    }
-
-    double gammaval;
-    if (png_get_gAMA(png_p, info_p, &gammaval)) {
-	png_set_gAMA(png_p, info_p, gammaval);
-    }
-
-    png_read_update_info(png_p, info_p);
-
-    if (bif->width > 0 && bif->height > (size_t)-1 / bif->width / 3 / sizeof(double)) {
-	bu_log("png_read: dimensions excessively large, causing integer overflow\n");
-	png_destroy_read_struct(&png_p, &info_p, NULL);
-	bu_free(bif, "bif");
-	return NULL;
-    }
-
-    /* allocate memory for image */
-    image = (unsigned char *)bu_calloc(1, bif->width*bif->height*3, "image");
-
-    /* create rows array */
-    rows = (unsigned char **)bu_calloc(bif->height, sizeof(unsigned char *), "rows");
-    for (size_t i = 0; i < bif->height; i++)
-	rows[bif->height - 1 - i] = image+(i * bif->width * 3);
-
-    png_read_image(png_p, rows);
-
-    bif->data = icv_uchar2double(image, 3 * bif->width * bif->height);
-    bu_free(image, "png_read : unsigned char data");
-    bif->magic = ICV_IMAGE_MAGIC;
-    bif->channels = 3;
-    bif->color_space = ICV_COLOR_SPACE_RGB;
-
-    png_destroy_read_struct(&png_p, &info_p, NULL);
-    bu_free(rows, "png rows");
-
-    return bif;
-}
-
-struct png_mem_source {
+struct png_source {
+    FILE *stream;
     const unsigned char *buffer;
     size_t size;
     size_t offset;
+    mime_png::inspector *header;
 };
 
 static void
@@ -542,130 +422,127 @@ user_read_data(png_structp png_ptr, png_bytep data, png_size_t length)
 {
     png_voidp io_ptr = png_get_io_ptr(png_ptr);
     if (!io_ptr) {
-	png_error(png_ptr, "png_read_mem: IO pointer is NULL");
+	png_error(png_ptr, "PNG input source is NULL");
 	return;
     }
 
-    struct png_mem_source *src = (struct png_mem_source *)io_ptr;
-
-    if (src->offset + length > src->size) {
-	png_error(png_ptr, "png_read_mem: Read beyond end of buffer");
-	return;
+    auto *src = static_cast<png_source *>(io_ptr);
+    if (src->stream) {
+	if (fread(data, 1, length, src->stream) != length)
+	    png_error(png_ptr, "Cannot read PNG input");
+    } else {
+	if (src->offset > src->size || length > src->size - src->offset)
+	    png_error(png_ptr, "Read beyond end of PNG buffer");
+	memcpy(data, src->buffer + src->offset, length);
+	src->offset += length;
     }
-
-    memcpy(data, src->buffer + src->offset, length);
-    src->offset += length;
+    src->header->feed(data, length);
 }
 
-extern "C" icv_image_t*
-png_read_mem(const unsigned char *buffer, size_t size)
+struct png_decode_state {
+    icv_image_t *image = NULL;
+    unsigned char *pixels = NULL;
+    png_bytep *rows = NULL;
+    mime_png::inspector header;
+};
+
+static icv_image_t *
+png_decode(FILE *stream, const unsigned char *buffer, size_t size, const char *type, const bu_mime_traits *traits, const bu_mime_traits *observations)
 {
-    if (UNLIKELY(!buffer || size == 0))
+    png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (!png)
 	return NULL;
-
-    icv_image_t *bif = NULL;
-    unsigned char *data = NULL;
-    png_bytep *row_pointers = NULL;
-
-    png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-    if (UNLIKELY(png_ptr == NULL))
-	return NULL;
-
-    png_infop info_ptr = png_create_info_struct(png_ptr);
-    if (info_ptr == NULL) {
-	png_destroy_read_struct(&png_ptr, NULL, NULL);
+    png_infop info = png_create_info_struct(png);
+    if (!info) {
+	png_destroy_read_struct(&png, NULL, NULL);
 	return NULL;
     }
-
-    if (setjmp(png_jmpbuf(png_ptr))) {
-	png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-	bu_log("png_read_mem: Error reading PNG buffer\n");
-	if (bif) bu_free(bif, "bif");
-	if (data) bu_free(data, "png_read_mem unsigned char data");
-	if (row_pointers) bu_free(row_pointers, "row_pointers");
+    /* libpng errors use longjmp. Keep changing ownership state on the heap
+     * so cleanup does not inspect indeterminate automatic variables. */
+    auto *state = new (std::nothrow) png_decode_state;
+    if (!state) {
+	png_destroy_read_struct(&png, &info, NULL);
 	return NULL;
     }
-
-    struct png_mem_source mem_src;
-    mem_src.buffer = buffer;
-    mem_src.size = size;
-    mem_src.offset = 0;
-
-    png_set_read_fn(png_ptr, &mem_src, user_read_data);
-
-    png_read_info(png_ptr, info_ptr);
-
-    png_uint_32 width, height;
-    int bit_depth, color_type;
-    png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, NULL, NULL, NULL);
-
-    int channels = 1;
-    ICV_COLOR_SPACE color_space = ICV_COLOR_SPACE_GRAY;
-
+    if (setjmp(png_jmpbuf(png))) {
+	png_destroy_read_struct(&png, &info, NULL);
+	icv_destroy(state->image);
+	bu_free(state->pixels, "PNG pixels");
+	bu_free(state->rows, "PNG rows");
+	delete state;
+	return NULL;
+    }
+    struct png_source source = {stream, buffer, size, 0, &state->header};
+    png_set_read_fn(png, &source, user_read_data);
+    png_read_info(png, info);
+    if (!state->header.facts.matches(traits, observations) ||
+	(BU_STR_EQUAL(type, "image/apng") && !state->header.facts.animated))
+	png_error(png, "Requested PNG traits do not match the encoded header");
+    int color_type = png_get_color_type(png, info);
+    int bit_depth = png_get_bit_depth(png, info);
     if (color_type == PNG_COLOR_TYPE_PALETTE)
-	png_set_palette_to_rgb(png_ptr);
+	png_set_palette_to_rgb(png);
     if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
-	png_set_expand_gray_1_2_4_to_8(png_ptr);
-    if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
-	png_set_tRNS_to_alpha(png_ptr);
-
+	png_set_expand_gray_1_2_4_to_8(png);
+    if (png_get_valid(png, info, PNG_INFO_tRNS))
+	png_set_tRNS_to_alpha(png);
     if (bit_depth == 16)
-	png_set_strip_16(png_ptr);
+	png_set_strip_16(png);
+    png_set_interlace_handling(png);
+    png_read_update_info(png, info);
 
-    png_read_update_info(png_ptr, info_ptr);
-    png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, NULL, NULL, NULL);
+    size_t width = png_get_image_width(png, info);
+    size_t height = png_get_image_height(png, info);
+    size_t channels = png_get_channels(png, info);
+    size_t row_size = png_get_rowbytes(png, info);
+    if (!width || !height || !channels || channels > 4 ||
+	width > SIZE_MAX / channels || row_size != width * channels ||
+	height > SIZE_MAX / row_size || height > SIZE_MAX / sizeof(png_bytep))
+	png_error(png, "Invalid or excessive PNG dimensions");
+    state->image = icv_create_with_channels(width, height,
+	channels <= 2 ? ICV_COLOR_SPACE_GRAY : ICV_COLOR_SPACE_RGB, channels);
+    if (!state->image)
+	png_error(png, "Cannot allocate PNG image");
+    state->pixels = static_cast<unsigned char *>(bu_malloc(row_size * height, "PNG pixels"));
+    state->rows = static_cast<png_bytep *>(bu_malloc(height * sizeof(png_bytep), "PNG rows"));
+    for (size_t row = 0; row < height; ++row)
+	state->rows[height - row - 1] = state->pixels + row * row_size;
+    png_read_image(png, state->rows);
+    png_read_end(png, info);
+    for (size_t i = 0; i < row_size * height; ++i)
+	state->image->data[i] = static_cast<double>(state->pixels[i]) / 255.0;
 
-    switch (color_type) {
-	case PNG_COLOR_TYPE_GRAY:
-	    channels = 1;
-	    color_space = ICV_COLOR_SPACE_GRAY;
+    png_textp text = NULL;
+    int text_count = 0;
+    if (png_get_text(png, info, &text, &text_count) > 0)
+	for (int i = 0; i < text_count; ++i) {
+	    if (!text[i].key || !text[i].text || !BU_STR_EQUAL(text[i].key, ICV_PNG_KEY_SCENE))
+		continue;
+	    struct icv_render_info *render_info = icv_render_info_create();
+	    if (json_to_render_info(text[i].text, render_info))
+		state->image->render_info = render_info;
+	    else
+		icv_render_info_destroy(render_info);
 	    break;
-	case PNG_COLOR_TYPE_GRAY_ALPHA:
-	    channels = 2;
-	    color_space = ICV_COLOR_SPACE_GRAY;
-	    break;
-	case PNG_COLOR_TYPE_RGB:
-	    channels = 3;
-	    color_space = ICV_COLOR_SPACE_RGB;
-	    break;
-	case PNG_COLOR_TYPE_RGB_ALPHA:
-	    channels = 4;
-	    color_space = ICV_COLOR_SPACE_RGB;
-	    break;
-    }
+	}
+    icv_image_t *image = state->image;
+    png_destroy_read_struct(&png, &info, NULL);
+    bu_free(state->pixels, "PNG pixels");
+    bu_free(state->rows, "PNG rows");
+    delete state;
+    return image;
+}
 
-    png_size_t rowbytes = png_get_rowbytes(png_ptr, info_ptr);
+extern "C" icv_image_t *
+png_read(FILE *stream, size_t, size_t, const char *type, const bu_mime_traits *traits, const bu_mime_traits *observations)
+{
+    return stream ? png_decode(stream, NULL, 0, type, traits, observations) : NULL;
+}
 
-    if (rowbytes > 0 && height > (size_t)-1 / rowbytes) {
-	bu_log("png_read_mem: dimensions excessively large, causing integer overflow\n");
-	png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-	return NULL;
-    }
-
-    data = (unsigned char *)bu_malloc(rowbytes * height, "png_read_mem unsigned char data");
-
-    row_pointers = (png_bytep*)bu_malloc(sizeof(png_bytep) * height, "row_pointers");
-    for (png_uint_32 row = 0; row < height; row++) {
-	row_pointers[height - 1 - row] = data + row * rowbytes;
-    }
-
-    png_read_image(png_ptr, row_pointers);
-
-    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-    bu_free(row_pointers, "row_pointers");
-
-    BU_ALLOC(bif, struct icv_image);
-    ICV_IMAGE_INIT(bif);
-    bif->width = (size_t)width;
-    bif->height = (size_t)height;
-    bif->channels = channels;
-    bif->color_space = color_space;
-    if (channels == 2 || channels == 4) bif->alpha_channel = 1;
-    bif->magic = ICV_IMAGE_MAGIC;
-    bif->data = icv_uchar2double(data, (size_t)(rowbytes * height));
-    bu_free(data, "png_read_mem unsigned char data");
-
-    return bif;
+extern "C" icv_image_t *
+png_read_mem(const unsigned char *buffer, size_t size, size_t, size_t, const char *type, const bu_mime_traits *traits, const bu_mime_traits *observations)
+{
+    return buffer && size ? png_decode(NULL, buffer, size, type, traits, observations) : NULL;
 }
 
 

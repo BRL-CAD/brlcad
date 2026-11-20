@@ -37,6 +37,7 @@ __BEGIN_DECLS
 #include "icv/crop.h"
 #include "icv/filters.h"
 #include "icv/io.h"
+#include "icv/codec.h"
 #include "icv/ops.h"
 #include "icv/stat.h"
 

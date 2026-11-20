@@ -28,41 +28,14 @@
 #ifndef ICV_IO_H
 #define ICV_IO_H
 
-#include <stddef.h> /* for size_t */
-
 #include "common.h"
-#include "vmath.h"
 #include "bu/mime.h"
-#include "icv/defines.h"
+#include "icv/codec.h"
 
 __BEGIN_DECLS
 
 /** @{ */
 /** @file icv/io.h */
-
-/**
- * This function allocates memory for an image and returns the
- * resultant image.
- *
- * @param width Width of the image to be created
- * @param height Height of the image to be created
- * @param color_space Color space of the image (RGB, grayscale)
- * @return Image structure with allocated space and zeroed data array, or
- * NULL if the arguments are invalid or allocation fails.
- */
-ICV_EXPORT extern icv_image_t *icv_create(size_t width, size_t height, ICV_COLOR_SPACE color_space);
-
-/**
- * This function zeroes all the data entries of an image
- * @param bif Image Structure
- */
-ICV_EXPORT extern icv_image_t *icv_zero(icv_image_t *bif);
-
-/**
- * This function frees the allocated memory for a ICV Structure and
- * data.
- */
-ICV_EXPORT extern int icv_destroy(icv_image_t *bif);
 
 /**
  * Function to calculate (or make an educated guess) about the
@@ -85,12 +58,14 @@ ICV_EXPORT extern int icv_destroy(icv_image_t *bif);
  * @return
  * Returns 1 if an image size was identified, zero otherwise.
  *
+ * DEPRECATED (7.48): The generated-enum size interface.
+ * Use icv_image_size_with_context, icv_raw_size, or icv_named_size.
  */
 ICV_EXPORT extern int icv_image_size(const char *label, size_t dpi, size_t data_size, bu_mime_image_t type, size_t *widthp, size_t *heightp);
 
 /**
  * Load a file into an ICV struct. For most formats, this will be
- * called with format=ICV_IMAGE_AUTO.
+ * called with format=BU_MIME_IMAGE_AUTO.
  *
  * The data is packed in icv_image struct in double format with varied
  * channels as per the specification of image to be loaded.
@@ -104,12 +79,15 @@ ICV_EXPORT extern int icv_image_size(const char *label, size_t dpi, size_t data_
  *
  * @param filename File to read
  * @param format Probable format of the file, typically
- * ICV_IMAGE_AUTO
+ * BU_MIME_IMAGE_AUTO
  * @param width Width when passed as parameter from calling
  * program.
  * @param height Height when passed as parameter from calling
  * program.
  * @return A newly allocated struct holding the loaded image info.
+ *
+ * DEPRECATED (7.48): Use icv_read_with_context and a
+ * canonical MIME name (NULL for automatic recognition).
  */
 ICV_EXPORT extern icv_image_t *icv_read(const char *filename, bu_mime_image_t format, size_t width, size_t height);
 
@@ -122,6 +100,8 @@ ICV_EXPORT extern icv_image_t *icv_read(const char *filename, bu_mime_image_t fo
  * @param width Width when passed as parameter from calling program.
  * @param height Height when passed as parameter from calling program.
  * @return A newly allocated struct holding the loaded image info, or NULL on failure.
+ *
+ * DEPRECATED (7.48): Use icv_read_mem_with_context.
  */
 ICV_EXPORT extern icv_image_t *icv_read_mem(const unsigned char *buffer, size_t size, bu_mime_image_t format, size_t width, size_t height);
 
@@ -137,6 +117,8 @@ ICV_EXPORT extern icv_image_t *icv_read_mem(const unsigned char *buffer, size_t 
  * @param filename Filename of the file to be written.
  * @param format Specific format of the file to be written.
  * @return on success 0, on failure -1 with log messages.
+ *
+ * DEPRECATED (7.48): Use icv_write_with_context.
  */
 ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, bu_mime_image_t format);
 
@@ -153,135 +135,10 @@ ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, bu_mime_i
  * @return on success 0, on failure -1 with log messages.
  *
  * Note: The caller is responsible for freeing *buffer using bu_free().
+ *
+ * DEPRECATED (7.48): Use icv_write_mem_with_context.
  */
 ICV_EXPORT extern int icv_write_mem(icv_image_t *bif, unsigned char **buffer, size_t *size, bu_mime_image_t format);
-
-/**
- * Saves an image as an 8-bit color-mapped Sun rasterfile.
- *
- * This format-specific entry point supports optional dithering during palette
- * quantization.  Use icv_write() with BU_MIME_IMAGE_SUN when dithering is not
- * needed.
- *
- * @param bif Image structure.
- * @param filename Output filename, or NULL to write to standard output.
- * @param dither Non-zero to dither while quantizing to the rasterfile palette.
- * @return on success 0, on failure -1 with log messages.
- */
-ICV_EXPORT extern int icv_write_sun(icv_image_t *bif, const char *filename, int dither);
-
-/**
- * Write an image line to the data of ICV struct. Can handle unsigned
- * char buffers.
- *
- * Note : This function requires memory allocation for ICV_UCHAR_DATA,
- * which in turn acquires BU_SEM_SYSCALL semaphore.
- *
- * @param bif ICV struct where data is to be written
- * @param y Index of the line at which data is to be written. 0 for
- * the first line
- * @param data Line Data to be written
- * @param type Type of data, e.g., uint8 data specify ICV_DATA_UCHAR or 1
- * @return on success 0, on failure -1
- */
-ICV_EXPORT int icv_writeline(icv_image_t *bif, size_t y, void *data, ICV_DATA type);
-
-/**
- * Writes a pixel to the specified coordinates in the data of ICV
- * struct.
- *
- * @param bif ICV struct where data is to be written
- * @param x x-dir coordinate of the pixel
- * @param y y-dir coordinate of the pixel. (0,0) coordinate is taken
- * as bottom left
- * @param data Data to be written
- * @return on success 0, on failure -1
- */
-ICV_EXPORT int icv_writepixel(icv_image_t *bif, size_t x, size_t y, double *data);
-
-/**
- * Converts double data of icv_image to unsigned char data.
- * This function also does gamma correction using the gamma_corr
- * parameter of the image structure.
- *
- * Gamma correction prevents bad color aliasing.
- *
- * @param bif ICV struct where data is to be read from
- * @return array of unsigned char converted data, or NULL on failure
- */
-ICV_EXPORT unsigned char *icv_data2uchar(const icv_image_t *bif);
-
-/**
- * Converts unsigned char array to double array.
- * This function returns array of double data.
- *
- * Used to convert data from pix, bw, ppm type images for icv_image
- * struct.
- *
- * This does not free the char data.
- *
- * @param data pointer to the array to be converted.
- * @param size Size of the array.
- * @return double array.
- *
- */
-ICV_EXPORT double *icv_uchar2double(unsigned char *data, size_t size);
-
-
-/**
- * Options that can be passed to icv_ascii_art to modify its output.
- */
-struct icv_ascii_art_params {
-    int output_color;
-    int invert_color;
-    fastf_t brightness_multiplier;
-};
-#define ICV_ASCII_ART_PARAMS_DEFAULT {0, 0, 1.0}
-
-/**
- * Converts the image to an ASCII art text string.  This function returns a
- * char array - it is the caller's responsibility to free it.
- *
- * Note that this function does not attempt to correct for the aspect ratio
- * problem (character printing in terminals often will result in the image
- * being "stretched" in height.)  If the use case calls for that, the
- * application should use icv_resize to adjust the image before calling
- * icv_ascii_art. (See the ascii libicv test code for an example.)
- *
- * @param i ICV image data.
- * @param p ASCII text generation parameters.
- * @return char array.
- *
- */
-ICV_EXPORT extern char *icv_ascii_art(icv_image_t *i, struct icv_ascii_art_params *p);
-
-/**
- * Allocate and zero-initialise a new icv_render_info struct.
- * Caller is responsible for filling in the fields and eventually
- * calling icv_render_info_destroy().
- */
-ICV_EXPORT extern struct icv_render_info *icv_render_info_create(void);
-
-/**
- * Release all memory owned by an icv_render_info, including the struct itself.
- *
- * @return 0 on success.
- */
-ICV_EXPORT extern int icv_render_info_destroy(struct icv_render_info *info);
-
-/**
- * Attach render metadata to an image.  Any existing render_info on the
- * image is first freed.  Passing NULL clears the metadata.  On success,
- * ownership of info transfers to img.
- *
- * @return 0 on success, -1 if img is NULL.
- */
-ICV_EXPORT extern int icv_image_set_render_info(icv_image_t *img, struct icv_render_info *info);
-
-/**
- * Return the render metadata attached to an image, or NULL if none.
- */
-ICV_EXPORT extern struct icv_render_info *icv_image_get_render_info(const icv_image_t *img);
 
 /** @} */
 

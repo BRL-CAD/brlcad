@@ -50,7 +50,7 @@ struct xy_size {
 
 /* See https://en.wikipedia.org/wiki/Graphics_display_resolution
  * for more information - list assembled cira 2016/02/26 */
-struct xy_size icv_display_sizes[] = {
+static const struct xy_size icv_display_sizes[] = {
     { "nHD *"     ,   640,  360 }, /*    230400 */
     { "qHD *"     ,   960,  540 }, /*    518400 */
     { "HD *"      ,  1280,  720 }, /*    921600 */
@@ -114,7 +114,7 @@ struct paper_size {
 
 /* Specify the size in whatever unit the "standard"
  * definition uses, and zero the other unit. */
-struct paper_size paper_sizes[] = {
+static const struct paper_size paper_sizes[] = {
     { "Letter",   0,    0, 8.5,  11 },
     { "Legal",    0,    0, 8.5,  14 },
     { "Ledger",   0,    0,  17,  11 },
@@ -169,128 +169,117 @@ struct paper_size paper_sizes[] = {
 };
 
 /* DPI settings */
-size_t dpi_array[] = {72, 96, 150, 300, 2540, 4000, 0};
+static const size_t dpi_array[] = {72, 96, 150, 300, 2540, 4000, 0};
 
 int
-icv_image_size(const char *name, size_t udpi, size_t file_size, bu_mime_image_t img_type, size_t *widthp, size_t *heightp)
+icv_image_size(const char *name, size_t dpi, size_t file_size, bu_mime_image_t type, size_t *width, size_t *height)
 {
-    struct xy_size *sp;
-    struct paper_size *ps;
-    size_t root;
-    size_t npixels;
-    int dpi_ind = 0;
-    unsigned long i;
-    int pixel_size = 3; /* Start with an assumption of 3 doubles per pixel */
-    switch (img_type) {
-	case BU_MIME_IMAGE_PIX:
-	    pixel_size = 3;
-	    break;
-	case BU_MIME_IMAGE_BW:
-	    pixel_size = 1;
-	    break;
-	default:
-	    break;
-    }
+    /* Legacy inference discards partial pixels and defaults non-BW types
+     * to three bytes per pixel. New layout queries require exact sizes. */
+    size_t pixel_size = type == BU_MIME_IMAGE_BW ? 1 : 3;
+    if (file_size && file_size < pixel_size)
+	return 0;
+    return icv_raw_size(name, dpi, file_size - file_size % pixel_size, pixel_size, width, height);
+}
 
-    npixels = (size_t)(file_size / pixel_size);
+int
+icv_named_size(const char *name, size_t dpi, size_t *width, size_t *height)
+{
+    return name && icv_raw_size(name, dpi, 0, 1, width, height);
+}
 
-    /* If we have a name, try that first. */
+static int
+icv_size_matches(size_t pixels, size_t width, size_t height)
+{
+    return width && height && pixels / width == height && pixels % width == 0;
+}
+
+static int
+icv_paper_dimensions(const struct paper_size *paper, size_t dpi, size_t *width, size_t *height)
+{
+    double inches = bu_units_conversion("inch");
+    double w = (paper->width_mm > 0 ? paper->width_mm / inches : paper->width_in) * dpi;
+    double h = (paper->height_mm > 0 ? paper->height_mm / inches : paper->height_in) * dpi;
+    if (!isfinite(w) || !isfinite(h) || w < 1 || h < 1 ||
+	w >= (double)SIZE_MAX || h >= (double)SIZE_MAX)
+	return 0;
+    *width = (size_t)w;
+    *height = (size_t)h;
+    return *width <= SIZE_MAX / *height;
+}
+
+int
+icv_raw_size(const char *name, size_t dpi, size_t file_size, size_t pixel_size, size_t *width, size_t *height)
+{
+    const size_t default_dpi = 300;
+    size_t pixels;
+    if (!width || !height || !pixel_size || file_size % pixel_size)
+	return 0;
+    pixels = file_size / pixel_size;
     if (name) {
-	/* First try the display sizes - they're not DPI dependent. */
-	sp = icv_display_sizes;
-	while (sp->label) {
-	    if (BU_STR_EQUAL(sp->label, name)) {
-		*widthp = sp->width;
-		*heightp = sp->height;
-		/* If we don't have a file size, just return success*/
-		if (!file_size) return 1;
-		/* If we *do* have a size, validate that the image dimensions match the
-		 * display size identified. */
-		return (npixels == sp->width * sp->height) ? 1 : 0;
-	    }
-	    sp++;
-	}
-	/* Next, try the paper sizes. */
-	ps = paper_sizes;
-	while (ps->label) {
-	    if (BU_STR_EQUAL(ps->label, name)) {
-		/* For paper sizes, dimensions aren't enough by themselves.  We need a dpi.
-		 * If one was supplied, use it. */
-		if (udpi) {
-		    *widthp = (ps->width_mm > 0) ? (size_t)(ps->width_mm * udpi * 1/bu_units_conversion("inch")) : (size_t)(ps->width_in * udpi);
-		    *heightp = (ps->height_mm > 0) ? (size_t)(ps->height_mm * udpi * 1/bu_units_conversion("inch")) : (size_t)(ps->height_in * udpi);
-		    /* If we don't have a file size, just return success*/
-		    if (!file_size) return 1;
-		    /* If we *do* have a size, validate that the image dimensions match the
-		     * display size identified. */
-		    return (npixels == *widthp * *heightp) ? 1 : 0;
-		}
-		/* If not, and if we have a file size, try to find a matching fit in the DPI array */
-		if (file_size) {
-		    i = 0;
-		    while (dpi_array[i]) {
-			size_t tw = (ps->width_mm > 0) ? (size_t)(ps->width_mm * dpi_array[i] * 1/bu_units_conversion("inch")) : (size_t)(ps->width_in * dpi_array[i]);
-			size_t th = (ps->height_mm > 0) ? (size_t)(ps->height_mm * dpi_array[i] * 1/bu_units_conversion("inch")) : (size_t)(ps->height_in * dpi_array[i]);
-			if (npixels == tw * th) {
-			    *widthp = tw;
-			    *heightp = th;
-			    return 1;
-			}
-			i++;
-		    }
-		    return 0;
-		}
-		/* If we don't have a file size, go with 300 dpi */
-		*widthp = (ps->width_mm > 0) ? (size_t)(ps->width_mm * 300 * 1/bu_units_conversion("inch")) : (size_t)(ps->width_in * 300);
-		*heightp = (ps->height_mm > 0) ? (size_t)(ps->height_mm * 300 * 1/bu_units_conversion("inch")) : (size_t)(ps->height_in * 300);
-		return 1;
-	    }
-	    ps++;
-	}
-    }
-
-    /* If we don't have a name or none of the names matched, try the image dimensions if we have them. */
-    if (npixels <= 0) return  0;
-
-    /* If the size is a perfect square, then use that. */
-    root = (size_t)(sqrt((double)npixels)+0.999);
-    if (root*root == npixels) {
-	*widthp = root;
-	*heightp = root;
-	return  1;
-    }
-
-
-    /* Check for "standard" display sized images */
-    sp = icv_display_sizes;
-    while (sp->width != 0) {
-	if (npixels == sp->width * sp->height) {
-	    *widthp = sp->width;
-	    *heightp = sp->height;
+	for (const struct xy_size *display = icv_display_sizes; display->label; ++display) {
+	    if (!BU_STR_EQUAL(display->label, name))
+		continue;
+	    if (file_size && !icv_size_matches(pixels, display->width, display->height))
+		return 0;
+	    *width = display->width;
+	    *height = display->height;
 	    return 1;
 	}
-	sp++;
-    }
-
-    /* Try paper sizes in various DPI settings */
-    ps = paper_sizes;
-    while (ps->label) {
-	dpi_ind = 0;
-	while (dpi_array[dpi_ind]) {
-	    size_t tw = (ps->width_mm > 0) ? (size_t)(ps->width_mm * dpi_array[dpi_ind] * 1/bu_units_conversion("inch")) : (size_t)(ps->width_in * dpi_array[dpi_ind]);
-	    size_t th = (ps->height_mm > 0) ? (size_t)(ps->height_mm * dpi_array[dpi_ind] * 1/bu_units_conversion("inch")) : (size_t)(ps->height_in * dpi_array[dpi_ind]);
-	    if (npixels == tw * th) {
-		*widthp = tw;
-		*heightp = th;
+	for (const struct paper_size *paper = paper_sizes; paper->label; ++paper) {
+	    if (!BU_STR_EQUAL(paper->label, name))
+		continue;
+	    if (dpi || !file_size) {
+		size_t w, h;
+		if (!icv_paper_dimensions(paper, dpi ? dpi : default_dpi, &w, &h) ||
+		    (file_size && !icv_size_matches(pixels, w, h)))
+		    return 0;
+		*width = w;
+		*height = h;
 		return 1;
 	    }
-	    dpi_ind++;
+	    for (size_t i = 0; dpi_array[i]; ++i) {
+		size_t w, h;
+		if (icv_paper_dimensions(paper, dpi_array[i], &w, &h) && icv_size_matches(pixels, w, h)) {
+		    *width = w;
+		    *height = h;
+		    return 1;
+		}
+	    }
+	    return 0;
 	}
-	ps++;
     }
-
-    /* Nope, we are clueless. */
-    return      0;
+    if (!pixels)
+	return 0;
+    double approximation = sqrt((double)pixels);
+    size_t root = (size_t)approximation;
+    /* Correct floating rounding without overflowing root*root. */
+    while (root > pixels / root)
+	--root;
+    while (root + 1 <= pixels / (root + 1))
+	++root;
+    if (icv_size_matches(pixels, root, root)) {
+	*width = *height = root;
+	return 1;
+    }
+    for (const struct xy_size *display = icv_display_sizes; display->label; ++display) {
+	if (icv_size_matches(pixels, display->width, display->height)) {
+	    *width = display->width;
+	    *height = display->height;
+	    return 1;
+	}
+    }
+    for (const struct paper_size *paper = paper_sizes; paper->label; ++paper) {
+	for (size_t i = 0; dpi_array[i]; ++i) {
+	    size_t w, h;
+	    if (icv_paper_dimensions(paper, dpi_array[i], &w, &h) && icv_size_matches(pixels, w, h)) {
+		*width = w;
+		*height = h;
+		return 1;
+	    }
+	}
+    }
+    return 0;
 }
 
 static int

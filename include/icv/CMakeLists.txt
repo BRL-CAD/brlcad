@@ -3,9 +3,11 @@ set(
   anim.h
   defines.h
   colorspace.h
+  codec.h
   crop.h
   filters.h
   io.h
+  image.h
   ops.h
   stat.h
 )

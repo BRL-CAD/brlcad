@@ -31,6 +31,7 @@
 
 #include "common.h"
 #include "icv/defines.h"
+#include "icv/image.h"
 
 __BEGIN_DECLS
 
@@ -47,7 +48,8 @@ typedef struct icv_anim icv_anim_t;
 /**
  * Create a new empty animation object.
  *
- * @param format The output format (ICV_ANIM_APNG or ICV_ANIM_MJPG).
+ * @param format Legacy output choice (ICV_ANIM_APNG or ICV_ANIM_MJPG), or
+ * ICV_ANIM_UNKNOWN for independent MIME-based output selection.
  * @param width The canvas width (can be 0 to auto-detect based on frames).
  * @param height The canvas height (can be 0 to auto-detect based on frames).
  * @param fps The default frames per second for the animation.
@@ -60,6 +62,11 @@ ICV_EXPORT extern icv_anim_t *icv_anim_create(icv_anim_format_t format, uint32_t
  * @param filename The path to the animation file.
  */
 ICV_EXPORT extern icv_anim_t *icv_anim_read(const char *filename);
+
+/** Borrow the sequence's canonical MIME identity, or NULL when unknown.
+ * The value belongs to the animation and survives codec context teardown.
+ * Built-in enum creation records its corresponding MIME identity. */
+ICV_EXPORT extern const char *icv_anim_mime_type(const icv_anim_t *anim);
 
 /**
  * Write the animation object to a file.

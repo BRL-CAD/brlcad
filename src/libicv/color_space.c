@@ -26,6 +26,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "vmath.h"
 #include "bio.h"
@@ -33,6 +34,39 @@
 #include "bu/log.h"
 #include "icv.h"
 #include "icv_private.h"
+
+icv_image_t *
+icv_flatten(const icv_image_t *image, const double *background)
+{
+    static const double black[3] = {0.0, 0.0, 0.0};
+    ICV_IMAGE_VAL_PTR(image);
+    size_t color_channels = image->color_space == ICV_COLOR_SPACE_RGB ? 3 :
+	image->color_space == ICV_COLOR_SPACE_GRAY ? 1 : 0;
+    if (!image->data || !color_channels || image->alpha_channel > 1 ||
+	image->channels != color_channels + image->alpha_channel)
+	return NULL;
+    if (!background)
+	background = black;
+    for (size_t channel = 0; channel < 3; ++channel)
+	if (!isfinite(background[channel]) || background[channel] < 0.0 || background[channel] > 1.0)
+	    return NULL;
+    icv_image_t *result = icv_create(image->width, image->height, ICV_COLOR_SPACE_RGB);
+    if (!result)
+	return NULL;
+    result->gamma_corr = image->gamma_corr;
+    for (size_t pixel = 0; pixel < image->width * image->height; ++pixel) {
+	const double *source = image->data + pixel * image->channels;
+	double alpha = image->alpha_channel ? source[color_channels] : 1.0;
+	if (!isfinite(alpha) || alpha < 0.0 || alpha > 1.0) {
+	    icv_destroy(result);
+	    return NULL;
+	}
+	for (size_t channel = 0; channel < 3; ++channel)
+	    result->data[pixel * 3 + channel] = alpha * source[color_channels == 1 ? 0 : channel] +
+		(1.0 - alpha) * background[channel];
+    }
+    return result;
+}
 
 int
 icv_gray2rgb(icv_image_t *img)

@@ -21,8 +21,11 @@
 #include "common.h"
 
 #include <vector>
+#include <array>
+#include <memory>
 #include <string>
 #include <cstdio>
+#include <fstream>
 #include <cstring>
 #include <cmath>
 #include <sstream>
@@ -39,6 +42,8 @@
 
 #include "icv_private.h"
 #include "icv/anim.h"
+#include "../libbu/mime_avi.h"
+#include "../libbu/mime_png.h"
 #define APNGMINI_IMPLEMENTATION
 #include "apngmini.hpp"
 
@@ -49,6 +54,7 @@ struct icv_anim_frame {
 
 struct icv_anim {
     icv_anim_format_t format;
+    std::string mime_type;
     uint32_t width;
     uint32_t height;
     int fps;
@@ -63,10 +69,24 @@ extern "C" {
     {
 	icv_anim_t *anim = new icv_anim;
 	anim->format = format;
+	if (format == ICV_ANIM_APNG) anim->mime_type = "image/apng";
+	else if (format == ICV_ANIM_MJPG) anim->mime_type = "video/x-msvideo";
 	anim->width = width;
 	anim->height = height;
 	anim->fps = (fps > 0) ? fps : 10;
 	return anim;
+    }
+
+    const char *
+    icv_anim_mime_type(const icv_anim_t *anim)
+    {
+	return anim && !anim->mime_type.empty() ? anim->mime_type.c_str() : NULL;
+    }
+
+    void
+    icv_anim_set_mime_type(icv_anim_t *anim, const char *type)
+    {
+	anim->mime_type = type;
     }
 
     int
@@ -157,34 +177,32 @@ extern "C" {
     }
 
 extern "C" {
-    static icv_anim_format_t
-    detect_anim_format(const char *filename)
+    static bool
+    anim_input_matches(const char *filename, const char *type, const bu_mime_traits *requested, const bu_mime_traits *observations)
     {
-	FILE *fp = fopen(filename, "rb");
-	if (!fp) return ICV_ANIM_UNKNOWN;
-	unsigned char header[12];
-	size_t read_bytes = fread(header, 1, 12, fp);
-	fclose(fp);
-
-	if (read_bytes >= 8) {
-	    if (header[0] == 0x89 && header[1] == 'P' && header[2] == 'N' && header[3] == 'G' &&
-		header[4] == '\r' && header[5] == '\n' && header[6] == 0x1A && header[7] == '\n') {
-		return ICV_ANIM_APNG;
+	std::ifstream input(filename, std::ios::binary);
+	if (!input.is_open()) return false;
+	bu_mime_traits observed = BU_MIME_TRAITS_INIT_ZERO;
+	bool valid = false;
+	if (BU_STR_EQUAL(type, "image/apng")) {
+	    mime_png::inspector header;
+	    constexpr size_t header_block_size = 4096;
+	    unsigned char block[header_block_size];
+	    while (!header.finished() && input) {
+		input.read(reinterpret_cast<char *>(block), sizeof(block));
+		header.feed(block, static_cast<size_t>(input.gcount()));
 	    }
+	    valid = !input.bad() && header.finished() && header.facts.standard_header() &&
+		header.facts.animated && header.facts.append_traits(observed);
+	} else if (BU_STR_EQUAL(type, "video/x-msvideo")) {
+	    const auto header = mime_avi::inspect(input);
+	    valid = !input.bad() && header.complete && header.video_streams == 1 && header.video_index == 0 &&
+		(header.handler == "MJPG" || header.handler == "mjpg") && header.append_traits(observed);
 	}
-	if (read_bytes >= 12) {
-	    if (header[0] == 'R' && header[1] == 'I' && header[2] == 'F' && header[3] == 'F' &&
-		header[8] == 'A' && header[9] == 'V' && header[10] == 'I') {
-		return ICV_ANIM_MJPG;
-	    }
-	}
-
-	if (strstr(filename, ".apng") != NULL || strstr(filename, ".png") != NULL) {
-	    return ICV_ANIM_APNG;
-	} else if (strstr(filename, ".avi") != NULL || strstr(filename, ".mjpg") != NULL) {
-	    return ICV_ANIM_MJPG;
-	}
-	return ICV_ANIM_UNKNOWN;
+	valid = valid && bu_mime_traits_match(&observed, observations, requested);
+	bu_mime_traits_free(&observed);
+	if (!valid) bu_log("Sequence input does not establish the selected %s profile\n", type);
+	return valid;
     }
 
     static uint32_t avi_read_u32(FILE *fp)
@@ -195,7 +213,7 @@ extern "C" {
     }
 
     static icv_anim_t *
-    read_mjpeg_avi(const char *filename)
+    read_mjpeg_avi(icv_context *context, const char *filename)
     {
 	FILE *fp = fopen(filename, "rb");
 	if (!fp) return NULL;
@@ -232,7 +250,7 @@ extern "C" {
 			    if (sub_size > 256 * 1024 * 1024) break; /* Sanity limit 256MB */
 			    unsigned char *buf = (unsigned char *)bu_malloc(sub_size, "avi jpeg frame");
 			    if (fread(buf, 1, sub_size, fp) == sub_size) {
-				icv_image_t *img = icv_read_mem(buf, sub_size, BU_MIME_IMAGE_JPEG, 0, 0);
+				icv_image_t *img = icv_read_mem_with_context(context, buf, sub_size, "image/jpeg", NULL, 0, 0, NULL);
 				if (img) {
 				    icv_anim_frame f;
 				    f.img = img;
@@ -283,14 +301,12 @@ extern "C" {
 	return anim;
     }
 
-    icv_anim_t *
-    icv_anim_read(const char *filename)
+    static icv_anim_t *
+    anim_read_builtin(icv_context *context, const char *filename, const char *type, const bu_mime_traits *traits, const bu_mime_traits *observations)
     {
-	if (!filename) return NULL;
+	if (!filename || !anim_input_matches(filename, type, traits, observations)) return NULL;
 
-	icv_anim_format_t fmt = detect_anim_format(filename);
-
-	if (fmt == ICV_ANIM_APNG) {
+	if (BU_STR_EQUAL(type, "image/apng")) {
 	    try {
 		apngmini::Animation aapng = apngmini::read_file(filename);
 		if (aapng.frames.empty()) return NULL;
@@ -350,8 +366,8 @@ extern "C" {
 		bu_log("icv_anim_read (APNG): Exception parsing file '%s': %s\n", filename, e.what());
 		return NULL;
 	    }
-	} else if (fmt == ICV_ANIM_MJPG) {
-	    return read_mjpeg_avi(filename);
+	} else if (BU_STR_EQUAL(type, "video/x-msvideo")) {
+	    return read_mjpeg_avi(context, filename);
 	}
 
 	bu_log("icv_anim_read: Unsupported format or missing support for '%s'\n", filename);
@@ -498,8 +514,8 @@ extern "C" {
 	return 0;
     }
 
-    int
-    icv_anim_write(const icv_anim_t *anim, const char *filename)
+    static int
+    anim_write_builtin(icv_context *context, const icv_anim_t *anim, const char *filename, const char *type, const bu_mime_traits *)
     {
 	if (!anim || !filename || anim->frames.empty()) return -1;
 
@@ -513,7 +529,7 @@ extern "C" {
 	    }
 	}
 
-	if (anim->format == ICV_ANIM_APNG) {
+	if (BU_STR_EQUAL(type, "image/apng")) {
 	    apngmini::Animation aapng;
 	    aapng.canvas_width = w;
 	    aapng.canvas_height = h;
@@ -527,7 +543,7 @@ extern "C" {
 		return -1;
 	    }
 	    return 0;
-	} else if (anim->format == ICV_ANIM_MJPG) {
+	} else if (BU_STR_EQUAL(type, "video/x-msvideo")) {
 	    std::vector<std::vector<unsigned char> > jpegs;
 
 	    for (size_t i = 0; i < anim->frames.size(); ++i) {
@@ -535,7 +551,7 @@ extern "C" {
 		size_t jpg_size = 0;
 
 		// Write image straight to memory buffer
-		if (icv_write_mem(anim->frames[i].img, &jpg_data, &jpg_size, BU_MIME_IMAGE_JPEG) != 0) {
+		if (icv_write_mem_with_context(context, anim->frames[i].img, &jpg_data, &jpg_size, "image/jpeg", NULL, NULL) != 0) {
 		    // Free any successfully compressed frames before returning on failure
 		    return -1;
 		}
@@ -553,6 +569,20 @@ extern "C" {
 	    return write_mjpeg_avi(jpegs, w, h, anim->fps, filename);
 	}
 	return -1;
+    }
+
+    icv_anim_t *
+    icv_anim_read(const char *filename)
+    {
+	return icv_anim_read_variant(NULL, filename, NULL, NULL, NULL, NULL);
+    }
+
+    int
+    icv_anim_write(const icv_anim_t *anim, const char *filename)
+    {
+	if (!anim || anim->format == ICV_ANIM_UNKNOWN) return -1;
+	const char *type = anim->format == ICV_ANIM_APNG ? "image/apng" : "video/x-msvideo";
+	return icv_anim_write_variant(NULL, anim, filename, type, NULL, NULL, NULL) ? -1 : 0;
     }
 
     int
@@ -616,6 +646,57 @@ extern "C" {
     }
 
 } /* extern "C" */
+
+static std::array<bu_mime_trait, 6>
+anim_avi_profile(const char *handler)
+{
+    return {{BU_MIME_TRAIT_STRING("encoding", "binary"), BU_MIME_TRAIT_STRING("container", "avi"),
+	BU_MIME_TRAIT_STRING("byte-order", "little-endian"), BU_MIME_TRAIT_STRING("avi.video-handler", handler),
+	BU_MIME_TRAIT_STRING("avi.video-streams", "1"), BU_MIME_TRAIT_STRING("avi.video-stream-index", "0")}};
+}
+
+extern "C" const struct icv_plugin *
+icv_anim_plugin(void)
+{
+    static const char *apng_extensions[] = {"apng", "png"};
+    static const char *avi_extensions[] = {"avi", "mjpg"};
+    static const bu_mime_definition definitions[] = {
+	{BU_MIME_ABI_VERSION, sizeof(bu_mime_definition), "image/apng", "APNG image sequence", NULL, 0,
+	    apng_extensions, sizeof(apng_extensions) / sizeof(apng_extensions[0]), NULL, 0},
+	{BU_MIME_ABI_VERSION, sizeof(bu_mime_definition), "video/x-msvideo", "AVI image sequence", NULL, 0,
+	    avi_extensions, sizeof(avi_extensions) / sizeof(avi_extensions[0]), NULL, 0}
+    };
+    static const bu_mime_trait apng_input[] = {
+	BU_MIME_TRAIT_STRING("encoding", "binary"), BU_MIME_TRAIT_STRING("png.animated", "true")
+    };
+    static const bu_mime_trait apng_output[] = {
+	BU_MIME_TRAIT_STRING("encoding", "binary"), BU_MIME_TRAIT_STRING("bit-depth", "8"),
+	BU_MIME_TRAIT_STRING("png.color-type", "6"), BU_MIME_TRAIT_STRING("png.compression-method", "0"),
+	BU_MIME_TRAIT_STRING("png.filter-method", "0"), BU_MIME_TRAIT_STRING("png.interlace-method", "0"),
+	BU_MIME_TRAIT_STRING("png.animated", "true"), BU_MIME_TRAIT_STRING("apng.plays", "0"),
+	BU_MIME_TRAIT_STRING("apng.default-image", "frame")
+    };
+    static const bu_mime_capability apng_formats[] = {
+	{"image/apng", apng_input, sizeof(apng_input) / sizeof(apng_input[0]), ICV_CODEC_READ_SEQUENCE, BU_MIME_DEFER_INPUT_VALIDATION},
+	BU_MIME_CAPABILITY("image/apng", apng_output, sizeof(apng_output) / sizeof(apng_output[0]), ICV_CODEC_WRITE_SEQUENCE)
+    };
+    static const auto avi_upper = anim_avi_profile("MJPG");
+    static const auto avi_lower = anim_avi_profile("mjpg");
+    static const bu_mime_capability avi_formats[] = {
+	{"video/x-msvideo", avi_upper.data(), avi_upper.size(), ICV_CODEC_READ_SEQUENCE, BU_MIME_DEFER_INPUT_VALIDATION},
+	{"video/x-msvideo", avi_lower.data(), avi_lower.size(), ICV_CODEC_READ_SEQUENCE, BU_MIME_DEFER_INPUT_VALIDATION},
+	BU_MIME_CAPABILITY("video/x-msvideo", avi_upper.data(), avi_upper.size(), ICV_CODEC_WRITE_SEQUENCE)
+    };
+    static const icv_codec codecs[] = {
+	{"APNG Sequence", apng_formats, sizeof(apng_formats) / sizeof(apng_formats[0]), BU_MIME_DEFAULT_PRIORITY,
+	    NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, anim_read_builtin, anim_write_builtin},
+	{"AVI MJPEG Sequence", avi_formats, sizeof(avi_formats) / sizeof(avi_formats[0]), BU_MIME_DEFAULT_PRIORITY,
+	    NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, anim_read_builtin, anim_write_builtin}
+    };
+    static const icv_plugin plugin = {ICV_PLUGIN_ABI_VERSION, sizeof(icv_plugin), definitions,
+	sizeof(definitions) / sizeof(definitions[0]), codecs, sizeof(codecs) / sizeof(codecs[0])};
+    return &plugin;
+}
 
 // Local Variables:
 // tab-width: 8

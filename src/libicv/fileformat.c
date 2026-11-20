@@ -22,19 +22,13 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>	/* for file mode info in WRMODE */
-#include "png.h"
 
-#include "bio.h"
 
 #include "bu/str.h"
-#include "bu/exit.h"
-#include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/mime.h"
 #include "bu/path.h"
-#include "bn.h"
 #include "vmath.h"
 #include "icv_private.h"
 
@@ -162,218 +156,94 @@ icv_guess_file_format(const char *filename, struct bu_vls *trimmedname)
 
 /* begin public functions */
 
+static void
+icv_report_codec_messages(struct bu_vls *messages)
+{
+    if (bu_vls_strlen(messages))
+	bu_log("%s", bu_vls_cstr(messages));
+    bu_vls_free(messages);
+}
+
 icv_image_t *
 icv_read(const char *filename, bu_mime_image_t format, size_t width, size_t height)
 {
-    struct bu_vls ifilename = BU_VLS_INIT_ZERO;
-    const char *ifname = filename;
-
-    if (format == BU_MIME_IMAGE_AUTO) {
-	format = icv_guess_file_format(filename, &ifilename);
-	if (filename)
-	    ifname = bu_vls_cstr(&ifilename);
+    struct bu_vls trimmed = BU_VLS_INIT_ZERO;
+    struct bu_vls messages = BU_VLS_INIT_ZERO;
+    struct icv_context *context = icv_context_create(NULL);
+    icv_image_t *image;
+    const char *path = filename;
+    int automatic = format == BU_MIME_IMAGE_AUTO;
+    if (automatic) {
+	format = icv_guess_file_format(filename, &trimmed);
+	if (filename) {
+	    path = bu_vls_cstr(&trimmed);
+	    /* An explicit FMT: prefix takes precedence over inspection. */
+	    if (!BU_STR_EQUAL(path, filename))
+		automatic = 0;
+	}
     }
-
-    FILE *fp = (!ifname) ? stdin : fopen(ifname, "rb");
-    if (!fp) {
-	bu_log("ERROR: Cannot open file %s for reading\n", filename);
-	bu_vls_free(&ifilename);
-	return NULL;
-    }
-    if (!ifname)
-	setmode(fileno(fp), O_BINARY);
-
-    icv_image_t *oimg = NULL;
-    switch (format) {
-	case BU_MIME_IMAGE_PNG:
-	    oimg = png_read(fp);
-	    break;
-	case BU_MIME_IMAGE_PIX:
-	    oimg = pix_read(fp, width, height);
-	    break;
-	case BU_MIME_IMAGE_BW :
-	    oimg = bw_read(fp, width, height);
-	    break;
-	case BU_MIME_IMAGE_DPIX :
-	    oimg = dpix_read(fp, width, height);
-	    break;
-	case BU_MIME_IMAGE_PPM :
-	    oimg = ppm_read(fp);
-	    break;
-	case BU_MIME_IMAGE_RLE :
-	    oimg = rle_read(fp);
-	    break;
-	case BU_MIME_IMAGE_JPEG :
-	    oimg = jpeg_read(fp);
-	    break;
-	default:
-	    bu_log("icv_read not implemented for this format\n");
-	    fclose(fp);
-	    bu_vls_free(&ifilename);
-	    return NULL;
-    }
-
-    if (fp != stdin) {
-	fflush(fp);
-	fclose(fp);
-    }
-    bu_vls_free(&ifilename);
-    return oimg;
+    image = icv_read_legacy(context, path, format, automatic, width, height, &messages);
+    icv_context_destroy(context);
+    bu_vls_free(&trimmed);
+    icv_report_codec_messages(&messages);
+    return image;
 }
 
 icv_image_t *
 icv_read_mem(const unsigned char *buffer, size_t size, bu_mime_image_t format, size_t width, size_t height)
 {
-    if (!buffer || size == 0) {
+    struct bu_vls messages = BU_VLS_INIT_ZERO;
+    struct icv_context *context;
+    icv_image_t *image;
+    const char *type = bu_mime_legacy_name(format, BU_MIME_IMAGE);
+    if (format != BU_MIME_IMAGE_AUTO && !type)
 	return NULL;
-    }
-
-    (void)width;
-    (void)height;
-
-    icv_image_t *oimg = NULL;
-    switch (format) {
-	case BU_MIME_IMAGE_JPEG:
-	    oimg = jpeg_read_mem(buffer, size);
-	    break;
-	case BU_MIME_IMAGE_PNG:
-	    oimg = png_read_mem(buffer, size);
-	    break;
-	case BU_MIME_IMAGE_PIX:
-	    oimg = pix_read_mem(buffer, size, width, height);
-	    break;
-	case BU_MIME_IMAGE_BW:
-	    oimg = bw_read_mem(buffer, size, width, height);
-	    break;
-	case BU_MIME_IMAGE_DPIX:
-	    oimg = dpix_read_mem(buffer, size, width, height);
-	    break;
-	case BU_MIME_IMAGE_PPM:
-	    oimg = ppm_read_mem(buffer, size);
-	    break;
-	case BU_MIME_IMAGE_RLE:
-	    oimg = rle_read_mem(buffer, size);
-	    break;
-	default:
-	    bu_log("icv_read_mem not implemented for this format\n");
-	    return NULL;
-    }
-
-    return oimg;
+    context = icv_context_create(NULL);
+    image = icv_read_mem_with_context(context, buffer, size, type, NULL, width, height, &messages);
+    icv_context_destroy(context);
+    icv_report_codec_messages(&messages);
+    return image;
 }
 
-
 int
-icv_write(icv_image_t *bif, const char *filename, bu_mime_image_t format)
+icv_write(icv_image_t *image, const char *filename, bu_mime_image_t format)
 {
-    int ret = 0;
-    struct bu_vls ofilename = BU_VLS_INIT_ZERO;
-    const char *ofname = filename;
-
+    struct bu_vls trimmed = BU_VLS_INIT_ZERO;
+    struct bu_vls messages = BU_VLS_INIT_ZERO;
+    struct icv_context *context;
+    const char *path = filename;
+    const char *type;
+    int status;
+    ICV_IMAGE_VAL_INT(image);
     if (format == BU_MIME_IMAGE_AUTO) {
-	format = icv_guess_file_format(filename, &ofilename);
+	format = icv_guess_file_format(filename, &trimmed);
 	if (filename)
-	    ofname = bu_vls_cstr(&ofilename);
+	    path = bu_vls_cstr(&trimmed);
+    }
+    type = bu_mime_legacy_name(format, BU_MIME_IMAGE);
+    context = icv_context_create(NULL);
+    status = icv_write_with_context(context, image, path, type ? type : "image/vnd.brlcad.pix", NULL, &messages);
+    icv_context_destroy(context);
+    bu_vls_free(&trimmed);
+    icv_report_codec_messages(&messages);
+    return status;
     }
 
-    ICV_IMAGE_VAL_INT(bif);
-
-    FILE *fp = (ofname==NULL) ? stdout : fopen(ofname, "wb");
-    if (UNLIKELY(fp==NULL)) {
-	perror("fopen");
-	bu_log("ERROR: icv_write failed to get a FILE pointer for %s\n", filename);
-	return BRLCAD_ERROR;
-    }
-
-    switch (format) {
-	/* case BU_MIME_IMAGE_BMP:
-	   return bmp_write(bif, ofname); */
-	case BU_MIME_IMAGE_PPM:
-	    ret = ppm_write(bif, fp);
-	    break;
-	case BU_MIME_IMAGE_PNG:
-	    ret = png_write(bif, fp);
-	    break;
-	case BU_MIME_IMAGE_PIX:
-	    ret = pix_write(bif, fp);
-	    break;
-	case BU_MIME_IMAGE_BW:
-	    ret = bw_write(bif, fp);
-	    break;
-	case BU_MIME_IMAGE_DPIX :
-	    ret = dpix_write(bif, fp);
-	    break;
-	case BU_MIME_IMAGE_RLE :
-	    ret = rle_write(bif, fp);
-	    break;
-	case BU_MIME_IMAGE_SUN:
-	    ret = sun_write(bif, fp, 0);
-	    break;
-	case BU_MIME_IMAGE_JPEG :
-	    // The icv write function doesn't expose a quality setting - we
-	    // try to make a good trade-off between file size and quality.
-	    // There is little point in 100% quality, since JPEG is inherently
-	    // lossy - it gives us larger file sizes for little in return.
-	    ret = jpeg_write(bif, fp, 90);
-	    break;
-	default:
-	    ret = pix_write(bif, fp);
-    }
-
-    if (fp != stdout) {
-	fflush(fp);
-	fclose(fp);
-    }
-
-    bu_vls_free(&ofilename);
-    return ret;
-}
-
-int
-icv_write_mem(icv_image_t *bif, unsigned char **buffer, size_t *size, bu_mime_image_t format)
-{
-    int ret = 0;
-
-    if (!bif || !buffer || !size) {
-	return BRLCAD_ERROR;
-    }
-
-    *buffer = NULL;
-    *size = 0;
-
-    ICV_IMAGE_VAL_INT(bif);
-
-    switch (format) {
-	case BU_MIME_IMAGE_JPEG:
-	    ret = jpeg_write_mem(bif, buffer, size, 90);
-	    break;
-	case BU_MIME_IMAGE_PNG:
-	    ret = png_write_mem(bif, buffer, size);
-	    break;
-	case BU_MIME_IMAGE_PPM:
-	    ret = ppm_write_mem(bif, buffer, size);
-	    break;
-	case BU_MIME_IMAGE_BW:
-	    ret = bw_write_mem(bif, buffer, size);
-	    break;
-	case BU_MIME_IMAGE_PIX:
-	    ret = pix_write_mem(bif, buffer, size);
-	    break;
-	case BU_MIME_IMAGE_DPIX:
-	    ret = dpix_write_mem(bif, buffer, size);
-	    break;
-	case BU_MIME_IMAGE_RLE:
-	    ret = rle_write_mem(bif, buffer, size);
-	    break;
-	case BU_MIME_IMAGE_SUN:
-	    ret = sun_write_mem(bif, buffer, size, 0);
-	    break;
-	default:
-	    bu_log("ERROR: icv_write_mem not implemented for this format\n");
+    int
+    icv_write_mem(icv_image_t *image, unsigned char **buffer, size_t *size, bu_mime_image_t format)
+    {
+	struct bu_vls messages = BU_VLS_INIT_ZERO;
+	struct icv_context *context;
+	const char *type = bu_mime_legacy_name(format, BU_MIME_IMAGE);
+	int status;
+	if (!image || !buffer || !size)
 	    return BRLCAD_ERROR;
-    }
-
-    return ret;
+	ICV_IMAGE_VAL_INT(image);
+	context = icv_context_create(NULL);
+	status = icv_write_mem_with_context(context, image, buffer, size, type, NULL, &messages);
+	icv_context_destroy(context);
+	icv_report_codec_messages(&messages);
+	return status;
 }
 
 int

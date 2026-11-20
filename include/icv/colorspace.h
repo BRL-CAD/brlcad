@@ -55,6 +55,14 @@ typedef enum {
  */
 ICV_EXPORT int icv_gray2rgb(icv_image_t *img);
 
+/** Allocate a three-channel RGB image for display. Grayscale is replicated;
+ * straight alpha is composited over background (three normalized RGB
+ * components), or black when background is NULL. Samples use the source
+ * image's numeric color space; no transfer-function conversion is applied.
+ * The source is unchanged. Invalid layouts or alpha/background values
+ * return NULL. Destroy the returned image with icv_destroy. */
+ICV_EXPORT icv_image_t *icv_flatten(const icv_image_t *image, const double *background);
+
 /**
  * converts image to single channel image by combining three weights
  * based on NTSC primaries and 6500 white.
