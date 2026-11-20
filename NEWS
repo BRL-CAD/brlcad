@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 202X-XX-XX  Release 7.48.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed Windows terminal interactivity detection - Cliff Yapp
 * fixed MGED -a display attachment with piped input - Cliff Yapp
 * added bot_* operations to bot command as subcommands -  Cliff Yapp
 * generalized librt and libged editing APIs and sessions - Cliff Yapp

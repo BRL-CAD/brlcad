@@ -1211,6 +1211,10 @@ bu_pid_terminate(int process)
 int
 bu_interactive(void)
 {
+#ifdef _WIN32
+    /* Winsock select() cannot inspect CRT standard input descriptors. */
+    return isatty(fileno(stdin)) ? 1 : 0;
+#else
     int interactive = 1;
 
     fd_set read_set;
@@ -1281,6 +1285,7 @@ bu_interactive(void)
     } /* read_set */
 
     return interactive;
+#endif
 }
 
 int
