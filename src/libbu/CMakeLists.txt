@@ -243,6 +243,12 @@ set(
   json.hpp
   mime.cmake
   mime_catalog.cmake
+  mime_private.h
+  mime_binary.h
+  mime_json.h
+  mime_select.h
+  mime_text.h
+  mime_unicode.h
   parallel.h
   parallel_cpp11thread.cpp
   process_private.h

@@ -22,6 +22,7 @@
 #define BU_MIME_H
 
 #include "common.h"
+#include "bu/mime_runtime.h"
 
 #include "bu/defines.h"
 #include "bu/mime_types.h"
