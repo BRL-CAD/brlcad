@@ -106,7 +106,7 @@ brlcad_addexec(tankill-g tankill/tankill-g.c "libwdb;librt;libnmg;libbu" FOLDER 
 
 brlcad_addexec(g-var g-var.c "librt;libbu;${M_LIBRARY}" FOLDER Conv ARG_SCHEMA)
 
-brlcad_addexec(g-vrml g-vrml.c "librt;libnmg;libbu;${M_LIBRARY}" FOLDER Conv)
+brlcad_addexec(g-vrml g-vrml.c "librt;libnmg;libbu;${M_LIBRARY}" FOLDER Conv ARG_SCHEMA)
 
 brlcad_addexec(g-x3d g-x3d.c "librt;libnmg;libbu;${M_LIBRARY}" FOLDER Conv)
 

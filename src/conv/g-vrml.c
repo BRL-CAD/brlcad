@@ -28,22 +28,18 @@
 #include "common.h"
 
 /* system headers */
-#include <float.h>
-#include <limits.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <math.h>
 #include <string.h>
-#include <errno.h>
 #include "bio.h"
 
 /* interface headers */
 #include "vmath.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bu/units.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -98,14 +94,10 @@ const struct bu_structparse vrml_mat_parse[]={
 };
 
 
-static const char *usage =
-    "[-b] [-e] [-v] [-xX lvl] [-d tolerance_distance] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] [-u units] brlcad_db.g object(s)\n"
-    "(units default to mm)\n";
-
 static const char *tok_sep = " \t";
 static int NMG_debug; /* saved arg of -X, for longjmp handling */
 static int verbose = 0;
-static char *out_file = (char *)NULL; /* Output filename */
+static const char *out_file = NULL; /* Output filename */
 static FILE *fp_out; /* Output file pointer */
 static struct db_i *dbip;
 static struct bg_tess_tol ttol;
@@ -124,27 +116,142 @@ static int bomb_cnt = 0;
 static int bot_dump = 0;
 static int eval_all = 0;
 
-static void
-print_usage(const char *progname)
-{
-    bu_exit(1, "Usage: %s %s", progname, usage);
-}
+struct g_vrml_args {
+    struct g_vrml_args *self;
+    int help;
+    int bot_dump;
+    int eval_all;
+    int verbose;
+    fastf_t absolute_tolerance;
+    fastf_t relative_tolerance;
+    fastf_t normal_tolerance;
+    fastf_t distance_tolerance;
+    unsigned int rt_debug;
+    unsigned int nmg_debug;
+    const char *units;
+    const char *output_file;
+};
 
+enum g_vrml_tolerance_kind {
+    G_VRML_ABSOLUTE_TOLERANCE,
+    G_VRML_NORMAL_TOLERANCE
+};
 
 static int
-parse_debug_mask(unsigned int *mask, const char *arg)
+g_vrml_tolerance_consume(struct bu_vls *msg, size_t argc, const char **argv,
+	void *storage, enum g_vrml_tolerance_kind kind)
 {
-    char *end;
-    unsigned long parsed;
+    struct g_vrml_args *args = storage ? *(struct g_vrml_args **)storage : NULL;
+    fastf_t value;
 
-    if (!mask || !arg || !*arg || *arg == '-')
+    if (argc != 1 || bu_arg_nonnegative_number_validate(msg, argv[0]) < 0 ||
+	!bu_arg_number_from_str(msg, &value, argv[0]))
+	return -1;
+    if (!args)
 	return 0;
-    errno = 0;
-    parsed = strtoul(arg, &end, 16);
-    if (end == arg || *end || errno == ERANGE || parsed > UINT_MAX)
-	return 0;
-    *mask = (unsigned int)parsed;
-    return 1;
+
+    if (kind == G_VRML_ABSOLUTE_TOLERANCE)
+	args->absolute_tolerance = value;
+    else
+	args->normal_tolerance = value * DEG2RAD;
+    args->relative_tolerance = 0.0;
+    return 0;
+}
+
+static int
+g_vrml_absolute_tolerance_consume(struct bu_vls *msg, size_t argc,
+	const char **argv, void *storage)
+{
+    return g_vrml_tolerance_consume(msg, argc, argv, storage,
+	G_VRML_ABSOLUTE_TOLERANCE);
+}
+
+static int
+g_vrml_normal_tolerance_consume(struct bu_vls *msg, size_t argc,
+	const char **argv, void *storage)
+{
+    return g_vrml_tolerance_consume(msg, argc, argv, storage,
+	G_VRML_NORMAL_TOLERANCE);
+}
+
+static const struct bu_arg_option g_vrml_options[] = {
+    BU_ARG_FLAG("h", "help", struct g_vrml_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("b", "bot-only", struct g_vrml_args, bot_dump,
+	"Write BoT primitives directly and skip non-BoT geometry"),
+    BU_ARG_FLAG("e", "evaluate-all", struct g_vrml_args, eval_all,
+	"Evaluate Boolean geometry for both CSG and BoT primitives"),
+    BU_ARG_COUNTING_FLAG("v", "verbose", struct g_vrml_args, verbose,
+	BU_ARG_VALUE_INTEGER, "Increase conversion progress reporting"),
+    BU_ARG_NUMBER_RANGE("d", "distance-tolerance", struct g_vrml_args,
+	distance_tolerance, 1, 0.0, 0, 0.0, "millimeters",
+	"Set nonnegative vertex-coincidence distance in millimeters "
+	"(default 0.005)"),
+    BU_ARG_OPTION_SHAPED("a", "absolute-tolerance", "absolute-tolerance",
+	struct g_vrml_args, self, BU_ARG_VALUE_NUMBER, "millimeters",
+	"Set nonnegative maximum chord error in millimeters and clear relative "
+	"tolerance", BU_ARG_REQUIRED, NULL,
+	g_vrml_absolute_tolerance_consume),
+    BU_ARG_VALUE_VALIDATE("r", "relative-tolerance", struct g_vrml_args,
+	relative_tolerance, BU_ARG_VALUE_NUMBER,
+	bu_arg_nonnegative_number_validate, "fraction",
+	"Set nonnegative tolerance as a fraction of bounding-box size "
+	"(default 0.01)"),
+    BU_ARG_OPTION_SHAPED("n", "normal-tolerance", "normal-tolerance",
+	struct g_vrml_args, self, BU_ARG_VALUE_NUMBER, "degrees",
+	"Set nonnegative surface-normal tolerance in degrees and clear relative "
+	"tolerance", BU_ARG_REQUIRED, NULL, g_vrml_normal_tolerance_consume),
+    BU_ARG_VALUE_VALIDATE("u", "units", struct g_vrml_args, units,
+	BU_ARG_VALUE_STRING, bu_arg_units_validate, "units",
+	"Write coordinates in these recognized BRL-CAD units (default mm)"),
+    BU_ARG_VALUE("o", "output", struct g_vrml_args, output_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "output.wrl",
+	"Write VRML output to this file instead of standard output"),
+    BU_ARG_VALUE("x", "rt-debug", struct g_vrml_args, rt_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set librt hexadecimal debug flags"),
+    BU_ARG_VALUE("X", "nmg-debug", struct g_vrml_args, nmg_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set libnmg hexadecimal debug flags"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand g_vrml_operands[] = {
+    BU_ARG_OPERAND("database.g", BU_ARG_VALUE_FILE, 1, 1,
+	"Input BRL-CAD database", NULL),
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1,
+	BU_ARG_COUNT_UNLIMITED, "Database object to convert", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const char * const g_vrml_mode_options[] = {
+    "bot-only", "evaluate-all", NULL
+};
+
+static const struct bu_arg_constraint g_vrml_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS,
+	g_vrml_mode_options, 0, 1,
+	"--bot-only and --evaluate-all are mutually exclusive"),
+    BU_ARG_CONSTRAINT_NULL
+};
+
+static const struct bu_arg_schema g_vrml_schema = BU_ARG_SCHEMA(
+    "g-vrml", "Convert BRL-CAD geometry to VRML 2.0",
+    g_vrml_options, g_vrml_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, g_vrml_constraints, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar g_vrml_grammar = {
+    &g_vrml_schema, NULL, NULL
+};
+
+static int
+g_vrml_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&g_vrml_schema, "g-vrml");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "g-vrml help");
+    return status;
 }
 
 
@@ -1192,19 +1299,16 @@ do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 int
 main(int argc, char **argv)
 {
+    struct g_vrml_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     int i;
-    int c;
-    double option_value;
+    int introspection;
+    int operand_index;
+    int object_index;
     struct plate_mode pm;
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
-
-    the_model = nmg_mm();
-    RT_DBTS_INIT(&tree_state);
-    tree_state.ts_tol = &tol;
-    tree_state.ts_ttol = &ttol;
-    tree_state.ts_m = &the_model;
 
     ttol.magic = BG_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
@@ -1224,82 +1328,60 @@ main(int argc, char **argv)
 	nmg_eue_dist = 2.0;
     }
 
+    args.self = &args;
+    args.absolute_tolerance = ttol.abs;
+    args.relative_tolerance = ttol.rel;
+    args.normal_tolerance = ttol.norm;
+    args.distance_tolerance = tol.dist;
+    args.units = units;
+
+    introspection = bu_arg_introspect(&msg, &g_vrml_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    operand_index = bu_arg_schema_parse_complete(&g_vrml_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return g_vrml_help(stdout, 0);
+
+    bot_dump = args.bot_dump;
+    eval_all = args.eval_all;
+    verbose = args.verbose;
+    ttol.abs = args.absolute_tolerance;
+    ttol.rel = args.relative_tolerance;
+    ttol.norm = args.normal_tolerance;
+    tol.dist = args.distance_tolerance;
+    tol.dist_sq = tol.dist * tol.dist;
+    units = args.units;
+    out_file = args.output_file;
+    rt_debug = args.rt_debug;
+    nmg_debug = args.nmg_debug;
+    NMG_debug = nmg_debug;
+    scale_factor = 1.0 / bu_units_conversion(units);
+
+    the_model = nmg_mm();
+    RT_DBTS_INIT(&tree_state);
+    tree_state.ts_tol = &tol;
+    tree_state.ts_ttol = &ttol;
+    tree_state.ts_m = &the_model;
     pm.vlfree = &rt_vlfree;
 
-    /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:bd:en:o:r:vx:X:u:h?")) != -1) {
-	switch (c) {
-	    case 'a':		/* Absolute tolerance. */
-		if (!bu_opt_scan_double_range(bu_optarg, &option_value, 0.0,
-			DBL_MAX, "absolute tessellation tolerance"))
-		    print_usage(argv[0]);
-		ttol.abs = option_value;
-		ttol.rel = 0.0;
-		break;
-	    case 'b':		/* BOT dump */
-		bot_dump = 1;
-		break;
-	    case 'd':		/* Calculational tolerance */
-		if (!bu_opt_scan_double_range(bu_optarg, &option_value, 0.0,
-			DBL_MAX, "distance tolerance"))
-		    print_usage(argv[0]);
-		tol.dist = option_value;
-		tol.dist_sq = tol.dist * tol.dist;
-		break;
-	    case 'e':		/* Evaluate all, CSG and BOTs */
-		eval_all = 1;
-		break;
-	    case 'n':		/* Surface normal tolerance. */
-		if (!bu_opt_scan_double_range(bu_optarg, &option_value, 0.0,
-			DBL_MAX, "normal tessellation tolerance"))
-		    print_usage(argv[0]);
-		ttol.norm = option_value * DEG2RAD;
-		ttol.rel = 0.0;
-		break;
-	    case 'o':		/* Output file name */
-		out_file = bu_optarg;
-		break;
-	    case 'r':		/* Relative tolerance. */
-		if (!bu_opt_scan_double_range(bu_optarg, &option_value, 0.0,
-			DBL_MAX, "relative tessellation tolerance"))
-		    print_usage(argv[0]);
-		ttol.rel = option_value;
-		break;
-	    case 'v':
-		verbose++;
-		break;
-	    case 'x':
-		if (!parse_debug_mask(&rt_debug, bu_optarg))
-		    bu_exit(1, "Invalid librt debug mask: %s\n", bu_optarg);
-		break;
-	    case 'X':
-		if (!parse_debug_mask(&nmg_debug, bu_optarg))
-		    bu_exit(1, "Invalid NMG debug mask: %s\n", bu_optarg);
-		NMG_debug = nmg_debug;
-		break;
-	    case 'u':
-		units = bu_strdup(bu_optarg);
-		scale_factor = bu_units_conversion(units);
-		if (ZERO(scale_factor))
-		    bu_exit(1, "Unrecognized units (%s)\n", units);
-		scale_factor = 1.0 / scale_factor;
-		break;
-	    default:
-		print_usage(argv[0]);
-	}
-    }
-
-    if (bu_optind + 1 >= argc)
-	print_usage(argv[0]);
-
-    if ((bot_dump == 1) && (eval_all == 1)) {
-	bu_exit(1, "BOT Dump and Evaluate All are mutually exclusive\n");
-    }
+    object_index = operand_index + 2;
 
     /* Open BRL-CAD database */
-    if ((dbip = db_open(argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL) {
+    if ((dbip = db_open(argv[operand_index + 1], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[0]);
-	bu_exit(1, "Cannot open geometry database file %s\n", argv[bu_optind]);
+	bu_exit(1, "Cannot open geometry database file %s\n",
+	    argv[operand_index + 1]);
     }
     if (db_dirbuild(dbip)) {
 	bu_exit(1, "db_dirbuild() failed!\n");
@@ -1343,8 +1425,6 @@ main(int argc, char **argv)
     fprintf(fp_out, "Transform {\n");
     fprintf(fp_out, "\tchildren [\n");
 
-    bu_optind++;
-
     pm.num_bots = 0;
     pm.num_nonbots = 0;
 
@@ -1355,7 +1435,7 @@ main(int argc, char **argv)
     }
 
     if (eval_all) {
-	(void)db_walk_tree(dbip, argc-bu_optind, (const char **)(&argv[bu_optind]),
+	(void)db_walk_tree(dbip, argc-object_index, (const char **)(&argv[object_index]),
 			   1,		/* ncpu */
 			   &tree_state,
 			   0,
@@ -1366,7 +1446,7 @@ main(int argc, char **argv)
     }
 
     if (bot_dump) {
-	(void)db_walk_tree(dbip, argc-bu_optind, (const char **)(&argv[bu_optind]),
+	(void)db_walk_tree(dbip, argc-object_index, (const char **)(&argv[object_index]),
 			   1,		/* ncpu */
 			   &tree_state,
 			   0,
@@ -1376,7 +1456,7 @@ main(int argc, char **argv)
 	goto out;
     }
 
-    for (i = bu_optind; i < argc; i++) {
+    for (i = object_index; i < argc; i++) {
 	struct directory *dp;
 
 	dp = db_lookup(dbip, argv[i], LOOKUP_QUIET);
@@ -1403,7 +1483,7 @@ main(int argc, char **argv)
     }
 
     /* Walk indicated tree(s).  Each non-light-source region will be output separately */
-    (void)db_walk_tree(dbip, argc - bu_optind, (const char **)(&argv[bu_optind]),
+    (void)db_walk_tree(dbip, argc - object_index, (const char **)(&argv[object_index]),
 		       1,		/* ncpu */
 		       &tree_state,
 		       select_non_lights,
