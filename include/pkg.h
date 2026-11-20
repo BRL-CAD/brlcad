@@ -112,10 +112,11 @@ struct pkg_conn {
      * replace the raw fd reads/writes inside pkg_suckin(), pkg_send(),
      * pkg_2send(), and pkg_flush().  pkc_tls_ctx is the opaque context
      * pointer forwarded as the first argument to both callbacks.
+     * pkc_tls_pending reports decrypted input buffered above the socket so
+     * pkg_conn_poll() does not sleep while that input is available.
      *
      * pkc_tls_free (if non-NULL) is called by pkg_close() before
-     * closing the socket, giving the TLS layer a chance to send a
-     * clean close_notify and free its own state.
+     * closing the socket so the TLS layer can free its own state.
      *
      * All four fields are zero-initialized by _pkg_makeconn().
      *
@@ -126,11 +127,13 @@ struct pkg_conn {
     void *pkc_tls_ctx;							/**< @brief opaque TLS state (e.g. SSL *) */
     ptrdiff_t (*pkc_tls_read)(void *ctx, void *buf, size_t n);		/**< @brief TLS read callback; NULL = use raw fd */
     ptrdiff_t (*pkc_tls_write)(void *ctx, const void *buf, size_t n);	/**< @brief TLS write callback; NULL = use raw fd */
+    int (*pkc_tls_pending)(void *ctx);					/**< @brief non-zero when decrypted input is buffered */
     void (*pkc_tls_free)(void *ctx);					/**< @brief called by pkg_close() to free TLS state */
-    char pkc_addr[128];        /**< @brief transport address string (populated by future phases) */
-    char pkc_addr_env[160];    /**< @brief PKG_ADDR=... env string for child spawn (future phases) */
+    char pkc_addr[128];        /**< @brief transport address string */
+    char pkc_addr_env[160];    /**< @brief PKG_ADDR=... env string for child spawn */
     int  pkc_tx_kind;          /**< @brief transport kind: 0=socket/TCP, 1=pipe pair */
-    int  pkc_listen_fd;        /**< @brief listening socket fd for lazy-accept (TCP, future phases) */
+    int  pkc_listen_fd;        /**< @brief listening socket fd for lazy TCP accept */
+    int  pkc_owns_fd;          /**< @brief !0 if pkg_close() closes the socket fd */
 };
 #define PKC_NULL	((struct pkg_conn *)0)
 #define PKC_ERROR	((struct pkg_conn *)(-1L))
@@ -345,10 +348,10 @@ PKG_EXPORT extern int pkg_set_nodelay(struct pkg_conn *pc, int on);
  * the raw read()/write() calls inside pkg_suckin(), pkg_send(),
  * pkg_2send(), and pkg_flush().  @p tls_ctx is the opaque context
  * pointer forwarded as the first argument to both callbacks.
+ * @p tls_pending reports decrypted input already buffered by the TLS layer.
  *
  * @p tls_free (if non-NULL) is invoked by pkg_close() before closing
- * the underlying transport, giving the TLS layer a chance to send a
- * clean close_notify and free its own state.
+ * the underlying transport so the TLS layer can free its own state.
  *
  * Returns 0 on success, -1 on error.
  */
@@ -356,6 +359,7 @@ PKG_EXPORT extern int pkg_set_tls(struct pkg_conn *pc,
 				  void *tls_ctx,
 				  ptrdiff_t (*tls_read)(void *ctx, void *buf, size_t n),
 				  ptrdiff_t (*tls_write)(void *ctx, const void *buf, size_t n),
+				  int (*tls_pending)(void *ctx),
 				  void (*tls_free)(void *ctx));
 
 /**
@@ -374,6 +378,15 @@ PKG_EXPORT extern int pkg_set_tls(struct pkg_conn *pc,
 PKG_EXPORT extern struct pkg_conn *pkg_adopt_socket(int fd,
 						    const struct pkg_switch *switchp,
 						    pkg_errlog errlog);
+
+/**
+ * Wrap a framework-owned connected socket without taking descriptor ownership.
+ * The caller must keep the socket open until pkg_close() returns and remains
+ * responsible for closing it afterward.
+ */
+PKG_EXPORT extern struct pkg_conn *pkg_borrow_socket(int fd,
+						     const struct pkg_switch *switchp,
+						     pkg_errlog errlog);
 
 
 /****************************
@@ -402,7 +415,8 @@ typedef enum {
 /**
  * Create a connected pair of pkg_conn handles.
  *
- * Probe order: pipe -> socketpair -> TCP loopback (or use preferred).
+ * Probe order: pipe -> socketpair -> TCP loopback (or use preferred).  TCP
+ * pairs are connected but cannot be exported to another process by address.
  * Returns 0 on success, -1 on failure.
  */
 PKG_EXPORT extern int pkg_pair(struct pkg_conn **parent_end,
@@ -420,7 +434,8 @@ PKG_EXPORT extern int pkg_pair_prefer(struct pkg_conn **parent_end,
  * Return a "KEY=VALUE" env string for passing to a spawned child.
  * The pointer is valid until pkg_close().  Format: "PKG_ADDR=<addr>".
  * For pair transports, the address may be a child-side or parent-side
- * local IPC string, depending on which end is being exported.
+ * local IPC string, depending on which end is being exported.  Returns
+ * NULL when the connected transport cannot be exported, as with a TCP pair.
  */
 PKG_EXPORT extern const char *pkg_child_addr_env(struct pkg_conn *pc);
 
@@ -429,9 +444,13 @@ PKG_EXPORT extern const char *pkg_child_addr_env(struct pkg_conn *pc);
  * for use in argv["-I addr"] style arguments to a child process.
  * Pair transports may also return parent-side variants such as
  * "pipe_parent:4,7" and "socket_parent:5".
- * The pointer is valid until pkg_close().
+ * The pointer is valid until pkg_close().  Returns NULL when the connected
+ * transport cannot be represented by a reusable or inherited address.
  */
 PKG_EXPORT extern const char *pkg_child_addr(struct pkg_conn *pc);
+
+/** Return non-zero when an address adopts descriptors inherited across exec. */
+PKG_EXPORT extern int pkg_addr_uses_inherited_fds(const char *addr);
 
 /**
  * Connect an IPC endpoint from an address string.
@@ -451,8 +470,8 @@ PKG_EXPORT extern struct pkg_conn *pkg_connect_addr(const char *addr,
  * intended to be passed unchanged to a server's pkg_listen() and client-side
  * pkg_connect_addr() calls.  It does not bind the listener itself.  The
  * concrete transport is selected by libpkg for the current platform.
- * Current implementations include POSIX FIFO/UNIX-domain transports and
- * Windows named pipes; callers must not parse the returned address.
+ * Current implementations include POSIX UNIX-domain sockets and Windows
+ * named pipes; callers must not parse the returned address.
  * Platforms may support inherited endpoint IPC via pkg_pair() even when
  * they do not provide a reusable listener transport here.
  *
@@ -487,10 +506,22 @@ PKG_EXPORT extern struct pkg_conn *pkg_adopt_stdio(const struct pkg_switch *swit
 						   pkg_errlog errlog);
 
 /**
- * Move the connection's fds above min_fd.
+ * Move the connection's descriptors above min_fd.  On Windows, socket
+ * transports cannot be renumbered and return -1 when below min_fd.
  * Returns 0 on success, -1 on error.
  */
 PKG_EXPORT extern int pkg_move_high_fd(struct pkg_conn *pc, int min_fd);
+
+/**
+ * Poll a connection for readable input without consuming it.
+ *
+ * EOF and disconnected transports report as readable so the caller can use
+ * pkg_suckin() to observe the closure and retire the connection.
+ *
+ * Returns 1 when input or EOF is ready, 0 when no input is ready, and -1 on
+ * error.
+ */
+PKG_EXPORT extern int pkg_conn_poll(const struct pkg_conn *pc);
 
 
 /****************************
@@ -504,11 +535,19 @@ PKG_EXPORT extern pkg_listener_t *pkg_listen(const char *service,
 					     const char *iface_or_null,
 					     int backlog,
 					     pkg_errlog errlog);
+/**
+ * Accept a listener connection.  If nonblocking is non-zero, return
+ * PKC_NULL when no client is pending and PKC_ERROR on failure.
+ */
 PKG_EXPORT extern struct pkg_conn *pkg_accept(pkg_listener_t *L,
 					      const struct pkg_switch *switchp,
 					      pkg_errlog errlog,
 					      int nonblocking);
 PKG_EXPORT extern int pkg_get_listener_fd(const pkg_listener_t *L);
+/**
+ * Return the bound TCP port in host byte order, or -1 for a non-TCP
+ * listener or invalid listener.
+ */
 PKG_EXPORT extern int pkg_get_listener_port(const pkg_listener_t *L);
 PKG_EXPORT extern void pkg_listener_close(pkg_listener_t *L);
 
