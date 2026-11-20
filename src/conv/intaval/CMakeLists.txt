@@ -1,5 +1,5 @@
 set(tgf_SRCS read_dra.cpp regtab.cpp tgf-g.cpp write_brl.cpp)
-brlcad_addexec(tgf-g "${tgf_SRCS}" "libwdb;librt;libbu" FOLDER Conv)
+brlcad_addexec(tgf-g "${tgf_SRCS}" "libwdb;librt;libbu" FOLDER Conv ARG_SCHEMA)
 
 set(
   intaval_ignore_files

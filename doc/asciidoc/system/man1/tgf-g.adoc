@@ -8,11 +8,10 @@ tgf-g - convert an INTAVAL Target Geometry File to a BRL-CAD database
 
 == SYNOPSIS
 
-[source]
-----
-tgf-g _material_file_ _geometry_file_ _output.g_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*tgf-g* _material_file_ _geometry_file_ _output.g_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -39,6 +38,12 @@ out as BRL-CAD regions.
 All three arguments are mandatory and positional.  The first argument is the
 INTAVAL material file, the second is the INTAVAL geometry file, and the third is
 the BRL-CAD database to create.
+
+[[options]]
+== OPTIONS
+
+*-h*, *-?*, *--help*::
+  Print a usage message and exit.
 
 [[examples]]
 == EXAMPLES
