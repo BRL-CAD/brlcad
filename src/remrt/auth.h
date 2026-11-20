@@ -33,10 +33,8 @@
  * MSG_VERSION handshake string; remrt's ph_version() verifies the
  * token before accepting the worker.
  *
- * Workers that were started manually (passive connections) and do not
- * carry the token are still accepted to preserve backward
- * compatibility.  Pass '-A' to remrt for strict mode where ALL
- * connecting workers must authenticate.
+ * Workers started manually must be given the token using '-S'.  remrt
+ * rejects all workers that do not authenticate to the current session.
  *
  * PORTABILITY
  * -----------

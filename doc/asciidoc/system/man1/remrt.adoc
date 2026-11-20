@@ -141,8 +141,9 @@ $ fbserv -s2048 -p0 -F/dev/X
 # 3. run the edited script to start the dispatcher
 $ ./remrt.rt
 
-# 4. from a directory holding the same model.g, start a worker
-$ rtsrv -d localhost 4446
+# 4. from a directory holding the same model.g, start a worker using
+#    the session token printed by remrt
+$ rtsrv -d -S <token> localhost 4446
 
 # 5. when all frames report done, save the framebuffer to disk
 $ fb-png -F0 -s2048 image.png
@@ -162,23 +163,33 @@ by hand.
 At startup *remrt* generates a 256-bit random session token, prints it
 to standard error, and appends `-S _token_` to each *rtsrv*(1) worker it
 auto-launches. Workers echo the token in their version handshake and
-*remrt* rejects any mismatch. Manually started (passive) workers that
-present no token are still accepted by default for backward
-compatibility; to authenticate them, pass the printed token:
+*remrt* rejects missing or mismatched tokens. Manually started workers
+must be given the printed token:
 
 [source]
 ----
 rtsrv -S <token> server_host 4446
 ----
 
-When built with OpenSSL, all dispatcher-to-worker traffic is encrypted
-with TLS 1.2 or later. *remrt* acts as the TLS server, generating an
-in-memory RSA-2048 self-signed certificate by default; the session token
-provides application-level authentication in place of certificate
-verification. Sites with pre-provisioned certificates may set
-`REMRT_TLS_CERT` (PEM certificate chain) and `REMRT_TLS_KEY` (matching
-PEM private key) before starting *remrt*. Without OpenSSL, connections
-fall back to plain TCP.
+TCP connections use the historical plaintext transport by default. To enable
+TLS 1.2 or later, set `REMRT_TLS=1` before starting an OpenSSL-enabled
+*remrt*. Setting `REMRT_TLS_CERT` or `REMRT_TLS_KEY` also enables TLS, and
+both variables must then be set. When no certificate is supplied, *remrt*
+generates an in-memory RSA-2048 self-signed certificate. *remrt* prints the
+SHA-256 fingerprint of the certificate public key and passes it to each
+automatically launched worker. Workers verify that fingerprint before
+sending session data.
+
+The session token authenticates workers to the dispatcher. When TLS is
+enabled, the per-session public-key fingerprint authenticates the dispatcher
+to workers.
+
+The dispatcher and worker must select the same transport mode. A worker uses
+TLS when given `rtsrv -C _tls-pin_`; otherwise it uses plain TCP. Before
+starting TLS, TLS-enabled peers exchange a bounded capability marker.
+Connecting a TLS worker to a plaintext dispatcher, or a plaintext worker to a
+TLS dispatcher, fails rather than falling back to another mode. Local
+inherited IPC connections do not use TLS.
 
 
 [[diagnostics]]

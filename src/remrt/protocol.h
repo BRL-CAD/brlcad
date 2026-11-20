@@ -46,17 +46,21 @@
 #define MSG_DIRBUILD_REPLY	16	/* response to MSG_DIRBUILD */
 #define MSG_GETTREES		17	/* request rt_gettrees() be called */
 #define MSG_GETTREES_REPLY	18	/* response to MSG_GETTREES */
+#define MSG_CMD_REPLY		19	/* dispatcher reports one-shot command status */
+#define MSG_CMD_VERSION		20	/* version exchange for a command-only connection */
+
+#define REMRT_CMD_REPLY_OK "ok"
+#define REMRT_CMD_REPLY_ERROR "command-failed"
+#define REMRT_CMD_REPLY_TLS_REQUIRED "tls-required"
 
 /*
- * MSG_VERSION payload format when session authentication is in use:
+ * MSG_VERSION and MSG_CMD_VERSION payload format:
  *
  *   PROTOCOL_VERSION REMRT_AUTH_TOKEN_PREFIX <hex-token>
  *
  * e.g. "BRL-CAD REMRT Protocol v2.0 token=3fa2...c81b"
  *
- * Workers started without a token omit the suffix.  remrt accepts
- * both forms; it only rejects a connection when the worker sends a
- * token that does not match the current session token.
+ * remrt requires the current session token when authentication is enabled.
  */
 #define REMRT_AUTH_TOKEN_PREFIX " token="
 

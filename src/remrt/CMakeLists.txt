@@ -10,8 +10,6 @@
 # Optional: link against OpenSSL for cryptographically strong token
 # generation.  Falls back to /dev/urandom (POSIX) or CryptGenRandom
 # (Windows) if OpenSSL is not found.
-find_package(OpenSSL QUIET)
-
 brlcad_addexec(remrt "../rt/opt.c;ihost.c;remrt.c" "liboptical;libdm")
 target_include_directories(remrt BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(remrt ${M_LIBRARY} ${WINSOCK_LIB})

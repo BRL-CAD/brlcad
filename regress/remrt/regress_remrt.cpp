@@ -40,18 +40,22 @@
  * Both sub-tests start remrt with the benchmark flags (-B -H 0 -J 0) for
  * deterministic rendering identical to the standard BRL-CAD benchmark.
  *
+ * With --tls-worker, run the benchmark over TLS with a foreground TCP worker.
+ *
  * Usage:
- *   regress_remrt --remrt PATH --m35g PATH --refpix PATH
+ *   regress_remrt --remrt PATH --m35g PATH --refpix PATH [--tls-worker PATH]
  *
  * Exits 0 on full success, non-zero if either sub-test fails.
  */
 
 #include "common.h"
 
+#include <chrono>
 #include <condition_variable>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <functional>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -80,8 +84,10 @@
  * Constants
  * -------------------------------------------------------------------------- */
 
-/* Maximum seconds to wait for remrt to print its port and session token. */
-static const int PORT_TOKEN_WAIT_SEC = 30;
+static const auto STARTUP_TIMEOUT = std::chrono::seconds(30);
+static const auto PROCESS_POLL_INTERVAL = std::chrono::milliseconds(10);
+static const int WORKER_EXIT_TIMEOUT_MS = 5000;
+static const auto COMMAND_TIMEOUT = std::chrono::seconds(15);
 
 /* Maximum seconds to wait for remrt to complete each sub-test. */
 static const int REMRT_WAIT_SEC = 500;
@@ -107,13 +113,8 @@ struct RemrtDetected {
     std::condition_variable cv;
     int port = 0;
     std::string token;
-    bool ready = false;   /* token found */
-
-    void reset() {
-	port = 0;
-	token.clear();
-	ready = false;
-    }
+    std::string tls_pin;
+    bool done = false;
 };
 
 /* --------------------------------------------------------------------------
@@ -133,75 +134,40 @@ rtrim(char *buf)
 
 /*
  * Thread function: drain a process's stderr pipe, parse lines to extract
- * the TCP port and session token printed by remrt, and signal the condition
- * variable once both have been found.
+ * the TCP port, token, and TLS pin printed by remrt.
  *
  * Continues reading until EOF so the pipe never fills up.
  */
 static void
-read_remrt_stderr(struct bu_process *proc, RemrtDetected *det, std::string *log_out)
+read_remrt_stderr(struct bu_process *proc, RemrtDetected &det, std::string &log)
 {
-    /* Use raw fd + dup so that fclose() does not close the original fd
-     * and cause a double-close in bu_process_wait_n().                 */
-    int raw_fd = bu_process_fileno(proc, BU_PROCESS_STDERR);
-    if (raw_fd < 0)
-	return;
-
-    int dup_fd = dup(raw_fd);
-    if (dup_fd < 0)
-	return;
-
-    FILE *ferr = fdopen(dup_fd, "rb");
-    if (!ferr) {
-	close(dup_fd);
-	return;
-    }
+    FILE *ferr = bu_process_file_open(proc, BU_PROCESS_STDERR);
+    const char port_marker[] = "Listening for remote workers on TCP port ";
+    const char token_marker[] = "Session token: ";
+    const char pin_marker[] = "TLS fingerprint: ";
 
     char buf[4096];
-    while (bu_fgets(buf, sizeof(buf), ferr)) {
-	if (log_out)
-	    log_out->append(buf);
-
-	/* "Listening at TCP port NNNNN" */
-	const char *p = strstr(buf, "Listening at TCP port ");
-	if (p) {
-	    int port_val = atoi(p + strlen("Listening at TCP port "));
-	    if (port_val > 0) {
-		std::lock_guard<std::mutex> lk(det->mtx);
-		det->port = port_val;
-	    }
-	}
-
-	/* Fallback: "Assigned LIBPKG permport NNNNN" */
-	if (!det->port) {
-	    p = strstr(buf, "Assigned LIBPKG permport ");
-	    if (p) {
-		int port_val = atoi(p + strlen("Assigned LIBPKG permport "));
-		if (port_val > 0) {
-		    std::lock_guard<std::mutex> lk(det->mtx);
-		    det->port = port_val;
-		}
-	    }
-	}
-
-	/* "Session token: XXXXXXXXXX..." */
-	p = strstr(buf, "Session token: ");
-	if (p) {
-	    char tok[512];
-	    bu_strlcpy(tok, p + strlen("Session token: "), sizeof(tok));
-	    rtrim(tok);
-	    if (tok[0] != '\0') {
-		std::lock_guard<std::mutex> lk(det->mtx);
-		det->token = tok;
-		if (!det->ready) {
-		    det->ready = true;
-		    det->cv.notify_all();
-		}
-	    }
-	}
+    while (ferr && bu_fgets(buf, sizeof(buf), ferr)) {
+	log.append(buf);
+	rtrim(buf);
+	const char *port = strstr(buf, port_marker);
+	const char *token = strstr(buf, token_marker);
+	const char *pin = strstr(buf, pin_marker);
+	if (!port && !token && !pin)
+	    continue;
+	std::lock_guard<std::mutex> lock(det.mtx);
+	if (port)
+	    det.port = atoi(port + sizeof(port_marker) - 1);
+	if (token)
+	    det.token = token + sizeof(token_marker) - 1;
+	if (pin)
+	    det.tls_pin = pin + sizeof(pin_marker) - 1;
+	det.cv.notify_all();
     }
 
-    fclose(ferr);   /* closes dup_fd only, not the original raw_fd */
+    std::lock_guard<std::mutex> lock(det.mtx);
+    det.done = true;
+    det.cv.notify_all();
 }
 
 
@@ -210,14 +176,18 @@ read_remrt_stderr(struct bu_process *proc, RemrtDetected *det, std::string *log_
  * when the child writes a lot of output but the parent does not read it).
  */
 static void
-drain_stdout(struct bu_process *proc)
+drain_stdout(struct bu_process *proc, std::string *log)
 {
     /* Use raw fd (not fdopen) to avoid double-close with bu_process_wait_n. */
     int fd = bu_process_fileno(proc, BU_PROCESS_STDOUT);
     if (fd < 0)
 	return;
     char buf[4096];
-    while (read(fd, buf, sizeof(buf)) > 0) {}
+    int count;
+    while ((count = bu_process_read_n(proc, BU_PROCESS_STDOUT, sizeof(buf), buf)) > 0) {
+	if (log)
+	    log->append(buf, count);
+    }
 }
 
 
@@ -253,22 +223,68 @@ path_dirname(const char *path, char *buf, size_t bufsz)
 
 struct TestOptions {
     std::string remrt_exe;
+    std::string tls_worker_exe;
     std::string m35g_path;
     std::string refpix_path;
 };
 
+static struct bu_process *
+start_tls_worker(const std::string &executable, const std::string &token,
+		 const std::string &pin, int port, const char *command = nullptr)
+{
+    const std::string port_string = std::to_string(port);
+    const char *argv[] = {executable.c_str(), "-d", "-S", token.c_str(), "-C",
+	pin.c_str(), "127.0.0.1", port_string.c_str(), command, nullptr};
+    const char *env[] = {"PKG_ADDR=", nullptr};
+    struct bu_process_create_info info = {};
+    info.opts = BU_PROCESS_OUT_EQ_ERR;
+    info.env_overrides = env;
+    struct bu_process *worker = nullptr;
+    bu_process_create_ex(&worker, argv, &info);
+    return worker;
+}
+
+
+static bool
+check_tls_command(const std::string &executable, const std::string &token,
+		  const std::string &pin, int port, const char *command, int expected_status)
+{
+    struct bu_process *worker = start_tls_worker(executable, token, pin, port, command);
+    if (!worker)
+	return false;
+
+    int status = -1;
+    int state;
+    const auto deadline = std::chrono::steady_clock::now() + COMMAND_TIMEOUT;
+    while ((state = bu_process_poll(worker, &status)) == 0 &&
+	    std::chrono::steady_clock::now() < deadline)
+	std::this_thread::sleep_for(PROCESS_POLL_INTERVAL);
+
+    std::string log;
+    if (state == 1)
+	drain_stdout(worker, &log);
+    else
+	(void)bu_process_terminate(worker);
+    (void)bu_process_wait_n(&worker, WORKER_EXIT_TIMEOUT_MS);
+    if (state == 1 && status == expected_status &&
+	    log.find("TLS established with") != std::string::npos &&
+	    (expected_status == EXIT_SUCCESS || log.find("dispatcher rejected command") != std::string::npos))
+	return true;
+
+    fprintf(stderr, "regress_remrt: command '%s' exited with status %d, expected %d\n%s\n",
+	command, status, expected_status, log.c_str());
+    return false;
+}
+
 
 /*
- * Write a ".remrtrc" that registers "localhost" as an HT_LOCAL host.
- *
- * remrt will auto-spawn an rtsrv worker on this machine via libpkg ipc
- * (socketpair) when it calls start_servers().  No SSH or manual rtsrv
- * launch is needed.
+ * Configure localhost for an inherited IPC worker or a passive TCP
+ * worker. Passive mode opens the dispatcher listener without using SSH.
  *
  * Returns 0 on success, -1 on failure.
  */
 static int
-write_remrtrc_local(const char *db_dir)
+write_remrtrc(const char *db_dir, bool use_tls)
 {
     char cwd[MAXPATHLEN] = {0};
     bu_dir(cwd, sizeof(cwd), BU_DIR_CURR, NULL);
@@ -301,16 +317,17 @@ write_remrtrc_local(const char *db_dir)
     /* The remrt command parser tokenizes this line with
      * bu_argv_from_string(), so retain spaces in odd-pathname build
      * directories as part of the single directory argument. */
-    fprintf(fp, "host localhost always local \"%s\"\n", bu_vls_cstr(&db_dir_fwd));
-    fclose(fp);
+    int written = fprintf(fp, "host localhost %s \"%s\"\n",
+	use_tls ? "passive cd" : "always local", bu_vls_cstr(&db_dir_fwd));
+    int closed = fclose(fp);
     bu_vls_free(&rcpath);
     bu_vls_free(&db_dir_fwd);
-    return 0;
+    return written < 0 || closed != 0 ? -1 : 0;
 }
 
 
 /*
- * Remove the ".remrtrc" file written by write_remrtrc_local().
+ * Remove the ".remrtrc" file written for the test.
  */
 static void
 cleanup_remrtrc(void)
@@ -326,13 +343,8 @@ cleanup_remrtrc(void)
 
 
 /*
- * Run one IPC-mode remrt sub-test.
- *
- * A ".remrtrc" with "host localhost always local <db_dir>" is written
- * before launching remrt so that remrt auto-spawns one rtsrv worker on
- * this machine via add_host_local() (pkg IPC socketpair + PKG_ADDR
- * env var).  No TCP port allocation and no manual rtsrv invocation are
- * needed.
+ * Run one render with either an automatically spawned IPC worker or a
+ * foreground TLS worker started after the dispatcher reports its endpoint.
  *
  * Parameters
  *   opts        – paths to executables and geometry/reference files
@@ -345,7 +357,7 @@ cleanup_remrtrc(void)
  * Returns 0 on success, non-zero on failure.
  */
 static int
-run_ipc_subtest(const TestOptions &opts,
+run_render_subtest(const TestOptions &opts,
 		bool use_script,
 		int image_size,
 		const std::string &out_pix,
@@ -357,7 +369,8 @@ run_ipc_subtest(const TestOptions &opts,
     char db_dir[MAXPATHLEN];
     path_dirname(opts.m35g_path.c_str(), db_dir, sizeof(db_dir));
 
-    if (write_remrtrc_local(db_dir) != 0) {
+    const bool use_tls = !opts.tls_worker_exe.empty();
+    if (write_remrtrc(db_dir, use_tls) != 0) {
 	fprintf(stderr, "regress_remrt [%s]: failed to set up .remrtrc\n", label);
 	return 1;
     }
@@ -365,8 +378,6 @@ run_ipc_subtest(const TestOptions &opts,
     bu_file_delete(out_pix.c_str());
     bu_file_delete((out_pix + ".0").c_str());
 
-    /* Build remrt argv.  remrt auto-spawns its own rtsrv worker via the
-     * "always local" .remrtrc entry; no worker args needed here.          */
     char size_str[32];
     snprintf(size_str, sizeof(size_str), "%d", image_size);
 
@@ -384,21 +395,22 @@ run_ipc_subtest(const TestOptions &opts,
     remrt_argv.push_back(NULL);
 
     struct bu_process *remrt_proc = NULL;
-    bu_process_create(&remrt_proc, remrt_argv.data(), BU_PROCESS_DEFAULT);
+    const char *tls_env[] = {"REMRT_TLS=1", "REMRT_TLS_CERT=", "REMRT_TLS_KEY=", NULL};
+    struct bu_process_create_info create_info = {};
+    create_info.env_overrides = use_tls ? tls_env : NULL;
+    bu_process_create_ex(&remrt_proc, remrt_argv.data(), &create_info);
     if (!remrt_proc) {
 	fprintf(stderr, "regress_remrt [%s]: failed to start remrt\n", label);
 	cleanup_remrtrc();
 	return 1;
     }
 
-    /* Drain remrt I/O in background threads to avoid pipe-buffer deadlocks.
-     * Also collect stderr for failure diagnostics and wait for the startup
-     * confirmation (port + token printed by remrt) before proceeding.     */
+    /* Drain both pipes while waiting for the dispatcher or worker. */
     RemrtDetected det;
     std::string remrt_stderr_log;
-    std::thread stdout_drain_thr(drain_stdout, remrt_proc);
+    std::thread stdout_drain_thr(drain_stdout, remrt_proc, nullptr);
     std::thread stderr_read_thr(read_remrt_stderr, remrt_proc,
-				&det, &remrt_stderr_log);
+				std::ref(det), std::ref(remrt_stderr_log));
 
     /* If using -M, pipe the view script to remrt's stdin immediately.
      * remrt reads it after startup reaches eat_script(); writing it now
@@ -415,16 +427,30 @@ run_ipc_subtest(const TestOptions &opts,
 	}
     }
 
-    {
-	std::unique_lock<std::mutex> lk(det.mtx);
-	bool ok = det.cv.wait_for(lk,
-				  std::chrono::seconds(PORT_TOKEN_WAIT_SEC),
-				  [&det] { return det.ready; });
-	if (!ok)
-	    fprintf(stderr,
-		    "regress_remrt [%s]: timeout waiting for remrt startup\n"
-		    "  stderr so far:\n%s\n",
-		    label, remrt_stderr_log.c_str());
+    struct bu_process *worker = NULL;
+    std::thread worker_drain_thr;
+    std::string worker_log;
+    if (use_tls) {
+	std::unique_lock<std::mutex> lock(det.mtx);
+	det.cv.wait_for(lock, STARTUP_TIMEOUT, [&det] {
+	    return det.done || (det.port > 0 && !det.token.empty() && !det.tls_pin.empty());
+	});
+	if (!det.done && det.port > 0 && !det.token.empty() && !det.tls_pin.empty()) {
+	    const int port = det.port;
+	    const std::string token = det.token;
+	    const std::string pin = det.tls_pin;
+	    lock.unlock();
+
+	    if (check_tls_command(opts.tls_worker_exe, token, pin, port, "status", EXIT_SUCCESS) &&
+		check_tls_command(opts.tls_worker_exe, token, pin, port, "unrecognized_regression_command", EXIT_FAILURE))
+		worker = start_tls_worker(opts.tls_worker_exe, token, pin, port);
+	    if (worker)
+		worker_drain_thr = std::thread(drain_stdout, worker, &worker_log);
+	}
+	if (!worker) {
+	    fprintf(stderr, "regress_remrt [%s]: TLS dispatcher or worker failed to start\n", label);
+	    (void)bu_process_terminate(remrt_proc);
+	}
     }
 
     /* Keep the process record and its descriptors alive while the reader
@@ -436,26 +462,45 @@ run_ipc_subtest(const TestOptions &opts,
     int poll_ret = 0;
     while ((poll_ret = bu_process_poll(remrt_proc, &poll_status)) == 0 &&
 	    std::chrono::steady_clock::now() < render_deadline) {
-	std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	int worker_poll_status = 0;
+	if (worker && bu_process_poll(worker, &worker_poll_status) == 1 &&
+		worker_poll_status != 0)
+	    break;
+	std::this_thread::sleep_for(PROCESS_POLL_INTERVAL);
     }
     if (poll_ret == 0) {
 	(void)bu_process_terminate(remrt_proc);
 	while (bu_process_poll(remrt_proc, &poll_status) == 0)
-	    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	    std::this_thread::sleep_for(PROCESS_POLL_INTERVAL);
     }
     stdout_drain_thr.join();
     stderr_read_thr.join();
     if (poll_ret == 1)
 	remrt_status = poll_status;
     (void)bu_process_wait_n(&remrt_proc, 0);
+    int worker_status = 0;
+    if (worker) {
+	const auto deadline = std::chrono::steady_clock::now() +
+	    std::chrono::milliseconds(WORKER_EXIT_TIMEOUT_MS);
+	while (bu_process_poll(worker, NULL) == 0 &&
+		std::chrono::steady_clock::now() < deadline)
+	    std::this_thread::sleep_for(PROCESS_POLL_INTERVAL);
+	if (bu_process_poll(worker, NULL) == 0)
+	    (void)bu_process_terminate(worker);
+	worker_drain_thr.join();
+	worker_status = bu_process_wait_n(&worker, WORKER_EXIT_TIMEOUT_MS);
+    }
     if (remrt_log)
 	*remrt_log = remrt_stderr_log;
 
     cleanup_remrtrc();
 
-    if (remrt_status != 0) {
+    if (remrt_status != 0 || (use_tls &&
+	    (worker_status != 0 || worker_log.find("TLS established with") == std::string::npos))) {
 	fprintf(stderr, "regress_remrt [%s]: remrt exited with status %d\n"
 		"  stderr:\n%s\n", label, remrt_status, remrt_stderr_log.c_str());
+	if (use_tls)
+	    fprintf(stderr, "  TLS worker status %d:\n%s\n", worker_status, worker_log.c_str());
 	bu_file_delete(out_pix.c_str());
 	bu_file_delete((out_pix + ".0").c_str());
 	return 1;
@@ -595,7 +640,7 @@ static void
 usage(const char *argv0)
 {
     fprintf(stderr,
-	    "Usage: %s --remrt PATH --m35g PATH --refpix PATH\n",
+	    "Usage: %s --remrt PATH --m35g PATH --refpix PATH [--tls-worker PATH]\n",
 	    argv0);
 }
 
@@ -611,10 +656,9 @@ main(int argc, char *argv[])
 	if      (BU_STR_EQUAL(argv[i], "--remrt"))   opts.remrt_exe   = argv[++i];
 	else if (BU_STR_EQUAL(argv[i], "--m35g"))    opts.m35g_path   = argv[++i];
 	else if (BU_STR_EQUAL(argv[i], "--refpix"))  opts.refpix_path = argv[++i];
-	/* Silently accept deprecated flags for backward compat with old
-	 * cmake invocations that still pass --rtsrv.                       */
+	else if (BU_STR_EQUAL(argv[i], "--tls-worker")) opts.tls_worker_exe = argv[++i];
 	else if (BU_STR_EQUAL(argv[i], "--rtsrv") ||
-		 BU_STR_EQUAL(argv[i], "--pixcmp"))  ++i;
+		 BU_STR_EQUAL(argv[i], "--pixcmp")) ++i;
     }
 
     if (opts.remrt_exe.empty() ||
@@ -650,16 +694,18 @@ main(int argc, char *argv[])
     /* Uses the exact m35 benchmark view and compares against the          */
     /* bench/ref/m35.pix reference image.                                  */
     /* ------------------------------------------------------------------ */
-    std::string out_bench = std::string(cwd) + "/m35_remrt_ipc_bench.pix";
+    const bool use_tls = !opts.tls_worker_exe.empty();
+    std::string out_bench = std::string(cwd) +
+	(use_tls ? "/m35_remrt_tls_bench.pix" : "/m35_remrt_ipc_bench.pix");
     std::string subtest1_log;
-    int rc = run_ipc_subtest(opts,
+    int rc = run_render_subtest(opts,
 			     /* use_script */ true,
 			     /* image_size */ 512,
 			     out_bench,
-			     "IPC 512x512 benchmark",
+				     use_tls ? "TLS 512x512 benchmark" : "IPC 512x512 benchmark",
 			     &subtest1_log);
     if (rc != 0) {
-	fprintf(stderr, "FAIL: sub-test 1 (IPC benchmark render)\n");
+	fprintf(stderr, "FAIL: benchmark render\n");
 	failures++;
     } else {
 	std::string actual_bench = out_bench + ".0";
@@ -678,17 +724,18 @@ main(int argc, char *argv[])
 	    failures++;
 	} else {
 	    fprintf(stderr,
-		    "PASS: sub-test 1 (IPC benchmark render"
-		    " matches reference)\n");
+			    "PASS: benchmark render matches reference\n");
 	}
     }
     bu_file_delete(out_bench.c_str());
+    if (use_tls)
+	return failures ? 1 : 0;
 
     /* ------------------------------------------------------------------ */
     /* Sub-test 2: 64×64 IPC quick render, output size check only.        */
     /* ------------------------------------------------------------------ */
     std::string out_quick = std::string(cwd) + "/m35_remrt_ipc_quick.pix";
-    rc = run_ipc_subtest(opts,
+    rc = run_render_subtest(opts,
 			 /* use_script */ false,
 			 /* image_size */ 64,
 			 out_quick,

@@ -12,9 +12,8 @@
 #   2. IPC 64x64 quick render:
 #      Same local-worker mechanism, 64x64 pixels, output size check only.
 #
-# No TCP ports are used for the local-worker cases; no manual rtsrv
-# invocation is needed.  The test therefore carries no RESOURCE_LOCK on any
-# network port.
+# An OpenSSL build also tests the benchmark over TCP with a pinned TLS
+# connection to a foreground rtsrv worker.
 
 if(TARGET remrt AND TARGET rtsrv)
 
@@ -37,25 +36,38 @@ if(TARGET remrt AND TARGET rtsrv)
     )
     # Set the working directory to this CMake binary dir so that both the
     # test orchestrator and the remrt child process find ".remrtrc" in the
-    # same known location.  bu_dir(BU_DIR_CURR) in the test code and
-    # bu_dir(BU_DIR_CURR) in remrt's read_rc_file() both resolve to this dir.
-    # RESOURCE_LOCK serialises this test with any other test that also binds
-    # loopback TCP ports in the 4446+ range, so it can safely run as part of
-    # the normal "check" / "Regression" target without a separate STAND_ALONE
-    # label.
+    # same known location.
     set_tests_properties(regress-remrt PROPERTIES
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     )
 
-    # No STAND_ALONE: this test carries the standard "Regression" label so
-    # it participates in the normal "ninja check" run.  Port isolation is
-    # handled by the RESOURCE_LOCK above.
     # TIMEOUT 600: a 512x512 distributed render plus startup overhead may
     # take several minutes.
     brlcad_regression_test(
       regress-remrt "remrt;rtsrv;m35.g;regress_remrt"
       TEST_DEFINED TIMEOUT 600
     )
+
+    if(BUILD_TESTING AND (OpenSSL_FOUND OR OPENSSL_FOUND))
+      set(REMRT_TLS_TEST_DIR "${CMAKE_CURRENT_BINARY_DIR}/tls")
+      file(MAKE_DIRECTORY "${REMRT_TLS_TEST_DIR}")
+      brlcad_add_test(
+        NAME regress-remrt-tls
+        COMMAND regress_remrt
+          --remrt  $<TARGET_FILE:remrt>
+          --tls-worker $<TARGET_FILE:rtsrv>
+          --m35g   "${M35G_PATH}"
+          --refpix "${REFPIX_PATH}"
+      )
+      set_tests_properties(regress-remrt-tls PROPERTIES
+        WORKING_DIRECTORY "${REMRT_TLS_TEST_DIR}"
+      )
+      brlcad_regression_test(
+        regress-remrt-tls "remrt;rtsrv;m35.g;regress_remrt"
+        TEST_DEFINED TIMEOUT 600
+      )
+      distclean("${REMRT_TLS_TEST_DIR}")
+    endif()
 
     distclean(
       ${CMAKE_CURRENT_BINARY_DIR}/.remrtrc
