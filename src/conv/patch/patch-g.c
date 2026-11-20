@@ -41,6 +41,9 @@
 
 #include "common.h"
 
+#include <ctype.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -69,6 +72,85 @@ extern double hypot(double x, double y);
 #endif
 
 #define ABS(_x)	((_x > 0.0)? _x : (-_x))
+
+
+static int
+patch_g_parse_number(fastf_t *value, const char *arg)
+{
+    char *end;
+    double parsed;
+
+    if (!value || !arg || !*arg)
+	return 0;
+    errno = 0;
+    parsed = strtod(arg, &end);
+    if (end == arg || *end || errno == ERANGE || !isfinite(parsed))
+	return 0;
+    *value = (fastf_t)parsed;
+    return 1;
+}
+
+
+static int
+patch_g_parse_int(int *value, const char *arg)
+{
+    char *end;
+    long parsed;
+
+    if (!value || !arg || !*arg)
+	return 0;
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (end == arg || *end || errno == ERANGE || parsed < INT_MIN ||
+	parsed > INT_MAX)
+	return 0;
+    *value = (int)parsed;
+    return 1;
+}
+
+
+static int
+patch_g_parse_hex(unsigned int *value, const char *arg)
+{
+    char *end;
+    unsigned long parsed;
+
+    if (!value || !arg || !*arg)
+	return 0;
+    errno = 0;
+    parsed = strtoul(arg, &end, 16);
+    if (end == arg || *end || errno == ERANGE || parsed > UINT_MAX)
+	return 0;
+    *value = (unsigned int)parsed;
+    return 1;
+}
+
+
+static int
+patch_g_parse_point(point_t point, const char *arg)
+{
+    const char *cursor = arg;
+    char *end;
+    double coordinates[3];
+
+    if (!arg)
+	return 0;
+    for (size_t i = 0; i < 3; i++) {
+	while (isspace((unsigned char)*cursor))
+	    cursor++;
+	errno = 0;
+	coordinates[i] = strtod(cursor, &end);
+	if (end == cursor || errno == ERANGE || !isfinite(coordinates[i]))
+	    return 0;
+	cursor = end;
+    }
+    while (isspace((unsigned char)*cursor))
+	cursor++;
+    if (*cursor)
+	return 0;
+    VMOVE(point, coordinates);
+    return 1;
+}
 
 
 static void
@@ -3389,7 +3471,7 @@ main(int argc, char **argv)
      */
     char buf[256];
 
-    /* intentionally double for scan */
+    /* intentionally double for fixed-column input scans */
     double scan[3];
 
     BU_LIST_INIT(&head.l);
@@ -3444,9 +3526,9 @@ main(int argc, char **argv)
 		break;
 	    case 'T':  /* tolerance distance */
 
-		TOL.dist = atof(bu_optarg);
-		if (TOL.dist < 0.0) {
-		    bu_log("Illegal tolerance distance (%g inches) (must be non-negative).\n", TOL.dist);
+		if (!patch_g_parse_number(&TOL.dist, bu_optarg) || TOL.dist < 0.0) {
+		    bu_log("Illegal tolerance distance (%s inches) "
+			"(must be non-negative).\n", bu_optarg);
 		    usage(1, argv[0]);
 		}
 		TOL.dist *= mmtin;
@@ -3455,23 +3537,30 @@ main(int argc, char **argv)
 
 	    case 'A':  /* angular tolerance */
 
-		TOL.perp = atof(bu_optarg);
-		if (TOL.perp < 0.0 || TOL.perp > 1.0) {
-		    bu_log("Illegal angular tolerance (%g) (must be non-negative between 0 and 1).\n", TOL.perp);
+		if (!patch_g_parse_number(&TOL.perp, bu_optarg) ||
+		    TOL.perp < 0.0 || TOL.perp > 1.0) {
+		    bu_log("Illegal angular tolerance (%s) "
+			"(must be between 0 and 1).\n", bu_optarg);
 		    usage(1, argv[0]);
 		}
 		TOL.para = 1 - TOL.perp;
 		break;
 
-	    case 'x':  /* librt debug flags */
-
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
+	    case 'x': {  /* librt debug flags */
+		unsigned int mask;
+		if (!patch_g_parse_hex(&mask, bu_optarg))
+		    bu_exit(1, "Invalid librt debug mask: %s\n", bu_optarg);
+		rt_debug = mask;
 		break;
+	    }
 
-	    case 'X':  /* librt NMG debug flags */
-
-		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+	    case 'X': {  /* librt NMG debug flags */
+		unsigned int mask;
+		if (!patch_g_parse_hex(&mask, bu_optarg))
+		    bu_exit(1, "Invalid NMG debug mask: %s\n", bu_optarg);
+		nmg_debug = mask;
 		break;
+	    }
 
 	    case 'p':  /* polysolid output */
 
@@ -3507,8 +3596,9 @@ main(int argc, char **argv)
 			* a region
 			*/
 
-		if ((num_unions = atoi(bu_optarg)) <= 0) {
-		    bu_exit(1, "%d: bad number of unions to put in a region\n", num_unions);
+		if (!patch_g_parse_int(&num_unions, bu_optarg) || num_unions <= 0) {
+		    bu_exit(1, "%s: bad number of unions to put in a region\n",
+			bu_optarg);
 		}
 		break;
 
@@ -3530,9 +3620,8 @@ main(int argc, char **argv)
 	    case 'c':  /* center of object (used for some plate mode
 			* triangle surface normal calculations
 			*/
-		sscanf(bu_optarg, "%lf %lf %lf",
-		       &scan[0], &scan[1], &scan[2]);
-		VMOVE(Centroid, scan); /* double to fastf_t */
+		if (!patch_g_parse_point(Centroid, bu_optarg))
+		    bu_exit(1, "Invalid object center: %s\n", bu_optarg);
 
 		bu_log("Centroid = (%f %f %f)\n", V3ARGS(Centroid));
 		VSCALE(Centroid, Centroid, mmtin);
@@ -3540,7 +3629,8 @@ main(int argc, char **argv)
 
 	    case 'd':  /* debug flag checking */
 
-		debug = atoi(bu_optarg); /* Debug level */
+		if (!patch_g_parse_int(&debug, bu_optarg) || debug < 0)
+		    bu_exit(1, "Invalid debug level: %s\n", bu_optarg);
 		break;
 
 	    default:
@@ -3548,7 +3638,7 @@ main(int argc, char **argv)
 	}
     }
 
-    if (bu_optind >= argc) {
+    if (argc - bu_optind != 1) {
 	usage(1, argv[0]);
     }
     outfp = wdb_fopen(argv[bu_optind]);
