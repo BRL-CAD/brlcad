@@ -76,10 +76,12 @@ main(int argc, char **argv)
     if (!output_path)
 	output_path = argv[1];
 
+    const char *input_type = "model/vnd.mcneel.3dm";
+    const char *output_type = "model/vnd.brlcad";
     gcv_context_init(&context);
 
-    in_filter = find_filter(GCV_FILTER_READ, BU_MIME_MODEL_VND_RHINO, input_path, &context);
-    out_filter = find_filter(GCV_FILTER_WRITE, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, &context);
+    in_filter = gcv_select_filter(&context, GCV_FILTER_READ, input_type, NULL, NULL);
+    out_filter = gcv_select_filter(&context, GCV_FILTER_WRITE, output_type, NULL, NULL);
 
     if (!out_filter) {
 	gcv_context_destroy(&context);
@@ -93,14 +95,14 @@ main(int argc, char **argv)
     }
 
 
-    if (!gcv_execute(&context, in_filter, &gcv_options, 0, NULL, input_path)) {
+    if (!gcv_execute_format(&context, in_filter, input_type, &gcv_options, 0, NULL, input_path)) {
 	gcv_context_destroy(&context);
 	bu_exit(1, "failed to load input file");
     }
 
     gcv_options.debug_mode = 0;
 
-    if (!gcv_execute(&context, out_filter, &gcv_options, 0, NULL, output_path)) {
+    if (!gcv_execute_format(&context, out_filter, output_type, &gcv_options, 0, NULL, output_path)) {
 	gcv_context_destroy(&context);
 	bu_exit(1, "failed to export to output file");
     }

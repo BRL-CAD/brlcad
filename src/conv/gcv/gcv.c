@@ -113,173 +113,33 @@ fmt_fun(struct bu_vls *msgs, size_t argc, const char **argv, void *set_var)
     return args_used;
 }
 
+/* A single-letter prefix is a drive letter, not a format selector. */
+static size_t
+format_prefix_length(const char *input)
+{
+    const char *colon = input ? strchr(input, ':') : NULL;
+    return colon && colon - input > 1 ? (size_t)(colon - input) : 0;
+}
 
-/* given an input string with an optional format specifier of the
- * format /path/to/file.ext:format, this routine saves
- * "/path/to/file.ext" in path.
- *
- * returns 1 if a :format was found on the input string, 0 otherwise
- */
 static int
 extract_path(struct bu_vls *path, const char *input)
 {
-    int ret = 0;
-    struct bu_vls wpath = BU_VLS_INIT_ZERO;
-    const char *colon_pos = NULL;
-
-    if (UNLIKELY(!input))
+    size_t prefix;
+    if (!input || !input[0])
 	return 0;
-
-    colon_pos = strchr(input, ':');
-
-    if (colon_pos) {
-	bu_vls_sprintf(&wpath, "%s", input);
-	bu_vls_nibble(&wpath, strlen(input) - strlen(colon_pos) + 1);
-	if (path && bu_vls_strlen(&wpath) > 0) {
-	    ret = 1;
-	    bu_vls_sprintf(path, "%s", bu_vls_addr(&wpath));
+    prefix = format_prefix_length(input);
+    bu_vls_strcpy(path, input + (prefix ? prefix + 1 : 0));
+    return bu_vls_strlen(path) > 0;
 	}
-	bu_vls_free(&wpath);
-    } else {
-	if (path)
-	    bu_vls_sprintf(path, "%s", input);
-	ret = 1;
-    }
 
-    if (path && !(bu_vls_strlen(path) > 0))
-	return 0;
-
-    return ret;
-}
-
-
-static int
-extract_format_prefix(struct bu_vls *format, const char *input)
-{
-    struct bu_vls wformat = BU_VLS_INIT_ZERO;
-    char *colon_pos = NULL;
-    char *inputcpy = NULL;
-
-    if (UNLIKELY(!input))
-	return 0;
-
-    inputcpy = bu_strdup(input);
-    colon_pos = strchr(inputcpy, ':');
-
-    if (colon_pos) {
-	int ret = 0;
-	bu_vls_sprintf(&wformat, "%s", input);
-	bu_vls_trunc(&wformat, (int)strlen(colon_pos) * -1);
-	/* Note: because Windows supports drive letters in the form {drive}: in
-	 * paths, we can't use single characters as format specifiers for the
-	 * {format}: prefix - they must be multi-character. */
-	if (bu_vls_strlen(&wformat) > 1) {
-	    ret = 1;
-	    if (format)
-		bu_vls_sprintf(format, "%s", bu_vls_addr(&wformat));
+	static int
+	extract_format_prefix(struct bu_vls *format, const char *input)
+	{
+	    size_t length = format_prefix_length(input);
+	    if (length)
+		bu_vls_strncpy(format, input, length);
+	    return length != 0;
 	}
-	bu_vls_free(&wformat);
-	if (inputcpy)
-	    bu_free(inputcpy, "input copy");
-	return ret;
-    } else {
-	if (inputcpy)
-	    bu_free(inputcpy, "input copy");
-	return 0;
-    }
-
-    /* Shouldn't get here */
-    return 0;
-}
-
-
-static int
-parse_model_string(struct bu_vls *format, struct bu_vls *slog, const char *opt, const char *input)
-{
-    int type_int = 0;
-    bu_mime_model_t type = BU_MIME_MODEL_UNKNOWN;
-
-    struct bu_vls format_cpy = BU_VLS_INIT_ZERO;
-    struct bu_vls path = BU_VLS_INIT_ZERO;
-
-    if (UNLIKELY(!input) || UNLIKELY(strlen(input) == 0))
-	return BU_MIME_MODEL_UNKNOWN;
-
-    /* If an external routine has specified a format string, that string will
-     * override the file extension (but not an explicit option or format prefix).
-     * Stash any local format string here for later processing.  The idea is
-     * to allow some other routine (say, an introspection of a file looking for
-     * some signature string) to override a file extension based type identification.
-     * Such introspection is beyond the scope of this function, but should override
-     * the file extension mechanism. */
-    if (format)
-	bu_vls_sprintf(&format_cpy, "%s", bu_vls_addr(format));
-
-    /* If we have an explicit option, that overrides any other format specifiers */
-    if (opt) {
-	type_int = bu_file_mime(opt, BU_MIME_MODEL);
-	type = (type_int < 0) ? BU_MIME_MODEL_UNKNOWN : (bu_mime_model_t)type_int;
-	if (type == BU_MIME_MODEL_UNKNOWN) {
-	    /* Have prefix, but doesn't result in a known format - that's an error */
-	    if (slog)
-		bu_vls_printf(slog, "Error: unknown model format \"%s\" specified as an option.\n", opt);
-	    bu_vls_free(&format_cpy);
-	    return -1;
-	}
-    }
-
-    /* Try for a format prefix */
-    if (extract_format_prefix(format, input)) {
-	/* If we don't already have a valid type and we had a format prefix,
-	 * find out if it maps to a valid type */
-	if (type == BU_MIME_MODEL_UNKNOWN && format) {
-	    /* Yes - see if the prefix specifies a model format */
-	    type_int = bu_file_mime(bu_vls_addr(format), BU_MIME_MODEL);
-	    type = (type_int < 0) ? BU_MIME_MODEL_UNKNOWN : (bu_mime_model_t)type_int;
-	    if (type == BU_MIME_MODEL_UNKNOWN) {
-		/* Have prefix, but doesn't result in a known format - that's an error */
-		if (slog)
-		    bu_vls_printf(slog, "Error: unknown model format \"%s\" specified as a format prefix.\n", bu_vls_addr(format));
-		bu_vls_free(&format_cpy);
-		return -1;
-	    }
-	}
-    }
-
-    /* If we don't already have a type and we were passed a format string, give it a try */
-    if (type == BU_MIME_MODEL_UNKNOWN && format && bu_vls_strlen(&format_cpy) > 0) {
-	bu_vls_sprintf(format, "%s", bu_vls_addr(&format_cpy));
-	type_int = bu_file_mime(bu_vls_addr(&format_cpy), BU_MIME_MODEL);
-	type = (type_int < 0) ? BU_MIME_MODEL_UNKNOWN : (bu_mime_model_t)type_int;
-	if (type == BU_MIME_MODEL_UNKNOWN) {
-	    /* Have prefix, but doesn't result in a known format - that's an error */
-	    if (slog)
-		bu_vls_printf(slog, "Error: unknown model format \"%s\" passed to parse_model_string.\n", bu_vls_addr(format));
-	    bu_vls_free(&format_cpy);
-	    return -1;
-	}
-    }
-
-    /* If we have no prefix or the prefix didn't map to a model type, try file extension */
-    if (type == BU_MIME_MODEL_UNKNOWN && extract_path(&path, input)) {
-	if (bu_path_component(format, bu_vls_addr(&path), BU_PATH_EXT)) {
-	    type_int = bu_file_mime(bu_vls_addr(format), BU_MIME_MODEL);
-	    type = (type_int < 0) ? BU_MIME_MODEL_UNKNOWN : (bu_mime_model_t)type_int;
-	    if (type == BU_MIME_MODEL_UNKNOWN) {
-		/* Have file extension, but doesn't result in a known format - that's an error */
-		if (slog)
-		    bu_vls_printf(slog, "Error: file extension \"%s\" does not map to a known model format.\n", bu_vls_addr(format));
-		bu_vls_free(&format_cpy);
-		bu_vls_free(&path);
-		return -1;
-	    }
-	}
-    }
-    bu_vls_free(&path);
-    bu_vls_free(&format_cpy);
-    return (int)type;
-}
-
 
 static int
 file_stat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
@@ -328,29 +188,6 @@ file_null(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 }
 
 
-static int
-model_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
-{
-    int type_int;
-    bu_mime_model_t type = BU_MIME_MODEL_UNKNOWN;
-    bu_mime_model_t *set_type = (bu_mime_model_t *)set_mime;
-
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "mime format");
-
-    type_int = bu_file_mime(argv[0], BU_MIME_MODEL);
-    type = (type_int < 0) ? BU_MIME_MODEL_UNKNOWN : (bu_mime_model_t)type_int;
-    if (type == BU_MIME_MODEL_UNKNOWN) {
-	if (msg) {
-	    bu_vls_sprintf(msg, "Error - unknown geometry file type: %s \n", argv[0]);
-	}
-	return -1;
-    }
-    if (set_type)
-	(*set_type) = type;
-    return 1;
-}
-
-
 struct help_state {
     int showhelp;
     char *format;
@@ -377,69 +214,88 @@ help(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
     return 1;
 }
 
+/* Preserve old CLI selectors at the compatibility boundary, without
+ * registering backend names as data formats. */
+static int
+legacy_backend_format(struct bu_vls *format, struct bu_vls *handler, int writing, struct bu_vls *messages)
+{
+    const char *backend = NULL;
+    if (BU_STR_EQUIV(bu_vls_cstr(format), "gdal"))
+	backend = writing ? "GDAL Writer" : "GDAL Reader";
+    else if (BU_STR_EQUIV(bu_vls_cstr(format), "assetimport"))
+	backend = writing ? "Assetimport Writer" : "Assetimport Reader";
+    if (!backend)
+	return 1;
+    if (bu_vls_strlen(handler) && !BU_STR_EQUAL(bu_vls_cstr(handler), backend)) {
+	bu_vls_printf(messages, "Backend selector %s conflicts with handler %s\n", bu_vls_cstr(format), bu_vls_cstr(handler));
+	return 0;
+    }
+    bu_vls_strcpy(handler, backend);
+    bu_vls_trunc(format, 0);
+    return 1;
+}
 
 static int
-do_conversion(
-    struct bu_vls *messages,
-    const char *in_path, bu_mime_model_t in_type,
-    const char *out_path, bu_mime_model_t out_type,
-    size_t in_argc, const char **in_argv,
-    size_t out_argc, const char **out_argv)
+execute_conversion_filter(struct gcv_context *context, const struct gcv_filter *filter,
+    const char *type, const struct bu_mime_traits *traits, const struct gcv_opts *options,
+    size_t argc, const char *const *argv, const char *path, struct bu_vls *messages)
+{
+    struct gcv_conversion_result result = GCV_CONVERSION_RESULT_INIT_ZERO;
+    enum gcv_conversion_status status = gcv_execute_result(context, filter, type, traits,
+	options, argc, argv, path, &result);
+    if (status != GCV_CONVERSION_COMPLETE || bu_vls_strlen(&result.messages)) {
+	struct bu_vls description = BU_VLS_INIT_ZERO;
+	gcv_conversion_result_describe(&result, &description);
+	if (status == GCV_CONVERSION_FAILED)
+	    bu_vls_vlscat(messages, &description);
+	else
+	    bu_log("%s", bu_vls_cstr(&description));
+	bu_vls_free(&description);
+    }
+    gcv_conversion_result_free(&result);
+    return status != GCV_CONVERSION_FAILED;
+}
+
+static int
+do_conversion(struct bu_vls *messages,
+	      const char *in_path, const char *in_format, const char *in_handler,
+	      const char *out_path, const char *out_format, const char *out_handler,
+	      size_t in_argc, const char **in_argv, size_t out_argc, const char **out_argv,
+              const struct bu_mime_traits *input_traits, const struct bu_mime_traits *output_traits,
+              unsigned int reject_losses)
 {
     struct gcv_context context;
+    struct bu_vls in_type = BU_VLS_INIT_ZERO;
+    struct bu_vls out_type = BU_VLS_INIT_ZERO;
+    const struct gcv_filter *reader;
+    const struct gcv_filter *writer;
+    int status = 0;
+    struct gcv_opts options;
+    gcv_opts_default(&options);
+    options.reject_losses = reject_losses;
     gcv_context_init(&context);
-    const struct bu_ptbl * const filters = gcv_list_filters(&context);
-    const struct gcv_filter * const *entry;
-    const struct gcv_filter *in_filter = NULL, *out_filter = NULL;
-
-    for (BU_PTBL_FOR(entry, (const struct gcv_filter * const *), filters)) {
-	if (!entry || !*entry)
-	    break;
-
-	bu_mime_model_t emt = (*entry)->mime_type;
-	if ((*entry)->filter_type == GCV_FILTER_READ) {
-	    if (!in_filter && (emt != BU_MIME_MODEL_AUTO) && (emt == in_type))
-		in_filter = *entry;
-	    if (!in_filter && (emt == BU_MIME_MODEL_AUTO) &&
-		((*entry)->data_supported && in_path && (*(*entry)->data_supported)(in_path))) {
-	       	in_filter = *entry;
-	    }
-	}
-	if ((*entry)->filter_type == GCV_FILTER_WRITE) {
-	    if (!out_filter && (emt != BU_MIME_MODEL_AUTO) && (emt == out_type))
-		out_filter = *entry;
-	    if (!out_filter && (emt == BU_MIME_MODEL_AUTO) &&
-		((*entry)->data_supported && (*(*entry)->data_supported)(bu_file_mime_str(out_type, BU_MIME_MODEL)))) {
-		out_filter = *entry;
-	    }
-	}
+    reader = gcv_resolve_variant(&context, GCV_FILTER_READ, in_path, in_format, input_traits, in_handler, &in_type, NULL, messages);
+    writer = gcv_resolve_variant(&context, GCV_FILTER_WRITE, out_path, out_format, output_traits, out_handler, &out_type, NULL, messages);
+    if (!reader || !writer)
+	goto done;
+    bu_log("Input: %s (%s)\nOutput: %s (%s)\n", bu_vls_cstr(&in_type), reader->name,
+	   bu_vls_cstr(&out_type), writer->name);
+    if (!execute_conversion_filter(&context, reader, bu_vls_cstr(&in_type), input_traits,
+	    &options, in_argc, in_argv, in_path, messages)) {
+	bu_vls_printf(messages, "Read filter '%s' failed for '%s'\n", reader->name, in_path);
+	goto done;
     }
-
-    if (!in_filter)
-	bu_vls_printf(messages, "No filter for %s\n", bu_file_mime_str(in_type, BU_MIME_MODEL));
-    if (!out_filter)
-	bu_vls_printf(messages, "No filter for %s\n", bu_file_mime_str(out_type, BU_MIME_MODEL));
-    if (!in_filter || !out_filter) {
-	gcv_context_destroy(&context);
-	return 0;
+    if (!execute_conversion_filter(&context, writer, bu_vls_cstr(&out_type), output_traits,
+	    &options, out_argc, out_argv, out_path, messages)) {
+	bu_vls_printf(messages, "Write filter '%s' failed for '%s'\n", writer->name, out_path);
+	goto done;
     }
-
-
-    if (!gcv_execute(&context, in_filter, NULL, in_argc, in_argv, in_path)) {
-	bu_vls_printf(messages, "Read filter ('%s') failed for '%s'\n", in_filter->name, in_path);
-	gcv_context_destroy(&context);
-	return 0;
-    }
-
-    if (!gcv_execute(&context, out_filter, NULL, out_argc, out_argv, out_path)) {
-	bu_vls_printf(messages, "Write filter ('%s') failed for '%s'\n", out_filter->name, out_path);
-	gcv_context_destroy(&context);
-	return 0;
-    }
-
+    status = 1;
+done:
+    bu_vls_free(&in_type);
+    bu_vls_free(&out_type);
     gcv_context_destroy(&context);
-
-    return 1;
+    return status;
 }
 
 
@@ -453,25 +309,59 @@ usage(const struct bu_opt_desc *opts) {
 }
 
 
+static int
+inspect_formats(int list, const char *filename, struct bu_vls *messages)
+{
+    struct gcv_context context;
+    struct bu_mime_result *result = NULL;
+    struct gcv_handler_info *handlers = NULL;
+    size_t count = 0;
+    int status = 0;
+    gcv_context_init(&context);
+    if (!list) {
+	enum bu_mime_status detected = gcv_detect_file(&context, filename, &result, messages);
+	bu_mime_result_describe(result, messages);
+	status = detected == BU_MIME_MATCH ? 0 : 1;
+    }
+    if (!gcv_list_handlers(&context, NULL, &handlers, &count)) {
+	status = 1;
+    } else {
+	for (size_t i = 0; i < count; ++i) {
+	    int show = list;
+	    for (size_t j = 0; !show && result && j < result->count; ++j)
+		show = BU_STR_EQUAL(handlers[i].mime_type, result->candidates[j].name);
+	    if (show) {
+		bu_vls_printf(messages, "%s  %s  %s (priority %u)", handlers[i].mime_type,
+		    handlers[i].operation == GCV_FILTER_READ ? "read" : "write",
+		    handlers[i].name, handlers[i].priority);
+		bu_mime_traits_describe(&handlers[i].traits, messages);
+		bu_vls_putc(messages, '\n');
+	    }
+	}
+    }
+    gcv_handler_list_free(handlers, count);
+    bu_mime_result_free(result);
+    gcv_context_destroy(&context);
+    return status;
+}
+
 int
 main(int ac, const char **av)
 {
     size_t i;
-    int fmt = 0;
     int ret = 0;
-
-    static bu_mime_model_t in_type = BU_MIME_MODEL_UNKNOWN;
-    static bu_mime_model_t out_type = BU_MIME_MODEL_UNKNOWN;
 
     static struct fmt_opts in_only_opts;
     static struct fmt_opts out_only_opts;
     static struct fmt_opts both_opts;
     static struct help_state hs;
 
-    const char *in_fmt = NULL;
-    const char *out_fmt = NULL;
     struct bu_vls in_format = BU_VLS_INIT_ZERO;
     struct bu_vls out_format = BU_VLS_INIT_ZERO;
+    struct bu_mime_traits input_traits = BU_MIME_TRAITS_INIT_ZERO;
+    struct bu_mime_traits output_traits = BU_MIME_TRAITS_INIT_ZERO;
+    struct bu_vls in_handler = BU_VLS_INIT_ZERO;
+    struct bu_vls out_handler = BU_VLS_INIT_ZERO;
 
     /* input/output file names as read by bu_opt */
     static char *in_str = NULL;
@@ -491,6 +381,9 @@ main(int ac, const char **av)
     struct bu_vls slog = BU_VLS_INIT_ZERO;
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
     int unknown_ac = 0;
+    int list_formats = 0;
+    unsigned int reject_losses = 0;
+    char *identify = NULL;
 
 #define STR_HELP "Print help and exit.  If a format is specified to --help, print help specific to that format"
 #define STR_INOPT "Options to apply only while processing input file.  Accepts options until another toplevel option is encountered."
@@ -498,15 +391,23 @@ main(int ac, const char **av)
 #define STR_BOTH "Options to apply both during input and output handling.  Accepts options until another toplevel option is encountered."
 
     struct bu_opt_desc options[] = {
-	{"h", "help",             "[format]",  &help,    (void *)&hs,            STR_HELP,                     },
-	{"?", "",                 "[format]",  &help,    (void *)&hs,            "",                           },
-	{"i", "input",            "file",      &file_stat,   (void *)&in_str,    "Input file.",                },
-	{"o", "output",           "file",      &file_null,   (void *)&out_str,   "Output file.",               },
-	{"",  "input-format",     "format",    &model_mime,  (void *)&in_type,   "File format of input file.", },
-	{"",  "output-format",    "format",    &model_mime,  (void *)&out_type,  "File format of output file." },
-	{"I", "input-only-opts",  "opts",      &fmt_fun, (void *)&in_only_opts,  STR_INOPT,                    },
-	{"O", "output-only-opts", "opts",      &fmt_fun, (void *)&out_only_opts, STR_OUTOPT,                   },
-	{"B", "input-and-output-opts", "opts", &fmt_fun, (void *)&both_opts,     STR_BOTH,                     },
+	{"", "list-formats", "", NULL, &list_formats, "List registered formats and handlers."},
+	{"", "identify", "file", &bu_opt_str, &identify, "Inspect file type and available handlers."},
+	{"", "reject-loss", "category", &gcv_opt_loss_policy, &reject_losses,
+	    "Reject reported geometry, appearance, behavior, metadata or all losses (repeatable)."},
+	{"h", "help",          "[format]", &help, &hs, STR_HELP},
+	{"?", "",              "[format]", &help, &hs, ""},
+	{"i", "input",         "file", &file_stat, &in_str, "Input file."},
+	{"o", "output",        "file", &file_null, &out_str, "Output file."},
+	{"", "input-format",   "format", &bu_opt_vls, &in_format, "Input MIME name or extension."},
+	{"", "output-format",  "format", &bu_opt_vls, &out_format, "Output MIME name or extension."},
+	{"", "input-trait", "key=value", &bu_opt_mime_trait, &input_traits, "Required input format trait (repeatable)."},
+	{"", "output-trait", "key=value", &bu_opt_mime_trait, &output_traits, "Requested output format trait (repeatable)."},
+	{"", "input-handler",  "name", &bu_opt_vls, &in_handler, "Input handler implementation."},
+	{"", "output-handler", "name", &bu_opt_vls, &out_handler, "Output handler implementation."},
+	{"I", "input-only-opts", "opts", &fmt_fun, &in_only_opts, STR_INOPT},
+	{"O", "output-only-opts", "opts", &fmt_fun, &out_only_opts, STR_OUTOPT},
+	{"B", "input-and-output-opts", "opts", &fmt_fun, &both_opts, STR_BOTH},
 	BU_OPT_DESC_NULL
     };
 
@@ -537,30 +438,19 @@ main(int ac, const char **av)
 	goto cleanup;
     }
 
+    if (list_formats || identify) {
+	ret = inspect_formats(list_formats, identify, &slog);
+	bu_log("%s", bu_vls_cstr(&slog));
+	bu_vls_trunc(&slog, 0);
+	goto cleanup;
+    }
+
     /* First, see if help was supplied */
     if (hs.showhelp) {
 	if (hs.format) {
 	    /* TODO - generate format-specific help */
 	}
 	usage(options);
-
-#if 0
-	/* TODO - figure out how to get this info from each plugin to construct this table */
-	/* on the fly... */
-	bu_log("\nSupported formats:\n");
-	bu_log(" ------------------------------------------------------------\n");
-	bu_log(" | Extension  |          File Format      |  Input | Output |\n");
-	bu_log(" |----------------------------------------------------------|\n");
-	bu_log(" |    stl     |   STereoLithography       |   Yes  |   Yes  |\n");
-	bu_log(" |------------|---------------------------|--------|--------|\n");
-	bu_log(" |    obj     |   Wavefront Object        |   Yes  |   Yes  |\n");
-	bu_log(" |------------|---------------------------|--------|--------|\n");
-	bu_log(" |    step    |   STEP (AP203)            |   Yes  |   Yes  |\n");
-	bu_log(" |------------|---------------------------|--------|--------|\n");
-	bu_log(" |    iges    |   Initial Graphics        |   Yes  |   No   |\n");
-	bu_log(" |            |   Exchange Specification  |        |        |\n");
-	bu_log(" |----------------------------------------------------------|\n");
-#endif
 
 	goto cleanup;
     }
@@ -654,60 +544,30 @@ main(int ac, const char **av)
 	ret = 1;
     }
 
-    /* Find out what input file type we are dealing with */
-    if (in_type == BU_MIME_MODEL_UNKNOWN) {
-	fmt = parse_model_string(&in_format, &slog, in_fmt, bu_vls_addr(&in_path_raw));
-	in_type = (fmt < 0) ? BU_MIME_MODEL_UNKNOWN : (bu_mime_model_t)fmt;
-	in_fmt = NULL;
-    }
-    /* Identify output file type */
-    if (out_type == BU_MIME_MODEL_UNKNOWN) {
-	fmt = parse_model_string(&out_format, &slog, out_fmt, bu_vls_addr(&out_path_raw));
-	out_type = (fmt < 0) ? BU_MIME_MODEL_UNKNOWN : (bu_mime_model_t)fmt;
-	out_fmt = NULL;
-    }
-
-    /* If we get to this point without knowing the input type, it's up to the plugins to see if
-     * any of them can figure it out. */
-    if (in_type == BU_MIME_MODEL_UNKNOWN) {
-	in_type = BU_MIME_MODEL_AUTO;
-    }
-
-    /* If we get to this point without knowing the *output* type, we've got a problem */
-    if (out_type == BU_MIME_MODEL_UNKNOWN) {
-	if (bu_vls_strlen(&out_path) > 0) {
-	    bu_vls_printf(&slog, "Error: no format type identified for output path: %s\n", bu_vls_addr(&out_path));
-	} else {
-	    bu_vls_printf(&slog, "Error: no output format type identified.\n");
-	}
-	ret = 1;
-    }
-
-    /* If everything isn't OK, we're done - report and clean up memory */
-    if (ret == 1)
+    if (!bu_vls_strlen(&in_format))
+	extract_format_prefix(&in_format, bu_vls_cstr(&in_path_raw));
+    if (!bu_vls_strlen(&out_format))
+	extract_format_prefix(&out_format, bu_vls_cstr(&out_path_raw));
+    if (ret)
 	goto cleanup;
-
-    /* If we've gotten this far, we know enough to try to convert. Until we
-     * hook in conversion calls to libgcv, print a summary of the option
-     * parsing results for debugging. */
-    in_fmt = bu_file_mime_str((int)in_type, BU_MIME_MODEL);
-    out_fmt = bu_file_mime_str((int)out_type, BU_MIME_MODEL);
-    if (in_fmt) {
-	bu_log("Input file format: %s\n", in_fmt);
-    } else {
-	bu_log("Input file format: AUTO\n");
+    if (!legacy_backend_format(&in_format, &in_handler, 0, &slog) ||
+	!legacy_backend_format(&out_format, &out_handler, 1, &slog)) {
+	ret = 1;
+	goto cleanup;
     }
-    bu_log("Output file format: %s\n", out_fmt);
-    bu_log("Input file path: %s\n", bu_vls_addr(&in_path));
-    bu_log("Output file path: %s\n", bu_vls_addr(&out_path));
 
     {
 	const size_t in_argc = BU_PTBL_LEN(&in_opts), out_argc = BU_PTBL_LEN(&out_opts);
 	const char ** const in_argv = (const char **)in_opts.buffer;
 	const char ** const out_argv = (const char **)out_opts.buffer;
 
-	if (!do_conversion(&slog, bu_vls_addr(&in_path), in_type, bu_vls_addr(&out_path),
-			   out_type, in_argc, in_argv, out_argc, out_argv)) {
+	if (!do_conversion(&slog, bu_vls_cstr(&in_path),
+			   bu_vls_strlen(&in_format) ? bu_vls_cstr(&in_format) : NULL,
+			   bu_vls_strlen(&in_handler) ? bu_vls_cstr(&in_handler) : NULL,
+			   bu_vls_cstr(&out_path),
+			   bu_vls_strlen(&out_format) ? bu_vls_cstr(&out_format) : NULL,
+			   bu_vls_strlen(&out_handler) ? bu_vls_cstr(&out_handler) : NULL,
+			   in_argc, in_argv, out_argc, out_argv, &input_traits, &output_traits, reject_losses)) {
 	    bu_vls_printf(&slog, "Conversion failed\n");
 	    ret = 1;
 	    goto cleanup;
@@ -715,13 +575,13 @@ main(int ac, const char **av)
     }
 
 cleanup:
+
     if (bu_vls_strlen(&slog) > 0 && ret != 0)
 	bu_log("%s", bu_vls_addr(&slog));
-    if (in_fmt)
-	bu_free((char *)in_fmt, "input format string");
-    if (out_fmt)
-	bu_free((char *)out_fmt, "output format string");
-
+    bu_mime_traits_free(&input_traits);
+    bu_mime_traits_free(&output_traits);
+    bu_vls_free(&in_handler);
+    bu_vls_free(&out_handler);
     bu_vls_free(&in_format);
     bu_vls_free(&in_path);
     bu_vls_free(&in_path_raw);

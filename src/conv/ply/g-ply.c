@@ -120,11 +120,13 @@ main(int argc, char **argv)
     gcv_options.object_names = (const char* const*)argv + bu_optind + 1;    // offset after flags and input_file name
 
     /* setup to call gcv */
+    const char *input_type = "model/vnd.brlcad";
+    const char *output_type = "application/x-ply";
     gcv_context_init(&context);
 
     /* ensure filters exist */
-    in_filter = find_filter(GCV_FILTER_READ, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, input_path, &context);
-    out_filter = find_filter(GCV_FILTER_WRITE, BU_MIME_MODEL_PLY, output_path, &context);
+    in_filter = gcv_select_filter(&context, GCV_FILTER_READ, input_type, NULL, NULL);
+    out_filter = gcv_select_filter(&context, GCV_FILTER_WRITE, output_type, NULL, NULL);
 
     if (!out_filter || !in_filter) {
 	gcv_context_destroy(&context);
@@ -133,14 +135,14 @@ main(int argc, char **argv)
     }
 
     /* do the conversion */
-    if (!gcv_execute(&context, in_filter, &gcv_options, 0, NULL, input_path)) {
+    if (!gcv_execute_format(&context, in_filter, input_type, &gcv_options, 0, NULL, input_path)) {
 	gcv_context_destroy(&context);
 	bu_exit(1, "failed to load input file");
     }
 
     gcv_options.debug_mode = 0;
 
-    if (!gcv_execute(&context, out_filter, &gcv_options, unique_options_ac, unique_options_av, output_path)) {
+    if (!gcv_execute_format(&context, out_filter, output_type, &gcv_options, unique_options_ac, unique_options_av, output_path)) {
 	gcv_context_destroy(&context);
 	bu_exit(1, "failed to export to output file");
     }

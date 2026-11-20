@@ -51,6 +51,27 @@ brlcad_addexec(g-dot g-dot.c "libged;libbu" FOLDER Conv)
 brlcad_addexec(g-dxf dxf/g-dxf.c "librt;libgcv;libnmg;libbu" FOLDER Conv)
 add_dependencies(g-dxf gcv_plugins)
 
+if(BUILD_TESTING)
+  function(DXF_ADD_MIME_PROFILE_TEST)
+    foreach(_target g-dxf dxf-g gcv mged gcv-assetimport)
+      if(NOT TARGET ${_target})
+	return()
+      endif()
+    endforeach()
+    get_target_property(_dxf_source g-dxf SOURCE_DIR)
+    get_target_property(_dxf_binary g-dxf BINARY_DIR)
+    brlcad_add_test(NAME dxf_mime_profiles COMMAND ${CMAKE_COMMAND}
+      "-DG_DXF=$<TARGET_FILE:g-dxf>" "-DDXF_G=$<TARGET_FILE:dxf-g>"
+      "-DGCV=$<TARGET_FILE:gcv>" "-DMGED=$<TARGET_FILE:mged>"
+      "-DWORK_DIR=${_dxf_binary}/dxf_mime"
+      -P "${_dxf_source}/dxf/mime_profiles.cmake")
+    distclean("${_dxf_binary}/dxf_mime")
+  endfunction()
+  # MGED is configured after the converters, including in component builds.
+  cmake_language(DEFER DIRECTORY "${CMAKE_SOURCE_DIR}" CALL DXF_ADD_MIME_PROFILE_TEST)
+endif()
+cmakefiles(dxf/mime_profiles.cmake)
+
 brlcad_addexec(g-egg g-egg.c "libwdb;libgcv;libnmg" FOLDER Conv)
 add_dependencies(g-egg gcv_plugins)
 
