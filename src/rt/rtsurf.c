@@ -93,6 +93,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -114,7 +115,7 @@
 struct options
 {
     double radius;    /** calculated bounding radius */
-    ssize_t samples;  /** segment count, -1 to iterate to convergence */
+    long samples;     /** segment count, -1 to iterate to convergence */
     double threshold; /** percentage change to stop at, 0 to do 1-shot */
     char *materials;  /** print out areas per region, path to file */
     int makeGeometry; /** whether to write out geometry script to stdout */
@@ -766,9 +767,7 @@ get_options(int argc, char *argv[], struct options *opts)
     bu_optind = 1;
 
     int c;
-    while ((c = bu_getopt(argc, (char * const *)argv, "grcn:t:m:oh?")) != -1) {
-	if (bu_optopt == '?')
-	    c = 'h';
+    while ((c = bu_getopt(argc, (char * const *)argv, "grn:t:m:oh?")) != -1) {
 
 	switch (c) {
 	    case 'o':
@@ -784,35 +783,48 @@ get_options(int argc, char *argv[], struct options *opts)
 		    opts->printRegions = 1;
 		break;
 	    case 't':
-		if (opts)
-		    opts->threshold = (double)strtod(bu_optarg, NULL);
+		if (opts) {
+		    char *end = NULL;
+
+		    errno = 0;
+		    opts->threshold = strtod(bu_optarg, &end);
+		    if (errno != 0 || end == bu_optarg || *end != '\0' ||
+			!isfinite(opts->threshold) || opts->threshold < 0.0)
+			bu_exit(EXIT_FAILURE, "ERROR: invalid threshold [%s]\n", bu_optarg);
+		}
 		break;
 	    case 'm':
 		if (opts)
 		    opts->materials = bu_optarg;
 		break;
 	    case 'n':
-		if (opts)
-		    opts->samples = (size_t)strtol(bu_optarg, NULL, 10);
+		if (opts) {
+		    char *end = NULL;
+
+		    errno = 0;
+		    opts->samples = strtol(bu_optarg, &end, 10);
+		    if (errno != 0 || end == bu_optarg || *end != '\0' ||
+			opts->samples < 1)
+			bu_exit(EXIT_FAILURE, "ERROR: invalid sample count [%s]\n", bu_optarg);
+		}
 		break;
 	    case '?':
+		if (bu_optopt != '?')
+		    bu_exit(EXIT_FAILURE, "ERROR: unknown option -%c\n", bu_optopt);
+		/* fall through */
 	    case 'h':
 		/* asking for help */
 		bu_exit(EXIT_SUCCESS, usage, argv0);
 	    default:
-		bu_exit(EXIT_FAILURE, "ERROR: unknown option -%c\n", *bu_optarg);
+		bu_exit(EXIT_FAILURE, "ERROR: unexpected option code %d\n", c);
 	}
-    }
-
-    if (opts->threshold < 0.0) {
-	opts->threshold = 0.0;
     }
 
     if (opts->materials && !bu_file_exists(opts->materials, NULL)) {
 	bu_exit(EXIT_FAILURE, "ERROR: material file [%s] not found\n", opts->materials);
     }
 
-    bu_log("Samples: %zd %s\n", opts->samples, opts->samples>0?"rays":"(until converges)");
+    bu_log("Samples: %ld %s\n", opts->samples, opts->samples>0?"rays":"(until converges)");
     bu_log("Threshold: %g %s\n", opts->threshold, opts->threshold>0.0?"%":"(one iteration)");
 
     argv += bu_optind;
