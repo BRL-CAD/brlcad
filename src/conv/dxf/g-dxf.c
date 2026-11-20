@@ -417,7 +417,7 @@ main(int argc, char *argv[])
 		ttol.rel = 0.0;
 		break;
 	    case 'n':		/* Surface normal tolerance. */
-		ttol.norm = atof(bu_optarg);
+		ttol.norm = atof(bu_optarg) * DEG2RAD;
 		ttol.rel = 0.0;
 		break;
 	    case 'o':		/* Output file name. */
