@@ -28,12 +28,42 @@
 
 #include "common.h"
 
+#include <math.h>
 #include <string.h>
 
 #include "bu/path.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "./librt_private.h"
+
+
+static int
+rt_bound_db_internal(point_t *bmin, point_t *bmax,
+		     struct rt_db_internal *ip,
+		     const struct bg_tess_tol *ttol,
+		     const struct bn_tol *tol)
+{
+    int ret = -1;
+
+    if (ip->idb_type == ID_HALF) {
+	VSETALL(*bmin, -INFINITY);
+	VSETALL(*bmax, INFINITY);
+	return 0;
+    }
+
+    if (ip->idb_meth->ft_bbox)
+	ret = ip->idb_meth->ft_bbox(ip, bmin, bmax, tol);
+
+    if (ret < 0 && ip->idb_meth->ft_plot) {
+	struct bu_list vhead;
+	BU_LIST_INIT(&vhead);
+	if (ip->idb_meth->ft_plot(&vhead, ip, ttol, tol, NULL) >= 0)
+	    ret = bv_vlist_bbox(&vhead, bmin, bmax, NULL, NULL);
+	BV_FREE_VLIST(&rt_vlfree, &vhead);
+    }
+
+    return ret;
+}
 
 int
 rt_bound_tree(const union tree *tp, vect_t tree_min, vect_t tree_max)
@@ -102,6 +132,13 @@ rt_bound_tree(const union tree *tp, vect_t tree_min, vect_t tree_max)
 	     * subtractions must evaluate the boolean tree (e.g. the ray-traced
 	     * evaluated-geometry path exposed via the "bb -t" command). */
 	    break;
+	case OP_GUARD:
+	case OP_XNOP:
+	    return rt_bound_tree(tp->tr_b.tb_left, tree_min, tree_max);
+	case OP_NOT:
+	    VSETALL(tree_min, -INFINITY);
+	    VSETALL(tree_max, INFINITY);
+	    return 0;
 	case OP_NOP:
 	    /* Implies that this tree has nothing in it */
 	    break;
@@ -463,27 +500,7 @@ rt_bound_instance(point_t *bmin, point_t *bmax,
     if (ret < 0)
 	return -1;
 
-    int bbret = -1;
-    if (ip->idb_meth->ft_bbox)
-	bbret = ip->idb_meth->ft_bbox(ip, bmin, bmax, tol);
-
-    if (bbret < 0 && ip->idb_meth->ft_plot) {
-	/* As a fallback for primitives that don't have a bbox
-	 * function, (there are still some as of 2021) use the old
-	 * bounding method of calculating the default (non-adaptive)
-	 * plot for the primitive and using the extent of the plotted
-	 * segments as the bounds.
-	 */
-	struct bu_list vhead;
-	BU_LIST_INIT(&(vhead));
-	if (ip->idb_meth->ft_plot(&vhead, ip, ttol, tol, NULL) >= 0) {
-	    if (bv_vlist_bbox(&vhead, bmin, bmax, NULL, NULL)) {
-		rt_db_free_internal(&dbintern);
-		return -1;
-	    }
-	    bbret = 0;
-	}
-    }
+    int bbret = rt_bound_db_internal(bmin, bmax, ip, ttol, tol);
 
     rt_db_free_internal(&dbintern);
     return bbret;
@@ -701,6 +718,228 @@ rt_obj_bounds(struct bu_vls *msgs,
 
     rt_i_destroy(rtip);
 
+    return BRLCAD_OK;
+}
+
+
+struct rt_obj_bounds_mat_state {
+    point_t minimum;
+    point_t maximum;
+    int flags;
+    int use_air;
+    int have_bounds;
+    int error;
+};
+
+
+static int
+rt_bounds_are_valid(const point_t minimum, const point_t maximum)
+{
+    int axis;
+
+    for (axis = 0; axis < 3; axis++) {
+	if (isnan(minimum[axis]) || isnan(maximum[axis]))
+	    return 0;
+    }
+    return 1;
+}
+
+
+static int
+rt_bounds_are_empty(const point_t minimum, const point_t maximum)
+{
+    int axis;
+
+    for (axis = 0; axis < 3; axis++) {
+	if (minimum[axis] > maximum[axis])
+	    return 1;
+    }
+    return 0;
+}
+
+
+static int
+rt_bounds_are_finite(const point_t minimum, const point_t maximum)
+{
+    int axis;
+
+    if (!rt_bounds_are_valid(minimum, maximum) ||
+	rt_bounds_are_empty(minimum, maximum))
+	return 0;
+    for (axis = 0; axis < 3; axis++) {
+	if (!isfinite(minimum[axis]) || !isfinite(maximum[axis]))
+	    return 0;
+    }
+    return 1;
+}
+
+
+static int
+rt_obj_bounds_mat_region_start(struct db_tree_state *state,
+			       const struct db_full_path *UNUSED(path),
+			       const struct rt_comb_internal *UNUSED(combination),
+			       void *client_data)
+{
+    struct rt_obj_bounds_mat_state *bounds =
+	(struct rt_obj_bounds_mat_state *)client_data;
+
+    return !bounds->use_air && state->ts_aircode != 0 ? -1 : 0;
+}
+
+
+static union tree *
+rt_obj_bounds_mat_leaf(struct db_tree_state *state,
+		       const struct db_full_path *UNUSED(path),
+		       struct rt_db_internal *internal,
+		       void *client_data)
+{
+    struct rt_obj_bounds_mat_state *bounds =
+	(struct rt_obj_bounds_mat_state *)client_data;
+    point_t minimum, maximum;
+    struct soltab *solid;
+    union tree *leaf;
+
+    VSETALL(minimum, INFINITY);
+    VSETALL(maximum, -INFINITY);
+    if (rt_bound_db_internal(&minimum, &maximum, internal,
+		state->ts_ttol, state->ts_tol) < 0) {
+	bounds->error = 1;
+	return TREE_NULL;
+    }
+    if (!rt_bounds_are_valid(minimum, maximum)) {
+	bounds->error = 1;
+	return TREE_NULL;
+    }
+
+    BU_GET(solid, struct soltab);
+    *solid = (struct soltab)RT_SOLTAB_INIT_ZERO;
+    solid->l.magic = RT_SOLTAB_MAGIC;
+    solid->l2.magic = RT_SOLTAB2_MAGIC;
+    solid->st_aradius = rt_bounds_are_finite(minimum, maximum) ? 1.0 : INFINITY;
+    VMOVE(solid->st_min, minimum);
+    VMOVE(solid->st_max, maximum);
+
+    BU_GET(leaf, union tree);
+    RT_TREE_INIT(leaf);
+    leaf->tr_op = OP_SOLID;
+    leaf->tr_a.tu_stp = solid;
+    return leaf;
+}
+
+
+static void
+rt_obj_bounds_mat_free_tree(union tree *tree, int keep_root)
+{
+    if (!tree)
+	return;
+
+    switch (tree->tr_op) {
+	case OP_SOLID:
+	    if (tree->tr_a.tu_stp)
+		BU_PUT(tree->tr_a.tu_stp, struct soltab);
+	    break;
+	case OP_UNION:
+	case OP_XOR:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	    rt_obj_bounds_mat_free_tree(tree->tr_b.tb_left, 0);
+	    rt_obj_bounds_mat_free_tree(tree->tr_b.tb_right, 0);
+	    break;
+	case OP_GUARD:
+	case OP_XNOP:
+	case OP_NOT:
+	    rt_obj_bounds_mat_free_tree(tree->tr_b.tb_left, 0);
+	    break;
+	default:
+	    break;
+    }
+
+    if (keep_root) {
+	RT_TREE_INIT(tree);
+	tree->tr_op = OP_NOP;
+    } else {
+	BU_PUT(tree, union tree);
+    }
+}
+
+
+static union tree *
+rt_obj_bounds_mat_region_end(struct db_tree_state *UNUSED(state),
+			     const struct db_full_path *UNUSED(path),
+			     union tree *tree,
+			     void *client_data)
+{
+    struct rt_obj_bounds_mat_state *bounds =
+	(struct rt_obj_bounds_mat_state *)client_data;
+    point_t minimum, maximum;
+
+    VSETALL(minimum, INFINITY);
+    VSETALL(maximum, -INFINITY);
+    if (rt_bound_tree(tree, minimum, maximum) < 0 ||
+	!rt_bounds_are_valid(minimum, maximum)) {
+	bounds->error = 1;
+    } else if (!rt_bounds_are_empty(minimum, maximum) &&
+	(rt_bounds_are_finite(minimum, maximum) ||
+	 !(bounds->flags & RT_OBJ_BOUNDS_IGNORE_INFINITE))) {
+	if (!bounds->have_bounds) {
+	    VMOVE(bounds->minimum, minimum);
+	    VMOVE(bounds->maximum, maximum);
+	    bounds->have_bounds = 1;
+	} else {
+	    VMIN(bounds->minimum, minimum);
+	    VMAX(bounds->maximum, maximum);
+	}
+    }
+
+    rt_obj_bounds_mat_free_tree(tree, 1);
+    return tree;
+}
+
+
+int
+rt_obj_bounds_mat(struct bu_vls *msgs,
+		  struct db_i *dbip,
+		  int argc,
+		  const char *argv[],
+		  int use_air,
+		  const mat_t model2bounds,
+		  int flags,
+		  point_t rpp_min,
+		  point_t rpp_max)
+{
+    struct db_tree_state state = RT_DBTS_INIT_IDN;
+    struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    struct rt_obj_bounds_mat_state bounds;
+    int status;
+
+    if (!dbip || argc <= 0 || !argv || !rpp_min || !rpp_max ||
+	(flags & ~RT_OBJ_BOUNDS_IGNORE_INFINITE))
+	return BRLCAD_ERROR;
+
+    VSETALL(bounds.minimum, INFINITY);
+    VSETALL(bounds.maximum, -INFINITY);
+    bounds.flags = flags;
+    bounds.use_air = use_air;
+    bounds.have_bounds = 0;
+    bounds.error = 0;
+    state.ts_dbip = dbip;
+    state.ts_ttol = &ttol;
+    state.ts_tol = &tol;
+    if (model2bounds)
+	MAT_COPY(state.ts_mat, model2bounds);
+
+    status = db_walk_tree(dbip, argc, argv, 1, &state,
+	rt_obj_bounds_mat_region_start, rt_obj_bounds_mat_region_end,
+	rt_obj_bounds_mat_leaf, &bounds);
+    if (status < 0 || bounds.error || !bounds.have_bounds) {
+	if (msgs)
+	    bu_vls_printf(msgs, "unable to determine transformed object bounds\n");
+	return BRLCAD_ERROR;
+    }
+
+    VMOVE(rpp_min, bounds.minimum);
+    VMOVE(rpp_max, bounds.maximum);
     return BRLCAD_OK;
 }
 
