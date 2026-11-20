@@ -8,12 +8,11 @@ handle - create a BRL-CAD .g database containing handle shapes
 
 == SYNOPSIS
 
-[source]
-----
-handle [-h | -?]
-handle [-f _name.g_] [-n _count_] [-l _length_] [-H _height_] [-r1 _torus_radius_] [-r2 _cylinder_radius_]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*handle* [*-f* _database.g_] [*-n* _count_] [*-l* _millimeters_] [*-H* _millimeters_]
+       [*--torus-radius* _millimeters_] [*--cylinder-radius* _millimeters_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -33,27 +32,29 @@ run; values outside that range are clamped.
 [[options]]
 == OPTIONS
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a usage message and exit.
 
-*-f* _name.g_::
+*-f*, *--output* _name.g_::
   Name of the .g database file to create. Defaults to handle.g in
   interactive mode.
 
-*-n* _count_::
+*-n*, *--count* _count_::
   Number of handles to create (1 to 256, default 1).
 
-*-l* _length_::
+*-l*, *--length* _length_::
   Length of the handle in millimeters.
 
-*-H* _height_::
+*-H*, *--height* _height_::
   Height of the handle in millimeters.
 
-*-r1* _torus_radius_::
-  Radius r1 of the two tori in millimeters (the rounding of the corners).
+*--torus-radius* _torus_radius_::
+  Radius of the two corner tori in millimeters. The legacy attached form
+  *-r1*__torus_radius__ is also accepted.
 
-*-r2* _cylinder_radius_::
-  Radius r2 of the three cylinders in millimeters.
+*--cylinder-radius* _cylinder_radius_::
+  Radius of the three cylinders in millimeters. The legacy attached form
+  *-r2*__cylinder_radius__ is also accepted.
 
 
 [[examples]]
@@ -63,13 +64,14 @@ run; values outside that range are clamped.
 ====
 [source,console]
 ----
-$ handle -fhandle.g -n3 -l200 -H100 -r120 -r210
+$ handle --output handle.g --count 3 --length 200 --height 100 \
+    --torus-radius 20 --cylinder-radius 10
 $ rt -s 1024 -o handle.png handle.g hana
 ----
 Creates handle.g containing three handles, each 200 mm long and 100 mm tall,
 with a torus rounding radius of 20 mm and a cylinder radius of 10 mm. Note
-that the option value is appended directly to the flag (for example *-l200*
-and *-r120*). The grouped handles can then be rendered with *rt*(1).
+that the legacy attached short forms such as *-l200* and *-r120* remain
+accepted. The grouped handles can then be rendered with *rt*(1).
 ====
 
 

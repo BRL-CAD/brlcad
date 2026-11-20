@@ -38,8 +38,98 @@
 #include "rt/db4.h"
 #include "vmath.h"
 #include "bu/app.h"
+#include "bu/arg.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 #include "raytrace.h"
 #include "wdb.h"
+
+struct handle_args {
+    int help;
+    const char *output_file;
+    int count;
+    double length;
+    double height;
+    double torus_radius;
+    double cylinder_radius;
+};
+
+static const struct bu_arg_option handle_options[] = {
+    BU_ARG_FLAG("h", "help", struct handle_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_VALUE("f", "output", struct handle_args, output_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "database.g",
+	"Write generated geometry to this database"),
+    BU_ARG_INTEGER_RANGE("n", "count", struct handle_args, count,
+	1, 1, 1, 256, "count", "Create this many handles"),
+    BU_ARG_VALUE_VALIDATE("l", "length", struct handle_args, length,
+	BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate, "millimeters",
+	"Set the positive handle length"),
+    BU_ARG_VALUE_VALIDATE("H", "height", struct handle_args, height,
+	BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate, "millimeters",
+	"Set the positive handle height"),
+    BU_ARG_VALUE_VALIDATE(NULL, "torus-radius", struct handle_args,
+	torus_radius, BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate,
+	"millimeters", "Set the positive corner torus radius"),
+    BU_ARG_VALUE_VALIDATE(NULL, "cylinder-radius", struct handle_args,
+	cylinder_radius, BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate,
+	"millimeters", "Set the positive cylinder radius"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema handle_schema = BU_ARG_SCHEMA(
+    "handle", "Create a BRL-CAD database of handle shapes",
+    handle_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar handle_grammar = {
+    &handle_schema, NULL, NULL
+};
+
+
+static const char **
+normalize_handle_args(int argc, char **argv)
+{
+    const char **args;
+    int i;
+
+    args = (const char **)bu_calloc((size_t)(argc - 1), sizeof(char *),
+	"normalized handle arguments");
+    for (i = 1; i < argc; i++) {
+	const char *radius_option = NULL;
+	struct bu_vls normalized = BU_VLS_INIT_ZERO;
+
+	if (bu_strncmp(argv[i], "-r1", 3) == 0)
+	    radius_option = "torus-radius";
+	else if (bu_strncmp(argv[i], "-r2", 3) == 0)
+	    radius_option = "cylinder-radius";
+	if (!radius_option) {
+	    args[i - 1] = argv[i];
+	    continue;
+	}
+
+	bu_vls_printf(&normalized, "--%s=%s", radius_option, argv[i] + 3);
+	args[i - 1] = bu_strdup(bu_vls_cstr(&normalized));
+	bu_vls_free(&normalized);
+    }
+
+    return args;
+}
+
+
+static void
+free_normalized_handle_args(int argc, char **argv, const char **args)
+{
+    int i;
+
+    for (i = 1; i < argc; i++) {
+	if (args[i - 1] != argv[i])
+	    bu_free((void *)args[i - 1], "normalized handle argument");
+    }
+    bu_free((void *)args, "normalized handle arguments");
+}
 
 void
 printusage(void)
@@ -80,9 +170,6 @@ main(int argc, char **argv)
     point_t cent;		/* Center of torus. */
     vect_t norm;		/* Normal of torus. */
     double rad1, rad2;		/* r1 and r2 of torus. */
-    char *temp;			/* Temporary character string. */
-    char temp1[NAME_LEN];	/* Temporary character string. */
-
     char solnam[8];		/* Solid name. */
     char regnam[8];		/* Region name. */
     char grpnam[5];		/* Group name. */
@@ -91,10 +178,19 @@ main(int argc, char **argv)
     struct wmember comb;	/* Used to make regions. */
     struct wmember comb1;	/* Used to make groups. */
 
-    int i, j, k;		/* Loop counters. */
+    int i;			/* Loop counter. */
     int ret;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
+
+    ret = bu_arg_introspect(&msg, &handle_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (ret != 0) {
+	bu_flog(ret > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return ret > 0 ? 0 : 1;
+    }
 
     /* Set up solid, region, and group names. */
     solnam[0] = 's';
@@ -186,81 +282,31 @@ main(int argc, char **argv)
 
     /* if there are arguments get the answers from the arguments. */
     else {
-	/* START # 4 */
+	struct handle_args args = {0};
+	const char **normalized_args = normalize_handle_args(argc, argv);
 
-	for (i=1; i<argc; i++) {
-	    /* START # 5 */
-	    /* Put argument into temporary character string. */
-	    temp = argv[i];
-	    if (temp[1] == 'h' || temp[1] == '?') {
-	    	printusage();
-		bu_exit(1, NULL);
-	    }
-
-	    /* -f - mged file name. */
-	    if (temp[1] == 'f') {
-		/* START # 6 */
-		j = 2;
-		k = 0;
-		while ((temp[j] != '\0') && (k < NAME_LEN - 1)) {
-		    /* START # 7 */
-		    filemged[k] = temp[j];
-		    j++;
-		    k++;
-		}					/* END # 7 */
-		filemged[k] = '\0';
-	    }						/* END # 6 */
-
-	    /* -n - # of handles to be created. */
-	    else if (temp[1] == 'n') {
-		/* START # 8 */
-		/* Set up temporary character string. */
-		j = 2;
-		k = 0;
-		while ((temp[j] != '\0') && (k < NAME_LEN - 1)) {
-		    /* START # 9 */
-		    temp1[k] = temp[j];
-		    j++;
-		    k++;
-		}					/* END # 9 */
-		temp1[k] = '\0';
-		sscanf(temp1, "%d", &numhan);
-	    }						/* END # 8 */
-
-	    /* -l or -h - length and height of handle in mm. */
-	    else if ((temp[1] == 'l') || (temp[1] == 'H')) {
-		/* START # 10 */
-		/* Set up temporary character string. */
-		j = 2;
-		k = 0;
-		while ((temp[j] != '\0') && (k < NAME_LEN - 1)) {
-		    /* START # 11 */
-		    temp1[k] = temp[j];
-		    j++;
-		    k++;
-		}					/* END # 11 */
-		temp1[k] = '\0';
-		if (temp[1] == 'l') sscanf(temp1, "%lf", &len);
-		else if (temp[1] == 'H') sscanf(temp1, "%lf", &hgt);
-	    }						/* END # 10 */
-
-	    /* -r1 or -r2 - radii for torus. */
-	    else if (temp[1] == 'r') {
-		/* START # 12 */
-		/* Set up temporary character string. */
-		j = 3;
-		k = 0;
-		while ((temp[j] != '\0') && (k < NAME_LEN - 1)) {
-		    /* START # 13 */
-		    temp1[k] = temp[j];
-		    j++;
-		    k++;
-		}					/* END # 13 */
-		temp1[k] = '\0';
-		if (temp[2] == '1') sscanf(temp1, "%lf", &r1);
-		else if (temp[2] == '2') sscanf(temp1, "%lf", &r2);
-	    }						/* END # 12 */
-	}						/* END # 5 */
+	ret = bu_arg_schema_parse_complete(&handle_schema, &args, &msg,
+	    argc - 1, normalized_args);
+	free_normalized_handle_args(argc, argv, normalized_args);
+	if (ret < 0)
+	    bu_exit(1, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	if (args.help) {
+	    char *help = bu_arg_schema_help(&handle_schema, "handle");
+	    bu_flog(stdout, "%s", help ? help : "");
+	    bu_free(help, "handle help");
+	    return 0;
+	}
+	if (args.output_file) {
+	    if (strlen(args.output_file) > NAME_LEN)
+		bu_exit(1, "Output filename exceeds %d characters\n", NAME_LEN);
+	    bu_strlcpy(filemged, args.output_file, sizeof(filemged));
+	}
+	numhan = args.count;
+	len = args.length;
+	hgt = args.height;
+	r1 = args.torus_radius;
+	r2 = args.cylinder_radius;
     }							/* END # 4 */
 
     if (numhan < 1)
