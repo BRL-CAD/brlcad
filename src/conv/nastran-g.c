@@ -26,18 +26,14 @@
 
 #include "common.h"
 
-#include <float.h>
-#include <limits.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
-#include <errno.h>
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "bu/opt.h"
 #include "bu/vls.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -111,7 +107,6 @@ static const char *output_file = "nastran.g";
 static struct rt_wdb *fpout;		/* brlcad output file */
 static FILE *fpin;			/* NASTRAN input file */
 static FILE *fptmp;			/* temporary version of NASTRAN input */
-static const char *usage = "[-xX lvl] [-t tol.dist] [-n] [-m] [-i NASTRAN_file] -o BRL-CAD_file\n";
 static b_off_t start_off;
 static const char *delims=", \t";
 static struct coord_sys coord_head;	/* head of linked list of coordinate systems */
@@ -149,27 +144,65 @@ static int convert_pnt(const point_t pt, struct coord_sys *cs, point_t out_pt);
 #define NO_OF_FIELDS 20
 #define FIELD_LENGTH 17
 
-static void
-print_usage(const char *progname)
-{
-    bu_exit(1, "Usage: %s %s", progname, usage);
-}
+struct nastran_g_args {
+    int help;
+    int nmg_surfaces;
+    int millimeters;
+    fastf_t distance_tolerance;
+    unsigned int rt_debug;
+    unsigned int nmg_debug;
+    const char *input_file;
+    const char *output_file;
+};
 
+
+static const struct bu_arg_option nastran_g_options[] = {
+    BU_ARG_FLAG("h", "help", struct nastran_g_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("n", "nmg-surfaces", struct nastran_g_args, nmg_surfaces,
+	"Write shell elements as NMG solids instead of BoT solids"),
+    BU_ARG_FLAG("m", "millimeters", struct nastran_g_args, millimeters,
+	"Interpret input coordinates as millimeters instead of inches"),
+    BU_ARG_NUMBER_RANGE("t", "distance-tolerance", struct nastran_g_args,
+	distance_tolerance, 1, 0.0, 0, 0.0, "millimeters",
+	"Set the nonnegative vertex-coincidence distance in millimeters "
+	"(default BRL-CAD distance tolerance)"),
+    BU_ARG_VALUE("i", "input", struct nastran_g_args, input_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "model.bdf",
+	"Read the NASTRAN bulk data deck from this file instead of standard input"),
+    BU_ARG_VALUE("o", "output", struct nastran_g_args, output_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "database.g",
+	"Write the BRL-CAD database to this file (default nastran.g)"),
+    BU_ARG_VALUE("x", "rt-debug", struct nastran_g_args, rt_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set librt hexadecimal debug flags"),
+    BU_ARG_VALUE("X", "nmg-debug", struct nastran_g_args, nmg_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set libnmg hexadecimal debug flags"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand nastran_g_operands[] = {
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema nastran_g_schema = BU_ARG_SCHEMA(
+    "nastran-g", "Convert a NASTRAN finite element model to a BRL-CAD database",
+    nastran_g_options, nastran_g_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar nastran_g_grammar = {
+    &nastran_g_schema, NULL, NULL
+};
 
 static int
-parse_debug_mask(unsigned int *mask, const char *arg)
+nastran_g_help(FILE *stream, int status)
 {
-    char *end;
-    unsigned long parsed;
-
-    if (!mask || !arg || !*arg || *arg == '-')
-	return 0;
-    errno = 0;
-    parsed = strtoul(arg, &end, 16);
-    if (end == arg || *end || errno == ERANGE || parsed > UINT_MAX)
-	return 0;
-    *mask = (unsigned int)parsed;
-    return 1;
+    char *help = bu_arg_schema_help(&nastran_g_schema, "nastran-g");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "nastran-g help");
+    return status;
 }
 
 
@@ -1125,9 +1158,10 @@ get_cbar(void)
 int
 main(int argc, char **argv)
 {
-    int c;
+    struct nastran_g_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     int i;
-    double distance_tolerance;
+    int introspection;
     struct pshell *psh;
     struct pbar *pbp;
     struct wmember head;
@@ -1148,61 +1182,56 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    while ((c=bu_getopt(argc, argv, "x:X:t:ni:o:mh?")) != -1) {
-	switch (c) {
-	    case 'x':
-		if (!parse_debug_mask(&rt_debug, bu_optarg))
-		    bu_exit(1, "Invalid librt debug mask: %s\n", bu_optarg);
-		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
-		bu_log("\n");
-		break;
-	    case 'X':
-		if (!parse_debug_mask(&nmg_debug, bu_optarg))
-		    bu_exit(1, "Invalid NMG debug mask: %s\n", bu_optarg);
-		bu_printb("librt nmg_debug", nmg_debug, NMG_DEBUG_FORMAT);
-		bu_log("\n");
-		break;
-	    case 't':		/* calculational tolerance */
-		if (!bu_opt_scan_double_range(bu_optarg, &distance_tolerance,
-			0.0, DBL_MAX, "distance tolerance"))
-		    print_usage(argv[0]);
-		tol.dist = distance_tolerance;
-		tol.dist_sq = tol.dist * tol.dist;
-		break;
-	    case 'n':
-		polysolids = 0;
-		break;
-	    case 'm':
-		units = MM;
-		break;
-	    case 'i':
-		fpin = fopen(bu_optarg, "rb");
-		if (fpin == (FILE *)NULL) {
-		    bu_log("Cannot open NASTRAN file (%s) for reading!\n", bu_optarg);
-		    print_usage(argv[0]);
-		}
-		nastran_file = bu_optarg;
-		break;
-	    case 'o':
-		output_file = bu_optarg;
-		break;
-	    default:
-		print_usage(argv[0]);
-	}
+    args.distance_tolerance = tol.dist;
+    args.output_file = output_file;
+
+    introspection = bu_arg_introspect(&msg, &nastran_g_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    if (bu_arg_schema_parse_complete(&nastran_g_schema, &args, &msg,
+	    argc - 1, (const char **)(argv + 1)) < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return nastran_g_help(stdout, 0);
+
+    units = args.millimeters ? MM : INCHES;
+    polysolids = args.nmg_surfaces ? 0 : 1;
+    tol.dist = args.distance_tolerance;
+    tol.dist_sq = tol.dist * tol.dist;
+    output_file = args.output_file;
+    rt_debug = args.rt_debug;
+    nmg_debug = args.nmg_debug;
+
+    if (bu_arg_schema_option_present(&nastran_g_schema, argc - 1,
+	    (const char **)(argv + 1), "rt-debug")) {
+	bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
+	bu_log("\n");
+    }
+    if (bu_arg_schema_option_present(&nastran_g_schema, argc - 1,
+	    (const char **)(argv + 1), "nmg-debug")) {
+	bu_printb("librt nmg_debug", nmg_debug, NMG_DEBUG_FORMAT);
+	bu_log("\n");
     }
 
-    if (bu_optind != argc)
-	print_usage(argv[0]);
+    if (args.input_file) {
+	fpin = fopen(args.input_file, "rb");
+	if (!fpin)
+	    bu_exit(1, "Cannot open NASTRAN file (%s) for reading!\n",
+		args.input_file);
+	nastran_file = args.input_file;
+    }
 
     fpout = wdb_fopen(output_file);
-    if (fpout == NULL) {
-	bu_log("Cannot open BRL-CAD file (%s) for writing!\n", output_file);
-	print_usage(argv[0]);
-    }
-
-    if (!fpin || !fpout) {
-	print_usage(argv[0]);
-    }
+    if (!fpout)
+	bu_exit(1, "Cannot open BRL-CAD file (%s) for writing!\n", output_file);
 
     line = (char *)bu_malloc(MAX_LINE_SIZE, "line");
     next_line = (char *)bu_malloc(MAX_LINE_SIZE, "next_line");
@@ -1227,8 +1256,7 @@ main(int argc, char **argv)
     }
 
     if (start_off < 0) {
-	bu_log("Cannot find start of bulk data in NASTRAN file!\n");
-	print_usage(argv[0]);
+	bu_exit(1, "Cannot find start of bulk data in NASTRAN file!\n");
     }
 
     /* convert BULK data deck into something reasonable */
