@@ -69,3 +69,17 @@ cmakefiles(CMakeLists.txt test_context.c)
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
+
+if(TARGET gcv-gdal)
+  brlcad_find_package(GDAL REQUIRED)
+  brlcad_addexec(test_gcv_gdal_profiles gdal_profiles.cpp "libgcv;libwdb;librt;${GDAL_LIBRARY}" TEST)
+  if(TARGET test_gcv_gdal_profiles)
+    target_include_directories(test_gcv_gdal_profiles SYSTEM PRIVATE ${GDAL_INCLUDE_DIR})
+    add_dependencies(test_gcv_gdal_profiles gcv-gdal)
+  endif()
+  brlcad_add_test(NAME gcv_gdal_profiles COMMAND test_gcv_gdal_profiles)
+  brlcad_add_test(NAME gcv_gdal_heightfield_profiles COMMAND test_gcv_gdal_profiles heightfields)
+  brlcad_add_test(NAME gcv_gdal_sidecar_profiles COMMAND test_gcv_gdal_profiles sidecars)
+  brlcad_add_test(NAME gcv_gdal_science_profiles COMMAND test_gcv_gdal_profiles science)
+  brlcad_add_test(NAME gcv_gdal_product_profiles COMMAND test_gcv_gdal_profiles products)
+endif()
