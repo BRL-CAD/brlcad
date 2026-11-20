@@ -10,9 +10,8 @@ fblabel - display a text string on a framebuffer
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*fblabel* [*-a*] [*-c*] [*-d*] [*-F* _device_] [*-f* _name_] [*-C* _r/g/b_] [*-r* _value_]
-        [*-g* _value_] [*-b* _value_] [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_] _x-position_
-        _y-position_ _text_
+*fblabel* [*-a*] [*-c*] [*-d*] [*-F* _device_] [*-f* _name_] [*-C* _r/g/b_] [*-s* _pixels_]
+        [*-w* _pixels_] [*-n* _pixels_] _x-position_ _y-position_ _text_
 // END GENERATED BU_ARG SYNOPSIS
 
 

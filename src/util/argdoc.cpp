@@ -124,6 +124,14 @@ write_file(const fs::path &path, const std::string &contents)
 	throw std::runtime_error("failed writing " + path.string());
 }
 
+static void
+write_file_if_changed(const fs::path &path, const std::string &original,
+	const std::string &contents)
+{
+    if (contents != original)
+	write_file(path, contents);
+}
+
 static std::string
 run_schema_command(const std::vector<std::string> &command)
 {
@@ -652,6 +660,13 @@ canonical_option(const json &schema, const std::string &name)
     return nullptr;
 }
 
+static bool
+option_has_default_visibility(const json &option)
+{
+    return option.value("visibility", std::string("default")) == "default" &&
+	!option.value("hidden", false);
+}
+
 static std::string
 synopsis_option(const json &option)
 {
@@ -715,14 +730,16 @@ option_choice(const json &schema, const std::string &canonical)
 
 static std::string
 option_choice_term(const json &schema, const json &constraint,
-	const std::set<std::string> &excluded)
+	const std::set<std::string> &excluded, bool include_advanced)
 {
     const std::set<std::string> terminal = terminal_options(schema);
 	std::vector<std::string> choices;
 	for (const json &name : constraint.at("options")) {
 	    const std::string canonical = name.get<std::string>();
 	    const json *option = canonical_option(schema, canonical);
-	    if (option && option->value("visibility", std::string()) != "internal" &&
+	    if (option &&
+		(include_advanced || option_has_default_visibility(*option)) &&
+		option->value("visibility", std::string()) != "internal" &&
 		!option->value("hidden", false) &&
 		terminal.find(canonical) == terminal.end() &&
 		excluded.find(canonical) == excluded.end())
@@ -749,8 +766,7 @@ synopsis_options(const json &schema, const std::set<std::string> &excluded)
     std::vector<std::string> result;
     for (const json &option : schema.at("options")) {
 	const std::string canonical = option.value("canonical", std::string());
-	if (option.value("visibility", std::string()) == "internal" ||
-	    option.value("hidden", false) ||
+	if (!option_has_default_visibility(option) ||
 	    !option.value("alias_of", std::string()).empty() ||
 	    terminal.find(canonical) != terminal.end() ||
 	    excluded.find(canonical) != excluded.end())
@@ -758,7 +774,8 @@ synopsis_options(const json &schema, const std::set<std::string> &excluded)
 	const json *choice = option_choice(schema, canonical);
 	if (choice) {
 	    if (rendered_choices.insert(choice).second) {
-		const std::string term = option_choice_term(schema, *choice, excluded);
+		const std::string term = option_choice_term(schema, *choice,
+		    excluded, false);
 		if (!term.empty())
 		    result.push_back(term);
 	    }
@@ -783,7 +800,7 @@ required_option_choices(const json &schema)
 	if (!is_option_choice(constraint) ||
 	    constraint.value("min", (size_t)0) != 1)
 	    continue;
-	const std::string term = option_choice_term(schema, constraint, {});
+	const std::string term = option_choice_term(schema, constraint, {}, true);
 	if (!term.empty())
 	    result.push_back(term);
     }
@@ -1389,7 +1406,8 @@ process_page(const fs::path &path, const std::vector<schema_view> &views,
     if (operation == settings::mode::update_directory) {
 	const std::string synopsis = render_synopsis(views);
 	if (!synopsis.empty()) {
-	    std::string page = slurp(path);
+	    const std::string original_page = slurp(path);
+	    std::string page = original_page;
 	    page = replace_synopsis(page, synopsis);
 	    if (page.find(options_begin) != std::string::npos)
 		page = replace_region(page, options_begin, options_end,
@@ -1397,7 +1415,7 @@ process_page(const fs::path &path, const std::vector<schema_view> &views,
 	    if (grammar && page.find(subcommands_begin) != std::string::npos)
 		page = replace_region(page, subcommands_begin, subcommands_end,
 		    render_subcommands(*grammar));
-	    write_file(path, page);
+	    write_file_if_changed(path, original_page, page);
 	}
     }
     return check_page(path, views, grammar);
@@ -1620,7 +1638,8 @@ main(int argc, char **argv)
 	    return 0;
 	}
 
-	std::string page = slurp(config.man_page);
+	const std::string original_page = slurp(config.man_page);
+	std::string page = original_page;
 	if (config.operation == settings::mode::update) {
 	    page = replace_synopsis(page, synopsis);
 	    if (page.find(options_begin) != std::string::npos)
@@ -1628,7 +1647,7 @@ main(int argc, char **argv)
 	    if (page.find(subcommands_begin) != std::string::npos)
 		page = replace_region(page, subcommands_begin, subcommands_end,
 		    render_subcommands(*grammar));
-	    write_file(config.man_page, page);
+	    write_file_if_changed(config.man_page, original_page, page);
 	    return 0;
 	}
 

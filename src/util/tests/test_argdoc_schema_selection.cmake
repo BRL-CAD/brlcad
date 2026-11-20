@@ -415,11 +415,14 @@ string(FIND "${presented_render}" "*-z*, *--zeta*::" zeta_term)
 string(FIND "${presented_render}" "*-b*, *--basic*::" basic_term)
 string(FIND "${presented_render}" "=== Advanced options" advanced_heading)
 string(FIND "${presented_render}" "*-a*, *--advanced*::" advanced_term)
+string(FIND "${presented_render}" "*presented* [*-z*] [*-b*]" presented_synopsis)
+string(FIND "${presented_render}" "*presented* [*-z*] [*-b*] [*-a*]" advanced_synopsis)
 string(FIND "${presented_render}" "==== Expert" parameter_heading)
 string(FIND "${presented_render}" "*quality*=_level_::" parameter_term)
 string(FIND "${presented_render}" "--internal" internal_term)
 if(primary_heading EQUAL -1 OR zeta_term EQUAL -1 OR basic_term EQUAL -1 OR
    advanced_heading EQUAL -1 OR advanced_term EQUAL -1 OR
+   presented_synopsis EQUAL -1 OR NOT advanced_synopsis EQUAL -1 OR
    parameter_heading EQUAL -1 OR parameter_term EQUAL -1 OR
    NOT primary_heading LESS zeta_term OR NOT zeta_term LESS basic_term OR
    NOT basic_term LESS advanced_heading OR NOT advanced_heading LESS advanced_term OR
