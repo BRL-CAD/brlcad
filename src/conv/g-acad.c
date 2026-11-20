@@ -39,6 +39,7 @@
 
 /* interface headers */
 #include "bu/app.h"
+#include "bu/file.h"
 #include "bu/parallel.h"
 #include "bu/getopt.h"
 #include "vmath.h"
@@ -48,6 +49,8 @@
 
 
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
+#define ACAD_COPY_BUFFER_SIZE 4096
+#define ACAD_REGION_COUNT_WIDTH 14
 
 
 static int NMG_debug;	/* saved arg of -X, for longjmp handling */
@@ -485,6 +488,9 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 int
 main(int argc, char **argv)
 {
+    FILE *final_output = NULL;
+    b_off_t region_count_offset;
+    char copy_buffer[ACAD_COPY_BUFFER_SIZE];
     int c;
     double percent;
     int i;
@@ -565,8 +571,10 @@ main(int argc, char **argv)
 	usage(argv[0]);
 
     if (!output_file) {
-	fp = stdout;
-	(void)setmode(fileno(fp), O_BINARY);
+	final_output = stdout;
+	(void)setmode(fileno(final_output), O_BINARY);
+	if ((fp = bu_temp_file(NULL, 0)) == NULL)
+	    bu_exit(1, "Cannot create temporary ACAD output file\n");
     } else {
 	/* Open output file */
 	if ((fp=fopen(output_file, "wb+")) == NULL) {
@@ -631,7 +639,10 @@ main(int argc, char **argv)
 
 /* Generate space for number of facet entities, will write over later */
 
-    fprintf(fp, "               ");
+    region_count_offset = bu_ftell(fp);
+    if (region_count_offset < 0)
+	bu_exit(1, "Cannot locate ACAD region-count field\n");
+    fprintf(fp, "%*s\n", ACAD_REGION_COUNT_WIDTH, "");
 
     /* Walk indicated tree(s).  Each region will be output separately */
     (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
@@ -660,8 +671,21 @@ main(int argc, char **argv)
     /* Write out number of facet entities to .facet file */
 
     rewind(fp);
-    bu_fseek(fp, 46, 0); /* Re-position pointer to 2nd line */
-    fprintf(fp, "%zu\n", regions_written); /* Write out number of regions */
+    if (bu_fseek(fp, region_count_offset, SEEK_SET) != 0)
+	bu_exit(1, "Cannot update ACAD region count\n");
+    fprintf(fp, "%*zu\n", ACAD_REGION_COUNT_WIDTH, regions_written);
+
+    if (final_output) {
+	size_t read_size;
+
+	rewind(fp);
+	while ((read_size = fread(copy_buffer, 1, sizeof(copy_buffer), fp)) > 0) {
+	    if (fwrite(copy_buffer, 1, read_size, final_output) != read_size)
+		bu_exit(1, "Error writing ACAD output\n");
+	}
+	if (ferror(fp))
+	    bu_exit(1, "Error reading temporary ACAD output\n");
+    }
     fclose(fp);
 
     /* Release dynamic storage */
