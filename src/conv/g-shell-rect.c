@@ -31,6 +31,8 @@
 #include "common.h"
 
 /* system headers */
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -40,6 +42,9 @@
 #include "bu/app.h"
 #include "bu/debug.h"
 #include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/opt.h"
+#include "bu/str.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -221,9 +226,87 @@ static int bot=0;
 #define INSIDE 3
 
 static void
-print_usage(const char *progname)
+print_usage(const char *progname, int status)
 {
-    bu_exit(1, "Usage: %s %s", progname, usage);
+    bu_exit(status, "Usage: %s %s", progname, usage);
+}
+
+
+static int
+parse_nmg_debug(const char *arg, unsigned int *value)
+{
+    unsigned long parsed;
+    char *end = NULL;
+
+    if (!arg || !arg[0] || !value)
+	return 0;
+
+    errno = 0;
+    parsed = strtoul(arg, &end, 16);
+    if (errno != 0 || end == arg || *end != '\0' || parsed > UINT_MAX)
+	return 0;
+
+    *value = (unsigned int)parsed;
+    return 1;
+}
+
+
+static struct refine_rpp *
+parse_refine_rpp(const char *arg)
+{
+    double values[7];
+    char *copy;
+    char *token;
+    size_t i;
+    struct refine_rpp *rpp;
+
+    if (!arg)
+	return NULL;
+
+    copy = bu_strdup(arg);
+    token = strtok(copy, token_seps);
+    for (i = 0; i < 7; i++) {
+	if (!token) {
+	    bu_log("%s: refinement box requires exactly seven values\n",
+		    bu_getprogname());
+	    bu_free(copy, "refinement box option");
+	    return NULL;
+	}
+	if (!bu_opt_scan_double(token, &values[i], "refinement box value")) {
+	    bu_free(copy, "refinement box option");
+	    return NULL;
+	}
+	token = strtok(NULL, token_seps);
+    }
+    if (token) {
+	bu_log("%s: refinement box requires exactly seven values\n",
+		bu_getprogname());
+	bu_free(copy, "refinement box option");
+	return NULL;
+    }
+    bu_free(copy, "refinement box option");
+
+    if (values[0] <= 0.0) {
+	bu_log("%s: refinement box tolerance must be positive\n",
+		bu_getprogname());
+	return NULL;
+    }
+    for (i = 0; i < 3; i++) {
+	if (values[i + 1] > values[i + 4]) {
+	    bu_log("%s: refinement box minimum exceeds its maximum\n",
+		    bu_getprogname());
+	    return NULL;
+	}
+    }
+
+    rpp = (struct refine_rpp *)bu_malloc(sizeof(struct refine_rpp),
+	"add refine rpp");
+    rpp->tolerance = (fastf_t)values[0];
+    for (i = 0; i < 3; i++) {
+	rpp->min[i] = (fastf_t)values[i + 1];
+	rpp->max[i] = (fastf_t)values[i + 4];
+    }
+    return rpp;
 }
 
 
@@ -1663,6 +1746,8 @@ main(int argc, char **argv)
     while ((c=bu_getopt(argc, argv, "bi:a:nR:g:o:d:p:X:h?")) != -1) {
 	switch (c) {
 	    case 'i':	/* set initial ray direction */
+		if (strlen(bu_optarg) != 1)
+		    bu_exit(1, "Illegal ray direction (%s), must be X, Y, or Z!\n", bu_optarg);
 		switch (*bu_optarg) {
 		    case 'x':
 		    case 'X':
@@ -1683,54 +1768,10 @@ main(int argc, char **argv)
 		break;
 	    case 'a': {
 		/* add an rpp for refining */
-		char *ptr;
-		struct refine_rpp *rpp;
-		int bad_opt = 0;
+		struct refine_rpp *rpp = parse_refine_rpp(bu_optarg);
 
-		rpp = (struct refine_rpp *)bu_malloc(sizeof(struct refine_rpp), "add refine rpp");
-		ptr = strtok(bu_optarg, token_seps);
-		if (!ptr) {
-		    bu_log("Bad -a option '%s'\n", bu_optarg);
-		    bu_free((char *)rpp, "rpp");
-		    break;
-		}
-
-		rpp->tolerance = atof(ptr);
-		if (rpp->tolerance <= 0.0) {
-		    bu_log("Illegal tolerance in -a option (%s)\n", ptr);
-		    bu_free((char *)rpp, "rpp");
-		    break;
-		}
-
-		/* get minimum */
-		for (i = 0; i < 3; i++) {
-		    ptr = strtok((char *)NULL, token_seps);
-		    if (!ptr) {
-			bu_log("Unexpected end of option args for -a\n");
-			bad_opt = 1;
-			break;
-		    }
-		    rpp->min[i] = atof(ptr);
-		}
-		if (bad_opt) {
-		    bu_free((char *)rpp, "rpp");
-		    break;
-		}
-
-		/* get maximum */
-		for (i = 0; i < 3; i++) {
-		    ptr = strtok((char *)NULL, token_seps);
-		    if (!ptr) {
-			bu_log("Unexpected end of option args for -a\n");
-			bad_opt = 1;
-			break;
-		    }
-		    rpp->max[i] = atof(ptr);
-		}
-		if (bad_opt) {
-		    bu_free((char *) rpp, "rpp");
-		    break;
-		}
+		if (!rpp)
+		    return 1;
 
 		BU_LIST_APPEND(&add_rpp_head, &rpp->h);
 	    }
@@ -1738,19 +1779,31 @@ main(int argc, char **argv)
 	    case 'n':	/* don't do extra raytracing to refine shape */
 		do_extra_rays = 0;
 		break;
-	    case 'R':	/* do edge breaking */
-		edge_tol = atof(bu_optarg);
+	    case 'R': {	/* do edge breaking */
+		double value;
+		if (!bu_opt_scan_double(bu_optarg, &value, "edge tolerance") ||
+		    value < 0.0)
+		    bu_exit(1, "Edge tolerance must be nonnegative\n");
+		edge_tol = (fastf_t)value;
 		break;
+	    }
 	    case 'p':	/* plot edge breaking */
 		plotfile = bu_optarg;
 		break;
 	    case 'd':	/* debug level */
-		debug = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &debug, 0, INT_MAX,
+			"debug level"))
+		    return 1;
 		break;
-	    case 'g':	/* cell size */
-		cell_size = atof(bu_optarg);
+	    case 'g': {	/* cell size */
+		double value;
+		if (!bu_opt_scan_double(bu_optarg, &value, "cell size") ||
+		    value <= 0.0)
+		    bu_exit(1, "Cell size must be positive\n");
+		cell_size = (fastf_t)value;
 		cell_size_sq = cell_size * cell_size;
 		break;
+	    }
 	    case 'o':	/* BRL-CAD output file */
 		output_file = bu_optarg;
 		break;
@@ -1758,16 +1811,24 @@ main(int argc, char **argv)
 		bot = 1;
 		break;
 	    case 'X':	/* nmg debug flags */
-		bu_sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		if (!parse_nmg_debug(bu_optarg, &nmg_debug))
+		    bu_exit(1, "Invalid hexadecimal NMG debug flags (%s)\n", bu_optarg);
 		bu_log("%s: setting nmg_debug to x%x\n", argv[0], nmg_debug);
 		break;
+	    case 'h':
+		print_usage(argv[0], 0);
+		break;
+	    case '?':
+		print_usage(argv[0], bu_optind > 0 &&
+		    BU_STR_EQUAL(argv[bu_optind - 1], "-?") ? 0 : 1);
+		break;
 	    default:
-		print_usage(argv[0]);
+		print_usage(argv[0], 1);
 	}
     }
 
     if (bu_optind+1 >= argc)
-	print_usage(argv[0]);
+	print_usage(argv[0], 1);
 
     if (!output_file)
 	bu_exit(1, "ERROR: Output file must be specified!\n");
