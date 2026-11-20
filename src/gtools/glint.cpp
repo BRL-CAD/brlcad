@@ -151,6 +151,7 @@ struct CompareByVol {
     }
 };
 std::set<g_lint_ovlp*, CompareByVol> ovlps_by_vol;
+static bool sort_overlaps = false;
 
 int log_2(unsigned long x)
 {
@@ -665,7 +666,7 @@ static int rpt_ovlp(struct application *ap, struct partition *pp, struct region 
 	if (do_plot3) {
 	    pl_color(cp->glc_fp, V3ARGS(&(cp->glc_color[log_2(G_LINT_OVLP)])));
 	    pdv_3line(cp->glc_fp, pp->pt_inhit->hit_point, pp->pt_outhit->hit_point);
-	} else if (!ovlp_log.empty()) {
+	} else if (sort_overlaps) {
 	    update_ovlp_log(r1, r2, mag_del, ap->a_ray.r_pt, pp->pt_inhit->hit_point, pp->pt_outhit->hit_point);
 	} else {
 	    print_segment(r1->reg_name, r2->reg_name, mag_del,
@@ -701,6 +702,8 @@ main(int argc, char **argv)
     int ch;			/* Character from getopt */
     int complement_bits;	/* Used by -r option */
     int i;			/* Dummy loop index */
+    int include_origin = 0;
+    int plot_output = 0;
     int use_air = 0;		/* Does air count? */
     unsigned long option_bits;
     mat_t model2view;		/* Model-to-view matrix */
@@ -767,11 +770,10 @@ main(int argc, char **argv)
 		}
 		break;
 	    case 'o':
-		control.glc_how_to_report = G_LINT_ASCII_WITH_ORIGIN;
+		include_origin = 1;
 		break;
 	    case 'p':
-		control.glc_how_to_report = G_LINT_PLOT3;
-		ovlp_log.clear();
+		plot_output = 1;
 		break;
 	    case 'r':
 		if (*bu_optarg == '-') {
@@ -793,8 +795,7 @@ main(int argc, char **argv)
 		use_air = ((control.glc_what_to_report & G_LINT_A_ANY) != 0);
 		break;
 	    case 's':
-		ovlp_log.clear();
-		control.glc_how_to_report = (control.glc_how_to_report == G_LINT_PLOT3) ? G_LINT_ASCII : control.glc_how_to_report;
+		sort_overlaps = true;
 		break;
 	    case 't':
 		if (!bu_opt_scan_double_range(bu_optarg, &control.glc_tol,
@@ -820,6 +821,14 @@ main(int argc, char **argv)
 		bu_exit(1, NULL);
 	}
     }
+
+    if (sort_overlaps)
+	control.glc_how_to_report = include_origin ?
+	    G_LINT_ASCII_WITH_ORIGIN : G_LINT_ASCII;
+    else if (plot_output)
+	control.glc_how_to_report = G_LINT_PLOT3;
+    else if (include_origin)
+	control.glc_how_to_report = G_LINT_ASCII_WITH_ORIGIN;
 
     if (argc - bu_optind < 2) {
 	printusage();
