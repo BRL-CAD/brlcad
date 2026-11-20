@@ -374,17 +374,22 @@ cmd_anim(int ac, const char **av)
 	}
 
 	size_t num = icv_anim_num_frames(anim);
+	int status = 0;
 	for (size_t i = 0; i < num; ++i) {
 	    icv_image_t *img = icv_anim_get_frame(anim, i);
 	    if (img) {
 		char out_name[1024];
 		snprintf(out_name, sizeof(out_name), "%s%03zu_ctrl.png", out_prefix, i + 1);
-		icv_write(img, out_name, BU_MIME_IMAGE_PNG);
+		status = icv_write(img, out_name, BU_MIME_IMAGE_PNG);
 		icv_destroy(img);
+		if (status) {
+		    bu_log("Failed to write frame '%s'\n", out_name);
+		    break;
+		}
 	    }
 	}
 	icv_anim_destroy(anim);
-	return 0;
+	return status ? 1 : 0;
 
     } else if (BU_STR_EQUAL(action, "replace") || BU_STR_EQUAL(action, "insert") || BU_STR_EQUAL(action, "remove")) {
 	if (BU_STR_EQUAL(action, "remove")) {
