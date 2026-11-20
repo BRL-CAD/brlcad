@@ -5,7 +5,9 @@ brlcad_find_package(assimp)
 
 if(BRLCAD_ENABLE_ASSETIMPORT)
   if(TARGET assimp::assimp AND TARGET pugixml::pugixml)
+    find_package_zlib(REQUIRED)
     gcv_plugin_library(gcv-assetimport SHARED ${ASSETIMPORT_SRCS})
+    target_include_directories(gcv-assetimport PRIVATE "${BRLCAD_SOURCE_DIR}/src/libbu")
     target_link_libraries(
       gcv-assetimport
       libgcv
@@ -15,6 +17,7 @@ if(BRLCAD_ENABLE_ASSETIMPORT)
       OPENNURBS::OPENNURBS
       assimp::assimp
       pugixml::pugixml
+      ZLIB::ZLIB
     )
     set_property(TARGET gcv-assetimport APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
     validate_style(gcv-assetimport "${ASSETIMPORT_SRCS}")
@@ -26,6 +29,12 @@ endif(BRLCAD_ENABLE_ASSETIMPORT)
 
 cmakefiles(
   ${ASSETIMPORT_SRCS}
+  format_map.h
+  blender_mime.h
+  gltf_draco.h
+  xgl_mime.h
+  x_mime.h
+  zip_mime.h
   CMakeLists.txt
 )
 

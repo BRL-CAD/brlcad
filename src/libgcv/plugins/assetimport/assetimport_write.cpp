@@ -27,6 +27,7 @@
 #include "common.h"
 
 #include <exception>
+#include <locale>
 #include <map>
 #include <sstream>
 #include <string>
@@ -35,6 +36,7 @@
 
 #include "gcv.h"
 #include "raytrace.h"
+#include "format_map.h"
 
 /* assimp headers */
 #include <assimp/scene.h>
@@ -162,6 +164,76 @@ validate_assimp_scene(const aiScene *scene)
     return true;
 }
 
+static bool
+assetimport_ascii_name(const aiString &name)
+{
+    for (size_t i = 0; i < name.length; ++i)
+	if (static_cast<unsigned char>(name.data[i]) >= 0x80) return false;
+    return true;
+}
+
+static bool
+assetimport_ascii_node(const aiNode *node)
+{
+    if (!assetimport_ascii_name(node->mName)) return false;
+    for (unsigned int i = 0; i < node->mNumChildren; ++i)
+	if (!assetimport_ascii_node(node->mChildren[i])) return false;
+    return true;
+}
+
+static bool
+assetimport_ascii_meshes(const aiScene *scene)
+{
+    for (unsigned int i = 0; i < scene->mNumMeshes; ++i)
+	if (!assetimport_ascii_name(scene->mMeshes[i]->mName)) return false;
+    return true;
+}
+
+static bool
+assetimport_ascii_materials(const aiScene *scene)
+{
+    for (unsigned int i = 0; i < scene->mNumMaterials; ++i) {
+	aiString name;
+	if (scene->mMaterials[i]->Get(AI_MATKEY_NAME, name) == AI_SUCCESS && !assetimport_ascii_name(name)) return false;
+    }
+    return true;
+}
+
+/* OBJ emits mesh names, but omits the node hierarchy. The no-material
+ * backend also omits material names and the companion filename. The SDK
+ * imbues its OBJ streams with the C locale independently of the process. */
+static bool
+assetimport_obj_ascii(const aiScene *scene, bool materials, const std::string &output_path)
+{
+    if (!assetimport_ascii_meshes(scene)) return false;
+    if (!materials) return true;
+    if (!assetimport_ascii_materials(scene)) return false;
+    /* Match the SDK's material filename construction, including removal
+     * of its last extension before stripping directory components. */
+    std::string library(output_path);
+    const auto extension = library.find_last_of('.');
+    if (extension != std::string::npos) library.resize(extension);
+    const auto separator = library.find_last_of("/\\");
+    const size_t begin = separator == std::string::npos ? 0 : separator + 1;
+    for (size_t i = begin; i < library.size(); ++i)
+	if (static_cast<unsigned char>(library[i]) >= 0x80) return false;
+    return true;
+}
+
+/* These are the text fields the adapter supplies to FBX. Check the built
+ * scene so unselected objects and names omitted by conversion do not
+ * constrain a request. SDK numeric properties use the formatting locale. */
+static bool
+assetimport_fbx_ascii(const aiScene *scene)
+{
+    const std::locale locale;
+    const auto &punctuation = std::use_facet<std::numpunct<char>>(locale);
+    if (static_cast<unsigned char>(punctuation.decimal_point()) >= 0x80 ||
+	(!punctuation.grouping().empty() && static_cast<unsigned char>(punctuation.thousands_sep()) >= 0x80)) return false;
+    return assetimport_ascii_node(scene->mRootNode) && assetimport_ascii_meshes(scene) &&
+	assetimport_ascii_materials(scene);
+}
+
 static void
 nmg_to_assetimport(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state* tsp, void *client_data)
 {
@@ -174,7 +246,7 @@ nmg_to_assetimport(struct nmgregion *r, const struct db_full_path *pathp, struct
     std::vector<aiFace> faces = {};
     aiMesh* curr_mesh = new aiMesh();
     aiNode* curr_node = new aiNode();
-    size_t numverts = 0;		                /* Number of vertices to output */
+    size_t numverts = 0; /* Number of vertices to output */
     size_t i;
 
     NMG_CK_REGION(r);
@@ -439,7 +511,7 @@ assetimport_write_create_opts(struct bu_opt_desc **options_desc, void **dest_opt
     options_data->format = NULL;
     options_data->model_workaround = NULL;
 
-    BU_OPT((*options_desc)[0], NULL, "format", "string", bu_opt_str, &options_data->format, "specify the output file format");
+    BU_OPT((*options_desc)[0], NULL, "format", "string", bu_opt_str, &options_data->format, "Select an SDK exporter ID or file extension; must agree with the requested type and traits");
     BU_OPT((*options_desc)[1], NULL, "model", "string", bu_opt_str, &options_data->model_workaround, "specify a single object to convert");
     BU_OPT_NULL((*options_desc)[2]);
 }
@@ -466,29 +538,39 @@ assetimport_write(struct gcv_context *context, const struct gcv_opts *gcv_option
     state.gcv_options = gcv_options;
     state.assetimport_write_options = (assetimport_write_options_t*)options_data;
 
-    /* check and validate the specified output file type against ai
-     * checks using file extension if no --format is supplied
-     * this is likely all a 'can_write' function would need
-     */
-    const char* outext = strip_at_char((char*)dest_path, '.');
-    if (state.assetimport_write_options->format)     /* intentional setting format trumps file extension */
-	outext = state.assetimport_write_options->format;
-    const aiExportFormatDesc* fmt_desc = NULL;
-    bool found_fmt = false;
-    if (!outext) {
-	bu_log("ERROR: Please provide a file with an extension, or specify format with --format\n");
-	return 0;
-    }
+    const char *requested = gcv_target_mime(context);
+    const char *format_option = state.assetimport_write_options->format;
+    /* An explicit backend may choose another compatible variant. Defaults
+     * from the first matching clause are not additional caller assertions. */
+    const bu_mime_traits *requested_traits = format_option ? gcv_target_request_traits(context) : gcv_target_traits(context);
     Assimp::Exporter exporter;
-    for (size_t i = 0, end = exporter.GetExportFormatCount(); i < end; ++i) {
-	fmt_desc = exporter.GetExportFormatDescription(i);
-	if (!bu_strcmp(outext, fmt_desc->fileExtension)) {
-	    found_fmt = true;
-	    break;
+    const aiExportFormatDesc *fmt_desc = NULL;
+    bool explicit_id = false;
+    for (size_t i = 0; format_option && i < exporter.GetExportFormatCount(); ++i)
+	if (BU_STR_EQUAL(format_option, exporter.GetExportFormatDescription(i)->id))
+	    explicit_id = true;
+    for (size_t i = 0; i < exporter.GetExportFormatCount(); ++i) {
+	const aiExportFormatDesc *candidate = exporter.GetExportFormatDescription(i);
+	const assetimport_export_format *identity = assetimport_export_identity(candidate->id);
+	if (!identity || (requested && !BU_STR_EQUAL(requested, identity->mime)))
+	    continue;
+	if (format_option && (explicit_id ? !BU_STR_EQUAL(format_option, candidate->id) :
+	    !BU_STR_EQUIV(format_option, candidate->fileExtension)))
+	    continue;
+	bool compatible = false;
+	for (const auto &values : assetimport_export_profiles(*identity)) {
+	    std::vector<bu_mime_trait> traits;
+	    for (const auto &value : values)
+		traits.push_back(BU_MIME_TRAIT_STRING(value.first.c_str(), value.second.c_str()));
+	    bu_mime_capability capability = BU_MIME_CAPABILITY(identity->mime, traits.data(), traits.size(), 0);
+	    if (bu_mime_capability_match(&capability, requested_traits, BU_MIME_OUTPUT)) {compatible = true; break;}
 	}
+	if (!compatible) continue;
+	fmt_desc = candidate;
+	break;
     }
-    if (!found_fmt) {
-	bu_log("ERROR: Non-supported file format (%s)\n", outext);
+    if (!fmt_desc) {
+	bu_log("Asset Import has no writer for the requested output format\n");
 	return 0;
     }
 
@@ -522,21 +604,21 @@ assetimport_write(struct gcv_context *context, const struct gcv_opts *gcv_option
     /* Walk indicated tree(s).  Each region will be output separately */
     if (state.assetimport_write_options->model_workaround) {
 	const char* single[1] = { state.assetimport_write_options->model_workaround };
-	(void) db_walk_tree(context->dbip, 1, single,
-		1,
-		&tree_state,
-		0,			/* take all regions */
-		(gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES)?gcv_region_end_mc:gcv_region_end,
-		(gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES)?NULL:rt_booltree_leaf_tess,
-		(void *)&gcvwriter);
+	(void)db_walk_tree(context->dbip, 1, single,
+			   1,
+			   &tree_state,
+			   0, /* take all regions */
+			   (gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES) ? gcv_region_end_mc : gcv_region_end,
+			   (gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES) ? NULL : rt_booltree_leaf_tess,
+			   (void *)&gcvwriter);
     } else {
-	(void) db_walk_tree(context->dbip, gcv_options->num_objects, (const char **)gcv_options->object_names,
-		1,
-		&tree_state,
-		0,			/* take all regions */
-		(gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES)?gcv_region_end_mc:gcv_region_end,
-		(gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES)?NULL:rt_booltree_leaf_tess,
-		(void *)&gcvwriter);
+	(void)db_walk_tree(context->dbip, gcv_options->num_objects, (const char **)gcv_options->object_names,
+			   1,
+			   &tree_state,
+			   0, /* take all regions */
+			   (gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES) ? gcv_region_end_mc : gcv_region_end,
+			   (gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES) ? NULL : rt_booltree_leaf_tess,
+			   (void *)&gcvwriter);
     }
 
     /* update the scene */
@@ -567,7 +649,18 @@ assetimport_write(struct gcv_context *context, const struct gcv_opts *gcv_option
     if (BU_STR_EQUAL(fmt_desc->id, "pbrt"))
 	state.scene->mMetaData = new aiMetadata();
 
+    const bu_mime_traits *asserted = gcv_target_request_traits(context);
+    const char *encoding = asserted ? bu_mime_traits_get(asserted, "encoding") : NULL;
     if (!validate_assimp_scene(state.scene)) {
+	ret = 0;
+    } else if (BU_STR_EQUAL(fmt_desc->id, "fbxa") && encoding && BU_STR_EQUAL(encoding, "ascii") &&
+	!assetimport_fbx_ascii(state.scene)) {
+	bu_log("SDK FBX text output cannot satisfy encoding=ascii for the selected names or locale\n");
+	ret = 0;
+    } else if ((BU_STR_EQUAL(fmt_desc->id, "obj") || BU_STR_EQUAL(fmt_desc->id, "objnomtl")) &&
+	encoding && BU_STR_EQUAL(encoding, "ascii") &&
+	!assetimport_obj_ascii(state.scene, BU_STR_EQUAL(fmt_desc->id, "obj"), output_path)) {
+	bu_log("SDK OBJ output cannot satisfy encoding=ascii for the emitted names or material filename\n");
 	ret = 0;
     } else {
 	/* export. The fourth argument is an Assimp postprocess flag mask, not scene->mFlags. */

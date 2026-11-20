@@ -27,15 +27,42 @@
 #include "common.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
+#include <cstdio>
 #include <cstring>
+#include <fstream>
+#include <set>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
 #include "gcv/api.h"
+#include "bio.h"
+#include "../mime_catalog.h"
+#include "../mime_probe.h"
+#include "format_map.h"
+#include "mime_skeletal.h"
+#include "mime_nff.h"
+#include "mime_raw.h"
+#include "mime_scene_text.h"
+#include "mime_assbin.h"
+#include "mime_ply.h"
+#include "mime_stl.h"
+#include "mime_fbx.h"
+#include "mime_opengex.h"
+#include "mime_obj.h"
+#include "mime_off.h"
+#include "mime_dxf.h"
+#include "mime_xml.h"
+#include "mime_gltf.h"
+#include "mime_p21.h"
+#include "mime_unreal.h"
+#include "xgl_mime.h"
 #include "wdb.h"
+#include <assimp/BaseImporter.h>
 #include "bg/trimesh.h"
 #include "bu/color.h"
 #include "bu/opt.h"
@@ -45,16 +72,22 @@
 
 /* assimp headers */
 #include <assimp/cimport.h>
+#include <assimp/config.h>
+#include <assimp/cexport.h>
+#include <assimp/Importer.hpp>
+#include <assimp/importerdesc.h>
 #include <assimp/scene.h>
+#include <assimp/metadata.h>
+#include <assimp/commonMetaData.h>
 #include <assimp/postprocess.h>
 
 /* pugixml headers */
 #include <pugixml.hpp>
 
 typedef struct shader_properties {
-    char *name;		                            /* shader name, or NULL */
-    char *args;		                            /* shader args, or NULL */
-    unsigned char* rgb; 			    /* NULL => no color */
+    char *name;		/* shader name, or NULL */
+    char *args;		/* shader args, or NULL */
+    unsigned char *rgb; /* NULL => no color */
     shader_properties() {
 	name = NULL;
 	args = NULL;
@@ -72,15 +105,15 @@ typedef struct assetimport_read_options {
     int const_id;                                   /* Constant ident number (assigned to all regions if non-negative) */
     int mat_code;                                   /* default material code */
     int verbose;                                    /* verbose flag */
-    char* format;                                   /* output file format */
+    char* format;                                   /* legacy input type assertion */
 } assetimport_read_options_t;
 
 typedef struct assetimport_read_state {
     const struct gcv_opts* gcv_options;             /* global options */
     assetimport_read_options_t* assetimport_read_options;     /* internal options */
 
-    std::string input_file;	                    /* name of the input file */
-    struct rt_wdb* fd_out;	                    /* Resulting BRL-CAD file */
+    std::string input_file;			    /* name of the input file */
+    struct rt_wdb *fd_out;			    /* Resulting BRL-CAD file */
     struct wmember all;                             /* scene root */
 
     const aiScene* scene;                           /* assetimport generated scene */
@@ -190,7 +223,7 @@ static shader_properties_t*
 generate_shader(assetimport_read_state_t* pstate, unsigned int mesh_idx)
 {
     aiColor3D* mesh_color = (aiColor3D*)pstate->scene->mMeshes[mesh_idx]->mColors[0];
-    aiColor3D diffuse_color(1);	/* diffuse color -> defaults to white */
+    aiColor3D diffuse_color(1); /* diffuse color -> defaults to white */
     if (!pstate->scene->HasMaterials() && !mesh_color)
 	return NULL;
 
@@ -210,14 +243,14 @@ generate_shader(assetimport_read_state_t* pstate, unsigned int mesh_idx)
 	    bu_strlcpy(ret->name, name.c_str(), name.size() + 1);
 
 	    /* brlcad 'plastic' shader defaults */
-	    float tr = 0.0;		/* transparency */
-	    float re = 0.0;		/* mirror reflectance */
-	    float sp = 0.7;		/* specular reflectivity */
-	    float di = 0.3;		/* diffuse reflectivity */
-	    float ri = 1.0;		/* refractive index */
-	    float ex = 0.0;		/* extinction */
-	    float sh = 10.0;	        /* shininess */
-	    float em = 0.0;		/* emission */
+	    float tr = 0.0;  /* transparency */
+	    float re = 0.0;  /* mirror reflectance */
+	    float sp = 0.7;  /* specular reflectivity */
+	    float di = 0.3;  /* diffuse reflectivity */
+	    float ri = 1.0;  /* refractive index */
+	    float ex = 0.0;  /* extinction */
+	    float sh = 10.0; /* shininess */
+	    float em = 0.0;  /* emission */
 
 	    /* gets value if key exists in material, otherwise leaves default */
             /* NOTE: assetimport seems to favor MATKEY_OPACITY over MATKEY_TRANSPARENCYFACTOR
@@ -1050,17 +1083,8 @@ x3d_convert_nurbs_node(assetimport_read_state_t *pstate, const pugi::xml_node &n
 }
 
 static int
-convert_x3d_nurbs(assetimport_read_state_t *pstate)
+convert_x3d_nurbs(assetimport_read_state_t *pstate, const pugi::xml_node &root)
 {
-    pugi::xml_document doc;
-    pugi::xml_parse_result result = doc.load_file(pstate->input_file.c_str());
-    if (!result)
-	return 0;
-
-    pugi::xml_node root = doc.document_element();
-    if (!root || !x3d_name_is(root, "X3D"))
-	return 0;
-
     unsigned int before = pstate->converted_nurbs;
     x3d_convert_nurbs_node(pstate, root);
     return (int)(pstate->converted_nurbs - before);
@@ -1227,34 +1251,730 @@ handle_node(assetimport_read_state_t* pstate, aiNode* curr, struct wmember &regi
 	delete shader_prop;
 }
 
-static int
-convert_input(assetimport_read_state_t* pstate)
+static const aiImporterDesc *
+assetimport_loaded_format(const Assimp::Importer &importer)
 {
-    BU_LIST_INIT(&pstate->all.l);
-    convert_x3d_nurbs(pstate);
+    /* The SDK records the loader it chose independently of the filename.
+     * SourceAsset_Format metadata can contain only the filename extension. */
+    int index = importer.GetPropertyInteger("importerIndex", -1);
+    return index < 0 ? NULL : importer.GetImporterInfo(static_cast<size_t>(index));
+}
 
+static bool
+assetimport_ogre_filename(const std::string &filename, const char *type)
+{
+    std::string suffix = BU_STR_EQUAL(type, "model/vnd.ogre.mesh") ? ".mesh" : ".mesh.xml";
+    return filename.size() >= suffix.size() && !bu_strcasecmp(filename.c_str() + filename.size() - suffix.size(), suffix.c_str());
+}
+
+static bool
+assetimport_ogre_xml_root(const mime_xml::profile &root)
+{
+    return root.valid && root.qname == "mesh" && (!root.namespace_known || root.uri.empty());
+}
+
+static int
+assetimport_ogre_xml_traits(mime_xml::profile root, bu_mime_traits &traits)
+{
+    root.version.clear(); // XML syntax is not an Ogre serializer revision.
+    return root.append_traits(traits) && bu_mime_traits_add(&traits, "compression", "none");
+}
+
+static bu_mime_probe_status
+assetimport_ogre_xml_prefix(const bu_mime_probe_input *input, bu_mime_traits *traits)
+{
+    std::string xml;
+    if (input->size) xml.assign(reinterpret_cast<const char *>(input->data), input->size);
+    std::istringstream stream(xml);
+    auto root = mime_xml::inspect(stream);
+    if (!root.valid)
+	return !input->complete && root.plausible ? BU_MIME_PROBE_INCOMPLETE : BU_MIME_PROBE_NO_MATCH;
+    if (!assetimport_ogre_xml_root(root)) return BU_MIME_PROBE_NO_MATCH;
+    pugi::xml_document document;
+    auto parsed = document.load_buffer(xml.data(), xml.size());
+    if (parsed.status == pugi::status_out_of_memory) return BU_MIME_PROBE_ERROR;
+    auto mesh = document.document_element();
+    bool recognized = mesh.child("submeshes").child("submesh") ||
+	mesh.child("sharedgeometry").child("vertexbuffer").child("vertex").child("position");
+    if (!recognized) return input->complete ? BU_MIME_PROBE_NO_MATCH : BU_MIME_PROBE_INCOMPLETE;
+    if (traits && !assetimport_ogre_xml_traits(root, *traits)) return BU_MIME_PROBE_ERROR;
+    return BU_MIME_PROBE_HEURISTIC;
+}
+
+static bu_mime_probe_status
+assetimport_probe(const bu_mime_probe_input *input, const char *type)
+{
+    if (BU_STR_EQUAL(type, mime_blender::type)) {
+	const auto result = assetimport_blender::prefix(*input);
+	if (result.error) return BU_MIME_PROBE_ERROR;
+	if (result.header.identified) return BU_MIME_PROBE_SIGNATURE;
+	return result.header.incomplete ? BU_MIME_PROBE_INCOMPLETE : BU_MIME_PROBE_NO_MATCH;
+    }
+    if (BU_STR_EQUAL(type, "model/vnd.ogre.mesh+xml")) return assetimport_ogre_xml_prefix(input, NULL);
+    return assetimport_xgl::probe(input, type);
+}
+
+static int
+assetimport_inspect(const bu_mime_probe_input *input, const char *type, bu_mime_traits *traits)
+{
+    if (BU_STR_EQUAL(type, mime_blender::type)) {
+	const auto result = assetimport_blender::prefix(*input);
+	return !result.error && (!result.header.identified || result.append(*traits));
+    }
+    if (BU_STR_EQUAL(type, "model/vnd.ogre.mesh+xml")) return assetimport_ogre_xml_prefix(input, traits) != BU_MIME_PROBE_ERROR;
+    return assetimport_xgl::inspect(input, type, traits);
+}
+
+static const char *
+assetimport_loaded_type(const aiImporterDesc *format, const std::string &filename, struct gcv_context *context)
+{
+    if (!format) return NULL;
+    if (BU_STR_EQUAL(format->mName, "Industry Foundation Classes (IFC) Importer")) return "application/p21";
+    if (BU_STR_EQUAL(format->mName, "Collada Importer")) {
+	/* The SDK tries ZIP before XML, except when .dae forces XML input. */
+	return !assetimport_zip::suffix(filename, ".dae") && assetimport_zip::end_record(filename) ?
+	    assetimport_zip::zae_type : "model/vnd.collada+xml";
+    }
+    if (BU_STR_EQUAL(format->mName, "Unreal Mesh Importer")) {
+	mime_unreal::files files(filename);
+	if (!files.valid()) return NULL;
+	return files.part == "script" ? mime_unreal::script_type : mime_unreal::mesh_type;
+    }
+    if (BU_STR_EQUAL(format->mName, "Quake III BSP Importer")) return "application/vnd.idsoftware.pk3+zip";
+    if (BU_STR_EQUAL(format->mName, "Ogre3D Mesh Importer"))
+	return assetimport_ogre_filename(filename, "model/vnd.ogre.mesh") ? "model/vnd.ogre.mesh" : "model/vnd.ogre.mesh+xml";
+    if (BU_STR_EQUAL(format->mName, "XGL Importer"))
+	return assetimport_xgl::compressed_filename(filename) ? assetimport_xgl::compressed_type : assetimport_xgl::xml_type;
+    if (BU_STR_EQUAL(format->mName, "Neutral File Format Importer")) {
+	/* The SDK selects its two NFF parsers from the initial token, before
+	 * skipping comments or whitespace. Verify the branch it actually used. */
+	std::ifstream stream(filename, std::ios::binary);
+	if (!stream.is_open()) return NULL;
+	const size_t token_size = 3, bom_size = 3;
+	char header[bom_size + token_size + 1];
+	stream.read(header, sizeof(header));
+	if (stream.bad()) return NULL;
+	std::string prefix(header, static_cast<size_t>(stream.gcount()));
+	if (prefix.compare(0, bom_size, "\xef\xbb\xbf") == 0) prefix.erase(0, bom_size);
+	bool sense8 = prefix.compare(0, token_size, "nff") == 0 && prefix.size() > token_size &&
+	    prefix.find_first_of(" \t\r\n\f", token_size) == token_size;
+	return sense8 ? "model/vnd.sense8.nff" : "model/prs.haines.nff";
+    }
+    bool gltf = assetimport_gltf_importer(format->mName);
+    bool lightwave = BU_STR_EQUAL(format->mName, "LightWave Scene Importer");
+    if (gltf || lightwave) {
+	FILE *file = fopen(filename.c_str(), "rb");
+	if (!file) return NULL;
+	char magic[4];
+	size_t size = fread(magic, 1, sizeof(magic), file);
+	int error = ferror(file);
+	if (fclose(file)) error = 1;
+	if (error || size != sizeof(magic)) return NULL;
+	if (lightwave)
+	    return !memcmp(magic, "LWSC", sizeof(magic)) ? "image/x-lws" :
+		!memcmp(magic, "LWMO", sizeof(magic)) ? "model/vnd.newtek.motion" : NULL;
+	auto identities = assetimport_import_identities(format->mName, !memcmp(magic, "glTF", sizeof(magic)) ? "glb" : "gltf");
+	return identities.size() == 1 ? identities.front() : NULL;
+    }
+    std::vector<const char *> identities;
+    for (const auto &extension : gcv_mime_catalog::split(format->mFileExtensions)) {
+	for (const char *candidate : assetimport_import_identities(format->mName, extension))
+	    if (std::none_of(identities.begin(), identities.end(), [candidate](const char *name) {return BU_STR_EQUAL(name, candidate);}))
+		identities.push_back(candidate);
+    }
+    if (identities.empty()) return NULL;
+    if (identities.size() == 1) return identities.front();
+    if (std::any_of(identities.begin(), identities.end(), mime_xml::is_type)) {
+	/* XML declarations and comments can precede the document element by
+	 * more than a fixed signature window. Reuse full root inspection. */
+	std::ifstream stream(filename, std::ios::binary);
+	if (!stream.is_open()) return NULL;
+	auto root = mime_xml::inspect(stream);
+	const char *type = stream.bad() ? NULL : root.type();
+	for (const char *candidate : identities)
+	    if (type && BU_STR_EQUAL(candidate, type)) return candidate;
+	return NULL;
+    }
+    /* One SDK importer/extension may accept unrelated file families. Match
+     * actual content against the audited identities rather than choosing
+     * the first binding or trusting the extension supplied by the caller. */
+    const size_t header_size = 3 * sizeof(uint32_t);
+    unsigned char header[header_size];
+    FILE *file = fopen(filename.c_str(), "rb");
+    if (!file) return NULL;
+    size_t size = fread(header, 1, sizeof(header), file);
+    int error = ferror(file);
+    if (fclose(file)) error = 1;
+    if (error) return NULL;
+    bu_mime_result *result = NULL;
+    bool inspected = bu_mime_detect(gcv_mime_registry(context), NULL, header, size, 0, &result) != BU_MIME_ERROR;
+    const char *identity = NULL;
+    for (const char *candidate : identities)
+	for (size_t i = 0; inspected && result && i < result->count; ++i)
+	    if (BU_STR_EQUAL(result->candidates[i].name, candidate)) {
+		if (identity && !BU_STR_EQUAL(identity, candidate)) {
+		    bu_mime_result_free(result);
+		    return NULL;
+		}
+		identity = candidate;
+	    }
+    bu_mime_result_free(result);
+    return identity;
+}
+
+static size_t
+assetimport_profile_header(const aiImporterDesc &format, const std::string &filename,
+    unsigned char *header, size_t capacity)
+{
+    FILE *file = fopen(filename.c_str(), "rb");
+    if (!file) return 0;
+    size_t size = 0;
+    if (BU_STR_EQUAL(format.mName, "LightWave/Modo Object Importer")) {
+	const size_t form_header_size = 3 * sizeof(uint32_t);
+	const size_t chunk_header_size = 2 * sizeof(uint32_t);
+	const size_t version_size = 2 * sizeof(uint32_t);
+	if (capacity >= form_header_size && fread(header, 1, form_header_size, file) == form_header_size) {
+	    size = form_header_size;
+	    if (!memcmp(header, "FORM", sizeof(uint32_t)) && !memcmp(header + 2 * sizeof(uint32_t), "LXOB", sizeof(uint32_t)) &&
+		capacity >= form_header_size + chunk_header_size + version_size) {
+		uint32_t form_size = gcv_probe_u32be(header + sizeof(uint32_t));
+		uint64_t remaining = UINT64_MAX;
+		if (form_size) remaining = form_size >= sizeof(uint32_t) ? form_size - sizeof(uint32_t) : 0;
+		unsigned char *chunk = header + form_header_size;
+		while (remaining >= chunk_header_size && fread(chunk, 1, chunk_header_size, file) == chunk_header_size) {
+		    uint32_t chunk_size = gcv_probe_u32be(chunk + sizeof(uint32_t));
+		    uint64_t padded_size = uint64_t(chunk_size) + (chunk_size & 1);
+		    remaining -= chunk_header_size;
+		    if (padded_size > remaining) break;
+		    if (!memcmp(chunk, "VRSN", sizeof(uint32_t)) && chunk_size >= version_size) {
+			if (fread(chunk + chunk_header_size, 1, version_size, file) == version_size)
+			    size = form_header_size + chunk_header_size + version_size;
+			break;
+		    }
+		    if (bu_fseek(file, static_cast<b_off_t>(padded_size), SEEK_CUR)) break;
+		    remaining -= padded_size;
+		}
+	    }
+	}
+    } else if (BU_STR_EQUAL(format.mName, "Silo SIB Importer")) {
+	const size_t chunk_header_size = 2 * sizeof(uint32_t);
+	const size_t version_size = sizeof(uint32_t);
+	/* SIB's version chunk need not be first in the file. */
+	if (capacity >= chunk_header_size + version_size)
+	    while (fread(header, 1, chunk_header_size, file) == chunk_header_size) {
+		uint32_t chunk_size = gcv_probe_u32le(header + sizeof(uint32_t));
+		if (!memcmp(header, "HEAD", sizeof(uint32_t))) {
+		    if (chunk_size >= version_size && fread(header + chunk_header_size, 1, version_size, file) == version_size)
+			size = chunk_header_size + version_size;
+		    break;
+		}
+		if (bu_fseek(file, static_cast<b_off_t>(chunk_size), SEEK_CUR)) break;
+	    }
+    } else {
+	size = fread(header, 1, capacity, file);
+    }
+    int error = ferror(file);
+    if (fclose(file)) error = 1;
+    return error ? 0 : size;
+}
+
+static bool
+assetimport_text_type(const char *type)
+{
+    return mime_skeletal::is_type(type) || mime_nff::is_type(type) || mime_raw::is_type(type);
+}
+
+static int
+assetimport_xml_traits(const std::string &filename, const char *type, const bu_mime_traits *requested, bu_mime_traits &traits)
+{
+    std::ifstream stream(filename, std::ios::binary);
+    if (!stream.is_open()) return 0;
+    auto root = mime_xml::inspect(stream);
+    const bool ogre = BU_STR_EQUAL(type, "model/vnd.ogre.mesh+xml");
+    if (stream.bad() || (ogre ? !assetimport_ogre_xml_root(root) : !root.type() || !BU_STR_EQUAL(root.type(), type))) return 0;
+    if (ogre) root.version.clear();
+    const bool charset = bu_mime_traits_get(requested, "encoding") || bu_mime_traits_get(requested, "text.ascii-only");
+    if (charset) {
+	stream.clear();
+	stream.seekg(0);
+	if (!stream) return 0;
+	const auto text = mime_xml::inspect_text(stream, root);
+	if (stream.bad() || text.encoding.empty() || !text.append_traits(root, traits)) return 0;
+    } else if (!root.append_traits(traits)) return 0;
+    if (ogre) return bu_mime_traits_add(&traits, "compression", "none");
+    if (BU_STR_EQUAL(type, "model/amf") || BU_STR_EQUAL(type, "model/vnd.collada+xml") || BU_STR_EQUAL(type, "model/x3d+xml")) return 1;
+
+    pugi::xml_document document;
+    if (!document.load_file(filename.c_str())) return 0;
+    auto element = document.document_element();
+    if (root.qname != element.name()) return 0;
+    auto lower = [](std::string value) {
+	for (char &c : value) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+	return value.empty() ? std::string("unspecified") : value;
+    };
+    auto local_name = [](const std::string &name) {
+	size_t colon = name.find_last_of(':');
+	return colon == std::string::npos ? name : name.substr(colon + 1);
+    };
+    std::set<std::string> features;
+    const char *key;
+    if (BU_STR_EQUAL(type, "model/vnd.irrlicht.mesh+xml")) {
+	key = "irrlicht.vertex-layouts";
+	for (auto buffer : element.children()) {
+	    std::string name = lower(buffer.name());
+	    if (name == "buffer") features.insert(lower(buffer.child("vertices").attribute("type").value()));
+	    else if (local_name(name) == "buffer")
+		features.insert("qualified-buffer");
+	}
+    } else {
+	key = "irrlicht.node-types";
+	std::vector<pugi::xml_node> parents = {element};
+	while (!parents.empty()) {
+	    auto parent = parents.back();
+	    parents.pop_back();
+	    for (auto node : parent.children()) {
+		std::string name = lower(node.name());
+		if (name == "node") {
+		    std::string kind = lower(node.attribute("type").value());
+		    if ((kind == "cube" || kind == "sphere") && !node.child("materials").child("attributes")) {
+			/* Its default-material path does not create a material for
+			 * these procedural shapes. Do not invoke that path. */
+			bu_log("SDK Irrlicht %s requires an explicit material\n", kind.c_str());
+			return 0;
+		    }
+		    features.insert(kind);
+		    parents.push_back(node);
+		} else if (local_name(name) == "node")
+		    features.insert("qualified-node");
+	    }
+	}
+    }
+    return mime_detail::append_set(traits, key, features);
+}
+
+static int
+assetimport_unreal_traits(const std::string &filename, const char *type, bu_mime_traits &traits)
+{
+    mime_unreal::files files(filename);
+    if (!files.valid() || (files.part == "script") != BU_STR_EQUAL(type, mime_unreal::script_type)) {
+	bu_log("SDK Unreal input requires native _d.3d, _a.3d or .uc companion names\n");
+	return 0;
+    }
+    auto read_header = [](const std::string &path, const std::string &part) {
+	mime_unreal::binary invalid;
+	struct stat info;
+	if (stat(path.c_str(), &info) || info.st_size < 0) return invalid;
+	FILE *file = fopen(path.c_str(), "rb");
+	if (!file) return invalid;
+	unsigned char header[mime_unreal::data_header_size];
+	size_t count = fread(header, 1, sizeof(header), file);
+	int error = ferror(file);
+	if (fclose(file)) error = 1;
+	if (error) return invalid;
+	bu_mime_probe_input input = {header, count, static_cast<uint64_t>(count) == static_cast<uint64_t>(info.st_size), static_cast<uint64_t>(info.st_size), 1};
+	return mime_unreal::inspect_binary(part, input);
+    };
+    auto data = read_header(files.base + "_d.3d", "data");
+    auto animation = read_header(files.base + "_a.3d", "animation");
+    if (!data.valid || !animation.valid || animation.frame_size % data.vertices) {
+	bu_log("SDK Unreal input requires compatible topology and frame companions\n");
+	return 0;
+    }
+    uint32_t stride = animation.frame_size / data.vertices;
+    if (files.part == "script") {
+	if (stride != mime_unreal::packed_vertex_size) return 0;
+	std::ifstream source(filename, std::ios::binary);
+	if (!source.is_open()) return 0;
+	auto profile = mime_unreal::inspect_script(source, true);
+	return !source.bad() && profile.append(traits);
+    }
+    const auto &source = files.part == "data" ? data : animation;
+    const auto &companion = files.part == "data" ? animation : data;
+    return source.append(traits) && companion.append_counts(traits) &&
+	bu_mime_traits_add(&traits, "unreal.vertex-stride", std::to_string(stride).c_str());
+}
+
+static int
+assetimport_fbx_traits(const std::string &filename, const bu_mime_traits *requested,
+    const aiScene *scene, bu_mime_traits &traits)
+{
+    aiString declared;
+    if (!scene || !scene->mMetaData || !scene->mMetaData->Get(AI_METADATA_SOURCE_FORMAT_VERSION, declared)) return 0;
+    const std::string code = mime_detail::decimal_field(declared.C_Str());
+    if (code.empty()) return 0;
+    std::ifstream stream(filename, std::ios::binary);
+    if (!stream.is_open()) return 0;
+    char header[mime_fbx::binary_header_size];
+    stream.read(header, sizeof(header));
+    const size_t size = static_cast<size_t>(stream.gcount());
+    mime_fbx::profile profile;
+    profile.identified = true;
+    if (mime_fbx::sdk_binary(header, size)) {
+	if (size < sizeof(header)) return 0;
+	profile.serialization = "binary";
+	profile.encoding = "binary";
+	/* The SDK ignores the signature's padding but always reads this
+	 * little-endian word. Keep it separate from the parsed DOM version. */
+	profile.binary_version = std::to_string(mime_binary::little_u32(
+	    reinterpret_cast<const unsigned char *>(header) + mime_fbx::binary_version_at));
+    } else {
+	stream.clear();
+	stream.seekg(0);
+	if (!stream) return 0;
+	mime_unicode::text_source source(stream);
+	profile.observe_text(source, true, requested && bu_mime_traits_get(requested, "encoding"));
+    }
+    const char *version = mime_fbx::version(code);
+    const bool charset = requested && bu_mime_traits_get(requested, "encoding");
+    return !stream.bad() && (!charset || !profile.encoding.empty()) && profile.append_traits(traits) &&
+	bu_mime_traits_add(&traits, "fbx.document-version-code", code.c_str()) &&
+	(!version || bu_mime_traits_add(&traits, "version", version));
+}
+
+static int
+assetimport_input_profile(const aiImporterDesc *format, const std::string &filename,
+    const char *mime_type, struct gcv_context *context, const aiScene *scene = NULL)
+{
+    if (!format) return 1;
+    if (assetimport_gltf_importer(format->mName) && !assetimport_gltf_host()) return 0;
+    auto supported = assetimport_import_profiles(format->mName, mime_type);
+    if (!mime_type) return 0;
+    const bu_mime_traits *requested = gcv_target_request_traits(context);
+    const bool charset = requested && (bu_mime_traits_get(requested, "encoding") || bu_mime_traits_get(requested, "text.ascii-only"));
+    const bool declared_profile = !supported.empty();
+    if (!declared_profile && (!requested || !requested->count)) return 1;
+    if ((BU_STR_EQUAL(mime_type, mime_opengex::type) || BU_STR_EQUAL(mime_type, mime_obj::type)) && !scene) {
+	std::ifstream stream(filename, std::ios::binary);
+	if (!stream.is_open()) return 0;
+	mime_unicode::text_source source(stream);
+	const bool supported_width = BU_STR_EQUAL(source.width(), "8");
+	if (!supported_width) bu_log("SDK %s input requires 8-bit source text\n", mime_type);
+	return !stream.bad() && supported_width;
+    }
+    if (BU_STR_EQUAL(mime_type, mime_fbx::type) && !scene) return 1;
+    /* The 3MF decoder opens ZIP only, then follows the package's root
+     * relationship. Successful decoding establishes those container facts
+     * without mistaking a ZIP prefix for a particular model identity. */
+    if (assetimport_zip::is_3mf(mime_type) && !scene) return 1;
+    if (assetimport_zip::is_zae(mime_type) && !scene) {
+	bool native = assetimport_zip::suffix(filename, ".zae");
+	if (!native) bu_log("SDK ZAE reader requires a .zae filename suffix\n");
+	return native;
+    }
+    if (BU_STR_EQUAL(mime_type, "application/vnd.idsoftware.pk3+zip") && !scene) {
+	bu_vls extension = BU_VLS_INIT_ZERO;
+	bu_path_component(&extension, filename.c_str(), BU_PATH_EXT);
+	bool native = !bu_strcasecmp(bu_vls_cstr(&extension), "pk3") || !bu_strcasecmp(bu_vls_cstr(&extension), "bsp");
+	bu_vls_free(&extension);
+	if (!native) bu_log("SDK PK3 reader requires a .pk3 or .bsp filename suffix\n");
+	/* This decoder always opens a ZIP before finding its map. Use that
+	 * verified result, allowing archive preambles, rather than guessing
+	 * container identity from a short header. No data is published yet. */
+	return native;
+    }
+
+    bu_mime_result *result = NULL;
+    bu_mime_traits text_traits = BU_MIME_TRAITS_INIT_ZERO;
+    bool inspected = false;
+    const bu_mime_traits *observed = NULL;
+    if (!declared_profile) {
+	/* A type-only capability does not establish additional file properties.
+	 * Check explicit assertions independently of the resolved request. */
+	inspected = gcv_detect_file(context, filename.c_str(), &result, NULL) != BU_MIME_ERROR;
+	for (size_t i = 0; inspected && result && i < result->count; ++i)
+	    if (BU_STR_EQUAL(result->candidates[i].name, mime_type)) observed = &result->candidates[i].traits;
+	supported.emplace_back();
+    } else if (BU_STR_EQUAL(mime_type, mime_obj::type)) {
+	std::ifstream stream(filename, std::ios::binary);
+	if (!stream.is_open()) return 0;
+	mime_unicode::text_source source(stream);
+	if (!BU_STR_EQUAL(source.width(), "8")) return 0;
+	const auto profile = mime_obj::observe(source, charset,
+	    bu_mime_traits_get(requested, "obj.material-library-reference") != NULL);
+	inspected = scene && !stream.bad() && (!charset || profile.repertoire_known) && profile.append_traits(text_traits);
+	observed = &text_traits;
+    } else if (BU_STR_EQUAL(mime_type, mime_opengex::type)) {
+	std::ifstream stream(filename, std::ios::binary);
+	if (!stream.is_open()) return 0;
+	mime_unicode::text_source source(stream);
+	mime_opengex::profile profile;
+	profile.identified = scene != NULL;
+	profile.observe_text(source, true, charset);
+	inspected = !stream.bad() && (!charset || profile.repertoire_known) && profile.append_traits(text_traits);
+	observed = &text_traits;
+    } else if (BU_STR_EQUAL(mime_type, mime_fbx::type)) {
+	inspected = assetimport_fbx_traits(filename, requested, scene, text_traits) != 0;
+	observed = &text_traits;
+    } else if (BU_STR_EQUAL(mime_type, "model/stl")) {
+	FILE *file = fopen(filename.c_str(), "rb");
+	if (!file) return 0;
+	const auto profile = mime_stl_file_profile(file, requested && bu_mime_traits_get(requested, "encoding"));
+	inspected = !ferror(file) && mime_stl_append(&profile, &text_traits);
+	if (fclose(file)) inspected = false;
+	if (inspected && !assetimport_zip::suffix(filename, ".stl")) {
+	    /* The SDK's filename hint can select files whose identifying text
+	     * is outside its own bounded loader search. Query that search for
+	     * neutral filenames rather than guessing its configured limit. */
+	    Assimp::Importer detector;
+	    const auto *reader = detector.GetImporter("stl");
+	    inspected = reader && reader->CanRead(filename, detector.GetIOHandler(), true);
+	    if (!inspected) bu_log("SDK STL input requires a .stl filename suffix for this header\n");
+	}
+	observed = &text_traits;
+    } else if (BU_STR_EQUAL(mime_type, mime_ply::type)) {
+	std::ifstream stream(filename, std::ios::binary);
+	if (!stream.is_open()) return 0;
+	const auto profile = mime_ply::inspect(stream, true);
+	inspected = !stream.bad() && !profile.encoding.empty() && profile.append_traits(text_traits);
+	observed = &text_traits;
+    } else if (BU_STR_EQUAL(mime_type, mime_blender::type)) {
+	inspected = assetimport_blender::file_traits(filename, text_traits) != 0;
+	observed = &text_traits;
+    } else if (BU_STR_EQUAL(format->mName, "Industry Foundation Classes (IFC) Importer")) {
+	std::ifstream stream(filename, std::ios::binary);
+	if (!stream.is_open()) return 0;
+	auto profile = mime_p21::inspect(stream, true);
+	inspected = profile.append_traits(text_traits);
+	observed = &text_traits;
+    } else if (assetimport_zip::is_zae(mime_type)) {
+	aiString version;
+	inspected = scene && scene->mMetaData && scene->mMetaData->Get(AI_METADATA_SOURCE_FORMAT_VERSION, version);
+	std::string family = inspected ? mime_xml::collada_schema(version.C_Str()) : std::string{};
+	inspected = inspected && !family.empty() &&
+	    bu_mime_traits_add(&text_traits, "encoding", "binary") && bu_mime_traits_add(&text_traits, "container", "zip") &&
+	    bu_mime_traits_add(&text_traits, "collada.document-version", version.C_Str()) &&
+	    bu_mime_traits_add(&text_traits, "collada.schema-version", family.c_str());
+	observed = &text_traits;
+    } else if (assetimport_gltf_importer(format->mName)) {
+	inspected = mime_gltf::file_traits(filename.c_str(), mime_type, text_traits);
+	const char *minimum = bu_mime_traits_get(&text_traits, "gltf.minimum-version");
+	int comparison = 0;
+	const char *maximum = BU_STR_EQUAL(format->mName, "glTF2 Importer") ? "2.0" : "1.0";
+	inspected = inspected && minimum && bu_mime_version_compare(minimum, maximum, &comparison) && comparison <= 0;
+	observed = &text_traits;
+    } else if (mime_unreal::is_type(mime_type)) {
+	inspected = assetimport_unreal_traits(filename, mime_type, text_traits) != 0;
+	observed = &text_traits;
+    } else if (BU_STR_EQUAL(mime_type, "application/vnd.idsoftware.pk3+zip") || assetimport_zip::is_3mf(mime_type)) {
+	inspected = scene && bu_mime_traits_add(&text_traits, "encoding", "binary") && bu_mime_traits_add(&text_traits, "container", "zip");
+	observed = &text_traits;
+    } else if (assetimport_xgl::is_type(mime_type)) {
+	inspected = assetimport_xgl::file_traits(filename, mime_type, requested, text_traits) != 0;
+	observed = &text_traits;
+    } else if (mime_xml::is_type(mime_type)) {
+	inspected = assetimport_xml_traits(filename, mime_type, requested, text_traits) != 0;
+	observed = &text_traits;
+    } else if (BU_STR_EQUAL(mime_type, mime_x::type)) {
+	inspected = assetimport_x::file_traits(filename, requested, text_traits) != 0;
+	observed = &text_traits;
+    } else if (BU_STR_EQUAL(mime_type, mime_assbin::type)) {
+	static_assert(mime_assbin::double_support == ASSIMP_CFLAGS_DOUBLE_SUPPORT, "Assimp real-width flag changed");
+	std::ifstream stream(filename, std::ios::binary);
+	if (!stream.is_open()) return 0;
+	unsigned char header[mime_assbin::header_size];
+	stream.read(reinterpret_cast<char *>(header), sizeof(header));
+	const bu_mime_probe_input input = {header, static_cast<size_t>(stream.gcount()), 0, 0, 0};
+	const auto profile = mime_assbin::inspect(input);
+	inspected = !stream.bad() && input.size == sizeof(header) && profile.identified && profile.append_traits(text_traits);
+	observed = &text_traits;
+    } else if (mime_scene_text::is_type(mime_type)) {
+	std::ifstream stream(filename, std::ios::binary);
+	if (!stream.is_open()) return 0;
+	const bool inspect_encoding = requested && bu_mime_traits_get(requested, "encoding");
+	const auto profile = mime_scene_text::inspect(stream, true, inspect_encoding);
+	inspected = !stream.bad() && profile.type == mime_type && profile.append_traits(text_traits);
+	if (inspected && BU_STR_EQUAL(mime_type, mime_scene_text::ac3d_type) && profile.bom && profile.width == "8" &&
+	    !assetimport_zip::suffix(filename, ".ac") && !assetimport_zip::suffix(filename, ".acc") &&
+	    !assetimport_zip::suffix(filename, ".ac3d")) {
+	    bu_log("SDK AC3D input with a UTF-8 BOM requires a native AC3D filename suffix\n");
+	    inspected = false;
+	}
+	observed = &text_traits;
+    } else if (BU_STR_EQUAL(mime_type, mime_dxf::type)) {
+	std::ifstream stream(filename, std::ios::binary);
+	if (!stream.is_open()) return 0;
+	const auto profile = mime_dxf::inspect(stream, true);
+	inspected = !stream.bad() && profile.identified && (!profile.header_seen || profile.header_complete) &&
+	    profile.append_traits(text_traits);
+	observed = &text_traits;
+    } else if (BU_STR_EQUAL(mime_type, mime_off::type)) {
+	std::ifstream stream(filename, std::ios::binary);
+	if (!stream.is_open()) return 0;
+	/* SDK loader selection searches only three bytes. Prefixed keywords,
+	 * preambles and headerless records therefore need its native suffix. */
+	constexpr size_t signature_search_size = sizeof("OFF") - 1;
+	char signature[signature_search_size];
+	stream.read(signature, sizeof(signature));
+	const bool bare_magic = stream.gcount() == static_cast<std::streamsize>(sizeof(signature)) &&
+	    !memcmp(signature, "OFF", sizeof(signature));
+	stream.clear();
+	stream.seekg(0);
+	if (!bare_magic && !assetimport_zip::suffix(filename, ".off")) {
+	    bu_log("SDK OFF reader requires a .off filename for prefixed or headerless input\n");
+	    return 0;
+	}
+	const auto profile = mime_off::inspect(stream, true, true);
+	inspected = !stream.bad() && profile.header_complete && profile.append_traits(text_traits);
+	observed = &text_traits;
+    } else if (assetimport_text_type(mime_type)) {
+	std::ifstream stream(filename, std::ios::binary);
+	if (!stream.is_open()) return 0;
+	if (mime_raw::is_type(mime_type)) {
+	    auto profile = mime_raw::inspect(stream, true);
+	    inspected = !stream.bad() && profile.type == mime_type && profile.append_traits(text_traits);
+	} else if (mime_nff::is_type(mime_type)) {
+	    auto profile = mime_nff::inspect(stream, true);
+	    inspected = !stream.bad() && profile.type == mime_type && profile.append_traits(text_traits);
+	} else {
+	    auto profile = mime_skeletal::inspect(stream, true);
+	    inspected = !stream.bad() && profile.type == mime_type;
+	    for (const auto &value : profile.traits())
+		if (!bu_mime_traits_add(&text_traits, value.first.c_str(), value.second.c_str())) inspected = false;
+	}
+	observed = &text_traits;
+    } else {
+	/* Include an IFF form, chunk header and LXO revision words. Full
+	 * validation can seek past chunks outside the inspection prefix. */
+	const size_t header_size = 7 * sizeof(uint32_t);
+	unsigned char header[header_size];
+	size_t size = assetimport_profile_header(*format, filename, header, sizeof(header));
+	if (!size) return 0;
+	inspected = bu_mime_detect(gcv_mime_registry(context), NULL, header, size, 0, &result) != BU_MIME_ERROR;
+	for (size_t i = 0; result && i < result->count; ++i)
+	    if (BU_STR_EQUAL(result->candidates[i].name, mime_type)) observed = &result->candidates[i].traits;
+    }
+    bool valid = false;
+    if (inspected && observed && gcv_probe_file_traits_match(context, filename.c_str(), mime_type, observed, requested))
+	for (const auto &profile : supported) {
+	    bu_mime_traits values = BU_MIME_TRAITS_INIT_ZERO;
+	    bool built = true;
+	    for (const auto &trait : profile)
+		if (!bu_mime_traits_add(&values, trait.first.c_str(), trait.second.c_str())) built = false;
+	    for (const auto &set : assetimport_import_sets(format->mName, mime_type)) {
+		std::vector<const char *> members;
+		for (const auto &member : set.second) members.push_back(member.c_str());
+		if (!bu_mime_traits_add_set(&values, set.first.c_str(), members.data(), members.size())) built = false;
+	    }
+	    const bu_mime_capability capability = BU_MIME_CAPABILITY(mime_type, values.items, values.count, 0);
+	    valid = built && bu_mime_capability_match(&capability, observed, BU_MIME_INPUT);
+	    bu_mime_traits_free(&values);
+	    if (valid || !built) break;
+	}
+    if (valid && assetimport_text_type(mime_type)) {
+	bu_vls extension = BU_VLS_INIT_ZERO;
+	bu_path_component(&extension, filename.c_str(), BU_PATH_EXT);
+	if (mime_raw::is_type(mime_type))
+	    valid = !bu_strcasecmp(bu_vls_cstr(&extension), "raw");
+	else if (mime_nff::is_type(mime_type))
+	    valid = !bu_strcasecmp(bu_vls_cstr(&extension), "nff") || !bu_strcasecmp(bu_vls_cstr(&extension), "enff");
+	else if (BU_STR_EQUAL(mime_type, "model/vnd.idsoftware.md5"))
+	    valid = BU_STR_EQUAL(bu_vls_cstr(&extension), "md5mesh");
+	else valid = !bu_strcasecmp(bu_vls_cstr(&extension), "smd") || !bu_strcasecmp(bu_vls_cstr(&extension), "vta");
+	bu_vls_free(&extension);
+	if (!valid) bu_log("SDK reader requires a native filename suffix for %s\n", mime_type);
+    }
+    if (valid && BU_STR_EQUAL(format->mName, "Ogre3D Mesh Importer") && !assetimport_ogre_filename(filename, mime_type)) {
+	bu_log("SDK Ogre reader requires a native filename suffix for %s\n", mime_type);
+	valid = false;
+    }
+    if (valid && BU_STR_EQUAL(mime_type, "model/vnd.blitzresearch.b3d") && !assetimport_zip::suffix(filename, ".b3d")) {
+	bu_log("SDK B3D reader requires a .b3d filename suffix\n");
+	valid = false;
+    }
+    if (!valid) {
+	bu_vls message = BU_VLS_INIT_ZERO;
+	bu_mime_traits_describe(observed, &message);
+	bu_log("SDK cannot convert the declared %s profile:%s\n", mime_type, bu_vls_cstr(&message));
+	bu_vls_free(&message);
+    }
+    bu_mime_result_free(result);
+    bu_mime_traits_free(&text_traits);
+    return valid;
+}
+
+static int
+convert_input(assetimport_read_state_t* pstate, const char *mime_type, struct gcv_context *context)
+{
+    /* Do not enter an archive path whose member behavior we cannot yet
+     * describe as a conversion capability, including legacy execution. */
+    if (assetimport_zip::suffix(pstate->input_file, ".ifczip")) {
+	bu_log("SDK IFCZIP conversion is unavailable; extract the IFC document first\n");
+	return 0;
+    }
+    BU_LIST_INIT(&pstate->all.l);
+    Assimp::Importer importer;
+    const aiImporterDesc *profiled_format = NULL;
+    if (mime_type) {
+	/* Validate declared layouts before conversion. The same driver-specific
+	 * check is also applied if the SDK ultimately chooses another loader. */
+	for (size_t i = 0; i < importer.GetImporterCount() && !profiled_format; ++i) {
+	    const auto *format = importer.GetImporterInfo(i);
+	    if (!format) continue;
+	    /* The SDK chooses separate glTF 1/2 loaders for the same MIME types.
+	     * Validate the actual loader after decoding, before publication. */
+	    if (assetimport_gltf_importer(format->mName)) continue;
+	    for (const auto &extension : gcv_mime_catalog::split(format->mFileExtensions))
+		for (const char *type : assetimport_import_identities(format->mName, extension))
+		    if (BU_STR_EQUAL(type, mime_type) && !assetimport_import_profiles(format->mName, mime_type).empty()) profiled_format = format;
+	}
+	if (profiled_format && !assetimport_input_profile(profiled_format, pstate->input_file, mime_type, context)) return 0;
+    }
     /* have importer remove points and lines as we can't do anything with them */
-    aiPropertyStore* props = aiCreatePropertyStore();
-    aiSetImportPropertyInteger(props, AI_CONFIG_PP_SBP_REMOVE, aiPrimitiveType_LINE | aiPrimitiveType_POINT);
+    if (mime_type && BU_STR_EQUAL(mime_type, "model/vnd.idsoftware.md5"))
+	importer.SetPropertyBool(AI_CONFIG_IMPORT_MD5_NO_ANIM_AUTOLOAD, true);
+    /* Generated skeleton previews are not geometry supplied by the input. */
+    importer.SetPropertyBool(AI_CONFIG_IMPORT_NO_SKELETON_MESHES, true);
+    importer.SetPropertyInteger(AI_CONFIG_PP_SBP_REMOVE, aiPrimitiveType_LINE | aiPrimitiveType_POINT);
     /* we are taking one of the postprocessing presets to have
      * max quality with reasonable render times. But, we must keep 
      * seemingly redundant materials as we use the names for BRLCAD shaders
      */
     unsigned int import_flags = aiProcessPreset_TargetRealtime_MaxQuality & ~aiProcess_RemoveRedundantMaterials;
-    pstate->scene = aiImportFileExWithProperties(pstate->input_file.c_str(),
-						 import_flags,
-						 NULL,
-						 props);
-    
+    pstate->scene = importer.ReadFile(pstate->input_file, import_flags);
+    if (pstate->scene) {
+	const aiImporterDesc *format = assetimport_loaded_format(importer);
+	const char *loaded_type = assetimport_loaded_type(format, pstate->input_file, context);
+	if (mime_type && (!loaded_type || !BU_STR_EQUAL(loaded_type, mime_type))) {
+	    bu_log("SDK input format %s does not match selected MIME type %s\n",
+		loaded_type ? loaded_type : "unknown", mime_type);
+	    return 0;
+	}
+	if ((format != profiled_format || assetimport_zip::is_zae(loaded_type) || assetimport_zip::is_3mf(loaded_type) ||
+	    (loaded_type && BU_STR_EQUAL(loaded_type, mime_fbx::type)) ||
+	    (loaded_type && BU_STR_EQUAL(loaded_type, mime_opengex::type)) ||
+	    (loaded_type && BU_STR_EQUAL(loaded_type, mime_obj::type)) ||
+	    (loaded_type && BU_STR_EQUAL(loaded_type, "application/vnd.idsoftware.pk3+zip"))) &&
+	    !assetimport_input_profile(format, pstate->input_file, loaded_type, context, pstate->scene)) return 0;
+    }
+
+    /* The supplemental XML path can succeed for NURBS-only X3D files even
+     * when the SDK produces no scene. Validate its root before publishing. */
+    pugi::xml_document x3d;
+    pugi::xml_node x3d_root;
+    if (!mime_type || BU_STR_EQUAL(mime_type, "model/x3d+xml")) {
+	if (x3d.load_file(pstate->input_file.c_str())) {
+	    pugi::xml_node root = x3d.document_element();
+	    if (root && x3d_name_is(root, "X3D")) x3d_root = root;
+	}
+	if (mime_type && !x3d_root) {
+	    bu_log("Selected XML X3D input has no X3D document root\n");
+	    return 0;
+	}
+    }
+    if (!pstate->scene && !x3d_root) {
+	bu_log("ERROR: bad scene conversion: %s\n", importer.GetErrorString());
+	return 0;
+    }
+    if (mk_id_units(pstate->fd_out, "Conversion using Asset Importer Library (assetimport)", "mm"))
+	return 0;
+    if (x3d_root) convert_x3d_nurbs(pstate, x3d_root);
     if (!pstate->scene) {
 	if (pstate->converted_nurbs) {
 	    mk_lcomb(pstate->fd_out, "all.g", &pstate->all, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
 	    bu_log("Converted %d X3D NURBS objects\n", pstate->converted_nurbs);
-	    aiReleasePropertyStore(props);
 	    return 1;
 	}
 	bu_log("ERROR: bad scene conversion\n");
-	aiReleasePropertyStore(props);
 	return 0;
     }
 
@@ -1283,10 +2003,6 @@ convert_input(assetimport_read_state_t* pstate)
     if (pstate->converted_nurbs)
 	bu_log("Converted %d X3D NURBS objects\n", pstate->converted_nurbs);
 
-    /* cleanup */
-    aiReleaseImport(pstate->scene);
-    aiReleasePropertyStore(props);
-
     return (pstate->converted || pstate->converted_nurbs);
 }
 
@@ -1309,7 +2025,7 @@ assetimport_read_create_opts(struct bu_opt_desc **options_desc, void **dest_opti
     BU_OPT((*options_desc)[1], NULL, "constant-ident", NULL, NULL, &options_data->const_id, "specify that the starting ident should remain constant");
     BU_OPT((*options_desc)[2], NULL, "material", "number", bu_opt_int, &options_data->mat_code, "specify the material code that will be assigned to created regions");
     BU_OPT((*options_desc)[3], "v", "verbose", NULL, NULL, &options_data->verbose, "specify for verbose output");
-    BU_OPT((*options_desc)[4], NULL, "format", NULL, bu_opt_str, &options_data->format, "specify the output file format");
+    BU_OPT((*options_desc)[4], NULL, "format", "string", bu_opt_str, &options_data->format, "Assert an input MIME type or file extension; must agree with the selected type");
     BU_OPT_NULL((*options_desc)[5]);
 }
 
@@ -1331,62 +2047,84 @@ assetimport_read(struct gcv_context *context, const struct gcv_opts* gcv_options
     struct rt_wdb *wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
     state.fd_out = wdbp;
 
-    /* check and validate the specified input file type against ai
-     * checks using file extension if no --format is supplied
-     * this is likely all a 'can_read' function would need
-     */
-    std::string extension;
-    if (!BU_STR_EMPTY(state.assetimport_read_options->format)) {
-	/* intentional setting format trumps file extension */
-	extension = state.assetimport_read_options->format;
-    } else {
-	struct bu_vls ext = BU_VLS_INIT_ZERO;
-	if (bu_path_component(&ext, source_path, BU_PATH_EXT))
-	    extension = "." + std::string(bu_vls_cstr(&ext));
-	bu_vls_free(&ext);
+    const char *mime_type = gcv_target_mime(context);
+    const char *format_option = state.assetimport_read_options->format;
+    struct bu_vls asserted_type = BU_VLS_INIT_ZERO;
+    struct bu_vls messages = BU_VLS_INIT_ZERO;
+    bool valid = true;
+    if (!mime_type || !BU_STR_EMPTY(format_option)) {
+	/* Older callers may pass an extension with a leading dot. */
+	if (format_option && format_option[0] == '.') ++format_option;
+	valid = gcv_resolve_variant(context, GCV_FILTER_READ, source_path, format_option,
+	    gcv_target_request_traits(context), "Assetimport Reader", &asserted_type, NULL, &messages) != NULL;
+	if (valid && mime_type && !BU_STR_EQUAL(mime_type, bu_vls_cstr(&asserted_type)))
+	    valid = false;
+	if (!valid)
+	    bu_log("Cannot select SDK input%s%s\n%s", BU_STR_EMPTY(format_option) ? "" : " --format ",
+		BU_STR_EMPTY(format_option) ? "" : format_option, bu_vls_cstr(&messages));
+	else
+	    mime_type = bu_vls_cstr(&asserted_type);
     }
-    if (extension.empty()) {
-	bu_log("ERROR: Please provide a file with a valid extension, or specify format with --format\n");
-	return 0;
-    }
-    if (AI_FALSE == aiIsExtensionSupported(extension.c_str())) {
-	bu_log("ERROR: The specified model file type is currently unsupported in assetimport conversion.\n");
-	return 0;
-    }
-
-    mk_id_units(state.fd_out, "Conversion using Asset Importer Library (assetimport)", "mm");
-
-    int ret = convert_input(&state);
-    return ret;
-}
-
-
-static int
-assetimport_can_read(const char* data)
-{
-    /* TODO FIXME - currently 'can_read' is unused by gcv */
-    if (!data)
-	return 0;
-
-    return 1;
+    int status = valid ? convert_input(&state, mime_type, context) : 0;
+    bu_vls_free(&asserted_type);
+    bu_vls_free(&messages);
+    return status;
 }
 
 
 /* filter setup */
 extern "C"
 {
-    static const struct gcv_filter gcv_conv_assetimport_read = {
-	"Assetimport Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_ASSETIMPORT, assetimport_can_read,
-	assetimport_read_create_opts, assetimport_read_free_opts, assetimport_read
-    };
+static const struct gcv_filter gcv_conv_assetimport_read = {
+    "Assetimport Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_ASSETIMPORT, NULL,
+    assetimport_read_create_opts, assetimport_read_free_opts, assetimport_read};
 
-    extern const struct gcv_filter gcv_conv_assetimport_write;
-    static const struct gcv_filter * const filters[] = { &gcv_conv_assetimport_read, &gcv_conv_assetimport_write, NULL };
+extern const struct gcv_filter gcv_conv_assetimport_write;
+static const struct gcv_filter *const filters[] = {&gcv_conv_assetimport_read, &gcv_conv_assetimport_write, NULL};
 
-    const struct gcv_plugin gcv_plugin_info_s = { filters };
+const struct gcv_plugin gcv_plugin_info_s = {filters};
 
-    COMPILER_DLLEXPORT const struct gcv_plugin *
-	gcv_plugin_info() { return &gcv_plugin_info_s; }
+COMPILER_DLLEXPORT const struct gcv_plugin *
+gcv_plugin_info()
+{
+    return &gcv_plugin_info_s; }
+
+COMPILER_DLLEXPORT const struct gcv_plugin_v2 *
+gcv_plugin_info_v2()
+{
+    static const gcv_mime_catalog catalog = []() {
+	gcv_mime_catalog result;
+	for (size_t i = 0; i < aiGetImportFormatCount(); ++i) {
+	    const aiImporterDesc *format = aiGetImportFormatDescription(i);
+	    if (!format) continue;
+	    for (const auto &extension : gcv_mime_catalog::split(format->mFileExtensions)) {
+		for (const char *name : assetimport_import_identities(format->mName, extension)) {
+		    if (!assetimport_geometry_input(name)) {
+			result.add(name, format->mName, {extension}, false, false);
+			continue;
+		    }
+		    auto profiles = assetimport_import_profiles(format->mName, name);
+		    if (profiles.empty()) result.add(name, format->mName, {extension}, true, false);
+		    for (const auto &traits : profiles)
+			result.add(name, format->mName, {extension}, true, false, traits, BU_MIME_DEFER_INPUT_VALIDATION,
+			    assetimport_import_sets(format->mName, name));
+		}
+	    }
+	}
+	for (size_t i = 0; i < aiGetExportFormatCount(); ++i) {
+	    const aiExportFormatDesc *format = aiGetExportFormatDescription(i);
+	    if (!format) continue;
+	    const assetimport_export_format *identity = assetimport_export_identity(format->id);
+	    if (identity)
+		for (const auto &traits : assetimport_export_profiles(*identity))
+		    result.add(identity->mime, format->description, {format->fileExtension}, false, true, traits);
+	    aiReleaseExportFormatDescription(format);
+	}
+	result.finish(&gcv_conv_assetimport_read, &gcv_conv_assetimport_write, assetimport_probe, assetimport_inspect);
+	return result;
+    }();
+    return catalog.plugin();
+}
 }
 
 // Local Variables:
