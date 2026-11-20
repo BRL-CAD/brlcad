@@ -14,6 +14,7 @@ set(
   brlcad.prerm
   brlcad.sh
   brlcad.xml
+  brlcad.links
   changelog
   control
   copyright

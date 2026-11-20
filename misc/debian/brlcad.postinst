@@ -1,24 +1,12 @@
 #!/bin/sh
 
+association_file="/etc/xdg/mimeapps.list"
+association_section="Default Applications"
+canonical_type="model/vnd.brlcad"
+application="archer.desktop"
 
-FILE="/etc/xdg/mimeapps.list"
-
-SECTION="Default Applications"
-
-MIME_1="application/brlcad-v4"
-MIME_2="application/brlcad-v5"
-
-APP="archer.desktop"
-
-
-# create dir if missing
-mkdir -p $(dirname ${FILE}) || :
-
-
-# add/update default app for specific mime type
-crudini --set "${FILE}" "${SECTION}" "${MIME_1}" "${APP}" || :
-crudini --set "${FILE}" "${SECTION}" "${MIME_2}" "${APP}" || :
-
+mkdir -p "$(dirname "$association_file")" || :
+crudini --set "$association_file" "$association_section" "$canonical_type" "$application" || :
 
 update-mime-database /usr/share/mime || :
 update-desktop-database /usr/share/applications || :

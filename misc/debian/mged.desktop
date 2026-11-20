@@ -6,5 +6,5 @@ Exec=/usr/brlcad/bin/mged %f
 Icon=mged
 Terminal=true
 Type=Application
-Categories=BRL-CAD;
-MimeType=application/brlcad-v4;application/brlcad-v5;
+Categories=Graphics;3DGraphics;X-BRL-CAD;
+MimeType=model/vnd.brlcad;

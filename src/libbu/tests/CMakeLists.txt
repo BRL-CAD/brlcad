@@ -918,6 +918,10 @@ cmakefiles(
 
 brlcad_addexec(bu_mime_test mime_registry.cpp "libbu;Threads::Threads" TEST)
 brlcad_add_test(NAME bu_mime_registry COMMAND bu_mime_test)
+brlcad_add_test(NAME bu_mime_desktop COMMAND ${CMAKE_COMMAND}
+  -DSOURCE_DIR=${BRLCAD_SOURCE_DIR}
+  -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/mime-desktop
+  -P ${BRLCAD_SOURCE_DIR}/misc/mime/desktop.cmake)
 
 # Local Variables:
 # tab-width: 8

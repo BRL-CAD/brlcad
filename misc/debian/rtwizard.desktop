@@ -4,5 +4,5 @@ Name=RtWizard
 Exec=/usr/brlcad/bin/rtwizard %f
 Icon=rtwizard
 Type=Application
-Categories=BRL-CAD;
-MimeType=application/brlcad-v4;application/brlcad-v5;
+Categories=Graphics;3DGraphics;X-BRL-CAD;
+MimeType=model/vnd.brlcad;

@@ -1,14 +1,9 @@
 #!/bin/sh
 
+association_file="/etc/xdg/mimeapps.list"
+association_section="Default Applications"
 
-FILE="/etc/xdg/mimeapps.list"
-
-SECTION="Default Applications"
-
-MIME_1="application/brlcad-v4"
-MIME_2="application/brlcad-v5"
-
-
-# delete default app for specific mime type
-crudini --del "${FILE}" "${SECTION}" "${MIME_1}" || :
-crudini --del "${FILE}" "${SECTION}" "${MIME_2}" || :
+# Remove associations left by both current and earlier package versions.
+for mime_type in model/vnd.brlcad application/brlcad-v4 application/brlcad-v5 application/brlcad-unknown; do
+    crudini --del "$association_file" "$association_section" "$mime_type" || :
+done

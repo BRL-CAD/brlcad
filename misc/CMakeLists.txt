@@ -114,6 +114,7 @@ set(
   macosx/Resources/Welcome.rtfd/brlcad_logo_tiny.png
   macosx/background.png
   macosx/openUp.c
+  mime/desktop.cmake
   mime/README
   mime/update.py
   mime/upstream.types
