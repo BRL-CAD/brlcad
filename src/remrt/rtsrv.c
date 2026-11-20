@@ -56,7 +56,6 @@
 /* bu/ipc.h removed - transport handled by libpkg */
 #include "bu/str.h"
 #include "bu/process.h"
-#include "bu/snooze.h"
 #include "bu/vls.h"
 #include "vmath.h"
 #include "bn.h"
@@ -115,6 +114,9 @@ static int seen_matrix = 0;
 /* Set to 1 when the remrt connection is lost mid-render so the main loop
  * can break cleanly rather than calling bu_exit() from a hook function.  */
 static volatile int rtsrv_connection_lost = 0;
+static int rtsrv_exit_status = 0;
+
+#define RTSRV_CMD_REPLY_TIMEOUT_MS 10000
 
 /* Frame number for which grid vectors and lighting have been initialized.
  * Set to -1 by prepare() and ph_matrix() to force re-setup on the next
@@ -148,6 +150,7 @@ void ph_end(struct pkg_conn *pc, char *buf);
 void ph_restart(struct pkg_conn *pc, char *buf);
 void ph_loglvl(struct pkg_conn *pc, char *buf);
 void ph_cd(struct pkg_conn *pc, char *buf);
+void ph_cmd_reply(struct pkg_conn *pc, char *buf);
 
 void prepare(void);
 
@@ -162,6 +165,7 @@ struct pkg_switch pkgswitch[] = {
     { MSG_LOGLVL,	ph_loglvl,	"Change log level", NULL },
     { MSG_RESTART,	ph_restart,	"Restart", NULL },
     { MSG_CD,		ph_cd,		"Change Dir", NULL },
+    { MSG_CMD_REPLY,	ph_cmd_reply,	"Command status", NULL },
     { 0,		0,		NULL, NULL }
 };
 
@@ -174,12 +178,18 @@ int debug = 0;		/* 0=off, 1=debug, 2=verbose */
 /*
  * Session authentication token, supplied via "-S <token>" on the
  * command line when remrt auto-launches this process via SSH.
- * An empty string means no authentication (passive/manual start).
+ * TCP connections require this token; local inherited IPC receives it too.
  */
 static char srv_auth_token[REMRT_AUTH_TOKEN_LEN + 1] = {0};
+#ifdef HAVE_OPENSSL_SSL_H
+static char srv_tls_fingerprint[REMRT_TLS_FINGERPRINT_HEX_LEN + 1] = {0};
+#endif
 
-char srv_usage[] = "Usage: rtsrv [-d] [-S token] [-x hex_flags] [-X hex_flags] [-I ipc-addr] control-host tcp-port [cmd]\n"
-		   "       rtsrv [-d] [-S token] [-x hex_flags] [-X hex_flags] -I ipc-addr\n";
+char srv_usage[] = "Usage: rtsrv [-d] [-S token] [-C sha256-pin] "
+    "[-x hex_flags] [-X hex_flags] [-I ipc-addr] "
+    "control-host tcp-port [cmd]\n"
+		   "       rtsrv [-d] [-S token] [-x hex_flags] "
+		   "[-X hex_flags] -I ipc-addr\n";
 
 /* forward declarations for log/bomb hook helpers defined later in this file */
 static int rtsrv_log_hook(void *clientdata, void *str);
@@ -218,6 +228,28 @@ rtsrv_valid_auth_token(const char *token)
     }
 
     return 1;
+}
+
+
+static int
+rtsrv_send_version(void)
+{
+    struct bu_vls version = BU_VLS_INIT_ZERO;
+    int result;
+
+    bu_vls_strcat(&version, PROTOCOL_VERSION);
+    if (srv_auth_token[0] != '\0') {
+	bu_vls_strcat(&version, REMRT_AUTH_TOKEN_PREFIX);
+	bu_vls_strcat(&version, srv_auth_token);
+    }
+    result = pkg_send(MSG_VERSION, bu_vls_addr(&version),
+	bu_vls_strlen(&version) + 1, pcsrv);
+    if (result < 0)
+	fprintf(stderr, "pkg_send MSG_VERSION error\n");
+    else if (debug)
+	fprintf(stderr, "PROTOCOL_VERSION='%s'\n", bu_vls_addr(&version));
+    bu_vls_free(&version);
+    return result < 0 ? BRLCAD_ERROR : BRLCAD_OK;
 }
 
 __END_DECLS
@@ -261,6 +293,16 @@ main(int argc, char **argv)
 	    bu_strlcpy(srv_auth_token, argv[2],
 		       sizeof(srv_auth_token));
 	    argc--; argv++;
+#ifdef HAVE_OPENSSL_SSL_H
+	} else if (BU_STR_EQUAL(argv[1], "-C")) {
+	    if (argc < 3) {
+		fprintf(stderr, "%s", srv_usage);
+		return 3;
+	    }
+	    bu_strlcpy(srv_tls_fingerprint, argv[2],
+		sizeof(srv_tls_fingerprint));
+	    argc--; argv++;
+#endif
 	} else if (BU_STR_EQUAL(argv[1], "-I")) {
 	    /* IPC connection address supplied by remrt via -I <addr>.
 	     * When present, no host/port positional args are needed.  */
@@ -292,9 +334,8 @@ main(int argc, char **argv)
 	}
 
 	if (pcsrv != PKC_ERROR && pcsrv != PKC_NULL) {
-	    /* IPC mode: remrt created a socketpair, moved the child-end fd
-	     * above the close(3..19) sweep in bu_process_create(), and
-	     * advertised it via -I or PKG_ADDR (PKG_ADDR_ENVVAR).
+	    /* IPC mode: remrt created a local transport and explicitly
+	     * inherited its child endpoint, advertised via -I or PKG_ADDR.
 	     * pkg_connect_addr/env wraps the already-inherited fd into a
 	     * pkg_conn so the rest of the code is transport-agnostic. */
 	    if (debug) {
@@ -311,6 +352,18 @@ main(int argc, char **argv)
 
 	    control_host = argv[1];
 	    tcp_port = argv[2];
+	    if (srv_auth_token[0] == '\0') {
+		fprintf(stderr, "rtsrv: -S session token is required for TCP connections\n");
+		return 2;
+	    }
+
+#ifdef HAVE_OPENSSL_SSL_H
+	    if (srv_tls_fingerprint[0] != '\0' &&
+		!remrt_tls_fingerprint_valid(srv_tls_fingerprint)) {
+		fprintf(stderr, "rtsrv: -C requires a valid dispatcher TLS fingerprint\n");
+		return 2;
+	    }
+#endif
 
 	    /* Note that the LIBPKG error logger can not be
 	     * "bu_log", as that can cause bu_log to be entered recursively.
@@ -328,26 +381,28 @@ main(int argc, char **argv)
     }
 
 #ifdef HAVE_OPENSSL_SSL_H
-    /* Attempt TLS handshake with the remrt dispatcher.  If remrt was
-     * built with TLS support it will do SSL_accept() on its side;
-     * if not (or the handshake fails) we continue as plaintext for
-     * backward compatibility.
-     * Skip TLS in IPC mode — the libpkg ipc transport runs on the same
-     * machine and the shared-memory or socketpair channel does not
-     * need encryption.                                               */
-    if (control_host) {
+    if (!control_host && srv_tls_fingerprint[0] != '\0') {
+	fprintf(stderr, "rtsrv: -C cannot be used with local IPC\n");
+	pkg_close(pcsrv);
+	return 2;
+    }
+
+    /* A certificate pin explicitly requests TLS.  Skip TLS in IPC mode --
+     * the libpkg transport is inherited locally and needs no encryption. */
+    if (control_host && srv_tls_fingerprint[0] != '\0') {
 	SSL_CTX *tls_ctx = remrt_tls_client_ctx();
-	if (tls_ctx) {
-	    if (remrt_tls_connect(tls_ctx, pcsrv) == REMRT_TLS_OK) {
-		if (debug)
-		    fprintf(stderr, "rtsrv: TLS established with %s\n",
-			    control_host);
-	    } else {
-		fprintf(stderr, "rtsrv: TLS handshake failed; "
-			"continuing as plaintext\n");
-	    }
-	    SSL_CTX_free(tls_ctx);
+	if (!tls_ctx || remrt_tls_connect(tls_ctx, pcsrv,
+		srv_tls_fingerprint) != REMRT_TLS_OK) {
+	    fprintf(stderr, "rtsrv: TLS negotiation with %s failed\n",
+		control_host);
+	    if (tls_ctx)
+		SSL_CTX_free(tls_ctx);
+	    pkg_close(pcsrv);
+	    return 1;
 	}
+	if (debug)
+	    fprintf(stderr, "rtsrv: TLS established with %s\n", control_host);
+	SSL_CTX_free(tls_ctx);
     }
 #endif
 
@@ -364,14 +419,44 @@ main(int argc, char **argv)
 #endif
 
     if (argc == 4) {
-	/* Slip one command to dispatcher */
-	(void)pkg_send(MSG_CMD, argv[3], strlen(argv[3])+1, pcsrv);
+	pkg_mux_t *reply_mux;
+	char *reply;
+	int wait_ret;
+	int command_status = 0;
 
-	/* Prevent chasing the package with an immediate TCP close */
-	bu_snooze(BU_SEC2USEC(1));
+	/* Authenticate before sending a one-shot dispatcher command. */
+	if (rtsrv_send_version() != BRLCAD_OK ||
+	    pkg_send(MSG_CMD, argv[3], strlen(argv[3])+1, pcsrv) < 0) {
+	    pkg_close(pcsrv);
+	    return 1;
+	}
+
+	reply_mux = pkg_mux_create();
+	if (!reply_mux || pkg_mux_add_conn(reply_mux, pcsrv) < 0) {
+	    pkg_mux_destroy(reply_mux);
+	    pkg_close(pcsrv);
+	    return 1;
+	}
+	wait_ret = pkg_mux_wait(reply_mux, RTSRV_CMD_REPLY_TIMEOUT_MS);
+	pkg_mux_destroy(reply_mux);
+	if (wait_ret <= 0) {
+	    fprintf(stderr, "rtsrv: dispatcher command response timed out\n");
+	    pkg_close(pcsrv);
+	    return 1;
+	}
+
+	reply = pkg_bwaitfor(MSG_CMD_REPLY, pcsrv);
+	if (reply) {
+	    if (!BU_STR_EQUAL(reply, REMRT_CMD_REPLY_OK)) {
+		fprintf(stderr, "rtsrv: dispatcher rejected command: %s\n",
+			reply);
+		command_status = 1;
+	    }
+	    free(reply);
+	}
 
 	pkg_close(pcsrv);
-	return 0;
+	return command_status;
     }
 
 #ifdef SO_SNDBUF
@@ -451,29 +536,8 @@ main(int argc, char **argv)
 	    perror("freopen STDERR");
     }
 
-    /* Send our version string, optionally including the session token.
-     * Format: PROTOCOL_VERSION REMRT_AUTH_TOKEN_PREFIX <hex-token>
-     * The token is only appended when one was supplied on the command
-     * line (i.e., this process was auto-launched by remrt via SSH).
-     */
-    {
-	struct bu_vls ver = BU_VLS_INIT_ZERO;
-	bu_vls_strcat(&ver, PROTOCOL_VERSION);
-	if (srv_auth_token[0] != '\0') {
-	    bu_vls_strcat(&ver, REMRT_AUTH_TOKEN_PREFIX);
-	    bu_vls_strcat(&ver, srv_auth_token);
-	}
-	if (pkg_send(MSG_VERSION,
-		     bu_vls_addr(&ver), bu_vls_strlen(&ver) + 1,
-		     pcsrv) < 0) {
-	    fprintf(stderr, "pkg_send MSG_VERSION error\n");
-	    bu_vls_free(&ver);
-	    return 1;
-	}
-	if (debug)
-	    fprintf(stderr, "PROTOCOL_VERSION='%s'\n", bu_vls_addr(&ver));
-	bu_vls_free(&ver);
-    }
+    if (rtsrv_send_version() != BRLCAD_OK)
+	return 1;
 
     /*
      * Now that the fork() has been done, it is safe to initialize
@@ -576,7 +640,19 @@ main(int argc, char **argv)
     }
 
     pkg_mux_destroy(input_mux);
-    return 0;		/* bu_exit(0, NULL) */
+    return rtsrv_exit_status;
+}
+
+
+void
+ph_cmd_reply(struct pkg_conn *UNUSED(pc), char *buf)
+{
+    fprintf(stderr, "rtsrv: dispatcher rejected connection: %s\n",
+	    buf ? buf : "unspecified error");
+    if (buf)
+	free(buf);
+    rtsrv_exit_status = 1;
+    rtsrv_connection_lost = 1;
 }
 
 

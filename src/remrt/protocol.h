@@ -46,6 +46,10 @@
 #define MSG_DIRBUILD_REPLY	16	/* response to MSG_DIRBUILD */
 #define MSG_GETTREES		17	/* request rt_gettrees() be called */
 #define MSG_GETTREES_REPLY	18	/* response to MSG_GETTREES */
+#define MSG_CMD_REPLY		19	/* dispatcher reports one-shot command status */
+
+#define REMRT_CMD_REPLY_OK "ok"
+#define REMRT_CMD_REPLY_TLS_REQUIRED "tls-required"
 
 /*
  * MSG_VERSION payload format when session authentication is in use:
