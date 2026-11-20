@@ -86,10 +86,21 @@ int main(int ac, char *av[])
     struct rt_wdb *wdbp = NULL;
     const char *filename = NULL;
     struct ged ged;
+    struct bu_vls schema_output = BU_VLS_INIT_ZERO;
+    int introspection;
     int informational;
     int ret;
 
     bu_setprogname(av[0]);
+
+    introspection = ged_cmd_introspect(&schema_output, "tire", ac - 1,
+	(const char * const *)(av + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s",
+	    bu_vls_cstr(&schema_output));
+	bu_vls_free(&schema_output);
+	return introspection > 0 ? 0 : 1;
+    }
 
     filename = DEFAULT_TIRE_FILENAME;
     ret = demo_file_arg(ac, av, &filename);
