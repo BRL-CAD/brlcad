@@ -124,7 +124,7 @@ OTHER C89 FIXES documented here:
 
    fix is to substitute 'h_addr_list[0]' for 'h_addr'
    affected several files (fixed):
-     ./src/util/ttcp.c
+     ./src/util/ttcp/ttcp.c
      ./src/libpkg/pkg.c
 ------------------------------------------------------------------
 

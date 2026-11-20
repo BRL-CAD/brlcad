@@ -1,0 +1,22 @@
+#ifndef TTCP_CONFIG_H
+#define TTCP_CONFIG_H
+
+#cmakedefine HAVE_ARPA_INET_H 1
+#cmakedefine HAVE_GETADDRINFO 1
+#cmakedefine HAVE_GETHOSTBYNAME 1
+#cmakedefine HAVE_GETRUSAGE 1
+#cmakedefine HAVE_GETTIMEOFDAY 1
+#cmakedefine HAVE_NETDB_H 1
+#cmakedefine HAVE_NETINET_IN_H 1
+#cmakedefine HAVE_SELECT 1
+#cmakedefine HAVE_SOCKLEN_T 1
+#cmakedefine HAVE_SYS_RESOURCE_H 1
+#cmakedefine HAVE_SYS_SELECT_H 1
+#cmakedefine HAVE_SYS_SOCKET_H 1
+#cmakedefine HAVE_SYS_TIME_H 1
+#cmakedefine HAVE_SYS_TYPES_H 1
+#cmakedefine HAVE_UNISTD_H 1
+#cmakedefine HAVE_WINDOWS_H 1
+#cmakedefine HAVE_WINSOCK2_H 1
+
+#endif

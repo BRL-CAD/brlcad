@@ -142,7 +142,7 @@ tea_nmg             src/proc-db/tea_nmg.c
 texturescale        src/util/texturescale.c
 tgf-g
 torii               src/proc-db/torii.c
-ttcp                src/util/ttcp.c
+ttcp                src/util/ttcp/ttcp.c
 tube                src/proc-db/tube.c
 u-a                 src/sig/u-a.c
 u-bw                src/sig/u-bw.c

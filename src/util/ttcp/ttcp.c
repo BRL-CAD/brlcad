@@ -19,11 +19,8 @@
  * Mike Muuss and Terry Slattery have released this code to the Public Domain.
  */
 
-/* intentionally does not include common.h or bio.h so it may remain
- * stand-alone.  however, it does include config so it knows when to
- * declare functions
- */
-#include "brlcad_config.h"
+/* Intentionally avoids BRL-CAD headers so it may remain stand-alone. */
+#include "ttcp_config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,6 +39,9 @@
 #endif
 #ifdef HAVE_WINDOWS_H
 #  include <windows.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_SOCKET_H
 #  include <sys/socket.h>
@@ -63,9 +63,6 @@
 #endif
 #ifdef HAVE_SYS_RESOURCE_H
 #  include <sys/resource.h>
-#endif
-#ifdef HAVE_SYS_TYPES_H
-#  include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_SELECT_H
 #  include <sys/select.h>
@@ -274,7 +271,7 @@ read_timer(char *str, int len)
     end = (double)timer_end.QuadPart / timer_freq.QuadPart;
     realt = end - win_timer0;
     cput = realt; /* No per-thread/user time on Windows w/o more work */
-    sprintf(str, "%g CPU secs in %g elapsed secs (Windows)", cput, realt);
+    snprintf(str, (size_t)len, "%g CPU secs in %g elapsed secs (Windows)", cput, realt);
     if ((int)strlen(str) >= len) str[len-1] = '\0';
     return cput;
 }
@@ -299,7 +296,7 @@ tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
 }
 
 static void
-prusage(struct rusage *r0, struct rusage *r1, struct timeval *e, struct timeval *b, char *outp)
+prusage(struct rusage *r0, struct rusage *r1, struct timeval *e, struct timeval *b, char *outp, size_t outlen)
 {
     const long centiseconds_per_second = 100;
     const long microseconds_per_centisecond = 10000;
@@ -312,10 +309,10 @@ prusage(struct rusage *r0, struct rusage *r1, struct timeval *e, struct timeval 
         (r1->ru_stime.tv_usec-r0->ru_stime.tv_usec)/microseconds_per_centisecond;
     long elapsed_centiseconds = (e->tv_sec-b->tv_sec)*centiseconds_per_second +
         (e->tv_usec-b->tv_usec)/microseconds_per_centisecond;
-    sprintf(outp, "%ld.%01ld user+sys, %ld ms real",
-            (long)(cpu_centiseconds/centiseconds_per_second),
-            (long)((cpu_centiseconds%centiseconds_per_second)/centiseconds_per_tenth),
-            elapsed_centiseconds*milliseconds_per_centisecond);
+    snprintf(outp, outlen, "%ld.%01ld user+sys, %ld ms real",
+             (long)(cpu_centiseconds/centiseconds_per_second),
+             (long)((cpu_centiseconds%centiseconds_per_second)/centiseconds_per_tenth),
+             elapsed_centiseconds*milliseconds_per_centisecond);
 }
 
 double
@@ -326,7 +323,7 @@ read_timer(char *str, int len)
     struct timeval td;
     getrusage(RUSAGE_SELF, &ru1);
     gettimeofday(&timedol, (struct timezone *)0);
-    prusage(&ru0, &ru1, &timedol, &time0, str);
+    prusage(&ru0, &ru1, &timedol, &time0, str, (size_t)len);
 
     /* Get real time */
     tvsub(&td, &timedol, &time0);
@@ -355,7 +352,7 @@ read_timer(char *str, int len)
     now = clock();
     realt = (double)(now - time0) / CLOCKS_PER_SEC;
     cput = realt;
-    sprintf(str, "%g CPU secs in %g elapsed secs (clock)", cput, realt);
+    snprintf(str, (size_t)len, "%g CPU secs in %g elapsed secs (clock)", cput, realt);
     if ((int)strlen(str) >= len) str[len-1] = '\0';
     return cput;
 }
@@ -521,21 +518,23 @@ main(int argc, char **argv)
             if (addr == NULL)
                 err("bad hostname");
             sinhim.sin_family = addr->h_addrtype;
-	    unsigned long addr_tmp;
-	    memcpy((char*)&addr_tmp, addr->h_addr_list[0], addr->h_length);
-            sinhim.sin_addr.s_addr = addr_tmp;
+            {
+                unsigned long addr_tmp;
+                memcpy((char *)&addr_tmp, addr->h_addr_list[0], addr->h_length);
+                sinhim.sin_addr.s_addr = addr_tmp;
+            }
 #else
             fprintf(stderr, "No hostname resolution available\n");
             exit(1);
 #endif
         }
-        sinhim.sin_port = htons(port);
+        sinhim.sin_port = htons((unsigned short)port);
         sinme.sin_port = 0;		/* free choice */
         sinme.sin_family = AF_INET; /* Ensure family is set for sender */
     } else {
         /* rcvr */
         sinme.sin_family = AF_INET; /* Ensure family is set for receiver */
-        sinme.sin_port =  htons(port);
+        sinme.sin_port = htons((unsigned short)port);
     }
 
     buf = (char *)malloc(buflen);
@@ -612,7 +611,7 @@ main(int argc, char **argv)
 #elif defined(HAVE_UNISTD_H)
                 (cnt = read(0, buf, buflen)) > 0
 #else
-                (cnt = fread(buf, 1, buflen, stdin)) > 0
+                (cnt = (int)fread(buf, 1, (size_t)buflen, stdin)) > 0
 #endif
                 && Nwrite(fd, buf, cnt) == cnt)
                 nbytes += cnt;
@@ -634,7 +633,7 @@ main(int argc, char **argv)
 #elif defined(HAVE_UNISTD_H)
                 if (write(1, buf, cnt) != cnt) break;
 #else
-                if (fwrite(buf, 1, cnt, stdout) != (size_t)cnt) break;
+                if (fwrite(buf, 1, (size_t)cnt, stdout) != (size_t)cnt) break;
 #endif
                 nbytes += cnt;
             }

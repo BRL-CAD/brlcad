@@ -130,7 +130,7 @@ brlcad_addexec(png-pix png-pix.c "libbn;libbu;PNG::PNG" FOLDER Util)
 target_include_directories(png-pix BEFORE PRIVATE ${PNG_INCLUDE_DIRS})
 brlcad_addexec(sun-pix sun-pix.c libbu FOLDER Util)
 brlcad_addexec(terrain terrain.c "libbn;libbu;${M_LIBRARY}" FOLDER Util)
-brlcad_addexec(ttcp ttcp.c "${SOCKET_LIBRARY};${NSL_LIBRARY};${NETWORK_LIBRARY};${WINSOCK_LIB}" FOLDER Util)
+add_subdirectory(ttcp)
 brlcad_addexec(wavelet wavelet.c "libdm;libbn;libbu" FOLDER Util)
 add_target_deps(wavelet dm_plugins)
 
@@ -142,7 +142,7 @@ brlcad_adddata(roots_example.c sample_applications)
 add_subdirectory(tests)
 
 cmakefiles(bombardier.h morphedit.tcl)
-cmakefiles(CMakeLists.txt)
+cmakefiles(CMakeLists.txt ttcp/CMakeLists.txt ttcp/ttcp.c ttcp/ttcp_config.h.in)
 
 # Local Variables:
 # tab-width: 8
