@@ -158,6 +158,31 @@ rt_obj_bounds(struct bu_vls *msgs,
                     point_t rpp_min,
                     point_t rpp_max);
 
+/** Ignore regions whose transformed bounds are not finite. */
+#define RT_OBJ_BOUNDS_IGNORE_INFINITE 0x1
+
+/**
+ * Calculate collective object bounds after applying model2bounds before
+ * primitive bounds are evaluated.  This produces tighter bounds in an
+ * arbitrary coordinate system than transforming the corners of the model
+ * space AABB returned by rt_obj_bounds().
+ *
+ * If model2bounds is NULL, the identity matrix is used.  By default,
+ * unbounded regions produce unbounded output.  Set
+ * RT_OBJ_BOUNDS_IGNORE_INFINITE for display-style framing that omits such
+ * regions when finite geometry is also present.
+ */
+RT_EXPORT extern int
+rt_obj_bounds_mat(struct bu_vls *msgs,
+		  struct db_i *dbip,
+		  int argc,
+		  const char *argv[],
+		  int use_air,
+		  const mat_t model2bounds,
+		  int flags,
+		  point_t rpp_min,
+		  point_t rpp_max);
+
 /**
  *
  * Given a region, return a matrix which maps model coordinates into
