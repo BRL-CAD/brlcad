@@ -896,6 +896,7 @@ fbo_open_tcl(void *UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     fbop->fbo_fbs.fbs_listener.fbsl_fbsp = &fbop->fbo_fbs;
     fbop->fbo_fbs.fbs_listener.fbsl_fd = -1;
     fbop->fbo_fbs.fbs_listener.fbsl_port = -1;
+    tclcad_configure_ipc_handlers(&fbop->fbo_fbs);
     fbop->fbo_interp = interp;
 
     BU_LIST_APPEND(objects, &fbop->l);
@@ -978,6 +979,8 @@ to_open_fbs(struct bview *gdvp, Tcl_Interp *interp)
 	Tcl_SetObjResult(interp, obj);
 	return TCL_ERROR;
     }
+
+    tclcad_configure_ipc_handlers(&tvd->gdv_fbs);
 
     return TCL_OK;
 }

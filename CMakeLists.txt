@@ -3069,6 +3069,15 @@ mark_as_advanced(BUILD_TESTING)
 # Set up the BRL-CAD wrapper around find_package
 include(BRLCAD_Find_Package)
 
+# TLS is optional, but all consumers must use one discovery result so imported
+# targets and feature tests remain visible throughout the source and regression
+# directory trees.
+brlcad_find_package(OpenSSL QUIET)
+set(_OPENSSL_FOUND FALSE)
+if(OpenSSL_FOUND OR OPENSSL_FOUND)
+  set(_OPENSSL_FOUND TRUE)
+endif()
+
 
 ###
 # traverse into the source tree with intentional ordering

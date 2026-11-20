@@ -34,6 +34,12 @@
 extern void *dm_backends;
 extern void *fb_backends;
 
+/* Authentication override for the current thread's remote fb_open call. */
+__BEGIN_DECLS
+extern const char *fb_auth_token_override(void);
+extern const char *fb_tls_pin_override(void);
+__END_DECLS
+
 #include <limits.h> /* For INT_MAX */
 #include <stdlib.h>
 

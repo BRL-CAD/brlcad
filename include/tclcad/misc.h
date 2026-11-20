@@ -165,10 +165,9 @@ TCLCAD_EXPORT extern struct application *to_rt_gettrees_application(struct ged *
  * Set up an IPC-based framebuffer server on @p fbsp without binding a
  * TCP port, using platform-appropriate Tcl event notification.
  *
- * On POSIX, Tcl_CreateFileHandler is used to watch the pipe fd.
- * On Windows (USE_TCL_CHAN), a recurring Tcl timer polling
- * PeekNamedPipe() is used because Tcl's Windows pipe channel driver
- * consumes data via a background reader thread.
+ * On POSIX, Tcl_CreateFileHandler watches the read descriptor.
+ * On Windows, a Tcl timer checks readiness with pkg_conn_poll()
+ * because Tcl's pipe channel consumes data in a background thread.
  *
  * If @p interp is non-NULL, the PKG_ADDR child-end address string
  * is stored in the Tcl variable fbserv(ipc_addr).

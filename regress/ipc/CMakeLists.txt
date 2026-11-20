@@ -19,7 +19,7 @@ set(ipc_runtime_path_modification "LD_LIBRARY_PATH=path_list_prepend:${CMAKE_BIN
 # -------------------------------------------------------------------
 if(TARGET libbu AND TARGET libdm AND TARGET libpkg AND TARGET libtclcad AND TARGET fbserv)
 
-  set(regress_ipc_libs libbu libdm libpkg libtclcad ${TCL_LIBRARY})
+  set(regress_ipc_libs libbu libdm libpkg libtclcad ${TCL_LIBRARY} Threads::Threads)
 
   brlcad_addexec(regress_ipc regress_ipc.cpp "${regress_ipc_libs}" TEST)
   if(TARGET regress_ipc)
@@ -37,7 +37,6 @@ if(TARGET libbu AND TARGET libdm AND TARGET libpkg AND TARGET libtclcad AND TARG
     )
     brlcad_regression_test(regress-ipc "regress_ipc;fbserv;libbu;libdm;libpkg;libtclcad" TEST_DEFINED)
     distclean(${CMAKE_CURRENT_BINARY_DIR}/regress-ipc.log)
-    distclean(${CMAKE_CURRENT_BINARY_DIR}/regress_ipc_fbserv.log)
 
   endif(TARGET regress_ipc)
 

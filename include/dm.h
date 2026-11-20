@@ -453,6 +453,8 @@ DM_EXPORT struct fb *fb_raw(const char *type);
 DM_EXPORT void  fb_put(struct fb *ifp);
 DM_EXPORT struct dm *fb_get_dm(struct fb *ifp);
 DM_EXPORT extern const char *fb_gettype(struct fb *ifp);
+/** Return non-zero when a remote framebuffer uses an inherited IPC endpoint. */
+DM_EXPORT extern int fb_is_remote_ipc(const struct fb *ifp);
 DM_EXPORT extern void fb_set_standalone(struct fb *ifp, int val);
 DM_EXPORT extern int fb_get_standalone(struct fb *ifp);
 DM_EXPORT extern int fb_get_max_width(struct fb *ifp);
@@ -483,6 +485,19 @@ DM_EXPORT extern int fb_bwreadrect(struct fb *ifp, int xmin, int ymin, int width
 DM_EXPORT extern int fb_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp);
 
 DM_EXPORT extern struct fb *fb_open(const char *file, int _width, int _height);
+/**
+ * Open a framebuffer using an authentication token scoped to this call.
+ * NULL preserves the default environment lookup; an empty token explicitly
+ * disables authentication for this call.
+ */
+DM_EXPORT extern struct fb *fb_open_with_auth(const char *file, int _width, int _height, const char *auth_token);
+/**
+ * Open a framebuffer using authentication and TLS credentials scoped to
+ * this call.  A non-NULL tls_pin requests TLS and must be a SHA-256
+ * public-key fingerprint encoded as 64 hexadecimal characters.
+ */
+DM_EXPORT extern struct fb *fb_open_with_auth_and_tls(const char *file,
+	int _width, int _height, const char *auth_token, const char *tls_pin);
 DM_EXPORT extern int fb_close(struct fb *ifp);
 DM_EXPORT extern int fb_close_existing(struct fb *ifp);
 DM_EXPORT extern int fb_genhelp(void);
@@ -595,6 +610,7 @@ typedef struct fb_internal FBIO;
 #define MSG_FBBWREADRECT  32            /**< @brief NEW in Release 4.6 */
 #define MSG_FBBWWRITERECT 33            /**< @brief NEW in Release 4.6 */
 #define MSG_FBAUTH        34            /**< @brief Session token authentication */
+#define MSG_FBTLS         35            /**< @brief TLS capability negotiation */
 
 #define MSG_DATA          20
 #define MSG_RETURN        21

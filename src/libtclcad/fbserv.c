@@ -58,9 +58,9 @@ comm_error(const char *str)
 static struct pkg_conn *
 fbs_makeconn(int fd, const struct pkg_switch *switchp)
 {
-    struct pkg_conn *pc = pkg_adopt_socket(fd, switchp, comm_error);
+    struct pkg_conn *pc = pkg_borrow_socket(fd, switchp, comm_error);
     if (pc == PKC_ERROR) {
-	comm_error("fbs_makeconn: pkg_adopt_socket failure\n");
+	comm_error("fbs_makeconn: pkg_borrow_socket failure\n");
     }
     return pc;
 }
@@ -204,6 +204,8 @@ tclcad_close_client_handler(struct fbserv_obj *fbsp, int sub)
 
 
 #ifdef USE_TCL_CHAN
+#  define TCL_IPC_POLL_MS 10
+
 /**
  * Poll callback for IPC clients on Windows (USE_TCL_CHAN path).
  *
@@ -212,12 +214,12 @@ tclcad_close_client_handler(struct fbserv_obj *fbsp, int sub)
  * that CONSUMES data from the pipe into Tcl's internal buffer -- which
  * prevents pkg_process() from reading the data via the raw fd.
  *
- * Instead, we install a recurring Tcl timer that uses PeekNamedPipe()
- * (non-destructive) to check whether data is available.  When data is
- * found the same fbs_existing_client_handler() that POSIX file-handler
- * callbacks fire is called directly.  10 ms polling corresponds to the
- * 100 fps maximum framebuffer refresh rate; it adds negligible overhead
- * compared to the actual rendering time.
+ * Instead, we install a recurring Tcl timer that uses libpkg's
+ * transport-aware, non-destructive readiness poll.  When data is found the
+ * same fbs_existing_client_handler() that POSIX file-handler callbacks fire
+ * is called directly.  10 ms polling corresponds to the 100 fps maximum
+ * framebuffer refresh rate; it adds negligible overhead compared to the
+ * actual rendering time.
  */
 static void
 tcl_ipc_poll_win(ClientData cd)
@@ -230,27 +232,19 @@ tcl_ipc_poll_win(ClientData cd)
 	return;
     }
 
-    /* Peek at the pipe without consuming data. */
     {
-	int fd = fbscp->fbsc_fd;
-	int has_data = 0;
-	intptr_t handle = (fd >= 0) ? _get_osfhandle(fd) : -1;
-	HANDLE h = (HANDLE)handle;
-	if (h != INVALID_HANDLE_VALUE) {
-	    DWORD avail = 0;
-	    if (PeekNamedPipe(h, NULL, 0, NULL, &avail, NULL) && avail > 0)
-		has_data = 1;
-	}
+	int ready = pkg_conn_poll(fbscp->fbsc_pkg);
 
 	/* Reschedule BEFORE calling the handler: the handler may call
 	 * drop_client() → tclcad_close_ipc_client_win() which cancels
 	 * the new token, so we must store it first.                       */
 	{
-	    Tcl_TimerToken tok = Tcl_CreateTimerHandler(10, tcl_ipc_poll_win, cd);
+	    Tcl_TimerToken tok = Tcl_CreateTimerHandler(TCL_IPC_POLL_MS,
+		tcl_ipc_poll_win, cd);
 	    fbscp->fbsc_chan = (void *)tok;
 	}
 
-	if (has_data)
+	if (ready)
 	    fbs_existing_client_handler(cd, TCL_READABLE);
     }
 }
@@ -263,7 +257,7 @@ static void
 tclcad_open_ipc_client_win(struct fbserv_obj *fbsp, int i, void *UNUSED(data))
 {
     Tcl_TimerToken tok =
-	Tcl_CreateTimerHandler(10, tcl_ipc_poll_win,
+	Tcl_CreateTimerHandler(TCL_IPC_POLL_MS, tcl_ipc_poll_win,
 			       (ClientData)&fbsp->fbs_clients[i]);
     fbsp->fbs_clients[i].fbsc_chan    = (void *)tok;
     fbsp->fbs_clients[i].fbsc_handler = NULL;
@@ -285,33 +279,12 @@ tclcad_close_ipc_client_win(struct fbserv_obj *fbsp, int sub)
 #endif /* USE_TCL_CHAN */
 
 
-/**
- * Phase 4: IPC listen path for libtclcad.
- *
- * Sets up an IPC-based (pipe/socketpair) framebuffer server on @p fbsp
- * without binding a TCP port.
- *
- * On POSIX, tclcad_open_client_handler / tclcad_close_client_handler use
- * Tcl_CreateFileHandler / Tcl_DeleteFileHandler which work for any fd.
- *
- * On Windows (USE_TCL_CHAN), Tcl_CreateFileHandler is a no-op.  Wrapping
- * a pipe HANDLE in a Tcl channel via Tcl_MakeFileChannel is also not viable
- * because Tcl's Windows pipe channel driver spawns a background reader
- * thread that CONSUMES data from the pipe into its own buffer, preventing
- * pkg_process() from reading via the raw fd.  Instead we install a
- * recurring Tcl timer (tclcad_open_ipc_client_win / tcl_ipc_poll_win) that
- * uses PeekNamedPipe() to check availability without consuming data, then
- * calls fbs_existing_client_handler() when data is ready.
- *
- * If the open succeeds and @p interp is non-NULL, the PKG_ADDR child-end
- * address string is stored in the Tcl variable fbserv(ipc_addr) so that
- * Tcl scripts (rtwizard, MGED's rt.tcl) can pass it to subprocesses.
- *
- * @return BRLCAD_OK on success, BRLCAD_ERROR on failure.
- */
-TCLCAD_EXPORT int
-tclcad_listen_ipc(struct fbserv_obj *fbsp, Tcl_Interp *interp)
+TCLCAD_EXPORT void
+tclcad_configure_ipc_handlers(struct fbserv_obj *fbsp)
 {
+    if (!fbsp)
+	return;
+
 #ifdef USE_TCL_CHAN
     /* Windows: use a timer-based poll to avoid Tcl's pipe reader thread
      * consuming data before pkg_process() can read it.                   */
@@ -324,14 +297,20 @@ tclcad_listen_ipc(struct fbserv_obj *fbsp, Tcl_Interp *interp)
     fbsp->fbs_open_ipc_client_handler  = tclcad_open_client_handler;
     fbsp->fbs_close_ipc_client_handler = tclcad_close_client_handler;
 #endif
+}
+
+
+TCLCAD_EXPORT int
+tclcad_listen_ipc(struct fbserv_obj *fbsp, Tcl_Interp *interp)
+{
+    tclcad_configure_ipc_handlers(fbsp);
 
     if (fbs_open_ipc(fbsp) != BRLCAD_OK) {
 	bu_log("tclcad_listen_ipc: fbs_open_ipc failed\n");
 	return BRLCAD_ERROR;
     }
 
-    /* Phase 6 support: expose the child-end address as a Tcl variable so
-     * rtwizard / MGED Tcl scripts can pass it to spawned subprocesses.     */
+    /* Expose the child-end address for Tcl code that launches a subprocess. */
     if (interp) {
 	const char *addr_env = fbs_ipc_child_addr_env(fbsp);
 	if (addr_env) {

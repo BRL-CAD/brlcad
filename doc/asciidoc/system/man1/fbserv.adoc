@@ -56,7 +56,8 @@ Clients reach an IPC server using a framebuffer name of the form
 *-T*::
   Enable TLS encryption for protocol traffic. Requires an
   OpenSSL-enabled build; the *FBSERV_TLS* environment variable has the
-  same effect.
+  same effect. Clients must set *FBSERV_TLS_PIN* to the SHA-256
+  public-key pin printed by *fbserv*.
 
 *-A*::
   Strict authentication: reject any client that does not present a valid
@@ -97,6 +98,15 @@ fresh token at startup and prints it to standard error. With *-A*,
 clients that do not authenticate are rejected; without it, unauthenticated
 clients are still accepted.
 
+When TLS is enabled, *fbserv* prints the SHA-256 fingerprint of its
+certificate public key. Set *FBSERV_TLS=1* and *FBSERV_TLS_PIN* to that
+64-character value in each client environment. The pin authenticates the
+server before the client sends its session token. A missing or mismatched
+pin, TLS setup failure, or a peer without TLS support terminates the
+connection; there is no plaintext fallback. *FBSERV_TLS_CERT* and
+*FBSERV_TLS_KEY* may name an existing PEM certificate chain and matching
+private key instead of using the generated per-session certificate.
+
 [[examples]]
 == EXAMPLES
 
@@ -119,12 +129,14 @@ the same framebuffer and the image survives between client connections.
 ----
 $ export FBSERV_TOKEN=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 $ fbserv -T -A -p 0 -F /dev/wgl &
+$ export FBSERV_TLS=1
+$ export FBSERV_TLS_PIN=<pin-printed-by-fbserv>
 $ rt -F 0 model.g object
 ----
 Run *fbserv* in encrypted, strictly authenticated mode. Both the server
-and every client must share the same *FBSERV_TOKEN*; the *-T* flag enables
-TLS (in an OpenSSL-enabled build) and *-A* rejects any client that fails
-to authenticate.
+and every client share *FBSERV_TOKEN*. Clients also request TLS and pin the
+server identity using the value printed at server startup. The *-A* option
+rejects any client that fails to authenticate.
 ====
 
 [[see_also]]

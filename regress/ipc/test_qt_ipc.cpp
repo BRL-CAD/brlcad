@@ -20,20 +20,20 @@
 /**
  * @file test_qt_ipc.cpp
  *
- * Qt IPC mechanism tests — validates the QSocketNotifier-based IPC path
+ * Qt IPC mechanism tests — validates the event-loop notification path
  * that qged uses for the ert command's rt→framebuffer pixel data flow
  *
  * Two test groups:
  *
- *   Group A: QSocketNotifier delivery
+ *   Group A: Qt notification delivery
  *     Replicates exactly the pattern used by QFBIPCSocket in
- *     src/qged/fbserv.cpp.  Registers a QSocketNotifier on the parent-end
- *     read fd returned by fbs_open_ipc(), writes from the child end, then
- *     pumps QCoreApplication::processEvents() and verifies the handler fires.
+ *     src/qged/fbserv.cpp.  Watches the parent connection returned by
+ *     fbs_open_ipc(), writes from the child end, and verifies the Qt
+ *     event loop invokes the handler.
  *
  *   Group B: fbs_open_ipc() + inline Qt client handler smoke test
  *     Calls fbs_open_ipc() with an inline open/close handler pair that
- *     mirrors qdm_open_ipc_sw_client_handler(), verifies QSocketNotifier is
+ *     mirrors qdm_open_ipc_sw_client_handler(), verifies the notifier is
  *     created, then sends a MSG_FBCLOSE frame from the child end and confirms
  *     pkg_suckin / pkg_process run without error.
  *
@@ -55,14 +55,16 @@
 #include "bio.h"
 
 #include <QCoreApplication>
-#include <QSocketNotifier>
+#include <QEventLoop>
 #include <QTimer>
+#ifndef _WIN32
+#  include <QSocketNotifier>
+#endif
 
 /* bu/ipc.h removed - transport handled by libpkg */
 #include "bu/str.h"
 #include "bu/env.h"
 #include "bu/app.h"
-#include "bu/snooze.h"
 #include "dm/fbserv.h"
 #include "dm.h"    /* MSG_FBCLOSE, NET_LONG_LEN */
 #include "pkg.h"
@@ -95,6 +97,40 @@ static bool g_verbose    = false;
     }                                                                      \
 } while (0)
 
+#ifdef _WIN32
+using IpcNotifier = QTimer;
+static const int IPC_POLL_MS = 10;
+#else
+using IpcNotifier = QSocketNotifier;
+#endif
+
+static bool
+notifier_enabled(const IpcNotifier *notifier)
+{
+    if (!notifier)
+	return false;
+#ifdef _WIN32
+    return notifier->isActive();
+#else
+    return notifier->isEnabled();
+#endif
+}
+
+static bool
+wait_for_notification(const int &calls)
+{
+    const int NOTIFICATION_TIMEOUT_MS = 2000;
+    QEventLoop loop;
+    QTimer timeout;
+    timeout.setSingleShot(true);
+    timeout.start(NOTIFICATION_TIMEOUT_MS);
+
+    /* Wait for events so the Windows polling timer can fire. */
+    while (calls == 0 && timeout.isActive())
+	loop.processEvents(QEventLoop::AllEvents | QEventLoop::WaitForMoreEvents);
+    return calls > 0;
+}
+
 /* ------------------------------------------------------------------ */
 /* Stub fbserv_obj callbacks (server-TCP path — not exercised here)   */
 /* ------------------------------------------------------------------ */
@@ -112,20 +148,14 @@ noop_close_client(struct fbserv_obj *, int) {}
 
 
 /* ================================================================== */
-/* Group A: QSocketNotifier delivery                                   */
+/* Group A: Qt event-loop notification delivery                        */
 /* ================================================================== */
 
-/*
- * This counter is incremented each time the notifier slot fires.
- * It lives at file scope so the lambda capture can reach it.
- */
-static int g_notifier_fired = 0;
-
 static void
-test_qsocketnotifier_delivery(void)
+test_qt_notification_delivery(void)
 {
     if (g_verbose)
-	fprintf(stdout, "\n[Group A] QSocketNotifier delivery\n");
+	fprintf(stdout, "\n[Group A] Qt IPC notification delivery\n");
 
     /* ---- 1. Set up a minimal fbserv_obj ---- */
     struct fbserv_obj fbs;
@@ -158,19 +188,29 @@ test_qsocketnotifier_delivery(void)
     TEST("A3: fbsc_fd is valid (>= 0)", parent_rfd >= 0);
     if (!ppc || parent_rfd < 0) { fbs_close(&fbs); return; }
 
-    /* ---- 4. Create a QSocketNotifier on the parent read fd ----
+    /* ---- 4. Watch the parent connection for input ----
      * This mirrors exactly what qdm_open_ipc_sw_client_handler does
      * in src/qged/fbserv.cpp.                                       */
-    g_notifier_fired = 0;
+    int notifier_fired = 0;
+#ifdef _WIN32
+    QTimer notifier;
+    notifier.setInterval(IPC_POLL_MS);
+    QObject::connect(&notifier, &QTimer::timeout, [&]() {
+	if (pkg_conn_poll(ppc) != 1)
+	    return;
+	notifier_fired++;
+	notifier.stop();
+    });
+    notifier.start();
+#else
     QSocketNotifier notifier(parent_rfd, QSocketNotifier::Read);
-    QObject::connect(&notifier, &QSocketNotifier::activated,
-		     [&](QSocketDescriptor) {
-			 g_notifier_fired++;
-			 notifier.setEnabled(false); /* one-shot for the test */
-		     });
+    QObject::connect(&notifier, &QSocketNotifier::activated, [&]() {
+	notifier_fired++;
+	notifier.setEnabled(false);
+    });
+#endif
 
-    TEST("A4: QSocketNotifier created (enabled by default)",
-	 notifier.isEnabled());
+    TEST("A4: Qt IPC notification enabled", notifier_enabled(&notifier));
 
     /* ---- 5. Write from the child end to make parent_rfd readable ---- */
     struct pkg_conn *ce = fbs.fbs_listener.fbsl_ipc_child;
@@ -186,13 +226,9 @@ test_qsocketnotifier_delivery(void)
     TEST("A7: write from child end succeeds", n == (ssize_t)(sizeof(payload)-1));
     if (n < 0) { fbs_close(&fbs); return; }
 
-    /* ---- 6. Pump the Qt event loop until the notifier fires ---- */
-    int loops = 0;
-    while (g_notifier_fired == 0 && loops < 200) {
-	QCoreApplication::processEvents(QEventLoop::AllEvents, 10);
-	loops++;
-    }
-    TEST("A8: QSocketNotifier fired after data available", g_notifier_fired > 0);
+    /* ---- 6. Let Qt dispatch the IPC callback ---- */
+    TEST("A8: Qt IPC notification fired after data available",
+	 wait_for_notification(notifier_fired));
 
     fbs_close(&fbs);
 }
@@ -204,13 +240,27 @@ test_qsocketnotifier_delivery(void)
 
 /* State tracked by the inline handler */
 struct QtIpcState {
-    QSocketNotifier *notifier = nullptr;
-    int             ind       = -1;
-    struct fbserv_obj *fbsp   = nullptr;
-    int             pkgproc_ret = 0;
-    int             handler_calls = 0;
+    IpcNotifier *notifier = nullptr;
+    int ind = -1;
+    struct fbserv_obj *fbsp = nullptr;
+    int frames_processed = 0;
+    int handler_calls = 0;
 };
 static QtIpcState g_qipc;
+
+static void
+qt_process_ipc(void)
+{
+    g_qipc.handler_calls++;
+#ifdef _WIN32
+    g_qipc.notifier->stop();
+#else
+    g_qipc.notifier->setEnabled(false);
+#endif
+    struct pkg_conn *pc = g_qipc.fbsp->fbs_clients[g_qipc.ind].fbsc_pkg;
+    if (pc && pkg_suckin(pc) > 0)
+	g_qipc.frames_processed = pkg_process(pc);
+}
 
 static void
 qt_open_ipc_client_handler(struct fbserv_obj *fbsp, int i, void *)
@@ -218,21 +268,19 @@ qt_open_ipc_client_handler(struct fbserv_obj *fbsp, int i, void *)
     /* Replicates qdm_open_ipc_sw_client_handler */
     g_qipc.ind  = i;
     g_qipc.fbsp = fbsp;
-    int fd = fbsp->fbs_clients[i].fbsc_fd;
-    g_qipc.notifier = new QSocketNotifier(fd, QSocketNotifier::Read);
-    QObject::connect(g_qipc.notifier, &QSocketNotifier::activated,
-		     [&](QSocketDescriptor) {
-			 g_qipc.handler_calls++;
-			 g_qipc.notifier->setEnabled(false);
-			 /* Drain one PKG frame — mirrors QFBIPCSocket::ipc_handler */
-			 struct pkg_conn *pc = g_qipc.fbsp->fbs_clients[g_qipc.ind].fbsc_pkg;
-			 if (pc) {
-			     if (pkg_suckin(pc) <= 0)
-				 g_qipc.pkgproc_ret = -1;
-			     else
-				 g_qipc.pkgproc_ret = pkg_process(pc);
-			 }
-		     });
+#ifdef _WIN32
+    struct pkg_conn *pc = fbsp->fbs_clients[i].fbsc_pkg;
+    g_qipc.notifier = new QTimer;
+    g_qipc.notifier->setInterval(IPC_POLL_MS);
+    QObject::connect(g_qipc.notifier, &QTimer::timeout, [pc]() {
+	if (pkg_conn_poll(pc) == 1)
+	    qt_process_ipc();
+    });
+    g_qipc.notifier->start();
+#else
+    g_qipc.notifier = new QSocketNotifier(fbsp->fbs_clients[i].fbsc_fd, QSocketNotifier::Read);
+    QObject::connect(g_qipc.notifier, &QSocketNotifier::activated, &qt_process_ipc);
+#endif
 }
 
 static void
@@ -279,9 +327,8 @@ test_qt_handler_pkgproc(void)
     TEST("B1: fbs_open_ipc with Qt handler returns BRLCAD_OK", rc == BRLCAD_OK);
     if (rc != BRLCAD_OK) return;
 
-    TEST("B2: QSocketNotifier created by handler", g_qipc.notifier != nullptr);
-    TEST("B3: QSocketNotifier enabled",
-	 g_qipc.notifier && g_qipc.notifier->isEnabled());
+    TEST("B2: Qt notifier created by handler", g_qipc.notifier != nullptr);
+    TEST("B3: Qt notifier enabled", notifier_enabled(g_qipc.notifier));
 
     struct pkg_conn *ce = fbs.fbs_listener.fbsl_ipc_child;
     TEST("B4: fbsl_ipc_child stored", ce != nullptr);
@@ -316,19 +363,10 @@ test_qt_handler_pkgproc(void)
     TEST("B6: child sends PKG frame", nw == (ssize_t)sizeof(frame));
     if (nw < 0) { fbs_close(&fbs); return; }
 
-    /* ---- 4. Pump Qt event loop → QSocketNotifier fires → pkg_suckin ---- */
-    int loops = 0;
-    while (g_qipc.handler_calls == 0 && loops < 200) {
-	QCoreApplication::processEvents(QEventLoop::AllEvents, 10);
-	loops++;
-    }
+    /* ---- 4. Let Qt dispatch the IPC callback ---- */
     TEST("B7: Qt handler called after PKG frame written",
-	 g_qipc.handler_calls > 0);
-    /* pkg_suckin + pkg_process return value may be < 0 if fbserv has no
-     * handler registered for MSG_FBCLOSE in this minimal test setup.
-     * The important assertion is that the handler was invoked at all.    */
-    TEST("B8: pkg_suckin was executed (handler called pkg_suckin)",
-	 g_qipc.handler_calls > 0);
+	 wait_for_notification(g_qipc.handler_calls));
+    TEST("B8: Qt handler processed one PKG frame", g_qipc.frames_processed == 1);
 
     fbs_close(&fbs);
 }
@@ -357,23 +395,13 @@ main(int argc, char *argv[])
     if (g_verbose)
 	fprintf(stdout, "=== Qt IPC mechanism tests ===\n");
 
-#ifdef _WIN32
-    /* QSocketNotifier on Windows only supports WinSock sockets, not
-     * anonymous pipe handles.  The IPC transport uses Windows pipes
-     * (CreatePipe) whose CRT fds cannot be watched via QSocketNotifier.
-     * Skip the test body to avoid spurious failures on Windows builds. */
-    fprintf(stdout, "Qt IPC tests: skipped on Windows "
-	    "(QSocketNotifier does not support pipe fds)\n");
-    return 0;
-#else
-    test_qsocketnotifier_delivery();
+    test_qt_notification_delivery();
     test_qt_handler_pkgproc();
 
     fprintf(stdout, "\nQt IPC tests: %d/%d passed\n", g_tests_pass, g_tests_run);
 
     int failures = g_tests_run - g_tests_pass;
     return (failures == 0) ? 0 : 1;
-#endif
 }
 
 /*

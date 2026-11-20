@@ -47,10 +47,6 @@
 #define FBSERV_AUTH_SERVER
 #include "../fbserv/auth.h"
 
-/* Enable TLS server-side functions */
-#define FBSERV_TLS_IMPL
-#include "../fbserv/tls_wrap.h"
-
 /**
  * Helper: extract the current framebuffer pointer from a pkg_conn
  * whose pkc_server_data points to the owning fbserv_client.
@@ -67,9 +63,12 @@ _fbs_conn_fb(struct pkg_conn *pcp)
     return fbscp->fbsc_fbsp->fbs_fbp;
 }
 
-static void
-drop_client(struct fbserv_obj *fbsp, int sub)
+void
+fbs_drop_client(struct fbserv_obj *fbsp, int sub)
 {
+    if (!fbsp || sub < 0 || sub >= MAX_CLIENTS)
+	return;
+
     if (fbsp->fbs_clients[sub].fbsc_pkg != PKC_NULL) {
 	pkg_close(fbsp->fbs_clients[sub].fbsc_pkg);
 	fbsp->fbs_clients[sub].fbsc_pkg = PKC_NULL;
@@ -88,6 +87,24 @@ drop_client(struct fbserv_obj *fbsp, int sub)
     fbsp->fbs_clients[sub].fbsc_auth_ok = 0;
     fbsp->fbs_clients[sub].fbsc_pending_drop = 0;
     fbsp->fbs_clients[sub].fbsc_is_ipc = 0;
+}
+
+
+static void
+fbs_rfbtls(struct pkg_conn *pcp, char *buf)
+{
+    struct fbserv_client *fbscp;
+    const char unsupported = 0;
+
+    if (!pcp || !pcp->pkc_server_data) {
+	if (buf) (void)free(buf);
+	return;
+    }
+
+    fbscp = (struct fbserv_client *)pcp->pkc_server_data;
+    (void)pkg_send(MSG_FBTLS, &unsupported, 1, pcp);
+    fbscp->fbsc_pending_drop = 1;
+    if (buf) (void)free(buf);
 }
 
 
@@ -191,7 +208,7 @@ fbs_rfbauth(struct pkg_conn *pcp, char *buf)
 	bu_log("fbserv: MSG_FBAUTH token mismatch from client — dropping\n");
 	/* Use deferred drop: pkg_process still holds a reference to pcp.
 	 * Setting fbsc_pending_drop causes fbs_existing_client_handler to
-	 * call drop_client() after pkg_process() returns. */
+	 * call fbs_drop_client() after pkg_process() returns. */
 	fbscp->fbsc_pending_drop = 1;
     }
 
@@ -202,47 +219,32 @@ fbs_rfbauth(struct pkg_conn *pcp, char *buf)
 static void
 fbs_rfbopen(struct pkg_conn *pcp, char *buf)
 {
-    struct fbserv_client *fbscp;
-    struct fbserv_obj *fbsp;
+    struct fbserv_client *fbscp = pcp ? (struct fbserv_client *)pcp->pkc_server_data : NULL;
+    struct fbserv_obj *fbsp = fbscp ? fbscp->fbsc_fbsp : NULL;
     struct fb *curr_fbp = _fbs_conn_fb(pcp);
     char rbuf[5*NET_LONG_LEN+1] = {0};
-    int want;
 
-    /* Auth check: if the server requires authentication and this
-     * connection has not sent a valid MSG_FBAUTH, reject with an
-     * error return code and close the connection. */
-    if (pcp && pcp->pkc_server_data) {
-	fbscp = (struct fbserv_client *)pcp->pkc_server_data;
-	fbsp  = fbscp->fbsc_fbsp;
-	if (fbsp && fbsp->fbs_require_auth && !fbscp->fbsc_auth_ok) {
+    if (!curr_fbp || (fbsp && fbsp->fbs_require_auth && !fbscp->fbsc_auth_ok)) {
+	if (!curr_fbp)
+	    bu_log("fbserv: MSG_FBOPEN rejected because no framebuffer is attached\n");
+	else
 	    bu_log("fbserv: unauthenticated MSG_FBOPEN rejected (strict mode)\n");
-	    (void)pkg_plong(&rbuf[0*NET_LONG_LEN], -1);	/* failure */
-	    (void)pkg_plong(&rbuf[1*NET_LONG_LEN], 0);
-	    (void)pkg_plong(&rbuf[2*NET_LONG_LEN], 0);
-	    (void)pkg_plong(&rbuf[3*NET_LONG_LEN], 0);
-	    (void)pkg_plong(&rbuf[4*NET_LONG_LEN], 0);
-	    pkg_send(MSG_RETURN, rbuf, 5*NET_LONG_LEN, pcp);
-	    /* Deferred drop: pkg_process still holds pcp; close after return */
+	(void)pkg_plong(rbuf, -1);
+	/* pkg_process may still be dispatching input on this connection. */
+	if (fbscp)
 	    fbscp->fbsc_pending_drop = 1;
-	    if (buf) (void)free(buf);
-	    return;
-	}
+    } else {
+	(void)pkg_plong(&rbuf[1*NET_LONG_LEN], curr_fbp->i->if_max_width);
+	(void)pkg_plong(&rbuf[2*NET_LONG_LEN], curr_fbp->i->if_max_height);
+	(void)pkg_plong(&rbuf[3*NET_LONG_LEN], curr_fbp->i->if_width);
+	(void)pkg_plong(&rbuf[4*NET_LONG_LEN], curr_fbp->i->if_height);
     }
 
-    /* Don't really open a new framebuffer --- use existing one */
-    (void)pkg_plong(&rbuf[0*NET_LONG_LEN], 0);	/* ret */
-    (void)pkg_plong(&rbuf[1*NET_LONG_LEN], curr_fbp->i->if_max_width);
-    (void)pkg_plong(&rbuf[2*NET_LONG_LEN], curr_fbp->i->if_max_height);
-    (void)pkg_plong(&rbuf[3*NET_LONG_LEN], curr_fbp->i->if_width);
-    (void)pkg_plong(&rbuf[4*NET_LONG_LEN], curr_fbp->i->if_height);
-
-    want = 5*NET_LONG_LEN;
-    if (pkg_send(MSG_RETURN, rbuf, want, pcp) != want)
+    if (pcp && pkg_send(MSG_RETURN, rbuf, 5*NET_LONG_LEN, pcp) != 5*NET_LONG_LEN)
 	bu_log("pkg_send fb_open reply\n");
 
-    if (buf) {
+    if (buf)
 	(void)free(buf);
-    }
 }
 
 
@@ -911,6 +913,17 @@ fbs_generate_token(struct fbserv_obj *fbsp)
 
 
 int
+fbs_create_token(char *token, size_t token_size)
+{
+    if (!token || token_size < FBSERV_AUTH_TOKEN_LEN + 1)
+	return BRLCAD_ERROR;
+
+    fbserv_generate_token(token);
+    return BRLCAD_OK;
+}
+
+
+int
 fbs_open(struct fbserv_obj *fbsp, int port)
 {
     int i;
@@ -963,9 +976,10 @@ fbs_close(struct fbserv_obj *fbsp)
 
     /* first drop all clients */
     for (i = 0; i < MAX_CLIENTS; ++i)
-	drop_client(fbsp, i);
+	fbs_drop_client(fbsp, i);
 
-    (*fbsp->fbs_close_server_handler)(fbsp);
+    if (fbsp->fbs_close_server_handler)
+	(*fbsp->fbs_close_server_handler)(fbsp);
 
     /* Close the TCP listener if one was created by fbs_listen_on_port(). */
     if (fbsp->fbs_listener.fbsl_listener) {
@@ -977,11 +991,7 @@ fbs_close(struct fbserv_obj *fbsp)
     fbsp->fbs_listener.fbsl_fd = -1;
     fbsp->fbs_listener.fbsl_port = -1;
 
-    /* Close the IPC child-end channel if one was created by fbs_open_ipc(). */
-    if (fbsp->fbs_listener.fbsl_ipc_child) {
-	pkg_close(fbsp->fbs_listener.fbsl_ipc_child);
-	fbsp->fbs_listener.fbsl_ipc_child = NULL;
-    }
+    fbs_close_ipc_child(fbsp);
 
     return BRLCAD_OK;
 }
@@ -990,6 +1000,7 @@ struct pkg_switch *
 fbs_pkg_switch(void)
 {
     static struct pkg_switch pswitch[] = {
+	{ MSG_FBTLS,                         fbs_rfbtls,           "TLS Capability", NULL },
 	{ MSG_FBAUTH,                        fbs_rfbauth,          "Session Authentication", NULL },
 	{ MSG_FBOPEN, fbs_rfbopen, "Open Framebuffer", NULL },
 	{ MSG_FBCLOSE, fbs_rfbclose, "Close Framebuffer", NULL },
@@ -1080,13 +1091,16 @@ fbs_existing_client_handler(void *clientData, int UNUSED(mask))
 
 	fbsp->fbs_clients[i].fbsc_pkg->pkc_server_data = (void *)&fbsp->fbs_clients[i];
 
-	if ((pkg_process(fbsp->fbs_clients[i].fbsc_pkg)) < 0)
+	if ((pkg_process(fbsp->fbs_clients[i].fbsc_pkg)) < 0) {
 	    bu_log("pkg_process error encountered (1)\n");
+	    fbs_drop_client(fbsp, i);
+	    continue;
+	}
 
 	/* Act on deferred drop requested by a handler (e.g. token mismatch).
 	 * We must not call pkg_close() from inside pkg_process's loop. */
 	if (fbsp->fbs_clients[i].fbsc_pending_drop) {
-	    drop_client(fbsp, i);
+	    fbs_drop_client(fbsp, i);
 	    continue;
 	}
 
@@ -1095,17 +1109,20 @@ fbs_existing_client_handler(void *clientData, int UNUSED(mask))
 
 	if (pkg_suckin(fbsp->fbs_clients[i].fbsc_pkg) <= 0) {
 	    /* Probably EOF */
-	    drop_client(fbsp, i);
+	    fbs_drop_client(fbsp, i);
 
 	    continue;
 	}
 
-	if ((pkg_process(fbsp->fbs_clients[i].fbsc_pkg)) < 0)
+	if ((pkg_process(fbsp->fbs_clients[i].fbsc_pkg)) < 0) {
 	    bu_log("pkg_process error encountered (2)\n");
+	    fbs_drop_client(fbsp, i);
+	    continue;
+	}
 
 	/* Deferred drop from second-pass handler */
 	if (fbsp->fbs_clients[i].fbsc_pending_drop) {
-	    drop_client(fbsp, i);
+	    fbs_drop_client(fbsp, i);
 	    continue;
 	}
     }
@@ -1142,20 +1159,6 @@ fbs_new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp, void *data)
 	 * reach back to the fbserv_obj (needed for auth checks). */
 	pcp->pkc_server_data = (void *)&fbsp->fbs_clients[i];
 
-#ifdef HAVE_OPENSSL_SSL_H
-	/* Optional TLS: if the server has a TLS context, perform the
-	 * server-side handshake before the first PKG message is read. */
-	if (fbsp->fbs_tls_ctx) {
-	    if (fbserv_tls_accept((SSL_CTX *)fbsp->fbs_tls_ctx, pcp) != FBSERV_TLS_OK) {
-		bu_log("fbs_new_client: TLS handshake failed — dropping client\n");
-		pkg_close(pcp);
-		fbsp->fbs_clients[i].fbsc_pkg = PKC_NULL;
-		fbsp->fbs_clients[i].fbsc_fd = 0;
-		return -1;
-	    }
-	}
-#endif
-
 	(*fbsp->fbs_open_client_handler)(fbsp, i, data);
 
 	return i;
@@ -1182,16 +1185,27 @@ fbs_open_ipc(struct fbserv_obj *fbsp)
     struct pkg_conn *pc;
     int i;
 
+    fbs_close_ipc_child(fbsp);
+
     if (pkg_pair(&pe, &ce, fbs_pkg_switch(), _fbs_ipc_comm_error) != 0) {
 	if (fbsp->msgs)
 	    bu_vls_printf(fbsp->msgs, "fbs_open_ipc: pkg_pair failed\n");
 	return BRLCAD_ERROR;
     }
 
-    /* Move child-end fd(s) above bu_process_create()'s close(3..19) sweep
-     * so the fd survives into the spawned subprocess after exec().          */
-    if (pkg_move_high_fd(ce, 64) != 0)
-	bu_log("fbs_open_ipc: pkg_move_high_fd failed; fd may be swept\n");
+    if (!pkg_addr_uses_inherited_fds(pkg_child_addr(ce))) {
+	pkg_close(ce);
+	pkg_close(pe);
+	return BRLCAD_ERROR;
+    }
+
+    /* The server uses zero as its empty-slot sentinel, and POSIX process
+     * setup reserves descriptors 0 through 2 for the standard streams. */
+    if (pkg_move_high_fd(pe, 3) != 0 || pkg_move_high_fd(ce, 3) != 0) {
+	pkg_close(ce);
+	pkg_close(pe);
+	return BRLCAD_ERROR;
+    }
 
     pc = pe;
 
@@ -1235,8 +1249,6 @@ fbs_open_ipc(struct fbserv_obj *fbsp)
 
     /* Store the child end so fbs_ipc_child_addr_env() can retrieve it, and
      * so fbs_close() can close it when the session ends.                    */
-    if (fbsp->fbs_listener.fbsl_ipc_child)
-	pkg_close(fbsp->fbs_listener.fbsl_ipc_child);
     fbsp->fbs_listener.fbsl_ipc_child = ce;
 
     return BRLCAD_OK;
@@ -1249,6 +1261,33 @@ fbs_ipc_child_addr_env(struct fbserv_obj *fbsp)
     if (!fbsp || !fbsp->fbs_listener.fbsl_ipc_child)
 	return NULL;
     return pkg_child_addr_env(fbsp->fbs_listener.fbsl_ipc_child);
+}
+
+
+size_t
+fbs_ipc_child_fds(struct fbserv_obj *fbsp, int fds[2])
+{
+    struct pkg_conn *child;
+
+    if (!fbsp || !fds || !(child = fbsp->fbs_listener.fbsl_ipc_child))
+	return 0;
+
+    fds[0] = pkg_get_read_fd(child);
+    fds[1] = pkg_get_write_fd(child);
+    if (fds[0] < 0 || fds[1] < 0)
+	return 0;
+    return (fds[0] == fds[1]) ? 1 : 2;
+}
+
+
+void
+fbs_close_ipc_child(struct fbserv_obj *fbsp)
+{
+    if (!fbsp || !fbsp->fbs_listener.fbsl_ipc_child)
+	return;
+
+    pkg_close(fbsp->fbs_listener.fbsl_ipc_child);
+    fbsp->fbs_listener.fbsl_ipc_child = NULL;
 }
 
 

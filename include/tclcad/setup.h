@@ -43,6 +43,11 @@ TCLCAD_EXPORT extern void tclcad_auto_path(Tcl_Interp *interp);
 TCLCAD_EXPORT extern void tclcad_tcl_library(Tcl_Interp *interp);
 TCLCAD_EXPORT extern void tclcad_bn_setup(Tcl_Interp *interp);
 
+struct fbserv_obj;
+
+/** Configure event-loop callbacks for local framebuffer IPC clients. */
+TCLCAD_EXPORT extern void tclcad_configure_ipc_handlers(struct fbserv_obj *fbsp);
+
 /**
  * Allows LIBRT to be dynamically loaded to a vanilla tclsh/wish with
  * "load /usr/brlcad/lib/libbu.so"

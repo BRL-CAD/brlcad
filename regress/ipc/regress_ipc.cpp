@@ -45,13 +45,23 @@
 
 #include "common.h"
 
+#include <cerrno>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <csignal>
+#include <set>
+#include <string>
 #include <thread>
+#include <vector>
+#ifndef _WIN32
+#  include <signal.h>
+#endif
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
 #endif
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
@@ -61,13 +71,17 @@
 #  ifndef X_OK
 #    define X_OK 0
 #  endif
+#else
+#  include <fcntl.h>
 #endif
 #include <tcl.h>
 
 #include "bu/app.h"
+#include "bu/datetime.h"
 /* bu/ipc.h removed - transport handled by libpkg */
 #include "bu/str.h"
 #include "bu/env.h"
+#include "bu/process.h"
 #include "bu/snooze.h"
 #include "bu/vls.h"
 #include "dm/fbserv.h"
@@ -162,15 +176,74 @@ test_pkg_pair_basics(void)
 
     const char *ae_pe = pkg_child_addr_env(pe);
     const char *ae_ce = pkg_child_addr_env(ce);
-    TEST("parent addr_env non-NULL",              ae_pe != nullptr);
-    TEST("child  addr_env non-NULL",              ae_ce != nullptr);
-    TEST("parent addr_env has PKG_ADDR= prefix",
-         ae_pe && bu_strncmp(ae_pe, "PKG_ADDR=", 9) == 0);
-    TEST("child  addr_env has PKG_ADDR= prefix",
-         ae_ce && bu_strncmp(ae_ce, "PKG_ADDR=", 9) == 0);
+    TEST("pair address exportability is consistent",
+        (ae_pe == nullptr) == (ae_ce == nullptr));
+    if (ae_pe && ae_ce) {
+        TEST("parent addr_env has PKG_ADDR= prefix",
+            bu_strncmp(ae_pe, "PKG_ADDR=", 9) == 0);
+        TEST("child addr_env has PKG_ADDR= prefix",
+            bu_strncmp(ae_ce, "PKG_ADDR=", 9) == 0);
+    }
+
+#ifndef _WIN32
+    int move_status = pkg_move_high_fd(ce, 64);
+    TEST("moving child endpoint succeeds", move_status == 0);
+    if (move_status == 0) {
+        const char *moved_addr = pkg_child_addr(ce);
+        int moved_read_fd = -1;
+        int moved_write_fd = -1;
+        bool address_matches = false;
+
+        if (moved_addr && sscanf(moved_addr, "socket:%d", &moved_read_fd) == 1) {
+            address_matches = moved_read_fd == pkg_get_read_fd(ce) &&
+                moved_read_fd == pkg_get_write_fd(ce);
+        } else if (moved_addr && sscanf(moved_addr, "pipe:%d,%d",
+                &moved_read_fd, &moved_write_fd) == 2) {
+            address_matches = moved_read_fd == pkg_get_read_fd(ce) &&
+                moved_write_fd == pkg_get_write_fd(ce);
+        }
+        TEST("moved child address tracks inherited descriptors",
+            address_matches);
+    }
+
+    if (pe && pkg_child_addr(pe)) {
+        int parent_read_fd = -1;
+        int parent_write_fd = -1;
+        const int parent_move_status = pkg_move_high_fd(pe, 64);
+        const char *parent_addr = pkg_child_addr(pe);
+        const bool parent_address_matches = parent_move_status == 0 &&
+            parent_addr && sscanf(parent_addr, "pipe_parent:%d,%d",
+                &parent_read_fd, &parent_write_fd) == 2 &&
+            parent_read_fd == pkg_get_read_fd(pe) &&
+            parent_write_fd == pkg_get_write_fd(pe);
+        TEST("moved parent address preserves endpoint direction",
+            parent_address_matches);
+    }
+#endif
 
     pkg_close(pe);
     pkg_close(ce);
+
+    pe = nullptr;
+    ce = nullptr;
+    rc = pkg_pair_prefer(&pe, &ce, NULL, NULL, PKG_TRANSPORT_TCP);
+    TEST("TCP pair creation succeeds", rc == 0 && pe && ce);
+    if (pe && ce) {
+        TEST("TCP parent address is not falsely exportable",
+            pkg_child_addr(pe) == nullptr && pkg_child_addr_env(pe) == nullptr);
+        TEST("TCP child address is not falsely exportable",
+            pkg_child_addr(ce) == nullptr && pkg_child_addr_env(ce) == nullptr);
+    }
+    if (pe) pkg_close(pe);
+    if (ce) pkg_close(ce);
+
+    pe = reinterpret_cast<struct pkg_conn *>(1);
+    ce = reinterpret_cast<struct pkg_conn *>(1);
+    const pkg_transport_t invalid_transport =
+        static_cast<pkg_transport_t>(-1);
+    rc = pkg_pair_prefer(&pe, &ce, NULL, NULL, invalid_transport);
+    TEST("failed pair creation clears outputs",
+        rc == -1 && pe == nullptr && ce == nullptr);
 }
 
 
@@ -218,6 +291,267 @@ test_pkg_roundtrip(void)
 }
 
 
+static void
+test_pkg_borrowed_socket(void)
+{
+    struct pkg_conn *parent = nullptr;
+    struct pkg_conn *child = nullptr;
+    struct pkg_conn *borrowed = nullptr;
+    const char payload = 'b';
+    char received = 0;
+
+    int rc = pkg_pair_prefer(&parent, &child, NULL, NULL,
+	PKG_TRANSPORT_TCP);
+    TEST("TCP pair for borrowed socket",
+	rc == 0 && parent != nullptr && child != nullptr);
+    if (rc != 0 || !parent || !child) {
+	if (parent) pkg_close(parent);
+	if (child) pkg_close(child);
+	return;
+    }
+
+    borrowed = pkg_borrow_socket(pkg_get_read_fd(parent), NULL, NULL);
+    TEST("borrow framework-owned socket",
+	borrowed != PKC_ERROR && borrowed != PKC_NULL);
+    if (borrowed != PKC_ERROR && borrowed != PKC_NULL)
+	pkg_close(borrowed);
+
+    TEST("borrowed wrapper leaves socket usable",
+	pkg_send(102, &payload, sizeof(payload), child) == 1 &&
+	pkg_waitfor(102, &received, sizeof(received), parent) == 1 &&
+	received == payload);
+
+    pkg_close(parent);
+    pkg_close(child);
+}
+
+
+static void
+test_pkg_framed_traffic(void)
+{
+    static const int message_count = 128;
+    static const size_t payload_size = 2048;
+    static const int request_type = 100;
+    static const int reply_type = 101;
+    char request[payload_size];
+    char reply[payload_size];
+    memset(request, 0x5a, sizeof(request));
+    memset(reply, 0xa5, sizeof(reply));
+
+    struct pkg_conn *parent = nullptr;
+    struct pkg_conn *child = nullptr;
+    int rc = pkg_pair_prefer(&parent, &child, NULL, NULL,
+        PKG_TRANSPORT_AUTO);
+    TEST("pkg_pair_prefer for framed traffic",
+        rc == 0 && parent != nullptr && child != nullptr);
+    if (rc != 0 || !parent || !child) {
+        if (parent) pkg_close(parent);
+        if (child) pkg_close(child);
+        return;
+    }
+
+    bool sends_ok = true;
+    bool reverse_input_polled = true;
+    bool payloads_match = true;
+    for (int i = 0; i < message_count; ++i) {
+        if (pkg_2send(reply_type, reply, payload_size / 2,
+                reply + payload_size / 2, payload_size / 2, child) !=
+                (int)payload_size ||
+            pkg_send(request_type, request, payload_size, parent) !=
+                (int)payload_size) {
+            sends_ok = false;
+            break;
+        }
+
+        if (parent->pkc_inend <= parent->pkc_incur)
+            reverse_input_polled = false;
+
+        char *received_reply = pkg_bwaitfor(reply_type, parent);
+        char *received_request = pkg_bwaitfor(request_type, child);
+        if (!received_reply || !received_request ||
+            memcmp(received_reply, reply, payload_size) != 0 ||
+            memcmp(received_request, request, payload_size) != 0)
+            payloads_match = false;
+        free(received_reply);
+        free(received_request);
+        if (!payloads_match)
+            break;
+    }
+
+    TEST("framed pipe traffic sends complete messages", sends_ok);
+    TEST("send-side checkin polls reverse pipe traffic",
+        reverse_input_polled);
+    TEST("framed pipe traffic preserves payloads", payloads_match);
+    pkg_close(parent);
+    pkg_close(child);
+}
+
+
+static void
+test_pkg_mux_many_connections(void)
+{
+    static const size_t connection_count = 72;
+    std::vector<struct pkg_conn *> parents;
+    std::vector<struct pkg_conn *> children;
+    pkg_mux_t *mux = pkg_mux_create();
+    bool setup_ok = mux != nullptr;
+
+    for (size_t i = 0; setup_ok && i < connection_count; i++) {
+        struct pkg_conn *parent = nullptr;
+        struct pkg_conn *child = nullptr;
+        setup_ok = pkg_pair_prefer(&parent, &child, NULL, NULL,
+            PKG_TRANSPORT_TCP) == 0 && parent && child &&
+            pkg_mux_add_conn(mux, parent) == 0;
+        if (parent) parents.push_back(parent);
+        if (child) children.push_back(child);
+    }
+    TEST("pkg_mux registers more than 64 socket connections", setup_ok);
+
+    static const char byte = 'x';
+    bool last_ready = false;
+    if (setup_ok) {
+        int count = pkg_send(999, &byte, 1, children.back());
+        int ready = pkg_mux_wait(mux, 1000);
+        last_ready = count == 1 && ready > 0 &&
+            pkg_mux_is_ready_conn(mux, parents.back());
+    }
+    TEST("pkg_mux observes readiness beyond 64 sockets", last_ready);
+
+    pkg_mux_destroy(mux);
+    for (struct pkg_conn *connection : parents) pkg_close(connection);
+    for (struct pkg_conn *connection : children) pkg_close(connection);
+}
+
+
+static void
+test_pkg_mux_state(void)
+{
+    struct pkg_conn *parent = nullptr;
+    struct pkg_conn *child = nullptr;
+    pkg_mux_t *mux = pkg_mux_create();
+
+    TEST("pkg_mux_wait rejects null mux", pkg_mux_wait(nullptr, 0) == -1);
+    bool setup_ok = mux &&
+        pkg_pair_prefer(&parent, &child, NULL, NULL, PKG_TRANSPORT_TCP) == 0 &&
+        parent && child && pkg_mux_add_conn(mux, parent) == 0;
+    TEST("pkg_mux stale-readiness setup succeeds", setup_ok);
+
+    if (setup_ok) {
+        static const char byte = 'x';
+        int fd = pkg_get_read_fd(parent);
+        bool ready = pkg_send(999, &byte, 1, child) == 1 &&
+            pkg_mux_wait(mux, 1000) > 0 && pkg_mux_is_ready_fd(mux, fd);
+        TEST("pkg_mux records ready descriptor", ready);
+        pkg_mux_remove_fd(mux, fd);
+        TEST("empty pkg_mux wait clears stale readiness",
+            pkg_mux_wait(mux, 0) == 0 && !pkg_mux_is_ready_fd(mux, fd));
+    }
+
+    pkg_mux_destroy(mux);
+    if (parent) pkg_close(parent);
+    if (child) pkg_close(child);
+}
+
+
+#if !defined(_WIN32) && defined(HAVE_POLL_H) && defined(HAVE_SYS_TIME_H)
+static volatile sig_atomic_t g_mux_signal_write_fd = -1;
+static volatile sig_atomic_t g_mux_signal_wrote = 0;
+
+
+static void
+mux_alarm_handler(int UNUSED(signum))
+{
+    static const unsigned char byte = 'x';
+    int fd = (int)g_mux_signal_write_fd;
+    int saved_errno = errno;
+
+    g_mux_signal_wrote = fd >= 0 && write(fd, &byte, sizeof(byte)) > 0;
+    errno = saved_errno;
+}
+
+
+static void
+test_pkg_mux_eintr(void)
+{
+    int pipe_fds[2] = {-1, -1};
+    pkg_mux_t *mux = pkg_mux_create();
+    struct sigaction action = {};
+    struct sigaction previous_action = {};
+    struct itimerval timer = {};
+    bool setup_ok = mux && pipe(pipe_fds) == 0;
+    bool handler_installed = false;
+
+    if (setup_ok) {
+        action.sa_handler = mux_alarm_handler;
+        sigemptyset(&action.sa_mask);
+        handler_installed = sigaction(SIGALRM, &action,
+            &previous_action) == 0;
+        setup_ok = handler_installed &&
+            pkg_mux_add_fd(mux, pipe_fds[0], 0) == 0;
+    }
+    TEST("pkg_mux EINTR setup succeeds", setup_ok);
+
+    bool resumed = false;
+    if (setup_ok) {
+        g_mux_signal_write_fd = pipe_fds[1];
+        g_mux_signal_wrote = 0;
+        timer.it_value.tv_usec = 50000;
+        if (setitimer(ITIMER_REAL, &timer, NULL) == 0) {
+            int ready = pkg_mux_wait(mux, -1);
+            resumed = g_mux_signal_wrote && ready > 0 &&
+                pkg_mux_is_ready_fd(mux, pipe_fds[0]);
+        }
+    }
+    timer.it_value.tv_usec = 0;
+    (void)setitimer(ITIMER_REAL, &timer, NULL);
+    if (handler_installed)
+        (void)sigaction(SIGALRM, &previous_action, NULL);
+    g_mux_signal_write_fd = -1;
+    TEST("infinite pkg_mux wait resumes after EINTR", resumed);
+
+    if (pipe_fds[0] >= 0) close(pipe_fds[0]);
+    if (pipe_fds[1] >= 0) close(pipe_fds[1]);
+    pkg_mux_destroy(mux);
+}
+#endif
+
+
+static void
+test_pkg_ipc_addr_concurrency(void)
+{
+    static const size_t address_count = 64;
+    std::vector<std::string> addresses(address_count);
+    std::vector<int> statuses(address_count, -1);
+    std::vector<std::thread> workers;
+
+    workers.reserve(address_count);
+    for (size_t i = 0; i < address_count; i++) {
+        workers.emplace_back([&, i]() {
+            char addr[MAXPATHLEN] = {0};
+            statuses[i] = pkg_ipc_addr(addr, sizeof(addr), "regress-ipc-thread");
+            if (statuses[i] == 0)
+                addresses[i] = addr;
+        });
+    }
+    for (std::thread &worker : workers)
+        worker.join();
+
+    bool available = statuses[0] == 0;
+    bool consistent = true;
+    std::set<std::string> unique_addresses;
+    for (size_t i = 0; i < address_count; i++) {
+        consistent = consistent && ((statuses[i] == 0) == available);
+        if (available)
+            consistent = consistent && !addresses[i].empty();
+        if (!addresses[i].empty())
+            unique_addresses.insert(addresses[i]);
+    }
+    TEST("concurrent pkg_ipc_addr availability is consistent", consistent);
+    TEST("concurrent pkg_ipc_addr calls are unique",
+        !available || unique_addresses.size() == address_count);
+}
+
+
 /* ================================================================== */
 /* Group 3: pkg_connect_addr() via addr string                         */
 /* ================================================================== */
@@ -225,6 +559,20 @@ static void
 test_pkg_connect(void)
 {
     if (g_verbose) fprintf(stdout, "\n[Group 3] pkg_connect_addr() via addr string\n");
+
+    const char *invalid_addresses[] = {
+        "pipe:999999,999998junk",
+        "pipe:-1,4",
+        "socket:4junk",
+        "tcp:70000",
+        "tcp:4444junk"
+    };
+    for (const char *invalid_address : invalid_addresses) {
+        struct pkg_conn *invalid = pkg_connect_addr(invalid_address, NULL, NULL);
+        TEST("pkg_connect_addr rejects malformed address", invalid == PKC_ERROR);
+        if (invalid && invalid != PKC_ERROR)
+            pkg_close(invalid);
+    }
 
     struct pkg_conn *pe = nullptr, *ce = nullptr;
     if (pkg_pair_prefer(&pe, &ce, NULL, NULL, PKG_TRANSPORT_AUTO) != 0 || !pe || !ce) {
@@ -236,7 +584,8 @@ test_pkg_connect(void)
     TEST("pkg_pair_prefer for connect test", 1);
 
     const char *addr = pkg_child_addr(ce);
-    TEST("child addr non-NULL", addr != nullptr);
+    if (!addr && g_verbose)
+        fprintf(stdout, "  pair transport is not exportable; skipping child-addr connect test\n");
 
     if (addr) {
         /* pkg_connect_addr parses the addr string and creates a new pkg_conn
@@ -277,9 +626,7 @@ test_pkg_connect(void)
     TEST("pkg_pair_prefer for parent connect test", 1);
 
     const char *parent_addr = pkg_child_addr(pe2);
-    TEST("parent addr non-NULL", parent_addr != nullptr);
-
-    if (parent_addr && (bu_strncmp(parent_addr, "tcp_server:", 11) != 0)) {
+    if (parent_addr) {
         struct pkg_conn *parent_conn = pkg_connect_addr(parent_addr, NULL, NULL);
         TEST("pkg_connect_addr via parent addr succeeds", parent_conn != nullptr && parent_conn != PKC_ERROR);
 
@@ -304,7 +651,7 @@ test_pkg_connect(void)
             pe2 = nullptr;
         }
     } else if (g_verbose) {
-        fprintf(stdout, "  parent address fell back to TCP; skipping parent-addr connect test\n");
+        fprintf(stdout, "  pair transport is not exportable; skipping parent-addr connect test\n");
     }
 
     if (pe2) pkg_close(pe2);
@@ -351,9 +698,16 @@ test_pkg_ipc_listener(void)
 
     char addr[MAXPATHLEN] = {0};
     int rc = pkg_ipc_addr(addr, sizeof(addr), "regress-ipc");
+#ifdef HAVE_SYS_UN_H
     TEST("pkg_ipc_addr succeeds", rc == 0);
     TEST("pkg_ipc_addr returns listener address",
          rc == 0 && pkg_addr_is_ipc_listener(addr));
+    TEST("pkg_ipc_addr returns UNIX-domain address",
+         rc == 0 && (bu_strncmp(addr, "unix:", 5) == 0 ||
+                     bu_strncmp(addr, "unix-abstract:", 14) == 0));
+#else
+    TEST("pkg_ipc_addr reports unavailable UNIX-domain listeners", rc != 0);
+#endif
 
     if (rc != 0)
         return;
@@ -454,6 +808,44 @@ test_fbs_open_ipc_smoke(void)
 }
 
 
+static void
+test_embedded_fb_tls_refusal(void)
+{
+    struct fbserv_obj fbs;
+    struct fbserv_client *server_client = nullptr;
+    const char request = 1;
+    char response = 1;
+
+    init_fbs_noops(&fbs);
+    TEST("fbs_open_ipc for TLS refusal",
+	fbs_open_ipc(&fbs) == BRLCAD_OK);
+    if (!fbs.fbs_listener.fbsl_ipc_child)
+	return;
+
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+	if (fbs.fbs_clients[i].fbsc_pkg) {
+	    server_client = &fbs.fbs_clients[i];
+	    break;
+	}
+    }
+    TEST("embedded framebuffer server client found", server_client != nullptr);
+    if (!server_client) {
+	fbs_close(&fbs);
+	return;
+    }
+
+    TEST("TLS capability request sent",
+	pkg_send(MSG_FBTLS, &request, sizeof(request),
+	    fbs.fbs_listener.fbsl_ipc_child) == (int)sizeof(request));
+    fbs_existing_client_handler(server_client, 0);
+    TEST("embedded framebuffer rejects TLS",
+	pkg_waitfor(MSG_FBTLS, &response, sizeof(response),
+	    fbs.fbs_listener.fbsl_ipc_child) == 1 && response == 0);
+    TEST("TLS requester dropped after refusal", server_client->fbsc_pkg == nullptr);
+    fbs_close(&fbs);
+}
+
+
 /* ================================================================== */
 /* Group 5: PKG_ADDR env-var end-to-end (pkg IPC path)                */
 /* ================================================================== */
@@ -532,8 +924,107 @@ test_env_var_end_to_end(void)
 }
 
 
+static int
+run_inherited_ipc_child(void)
+{
+    static const char message[] = "INHERITED_IPC";
+    struct pkg_conn *connection = pkg_connect_env(NULL, NULL);
+    if (!connection || connection == PKC_ERROR)
+        return 2;
+    ssize_t written = ipc_fd_write(pkg_get_write_fd(connection), message,
+        strlen(message));
+    pkg_close(connection);
+    return (written == (ssize_t)strlen(message)) ? 0 : 3;
+}
+
+
+static void
+test_process_ipc_inheritance(const char *executable)
+{
+    static const char expected[] = "INHERITED_IPC";
+    struct fbserv_obj fbs;
+    init_fbs_noops(&fbs);
+    TEST("fbs_open_ipc for process inheritance",
+        fbs_open_ipc(&fbs) == BRLCAD_OK);
+    if (!fbs.fbs_listener.fbsl_ipc_child)
+        return;
+
+    struct pkg_conn *parent = nullptr;
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (fbs.fbs_clients[i].fbsc_is_ipc) {
+            parent = fbs.fbs_clients[i].fbsc_pkg;
+            break;
+        }
+    }
+    TEST("process inheritance parent connection registered", parent != nullptr);
+    if (!parent) {
+        fbs_close(&fbs);
+        return;
+    }
+
+    const char *env_overrides[2] = {fbs_ipc_child_addr_env(&fbs), nullptr};
+    int inherit_fds[2] = {-1, -1};
+    struct bu_process_create_info create_info = {};
+    create_info.env_overrides = env_overrides;
+    create_info.inherit_fd_count = fbs_ipc_child_fds(&fbs, inherit_fds);
+    create_info.inherit_fds = inherit_fds;
+
+    bool inheritance_flags_set = create_info.inherit_fd_count > 0;
+    for (size_t i = 0; i < create_info.inherit_fd_count; i++) {
+#ifdef _WIN32
+        HANDLE handle = (HANDLE)_get_osfhandle(inherit_fds[i]);
+        inheritance_flags_set = inheritance_flags_set &&
+            handle != INVALID_HANDLE_VALUE;
+        DWORD flags = 0;
+        inheritance_flags_set = inheritance_flags_set &&
+            GetHandleInformation(handle, &flags) &&
+            (flags & HANDLE_FLAG_INHERIT);
+#else
+        int flags = fcntl(inherit_fds[i], F_GETFD);
+        inheritance_flags_set = inheritance_flags_set && flags >= 0 &&
+            fcntl(inherit_fds[i], F_SETFD, flags | FD_CLOEXEC) == 0;
+#endif
+    }
+    TEST("IPC descriptors have required inheritance flags", inheritance_flags_set);
+
+    const char *child_argv[] = {executable, "--inherited-ipc-child", nullptr};
+    struct bu_process *process = nullptr;
+    bu_process_create_ex(&process, child_argv, &create_info);
+
+    bool inheritance_flags_restored = inheritance_flags_set;
+    for (size_t i = 0; i < create_info.inherit_fd_count; i++) {
+#ifdef _WIN32
+        HANDLE handle = (HANDLE)_get_osfhandle(inherit_fds[i]);
+        DWORD flags = 0;
+        inheritance_flags_restored = inheritance_flags_restored &&
+            handle != INVALID_HANDLE_VALUE && GetHandleInformation(handle, &flags) &&
+            (flags & HANDLE_FLAG_INHERIT);
+#else
+        int flags = fcntl(inherit_fds[i], F_GETFD);
+        inheritance_flags_restored = inheritance_flags_restored &&
+            flags >= 0 && (flags & FD_CLOEXEC);
+#endif
+    }
+    TEST("process creation preserves parent descriptor flags",
+        inheritance_flags_restored);
+    fbs_close_ipc_child(&fbs);
+    TEST("IPC child process starts", process != nullptr);
+
+    char message[sizeof(expected)] = {0};
+    ssize_t received = process ? ipc_fd_read(pkg_get_read_fd(parent), message,
+        strlen(expected)) : -1;
+    TEST("IPC child process writes inherited channel",
+        received == (ssize_t)strlen(expected));
+    TEST("IPC child process payload matches",
+        received > 0 && memcmp(message, expected, strlen(expected)) == 0);
+    TEST("IPC child process exits cleanly",
+        process && bu_process_wait_n(&process, 0) == 0);
+    fbs_close(&fbs);
+}
+
+
 /* ================================================================== */
-/* Group 6: Tcl_CreateFileHandler callback path (Phase 4)              */
+/* Group 6: Tcl_CreateFileHandler callback path                        */
 /* Tcl_CreateFileHandler is a POSIX-only Tcl API; not available on     */
 /* Windows (which uses Tcl channels instead).                           */
 /* ================================================================== */
@@ -698,7 +1189,7 @@ test_tcl_fbserv_var(void)
 /* On Windows, Tcl_CreateFileHandler is a no-op and wrapping a pipe   */
 /* in a Tcl channel causes Tcl's reader thread to consume data before  */
 /* pkg_process() can read it.  tclcad_listen_ipc() uses a recurring   */
-/* Tcl timer (PeekNamedPipe) instead.  This test verifies:            */
+/* Tcl timer with libpkg readiness polling instead.  This test verifies: */
 /*   1. tclcad_listen_ipc returns BRLCAD_OK on Windows (not error).   */
 /*   2. The timer token (fbsc_chan) is installed.                      */
 /*   3. The $fbserv(ipc_addr) Tcl variable is set.                    */
@@ -739,9 +1230,11 @@ test_tcl_listen_ipc_win(void)
 
         /* The timer token is stored in fbsc_chan of the registered client. */
         bool timer_installed = false;
+        int ipc_client = -1;
         for (int i = 0; i < MAX_CLIENTS; ++i) {
             if (fbs.fbs_clients[i].fbsc_is_ipc && fbs.fbs_clients[i].fbsc_chan) {
                 timer_installed = true;
+                ipc_client = i;
                 break;
             }
         }
@@ -763,6 +1256,45 @@ test_tcl_listen_ipc_win(void)
         TEST("$fbserv(ipc_addr) has positive length in Tcl",
              tres && atoi(tres) > 0);
 
+        fbs_close_ipc_child(&fbs);
+        int64_t deadline = bu_gettime() + BU_SEC2USEC(1);
+        while (ipc_client >= 0 && fbs.fbs_clients[ipc_client].fbsc_fd != 0 &&
+               bu_gettime() < deadline) {
+            while (Tcl_DoOneEvent(TCL_DONT_WAIT)) {}
+            bu_snooze(1000);
+        }
+        TEST("Windows IPC poll retires a disconnected client",
+             ipc_client >= 0 && fbs.fbs_clients[ipc_client].fbsc_fd == 0);
+
+        bool sessions_retired = true;
+        for (int session = 0; session < MAX_CLIENTS + 8; ++session) {
+            if (tclcad_listen_ipc(&fbs, interp) != BRLCAD_OK) {
+                sessions_retired = false;
+                break;
+            }
+            ipc_client = -1;
+            for (int i = 0; i < MAX_CLIENTS; ++i) {
+                if (fbs.fbs_clients[i].fbsc_is_ipc) {
+                    ipc_client = i;
+                    break;
+                }
+            }
+            fbs_close_ipc_child(&fbs);
+            deadline = bu_gettime() + BU_SEC2USEC(1);
+            while (ipc_client >= 0 &&
+                   fbs.fbs_clients[ipc_client].fbsc_fd != 0 &&
+                   bu_gettime() < deadline) {
+                while (Tcl_DoOneEvent(TCL_DONT_WAIT)) {}
+                bu_snooze(1000);
+            }
+            if (ipc_client < 0 || fbs.fbs_clients[ipc_client].fbsc_fd != 0) {
+                sessions_retired = false;
+                break;
+            }
+        }
+        TEST("repeated Windows IPC sessions do not exhaust client slots",
+             sessions_retired);
+
         /* fbs_close() must cancel the timer; fbsc_chan becomes NULL. */
         fbs_close(&fbs);
 
@@ -782,76 +1314,58 @@ test_tcl_listen_ipc_win(void)
 
 
 
-/* Spawns fbserv -F /dev/null -I <addr> and verifies it accepts the   */
-/* flag without printing "Illegal option" or "Usage:".                */
-/* This test uses POSIX shell features and is skipped on Windows.     */
+/* Group 8: fbserv -I with an inherited IPC endpoint                  */
 /* ================================================================== */
-#ifndef _WIN32
 static void
 test_fbserv_minus_I(const char *fbserv_bin)
 {
     if (g_verbose) fprintf(stdout, "\n[Group 8] fbserv -I <addr> flag\n");
 
-    struct pkg_conn *pe = nullptr, *ce = nullptr;
-    if (pkg_pair_prefer(&pe, &ce, NULL, NULL, PKG_TRANSPORT_AUTO) != 0 || !pe || !ce) {
-        TEST("pkg_pair_prefer for fbserv -I test", 0);
-        if (pe) pkg_close(pe);
-        if (ce) pkg_close(ce);
+    struct pkg_conn *parent = nullptr;
+    struct pkg_conn *child = nullptr;
+    bool paired = pkg_pair_prefer(&parent, &child, NULL, NULL,
+        PKG_TRANSPORT_PIPE) == 0 && parent && child;
+    TEST("pkg_pair_prefer for fbserv -I test", paired);
+    if (!paired) {
+        if (parent) pkg_close(parent);
+        if (child) pkg_close(child);
         return;
     }
-    TEST("pkg_pair_prefer for fbserv -I test", 1);
 
-    /* Move child-end fds high so they survive exec()'s fd sweep */
-    (void)pkg_move_high_fd(ce, 64);
+    const char *args[] = {fbserv_bin, "-F", "/dev/null", "-I",
+        pkg_child_addr(child), nullptr};
+    int inherit_fds[] = {pkg_get_read_fd(child), pkg_get_write_fd(child)};
+    struct bu_process_create_info create_info = {};
+    create_info.opts = BU_PROCESS_OUT_EQ_ERR | BU_PROCESS_HIDE_WINDOW;
+    create_info.inherit_fds = inherit_fds;
+    create_info.inherit_fd_count = inherit_fds[0] == inherit_fds[1] ? 1 : 2;
 
-    const char *ae = pkg_child_addr_env(ce);
-    const char *eq = ae ? strchr(ae, '=') : nullptr;
-    TEST("child addr_env for fbserv -I test", eq != nullptr);
-    if (!eq) { pkg_close(pe); pkg_close(ce); return; }
+    struct bu_process *process = nullptr;
+    bu_process_create_ex(&process, args, &create_info);
+    pkg_close(child);
+    /* The server exits after it attaches and reads EOF from its peer. */
+    pkg_close(parent);
+    TEST("fbserv -I starts as a subprocess", process != nullptr);
+    if (!process)
+        return;
 
-    const char *addr = eq+1;
-    char log_path[256];
-    snprintf(log_path, sizeof(log_path), "%s", "/tmp/regress_ipc_fbserv.log");
-
-    char cmd[1024];
-    snprintf(cmd, sizeof(cmd),
-             "LD_LIBRARY_PATH=%s "
-             "%s -F /dev/null -I '%s' "
-             "> %s 2>&1 &",
-             getenv("LD_LIBRARY_PATH") ? getenv("LD_LIBRARY_PATH") : "",
-             fbserv_bin, addr, log_path);
-    int sysrc = system(cmd);
-    TEST("fbserv -I spawn returns 0", sysrc == 0);
-
-    /* Poll for the log file rather than sleeping a fixed amount.
-     * fbserv -I exits quickly (connect attempt completes or fails within
-     * ~100 ms in practice); cap at 2 s to avoid flakiness on slow runners. */
-    FILE *log = nullptr;
-    for (int attempt = 0; attempt < 20 && !log; ++attempt) {
-        bu_snooze(BU_SEC2USEC(0.1));   /* 100 ms per attempt, up to 2 s total */
-        log = fopen(log_path, "r");
+    const int cleanup_timeout_ms = 1000;
+    int64_t deadline = bu_gettime() + BU_SEC2USEC(5);
+    int result;
+    int exit_status = -1;
+    while ((result = bu_process_poll(process, &exit_status)) == 0 &&
+           bu_gettime() < deadline) {
+        bu_snooze(1000);
     }
-
-    if (log) {
-        char logbuf[1024] = {0};
-        size_t nr = fread(logbuf, 1, sizeof(logbuf)-1, log);
-        (void)nr;
-        fclose(log);
-        if (g_verbose)
-            fprintf(stdout, "  fbserv -I log: %s\n",
-                    logbuf[0] ? logbuf : "(empty)");
-        bool bad = (strstr(logbuf, "Illegal option") ||
-                    strstr(logbuf, "Usage: fbserv port_num")) ? true : false;
-        TEST("fbserv -I: no 'Illegal option'/'Usage' in log", !bad);
-    } else {
-        TEST("fbserv -I log file created", 0);
+    if (result == 1 && exit_status != 0) {
+        char output[1024];
+        int count = bu_process_read_n(process, BU_PROCESS_STDOUT, sizeof(output), output);
+        if (count > 0)
+            fprintf(stderr, "fbserv -I output: %.*s\n", count, output);
     }
-
-    pkg_close(pe);
-    pkg_close(ce);
-    bu_snooze(BU_SEC2USEC(0.2));
+    (void)bu_process_wait_n(&process, cleanup_timeout_ms);
+    TEST("fbserv -I attaches and exits successfully at EOF", result == 1 && exit_status == 0);
 }
-#endif /* !_WIN32 */
 
 #ifdef _WIN32
 static void
@@ -875,6 +1389,10 @@ test_pkg_ipc_listener_win(void)
     if (!listener)
         return;
 
+    struct pkg_conn *pending = pkg_accept(listener, NULL, NULL, 1);
+    TEST("nonblocking npipe accept reports no pending client",
+	 pending == PKC_NULL);
+
     const char *client_msg[2] = {"IPC_CLIENT_ONE", "IPC_CLIENT_TWO"};
     const char *server_msg[2] = {"IPC_ACK_ONE", "IPC_ACK_TWO"};
 
@@ -884,11 +1402,30 @@ test_pkg_ipc_listener_win(void)
             client_rc = run_ipc_listener_child(addr, client_msg[i], server_msg[i]);
         });
 
-        struct pkg_conn *server = pkg_accept(listener, NULL, NULL, 0);
-        TEST("pkg_accept local IPC client succeeds",
+        struct pkg_conn *server = PKC_NULL;
+        if (i == 0) {
+            int64_t deadline = bu_gettime() + BU_SEC2USEC(1);
+            while (server == PKC_NULL && bu_gettime() < deadline) {
+                server = pkg_accept(listener, NULL, NULL, 1);
+                if (server == PKC_NULL)
+                    bu_snooze(1000);
+            }
+        } else {
+            server = pkg_accept(listener, NULL, NULL, 0);
+        }
+        TEST(i == 0 ? "nonblocking accept returns pending npipe client" :
+             "blocking accept returns local IPC client",
              server != NULL && server != PKC_ERROR);
 
-        if (server && server != PKC_ERROR) {
+        if (!server || server == PKC_ERROR) {
+            pkg_listener_close(listener);
+            listener = NULL;
+            client.join();
+            TEST("Windows npipe client exits after accept failure", client_rc != -1);
+            break;
+        }
+
+        {
             char buf[64] = {0};
             ssize_t n = ipc_fd_read(pkg_get_read_fd(server), buf, strlen(client_msg[i]));
             TEST("server reads local IPC client data",
@@ -907,7 +1444,8 @@ test_pkg_ipc_listener_win(void)
         TEST("Windows npipe client round-trip succeeds", client_rc == 0);
     }
 
-    pkg_listener_close(listener);
+    if (listener)
+        pkg_listener_close(listener);
 }
 #endif /* _WIN32 */
 
@@ -919,6 +1457,9 @@ int
 main(int argc, const char **argv)
 {
     bu_setprogname(argv[0]);
+
+    if (argc == 2 && BU_STR_EQUAL(argv[1], "--inherited-ipc-child"))
+        return run_inherited_ipc_child();
 
 #ifdef SIGPIPE
     /* Ignore SIGPIPE: writes to closed peers must not crash the harness */
@@ -973,22 +1514,30 @@ main(int argc, const char **argv)
 
     test_pkg_pair_basics();
     test_pkg_roundtrip();
+    test_pkg_borrowed_socket();
+    test_pkg_framed_traffic();
+    test_pkg_mux_many_connections();
+    test_pkg_mux_state();
+#if !defined(_WIN32) && defined(HAVE_POLL_H) && defined(HAVE_SYS_TIME_H)
+    test_pkg_mux_eintr();
+#endif
+    test_pkg_ipc_addr_concurrency();
     test_pkg_connect();
     test_fbs_open_ipc_smoke();
+    test_embedded_fb_tls_refusal();
     test_env_var_end_to_end();
+    test_process_ipc_inheritance(argv[0]);
 #ifndef _WIN32
     test_pkg_ipc_listener();
     test_tcl_file_handler();
     test_tcl_fbserv_var();
-    test_fbserv_minus_I(bu_vls_cstr(&fbserv_bin));
 #else
     test_pkg_ipc_listener_win();
     if (g_verbose)
         fprintf(stdout, "\n[Group 6] SKIPPED (Tcl_CreateFileHandler not available on Windows)\n");
     test_tcl_listen_ipc_win();  /* Group 7: Windows timer-IPC path */
-    if (g_verbose)
-        fprintf(stdout, "\n[Group 8] SKIPPED (POSIX shell spawn not available on Windows)\n");
 #endif
+    test_fbserv_minus_I(bu_vls_cstr(&fbserv_bin));
 
     fprintf(stdout, "\n==============================================\n");
     fprintf(stdout, "  Results: %d / %d passed\n", g_tests_pass, g_tests_run);

@@ -31,7 +31,11 @@
 #include <QByteArray>
 #include <QHostAddress>
 #include <QObject>
-#include <QSocketNotifier>
+#ifdef _WIN32
+#  include <QTimer>
+#else
+#  include <QSocketNotifier>
+#endif
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <iostream>
@@ -44,9 +48,9 @@ class QFBSocket : public QObject
     Q_OBJECT
 
     public:
-	QTcpSocket *s;
-	int ind;
-	struct fbserv_obj *fbsp;
+	QTcpSocket *s = nullptr;
+	int ind = -1;
+	struct fbserv_obj *fbsp = nullptr;
 
     signals:
 	void updated();
@@ -64,9 +68,14 @@ class QFBIPCSocket : public QObject
     Q_OBJECT
 
     public:
+#ifdef _WIN32
+	QTimer *timer = nullptr;
+#else
 	QSocketNotifier *notifier = nullptr;
+#endif
 	int ind = -1;
 	struct fbserv_obj *fbsp = nullptr;
+	void set_enabled(bool enabled);
 
     signals:
 	void updated();
