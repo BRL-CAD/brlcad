@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * made MGED mode flags independent of terminal input - Cliff Yapp
+* fixed MGED nirt queries with explicitly named objects - Cliff Yapp
 * fixed Windows terminal interactivity detection - Cliff Yapp
 * fixed MGED -a display attachment with piped input - Cliff Yapp
 * added bot_* operations to bot command as subcommands -  Cliff Yapp

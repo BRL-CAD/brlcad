@@ -132,7 +132,7 @@ nirt_cmd_print(struct ged *gedp, struct nirt_info *np)
 
     while (!complete || out_open || err_open) {
 	bool progressed = false;
-	if (out_open && bu_process_pending(out_fd)) {
+	if (out_open && bu_fd_read_ready(out_fd, 0) > 0) {
 	    int count = bu_process_read_n(np->p, BU_PROCESS_STDOUT,
 		    (int)sizeof(buffer), buffer);
 	    if (count > 0)
@@ -142,7 +142,7 @@ nirt_cmd_print(struct ged *gedp, struct nirt_info *np)
 		out_open = false;
 	    progressed = true;
 	}
-	if (err_open && bu_process_pending(err_fd)) {
+	if (err_open && bu_fd_read_ready(err_fd, 0) > 0) {
 	    int count = bu_process_read_n(np->p, BU_PROCESS_STDERR,
 		    (int)sizeof(buffer), buffer);
 	    if (count > 0)
@@ -158,9 +158,9 @@ nirt_cmd_print(struct ged *gedp, struct nirt_info *np)
 	    return BRLCAD_ERROR;
 	complete = (poll_ret == 1);
 	if (complete) {
-	    if (out_open && !bu_process_pending(out_fd))
+	    if (out_open && bu_fd_read_ready(out_fd, 0) <= 0)
 		out_open = false;
-	    if (err_open && !bu_process_pending(err_fd))
+	    if (err_open && bu_fd_read_ready(err_fd, 0) <= 0)
 		err_open = false;
 	}
 	if (!progressed && (!complete || out_open || err_open))
@@ -222,12 +222,13 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     // If we found something, print and return
     if (info_arg) {
 	// load av with request
-	const char *av[5] = {NULL};
+	const char *av[6] = {NULL};
 	av[0] = (const char *)nirt;
 	av[1] = info_arg;
-	av[2] = "-X";
-	av[3] = "ged";
-	av[4] = NULL;
+	av[2] = "-s";
+	av[3] = "-X";
+	av[4] = "ged";
+	av[5] = NULL;
 
 	bu_process_create(&np.p, (const char **)av, BU_PROCESS_HIDE_WINDOW);
 	if (!np.p) {
@@ -400,14 +401,14 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	    /* ignore obvious trailing flag */
 	    break;
 	}
-	if (db_lookup(gedp->dbip, argv[0], 0) != RT_DIR_NULL) {
+	if (db_lookup(gedp->dbip, argv[i], 0) != RT_DIR_NULL) {
 	    skip_drawn = 1;
 	    continue;
 	}
 	/* It might be a path, not just a solid specifier - try that as well */
 	struct db_full_path pp;
 	db_full_path_init(&pp);
-	if (!db_string_to_path(&pp, gedp->dbip, argv[0])) {
+	if (!db_string_to_path(&pp, gedp->dbip, argv[i])) {
 	    skip_drawn = 1;
 	    db_free_full_path(&pp);
 	    continue;
@@ -434,6 +435,9 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     /* We will be launching from ged, so populate those options */
     bu_ptbl_ins(&av_args, (long *)bu_strdup("-X"));
     bu_ptbl_ins(&av_args, (long *)bu_strdup("ged"));
+
+    /* Subprocess behavior must not depend on the parent's terminal setup. */
+    bu_ptbl_ins(&av_args, (long *)bu_strdup("-s"));
 
     /* We only need to provide options for things that aren't set to defaults,
      * so use the appropriate libanalyze function to set up the args.
@@ -546,11 +550,8 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
      * who list */
     if (skip_drawn) {
 	for (int i = 0; i < argc; i++) {
-	    struct bu_vls *obj;
-	    BU_GET(obj, struct bu_vls);
-	    bu_vls_init(obj);
-	    bu_vls_sprintf(obj, "%s", argv[i]);
-	    bu_ptbl_ins(&av_args, (long *)obj);
+	    bu_vls_sprintf(&nirt_cmd, "draw %s", argv[i]);
+	    fprintf(np.fp_in, "%s\n", bu_vls_cstr(&nirt_cmd));
 	}
     } else {
 	size_t drawn_cnt = ged_who_argc(gedp);

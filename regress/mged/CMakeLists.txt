@@ -41,6 +41,7 @@ set(
   mrot.mged
   mvall.mged
   mv.mged
+  nirt.mged
   oed.mged
   orientation.mged
   prim_edit.mged
@@ -136,6 +137,9 @@ if(TARGET mged)
       list(APPEND TEST_REJECT "db_lookup(killtree_dup.s) failed")
     elseif(TNAME STREQUAL "oed")
       set(TEST_EXPECT "PASS oed one-path bounding-box keypoint")
+    elseif(TNAME STREQUAL "nirt")
+      set(TEST_EXPECT "PASS explicit-object nirt")
+      list(APPEND TEST_DEPS "nirt")
     elseif(TNAME STREQUAL "who")
       set(TEST_EXPECT "PASS who ordering")
       set(TEST_REJECT "FAIL who ordering")

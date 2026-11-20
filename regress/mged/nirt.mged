@@ -1,0 +1,14 @@
+puts "*** Testing explicit-object nirt queries ***"
+
+in nirt_near.s sph 0 0 0 1
+in nirt_far.s sph 0 0 -3 1
+
+set nirt_output [nirt nirt_near.s nirt_far.s]
+if {[string first "nirt_near.s" $nirt_output] < 0} {
+    error "FAIL: nirt output omitted nirt_near.s"
+}
+if {[string first "nirt_far.s" $nirt_output] < 0} {
+    error "FAIL: nirt output omitted nirt_far.s"
+}
+
+puts "PASS explicit-object nirt"
