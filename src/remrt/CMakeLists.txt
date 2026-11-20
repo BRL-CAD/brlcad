@@ -12,7 +12,7 @@
 # (Windows) if OpenSSL is not found.
 find_package(OpenSSL QUIET)
 
-brlcad_addexec(remrt "../rt/opt.c;ihost.c;remrt.c" "liboptical;libdm")
+brlcad_addexec(remrt "../rt/opt.c;ihost.c;remrt.c" "liboptical;libdm" ARG_SCHEMA)
 target_include_directories(remrt BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(remrt ${M_LIBRARY} ${WINSOCK_LIB})
 add_target_deps(remrt dm_plugins)

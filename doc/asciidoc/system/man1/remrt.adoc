@@ -8,11 +8,13 @@ remrt - network-distributed (remote) ray-trace dispatcher
 
 == SYNOPSIS
 
-[source]
-----
-remrt [options] model.g objects...
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*remrt* [*-o* _file_] [*-O* _file_] [*-F* _fb_] [*-s* _#_] [*-w* _#_] [*-n* _#_] [*-C* _#/#/#_]
+      [*-W*] [*-r*] [*-R*] [*-a* _deg_] [*-e* _deg_] [*-p* _deg_] [*-E* _#_] [*-V* _#[:#]_] [*-M*]
+      [*-A* _#_] [*-l* _#[,args]_] [*-m* _d,r,g,b_] [*-i*] [*-t*] [*-S*] [*-H* _#_] [*-J* _#_]
+      [*-u* _units_] [*-U* _#_] [*-T* _#[/#]_] [_model.g_] [_object_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -93,6 +95,184 @@ animations.
 
 [[options]]
 == OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+=== Output
+
+*-o* _file_, *--output*=_file_::
+  Output image file (e.g. image.pix or image.png).
+
+*-O* _file_, *--output-double*=_file_::
+  Output double-precision .dpix file.
+
+*-F* _fb_, *--framebuffer*=_fb_::
+  Render to named framebuffer (see FB_FILE).
+
+=== Image dimensions
+
+*-s* _#_, *--size*=_#_::
+  Square image size in pixels (default 512).
+
+*-w* _#_, *--width*=_#_::
+  Image width in pixels.
+
+*-n* _#_, *--height*=_#_::
+  Image height in scanlines.
+
+=== Background and overlaps
+
+*-C* _#/#/#_, *--background*=_#/#/#_::
+  Background color R/G/B (0-255 or 0.0-1.0).
+
+*-W*, *--white-background*::
+  White background (255/255/254).
+
+*-r*, *--report-overlaps*::
+  Report overlapping region names (on by default).
+
+*-R*, *--no-overlap-report*::
+  Suppress overlap region name reports.
+
+=== View and camera
+
+*-a* _deg_, *--azimuth*=_deg_::
+  Auto-size: view azimuth in degrees (conflicts with -M).
+
+*-e* _deg_, *--elevation*=_deg_::
+  Auto-size: view elevation in degrees (conflicts with -M).
+
+*-p* _deg_, *--perspective*=_deg_::
+  Perspective angle in degrees (0 <= deg < 180; 0 = ortho).
+
+*-E* _#_, *--eye-backoff*=_#_::
+  Distance from eye to model center (default sqrt(2)).
+
+*-V* _#[:#]_, *--view-aspect*=_#[:#]_::
+  View aspect ratio width/height (e.g. 1.33 or 4:3).
+
+*-M*, *--read-matrix*::
+  Read model2view matrix (+ animation script) from stdin.
+
+=== Grid and cells
+
+*-g* _mm_, *--cell-width*=_mm_::
+  Grid cell width in mm.
+
+*-G* _mm_, *--cell-height*=_mm_::
+  Grid cell height in mm.
+
+*-j* _xmin,ymin,xmax,ymax_, *--subgrid*=_xmin,ymin,xmax,ymax_::
+  Raytrace only a sub-rectangle of the view.
+
+*-k* _xdir,ydir,zdir,dist | x,y,z,nx,ny,nz | x,y,z_, *--cut-plane*=_xdir,ydir,zdir,dist | x,y,z,nx,ny,nz | x,y,z_::
+  Apply a cutting plane (equivalent to subtracting a halfspace).
+
+=== Rendering
+
+*-A* _#_, *--ambient*=_#_::
+  Ambient light intensity as a fraction 0.0-1.0.
+
+*-l* _#[,args]_, *--light-model*=_#[,args]_::
+  Select lighting model (default 0; use -l7,... for photon mapping).
+
+*-m* _d,r,g,b_, *--haze*=_d,r,g,b_::
+  Atmospheric haze: density and RGB color (e.g. 2.5e-8,.75,.95,.99).
+
+*-i*, *--incremental*::
+  Incremental (progressive) rendering.
+
+*-t*, *--top-down*::
+  Render top-to-bottom (default is bottom-up).
+
+*-S*, *--stereo*::
+  Stereo viewing (left eye = red, right eye = blue).
+
+*-H* _#_, *--hypersample*=_#_::
+  Number of extra rays per pixel (also enables -J 1).
+
+*-J* _#_, *--jitter*=_#_::
+  Ray jitter bit vector (1=cell jitter, 2=frame shift, 3=both).
+
+*-u* _units_, *--units*=_units_::
+  Display units ("model" uses model-space units).
+
+*-U* _#_, *--use-air*=_#_::
+  Whether librt retains air-coded regions (0=off default, 1=on).
+
+*-T* _#[/#]_, *--tolerance*=_#[/#]_::
+  Geometry tolerances: dist[/perp] (default 0.005/1e-6).
+
+*-z* _#_, *--opencl*=_#_::
+  Enable OpenCL-accelerated raytracing (must be compiled in).
+
+=== Animation and scripting
+
+*-c* _cmd_, *--command*=_cmd_::
+  Execute an rt script command before raytracing.
+
+*-d* _file_, *--density-file*=_file_::
+  Density definitions file.
+
+*-D* _#_, *--start-frame*=_#_::
+  Starting frame number for animation.
+
+*-K* _#_, *--end-frame*=_#_::
+  Ending (kill-after) frame number for animation.
+
+=== Pixel selection
+
+*-b* _index|"x y"_, *--single-pixel*=_index|"x y"_::
+  Shoot one debug ray at a pixel index or (x, y); forces serial execution.
+
+*-Q* _x,y_, *--query-pixel*=_x,y_::
+  Compute full image but enable debug for pixel (x,y).
+
+=== Object input
+
+*-I* _file_, *--objects-file*=_file_::
+  Load object names from a text file (one per line).
+
+=== Output format
+
+*-+* _t_, *--text-output*=_t_::
+  Output mode modifier: 't' selects non-binary (text) output.
+
+=== Randomization
+
+*-q* _#_, *--rand-table-size*=_#_::
+  Size of random-number half-table (default BN_RANDHALFTABSIZE).
+
+=== Diagnostics and performance
+
+*-v* [_[#]_], *--verbose*[=_[#]_]::
+  Verbosity level; repeat (-vvvv) or give hex value (-v 0xff010030).
+
+*-x* _#_, *--rt-debug*=_#_::
+  librt debug flags (hexadecimal bit vector, see raytrace.h).
+
+*-X* _#_, *--optical-debug*=_#_::
+  rt optical/program debug flags (hexadecimal).
+
+*-N* _#_, *--nmg-debug*=_#_::
+  libnmg debug flags (hexadecimal, see nmg.h).
+
+*-!* _#_, *--bu-debug*=_#_::
+  libbu debug flags (hexadecimal, see bu.h); -!1 causes bu_bomb core dump.
+
+*-P* _#_, *--cpus*=_#_::
+  Max processor cores to use (negative = all but N).
+
+*-B*, *--benchmark*::
+  Benchmark mode: disable all intentional randomness (dither, etc.).
+
+=== Help
+
+*-h* [_all_], *--help*[=_all_]::
+  Print help and exit; use --help=all for advanced options.
+
+// END GENERATED BU_ARG OPTIONS
+
+=== Additional Details
 
 *remrt* parses the complete *rt*(1) option set; consult *rt*(1) for the
 full description. The options most relevant to distributed rendering
