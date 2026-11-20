@@ -99,17 +99,6 @@ const char	*cmd[] = {
     0
 };
 
-const char	*usage[] = {
-    "",
-    "v d e c k",
-    "Make COMGEOM decks of objects from a \"mged\" file suitable as",
-    "input to GIFT5 or gift(1V).",
-    "",
-    "Usage: vdeck file.g",
-    "",
-    0
-};
-
 /*  These arrays are now dynamically allocated by toc() */
 
 char	**toc_list;		/* Sorted table of contents. */
@@ -1618,15 +1607,16 @@ quit(int UNUSED(sig))
 int
 main(int argc, char *argv[])
 {
+    int parse_status;
+
     bu_setprogname(argv[0]);
 
     setbuf(stdout, (char *)bu_malloc(BUFSIZ, "stdout buffer"));
     BU_LIST_INIT(&(sol_hd.l));
 
-    if (! parsArg(argc, argv)) {
-	menu(usage);
-	return 1;
-    }
+    parse_status = parsArg(argc, argv);
+    if (parse_status <= 0)
+	return parse_status < 0 ? 0 : 1;
 
     /* Build directory from object file.	 	*/
     if (db_dirbuild(dbip) < 0) {

@@ -58,7 +58,6 @@
 #define NO	0
 
 extern int	debug;
-extern const char *usage[];
 extern const char *cmd[];
 extern mat_t	identity;
 
