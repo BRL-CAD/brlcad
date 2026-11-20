@@ -61,15 +61,60 @@ if(TARGET gcv-ply)
   brlcad_add_test(NAME gcv_ply_read_whitespace COMMAND test_gcv_ply_read whitespace)
 endif()
 
-cmakefiles(CMakeLists.txt test_context.c)
-
-# Local Variables:
-# tab-width: 8
-# mode: cmake
-# indent-tabs-mode: t
-# End:
-# ex: shiftwidth=2 tabstop=8
-
+# Keep the fixture out of installation while exercising the actual loader.
+add_library(gcv-mime-fixture MODULE EXCLUDE_FROM_ALL mime_plugin.c)
+target_link_libraries(gcv-mime-fixture libgcv)
+target_compile_definitions(gcv-mime-fixture PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+set_target_properties(gcv-mime-fixture PROPERTIES
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/gcv"
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/gcv"
+)
+brlcad_addexec(test_gcv_mime "test_mime.c;result_exception.cpp" libgcv TEST)
+if(TARGET test_gcv_mime)
+  brlcad_add_test(NAME gcv_mime_directory COMMAND test_gcv_mime directory-input)
+  add_dependencies(test_gcv_mime gcv-mime-fixture gcv_plugins)
+  if(TARGET gcv-vtk AND TARGET gcv-vrml AND TARGET gcv-asc AND TARGET gcv-stl AND TARGET gcv-scad)
+    # VRML parser state survives conversion contexts. Keep MIME cases in
+    # separate processes while its independent reuse bug remains deferred.
+    set(native_assertion_formats vtk vrml1 vrml2 asc stl scad brlcad)
+    foreach(optional obj ply)
+      if(TARGET gcv-${optional})
+        list(APPEND native_assertion_formats ${optional})
+      endif()
+    endforeach()
+    foreach(format ${native_assertion_formats})
+      foreach(request none empty explicit observed)
+        if(format STREQUAL "scad" AND request STREQUAL "explicit")
+          continue()
+        endif()
+        brlcad_add_test(NAME gcv_native_assertions_${format}_${request}
+          COMMAND test_gcv_mime native-assertions ${format} ${request})
+      endforeach()
+    endforeach()
+    unset(native_assertion_formats)
+  endif()
+  if(TARGET gcv-ply)
+    brlcad_add_test(NAME gcv_ply_profiles COMMAND test_gcv_mime ply-profiles)
+  endif()
+  if(TARGET gcv-stl)
+    brlcad_add_test(NAME gcv_stl_profiles COMMAND test_gcv_mime stl-profiles)
+    brlcad_add_test(NAME gcv_stl_output_profiles COMMAND test_gcv_mime stl-output-profiles)
+  endif()
+  if(TARGET gcv-gdal)
+    add_dependencies(test_gcv_mime gcv-gdal)
+    target_compile_definitions(test_gcv_mime PRIVATE TEST_GCV_GDAL)
+  endif()
+  if(TARGET gcv-obj)
+    target_compile_definitions(test_gcv_mime PRIVATE TEST_GCV_OBJ)
+    brlcad_add_test(NAME gcv_obj_profiles COMMAND test_gcv_mime obj-profiles)
+  endif()
+  if(TARGET gcv-gltf)
+    add_dependencies(test_gcv_mime gcv-gltf)
+    target_compile_definitions(test_gcv_mime PRIVATE TEST_GCV_GLTF)
+  endif()
+endif()
+brlcad_add_test(NAME gcv_mime COMMAND test_gcv_mime "${CMAKE_CURRENT_SOURCE_DIR}/ifc_tetra.ifc")
+brlcad_add_test(NAME gcv_mime_variants COMMAND test_gcv_mime variants)
 if(TARGET gcv-gdal)
   brlcad_find_package(GDAL REQUIRED)
   brlcad_addexec(test_gcv_gdal_profiles gdal_profiles.cpp "libgcv;libwdb;librt;${GDAL_LIBRARY}" TEST)
@@ -83,3 +128,34 @@ if(TARGET gcv-gdal)
   brlcad_add_test(NAME gcv_gdal_science_profiles COMMAND test_gcv_gdal_profiles science)
   brlcad_add_test(NAME gcv_gdal_product_profiles COMMAND test_gcv_gdal_profiles products)
 endif()
+if(TARGET gcv-fastgen4)
+  brlcad_addexec(test_gcv_fastgen_profiles fastgen_profiles.c "libgcv;libwdb;librt" TEST)
+  if(TARGET test_gcv_fastgen_profiles)
+    add_dependencies(test_gcv_fastgen_profiles gcv-fastgen4)
+  endif()
+  brlcad_add_test(NAME gcv_fastgen_profiles COMMAND test_gcv_fastgen_profiles)
+endif()
+if(TARGET gcv-jt)
+  brlcad_addexec(test_gcv_jt_profiles jt_profiles.c "libgcv;libwdb;librt" TEST)
+  if(TARGET test_gcv_jt_profiles)
+    add_dependencies(test_gcv_jt_profiles gcv-jt)
+  endif()
+  brlcad_add_test(NAME gcv_jt_profiles COMMAND test_gcv_jt_profiles)
+endif()
+if(TARGET gcv-rhino)
+  brlcad_addexec(test_gcv_rhino_profiles rhino_profiles.cpp "libgcv;libwdb;librt;OPENNURBS::OPENNURBS" TEST)
+  if(TARGET test_gcv_rhino_profiles)
+    add_dependencies(test_gcv_rhino_profiles gcv-rhino)
+  endif()
+  brlcad_add_test(NAME gcv_rhino_profiles COMMAND test_gcv_rhino_profiles)
+endif()
+cmakefiles(mime_plugin.c mime_cli.cmake sdk_writers.cmake ifc_tetra.ifc)
+
+cmakefiles(CMakeLists.txt test_context.c)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

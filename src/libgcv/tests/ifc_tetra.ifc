@@ -1,0 +1,64 @@
+ISO-10303-21;
+/* IFC tetrahedron MIME fixture
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+HEADER;
+FILE_DESCRIPTION(('ViewDefinition [CoordinationView]'),'2;1');
+FILE_NAME('tetra.ifc','2000-01-01T00:00:00',(''),(''),'BRL-CAD','BRL-CAD','');
+FILE_SCHEMA(('IFC2X3'));
+ENDSEC;
+DATA;
+#1=IFCPERSON($,$,'Reader',$,$,$,$,$);
+#2=IFCORGANIZATION($,'Fixture',$,$,$);
+#3=IFCPERSONANDORGANIZATION(#1,#2,$);
+#4=IFCAPPLICATION(#2,'1','Fixture','Fixture');
+#5=IFCOWNERHISTORY(#3,#4,$,.ADDED.,$,$,$,0);
+#6=IFCSIUNIT(*,.LENGTHUNIT.,$,.METRE.);
+#7=IFCUNITASSIGNMENT((#6));
+#8=IFCCARTESIANPOINT((0.,0.,0.));
+#9=IFCAXIS2PLACEMENT3D(#8,$,$);
+#10=IFCGEOMETRICREPRESENTATIONCONTEXT($,'Model',3,0.00001,#9,$);
+#11=IFCLOCALPLACEMENT($,#9);
+#20=IFCPROJECT('0000000000000000000001',#5,'Fixture',$,$,$,$,(#10),#7);
+#21=IFCBUILDING('0000000000000000000002',#5,'Building',$,$,#11,$,$,.ELEMENT.,$,$,$);
+#22=IFCRELAGGREGATES('0000000000000000000003',#5,$,$,#20,(#21));
+#30=IFCCARTESIANPOINT((0.,0.,0.));
+#31=IFCCARTESIANPOINT((1.,0.,0.));
+#32=IFCCARTESIANPOINT((0.,1.,0.));
+#33=IFCCARTESIANPOINT((0.,0.,1.));
+#40=IFCPOLYLOOP((#30,#32,#31));
+#41=IFCFACEOUTERBOUND(#40,.T.);
+#42=IFCFACE((#41));
+#43=IFCPOLYLOOP((#30,#31,#33));
+#44=IFCFACEOUTERBOUND(#43,.T.);
+#45=IFCFACE((#44));
+#46=IFCPOLYLOOP((#30,#33,#32));
+#47=IFCFACEOUTERBOUND(#46,.T.);
+#48=IFCFACE((#47));
+#49=IFCPOLYLOOP((#31,#32,#33));
+#50=IFCFACEOUTERBOUND(#49,.T.);
+#51=IFCFACE((#50));
+#60=IFCCLOSEDSHELL((#42,#45,#48,#51));
+#61=IFCFACETEDBREP(#60);
+#62=IFCSHAPEREPRESENTATION(#10,'Body','Brep',(#61));
+#63=IFCPRODUCTDEFINITIONSHAPE($,$,(#62));
+#64=IFCBUILDINGELEMENTPROXY('0000000000000000000004',#5,'Tetrahedron',$,$,#11,#63,$,.ELEMENT.);
+#65=IFCRELCONTAINEDINSPATIALSTRUCTURE('0000000000000000000005',#5,$,$,(#64),#21);
+ENDSEC;
+END-ISO-10303-21;
