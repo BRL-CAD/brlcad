@@ -10,7 +10,7 @@ rtwizard - composite BRL-CAD images from color, ghost, and edge-line renderings
 
 [source]
 ----
-rtwizard [options] [-i] _geometry.g_ [-o] _output.{pix|png}_ [object ...]
+rtwizard [options] [-i] _geometry.g_ [-o] _output.image_ [object ...]
 ----
 
 
@@ -73,10 +73,12 @@ preferred.
   Input .g geometry database.  Overrides any unflagged .g argument.
 
 *-o* _filename_, *--output-file* _filename_::
-  Output image file.  A .png extension produces a PNG image; otherwise
-  a BRL-CAD *pix*(5) image is written.  Other supported extensions are
-  .ppm, .bw, and .dpix.  In cutting-plane animation mode, .png and .apng
-  produce APNG while .avi and .mjpg produce MJPEG.
+  Output image file.  Its extension selects a registered libicv writer,
+  including PNG, JPEG, PPM and BRL-CAD *pix*(5).  Unsupported or ambiguous
+  extensions fail without falling back to raw PIX output.  The graphical
+  save dialog lists extensions supported by the current codec context.
+  In cutting-plane animation mode, .png and .apng produce APNG while .avi
+  and .mjpg produce MJPEG.
 
 *-s* _#_, *--size* _#_::
   Width and height of a square output image, in pixels (default 512).

@@ -12,6 +12,7 @@ set(
   main_menu.adoc
   mged.adoc
   mgedrc.adoc
+  mime.adoc
   nirt.adoc
   object_types.adoc
   oed.adoc

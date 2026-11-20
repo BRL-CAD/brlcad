@@ -1,0 +1,405 @@
+= Runtime MIME Types and Format Selection
+:doctype: article
+:toc:
+:toclevels: 2
+
+BRL-CAD separates format identity, content recognition, and implementation
+selection. A MIME name identifies a format family; traits describe its
+representation or revision. A handler advertises the variants and operations
+it implements. Recognizing a file does not establish that a converter can
+read it or preserve every feature.
+
+== Selecting formats
+
+Use the installed tools to inspect available support:
+
+[source,shell]
+----
+gcv --list-formats
+gcv --identify input.data
+icv --list-formats
+icv info input.data
+----
+
+Input selection combines bounded content inspection with filename evidence.
+Output selection uses an explicit type or the destination's extension.
+Explicit MIME names avoid extension collisions; handler or codec names
+choose an implementation. Available formats depend on installed plugins
+and the linked SDKs.
+
+[source,shell]
+----
+gcv --input-format model/stl input.data output.g
+gcv --input-handler 'Assetimport Reader' input.stl output.g
+gcv --output-trait encoding=binary model.g output.stl
+icv --input-format image/vnd.brlcad.pix -w 512 -n 512 input.pix output.png
+icv --plugin codec-library --input-codec 'Example codec' input.data output.png
+----
+
+GCV accepts `--input-handler` and `--output-handler`; ICV accepts
+`--input-codec` and `--output-codec`. ICV's repeatable `--plugin` option
+loads codec libraries for conversion, information, and comparison operations.
+GCV also accepts multi-letter `format:path` prefixes. Explicit command-line
+format options take precedence over a prefix.
+
+Repeat `--input-trait key=value` or `--output-trait key=value` to constrain a
+variant. Set-valued assertions use a complete JSON array:
+
+[source,shell]
+----
+gcv --input-trait 'gltf.required-extensions[]=[]' input.gltf output.g
+----
+
+This request requires a glTF document with no required extensions. It does
+not tell the reader to ignore extensions found later. Unsupported output
+requests fail selection before output creation. Input assertions are checked
+against the source, including declarations outside the inspection prefix.
+See the `gcv`, `icv`, `step-g`, and `g-step` manual pages for their options.
+
+== MIME names and aliases
+
+Canonical names are lowercase `type/subtype` strings. Use an IANA name when
+one exists, then an established name from the format owner or desktop
+metadata. A local vendor-tree proposal fills a genuine gap; registering it
+inside BRL-CAD does not register it with IANA or imply owner endorsement.
+Catalog policy and provenance are documented in `misc/mime/README`.
+
+Aliases resolve to a canonical identity. They do not set a version, encoding,
+or output profile. Native databases use proposed `model/vnd.brlcad`, with
+`version=4` or `version=5`. The published `application/brlcad-v4`,
+`application/brlcad-v5`, and `application/brlcad-unknown` packaging names
+remain aliases. ASC has a separate grammar and uses proposed
+`application/vnd.brlcad.script`.
+
+An extension may identify unrelated formats. In particular, `.stl`, `.obj`,
+`.asc`, `.pix`, and `.vtu` are ambiguous. Registered `model/vnd.vtu` means
+Virtue3D; VTK XML uses proposed `application/vnd.kitware.vtk+xml`. Preserve
+such distinctions rather than treating every shared extension as an alias.
+Backend names such as GDAL and Asset Import select implementations, not
+formats.
+
+== Traits and capabilities
+
+Traits describe source facts or requested output properties. They are
+BRL-CAD metadata, separate from MIME parameters and conversion-loss policy.
+Format-specific keys use a namespace such as `step.`, `gltf.`, or `png.`.
+
+[cols="1,3",options="header"]
+|===
+|Trait |Meaning
+|`encoding` |Character encoding or binary representation, such as `ascii`, `utf-8`, or `binary`.
+|`byte-order` |`little-endian` or `big-endian` for encoded numeric fields.
+|`version` |A declared format revision, independent of the producer's application version.
+|`text.code-unit-width` |Physical text units: `8`, `16`, or `32` bits.
+|`text.ascii-only` |Whether the decoded character repertoire is entirely ASCII; independent of code-unit width.
+|`bit-depth`, `sample-format`, `channels`, `color-space` |Encoded image or raster layout, rather than a decoder's normalized pixel buffer.
+|`container`, `compression` |The outer representation, when established by the source or writer.
+|`stl.serialization` |`text` or `binary`; charset is a separate property.
+|`obj.serialization` |OBJ text serialization; a text label alone does not guarantee ASCII.
+|`asc.syntax` |`tcl-commands` or `legacy-records`, independently of the database version.
+|`gltf.required-extensions` |The complete set of extensions required to interpret a glTF asset.
+|`step.profiles` |Complete protocol/edition identifiers, such as `ap203e1` or `ap242e1`, when all editions are known.
+|===
+
+An absent key is unknown. A known empty set has no members. Different
+observations of one scalar, or different complete sets for one key, are
+contradictions. Multiple members within a single set are not contradictions.
+Initialize owned collections with `BU_MIME_TRAITS_INIT_ZERO`, populate them
+with `bu_mime_traits_add` or `bu_mime_traits_add_set`, and release them with
+`bu_mime_traits_free`. Registration copies descriptor data.
+
+A capability row is an AND clause; repeated rows for a type are alternatives.
+Scalar constraints require equality. Set constraints list supported members:
+a complete observed or requested set must be a subset of the supported set.
+Thus a reader supporting features A and B can accept either, both, or neither,
+while rejecting C. Complete-set source assertions, by contrast, require exact
+membership when matched against the source.
+
+Operation masks distinguish file, memory, metadata, and sequence support.
+A type may be recognized without any implementation for a requested
+operation. Query `gcv_list_handlers` or `icv_list_codecs` instead of assuming
+that recognition, a file extension, or a decoder implies writer support.
+
+=== Source assertions and output choices
+
+Keep three collections separate: original caller assertions, observed source
+facts, and a provisional resolved selection. Resolving a request may fill
+unknown keys for selection; it does not prove that the source has those
+properties. Pass original requests to execution rather than promoting
+resolved defaults or observations into new caller requirements.
+
+Input constraints normally require known facts. A reader may set
+`BU_MIME_DEFER_INPUT_VALIDATION` to check facts unavailable in the bounded
+prefix against the complete source before publishing converted data. Known
+contradictions still fail selection. Reader-established facts remain
+authoritative; supplemental observations may fill absent keys only after
+source validation succeeds. Use `bu_mime_traits_match` for assertion checks.
+A header declaration cannot rescue a failed whole-file charset check.
+
+Output requests require advertised support for every key. Matching clauses
+supply unrequested scalar defaults; they do not select all members of an
+unrequested supported set. Existing writer options may choose compatible
+values left unspecified by the caller. Explicit contradictions must fail
+before opening output. GCV writers borrow the resolved profile through
+`gcv_target_traits`; readers obtain original assertions through
+`gcv_target_request_traits`. Nested calls restore the parent's request.
+
+Headerless raw images use a different contract: explicit traits may declare
+how supplied bytes are to be interpreted. Such choices are not observations
+of an encoded header. Dimensions and layout must still agree with the bytes.
+
+=== STEP schemas and editions
+
+Part 21 syntax uses registered `application/p21`; recognized STEP product
+schemas can additionally establish `model/step`. IFC-SPF remains Part 21 and
+is not inferred to be a STEP product model from its extension or syntax.
+
+Inspection reads `FILE_SCHEMA` from the header. Complete `p21.schemas`,
+`p21.schema-identifiers`, and `p21.oids` sets retain its declarations. STEP
+adds `step.schemas`, `step.schema-identifiers`, `step.application-protocols`,
+`step.profiles`, and `step.oids`. Singular `step.ap`, `step.edition`,
+`step.schema`, `step.schema-identifier`, and `step.oid` facts are supplied only
+when unambiguous. Multiple schemas are valid sets, not conflicting scalars.
+
+An AP number alone does not establish an edition. AP242 editions share a
+schema name; a recognized identifier/OID establishes the edition. Missing or
+future identifiers leave it unknown. A handler restricted to AP242e1 can
+require both `step.ap=242` and `step.edition=1`; a broader reader can validate
+unknown editions itself. `bu_mime_version_compare` compares dotted decimal
+versions, but compatibility remains a format-specific decision.
+
+=== Text and containers
+
+Text serialization, character encoding, repertoire, code-unit width, and BOM
+presence are independent properties. Full-source XML charset checks verify
+Unicode encodings, declared ASCII, and ISO-8859-1. `US-ASCII` and `latin1`
+declarations normalize to `ascii` and `iso-8859-1`. An unverified charset
+cannot satisfy an explicit charset assertion.
+
+Facts about a member do not automatically describe its container. For
+example, compressed ZGL has `encoding=binary`; its decoded XML uses the scoped
+`xml.encoding` key. A ZIP signature alone does not establish a CAD package's
+manifest, schema, or supported conversion profile. Standalone labels,
+referenced raster payloads, and enclosing packages may have distinct types.
+
+== Recognition and registry ownership
+
+Create a `bu_mime_registry` with `bu_mime_registry_create`. A zero scan limit
+selects the default 64 KiB prefix. The registry starts with the compiled
+catalog and built-in recognizers; it needs neither network access nor an
+installed desktop database.
+
+`bu_mime_register` copies a definition's names, extensions, and rules and
+returns a contribution token. Multiple contributors may describe one type.
+`bu_mime_unregister` removes only that token's contribution; built-ins cannot
+be removed. Invalid definitions and conflicting aliases are rejected without
+publishing a partial contribution. Registry queries and updates synchronize
+internally; destruction requires exclusive ownership.
+
+A definition's rules are alternatives. Each rule is a conjunction of byte
+tests at fixed offsets or inclusive bounded offset ranges, with optional bit
+masks. Encode numeric signatures in file byte order. Registration rejects
+rules extending beyond the scan limit. Structural probes can interpret
+bounded headers when byte tests are insufficient.
+
+`bu_mime_detect` accepts a filename and/or bytes. A NULL buffer requests
+filename-only lookup; a non-NULL zero-length buffer represents empty input.
+Its `complete` argument distinguishes a complete input from a prefix.
+`bu_mime_detect_file` reads a bounded prefix and reports I/O failure separately
+from an unknown format. Results own their strings; free them with
+`bu_mime_result_free`. `bu_mime_list` returns an owned catalog snapshot,
+released with `bu_mime_list_free`.
+
+Evidence ranks from extension to heuristic to signature. Evidence priority
+breaks ties within a class; equal highest-ranked types remain ambiguous.
+The independent `incomplete` flag means inspection could not establish all
+relevant facts. Neither a filename nor a recognizable header proves that a
+complete file is valid. The selected reader still validates it.
+
+A structural probe receives a read-only `bu_mime_probe_input` containing the
+bounded prefix, completeness, and file size when known. It reports a match,
+no match, insufficient data, or error. Probes perform no I/O or full decoding.
+The core implements a small rule vocabulary, not the libmagic language: it
+does not load a system magic database or recursively unpack arbitrary data.
+Use a format-specific probe or the full reader for deeper inspection.
+
+== GCV plugins and execution
+
+Include `gcv/runtime.h` for the enum-free interface. A loadable plugin exports
+`gcv_plugin_info_v2` and returns a `gcv_plugin_v2` descriptor containing
+`GCV_PLUGIN_ABI_VERSION`, its structure size, MIME definitions, and handlers.
+Each `gcv_handler` references a `gcv_conversion`, capability clauses,
+preference priority, and optional recognition/trait probes. Static plugins
+call `gcv_register_plugin`. Registration copies descriptors and rolls back
+new contributions if validation fails.
+
+A GCV context owns its registry, handler handles, and loaded libraries.
+Serialize context operations and keep handles within their owning context.
+Libraries remain loaded until context destruction; copied capability and
+conversion-result snapshots have independent ownership.
+
+Use `gcv_resolve_variant` to combine input detection or output filename
+selection with a request. `gcv_select_variant` selects an already known type.
+`gcv_execute_variant` executes the returned handle with the canonical type
+and original request. `gcv_execute_format` provides the type-aware interface
+without an explicit trait collection. During a callback, `gcv_target_mime`
+identifies the selected format, including for multi-format writers.
+
+Handler preference chooses between implementations of the same type. Broad
+SDK backends use `GCV_FALLBACK_PRIORITY`; equal preferences require an
+explicit handler. Preference cannot settle ambiguity between file types.
+Capabilities must describe actual SDK support, including host restrictions;
+recognition-only entries must not advertise conversion.
+
+`src/libgcv/tests/mime_plugin.c` is a complete minimal loadable plugin.
+`src/libgcv/plugins/obj/obj_read.c` demonstrates a structural probe.
+The public headers specify descriptor fields, callbacks, and return values.
+
+=== Conversion results
+
+Format traits do not express acceptable conversion losses. Set
+`gcv_opts.reject_losses` with `GCV_LOSS_GEOMETRY`, `GCV_LOSS_APPEARANCE`,
+`GCV_LOSS_BEHAVIOR`, or `GCV_LOSS_METADATA`; zero permits reported losses.
+The `gcv` and `gltf-g` tools expose repeatable `--reject-loss category` options.
+
+Initialize `gcv_conversion_result` with
+`GCV_CONVERSION_RESULT_INIT_ZERO` and call `gcv_execute_result` to distinguish
+complete, partial, and failed conversion. Diagnostics and loss entries belong
+to the result and survive context destruction. Release them with
+`gcv_conversion_result_free`.
+
+Callbacks report omissions or approximations with `gcv_report_loss` before
+affected writes where possible. The executor enforces rejection even if the
+callback ignores it, but does not roll back earlier writes. Loss coverage
+depends on the handler; complete status means no losses were reported, not
+that every format feature has been audited.
+
+== ICV codecs, images, and sequences
+
+Include `icv/codec.h`. Create an `icv_context`, then register static codecs
+with `icv_register_plugin` or load libraries with `icv_load_plugin`. A loadable
+plugin exports `icv_plugin_info`, returning an `icv_plugin` with
+`ICV_PLUGIN_ABI_VERSION` and its structure size. Advertise only implemented
+file, memory, metadata, and sequence callbacks. Incompatible descriptor
+versions are rejected; rebuild modules after a runtime ABI change.
+
+An ICV context owns its registry unless the application supplies a borrowed
+registry to `icv_context_create`. The borrowed registry must outlive the
+context; context destruction removes its plugin contributions. Serialize
+context operations. Passing NULL as an I/O context creates temporary
+built-ins; reuse an explicit context for plugins, batches, and animations.
+
+[source,c]
+----
+#include "common.h"
+#include "bu/log.h"
+#include "bu/vls.h"
+#include "icv/codec.h"
+
+int convert_to_png(const char *input, const char *output)
+{
+    struct icv_context *context = icv_context_create(NULL);
+    struct bu_vls messages = BU_VLS_INIT_ZERO;
+    icv_image_t *image;
+    int status = BRLCAD_ERROR;
+
+    if (!context) return status;
+    image = icv_read_with_context(context, input, NULL, NULL, 0, 0, &messages);
+    if (image) {
+        status = icv_write_with_context(context, image, output,
+            "image/png", NULL, &messages);
+        icv_destroy(image);
+    }
+    if (bu_vls_strlen(&messages)) bu_log("%s", bu_vls_cstr(&messages));
+    bu_vls_free(&messages);
+    icv_context_destroy(context);
+    return status;
+}
+----
+
+A NULL input type requests detection. A NULL output type selects by filename;
+memory output requires an explicit type. A failed decoder is reported rather
+than retried through unrelated decoders. `_variant` I/O functions add traits
+to the corresponding `_with_context` calls.
+
+Input callbacks receive original assertions and separate borrowed
+observations, valid throughout the callback, including nested calls. Validate
+against reader-established facts; do not use selected defaults or requests as
+observations. Output callbacks receive the resolved profile. Returned images
+use normal ICV ownership; memory writers allocate storage compatible with
+`bu_free`. `src/libicv/tests/codec_plugin.c` demonstrates these contracts.
+
+=== Dimensions and channel layout
+
+Use `icv_named_size` for paper/display names and `icv_raw_size` for exact byte
+counts with an explicit bytes-per-pixel layout. `icv_image_size_with_context`
+obtains the raw layout from codec capabilities and rejects encoded formats.
+Compressed file size cannot establish image dimensions.
+
+`icv_metadata` and `icv_metadata_file` query encoded headers without allocating
+pixels. Their `_variant` counterparts enforce trait requests. Results
+distinguish match, unknown, incomplete, and error; zero-valued fields are
+unknown. Header metadata does not validate compressed pixels. Bounded
+metadata queries cannot defer assertions to a later full read.
+
+`icv/image.h` provides allocation and pixel access independently of file types.
+PNG reads preserve grayscale and alpha as one-, two-, three-, or four-channel
+images. `icv_flatten` allocates three-channel RGB for display, compositing
+straight alpha over an explicit background or black. It does not change the
+source or apply a transfer-function conversion.
+
+Headerless PIX, BW, and DPIX need an explicit interpretation when detection
+cannot identify them. Fixed-layout codecs may infer dimensions from an exact
+regular-file size; partial pixels are invalid. Nonseekable automatic reads
+select from a bounded prefix before spooling. Use
+`icv_context_set_spool_limit` to bound temporary-file buffering; zero leaves
+it unlimited. Explicit stream formats may decode directly.
+
+=== Animation
+
+Sequence codecs share the same registry and lifetime as still-image codecs.
+Use `icv_anim_read_variant` and `icv_anim_write_variant` for named files;
+sequence I/O does not accept memory buffers or standard streams. A returned
+animation retains its canonical source name through `icv_anim_mime_type`.
+Pass that name explicitly to write in the source format; a NULL output type
+selects from the destination filename.
+
+The `.png` association selects `image/png` for still output and `image/apng`
+for sequences. Still-image APNG reading returns the default image, not an
+arbitrary frame. AVI uses `video/x-msvideo`; the built-in sequence reader
+requires a single MJPG/mjpg video stream at index zero. Container recognition
+alone does not establish a supported animation stream.
+
+GED applications borrow the session-owned context with `ged_image_context`.
+Plugins loaded there serve overlays, screenshots, image fitting, and animation
+export. The context is created on first use and released by `ged_free`;
+callers must not destroy the borrowed context.
+
+== Migrating legacy code
+
+New code uses `bu/mime_runtime.h`, `gcv/runtime.h`, `icv/codec.h`, and
+`icv/image.h`. The compatibility headers retain frozen MIME enums and old
+entry points during the deprecation window. Use MIME strings, explicit
+contexts, and owned detection/capability results instead of enum values.
+
+Replace backend pseudo-formats with the actual MIME type and a handler name.
+Review ambiguous extensions and old raw PIX defaults explicitly: new context
+APIs report unknown input instead of silently choosing PIX. Legacy adapters
+retain their documented defaults during migration.
+
+The formal inventory, replacement interfaces, and release/time gates are in
+`doc/changes/deprecated.adoc`. This transition requires ownership and error-
+handling review; it is not a mechanical rename. Compatibility bridges and V1
+plugin descriptors remain until those removal prerequisites are satisfied.
+
+== Maintaining implementations
+
+For each advertised capability, verify actual input/output representations,
+explicit and automatic selection, conflicting requests, and assertions past
+the prefix limit. Exercise file, memory, stream, and sequence operations only
+where advertised. Registration tests should cover aliases, contribution
+ownership, copied descriptors, and context lifetimes.
+
+Run affected library/converter tests and the `regress-repository` and
+`regress-licenses` targets. `BRLCAD_MIME_FUZZING` enables optional Clang
+libFuzzer harnesses for additional parser exercises.

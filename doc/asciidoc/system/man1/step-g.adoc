@@ -14,6 +14,8 @@ step-g - import an ISO 10303 STEP file into a BRL-CAD geometry database
 step-g [options] input.step output.g
 step-g [options] (-o output.g | -O output.g) input.step
 step-g -D [options] input.step
+step-g --list-schemas
+step-g --list-formats
 ----
 
 [[description]]
@@ -71,11 +73,41 @@ is printed to standard output before geometry conversion begins.
 
 === Schema and content selection
 
+*--list-schemas*::
+  List configured schema bindings without loading modules or reading input.
+
+*--list-formats*::
+  List each binding's `model/step` input capability. The final columns are
+  supported source constraints. AP203 clauses distinguish editions 1 and 2;
+  AP214 and AP242 retain their existing broader source acceptance. An AP242
+  binding name does not assert the edition of a source file. The full reader
+  checks the header and caller assertions before conversion.
+
 *--schema* _AP_::
   Override AP242 edition selection with *ap242e1*, *ap242e2*, *ap242e3*, or
-  *ap242e4*. The default *auto* mode tries compatible AP242 layouts from the
-  newest to the oldest. For other AP families, an explicit value must agree
-  with *FILE_SCHEMA*.
+  *ap242e4*. This selects a decoder binding without changing the source
+  edition declaration. The default *auto* mode uses a recognized edition OID
+  from *FILE_SCHEMA*; when the edition is unknown, it tries AP242 layouts
+  from newest to oldest. For other AP families, an explicit value must agree
+  with *FILE_SCHEMA*. Use *--input-trait* to assert source properties
+  independently of this decoder-binding choice.
+
+*--input-format* _MIME_::
+  Require the source to match a MIME identity or associated extension.
+  Known STEP product-model headers use `model/step`; `application/p21`
+  describes the generic Part 21 serialization, including unrelated EXPRESS
+  companion schemas. MIME names and aliases use the common runtime registry.
+
+*--input-trait* _key=value_::
+  Assert an input property; repeat for multiple assertions. For example,
+  `step.ap=242` and `step.edition=1` require a declared AP242 edition 1
+  profile. Complete sets use JSON-array syntax, such as
+  `step.profiles[]=["ap242e1"]`. Assertions are checked against the complete
+  header before loading a schema module or opening the output. Unknown
+  requested properties fail; a decoder-binding override does not establish
+  a missing source fact. Generic `application/p21` requests use the
+  corresponding `p21.schemas`, `p21.schema-identifiers` and `p21.oids` facts.
+  No body character encoding is inferred from the header.
 
 *-e*, *--entity* _ID[,ID...]_::
   Convert only the listed representation-item roots while retaining required
@@ -179,10 +211,14 @@ plus an unknown companion identifier is accepted with a warning; a sole
 unknown schema or multiple supported AP families is rejected. IFC headers are
 recognized and directed to the separate *ifc-g*(1) converter.
 
-The AP242 long-form identifier does not state an edition. Automatic mode
-tries edition 4, 3, 2, and 1 physical layouts in that order when an attempted
-layout cannot produce usable geometry. A common subset can remain ambiguous,
-so use *--schema ap242eN* when the authoring edition is known.
+The AP242 long-form name alone does not state an edition. A recognized OID
+qualifying that name selects its declared edition in automatic mode. Without
+an established edition, automatic mode tries edition 4, 3, 2, and 1 physical
+layouts in that order when an attempted layout cannot produce usable geometry.
+That fallback does not establish a missing source edition. An explicit
+*--schema ap242eN* remains available to choose a decoder binding, including
+a compatibility override. Conflicting known editions in one header are
+rejected as ambiguous before a schema module is loaded.
 
 The interim identifiers `CONFIGURATION_CONTROL_3D_DESIGN_MIM_LF`,
 `CCD_CLA_GVP_AST`, and `CCD_CLA_GVP_AST_ASD` select AP203e2. Verified

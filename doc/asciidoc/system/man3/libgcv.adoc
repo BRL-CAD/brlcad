@@ -33,6 +33,10 @@ import, export, and in-memory conversion operations in a uniform way.
 This is the machinery underlying command-line converters and the
 general-purpose *gcv* geometry conversion tool.
 
+`gcv_list_handlers` returns owned runtime capability snapshots.
+`gcv_detect` and `gcv_detect_file` report bounded identification evidence,
+while `gcv_select_filter` and `gcv_resolve_filter` select implementations.
+
 The complete API, including data structures and function signatures, is
 documented in the headers noted above and in the Doxygen-generated
 reference for the LIBGCV module.
@@ -43,6 +47,42 @@ reference for the LIBGCV module.
 
 The BRL-CAD Doxygen API reference provides the authoritative,
 up-to-date description of all public LIBGCV routines.
+
+== Runtime MIME types
+
+The runtime format APIs separate MIME identities and content recognition
+from reader/writer selection. See the Runtime MIME Types and Format
+Detection article for registration, ownership and migration details.
+The public interfaces are documented in `bu/mime_runtime.h`, `gcv/runtime.h` and
+`icv/codec.h`. Existing enum entry points remain compatibility interfaces.
+
+The enum-free *gcv/runtime.h* interface describes modern execution callbacks
+with *gcv_conversion*. *gcv_execute_format* verifies context ownership and
+advertised MIME support before invoking callbacks. *gcv/api.h* retains the
+legacy filter layout for compatibility. *gcv_select_variant*,
+*gcv_resolve_variant* and *gcv_execute_variant* additionally enforce
+per-format trait clauses. Callbacks borrow selected traits with
+*gcv_target_traits*. Unknown input properties do not satisfy restricted
+readers; requested output properties require explicit capability support.
+
+
+Set-valued capability traits list supported members. Input observations and
+output requests must be subsets; a known empty set differs from unknown
+membership. A reader using `BU_MIME_DEFER_INPUT_VALIDATION` must check
+missing facts from the complete document. Snapshot `capability_flags`
+records that policy. Scalar constraints continue to use exact equality.
+
+*gcv_execute_result* returns complete, partial or failed status and owns
+diagnostics plus a list of reported losses. Initialize its result with
+`GCV_CONVERSION_RESULT_INIT_ZERO`, then release it with
+*gcv_conversion_result_free*. Loss data survives context destruction.
+Callbacks use *gcv_report_loss* to report omitted or approximated features
+by geometry, appearance, behavior or metadata category. The
+`gcv_opts.reject_losses` mask specifies which categories are unacceptable;
+it is independent of MIME facts. Boolean execution APIs permit partial
+results by default and print reported losses. Rejected losses cause failure
+even if the callback ignores the rejection. Callbacks should check loss
+policy before writing; the generic executor does not provide rollback.
 
 == AUTHOR
 

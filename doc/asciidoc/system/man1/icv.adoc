@@ -12,7 +12,7 @@ icv - convert, compare, and report information for image formats
 [source]
 ----
 icv [-w width] [-n height] [--input-format fmt] [--output-format fmt] [-i input] [-o output] [input] [output]
-icv info file [file ...]
+icv info [--decode] file [file ...]
 icv diff [options] img1 img2
 icv anim <action> <anim_file> ...
 ----
@@ -20,9 +20,20 @@ icv anim <action> <anim_file> ...
 [[description]]
 == DESCRIPTION
 
-Without a subcommand, *icv* acts as an image format converter, reading the input image and writing it to the output file. Image formats are auto-detected from file extensions unless overridden with *--input-format* / *--output-format*. To stream through standard input or output (a path of which carries no extension) the corresponding format must be given explicitly. This tool is intended to eventually replace the family of single-purpose *pix-png*(1), *png-pix*(1), *bw-pix*(1) and similar converters.
+Conversion recognizes input from bounded content inspection and filename
+associations. Format options accept MIME names or extension shorthand.
+The repeatable *--plugin* _library_ option loads a runtime codec library.
+*--input-codec* _name_ and *--output-codec* _name_ select implementations
+explicitly. Output inference uses the filename; stdout requires an explicit
+output format. Raw input should specify its type and dimensions.
+
+
+Without a subcommand, *icv* acts as an image format converter, reading the input image and writing it to the output file. Input formats are recognized from content and filename associations unless overridden with *--input-format*. Output formats use the filename or *--output-format*. Encoded standard input can be recognized from content; raw input and standard output require explicit formats. This tool is intended to eventually replace the family of single-purpose *pix-png*(1), *png-pix*(1), *bw-pix*(1) and similar converters.
 
 === Supported Formats
+
+The table lists built-in codecs. Runtime plugins may add formats; use
+*--list-formats* to inspect the active capabilities.
 
 [cols="2*"]
 |===
@@ -47,13 +58,13 @@ Without a subcommand, *icv* acts as an image format converter, reading the input
 === Subcommands
 
 *info*::
-	Report the width, height, format, number of channels, color space, and any embedded render information (like the database and objects used to render it) for the specified image file(s).
+	Use content recognition and bounded header inspection to report the format and available image properties without decoding pixels. Headers exceeding the inspection budget are reported as incomplete; codecs without a metadata callback report unavailable properties. Use *icv info --decode* to decode pixels and report embedded render information such as the database and objects used to render the image.
 
 *diff*::
 	Compare two images and report per-channel match statistics on standard error. When the images differ and no output file is given, a raw PIX difference image is written to standard output (only if stdout is not a terminal), matching the behaviour of *pixdiff*(1). Use *-o* to write the diff image to a named file instead.
 
 *anim*::
-	Manage animation files (APNG, MJPG). Supports actions for adding, extracting, replacing, inserting, and removing frames, as well as setting animation playback speed and per-frame delays.
+	Manage animation files through registered sequence codecs. Built-ins support APNG and AVI/MJPEG. Supports actions for adding, extracting, replacing, inserting, and removing frames, as well as setting playback speed and per-frame delays. Use *icv anim --plugin library* to load an additional image or sequence codec. New files select a sequence writer from their filename; edits retain the source MIME identity even when the filename has no useful extension. An existing file that cannot be decoded is left unchanged.
 
 [[options]]
 == OPTIONS
@@ -78,6 +89,22 @@ Without a subcommand, *icv* acts as an image format converter, reading the input
 *--output-format* _fmt_::
 	Explicitly set the output image format.
 
+*--input-trait* _key=value_::
+  Require an input format property. Repeat for multiple properties. Missing
+  observations may be supplied, but known contradictions are rejected.
+
+*--output-trait* _key=value_::
+  Request an output format property supported by the chosen implementation.
+  Repeat for multiple properties. Unsupported requests fail before output
+  creation. Traits are separate from MIME parameters.
+
+*--list-formats*::
+  List runtime MIME types, implementations, operations and capability traits.
+
+*--identify* _file_::
+  Inspect the file without converting it. Report candidate MIME types,
+  evidence strength, incomplete inspection, and matching implementations.
+
 *-h*, *--help*::
 *-?*::
 	Print conversion help and exit.
@@ -85,7 +112,9 @@ Without a subcommand, *icv* acts as an image format converter, reading the input
 === Diff Subcommand Options
 
 *-o* _file_, *--output* _file_::
-	Specify a file path to save the diff image output.
+	Specify a file path to save the diff image output. Registered filename
+	associations select an available writer; unassociated names default
+	to raw PIX. Recognized types without a still-image writer are rejected.
 
 *--output-format* _format_::
 	Explicitly set the format of the output diff image.
@@ -130,7 +159,7 @@ Reads a headerless 1024x512 PIX file and writes a PNG. The dimensions are requir
 ----
 $ icv info *.png
 ----
-Reports the width, height, format, channel count, color space, and any embedded render information (originating database and objects) for every PNG in the directory, useful for confirming a batch of renders is consistent before compositing.
+Reports available header properties for every PNG in the directory. Add *--decode* to include embedded render information (originating database and objects).
 ====
 
 .Regression-test a render against a known-good reference
@@ -141,6 +170,15 @@ $ icv diff -o delta.png reference.png current.png
 ----
 Compares two renders, prints per-channel match statistics to standard error, and writes a highlighted difference image to delta.png. Omitting *-o* streams a raw PIX diff to standard output for piping, exactly as *pixdiff*(1) does.
 ====
+
+
+== IMAGE INFORMATION
+
+`icv info` uses codecs in the caller context to resolve file types, just as
+conversion does. `--input-format`, `--input-codec` and repeatable
+`--input-trait key=value` options select and constrain the input.
+`--decode` validates the full image and reports embedded render information;
+the default inspects only a bounded header.
 
 [[see_also]]
 == SEE ALSO

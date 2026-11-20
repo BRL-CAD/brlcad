@@ -90,6 +90,7 @@ cmakefiles(
   changes_rules_test.sh
   deprecated.adoc
   minimally-impacting.rules
+  mime-capabilities.adoc
   obsoleted.adoc
 )
 

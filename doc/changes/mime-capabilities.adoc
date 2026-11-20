@@ -1,0 +1,90 @@
+= Runtime MIME Capabilities
+:doctype: article
+
+BRL-CAD identifies formats with canonical MIME names and describes variants
+with traits. Runtime registries let plugins add identities and handlers
+without extending generated enums. Content recognition and implementation
+selection are separate operations.
+
+== Public interfaces
+
+[cols="1,3",options="header"]
+|===
+|Header |Purpose
+|`bu/mime_runtime.h` |Type registration, aliases, bounded recognition, traits and capability matching.
+|`gcv/runtime.h` |Geometry handlers, format selection, execution and conversion results.
+|`icv/codec.h` |Image and sequence codecs, contextual I/O and metadata queries.
+|`icv/image.h` |Image allocation and pixel access independent of file formats.
+|===
+
+Applications reuse contexts when they need plugin registrations, consistent
+selection or batch operations. Registration copies descriptor data; detection
+results and capability snapshots have explicit ownership. Loaded libraries
+remain available for the context lifetime. Context operations require caller
+serialization; registry queries and contribution changes synchronize
+internally.
+
+== Format and variant contracts
+
+A MIME identity names a format family. Traits describe serialization,
+encoding, byte order, revision, schema and required features. Capability rows
+are alternative conjunctions. Scalar constraints use equality; set-valued
+capabilities enumerate supported members. Unknown facts, known empty sets
+and conflicting observations remain distinct.
+
+Input assertions must match independently established source facts. A reader
+can defer facts unavailable in a bounded prefix only when it validates them
+against the complete source before publishing converted data. Provisional
+selection defaults do not establish source facts. Headerless raw images may
+instead use explicit traits as a declared interpretation.
+
+Output requests require advertised support. Existing converter options can
+supply compatible choices left unspecified by the caller; contradictions
+fail before output creation. Conversion-loss policy is separate from MIME
+facts and does not provide rollback of earlier writes.
+
+STEP editions and other subformats use traits rather than a MIME name for
+every revision. Recognition may describe variants that no installed decoder
+supports. SDK capabilities depend on actual configured support, not solely
+on extension lists.
+
+== Catalog and recognition
+
+The checked-in catalog combines a pinned mime-db projection with reviewed
+local records. Registered, established unregistered and proposed names are
+identified explicitly. Legacy enum inputs remain frozen; aliases do not
+assert versions. Native databases use proposed `model/vnd.brlcad`, while
+ASC uses proposed `application/vnd.brlcad.script`.
+
+Detection combines filename associations, bounded byte rules and structural
+probes. Results report ranked evidence, ambiguity and incomplete inspection.
+A recognizable header does not validate the complete file. The core does not
+implement the libmagic language or recursively unpack arbitrary containers.
+
+Use runtime capability and identification queries to inspect installed
+support. Fixed-format tools retain explicit grammar choices; generic callers
+use contextual selection. Image metadata, decoding and sequence operations
+share codec registration and selection while remaining distinct operations.
+
+== Compatibility and removal
+
+The old enums, lookup functions, enum-taking ICV I/O and size functions,
+GCV V1 plugin descriptors and backend pseudo-format selectors are deprecated
+through the formal change inventory. Compatibility adapters preserve the
+legacy interfaces during the release/time window. New code uses MIME names
+and runtime contexts.
+
+`deprecated.adoc` defines replacement APIs, announcements and removal
+prerequisites. Runtime migration requires ownership and error-handling review
+and is not suitable for a mechanical rename. Converter lifecycle redesign,
+new decoding features and comprehensive geometry-fidelity work are separate
+from the MIME contract.
+
+== Developer references
+
+* Usage, ownership and plugin integration: `doc/asciidoc/articles/mime.adoc`.
+* Catalog policy and reproducible maintenance: `misc/mime/README`.
+* Public API details: the headers listed above.
+* Verification: affected library/converter tests, `regress-repository` and
+  `regress-licenses`. Exercise advertised operations and profiles, conflicting
+  requests, deferred assertions and registration ownership.

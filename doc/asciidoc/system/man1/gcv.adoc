@@ -32,11 +32,19 @@ The input and output files may be given as the last two positional
 arguments, or named explicitly with *-i* and *-o*. When only one of *-i* or
 *-o* is used, the remaining positional argument supplies the other file.
 
-The file format is normally inferred from the file extension. It may instead
-be stated with *--input-format* and *--output-format*, or with a multi-letter
+Input recognition combines bounded content inspection and filename evidence.
+Output format is inferred from the filename. Either format may instead
+be stated as a MIME name or extension with *--input-format* and
+*--output-format*, or with a multi-letter
 format prefix on the path itself in the form _fmt_:_path_ (e.g.
 *step:model.stp*). A single-letter prefix is not recognized as a format, so
 that Windows drive letters are not misinterpreted.
+
+*--input-handler* _name_ and *--output-handler* _name_ select an
+implementation explicitly. Without these options, dedicated handlers are
+preferred over broad-format backends. Equally preferred implementations
+require an explicit choice. Installed plugins can register new types at
+runtime without adding generated enum values.
 
 Per-filter options may be passed through to the read filter, the write
 filter, or both, allowing format-specific behavior to be tuned without
@@ -44,6 +52,47 @@ filter, or both, allowing format-specific behavior to be tuned without
 
 [[options]]
 == OPTIONS
+
+*--reject-loss* _category_::
+  Reject reported losses of _geometry_, _appearance_, _behavior_, _metadata_
+  or _all_. Repeat to combine categories. This policy is separate from
+  format traits. By default, reported losses are printed and conversion may
+  succeed with partial output. For example, *--reject-loss geometry* permits
+  reported material loss while refusing known omitted or approximated geometry.
+  Coverage depends on the handler's loss reporting. A failure does not imply
+  that a handler has rolled back earlier database or file writes.
+
+*--input-trait* _key=value_::
+  Require an input format property. Repeat for multiple properties. Missing
+  observations may be supplied, but known contradictions are rejected.
+
+*--output-trait* _key=value_::
+  Request an output format property supported by the chosen implementation.
+  Repeat for multiple properties. Unsupported requests fail before output
+  creation. Traits are separate from MIME parameters.
+  Native BRL-CAD output accepts *version=4* or *version=5* (the default).
+  ASC output accepts *asc.syntax=tcl-commands* (the default) or
+  *asc.syntax=legacy-records*. Legacy ASC requires a V4-representable model;
+  its syntax choice is independent of the context's native database version.
+  PLY output accepts *version=1.0*, *encoding=ascii* or *encoding=binary*,
+  and binary *byte-order=little-endian* or *byte-order=big-endian*.
+  The writer's legacy *--type* option accepts *asc*, *le*, *be*, or *de*
+  (native binary). It can supply choices left unspecified by the MIME request;
+  explicit contradictory traits fail before output creation.
+  Native OBJ accepts *encoding=ascii*; its existing normal and material
+  switches remain conversion options. Native IGES output accepts
+  *encoding=ascii*, *version=5.3* and *iges.version-code=11*, including with
+  *--faceted* or *--trimmed-surfaces*. IGES input verifies requested revisions
+  against Global parameter 23 after parsing; a producer's version string is
+  not the IGES standard revision. The obsolete *application/iges* name
+  resolves to *model/iges*.
+
+*--list-formats*::
+  List runtime MIME types, implementations, operations and capability traits.
+
+*--identify* _file_::
+  Inspect the file without converting it. Report candidate MIME types,
+  evidence strength, incomplete inspection, and matching implementations.
 
 *-h*, *--help* [_format_]::
   Print help and exit. If a _format_ is named, format-specific help is
@@ -136,7 +185,7 @@ coordinates are interpreted as millimeters.
 ====
 [source,console]
 ----
-$ gcv --input-format step --output-format stl in.dat out.dat
+$ gcv --input-format model/step --output-format model/stl in.dat out.dat
 ----
 Forces the input to be read as STEP and the output written as STL even
 though the *.dat* extensions give no hint of the formats involved.

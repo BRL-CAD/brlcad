@@ -18,7 +18,8 @@ g-nff [-v] [-i] [-x _rt_debug_] [-X _nmg_debug_] [-e _error_file_] [-D _dist_tol
 == DESCRIPTION
 
 *g-nff* converts the specified geometry _object(s)_ from a BRL-CAD _database.g_
-file to the Neutral File Format (NFF). Each region is evaluated with the NMG
+file to Eric Haines' Neutral File Format (NFF), identified by the runtime MIME
+proposal `model/prs.haines.nff`. Each region is evaluated with the NMG
 boolean routines, triangulated, and written as a set of NFF polygons tagged
 with the region's color. *g-nff* also computes a bounding box for the geometry
 and emits a default 45-degree view, light, and 512x512 resolution into the

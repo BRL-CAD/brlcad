@@ -20,6 +20,9 @@ raw-g _RAW_file_ _database.g_
 *raw-g* reads an IABG RAW geometry file (an ASCII listing of named objects,
 each followed by triangles given as nine whitespace-separated coordinates per
 line) and writes the result to a new BRL-CAD _database.g_ file.
+The runtime catalog proposes `model/vnd.iabg.raw` for this interchange.
+Its plain named-triangle layout overlaps POV-Ray RAW; the *thickf=* plate
+attribute distinguishes the IABG variant.
 
 Each named object in the input becomes a single BOT (Bag of Triangles) primitive
 and region in the output database. By default the triangles are written as a

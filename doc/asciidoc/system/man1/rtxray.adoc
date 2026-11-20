@@ -46,9 +46,10 @@ input (with the grid covering -1.0 <= X,Y <= +1.0 in view space); this
 form is convenient when *rtxray* is driven by a script produced by the
 *mged*(1) _saveview_ command.
 
-By default the image is written to a framebuffer.  Use *-o* to write a
-*pix*(5) or *png*(5) image (a *.bw* extension yields an 8-bit grayscale
-*bw*(5) file).  With the alternate lighting model (*-l 1*) *rtxray*
+By default the image is written to a framebuffer.  Use *-o* to write raw
+8-bit grayscale *bw*(5) data; the filename does not select a PNG or RGB PIX
+encoder.  Use a *.bw* suffix for these headerless pixels.  With the
+alternate lighting model (*-l 1*) *rtxray*
 writes raw double-precision path lengths instead of gray pixels; this
 mode requires *-o* (it cannot drive a framebuffer) and appends a *.los*
 extension when the output name looks like an image, producing data
@@ -139,10 +140,10 @@ options of *rt*(1) are disabled in *rtxray*.
 ====
 [source,console]
 ----
-$ rtxray -a 35 -e 25 -s 1024 -A 4.0 -o xray.png model.g all
+$ rtxray -a 35 -e 25 -s 1024 -A 4.0 -o xray.bw model.g all
 ----
 Ray traces the group _all_ in _model.g_ from azimuth 35, elevation 25
-degrees on a 1024x1024 grid and writes a grayscale PNG with a contrast
+degrees on a 1024x1024 grid and writes raw grayscale BW with a contrast
 boost of 4.0.  Thicker portions of the model appear darker, the empty
 background is pure black (value 0), and the boosted contrast keeps a
 sparse model from washing out to white.

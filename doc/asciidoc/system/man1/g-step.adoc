@@ -13,8 +13,10 @@ g-step - export a BRL-CAD database as an ISO 10303 STEP file
 ----
 g-step [--schema AP] [--native-csg] [--output-units UNIT]
        [--angle-units degree|radian] [--uncertainty VALUE]
+       [--output-format MIME] [--output-trait key=value ...]
        [--strict] [--report FILE] -o output.step input.g [object ...]
 g-step --list-schemas
+g-step --list-formats
 ----
 
 [[description]]
@@ -53,11 +55,35 @@ material, property, unit, occurrence, and configuration data retained by
 
 *--schema* _AP_::
   Select *ap203*, *ap203e2*, *ap214*, *ap242*, *ap242e1*, *ap242e2*,
-  *ap242e3*, *ap242e4*, or *auto*. *auto* currently selects AP203, and
-  *ap242* aliases *ap242e4*. Availability depends on the installed plugins.
+  *ap242e3*, *ap242e4*, or *auto*. With no output traits, *auto* selects
+  AP203; *ap242* aliases *ap242e4*. Availability depends on the configured
+  plugins. An explicit schema must satisfy all requested output traits.
+
+*--output-format* _MIME_::
+  Select *model/step* (the default) or generic *application/p21*.
+  Registered aliases and extension associations such as *stp* are accepted.
+
+*--output-trait* _key=value_::
+  Require an emitted header property. Repeat for multiple properties.
+  For *model/step*, *step.ap* and *step.edition* select an application
+  protocol and edition; generic *application/p21* uses the *p21.* schema
+  vocabulary. Complete sets use *key[]=JSON-array* syntax. The declared
+  writer's fixed sets must agree exactly with requested sets.
++
+  Without an explicit schema, a compatible default is retained. Otherwise
+  a unique compatible schema is selected. Ambiguous requests require a
+  schema or more specific traits. Unestablished properties and conflicting
+  requests fail before output or report creation.
++
+  These are file-format assertions. *--native-csg*, units and strictness
+  remain separate conversion options.
+
+*--list-formats*::
+  Print the MIME identities and fixed header profiles of configured writers
+  and exit. This does not load their schema modules.
 
 *--list-schemas*::
-  Print the installed STEP schema plugins and exit.
+  Print the configured STEP schema plugins and exit.
 
 === Representation policy
 

@@ -24,6 +24,9 @@ default geometry is emitted as 3DFACE entities; use *-p* to emit
 POLYFACE MESH entities instead. If no output file is given with *-o*,
 the DXF is written to standard output.
 
+The output is text DXF with media type `image/vnd.dxf`. It does not include
+an `$ACADVER` declaration or claim a particular drawing revision.
+
 [[options]]
 == OPTIONS
 

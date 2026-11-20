@@ -10,6 +10,80 @@ libicv - library for image processing in BRL-CAD
 This file seems to be out of date with the sources. Consult the headers for up-to-date information. Use the below interface documentation at your own discretion.
 
 
+== Runtime MIME types
+
+The runtime format APIs separate MIME identities and content recognition
+from reader/writer selection. See the Runtime MIME Types and Format
+Detection article for registration, ownership and migration details.
+The public interfaces are documented in `bu/mime_runtime.h`, `gcv/runtime.h` and
+`icv/codec.h`. Image allocation, pixel access and render metadata are in
+`icv/image.h`; these headers do not require generated MIME enums. Existing enum entry points remain compatibility interfaces.
+
+`icv_list_codecs` and `icv_supports` expose file and memory capabilities.
+Codec callbacks receive the selected canonical MIME type. Use
+`icv_named_size` for named dimensions and `icv_image_size_with_context`
+for fixed raw layouts; encoded file sizes do not determine dimensions.
+
+Runtime codecs may provide bounded header metadata through *icv_metadata*
+and *icv_metadata_file*. These queries report properties without pixel
+allocation and distinguish unknown, incomplete and malformed headers.
+*icv_metadata_variant* and *icv_metadata_file_variant* accept the same trait
+assertions as decoding. *icv_select_variant* selects a single operation
+from a detection result; *icv_resolve_variant* inspects a file before
+selection. These queries narrow ambiguous extensions using codecs in the
+caller context, and return owned type, codec and trait values without
+allocating pixels or opening output. They verify advertised capabilities;
+the decoder must still validate the full image.
+*icv_context_set_spool_limit* bounds temporary-file buffering of automatic
+nonseekable input; codec selection precedes buffering.
+
+Variant-aware file and memory APIs (*icv_read_variant*,
+*icv_read_mem_variant*, *icv_write_variant* and *icv_write_mem_variant*)
+match format traits against per-operation capability clauses. Callbacks
+receive the canonical type and resolved traits. Capability snapshots retain
+these clauses, including different restrictions for file and memory I/O.
+
+PNG file and memory decoding preserve grayscale and alpha layouts and use
+the same normalization and interlace handling. Consumers that require RGB
+for display should call *icv_flatten*, which returns a separate RGB image
+with alpha composited over an explicit background (black by default).
+The original image remains available with its alpha channel. *icv_gray2rgb*
+replicates grayscale and drops alpha without compositing; it does not
+flatten RGBA images. PPM file and memory decoding both accept P3 and P6,
+including 16-bit samples, normalized by the declared maximum value.
+
+Sun raster output uses `image/x-sun-raster`, with `encoding=binary`,
+`bit-depth=8`, `sun.raster-type=1` and `sun.map-type=1`. File and memory
+writers produce standard indexed images. Header metadata provides dimensions
+without advertising decoding support. *icv_write_sun* retains the explicit
+palette-dithering option for callers that require it.
+
+PNG profile requests describe the encoded IHDR fields before decoding
+transforms. The reader checks them and APNG control declarations before
+allocating pixel storage. Still-image APNG reads return the default image;
+`apng.default-image=frame` or `fallback` distinguishes its declared role.
+Sequence decoding remains a separate API. PNG output capabilities declare
+8-bit, noninterlaced, nonanimated binary output; unsupported requests fail
+before opening the destination.
+
+Set-valued traits support complete feature sets in the same selection
+APIs. Codec snapshots own their set members and expose `capability_flags`.
+Full reads may defer missing facts when declared by the codec; bounded
+metadata queries always require known facts. Output set requests select
+only the requested members, while scalar defaults fill other settings.
+
+Sequence codecs share the context through `ICV_CODEC_READ_SEQUENCE` and
+`ICV_CODEC_WRITE_SEQUENCE`. Use `icv_anim_read_variant` and
+`icv_anim_write_variant` for named-file sequence I/O with MIME, codec and
+trait selection. NULL output type selects a writer from the filename.
+`icv_anim_mime_type` returns an animation's recorded canonical source type.
+The original enum-based animation functions remain compatibility entry
+points. Plugin ABI 7 gives input and metadata callbacks separate original
+assertions and borrowed contextual source observations. Readers may use
+bu_mime_traits_match to supplement their own facts with independently
+observed keys. Sequence callbacks reuse their supplied context for nested
+frame codecs.
+
 [[bug_reports]]
 == BUG REPORTS
 

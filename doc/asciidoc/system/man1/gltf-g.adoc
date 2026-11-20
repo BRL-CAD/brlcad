@@ -10,7 +10,7 @@ gltf-g - convert a glTF model to a BRL-CAD database
 
 [source]
 ----
-gltf-g [-h] [-v] [-E] [-o _output_file.g_] _input_file_ [_output_file.g_]
+gltf-g [-h] [-v] [-E] [--reject-loss _category_] [-o _output_file.g_] _input_file_ [_output_file.g_]
 ----
 
 
@@ -18,17 +18,38 @@ gltf-g [-h] [-v] [-E] [-o _output_file.g_] _input_file_ [_output_file.g_]
 == DESCRIPTION
 
 *gltf-g* converts a glTF (GL Transmission Format) model into a BRL-CAD
-geometry database. Each glTF mesh is read and written as a Bag of
-Triangles (*BoT*) primitive in the output _.g_ file. A *BoT* whose
+geometry database. The default scene is imported, or the first scene
+when no default is specified. If the asset defines no scenes, all meshes
+are imported as a library in their local coordinates. Each mesh primitive
+is written as a Bag of Triangles (*BoT*) in the output _.g_ file. A *BoT* whose
 trimesh is found to be a closed, manifold solid is stored as a solid
 *BoT*; otherwise it is stored as a surface *BoT*.
 
-The input format is selected from the _input_file_ extension: a file
-ending in _.glb_ is read as binary glTF, while any other extension
-(such as _.gltf_) is read as ASCII glTF. Triangle index data may be
-stored as signed or unsigned 16- or 32-bit integers, and vertex
-positions may be single- or double-precision floating point; other
-component types are skipped with a warning.
+JSON glTF 2.0 and version 2 GLB containers are recognized from their
+contents. Unsupported minimum versions and required extensions are
+rejected. The converter accepts triangle primitives with unsigned
+8-, 16- or 32-bit indices, or non-indexed triangles. Vertex positions
+use single-precision floating point. Legacy non-standard double-precision
+positions are also accepted with a recovery warning. Unsupported modes
+and position/index layouts fail conversion.
+
+The standalone converter and the native *gcv*(1) GLTF Reader share scene
+conversion. Parent/child transforms, quaternion rotation, nonuniform
+and mirrored scale, and column-major matrices are preserved. Coordinates
+and translations are converted from meters to millimeters while retaining
+the source axis orientation. Repeated mesh instances share geometry;
+duplicate source names receive distinct database names. Mesh regions are
+grouped beneath node combinations and an _all_ combination.
+
+This reader imports static triangle geometry. It does not reproduce
+materials, textures, animation, skinning or morph deformation. The *-E*
+option retains raw extras/extension JSON in the parser model only; it
+does not save that JSON in the output database.
+Known selected-scene losses are reported before conversion. Appearance
+losses include materials, vertex attributes, cameras and lights; skinning
+and morph targets are geometry losses, and animation is a behavior loss.
+Unused meshes and materials outside the selected scene do not trigger these
+reports. Rejected losses fail before an output database is created.
 
 The output database may be named either positionally as the second
 argument or with the *-o* option, but not both.
@@ -36,14 +57,18 @@ argument or with the *-o* option, but not both.
 [[options]]
 == OPTIONS
 
+*--reject-loss* _category_::
+  Reject reported _geometry_, _appearance_, _behavior_, _metadata_ or _all_
+  losses. Repeat to combine categories. By default, known losses are printed
+  and static geometry conversion proceeds. This matches the native *gcv*(1)
+  reader's loss categories.
+
 *-h*, *--help*::
   Print a usage message and exit. The *-?* flag is accepted as a synonym.
 
 *-v*, *--verbosity*::
-  Increase the verbosity level. May be given more than once; a single
-  *-v* reports per-mesh vertex and face counts and any parse warnings,
-  while repeating it additionally dumps the individual vertex and face
-  data.
+  Report the number of available meshes before converting the selected
+  scene. May be given more than once. Parse warnings are always reported.
 
 *-o* _output_file.g_, *--output* _output_file.g_::
   Set the name of the output BRL-CAD database. Mutually exclusive with
@@ -63,8 +88,8 @@ $ gltf-g -v model.glb model.g
 $ mged model.g tops
 ----
 Imports the binary glTF file _model.glb_ into _model.g_, printing the
-mesh, vertex, and face counts as it works, then lists the top-level
-*BoT* objects of the new database with *mged*(1).
+available mesh count, then lists the top-level scene combination of the
+new database with *mged*(1).
 ====
 
 .Convert an ASCII glTF model using the output flag

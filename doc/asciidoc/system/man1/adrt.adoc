@@ -26,7 +26,10 @@ visualization modes without requiring the distributed ADRT master/slave tools.
 
 The default view uses azimuth 35 degrees, elevation 25 degrees, and a
 perspective camera. Explicit eye and look-at points may be supplied instead.
-The output format is selected from the extension of the file named by *-o*.
+The output format is selected from the filename's registered MIME
+associations and available still-image writers. Names without a recognized
+extension use PNG, including names under directories containing dots.
+Recognized formats without an available still-image writer are rejected.
 
 
 [[options]]

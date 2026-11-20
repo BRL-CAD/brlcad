@@ -21,6 +21,8 @@ g-raw [-vi8] [-x _rt_debug_] [-X _nmg_debug_] [-a _abs_tol_] [-r _rel_tol_] [-n 
 the RAW triangle facet format. Each specified region is tessellated using
 the NMG boolean evaluator and written as a list of triangle vertex
 coordinates.
+The named-triangle layout is shared by POV-Ray RAW and IABG RAW, proposed
+as `model/vnd.povray.raw` and `model/vnd.iabg.raw` in the runtime catalog.
 
 By default all converted geometry is written as a single stream to standard
 output. With *-o* the output is written to a named file, and with *-m* each
