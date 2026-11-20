@@ -21,6 +21,7 @@
 #include <cstring>
 #include <cstdio>
 #include <functional>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -457,6 +458,22 @@ bool check_sample(unsigned major, unsigned minor, bool little)
     const int32_t expected_object_id = major >= 9 ? 123 : -1;
     return expect(elements.size() == 1 && elements[0].object_id == expected_object_id && elements[0].data_length == 0,
 	"wrong element");
+}
+
+bool test_version_component_limits()
+{
+    const std::string oversized = std::to_string(std::numeric_limits<unsigned>::max()) + '0';
+    for (const std::string &signature : {"Version " + oversized + ".0", "Version 10." + oversized}) {
+	jt::ByteBuffer data = sample_file(10, 0, true);
+	std::fill(data.begin(), data.begin() + jt::VERSION_LENGTH, ' ');
+	std::copy(signature.begin(), signature.end(), data.begin());
+	jt::File file;
+	std::string error;
+	if (!expect(!file.load(data, error), "oversized JT version component was accepted") ||
+	    !expect(error.find("version") != std::string::npos, "oversized JT version failed after header parsing"))
+	    return false;
+    }
+    return true;
 }
 
 /* TST-001: CDP1 Null CODEC (codec 0) exercised with every Predictor variant.
@@ -1816,7 +1833,7 @@ int main(int argc, char **argv)
 
     if (!check_sample(8, 1, false) || !check_sample(9, 5, true) || !check_sample(10, 0, true)) return 1;
 
-    if (!test_cdp1_null_codec() || !test_cdp1_bitlength_boundaries() || !test_cdp2_null_codec() ||
+    if (!test_version_component_limits() || !test_cdp1_null_codec() || !test_cdp1_bitlength_boundaries() || !test_cdp2_null_codec() ||
 	!test_cdp2_bitlength2_jt9_fixed() || !test_cdp2_bitlength2_jt9_variable() ||
 	!test_cdp2_bitlength2_jt10_nibbler_fixed() || !test_cdp2_bitlength2_jt10_variable() ||
 	!test_big_endian_parsing() || !test_jt10_topological_mesh_header() ||

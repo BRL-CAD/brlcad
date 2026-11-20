@@ -1036,8 +1036,14 @@ File::load(const ByteBuffer &bytes, std::string &error)
 	    error = "invalid JT version signature";
 	    return false;
 	}
-	header_.major_version = static_cast<unsigned>(std::stoul(match[1].str()));
-	header_.minor_version = static_cast<unsigned>(std::stoul(match[2].str()));
+	const unsigned long major = std::stoul(match[1].str());
+	const unsigned long minor = std::stoul(match[2].str());
+	if (major > std::numeric_limits<unsigned>::max() || minor > std::numeric_limits<unsigned>::max()) {
+	    error = "invalid JT version signature";
+	    return false;
+	}
+	header_.major_version = static_cast<unsigned>(major);
+	header_.minor_version = static_cast<unsigned>(minor);
     } catch (const std::exception &) {
 	error = "invalid JT version signature";
 	return false;
