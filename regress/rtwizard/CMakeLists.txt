@@ -1,15 +1,8 @@
 # Tests for image generation via rtwizard
 if(BUILD_TESTING AND TARGET rtwizard)
-  # rtwizard tests were historically run STAND_ALONE and forced sequential
-  # because simultaneous instances would accidentally connect to each
-  # other's fbserv (wrong images, cleared framebuffers).
-  #
-  # Each rtwizard invocation now generates a unique FBSERV_TOKEN and
-  # launches fbserv with -A (strict auth), so parallel runs are fully
-  # isolated.  Port detection uses a non-destructive TCP probe instead of
-  # fbclear, eliminating the destructive side-effect that corrupted images
-  # in competing instances.  The STAND_ALONE label and the sequential
-  # DEPENDS chains are therefore no longer needed.
+  # Native file rendering does not start fbserv.  The framebuffer transport
+  # test uses authenticated managed servers, so parallel test runs cannot
+  # connect to or alter another RtWizard instance's framebuffer.
 
   # Convenience target to run only the rtwizard regression tests:
   add_custom_target(
@@ -22,7 +15,7 @@ if(BUILD_TESTING AND TARGET rtwizard)
 
   # This target also acts like the check target in that it depends on the
   # necessary inputs for the CTest tests
-  add_dependencies(regress-rtwizard rtwizard pixcmp m35.g moss.g)
+  add_dependencies(regress-rtwizard rtwizard icv pixcmp pixstat m35.g moss.g)
 
   # All rtwizard tests used the same script
   set(TSCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-rtwiz.cmake.in")
@@ -94,6 +87,11 @@ if(BUILD_TESTING AND TARGET rtwizard)
   distclean(${LOG_FILE} ${TARGET_IMAGE})
 
   set(INPUT_FILE "${DATA_DIR}/db/m35.g")
+  if(OpenSSL_FOUND OR OPENSSL_FOUND)
+    set(RTWIZARD_HAVE_TLS 1)
+  else()
+    set(RTWIZARD_HAVE_TLS 0)
+  endif()
   brlcad_regression_test(
     regress-rtwiz_cut_animation
     "rtwizard;icv;pixcmp;pixstat;m35.g"
@@ -109,6 +107,30 @@ if(BUILD_TESTING AND TARGET rtwizard)
     EXEC rtwizard
   )
   distclean(${CMAKE_CURRENT_BINARY_DIR}/moss_multi_occlusion.pix ${CMAKE_CURRENT_BINARY_DIR}/moss_multi_occlusion.log)
+
+  set(INPUT_FILE "${DATA_DIR}/db/m35.g")
+  brlcad_regression_test(
+    regress-rtwiz_fb_transport
+    "rtwizard;fbserv;m35.g"
+    TEST_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-rtwiz-fb.cmake.in"
+    EXEC rtwizard
+  )
+  distclean(
+    ${CMAKE_CURRENT_BINARY_DIR}/rtwizard_fb_ipc.log
+    ${CMAKE_CURRENT_BINARY_DIR}/rtwizard_fb_ipc.pix
+    ${CMAKE_CURRENT_BINARY_DIR}/rtwizard_fb_tcp.log
+    ${CMAKE_CURRENT_BINARY_DIR}/rtwizard_fb_tcp.pix
+    ${CMAKE_CURRENT_BINARY_DIR}/rtwizard_fb_tls.log
+    ${CMAKE_CURRENT_BINARY_DIR}/rtwizard_fb_tls.pix
+  )
+
+  brlcad_regression_test(
+    regress-rtwiz_files
+    "rtwizard;m35.g"
+    TEST_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-rtwiz-files.cmake.in"
+    EXEC rtwizard
+  )
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/render-files")
 
   distclean(${CMAKE_CURRENT_BINARY_DIR}/rtedge.log)
 endif()
@@ -126,6 +148,8 @@ cmakefiles(
   regress-rtwiz.cmake.in
   regress-rtwiz-occlusion.cmake.in
   regress-rtwiz-anim.cmake.in
+  regress-rtwiz-fb.cmake.in
+  regress-rtwiz-files.cmake.in
 )
 
 # Local Variables:

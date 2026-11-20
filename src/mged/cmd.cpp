@@ -1683,6 +1683,30 @@ cmd_ged_dm_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, con
 }
 
 
+int
+cmd_ged_fb_render_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
+{
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    if (s->gedp == GED_NULL)
+	return TCL_OK;
+    struct bview *view = s->gedp->ged_gvp ? s->gedp->ged_gvp : view_state->vs_gvp;
+    if (view && !mged_variables->mv_fb)
+	view->gv_s->gv_fb_mode = 0;
+
+    int ret = cmd_ged_dm_wrapper(clientData, interpreter, argc, argv);
+    if (ret == TCL_OK && view && view->gv_s->gv_fb_mode && !mged_variables->mv_fb) {
+	mged_variables->mv_fb = 1;
+	DMP_dirty = 1;
+	dm_set_dirty(DMP, 1);
+    }
+
+    return ret;
+}
+
+
 /**
  * Screengrab wrapper: forces a render via refresh(s) so that the
  * display manager has current pixel data before we call the GED

@@ -305,13 +305,15 @@ swrast_configureWindow(struct fb *ifp, int width, int height)
 
 static void
 #ifdef SWRAST_QT
-swrast_do_event(struct fb *ifp)
+swrast_update_window(struct fb *ifp)
 #else
-swrast_do_event(struct fb *UNUSED(ifp))
+swrast_update_window(struct fb *UNUSED(ifp))
 #endif
 {
 #ifdef SWRAST_QT
-    SWRAST(ifp)->mw->update();
+    /* Only standalone framebuffers own a Qt window. */
+    if (SWRAST(ifp)->mw)
+	SWRAST(ifp)->mw->update();
 #endif
 }
 
@@ -473,7 +475,7 @@ swrast_close_existing(struct fb *ifp)
 static int
 swrast_poll(struct fb *ifp)
 {
-    swrast_do_event(ifp);
+    swrast_update_window(ifp);
 
     if (SWRAST(ifp)->alive)
 	return 0;
@@ -789,9 +791,7 @@ swrast_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, cons
 	}
     }
 
-#ifdef SWRAST_QT
-    SWRAST(ifp)->mw->update();
-#endif
+    swrast_update_window(ifp);
     return width*height;
 }
 
@@ -831,9 +831,7 @@ swrast_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, co
 	}
     }
 
-#ifdef SWRAST_QT
-    SWRAST(ifp)->mw->update();
-#endif
+    swrast_update_window(ifp);
     return width*height;
 }
 

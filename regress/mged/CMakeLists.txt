@@ -20,6 +20,7 @@ set(
   draw.mged
   edgedir.mged
   erase.mged
+  ert.mged
   exists.mged
   extrude.mged
   eye_pt.mged
@@ -101,11 +102,16 @@ if(TARGET mged)
       message("INTERNAL ERROR: regex replaced to empty test from [$testfile]")
       continue()
     endif(TNAME STREQUAL "")
+    if(TNAME STREQUAL "ert" AND NOT TARGET dm-swrast)
+      continue()
+    endif()
 
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${testfile}")
     file(READ "${CMAKE_CURRENT_SOURCE_DIR}/${testfile}" TEST_CONTENTS)
     if(TNAME STREQUAL "search_exec")
       string(CONFIGURE "${TEST_CONTENTS}" TEST_CONTENTS @ONLY)
+    elseif(TNAME STREQUAL "ert" AND TARGET rtwizard)
+      string(PREPEND TEST_CONTENTS "set test_rtwizard 1\n")
     endif()
     file(
       WRITE
@@ -155,6 +161,13 @@ if(TARGET mged)
       set(TEST_DB "${CMAKE_SOURCE_DIR}/src/libged/tests/ged_tests.g")
       set(TEST_EXPECT "PASS overlap plotting")
       set(TEST_TIMEOUT 20)
+    elseif(TNAME STREQUAL "ert")
+      set(TEST_EXPECT "PASS headless ERT framebuffer render")
+      list(APPEND TEST_DEPS "dm-swrast")
+      if(TARGET rtwizard)
+        list(APPEND TEST_DEPS "rtwizard")
+      endif()
+      set(TEST_TIMEOUT 60)
     endif()
 
     if(TNAME STREQUAL "saveview")
@@ -169,6 +182,9 @@ if(TARGET mged)
       TIMEOUT "${TEST_TIMEOUT}"
       EXEC mged
     )
+    if(TNAME STREQUAL "ert")
+      set_property(TEST regress-mged_ert APPEND PROPERTY ENVIRONMENT "DM_SWRAST=1")
+    endif()
     distclean("${CMAKE_CURRENT_BINARY_DIR}/${TNAME}")
     distclean("${LOG_FILE}")
   endforeach(testfile ${MGED_TESTS})

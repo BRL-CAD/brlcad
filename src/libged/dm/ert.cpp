@@ -38,7 +38,6 @@
 #include "bresource.h"
 
 #include "bu/app.h"
-#include "bu/env.h"
 #include "bu/process.h"
 #include "raytrace.h"
 #include "dm.h"
@@ -48,6 +47,10 @@
 extern "C" int
 ged_ert_core(struct ged *gedp, int argc, const char *argv[])
 {
+    static const char *usage =
+	"Usage: ert [-h] [rt-options] [-- object ...]\n"
+	"Raytrace the current view into its embedded framebuffer.  Standard rt\n"
+	"options are forwarded; use -o file.pix to also save the rendered image.\n";
 
     int ret = BRLCAD_OK;
 
@@ -58,6 +61,12 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if (argc == 2 && (BU_STR_EQUAL(argv[1], "-h") ||
+	BU_STR_EQUAL(argv[1], "--help"))) {
+	bu_vls_printf(gedp->ged_result_str, "%s", usage);
+	return GED_HELP;
+    }
 
     if (!gedp->ged_gvp) {
 	bu_vls_printf(gedp->ged_result_str, "no current view set\n");
@@ -92,16 +101,31 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
     // framebuffer server.
     struct fbserv_obj *fbs = gedp->ged_fbs;
     fbs->fbs_fbp = fbp;
+    struct bu_process_create_info create_info = {};
+    const char *env_overrides[3] = {NULL, NULL, NULL};
+    int inherit_fds[2] = {-1, -1};
+    char auth_env[sizeof("FBSERV_TOKEN=") + sizeof(fbs->fbs_auth_token)] = {0};
 
-    /* Phase 3: Try the IPC fast path first (anonymous pipe / socketpair).
-     * This avoids TCP port binding, firewall traversal, and port collisions.
-     * Fall back to the traditional TCP listen path when IPC is unavailable.  */
+    /* Prefer local IPC to avoid TCP port binding, firewall traversal, and
+     * port collisions.  Fall back to the traditional TCP listen path when
+     * IPC is unavailable. */
     bool using_ipc = false;
-    if (fbs->fbs_open_ipc_client_handler && fbs_open_ipc(fbs) == BRLCAD_OK) {
+    if (fbs->fbs_open_ipc_client_handler &&
+	_ged_open_fbs_ipc(gedp, &create_info, env_overrides,
+	    inherit_fds) == BRLCAD_OK) {
 	using_ipc = true;
     } else {
 	if (!fbs->fbs_is_listening || fbs_open(fbs, 0) != BRLCAD_OK) {
 	    bu_vls_printf(gedp->ged_result_str, "could not open fb server\n");
+	    return BRLCAD_ERROR;
+	}
+    }
+    if (!using_ipc) {
+	create_info = {};
+	if (_ged_configure_fbs_auth(gedp, &create_info, env_overrides,
+		auth_env, sizeof(auth_env)) != BRLCAD_OK) {
+	    bu_vls_printf(gedp->ged_result_str,
+		"could not configure framebuffer authentication\n");
 	    return BRLCAD_ERROR;
 	}
     }
@@ -145,7 +169,7 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
     int units_supplied = 0;
     int i = 0;
     for (i = 1; i < argc; i++) {
-	if (BU_STR_EQUAL(argv[1], "-u")) {
+	if (BU_STR_EQUAL(argv[i], "-u")) {
 	    units_supplied=1;
 	} else if (argv[i][0] == '-' && argv[i][1] == '-' && argv[i][2] == '\0') {
 	    ++i;
@@ -178,27 +202,12 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
     // We need to know the pid of the rt command that has been launched
     int rt_pid = -1;
 
-    /* When using IPC, advertise the child-end address via the process
-     * environment immediately before forking.  bu_process_create() inherits
-     * all open file descriptors (the child-end fds have been moved high by
-     * fbs_open_ipc to survive any descriptor sweep), and the child reads
-     * PKG_ADDR via getenv() in if_remote.c::rem_open().
-     * We clear the variable right after the fork because the child already
-     * has its own independent copy of the environment.                       */
-    if (using_ipc) {
-	const char *addr_env = fbs_ipc_child_addr_env(fbs);
-	if (addr_env) {
-	    /* addr_env is "PKG_ADDR=pipe:4,7" — strip the "KEY=" prefix */
-	    const char *eq = strchr(addr_env, '=');
-	    if (eq)
-		bu_setenv(PKG_ADDR_ENVVAR, eq + 1, 1);
-	}
-    }
-
-    ret = _ged_run_rt(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd, (argc - i), &(argv[i]), 0, &rt_pid, clbk, u2);
+    ret = _ged_run_rt(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd,
+	(argc - i), &(argv[i]), 0, &rt_pid, clbk, u2,
+	&create_info);
 
     if (using_ipc)
-	bu_setenv(PKG_ADDR_ENVVAR, "", 1); /* clear parent's env copy */
+	fbs_close_ipc_child(fbs);
 
     clbk = NULL;
     u1 = (void *)&rt_pid;
@@ -208,7 +217,7 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
     if (clbk)
 	(*clbk)(argc, argv, u1, u2);
 
-    bu_vls_cstr(&wstr);
+    bu_vls_free(&wstr);
     for (size_t j = 0; j < args.size(); j++) {
 	bu_free(gd_rt_cmd[j], "free gd_rt_cmd arg");
     }

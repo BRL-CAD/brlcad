@@ -159,7 +159,7 @@ if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN" AND
     endif()
   endif()
 
-  if(TARGET rtwizard)
+  if(TARGET rtwizard AND TARGET libtclcad)
     brlcad_add_gui_test(
       NAME regress-rtwizard-xmin-smoke
       TIMEOUT 180
@@ -172,20 +172,20 @@ if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN" AND
     brlcad_regression_test(regress-rtwizard-xmin-smoke
       "rtwizard;m35.g" STAND_ALONE TEST_DEFINED)
 
-    if(TARGET bwish)
-      brlcad_add_gui_test(
-        NAME regress-rtwizard-xmin-gui
-        TIMEOUT 180
-        ENVIRONMENT ${_gui_smoke_environment}
-          "GUI_TEST_LIBRARY=${_gui_test_library}"
-          "RTWIZARD_TEST_DATABASE=${_gui_test_db}"
-          "RTWIZARD_MENU_MANIFEST=${CMAKE_CURRENT_SOURCE_DIR}/rtwizard_menu_manifest.txt"
-        COMMAND "${SH_EXEC}" "${_gui_tcl_runner}" rtwizard
-          $<TARGET_FILE:bwish> "${CMAKE_CURRENT_SOURCE_DIR}/rtwizard_xmin_gui.tcl"
-      )
-      brlcad_regression_test(regress-rtwizard-xmin-gui
-        "rtwizard;bwish;m35.g" STAND_ALONE TEST_DEFINED)
-    endif()
+    brlcad_add_gui_test(
+      NAME regress-rtwizard-xmin-gui
+      TIMEOUT 180
+      ENVIRONMENT ${_gui_smoke_environment}
+        "GUI_TEST_LIBRARY=${_gui_test_library}"
+        "RTWIZARD_GUI_TEST=${CMAKE_CURRENT_SOURCE_DIR}/rtwizard_xmin_gui.tcl"
+        "RTWIZARD_RCFILE=${CMAKE_CURRENT_SOURCE_DIR}/rtwizard_xmin_gui_rc.tcl"
+        "RTWIZARD_TEST_DATABASE=${_gui_test_db}"
+        "RTWIZARD_MENU_MANIFEST=${CMAKE_CURRENT_SOURCE_DIR}/rtwizard_menu_manifest.txt"
+      COMMAND "${SH_EXEC}" "${_gui_tcl_runner}" rtwizard
+        $<TARGET_FILE:rtwizard> --gui -i "${_gui_test_db}" -t A --process-timeout 7
+    )
+    brlcad_regression_test(regress-rtwizard-xmin-gui
+      "rtwizard;m35.g" STAND_ALONE TEST_DEFINED)
   endif()
 
   # qged is still evolving, so keep this fixture deliberately narrow: prove
@@ -221,6 +221,7 @@ cmakefiles(
   rtwizard_action.sh
   rtwizard_menu_manifest.txt
   rtwizard_xmin_gui.tcl
+  rtwizard_xmin_gui_rc.tcl
   mged/MGED_GUI_TEST_COVERAGE.md
   mged/mged_gui_menu_manifest.txt
   mged/mged_xmin_gui.sh

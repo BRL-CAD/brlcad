@@ -423,7 +423,20 @@ GED_EXPORT extern int _ged_run_rt(
        	int stdout_is_txt,
        	int *pid,
 	bu_clbk_t end_clbk,
-	void *end_clbk_data);
+	void *end_clbk_data,
+	const struct bu_process_create_info *create_info);
+
+GED_EXPORT extern int _ged_open_fbs_ipc(
+	struct ged *gedp,
+	struct bu_process_create_info *create_info,
+	const char *env_overrides[2],
+	int inherit_fds[2]);
+GED_EXPORT extern int _ged_configure_fbs_auth(
+	struct ged *gedp,
+	struct bu_process_create_info *create_info,
+	const char *env_overrides[3],
+	char *auth_env,
+	size_t auth_env_size);
 
 GED_EXPORT extern void _ged_rt_write(struct ged *gedp,
 			  FILE *fp,

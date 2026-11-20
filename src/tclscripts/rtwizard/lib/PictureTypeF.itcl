@@ -126,14 +126,7 @@ namespace eval RtWizard {
 	# get a framebuffer
 	#
 	set fb [$::fbp getFrameBuffer $w $h]
-	set fbarray [split $fb " "]
-	if { [llength $fbarray] > 1 } {
-	   set fb [lindex $fbarray 0]
-	   set fbpid [lindex $fbarray 1]
-	}
-	if {[info exists  ::RtWizard::wizard_state(output_filename)]} {
-	    set filename $::RtWizard::wizard_state(output_filename)
-	}
+
 
 	#
 	# Get the view info
@@ -187,9 +180,7 @@ namespace eval RtWizard {
 	#
 	set perspective [$::mgedObj gedCmd perspective]
 
-	set pid_filename [bu_file_null]
-	set log_file [bu_file_null]
-
+        # Populate the native renderer settings.
         set rtimage_dict [dict create \
 	    _dbfile $::RtWizard::wizard_state(dbFile) \
             _port $fb \
@@ -207,47 +198,9 @@ namespace eval RtWizard {
 	    _color_objects $color_objects \
 	    _ghost_objects $ghost_objects \
 	    _edge_objects $line_objects \
-           _pid_filename $pid_filename \
-           _log_file $log_file \
-	   _animate 1 \
 	   _ao_samples $::RtWizard::wizard_state(ao_samples) \
 	   _ao_radius $::RtWizard::wizard_state(ao_radius)]
-
-	::cadwidgets::rtimage $rtimage_dict
-
-	# If we're outputting a file, write it out and close down
-	# the in-memory fbserv
-	if {[info exists filename]} {
-	   if {[string length $filename] > 0 } {
-	       set output_generated [expr {[info exists ::RtWizard::wizard_state(make_animation)] && $::RtWizard::wizard_state(make_animation)}]
-	       if {[file extension $filename] == ".png"} {
-		  if { [catch {exec [file join [bu_dir bin] fb-png] -w $w -n $h -F $fb $filename}] } {
-		      set output_generated 0
-		  } else {
-		      set output_generated 1
-		  }
-	       }
-	       if {!$output_generated} {
-		   if { [ catch {exec [file join [bu_dir bin] fb-pix] -w $w -n $h -F $fb $filename} ] } {
-		       set output_generated 0
-		   } else {
-		       set output_generated 1
-		   }
-	       }
-	       if {!$output_generated} {
-		   tk_messageBox -message "Generation of image $filename failed!  If a file with the same name exists, it may be marked read-only." -type ok
-	       }
-	       if {$::tcl_platform(platform) == "windows"} {
-		   set kill_cmd "[auto_execok taskkill] /F /PID"
-	       } else {
-		   set kill_cmd [auto_execok kill]
-	       }
-
-	       if {$kill_cmd != ""} {
-		   eval exec $kill_cmd $fbpid
-	       }
-	   }
-	}
+	::RtWizard::render F $rtimage_dict
     }
 
 

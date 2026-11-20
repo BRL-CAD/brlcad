@@ -1,0 +1,93 @@
+# Regression coverage for render scratch space and output ownership.
+string(REPLACE "\\" "" RTWIZ "${EXEC}")
+get_filename_component(BINDIR "${RTWIZ}" DIRECTORY)
+get_filename_component(ROOTDIR "${BINDIR}" DIRECTORY)
+set(DATABASE "${ROOTDIR}/@INPUT_FILE@")
+set(TEST_DIR "@CMAKE_CURRENT_BINARY_DIR@/render-files")
+file(REMOVE_RECURSE "${TEST_DIR}")
+file(MAKE_DIRECTORY "${TEST_DIR}/cwd" "${TEST_DIR}/scratch")
+
+set(BASE "${RTWIZ}" --no-gui --benchmark --cpu-count 1)
+set(COLOR -i "${DATABASE}" -c all.g -t A)
+set(PID "${TEST_DIR}/render.pid")
+set(IMAGE "${TEST_DIR}/render.pix")
+set(LOG "${TEST_DIR}/render.log")
+set(TEMP_ENV "${CMAKE_COMMAND}" -E env
+  "TMPDIR=${TEST_DIR}/scratch" "TMP=${TEST_DIR}/scratch" "TEMP=${TEST_DIR}/scratch")
+
+file(WRITE "${PID}" "owned by another process\n")
+file(WRITE "${TEST_DIR}/invalid.g" "")
+foreach(input IN ITEMS "${TEST_DIR}/invalid.g" "${DATABASE}")
+  execute_process(
+    COMMAND ${BASE} -i "${input}" -c all.g -t A -s 8 -o "${IMAGE}" --pid-file "${PID}"
+    RESULT_VARIABLE status OUTPUT_QUIET ERROR_VARIABLE errors
+  )
+  if(NOT EXISTS "${PID}")
+    message(FATAL_ERROR "A render deleted a pre-existing PID file.\n${errors}")
+  endif()
+  file(READ "${PID}" contents)
+  if(status STREQUAL "0" OR NOT contents STREQUAL "owned by another process\n" OR EXISTS "${IMAGE}")
+    message(FATAL_ERROR "A render accepted or overwrote a pre-existing PID file.\n${errors}")
+  endif()
+endforeach()
+file(REMOVE "${PID}")
+
+if(UNIX)
+  file(CHMOD "${TEST_DIR}/cwd" PERMISSIONS OWNER_READ OWNER_EXECUTE)
+endif()
+execute_process(
+  COMMAND ${TEMP_ENV} ${BASE} ${COLOR} -s 8 -o "${IMAGE}" --pid-file "${PID}" --log-file "${LOG}"
+  WORKING_DIRECTORY "${TEST_DIR}/cwd"
+  RESULT_VARIABLE status OUTPUT_QUIET ERROR_VARIABLE errors
+)
+if(UNIX)
+  file(CHMOD "${TEST_DIR}/cwd" PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
+endif()
+if(NOT status STREQUAL "0" OR NOT EXISTS "${IMAGE}" OR EXISTS "${PID}")
+  message(FATAL_ERROR "Render did not complete using the temporary directory.\n${errors}")
+endif()
+file(READ "${LOG}" contents)
+string(REPLACE "\\" "/" contents "${contents}")
+string(FIND "${contents}" "${TEST_DIR}/scratch/.rtwizard-" scratch_used)
+file(GLOB scratch_left "${TEST_DIR}/scratch/.rtwizard-*")
+if(scratch_used LESS 0 OR scratch_left)
+  message(FATAL_ERROR "Render did not use and clean up its scratch directory.")
+endif()
+file(REMOVE "${IMAGE}")
+
+execute_process(
+  COMMAND ${BASE} ${COLOR} -s 256 -o "${IMAGE}"
+  COMMAND ${BASE} ${COLOR} -s 256 -o "${IMAGE}"
+  RESULTS_VARIABLE results OUTPUT_QUIET ERROR_VARIABLE errors
+)
+list(SORT results)
+if(NOT results STREQUAL "0;1" OR NOT EXISTS "${IMAGE}")
+  message(FATAL_ERROR "Expected exactly one render to publish the image, got ${results}.\n${errors}")
+endif()
+file(SIZE "${IMAGE}" actual_bytes)
+math(EXPR expected_bytes "256 * 256 * 3")
+if(NOT actual_bytes EQUAL expected_bytes)
+  message(FATAL_ERROR "The published image is incomplete (${actual_bytes} bytes).")
+endif()
+file(REMOVE "${IMAGE}")
+
+execute_process(
+  COMMAND ${BASE} -i "${DATABASE}" -l component -t B -s 32
+    -C 0/0/0 --line-color 0/0/0 -o "${IMAGE}"
+  RESULT_VARIABLE status OUTPUT_QUIET ERROR_VARIABLE errors
+)
+if(NOT status STREQUAL "0")
+  message(FATAL_ERROR "Edge-only render failed.\n${errors}")
+endif()
+file(READ "${IMAGE}" pixels HEX)
+if(NOT pixels MATCHES "^0+$")
+  message(FATAL_ERROR "Edge-only render exposed the mask color.")
+endif()
+file(REMOVE_RECURSE "${TEST_DIR}")
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

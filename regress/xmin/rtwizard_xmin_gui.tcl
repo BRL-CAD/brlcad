@@ -32,7 +32,6 @@ namespace eval ::rtwizard::xmin {
     variable ready_retry_limit 400
     variable retry_delay_ms 25
     variable startup_delay_ms 1500
-    variable forced_port_probe false
 }
 
 proc ::rtwizard::xmin::finish {status message} {
@@ -171,25 +170,18 @@ proc ::rtwizard::xmin::exercise_framebuffer_controls {} {
     } "file output did not enable file controls"
 }
 
-proc ::rtwizard::xmin::invoke_render_with_port_contention {} {
-    variable forced_port_probe
-    set forced_port_probe false
-    rename ::rtwiz_port_occupied ::rtwizard::xmin::actual_port_occupied
-    proc ::rtwiz_port_occupied {logical_port} {
-	if {!$::rtwizard::xmin::forced_port_probe} {
-	    set ::rtwizard::xmin::forced_port_probe true
-	    return 1
-	}
-	return [::rtwizard::xmin::actual_port_occupied $logical_port]
+proc ::rtwizard::xmin::check_process_timeout {} {
+    rename ::rtwizard_render ::rtwizard::xmin::native_render
+    proc ::rtwizard_render {type settings} {
+	return [dict get $settings _process_timeout]
     }
     try {
-	::gui::test::invoke_menu_entry . {Render Full-Size}
+	set timeout [::RtWizard::render A {}]
+	::gui::test::require {$timeout == 7} "render did not receive the CLI process timeout"
     } finally {
-	rename ::rtwiz_port_occupied {}
-	rename ::rtwizard::xmin::actual_port_occupied ::rtwiz_port_occupied
+	rename ::rtwizard_render {}
+	rename ::rtwizard::xmin::native_render ::rtwizard_render
     }
-    ::gui::test::require {$forced_port_probe} \
-	"rtwizard did not exercise its occupied framebuffer-port retry"
 }
 
 proc ::rtwizard::xmin::run {} {
@@ -209,6 +201,8 @@ proc ::rtwizard::xmin::run {} {
     set expected_title "RtWizard - [file tail $::env(RTWIZARD_TEST_DATABASE)]"
     ::gui::test::require {[wm title .] eq $expected_title} \
 	"unexpected rtwizard main-window title"
+
+    check_process_timeout
 
     set widget_inventory [::gui::test::widget_inventory .]
     set menu_inventory [::gui::test::menu_inventory .]
@@ -286,7 +280,9 @@ proc ::rtwizard::xmin::run {} {
     ::gui::test::require {
 	[info exists ::RtWizard::wizard_state(verbose)]
     } "RaytraceWizard did not initialize its optional verbose state"
-    set force_port_contention true
+    ::gui::test::require {
+	[llength [info commands rtwizard_render]] == 1
+    } "rtwizard did not register its native renderer"
     foreach {title basename} {
 	{Simple Full-Color Image} full-color
 	{Simple Line Drawing} line
@@ -297,13 +293,11 @@ proc ::rtwizard::xmin::run {} {
     } {
 	::gui::test::invoke_menu_entry . [list Image $title]
 	set render_file [file join $::env(GUI_TEST_DIR) rtwizard-$basename.pix]
+	set old_output [open $render_file w]
+	puts $old_output "previous image"
+	close $old_output
 	set ::RtWizard::wizard_state(output_filename) $render_file
-	if {$force_port_contention} {
-	    invoke_render_with_port_contention
-	    set force_port_contention false
-	} else {
-	    ::gui::test::invoke_menu_entry . {Render Full-Size}
-	}
+	::gui::test::invoke_menu_entry . {Render Full-Size}
 	::gui::test::require {[file exists $render_file]} \
 	    "rtwizard '$title' render did not create its output file"
 	::gui::test::require {[file size $render_file] == $expected_size} \
@@ -320,6 +314,10 @@ proc ::rtwizard::xmin::run {} {
     ::gui::test::require {
 	[file exists $preview_file] && [file size $preview_file] == $expected_preview_size
     } "rtwizard preview did not create the expected half-size image"
+
+    set ::RtWizard::wizard_state(output_filename) ""
+    [$::fbp component radBox] select toScreen
+    ::gui::test::invoke_menu_entry . {Render Preview}
 
     $::wizardInstance select exp
     update
@@ -346,12 +344,10 @@ set argv {}
 set argc 0
 ::gui::test::capture_background_errors
 after $::rtwizard::xmin::startup_delay_ms ::rtwizard::xmin::run_checked
-package require RaytraceWizard
-
-# RaytraceWizard normally remains in its event loop.  Reaching here means it
-# returned without the test callback explicitly completing the process.
-puts stderr "rtwizard exited before the GUI regression completed"
-exit 1
+if {[llength [info commands rtwizard_render]] != 1} {
+    puts stderr "rtwizard did not register its native renderer"
+    exit 1
+}
 
 # Local Variables:
 # mode: Tcl
