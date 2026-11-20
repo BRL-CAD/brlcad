@@ -244,11 +244,30 @@ set(
   mime.cmake
   mime_catalog.cmake
   mime_private.h
+  mime_p21.h
   mime_binary.h
+  mime_blender.h
+  mime_scene_text.h
+  mime_x.h
+  mime_ply.h
+  mime_3ds.h
+  mime_fbx.h
+  mime_obj.h
+  mime_opengex.h
+  mime_stl.h
+  mime_assbin.h
   mime_json.h
+  mime_off.h
+  mime_dxf.h
+  mime_dwg.h
   mime_select.h
+  mime_gltf.h
+  mime_skeletal.h
   mime_text.h
   mime_unicode.h
+  mime_unreal.h
+  mime_nff.h
+  mime_raw.h
   parallel.h
   parallel_cpp11thread.cpp
   process_private.h
