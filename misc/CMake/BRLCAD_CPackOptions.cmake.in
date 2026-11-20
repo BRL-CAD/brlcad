@@ -37,6 +37,15 @@
 # To pass variables to cpack from cmake, they must be configured
 # in this file.
 
+# Resolve development checkout revisions when CPack runs so package names
+# cannot retain a commit recorded by an earlier CMake configuration.
+if(NOT CPACK_INSTALLED_DIRECTORIES)
+  include("@BRLCAD_CMAKE_DIR@/BRLCAD_Package_Name.cmake")
+  brlcad_binary_package_suffix(_brlcad_package_revision_suffix "@CMAKE_SOURCE_DIR@")
+  string(APPEND CPACK_PACKAGE_FILE_NAME "${_brlcad_package_revision_suffix}")
+  unset(_brlcad_package_revision_suffix)
+endif()
+
 # Target a source directory created in the build dir to avoid bundling
 # anything we don't want bundled.
 if(CPACK_INSTALLED_DIRECTORIES)
