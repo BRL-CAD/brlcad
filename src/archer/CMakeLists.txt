@@ -16,13 +16,13 @@ if(BRLCAD_ENABLE_TCL)
     )
     set(archer_srcs archer.c)
     if(HAVE_WINDOWS_H)
-      # To associate an icon with the application for Windows (needed
-      # for the WiX installer) we must use an rc file.
+      # Windows applications require an rc file to embed their icons.
       enable_language(RC)
       set(archer_srcs ${archer_srcs} archer.rc)
     endif(HAVE_WINDOWS_H)
     brlcad_addexec(archer "${archer_srcs}" "${archer_libs}" GUI)
     target_compile_definitions(archer PRIVATE HAVE_TK)
+    brlcad_adddata(archer.ico icons)
     add_dependencies(archer rtwizard)
     add_target_deps(archer Tktable itcl_pkgIndex itk_pkgIndex TclIndexBld dm_plugins)
 

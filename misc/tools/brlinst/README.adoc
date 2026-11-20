@@ -1,0 +1,479 @@
+= brlinst
+
+A focused C++ packaging tool for BRL-CAD. Its implemented backends generate an
+interactive Windows executable and a native MSI package from the same JSON and
+staged files. The product-description and document preparation layers are portable
+so native macOS backends can use the same metadata and canonical license source.
+Every Windows version has its own directory, shortcuts, registration, and
+uninstaller.
+
+This is a new implementation requiring native-platform acceptance testing before
+release use. Its Windows backends use in-tree code and native Windows APIs. They
+require no external installer compiler, scripting interpreter, or downloadable
+prerequisites.
+
+== Build
+
+This tool lives in `misc/tools/brlinst` and is configured as a separate CMake
+project. Run the following commands from that directory. Its sources are included
+in BRL-CAD source distributions. Supported BRL-CAD package builds compile it as an
+isolated host tool and do not install it.
+
+Windows 10/11 on x64 or ARM64 and a matching Visual Studio C++ toolchain with
+the Windows SDK. For example, an x64 build uses:
+
+[source,powershell]
+----
+cmake -S . -B build -A x64
+cmake --build build --config Release
+ctest --test-dir build -C Release --output-on-failure
+----
+
+Dependencies are taken from the source tree and are not downloaded:
+
+* miniz 3.1.2: the required deflate, inflate, and CRC-32 implementation is
+  compiled directly into brlinst. ZIP/archive APIs are disabled.
+* nlohmann JSON 3.11 or newer: `BRLINST_JSON_INCLUDE` points to the directory
+  containing the single-header `json.hpp`. The default is the containing BRL-CAD
+  checkout's `src/libbu`, or a sibling `brlcad/src/libbu` when brlinst is extracted
+  as a standalone project. This path can also be set explicitly.
+
+=== Why miniz is embedded
+
+The Windows setup stub and uninstaller use the static MSVC runtime so they do
+not depend on a separately installed compiler runtime. A static zlib archive
+does not necessarily use that runtime: the zlib used by a normal BRL-CAD build
+may use the DLL runtime instead. Linking the two runtime models produces linker
+diagnostics and can be unsafe when allocation or other CRT-owned state crosses
+their boundary. Maintaining a second, installer-specific zlib binary would add
+dependency selection and packaging complexity to both BRL-CAD and bext.
+
+brlinst only needs zlib-wrapped deflate and inflate streams plus CRC-32. The
+embedded miniz sources provide those operations, compile with the same runtime
+settings as brlinst, and preserve the existing payload stream format. The ZIP,
+stdio, and time APIs are disabled to keep the compiled surface limited to that
+purpose. Use the prefixed `mz_*` API directly; do not enable miniz's zlib-compatible
+names or replace this target with an arbitrary static zlib without resolving the
+runtime compatibility requirement.
+
+Outputs are `brlinst.exe`, `brlinst-stub.exe`, and `brlinst-uninstall.exe`.
+Windows builds enable `BRLINST_WITH_MSI` by default and additionally build
+`brlinst-msi-actions.dll`; use `-DBRLINST_WITH_MSI=OFF` to omit MSI support.
+Keep them together. The generator is a console application; the runtime is a
+native GUI application with no extra runtime redistribution requirement when
+built with MSVC's static runtime configuration.
+
+On non-Windows hosts, the portable generator and model tests build without the
+Windows runtimes or MSI serializer. This supports development and testing of shared
+metadata, document, transaction, and packaging logic. The currently implemented
+installer outputs still require Windows.
+
+== macOS backend preparation
+
+Both Apple package formats serve distinct modern purposes. A flat `.pkg` is the
+native Installer archive and defines the privileged installation into the selected
+prefix. A `.dmg` is the signed distribution container users commonly download; for
+BRL-CAD it should contain the `.pkg` rather than duplicate its payload.
+
+The macOS implementation is intentionally a native backend, not a private rewrite
+of Apple package formats. It will invoke `/usr/bin/pkgbuild`,
+`/usr/bin/productbuild`, and `/usr/bin/hdiutil` without a shell, and consequently
+must run on macOS. Optional signing, notarization, and stapling will use Apple tools
+and explicit release-time configuration; credentials do not belong in the product
+JSON.
+
+`prepare_product` is the platform-neutral input boundary. It validates common
+metadata and loads the general icon and canonical plain-text license. The shared
+`text_rtf` converter can generate native Installer license resources with a
+backend-selected font and size limit. `prepare_windows_input` adds Windows-only
+branding, PE payload restrictions, case-folded collision checks, and shortcut
+validation. A macOS backend must start from `prepare_product` and let `pkgbuild`
+consume the CPack staging tree so POSIX modes and symbolic links are preserved.
+
+The first native implementation should:
+
+* generate a component package with `pkgbuild --root` and an explicit install
+  location matching `CMAKE_INSTALL_PREFIX`;
+* generate Distribution XML and its welcome, readme, and license resources, then
+  produce the final package with `productbuild`;
+* stage that package with a background and pre-authored Finder layout, then create
+  and verify the DMG with `hdiutil` without interactive Finder or AppleScript;
+* publish outputs transactionally and add macOS-only structural tests using
+  `pkgutil` and read-only `hdiutil` operations.
+
+The legacy `sh/make_pkg.sh` and `sh/make_dmg.sh` remain the reference behavior until
+native outputs are implemented and tested on a supported macOS release. They should
+not be removed based only on cross-platform model tests.
+
+Generation reports elapsed time and progress. EXE payloads are compressed in
+parallel deterministic shards and assembled in manifest order. MSI payloads
+are divided into balanced embedded cabinets that are compressed in parallel;
+validation, metadata collection, database authoring, and verification are also
+reported.
+
+For alternate toolchains, set `BRLINST_EXTRA_NOTICES` to any additional runtime-library
+notices that must accompany generated executables. These are embedded in the
+installed NOTICE.txt as well.
+
+The package/core tests also build on Unix. Windows resource customization and
+runtime builds require a Windows target toolchain. Unix packaging with an icon
+is intentionally unsupported in this release.
+
+== Generate an installer
+
+[source,powershell]
+----
+brlinst.exe --config product.json --source C:/stage/brlcad --output BRL-CAD-setup.exe
+brlinst.exe --verify BRL-CAD-setup.exe
+----
+
+`--stub` and `--uninstaller` can override the adjacent runtime executables.
+The output must not exist and must be outside the staging tree. All regular
+files in the tree are installed; symlinks, reparse points, Windows device names,
+case-colliding files, and traversal paths are rejected. Empty source directories
+are not included. `.brlinst` is reserved for bookkeeping.
+
+Every generated package includes `.brlinst/NOTICE.txt` with the brlinst and dependency licenses.
+
+The packager verifies every compressed file before publishing the output. The
+runtime verifies the entire payload before creating its destination. CRC-32
+checks detect corruption; publisher authenticity is supplied by Authenticode,
+not by these checksums.
+
+== Product JSON
+
+[source,json]
+----
+{
+  "formatVersion": 1,
+  "id": "org.brlcad.brlcad",
+  "name": "BRL-CAD",
+  "version": "7.42.0",
+  "architecture": "x64",
+  "publisher": "BRL-CAD Development Team",
+  "website": "https://brlcad.org/",
+  "welcome": "This wizard installs this version separately from other versions.",
+  "license": "COPYING",
+  "icon": "brlcad.ico",
+  "branding": {
+    "style": "classic",
+    "exe": {"header": "header.bmp", "sidebar": "side.bmp"}
+  },
+  "shortcuts": [
+    {"name": "MGED", "target": "bin/mged.exe", "workingDirectory": "@profile", "desktop": true},
+    {"name": "Manual", "target": "share/doc/index.html", "desktop": false}
+  ]
+}
+----
+
+`formatVersion`, `id`, `name`, `version`, `architecture`, `publisher`, `license`,
+and `shortcuts` are required. Architecture is `x64` or `arm64` and must match
+the setup stub and uninstaller PE architecture. `shortcuts` may be empty. The
+optional icon is a Windows `.ico`;
+welcome text and an HTTPS website are optional. License and installer-icon paths
+are relative to the JSON file, or absolute. Other paths use forward slashes and
+are relative to the staged payload. Unknown fields and duplicate JSON keys are
+errors. The license is displayed as information; there is no additional license
+acceptance switch for quiet installation.
+
+The optional `classic` branding style uses compact Windows installer layouts.
+EXE header and sidebar images must be uncompressed 24-bit BMP files sized
+150x57 and 164x314. By default, brlinst
+places those images at the left edge of white 493x58 and 493x312 MSI canvases,
+giving both formats one artwork source. Optional MSI `banner` and `dialog`
+overrides must have those canvas dimensions. brlinst owns window dimensions
+and control placement; product JSON supplies assets, not raw GUI coordinates.
+The MSI-specific icon overrides the general installer icon for Add/Remove
+Programs. Branding paths follow the same resolution rules as `license` and
+`icon`. An MSI-specific `license` must be an RTF document; if omitted, brlinst
+converts the general plain-text license to RTF.
+BRL-CAD omits that override so both installers use the canonical top-level
+`COPYING` file.
+
+Each shortcut has a name and target. Optional properties are `icon`, `arguments`,
+`workingDirectory`, and `desktop` (default true). The working directory defaults
+to `@profile`, which stores `%USERPROFILE%` in the shortcut for resolution when
+launched; `.` means the installation directory. Other values are relative
+payload directories. Targets, icons, and working directories must exist in the
+staged tree. Applications can be renamed, added, or removed in JSON without
+changing the engine. Desktop eligibility does not enable desktop shortcuts by
+default; the installer user makes that choice.
+
+Product IDs and versions use ASCII letters, digits, dots, underscores, and
+hyphens. Registration identity includes ID, version, and architecture, with the
+registry hive selecting scope. Names shown to users and used by shortcuts include
+version, architecture, and scope. There is no registry-state compatibility with
+installations created by other packaging systems; those retain their original
+uninstallers.
+
+== EXE installation
+
+[source,powershell]
+----
+# Graphical wizard:
+./BRL-CAD-setup.exe
+
+# Quiet, current-user installation:
+$p = Start-Process ./BRL-CAD-setup.exe -Wait -PassThru -ArgumentList '--quiet --scope user --start-menu on --desktop off --path off --log "C:/logs/install.log"'
+$p.ExitCode
+
+# Quiet machine installation, from an elevated process:
+./BRL-CAD-setup.exe --quiet --scope machine
+----
+
+The default scope is `user`; the default location is a versioned folder beneath
+Local AppData's Programs directory. Machine installation defaults beneath
+Program Files and requests elevation only in interactive mode. Quiet machine
+operations require an already elevated process and never display UAC prompts.
+
+For this first release, machine destinations must be new/empty folders directly
+beneath Program Files. This keeps privileged uninstall records out of arbitrary
+user-writable directory hierarchies. User destinations can be on another fixed
+local drive. The parent directory must already exist. Network and removable
+destinations are unsupported.
+
+Runtime arguments:
+
+[cols="1,3"]
+|===
+|`--quiet` |No application dialogs; failures go to the log and inherited stderr.
+|`--scope user\|machine` |Current user by default.
+|`--directory PATH` |Override the versioned default destination.
+|`--start-menu on\|off` |On by default.
+|`--desktop on\|off` |Off by default.
+|`--path on\|off` |Off by default. Append this version's `bin` directory to the matching scope's PATH.
+|`--log FILE` |Append an operation log; otherwise create a uniquely named log in TEMP.
+|`--recover` |Remove an interrupted installation made by this product/version; requires `--directory`.
+|`--help` |Display command-line help; use with `--quiet` for inherited stderr.
+|===
+
+CLI choices initialize the wizard, or directly control quiet installation.
+PATH entries are not reordered. Existing equivalent entries are not claimed or
+removed. Other versions' PATH entries remain intact. Existing same-version
+brlinst registrations are rejected; uninstall explicitly first.
+
+Exit codes: 0 success, 2 invalid arguments/configuration, 3 existing installation,
+4 elevation required, 5 cancelled, 6 operational failure. In PowerShell, use
+`Start-Process -Wait -PassThru` to reliably wait for a GUI-subsystem executable.
+
+== EXE uninstallation and recovery
+
+Run `.brlinst/uninstall.exe` inside that version's directory, or use Windows
+Installed apps / the Start Menu entry. It supports `--quiet` and `--log`.
+The scope and destination come from the journal and cannot be overridden.
+
+The journal records operation intent before changes. Failed installs attempt
+rollback. If interruption or files in use prevent cleanup, rerun that version's
+uninstaller. If interruption occurred before the uninstaller was written, run
+its original installer with `--recover --directory PATH`; completed installations
+must use their installed uninstaller.
+
+Uninstall removes unchanged owned files, owned shortcuts, registration, and the
+PATH entry it added. It preserves modified files, unrelated files, and nonempty
+directories. Files in use produce a retryable error; interactive operations offer
+Retry/Cancel, quiet operations return failure. No applications are killed and
+no reboot deletion is scheduled.
+
+The final running uninstaller image is removed by a temporary helper after the
+original process exits. Payload, integration, and recovery-journal removal all
+finish before the main process reports success; the helper refuses self-removal
+while a recovery journal remains. It retries transient sharing failures, then
+records any orphaned uninstaller in the same log. A small helper executable
+remains in its private TEMP directory for normal temporary-file cleanup. Deleting
+the final mapped image is the only deferred operation.
+
+Power-loss recovery depends on filesystem durability. Journals and extracted
+files are flushed before publication; this is not a full machine-wide transaction
+manager. CRC fingerprints preserve accidentally modified files but are not a
+cryptographic defense against a user deliberately modifying their own payload.
+
+== MSI generation and installation (Windows only)
+
+[source,powershell]
+----
+brlinst.exe --format msi --config product.json --source C:/stage/brlcad --output BRL-CAD-setup.msi
+brlinst.exe --verify BRL-CAD-setup.msi
+
+# Full wizard:
+msiexec /i BRL-CAD-setup.msi
+
+# Quiet per-user install (Start Menu on, desktop and PATH off by default):
+msiexec /i BRL-CAD-setup.msi /qn /norestart ALLUSERS=2 MSIINSTALLPERUSER=1
+
+# Quiet machine install, run from an elevated process:
+msiexec /i BRL-CAD-setup.msi /qn /norestart ALLUSERS=1 BRLINST_PATH=1
+
+# An explicit destination and options:
+msiexec /i BRL-CAD-setup.msi /qn /norestart INSTALLDIR="C:\Apps\BRL-CAD 7.42.0" BRLINST_STARTMENU=0 BRLINST_DESKTOP=1 /l*v install.log
+
+# Remove using the original package, or Installed apps:
+msiexec /x BRL-CAD-setup.msi /qn /norestart /l*v uninstall.log
+----
+
+MSI generation requires executing the Windows generator: it calls the system
+`msi.dll` database APIs and `cabinet.dll` FCI compressor. No third-party
+installer authoring toolkit, LGPL code, scripting compiler, or MSI engine is
+bundled. Unix generators retain EXE support, using cross-compiled Windows
+runtimes. `--format exe` is the default; the output extension alone does not
+select the generation format.
+
+Keep `brlinst-msi-actions.dll` beside the generator. It is embedded into the MSI
+and performs read-only destination/OS validation. All filesystem, registry,
+shortcut, PATH, rollback, and uninstall changes use standard Windows Installer
+actions. The MSI installs no brlinst EXE uninstaller or recovery journal.
+
+Both full GUI and `/qn` use one package; `/qb` supplies Windows Installer's basic
+progress display. The full wizard shows welcome/license information, scope and
+options, destination, review, progress, and completion. Scope and options are
+chosen before MSI costing; after moving to the destination page, changing them
+requires restarting setup. The destination can be typed directly. Start Menu,
+desktop, and PATH command-line properties accept `1` or `0`.
+
+Every version has a distinct ProductCode and component identities; rebuilding
+one version retains those identities and gives the package a fresh PackageCode.
+Uninstall an existing version before reinstalling it. Automatic upgrades,
+repair, feature selection, patch generation, advertisement, and administrative
+extraction (`/a`) are outside this backend's initial scope.
+
+Defaults use a versioned folder with the architecture and `MSI` in its name, in the current
+user's Programs folder or Program Files. MSI shortcuts are similarly marked,
+so EXE and MSI registrations do not claim the same shortcuts. A read-only
+preflight rejects nonempty destinations, linked paths, network/removable drives,
+and machine destinations outside a direct child of Program Files. Keep each
+installation in its own directory. Installations created by other packaging
+systems remain owned by their original installers.
+
+MSI follows Windows Installer's ownership rules: packaged files can be removed
+even if modified, and PATH entries/shortcuts are managed by MSI components.
+It does not implement the EXE backend's fingerprint-based preservation policy.
+Unlisted user files are retained. Do not store user work in packaged files.
+MSI resolves shortcut working-directory environment variables when creating
+shortcuts: `@profile` can therefore resolve to the installing account for a
+machine-wide shortcut. Check this behavior when testing MGED/Archer; use an
+explicit shared working directory in a custom JSON configuration when appropriate.
+Windows Installer controls files-in-use handling; automatic restart is suppressed,
+and a successful operation can return `3010` when a reboot is needed. MSI exit
+codes are Windows Installer codes, independent of brlinst EXE runtime codes.
+Use `Start-Process -Wait -PassThru` when capturing `msiexec` completion in PowerShell.
+
+Initial MSI format limits are checked during generation:
+
+* Canonical numeric `major.minor.build`, bounded by `255.255.65535`.
+* At most 32,767 files including the installed license notices, and at most
+  1.5 GiB of uncompressed payload split across embedded MSZIP cabinets. The
+  final database must be smaller than 2 GiB. EXE packaging retains its separate
+  limits.
+* Product text and payload filenames must be representable in Windows-1252.
+  License text is converted from UTF-8 to RTF with Unicode escapes, up to 60 KB
+  of RTF. Installer destination paths use Windows Unicode APIs.
+* Shortcut argument fields are limited to 255 characters after escaping, and
+  generated desktop shortcut names to 115 UTF-8 bytes before the short alias.
+
+`--verify` checks MSI storage, authored table constraints, and the presence of
+the embedded cabinet headers. It does not decompress the cabinets, run the ICE
+suite, or prove that an installation succeeds. These require Windows tests.
+
+== BRL-CAD / CPack integration
+
+On native 64-bit Windows builds, BRL-CAD configures brlinst as an isolated local
+`ExternalProject`. It is built in Release mode as part of the normal build graph,
+is not installed, and does not add its tests to the BRL-CAD test suite. The
+standard package target produces ZIP, EXE, and MSI artifacts:
+
+[source,powershell]
+----
+cmake -S C:/src/brlcad -B C:/build/brlcad
+cmake --build C:/build/brlcad --config Release
+cmake --build C:/build/brlcad --config Release --target package
+----
+
+CPack's ZIP generator remains available as a tool-independent fallback. Its
+External generator stages BRL-CAD once and invokes the locally built brlinst to
+produce both Windows installers. Native x64 and ARM64 builds are supported;
+native 32-bit Windows and cross-compiled builds produce ZIP only because the MSI
+backend requires Windows host APIs and the generated runtime must match the
+declared package architecture.
+
+MinGW builds produce ZIP only unless `BRLINST_EXTRA_NOTICES` names a file with
+the notices required by that toolchain's statically linked runtime libraries.
+Standalone MinGW brlinst builds require this setting.
+
+When brlinst runs on a non-Windows host, payload filenames must be ASCII. Windows
+performs Unicode case folding with operating-system tables, so accepting Unicode
+payload names elsewhere could miss filename collisions that Windows rejects.
+
+The default configuration advertises MGED, Archer, and RtWizard only when their
+build targets exist, and adds manual links when those files are staged. Set `BRLINST_PRODUCT_CONFIG` to a complete custom JSON file
+to control the shortcuts or add manuals. `examples/brlcad.json.in` illustrates
+those definitions; substitute BRL-CAD's installation paths and version, retaining
+`@profile` literally. Only reference manuals actually present in your build.
+
+For another CMake project, include `cmake/Brlinst.cmake` after `include(CPack)`
+and call `brlinst_add_package(CONFIG product.json EXECUTABLE /path/to/brlinst)`.
+Add `FORMATS exe msi` on Windows to create both targets. The BRL-CAD defaults omit
+resource-icon customization when packaging on Unix; the cross-built EXE stub's
+existing resources are retained.
+
+== Signing and validation
+
+Sign `brlinst-uninstall.exe` first if desired, then package it. Keep the setup
+stub unsigned. Sign the final generated installer last, then run `--verify`
+and the Windows smoke test again. Package offsets are independent of the
+certificate table, and the package is aligned before signing. Generation rejects
+executables near the 4 GiB PE signing limit. No signing certificates are bundled.
+
+Portable automated tests cover corruption/truncation, path rejection, file
+collisions, signature-table placement, extraction, cancellation, rollback,
+recovery, and preserving user data. On Windows, also run:
+
+[source,powershell]
+----
+powershell -ExecutionPolicy Bypass -File tests/windows-smoke.ps1 -BuildDirectory build/Release
+----
+
+This creates isolated current-user test installations, exercises two versions,
+checks shortcuts/PATH/registry, and removes them through their uninstallers.
+It preserves logs and test user files. Run it on a disposable test account.
+It does not test machine-wide UAC or graphical layout.
+Configure with `-DBRLINST_ENABLE_INSTALL_TESTS=ON` to register the profile-
+modifying `brlinst-windows-exe` and per-user `brlinst-windows-msi` CTest tests.
+They are disabled by default.
+
+Before releasing BRL-CAD installers, test on clean Windows 10 and 11 VMs for
+each released architecture:
+interactive navigation, high DPI and keyboard use, Unicode destinations,
+current-user and all-users installs, UAC cancellation and alternate credentials,
+quiet exit codes, files in use, low disk space, interruption/recovery, signed
+artifacts, and actual BRL-CAD application launch without development tools.
+Wine can supplement these checks but does not replace Windows validation.
+
+MSI authoring tests run natively without Windows: schema/foreign-key integrity,
+wizard navigation, version limits, literal argument handling, and identities
+across versions and reordered payloads. On Windows, CTest additionally generates
+and reads MSI packages and exercises the CPack MSI target. Installation is
+registered with CTest only when `BRLINST_ENABLE_INSTALL_TESTS` is enabled; the
+same checks can be run explicitly:
+
+[source,powershell]
+----
+# Generate and inspect packages only (also run by Windows CTest):
+powershell -NoProfile -ExecutionPolicy Bypass -File tests/windows-msi-smoke.ps1 -BuildDirectory build/Release
+# Install two versions, check payloads/shortcuts/PATH, remove independently:
+powershell -NoProfile -ExecutionPolicy Bypass -File tests/windows-msi-smoke.ps1 -BuildDirectory build/Release -Install
+# Repeat for all users from an elevated PowerShell:
+powershell -NoProfile -ExecutionPolicy Bypass -File tests/windows-msi-smoke.ps1 -BuildDirectory build/Release -Install -Machine
+----
+
+Use disposable Windows accounts/VMs. The MSI script preserves packages and logs;
+installation tests retain their deliberately unowned test file. Before release,
+run Windows SDK ICE validation (including the dual-purpose package checks) in
+Orca, and test the full wizard, cancellation/rollback, files in use, UAC,
+Unicode destinations, both scopes, and actual BRL-CAD payloads. These Windows
+acceptance checks have not been executed on the FreeBSD development host.
+
+The MSI implementation follows Microsoft's published
+https://learn.microsoft.com/en-us/windows/win32/msi/database-tables[table schemas],
+https://learn.microsoft.com/en-us/windows/win32/msi/single-package-authoring[single-package authoring guidance],
+and https://learn.microsoft.com/en-us/windows/win32/msi/sql-syntax[database API syntax].
+It contains no source or UI templates copied from third-party installer
+authoring toolkits.

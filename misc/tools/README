@@ -3,6 +3,12 @@ to its functionality that are not installed with the distribution. Generally
 these are used either in various stages of the compilation process or as
 maintenance tools.
 
+brlinst is a standalone C++17 packaging tool with EXE and native Windows MSI
+backends. Its shared product and document preparation code is portable in
+preparation for native macOS PKG and DMG backends. Configure misc/tools/brlinst
+separately to build it; brlinst/README.adoc documents dependencies, tests, the
+optional CPack hook, and the planned macOS integration.
+
 TODO - add latest CMake release and set up a bootstrap of it if a CMake older
 than our desired minimum is found.
 

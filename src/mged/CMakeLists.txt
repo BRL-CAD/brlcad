@@ -54,8 +54,7 @@ set(
 )
 
 if(HAVE_WINDOWS_H)
-  # To associate an icon with the application for Windows (needed
-  # for the WiX installer) we must use an rc file.
+  # Windows applications require an rc file to embed their icons.
   enable_language(RC)
   set(MGED_SOURCES ${MGED_SOURCES} mged.rc)
 endif(HAVE_WINDOWS_H)

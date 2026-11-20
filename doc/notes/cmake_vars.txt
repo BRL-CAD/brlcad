@@ -82,7 +82,6 @@ BRLCAD_ENABLE_TARGETS "controls all AsciiDoc based documentation.  Keys off what
 
 ### HOW TO INSTALL ###
 
-BRLCAD_ENABLE_WIX
 BRLCAD_INSTALL_EXAMPLE_GEOMETRY "Install the example BRL-CAD geometry files." ON
 
 # Local Variables:

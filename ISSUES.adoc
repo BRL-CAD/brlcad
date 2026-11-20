@@ -3431,10 +3431,6 @@ lookup check to ensure none are missing.
 
 * BUG: File->Export seems to not work on Windows
 
-* Windows installer does not respect the "add to path" checkbox
-  and always adds BRL-CAD to the system path
-  [DONE] NSIS.template.in:733 reads DO_NOT_ADD_TO_PATH option; :772 StrCmp skips path add
-
 * consider not using spaces in the default installer path on Windows
   for simplified scripting usage (e.g., when installed to C:\)
 

@@ -402,7 +402,7 @@ function(generate_dreport)
     # install/benchmark routine there. (Benchmarks aren't currently supported
     # in MSVC anyway.)
     set(INSTALL_LINE "To build, launch Visual Studio and open ${CMAKE_BINARY_DIR}/BRLCAD.sln")
-    set(BENCHMARK_LINE "Build the ALL_BUILD target.  To create an NSIS installer, build the PACKAGE target")
+    set(BENCHMARK_LINE "Build the ALL_BUILD target.  To create packages, build the PACKAGE target")
   endif(MSVC)
 
   set(

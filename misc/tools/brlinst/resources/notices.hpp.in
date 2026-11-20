@@ -1,0 +1,6 @@
+#pragma once
+namespace installer {
+inline constexpr unsigned char distribution_notices[] = {
+@BRLINST_NOTICES_BYTES@0
+};
+}

@@ -1,0 +1,26 @@
+{
+  "formatVersion": 1,
+  "id": "org.brlcad.brlcad",
+  "name": "BRL-CAD",
+  "version": "@BRLCAD_VERSION@",
+  "architecture": "x64",
+  "publisher": "BRL-CAD Development Team",
+  "website": "https://brlcad.org/",
+  "welcome": "BRL-CAD is an open source solid modeling system. This wizard installs this version separately from other versions.",
+  "license": "@CMAKE_SOURCE_DIR@/COPYING",
+  "icon": "@CMAKE_SOURCE_DIR@/misc/cpack/icons/brlcad.ico",
+  "branding": {
+    "style": "classic",
+    "exe": {
+      "header": "@CMAKE_SOURCE_DIR@/misc/cpack/exe/header.bmp",
+      "sidebar": "@CMAKE_SOURCE_DIR@/misc/cpack/exe/sidebar.bmp"
+    }
+  },
+  "shortcuts": [
+    {"name": "MGED", "target": "bin/mged.exe", "icon": "@DATA_DIR@/icons/brlcad.ico", "workingDirectory": "@profile", "desktop": true},
+    {"name": "Archer", "target": "bin/archer.exe", "icon": "@DATA_DIR@/icons/archer.ico", "workingDirectory": "@profile", "desktop": true},
+    {"name": "RtWizard", "target": "bin/rtwizard.exe", "workingDirectory": "@profile", "desktop": true},
+    {"name": "BRL-CAD Manual", "target": "@DOC_DIR@/html/manuals/index.html", "desktop": false},
+    {"name": "MGED Manual", "target": "@DOC_DIR@/html/manuals/mged/index.html", "desktop": false}
+  ]
+}

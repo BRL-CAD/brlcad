@@ -1555,9 +1555,9 @@ and install just what is needed to try and get a "this will probably run
 anywhere" binary, but as a manual process that's a pain - maybe there's a way
 to script qemu to do the job for us...
 
-Windows is still completely manual.  The .msi installer depends on an older
-version of WiX, and I don't know of another good solution there - we probably need
-to investigate whether we could produce MSIX packages instead.
+Native 64-bit Windows builds generate ZIP, EXE, and MSI packages with the
+standard package target.  Release signing and native-platform acceptance
+testing remain manual.
 
 Mac - TODO.
 

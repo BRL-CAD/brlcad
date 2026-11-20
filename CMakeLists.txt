@@ -3464,6 +3464,12 @@ endforeach(ad ${ALL_DIRS})
 # job more efficiently
 brlcad_install_path_privacy()
 
+brlinst_add_host()
+if(BRLINST_HOST_BINARY_DIR)
+  set(BRLINST_BUILTIN_INTEGRATION ON)
+  include("${CMAKE_SOURCE_DIR}/misc/tools/brlinst/cmake/BRLCAD.cmake")
+  brlinst_brlcad_configure()
+endif()
 include(BRLCAD_CPack)
 
 # Some files to ignore for distcheck.  The files and directories prefixed with

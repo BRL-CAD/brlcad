@@ -1,14 +1,16 @@
-This directory contains build resources specific to the Mac OS X
-platform.  There are related Mac OS X build scripts of interest also
-located in the top-level sh directory (make_pkg.sh & make_dmg.sh) as
-well as the top-level Makefile.am build targets: make pkg & make dmg
+This directory contains legacy build resources specific to the macOS
+platform.  The related sh/make_pkg.sh and sh/make_dmg.sh scripts predate
+Apple's current flat-package, signing, and notarization workflows.  They
+remain as behavioral references while native PKG and DMG backends are
+prepared in misc/tools/brlinst.  They are not connected to current CMake
+package targets.
 
 
 README
 	this file
 
 Resources/
-	contains the files for an Installer .pkg including the
+	contains the legacy files for an Installer .pkg including the
 	ReadMe, Welcome, License, and any installation support
 	scripts.
 
