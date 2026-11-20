@@ -38,6 +38,7 @@
 #include <vector>
 
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/str.h"
@@ -130,6 +131,27 @@ struct tree_options {
     rgb_color leaf_rgb = {48, 118, 62};
     bool overwrite = false;
     bool append = false;
+};
+
+struct tree_args {
+    const char *outfile;
+    const char *name;
+    const char *settings_file;
+    const char *preset;
+    const char *mode;
+    const char *leaf_mode;
+    const char *detail;
+    uint32_t seed;
+    fastf_t height;
+    fastf_t trunk_radius;
+    fastf_t age;
+    const char *demo_file;
+    fastf_t offset_x;
+    fastf_t offset_y;
+    fastf_t offset_z;
+    int overwrite;
+    int append;
+    int help;
 };
 
 struct tree_segment {
@@ -380,77 +402,124 @@ parse_detail(const char *value)
     throw std::runtime_error("--detail must be low, medium, or high");
 }
 
-static double
-parse_double_arg(const char *name, const char *value)
+static int
+tree_seed_arg(struct bu_vls *msg, const char *arg, void *storage)
 {
-    if (!value)
-	throw std::runtime_error(std::string(name) + " requires a value");
-    char *end = NULL;
-    const double d = std::strtod(value, &end);
-    if (!end || *end != '\0' || !std::isfinite(d))
-	throw std::runtime_error(std::string(name) + " requires a finite numeric value");
-    return d;
+    unsigned int value;
+
+    if (!bu_arg_unsigned_integer_from_str(msg, &value, arg, 10))
+	return -1;
+    if (storage)
+	*((uint32_t *)storage) = (uint32_t)value;
+    return 0;
 }
 
-static uint32_t
-parse_seed_arg(const char *name, const char *value)
-{
-    if (!value)
-	throw std::runtime_error(std::string(name) + " requires a value");
-    char *end = NULL;
-    const unsigned long l = std::strtoul(value, &end, 10);
-    if (!end || *end != '\0' || l > std::numeric_limits<uint32_t>::max())
-	throw std::runtime_error(std::string(name) + " requires a 32-bit unsigned integer value");
-    return static_cast<uint32_t>(l);
-}
+static const struct bu_arg_value_keyword tree_preset_values[] = {
+    {"broadleaf", NULL, "Broadleaf tree"},
+    {"conifer", NULL, "Conifer tree"},
+    {"palm", NULL, "Palm tree"},
+    {"shrub", NULL, "Shrub"},
+    {"dead", NULL, "Leafless dead tree"},
+    {NULL, NULL, NULL}
+};
 
-static const char *
-next_value(int argc, char **argv, int &i, const char *name)
-{
-    if (i + 1 >= argc)
-	throw std::runtime_error(std::string(name) + " requires a value");
-    return argv[++i];
-}
+static const struct bu_arg_value_keyword tree_mode_values[] = {
+    {"mesh", NULL, "Faceted branch tubes and foliage"},
+    {"csg", NULL, "Constructive solid geometry"},
+    {"analysis", NULL, "Lightweight analysis geometry"},
+    {NULL, NULL, NULL}
+};
 
-static bool
-split_long_option(const char *arg, std::string &key, const char *&value)
-{
-    if (!arg || arg[0] != '-' || arg[1] != '-')
-	return false;
-    const char *eq = std::strchr(arg + 2, '=');
-    if (eq) {
-	key.assign(arg + 2, static_cast<size_t>(eq - (arg + 2)));
-	value = eq + 1;
-    } else {
-	key = arg + 2;
-	value = NULL;
-    }
-    return true;
-}
+static const struct bu_arg_value_keyword tree_leaf_mode_values[] = {
+    {"none", NULL, "No foliage"},
+    {"simple", NULL, "Simple leaves"},
+    {"cluster", NULL, "Clustered leaves"},
+    {"canopy", NULL, "Solid canopy volumes"},
+    {NULL, NULL, NULL}
+};
+
+static const struct bu_arg_value_keyword tree_detail_values[] = {
+    {"low", NULL, "Low detail"},
+    {"medium", NULL, "Medium detail"},
+    {"high", NULL, "High detail"},
+    {NULL, NULL, NULL}
+};
+
+static const struct bu_arg_option tree_arg_options[] = {
+    BU_ARG_VALUE("o", "output", struct tree_args, outfile,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file.g", "Output BRL-CAD database"),
+    BU_ARG_VALUE("n", "name", struct tree_args, name,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "name", "Base object name"),
+    BU_ARG_VALUE(NULL, "settings", struct tree_args, settings_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file.json", "Advanced JSON settings file"),
+    BU_ARG_KEYWORD_VALUES(NULL, "preset", struct tree_args, preset, "preset",
+	"Species preset", tree_preset_values),
+    BU_ARG_KEYWORD_VALUES(NULL, "mode", struct tree_args, mode, "mode",
+	"Output realization", tree_mode_values),
+    BU_ARG_KEYWORD_VALUES(NULL, "leaf-mode", struct tree_args, leaf_mode,
+	"mode", "Foliage style", tree_leaf_mode_values),
+    BU_ARG_KEYWORD_VALUES(NULL, "detail", struct tree_args, detail, "level",
+	"Detail level", tree_detail_values),
+    BU_ARG_CUSTOM(NULL, "seed", struct tree_args, seed, tree_seed_arg,
+	"uint", "Deterministic 32-bit generation seed"),
+    BU_ARG_VALUE(NULL, "height", struct tree_args, height,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "length", "Overall tree height"),
+    BU_ARG_VALUE(NULL, "trunk-radius", struct tree_args, trunk_radius,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "length", "Trunk base radius"),
+    BU_ARG_NUMBER_RANGE(NULL, "age", struct tree_args, age,
+	1, 0.0, 1, 1.0, "ratio", "Relative age and maturity"),
+    BU_ARG_VALUE(NULL, "demo-file", struct tree_args, demo_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file.g", "Write a grid of sample trees"),
+    BU_ARG_VALUE(NULL, "x-offset", struct tree_args, offset_x,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "distance", "Model X offset"),
+    BU_ARG_VALUE(NULL, "y-offset", struct tree_args, offset_y,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "distance", "Model Y offset"),
+    BU_ARG_VALUE(NULL, "z-offset", struct tree_args, offset_z,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "distance", "Model Z offset"),
+    BU_ARG_FLAG("f", "force", struct tree_args, overwrite,
+	"Overwrite an existing output database"),
+    BU_ARG_FLAG("j", "append", struct tree_args, append,
+	"Append objects to an existing output database"),
+    BU_ARG_FLAG("h", "help", struct tree_args, help, "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const char * const tree_output_modes[] = {"force", "append", NULL};
+static const char * const tree_demo_conflicts[] = {"demo-file", "append", NULL};
+
+static const struct bu_arg_constraint tree_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS,
+	tree_output_modes, 0, 1, "select append or overwrite, not both"),
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_CONFLICTS, BU_ARG_CONDITION_ALWAYS,
+	tree_demo_conflicts, 0, 0, "demo output cannot use append mode"),
+    BU_ARG_CONSTRAINT_NULL
+};
+
+static const struct bu_arg_help_group tree_help_groups[] = {
+    BU_ARG_HELP_GROUP("Output", NULL, "output", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Tree geometry", NULL, "preset", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Placement", NULL, "x-offset", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("File handling", NULL, "force", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Help", NULL, "help", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP_NULL
+};
+
+static const struct bu_arg_presentation tree_presentation =
+    BU_ARG_PRESENTATION(tree_help_groups, NULL, NULL);
+
+static const struct bu_arg_schema tree_schema = BU_ARG_SCHEMA_PRESENTED(
+    "tree", "Procedurally generate a volumetric tree model",
+    tree_arg_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, tree_constraints, NULL, NULL, NULL),
+    &tree_presentation);
 
 static void
 usage(const char *argv0)
 {
-    bu_log("Usage: %s [options]\n\n", argv0);
-    bu_log("Options:\n");
-    bu_log("  -o, --output file.g          Output database [tree.g]\n");
-    bu_log("  -n, --name name              Object name prefix [tree]\n");
-    bu_log("      --settings file.json     Advanced JSON settings file\n");
-    bu_log("      --preset name            broadleaf, conifer, palm, shrub, or dead [broadleaf]\n");
-    bu_log("      --seed uint              Deterministic generation seed [1]\n");
-    bu_log("      --height length          Overall tree height [12000]\n");
-    bu_log("      --trunk-radius length    Trunk base radius [420]\n");
-    bu_log("      --age ratio              Relative age/maturity in [0, 1] [1]\n");
-    bu_log("      --detail name            low, medium, or high [medium]\n");
-    bu_log("      --mode name              Output mode: mesh, csg, or analysis [mesh]\n");
-    bu_log("      --leaf-mode name         none, simple, cluster, or canopy [simple]\n");
-    bu_log("      --demo-file file.g       Write a grid of sample trees\n");
-    bu_log("      --x-offset distance      Model X offset [0]\n");
-    bu_log("      --y-offset distance      Model Y offset [0]\n");
-    bu_log("      --z-offset distance      Model Z offset [0]\n");
-    bu_log("  -f, --force                  Overwrite output file\n");
-    bu_log("  -j, --append                 Append objects to an existing output file\n");
-    bu_log("  -h, --help                   Print this help\n");
+    char *help = bu_arg_schema_help(&tree_schema, argv0);
+    bu_log("%s", help ? help : "");
+    bu_free(help, "tree option help");
 }
 
 static std::string
@@ -843,120 +912,73 @@ static tree_options
 parse_args(int argc, char **argv)
 {
     tree_options opts;
-    bool preset_supplied = false;
-    bool mode_supplied = false;
-    bool leaf_mode_supplied = false;
-    bool seed_supplied = false;
-    bool height_supplied = false;
-    bool trunk_radius_supplied = false;
-    bool age_supplied = false;
-    bool detail_supplied = false;
-    bool offset_x_supplied = false;
-    bool offset_y_supplied = false;
-    bool offset_z_supplied = false;
-    preset_type cli_preset = opts.preset;
-    output_mode cli_mode = opts.mode;
-    leaf_mode cli_leaf_mode = opts.leaves;
-    detail_level cli_detail = opts.detail;
-    uint32_t cli_seed = opts.seed;
-    double cli_height = opts.height;
-    double cli_trunk_radius = opts.trunk_radius;
-    double cli_age = opts.age;
-    double cli_offset_x = opts.offset_x;
-    double cli_offset_y = opts.offset_y;
-    double cli_offset_z = opts.offset_z;
+    struct tree_args args = {};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
-    for (int i = 1; i < argc; ++i) {
-	const char *arg = argv[i];
-	std::string key;
-	const char *value = NULL;
-	if (split_long_option(arg, key, value)) {
-	    if (key == "help") {
-		usage(argv[0]);
-		bu_exit(EXIT_SUCCESS, NULL);
-	    } else if (key == "output") {
-		opts.outfile = value ? value : next_value(argc, argv, i, arg);
-	    } else if (key == "name") {
-		opts.name = value ? value : next_value(argc, argv, i, arg);
-	    } else if (key == "settings") {
-		opts.settings_file = value ? value : next_value(argc, argv, i, arg);
-	    } else if (key == "preset") {
-		opts.preset = parse_preset(value ? value : next_value(argc, argv, i, arg));
-		cli_preset = opts.preset;
-		preset_supplied = true;
-	    } else if (key == "mode") {
-		opts.mode = parse_mode(value ? value : next_value(argc, argv, i, arg));
-		cli_mode = opts.mode;
-		mode_supplied = true;
-	    } else if (key == "leaf-mode") {
-		opts.leaves = parse_leaf_mode(value ? value : next_value(argc, argv, i, arg));
-		cli_leaf_mode = opts.leaves;
-		leaf_mode_supplied = true;
-	    } else if (key == "detail") {
-		opts.detail = parse_detail(value ? value : next_value(argc, argv, i, arg));
-		cli_detail = opts.detail;
-		detail_supplied = true;
-	    } else if (key == "seed") {
-		opts.seed = parse_seed_arg(arg, value ? value : next_value(argc, argv, i, arg));
-		cli_seed = opts.seed;
-		seed_supplied = true;
-	    } else if (key == "height") {
-		opts.height = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-		cli_height = opts.height;
-		height_supplied = true;
-	    } else if (key == "trunk-radius") {
-		opts.trunk_radius = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-		cli_trunk_radius = opts.trunk_radius;
-		trunk_radius_supplied = true;
-	    } else if (key == "age") {
-		opts.age = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-		cli_age = opts.age;
-		age_supplied = true;
-	    } else if (key == "demo-file") {
-		opts.demo_file = value ? value : next_value(argc, argv, i, arg);
-	    } else if (key == "x-offset") {
-		opts.offset_x = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-		cli_offset_x = opts.offset_x;
-		offset_x_supplied = true;
-	    } else if (key == "y-offset") {
-		opts.offset_y = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-		cli_offset_y = opts.offset_y;
-		offset_y_supplied = true;
-	    } else if (key == "z-offset") {
-		opts.offset_z = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-		cli_offset_z = opts.offset_z;
-		offset_z_supplied = true;
-	    } else if (key == "force") {
-		if (value)
-		    throw std::runtime_error("--force does not take a value");
-		opts.overwrite = true;
-	    } else if (key == "append") {
-		if (value)
-		    throw std::runtime_error("--append does not take a value");
-		opts.append = true;
-	    } else {
-		throw std::runtime_error(std::string("unknown option: ") + arg);
-	    }
-	    continue;
-	}
-	if (BU_STR_EQUAL(arg, "-h")) {
-	    usage(argv[0]);
-	    bu_exit(EXIT_SUCCESS, NULL);
-	} else if (BU_STR_EQUAL(arg, "-o")) {
-	    opts.outfile = next_value(argc, argv, i, arg);
-	} else if (BU_STR_EQUAL(arg, "-n")) {
-	    opts.name = next_value(argc, argv, i, arg);
-	} else if (BU_STR_EQUAL(arg, "-f")) {
-	    opts.overwrite = true;
-	} else if (BU_STR_EQUAL(arg, "-j")) {
-	    opts.append = true;
-	} else {
-	    throw std::runtime_error(std::string("unknown option: ") + arg);
-	}
+    args.outfile = opts.outfile.c_str();
+    args.name = opts.name.c_str();
+    args.preset = "broadleaf";
+    args.mode = "mesh";
+    args.leaf_mode = "simple";
+    args.detail = "medium";
+    args.seed = opts.seed;
+    args.height = opts.height;
+    args.trunk_radius = opts.trunk_radius;
+    args.age = opts.age;
+    args.offset_x = opts.offset_x;
+    args.offset_y = opts.offset_y;
+    args.offset_z = opts.offset_z;
+
+    const int arg_count = argc - 1;
+    const char **arg_values = (const char **)(argv + 1);
+    const auto supplied = [&](const char *name) {
+	return bu_arg_schema_option_present(&tree_schema, arg_count,
+	    arg_values, name);
+    };
+    const bool preset_supplied = supplied("preset");
+    const bool mode_supplied = supplied("mode");
+    const bool leaf_mode_supplied = supplied("leaf-mode");
+    const bool detail_supplied = supplied("detail");
+    const bool seed_supplied = supplied("seed");
+    const bool height_supplied = supplied("height");
+    const bool trunk_radius_supplied = supplied("trunk-radius");
+    const bool age_supplied = supplied("age");
+    const bool offset_x_supplied = supplied("x-offset");
+    const bool offset_y_supplied = supplied("y-offset");
+    const bool offset_z_supplied = supplied("z-offset");
+
+    const int parsed = bu_arg_schema_parse_complete(&tree_schema, &args,
+	&msg, arg_count, arg_values);
+    if (parsed < 0) {
+	const char *error = bu_vls_cstr(&msg);
+	std::string error_text = error ? error : "";
+	bu_vls_free(&msg);
+	throw std::runtime_error(error_text.empty() ?
+	    "option parsing failed" : error_text);
+    }
+    bu_vls_free(&msg);
+
+    if (args.help) {
+	usage(argv[0]);
+	bu_exit(EXIT_SUCCESS, NULL);
     }
 
-    if (preset_supplied)
+    const preset_type cli_preset = parse_preset(args.preset);
+    const output_mode cli_mode = parse_mode(args.mode);
+    const leaf_mode cli_leaf_mode = parse_leaf_mode(args.leaf_mode);
+    const detail_level cli_detail = parse_detail(args.detail);
+
+    opts.outfile = args.outfile;
+    opts.name = args.name;
+    opts.settings_file = args.settings_file ? args.settings_file : "";
+    opts.demo_file = args.demo_file ? args.demo_file : "";
+    opts.overwrite = args.overwrite;
+    opts.append = args.append;
+
+    if (preset_supplied) {
+	opts.preset = cli_preset;
 	apply_preset(opts);
+    }
     if (!opts.settings_file.empty())
 	apply_settings_json(opts, read_text_file(opts.settings_file));
     if (preset_supplied)
@@ -966,21 +988,21 @@ parse_args(int argc, char **argv)
     if (leaf_mode_supplied)
 	opts.leaves = cli_leaf_mode;
     if (seed_supplied)
-	opts.seed = cli_seed;
+	opts.seed = args.seed;
     if (height_supplied)
-	opts.height = cli_height;
+	opts.height = args.height;
     if (trunk_radius_supplied)
-	opts.trunk_radius = cli_trunk_radius;
+	opts.trunk_radius = args.trunk_radius;
     if (age_supplied)
-	opts.age = cli_age;
+	opts.age = args.age;
     if (detail_supplied)
 	opts.detail = cli_detail;
     if (offset_x_supplied)
-	opts.offset_x = cli_offset_x;
+	opts.offset_x = args.offset_x;
     if (offset_y_supplied)
-	opts.offset_y = cli_offset_y;
+	opts.offset_y = args.offset_y;
     if (offset_z_supplied)
-	opts.offset_z = cli_offset_z;
+	opts.offset_z = args.offset_z;
     if (detail_supplied) {
 	if (opts.detail == detail_level::low) {
 	    opts.branch_sides = 7;
@@ -2322,6 +2344,19 @@ int
 main(int argc, char **argv)
 {
     bu_setprogname(argv[0]);
+
+    const struct bu_arg_grammar grammar = {&tree_schema, NULL, NULL};
+    struct bu_vls schema_output = BU_VLS_INIT_ZERO;
+    const int schema_status = bu_arg_introspect(&schema_output, &grammar,
+	argc - 1, (const char * const *)(argv + 1));
+    if (schema_status != 0) {
+	bu_flog(schema_status > 0 ? stdout : stderr, "%s",
+	    bu_vls_cstr(&schema_output));
+	bu_vls_free(&schema_output);
+	return schema_status > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+    bu_vls_free(&schema_output);
+
     try {
 	const tree_options opts = parse_args(argc, argv);
 	if (!opts.demo_file.empty())

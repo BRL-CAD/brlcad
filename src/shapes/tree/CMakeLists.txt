@@ -2,7 +2,7 @@ set(tree_srcs
   tree.cpp
   )
 
-brlcad_addexec(tree "${tree_srcs}" "libwdb;${M_LIBRARY}" FOLDER Shapes)
+brlcad_addexec(tree "${tree_srcs}" "libwdb;${M_LIBRARY}" FOLDER Shapes ARG_SCHEMA)
 
 cmakefiles(
   CMakeLists.txt
