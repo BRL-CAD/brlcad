@@ -56,6 +56,82 @@ libged commands
 	ordering during the deprecation window.
 	[deprecated 7.48]
 
+
+Runtime MIME interfaces
+
+include/bu/mime.h and generated include/bu/mime_types.h
+
+	bu_file_mime -> bu_mime_detect / bu_mime_detect_file
+	bu_file_mime_str -> canonical MIME names / bu_mime_description
+	bu_file_mime_int -> bu_mime_canonical
+	bu_file_mime_ext -> bu_mime_list
+	bu_mime_context_t, bu_mime_<category>_t, and generated MIME enum
+	constants -> canonical type/subtype strings
+	bu_mime_legacy_name, bu_mime_legacy_type -> temporary migration bridges
+	[deprecated 7.48]
+
+	Use an explicit registry, owned detection results and canonical names.
+	Handle ambiguous or unknown formats and I/O errors. Generated enum
+	values cannot represent plugin registrations and must not be extended.
+	Runtime BU_MIME_* status, evidence and configuration constants are
+	not deprecated.
+
+include/icv/io.h
+
+	icv_read -> icv_read_with_context
+	icv_read_mem -> icv_read_mem_with_context
+	icv_write -> icv_write_with_context
+	icv_write_mem -> icv_write_mem_with_context
+	icv_image_size -> icv_image_size_with_context / icv_raw_size / icv_named_size
+	[deprecated 7.48]
+
+	Reuse an icv_context for plugins and batches. Pass NULL as the input
+	type for detection, or an explicit MIME name when needed. Review raw
+	PIX fallbacks rather than carrying them into new callers implicitly.
+	Use encoded metadata queries for compressed-image dimensions; raw
+	size APIs interpret explicit layouts and exact byte counts.
+
+include/gcv/api.h and libgcv plugin entry points
+
+	struct gcv_plugin / gcv_plugin_info -> gcv_plugin_v2 / gcv_plugin_info_v2
+	struct gcv_filter.mime_type -> gcv_handler.formats
+	struct gcv_filter.data_supported -> gcv_handler.probe
+	find_filter -> gcv_select_filter / gcv_resolve_filter
+	[deprecated 7.48]
+
+	Register actual formats and execute through the type- or trait-aware
+	interfaces so multi-format handlers receive the selected identity.
+	Only obsolete MIME fields, V1 descriptors/loader paths and enum-based
+	lookup are scheduled for removal. Non-format filter operations remain.
+
+Legacy backend format selectors
+
+	model/vnd.gdal and the gdal shorthand
+	model/vnd.assetimport and the assetimport shorthand
+	-> actual MIME names plus explicit handler selection
+	[deprecated 7.48]
+
+	For example, select image/tiff with the GDAL Reader or model/stl with
+	the Assetimport Reader. Use --input-handler or --output-handler to
+	choose an implementation.
+
+Removal gates
+
+	Announce the transition in releases 7.48 and 7.50. Removal is no earlier
+	than 7.52 and requires at least 90 days after the first release
+	announcement, as specified in CHANGES.adoc. An inventory entry does
+	not start the elapsed-time window.
+
+	Keep misc/mime.types and misc/mime_cad.types frozen during migration;
+	maintain runtime identities in misc/mime. Remove obsolete execution
+	fields and V1 loader support through a versioned plugin ABI transition.
+	Retire enum bridges, generated headers and mappings only after callers
+	and metadata/size queries use the replacements and the release/time
+	gates are satisfied. Record completed removals in obsoleted.adoc.
+
+	This migration needs ownership and error-handling review, so it is not
+	a minimally impacting rename. See doc/asciidoc/articles/mime.adoc.
+
 == 7.46
 
 include/bg/trimesh.h

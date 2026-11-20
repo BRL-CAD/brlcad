@@ -961,7 +961,7 @@ include/bu/cv.h: #define IND_BIG    1
 include/bu/cv.h: #define IND_LITTLE 2
 include/bu/cv.h: #define IND_ILL    3
 include/bu/cv.h: #define IND_CRAY   4
-include/bu/cv.h: #  define ntohll(_val) ((bu_byteorder() == BU_LITTLE_ENDIAN) ?				;#  define htonll(_val) ntohll(_val)
+include/bu/cv.h: #    define ntohll(_val) ((bu_byteorder() == BU_LITTLE_ENDIAN) ?				;#    define htonll(_val) ntohll(_val)
 include/bu/cv.h: BU_EXPORT extern size_t bu_cv(void *out, char *outfmt, size_t size, void *in, char *infmt, size_t count);
 include/bu/cv.h: BU_EXPORT extern int bu_cv_cookie(const char *in);
 include/bu/cv.h: BU_EXPORT extern int bu_cv_optimize(int cookie);
@@ -1027,13 +1027,17 @@ include/bu/defines.h: #      define BU_DIR_SEPARATOR '/'
 include/bu/defines.h: #  define BU_PATH_SEPARATOR PATH_SEPARATOR
 include/bu/defines.h: #    define BU_PATH_SEPARATOR ';'
 include/bu/defines.h: #    define BU_PATH_SEPARATOR ':'
-include/bu/defines.h: #  define _BU_ATTR_PRINTF12 __attribute__((__format__ (__printf__, 1, 2)))
+include/bu/defines.h: #  define _BU_PRINTF_FORMAT __gnu_printf__
+include/bu/defines.h: #  define _BU_SCANF_FORMAT __gnu_scanf__
+include/bu/defines.h: #  define _BU_PRINTF_FORMAT __printf__
+include/bu/defines.h: #  define _BU_SCANF_FORMAT __scanf__
+include/bu/defines.h: #  define _BU_ATTR_PRINTF12 __attribute__((__format__ (_BU_PRINTF_FORMAT, 1, 2)))
 include/bu/defines.h: #  define _BU_ATTR_PRINTF12
-include/bu/defines.h: #  define _BU_ATTR_PRINTF23 __attribute__((__format__ (__printf__, 2, 3)))
+include/bu/defines.h: #  define _BU_ATTR_PRINTF23 __attribute__((__format__ (_BU_PRINTF_FORMAT, 2, 3)))
 include/bu/defines.h: #  define _BU_ATTR_PRINTF23
-include/bu/defines.h: #  define _BU_ATTR_PRINTF34 __attribute__((__format__ (__printf__, 3, 4)))
+include/bu/defines.h: #  define _BU_ATTR_PRINTF34 __attribute__((__format__ (_BU_PRINTF_FORMAT, 3, 4)))
 include/bu/defines.h: #  define _BU_ATTR_PRINTF34
-include/bu/defines.h: #  define _BU_ATTR_SCANF23 __attribute__((__format__ (__scanf__, 2, 3)))
+include/bu/defines.h: #  define _BU_ATTR_SCANF23 __attribute__((__format__ (_BU_SCANF_FORMAT, 2, 3)))
 include/bu/defines.h: #  define _BU_ATTR_SCANF23
 include/bu/defines.h: #  define _BU_ATTR_ALWAYS_INLINE __attribute__((always_inline))
 include/bu/defines.h: #  define _BU_ATTR_ALWAYS_INLINE
@@ -1395,6 +1399,50 @@ include/bu/mime.h: BU_EXPORT extern int bu_file_mime(const char *ext, bu_mime_co
 include/bu/mime.h: BU_EXPORT extern const char *bu_file_mime_ext(int t, bu_mime_context_t context);
 include/bu/mime.h: BU_EXPORT extern const char *bu_file_mime_str(int t, bu_mime_context_t context);
 include/bu/mime.h: BU_EXPORT extern int bu_file_mime_int(const char *str);
+include/bu/mime.h: BU_EXPORT extern const char *bu_mime_legacy_name(int type, bu_mime_context_t context);
+include/bu/mime.h: BU_EXPORT extern int bu_mime_legacy_type(const char *name, bu_mime_context_t context);
+include/bu/mime_runtime.h: #define BU_MIME_ABI_VERSION 3
+include/bu/mime_runtime.h: #define BU_MIME_DEFAULT_SCAN_LIMIT (64 * 1024)
+include/bu/mime_runtime.h: #define BU_MIME_DEFAULT_PRIORITY 50
+include/bu/mime_runtime.h: #define BU_MIME_MAX_PRIORITY 100
+include/bu/mime_runtime.h: BU_EXPORT extern int bu_mime_list(struct bu_mime_registry *registry,
+include/bu/mime_runtime.h: BU_EXPORT extern void bu_mime_list_free(struct bu_mime_info *info, size_t count);
+include/bu/mime_runtime.h: #define BU_MIME_TRAIT_STRING(_key, _value) {_key, _value, BU_MIME_VALUE_STRING, NULL, 0}
+include/bu/mime_runtime.h: #define BU_MIME_TRAIT_SET(_key, _members, _count) {_key, NULL, BU_MIME_VALUE_SET, _members, _count}
+include/bu/mime_runtime.h: #define BU_MIME_TRAITS_INIT_ZERO {NULL, 0}
+include/bu/mime_runtime.h: BU_EXPORT int bu_opt_mime_trait(struct bu_vls *messages, size_t argc,
+include/bu/mime_runtime.h: BU_EXPORT int bu_mime_traits_add(struct bu_mime_traits *traits, const char *key, const char *value);
+include/bu/mime_runtime.h: BU_EXPORT int bu_mime_traits_add_set(struct bu_mime_traits *traits, const char *key,
+include/bu/mime_runtime.h: BU_EXPORT int bu_mime_traits_copy(struct bu_mime_traits *destination, const struct bu_mime_traits *source);
+include/bu/mime_runtime.h: BU_EXPORT void bu_mime_traits_free(struct bu_mime_traits *traits);
+include/bu/mime_runtime.h: BU_EXPORT const char *bu_mime_traits_get(const struct bu_mime_traits *traits, const char *key);
+include/bu/mime_runtime.h: BU_EXPORT int bu_mime_traits_get_set(const struct bu_mime_traits *traits, const char *key,
+include/bu/mime_runtime.h: BU_EXPORT int bu_mime_traits_valid(const struct bu_mime_traits *traits, int unambiguous);
+include/bu/mime_runtime.h: BU_EXPORT int bu_mime_traits_match(const struct bu_mime_traits *observed,
+include/bu/mime_runtime.h: BU_EXPORT void bu_mime_traits_describe(const struct bu_mime_traits *traits, struct bu_vls *messages);
+include/bu/mime_runtime.h: BU_EXPORT int bu_mime_version_compare(const char *left, const char *right, int *comparison);
+include/bu/mime_runtime.h: BU_EXPORT int bu_mime_traits_resolve(struct bu_mime_traits *destination,
+include/bu/mime_runtime.h: #define BU_MIME_CAPABILITY(_type, _traits, _count, _operations) {_type, _traits, _count, _operations, 0}
+include/bu/mime_runtime.h: BU_EXPORT int bu_mime_capability_copy(struct bu_mime_capability *destination,
+include/bu/mime_runtime.h: BU_EXPORT void bu_mime_capability_free(struct bu_mime_capability *capability);
+include/bu/mime_runtime.h: BU_EXPORT int bu_mime_capability_match(const struct bu_mime_capability *capability,
+include/bu/mime_runtime.h: BU_EXPORT extern enum bu_mime_status bu_mime_result_add(struct bu_mime_registry *registry,
+include/bu/mime_runtime.h: BU_EXPORT int bu_mime_capability_resolve(const struct bu_mime_capability *capability,
+include/bu/mime_runtime.h: BU_EXPORT int bu_mime_result_add_traits(struct bu_mime_result *result, const char *canonical,
+include/bu/mime_runtime.h: BU_EXPORT enum bu_mime_status bu_mime_identify(struct bu_mime_registry *registry,
+include/bu/mime_runtime.h: BU_EXPORT extern struct bu_mime_registry *bu_mime_registry_create(size_t scan_limit);
+include/bu/mime_runtime.h: BU_EXPORT extern void bu_mime_registry_destroy(struct bu_mime_registry *registry);
+include/bu/mime_runtime.h: BU_EXPORT extern size_t bu_mime_scan_limit(const struct bu_mime_registry *registry);
+include/bu/mime_runtime.h: BU_EXPORT extern bu_mime_token bu_mime_register(struct bu_mime_registry *registry,
+include/bu/mime_runtime.h: BU_EXPORT extern int bu_mime_unregister(struct bu_mime_registry *registry, bu_mime_token token);
+include/bu/mime_runtime.h: BU_EXPORT extern int bu_mime_canonical(struct bu_mime_registry *registry,
+include/bu/mime_runtime.h: BU_EXPORT extern int bu_mime_description(struct bu_mime_registry *registry,
+include/bu/mime_runtime.h: BU_EXPORT enum bu_mime_status bu_mime_resolve_candidates(struct bu_mime_registry *registry,
+include/bu/mime_runtime.h: BU_EXPORT extern enum bu_mime_status bu_mime_resolve(struct bu_mime_registry *registry,
+include/bu/mime_runtime.h: BU_EXPORT extern enum bu_mime_status bu_mime_detect(struct bu_mime_registry *registry,
+include/bu/mime_runtime.h: BU_EXPORT extern enum bu_mime_status bu_mime_detect_file(struct bu_mime_registry *registry,
+include/bu/mime_runtime.h: BU_EXPORT extern void bu_mime_result_free(struct bu_mime_result *result);
+include/bu/mime_runtime.h: BU_EXPORT extern void bu_mime_result_describe(const struct bu_mime_result *result,
 include/bu/num.h: BU_EXPORT extern void bu_num_print(const double *vals,
 include/bu/observer.h: #define BU_OBSERVER_NULL ((struct bu_observer *)0)
 include/bu/observer.h: #define BU_CK_OBSERVER(_op) BU_CKMAG(_op, BU_OBSERVER_MAGIC, "bu_observer magic")
@@ -2069,7 +2117,7 @@ include/bv/vlist.h: BV_EXPORT extern void bv_plot_vlblock(FILE *fp,
 include/bv/vlist.h: BV_EXPORT extern void bv_vlblock_to_objs(struct bu_ptbl *out,
 include/bv/vlist.h: BV_EXPORT extern struct bv_scene_obj *
 include/bv/vlist.h: BV_EXPORT extern void bv_vlist_to_uplot(FILE *fp,
-include/common.h: #    define drand48() ((double)rand() / (double)(RAND_MAX + 1))
+include/common.h: #    define drand48() (rand() / (RAND_MAX + 1.0))
 include/common.h: #    define HAVE_DRAND48 1
 include/common.h: #    define srand48(seed) (srand(seed))
 include/common.h: #    define HAVE_DECL_DRAND48 1
@@ -2346,6 +2394,7 @@ include/dm.h: DM_EXPORT extern int fb_wpixel(struct fb *ifp, unsigned char *pp);
 include/dm.h: DM_EXPORT extern int fb_flush(struct fb *ifp);
 include/dm.h: DM_EXPORT extern int fb_configure_window(struct fb *, int, int);
 include/dm.h: DM_EXPORT extern int fb_refresh(struct fb *ifp, int x, int y, int w, int h);
+include/dm.h: #  define fb_log bu_log
 include/dm.h: DM_EXPORT extern void fb_log(const char *fmt, ...) _BU_ATTR_PRINTF12;
 include/dm.h: DM_EXPORT extern int fb_null(struct fb *ifp);
 include/dm.h: DM_EXPORT extern int fb_null_setcursor(struct fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig);
@@ -2458,15 +2507,41 @@ include/fft.h: FFT_EXPORT extern void icfft(COMPLEX *dat, int num);
 include/fft.h: FFT_EXPORT extern void cdiv(COMPLEX *result, COMPLEX *val1, COMPLEX *val2);
 include/fft.h: FFT_EXPORT extern void rfft256(register double X[]);
 include/fft.h: FFT_EXPORT extern void irfft256(register double X[]);
-include/gcv/api.h: GCV_EXPORT void
-include/gcv/api.h: GCV_EXPORT void
-include/gcv/api.h: GCV_EXPORT void
-include/gcv/api.h: GCV_EXPORT const struct bu_ptbl *gcv_list_filters(struct gcv_context *context);
 include/gcv/api.h: GCV_EXPORT const struct gcv_filter*
-include/gcv/api.h: GCV_EXPORT int
 include/gcv/defines.h: #    define GCV_EXPORT COMPILER_DLLEXPORT
 include/gcv/defines.h: #    define GCV_EXPORT COMPILER_DLLIMPORT
 include/gcv/defines.h: #    define GCV_EXPORT
+include/gcv/runtime.h: GCV_EXPORT void
+include/gcv/runtime.h: GCV_EXPORT void
+include/gcv/runtime.h: GCV_EXPORT struct bu_mime_registry *gcv_mime_registry(struct gcv_context *context);
+include/gcv/runtime.h: #define GCV_LOSS_ALL (GCV_LOSS_GEOMETRY | GCV_LOSS_APPEARANCE | GCV_LOSS_BEHAVIOR | GCV_LOSS_METADATA)
+include/gcv/runtime.h: #define GCV_CONVERSION_RESULT_INIT_ZERO {GCV_CONVERSION_FAILED, NULL, 0, BU_VLS_INIT_ZERO}
+include/gcv/runtime.h: GCV_EXPORT const char *gcv_loss_kind_name(enum gcv_loss_kind kind);
+include/gcv/runtime.h: GCV_EXPORT int gcv_opt_loss_policy(struct bu_vls *messages, size_t argc, const char **argv, void *destination);
+include/gcv/runtime.h: GCV_EXPORT void gcv_conversion_result_free(struct gcv_conversion_result *result);
+include/gcv/runtime.h: GCV_EXPORT void gcv_conversion_result_describe(const struct gcv_conversion_result *result, struct bu_vls *messages);
+include/gcv/runtime.h: GCV_EXPORT int gcv_report_loss(struct gcv_context *context, enum gcv_loss_kind kind,
+include/gcv/runtime.h: GCV_EXPORT void
+include/gcv/runtime.h: #define GCV_PLUGIN_ABI_VERSION 5
+include/gcv/runtime.h: #define GCV_FALLBACK_PRIORITY (BU_MIME_DEFAULT_PRIORITY / 2)
+include/gcv/runtime.h: GCV_EXPORT int gcv_list_handlers(struct gcv_context *context, const char *mime_type,
+include/gcv/runtime.h: GCV_EXPORT void gcv_handler_list_free(struct gcv_handler_info *info, size_t count);
+include/gcv/runtime.h: GCV_EXPORT int gcv_register_plugin(struct gcv_context *context,
+include/gcv/runtime.h: GCV_EXPORT const struct gcv_filter *gcv_select_filter(struct gcv_context *context,
+include/gcv/runtime.h: GCV_EXPORT const struct gcv_filter *gcv_select_variant(struct gcv_context *context,
+include/gcv/runtime.h: GCV_EXPORT const struct gcv_filter *gcv_resolve_variant(struct gcv_context *context,
+include/gcv/runtime.h: GCV_EXPORT int gcv_execute_variant(struct gcv_context *context, const struct gcv_filter *filter,
+include/gcv/runtime.h: GCV_EXPORT enum gcv_conversion_status gcv_execute_result(struct gcv_context *context,
+include/gcv/runtime.h: GCV_EXPORT const struct bu_mime_traits *gcv_target_traits(struct gcv_context *context);
+include/gcv/runtime.h: GCV_EXPORT const struct bu_mime_traits *gcv_target_request_traits(struct gcv_context *context);
+include/gcv/runtime.h: GCV_EXPORT enum bu_mime_status gcv_detect(struct gcv_context *context,
+include/gcv/runtime.h: GCV_EXPORT enum bu_mime_status gcv_detect_file(struct gcv_context *context,
+include/gcv/runtime.h: GCV_EXPORT const struct gcv_filter *gcv_resolve_filter(struct gcv_context *context,
+include/gcv/runtime.h: GCV_EXPORT const char *gcv_target_mime(struct gcv_context *context);
+include/gcv/runtime.h: GCV_EXPORT int gcv_execute_format(struct gcv_context *context, const struct gcv_filter *filter,
+include/gcv/runtime.h: GCV_EXPORT const struct bu_ptbl *gcv_list_filters(struct gcv_context *context);
+include/gcv/runtime.h: GCV_EXPORT int
+include/gcv/util.h: GCV_EXPORT int gcv_db_copy(struct gcv_context *context, struct rt_wdb *destination, struct db_i *source);
 include/gcv/util.h: GCV_EXPORT extern int gcv_bot_is_solid(const struct rt_bot_internal *bot);
 include/gcv/util.h: GCV_EXPORT extern int gcv_bot_is_closed_fan(const struct rt_bot_internal *bot);
 include/gcv/util.h: GCV_EXPORT extern int gcv_bot_is_orientable(const struct rt_bot_internal *bot);
@@ -2526,6 +2601,7 @@ include/ged/defines.h: GED_EXPORT struct ged *ged_create(void);
 include/ged/defines.h: GED_EXPORT void ged_destroy(struct ged *);
 include/ged/defines.h: GED_EXPORT extern void ged_init(struct ged *gedp);
 include/ged/defines.h: GED_EXPORT extern void ged_free(struct ged *gedp);
+include/ged/defines.h: GED_EXPORT struct icv_context *ged_image_context(struct ged *gedp);
 include/ged/defines.h: GED_EXPORT extern void ged_set_terminal_columns(struct ged *gedp, size_t columns);
 include/ged/defines.h: GED_EXPORT extern size_t ged_terminal_columns(const struct ged *gedp);
 include/ged/defines.h: GED_EXPORT extern int ged_clbk_set(struct ged *gedp, const char *cmd, int mode, bu_clbk_t f, void *d);
@@ -2587,6 +2663,7 @@ include/ged/view.h: GED_EXPORT ged_drawable_notify_func_t
 include/ged/view.h: GED_EXPORT extern void nmg_plot_eu(struct ged *gedp, struct edgeuse *es_eu, const struct bn_tol *tol, struct bu_list *vlfree);
 include/icv/anim.h: ICV_EXPORT extern icv_anim_t *icv_anim_create(icv_anim_format_t format, uint32_t width, uint32_t height, int fps);
 include/icv/anim.h: ICV_EXPORT extern icv_anim_t *icv_anim_read(const char *filename);
+include/icv/anim.h: ICV_EXPORT extern const char *icv_anim_mime_type(const icv_anim_t *anim);
 include/icv/anim.h: ICV_EXPORT extern int icv_anim_write(const icv_anim_t *anim, const char *filename);
 include/icv/anim.h: ICV_EXPORT extern int icv_anim_destroy(icv_anim_t *anim);
 include/icv/anim.h: ICV_EXPORT extern int icv_anim_add_frame(icv_anim_t *anim, const icv_image_t *img);
@@ -2597,7 +2674,38 @@ include/icv/anim.h: ICV_EXPORT extern icv_image_t *icv_anim_get_frame(const icv_
 include/icv/anim.h: ICV_EXPORT extern size_t icv_anim_num_frames(const icv_anim_t *anim);
 include/icv/anim.h: ICV_EXPORT extern int icv_anim_set_fps(icv_anim_t *anim, int fps);
 include/icv/anim.h: ICV_EXPORT extern int icv_anim_set_frame_delay(icv_anim_t *anim, size_t index, uint32_t delay_usec);
+include/icv/codec.h: #define ICV_PLUGIN_ABI_VERSION 7
+include/icv/codec.h: ICV_EXPORT struct icv_context *icv_context_create(struct bu_mime_registry *registry);
+include/icv/codec.h: ICV_EXPORT void icv_context_destroy(struct icv_context *context);
+include/icv/codec.h: ICV_EXPORT void icv_context_set_spool_limit(struct icv_context *context, size_t bytes);
+include/icv/codec.h: ICV_EXPORT struct bu_mime_registry *icv_mime_registry(struct icv_context *context);
+include/icv/codec.h: ICV_EXPORT int icv_list_codecs(struct icv_context *context, const char *mime_type,
+include/icv/codec.h: ICV_EXPORT void icv_codec_list_free(struct icv_codec_info *info, size_t count);
+include/icv/codec.h: ICV_EXPORT int icv_supports(struct icv_context *context, const char *mime_type,
+include/icv/codec.h: ICV_EXPORT int icv_select_variant(struct icv_context *context,
+include/icv/codec.h: ICV_EXPORT int icv_resolve_variant(struct icv_context *context,
+include/icv/codec.h: ICV_EXPORT enum icv_metadata_status icv_metadata(struct icv_context *context,
+include/icv/codec.h: ICV_EXPORT enum icv_metadata_status icv_metadata_file(struct icv_context *context,
+include/icv/codec.h: ICV_EXPORT enum icv_metadata_status icv_metadata_variant(struct icv_context *context,
+include/icv/codec.h: ICV_EXPORT enum icv_metadata_status icv_metadata_file_variant(struct icv_context *context,
+include/icv/codec.h: ICV_EXPORT enum bu_mime_status icv_detect(struct icv_context *context,
+include/icv/codec.h: ICV_EXPORT enum bu_mime_status icv_detect_file(struct icv_context *context,
+include/icv/codec.h: ICV_EXPORT int icv_image_size_with_context(struct icv_context *context,
+include/icv/codec.h: ICV_EXPORT int icv_register_plugin(struct icv_context *context,
+include/icv/codec.h: ICV_EXPORT int icv_load_plugin(struct icv_context *context,
+include/icv/codec.h: ICV_EXPORT icv_image_t *icv_read_with_context(struct icv_context *context,
+include/icv/codec.h: ICV_EXPORT icv_image_t *icv_read_mem_with_context(struct icv_context *context,
+include/icv/codec.h: ICV_EXPORT int icv_write_with_context(struct icv_context *context,
+include/icv/codec.h: ICV_EXPORT int icv_write_mem_with_context(struct icv_context *context,
+include/icv/codec.h: ICV_EXPORT icv_image_t *icv_read_variant(struct icv_context *context,
+include/icv/codec.h: ICV_EXPORT icv_image_t *icv_read_mem_variant(struct icv_context *context,
+include/icv/codec.h: ICV_EXPORT int icv_write_variant(struct icv_context *context, icv_image_t *image,
+include/icv/codec.h: ICV_EXPORT int icv_write_mem_variant(struct icv_context *context, icv_image_t *image,
+include/icv/codec.h: ICV_EXPORT icv_anim_t *icv_anim_read_variant(struct icv_context *context,
+include/icv/codec.h: ICV_EXPORT int icv_anim_write_variant(struct icv_context *context, const icv_anim_t *animation,
+include/icv/codec.h: ICV_EXPORT int icv_write_sun(icv_image_t *image, const char *filename, int dither);
 include/icv/colorspace.h: ICV_EXPORT int icv_gray2rgb(icv_image_t *img);
+include/icv/colorspace.h: ICV_EXPORT icv_image_t *icv_flatten(const icv_image_t *image, const double *background);
 include/icv/colorspace.h: #define icv_rgb2gray_ntsc(_a) icv_rgb2gray(_a, ICV_COLOR_RGB, 0.30, 0.59, 0.11)
 include/icv/colorspace.h: #define icv_rgb2gray_crt(_a) icv_rgb2gray(_a, ICV_COLOR_RGB, 0.26, 0.66, 0.08)
 include/icv/colorspace.h: ICV_EXPORT int icv_rgb2gray(icv_image_t *img,
@@ -2620,25 +2728,27 @@ include/icv/defines.h: #define ICV_CONV_8BIT(data) ((double)(data))/255.0
 include/icv/filters.h: ICV_EXPORT extern int icv_filter(icv_image_t *img, ICV_FILTER filter_type);
 include/icv/filters.h: ICV_EXPORT extern icv_image_t *icv_filter3(icv_image_t *old_img,
 include/icv/filters.h: ICV_EXPORT extern int icv_fade(icv_image_t *img, double fraction);
-include/icv/io.h: ICV_EXPORT extern icv_image_t *icv_create(size_t width, size_t height, ICV_COLOR_SPACE color_space);
-include/icv/io.h: ICV_EXPORT extern icv_image_t *icv_zero(icv_image_t *bif);
-include/icv/io.h: ICV_EXPORT extern int icv_destroy(icv_image_t *bif);
+include/icv/image.h: ICV_EXPORT extern icv_image_t *icv_create(size_t width, size_t height, ICV_COLOR_SPACE color_space);
+include/icv/image.h: ICV_EXPORT extern icv_image_t *icv_create_with_channels(size_t width, size_t height,
+include/icv/image.h: ICV_EXPORT extern icv_image_t *icv_zero(icv_image_t *bif);
+include/icv/image.h: ICV_EXPORT extern int icv_destroy(icv_image_t *bif);
+include/icv/image.h: ICV_EXPORT extern int icv_named_size(const char *label, size_t dpi, size_t *width, size_t *height);
+include/icv/image.h: ICV_EXPORT extern int icv_raw_size(const char *label, size_t dpi, size_t data_size,
+include/icv/image.h: ICV_EXPORT int icv_writeline(icv_image_t *bif, size_t y, void *data, ICV_DATA type);
+include/icv/image.h: ICV_EXPORT int icv_writepixel(icv_image_t *bif, size_t x, size_t y, double *data);
+include/icv/image.h: ICV_EXPORT unsigned char *icv_data2uchar(const icv_image_t *bif);
+include/icv/image.h: ICV_EXPORT double *icv_uchar2double(unsigned char *data, size_t size);
+include/icv/image.h: #define ICV_ASCII_ART_PARAMS_DEFAULT {0, 0, 1.0}
+include/icv/image.h: ICV_EXPORT extern char *icv_ascii_art(icv_image_t *i, struct icv_ascii_art_params *p);
+include/icv/image.h: ICV_EXPORT extern struct icv_render_info *icv_render_info_create(void);
+include/icv/image.h: ICV_EXPORT extern int icv_render_info_destroy(struct icv_render_info *info);
+include/icv/image.h: ICV_EXPORT extern int icv_image_set_render_info(icv_image_t *img, struct icv_render_info *info);
+include/icv/image.h: ICV_EXPORT extern struct icv_render_info *icv_image_get_render_info(const icv_image_t *img);
 include/icv/io.h: ICV_EXPORT extern int icv_image_size(const char *label, size_t dpi, size_t data_size, bu_mime_image_t type, size_t *widthp, size_t *heightp);
 include/icv/io.h: ICV_EXPORT extern icv_image_t *icv_read(const char *filename, bu_mime_image_t format, size_t width, size_t height);
 include/icv/io.h: ICV_EXPORT extern icv_image_t *icv_read_mem(const unsigned char *buffer, size_t size, bu_mime_image_t format, size_t width, size_t height);
 include/icv/io.h: ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, bu_mime_image_t format);
 include/icv/io.h: ICV_EXPORT extern int icv_write_mem(icv_image_t *bif, unsigned char **buffer, size_t *size, bu_mime_image_t format);
-include/icv/io.h: ICV_EXPORT extern int icv_write_sun(icv_image_t *bif, const char *filename, int dither);
-include/icv/io.h: ICV_EXPORT int icv_writeline(icv_image_t *bif, size_t y, void *data, ICV_DATA type);
-include/icv/io.h: ICV_EXPORT int icv_writepixel(icv_image_t *bif, size_t x, size_t y, double *data);
-include/icv/io.h: ICV_EXPORT unsigned char *icv_data2uchar(const icv_image_t *bif);
-include/icv/io.h: ICV_EXPORT double *icv_uchar2double(unsigned char *data, size_t size);
-include/icv/io.h: #define ICV_ASCII_ART_PARAMS_DEFAULT {0, 0, 1.0}
-include/icv/io.h: ICV_EXPORT extern char *icv_ascii_art(icv_image_t *i, struct icv_ascii_art_params *p);
-include/icv/io.h: ICV_EXPORT extern struct icv_render_info *icv_render_info_create(void);
-include/icv/io.h: ICV_EXPORT extern int icv_render_info_destroy(struct icv_render_info *info);
-include/icv/io.h: ICV_EXPORT extern int icv_image_set_render_info(icv_image_t *img, struct icv_render_info *info);
-include/icv/io.h: ICV_EXPORT extern struct icv_render_info *icv_image_get_render_info(const icv_image_t *img);
 include/icv/ops.h: ICV_EXPORT int icv_sanitize(icv_image_t* img);
 include/icv/ops.h: ICV_EXPORT int icv_add_val(icv_image_t* img, double val);
 include/icv/ops.h: ICV_EXPORT int icv_multiply_val(icv_image_t* img, double val);

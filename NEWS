@@ -18,6 +18,14 @@ changes made.  See document footer for additional details.
 * fixed Windows terminal interactivity detection - Cliff Yapp
 * fixed MGED -a display attachment with piped input - Cliff Yapp
 * added bot_* operations to bot command as subcommands -  Cliff Yapp
+
+* added runtime MIME registration and content-based format detection
+* modernized CAD media types and Debian MIME associations
+* added trait-based geometry and image format selection
+* added contextual image, metadata and animation codec APIs
+* preserved PNG channel layouts and added explicit display flattening
+* unified glTF scene imports and added conversion-loss policies
+* deprecated generated MIME enums and legacy format plugin descriptors
 * generalized librt and libged editing APIs and sessions - Cliff Yapp
 * switched MGED to using a built-in HTML manual viewer - Cliff Yapp
 
