@@ -41,9 +41,6 @@
 
 #include "common.h"
 
-#include <ctype.h>
-#include <errno.h>
-#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -57,7 +54,7 @@
 
 #include "vmath.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
+#include "bu/arg.h"
 #include "bu/log.h"
 #include "bn.h"
 #include "nmg.h"
@@ -74,111 +71,120 @@ extern double hypot(double x, double y);
 #define ABS(_x)	((_x > 0.0)? _x : (-_x))
 
 
-static int
-patch_g_parse_number(fastf_t *value, const char *arg)
-{
-    char *end;
-    double parsed;
-
-    if (!value || !arg || !*arg)
-	return 0;
-    errno = 0;
-    parsed = strtod(arg, &end);
-    if (end == arg || *end || errno == ERANGE || !isfinite(parsed))
-	return 0;
-    *value = (fastf_t)parsed;
-    return 1;
-}
-
-
-static int
-patch_g_parse_int(int *value, const char *arg)
-{
-    char *end;
-    long parsed;
-
-    if (!value || !arg || !*arg)
-	return 0;
-    errno = 0;
-    parsed = strtol(arg, &end, 10);
-    if (end == arg || *end || errno == ERANGE || parsed < INT_MIN ||
-	parsed > INT_MAX)
-	return 0;
-    *value = (int)parsed;
-    return 1;
-}
+struct patch_g_args {
+    int help;
+    int arb6;
+    int polysolids;
+    int volume_as_plate;
+    int reverse_normals;
+    int unions_per_region;
+    int debug;
+    point_t center;
+    fastf_t distance_tolerance;
+    fastf_t perpendicular_tolerance;
+    unsigned int rt_debug;
+    unsigned int nmg_debug;
+    const char *patch_file;
+    const char *label_file;
+    const char *material_file;
+    const char *jtype_file;
+    const char *title;
+    const char *top_level;
+};
 
 
 static int
-patch_g_parse_hex(unsigned int *value, const char *arg)
+patch_g_top_level_validate(struct bu_vls *msg, const char *arg)
 {
-    char *end;
-    unsigned long parsed;
-
-    if (!value || !arg || !*arg)
+    if (arg && *arg && !strpbrk(arg, " \t\r\n\f\v"))
 	return 0;
-    errno = 0;
-    parsed = strtoul(arg, &end, 16);
-    if (end == arg || *end || errno == ERANGE || parsed > UINT_MAX)
-	return 0;
-    *value = (unsigned int)parsed;
-    return 1;
+    if (msg)
+	bu_vls_printf(msg, "top-level object name must be nonempty and contain "
+	    "no whitespace: %s\n", arg ? arg : "");
+    return -1;
 }
 
+
+static const struct bu_arg_option patch_g_options[] = {
+    BU_ARG_FLAG("h", "help", struct patch_g_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_VALUE("f", "input", struct patch_g_args, patch_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "fastgen.rp",
+	"Read rpatch-preprocessed FASTGEN data from this file instead of standard "
+	"input"),
+    BU_ARG_FLAG("n", "volume-as-plate", struct patch_g_args,
+	volume_as_plate, "Process volume-mode components as plate mode"),
+    BU_ARG_INTEGER_RANGE("u", "unions-per-region", struct patch_g_args,
+	unions_per_region, 1, 1, 0, 0, "count",
+	"Set the positive number of union operations per region (default 5)"),
+    BU_ARG_VECTOR3("c", "center", struct patch_g_args, center, "x/y/z",
+	"Set the object center in inches for plate-mode normal calculations"),
+    BU_ARG_VALUE("t", "title", struct patch_g_args, title,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "text",
+	"Set the output database title (default: patch-g conversion)"),
+    BU_ARG_VALUE_VALIDATE("o", "top-level", struct patch_g_args, top_level,
+	BU_ARG_VALUE_STRING, patch_g_top_level_validate, "name",
+	"Set the whitespace-free top-level object name (default: all)"),
+    BU_ARG_FLAG("p", "polysolids", struct patch_g_args, polysolids,
+	"Write volume- and plate-mode components as BoT polysolids instead of "
+	"NMG solids"),
+    BU_ARG_FLAG("6", "arb6", struct patch_g_args, arb6,
+	"Write plate-mode triangles as ARB6 solids, overriding --polysolids"),
+    BU_ARG_VALUE("i", "label-file", struct patch_g_args, label_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "groups.txt",
+	"Read component group labels from this file"),
+    BU_ARG_VALUE("m", "material-file", struct patch_g_args, material_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "materials.txt",
+	"Read component material properties from this file"),
+    BU_ARG_VALUE("j", "jtype-file", struct patch_g_args, jtype_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "jtype.txt",
+	"Read thickness overrides in inches for components with no or zero "
+	"thickness"),
+    BU_ARG_COUNTING_FLAG("r", "reverse-normals", struct patch_g_args,
+	reverse_normals, BU_ARG_VALUE_FLAG,
+	"Reverse plate-mode triangle surface normals"),
+    BU_ARG_INTEGER_RANGE("d", "debug", struct patch_g_args, debug,
+	1, 0, 0, 0, "level", "Set a nonnegative diagnostic level; levels above "
+	"3 also write intermediate NMG solids"),
+    BU_ARG_VALUE("x", "rt-debug", struct patch_g_args, rt_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set librt hexadecimal debug flags"),
+    BU_ARG_VALUE("X", "nmg-debug", struct patch_g_args, nmg_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set libnmg hexadecimal debug flags"),
+    BU_ARG_VALUE_VALIDATE("T", "distance-tolerance", struct patch_g_args,
+	distance_tolerance, BU_ARG_VALUE_NUMBER,
+	bu_arg_nonnegative_number_validate, "inches",
+	"Set nonnegative vertex-coincidence distance in inches"),
+    BU_ARG_NUMBER_RANGE("A", "perpendicular-tolerance", struct patch_g_args,
+	perpendicular_tolerance, 1, 0.0, 1, 1.0, "cosine",
+	"Set the perpendicularity cosine tolerance from 0 through 1"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand patch_g_operands[] = {
+    BU_ARG_OPERAND("output.g", BU_ARG_VALUE_FILE, 1, 1,
+	"Output BRL-CAD database", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema patch_g_schema = BU_ARG_SCHEMA(
+    "patch-g", "Convert preprocessed FASTGEN geometry to a BRL-CAD database",
+    patch_g_options, patch_g_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar patch_g_grammar = {
+    &patch_g_schema, NULL, NULL
+};
 
 static int
-patch_g_parse_point(point_t point, const char *arg)
+patch_g_help(FILE *stream, int status)
 {
-    const char *cursor = arg;
-    char *end;
-    double coordinates[3];
-
-    if (!arg)
-	return 0;
-    for (size_t i = 0; i < 3; i++) {
-	while (isspace((unsigned char)*cursor))
-	    cursor++;
-	errno = 0;
-	coordinates[i] = strtod(cursor, &end);
-	if (end == cursor || errno == ERANGE || !isfinite(coordinates[i]))
-	    return 0;
-	cursor = end;
-    }
-    while (isspace((unsigned char)*cursor))
-	cursor++;
-    if (*cursor)
-	return 0;
-    VMOVE(point, coordinates);
-    return 1;
-}
-
-
-static void
-usage(int status, const char *argv0)
-{
-    bu_log("Usage: %s [options] model.g\n", argv0);
-    bu_log("	-f fastgen.rp	specify pre-processed FASTGEN file (default stdin)\n");
-    bu_log("	-n		process volume mode as plate mode?\n");
-    bu_log("	-u #		number of union operations per region (default %d)\n", num_unions);
-    bu_log("	-c \"x y z\"	center of object in inches (for some surface normal calculations)\n");
-    bu_log("	-t title	optional title (default \"%s\")\n", title);
-    bu_log("	-o object_name	optional top-level name (no spaces)(default \"%s\")\n", top_level);
-    bu_log("	-p		write volume and plate mode components as polysolids\n");
-    bu_log("	-6		process plate mode triangles as ARB6 solids (overrides '-p' for triangles)\n");
-    bu_log("	-i group.file	specify group labels source file\n");
-    bu_log("	-m mat.file	specify materials information source file\n");
-    bu_log("	-j jtype.file	specify plate-thickness override file (component_code thickness_in_inches per line)\n");
-    bu_log("	-r		reverse normals for plate mode triangles\n");
-    bu_log("	-d #		debug level\n");
-    bu_log("	-x #		librt debug flag\n");
-    bu_log("	-X #		librt NMG debug flags\n");
-    bu_log("	-T #		distance tolerance (inches) (two points within this distance are the same point)\n");
-    bu_log("	-A #		perpendicular tolerance (given unit vectors V1 and V2, if V1 dot V2 is less than\n");
-    bu_log("			this value, V1 and V2 are considered perpendicular)\n");
-    bu_log("Note: fastgen.rp is the pre-processed (through rpatch) FASTGEN file\n\n");
-    if (status == 0)
-	exit(0);
-    bu_exit(status, "Exit status %d\n", status);
+    char *help = bu_arg_schema_help(&patch_g_schema, "patch-g");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "patch-g help");
+    return status;
 }
 
 
@@ -3383,7 +3389,7 @@ set_color(int color)
  * heade == linked list of over-all group
  */
 void
-proc_label(char *label_file)
+proc_label(const char *label_file)
 {
     char gname[NAMESIZE+1], mgname[NAMESIZE+1];	/* group, mirrored group names */
     static int cur_series = -1;
@@ -3449,6 +3455,12 @@ add_to_list(struct subtract_list *slist, int outsolid, int insolid, int inmirror
 int
 main(int argc, char **argv)
 {
+    struct patch_g_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    const char *output_file;
+    int introspection;
+    int operand_index;
+
     bu_setprogname(argv[0]);
 
     FILE *gfp=NULL;
@@ -3456,7 +3468,6 @@ main(int argc, char **argv)
     FILE *jfp=NULL;
     FILE *fp=NULL;
 
-    int c;
     size_t j = 1;
     size_t i;
     int done;
@@ -3473,6 +3484,65 @@ main(int argc, char **argv)
 
     /* intentionally double for fixed-column input scans */
     double scan[3];
+
+    /* initialize tolerance structure */
+    TOL.magic = BN_TOL_MAGIC;
+    TOL.dist = 0.01;
+    TOL.dist_sq = TOL.dist * TOL.dist;
+    TOL.perp = 0.001;
+    TOL.para = 1 - TOL.perp;
+
+    conv_mm2in = 1.0/25.4; /* convert mm to inches */
+
+    args.unions_per_region = num_unions;
+    args.distance_tolerance = TOL.dist * conv_mm2in;
+    args.perpendicular_tolerance = TOL.perp;
+    args.title = title;
+    args.top_level = top_level;
+
+    introspection = bu_arg_introspect(&msg, &patch_g_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    operand_index = bu_arg_schema_parse_complete(&patch_g_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return patch_g_help(stdout, 0);
+
+    arb6 = args.arb6;
+    polysolid = args.polysolids;
+    nflg = args.volume_as_plate ? 0 : 1;
+    rev_norms = args.reverse_normals;
+    num_unions = args.unions_per_region;
+    debug = args.debug;
+    title = args.title;
+    top_level = args.top_level;
+    patchfile = args.patch_file;
+    labelfile = args.label_file;
+    matfile = args.material_file;
+    jtypefile = args.jtype_file;
+    rt_debug = args.rt_debug;
+    nmg_debug = args.nmg_debug;
+    TOL.dist = args.distance_tolerance * mmtin;
+    TOL.dist_sq = TOL.dist * TOL.dist;
+    TOL.perp = args.perpendicular_tolerance;
+    TOL.para = 1 - TOL.perp;
+    if (bu_arg_schema_option_present(&patch_g_schema, argc - 1,
+	    (const char **)(argv + 1), "center")) {
+	VMOVE(Centroid, args.center);
+	bu_log("Centroid = (%f %f %f)\n", V3ARGS(Centroid));
+	VSCALE(Centroid, Centroid, mmtin);
+    }
+    output_file = argv[operand_index + 1];
 
     BU_LIST_INIT(&head.l);
     BU_LIST_INIT(&heada.l);
@@ -3503,148 +3573,12 @@ main(int argc, char **argv)
     if (!in || !nm || !list || !XVAL || !YVAL || !ZVAL || !thicks || !RADIUS || !thk || !jtype || !mirror)
 	bu_exit(BRLCAD_ERROR, "Memory allocation failure\n");
 
-    /* initialize tolerance structure */
-    TOL.magic = BN_TOL_MAGIC;
-    TOL.dist = 0.01;
-    TOL.dist_sq = TOL.dist * TOL.dist;
-    TOL.perp = 0.001;
-    TOL.para = 1 - TOL.perp;
-
-    conv_mm2in = 1.0/25.4; /* convert mm to inches */
-
     scratch_num = 0;
 
-    /* This section checks usage options given at run command
-     * time.
-     */
-
-    /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "6A:T:x:X:pf:i:m:j:nu:t:o:rc:d:h?")) != -1) {
-	switch (c) {
-	    case '6':  /* use arb6 solids for plate mode */
-		arb6 = 1;
-		break;
-	    case 'T':  /* tolerance distance */
-
-		if (!patch_g_parse_number(&TOL.dist, bu_optarg) || TOL.dist < 0.0) {
-		    bu_log("Illegal tolerance distance (%s inches) "
-			"(must be non-negative).\n", bu_optarg);
-		    usage(1, argv[0]);
-		}
-		TOL.dist *= mmtin;
-		TOL.dist_sq = TOL.dist * TOL.dist;
-		break;
-
-	    case 'A':  /* angular tolerance */
-
-		if (!patch_g_parse_number(&TOL.perp, bu_optarg) ||
-		    TOL.perp < 0.0 || TOL.perp > 1.0) {
-		    bu_log("Illegal angular tolerance (%s) "
-			"(must be between 0 and 1).\n", bu_optarg);
-		    usage(1, argv[0]);
-		}
-		TOL.para = 1 - TOL.perp;
-		break;
-
-	    case 'x': {  /* librt debug flags */
-		unsigned int mask;
-		if (!patch_g_parse_hex(&mask, bu_optarg))
-		    bu_exit(1, "Invalid librt debug mask: %s\n", bu_optarg);
-		rt_debug = mask;
-		break;
-	    }
-
-	    case 'X': {  /* librt NMG debug flags */
-		unsigned int mask;
-		if (!patch_g_parse_hex(&mask, bu_optarg))
-		    bu_exit(1, "Invalid NMG debug mask: %s\n", bu_optarg);
-		nmg_debug = mask;
-		break;
-	    }
-
-	    case 'p':  /* polysolid output */
-
-		polysolid = 1;
-		break;
-
-	    case 'f':  /* FASTGEN source file data */
-
-		patchfile = bu_optarg;
-		break;
-
-	    case 'i':  /* group labels source file */
-
-		labelfile = bu_optarg;
-		break;
-
-	    case 'm':  /* materials information file */
-
-		matfile = bu_optarg;
-		break;
-
-	    case 'j':  /* JTYPE plate-thickness override file */
-
-		jtypefile = bu_optarg;
-		break;
-
-	    case 'n':  /* process volume mode as plate mode ? */
-
-		nflg = 0;
-		break;
-
-	    case 'u':  /* specify number of union operations to put in
-			* a region
-			*/
-
-		if (!patch_g_parse_int(&num_unions, bu_optarg) || num_unions <= 0) {
-		    bu_exit(1, "%s: bad number of unions to put in a region\n",
-			bu_optarg);
-		}
-		break;
-
-	    case 't':  /* optional title for the database */
-
-		title = bu_optarg;
-		break;
-
-	    case 'o':  /* optional top-level object name */
-
-		top_level = bu_optarg;
-		break;
-
-	    case 'r':  /* reverse normals for plate mode triangles */
-
-		rev_norms++;
-		break;
-
-	    case 'c':  /* center of object (used for some plate mode
-			* triangle surface normal calculations
-			*/
-		if (!patch_g_parse_point(Centroid, bu_optarg))
-		    bu_exit(1, "Invalid object center: %s\n", bu_optarg);
-
-		bu_log("Centroid = (%f %f %f)\n", V3ARGS(Centroid));
-		VSCALE(Centroid, Centroid, mmtin);
-		break;
-
-	    case 'd':  /* debug flag checking */
-
-		if (!patch_g_parse_int(&debug, bu_optarg) || debug < 0)
-		    bu_exit(1, "Invalid debug level: %s\n", bu_optarg);
-		break;
-
-	    default:
-		usage(1, argv[0]);
-	}
-    }
-
-    if (argc - bu_optind != 1) {
-	usage(1, argv[0]);
-    }
-    outfp = wdb_fopen(argv[bu_optind]);
+    outfp = wdb_fopen(output_file);
     if (outfp == RT_WDB_NULL) {
-	perror(argv[bu_optind]);
-	bu_exit(3, "ERROR: unable to open geometry database file (%s)\n", argv[bu_optind]);
+	perror(output_file);
+	bu_exit(3, "ERROR: unable to open geometry database file (%s)\n", output_file);
     }
 
     if (debug)

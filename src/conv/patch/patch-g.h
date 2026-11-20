@@ -115,9 +115,9 @@ int polysolid = 0;			/* convert triangle-facetted objects to polysolids */
 int arb6 = 0;				/* flag: convert plate-mode objects to arb6s */
 
 const char *patchfile = NULL;
-char *labelfile = NULL;
-char *matfile = NULL;
-char *jtypefile = NULL;
+const char *labelfile = NULL;
+const char *matfile = NULL;
+const char *jtypefile = NULL;
 
 struct patches *list = NULL;
 fastf_t *XVAL = NULL;
