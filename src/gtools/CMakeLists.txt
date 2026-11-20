@@ -9,7 +9,7 @@ if (TARGET ged-check)
   add_dependencies(gchecker ged-check)
 endif()
 brlcad_addexec(gex "gex.cpp" "libbu;librt" ARG_SCHEMA)
-brlcad_addexec(glint glint.cpp "librt;${M_LIBRARY}")
+brlcad_addexec(glint glint.cpp "librt;${M_LIBRARY}" ARG_SCHEMA)
 brlcad_addexec(gqa gqa.c "libged;librt")
 
 brlcad_addexec(gtransfer gtransfer.c "librt;libpkg" NO_INSTALL)

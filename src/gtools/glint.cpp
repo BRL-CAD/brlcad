@@ -29,7 +29,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
-#include <limits>
 #include <cstdio>
 #include <map>
 #include <set>
@@ -38,9 +37,8 @@
 #include <algorithm>
 
 #include "bu/app.h"
-#include "bu/getopt.h"
+#include "bu/arg.h"
 #include "bu/log.h"
-#include "bu/opt.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "bv/plot3.h"
@@ -48,7 +46,6 @@
 
 #define made_it()	bu_log("Made it to %s:%d\n", __FILE__, __LINE__);
 
-#define OPT_STRING	"a:ce:g:opr:st:ux:?h"
 #define RAND_NUM	(rand()/(fastf_t)RAND_MAX)
 #define RAND_OFFSET	((1 - cell_center) * 	\
 	(RAND_NUM * celsiz - celsiz / 2))
@@ -163,41 +160,6 @@ int log_2(unsigned long x)
     return result;
 }
 
-/**
- * The usage message -- it's a long 'un.
- */
-static const char *usage[] = {
-    "Usage: 'g_lint [options] model.g object ...'\n",
-    "Options (defaults in parentheses):\n",
-    "  -a azim      View target from azimuth of azim, in degrees (0.0)\n",
-    "  -c           Fire rays from center of grid cell (random point)\n",
-    "  -e elev      View target from elevation of elev, in degrees (0.0)\n",
-    "  -g gridsize  Use grid-cell spacing of gridsize, in mm (100.0)\n",
-    "  -o           Include ray-origin on each line\n",
-    "  -p           Produce plot3(5) output\n",
-    "  -r bits      Set report-specification flag=bits...\n",
-    "                  1  overlaps\n",
-    "                  2  contiguous unlike airs\n",
-    "                  4  unconfined airs\n",
-    "                  8  air first on shotlines\n",
-    "                 16  air last on shotlines\n",
-    "                 32  vacuums\n",
-    "  -s           Sort overlaps (report without sorting)\n",
-    "  -t tol       Ignore overlaps/voids of length < tol, in mm (0.0)\n",
-    "  -u           Report on air (overlaps only)\n",
-    "  -x bits      Set diagnostic flag=bits\n",
-    0
-};
-
-/**
- * Reports a usage message on stderr.
- */
-void printusage(void)
-{
-    for (const char **u = usage; *u != nullptr; ++u)
-	bu_log("%s", *u);
-}
-
 static int
 parse_unsigned_long(const char *arg, int base, unsigned long *value)
 {
@@ -212,6 +174,166 @@ parse_unsigned_long(const char *arg, int base, unsigned long *value)
 	return 0;
     *value = parsed;
     return 1;
+}
+
+struct glint_args {
+    struct glint_args *self;
+    int help;
+    double azimuth;
+    double elevation;
+    fastf_t grid_size;
+    fastf_t tolerance;
+    unsigned long report_bits;
+    unsigned int debug_bits;
+    int cell_center;
+    int include_origin;
+    int plot_output;
+    int sort_overlaps;
+    int use_air;
+};
+
+enum glint_angle_kind {
+    GLINT_AZIMUTH,
+    GLINT_ELEVATION
+};
+
+static int
+glint_angle_consume(struct bu_vls *msg, size_t argc, const char **argv,
+	void *storage, enum glint_angle_kind kind)
+{
+    struct glint_args *args = storage ? *(struct glint_args **)storage : nullptr;
+    double angle;
+
+    if (argc != 1 || bn_decode_angle(&angle, argv[0]) == 0 ||
+	    !std::isfinite(angle)) {
+	if (msg)
+	    bu_vls_printf(msg, "invalid %s angle: %s\n",
+		kind == GLINT_AZIMUTH ? "azimuth" : "elevation",
+		argc == 1 ? argv[0] : "");
+	return -1;
+    }
+    if (kind == GLINT_ELEVATION && (angle < -90.0 || angle > 90.0)) {
+	if (msg)
+	    bu_vls_printf(msg,
+		"elevation must be between -90 and 90 degrees\n");
+	return -1;
+    }
+    if (!args)
+	return 0;
+    if (kind == GLINT_AZIMUTH)
+	args->azimuth = angle;
+    else
+	args->elevation = angle;
+    return 0;
+}
+
+static int
+glint_azimuth_consume(struct bu_vls *msg, size_t argc, const char **argv,
+	void *storage)
+{
+    return glint_angle_consume(msg, argc, argv, storage, GLINT_AZIMUTH);
+}
+
+static int
+glint_elevation_consume(struct bu_vls *msg, size_t argc, const char **argv,
+	void *storage)
+{
+    return glint_angle_consume(msg, argc, argv, storage, GLINT_ELEVATION);
+}
+
+static int
+glint_report_consume(struct bu_vls *msg, size_t argc, const char **argv,
+	void *storage)
+{
+    struct glint_args *args = storage ? *(struct glint_args **)storage : nullptr;
+    const char *value;
+    unsigned long bits;
+    int complement;
+
+    if (argc != 1)
+	return -1;
+    value = argv[0];
+    complement = (*value == '-');
+    if (complement)
+	value++;
+    if (!parse_unsigned_long(value, 0, &bits)) {
+	if (msg)
+	    bu_vls_printf(msg, "invalid report mask: %s\n", argv[0]);
+	return -1;
+    }
+    if (complement)
+	bits = (~bits) & G_LINT_ALL;
+    if (args)
+	args->report_bits = bits;
+    return 0;
+}
+
+static const struct bu_arg_option glint_options[] = {
+    BU_ARG_FLAG("h", "help", struct glint_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_SHAPED("a", "azimuth", "azimuth", struct glint_args,
+	self, BU_ARG_VALUE_NUMBER, "degrees",
+	"Fire rays from this azimuth angle (default 0 degrees)",
+	BU_ARG_REQUIRED, NULL, glint_azimuth_consume),
+    BU_ARG_FLAG("c", "cell-center", struct glint_args, cell_center,
+	"Fire from each grid-cell center instead of a random point"),
+    BU_ARG_OPTION_SHAPED("e", "elevation", "elevation", struct glint_args,
+	self, BU_ARG_VALUE_NUMBER, "degrees",
+	"Fire rays from this elevation between -90 and 90 degrees (default 0)",
+	BU_ARG_REQUIRED, NULL, glint_elevation_consume),
+    BU_ARG_VALUE_VALIDATE("g", "grid-size", struct glint_args, grid_size,
+	BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate, "millimeters",
+	"Set positive grid-cell width and height in millimeters (default 100)"),
+    BU_ARG_FLAG("o", "show-origin", struct glint_args, include_origin,
+	"Include each ray's model-space origin in ASCII reports"),
+    BU_ARG_FLAG("p", "plot", struct glint_args, plot_output,
+	"Write plot3 geometry suitable for MGED overlays instead of ASCII unless "
+	"sorting is requested"),
+    BU_ARG_OPTION_SHAPED("r", "reports", "reports", struct glint_args,
+	self, BU_ARG_VALUE_INTEGER, "bits",
+	"Select reports by base-zero bitmask: 1 overlaps, 2 contiguous unlike "
+	"airs, 4 unconfined airs, 8 air first, 16 air last, and 32 vacuums; "
+	"prefix with - to complement",
+	BU_ARG_REQUIRED, NULL, glint_report_consume),
+    BU_ARG_FLAG("s", "sort", struct glint_args, sort_overlaps,
+	"Group region pairs by decreasing cumulative overlap length"),
+    BU_ARG_VALUE_VALIDATE("t", "tolerance", struct glint_args, tolerance,
+	BU_ARG_VALUE_NUMBER, bu_arg_nonnegative_number_validate, "millimeters",
+	"Ignore overlaps, vacuums, and air gaps shorter than this nonnegative "
+	"length (default 0)"),
+    BU_ARG_FLAG("u", "use-air", struct glint_args, use_air,
+	"Report air partitions; air-related report bits also enable this"),
+    BU_ARG_VALUE("x", "debug", struct glint_args, debug_bits,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "bits",
+	"Set hexadecimal diagnostic flags"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand glint_operands[] = {
+    BU_ARG_OPERAND("model.g", BU_ARG_VALUE_FILE, 1, 1,
+	"Input BRL-CAD database", NULL),
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1,
+	BU_ARG_COUNT_UNLIMITED, "Object or path to inspect", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema glint_schema = BU_ARG_SCHEMA(
+    "glint", "Sample geometry for overlaps, vacuums, and air problems",
+    glint_options, glint_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar glint_grammar = {
+    &glint_schema, NULL, NULL
+};
+
+static int
+glint_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&glint_schema, "glint");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "glint help");
+    return status;
 }
 
 g_lint_seg *create_segment(void)
@@ -695,17 +817,19 @@ void init_plot3(struct application *ap)
 int
 main(int argc, char **argv)
 {
+    struct glint_args args = {};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct application ap;
     char db_title[TITLE_LEN+1];	/* Title of database */
     struct g_lint_ctrl control;	/* Info handed to librt(3) */
     int cell_center = 0;	/* Fire from center of cell? */
-    int ch;			/* Character from getopt */
-    int complement_bits;	/* Used by -r option */
     int i;			/* Dummy loop index */
     int include_origin = 0;
+    int introspection;
+    int object_index;
+    int operand_index;
     int plot_output = 0;
     int use_air = 0;		/* Does air count? */
-    unsigned long option_bits;
     mat_t model2view;		/* Model-to-view matrix */
     mat_t view2model;		/* View-to-model matrix */
     point_t cell;		/* Cell center, view coords */
@@ -728,7 +852,6 @@ main(int argc, char **argv)
     double elevation = 0.0;
 
     bu_setprogname(argv[0]);
-    bu_log("%s\n", rt_version());
 
     control.glc_magic = G_LINT_CTRL_MAGIC;
     control.glc_debug = 0;
@@ -738,91 +861,42 @@ main(int argc, char **argv)
     control.glc_fp = stdout;
     control.glc_color = (unsigned char *) dflt_plot_rgb;
 
-    /* Handle command-line options */
-    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != -1) {
-	switch (ch) {
-	    case 'a':
-		if (bn_decode_angle(&azimuth, bu_optarg) == 0 ||
-			!std::isfinite(azimuth)) {
-		    bu_log("Invalid azimuth specification: '%s'\n", bu_optarg);
-		    printusage();
-		    bu_exit(1, NULL);
-		}
-		break;
-	    case 'c':
-		cell_center = 1;
-		break;
-	    case 'e':
-		if (bn_decode_angle(&elevation, bu_optarg) == 0 ||
-			!std::isfinite(elevation)) {
-		    bu_log("Invalid elevation specification: '%s'\n", bu_optarg);
-		    printusage();
-		    bu_exit(1, NULL);
-		}
-		if ((elevation < -90.0) || (elevation > 90.0))
-		    bu_exit(1, "Illegal elevation: '%g'\n", elevation);
-		break;
-	    case 'g':
-		if (!bu_opt_scan_double_range(bu_optarg, &celsiz, 0.0,
-			std::numeric_limits<double>::max(), "grid size") ||
-		celsiz <= 0.0) {
-		    bu_log("Invalid grid-size specification: '%s'\n", bu_optarg);
-		    printusage();
-		    bu_exit(1, NULL);
-		}
-		break;
-	    case 'o':
-		include_origin = 1;
-		break;
-	    case 'p':
-		plot_output = 1;
-		break;
-	    case 'r':
-		if (*bu_optarg == '-') {
-		    complement_bits = 1;
-		    ++bu_optarg;
-		} else {
-		    complement_bits = 0;
-		}
-		if (!parse_unsigned_long(bu_optarg, 0, &option_bits)) {
-		    bu_log("Invalid report specification: '%s'\n", bu_optarg);
-		    printusage();
-		    bu_exit(1, NULL);
-		}
-		control.glc_what_to_report = option_bits;
-		if (complement_bits) {
-		    control.glc_what_to_report = ~(control.glc_what_to_report);
-		    control.glc_what_to_report &= G_LINT_ALL;
-		}
-		use_air = ((control.glc_what_to_report & G_LINT_A_ANY) != 0);
-		break;
-	    case 's':
-		sort_overlaps = true;
-		break;
-	    case 't':
-		if (!bu_opt_scan_double_range(bu_optarg, &control.glc_tol,
-			0.0, std::numeric_limits<double>::max(), "tolerance")) {
-		    bu_log("Invalid tolerance specification: '%s'\n", bu_optarg);
-		    printusage();
-		    bu_exit(1, NULL);
-		}
-		break;
-	    case 'u':
-		use_air = 1;
-		break;
-	    case 'x':
-		if (!parse_unsigned_long(bu_optarg, 16, &option_bits)) {
-		    bu_log("Invalid debug-flag specification: '%s'\n", bu_optarg);
-		    printusage();
-		    bu_exit(1, NULL);
-		}
-		control.glc_debug = (long)option_bits;
-		break;
-	    default:
-		printusage();
-		bu_exit(1, NULL);
-	}
+    args.self = &args;
+    args.grid_size = celsiz;
+    args.report_bits = control.glc_what_to_report;
+
+    introspection = bu_arg_introspect(&msg, &glint_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+    operand_index = bu_arg_schema_parse_complete(&glint_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return glint_help(stdout, 0);
+
+    azimuth = args.azimuth;
+    elevation = args.elevation;
+    celsiz = args.grid_size;
+    cell_center = args.cell_center;
+    include_origin = args.include_origin;
+    plot_output = args.plot_output;
+    sort_overlaps = args.sort_overlaps;
+    use_air = args.use_air || ((args.report_bits & G_LINT_A_ANY) != 0);
+    control.glc_tol = args.tolerance;
+    control.glc_what_to_report = args.report_bits;
+    control.glc_debug = (long)args.debug_bits;
+    object_index = operand_index + 2;
+
+    bu_log("%s\n", rt_version());
 
     if (sort_overlaps)
 	control.glc_how_to_report = include_origin ?
@@ -832,24 +906,22 @@ main(int argc, char **argv)
     else if (include_origin)
 	control.glc_how_to_report = G_LINT_ASCII_WITH_ORIGIN;
 
-    if (argc - bu_optind < 2) {
-	printusage();
-	bu_exit(1, NULL);
-    }
     if (control.glc_what_to_report & ~G_LINT_ALL)
 	bu_log("WARNING: Ignoring undefined bits of report specification\n");
 
     /* Read in the geometry model */
-    bu_log("Database file:  '%s'\n", argv[bu_optind]);
+    bu_log("Database file:  '%s'\n", argv[operand_index + 1]);
     bu_log("Building the directory... ");
-    if ((rtip = rt_dirbuild(argv[bu_optind], db_title, TITLE_LEN)) == RTI_NULL)
-	bu_exit(1, "Could not build directory for file '%s'\n", argv[bu_optind]);
+    if ((rtip = rt_dirbuild(argv[operand_index + 1], db_title,
+	    TITLE_LEN)) == RTI_NULL)
+	bu_exit(1, "Could not build directory for file '%s'\n",
+	    argv[operand_index + 1]);
     rtip->useair = use_air;
     bu_log("\nPreprocessing the geometry... ");
-    while (++bu_optind < argc) {
-	if (rt_gettree(rtip, argv[bu_optind]) == -1)
+    for (i = object_index; i < argc; i++) {
+	if (rt_gettree(rtip, argv[i]) == -1)
 	    bu_exit(1, NULL);
-	bu_log("\nObject '%s' processed", argv[bu_optind]);
+	bu_log("\nObject '%s' processed", argv[i]);
     }
     bu_log("\nPrepping the geometry... ");
     rt_prep(rtip);
