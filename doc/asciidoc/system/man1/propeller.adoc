@@ -8,12 +8,20 @@ propeller - generate a procedural marine propeller geometry database
 
 == SYNOPSIS
 
-[source]
-----
-propeller [options] [-o _file.g_]
-propeller --demo-file _file.g_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*propeller* [*-o* _file.g_] [*-n* _name_] [*--demo-file* _file.g_] [*--mode* _mode_] [*-D* _length_]
+          [*-Z* _count_] [*--ae-ao* _ratio_] [*--pd-tip* _ratio_] [*--rake* _degrees_]
+          [*--skew* _degrees_] [*--hub-diameter-ratio* _ratio_] [*--hub-length-ratio* _ratio_]
+          [*--hub-profile* _profile_] [*--hub-forward-diameter* _length_]
+          [*--hub-aft-diameter* _length_] [*--hub-barrel-swell* _ratio_]
+          [*--shaft-standard* _standard_] [*--shaft-diameter-small* _length_]
+          [*--keyway-width* _length_] [*--keyway-depth* _length_] [*--fairing-cap-length* _length_]
+          [*--no-fairing-cap*] [*--hub-slices* _count_] [*--hub-segments* _count_]
+          [*--root-overlap* _ratio_] [*--edge-thickness-ratio* _ratio_]
+          [*--radial-stations* _count_] [*--chord-points* _count_] [*--x-offset* _distance_]
+          [*--y-offset* _distance_] [*--z-offset* _distance_] [*-f* | *-j*]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -28,8 +28,6 @@
 #include <array>
 #include <cmath>
 #include <cstdlib>
-#include <cstring>
-#include <limits>
 #include <map>
 #include <stdexcept>
 #include <string>
@@ -37,6 +35,7 @@
 
 #include "brep/edit.h"
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/log.h"
 #include "bu/str.h"
 #include "raytrace.h"
@@ -111,6 +110,44 @@ struct propeller_options {
 };
 
 
+struct propeller_args {
+    const char *outfile;
+    const char *demo_file;
+    const char *name;
+    const char *mode;
+    fastf_t diameter;
+    int blades;
+    fastf_t expanded_area_ratio;
+    fastf_t pitch_diameter_tip;
+    fastf_t rake_angle_deg;
+    fastf_t skew_max_deg;
+    fastf_t hub_diameter_ratio;
+    fastf_t hub_length_ratio;
+    const char *hub_profile;
+    fastf_t hub_forward_diameter;
+    fastf_t hub_aft_diameter;
+    fastf_t hub_barrel_swell_ratio;
+    const char *shaft_standard;
+    fastf_t shaft_diameter_small;
+    fastf_t keyway_width;
+    fastf_t keyway_depth;
+    fastf_t fairing_cap_length;
+    int no_fairing_cap;
+    int hub_longitudinal_slices;
+    int hub_angular_segments;
+    fastf_t root_overlap_ratio;
+    fastf_t blade_edge_thickness_ratio;
+    int radial_stations;
+    int chord_points;
+    fastf_t offset_x;
+    fastf_t offset_y;
+    fastf_t offset_z;
+    int overwrite;
+    int append;
+    int help;
+};
+
+
 struct wageningen_ordinate {
     double chord_fraction;
     double back_factor;
@@ -177,45 +214,146 @@ static const std::vector<radial_station_profile> WAGENINGEN_BASE_MATRIX = {
 };
 
 
+static const struct bu_arg_value_keyword propeller_mode_values[] = {
+    {"bot", NULL, "Bag-of-triangles blade geometry"},
+    {"brep", NULL, "Boundary representation blade geometry"},
+    {NULL, NULL, NULL}
+};
+
+static const struct bu_arg_value_keyword propeller_hub_profile_values[] = {
+    {"cylindrical", NULL, "Cylindrical hub casing"},
+    {"truncated-cone", NULL, "Truncated-cone hub casing"},
+    {"convex-barrel", NULL, "Convex barrel hub casing"},
+    {NULL, NULL, NULL}
+};
+
+static const struct bu_arg_value_keyword propeller_shaft_standard_values[] = {
+    {"iso-1-10", NULL, "ISO 1:10 shaft taper"},
+    {"sae-1-16", NULL, "SAE 1:16 shaft taper"},
+    {NULL, NULL, NULL}
+};
+
+static const struct bu_arg_option propeller_arg_options[] = {
+    BU_ARG_VALUE("o", "output", struct propeller_args, outfile,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file.g", "Output BRL-CAD database"),
+    BU_ARG_VALUE("n", "name", struct propeller_args, name,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "name", "Base object name"),
+    BU_ARG_VALUE(NULL, "demo-file", struct propeller_args, demo_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file.g", "Write a grid of sample propellers"),
+    BU_ARG_KEYWORD_VALUES(NULL, "mode", struct propeller_args, mode, "mode",
+	"Blade output geometry", propeller_mode_values),
+    BU_ARG_VALUE("D", "diameter", struct propeller_args, diameter,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "length", "Total propeller diameter"),
+    BU_ARG_INTEGER_RANGE("Z", "blades", struct propeller_args, blades,
+	1, 2, 1, 7, "count", "Blade count"),
+    BU_ARG_NUMBER_RANGE(NULL, "ae-ao", struct propeller_args,
+	expanded_area_ratio, 1, 0.30, 1, 1.20, "ratio",
+	"Expanded blade area ratio"),
+    BU_ARG_VALUE(NULL, "pd-tip", struct propeller_args, pitch_diameter_tip,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "ratio", "Tip pitch/diameter ratio"),
+    BU_ARG_VALUE(NULL, "rake", struct propeller_args, rake_angle_deg,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "degrees", "Rake angle"),
+    BU_ARG_VALUE(NULL, "skew", struct propeller_args, skew_max_deg,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "degrees", "Maximum angular skew sweep"),
+    BU_ARG_VALUE(NULL, "hub-diameter-ratio", struct propeller_args,
+	hub_diameter_ratio, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "ratio",
+	"Hub diameter divided by propeller diameter"),
+    BU_ARG_VALUE(NULL, "hub-length-ratio", struct propeller_args,
+	hub_length_ratio, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "ratio",
+	"Hub length divided by propeller diameter"),
+    BU_ARG_KEYWORD_VALUES(NULL, "hub-profile", struct propeller_args,
+	hub_profile, "profile", "Outer hub casing profile",
+	propeller_hub_profile_values),
+    BU_ARG_NUMBER_RANGE(NULL, "hub-forward-diameter", struct propeller_args,
+	hub_forward_diameter, 1, 0.0, 0, 0.0, "length",
+	"Forward casing diameter"),
+    BU_ARG_NUMBER_RANGE(NULL, "hub-aft-diameter", struct propeller_args,
+	hub_aft_diameter, 1, 0.0, 0, 0.0, "length", "Aft casing diameter"),
+    BU_ARG_NUMBER_RANGE(NULL, "hub-barrel-swell", struct propeller_args,
+	hub_barrel_swell_ratio, 1, 1.0, 0, 0.0, "ratio",
+	"Convex barrel swell ratio"),
+    BU_ARG_KEYWORD_VALUES(NULL, "shaft-standard", struct propeller_args,
+	shaft_standard, "standard", "Internal shaft taper convention",
+	propeller_shaft_standard_values),
+    BU_ARG_NUMBER_RANGE(NULL, "shaft-diameter-small", struct propeller_args,
+	shaft_diameter_small, 1, 0.0, 0, 0.0, "length",
+	"Small-end shaft bore diameter"),
+    BU_ARG_NUMBER_RANGE(NULL, "keyway-width", struct propeller_args,
+	keyway_width, 1, 0.0, 0, 0.0, "length", "Keyway slot width"),
+    BU_ARG_NUMBER_RANGE(NULL, "keyway-depth", struct propeller_args,
+	keyway_depth, 1, 0.0, 0, 0.0, "length", "Keyway depth into the hub"),
+    BU_ARG_NUMBER_RANGE(NULL, "fairing-cap-length", struct propeller_args,
+	fairing_cap_length, 1, 0.0, 0, 0.0, "length", "Aft fairing cap length"),
+    BU_ARG_FLAG(NULL, "no-fairing-cap", struct propeller_args,
+	no_fairing_cap, "Do not add the aft fairing cap"),
+    BU_ARG_INTEGER_RANGE(NULL, "hub-slices", struct propeller_args,
+	hub_longitudinal_slices, 1, 3, 0, 0, "count",
+	"Longitudinal slices for barrel hub shells"),
+    BU_ARG_INTEGER_RANGE(NULL, "hub-segments", struct propeller_args,
+	hub_angular_segments, 1, 12, 0, 0, "count",
+	"Angular segments for barrel hub shells"),
+    BU_ARG_VALUE(NULL, "root-overlap", struct propeller_args,
+	root_overlap_ratio, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "ratio",
+	"Blade root overlap in r/R units"),
+    BU_ARG_VALUE(NULL, "edge-thickness-ratio", struct propeller_args,
+	blade_edge_thickness_ratio, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "ratio",
+	"Finite blade edge thickness divided by diameter"),
+    BU_ARG_INTEGER_RANGE(NULL, "radial-stations", struct propeller_args,
+	radial_stations, 1, 4, 0, 0, "count", "Blade radial section count"),
+    BU_ARG_INTEGER_RANGE(NULL, "chord-points", struct propeller_args,
+	chord_points, 1, 5, 0, 0, "count", "Chordwise samples per blade grid"),
+    BU_ARG_VALUE(NULL, "x-offset", struct propeller_args, offset_x,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "distance", "Model X offset"),
+    BU_ARG_VALUE(NULL, "y-offset", struct propeller_args, offset_y,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "distance", "Model Y offset"),
+    BU_ARG_VALUE(NULL, "z-offset", struct propeller_args, offset_z,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "distance", "Model Z offset"),
+    BU_ARG_FLAG("f", "force", struct propeller_args, overwrite,
+	"Overwrite an existing output database"),
+    BU_ARG_FLAG("j", "append", struct propeller_args, append,
+	"Append objects to an existing output database"),
+    BU_ARG_FLAG("h", "help", struct propeller_args, help, "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const char * const propeller_output_modes[] = {"force", "append", NULL};
+static const char * const propeller_demo_conflicts[] = {"demo-file", "append", NULL};
+
+static const struct bu_arg_constraint propeller_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS,
+	propeller_output_modes, 0, 1, "select append or overwrite, not both"),
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_CONFLICTS, BU_ARG_CONDITION_ALWAYS,
+	propeller_demo_conflicts, 0, 0, "demo output cannot use append mode"),
+    BU_ARG_CONSTRAINT_NULL
+};
+
+static const struct bu_arg_help_group propeller_help_groups[] = {
+    BU_ARG_HELP_GROUP("Output", NULL, "output", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Blade geometry", NULL, "mode", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Hub and shaft", NULL, "hub-diameter-ratio", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Discretization", NULL, "hub-slices", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Placement", NULL, "x-offset", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("File handling", NULL, "force", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Help", NULL, "help", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP_NULL
+};
+
+static const struct bu_arg_presentation propeller_presentation =
+    BU_ARG_PRESENTATION(propeller_help_groups, NULL, NULL);
+
+static const struct bu_arg_schema propeller_schema = BU_ARG_SCHEMA_PRESENTED(
+    "propeller", "Generate a procedural marine propeller geometry database",
+    propeller_arg_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, propeller_constraints, NULL, NULL, NULL),
+    &propeller_presentation);
+
 static void
 usage(const char *argv0)
 {
-    bu_log("Usage: %s [options]\n\n", argv0);
-    bu_log("Options:\n");
-    bu_log("  -o, --output file.g          Output database [propeller.g]\n");
-    bu_log("  -n, --name name              Object name prefix [propeller]\n");
-    bu_log("      --demo-file file.g       Write a grid of varied sample propellers\n");
-    bu_log("      --mode name              Blade output mode: bot or brep [bot]\n");
-    bu_log("  -D, --diameter length        Propeller diameter [1000]\n");
-    bu_log("  -Z, --blades count           Blade count, 2 through 7 [4]\n");
-    bu_log("      --ae-ao ratio            Expanded blade area ratio, 0.30 through 1.20 [0.65]\n");
-    bu_log("      --pd-tip ratio           Tip pitch/diameter ratio [1.0]\n");
-    bu_log("      --rake degrees           Rake angle in degrees [0]\n");
-    bu_log("      --skew degrees           Maximum skew sweep in degrees [0]\n");
-    bu_log("      --hub-diameter-ratio r   Hub diameter / propeller diameter [0.20]\n");
-    bu_log("      --hub-length-ratio r     Hub length / propeller diameter [0.22]\n");
-    bu_log("      --hub-profile name        cylindrical, truncated-cone, or convex-barrel [truncated-cone]\n");
-    bu_log("      --hub-forward-diameter d  Forward casing diameter [derived]\n");
-    bu_log("      --hub-aft-diameter d      Aft casing diameter [derived]\n");
-    bu_log("      --hub-barrel-swell r      Convex barrel swell ratio [1.08]\n");
-    bu_log("      --shaft-standard name     iso-1-10 or sae-1-16 [iso-1-10]\n");
-    bu_log("      --shaft-diameter-small d  Small-end shaft bore diameter [derived]\n");
-    bu_log("      --keyway-width d          Keyway slot width [derived]\n");
-    bu_log("      --keyway-depth d          Keyway depth into hub [derived]\n");
-    bu_log("      --fairing-cap-length d    Aft fairing cap length [derived]\n");
-    bu_log("      --no-fairing-cap          Disable aft fairing cap\n");
-    bu_log("      --hub-slices count        Hub barrel longitudinal mesh slices [30]\n");
-    bu_log("      --hub-segments count      Hub barrel angular mesh segments [72]\n");
-    bu_log("      --root-overlap ratio     Root overlap in r/R units [0.01]\n");
-    bu_log("      --edge-thickness-ratio r Finite blade edge thickness / diameter [0.00075]\n");
-    bu_log("      --radial-stations count  Radial section count excluding the tip apex [20]\n");
-    bu_log("      --chord-points count     Chordwise samples per upper/lower grid [50]\n");
-    bu_log("      --x-offset distance      Model X offset [0]\n");
-    bu_log("      --y-offset distance      Model Y offset [0]\n");
-    bu_log("      --z-offset distance      Model Z offset [0]\n");
-    bu_log("  -f, --force                  Overwrite output file\n");
-    bu_log("  -j, --append                 Append objects to an existing output file\n");
-    bu_log("  -h, --help                   Print this help\n");
+    char *help = bu_arg_schema_help(&propeller_schema, argv0);
+    bu_log("%s", help ? help : "");
+    bu_free(help, "propeller option help");
 }
 
 
@@ -223,59 +361,6 @@ static bool
 finite_point(const point3d &p)
 {
     return std::isfinite(p.x) && std::isfinite(p.y) && std::isfinite(p.z);
-}
-
-
-static double
-parse_double_arg(const char *name, const char *value)
-{
-    if (!value)
-	throw std::runtime_error(std::string(name) + " requires a value");
-    char *end = NULL;
-    const double d = std::strtod(value, &end);
-    if (!end || *end != '\0' || !std::isfinite(d))
-	throw std::runtime_error(std::string(name) + " requires a finite numeric value");
-    return d;
-}
-
-
-static int
-parse_int_arg(const char *name, const char *value)
-{
-    if (!value)
-	throw std::runtime_error(std::string(name) + " requires a value");
-    char *end = NULL;
-    const long l = std::strtol(value, &end, 10);
-    if (!end || *end != '\0' || l < std::numeric_limits<int>::min() || l > std::numeric_limits<int>::max())
-	throw std::runtime_error(std::string(name) + " requires an integer value");
-    return static_cast<int>(l);
-}
-
-
-static const char *
-next_value(int argc, char **argv, int &i, const char *name)
-{
-    if (i + 1 >= argc)
-	throw std::runtime_error(std::string(name) + " requires a value");
-    return argv[++i];
-}
-
-
-static bool
-split_long_option(const char *arg, std::string &key, const char *&value)
-{
-    if (!arg || arg[0] != '-' || arg[1] != '-')
-	return false;
-
-    const char *eq = std::strchr(arg + 2, '=');
-    if (eq) {
-	key.assign(arg + 2, static_cast<size_t>(eq - (arg + 2)));
-	value = eq + 1;
-    } else {
-	key = arg + 2;
-	value = NULL;
-    }
-    return true;
 }
 
 
@@ -431,113 +516,88 @@ static propeller_options
 parse_args(int argc, char **argv)
 {
     propeller_options opts;
+    struct propeller_args args = {};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
-    for (int i = 1; i < argc; ++i) {
-	const char *arg = argv[i];
-	std::string key;
-	const char *value = NULL;
+    args.outfile = opts.outfile.c_str();
+    args.name = opts.name.c_str();
+    args.mode = "bot";
+    args.diameter = opts.diameter;
+    args.blades = opts.blades;
+    args.expanded_area_ratio = opts.expanded_area_ratio;
+    args.pitch_diameter_tip = opts.pitch_diameter_tip;
+    args.rake_angle_deg = opts.rake_angle_deg;
+    args.skew_max_deg = opts.skew_max_deg;
+    args.hub_diameter_ratio = opts.hub_diameter_ratio;
+    args.hub_length_ratio = opts.hub_length_ratio;
+    args.hub_profile = "truncated-cone";
+    args.hub_forward_diameter = opts.hub_forward_diameter;
+    args.hub_aft_diameter = opts.hub_aft_diameter;
+    args.hub_barrel_swell_ratio = opts.hub_barrel_swell_ratio;
+    args.shaft_standard = "iso-1-10";
+    args.shaft_diameter_small = opts.shaft_diameter_small;
+    args.keyway_width = opts.keyway_width;
+    args.keyway_depth = opts.keyway_depth;
+    args.fairing_cap_length = opts.fairing_cap_length;
+    args.hub_longitudinal_slices = opts.hub_longitudinal_slices;
+    args.hub_angular_segments = opts.hub_angular_segments;
+    args.root_overlap_ratio = opts.root_overlap_ratio;
+    args.blade_edge_thickness_ratio = opts.blade_edge_thickness_ratio;
+    args.radial_stations = opts.radial_stations;
+    args.chord_points = opts.chord_points;
+    args.offset_x = opts.offset_x;
+    args.offset_y = opts.offset_y;
+    args.offset_z = opts.offset_z;
 
-	if (split_long_option(arg, key, value)) {
-	    if (key == "help") {
-		usage(argv[0]);
-		bu_exit(EXIT_SUCCESS, NULL);
-	    } else if (key == "output") {
-		opts.outfile = value ? value : next_value(argc, argv, i, arg);
-	    } else if (key == "demo-file") {
-		opts.demo_file = value ? value : next_value(argc, argv, i, arg);
-	    } else if (key == "name") {
-		opts.name = value ? value : next_value(argc, argv, i, arg);
-	    } else if (key == "mode") {
-		opts.mode = parse_output_mode(value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "diameter") {
-		opts.diameter = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "blades") {
-		opts.blades = parse_int_arg(arg, value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "ae-ao") {
-		opts.expanded_area_ratio = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "pd-tip") {
-		opts.pitch_diameter_tip = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "rake") {
-		opts.rake_angle_deg = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "skew") {
-		opts.skew_max_deg = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "hub-diameter-ratio") {
-		opts.hub_diameter_ratio = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "hub-length-ratio") {
-		opts.hub_length_ratio = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "hub-profile") {
-		opts.hub_profile = parse_casing_profile(value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "hub-forward-diameter") {
-		opts.hub_forward_diameter = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "hub-aft-diameter") {
-		opts.hub_aft_diameter = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "hub-barrel-swell") {
-		opts.hub_barrel_swell_ratio = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "shaft-standard") {
-		opts.shaft_taper = parse_shaft_standard(value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "shaft-diameter-small") {
-		opts.shaft_diameter_small = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "keyway-width") {
-		opts.keyway_width = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "keyway-depth") {
-		opts.keyway_depth = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "fairing-cap-length") {
-		opts.fairing_cap_length = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "no-fairing-cap") {
-		if (value)
-		    throw std::runtime_error("--no-fairing-cap does not take a value");
-		opts.include_fairing_cap = false;
-	    } else if (key == "hub-slices") {
-		opts.hub_longitudinal_slices = parse_int_arg(arg, value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "hub-segments") {
-		opts.hub_angular_segments = parse_int_arg(arg, value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "root-overlap") {
-		opts.root_overlap_ratio = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "edge-thickness-ratio") {
-		opts.blade_edge_thickness_ratio = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "radial-stations") {
-		opts.radial_stations = parse_int_arg(arg, value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "chord-points") {
-		opts.chord_points = parse_int_arg(arg, value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "x-offset") {
-		opts.offset_x = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "y-offset") {
-		opts.offset_y = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "z-offset") {
-		opts.offset_z = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
-	    } else if (key == "force") {
-		if (value)
-		    throw std::runtime_error("--force does not take a value");
-		opts.overwrite = true;
-	    } else if (key == "append") {
-		if (value)
-		    throw std::runtime_error("--append does not take a value");
-		opts.append = true;
-	    } else {
-		throw std::runtime_error(std::string("unknown option: ") + arg);
-	    }
-	    continue;
-	}
-
-	if (BU_STR_EQUAL(arg, "-h")) {
-	    usage(argv[0]);
-	    bu_exit(EXIT_SUCCESS, NULL);
-	} else if (BU_STR_EQUAL(arg, "-o")) {
-	    opts.outfile = next_value(argc, argv, i, arg);
-	} else if (BU_STR_EQUAL(arg, "-n")) {
-	    opts.name = next_value(argc, argv, i, arg);
-	} else if (BU_STR_EQUAL(arg, "-D")) {
-	    opts.diameter = parse_double_arg(arg, next_value(argc, argv, i, arg));
-	} else if (BU_STR_EQUAL(arg, "-Z")) {
-	    opts.blades = parse_int_arg(arg, next_value(argc, argv, i, arg));
-	} else if (BU_STR_EQUAL(arg, "-f")) {
-	    opts.overwrite = true;
-	} else if (BU_STR_EQUAL(arg, "-j")) {
-	    opts.append = true;
-	} else {
-	    throw std::runtime_error(std::string("unknown option: ") + arg);
-	}
+    const int parsed = bu_arg_schema_parse_complete(&propeller_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (parsed < 0) {
+	const char *error = bu_vls_cstr(&msg);
+	std::string error_text = error ? error : "";
+	bu_vls_free(&msg);
+	throw std::runtime_error(error_text.empty() ?
+	    "option parsing failed" : error_text);
     }
+    bu_vls_free(&msg);
+
+    if (args.help) {
+	usage(argv[0]);
+	bu_exit(EXIT_SUCCESS, NULL);
+    }
+
+    opts.outfile = args.outfile;
+    opts.demo_file = args.demo_file ? args.demo_file : "";
+    opts.name = args.name;
+    opts.mode = parse_output_mode(args.mode);
+    opts.diameter = args.diameter;
+    opts.blades = args.blades;
+    opts.expanded_area_ratio = args.expanded_area_ratio;
+    opts.pitch_diameter_tip = args.pitch_diameter_tip;
+    opts.rake_angle_deg = args.rake_angle_deg;
+    opts.skew_max_deg = args.skew_max_deg;
+    opts.hub_diameter_ratio = args.hub_diameter_ratio;
+    opts.hub_length_ratio = args.hub_length_ratio;
+    opts.hub_profile = parse_casing_profile(args.hub_profile);
+    opts.hub_forward_diameter = args.hub_forward_diameter;
+    opts.hub_aft_diameter = args.hub_aft_diameter;
+    opts.hub_barrel_swell_ratio = args.hub_barrel_swell_ratio;
+    opts.shaft_taper = parse_shaft_standard(args.shaft_standard);
+    opts.shaft_diameter_small = args.shaft_diameter_small;
+    opts.keyway_width = args.keyway_width;
+    opts.keyway_depth = args.keyway_depth;
+    opts.fairing_cap_length = args.fairing_cap_length;
+    opts.include_fairing_cap = !args.no_fairing_cap;
+    opts.hub_longitudinal_slices = args.hub_longitudinal_slices;
+    opts.hub_angular_segments = args.hub_angular_segments;
+    opts.root_overlap_ratio = args.root_overlap_ratio;
+    opts.blade_edge_thickness_ratio = args.blade_edge_thickness_ratio;
+    opts.radial_stations = args.radial_stations;
+    opts.chord_points = args.chord_points;
+    opts.offset_x = args.offset_x;
+    opts.offset_y = args.offset_y;
+    opts.offset_z = args.offset_z;
+    opts.overwrite = args.overwrite;
+    opts.append = args.append;
 
     finalize_options(opts);
 
@@ -2021,6 +2081,18 @@ int
 main(int argc, char **argv)
 {
     bu_setprogname(argv[0]);
+
+    const struct bu_arg_grammar grammar = {&propeller_schema, NULL, NULL};
+    struct bu_vls schema_output = BU_VLS_INIT_ZERO;
+    const int schema_status = bu_arg_introspect(&schema_output, &grammar,
+	argc - 1, (const char * const *)(argv + 1));
+    if (schema_status != 0) {
+	bu_flog(schema_status > 0 ? stdout : stderr, "%s",
+	    bu_vls_cstr(&schema_output));
+	bu_vls_free(&schema_output);
+	return schema_status > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+    bu_vls_free(&schema_output);
 
     try {
 	const propeller_options opts = parse_args(argc, argv);
