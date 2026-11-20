@@ -26,6 +26,9 @@
 
 #include <stdlib.h> /* exit */
 #include <sys/types.h>
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
 #include <string.h>
 #include <errno.h>
 #include <time.h>
@@ -208,7 +211,7 @@ process_func_capture(int *fd, struct bu_vls *vls)
 	if (ret > 0) {
 	    if (vls)
 		bu_vls_strncat(vls, buff, (size_t)ret);
-	    if (!bu_process_pending(*fd))
+	    if (bu_fd_read_ready(*fd, 0) <= 0)
 		return;
 	    continue;
 	}
@@ -1022,39 +1025,126 @@ bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime)
 }
 
 int
-bu_process_pending(int fd)
+bu_fd_read_ready(int fd, int timeout_ms)
 {
-    if (fd < 0)
-	return 0;
-
-    int result;
+    if (fd < 0) {
+	errno = EBADF;
+	return -1;
+    }
+    if (timeout_ms < -1) {
+	errno = EINVAL;
+	return -1;
+    }
 
 #if defined(_WIN32)
     intptr_t os_handle = _get_osfhandle(fd);
-    if (os_handle == -1)
-	return 0;
-
-    HANDLE out_fd = (HANDLE)os_handle;
-    DWORD bytes_available = 0;
-    if (PeekNamedPipe(out_fd, NULL, 0, NULL, &bytes_available, NULL)) {
-	result = (int)bytes_available;
-    } else {
-	result = -1;
+    if (os_handle == -1 || os_handle == (intptr_t)INVALID_HANDLE_VALUE) {
+	errno = EBADF;
+	return -1;
     }
+
+    HANDLE handle = (HANDLE)os_handle;
+    SetLastError(NO_ERROR);
+    DWORD file_type = GetFileType(handle);
+    if (file_type == FILE_TYPE_UNKNOWN && GetLastError() != NO_ERROR) {
+	errno = EBADF;
+	return -1;
+    }
+
+    if (file_type == FILE_TYPE_PIPE) {
+	const DWORD check_interval_ms = 10;
+	ULONGLONG start = GetTickCount64();
+	for (;;) {
+	    DWORD bytes_available = 0;
+	    if (PeekNamedPipe(handle, NULL, 0, NULL, &bytes_available, NULL)) {
+		if (bytes_available > 0)
+		    return 1;
+	    } else {
+		DWORD error_code = GetLastError();
+		if (error_code == ERROR_BROKEN_PIPE ||
+		    error_code == ERROR_PIPE_NOT_CONNECTED ||
+		    error_code == ERROR_NO_DATA)
+		    return 1;
+		errno = EIO;
+		return -1;
+	    }
+
+	    if (timeout_ms == 0)
+		return 0;
+
+	    DWORD wait_ms = check_interval_ms;
+	    if (timeout_ms > 0) {
+		ULONGLONG elapsed = GetTickCount64() - start;
+		if (elapsed >= (ULONGLONG)timeout_ms)
+		    return 0;
+		ULONGLONG remaining = (ULONGLONG)timeout_ms - elapsed;
+		if (remaining < wait_ms)
+		    wait_ms = (DWORD)remaining;
+	    }
+	    Sleep(wait_ms);
+	}
+    }
+
+    if (file_type == FILE_TYPE_DISK)
+	return 1;
+
+    if (file_type == FILE_TYPE_CHAR) {
+	DWORD console_mode = 0;
+	if (!GetConsoleMode(handle, &console_mode))
+	    return 1;
+	DWORD wait_ms = timeout_ms < 0 ? INFINITE : (DWORD)timeout_ms;
+	DWORD wait_result = WaitForSingleObject(handle, wait_ms);
+	if (wait_result == WAIT_OBJECT_0)
+	    return 1;
+	if (wait_result == WAIT_TIMEOUT)
+	    return 0;
+	errno = EIO;
+	return -1;
+    }
+
+    errno = EINVAL;
+    return -1;
+#elif defined(HAVE_POLL_H)
+    struct pollfd descriptor;
+    descriptor.fd = fd;
+    descriptor.events = POLLIN;
+    descriptor.revents = 0;
+
+    int result = poll(&descriptor, 1, timeout_ms);
+    if (result <= 0)
+	return result;
+    if (descriptor.revents & POLLNVAL) {
+	errno = EBADF;
+	return -1;
+    }
+    if (descriptor.revents & (POLLIN | POLLHUP | POLLERR))
+	return 1;
+    return 0;
 #else
-    if (fd >= FD_SETSIZE)
-	return 0;
+    if (fd >= FD_SETSIZE) {
+	errno = EINVAL;
+	return -1;
+    }
 
     fd_set read_set;
-    struct timeval timeout = {0, 0};
     FD_ZERO(&read_set);
     FD_SET(fd, &read_set);
-    /* returns 1 on success, 0 on timeout, -1 on error */
-    result = select(fd+1, &read_set, NULL, NULL, &timeout);
-#endif
 
-    /* collapse return to ignore amount to read or errors */
-    return result > 0 ? 1 : 0;
+    struct timeval timeout;
+    struct timeval *timeout_ptr = NULL;
+    if (timeout_ms >= 0) {
+	timeout.tv_sec = timeout_ms / 1000;
+	timeout.tv_usec = (timeout_ms % 1000) * 1000;
+	timeout_ptr = &timeout;
+    }
+    return select(fd + 1, &read_set, NULL, NULL, timeout_ptr);
+#endif
+}
+
+int
+bu_process_pending(int fd)
+{
+    return bu_fd_read_ready(fd, 0) > 0 ? 1 : 0;
 }
 
 int
@@ -1209,11 +1299,35 @@ bu_pid_terminate(int process)
 }
 
 int
+bu_file_is_terminal(FILE *stream)
+{
+    if (!stream)
+	return 0;
+    return isatty(fileno(stream)) ? 1 : 0;
+}
+
+int
+bu_file_is_open(FILE *stream)
+{
+    struct stat sb;
+    int fd;
+
+    if (!stream)
+	return 0;
+
+    fd = fileno(stream);
+    if (fd < 0)
+	return 0;
+
+    return fstat(fd, &sb) == 0;
+}
+
+int
 bu_interactive(void)
 {
 #ifdef _WIN32
     /* Winsock select() cannot inspect CRT standard input descriptors. */
-    return isatty(fileno(stdin)) ? 1 : 0;
+    return bu_file_is_terminal(stdin);
 #else
     int interactive = 1;
 

@@ -634,7 +634,7 @@ static int run_command(const std::vector<std::string> &cmd)
     while (stdout_open || stderr_open || bu_process_alive(proc)) {
         bool progressed = false;
 
-        if (stdout_open && bu_process_pending(stdout_fd)) {
+        if (stdout_open && bu_fd_read_ready(stdout_fd, 0) > 0) {
             int got = bu_process_read_n(proc, BU_PROCESS_STDOUT, (int)sizeof(buffer), buffer);
             if (got > 0) {
                 std::cout.write(buffer, got);
@@ -645,7 +645,7 @@ static int run_command(const std::vector<std::string> &cmd)
             progressed = true;
         }
 
-        if (stderr_open && bu_process_pending(stderr_fd)) {
+        if (stderr_open && bu_fd_read_ready(stderr_fd, 0) > 0) {
             int got = bu_process_read_n(proc, BU_PROCESS_STDERR, (int)sizeof(buffer), buffer);
             if (got > 0) {
                 std::cerr.write(buffer, got);

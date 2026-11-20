@@ -485,7 +485,7 @@ SimAnimState::renderFrame(int frame_num)
     int poll_status = 0;
     char output[4096];
     while ((poll_status = bu_process_poll(proc, &process_status)) == 0) {
-	while (bu_process_pending(bu_process_fileno(proc, BU_PROCESS_STDOUT))) {
+	while (bu_fd_read_ready(bu_process_fileno(proc, BU_PROCESS_STDOUT), 0) > 0) {
 	    int count = bu_process_read_n(proc, BU_PROCESS_STDOUT,
 		    (int)sizeof(output), output);
 	    if (count <= 0)
@@ -499,7 +499,7 @@ SimAnimState::renderFrame(int frame_num)
 	}
 	(void)bu_snooze((int64_t)RT_POLL_INTERVAL_MS * 1000);
     }
-    while (bu_process_pending(bu_process_fileno(proc, BU_PROCESS_STDOUT))) {
+    while (bu_fd_read_ready(bu_process_fileno(proc, BU_PROCESS_STDOUT), 0) > 0) {
 	int count = bu_process_read_n(proc, BU_PROCESS_STDOUT,
 		(int)sizeof(output), output);
 	if (count <= 0)
