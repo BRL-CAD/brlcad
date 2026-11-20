@@ -9,10 +9,12 @@ g-x3d - convert BRL-CAD geometry to an X3D faceted model
 
 == SYNOPSIS
 
-[source]
-----
-g-x3d [-v] [-d _calc_dist_tol_] [-a _abs_tess_tol_] [-r _rel_tess_tol_] [-n _norm_tess_tol_] [-u _units_] [-P _ncpu_] [-x _librt_debug_] [-X _nmg_debug_] [-o _out.x3d_] _model.g_ _object(s)_
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*g-x3d* [*-v*]... [*-d* _millimeters_] [*-a* _millimeters_] [*-r* _fraction_] [*-n* _degrees_]
+      [*-u* _units_] [*-P* _count_] [*-o* _output.x3d_] [*-x* _mask_] [*-X* _mask_] _database.g_
+      _object_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -31,46 +33,41 @@ handling; use it when an XML-based X3D scene is preferred over classic VRML.
 [[options]]
 == OPTIONS
 
-*-v*::
-  Enable verbose output, reporting region conversion progress on standard error.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-d* _calc_dist_tol_::
-  Calculational distance tolerance, in millimeters, used to distinguish
-  neighboring vertices. The default is 0.0005.
+*-v*, *--verbose*::
+  Report region conversion progress on standard error. May be repeated.
 
-*-a* _abs_tess_tol_::
-  Absolute tessellation tolerance, in millimeters (the maximum chord error
-  permitted between an approximating facet and the true surface). Setting this
-  disables the relative tolerance.
+*-d* _millimeters_, *--distance-tolerance*=_millimeters_::
+  Set nonnegative calculational distance tolerance used to distinguish neighboring vertices, in millimeters (default 0.0005).
 
-*-r* _rel_tess_tol_::
-  Relative tessellation tolerance, expressed as a fraction of the bounding box
-  of each solid. The default is 0.01.
+*-a* _millimeters_, *--absolute-tolerance*=_millimeters_::
+  Set nonnegative maximum chord error between an approximating facet and the true surface, in millimeters, and clear relative tolerance.
 
-*-n* _norm_tess_tol_::
-  Surface normal tessellation tolerance, in degrees (the maximum angle between
-  adjacent facet normals). Setting this disables the relative tolerance.
+*-r* _fraction_, *--relative-tolerance*=_fraction_::
+  Set nonnegative tolerance as a fraction of each solid's bounding-box size (default 0.01).
 
-*-u* _units_::
-  Units for coordinates in the resulting X3D file. The default is mm. Any units
-  name understood by BRL-CAD (e.g. mm, cm, m, in, ft) is accepted.
+*-n* _degrees_, *--normal-tolerance*=_degrees_::
+  Set nonnegative maximum angle between adjacent facet normals, in degrees, and clear relative tolerance.
 
-*-P* _ncpu_::
-  Number of processors to use during tessellation. The default is 1.
+*-u* _units_, *--units*=_units_::
+  Write coordinates in recognized BRL-CAD units such as mm, cm, m, in, or ft (default mm).
 
-*-x* _librt_debug_::
-  Set the *librt* debug flags to the given hexadecimal value. See raytrace.h
-  for the bit definitions.
+*-P* _count_, *--processors*=_count_::
+  Use this positive processor count during tessellation (default 1).
 
-*-X* _nmg_debug_::
-  Set the NMG debug flags to the given hexadecimal value. See nmg.h for the bit
-  definitions.
+*-o* _output.x3d_, *--output*=_output.x3d_::
+  Write X3D output to this file instead of standard output.
 
-*-o* _out.x3d_::
-  Write the X3D output to the named file instead of standard output.
+*-x* _mask_, *--rt-debug*=_mask_::
+  Set librt hexadecimal debug flags (see raytrace.h).
 
-*-h*, *-?*::
-  Print a usage message and exit.
+*-X* _mask_, *--nmg-debug*=_mask_::
+  Set libnmg hexadecimal debug flags (see nmg.h).
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

@@ -29,22 +29,18 @@
 #include "common.h"
 
 /* system headers */
-#include <float.h>
-#include <limits.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <math.h>
 #include <string.h>
-#include <errno.h>
 #include "bio.h"
 
 /* interface headers */
 #include "vmath.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bu/units.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -103,15 +99,11 @@ struct bu_structparse vrml_mat_parse[]={
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 extern union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, struct bu_list *vlfree);
 
-static const char *usage =
-    "[-v] [-xX lvl] [-d tolerance_distance] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-P #_of_cpus] [-o out_file] [-u units] brlcad_db.g object(s)\n"
-    "(units default to mm)\n";
-
 static const char *tok_sep = " \t";
 static int NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int verbose=0;
 static int ncpu = 1;		/* Number of processors */
-static char *out_file = NULL;	/* Output filename */
+static const char *out_file = NULL;	/* Output filename */
 static FILE *outfp;		/* Output file pointer */
 static struct db_i *dbip;
 static struct bg_tess_tol ttol;
@@ -126,27 +118,134 @@ static struct db_tree_state tree_state;	/* includes tol & model */
 static int regions_tried = 0;
 static int regions_converted = 0;
 
-static void
-print_usage(const char *progname)
-{
-    bu_exit(1, "Usage: %s %s", progname, usage);
-}
+struct g_x3d_args {
+    struct g_x3d_args *self;
+    int help;
+    int verbose;
+    int processors;
+    fastf_t absolute_tolerance;
+    fastf_t relative_tolerance;
+    fastf_t normal_tolerance;
+    fastf_t distance_tolerance;
+    unsigned int rt_debug;
+    unsigned int nmg_debug;
+    const char *units;
+    const char *output_file;
+};
 
+enum g_x3d_tolerance_kind {
+    G_X3D_ABSOLUTE_TOLERANCE,
+    G_X3D_NORMAL_TOLERANCE
+};
 
 static int
-parse_debug_mask(unsigned int *mask, const char *arg)
+g_x3d_tolerance_consume(struct bu_vls *msg, size_t argc, const char **argv,
+	void *storage, enum g_x3d_tolerance_kind kind)
 {
-    char *end;
-    unsigned long parsed;
+    struct g_x3d_args *args = storage ? *(struct g_x3d_args **)storage : NULL;
+    fastf_t value;
 
-    if (!mask || !arg || !*arg || *arg == '-')
+    if (argc != 1 || bu_arg_nonnegative_number_validate(msg, argv[0]) < 0 ||
+	!bu_arg_number_from_str(msg, &value, argv[0]))
+	return -1;
+    if (!args)
 	return 0;
-    errno = 0;
-    parsed = strtoul(arg, &end, 16);
-    if (end == arg || *end || errno == ERANGE || parsed > UINT_MAX)
-	return 0;
-    *mask = (unsigned int)parsed;
-    return 1;
+
+    if (kind == G_X3D_ABSOLUTE_TOLERANCE)
+	args->absolute_tolerance = value;
+    else
+	args->normal_tolerance = value * DEG2RAD;
+    args->relative_tolerance = 0.0;
+    return 0;
+}
+
+static int
+g_x3d_absolute_tolerance_consume(struct bu_vls *msg, size_t argc,
+	const char **argv, void *storage)
+{
+    return g_x3d_tolerance_consume(msg, argc, argv, storage,
+	G_X3D_ABSOLUTE_TOLERANCE);
+}
+
+static int
+g_x3d_normal_tolerance_consume(struct bu_vls *msg, size_t argc,
+	const char **argv, void *storage)
+{
+    return g_x3d_tolerance_consume(msg, argc, argv, storage,
+	G_X3D_NORMAL_TOLERANCE);
+}
+
+static const struct bu_arg_option g_x3d_options[] = {
+    BU_ARG_FLAG("h", "help", struct g_x3d_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_COUNTING_FLAG("v", "verbose", struct g_x3d_args, verbose,
+	BU_ARG_VALUE_INTEGER,
+	"Report region conversion progress on standard error"),
+    BU_ARG_NUMBER_RANGE("d", "distance-tolerance", struct g_x3d_args,
+	distance_tolerance, 1, 0.0, 0, 0.0, "millimeters",
+	"Set nonnegative calculational distance tolerance used to distinguish "
+	"neighboring vertices, in millimeters "
+	"(default 0.0005)"),
+    BU_ARG_OPTION_SHAPED("a", "absolute-tolerance", "absolute-tolerance",
+	struct g_x3d_args, self, BU_ARG_VALUE_NUMBER, "millimeters",
+	"Set nonnegative maximum chord error between an approximating facet and "
+	"the true surface, in millimeters, and clear relative tolerance",
+	BU_ARG_REQUIRED, NULL,
+	g_x3d_absolute_tolerance_consume),
+    BU_ARG_VALUE_VALIDATE("r", "relative-tolerance", struct g_x3d_args,
+	relative_tolerance, BU_ARG_VALUE_NUMBER,
+	bu_arg_nonnegative_number_validate, "fraction",
+	"Set nonnegative tolerance as a fraction of each solid's bounding-box size "
+	"(default 0.01)"),
+    BU_ARG_OPTION_SHAPED("n", "normal-tolerance", "normal-tolerance",
+	struct g_x3d_args, self, BU_ARG_VALUE_NUMBER, "degrees",
+	"Set nonnegative maximum angle between adjacent facet normals, in degrees, "
+	"and clear relative tolerance", BU_ARG_REQUIRED, NULL,
+	g_x3d_normal_tolerance_consume),
+    BU_ARG_VALUE_VALIDATE("u", "units", struct g_x3d_args, units,
+	BU_ARG_VALUE_STRING, bu_arg_units_validate, "units",
+	"Write coordinates in recognized BRL-CAD units such as mm, cm, m, in, or "
+	"ft (default mm)"),
+    BU_ARG_INTEGER_RANGE("P", "processors", struct g_x3d_args, processors,
+	1, 1, 0, 0, "count",
+	"Use this positive processor count during tessellation (default 1)"),
+    BU_ARG_VALUE("o", "output", struct g_x3d_args, output_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "output.x3d",
+	"Write X3D output to this file instead of standard output"),
+    BU_ARG_VALUE("x", "rt-debug", struct g_x3d_args, rt_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set librt hexadecimal debug flags (see raytrace.h)"),
+    BU_ARG_VALUE("X", "nmg-debug", struct g_x3d_args, nmg_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set libnmg hexadecimal debug flags (see nmg.h)"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand g_x3d_operands[] = {
+    BU_ARG_OPERAND("database.g", BU_ARG_VALUE_FILE, 1, 1,
+	"Input BRL-CAD database", NULL),
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1,
+	BU_ARG_COUNT_UNLIMITED, "Database object to convert", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema g_x3d_schema = BU_ARG_SCHEMA(
+    "g-x3d", "Convert BRL-CAD geometry to X3D",
+    g_x3d_options, g_x3d_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar g_x3d_grammar = {
+    &g_x3d_schema, NULL, NULL
+};
+
+static int
+g_x3d_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&g_x3d_schema, "g-x3d");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "g-x3d help");
+    return status;
 }
 
 
@@ -315,7 +414,7 @@ leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt
 
 
 void
-writeX3dHeader(FILE *fp_out, char *x3dFileName)
+writeX3dHeader(FILE *fp_out, const char *x3dFileName)
 {
     fprintf(fp_out, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     fprintf(fp_out, "<!DOCTYPE X3D PUBLIC \"http://www.web3D.org/TaskGroups/x3d/translation/x3d-compact.dtd\"\n\"/www.web3D.org/TaskGroups/x3d/translation/x3d-compact.dtd\">\n");
@@ -368,19 +467,16 @@ writeX3dEnd(FILE *fp_out) {
 int
 main(int argc, char **argv)
 {
+    struct g_x3d_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     int i;
-    int c;
-    double option_value;
+    int introspection;
+    int operand_index;
+    int object_index;
     struct plate_mode pm;
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
-
-    the_model = nmg_mm();
-    RT_DBTS_INIT(&tree_state);
-    tree_state.ts_tol = &tol;
-    tree_state.ts_ttol = &ttol;
-    tree_state.ts_m = &the_model;
 
     ttol.magic = BG_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
@@ -401,77 +497,60 @@ main(int argc, char **argv)
 	nmg_eue_dist = 2.0;
     }
 
+    args.self = &args;
+    args.processors = ncpu;
+    args.absolute_tolerance = ttol.abs;
+    args.relative_tolerance = ttol.rel;
+    args.normal_tolerance = ttol.norm;
+    args.distance_tolerance = tol.dist;
+    args.units = units;
+
+    introspection = bu_arg_introspect(&msg, &g_x3d_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    operand_index = bu_arg_schema_parse_complete(&g_x3d_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return g_x3d_help(stdout, 0);
+
+    verbose = args.verbose;
+    ncpu = args.processors;
+    ttol.abs = args.absolute_tolerance;
+    ttol.rel = args.relative_tolerance;
+    ttol.norm = args.normal_tolerance;
+    tol.dist = args.distance_tolerance;
+    tol.dist_sq = tol.dist * tol.dist;
+    units = args.units;
+    out_file = args.output_file;
+    rt_debug = args.rt_debug;
+    nmg_debug = args.nmg_debug;
+    NMG_debug = nmg_debug;
+    scale_factor = 1.0 / bu_units_conversion(units);
+
+    the_model = nmg_mm();
+    RT_DBTS_INIT(&tree_state);
+    tree_state.ts_tol = &tol;
+    tree_state.ts_ttol = &ttol;
+    tree_state.ts_m = &the_model;
     pm.vlfree = &rt_vlfree;
 
-    /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "d:a:n:o:r:vx:P:X:u:h?")) != -1) {
-	switch (c) {
-	    case 'a':		/* Absolute tolerance. */
-		if (!bu_opt_scan_double_range(bu_optarg, &option_value, 0.0,
-			DBL_MAX, "absolute tessellation tolerance"))
-		    print_usage(argv[0]);
-		ttol.abs = option_value;
-		ttol.rel = 0.0;
-		break;
-	    case 'd':		/* calculational tolerance */
-		if (!bu_opt_scan_double_range(bu_optarg, &option_value, 0.0,
-			DBL_MAX, "distance tolerance"))
-		    print_usage(argv[0]);
-		tol.dist = option_value;
-		tol.dist_sq = tol.dist * tol.dist;
-		break;
-	    case 'n':		/* Surface normal tolerance. */
-		if (!bu_opt_scan_double_range(bu_optarg, &option_value, 0.0,
-			DBL_MAX, "normal tessellation tolerance"))
-		    print_usage(argv[0]);
-		ttol.norm = option_value * DEG2RAD;
-		ttol.rel = 0.0;
-		break;
-	    case 'o':		/* Output file name */
-		out_file = bu_optarg;
-		break;
-	    case 'r':		/* Relative tolerance. */
-		if (!bu_opt_scan_double_range(bu_optarg, &option_value, 0.0,
-			DBL_MAX, "relative tessellation tolerance"))
-		    print_usage(argv[0]);
-		ttol.rel = option_value;
-		break;
-	    case 'v':
-		verbose++;
-		break;
-	    case 'P':
-		if (!bu_opt_scan_int_range(bu_optarg, &ncpu, 1, INT_MAX,
-			"processor count"))
-		    print_usage(argv[0]);
-		break;
-	    case 'x':
-		if (!parse_debug_mask(&rt_debug, bu_optarg))
-		    bu_exit(1, "Invalid librt debug mask: %s\n", bu_optarg);
-		break;
-	    case 'X':
-		if (!parse_debug_mask(&nmg_debug, bu_optarg))
-		    bu_exit(1, "Invalid NMG debug mask: %s\n", bu_optarg);
-		NMG_debug = nmg_debug;
-		break;
-	    case 'u':
-		units = bu_strdup(bu_optarg);
-		scale_factor = bu_units_conversion(units);
-		if (ZERO(scale_factor))
-		    bu_exit(1, "Unrecognized units (%s)\n", units);
-		scale_factor = 1.0 / scale_factor;
-		break;
-	    default:
-		print_usage(argv[0]);
-	}
-    }
-
-    if (bu_optind+1 >= argc)
-	print_usage(argv[0]);
+    object_index = operand_index + 2;
 
     /* Open BRL-CAD database */
-    if ((dbip = db_open(argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL) {
+    if ((dbip = db_open(argv[operand_index + 1], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[0]);
-	bu_exit(1, "Cannot open geometry database file %s\n", argv[bu_optind]);
+	bu_exit(1, "Cannot open geometry database file %s\n",
+	    argv[operand_index + 1]);
     }
     if (db_dirbuild(dbip))
 	bu_exit(1, "db_dirbuild() failed!\n");
@@ -487,14 +566,13 @@ main(int argc, char **argv)
     }
 
     writeX3dHeader(outfp, out_file);
-    bu_optind++;
 
     pm.num_bots = 0;
     pm.num_nonbots = 0;
     pm.array_size = 5;
     pm.bots = (struct rt_bot_internal **)bu_calloc(pm.array_size,
 						   sizeof(struct rt_bot_internal *), "pm.bots");
-    for (i=bu_optind; i<argc; i++) {
+    for (i = object_index; i < argc; i++) {
 	struct directory *dp;
 
 	dp = db_lookup(dbip, argv[i], LOOKUP_QUIET);
@@ -520,7 +598,8 @@ main(int argc, char **argv)
     }
 
     /* Walk indicated tree(s).  Each non-light-source region will be output separately */
-    (void)db_walk_tree(dbip, argc-bu_optind, (const char **)(&argv[bu_optind]),
+    (void)db_walk_tree(dbip, argc-object_index,
+		       (const char **)(&argv[object_index]),
 		       ncpu,
 		       &tree_state,
 		       select_non_lights,
