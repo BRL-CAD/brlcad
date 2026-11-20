@@ -84,70 +84,119 @@ struct gist_args {
 
 static const struct bu_arg_option gist_options[] = {
     BU_ARG_VALUE("i", "input", struct gist_args, input_file,
-	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "filename.g", "Input database"),
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "filename.g",
+	"Read this BRL-CAD database; a bare model.g operand is equivalent"),
     BU_ARG_VALUE("o", "output", struct gist_args, output_file,
-	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "filename.png", "Output report filename"),
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "filename.png",
+	"Write the PNG report to this file; otherwise display it in a popup "
+	"outside folder mode"),
     BU_ARG_VALUE("F", "folder", struct gist_args, input_folder,
-	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "folder", "Folder of databases to process"),
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "folder",
+	"Process every BRL-CAD database in this folder"),
     BU_ARG_VALUE("e", "output-folder", struct gist_args, output_folder,
-	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "dir_name", "Output folder name"),
-    BU_ARG_FLAG("g", "gui", struct gist_args, open_gui, "Display report in a popup window"),
-    BU_ARG_FLAG("f", "force", struct gist_args, overwrite, "Overwrite an existing report"),
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "dir_name",
+	"Write folder-mode reports to this directory (default GIST_REPORTS "
+	"inside the input folder)"),
+    BU_ARG_FLAG("g", "gui", struct gist_args, open_gui,
+	"Display the generated report in a popup window"),
+    BU_ARG_FLAG("f", "force", struct gist_args, overwrite,
+	"Overwrite an existing report or export directory"),
     BU_ARG_FLAG("Z", "reuse-images", struct gist_args, reuse_images,
-	"Reuse renders from an existing working directory"),
+	"Reuse renders from an existing .working directory"),
     BU_ARG_VALUE("t", "top-component", struct gist_args, top_component,
-	BU_ARG_VALUE_DB_OBJECT, BU_ARG_REQUIRED, "component", "Primary report component"),
+	BU_ARG_VALUE_DB_OBJECT, BU_ARG_REQUIRED, "component",
+	"Feature this primary database object in the report"),
     BU_ARG_VALUE("m", "logo", struct gist_args, logo_path,
-	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "image", "Logo image for the report"),
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "image",
+	"Include this custom logo image in the report"),
     BU_ARG_INTEGER_RANGE("p", "ppi", struct gist_args, ppi,
-	1, 1, 0, 0, "#", "Pixels per inch"),
+	1, 1, 0, 0, "ppi", "Set positive output resolution (default 300 PPI)"),
     BU_ARG_VALUE("n", "preparer", struct gist_args, preparer,
-	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "name", "Report preparer name"),
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "name",
+	"Record the report preparer's name"),
     BU_ARG_VALUE("r", "owner", struct gist_args, owner,
-	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "name", "Model owner name"),
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "name",
+	"Record the model owner's name"),
     BU_ARG_VALUE("T", "executables", struct gist_args, executable_dir,
-	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "directory", "Directory containing BRL-CAD executables"),
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "directory",
+	"Use rt and rtwizard from this directory instead of locating them "
+	"automatically"),
     BU_ARG_VALUE("c", "classification", struct gist_args, classification,
-	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "classification", "Report banner classification"),
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "classification",
+	"Show this classification in the report banners"),
     BU_ARG_VALUE("N", "notes", struct gist_args, notes,
-	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "text", "Additional report notes"),
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "text",
+	"Include these additional notes in the report"),
     BU_ARG_FLAG("L", "left-handed", struct gist_args, left_handed,
-	"Use a left-handed coordinate system"),
-    BU_ARG_FLAG("A", "y-up", struct gist_args, y_up, "Use +Y as the up axis"),
+	"Use a left-handed coordinate system (default right-handed)"),
+    BU_ARG_FLAG("A", "y-up", struct gist_args, y_up,
+	"Use +Y as the up axis (default +Z)"),
     BU_ARG_VALUE("d", "density-file", struct gist_args, density_file,
-	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file|0", "Material density file, or 0 to skip densities"),
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file|0",
+	"Use this material density file, or 0 to skip density and mass "
+	"calculations"),
     BU_ARG_VALUE("l", "length-units", struct gist_args, length_units,
-	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "units", "Length units"),
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "units",
+	"Report dimensions in these length units"),
     BU_ARG_VALUE("w", "mass-units", struct gist_args, mass_units,
-	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "units", "Mass units"),
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "units",
+	"Report mass in these units"),
     BU_ARG_VALUE("a", "working-directory", struct gist_args, working_dir,
-	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "directory", "Directory for cached work"),
-    BU_ARG_INTEGER_RANGE("P", "cpu-count", struct gist_args, cpu_count,
-	1, 0, 0, 0, "#", "Number of CPUs to use (0 selects all available)"),
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "directory",
+	"Write cached rendering work to this directory (default derived .working "
+	"directory)"),
+    BU_ARG_VALUE("P", "cpu-count", struct gist_args, cpu_count,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "count",
+	"Number of CPUs to use; 0 selects all available and negative values "
+	"subtract from the available count"),
     BU_ARG_FLAG("Q", "preview", struct gist_args, preview,
-	"Use lower render quality and skip verification"),
-    BU_ARG_FLAG("v", "verbose", struct gist_args, verbose, "Print verbose status"),
+	"Generate a low-resolution preview and mark omitted verification values "
+	"unavailable"),
+    BU_ARG_FLAG("v", "verbose", struct gist_args, verbose,
+	"Print detailed progress status"),
     BU_ARG_FLAG("h", "help", struct gist_args, print_help, "Print help and exit"),
     BU_ARG_ALIAS("?", NULL, "help", 1),
     BU_ARG_OPTION_NULL
 };
 
 static const struct bu_arg_operand gist_operands[] = {
-    BU_ARG_OPERAND("model.g", BU_ARG_VALUE_FILE, 0, 1, "Input database", NULL),
+    BU_ARG_OPERAND("model.g", BU_ARG_VALUE_FILE, 1, 1, "Input database", NULL),
     BU_ARG_OPERAND_NULL
+};
+
+static const char * const gist_input_options[] = {
+    "input", "folder", NULL
+};
+
+static const struct bu_arg_constraint gist_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS,
+	gist_input_options, 0, 1,
+	"select at most one input database or folder option"),
+    BU_ARG_CONSTRAINT_NULL
+};
+
+static const struct bu_arg_schema_case gist_cases[] = {
+    BU_ARG_SCHEMA_CASE("input-option", "Select an input with -i or -F",
+	BU_ARG_CONDITION_ANY_OPTION_PRESENT, gist_input_options, NULL, NULL),
+    BU_ARG_SCHEMA_CASE_DEFAULT("model", "Supply one input database",
+	gist_operands, NULL),
+    BU_ARG_SCHEMA_CASE_NULL
 };
 
 static const struct bu_arg_schema gist_schema = BU_ARG_SCHEMA(
     "gist", "Generate a geometry information summary report", gist_options,
-    gist_operands, BU_ARG_PARSE_INTERSPERSED,
-    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+    NULL, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, gist_constraints, NULL, NULL, gist_cases));
+
+static const struct bu_arg_grammar gist_grammar = {
+    &gist_schema, NULL, NULL
+};
 
 static void
-gist_help(const char *program)
+gist_help(FILE *stream, const char *program)
 {
     char *help = bu_arg_schema_help(&gist_schema, program);
-    if (help)
-	bu_log("%s", help);
+    bu_flog(stream, "%s", help ? help : "");
     bu_free(help, "options help str");
 }
 
@@ -163,6 +212,13 @@ bool Options::readParameters(int argc, const char **argv) {
 
     /* parse options */
     struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int introspection = bu_arg_introspect(&msg, &gist_grammar, argc,
+	(const char * const *)argv);
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return false;
+    }
     int operand_index = bu_arg_schema_parse_complete(&gist_schema, &args,
 	&msg, argc, argv);
 
@@ -177,19 +233,12 @@ bool Options::readParameters(int argc, const char **argv) {
     }
     bu_vls_free(&msg);
     if (args.print_help) {
-	gist_help(cmd_progname);
+	gist_help(stdout, cmd_progname);
 	return false;
     }
 
     argc -= operand_index;
     argv += operand_index;
-    int input_count = (args.input_file ? 1 : 0) +
-	(args.input_folder ? 1 : 0) + argc;
-    if (input_count != 1) {
-	bu_log("Usage: %s %s\n\n", cmd_progname, usage);
-	bu_log("ERROR: specify exactly one input database or folder\n");
-	return false;
-    }
 
     if (args.input_file)
 	setInFile(args.input_file);
