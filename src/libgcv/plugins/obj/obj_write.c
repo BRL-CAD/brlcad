@@ -724,9 +724,6 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
 	    BU_UNSETJUMP;
 	}
-
-	if (!empty_model)
-	    nmg_kr(r);
     }
 
     /* Dispose of original tree, so that all associated dynamic memory
