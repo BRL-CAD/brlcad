@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <cerrno>
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
@@ -39,6 +40,7 @@
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
+#include "bu/opt.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "bv/plot3.h"
@@ -193,6 +195,22 @@ void printusage(void)
 {
     for (const char **u = usage; *u != nullptr; ++u)
 	bu_log("%s", *u);
+}
+
+static int
+parse_unsigned_long(const char *arg, int base, unsigned long *value)
+{
+    char *end = nullptr;
+    unsigned long parsed;
+
+    if (!arg || !*arg || *arg == '-' || !value)
+	return 0;
+    errno = 0;
+    parsed = strtoul(arg, &end, base);
+    if (end == arg || *end || errno == ERANGE)
+	return 0;
+    *value = parsed;
+    return 1;
 }
 
 g_lint_seg *create_segment(void)
@@ -678,13 +696,13 @@ main(int argc, char **argv)
 {
     struct application ap;
     char db_title[TITLE_LEN+1];	/* Title of database */
-    char *sp;			/* String from strtoul(3) */
     struct g_lint_ctrl control;	/* Info handed to librt(3) */
     int cell_center = 0;	/* Fire from center of cell? */
     int ch;			/* Character from getopt */
     int complement_bits;	/* Used by -r option */
     int i;			/* Dummy loop index */
     int use_air = 0;		/* Does air count? */
+    unsigned long option_bits;
     mat_t model2view;		/* Model-to-view matrix */
     mat_t view2model;		/* View-to-model matrix */
     point_t cell;		/* Cell center, view coords */
@@ -740,13 +758,13 @@ main(int argc, char **argv)
 		    bu_exit(1, "Illegal elevation: '%g'\n", elevation);
 		break;
 	    case 'g':
-		if (sscanf(bu_optarg, "%lf", &celsiz) != 1) {
+		if (!bu_opt_scan_double_range(bu_optarg, &celsiz, 0.0,
+			std::numeric_limits<double>::max(), "grid size") ||
+		celsiz <= 0.0) {
 		    bu_log("Invalid grid-size specification: '%s'\n", bu_optarg);
 		    printusage();
 		    bu_exit(1, NULL);
 		}
-		if (celsiz < 0.0)
-		    bu_exit(1, "Illegal grid size: '%g'\n", celsiz);
 		break;
 	    case 'o':
 		control.glc_how_to_report = G_LINT_ASCII_WITH_ORIGIN;
@@ -762,12 +780,12 @@ main(int argc, char **argv)
 		} else {
 		    complement_bits = 0;
 		}
-		control.glc_what_to_report = strtoul(bu_optarg, &sp, 0);
-		if (sp == bu_optarg) {
+		if (!parse_unsigned_long(bu_optarg, 0, &option_bits)) {
 		    bu_log("Invalid report specification: '%s'\n", bu_optarg);
 		    printusage();
 		    bu_exit(1, NULL);
 		}
+		control.glc_what_to_report = option_bits;
 		if (complement_bits) {
 		    control.glc_what_to_report = ~(control.glc_what_to_report);
 		    control.glc_what_to_report &= G_LINT_ALL;
@@ -779,24 +797,23 @@ main(int argc, char **argv)
 		control.glc_how_to_report = (control.glc_how_to_report == G_LINT_PLOT3) ? G_LINT_ASCII : control.glc_how_to_report;
 		break;
 	    case 't':
-		if (sscanf(bu_optarg, "%lf", &(control.glc_tol)) != 1) {
+		if (!bu_opt_scan_double_range(bu_optarg, &control.glc_tol,
+			0.0, std::numeric_limits<double>::max(), "tolerance")) {
 		    bu_log("Invalid tolerance specification: '%s'\n", bu_optarg);
 		    printusage();
 		    bu_exit(1, NULL);
 		}
-		if (control.glc_tol < 0.0)
-		    bu_exit(1, "Illegal tolerance: '%g'\n", control.glc_tol);
 		break;
 	    case 'u':
 		use_air = 1;
 		break;
 	    case 'x':
-		control.glc_debug = strtoul(bu_optarg, &sp, 16);
-		if (sp == bu_optarg) {
+		if (!parse_unsigned_long(bu_optarg, 16, &option_bits)) {
 		    bu_log("Invalid debug-flag specification: '%s'\n", bu_optarg);
 		    printusage();
 		    bu_exit(1, NULL);
 		}
+		control.glc_debug = (long)option_bits;
 		break;
 	    default:
 		printusage();
