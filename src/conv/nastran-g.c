@@ -26,6 +26,8 @@
 
 #include "common.h"
 
+#include <float.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -35,6 +37,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/vls.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -150,6 +153,23 @@ static void
 print_usage(const char *progname)
 {
     bu_exit(1, "Usage: %s %s", progname, usage);
+}
+
+
+static int
+parse_debug_mask(unsigned int *mask, const char *arg)
+{
+    char *end;
+    unsigned long parsed;
+
+    if (!mask || !arg || !*arg || *arg == '-')
+	return 0;
+    errno = 0;
+    parsed = strtoul(arg, &end, 16);
+    if (end == arg || *end || errno == ERANGE || parsed > UINT_MAX)
+	return 0;
+    *mask = (unsigned int)parsed;
+    return 1;
 }
 
 
@@ -1107,6 +1127,7 @@ main(int argc, char **argv)
 {
     int c;
     int i;
+    double distance_tolerance;
     struct pshell *psh;
     struct pbar *pbp;
     struct wmember head;
@@ -1130,17 +1151,22 @@ main(int argc, char **argv)
     while ((c=bu_getopt(argc, argv, "x:X:t:ni:o:mh?")) != -1) {
 	switch (c) {
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
+		if (!parse_debug_mask(&rt_debug, bu_optarg))
+		    bu_exit(1, "Invalid librt debug mask: %s\n", bu_optarg);
 		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		if (!parse_debug_mask(&nmg_debug, bu_optarg))
+		    bu_exit(1, "Invalid NMG debug mask: %s\n", bu_optarg);
 		bu_printb("librt nmg_debug", nmg_debug, NMG_DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    case 't':		/* calculational tolerance */
-		tol.dist = atof(bu_optarg);
+		if (!bu_opt_scan_double_range(bu_optarg, &distance_tolerance,
+			0.0, DBL_MAX, "distance tolerance"))
+		    print_usage(argv[0]);
+		tol.dist = distance_tolerance;
 		tol.dist_sq = tol.dist * tol.dist;
 		break;
 	    case 'n':
@@ -1164,6 +1190,9 @@ main(int argc, char **argv)
 		print_usage(argv[0]);
 	}
     }
+
+    if (bu_optind != argc)
+	print_usage(argv[0]);
 
     fpout = wdb_fopen(output_file);
     if (fpout == NULL) {
