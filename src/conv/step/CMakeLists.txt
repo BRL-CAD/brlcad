@@ -700,6 +700,34 @@ if(BRLCAD_ENABLE_STEP)
     brlcad_add_test(NAME step_header_schema COMMAND step_header_schema_test)
 
     add_executable(
+      step_mime_import_test
+      StepImportHost.cpp
+      $<TARGET_OBJECTS:step_plugin_host_objects>
+    )
+    target_include_directories(step_mime_import_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_link_libraries(step_mime_import_test PRIVATE librt libbu ${CMAKE_DL_LIBS})
+    set_target_properties(step_mime_import_test PROPERTIES FOLDER "BRL-CAD Tests/STEP")
+    brlcad_add_test(NAME step_mime_host COMMAND ${CMAKE_COMMAND}
+      "-DSTEP_HOST=$<TARGET_FILE:step_mime_import_test>"
+      "-DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/mime_host"
+      -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/step_mime_host.cmake")
+    distclean("${CMAKE_CURRENT_BINARY_DIR}/mime_host")
+
+    add_executable(
+      step_mime_export_test
+      StepExportHost.cpp
+      $<TARGET_OBJECTS:step_plugin_host_objects>
+    )
+    target_include_directories(step_mime_export_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_link_libraries(step_mime_export_test PRIVATE librt libbu ${CMAKE_DL_LIBS})
+    set_target_properties(step_mime_export_test PROPERTIES FOLDER "BRL-CAD Tests/STEP")
+    brlcad_add_test(NAME step_mime_export COMMAND ${CMAKE_COMMAND}
+      "-DSTEP_HOST=$<TARGET_FILE:step_mime_export_test>"
+      "-DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/mime_export"
+      -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/step_mime_export.cmake")
+    distclean("${CMAKE_CURRENT_BINARY_DIR}/mime_export")
+
+    add_executable(
       step_metadata_test
       tests/step_metadata.cpp
       STEPMetadata.cpp
@@ -816,6 +844,7 @@ cmakefiles(
   StepImportCommon.cmake
   StepPluginHost.cpp
   StepPluginHost.h
+  StepMime.h
   StepPluginConfig.h.in
   StepSchemaPlugin.cpp
   StepSchemaRuntime.cpp
@@ -826,6 +855,8 @@ cmakefiles(
   step_plugin.h
   tests/step_plugin_api.cpp
   tests/step_header_schema.cpp
+  tests/step_mime_host.cmake
+  tests/step_mime_export.cmake
   tests/step_metadata.cpp
   tests/step_enum_schemas.cmake
   tests/step_plugin_load.cpp

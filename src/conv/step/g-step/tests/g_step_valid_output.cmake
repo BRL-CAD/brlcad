@@ -23,7 +23,9 @@ if(NOT create_result EQUAL 0)
 endif()
 
 execute_process(
-  COMMAND "${G_STEP}" -o "${step}" "${input}"
+  COMMAND "${G_STEP}" --output-format model/step
+    --output-trait step.ap=203 --output-trait step.edition=1
+    -o "${step}" "${input}"
   RESULT_VARIABLE export_result
   OUTPUT_VARIABLE export_output
   ERROR_VARIABLE export_error
@@ -62,7 +64,9 @@ if(step_text MATCHES "#[+]?[0]+=")
 endif()
 
 execute_process(
-  COMMAND "${STEP_G}" -O "${roundtrip}" --report "${report}" "${step}"
+  COMMAND "${STEP_G}" --input-format model/step
+    --input-trait step.ap=203 --input-trait step.edition=1
+    -O "${roundtrip}" --report "${report}" "${step}"
   RESULT_VARIABLE import_result
   OUTPUT_VARIABLE import_output
   ERROR_VARIABLE import_error
@@ -110,8 +114,37 @@ foreach(schema ap203e2 ap214 ap242e1 ap242e2 ap242e3 ap242e4)
   set(schema_report "${OUTPUT_DIR}/g_step_valid_output_${schema}_roundtrip.json")
   file(REMOVE "${schema_step}" "${schema_roundtrip}" "${schema_report}")
 
+  if(schema STREQUAL "ap203e2")
+    set(protocol 203)
+    set(edition 2)
+    set(identifier "AP203_CONFIGURATION_CONTROLLED_3D_DESIGN_OF_MECHANICAL_PARTS_AND_ASSEMBLIES_MIM_LF")
+  elseif(schema STREQUAL "ap214")
+    set(protocol 214)
+    set(edition 3)
+    set(identifier "AUTOMOTIVE_DESIGN {1 0 10303 214 3 1 1}")
+  else()
+    set(protocol 242)
+    string(REGEX REPLACE "^ap242e" "" edition "${schema}")
+    set(oid_revisions 1 3 4 5)
+    math(EXPR revision_index "${edition} - 1")
+    list(GET oid_revisions ${revision_index} revision)
+    set(identifier "AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF {1 0 10303 442 ${revision} 1 4}")
+  endif()
+  set(type model/step)
+  set(traits "step.ap=${protocol}" "step.edition=${edition}")
+  if(schema STREQUAL "ap242e2")
+    set(type application/p21)
+    set(traits "p21.schema-identifier=${identifier}")
+  endif()
+  set(writer_traits)
+  set(reader_traits)
+  foreach(trait IN LISTS traits)
+    list(APPEND writer_traits --output-trait "${trait}")
+    list(APPEND reader_traits --input-trait "${trait}")
+  endforeach()
   execute_process(
-    COMMAND "${G_STEP}" --schema "${schema}" -o "${schema_step}" "${input}" all.g
+    COMMAND "${G_STEP}" --output-format "${type}" ${writer_traits}
+      -o "${schema_step}" "${input}" all.g
     RESULT_VARIABLE schema_export_result
     OUTPUT_VARIABLE schema_export_output
     ERROR_VARIABLE schema_export_error
@@ -124,6 +157,7 @@ foreach(schema ap203e2 ap214 ap242e1 ap242e2 ap242e3 ap242e4)
 
   file(READ "${schema_step}" schema_step_text)
   foreach(expected
+      "'${identifier}'"
       "DATA;"
       "UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(0.05)"
       "ADVANCED_BREP_SHAPE_REPRESENTATION(")
@@ -149,8 +183,8 @@ foreach(schema ap203e2 ap214 ap242e1 ap242e2 ap242e3 ap242e4)
   endif()
 
   execute_process(
-    COMMAND "${STEP_G}" --schema "${schema}" -O "${schema_roundtrip}"
-      --report "${schema_report}" "${schema_step}"
+    COMMAND "${STEP_G}" --input-format "${type}" ${reader_traits}
+      -O "${schema_roundtrip}" --report "${schema_report}" "${schema_step}"
     RESULT_VARIABLE schema_import_result
     OUTPUT_VARIABLE schema_import_output
     ERROR_VARIABLE schema_import_error

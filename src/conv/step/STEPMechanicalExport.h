@@ -11,7 +11,6 @@
 /** Schema-specific values consumed by the shared AP203-family exporter. */
 struct STEPMechanicalExportConfig {
     const char *schema_key;
-    const char *schema_identifier;
     const char *application;
     const char *preprocessor;
     bool create_design_context;

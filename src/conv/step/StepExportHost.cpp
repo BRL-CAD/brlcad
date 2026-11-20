@@ -12,6 +12,7 @@
 #include "common.h"
 
 #include "StepPluginHost.h"
+#include "StepMime.h"
 #include "step_plugin.h"
 
 #include <string>
@@ -80,6 +81,9 @@ main(int argc, const char **argv)
     bu_setprogname(argv[0]);
     int help = 0;
     int list_schemas = 0;
+    int list_formats = 0;
+    char *output_format = NULL;
+    brlcad::step::MimeTraits output_assertions;
     int native_csg = 0;
     int strict = 0;
     char *schema_name = NULL;
@@ -94,7 +98,10 @@ main(int argc, const char **argv)
 	{"?", "", "", NULL, &help, ""},
 	{"", "schema", "AP", bu_opt_str, &schema_name,
 	    "ap203, ap203e2, ap214, ap242 (e4), ap242e1 through ap242e4, or auto"},
-	{"", "list-schemas", "", NULL, &list_schemas, "list installed schema plugins"},
+	{"", "output-format", "MIME", bu_opt_str, &output_format, "output MIME identity or extension"},
+	{"", "output-trait", "key=value", bu_opt_mime_trait, &output_assertions.value, "required output format trait (repeatable)"},
+	{"", "list-formats", "", NULL, &list_formats, "list configured writer MIME profiles"},
+	{"", "list-schemas", "", NULL, &list_schemas, "list configured schema plugins"},
 	{"", "native-csg", "", NULL, &native_csg, "preserve supported AP203e2/AP214/AP242 boolean CSG trees"},
 	{"", "output-units", "UNIT", bu_opt_str, &length_unit,
 	    "write geometry in this recognized BRL-CAD length unit (default mm)"},
@@ -111,11 +118,13 @@ main(int argc, const char **argv)
     --argc;
     argc = bu_opt_parse(&messages, argc, argv, options);
     if (bu_vls_strlen(&messages)) bu_log("%s\n", bu_vls_cstr(&messages));
-    if (list_schemas) {
-	for (const std::string &schema : brlcad::step::available_schema_plugins())
-	    bu_log("%s\n", schema.c_str());
+    if (list_schemas || list_formats) {
+	if (bu_vls_strlen(&messages)) {bu_vls_free(&messages); return 1;}
+	if (list_schemas)
+	    for (const auto &schema : brlcad::step::available_schema_plugins()) bu_log("%s\n", schema.c_str());
+	const bool valid = !list_formats || brlcad::step::list_schema_mime_profiles(BU_MIME_WRITE);
 	bu_vls_free(&messages);
-	return 0;
+	return valid ? 0 : 1;
     }
     if (help) {
 	usage(options);
@@ -129,9 +138,13 @@ main(int argc, const char **argv)
     }
     bu_vls_free(&messages);
 
-    std::string schema = schema_name ? schema_name : STEP_EXPORT_DEFAULT_SCHEMA;
-    if (schema == "auto") schema = STEP_EXPORT_DEFAULT_SCHEMA;
-    if (schema == "ap242") schema = "ap242e4";
+    std::string selection_error;
+    const std::string schema = brlcad::step::select_schema_output(output_format, &output_assertions.value,
+	schema_name ? schema_name : "", STEP_EXPORT_DEFAULT_SCHEMA, selection_error);
+    if (schema.empty()) {
+	bu_log("ERROR: %s\n", selection_error.c_str());
+	return 1;
+    }
     if (native_csg && schema == "ap203") {
 	bu_log("ERROR: --native-csg requires --schema ap203e2, ap214, or AP242\n");
 	return 1;

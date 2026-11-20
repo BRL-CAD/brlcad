@@ -21,7 +21,6 @@ step_ap242_export_cli(int argc, char *argv[])
 {
     static const STEPMechanicalExportConfig config = {
 	STEP_PLUGIN_SCHEMA,
-	"'AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF'",
 	"'managed model based 3D engineering'",
 	"'BRL-CAD g-step AP242 exporter'",
 	false,

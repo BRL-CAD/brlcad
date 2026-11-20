@@ -17,7 +17,6 @@ step_ap203_export_cli(int argc, char *argv[])
 {
     static const STEPMechanicalExportConfig config = {
 	"ap203",
-	"'CONFIG_CONTROL_DESIGN'",
 	"'CONFIGURATION CONTROLLED 3D DESIGNS OF MECHANICAL PARTS AND ASSEMBLIES'",
 	"'BRL-CAD g-step AP203 exporter'",
 	true,

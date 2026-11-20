@@ -11,6 +11,9 @@
 
 #include "STEPHeaderSchema.h"
 #include "STEPString.h"
+#include "StepMime.h"
+#include "../../libbu/mime_p21.h"
+#include "bu/str.h"
 
 #include <algorithm>
 #include <cctype>
@@ -40,39 +43,17 @@ trim(const std::string &value)
 }
 
 std::string
-without_comments(const std::string &text)
+decode_identifier(const std::string &raw)
 {
-    std::string output;
-    bool comment = false;
-    bool quoted = false;
-    for (size_t i = 0; i < text.size();) {
-	if (comment) {
-	    if (i + 1 < text.size() && text[i] == '*' && text[i + 1] == '/') {
-		comment = false;
-		i += 2;
-	    } else {
-		if (text[i] == '\n' || text[i] == '\r') output.push_back(text[i]);
-		++i;
-	    }
-	    continue;
-	}
-	if (!quoted && i + 1 < text.size() && text[i] == '/' && text[i + 1] == '*') {
-	    comment = true;
-	    i += 2;
-	    continue;
-	}
-	output.push_back(text[i]);
-	if (text[i] == '\'') {
-	    if (quoted && i + 1 < text.size() && text[i + 1] == '\'') {
-		output.push_back(text[i + 1]);
-		i += 2;
-		continue;
-	    }
-	    quoted = !quoted;
-	}
-	++i;
+    /* The shared lexer already unescaped apostrophes. Restore their STEP
+     * quoting before applying the native reader's character decoding. */
+    std::string quoted = "'";
+    for (char c : raw) {
+	quoted += c;
+	if (c == '\'') quoted += c;
     }
-    return output;
+    quoted += '\'';
+    return trim(brlcad::step::decode_string(quoted));
 }
 
 bool
@@ -116,11 +97,7 @@ classify(const std::string &identifier, bool &legacy)
 bool
 ap203_interim_companion(const std::string &identifier)
 {
-    const std::string value = upper_ascii(trim(identifier));
-    return value == "GEOMETRIC_VALIDATION_PROPERTIES_MIM" ||
-	value == "GEOMETRIC_VALIDATION_PROPERTY_REPRESENTATION_MIM" ||
-	value == "SHAPE_APPEARANCE_LAYER_MIM" ||
-	value == "SHAPE_APPEARANCE_LAYERS_MIM";
+    return mime_p21::step_companion(mime_p21::schema_name(identifier));
 }
 
 } // namespace
@@ -148,79 +125,39 @@ brlcad::step::STEPHeaderSchema::inspect_file(const std::string &path)
 	return result;
     }
 
-    const size_t max_header = 16U * 1024U * 1024U;
-    std::string header;
-    header.reserve(64U * 1024U);
-    char buffer[8192];
-    while (input && header.size() < max_header) {
-	input.read(buffer, sizeof(buffer));
-	const std::streamsize count = input.gcount();
-	if (count > 0) header.append(buffer, static_cast<size_t>(count));
-	const std::string normalized = upper_ascii(without_comments(header));
-	const size_t header_pos = normalized.find("HEADER;");
-	if (header_pos != std::string::npos &&
-	    normalized.find("ENDSEC;", header_pos) != std::string::npos)
-	    return inspect_header(header);
-    }
-    result.error = "missing or over-large ISO 10303-21 HEADER section";
-    return result;
+    return inspect_stream(input);
 }
 
 brlcad::step::HeaderSchemaInfo
 brlcad::step::STEPHeaderSchema::inspect_header(const std::string &input)
 {
+    std::istringstream stream(input);
+    return inspect_stream(stream);
+}
+
+brlcad::step::HeaderSchemaInfo
+brlcad::step::STEPHeaderSchema::inspect_stream(std::istream &input)
+{
     HeaderSchemaInfo result;
-    const std::string header = without_comments(input);
-    const std::string upper = upper_ascii(header);
-    const size_t header_start = upper.find("HEADER;");
-    const size_t header_end = header_start == std::string::npos ?
-	std::string::npos : upper.find("ENDSEC;", header_start);
-    if (header_start == std::string::npos || header_end == std::string::npos) {
-	result.error = "malformed STEP HEADER section";
+    const auto observed = mime_p21::inspect(input, true);
+    if (!observed.complete) {
+	result.error = "malformed or missing ISO 10303-21 FILE_SCHEMA declaration";
 	return result;
     }
-    const size_t key_pos = upper.find("FILE_SCHEMA", header_start);
-    if (key_pos == std::string::npos || key_pos > header_end) {
-	result.error = "STEP header has no FILE_SCHEMA declaration";
+    bool header_complete = false;
+    mime_p21::tokens tail(input);
+    for (std::string value = tail.next(); !tail.ended; value = tail.next()) {
+	if (tail.quoted) continue;
+	if (value == "ENDSEC") {header_complete = tail.consume(";"); break;}
+	if (value == "DATA") break;
+    }
+    if (!header_complete || input.bad()) {
+	result.error = "malformed or incomplete STEP HEADER section";
 	return result;
     }
-    const size_t open = header.find('(', key_pos);
-    if (open == std::string::npos || open > header_end) {
-	result.error = "malformed FILE_SCHEMA declaration";
-	return result;
-    }
-
-    bool quoted = false;
-    std::string token;
-    for (size_t i = open + 1; i < header_end; ++i) {
-	const char c = header[i];
-	if (!quoted) {
-	    if (c == '\'') {
-		quoted = true;
-		token.assign(1, '\'');
-	    }
-	    continue;
-	}
-	token.push_back(c);
-	if (c == '\'') {
-	    if (i + 1 < header_end && header[i + 1] == '\'') {
-		token.push_back(header[++i]);
-		continue;
-	    }
-	    quoted = false;
-	    result.identifiers.push_back(trim(decode_string(token)));
-	    token.clear();
-	}
-    }
-    if (quoted) {
-	result.error = "unterminated FILE_SCHEMA identifier";
-	return result;
-    }
-    if (result.identifiers.empty()) {
-	result.error = "FILE_SCHEMA does not contain a schema identifier";
-	return result;
-    }
-
+    result.source_identifiers = observed.identifiers;
+    for (const auto &identifier : observed.identifiers)
+	result.identifiers.push_back(decode_identifier(identifier));
     std::set<HeaderSchema> schemas;
     for (const std::string &identifier : result.identifiers) {
 	const HeaderSchema schema = classify(identifier, result.legacy_identifier);
@@ -270,7 +207,54 @@ brlcad::step::STEPHeaderSchema::inspect_header(const std::string &input)
 	result.error = message.str();
 	return result;
     }
+    bool companion = false;
+    for (const auto &identifier : result.identifiers)
+	companion = companion || mime_p21::step_companion(mime_p21::schema_name(identifier));
+    std::set<std::string> editions;
+    bool all_editions_known = true;
+    for (const auto &identifier : result.identifiers) {
+	if (mime_p21::step_application(mime_p21::schema_name(identifier)).empty()) continue;
+	const std::string edition = mime_p21::step_edition(identifier, companion);
+	all_editions_known = all_editions_known && !edition.empty();
+	if (!edition.empty()) editions.insert(edition);
+    }
+    if (editions.size() > 1) {
+	result.ambiguous = true;
+	result.error = "ambiguous mixed STEP editions";
+	return result;
+    }
+    if (all_editions_known && editions.size() == 1) result.edition = *editions.begin();
     result.schema = *schemas.begin();
     result.recognized = true;
     return result;
+}
+
+bool
+brlcad::step::STEPHeaderSchema::matches_mime(const HeaderSchemaInfo &header, const char *format,
+    const bu_mime_traits *requested, std::string &error)
+{
+    error.clear();
+    if (header.source_identifiers.empty() || !bu_mime_traits_valid(requested, 1)) {
+	error = "missing STEP source declarations or invalid MIME assertions";
+	return false;
+    }
+    mime_p21::profile source;
+    source.identifiers = header.source_identifiers;
+    source.complete = true;
+    const std::string type = step_mime_identity(format, source.step_model());
+    if (type.empty()) {
+	error = "requested MIME format does not match the STEP source";
+	return false;
+    }
+    MimeTraits observed;
+    const bool valid = (type == "model/step" ? source.append_step_traits(observed.value) : source.append_traits(observed.value)) &&
+	bu_mime_traits_match(&observed.value, NULL, requested);
+    if (!valid) {
+	bu_vls detail = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&detail, "STEP source does not establish requested MIME traits:");
+	bu_mime_traits_describe(requested, &detail);
+	error = bu_vls_cstr(&detail);
+	bu_vls_free(&detail);
+    }
+    return valid;
 }

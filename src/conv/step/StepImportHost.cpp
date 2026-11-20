@@ -17,6 +17,7 @@
 #include "STEPHeaderSchema.h"
 #include "STEPString.h"
 #include "StepPluginHost.h"
+#include "StepMime.h"
 #include "step_plugin.h"
 
 #include <algorithm>
@@ -29,6 +30,7 @@
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/mime_runtime.h"
 #include "bu/opt.h"
 #include "bu/parallel.h"
 #include "bu/vls.h"
@@ -124,6 +126,8 @@ main(int argc, const char **argv)
 
     OutputFile output;
     int help = 0;
+    int list_schemas = 0;
+    int list_formats = 0;
     int dry_run = 0;
     int verbose = 0;
     int exact = 0;
@@ -140,11 +144,15 @@ main(int argc, const char **argv)
     char *report = NULL;
     char *summary = NULL;
     char *schema_override = NULL;
+    char *input_format = NULL;
+    brlcad::step::MimeTraits input_assertions;
     std::set<int64_t> entity_set;
     struct bu_vls messages = BU_VLS_INIT_ZERO;
     struct bu_opt_desc options[] = {
 	{"h", "help", "", NULL, &help, "print help and exit"},
 	{"?", "", "", NULL, &help, ""},
+	{"", "list-formats", "", NULL, &list_formats, "list configured reader MIME profiles"},
+	{"", "list-schemas", "", NULL, &list_schemas, "list configured schema plugins"},
 	{"D", "dry-run", "", NULL, &dry_run, "validate without writing a database"},
 	{"v", "verbose", "", NULL, &verbose, "report entity-level diagnostics"},
 	{"", "exact", "", NULL, &exact, "strictly enforce the declared model tolerance"},
@@ -165,6 +173,8 @@ main(int argc, const char **argv)
 	{"S", "summary", "FILE", bu_opt_str, &summary, "legacy entity summary"},
 	{"", "schema", "AP", bu_opt_str, &schema_override,
 	    "schema edition override (ap242e1 through ap242e4, or auto)"},
+	{"", "input-format", "MIME", bu_opt_str, &input_format, "assert source MIME identity or extension"},
+	{"", "input-trait", "key=value", bu_opt_mime_trait, &input_assertions.value, "assert a source format trait (repeatable)"},
 	{"e", "entity", "ID[,ID...]", parse_entity_ids, &entity_set, "selected representation-item IDs"},
 	{"j", "jobs", "N", bu_opt_int, &jobs, "geometry worker count"},
 	BU_OPT_DESC_NULL
@@ -174,6 +184,15 @@ main(int argc, const char **argv)
     --argc;
     argc = bu_opt_parse(&messages, argc, argv, options);
     if (bu_vls_strlen(&messages)) bu_log("%s\n", bu_vls_cstr(&messages));
+    if (list_schemas || list_formats) {
+	const bool valid = !bu_vls_strlen(&messages);
+	bu_vls_free(&messages);
+	if (!valid) return 2;
+	if (list_schemas)
+	    for (const auto &schema : brlcad::step::available_schema_plugins()) bu_log("%s\n", schema.c_str());
+	if (list_formats && !brlcad::step::list_schema_mime_profiles(BU_MIME_READ)) return 2;
+	return 0;
+    }
     if (help) {
 	usage(options);
 	bu_vls_free(&messages);
@@ -213,6 +232,11 @@ main(int argc, const char **argv)
 	bu_log("ERROR: %s\n", schema.error.c_str());
 	return 2;
     }
+    std::string profile_error;
+    if (!brlcad::step::STEPHeaderSchema::matches_mime(schema, input_format, &input_assertions.value, profile_error)) {
+	bu_log("ERROR: %s\n", profile_error.c_str());
+	return 2;
+    }
     const std::string schema_key = brlcad::step::STEPHeaderSchema::key(schema.schema);
     if (schema.schema == brlcad::step::HeaderSchema::IFC) {
 	bu_log("ERROR: recognized STEP schema '%s' requires the separate ifc-g converter\n",
@@ -237,33 +261,12 @@ main(int argc, const char **argv)
     }
 #endif
 
-    std::vector<std::string> schema_candidates;
-    const std::string requested_schema = schema_override ? schema_override : "auto";
-    if (schema.schema == brlcad::step::HeaderSchema::AP242) {
-	if (requested_schema == "auto" || requested_schema == "ap242") {
-	    /* The AP242 long-form FILE_SCHEMA name does not encode its edition.
-	     * Prefer the current binding, then retry earlier physical layouts when
-	     * parsing produces no usable model. */
-	    schema_candidates.push_back("ap242e4");
-	    schema_candidates.push_back("ap242e3");
-	    schema_candidates.push_back("ap242e2");
-	    schema_candidates.push_back("ap242e1");
-	} else if (requested_schema == "ap242e1" ||
-		requested_schema == "ap242e2" ||
-		requested_schema == "ap242e3" ||
-		requested_schema == "ap242e4") {
-	    schema_candidates.push_back(requested_schema);
-	} else {
-	    bu_log("ERROR: AP242 input requires --schema auto or ap242e1 through ap242e4\n");
-	    return 2;
-	}
-    } else {
-	if (requested_schema != "auto" && requested_schema != schema_key) {
-	    bu_log("ERROR: FILE_SCHEMA selected %s but --schema requested %s\n",
-		schema_key.c_str(), requested_schema.c_str());
-	    return 2;
-	}
-	schema_candidates.push_back(schema_key);
+    std::string selection_error;
+    const auto schema_candidates = brlcad::step::schema_plugin_candidates(schema,
+	schema_override ? schema_override : "auto", selection_error);
+    if (schema_candidates.empty()) {
+	bu_log("ERROR: %s\n", selection_error.c_str());
+	return 2;
     }
 
     std::vector<int64_t> entity_ids(entity_set.begin(), entity_set.end());

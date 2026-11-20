@@ -17,8 +17,26 @@
 #include <string>
 #include <vector>
 
+struct bu_mime_traits;
+struct bu_mime_capability;
+
 namespace brlcad {
 namespace step {
+
+struct HeaderSchemaInfo;
+std::vector<std::string> schema_plugin_candidates(const HeaderSchemaInfo &header,
+    const std::string &requested, std::string &error);
+
+std::string select_schema_output(const char *format, const bu_mime_traits *requested,
+    const std::string &explicit_schema, const std::string &default_schema, std::string &error);
+
+/** Copy a configured binding's MIME clause into an initially zeroed owner.
+ * Reader clauses describe product-model families. Generic Part 21 remains
+ * an explicit source assertion, rather than a promise to read any EXPRESS
+ * schema. A decoder binding's edition is not necessarily a source constraint. */
+bool schema_mime_capability(const std::string &schema, const char *type,
+    unsigned operation, bu_mime_capability &capability);
+bool list_schema_mime_profiles(unsigned operation);
 
 bool schema_plugin_available(const std::string &schema);
 std::vector<std::string> available_schema_plugins();

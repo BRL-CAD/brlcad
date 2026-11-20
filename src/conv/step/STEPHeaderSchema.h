@@ -14,8 +14,11 @@
 
 #include "common.h"
 
+#include <iosfwd>
 #include <string>
 #include <vector>
+
+struct bu_mime_traits;
 
 namespace brlcad {
 namespace step {
@@ -34,7 +37,10 @@ struct HeaderSchemaInfo {
     bool recognized = false;
     bool ambiguous = false;
     bool legacy_identifier = false;
+    std::string edition;
     std::vector<std::string> identifiers;
+    /* Keep literal declarations for assertions separate from decoder aliases. */
+    std::vector<std::string> source_identifiers;
     std::vector<std::string> unrecognized_identifiers;
     std::string error;
 };
@@ -44,6 +50,12 @@ public:
     static HeaderSchemaInfo inspect_file(const std::string &path);
     static HeaderSchemaInfo inspect_header(const std::string &header);
     static const char *key(HeaderSchema schema);
+    /** Check MIME identity and source assertions using the complete header.
+     * Decoder binding selection remains independent of these source facts. */
+    static bool matches_mime(const HeaderSchemaInfo &header, const char *format,
+	const bu_mime_traits *requested, std::string &error);
+private:
+    static HeaderSchemaInfo inspect_stream(std::istream &input);
 };
 
 } // namespace step

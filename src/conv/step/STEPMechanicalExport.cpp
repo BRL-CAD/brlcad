@@ -13,6 +13,7 @@
 
 #include "AP_Common.h"
 #include "STEPMechanicalExport.h"
+#include "StepMime.h"
 #include "STEPGeneratedAPI.h"
 #include "STEPExportMetadata.h"
 #include "StepExportPlan.h"
@@ -299,6 +300,11 @@ int
 STEPMechanicalExport(int argc, char *argv[], const STEPMechanicalExportConfig &config)
 {
     if (argc < 1 || !argv || !argv[0]) return 1;
+    const auto *mime_profile = brlcad::step::output_schema_profile(config.schema_key);
+    if (!mime_profile) {
+	bu_log("unknown STEP writer schema '%s'\n", config.schema_key);
+	return 1;
+    }
     bu_optind = 1;
     bu_setprogname(argv[0]);
 
@@ -479,7 +485,7 @@ STEPMechanicalExport(int argc, char *argv[], const STEPMechanicalExportConfig &c
 
     SdaiFile_schema *file_schema = (SdaiFile_schema *)step_file->HeaderDefaultFileSchema();
     StringAggregate_ptr identifiers = new StringAggregate;
-    identifiers->AddNode(new StringNode(config.schema_identifier));
+    identifiers->AddNode(new StringNode(mime_profile->file_schema));
     file_schema->schema_identifiers_(identifiers);
     header->Append((SDAI_Application_instance *)file_schema, completeSE);
 

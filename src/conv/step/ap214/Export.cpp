@@ -17,7 +17,6 @@ step_ap214_export_cli(int argc, char *argv[])
 {
     static const STEPMechanicalExportConfig config = {
 	"ap214",
-	"'AUTOMOTIVE_DESIGN {1 2 10303 214 0 1 1 1}'",
 	"'Core Data for Automotive Mechanical Design Process'",
 	"'BRL-CAD g-step AP214 exporter'",
 	false,
