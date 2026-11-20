@@ -48,6 +48,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -87,6 +89,40 @@ int		border;			/* flag for debugging; to be used later */
 int		verbose;		/* flag for debugging; to be used later */
 int		SEEN_DESCRIPT=0;	/* flag for descriptive string */
 
+static int
+parse_positive_number(const char *arg, const char *name, fastf_t *value)
+{
+    char *end = NULL;
+    double parsed;
+
+    errno = 0;
+    parsed = strtod(arg, &end);
+    if (errno != 0 || end == arg || *end != '\0' || !isfinite(parsed) || parsed <= 0.0) {
+	fprintf(stderr, "Invalid %s: %s\n", name, arg);
+	return 0;
+    }
+
+    *value = (fastf_t)parsed;
+    return 1;
+}
+
+static int
+parse_positive_integer(const char *arg, const char *name, int *value)
+{
+    char *end = NULL;
+    long parsed;
+
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || parsed < 1 || parsed > INT_MAX) {
+	fprintf(stderr, "Invalid %s: %s\n", name, arg);
+	return 0;
+    }
+
+    *value = (int)parsed;
+    return 1;
+}
+
 /*
  *
  *  Main exists to coordinate the actions of the three parts of this program.
@@ -101,9 +137,11 @@ main(int argc, char **argv)
     char		units[BUFF_LEN];	/* string for units type */
     char		label[BUFF_LEN];	/* string for scale labeling */
     char		name[BUFF_LEN];		/* incoming file name */
-    char		descript[BUFF_LEN];	/* descriptive string, optional */
+    char		descript[BUFF_LEN] = {0}; /* descriptive string, optional */
     int		intervals;		/* number of intervals */
     int		ret;			/* function return code */
+    fastf_t		width;			/* scale width in user units */
+    double		unit_scale;		/* user units to millimeters */
     fastf_t		m_len;			/* scale length in model size */
 
     bu_setprogname(argv[0]);
@@ -115,7 +153,27 @@ main(int argc, char **argv)
      * usage message.
      */
 
-    if (argc < 5)  {
+    if (argc != 5 && argc != 6)  {
+	fputs(usage, stderr);
+	bu_exit(-1, NULL);
+    }
+
+    if (!parse_positive_number(argv[1], "width", &width) ||
+	!parse_positive_integer(argv[3], "interval count", &intervals)) {
+	fputs(usage, stderr);
+	bu_exit(-1, NULL);
+    }
+
+    unit_scale = bu_units_conversion(argv[2]);
+    if (!isfinite(unit_scale) || unit_scale <= 0.0) {
+	fprintf(stderr, "Invalid units: %s\n", argv[2]);
+	fputs(usage, stderr);
+	bu_exit(-1, NULL);
+    }
+
+    m_len = width * unit_scale;
+    if (!isfinite(m_len) || m_len <= 0.0) {
+	fprintf(stderr, "Invalid converted length: %.17g %s\n", width, argv[2]);
 	fputs(usage, stderr);
 	bu_exit(-1, NULL);
     }
@@ -140,17 +198,6 @@ main(int argc, char **argv)
     if ( argc == 6 )  {
 	bu_strlcpy( descript, argv[5], sizeof(descript) );
 	SEEN_DESCRIPT = 1;
-    }
-
-    intervals = atof(argv[3]);
-
-    m_len = atof(argv[1]) * bu_units_conversion(argv[2]);
-
-    /* Check to make sure there has been a valid conversion. */
-    if (m_len <= 0)  {
-	fprintf(stderr, "Invalid length =%.6f\n", m_len);
-	fputs(usage, stderr);
-	bu_exit(-1, NULL);
     }
 
     /* Send pointer read_rt_file() a pointer to local model2view matrix
