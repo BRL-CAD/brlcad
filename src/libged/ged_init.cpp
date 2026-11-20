@@ -733,6 +733,33 @@ ged_cmd_schema_json(const char *cmd)
     return bu_vls_strgrab(&published);
 }
 
+extern "C" int
+ged_cmd_introspect(struct bu_vls *output, const char *cmd, int argc,
+	const char * const *argv)
+{
+    if (argc != 1 || !argv || !argv[0] ||
+	!BU_STR_EQUAL(argv[0], "--command-schema"))
+	return 0;
+    if (!output || !cmd) {
+	if (output)
+	    bu_vls_strcat(output,
+		"--command-schema: GED command name is missing\n");
+	return -1;
+    }
+
+    char *description = ged_cmd_schema_json(cmd);
+    if (!description) {
+	bu_vls_printf(output,
+	    "--command-schema: no grammar is registered for GED command %s\n",
+	    cmd);
+	return -1;
+    }
+    bu_vls_strcat(output, description);
+    bu_vls_putc(output, '\n');
+    bu_free(description, "GED command introspection JSON");
+    return 1;
+}
+
 extern "C" char *
 ged_cmd_help(const char *cmd, const char *invocation)
 {

@@ -422,6 +422,18 @@ ged_cmd_schema_exists(const char *cmd);
 GED_EXPORT extern char *
 ged_cmd_schema_json(const char *cmd);
 
+/** Handle BU_ARG's reserved, side-effect-free introspection request using a
+ * registered GED command grammar.  @p argv excludes the program name.  The
+ * exact single argument "--command-schema" appends JSON and a newline to
+ * @p output.  Other argument sequences leave @p output unchanged.
+ *
+ * Returns 1 when handled, 0 when not requested, and -1 when the command has no
+ * registered grammar or an argument is invalid.  This routine does not log,
+ * write a stream, or exit. */
+GED_EXPORT extern int
+ged_cmd_introspect(struct bu_vls *output, const char *cmd, int argc,
+	const char * const *argv);
+
 /** Return standard human-readable help generated from a command's native
  * schema.  @p invocation controls the synopsis command spelling and may be
  * NULL to use the schema name.  The caller owns the returned string and must

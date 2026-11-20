@@ -177,6 +177,28 @@ main(int argc, char **argv)
 	std::fprintf(stderr, "initial GED registry is incomplete\n");
 	return 1;
     }
+    struct bu_vls introspection = BU_VLS_INIT_ZERO;
+    const char *schema_request[] = {"--command-schema"};
+    if (ged_cmd_introspect(&introspection, "draw", 1, schema_request) != 1 ||
+	    !std::strstr(bu_vls_cstr(&introspection), "\"name\":\"draw\"") ||
+	    bu_vls_strlen(&introspection) < 2 ||
+	    bu_vls_cstr(&introspection)[bu_vls_strlen(&introspection) - 1] != '\n') {
+	std::fprintf(stderr, "GED command introspection did not publish schema JSON\n");
+	bu_vls_free(&introspection);
+	return 1;
+    }
+    bu_vls_trunc(&introspection, 0);
+    const char *ordinary_request[] = {"--help"};
+    if (ged_cmd_introspect(&introspection, "draw", 1, ordinary_request) != 0 ||
+	    bu_vls_strlen(&introspection) != 0 ||
+	    ged_cmd_introspect(&introspection, "registry_missing_schema", 1,
+		schema_request) != -1 ||
+	    !std::strstr(bu_vls_cstr(&introspection), "no grammar is registered")) {
+	std::fprintf(stderr, "GED command introspection return contract failed\n");
+	bu_vls_free(&introspection);
+	return 1;
+    }
+    bu_vls_free(&introspection);
     const char *suggestion = NULL;
     if (ged_cmd_lookup(&suggestion, "drwa") < 0 || !suggestion ||
 	    !BU_STR_EQUAL(suggestion, "draw")) {
