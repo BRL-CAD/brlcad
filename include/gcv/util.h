@@ -37,6 +37,18 @@
 
 __BEGIN_DECLS
 
+struct gcv_context;
+struct rt_wdb;
+
+/** Copy a native database through checked reads and writes, converting
+ * internal objects when database versions differ. Supports versions 4/5;
+ * the destination selects the representation. Call during GCV execution so
+ * V4 metadata/appearance losses can be reported and policy enforced before
+ * object writes. Existing append-only destinations retain global metadata.
+ * Unsupported object representations/names and I/O errors fail. A failed
+ * write does not roll back earlier writes. The caller owns both databases. */
+GCV_EXPORT int gcv_db_copy(struct gcv_context *context, struct rt_wdb *destination, struct db_i *source);
+
 
 /*
  * Tessellate the object at the specified path.

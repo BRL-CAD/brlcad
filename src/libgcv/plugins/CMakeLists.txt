@@ -38,6 +38,10 @@ add_subdirectory(vtk)
 
 cmakefiles(
   CMakeLists.txt
+  mime_catalog.h
+  inflate_mime.h
+  mime_output.h
+  mime_probe.h
 )
 
 # Local Variables:

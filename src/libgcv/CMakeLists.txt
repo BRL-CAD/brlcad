@@ -4,7 +4,9 @@ add_subdirectory(plugins)
 set(
   LIBGCV_SOURCES
   facetize.c
+  database.c
   gcv.c
+  mime.cpp
   region_end.c
   region_end_mc.c
 )
@@ -29,7 +31,7 @@ set_property(
 
 add_subdirectory(tests)
 
-set(GCV_IGNORE_FILES CMakeLists.txt NOTES)
+set(GCV_IGNORE_FILES CMakeLists.txt NOTES gcv_private.h mime_validate.h)
 cmakefiles(${GCV_IGNORE_FILES})
 
 distclean(${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake)

@@ -1,4 +1,7 @@
 brlcad_addexec(test_gcv_context test_context.c libgcv NO_INSTALL)
+if(TARGET test_gcv_context AND TARGET gcv-stl)
+  add_dependencies(test_gcv_context gcv-stl)
+endif()
 brlcad_add_test(NAME gcv_context_test COMMAND test_gcv_context)
 
 if(TARGET gcv-asc)

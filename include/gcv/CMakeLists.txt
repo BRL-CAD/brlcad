@@ -1,4 +1,4 @@
-set(gcv_headers defines.h api.h util.h)
+set(gcv_headers defines.h api.h runtime.h util.h)
 brlcad_manage_files(gcv_headers ${INCLUDE_DIR}/brlcad/gcv REQUIRED libgcv)
 
 cmakefiles(CMakeLists.txt)

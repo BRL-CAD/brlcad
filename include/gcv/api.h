@@ -26,110 +26,10 @@
 #ifndef GCV_API_H
 #define GCV_API_H
 
-#include "common.h"
-#include "vmath.h"
-
-#include "bu/avs.h"
-#include "bu/opt.h"
+#include "gcv/runtime.h"
 #include "bu/mime.h"
-#include "bn/tol.h"
-#include "rt/defines.h"
-#include "rt/tol.h"
-#include "gcv/defines.h"
 
 __BEGIN_DECLS
-
-
-/**
- * The big kahuna.
- */
-struct gcv_context_internal;
-struct gcv_context
-{
-    struct db_i *dbip;
-    bu_avs_t messages;
-    struct gcv_context_internal *i;  // Internal information
-};
-
-
-/**
- * Initialize a conversion context.
- */
-GCV_EXPORT void
-gcv_context_init(struct gcv_context *cxt);
-
-
-/**
- * Release a conversion context, freeing all memory internally
- * allocated by the library.  Caller is responsible for freeing the
- * context pointer itself, if necessary.
- */
-GCV_EXPORT void
-gcv_context_destroy(struct gcv_context *cxt);
-
-
-enum gcv_tessellation_algorithm {
-    GCV_TESS_DEFAULT = 0,
-    GCV_TESS_BOTTESS,
-    GCV_TESS_MARCHING_CUBES
-};
-
-
-enum gcv_filter_type {
-    GCV_FILTER_FILTER,
-    GCV_FILTER_READ,
-    GCV_FILTER_WRITE
-};
-
-
-/**
- * Conversion options.
- */
-struct gcv_opts
-{
-    /* debug flags, applied via bitwise-OR
-     * original flags are restored after conversion */
-    int bu_debug_flag;
-    uint32_t rt_debug_flag;
-    uint32_t nmg_debug_flag;
-
-    /* print debugging info if debug_mode == 1 */
-    unsigned debug_mode;
-
-    /* 0 is quiet, printing only errors */
-    unsigned verbosity_level;
-
-    /* max cpus; 0 for automatic */
-    unsigned max_cpus;
-
-    struct bn_tol calculational_tolerance;
-    struct bg_tess_tol tessellation_tolerance;
-    enum gcv_tessellation_algorithm tessellation_algorithm;
-
-    /* conversion to units */
-    fastf_t scale_factor;
-
-    /* default name for nameless objects */
-    const char *default_name;
-
-    /* number of elements in object_names
-     * if 0, convert all top-level objects */
-    size_t num_objects;
-
-    /* objects to convert */
-    const char * const *object_names;
-
-    /* Apply color randomization */
-    unsigned randomize_colors;
-};
-
-
-/**
- * Assign default option values.
- */
-GCV_EXPORT void
-gcv_opts_default(struct gcv_opts *gcv_options);
-
 
 /**
  * Input/Output/Translation filter.
@@ -141,23 +41,13 @@ struct gcv_filter {
     /* operation type */
     const enum gcv_filter_type filter_type;
 
-    /* If we have a specific model type this converter is known to
-     * handle, call it out here.  Use BU_MIME_MODEL_UNKNOWN if
-     * 'filter_type' is GCV_FILTER_FILTER or if the plugin is a
-     * multi-format I/O plugin.
-     *
-     * FIXME: input/output plugins conceivably could be something
-     * other than geometry (e.g., png input or csv output).
-     */
+    /** DEPRECATED (7.48): Declare supported MIME names
+     * in gcv_handler.formats. Retained for the legacy plugin ABI;
+     * modern handlers ignore this field. */
     const bu_mime_model_t mime_type;
 
-    /* For plugins supporting multiple file types, call this to
-     * process them.
-     *
-     * Return 1 if the input data can be processed by this filter.
-     * (for example: is the file readable by this plugin?  Return
-     * 1 if yes, 0 if no.  Later we should incorporate some notion
-     * of quality of support into this return value...) */
+    /** DEPRECATED (7.48): Use a bounded gcv_handler.probe
+     * for recognition and MIME capabilities for handler selection. */
     int (* const data_supported)(const char *data);
 
     /**
@@ -198,46 +88,19 @@ struct gcv_filter {
 };
 
 
+/** DEPRECATED (7.48): Export gcv_plugin_info_v2 returning
+ * gcv_plugin_v2 instead of the legacy gcv_plugin_info descriptor. */
 struct gcv_plugin {
     const struct gcv_filter * const * const filters;
 };
 
-
-/*
- * Return a pointer to a bu_ptbl listing all registered filters as
- * const struct gcv_filter pointers.
- */
-GCV_EXPORT const struct bu_ptbl *gcv_list_filters(struct gcv_context *context);
-
-/* Returns a pointer to a gcv_filter if it exists within the registered filters
-  * returns NULL if no matching filter can be found
-  */
+/** DEPRECATED (7.48): Use gcv_select_filter for MIME names
+ * or gcv_resolve_filter for explicit formats and content recognition.
+ * Return NULL if no matching filter is available. */
  GCV_EXPORT const struct gcv_filter*
  find_filter(enum gcv_filter_type filter_type, bu_mime_model_t mime_type, const char *data, struct gcv_context *context);
  
-/**
- * Perform a filtering operation on a gcv_context.
- *
- * If 'gcv_options' is NULL, defaults will be used as set by gcv_opts_default().
- * The parameters 'argc' and 'argv' are used for option processing as specified by
- * the filter.
- *
- * Returns 1 on success and 0 on failure.
- */
-GCV_EXPORT int
-gcv_execute(struct gcv_context *context, const struct gcv_filter *filter, const struct gcv_opts *gcv_options, size_t argc, const char * const *argv, const char *target);
-
 
 __END_DECLS
 
-#endif /* GCV_API_H */
-
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+#endif

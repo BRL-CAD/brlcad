@@ -24,10 +24,10 @@
 
 #include "common.h"
 
-#include <stdio.h>
-
 #include "bu/app.h"
 #include "bu/ptbl.h"
+#include "bu/log.h"
+#include "bu/mime.h"
 #include "gcv.h"
 
 
@@ -35,38 +35,67 @@ int
 main(int argc, const char **argv)
 {
     int failures = 0;
+    const int context_iterations = 3;
 
     (void)argc;
 
     bu_setprogname(argv[0]);
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < context_iterations; i++) {
 	struct gcv_context context;
 	const struct bu_ptbl *filters = NULL;
 
 	gcv_context_init(&context);
 	if (!context.dbip) {
-	    fprintf(stderr, "gcv_context_init did not initialize dbip\n");
+	    bu_log("gcv_context_init did not initialize dbip\n");
 	    failures++;
 	}
 	if (!context.i) {
-	    fprintf(stderr, "gcv_context_init did not initialize internals\n");
+	    bu_log("gcv_context_init did not initialize internals\n");
 	    failures++;
 	}
 
 	filters = gcv_list_filters(&context);
 	if (!filters || BU_PTBL_LEN(filters) < 2) {
-	    fprintf(stderr, "gcv_list_filters did not return built-in filters\n");
+	    bu_log("gcv_list_filters did not return built-in filters\n");
 	    failures++;
+	}
+
+	{
+	    struct gcv_context other;
+	    const struct bu_ptbl *other_filters;
+	    struct bu_mime_definition definition = {0};
+	    struct bu_vls canonical = BU_VLS_INIT_ZERO;
+	    definition.abi_version = BU_MIME_ABI_VERSION;
+	    definition.struct_size = sizeof(definition);
+	    definition.name = "model/vnd.example.context";
+	    if (!bu_mime_register(gcv_mime_registry(&context), &definition))
+		failures++;
+	    gcv_context_init(&other);
+	    other_filters = gcv_list_filters(&other);
+	    if (other_filters == filters || gcv_mime_registry(&context) == gcv_mime_registry(&other)) {
+		bu_log("GCV contexts unexpectedly share mutable registries\n");
+		failures++;
+	    }
+	    if (bu_mime_canonical(gcv_mime_registry(&other), definition.name, &canonical))
+		failures++;
+	    bu_vls_free(&canonical);
+	    gcv_context_destroy(&other);
+	    /* Discovery in another context must not invalidate our filters. */
+	    for (size_t j = 0; j < BU_PTBL_LEN(filters); ++j) {
+		const struct gcv_filter *filter = (const struct gcv_filter *)BU_PTBL_GET(filters, j);
+		if (!filter->name || !filter->name[0] || !filter->filter_fn)
+		    failures++;
+	    }
 	}
 
 	gcv_context_destroy(&context);
 	if (context.dbip) {
-	    fprintf(stderr, "gcv_context_destroy did not clear dbip\n");
+	    bu_log("gcv_context_destroy did not clear dbip\n");
 	    failures++;
 	}
 	if (context.i) {
-	    fprintf(stderr, "gcv_context_destroy did not clear internals\n");
+	    bu_log("gcv_context_destroy did not clear internals\n");
 	    failures++;
 	}
     }
