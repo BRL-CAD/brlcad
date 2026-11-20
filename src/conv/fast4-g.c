@@ -32,12 +32,13 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
 #include "bio.h"
 
 /* interface headers */
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/debug.h"
-#include "bu/getopt.h"
 #include "bu/path.h"
 #include "rt/db4.h"
 #include "vmath.h"
@@ -215,7 +216,6 @@ struct f4g_state {
     int bot;			/* Flag: >0 -> There are BOT's in current component */
     int warnings;		/* Flag: >0 -> Print warning messages */
     int debug;			/* Debug flag */
-    int frt_debug;		/* RT_G_DEBUG */
     int quiet;			/* flag to not blather */
     int comp_count;		/* Count of components in FASTGEN4 file */
     int f4_do_skips;		/* flag indicating that not all components will be processed */
@@ -267,7 +267,6 @@ void f4g_init(struct f4g_state *s)
     s->bot = 0;
     s->warnings = 0;
     s->debug = 0;
-    s->frt_debug = 0;
     s->quiet = 0;
     s->comp_count = 0;
     s->f4_do_skips = 0;
@@ -295,22 +294,6 @@ void f4g_init(struct f4g_state *s)
     s->grid_size = GRID_BLOCK;
     s->grid_points = (point_t *)bu_calloc(s->grid_size, sizeof(point_t), "fast4-g: grid_points");
 }
-
-static void
-usage(void) {
-    bu_log("Usage: fast4-g [-dwq] [-c component_list] [-m muves_file] [-o plot_file] [-b BU_DEBUG_FLAG] [-x RT_DEBUG_FLAG] fastgen4_bulk_data_file output.g\n");
-    bu_log("	d - print debugging info\n");
-    bu_log("	q - quiet mode (don't say anything except error messages)\n");
-    bu_log("	w - print warnings about creating default names\n");
-    bu_log("	c - process only the listed region ids, may be a list (3001, 4082, 5347) or a range (2314-3527)\n");
-    bu_log("	m - create a MUVES input file containing CHGCOMP and CBACKING elements\n");
-    bu_log("	o - create a 'plot_file' containing a libplot3 plot file of all CTRI and CQUAD elements processed\n");
-    bu_log("	b - set LIBBU debug flag\n");
-    bu_log("	x - set RT debug flag\n");
-
-    bu_exit(1, NULL);
-}
-
 
 static int
 get_line(struct f4g_state *s)
@@ -2560,39 +2543,109 @@ Process_input(struct f4g_state *s, int pass_number)
 }
 
 
-static void
-make_region_list(struct f4g_state *s, char *str)
+static int
+fast4_region_spec_next(const char **cursor, int *start, int *stop)
 {
-    char *ptr, *ptr2;
+    const char *value_start;
+    const char *next;
+    char *value_end;
+    long value;
 
-    s->region_list = (int *)bu_calloc(REGION_LIST_BLOCK, sizeof(int), "region_list");
+    if (!cursor || !*cursor || !start || !stop)
+	return -1;
+    value_start = *cursor;
+    while (isspace((unsigned char)*value_start))
+	value_start++;
+    if (!*value_start)
+	return 0;
+
+    errno = 0;
+    value = strtol(value_start, &value_end, 10);
+    if (value_end == value_start || errno == ERANGE || value < 0 ||
+	value > INT_MAX)
+	return -1;
+    *start = (int)value;
+    *stop = *start;
+    while (isspace((unsigned char)*value_end))
+	value_end++;
+    if (*value_end == '-') {
+	value_start = value_end + 1;
+	while (isspace((unsigned char)*value_start))
+	    value_start++;
+	errno = 0;
+	value = strtol(value_start, &value_end, 10);
+	if (value_end == value_start || errno == ERANGE || value < *start ||
+	    value > INT_MAX)
+	    return -1;
+	*stop = (int)value;
+	while (isspace((unsigned char)*value_end))
+	    value_end++;
+    }
+    if (*value_end == ',') {
+	next = value_end + 1;
+	while (isspace((unsigned char)*next))
+	    next++;
+	if (!*next)
+	    return -1;
+	*cursor = next;
+    } else if (!*value_end) {
+	*cursor = value_end;
+    } else {
+	return -1;
+    }
+    return 1;
+}
+
+
+static int
+fast4_region_list_validate(struct bu_vls *msg, const char *arg)
+{
+    const char *cursor = arg;
+    int start;
+    int stop;
+    int status;
+
+    if (!arg || !*arg)
+	status = -1;
+    else
+	while ((status = fast4_region_spec_next(&cursor, &start, &stop)) > 0)
+	    ;
+    if (status < 0 && msg)
+	bu_vls_printf(msg, "invalid region list: %s\n", arg ? arg : "");
+    return status < 0 ? -1 : 0;
+}
+
+
+static void
+fast4_region_list_append(struct f4g_state *s, int region_id)
+{
+    if (s->f4_do_skips == s->region_list_len) {
+	s->region_list_len += REGION_LIST_BLOCK;
+	s->region_list = (int *)bu_realloc((char *)s->region_list,
+	    s->region_list_len * sizeof(int), "region_list");
+    }
+    s->region_list[s->f4_do_skips++] = region_id;
+}
+
+
+static void
+make_region_list(struct f4g_state *s, const char *specification)
+{
+    const char *cursor = specification;
+    int start;
+    int stop;
+
+    s->region_list = (int *)bu_calloc(REGION_LIST_BLOCK, sizeof(int),
+	"region_list");
     s->region_list_len = REGION_LIST_BLOCK;
     s->f4_do_skips = 0;
 
-    ptr = strtok(str, CPP_XSTR(COMMA));
-    while (ptr) {
-	if ((ptr2=strchr(ptr, '-'))) {
-	    int i, start, stop;
-
-	    *ptr2 = '\0';
-	    ptr2++;
-	    start = atoi(ptr);
-	    stop = atoi(ptr2);
-	    for (i=start; i<=stop; i++) {
-		if (s->f4_do_skips == s->region_list_len) {
-		    s->region_list_len += REGION_LIST_BLOCK;
-		    s->region_list = (int *)bu_realloc((char *)s->region_list, s->region_list_len*sizeof(int), "region_list");
-		}
-		s->region_list[s->f4_do_skips++] = i;
-	    }
-	} else {
-	    if (s->f4_do_skips == s->region_list_len) {
-		s->region_list_len += REGION_LIST_BLOCK;
-		s->region_list = (int *)bu_realloc((char *)s->region_list, s->region_list_len*sizeof(int), "region_list");
-	    }
-	    s->region_list[s->f4_do_skips++] = atoi(ptr);
+    while (fast4_region_spec_next(&cursor, &start, &stop) > 0) {
+	for (int region_id = start; ; region_id++) {
+	    fast4_region_list_append(s, region_id);
+	    if (region_id == stop)
+		break;
 	}
-	ptr = strtok((char *)NULL, ", ");
     }
 }
 
@@ -2763,7 +2816,7 @@ make_regions(struct f4g_state *s)
 #define COLOR_LINE_LEN 256
 
 static void
-read_fast4_colors(struct f4g_state *s, char *color_file)
+read_fast4_colors(struct f4g_state *s, const char *color_file)
 {
     FILE *fp;
     char colorline[COLOR_LINE_LEN] = {0};
@@ -2802,77 +2855,144 @@ read_fast4_colors(struct f4g_state *s, char *color_file)
 }
 
 
+struct fast4_g_args {
+    int help;
+    int quiet;
+    int debug;
+    int warnings;
+    const char *muves_file;
+    const char *plot_file;
+    const char *component_list;
+    const char *color_file;
+    unsigned int rt_debug;
+    unsigned int bu_debug;
+};
+
+static const struct bu_arg_option fast4_g_options[] = {
+    BU_ARG_FLAG("h", "help", struct fast4_g_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("q", "quiet", struct fast4_g_args, quiet,
+	"Suppress progress output while retaining errors"),
+    BU_ARG_FLAG("d", "debug", struct fast4_g_args, debug,
+	"Write converter diagnostics"),
+    BU_ARG_FLAG("w", "warnings", struct fast4_g_args, warnings,
+	"Warn when generated component names are used"),
+    BU_ARG_VALUE("m", "muves-output", struct fast4_g_args, muves_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file",
+	"Write CHGCOMP and CBACKING records as MUVES input"),
+    BU_ARG_VALUE("o", "plot-output", struct fast4_g_args, plot_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file.plot3",
+	"Write processed CTRI and CQUAD elements as plot3 data"),
+    BU_ARG_VALUE_VALIDATE("c", "components", struct fast4_g_args,
+	component_list, BU_ARG_VALUE_STRING, fast4_region_list_validate,
+	"ident[,ident|first-last...]",
+	"Convert only the listed region identifiers and inclusive ranges"),
+    BU_ARG_VALUE("C", "color-file", struct fast4_g_args, color_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file",
+	"Read region identifier ranges and RGB colors from this file"),
+    BU_ARG_VALUE("x", "rt-debug", struct fast4_g_args, rt_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set librt hexadecimal debug flags"),
+    BU_ARG_VALUE("b", "bu-debug", struct fast4_g_args, bu_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set libbu hexadecimal debug flags"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand fast4_g_operands[] = {
+    BU_ARG_OPERAND("input.fastgen4", BU_ARG_VALUE_FILE, 1, 1,
+	"Input FASTGEN4 bulk-data file", NULL),
+    BU_ARG_OPERAND("output.g", BU_ARG_VALUE_FILE, 1, 1,
+	"Output BRL-CAD database", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema fast4_g_schema = BU_ARG_SCHEMA(
+    "fast4-g", "Convert FASTGEN4 geometry to a BRL-CAD database",
+    fast4_g_options, fast4_g_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar fast4_g_grammar = {
+    &fast4_g_schema, NULL, NULL
+};
+
+static int
+fast4_g_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&fast4_g_schema, "fast4-g");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "fast4-g help");
+    return status;
+}
+
+
 int
 main(int argc, char **argv)
 {
-    int c;
-    char *plot_file = NULL;
-    char *color_file = NULL;
+    struct fast4_g_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    const char *input_file;
+    const char *output_file;
+    int introspection;
+    int operand_index;
     struct f4g_state s;
 
     bu_setprogname(argv[0]);
 
+    introspection = bu_arg_introspect(&msg, &fast4_g_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    operand_index = bu_arg_schema_parse_complete(&fast4_g_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return fast4_g_help(stdout, 0);
+
+    input_file = argv[operand_index + 1];
+    output_file = argv[operand_index + 2];
+
     f4g_init(&s);
+    s.quiet = args.quiet;
+    s.debug = args.debug;
+    s.warnings = args.warnings;
+    rt_debug = args.rt_debug;
+    bu_debug = args.bu_debug;
+    if (args.component_list)
+	make_region_list(&s, args.component_list);
 
-    while ((c=bu_getopt(argc, argv, "qm:o:c:dwx:b:X:C:h?")) != -1) {
-	switch (c) {
-	    case 'q':	/* quiet mode */
-		s.quiet = 1;
-		break;
-	    case 'm':
-		if ((s.fp_muves=fopen(bu_optarg, "wb")) == (FILE *)NULL) {
-		    bu_log("Unable to open MUVES file (%s)\n\tno MUVES file created\n",
-			   bu_optarg);
-		}
-		break;
-	    case 'o':	/* output a plotfile of original FASTGEN4 elements */
-		s.f4_do_plot = 1;
-		plot_file = bu_optarg;
-		break;
-	    case 'c':	/* convert only the specified components */
-		make_region_list(&s, bu_optarg);
-		break;
-	    case 'd':	/* debug option */
-		s.debug = 1;
-		break;
-	    case 'w':	/* print warnings */
-		s.warnings = 1;
-		break;
-	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&s.frt_debug);
-		rt_debug = s.frt_debug;
-		break;
-	    case 'b':
-		sscanf(bu_optarg, "%x", (unsigned int *)&bu_debug);
-		break;
-	    case 'C':
-		color_file = bu_optarg;
-		break;
-	    default:
-		usage();
-		break;
+    if ((s.fpin=fopen(input_file, "rb")) == (FILE *)NULL) {
+	perror("fast4-g");
+	bu_exit(1, "Cannot open FASTGEN4 file (%s)\n", input_file);
+    }
+
+    if (args.plot_file) {
+	if ((s.fp_plot=fopen(args.plot_file, "wb")) == NULL) {
+	    perror("fast4-g");
+	    bu_exit(1, "Cannot open plot file (%s)\n", args.plot_file);
+	}
+	s.f4_do_plot = 1;
+    }
+
+    if (args.muves_file) {
+	if ((s.fp_muves=fopen(args.muves_file, "wb")) == NULL) {
+	    bu_log("Unable to open MUVES file (%s)\n\tno MUVES file created\n",
+		args.muves_file);
 	}
     }
 
-    if (argc-bu_optind != 2) {
-	usage();
-    }
-
-    if ((s.fpin=fopen(argv[bu_optind], "rb")) == (FILE *)NULL) {
+    if ((s.fpout=wdb_fopen(output_file)) == NULL) {
 	perror("fast4-g");
-	bu_exit(1, "Cannot open FASTGEN4 file (%s)\n", argv[bu_optind]);
-    }
-
-    if ((s.fpout=wdb_fopen(argv[bu_optind+1])) == NULL) {
-	perror("fast4-g");
-	bu_exit(1, "Cannot open file for output (%s)\n", argv[bu_optind+1]);
-    }
-
-    if (plot_file) {
-	if ((s.fp_plot=fopen(plot_file, "wb")) == NULL) {
-	    bu_log("Cannot open plot file (%s)\n", plot_file);
-	    usage();
-	}
+	bu_exit(1, "Cannot open file for output (%s)\n", output_file);
     }
 
     if (rt_debug) {
@@ -2883,13 +3003,9 @@ main(int argc, char **argv)
 	bu_printb("libbu bu_debug", bu_debug, BU_DEBUG_FORMAT);
 	bu_log("\n");
     }
-    if (nmg_debug) {
-	bu_printb("librt nmg_debug", nmg_debug, NMG_DEBUG_FORMAT);
-	bu_log("\n");
-    }
 
-    if (color_file)
-	read_fast4_colors(&s, color_file);
+    if (args.color_file)
+	read_fast4_colors(&s, args.color_file);
 
 
     cline_root = (struct cline *)NULL;
@@ -2917,7 +3033,7 @@ main(int argc, char **argv)
     /* Make an ID record if no vehicle card was found */
     if (!s.vehicle[0]) {
 	struct bu_vls fname = BU_VLS_INIT_ZERO;
-	bu_path_component(&fname, argv[bu_optind], BU_PATH_BASENAME);
+	bu_path_component(&fname, input_file, BU_PATH_BASENAME);
 	mk_id_units(s.fpout, bu_vls_cstr(&fname), "in");
 	bu_vls_free(&fname);
     }
