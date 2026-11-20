@@ -59,6 +59,16 @@ ged_lod_grammar_lint(struct bu_vls *msgs)
     return ged_cmd_native_forms_lint(&ged_view_lod_forms, msgs);
 }
 
+static int
+ged_lod_grammar_complete(struct ged *gedp, const char *input,
+	size_t cursor_pos,
+	const struct ged_cmd_completion_request *UNUSED(request),
+	struct ged_cmd_validate_result *result)
+{
+    return ged_cmd_native_validate(gedp, &ged_view_lod_schema, input,
+	cursor_pos, result);
+}
+
 static char *
 ged_lod_grammar_help(const char *invocation)
 {
@@ -69,7 +79,7 @@ ged_lod_grammar_help(const char *invocation)
 static const struct ged_cmd_grammar ged_lod_grammar = {
     "lod", "Manage level-of-detail drawing settings", ged_lod_grammar_validate,
     ged_lod_grammar_analyze, ged_view_lod_grammar_json,
-    ged_lod_grammar_lint, NULL, ged_lod_grammar_help
+    ged_lod_grammar_lint, ged_lod_grammar_complete, ged_lod_grammar_help
 };
 
 

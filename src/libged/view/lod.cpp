@@ -91,6 +91,22 @@ ged_view_lod_validation_result(struct bu_arg_validate_result *result,
 }
 
 
+static void
+ged_view_lod_keyword_result(struct bu_arg_validate_result *result,
+	const char * const *values, const char *value, size_t token,
+	const char *hint)
+{
+    int exact = ged_view_lod_keyword(values, value);
+
+    ged_view_lod_validation_result(result,
+	exact ? BU_ARG_VALIDATE_VALID : BU_ARG_VALIDATE_INVALID,
+	token, BU_ARG_VALUE_KEYWORD, hint);
+    bu_arg_keyword_candidates(result, values, value ? value : "");
+    if (!exact && result->completion_count)
+	result->state = BU_ARG_VALIDATE_INCOMPLETE;
+}
+
+
 static int
 ged_view_lod_prefix_state(const char * const *operands, size_t count,
 	struct bu_arg_validate_result *result, size_t token, int at_end)
@@ -104,9 +120,8 @@ ged_view_lod_prefix_state(const char * const *operands, size_t count,
 	return 0;
     }
     if (!ged_view_lod_keyword(ged_view_lod_actions, action)) {
-	ged_view_lod_validation_result(result, BU_ARG_VALIDATE_INVALID, token,
-	    BU_ARG_VALUE_KEYWORD, "known LoD action required");
-	bu_arg_keyword_candidates(result, ged_view_lod_actions, action);
+	ged_view_lod_keyword_result(result, ged_view_lod_actions, action, token,
+	    "known LoD action required");
 	return 0;
     }
     if (BU_STR_EQUAL(action, "0") || BU_STR_EQUAL(action, "1")) {
@@ -131,10 +146,9 @@ ged_view_lod_prefix_state(const char * const *operands, size_t count,
 		BU_ARG_VALUE_KEYWORD, "LoD enable value");
 	    return 0;
 	}
-	ged_view_lod_validation_result(result, BU_ARG_VALIDATE_INVALID, token,
-	    BU_ARG_VALUE_KEYWORD, "LoD enable value must be 0 or 1");
-	if (count == 2)
-	    bu_arg_keyword_candidates(result, ged_view_lod_binary_values, operands[1]);
+	ged_view_lod_keyword_result(result, ged_view_lod_binary_values,
+	    count == 2 ? operands[1] : "", token,
+	    "LoD enable value must be 0 or 1");
 	return 0;
     }
     if (BU_STR_EQUAL(action, "cache")) {
@@ -146,9 +160,8 @@ ged_view_lod_prefix_state(const char * const *operands, size_t count,
 	    return 0;
 	}
 	if (!ged_view_lod_keyword(ged_view_lod_cache_actions, operands[1])) {
-	    ged_view_lod_validation_result(result, BU_ARG_VALIDATE_INVALID, token,
-		BU_ARG_VALUE_KEYWORD, "cache action must be clear or exists");
-	    bu_arg_keyword_candidates(result, ged_view_lod_cache_actions, operands[1]);
+	    ged_view_lod_keyword_result(result, ged_view_lod_cache_actions,
+		operands[1], token, "cache action must be clear or exists");
 	    return 0;
 	}
 	if (BU_STR_EQUAL(operands[1], "exists")) {
@@ -169,10 +182,9 @@ ged_view_lod_prefix_state(const char * const *operands, size_t count,
 		BU_ARG_VALUE_KEYWORD, "cache clear scope");
 	    return 0;
 	}
-	ged_view_lod_validation_result(result, BU_ARG_VALIDATE_INVALID, token,
-	    BU_ARG_VALUE_KEYWORD, "cache clear scope must be all_files");
-	if (count == 3)
-	    bu_arg_keyword_candidates(result, ged_view_lod_cache_clear_actions, operands[2]);
+	ged_view_lod_keyword_result(result, ged_view_lod_cache_clear_actions,
+	    count == 3 ? operands[2] : "", token,
+	    "cache clear scope must be all_files");
 	return 0;
     }
 
@@ -240,36 +252,25 @@ ged_view_lod_validate(const struct bu_arg_schema *schema, size_t argc,
 	if (count < 3)
 	    operands[count] = current;
 	if (!count) {
-	    ged_view_lod_validation_result(result,
-		ged_view_lod_keyword(ged_view_lod_actions, current) ? BU_ARG_VALIDATE_VALID :
-		BU_ARG_VALIDATE_INVALID, cursor_arg, BU_ARG_VALUE_KEYWORD,
-		"LoD action required");
-	    bu_arg_keyword_candidates(result, ged_view_lod_actions, current);
+	    ged_view_lod_keyword_result(result, ged_view_lod_actions, current,
+		cursor_arg, "LoD action required");
 	    return 0;
 	}
 	const char *action = operands[0];
 	if (count == 1 && (BU_STR_EQUAL(action, "csg") || BU_STR_EQUAL(action, "mesh"))) {
-	    ged_view_lod_validation_result(result,
-		ged_view_lod_keyword(ged_view_lod_binary_values, current) ? BU_ARG_VALIDATE_VALID :
-		BU_ARG_VALIDATE_INVALID, cursor_arg, BU_ARG_VALUE_KEYWORD,
-		"LoD enable value must be 0 or 1");
-	    bu_arg_keyword_candidates(result, ged_view_lod_binary_values, current);
+	    ged_view_lod_keyword_result(result, ged_view_lod_binary_values, current,
+		cursor_arg, "LoD enable value must be 0 or 1");
 	    return 0;
 	}
 	if (count == 1 && BU_STR_EQUAL(action, "cache")) {
-	    ged_view_lod_validation_result(result,
-		ged_view_lod_keyword(ged_view_lod_cache_actions, current) ? BU_ARG_VALIDATE_VALID :
-		BU_ARG_VALIDATE_INVALID, cursor_arg, BU_ARG_VALUE_KEYWORD,
-		"cache action must be clear or exists");
-	    bu_arg_keyword_candidates(result, ged_view_lod_cache_actions, current);
+	    ged_view_lod_keyword_result(result, ged_view_lod_cache_actions, current,
+		cursor_arg, "cache action must be clear or exists");
 	    return 0;
 	}
 	if (count == 2 && BU_STR_EQUAL(action, "cache") &&
 	    BU_STR_EQUAL(operands[1], "clear")) {
-	    ged_view_lod_validation_result(result,
-		BU_STR_EQUAL(current, "all_files") ? BU_ARG_VALIDATE_VALID : BU_ARG_VALIDATE_INVALID,
-		cursor_arg, BU_ARG_VALUE_KEYWORD, "cache clear scope must be all_files");
-	    bu_arg_keyword_candidates(result, ged_view_lod_cache_clear_actions, current);
+	    ged_view_lod_keyword_result(result, ged_view_lod_cache_clear_actions,
+		current, cursor_arg, "cache clear scope must be all_files");
 	    return 0;
 	}
 	if (count == 1 && (BU_STR_EQUAL(action, "scale") ||
