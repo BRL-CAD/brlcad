@@ -1707,6 +1707,7 @@ include/bu/path.h: #define BU_PATH_MATCH_CASEFOLD    0x10 /**< bu_path_match() f
 include/bu/path.h: BU_EXPORT extern int bu_path_match(const char *pattern, const char *pathname, int flags);
 include/bu/process.h: #define ERROR_PROCESS_ABORTED 1067L
 include/bu/process.h: BU_EXPORT extern void bu_process_create(struct bu_process **pinfo, const char **argv, int process_creation_opts);
+include/bu/process.h: BU_EXPORT extern void bu_process_create_ex(struct bu_process **pinfo, const char **argv, const struct bu_process_create_info *create_info);
 include/bu/process.h: BU_EXPORT extern int bu_process_func(struct bu_process_func_info *info, bu_process_func_t func, void *data, int timeout_ms, int flags);
 include/bu/process.h: BU_EXPORT extern int bu_process_wait_n(struct bu_process **pinfo, int wtime);
 include/bu/process.h: BU_EXPORT extern int bu_process_alive(struct bu_process *pinfo);
@@ -2526,6 +2527,7 @@ include/dm.h: DM_EXPORT struct fb *fb_raw(const char *type);
 include/dm.h: DM_EXPORT void fb_put(struct fb *ifp);
 include/dm.h: DM_EXPORT struct dm *fb_get_dm(struct fb *ifp);
 include/dm.h: DM_EXPORT extern const char *fb_gettype(struct fb *ifp);
+include/dm.h: DM_EXPORT extern int fb_is_remote_ipc(const struct fb *ifp);
 include/dm.h: DM_EXPORT extern void fb_set_standalone(struct fb *ifp, int val);
 include/dm.h: DM_EXPORT extern int fb_get_standalone(struct fb *ifp);
 include/dm.h: DM_EXPORT extern int fb_get_max_width(struct fb *ifp);
@@ -2551,6 +2553,8 @@ include/dm.h: DM_EXPORT extern int fb_writerect(struct fb *ifp, int xmin, int ym
 include/dm.h: DM_EXPORT extern int fb_bwreadrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp);
 include/dm.h: DM_EXPORT extern int fb_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp);
 include/dm.h: DM_EXPORT extern struct fb *fb_open(const char *file, int _width, int _height);
+include/dm.h: DM_EXPORT extern struct fb *fb_open_with_auth(const char *file, int _width, int _height, const char *auth_token);
+include/dm.h: DM_EXPORT extern struct fb *fb_open_with_auth_and_tls(const char *file, int _width, int _height, const char *auth_token, const char *tls_pin);
 include/dm.h: DM_EXPORT extern int fb_close(struct fb *ifp);
 include/dm.h: DM_EXPORT extern int fb_close_existing(struct fb *ifp);
 include/dm.h: DM_EXPORT extern int fb_genhelp(void);
@@ -2622,6 +2626,7 @@ include/dm.h: #define MSG_FBSETCURSOR   31            /**< @brief NEW in Release
 include/dm.h: #define MSG_FBBWREADRECT  32            /**< @brief NEW in Release 4.6 */
 include/dm.h: #define MSG_FBBWWRITERECT 33            /**< @brief NEW in Release 4.6 */
 include/dm.h: #define MSG_FBAUTH        34            /**< @brief Session token authentication */
+include/dm.h: #define MSG_FBTLS         35            /**< @brief TLS capability negotiation */
 include/dm.h: #define MSG_DATA          20
 include/dm.h: #define MSG_RETURN        21
 include/dm.h: #define MSG_CLOSE         22
@@ -2650,10 +2655,14 @@ include/dm/fbserv.h: DM_EXPORT extern int fbs_close(struct fbserv_obj *fbsp);
 include/dm/fbserv.h: DM_EXPORT extern struct pkg_switch *fbs_pkg_switch(void);
 include/dm/fbserv.h: DM_EXPORT extern void fbs_setup_socket(int fd);
 include/dm/fbserv.h: DM_EXPORT extern int fbs_new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp, void *data);
+include/dm/fbserv.h: DM_EXPORT extern void fbs_drop_client(struct fbserv_obj *fbsp, int sub);
 include/dm/fbserv.h: DM_EXPORT extern void fbs_existing_client_handler(void *clientData, int mask);
 include/dm/fbserv.h: DM_EXPORT extern int fbs_open_ipc(struct fbserv_obj *fbsp);
 include/dm/fbserv.h: DM_EXPORT extern const char *fbs_ipc_child_addr_env(struct fbserv_obj *fbsp);
+include/dm/fbserv.h: DM_EXPORT extern size_t fbs_ipc_child_fds(struct fbserv_obj *fbsp, int fds[2]);
+include/dm/fbserv.h: DM_EXPORT extern void fbs_close_ipc_child(struct fbserv_obj *fbsp);
 include/dm/fbserv.h: DM_EXPORT extern const char *fbs_generate_token(struct fbserv_obj *fbsp);
+include/dm/fbserv.h: DM_EXPORT extern int fbs_create_token(char *token, size_t token_size);
 include/dm/util.h: DM_EXPORT unsigned long long dm_hash(struct dm *dmp);
 include/dm/util.h: DM_EXPORT void dm_generic_hook(const struct bu_structparse *sdp, const char *name, void *base, const char *value, void *data);
 include/dm/util.h: DM_EXPORT int dm_validXType(const char *dpy_string, const char *name);
@@ -3997,14 +4006,16 @@ include/pkg.h: PKG_EXPORT extern int pkg_is_stdio_mode(const struct pkg_conn *pc
 include/pkg.h: PKG_EXPORT extern int pkg_set_send_buffer(struct pkg_conn *pc, size_t bytes);
 include/pkg.h: PKG_EXPORT extern int pkg_set_recv_buffer(struct pkg_conn *pc, size_t bytes);
 include/pkg.h: PKG_EXPORT extern int pkg_set_nodelay(struct pkg_conn *pc, int on);
-include/pkg.h: PKG_EXPORT extern int pkg_set_tls(struct pkg_conn *pc, void *tls_ctx, ptrdiff_t (*tls_read)(void *ctx, void *buf, size_t n), ptrdiff_t (*tls_write)(void *ctx, const void *buf, size_t n), void (*tls_free)(void *ctx));
+include/pkg.h: PKG_EXPORT extern int pkg_set_tls(struct pkg_conn *pc, void *tls_ctx, ptrdiff_t (*tls_read)(void *ctx, void *buf, size_t n), ptrdiff_t (*tls_write)(void *ctx, const void *buf, size_t n), int (*tls_pending)(void *ctx), void (*tls_free)(void *ctx));
 include/pkg.h: PKG_EXPORT extern struct pkg_conn *pkg_adopt_socket(int fd, const struct pkg_switch *switchp, pkg_errlog errlog);
+include/pkg.h: PKG_EXPORT extern struct pkg_conn *pkg_borrow_socket(int fd, const struct pkg_switch *switchp, pkg_errlog errlog);
 include/pkg.h: #define PKG_ADDR_ENVVAR "PKG_ADDR"
 include/pkg.h: #define PKG_TRANSPORT_PREFER_ENVVAR "PKG_TRANSPORT_PREFER"
 include/pkg.h: PKG_EXPORT extern int pkg_pair(struct pkg_conn **parent_end, struct pkg_conn **child_end, const struct pkg_switch *switchp, pkg_errlog errlog);
 include/pkg.h: PKG_EXPORT extern int pkg_pair_prefer(struct pkg_conn **parent_end, struct pkg_conn **child_end, const struct pkg_switch *switchp, pkg_errlog errlog, pkg_transport_t preferred);
 include/pkg.h: PKG_EXPORT extern const char *pkg_child_addr_env(struct pkg_conn *pc);
 include/pkg.h: PKG_EXPORT extern const char *pkg_child_addr(struct pkg_conn *pc);
+include/pkg.h: PKG_EXPORT extern int pkg_addr_uses_inherited_fds(const char *addr);
 include/pkg.h: PKG_EXPORT extern struct pkg_conn *pkg_connect_addr(const char *addr, const struct pkg_switch *switchp, pkg_errlog errlog);
 include/pkg.h: PKG_EXPORT extern int pkg_ipc_addr(char *addr, size_t len, const char *name_hint);
 include/pkg.h: PKG_EXPORT extern int pkg_addr_is_ipc_listener(const char *addr);
@@ -4012,6 +4023,7 @@ include/pkg.h: PKG_EXPORT extern struct pkg_conn *pkg_connect_env(const struct p
 include/pkg.h: PKG_EXPORT extern struct pkg_conn *pkg_adopt_fds(int rfd, int wfd, const struct pkg_switch *switchp, pkg_errlog errlog);
 include/pkg.h: PKG_EXPORT extern struct pkg_conn *pkg_adopt_stdio(const struct pkg_switch *switchp, pkg_errlog errlog);
 include/pkg.h: PKG_EXPORT extern int pkg_move_high_fd(struct pkg_conn *pc, int min_fd);
+include/pkg.h: PKG_EXPORT extern int pkg_conn_poll(const struct pkg_conn *pc);
 include/pkg.h: PKG_EXPORT extern pkg_listener_t *pkg_listen(const char *service, const char *iface_or_null, int backlog, pkg_errlog errlog);
 include/pkg.h: PKG_EXPORT extern struct pkg_conn *pkg_accept(pkg_listener_t *L, const struct pkg_switch *switchp, pkg_errlog errlog, int nonblocking);
 include/pkg.h: PKG_EXPORT extern int pkg_get_listener_fd(const pkg_listener_t *L);
@@ -4294,6 +4306,8 @@ include/rt/calc.h: RT_EXPORT extern int rt_in_rpp(struct xray *rp, const fastf_t
 include/rt/calc.h: RT_EXPORT extern int rt_bound_internal(struct db_i *dbip, struct directory *dp, point_t rpp_min, point_t rpp_max);
 include/rt/calc.h: RT_EXPORT extern int rt_bound_instance(point_t *bmin, point_t *bmax, struct directory *dp, struct db_i *dbip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, mat_t *s_mat );
 include/rt/calc.h: RT_EXPORT extern int rt_obj_bounds(struct bu_vls *msgs, struct db_i *dbip, int argc, const char *argv[], int use_air, point_t rpp_min, point_t rpp_max);
+include/rt/calc.h: #define RT_OBJ_BOUNDS_IGNORE_INFINITE 0x1
+include/rt/calc.h: RT_EXPORT extern int rt_obj_bounds_mat(struct bu_vls *msgs, struct db_i *dbip, int argc, const char *argv[], int use_air, const mat_t model2bounds, int flags, point_t rpp_min, point_t rpp_max);
 include/rt/calc.h: RT_EXPORT extern int rt_shader_mat(mat_t model_to_shader, const struct rt_i *rtip, const struct region *rp, point_t p_min, point_t p_max);
 include/rt/calc.h: RT_EXPORT extern struct rt_db_internal *rt_mirror(struct db_i *dpip, struct rt_db_internal *ip, point_t mirror_pt, vect_t mirror_dir);
 include/rt/calc.h: RT_EXPORT extern void rt_plot_all_bboxes(FILE *fp, struct rt_i *rtip);
@@ -5806,6 +5820,7 @@ include/tclcad/setup.h: TCLCAD_EXPORT extern int tclcad_tk_setup(Tcl_Interp *int
 include/tclcad/setup.h: TCLCAD_EXPORT extern void tclcad_auto_path(Tcl_Interp *interp);
 include/tclcad/setup.h: TCLCAD_EXPORT extern void tclcad_tcl_library(Tcl_Interp *interp);
 include/tclcad/setup.h: TCLCAD_EXPORT extern void tclcad_bn_setup(Tcl_Interp *interp);
+include/tclcad/setup.h: TCLCAD_EXPORT extern void tclcad_configure_ipc_handlers(struct fbserv_obj *fbsp);
 include/tclcad/setup.h: TCLCAD_EXPORT extern int Rt_Init(Tcl_Interp *interp);
 include/tclcad/setup.h: TCLCAD_EXPORT extern int Bu_Init(Tcl_Interp *interp);
 include/tclcad/setup.h: TCLCAD_EXPORT extern int Bn_Init(Tcl_Interp *interp);
