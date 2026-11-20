@@ -28,18 +28,22 @@
 #include "common.h"
 
 /* system headers */
+#include <float.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <math.h>
 #include <string.h>
+#include <errno.h>
 #include "bio.h"
 
 /* interface headers */
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/units.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -124,6 +128,23 @@ static void
 print_usage(const char *progname)
 {
     bu_exit(1, "Usage: %s %s", progname, usage);
+}
+
+
+static int
+parse_debug_mask(unsigned int *mask, const char *arg)
+{
+    char *end;
+    unsigned long parsed;
+
+    if (!mask || !arg || !*arg || *arg == '-')
+	return 0;
+    errno = 0;
+    parsed = strtoul(arg, &end, 16);
+    if (end == arg || *end || errno == ERANGE || parsed > UINT_MAX)
+	return 0;
+    *mask = (unsigned int)parsed;
+    return 1;
 }
 
 
@@ -1173,6 +1194,7 @@ main(int argc, char **argv)
 {
     int i;
     int c;
+    double option_value;
     struct plate_mode pm;
 
     bu_setprogname(argv[0]);
@@ -1208,37 +1230,51 @@ main(int argc, char **argv)
     while ((c = bu_getopt(argc, argv, "a:bd:en:o:r:vx:X:u:h?")) != -1) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
-		ttol.abs = atof(bu_optarg);
+		if (!bu_opt_scan_double_range(bu_optarg, &option_value, 0.0,
+			DBL_MAX, "absolute tessellation tolerance"))
+		    print_usage(argv[0]);
+		ttol.abs = option_value;
 		ttol.rel = 0.0;
 		break;
 	    case 'b':		/* BOT dump */
 		bot_dump = 1;
 		break;
 	    case 'd':		/* Calculational tolerance */
-		tol.dist = atof(bu_optarg);
+		if (!bu_opt_scan_double_range(bu_optarg, &option_value, 0.0,
+			DBL_MAX, "distance tolerance"))
+		    print_usage(argv[0]);
+		tol.dist = option_value;
 		tol.dist_sq = tol.dist * tol.dist;
 		break;
 	    case 'e':		/* Evaluate all, CSG and BOTs */
 		eval_all = 1;
 		break;
 	    case 'n':		/* Surface normal tolerance. */
-		ttol.norm = atof(bu_optarg)*DEG2RAD;
+		if (!bu_opt_scan_double_range(bu_optarg, &option_value, 0.0,
+			DBL_MAX, "normal tessellation tolerance"))
+		    print_usage(argv[0]);
+		ttol.norm = option_value * DEG2RAD;
 		ttol.rel = 0.0;
 		break;
 	    case 'o':		/* Output file name */
 		out_file = bu_optarg;
 		break;
 	    case 'r':		/* Relative tolerance. */
-		ttol.rel = atof(bu_optarg);
+		if (!bu_opt_scan_double_range(bu_optarg, &option_value, 0.0,
+			DBL_MAX, "relative tessellation tolerance"))
+		    print_usage(argv[0]);
+		ttol.rel = option_value;
 		break;
 	    case 'v':
 		verbose++;
 		break;
 	    case 'x':
-		bu_sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
+		if (!parse_debug_mask(&rt_debug, bu_optarg))
+		    bu_exit(1, "Invalid librt debug mask: %s\n", bu_optarg);
 		break;
 	    case 'X':
-		bu_sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		if (!parse_debug_mask(&nmg_debug, bu_optarg))
+		    bu_exit(1, "Invalid NMG debug mask: %s\n", bu_optarg);
 		NMG_debug = nmg_debug;
 		break;
 	    case 'u':
