@@ -264,7 +264,7 @@ int parseArguments(int argc, char **argv)
 
     double d=0.0;
     char *progname;
-    int color[3];
+    unsigned int color[3];
 
     progname = (char *) bu_calloc(DEFAULT_MAXNAMELENGTH, sizeof(char), "progname");
 
@@ -439,11 +439,11 @@ int parseArguments(int argc, char **argv)
 
 	    case 'c' :
 	    case 'C' :
-		if ((sscanf(bu_optarg, "%u %u %u", (unsigned int *)&color[0], (unsigned int *)&color[1], (unsigned int *)&color[2]))!=3) {
+		if ((sscanf(bu_optarg, "%u %u %u", &color[0], &color[1], &color[2]))!=3) {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid number of parameters for material color: need r, g, b values");
 		    bu_exit(1, NULL);
 		}
-		if ((color[0]<0)|(color[0]>255)|(color[1]<0)|(color[1]>255)|(color[2]<0)|(color[2]>255)) {
+		if (color[0] > 255 || color[1] > 255 || color[2] > 255) {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Fence material color values must be in the range of 0 to 255 inclusive");
 		    bu_exit(1, NULL);
 		}
