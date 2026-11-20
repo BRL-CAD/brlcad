@@ -2840,7 +2840,7 @@ main(int argc, char **argv)
 		break;
 	    case 'x':
 		sscanf(bu_optarg, "%x", (unsigned int *)&s.frt_debug);
-		bu_debug = s.frt_debug;
+		rt_debug = s.frt_debug;
 		break;
 	    case 'b':
 		sscanf(bu_optarg, "%x", (unsigned int *)&bu_debug);
@@ -2875,8 +2875,12 @@ main(int argc, char **argv)
 	}
     }
 
+    if (rt_debug) {
+	bu_printb("librt rt_debug", rt_debug, RT_DEBUG_FORMAT);
+	bu_log("\n");
+    }
     if (bu_debug) {
-	bu_printb("librtbu_debug", bu_debug, RT_DEBUG_FORMAT);
+	bu_printb("libbu bu_debug", bu_debug, BU_DEBUG_FORMAT);
 	bu_log("\n");
     }
     if (nmg_debug) {
