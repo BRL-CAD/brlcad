@@ -73,6 +73,13 @@ main(int argc, const char *argv[])
 	return 0;
     }
 
+    if (BU_STR_EQUAL(argv[1], "environment")) {
+	const char *value = getenv("BU_PROCESS_TEST_ENV");
+	if (value)
+	    fprintf(stdout, "%s", value);
+	return 0;
+    }
+
     if (argc > 2) {
 	fprintf(stderr, "Usage: %s\n", argv[0]);
 	return 1;

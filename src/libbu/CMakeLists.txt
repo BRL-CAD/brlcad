@@ -137,6 +137,39 @@ if(BRLCAD_WARNINGS OR BRLCAD_ENABLE_STRICT)
   endif()
 endif()
 
+# Probe with the same feature macros used to compile process.c. A libc
+# can provide these descriptor APIs while hiding them in strict POSIX mode.
+if(HAVE_UNISTD_H)
+  include(CheckCSourceCompiles)
+  include(CMakePushCheckState)
+  set(process_feature_macro _DEFAULT_SOURCE=1)
+  cmake_push_check_state(RESET)
+  set(CMAKE_REQUIRED_DEFINITIONS "-D${process_feature_macro}")
+  check_c_source_compiles(
+    "#include <unistd.h>
+    int main(void) { (void)closefrom; closefrom(STDERR_FILENO + 1); return 0; }"
+    BU_PROCESS_USE_CLOSEFROM
+  )
+  if(HAVE_SYS_SYSCALL_H)
+    check_c_source_compiles(
+      "#include <unistd.h>
+      #include <sys/syscall.h>
+      int main(void) {
+        unsigned int fd = STDERR_FILENO + 1;
+        (void)syscall;
+        return syscall(SYS_close_range, fd, fd, 0) < 0;
+      }"
+      BU_PROCESS_HAVE_CLOSE_RANGE_SYSCALL
+    )
+  endif()
+  cmake_pop_check_state()
+  set_property(SOURCE process.c APPEND PROPERTY COMPILE_DEFINITIONS
+    ${process_feature_macro}
+    "$<$<BOOL:${BU_PROCESS_USE_CLOSEFROM}>:BU_PROCESS_HAVE_CLOSEFROM>"
+    "$<$<BOOL:${BU_PROCESS_HAVE_CLOSE_RANGE_SYSCALL}>:BU_PROCESS_HAVE_CLOSE_RANGE_SYSCALL>"
+  )
+endif()
+
 # bitv is C only - keep it that way even when we are compiling
 # the rest of the sources as C++
 set_source_files_properties(bitv.c PROPERTIES NO_CXX_COMPILE TRUE)

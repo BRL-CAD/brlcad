@@ -25,6 +25,7 @@
 #endif
 
 #include <stdlib.h> /* exit */
+#include <limits.h>
 #include <sys/types.h>
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
@@ -41,6 +42,15 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
+#ifdef HAVE_PTHREAD_H
+#  include <pthread.h>
+#endif
+#ifdef __APPLE__
+#  include <crt_externs.h>
+#endif
+#ifdef BU_PROCESS_HAVE_CLOSE_RANGE_SYSCALL
+#  include <sys/syscall.h>
+#endif
 #include "bio.h"
 #include "bnetwork.h"
 #include "bu/debug.h"
@@ -49,6 +59,7 @@
 #include "bu/malloc.h"
 #include "bu/process.h"
 #include "bu/snooze.h"
+#include "bu/sort.h"
 #include "bu/str.h"
 #include "bu/datetime.h"
 #include "bu/vls.h"
@@ -131,7 +142,40 @@ process_record_free(struct bu_process *process)
 }
 
 
+static size_t
+process_env_name_length(const char *entry)
+{
+    const char *separator;
+
+    if (!entry || !entry[0] || entry[0] == '=')
+	return 0;
+    separator = strchr(entry, '=');
+    return separator ? (size_t)(separator - entry) : 0;
+}
+
+
 #ifndef _WIN32
+#ifndef __APPLE__
+#  if defined(__ELF__) && defined(__GNUC__)
+/* Some ELF runtimes supply environ from the executable's startup code. */
+extern char **environ __attribute__((weak));
+#  else
+extern char **environ;
+#  endif
+#endif
+
+
+static char ***
+process_environment_location(void)
+{
+#ifdef __APPLE__
+    return _NSGetEnviron();
+#else
+    return &environ;
+#endif
+}
+
+
 static int
 process_wait_status(int status)
 {
@@ -141,6 +185,59 @@ process_wait_status(int status)
 	return ERROR_PROCESS_ABORTED;
 
     return -1;
+}
+
+
+#ifdef HAVE_PTHREAD_H
+static void *
+process_reap_thread(void *data)
+{
+    pid_t pid = (pid_t)(intptr_t)data;
+    int status = 0;
+
+    while (waitpid(pid, &status, 0) < 0 && errno == EINTR)
+	;
+
+    return NULL;
+}
+#endif
+
+
+static void
+process_reap_async(pid_t pid)
+{
+#ifdef HAVE_PTHREAD_H
+    pthread_attr_t attributes;
+    pthread_t thread;
+
+    if (pthread_attr_init(&attributes) != 0)
+	return;
+    /* Failure to create the worker must not restore an unbounded wait.  In
+     * that resource-exhaustion case the OS reclaims the child at parent exit. */
+    if (pthread_attr_setdetachstate(&attributes, PTHREAD_CREATE_DETACHED) == 0)
+	(void)pthread_create(&thread, &attributes, process_reap_thread,
+	    (void *)(intptr_t)pid);
+    (void)pthread_attr_destroy(&attributes);
+#else
+    (void)pid;
+#endif
+}
+
+
+static int
+process_wait_pid(pid_t pid, int *status, int timeout_ms)
+{
+    int64_t deadline = bu_gettime() + (int64_t)timeout_ms * 1000;
+    int wait_result;
+
+    while (1) {
+	do {
+	    wait_result = waitpid(pid, status, WNOHANG);
+	} while (wait_result < 0 && errno == EINTR);
+	if (wait_result != 0 || bu_gettime() >= deadline)
+	    return wait_result;
+	(void)bu_snooze(PROCESS_WAIT_POLL_USEC);
+    }
 }
 #else
 static void
@@ -400,9 +497,267 @@ bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_
     return (read_ret > 0) ? 1 : -1;
 }
 
-void
-bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
+static int
+process_inherit_fd(const struct bu_process_create_info *create_info, int fd)
 {
+    if (!create_info || !create_info->inherit_fds)
+	return 0;
+
+    for (size_t i = 0; i < create_info->inherit_fd_count; i++) {
+	if (create_info->inherit_fds[i] == fd)
+	    return 1;
+    }
+
+    return 0;
+}
+
+
+#ifndef _WIN32
+static int
+process_prepare_inherited_fds(const struct bu_process_create_info *create_info)
+{
+    if (!create_info || !create_info->inherit_fds)
+	return 0;
+
+    for (size_t i = 0; i < create_info->inherit_fd_count; i++) {
+	int fd = create_info->inherit_fds[i];
+	int flags;
+
+	if (fd < 0 || (flags = fcntl(fd, F_GETFD)) < 0)
+	    return -1;
+	if ((flags & FD_CLOEXEC) && fcntl(fd, F_SETFD, flags & ~FD_CLOEXEC) < 0)
+	    return -1;
+    }
+
+    return 0;
+}
+
+
+static void
+process_close_unlisted_fds(const struct bu_process_create_info *create_info)
+{
+#ifdef BU_PROCESS_HAVE_CLOSE_RANGE_SYSCALL
+    unsigned int close_range_first = 3;
+    int close_range_available = 1;
+
+    while (close_range_first < UINT_MAX) {
+	unsigned int next = UINT_MAX;
+	if (create_info && create_info->inherit_fds) {
+	    for (size_t i = 0; i < create_info->inherit_fd_count; i++) {
+		int fd = create_info->inherit_fds[i];
+		if (fd >= 3 && (unsigned int)fd >= close_range_first &&
+		    (unsigned int)fd < next)
+		    next = (unsigned int)fd;
+	    }
+	}
+
+	if (next > close_range_first &&
+	    syscall(SYS_close_range, close_range_first, next - 1, 0) < 0 &&
+	    errno != EBADF) {
+	    close_range_available = 0;
+	    break;
+	}
+	if (next == UINT_MAX)
+	    return;
+	close_range_first = next + 1;
+    }
+
+    if (close_range_available)
+	return;
+#endif
+
+#ifdef BU_PROCESS_HAVE_CLOSEFROM
+    int closefrom_first = 3;
+    while (1) {
+	int next = INT_MAX;
+	if (create_info && create_info->inherit_fds) {
+	    for (size_t i = 0; i < create_info->inherit_fd_count; i++) {
+		int fd = create_info->inherit_fds[i];
+		if (fd >= closefrom_first && fd < next)
+		    next = fd;
+	    }
+	}
+
+	if (next == INT_MAX) {
+	    closefrom(closefrom_first);
+	    return;
+	}
+	for (int fd = closefrom_first; fd < next; fd++)
+	    (void)close(fd);
+	if (next == INT_MAX - 1)
+	    return;
+	closefrom_first = next + 1;
+    }
+#endif
+
+    long max_fd = sysconf(_SC_OPEN_MAX);
+    if (max_fd < 0)
+	max_fd = 1024;
+    for (int fd = 3; fd < max_fd; fd++) {
+	if (!process_inherit_fd(create_info, fd))
+	    (void)close(fd);
+    }
+}
+
+
+static int
+process_posix_env_names_equal(const char *left, const char *right)
+{
+    size_t left_length = process_env_name_length(left);
+    size_t right_length = process_env_name_length(right);
+
+    return left_length && left_length == right_length &&
+	bu_strncmp(left, right, left_length) == 0;
+}
+
+
+static char **
+process_posix_environment(char **parent_environment, const char * const *overrides)
+{
+    size_t environment_count = 0;
+    size_t override_count = 0;
+    size_t output_count = 0;
+    char **environment;
+
+    while (overrides[override_count]) {
+	if (!process_env_name_length(overrides[override_count]))
+	    return NULL;
+	override_count++;
+    }
+    while (parent_environment && parent_environment[environment_count])
+	environment_count++;
+
+    environment = (char **)bu_calloc(environment_count + override_count + 1,
+	sizeof(char *), "process environment");
+    for (size_t i = 0; i < environment_count; i++) {
+	const char *entry = parent_environment[i];
+	for (size_t j = 0; j < override_count; j++) {
+	    if (process_posix_env_names_equal(entry, overrides[j]))
+		entry = overrides[j];
+	}
+	environment[output_count++] = (char *)entry;
+    }
+    for (size_t i = 0; i < override_count; i++) {
+	int found = 0;
+	for (size_t j = 0; j < environment_count; j++) {
+	    if (process_posix_env_names_equal(overrides[i], parent_environment[j])) {
+		found = 1;
+		break;
+	    }
+	}
+	for (size_t j = i + 1; !found && j < override_count; j++) {
+	    if (process_posix_env_names_equal(overrides[i], overrides[j]))
+		found = 1;
+	}
+	if (!found)
+	    environment[output_count++] = (char *)overrides[i];
+    }
+
+    return environment;
+}
+#endif
+
+
+#ifdef _WIN32
+static int
+process_env_names_equal(const char *left, const char *right)
+{
+    size_t left_length = process_env_name_length(left);
+    size_t right_length = process_env_name_length(right);
+
+    return left_length && left_length == right_length &&
+	_strnicmp(left, right, left_length) == 0;
+}
+
+
+static int
+process_env_compare(const void *left, const void *right, void *UNUSED(context))
+{
+    const char *left_entry = *(const char * const *)left;
+    const char *right_entry = *(const char * const *)right;
+    return _stricmp(left_entry, right_entry);
+}
+
+
+static char *
+process_windows_environment(const char * const *overrides)
+{
+    LPCH parent_environment;
+    const char *entry;
+    const char **entries;
+    size_t entry_count = 0;
+    size_t override_count = 0;
+    size_t output_size = 1;
+    char *environment;
+    char *output;
+
+    if (!overrides || !overrides[0])
+	return NULL;
+
+    while (overrides[override_count]) {
+	if (!process_env_name_length(overrides[override_count]))
+	    return NULL;
+	override_count++;
+    }
+
+    parent_environment = GetEnvironmentStringsA();
+    if (!parent_environment)
+	return NULL;
+
+    for (entry = parent_environment; entry[0]; entry += strlen(entry) + 1)
+	entry_count++;
+
+    entries = (const char **)bu_calloc(entry_count + override_count,
+	sizeof(const char *), "process environment entries");
+    entry_count = 0;
+    for (entry = parent_environment; entry[0]; entry += strlen(entry) + 1) {
+	int replaced = 0;
+	for (size_t i = 0; i < override_count; i++) {
+	    if (process_env_names_equal(entry, overrides[i])) {
+		replaced = 1;
+		break;
+	    }
+	}
+	if (!replaced)
+	    entries[entry_count++] = entry;
+    }
+    for (size_t i = 0; i < override_count; i++) {
+	int superseded = 0;
+	for (size_t j = i + 1; j < override_count; j++) {
+	    if (process_env_names_equal(overrides[i], overrides[j])) {
+		superseded = 1;
+		break;
+	    }
+	}
+	if (!superseded)
+	    entries[entry_count++] = overrides[i];
+    }
+
+    bu_sort(entries, entry_count, sizeof(const char *), process_env_compare,
+	NULL);
+    for (size_t i = 0; i < entry_count; i++)
+	output_size += strlen(entries[i]) + 1;
+
+    environment = (char *)bu_malloc(output_size, "process environment");
+    output = environment;
+    for (size_t i = 0; i < entry_count; i++) {
+	size_t entry_size = strlen(entries[i]) + 1;
+	memcpy(output, entries[i], entry_size);
+	output += entry_size;
+    }
+    *output = '\0';
+
+    bu_free(entries, "process environment entries");
+    FreeEnvironmentStringsA(parent_environment);
+    return environment;
+}
+#endif
+
+
+void
+bu_process_create_ex(struct bu_process **pinfo, const char **argv, const struct bu_process_create_info *create_info)
+{
+    int opts = create_info ? create_info->opts : BU_PROCESS_DEFAULT;
     if (!pinfo)
 	return;
     *pinfo = NULL;
@@ -443,6 +798,18 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
     int pipe_in[2] = {-1, -1};
     int pipe_out[2] = {-1, -1};
     int pipe_err[2] = {-1, -1};
+    char **child_environment = NULL;
+    char ***environment_location = NULL;
+
+    if (create_info && create_info->env_overrides &&
+	create_info->env_overrides[0]) {
+	environment_location = process_environment_location();
+	if (!environment_location)
+	    goto process_create_fail;
+	child_environment = process_posix_environment(*environment_location, create_info->env_overrides);
+	if (!child_environment)
+	    goto process_create_fail;
+    }
 
     pret = pipe(pipe_in);
     if (pret < 0) {
@@ -497,11 +864,12 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
 	(void)close(pipe_err[0]);
 	(void)close(pipe_err[1]);
 
-	// TODO - should we be doing this for more than 20? See
-	// https://docs.fedoraproject.org/en-US/Fedora_Security_Team/1/html/Defensive_Coding/sect-Defensive_Coding-Tasks-Descriptors-Child_Processes.html
-	for (int i = 3; i < 20; i++) {
-	    (void)close(i);
-	}
+	if (process_prepare_inherited_fds(create_info) < 0)
+	    _exit(PROCESS_EXEC_ERROR);
+	process_close_unlisted_fds(create_info);
+
+	if (child_environment)
+	    *environment_location = child_environment;
 
 	// TODO / FIXME - parent does not know whether child successfully started or not
 	(void)execvp(cmd, (char * const*)(*pinfo)->argv);
@@ -528,6 +896,8 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
     }
     (*pinfo)->fd_err = pipe_err[0];
     (*pinfo)->pid = pid;
+    if (child_environment)
+	bu_free(child_environment, "process environment");
     return;
 
 process_create_fail:
@@ -539,6 +909,8 @@ process_create_fail:
 	if (pipe_err[i] >= 0)
 	    (void)close(pipe_err[i]);
     }
+    if (child_environment)
+	bu_free(child_environment, "process environment");
     process_record_free(*pinfo);
     *pinfo = NULL;
 
@@ -547,9 +919,13 @@ process_create_fail:
     HANDLE pipe_in[2] = {NULL, NULL}, pipe_inDup = NULL;
     HANDLE pipe_out[2] = {NULL, NULL}, pipe_outDup = NULL;
     HANDLE pipe_err[2] = {NULL, NULL}, pipe_errDup = NULL;
-    STARTUPINFO si = {0};
+    STARTUPINFOEX si = {0};
     PROCESS_INFORMATION pi = {0};
     SECURITY_ATTRIBUTES sa = {0};
+    HANDLE *inherit_handles = NULL;
+    SIZE_T attribute_size = 0;
+    size_t inherit_handle_count = 0;
+    char *child_environment = NULL;
 
     sa.nLength = sizeof(sa);
     sa.bInheritHandle = TRUE;
@@ -596,24 +972,75 @@ process_create_fail:
     CloseHandle(pipe_in[1]);
     pipe_in[1] = NULL;
 
-    si.cb = sizeof(STARTUPINFO);
-    si.lpReserved = NULL;
-    si.lpReserved2 = NULL;
-    si.cbReserved2 = 0;
-    si.lpDesktop = NULL;
+    si.StartupInfo.cb = sizeof(STARTUPINFOEX);
+    si.StartupInfo.lpReserved = NULL;
+    si.StartupInfo.lpReserved2 = NULL;
+    si.StartupInfo.cbReserved2 = 0;
+    si.StartupInfo.lpDesktop = NULL;
     if (opts & BU_PROCESS_HIDE_WINDOW) {
-	si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
-	si.wShowWindow = SW_HIDE;
+	si.StartupInfo.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+	si.StartupInfo.wShowWindow = SW_HIDE;
     } else {
-	si.dwFlags = STARTF_USESTDHANDLES;
+	si.StartupInfo.dwFlags = STARTF_USESTDHANDLES;
     }
-    si.hStdInput   = pipe_in[0];
+    si.StartupInfo.hStdInput = pipe_in[0];
     if (merged_output) {
-	si.hStdOutput  = pipe_err[1];
+	si.StartupInfo.hStdOutput = pipe_err[1];
     } else {
-	si.hStdOutput  = pipe_out[1];
+	si.StartupInfo.hStdOutput = pipe_out[1];
     }
-    si.hStdError   = pipe_err[1];
+    si.StartupInfo.hStdError = pipe_err[1];
+
+    inherit_handles = (HANDLE *)bu_calloc(3 +
+	(create_info ? create_info->inherit_fd_count : 0), sizeof(HANDLE),
+	"process inherited handles");
+    inherit_handles[inherit_handle_count++] = si.StartupInfo.hStdInput;
+    inherit_handles[inherit_handle_count++] = si.StartupInfo.hStdOutput;
+    if (si.StartupInfo.hStdError != si.StartupInfo.hStdOutput)
+	inherit_handles[inherit_handle_count++] = si.StartupInfo.hStdError;
+    if (create_info && create_info->inherit_fds) {
+	for (size_t i = 0; i < create_info->inherit_fd_count; i++) {
+	    HANDLE handle = (HANDLE)_get_osfhandle(create_info->inherit_fds[i]);
+	    int duplicate = 0;
+	    if (handle == INVALID_HANDLE_VALUE)
+		goto process_create_fail;
+	    for (size_t j = 0; j < inherit_handle_count; j++) {
+		if (inherit_handles[j] == handle) {
+		    duplicate = 1;
+		    break;
+		}
+	    }
+	    if (!duplicate)
+		inherit_handles[inherit_handle_count++] = handle;
+	}
+    }
+
+    for (size_t i = 0; i < inherit_handle_count; i++) {
+	DWORD handle_flags = 0;
+	if (!GetHandleInformation(inherit_handles[i], &handle_flags) ||
+	    !(handle_flags & HANDLE_FLAG_INHERIT))
+	    goto process_create_fail;
+    }
+
+    (void)InitializeProcThreadAttributeList(NULL, 1, 0, &attribute_size);
+    if (!attribute_size)
+	goto process_create_fail;
+    si.lpAttributeList = (LPPROC_THREAD_ATTRIBUTE_LIST)bu_malloc(attribute_size,
+	"process attribute list");
+    if (!InitializeProcThreadAttributeList(si.lpAttributeList, 1, 0,
+	    &attribute_size))
+	goto process_create_fail;
+    if (!UpdateProcThreadAttribute(si.lpAttributeList, 0,
+	    PROC_THREAD_ATTRIBUTE_HANDLE_LIST, inherit_handles,
+	    inherit_handle_count * sizeof(HANDLE), NULL, NULL))
+	goto process_create_fail;
+
+    if (create_info && create_info->env_overrides &&
+	create_info->env_overrides[0]) {
+	child_environment = process_windows_environment(create_info->env_overrides);
+	if (!child_environment)
+	    goto process_create_fail;
+    }
 
     /* CreateProcess uses one command-line string.  Quote every argument so
      * whitespace, empty strings, embedded quotes, and trailing backslashes
@@ -622,10 +1049,19 @@ process_create_fail:
 	process_windows_append_arg(&cp_cmd, argv[i]);
 
     if (!CreateProcess(NULL, bu_vls_addr(&cp_cmd), NULL, NULL, TRUE,
-		       DETACHED_PROCESS, NULL, NULL,
-		       &si, &pi))
+		       DETACHED_PROCESS | EXTENDED_STARTUPINFO_PRESENT,
+		       child_environment, NULL, &si.StartupInfo, &pi))
 	goto process_create_fail;
     bu_vls_free(&cp_cmd);
+    DeleteProcThreadAttributeList(si.lpAttributeList);
+    bu_free(si.lpAttributeList, "process attribute list");
+    si.lpAttributeList = NULL;
+    bu_free(inherit_handles, "process inherited handles");
+    inherit_handles = NULL;
+    if (child_environment) {
+	bu_free(child_environment, "process environment");
+	child_environment = NULL;
+    }
 
     CloseHandle(pipe_in[0]);
     pipe_in[0] = NULL;
@@ -665,6 +1101,14 @@ process_create_fail:
 
 process_create_fail:
     bu_vls_free(&cp_cmd);
+    if (si.lpAttributeList) {
+	DeleteProcThreadAttributeList(si.lpAttributeList);
+	bu_free(si.lpAttributeList, "process attribute list");
+    }
+    if (inherit_handles)
+	bu_free(inherit_handles, "process inherited handles");
+    if (child_environment)
+	bu_free(child_environment, "process environment");
     if (pi.hProcess) {
 	(void)TerminateProcess(pi.hProcess, BU_MSVC_ABORT_EXIT);
 	CloseHandle(pi.hProcess);
@@ -687,6 +1131,15 @@ process_create_fail:
     *pinfo = NULL;
 
 #endif
+}
+
+
+void
+bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
+{
+    struct bu_process_create_info create_info = {0};
+    create_info.opts = opts;
+    bu_process_create_ex(pinfo, argv, &create_info);
 }
 
 
@@ -755,6 +1208,7 @@ bu_process_func(struct bu_process_func_info *info, bu_process_func_t func, void 
     int status = 0;
     int child_done = 0;
     int pid = -1;
+    int64_t termination_deadline = 0;
     struct bu_vls *capture_out = out;
     struct bu_vls *capture_err = err;
     int64_t start_time = bu_gettime();
@@ -827,12 +1281,23 @@ bu_process_func(struct bu_process_func_info *info, bu_process_func_t func, void 
 		child_done = 1;
 	    } else if (wret < 0) {
 		goto process_func_fail;
-	    } else if (timeout_usec > 0 && (bu_gettime() - start_time) > timeout_usec) {
-		info->timed_out = 1;
-		(void)bu_pid_terminate(pid);
-		if (waitpid((pid_t)pid, &status, 0) == pid)
-		    child_done = 1;
 	    }
+	}
+	if (!info->timed_out && timeout_usec > 0 &&
+	    bu_gettime() - start_time >= timeout_usec) {
+	    info->timed_out = 1;
+	    (void)bu_pid_terminate(pid);
+	    termination_deadline = bu_gettime() +
+		(int64_t)PROCESS_TERMINATE_GRACE_MS * 1000;
+	}
+	if (info->timed_out && bu_gettime() >= termination_deadline) {
+	    if (!child_done)
+		process_reap_async((pid_t)pid);
+	    if (fd_out >= 0) close(fd_out);
+	    if (fd_err >= 0) close(fd_err);
+	    fd_out = -1;
+	    fd_err = -1;
+	    break;
 	}
 
 	if (fd_out < 0 && fd_err < 0) {
@@ -874,6 +1339,9 @@ bu_process_func(struct bu_process_func_info *info, bu_process_func_t func, void 
 	    process_func_capture(&fd_err, capture_err);
     }
 
+    if (info->timed_out)
+	return ERROR_PROCESS_ABORTED;
+
     if (WIFEXITED(status)) {
 	info->exit_code = WEXITSTATUS(status);
 	return info->exit_code;
@@ -896,7 +1364,9 @@ process_func_fail:
     if (fd_err >= 0) close(fd_err);
     if (pid > 0) {
 	(void)bu_pid_terminate(pid);
-	(void)waitpid((pid_t)pid, &status, 0);
+	if (process_wait_pid((pid_t)pid, &status,
+		PROCESS_TERMINATE_GRACE_MS) == 0)
+	    process_reap_async((pid_t)pid);
     }
     return -1;
 #else
@@ -965,14 +1435,17 @@ bu_process_wait_n(struct bu_process **pinfo, int wtime)
 	}
 
 	if (timed_out) {
-	    int terminated = bu_pid_terminate(process->pid);
-	    int wait_options = terminated ? 0 : WNOHANG;
+	    (void)bu_pid_terminate(process->pid);
+	    wait_result = process_wait_pid((pid_t)process->pid, &wait_status,
+		PROCESS_TERMINATE_GRACE_MS);
 
-	    do {
-		wait_result = waitpid((pid_t)process->pid, &wait_status, wait_options);
-	    } while (wait_result < 0 && errno == EINTR);
-
-	    rc = (wait_result == process->pid) ? process_wait_status(wait_status) : -1;
+	    if (wait_result == process->pid) {
+		rc = process_wait_status(wait_status);
+	    } else {
+		rc = -1;
+		if (wait_result == 0)
+		    process_reap_async((pid_t)process->pid);
+	    }
 	}
     }
 #else
@@ -997,9 +1470,14 @@ bu_process_wait_n(struct bu_process **pinfo, int wtime)
 	    wait_result = WaitForSingleObject(process->hProcess, PROCESS_TERMINATE_GRACE_MS);
 	    if (wait_result != WAIT_OBJECT_0 &&
 		TerminateProcess(process->hProcess, BU_MSVC_ABORT_EXIT)) {
-		wait_result = WaitForSingleObject(process->hProcess, INFINITE);
+		wait_result = WaitForSingleObject(process->hProcess,
+		    PROCESS_TERMINATE_GRACE_MS);
 	    }
-	    rc = (wait_result == WAIT_OBJECT_0) ? ERROR_PROCESS_ABORTED : -1;
+	    if (wait_result == WAIT_OBJECT_0) {
+		rc = ERROR_PROCESS_ABORTED;
+	    } else {
+		rc = -1;
+	    }
 	} else {
 	    rc = -1;
 	}
