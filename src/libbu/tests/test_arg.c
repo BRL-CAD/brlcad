@@ -33,6 +33,10 @@ struct counting_args {
     long quiet;
 };
 
+struct attached_args {
+    const char *command;
+};
+
 static int custom_calls = 0;
 
 static int cannot_bypass_structure(const struct bu_arg_schema *, size_t,
@@ -327,6 +331,15 @@ static const struct bu_arg_schema ranged_schema = {
     "ranged", "Declarative numeric range fixture", ranged_options, NULL,
     BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
+static const struct bu_arg_option attached_options[] = {
+    BU_ARG_VALUE("c", "command", struct attached_args, command,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "command", "Run a command"),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_schema attached_schema = BU_ARG_SCHEMA(
+    "attached", "Attached short value fixture", attached_options, NULL,
+    BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
 static const struct bu_arg_operand one_sided_operands[] = {
     BU_ARG_OPERAND_INTEGER_RANGE("positive", 1, 1, 1, 1, 0, 0,
 	"Positive integer", NULL),
@@ -737,6 +750,7 @@ main(int UNUSED(argc), char **argv)
     struct test_args args = {0, 0};
     struct short_only_args short_only_args = {0};
     struct counting_args counting_args = {0, 0};
+    struct attached_args attached_args = {NULL};
     int context_calls = 0;
 
     const char *bare[] = {"--list"};
@@ -756,6 +770,7 @@ main(int UNUSED(argc), char **argv)
     const char *range_high[] = {"--level", "6"};
     const char *range_valid[] = {"--level", "5"};
     const char *range_attached[] = {"-l5"};
+    const char *attached_equals[] = {"-cset key=value"};
     const char *range_parse_low[] = {"--level", "0"};
     const char *shape_packed[] = {"1/2/3"};
     const char *shape_partial[] = {"1", "2"};
@@ -978,6 +993,22 @@ main(int UNUSED(argc), char **argv)
 	bu_arg_schema_validate(&ranged_schema, 1, range_attached, 1,
 	    &result) != 0 || result.state != BU_ARG_VALIDATE_VALID) {
 	bu_log("attached short option argument did not parse consistently\n");
+	bu_arg_validate_result_clear(&result);
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_arg_validate_result_clear(&result);
+
+    if (bu_arg_schema_parse(&attached_schema, &attached_args, &msg, 1,
+	attached_equals) != 1 || !attached_args.command ||
+	!BU_STR_EQUAL(attached_args.command, "set key=value") ||
+	bu_arg_schema_option_span(&attached_schema, 1, attached_equals) != 1 ||
+	!bu_arg_schema_option_present(&attached_schema, 1, attached_equals,
+	    "command") ||
+	bu_arg_schema_operand_count(&attached_schema, 1, attached_equals) != 0 ||
+	bu_arg_schema_validate(&attached_schema, 1, attached_equals, 1,
+	    &result) != 0 || result.state != BU_ARG_VALIDATE_VALID) {
+	bu_log("equals sign in attached short value did not parse consistently\n");
 	bu_arg_validate_result_clear(&result);
 	bu_vls_free(&msg);
 	return 1;

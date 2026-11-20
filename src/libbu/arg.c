@@ -39,6 +39,9 @@ static const struct bu_arg_operand *cmd_schema_operand(
 static const struct bu_arg_schema *cmd_schema_case_view(
 	const struct bu_arg_schema *schema, size_t argc, const char **argv,
 	struct bu_arg_schema *view);
+static const struct bu_arg_option *cmd_schema_native_option(
+	const struct bu_arg_schema *schema, const char *arg,
+	const char **attached);
 int _bu_arg_schema_validate_structure(const struct bu_arg_schema *schema,
 	size_t argc, const char **argv, size_t cursor_arg,
 	struct bu_arg_validate_result *result,
@@ -1232,33 +1235,6 @@ cmd_schema_is_end_marker(const struct bu_arg_schema *schema, const char *arg,
 }
 
 
-static const struct bu_arg_option *
-cmd_schema_lookup_token(const struct bu_arg_schema *schema, const char *arg)
-{
-    const char *name = NULL;
-    const char *eq = NULL;
-    const struct bu_arg_option *option = NULL;
-    int longopt = 0;
-
-    if (!arg || arg[0] != '-' || !arg[1])
-	return NULL;
-
-    longopt = arg[1] == '-';
-    name = arg + (longopt ? 2 : 1);
-    eq = strchr(name, '=');
-    if (!eq)
-	return cmd_schema_find_option(schema, name, longopt);
-
-    size_t name_len = (size_t)(eq - name);
-    char *name_copy = (char *)bu_malloc(name_len + 1, "command schema option name");
-    memcpy(name_copy, name, name_len);
-    name_copy[name_len] = '\0';
-    option = cmd_schema_find_option(schema, name_copy, longopt);
-    bu_free(name_copy, "command schema option name");
-    return option;
-}
-
-
 static int
 cmd_schema_set_value(const struct bu_arg_option *option, void *data, const char *arg, struct bu_vls *msg)
 {
@@ -1582,6 +1558,55 @@ cmd_schema_attached_short_option(const struct bu_arg_schema *schema,
     if (value)
 	*value = arg[2] == '=' ? arg + 3 : arg + 2;
     return option;
+}
+
+
+/* Resolve one native option token and, when present, return its attached
+ * value.  For short options an '=' belongs to the value unless the complete
+ * spelling before it names an option; this preserves values such as
+ * -cset key=value without weakening exact option matching. */
+static const struct bu_arg_option *
+cmd_schema_native_option(const struct bu_arg_schema *schema, const char *arg,
+	const char **attached)
+{
+    const struct bu_arg_option *option;
+    const char *eq;
+    const char *name;
+    int longopt;
+
+    if (attached)
+	*attached = NULL;
+    if (!schema || !arg || arg[0] != '-' || !arg[1] ||
+	BU_STR_EQUAL(arg, "--"))
+	return NULL;
+
+    longopt = arg[1] == '-';
+    name = arg + (longopt ? 2 : 1);
+    eq = strchr(name, '=');
+    if (!longopt) {
+	option = cmd_schema_find_option(schema, name, 0);
+	if (option)
+	    return option;
+    }
+    if (eq) {
+	size_t name_len = (size_t)(eq - name);
+	char *name_copy = (char *)bu_malloc(name_len + 1,
+	    "command schema option name");
+	memcpy(name_copy, name, name_len);
+	name_copy[name_len] = '\0';
+	option = cmd_schema_find_option(schema, name_copy, longopt);
+	bu_free(name_copy, "command schema option name");
+	if (option) {
+	    if (attached)
+		*attached = eq + 1;
+	    return option;
+	}
+    } else if (longopt) {
+	return cmd_schema_find_option(schema, name, 1);
+    }
+
+    return longopt ? NULL :
+	cmd_schema_attached_short_option(schema, arg, attached);
 }
 
 
@@ -2018,11 +2043,8 @@ _bu_arg_schema_parse_bound(const struct bu_arg_schema *schema, void *data,
 
     while (i < argc) {
 	const char *arg = argv[i];
-	const char *name = NULL;
-	const char *eq = NULL;
 	const char *short_attached = NULL;
 	const struct bu_arg_option *option = NULL;
-	int longopt = 0;
 	const struct bu_cmd_parse_binding *binding = NULL;
 	const char *opt_attached = NULL;
 	const char *opt_short_tail = NULL;
@@ -2237,21 +2259,7 @@ _bu_arg_schema_parse_bound(const struct bu_arg_schema *schema, void *data,
 	    }
 	}
 
-	longopt = arg[1] == '-';
-	name = arg + (longopt ? 2 : 1);
-	eq = strchr(name, '=');
-	if (eq) {
-	    size_t name_len = (size_t)(eq - name);
-	    char *name_copy = (char *)bu_malloc(name_len + 1, "command schema option name");
-	    memcpy(name_copy, name, name_len);
-	    name_copy[name_len] = '\0';
-	    option = cmd_schema_find_option(schema, name_copy, longopt);
-	    bu_free(name_copy, "command schema option name");
-	} else {
-	    option = cmd_schema_find_option(schema, name, longopt);
-	}
-	if (!option && !longopt && !eq)
-	    option = cmd_schema_attached_short_option(schema, arg, &short_attached);
+	option = cmd_schema_native_option(schema, arg, &short_attached);
 	if (!option) {
 	    if (cmd_schema_dash_numeric_operand_valid(schema, operand_count, arg)) {
 		if (!interspersed) {
@@ -2285,7 +2293,7 @@ _bu_arg_schema_parse_bound(const struct bu_arg_schema *schema, void *data,
 	    goto done;
 	}
 	if (option->arg_requirement == BU_ARG_NONE) {
-	    if (eq) {
+	    if (short_attached) {
 		if (msg)
 		    bu_vls_printf(msg, "option does not take an argument: %s\n", arg);
 		goto done;
@@ -2298,6 +2306,13 @@ _bu_arg_schema_parse_bound(const struct bu_arg_schema *schema, void *data,
 	    continue;
 	}
 	if (short_attached) {
+	    if (!cmd_schema_option_attached_allowed(option)) {
+		if (msg)
+		    bu_vls_printf(msg,
+			"option does not accept an attached multi-token argument: %s\n",
+			arg);
+		goto done;
+	    }
 	    if (!short_attached[0] ||
 		cmd_schema_apply_option_arguments(option, data, 1,
 		    &short_attached, msg) != 0)
@@ -2307,21 +2322,6 @@ _bu_arg_schema_parse_bound(const struct bu_arg_schema *schema, void *data,
 	    i++;
 	    continue;
 	}
-	if (eq) {
-	    const char *value = eq + 1;
-	    if (!cmd_schema_option_attached_allowed(option)) {
-		if (msg)
-		    bu_vls_printf(msg, "option does not accept an attached multi-token argument: %s\n", arg);
-		goto done;
-	    }
-	    if (cmd_schema_apply_option_arguments(option, data, 1, &value, msg) != 0)
-		goto done;
-	    if (interspersed)
-		known_args[known_count++] = arg;
-	    i++;
-	    continue;
-	}
-
 	size_t available = (size_t)(argc - i - 1);
 	size_t min_tokens = cmd_schema_option_min_tokens(option);
 	size_t consume = cmd_schema_option_argument_count(option, available, argv + i + 1);
@@ -2396,11 +2396,8 @@ cmd_schema_invalid_option_start(const struct bu_arg_schema *schema,
     for (size_t i = token + 1; i > 0; i--) {
 	size_t index = i - 1;
 	const char *attached = NULL;
-	const struct bu_arg_option *option = cmd_schema_lookup_token(schema,
-	    argv[index]);
-	if (!option)
-	    option = cmd_schema_attached_short_option(schema, argv[index],
-		&attached);
+	const struct bu_arg_option *option = cmd_schema_native_option(schema,
+	    argv[index], &attached);
 	if (option && BU_STR_EQUAL(bu_arg_option_canonical(option), canonical))
 	    return index;
     }
@@ -2429,15 +2426,8 @@ cmd_schema_report_invalid_option(const struct bu_arg_schema *schema, void *data,
     original_length = bu_vls_strlen(msg);
 
     if (active_option) {
-	const char *eq = strchr(argv[start], '=');
-	if (!eq)
-	    (void)cmd_schema_attached_short_option(schema, argv[start],
-		&attached);
-	if (eq) {
-	    attached = eq + 1;
-	    arguments = &attached;
-	    argument_count = 1;
-	} else if (attached) {
+	(void)cmd_schema_native_option(schema, argv[start], &attached);
+	if (attached) {
 	    arguments = &attached;
 	    argument_count = 1;
 	} else if (active_option->arg_requirement != BU_ARG_NONE) {
@@ -4308,7 +4298,6 @@ cmd_schema_option_occurrences(const struct bu_arg_schema *schema, size_t argc,
     while (i < argc) {
 	const char *arg = argv[i];
 	const struct bu_arg_option *option = NULL;
-	const char *eq = NULL;
 	const char *short_attached = NULL;
 	if (!arg)
 	    return occurrences;
@@ -4319,15 +4308,11 @@ cmd_schema_option_occurrences(const struct bu_arg_schema *schema, size_t argc,
 	}
 	if (options_allowed && cmd_schema_has_options(schema) &&
 	    arg[0] == '-' && arg[1]) {
-	    option = cmd_schema_lookup_token(schema, arg);
-	    if (!option)
-		option = cmd_schema_attached_short_option(schema, arg,
-		    &short_attached);
-	    eq = strchr(arg, '=');
+	    option = cmd_schema_native_option(schema, arg, &short_attached);
 	    if (option) {
 		if (BU_STR_EQUAL(bu_arg_option_canonical(option), canonical))
 		    occurrences++;
-		if (option->arg_requirement == BU_ARG_NONE || eq || short_attached) {
+		if (option->arg_requirement == BU_ARG_NONE || short_attached) {
 		    i++;
 		    continue;
 		}
@@ -4380,7 +4365,6 @@ bu_arg_schema_operand_count(const struct bu_arg_schema *schema, size_t argc,
     while (i < argc) {
 	const char *arg = argv[i];
 	const struct bu_arg_option *option = NULL;
-	const char *eq = NULL;
 	const char *short_attached = NULL;
 	if (!arg)
 	    return count;
@@ -4391,13 +4375,9 @@ bu_arg_schema_operand_count(const struct bu_arg_schema *schema, size_t argc,
 	}
 	if (options_allowed && cmd_schema_has_options(schema) &&
 	    arg[0] == '-' && arg[1]) {
-	    option = cmd_schema_lookup_token(schema, arg);
-	    if (!option)
-		option = cmd_schema_attached_short_option(schema, arg,
-		    &short_attached);
-	    eq = strchr(arg, '=');
+	    option = cmd_schema_native_option(schema, arg, &short_attached);
 	    if (option) {
-		if (option->arg_requirement == BU_ARG_NONE || eq || short_attached) {
+		if (option->arg_requirement == BU_ARG_NONE || short_attached) {
 		    i++;
 		    continue;
 		}
@@ -4457,7 +4437,6 @@ cmd_schema_collect_operands(const struct bu_arg_schema *schema, size_t argc,
 	const char *arg = argv[i];
 	const struct bu_arg_option *option = NULL;
 	const char *short_attached = NULL;
-	const char *eq = NULL;
 
 	if (!arg)
 	    break;
@@ -4468,13 +4447,9 @@ cmd_schema_collect_operands(const struct bu_arg_schema *schema, size_t argc,
 	}
 	if (options_allowed && cmd_schema_has_options(schema) &&
 	    arg[0] == '-' && arg[1]) {
-	    option = cmd_schema_lookup_token(schema, arg);
-	    if (!option)
-		option = cmd_schema_attached_short_option(schema, arg,
-		    &short_attached);
-	    eq = strchr(arg, '=');
+	    option = cmd_schema_native_option(schema, arg, &short_attached);
 	    if (option) {
-		if (option->arg_requirement == BU_ARG_NONE || eq || short_attached) {
+		if (option->arg_requirement == BU_ARG_NONE || short_attached) {
 		    i++;
 		    continue;
 		}
@@ -4511,11 +4486,8 @@ bu_arg_schema_option_span(const struct bu_arg_schema *schema, size_t argc,
 	const char **argv)
 {
     const char *arg = NULL;
-    const char *name = NULL;
-    const char *eq = NULL;
     const char *short_attached = NULL;
     const struct bu_arg_option *option = NULL;
-    int longopt = 0;
 
     if (!schema || !argc || !argv || !argv[0])
 	return 0;
@@ -4525,37 +4497,16 @@ bu_arg_schema_option_span(const struct bu_arg_schema *schema, size_t argc,
     if (arg[0] != '-' || !arg[1])
 	return 0;
 
-    longopt = arg[1] == '-';
-    name = arg + (longopt ? 2 : 1);
-    eq = strchr(name, '=');
-    if (eq) {
-	size_t name_len = (size_t)(eq - name);
-	char *name_copy = (char *)bu_malloc(name_len + 1, "command schema option name");
-	memcpy(name_copy, name, name_len);
-	name_copy[name_len] = '\0';
-	option = cmd_schema_find_option(schema, name_copy, longopt);
-	bu_free(name_copy, "command schema option name");
-    } else {
-	option = cmd_schema_find_option(schema, name, longopt);
-    }
-    if (!option && !longopt && !eq)
-	option = cmd_schema_attached_short_option(schema, arg, &short_attached);
+    option = cmd_schema_native_option(schema, arg, &short_attached);
     if (!option) {
 	int cluster = cmd_schema_short_flag_cluster(schema, arg, NULL, NULL, 0);
 	return cluster > 0 ? 1 : 0;
     }
     if (option->arg_requirement == BU_ARG_NONE)
-	return eq ? -1 : 1;
+	return short_attached ? -1 : 1;
     if (short_attached) {
-	if (!short_attached[0] ||
+	if (!cmd_schema_option_attached_allowed(option) || !short_attached[0] ||
 	    !cmd_schema_option_arguments_valid(option, 1, &short_attached))
-	    return -1;
-	return 1;
-    }
-    if (eq) {
-	const char *value = eq + 1;
-	if (!cmd_schema_option_attached_allowed(option) ||
-	    !cmd_schema_option_arguments_valid(option, 1, &value))
 	    return -1;
 	return 1;
     }
@@ -4912,15 +4863,12 @@ _bu_arg_schema_validate_structure(const struct bu_arg_schema *schema, size_t arg
 	}
 	if (options_allowed && cmd_schema_has_options(schema) &&
 	    arg[0] == '-' && arg[1]) {
-	    const struct bu_arg_option *option = cmd_schema_lookup_token(schema, arg);
-	const char *eq = strchr(arg, '=');
-	const char *short_attached = NULL;
-	size_t min_tokens = 0;
-	size_t available = 0;
+	    const char *short_attached = NULL;
+	    const struct bu_arg_option *option =
+		cmd_schema_native_option(schema, arg, &short_attached);
+	    size_t min_tokens = 0;
+	    size_t available = 0;
 	    size_t consume = 0;
-	    if (!option)
-		option = cmd_schema_attached_short_option(schema, arg,
-		    &short_attached);
 	    if (!option && cmd_schema_short_flag_cluster(schema, arg, NULL, NULL, 0) > 0) {
 		i++;
 		continue;
@@ -4933,7 +4881,7 @@ _bu_arg_schema_validate_structure(const struct bu_arg_schema *schema, size_t arg
 		cmd_schema_add_option_candidates(schema, result, arg);
 		return 0;
 	    }
-	    if (option->arg_requirement == BU_ARG_NONE && eq) {
+	    if (option->arg_requirement == BU_ARG_NONE && short_attached) {
 		if (active_option)
 		    *active_option = option;
 		cmd_schema_set_result(result, BU_ARG_VALIDATE_INVALID, i, BU_ARG_EXPECT_OPTION,
@@ -4946,7 +4894,8 @@ _bu_arg_schema_validate_structure(const struct bu_arg_schema *schema, size_t arg
 	    }
 	    min_tokens = cmd_schema_option_min_tokens(option);
 	    if (short_attached) {
-		if (!short_attached[0] ||
+		if (!cmd_schema_option_attached_allowed(option) ||
+		    !short_attached[0] ||
 		    !cmd_schema_option_arguments_valid(option, 1,
 			&short_attached)) {
 		    if (active_option)
@@ -4959,20 +4908,6 @@ _bu_arg_schema_validate_structure(const struct bu_arg_schema *schema, size_t arg
 		i++;
 		continue;
 	    }
-	    if (eq) {
-		const char *value = eq + 1;
-		if (!cmd_schema_option_attached_allowed(option) ||
-		    !cmd_schema_option_arguments_valid(option, 1, &value)) {
-		    if (active_option)
-			*active_option = option;
-		    cmd_schema_set_result(result, BU_ARG_VALIDATE_INVALID, i, BU_ARG_EXPECT_OPTION_ARG,
-			option->value_type, "invalid option argument", option->semantic_provider);
-		    return 0;
-		}
-		i++;
-		continue;
-	    }
-
 	    available = argc - i - 1;
 	    consume = cmd_schema_option_argument_count(option, available, argv + i + 1);
 
@@ -5093,17 +5028,14 @@ validate_operand:
 	    operand_count, argv[cursor_arg])) {
 	const char *current = argv[cursor_arg];
 	int option_prefix = !current[1] || BU_STR_EQUAL(current, "--");
-	const char *eq = strchr(current, '=');
-	const struct bu_arg_option *option = cmd_schema_lookup_token(schema, current);
 	const char *short_attached = NULL;
-	if (!option)
-	    option = cmd_schema_attached_short_option(schema, current,
-		&short_attached);
+	const struct bu_arg_option *option =
+	    cmd_schema_native_option(schema, current, &short_attached);
 	int cluster = !option && cmd_schema_short_flag_cluster(schema, current, NULL, NULL, 0) > 0;
-	const char *value = eq ? eq + 1 : short_attached;
+	const char *value = short_attached;
 	int value_valid = option && option->arg_requirement != BU_ARG_NONE && value ?
 	    cmd_schema_option_attached_allowed(option) && cmd_schema_option_arguments_valid(option, 1, &value) : 1;
-	int flag_has_value = option && option->arg_requirement == BU_ARG_NONE && eq;
+	int flag_has_value = option && option->arg_requirement == BU_ARG_NONE && value;
 	/* A lone '-', or '--' when long options are available, is an editable
 	 * option prefix.  A completed command may still use '-' as an ordinary
 	 * operand, but while the cursor is on that token the editor needs the
