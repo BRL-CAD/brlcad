@@ -8,10 +8,10 @@ dxf-g - convert an AutoCAD DXF file to a BRL-CAD database
 
 == SYNOPSIS
 
-[source]
-----
-dxf-g [-c] [-d] [-v] [-t _tolerance_] [-s _scale_factor_] [-h] [-?] _file.dxf_ _database.g_
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*dxf-g* [*-c*] [*-d*] [*-v*] [*-t* _millimeters_] [*-s* _factor_] _input.dxf_ _output.g_
+// END GENERATED BU_ARG SYNOPSIS
 
 
 [[description]]
@@ -34,27 +34,27 @@ colors are preserved. The inverse conversion is performed by
 [[options]]
 == OPTIONS
 
-*-c*::
+*-c*, *--ignore-colors*::
   Ignore colors. By default each layer may be split into separate BOT
   primitives by color; with this option a single object is produced per
   layer regardless of the colors it contains.
 
-*-d*::
+*-d*, *--debug*::
   Enable a debug flag that requests a core dump on failure. Useful only
   for developers.
 
-*-v*::
+*-v*, *--verbose*::
   Produce verbose progress output on standard error.
 
-*-t* _tolerance_::
+*-t* _tolerance_, *--tolerance* _tolerance_::
   Maximum distance, in millimeters, at which two vertices are
   considered to be the same point.
 
-*-s* _scale_factor_::
+*-s* _scale_factor_, *--scale* _scale_factor_::
   Multiply all input coordinates by _scale_factor_. Useful for DXF
   files that do not specify their units.
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a usage message and exit.
 
 [[examples]]

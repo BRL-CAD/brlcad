@@ -37,7 +37,7 @@ brlcad_addexec(g-scad csg/g-scad.c "libwdb;librt;libnmg;libbu;${M_LIBRARY}" FOLD
 
 brlcad_addexec(dbupgrade dbupgrade.c "libwdb;librt;libbu" FOLDER Conv ARG_SCHEMA)
 
-brlcad_addexec(dxf-g dxf/dxf-g.c "libwdb;librt;libnmg;libbn;libbu;${M_LIBRARY}" FOLDER Conv)
+brlcad_addexec(dxf-g dxf/dxf-g.c "libwdb;librt;libnmg;libbn;libbu;${M_LIBRARY}" FOLDER Conv ARG_SCHEMA)
 
 if(BRLCAD_ENABLE_TCL)
   brlcad_addexec(enf-g enf-g.c "libwdb;${TCL_LIBRARY};${M_LIBRARY}" FOLDER Conv ARG_SCHEMA)
