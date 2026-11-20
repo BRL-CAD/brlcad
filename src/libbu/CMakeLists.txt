@@ -245,6 +245,9 @@ set(
   mime_catalog.cmake
   mime_private.h
   mime_p21.h
+  mime_png.h
+  mime_rle.h
+  mime_sun.h
   mime_binary.h
   mime_blender.h
   mime_scene_text.h
@@ -256,11 +259,35 @@ set(
   mime_opengex.h
   mime_stl.h
   mime_assbin.h
+  mime_bmp.h
+  mime_cals.h
+  mime_vicar.h
+  mime_zarr.h
   mime_json.h
+  mime_stac.h
+  mime_esric.h
+  mime_zip.h
+  mime_tar.h
+  mime_lerc.h
+  mime_leveller.h
+  mime_hf2.h
+  mime_sigdem.h
+  mime_byn.h
+  mime_isg.h
+  mime_raster_label.h
+  mime_noaa_grid.h
+  mime_nsidc.h
+  mime_iris.h
+  mime_nitf.h
+  mime_geopackage.h
+  mime_grib.h
+  mime_terrain.h
   mime_off.h
   mime_dxf.h
   mime_dwg.h
+  mime_pnm.h
   mime_select.h
+  mime_avi.h
   mime_gltf.h
   mime_skeletal.h
   mime_text.h
@@ -268,6 +295,7 @@ set(
   mime_unreal.h
   mime_nff.h
   mime_raw.h
+  mime_xml.h
   parallel.h
   parallel_cpp11thread.cpp
   process_private.h
