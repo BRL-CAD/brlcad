@@ -11,7 +11,7 @@ brlcad_addexec(asc2pix asc2pix.c libbu FOLDER Conv NO_MAN NO_OPTIONS)
 brlcad_addexec(pix2asc pix2asc.c libbu FOLDER Conv NO_OPTIONS)
 
 if(TARGET libtclcad)
-  brlcad_addexec(asc2g asc2g.c "libtclcad;libged;libwdb;librt;libnmg;libbu;${WINSOCK_LIB};${M_LIBRARY}" FOLDER Conv)
+  brlcad_addexec(asc2g asc2g.c "libtclcad;libged;libwdb;librt;libnmg;libbu;${WINSOCK_LIB};${M_LIBRARY}" FOLDER Conv ARG_SCHEMA)
   brlcad_addexec(g2asc g2asc.c "libtclcad;librt;libnmg;libbu;${WINSOCK_LIB}" FOLDER Conv ARG_SCHEMA)
   add_dependencies(asc2g TclIndexBld)
   add_dependencies(g2asc TclIndexBld)
