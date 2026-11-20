@@ -54,6 +54,7 @@ set(
   test_glob.c
   test_vls.c
   test_vls_vprintf.c
+  test_vmath_macros.c
 )
 #  file_glob.c
 
@@ -888,7 +889,7 @@ brlcad_add_test(NAME bu_test_vlb COMMAND bu_test test_vlb)
 brlcad_add_test(NAME bu_test_units COMMAND bu_test test_units)
 brlcad_add_test(NAME bu_test_endian COMMAND bu_test test_endian)
 brlcad_add_test(NAME bu_test_convert COMMAND bu_test test_convert)
-
+brlcad_add_test(NAME bu_test_vmath_macros COMMAND bu_test test_vmath_macros)
 #
 #  *********** bu_dlopen/bu_dlsym test ************
 #

@@ -1180,7 +1180,7 @@ typedef enum vmath_matrix_component_ {
  * @brief Find the sum of two points, and scale the result.  Often
  * used to find the midpoint.
  */
-#define VADD2SCALE2(o, a, b, s) do { \
+#define VADD2SCALE(o, a, b, s) do { \
 			(o)[X] = ((a)[X] + (b)[X]) * (s); \
 			(o)[Y] = ((a)[Y] + (b)[Y]) * (s); \
 			(o)[Z] = ((a)[Z] + (b)[Z]) * (s); \
