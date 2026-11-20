@@ -53,7 +53,7 @@
 #include <time.h>
 
 #include "bu/app.h"
-#include "bu/getopt.h"
+#include "bu/arg.h"
 #include "bu/sort.h"
 #include "bu/units.h"
 #include "vmath.h"
@@ -65,81 +65,131 @@
 #include "obj_parser.h"
 #include "tri_face.h"
 
-static void
-usage(const char *argv0)
-{
-
-    bu_log("Usage: %s [options] input.obj output.g\n\n", argv0);
-
-    bu_log("  -c\t\tContinue processing on nmg-bomb. Conversion will fall-back to\n"
-	   "\t\tnative bot mode if a fatal error occurs when using the nmg or\n"
-	   "\t\tbot via nmg modes.\n"
-	);
-
-    bu_log("  -d\t\tOutput debug info to standard error.\n"
-	);
-
-    bu_log("  -f\t\tFuse vertices that are close enough to be considered the\n"
-	   "\t\tsame. Can make the solidity detection more reliable, but\n"
-	   "\t\tmay significantly increase processing time during import.\n"
-	);
-
-    bu_log("  -g grouping\tSelect which OBJ face grouping is used to create BRL-CAD\n"
-	   "\t\tprimitives:\n"
-	   "\t\t\tg = group (default)\n"
-	   "\t\t\tm = material\n"
-	   "\t\t\tn = none\n"
-	   "\t\t\to = object\n"
-	   "\t\t\tt = texture\n"
-	);
-
-    bu_log("  -H plate_thickness\n"
-	   "\t\tThickness (mm) used when a bot is not a closed volume and it's\n"
-	   "\t\tconverted as a plate or plate-nocos bot.\n"
-	   "  -i\t\tIgnore the normals defined in the input file when using native\n"
-	   "\t\tbot conversion mode.\n"
-	   "  -m mode\tSelect the conversion mode:\n"
-	   "\t\t\tb = native bot (default)\n"
-	   "\t\t\tn = nmg\n"
-	   "\t\t\tv = bot via nmg\n"
-	);
-
-    bu_log("  -o type\tSelect the type used for bots that aren't closed volumes:\n"
-	   "\t\t\tn = plate nocos\n"
-	   "\t\t\tp = plate\n"
-	   "\t\t\ts = surface (default)\n"
-	   "  -p\t\tCreates a plot/overlay (.plot3) file of open edges for bots that\n"
-	   "\t\taren't closed volumes. <bot_name>.plot3 will be created in the\n"
-	   "\t\tcurrent directory and will overwrite any existing file with the\n"
-	   "\t\tsame name.\n"
-	   "  -r orient\tSelect the bot orientation mode:\n"
-	   "\t\t\t1 = unoriented (default)\n"
-	   "\t\t\t2 = ccw\n"
-	   "\t\t\t3 = cw\n"
-	);
-
-    bu_log("  -t distance_tolerance\n"
-	   "\t\tDistance tolerance (mm); default is %lf. Two vertices are\n"
-	   "\t\tconsidered to be the same if they are within this distance of\n"
-	   "\t\teach other. You should not change this value without setting\n"
-	   "\t\tthe raytracer tolerance to match it.\n", BN_TOL_DIST);
-    bu_log("  -u units\tSelect units for the obj file: (m|cm|mm|ft|in). Default is m.\n"
-	   "\t\tYou can also provide a custom conversion factor from file units\n"
-	   "\t\tto mm.\n"
-	);
-
-    bu_log("  -v\t\tOutput verbose user info to standard error. Each occurrence of this option\n"
-	   "\t\tin the option list increases the verbosity level (two levels currently).\n"
-	   "  -x flag\tSpecify rt debug flag bits (see raytrace.h).\n"
-	   "  -X flag\tSpecify nmg debug flag bits (see nmg.h).\n"
-	);
-}
-
-
 /* global definition */
 static int NMG_debug; /* saved arg of -X, for longjmp handling */
 static int debug = 0;
 static int verbose = 0;
+
+struct obj_g_args {
+    int help;
+    int continue_on_nmg_bomb;
+    int plot_open_edges;
+    int ignore_normals;
+    int debug;
+    unsigned int rt_debug;
+    unsigned int nmg_debug;
+    int verbose;
+    int fuse_vertices;
+    fastf_t distance_tolerance;
+    fastf_t plate_thickness;
+    const char *mode;
+    const char *units;
+    const char *grouping;
+    const char *open_bot_type;
+    const char *orientation;
+};
+
+static const struct bu_arg_value_keyword obj_g_modes[] = {
+    {"b", NULL, "Create native BoTs"},
+    {"n", NULL, "Create NMG primitives"},
+    {"v", NULL, "Create BoTs through NMG conversion"},
+    {NULL, NULL, NULL}
+};
+
+static const struct bu_arg_value_keyword obj_g_groupings[] = {
+    {"g", NULL, "Group faces by OBJ group"},
+    {"o", NULL, "Group faces by OBJ object"},
+    {"m", NULL, "Group faces by OBJ material"},
+    {"t", NULL, "Group faces by OBJ texture"},
+    {"n", NULL, "Do not group faces"},
+    {NULL, NULL, NULL}
+};
+
+static const struct bu_arg_value_keyword obj_g_open_bot_types[] = {
+    {"s", NULL, "Create surface BoTs"},
+    {"p", NULL, "Create plate BoTs"},
+    {"n", NULL, "Create plate-nocos BoTs"},
+    {NULL, NULL, NULL}
+};
+
+static const struct bu_arg_value_keyword obj_g_orientations[] = {
+    {"1", NULL, "Unoriented"},
+    {"2", NULL, "Counter-clockwise"},
+    {"3", NULL, "Clockwise"},
+    {NULL, NULL, NULL}
+};
+
+static const struct bu_arg_option obj_g_options[] = {
+    BU_ARG_FLAG("h", "help", struct obj_g_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("c", "continue-on-nmg-bomb", struct obj_g_args,
+	continue_on_nmg_bomb, "Fall back to native BoTs after an NMG bomb"),
+    BU_ARG_FLAG("p", "plot-open-edges", struct obj_g_args, plot_open_edges,
+	"Write a .plot3 file of open edges for each non-closed BoT"),
+    BU_ARG_FLAG("i", "ignore-normals", struct obj_g_args, ignore_normals,
+	"Ignore OBJ normals in native-BoT mode"),
+    BU_ARG_FLAG("d", "debug", struct obj_g_args, debug,
+	"Write developer diagnostics to standard error"),
+    BU_ARG_VALUE("x", "rt-debug", struct obj_g_args, rt_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set librt hexadecimal debug flags"),
+    BU_ARG_VALUE("X", "nmg-debug", struct obj_g_args, nmg_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set libnmg hexadecimal debug flags"),
+    BU_ARG_COUNTING_FLAG("v", "verbose", struct obj_g_args, verbose,
+	BU_ARG_VALUE_INTEGER, "Increase conversion reporting"),
+    BU_ARG_FLAG("f", "fuse-vertices", struct obj_g_args, fuse_vertices,
+	"Fuse vertices within the distance tolerance"),
+    BU_ARG_VALUE_VALIDATE("t", "distance-tolerance", struct obj_g_args,
+	distance_tolerance, BU_ARG_VALUE_NUMBER,
+	bu_arg_positive_number_validate, "millimeters",
+	"Set the positive vertex-coincidence distance"),
+    BU_ARG_VALUE_VALIDATE("H", "plate-thickness", struct obj_g_args,
+	plate_thickness, BU_ARG_VALUE_NUMBER,
+	bu_arg_positive_number_validate, "millimeters",
+	"Set the thickness required for plate and plate-nocos BoTs"),
+    BU_ARG_KEYWORD_VALUES("m", "mode", struct obj_g_args, mode, "mode",
+	"Select native-BoT, NMG, or BoT-via-NMG conversion", obj_g_modes),
+    BU_ARG_VALUE_VALIDATE("u", "units", struct obj_g_args, units,
+	BU_ARG_VALUE_STRING, bu_arg_units_validate, "units",
+	"Set the OBJ input units or conversion factor to millimeters"),
+    BU_ARG_KEYWORD_VALUES("g", "grouping", struct obj_g_args, grouping,
+	"grouping", "Select the OBJ face grouping", obj_g_groupings),
+    BU_ARG_KEYWORD_VALUES("o", "open-bot-type", struct obj_g_args,
+	open_bot_type, "type", "Select the BoT type for open surfaces",
+	obj_g_open_bot_types),
+    BU_ARG_KEYWORD_VALUES("r", "orientation", struct obj_g_args,
+	orientation, "orientation", "Select the BoT orientation",
+	obj_g_orientations),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand obj_g_operands[] = {
+    BU_ARG_OPERAND("input.obj", BU_ARG_VALUE_FILE, 1, 1,
+	"Input Wavefront OBJ file", NULL),
+    BU_ARG_OPERAND("output.g", BU_ARG_VALUE_FILE, 1, 1,
+	"Output BRL-CAD database", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema obj_g_schema = BU_ARG_SCHEMA(
+    "obj-g", "Convert Wavefront OBJ geometry to a BRL-CAD database",
+    obj_g_options, obj_g_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar obj_g_grammar = {
+    &obj_g_schema, NULL, NULL
+};
+
+static int
+obj_g_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&obj_g_schema, "obj-g");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "obj-g help");
+    return status;
+}
 
 /* grouping type */
 #define GRP_NONE     0 /* perform no grouping */
@@ -3155,6 +3205,8 @@ process_nv_mode_option(struct ga_t *ga,
 int
 main(int argc, char **argv)
 {
+    struct obj_g_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     char *prog = *argv;
     struct bu_vls input_file_name = BU_VLS_INIT_ZERO;  /* input file name */
     struct bu_vls brlcad_file_name = BU_VLS_INIT_ZERO; /* output file name */
@@ -3164,11 +3216,12 @@ main(int argc, char **argv)
     struct ga_t ga;
     struct gfi_t *gfi = (struct gfi_t *)NULL; /* grouping face indices */
     size_t i = 0;
-    int c;
+    int introspection;
+    int operand_index;
     const char *parse_messages = (char *)0;
     int parse_err = 0;
     int face_type_idx = 0;
-    double dist_tmp = 0.0;
+    double units_factor = 0.0;
     struct bn_tol tol_struct;
     struct bn_tol *tol;
     int cont_on_nmg_bomb_flag = 0;
@@ -3199,9 +3252,6 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
-    /* set default conv factor */
-    str2mm("m", &conv_factor);
-
     /* the raytracer tolerance values (rtip->rti_tol) need to match
      * these otherwise raytrace errors will result. the defaults for
      * the rti_tol are set in the function rt_i_create.  either use
@@ -3217,171 +3267,75 @@ main(int argc, char **argv)
     tol->perp = 1e-6;
     tol->para = 1 - tol->perp;
 
-    if (argc < 2) {
-	bu_vls_free(&input_file_name);
-	bu_vls_free(&brlcad_file_name);
-	usage(argv[0]);
-	bu_exit(1, NULL);
+    args.distance_tolerance = tol->dist;
+    args.mode = "b";
+    args.units = "m";
+    args.grouping = "g";
+    args.open_bot_type = "s";
+    args.orientation = "1";
+    introspection = bu_arg_introspect(&msg, &obj_g_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+    operand_index = bu_arg_schema_parse_complete(&obj_g_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return obj_g_help(stderr, EXIT_FAILURE);
+    }
+    if (args.help) {
+	bu_vls_free(&msg);
+	return obj_g_help(stdout, EXIT_SUCCESS);
     }
 
-    while ((c = bu_getopt(argc, argv, "cpidfx:X:vt:H:m:u:g:o:r:h?")) != -1) {
-	switch (c) {
-	    case 'c': /* continue processing on nmg bomb */
-		cont_on_nmg_bomb_flag = 1;
-		break;
-	    case 'p': /* create plot files for open edges */
-		plot_mode = PLOT_ON;
-		break;
-	    case 'i': /* ignore normals if provided in obj file */
-		normal_mode = IGNR_NORM;
-		break;
-	    case 'd':
-		/* turn on local debugging, displays additional information of
-		 * developer interest on stderr
-		 */
-		debug = 1;
-		break;
-	    case 'x': /* set librt debug level */
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
-		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
-		bu_log("\n");
-		break;
-	    case 'X': /* set nmg debug level */
-		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
-		NMG_debug = nmg_debug;
-		bu_printb("librt nmg_debug", nmg_debug,
-			  NMG_DEBUG_FORMAT);
-		bu_log("\n");
-		break;
-	    case 'v': /* displays additional information of user interest */
-		verbose++;
-		break;
-	    case 'f': /* vertex fusing is very expensive; disabled by default */
-		fuse_vertices = 1;
-		break;
-	    case 't': /* distance tolerance in mm units */
-		dist_tmp = (double)atof(bu_optarg);
-		if (dist_tmp <= 0.0) {
-		    bu_log("Distance tolerance must be greater then zero.\n");
-		    bu_vls_free(&input_file_name);
-		    bu_vls_free(&brlcad_file_name);
-		    bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
-		}
-		tol->dist = dist_tmp;
-		tol->dist_sq = tol->dist * tol->dist;
-		break;
-	    case 'H': /* plate-mode-bot thickness in mm units */
-		bot_thickness = (fastf_t)atof(bu_optarg);
-		user_bot_thickness_flag = 1;
-		break;
-	    case 'm': /* output mode */
-		switch (bu_optarg[0]) {
-		    case 'b': /* native bot */
-			mode_option = bu_optarg[0];
-			break;
-		    case 'n': /* nmg */
-			nmg_output_mode = OUT_NMG;
-			mode_option = bu_optarg[0];
-			break;
-		    case 'v': /* bot via nmg */
-			nmg_output_mode = OUT_VBOT;
-			mode_option = bu_optarg[0];
-			break;
-		    default:
-			bu_log("Invalid mode option '%c'.\n", bu_optarg[0]);
-			bu_vls_free(&input_file_name);
-			bu_vls_free(&brlcad_file_name);
-			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
-				argv[0]);
-			break;
-		}
-		break;
-	    case 'u': /* units */
-		if (str2mm(bu_optarg, &conv_factor)) {
-		    bu_vls_free(&input_file_name);
-		    bu_vls_free(&brlcad_file_name);
-		    bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
-		}
-		break;
-	    case 'g': /* face grouping */
-		switch (bu_optarg[0]) {
-		    case 'g': /* group grouping */
-		    case 'o': /* object grouping */
-		    case 'm': /* material grouping */
-		    case 't': /* texture grouping */
-		    case 'n': /* no grouping */
-			grouping_option = bu_optarg[0];
-			break;
-		    default:
-			bu_log("Invalid grouping option '%c'.\n", bu_optarg[0]);
-			bu_vls_free(&input_file_name);
-			bu_vls_free(&brlcad_file_name);
-			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
-				argv[0]);
-			break;
-		}
-		break;
-	    case 'o': /* open surface output bot type */
-		switch (bu_optarg[0]) {
-		    case 's': /* surface bot */
-			open_bot_output_mode = RT_BOT_SURFACE;
-			break;
-		    case 'p': /* plate bot */
-			open_bot_output_mode = RT_BOT_PLATE;
-			break;
-		    case 'n': /* plate bot nocos */
-			open_bot_output_mode = RT_BOT_PLATE_NOCOS;
-			break;
-		    default:
-			bu_log("Invalid open surface 'native-bot' output bot "
-			       "type '%c'.\n", bu_optarg[0]);
-			bu_vls_free(&input_file_name);
-			bu_vls_free(&brlcad_file_name);
-			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
-				argv[0]);
-			break;
-		}
-		break;
-	    case 'r':
-		switch (bu_optarg[0]) {
-		    case '1':
-			bot_orientation = RT_BOT_UNORIENTED;
-			break;
-		    case '2':
-			bot_orientation = RT_BOT_CCW;
-			break;
-		    case '3':
-			bot_orientation = RT_BOT_CW;
-			break;
-		    default:
-			bu_log("Invalid bot orientation type '%c'.\n",
-			       bu_optarg[0]);
-			bu_vls_free(&input_file_name);
-			bu_vls_free(&brlcad_file_name);
-			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
-				argv[0]);
-		}
-		break;
-	    default:
-/*		bu_log("Invalid option '%c'.\n", c); */
-/* The above is believed to be redundant, and anyway should be off if 'h' or '?' was used. */
-		bu_vls_free(&input_file_name);
-		bu_vls_free(&brlcad_file_name);
-		bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
-		break;
-	}
+    if (!bu_arg_units_from_str(&msg, &units_factor, args.units)) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return EXIT_FAILURE;
+    }
+    bu_vls_free(&msg);
+    conv_factor = (fastf_t)units_factor;
+    cont_on_nmg_bomb_flag = args.continue_on_nmg_bomb;
+    plot_mode = args.plot_open_edges ? PLOT_ON : PLOT_OFF;
+    normal_mode = args.ignore_normals ? IGNR_NORM : PROC_NORM;
+    debug = args.debug;
+    rt_debug = args.rt_debug;
+    nmg_debug = args.nmg_debug;
+    NMG_debug = nmg_debug;
+    verbose = args.verbose;
+    fuse_vertices = args.fuse_vertices;
+    tol->dist = args.distance_tolerance;
+    tol->dist_sq = tol->dist * tol->dist;
+    bot_thickness = args.plate_thickness;
+    user_bot_thickness_flag = !ZERO(args.plate_thickness);
+    mode_option = args.mode[0];
+    grouping_option = args.grouping[0];
+    if (mode_option == 'n')
+	nmg_output_mode = OUT_NMG;
+    if (args.open_bot_type[0] == 'p')
+	open_bot_output_mode = RT_BOT_PLATE;
+    else if (args.open_bot_type[0] == 'n')
+	open_bot_output_mode = RT_BOT_PLATE_NOCOS;
+    if (args.orientation[0] == '2')
+	bot_orientation = RT_BOT_CCW;
+    else if (args.orientation[0] == '3')
+	bot_orientation = RT_BOT_CW;
+
+    if (args.rt_debug) {
+	bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
+	bu_log("\n");
+    }
+    if (args.nmg_debug) {
+	bu_printb("librt nmg_debug", nmg_debug, NMG_DEBUG_FORMAT);
+	bu_log("\n");
     }
 
-    if (argc - bu_optind != 2) {
-	bu_vls_free(&input_file_name);
-	bu_vls_free(&brlcad_file_name);
-	bu_exit(EXIT_FAILURE, "Invalid number of arguments.\nType '%s' for "
-		"usage.\n", argv[0]);
-    }
-
-    bu_vls_sprintf(&input_file_name, "%s", argv[bu_optind]);
-    bu_optind++;
-    bu_vls_sprintf(&brlcad_file_name, "%s", argv[bu_optind]);
+    bu_vls_sprintf(&input_file_name, "%s", argv[operand_index + 1]);
+    bu_vls_sprintf(&brlcad_file_name, "%s", argv[operand_index + 2]);
 
     /* if plate bots were selected as the open bot output type but the
      * user did not specify plate bot thickness, abort since thickness
@@ -3393,7 +3347,7 @@ main(int argc, char **argv)
 	bu_log("'plate_thickness' was not specified but is required\n");
 	bu_vls_free(&input_file_name);
 	bu_vls_free(&brlcad_file_name);
-	bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
+	return obj_g_help(stderr, EXIT_FAILURE);
     }
 
     /* initialize ga structure */
