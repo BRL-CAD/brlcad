@@ -75,7 +75,7 @@ brlcad_addexec(g4-g5 g4-g5.c "librt;libbu" NO_INSTALL)
 
 brlcad_addexec(g5-g4 g5-g4.c "libwdb;librt;libbu" NO_INSTALL)
 
-brlcad_addexec(g-acad g-acad.c "librt;libnmg;libbu" FOLDER Conv)
+brlcad_addexec(g-acad g-acad.c "librt;libnmg;libbu" FOLDER Conv ARG_SCHEMA)
 
 brlcad_addexec(g-obj g-obj.c "librt;libnmg;libbu;${M_LIBRARY}" FOLDER Conv ARG_SCHEMA)
 
