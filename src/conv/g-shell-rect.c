@@ -1721,6 +1721,7 @@ main(int argc, char **argv)
     char idbuf[132];
     struct application ap;
     size_t i, j;
+    size_t loaded = 0;
     int c;
     fastf_t x_start, y_start, z_start;
     fastf_t bb_area[3];
@@ -1863,7 +1864,11 @@ main(int argc, char **argv)
     while (++bu_optind < argc) {
 	if (rt_gettree(rtip, argv[bu_optind]) < 0)
 	    bu_log("rt_gettree failed on %s\n", argv[bu_optind]);
+	else
+	    loaded++;
     }
+    if (!loaded)
+	bu_exit(1, "ERROR: no requested objects could be loaded\n");
 
     rt_prep(rtip);
 
