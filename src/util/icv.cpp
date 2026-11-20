@@ -34,6 +34,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/stat.h>
+#include <memory>
+#include <string>
+#include <vector>
 
 #include "bio.h"
 #include "bu.h"
@@ -76,26 +79,6 @@ file_null(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
     return 1;
 }
 
-int
-image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
-{
-    int type_int;
-    bu_mime_image_t type = BU_MIME_IMAGE_UNKNOWN;
-    bu_mime_image_t *set_type = (bu_mime_image_t *)set_mime;
-
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "mime format");
-
-    type_int = bu_file_mime(argv[0], BU_MIME_IMAGE);
-    type = (type_int < 0) ? BU_MIME_IMAGE_UNKNOWN : (bu_mime_image_t)type_int;
-    if (type == BU_MIME_IMAGE_UNKNOWN) {
-	if (msg) bu_vls_sprintf(msg, "Error - unknown geometry file type: %s \n", argv[0]);
-	return -1;
-    }
-    if (set_type)(*set_type) = type;
-    return 1;
-}
-
-
 static int
 positive_size(struct bu_vls *msg, size_t argc, const char **argv, void *set_size)
 {
@@ -116,59 +99,104 @@ positive_size(struct bu_vls *msg, size_t argc, const char **argv, void *set_size
 }
 
 
-/* ---- internal utilities ----------------------------------------------- */
+static int codec_plugin_option(struct bu_vls *, size_t, const char **, void *);
 
-/* Derive a MIME image type from a file's extension. */
-static bu_mime_image_t
-mime_from_path(const char *path)
+static bool
+load_codec_plugins(struct icv_context *context, const std::vector<std::string> &plugins)
 {
-    struct bu_vls c = BU_VLS_INIT_ZERO;
-    bu_mime_image_t t = BU_MIME_IMAGE_UNKNOWN;
-    if (path && bu_path_component(&c, path, BU_PATH_EXT)) {
-	int ti = bu_file_mime(bu_vls_addr(&c), BU_MIME_IMAGE);
-	t = (ti < 0) ? BU_MIME_IMAGE_UNKNOWN : (bu_mime_image_t)ti;
-    }
-    bu_vls_free(&c);
-    return t;
+    struct bu_vls messages = BU_VLS_INIT_ZERO;
+    bool success = context != NULL;
+    for (const auto &plugin : plugins)
+	if (!icv_load_plugin(context, plugin.c_str(), &messages)) {
+	    success = false;
+	    break;
+	}
+    if (bu_vls_strlen(&messages))
+	bu_log("%s", bu_vls_cstr(&messages));
+    bu_vls_free(&messages);
+    return success;
 }
 
-/*
- * Read an image, auto-deducing dimensions for raw formats (pix/bw) from the
- * file size when width/height are both zero.  Returns NULL on failure.
- */
-static icv_image_t *
-icv_read_auto(const char *path, bu_mime_image_t fmt, size_t width, size_t height)
+static int
+inspect_formats(struct icv_context *context, int list, const char *filename, struct bu_vls *messages)
 {
-    if (!width && !height && (fmt == BU_MIME_IMAGE_PIX || fmt == BU_MIME_IMAGE_BW)) {
-	struct stat sbuf;
-	if (stat(path, &sbuf) < 0) {
-	    bu_log("Error: unable to stat '%s'\n", path);
-	    return NULL;
-	}
-	if (sbuf.st_size <= 0) {
-	    bu_log("Error: '%s' has zero or invalid size\n", path);
-	    return NULL;
-	}
-	if (!icv_image_size(NULL, 0, (size_t)sbuf.st_size, fmt, &width, &height)) {
-	    bu_log("Error: unable to determine dimensions of '%s';\n"
-		   "  use -w/-n to specify width/height explicitly.\n", path);
-	    return NULL;
+    struct bu_mime_result *result = NULL;
+    struct icv_codec_info *codecs = NULL;
+    size_t count = 0;
+    int status = 0;
+    if (!list) {
+	enum bu_mime_status detected = icv_detect_file(context, filename, &result, messages);
+	bu_mime_result_describe(result, messages);
+	status = detected == BU_MIME_MATCH ? 0 : 1;
+    }
+    if (!icv_list_codecs(context, NULL, &codecs, &count)) {
+	status = 1;
+    } else {
+	for (size_t i = 0; i < count; ++i) {
+	    bool show = list;
+	    for (size_t j = 0; !show && result && j < result->count; ++j)
+		show = BU_STR_EQUAL(codecs[i].mime_type, result->candidates[j].name);
+	    if (show) {
+		bu_vls_printf(messages, "%s  %s%s%s%s%s%s%s  %s (priority %u)", codecs[i].mime_type,
+		    codecs[i].operations & ICV_CODEC_READ ? "read " : "",
+		    codecs[i].operations & ICV_CODEC_READ_MEM ? "read-memory " : "",
+		    codecs[i].operations & ICV_CODEC_WRITE ? "write " : "",
+		    codecs[i].operations & ICV_CODEC_WRITE_MEM ? "write-memory " : "",
+		    codecs[i].operations & ICV_CODEC_METADATA ? "metadata " : "",
+		    codecs[i].operations & ICV_CODEC_READ_SEQUENCE ? "read-sequence " : "",
+		    codecs[i].operations & ICV_CODEC_WRITE_SEQUENCE ? "write-sequence " : "",
+		    codecs[i].name, codecs[i].priority);
+		bu_mime_traits_describe(&codecs[i].traits, messages);
+		bu_vls_putc(messages, '\n');
+	    }
 	}
     }
-    return icv_read(path, fmt, width, height);
+    icv_codec_list_free(codecs, count);
+    bu_mime_result_free(result);
+    return status;
 }
-
 
 /* ---- icv info subcommand ---------------------------------------------- */
 
 static int
 cmd_info(int ac, const char **av)
 {
+    std::vector<std::string> plugins;
+    struct bu_vls messages = BU_VLS_INIT_ZERO;
+    int decode = 0;
+    struct bu_vls input_format = BU_VLS_INIT_ZERO;
+    struct bu_vls input_codec = BU_VLS_INIT_ZERO;
+    struct bu_mime_traits input_traits = BU_MIME_TRAITS_INIT_ZERO;
+    struct bu_opt_desc options[] = {
+	{"", "input-format", "type", bu_opt_vls, &input_format, "Input MIME type or extension."},
+	{"", "input-codec", "name", bu_opt_vls, &input_codec, "Select an input codec."},
+	{"", "input-trait", "key=value", bu_opt_mime_trait, &input_traits, "Assert an input format property."},
+	{"", "decode", "", NULL, &decode, "Decode pixels and report embedded render information."},
+	{"", "plugin", "library", &codec_plugin_option, &plugins, "Load an image codec plugin."},
+	BU_OPT_DESC_NULL
+    };
+    ac = bu_opt_parse(&messages, ac, av, options);
+    if (ac < 0)
+	bu_log("%s", bu_vls_cstr(&messages));
+    bu_vls_free(&messages);
+
     if (ac < 1) {
-	bu_log("Usage: icv info filename [filename ...]\n");
+	bu_log("Usage: icv info [--decode] [--plugin library] filename [filename ...]\n");
+	bu_vls_free(&input_format);
+	bu_vls_free(&input_codec);
+	bu_mime_traits_free(&input_traits);
 	return 1;
     }
 
+    std::unique_ptr<icv_context, decltype(&icv_context_destroy)> context(icv_context_create(NULL), icv_context_destroy);
+    if (!load_codec_plugins(context.get(), plugins)) {
+	bu_vls_free(&input_format);
+	bu_vls_free(&input_codec);
+	bu_mime_traits_free(&input_traits);
+	return 1;
+    }
+    const char *requested_type = bu_vls_strlen(&input_format) ? bu_vls_cstr(&input_format) : NULL;
+    const char *requested_codec = bu_vls_strlen(&input_codec) ? bu_vls_cstr(&input_codec) : NULL;
     int ret = 0;
     for (int i = 0; i < ac; i++) {
 	const char *path = av[i];
@@ -179,19 +207,53 @@ cmd_info(int ac, const char **av)
 	    continue;
 	}
 
-	bu_mime_image_t fmt = mime_from_path(path);
-	icv_image_t *img = icv_read_auto(path, fmt, 0, 0);
+	struct bu_vls resolved = BU_VLS_INIT_ZERO;
+	int selected = icv_resolve_variant(context.get(), decode ? ICV_CODEC_READ : ICV_CODEC_METADATA,
+	    path, requested_type, requested_codec, &input_traits, &resolved, NULL, NULL, NULL);
+	/* A readable codec may legitimately lack header metadata. */
+	if (!selected && !decode)
+	    selected = icv_resolve_variant(context.get(), ICV_CODEC_READ, path,
+		requested_type, requested_codec, &input_traits, &resolved, NULL, NULL, NULL);
+	std::string type = bu_vls_cstr(&resolved);
+	bu_vls_free(&resolved);
+	if (!selected) {
+	    bu_log("%s: no unambiguous compatible image codec\n", path);
+	    ret = 1;
+	    continue;
+	}
+	if (!decode) {
+	    icv_image_metadata metadata = {};
+	    icv_metadata_status ms = icv_metadata_file_variant(context.get(), path,
+		type.c_str(), requested_codec, &input_traits, &metadata, NULL);
+	    bu_log("%s: format: %s", path, type.c_str());
+	    if (ms == ICV_METADATA_MATCH) {
+		bu_log("  %zux%zu", metadata.width, metadata.height);
+		if (metadata.channels)
+		    bu_log("  channels: %zu (%s)", metadata.channels,
+			metadata.color_space == ICV_METADATA_COLOR_GRAY ? "grayscale" :
+			metadata.color_space == ICV_METADATA_COLOR_RGB ? "RGB" :
+			metadata.color_space == ICV_METADATA_COLOR_CMYK ? "CMYK" : "unknown");
+	    } else {
+		bu_log("  properties: %s", ms == ICV_METADATA_INCOMPLETE ? "incomplete header" :
+		    ms == ICV_METADATA_ERROR ? "invalid header" : "unavailable");
+		if (ms == ICV_METADATA_ERROR)
+		    ret = 1;
+	    }
+	    bu_log("\n");
+	    continue;
+	}
+	icv_image_t *img = icv_read_variant(context.get(), path, type.c_str(), requested_codec, &input_traits, 0, 0, NULL);
 	if (!img) {
 	    bu_log("%s: unable to read image\n", path);
 	    ret = 1;
 	    continue;
 	}
 
-	const char *fmt_str = bu_file_mime_str((int)fmt, BU_MIME_IMAGE);
+	const char *fmt_str = type.c_str();
 	bu_log("%s: %zux%zu  format: %s  channels: %zu (%s)",
 	       path,
 	       img->width, img->height,
-	       fmt_str ? fmt_str : "unknown",
+	       fmt_str,
 	       img->channels,
 	       img->color_space == ICV_COLOR_SPACE_RGB ? "RGB" : "grayscale");
 
@@ -203,9 +265,11 @@ cmd_info(int ac, const char **av)
 	}
 	bu_log("\n");
 
-	bu_free((char *)fmt_str, "fmt str");
 	icv_destroy(img);
     }
+    bu_vls_free(&input_format);
+    bu_vls_free(&input_codec);
+    bu_mime_traits_free(&input_traits);
     return ret;
 }
 
@@ -215,24 +279,26 @@ cmd_info(int ac, const char **av)
 static int
 cmd_diff(int ac, const char **av)
 {
+    std::vector<std::string> plugins;
     int need_help = 0;
     int ret = 0;
     const char *out_path_str = NULL;
-    bu_mime_image_t out_type  = BU_MIME_IMAGE_UNKNOWN;
-    bu_mime_image_t in_type_1 = BU_MIME_IMAGE_UNKNOWN;
-    bu_mime_image_t in_type_2 = BU_MIME_IMAGE_UNKNOWN;
+    struct bu_vls out_type = BU_VLS_INIT_ZERO;
+    struct bu_vls in_type_1 = BU_VLS_INIT_ZERO;
+    struct bu_vls in_type_2 = BU_VLS_INIT_ZERO;
     size_t width1 = 0, height1 = 0;
     size_t width2 = 0, height2 = 0;
 
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
 
     struct bu_opt_desc diff_opt_desc[] = {
+	{"", "plugin", "library", &codec_plugin_option, &plugins, "Load an image codec plugin."},
 	{"h", "help",          "",       NULL,         &need_help,            "Print help and exit."                             },
 	{"?", "",              "",       NULL,         &need_help,            "",                                                },
 	{"o", "output",        "file",   &bu_opt_str, (void *)&out_path_str, "Output diff image file."                         },
-	{"",  "output-format", "format", &image_mime, (void *)&out_type,     "File format for output image."                   },
-	{"",  "format-img1",   "format", &image_mime, (void *)&in_type_1,    "File format of first input image."               },
-	{"",  "format-img2",   "format", &image_mime, (void *)&in_type_2,    "File format of second input image."              },
+	{"",  "output-format", "format", &bu_opt_vls, (void *)&out_type,     "File format for output image."                   },
+	{"",  "format-img1",   "format", &bu_opt_vls, (void *)&in_type_1,    "File format of first input image."               },
+	{"",  "format-img2",   "format", &bu_opt_vls, (void *)&in_type_2,    "File format of second input image."              },
 	{"",  "width-img1",    "#",      &positive_size, (void *)&width1,    "Width of first input image (raw formats only)."  },
 	{"",  "height-img1",   "#",      &positive_size, (void *)&height1,   "Height of first input image (raw formats only)." },
 	{"",  "width-img2",    "#",      &positive_size, (void *)&width2,    "Width of second input image (raw formats only)." },
@@ -244,6 +310,10 @@ cmd_diff(int ac, const char **av)
     if (uac == -1) {
 	bu_log("Parsing error: %s\n", bu_vls_addr(&parse_msgs));
 	bu_vls_free(&parse_msgs);
+	bu_vls_free(&in_type_1);
+	bu_vls_free(&in_type_2);
+	bu_vls_free(&out_type);
+
 	return 1;
     }
     bu_vls_free(&parse_msgs);
@@ -254,34 +324,40 @@ cmd_diff(int ac, const char **av)
 	       "Compare two images and report pixel differences.  With no -o option the\n"
 	       "difference image is written as raw PIX data to stdout (compatible with\n"
 	       "pixdiff).  Use -o to write the diff image to a named file; the output\n"
-	       "format is inferred from the file extension.\n\nOptions:\n%s\n", help);
+	       "format is inferred from the file extension, defaulting to PIX for\n"
+	       "unassociated names.\n\nOptions:\n%s\n", help);
 	bu_free(help, "help str");
+	bu_vls_free(&in_type_1);
+	bu_vls_free(&in_type_2);
+	bu_vls_free(&out_type);
+
 	return need_help ? 0 : 1;
     }
 
     const char *img_path_1 = av[uac - 2];
     const char *img_path_2 = av[uac - 1];
 
-    /* Determine input formats from file extensions when not specified */
-    if (in_type_1 == BU_MIME_IMAGE_UNKNOWN)
-	in_type_1 = mime_from_path(img_path_1);
-    if (in_type_2 == BU_MIME_IMAGE_UNKNOWN)
-	in_type_2 = mime_from_path(img_path_2);
+    std::unique_ptr<icv_context, decltype(&icv_context_destroy)> context(icv_context_create(NULL), icv_context_destroy);
+    if (!load_codec_plugins(context.get(), plugins)) {
+	bu_vls_free(&in_type_1);
+	bu_vls_free(&in_type_2);
+	bu_vls_free(&out_type);
 
-    /* Determine output format */
-    if (out_type == BU_MIME_IMAGE_UNKNOWN && out_path_str)
-	out_type = mime_from_path(out_path_str);
-    /* Default: raw PIX to stdout (pixdiff-compatible) */
-    if (out_type == BU_MIME_IMAGE_UNKNOWN)
-	out_type = BU_MIME_IMAGE_PIX;
-
-    icv_image_t *img1 = icv_read_auto(img_path_1, in_type_1, width1, height1);
-    icv_image_t *img2 = icv_read_auto(img_path_2, in_type_2, width2, height2);
+	return 1;
+    }
+    icv_image_t *img1 = icv_read_with_context(context.get(), img_path_1,
+	bu_vls_strlen(&in_type_1) ? bu_vls_cstr(&in_type_1) : NULL, NULL, width1, height1, NULL);
+    icv_image_t *img2 = icv_read_with_context(context.get(), img_path_2,
+	bu_vls_strlen(&in_type_2) ? bu_vls_cstr(&in_type_2) : NULL, NULL, width2, height2, NULL);
 
     if (!img1 || !img2) {
 	bu_log("icv diff: error reading input image(s)\n");
 	icv_destroy(img1);
 	icv_destroy(img2);
+	bu_vls_free(&in_type_1);
+	bu_vls_free(&in_type_2);
+	bu_vls_free(&out_type);
+
 	return 1;
     }
 
@@ -294,12 +370,24 @@ cmd_diff(int ac, const char **av)
     if (off_by_1 || off_by_many) {
 	icv_image_t *oimg = icv_diffimg(img1, img2);
 	if (oimg) {
-	    if (out_path_str) {
-		/* Write diff image to named output file */
-		icv_write(oimg, out_path_str, out_type);
-	    } else if (!isatty(fileno(stdout))) {
-		/* Pipe raw PIX diff to stdout, matching pixdiff behaviour */
-		icv_write(oimg, NULL, out_type);
+	    if (out_path_str || !isatty(fileno(stdout))) {
+		const char *format = bu_vls_strlen(&out_type) ? bu_vls_cstr(&out_type) : NULL;
+		bu_mime_result *formats = NULL;
+		bu_vls messages = BU_VLS_INIT_ZERO;
+		bu_mime_status identified = out_path_str && !format ?
+		    bu_mime_detect(icv_mime_registry(context.get()), out_path_str, NULL, 0, 0, &formats) : BU_MIME_UNKNOWN_RESULT;
+		/* Preserve the pixdiff-compatible default for stdout and
+		 * unassociated names; registered suffixes use their writer. */
+		if (!format && identified == BU_MIME_UNKNOWN_RESULT)
+		    format = "image/vnd.brlcad.pix";
+		if (identified == BU_MIME_ERROR ||
+		    icv_write_with_context(context.get(), oimg, out_path_str, format, NULL, &messages)) {
+		    bu_log("icv diff: cannot write difference image to %s\n%s",
+			out_path_str ? out_path_str : "stdout", bu_vls_cstr(&messages));
+		    ret = 1;
+		}
+		bu_vls_free(&messages);
+		bu_mime_result_free(formats);
 	    }
 	    icv_destroy(oimg);
 	}
@@ -307,6 +395,10 @@ cmd_diff(int ac, const char **av)
 
     icv_destroy(img1);
     icv_destroy(img2);
+    bu_vls_free(&in_type_1);
+    bu_vls_free(&in_type_2);
+    bu_vls_free(&out_type);
+
     return ret;
 }
 
@@ -316,9 +408,18 @@ cmd_diff(int ac, const char **av)
 static int
 cmd_anim(int ac, const char **av)
 {
+    std::vector<std::string> plugins;
+    struct bu_vls messages = BU_VLS_INIT_ZERO;
+    struct bu_opt_desc options[] = {
+	{"", "plugin", "library", codec_plugin_option, &plugins, "Load an image or sequence codec plugin."},
+	BU_OPT_DESC_NULL
+    };
+    ac = bu_opt_parse(&messages, ac, av, options);
+    if (ac < 0) bu_log("%s", bu_vls_cstr(&messages));
+    bu_vls_free(&messages);
     if (ac < 2) {
 	bu_log("Usage:\n"
-	       "  icv anim add <anim_file> <img1> [<img2> ...]\n"
+	       "  icv anim [--plugin library] add <anim_file> <img1> [<img2> ...]\n"
 	       "  icv anim extract <anim_file> <out_prefix>\n"
 	       "  icv anim replace <anim_file> <index> <img_file>\n"
 	       "  icv anim insert <anim_file> <index> <img_file>\n"
@@ -326,31 +427,37 @@ cmd_anim(int ac, const char **av)
 	       "  icv anim set-fps <anim_file> <fps>\n"
 	       "  icv anim set-delay <anim_file> <index> <delay_usec>\n"
 	       "Note: <index> is 1-based.\n"
-	       "When creating a new animation via 'add', format is inferred from the extension (.apng or .avi).\n");
+	       "When creating a new animation via 'add', a registered sequence writer is selected from the filename.\n");
 	return 1;
     }
 
     const char *action = av[0];
     const char *anim_file = av[1];
+    std::unique_ptr<icv_context, decltype(&icv_context_destroy)> context(icv_context_create(NULL), icv_context_destroy);
+    if (!context || !load_codec_plugins(context.get(), plugins)) return 1;
+    const auto read_sequence = [&]() {
+	return icv_anim_read_variant(context.get(), anim_file, NULL, NULL, NULL, NULL);
+    };
+    const auto write_sequence = [&](const icv_anim_t *animation) {
+	return icv_anim_write_variant(context.get(), animation, anim_file, icv_anim_mime_type(animation), NULL, NULL, NULL);
+    };
 
     if (BU_STR_EQUAL(action, "add")) {
 	if (ac < 3) return 1;
 
-	icv_anim_t *anim = icv_anim_read(anim_file);
+	icv_anim_t *anim = bu_file_exists(anim_file, NULL) ? read_sequence() : NULL;
 	if (!anim) {
-	    icv_anim_format_t fmt = ICV_ANIM_UNKNOWN;
-	    if (strstr(anim_file, ".apng") || strstr(anim_file, ".png")) fmt = ICV_ANIM_APNG;
-	    else if (strstr(anim_file, ".avi") || strstr(anim_file, ".mjpg")) fmt = ICV_ANIM_MJPG;
-	    if (fmt == ICV_ANIM_UNKNOWN) {
-		bu_log("Unknown animation format for '%s'. Use .apng or .avi extension.\n", anim_file);
+	    if (bu_file_exists(anim_file, NULL) || !icv_resolve_variant(context.get(), ICV_CODEC_WRITE_SEQUENCE,
+		anim_file, NULL, NULL, NULL, NULL, NULL, NULL, NULL)) {
+		bu_log("Cannot select animation input/output for '%s'\n", anim_file);
 		return 1;
 	    }
-	    anim = icv_anim_create(fmt, 0, 0, 10);
+	    anim = icv_anim_create(ICV_ANIM_UNKNOWN, 0, 0, 10);
+	    if (!anim) return 1;
 	}
 
 	for (int i = 2; i < ac; ++i) {
-	    bu_mime_image_t type = mime_from_path(av[i]);
-	    icv_image_t *img = icv_read_auto(av[i], type, 0, 0);
+	    icv_image_t *img = icv_read_with_context(context.get(), av[i], NULL, NULL, 0, 0, NULL);
 	    if (!img) {
 		bu_log("Failed to read image '%s'\n", av[i]);
 		continue;
@@ -359,15 +466,15 @@ cmd_anim(int ac, const char **av)
 	    icv_destroy(img);
 	}
 
-	icv_anim_write(anim, anim_file);
+	const int status = write_sequence(anim);
 	icv_anim_destroy(anim);
-	return 0;
+	return status ? 1 : 0;
 
     } else if (BU_STR_EQUAL(action, "extract")) {
 	if (ac < 3) return 1;
 	const char *out_prefix = av[2];
 
-	icv_anim_t *anim = icv_anim_read(anim_file);
+	icv_anim_t *anim = read_sequence();
 	if (!anim) {
 	    bu_log("Failed to read animation '%s'\n", anim_file);
 	    return 1;
@@ -380,7 +487,7 @@ cmd_anim(int ac, const char **av)
 	    if (img) {
 		char out_name[1024];
 		snprintf(out_name, sizeof(out_name), "%s%03zu_ctrl.png", out_prefix, i + 1);
-		status = icv_write(img, out_name, BU_MIME_IMAGE_PNG);
+		status = icv_write_with_context(context.get(), img, out_name, "image/png", NULL, NULL);
 		icv_destroy(img);
 		if (status) {
 		    bu_log("Failed to write frame '%s'\n", out_name);
@@ -403,7 +510,7 @@ cmd_anim(int ac, const char **av)
 	    return 1;
 	}
 
-	icv_anim_t *anim = icv_anim_read(anim_file);
+	icv_anim_t *anim = read_sequence();
 	if (!anim) {
 	    bu_log("Failed to read animation '%s'\n", anim_file);
 	    return 1;
@@ -412,8 +519,7 @@ cmd_anim(int ac, const char **av)
 	size_t i = (size_t)(idx - 1);
 	icv_image_t *img = NULL;
 	if (!BU_STR_EQUAL(action, "remove")) {
-	    bu_mime_image_t type = mime_from_path(av[3]);
-	    img = icv_read_auto(av[3], type, 0, 0);
+	    img = icv_read_with_context(context.get(), av[3], NULL, NULL, 0, 0, NULL);
 	    if (!img) {
 		bu_log("Failed to read image '%s'\n", av[3]);
 		icv_anim_destroy(anim);
@@ -430,15 +536,15 @@ cmd_anim(int ac, const char **av)
 	}
 	if (img) icv_destroy(img);
 
-	icv_anim_write(anim, anim_file);
+	const int status = write_sequence(anim);
 	icv_anim_destroy(anim);
-	return 0;
+	return status ? 1 : 0;
 
     } else if (BU_STR_EQUAL(action, "set-fps") || BU_STR_EQUAL(action, "set-delay")) {
 	if (BU_STR_EQUAL(action, "set-fps") && ac < 3) return 1;
 	if (BU_STR_EQUAL(action, "set-delay") && ac < 4) return 1;
 
-	icv_anim_t *anim = icv_anim_read(anim_file);
+	icv_anim_t *anim = read_sequence();
 	if (!anim) {
 	    bu_log("Failed to read animation '%s'\n", anim_file);
 	    return 1;
@@ -466,7 +572,7 @@ cmd_anim(int ac, const char **av)
 	    }
 	}
 
-	if (icv_anim_write(anim, anim_file) != 0) {
+	if (write_sequence(anim) != 0) {
 	    bu_log("Failed to write animation '%s'\n", anim_file);
 	    icv_anim_destroy(anim);
 	    return 1;
@@ -494,12 +600,36 @@ print_usage(void)
 	   "  diff   Compare two images (pixdiff-compatible; see 'icv diff -h').\n"
 	   "  anim   Manage animation files (APNG, MJPG). Run 'icv anim' for usage.\n\n"
 	   "Without a subcommand, icv converts the input image to the output format\n"
-	   "as inferred from the file extensions (or specified with --input-format /\n"
+	   "using input contents and output extensions (or --input-format /\n"
 	   "--output-format).\n");
 }
 
+static int
+codec_plugin_option(struct bu_vls *messages, size_t argc, const char **argv, void *data)
+{
+    BU_OPT_CHECK_ARGV0(messages, argc, argv, "plugin library");
+    static_cast<std::vector<std::string> *>(data)->emplace_back(argv[0]);
+    return 1;
+}
 
-/* ---- conversion (original functionality) ------------------------------ */
+static bool
+codec_format(struct icv_context *context, struct bu_vls *format, struct bu_vls *messages)
+{
+    if (!bu_vls_strlen(format))
+	return true;
+    std::string requested = bu_vls_cstr(format);
+    struct bu_mime_result *names = NULL;
+    enum bu_mime_status status = bu_mime_resolve_candidates(icv_mime_registry(context), requested.c_str(), &names);
+    if (status == BU_MIME_MATCH)
+	bu_vls_strcpy(format, names->candidates[0].name);
+    bu_mime_result_free(names);
+    if (status == BU_MIME_MATCH || status == BU_MIME_AMBIGUOUS)
+	return true;
+    bu_vls_printf(messages, "Unknown image format: %s\n", requested.c_str());
+    return false;
+}
+
+/* ---- conversion ------------------------------ */
 
 int
 main(int ac, const char **av)
@@ -508,13 +638,13 @@ main(int ac, const char **av)
     int ret = 0;
     size_t width = 0;
     size_t height = 0;
-    const char *in_fmt = NULL;
-    const char *out_fmt = NULL;
-    static bu_mime_image_t in_type = BU_MIME_IMAGE_UNKNOWN;
-    static bu_mime_image_t out_type = BU_MIME_IMAGE_UNKNOWN;
-    static char *in_path_str = NULL;
-    static char *out_path_str = NULL;
+    std::unique_ptr<icv_context, decltype(&icv_context_destroy)> context(NULL, icv_context_destroy);
+    std::vector<std::string> plugins;
+    char *in_path_str = NULL;
+    char *out_path_str = NULL;
     int need_help = 0;
+    int list_formats = 0;
+    char *identify = NULL;
     int skip_in = 0;
     int skip_out = 0;
     icv_image_t *img = NULL;
@@ -527,16 +657,27 @@ main(int ac, const char **av)
     struct bu_vls out_format = BU_VLS_INIT_ZERO;
     struct bu_vls out_path = BU_VLS_INIT_ZERO;
     struct bu_vls slog = BU_VLS_INIT_ZERO;
+    struct bu_mime_traits input_traits = BU_MIME_TRAITS_INIT_ZERO;
+    struct bu_mime_traits output_traits = BU_MIME_TRAITS_INIT_ZERO;
+    struct bu_vls input_codec = BU_VLS_INIT_ZERO;
+    struct bu_vls output_codec = BU_VLS_INIT_ZERO;
 
     struct bu_opt_desc icv_opt_desc[] = {
-	{"h", "help",             "",           NULL,          &need_help,            "Print help and exit."        },
-	{"?", "",                 "",           NULL,          &need_help,            "",                           },
-	{"i", "input",            "file",       &file_stat, (void *)&in_path_str,   "Input file.",                },
-	{"o", "output",           "file",       &file_null, (void *)&out_path_str,  "Output file.",               },
-	{"w", "width",            "#",          &positive_size, (void *)&width,      "Image width.",               },
-	{"n", "height",           "#",          &positive_size, (void *)&height,     "Image height.",              },
-	{"",  "input-format",     "format",     &image_mime, (void *)&in_type,       "File format of input file.", },
-	{"",  "output-format",    "format",     &image_mime, (void *)&out_type,      "File format of output file." },
+	{"", "list-formats", "", NULL, &list_formats, "List registered formats and codecs."},
+	{"", "identify", "file", &bu_opt_str, &identify, "Inspect file type and available codecs."},
+	{"h", "help",          "",       NULL, &need_help, "Print help and exit."},
+	{"?", "",              "",       NULL, &need_help, ""},
+	{"i", "input",         "file",   &file_stat, &in_path_str, "Input file."},
+	{"o", "output",        "file",   &file_null, &out_path_str, "Output file."},
+	{"w", "width",         "#",      &positive_size, &width, "Image width."},
+	{"n", "height",        "#",      &positive_size, &height, "Image height."},
+	{"", "input-format",   "format", &bu_opt_vls, &in_format, "Input MIME name or extension."},
+	{"", "output-format",  "format", &bu_opt_vls, &out_format, "Output MIME name or extension."},
+	{"", "plugin",         "library", &codec_plugin_option, &plugins, "Load an image codec plugin (repeatable)."},
+	{"", "input-trait", "key=value", &bu_opt_mime_trait, &input_traits, "Required input format trait (repeatable)."},
+	{"", "output-trait", "key=value", &bu_opt_mime_trait, &output_traits, "Requested output format trait (repeatable)."},
+	{"", "input-codec",    "name", &bu_opt_vls, &input_codec, "Input codec implementation."},
+	{"", "output-codec",   "name", &bu_opt_vls, &output_codec, "Output codec implementation."},
 	BU_OPT_DESC_NULL
     };
 
@@ -573,33 +714,40 @@ main(int ac, const char **av)
 	goto cleanup;
     }
 
-    /* Did we get explicit options for an input and/or output file? */
+    context.reset(icv_context_create(NULL));
+    if (!context) {
+	ret = 1;
+	goto cleanup;
+    }
+    if (!load_codec_plugins(context.get(), plugins)) {
+	ret = 1;
+	goto cleanup;
+    }
+    if (list_formats || identify) {
+	ret = inspect_formats(context.get(), list_formats, identify, &slog);
+	goto cleanup;
+    }
+    if (!codec_format(context.get(), &in_format, &slog) ||
+	!codec_format(context.get(), &out_format, &slog)) {
+	ret = 1;
+	goto cleanup;
+    }
     if (in_path_str) {
-	bu_vls_sprintf(&in_path, "%s", in_path_str);
-	skip_in++;
+	bu_vls_strcpy(&in_path, in_path_str);
+	skip_in = 1;
     }
     if (out_path_str) {
-	bu_vls_sprintf(&out_path, "%s", out_path_str);
-	skip_out++;
+	bu_vls_strcpy(&out_path, out_path_str);
+	skip_out = 1;
     }
-
-    /* If not specified explicitly with -i or -o, the input and output paths must always
-     * be the last two arguments supplied */
-    if (!(skip_in && skip_out)) {
-	if (skip_in && !skip_out) {
-	    bu_vls_sprintf(&out_path, "%s", av[uac - 1]);
-	}
-	if (!skip_in && skip_out) {
-	    bu_vls_sprintf(&in_path, "%s", av[uac - 1]);
-	}
-	if (!skip_in && !skip_out) {
-	    if (ac > 1) {
-		bu_vls_sprintf(&in_path, "%s", av[uac - 2]);
-		bu_vls_sprintf(&out_path, "%s", av[uac - 1]);
-	    } else {
-		bu_vls_sprintf(&in_path, "%s", av[uac - 1]);
-	    }
-	}
+    if (skip_in && !skip_out && uac > 0)
+	bu_vls_strcpy(&out_path, av[uac - 1]);
+    if (!skip_in && skip_out && uac > 0)
+	bu_vls_strcpy(&in_path, av[uac - 1]);
+    if (!skip_in && !skip_out && uac > 0) {
+	bu_vls_strcpy(&in_path, av[uac > 1 ? uac - 2 : uac - 1]);
+	if (uac > 1)
+	    bu_vls_strcpy(&out_path, av[uac - 1]);
     }
 
     /* Make sure we have distinct input and output paths */
@@ -608,66 +756,31 @@ main(int ac, const char **av)
 	ret = 1;
     }
 
-    /* Find out what input file type we are dealing with */
-    if (in_type == BU_MIME_IMAGE_UNKNOWN) {
-	struct bu_vls c = BU_VLS_INIT_ZERO;
-	if (!bu_vls_strlen(&in_path)) {
-	    bu_vls_printf(&slog, "No input file specified - to use stdin, specify an image format for the data input stream\n");
-	    ret = 1;
-	} else {
-	    if (bu_path_component(&c, bu_vls_addr(&in_path), BU_PATH_EXT)) {
-		in_type = (bu_mime_image_t)bu_file_mime(bu_vls_addr(&c), BU_MIME_IMAGE);
-	    } else {
-		bu_vls_printf(&slog, "No input file image type specified - need either a specified input image type or a path that provides MIME information.\n");
-		ret = 1;
-	    }
-	}
-	bu_vls_free(&c);
-    }
-    if (out_type == BU_MIME_IMAGE_UNKNOWN) {
-	struct bu_vls c = BU_VLS_INIT_ZERO;
-	if (!bu_vls_strlen(&out_path)) {
-	    bu_vls_printf(&slog, "No output file specified - to use stdout, specify an image format to use for the data stream\n");
-	    ret = 1;
-	} else {
-	    if (bu_path_component(&c, bu_vls_addr(&out_path), BU_PATH_EXT)) {
-		out_type = (bu_mime_image_t)bu_file_mime(bu_vls_addr(&c), BU_MIME_IMAGE);
-	    } else {
-		bu_vls_printf(&slog, "No output file image type specified - need either a specified output image type or a path that provides MIME information.\n");
-		ret = 1;
-	    }
-	}
-	bu_vls_free(&c);
-    }
-
-    /* If everything isn't OK, we're done - report and clean up memory */
-    if (ret == 1) goto cleanup;
-
-    in_fmt = bu_file_mime_str((int)in_type, BU_MIME_IMAGE);
-    out_fmt = bu_file_mime_str((int)out_type, BU_MIME_IMAGE);
-
-    /* If we have no width or height specified, and we have an input format that
-     * does not encode that information, make an educated guess */
-    if (!width && !height && (in_type == BU_MIME_IMAGE_PIX || in_type == BU_MIME_IMAGE_BW)) {
-	struct stat sbuf;
-	if (stat(bu_vls_addr(&in_path), &sbuf) < 0) {
-	    bu_exit(1, "Unable to stat input file");
-	}
-	if (!icv_image_size(NULL, 0, (size_t)sbuf.st_size, in_type, &width, &height)) {
-	    bu_log("Error - input image type does not have dimension information encoded, and icv was not able to deduce a size.  Please specify image width in pixels with the \"-w\" option and image height in pixels with the \"-n\" option.\n");
-	    bu_exit(1, "image dimensional information insufficient");
-	}
-    }
-
-    img = icv_read(bu_vls_addr(&in_path), in_type, width, height);
-    icv_write(img, bu_vls_addr(&out_path), out_type);
+    if (ret)
+	goto cleanup;
+    img = icv_read_variant(context.get(), bu_vls_strlen(&in_path) ? bu_vls_cstr(&in_path) : NULL,
+				bu_vls_strlen(&in_format) ? bu_vls_cstr(&in_format) : NULL,
+				bu_vls_strlen(&input_codec) ? bu_vls_cstr(&input_codec) : NULL, &input_traits, width, height, &slog);
+    if (!img || icv_write_variant(context.get(), img,
+				       bu_vls_strlen(&out_path) ? bu_vls_cstr(&out_path) : NULL,
+				       bu_vls_strlen(&out_format) ? bu_vls_cstr(&out_format) : NULL,
+				       bu_vls_strlen(&output_codec) ? bu_vls_cstr(&output_codec) : NULL, &output_traits, &slog))
+	ret = 1;
 
     /* Clean up */
 cleanup:
+
     if (bu_vls_strlen(&slog) > 0)
 	bu_log("%s", bu_vls_addr(&slog));
-    bu_free((char *)in_fmt, "input format string");
-    bu_free((char *)out_fmt, "output format string");
+    if (img)
+	icv_destroy(img);
+    bu_free(in_path_str, "input path option");
+    bu_free(out_path_str, "output path option");
+    bu_vls_free(&parse_msgs);
+    bu_mime_traits_free(&input_traits);
+    bu_mime_traits_free(&output_traits);
+    bu_vls_free(&input_codec);
+    bu_vls_free(&output_codec);
     bu_vls_free(&in_format);
     bu_vls_free(&in_path);
     bu_vls_free(&out_format);

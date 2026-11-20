@@ -197,9 +197,12 @@ main(int argc, char **argv)
 	dousage();
 	bu_exit (1, NULL);
     }
-    img = icv_read(in_file, BU_MIME_IMAGE_BW, inx, iny);
-    if (img == NULL)
+    struct icv_context *context = icv_context_create(NULL);
+    img = icv_read_with_context(context, in_file, "image/vnd.brlcad.bw", NULL, inx, iny, NULL);
+    if (img == NULL) {
+	icv_context_destroy(context);
 	return 1;
+    }
 
     icv_filter(img, filter_type);
 
@@ -231,14 +234,16 @@ main(int argc, char **argv)
     bu_free(min_d, "max value");
     bu_free(max_d, "min values");
 
-    icv_write(img, out_file, BU_MIME_IMAGE_BW);
+    int write_status = icv_write_with_context(context, img, out_file, "image/vnd.brlcad.bw", NULL, NULL);
 
     /* If stdout is non-interactive as well as -o being specified, emit to both. */
     if (!isatty(fileno(stdout)) && out_file != NULL) {
-	icv_write(img, NULL, BU_MIME_IMAGE_BW);
+	write_status |= icv_write_with_context(context, img, NULL, "image/vnd.brlcad.bw", NULL, NULL);
     }
 
-    return 0;
+    icv_destroy(img);
+    icv_context_destroy(context);
+    return write_status ? 1 : 0;
 }
 
 /*

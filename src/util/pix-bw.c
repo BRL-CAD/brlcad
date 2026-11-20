@@ -188,10 +188,13 @@ main(int argc, char **argv)
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
 
-    img = icv_read(in_file, BU_MIME_IMAGE_PIX, inx, iny);
+    struct icv_context *context = icv_context_create(NULL);
+    img = icv_read_with_context(context, in_file, "image/vnd.brlcad.pix", NULL, inx, iny, NULL);
 
-    if (img == NULL)
+    if (img == NULL) {
+	icv_context_destroy(context);
 	return 1;
+    }
 
     if (red && green && blue)
 	color = ICV_COLOR_RGB;
@@ -215,14 +218,16 @@ main(int argc, char **argv)
 
     icv_rgb2gray(img, color, rweight, gweight, bweight);
 
-    icv_write(img, out_file, BU_MIME_IMAGE_BW);
+    int write_status = icv_write_with_context(context, img, out_file, "image/vnd.brlcad.bw", NULL, NULL);
 
     int fno = fileno(stdout);
     if ((fno > 0) && !isatty(fno) && (out_file != NULL)) {
-	icv_write(img, NULL, BU_MIME_IMAGE_BW);
+	write_status |= icv_write_with_context(context, img, NULL, "image/vnd.brlcad.bw", NULL, NULL);
     }
 
-    return 0;
+    icv_destroy(img);
+    icv_context_destroy(context);
+    return write_status ? 1 : 0;
 }
 
 

@@ -256,16 +256,20 @@ main(int argc, char **argv)
 
     /* If we've got the "normal" situation, use libicv */
 
-    img = icv_read(bu_vls_addr(&in_fname), BU_MIME_IMAGE_BW, 0, 0);
-    if (img == NULL)
+    struct icv_context *context = icv_context_create(NULL);
+    img = icv_read_with_context(context, bu_vls_strlen(&in_fname) ? bu_vls_cstr(&in_fname) : NULL, "image/vnd.brlcad.bw", NULL, 0, 0, NULL);
+    if (img == NULL) {
+	icv_context_destroy(context);
 	return 1;
+    }
     icv_gray2rgb(img);
-    icv_write(img, bu_vls_addr(&out_fname), BU_MIME_IMAGE_PIX);
+    int write_status = icv_write_with_context(context, img, bu_vls_strlen(&out_fname) ? bu_vls_cstr(&out_fname) : NULL, "image/vnd.brlcad.pix", NULL, NULL);
     if (duplicate_stdout(&out_fname)) {
-	icv_write(img, NULL, BU_MIME_IMAGE_PIX);
+	write_status |= icv_write_with_context(context, img, NULL, "image/vnd.brlcad.pix", NULL, NULL);
     }
     icv_destroy(img);
-    return 0;
+    icv_context_destroy(context);
+    return write_status ? 1 : 0;
 }
 
 /*

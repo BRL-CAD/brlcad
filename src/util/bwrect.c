@@ -129,20 +129,25 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    img = icv_read(in_file, BU_MIME_IMAGE_BW, inx, iny);
-    if (img == NULL)
-	return 1;
-    if (icv_crop_rect(img, xorig, yorig, outx, outy) != 0) {
-	icv_destroy(img);
+    struct icv_context *context = icv_context_create(NULL);
+    img = icv_read_with_context(context, in_file, "image/vnd.brlcad.bw", NULL, inx, iny, NULL);
+    if (img == NULL) {
+	icv_context_destroy(context);
 	return 1;
     }
-    icv_write(img, out_file, BU_MIME_IMAGE_BW);
+    if (icv_crop_rect(img, xorig, yorig, outx, outy) != 0) {
+	icv_destroy(img);
+	icv_context_destroy(context);
+	return 1;
+    }
+    int write_status = icv_write_with_context(context, img, out_file, "image/vnd.brlcad.bw", NULL, NULL);
     if (!isatty(fileno(stdout)) && out_file != NULL) {
-	icv_write(img, NULL, BU_MIME_IMAGE_BW);
+	write_status |= icv_write_with_context(context, img, NULL, "image/vnd.brlcad.bw", NULL, NULL);
     }
 
     icv_destroy(img);
-    return 0;
+    icv_context_destroy(context);
+    return write_status ? 1 : 0;
 }
 
 

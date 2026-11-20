@@ -57,6 +57,15 @@ add_target_deps(halftone dm_plugins)
 
 # This is intended to replace all of the img-img utils eventually
 brlcad_addexec(icv icv.cpp "libicv;libbu" FOLDER Util)
+if(TARGET icv AND TARGET icv_codec_test)
+  add_dependencies(icv_codec_test icv imgdiff)
+  brlcad_add_test(NAME icv_codec_cli COMMAND ${CMAKE_COMMAND}
+    "-DIMGDIFF=$<TARGET_FILE:imgdiff>" "-DICV=$<TARGET_FILE:icv>" "-DCODEC_TEST=$<TARGET_FILE:icv_codec_test>"
+    "-DPLUGIN=$<TARGET_FILE:icv-codec-fixture>" "-DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/mime_cli"
+    -P "${BRLCAD_SOURCE_DIR}/src/libicv/tests/codec_cli.cmake")
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/mime_cli")
+endif()
+
 
 # Should (eventually) have the pixdiff functionality, but be more
 # flexible about input and output formats...

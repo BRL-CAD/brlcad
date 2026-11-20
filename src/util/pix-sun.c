@@ -92,7 +92,9 @@ main(int argc, char **argv)
     if (bu_optind < argc)
 	usage();
 
-    image = icv_read(NULL, BU_MIME_IMAGE_PIX, width, height);
+    struct icv_context *context = icv_context_create(NULL);
+    image = icv_read_with_context(context, NULL, "image/vnd.brlcad.pix", NULL, width, height, NULL);
+    icv_context_destroy(context);
     if (!image)
 	bu_exit(1, "%s: unable to read %zu x %zu PIX input\n", progname, width, height);
     if (icv_write_sun(image, NULL, dither) != BRLCAD_OK) {
