@@ -742,7 +742,8 @@ main(int argc, char **argv)
     while ((ch = bu_getopt(argc, argv, OPT_STRING)) != -1) {
 	switch (ch) {
 	    case 'a':
-		if (bn_decode_angle(&azimuth, bu_optarg) == 0) {
+		if (bn_decode_angle(&azimuth, bu_optarg) == 0 ||
+			!std::isfinite(azimuth)) {
 		    bu_log("Invalid azimuth specification: '%s'\n", bu_optarg);
 		    printusage();
 		    bu_exit(1, NULL);
@@ -752,7 +753,8 @@ main(int argc, char **argv)
 		cell_center = 1;
 		break;
 	    case 'e':
-		if (bn_decode_angle(&elevation, bu_optarg) == 0) {
+		if (bn_decode_angle(&elevation, bu_optarg) == 0 ||
+			!std::isfinite(elevation)) {
 		    bu_log("Invalid elevation specification: '%s'\n", bu_optarg);
 		    printusage();
 		    bu_exit(1, NULL);
