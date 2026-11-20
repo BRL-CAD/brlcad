@@ -43,7 +43,7 @@ brlcad_adddata(rtexample.c sample_applications)
 
 brlcad_addexec(rtexample "rtexample.c" "librt;libdm;liboptical;libicv" NO_INSTALL)
 
-brlcad_addexec(reshoot "reshoot.c" "Threads::Threads;librt;libdm;liboptical;libicv" FOLDER Rt)
+brlcad_addexec(reshoot "reshoot.c" "Threads::Threads;librt;libdm;liboptical;libicv" FOLDER Rt ARG_SCHEMA)
 target_include_directories(reshoot BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 brlcad_addexec(rtshot "rtshot.c" "${RT_STD_LIBS}" FOLDER Rt)

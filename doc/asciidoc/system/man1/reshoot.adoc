@@ -8,10 +8,10 @@ reshoot - re-shoot a list of rays and compare results to a previous run
 
 == SYNOPSIS
 
-[source]
-----
-reshoot _geom.g_ [_obj_ ...] < _rayfile_
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*reshoot* _geom.g_ [_object_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 
 [[description]]
@@ -90,6 +90,15 @@ For each ray that disagrees, *reshoot* prints the ray's point and
 direction followed by one or more mismatch lines describing the inhit
 distance, outhit distance, region name, or in/out primitive name that
 did not match.
+
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*, *-?*::
+  Print help and exit.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES
