@@ -25,6 +25,7 @@
 #include "bu/app.h"
 #include "bu/file.h"
 #include "bu/log.h"
+#include "bu/mime_runtime.h"
 #include "bu/ptbl.h"
 #include "bu/str.h"
 #include "gcv.h"
@@ -80,6 +81,8 @@ main(int UNUSED(argc), const char **argv)
     char line[4096];
     int failed = 0;
     int close_status;
+    const struct bu_mime_trait syntax[] = {BU_MIME_TRAIT_STRING("asc.syntax", "legacy-records")};
+    const struct bu_mime_traits traits = {syntax, sizeof(syntax) / sizeof(syntax[0])};
 
     bu_setprogname(argv[0]);
     gcv_context_init(&source);
@@ -107,7 +110,8 @@ main(int UNUSED(argc), const char **argv)
     CHECK(!mk_sph(writer, "last.s", center, 3));
     CHECK(!mk_comb1(writer, "last.r", "last.s", 1));
     filter = asc_filter(&source, GCV_FILTER_WRITE);
-    CHECK(filter && gcv_execute(&source, filter, NULL, 0, NULL, ascii_path));
+    CHECK(filter && gcv_execute_variant(&source, filter, "application/vnd.brlcad.script",
+	&traits, NULL, 0, NULL, ascii_path));
     file = fopen(ascii_path, "rb");
     CHECK(file);
     while (bu_fgets(line, sizeof(line), file)) {
@@ -125,7 +129,18 @@ main(int UNUSED(argc), const char **argv)
     CHECK(!close_status);
     CHECK(ident_count == 1 && solid_count == 2 && combination_count == 2 && member_count == 3);
     filter = asc_filter(&imported, GCV_FILTER_READ);
-    CHECK(filter && gcv_execute(&imported, filter, NULL, 0, NULL, ascii_path));
+    {
+	const struct bu_mime_trait unknown = BU_MIME_TRAIT_STRING("fixture.unestablished", "assertion");
+	const struct bu_mime_traits invalid = {&unknown, 1};
+	CHECK(!db_update_ident(imported.dbip, "Before legacy assertion", 10));
+	const size_t before = db_directory_size(imported.dbip);
+	CHECK(filter && !gcv_execute_variant(&imported, filter, "application/vnd.brlcad.script",
+	    &invalid, NULL, 0, NULL, ascii_path));
+	CHECK(db_directory_size(imported.dbip) == before && BU_STR_EQUAL(imported.dbip->dbi_title, "Before legacy assertion") &&
+	    EQUAL(imported.dbip->dbi_local2base, 10));
+    }
+    CHECK(filter && gcv_execute_variant(&imported, filter, "application/vnd.brlcad.script",
+	&traits, NULL, 0, NULL, ascii_path));
     CHECK(db_lookup(imported.dbip, "first.s", LOOKUP_QUIET));
     CHECK(db_lookup(imported.dbip, "last.s", LOOKUP_QUIET));
     CHECK(db_lookup(imported.dbip, "last.r", LOOKUP_QUIET));

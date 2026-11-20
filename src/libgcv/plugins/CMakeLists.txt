@@ -32,7 +32,6 @@ add_subdirectory(ply)
 add_subdirectory(rhino)
 add_subdirectory(scad)
 add_subdirectory(stl)
-add_subdirectory(vol)
 add_subdirectory(vrml)
 add_subdirectory(vtk)
 

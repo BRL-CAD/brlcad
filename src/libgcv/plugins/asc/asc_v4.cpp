@@ -2551,28 +2551,25 @@ sketchdump(struct ascv4_wstate *s)
 /*******************************************************************/
 int
 asc_write_v4(
-	    struct gcv_context *c,
-	    const struct gcv_opts *UNUSED(o),
+	    struct db_i *database,
 	    const char *dest_path
 	    )
 {
     if (!dest_path) return 0;
 
-    // If we don't have a v4 dbip, this won't (currently) work.
-    // Need to downgrade the db first, or update this logic to
-    // work with in-mem data rather than the disk file...
+    /* The record dumper requires the caller's staged V4 stream. */
 
-    if (db_version(c->dbip) > 4) {
+    if (db_version(database) > 4) {
 	bu_log("Attempting to write v4 asc output with a v5 database - unsupported\n");
 	return 0;
     }
 
     struct ascv4_wstate *s = ascv4_wcreate();
 
-    s->ifp = c->dbip->i->dbi_fp;
+    s->ifp = database->i->dbi_fp;
 
     if (!s->ifp) {
-	bu_log("Could not open %s for reading.\n", c->dbip->dbi_filename);
+	bu_log("Could not open %s for reading.\n", database->dbi_filename);
 	ascv4_wdestroy(s);
 	return 0;
     }

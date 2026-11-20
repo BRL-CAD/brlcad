@@ -8,6 +8,7 @@ plugin_setup(gcv-fastgen4 gcv)
 
 cmakefiles(
   ${FASTGEN4_SRCS}
+  fastgen4_mime.h
   CMakeLists.txt
   NOTES
 )

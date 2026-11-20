@@ -8,6 +8,7 @@
  */
 
 #include "common.h"
+#include "../mime_probe.h"
 
 #include <algorithm>
 #include <cctype>
@@ -33,11 +34,34 @@
 #include "bu/avs.h"
 #include "bu/log.h"
 #include "bu/mime.h"
+#include "bu/str.h"
 #include "bu/units.h"
 #include "gcv/api.h"
 #include "gcv/util.h"
 #include "raytrace.h"
 #include "wdb.h"
+
+static enum bu_mime_probe_status
+jt_probe(const struct bu_mime_probe_input *input, const char *)
+{
+    bu_mime_probe_status status = gcv_probe_prefix(input, "Version ");
+    if (status != BU_MIME_PROBE_SIGNATURE)
+	return status;
+    if (input->size <= jt::VERSION_LENGTH)
+	return input->complete ? BU_MIME_PROBE_NO_MATCH : BU_MIME_PROBE_INCOMPLETE;
+    const size_t prefix_length = sizeof("Version ") - 1;
+    size_t offset = prefix_length;
+    while (offset < jt::VERSION_LENGTH && std::isdigit(input->data[offset]))
+	++offset;
+    if (offset == prefix_length || offset >= jt::VERSION_LENGTH || input->data[offset++] != '.')
+	return BU_MIME_PROBE_NO_MATCH;
+    size_t minor_start = offset;
+    while (offset < jt::VERSION_LENGTH && std::isdigit(input->data[offset]))
+	++offset;
+    if (offset == minor_start || input->data[jt::VERSION_LENGTH] > 1)
+	return BU_MIME_PROBE_NO_MATCH;
+    return BU_MIME_PROBE_HEURISTIC;
+}
 
 static int
 jt_can_read(const char *path)
@@ -471,6 +495,22 @@ jt_read(struct gcv_context *context, const struct gcv_opts *options,
 	return 0;
     }
 
+    const jt::Header &header = file.header();
+    const std::string major = std::to_string(header.major_version);
+    const std::string version = major + '.' + std::to_string(header.minor_version);
+    const struct bu_mime_trait values[] = {
+	BU_MIME_TRAIT_STRING("version", version.c_str()), BU_MIME_TRAIT_STRING("jt.major-version", major.c_str()),
+	BU_MIME_TRAIT_STRING("encoding", "binary"),
+	BU_MIME_TRAIT_STRING("byte-order", header.little_endian ? "little-endian" : "big-endian")};
+    const struct bu_mime_traits observed = {values, sizeof(values) / sizeof(values[0])};
+    const unsigned first_supported_major = 8;
+    const unsigned last_supported_major = 10;
+    if (header.major_version < first_supported_major || header.major_version > last_supported_major ||
+	!gcv_probe_file_traits_match(context, source_path, "model/jt", &observed, gcv_target_request_traits(context))) {
+	bu_log("JT input header is unsupported or contradicts the selected profile\n");
+	return 0;
+    }
+
     /* A zero or negative scale factor would collapse all geometry; fall back to
      * an identity scale so a mis-defaulted option cannot silently destroy the model. */
     double scale = options->scale_factor;
@@ -796,6 +836,21 @@ struct jt_write_state {
  * create_opts/process_options hooks are NULL), so these carry conservative,
  * interoperable defaults; each flag gates one EXP-* encoding path so the choices
  * stay explicit and testable in one place. */
+static constexpr unsigned JT_WRITER_VERSION = 8;
+
+static const struct {
+    unsigned major;
+    const char *name;
+} jt_output_versions[] = {{8, "8.0"}, {9, "9.5"}, {10, "10.3"}};
+
+static const char *
+jt_output_version_name(unsigned major)
+{
+    for (const auto &version : jt_output_versions)
+	if (version.major == major) return version.name;
+    return NULL;
+}
+
 struct jt_write_options {
     /* EXP-001: zlib-deflate the lossless vertex coordinate block instead of
      * storing raw floats.  The reader inflates via zlib uncompress(), which
@@ -812,15 +867,14 @@ struct jt_write_options {
      * the master enable. */
     bool unsigned_quant = true;
 
-    /* EXP-015: write-time options threaded from the caller (parsed from
-     * gcv_opts->options_data when supplied).  These carry conservative,
-     * interoperable defaults so an unconfigured export matches the previous
-     * lossless JT 8 output byte-for-byte. */
+    /* Preserve the existing interoperable defaults for legacy option data. */
 
     /* Target JT major format version (8, 9, or 10).  Controls the header
      * signature and the wide-offset / object-id element framing (EXP-003).
      * Defaults to the widely interoperable JT 8. */
-    unsigned version = 8;
+    unsigned version = JT_WRITER_VERSION;
+    bool version_explicit = false;
+    bool version_valid = true;
     /* zlib deflate level 0..9 used for the vertex block (EXP-001).  -1 selects
      * zlib's default; any other out-of-range value is clamped on use. */
     int compress_level = Z_DEFAULT_COMPRESSION;
@@ -885,8 +939,14 @@ jt_parse_write_options(const void *options_data)
 	if (val.empty())
 	    return;
 	if (key == "version") {
-	    const long v = std::strtol(val.c_str(), NULL, 10);
-	    if (v == 8 || v == 9 || v == 10) opts.version = static_cast<unsigned>(v);
+	    opts.version_explicit = true;
+	    opts.version_valid = false;
+	    for (const auto &version : jt_output_versions)
+		if (val == version.name || val == std::to_string(version.major)) {
+		    opts.version = version.major;
+		    opts.version_valid = true;
+		    break;
+		}
 	} else if (key == "compress_level") {
 	    long v = std::strtol(val.c_str(), NULL, 10);
 	    if (v < -1) v = -1;
@@ -1594,9 +1654,7 @@ static bool
 write_file_description_segment(const jt_write_options &opts, const char *unit_name,
     jt::ByteBuffer &segment, jt::Guid &guid_out, std::string &error)
 {
-    std::string ver = "8.0";
-    if (opts.version == 9) ver = "9.5";
-    else if (opts.version == 10) ver = "10.3";
+    std::string ver = jt_output_version_name(opts.version);
 
     /* EXP-018: an ISO-8601-ish UTC export timestamp for traceability.  time()/gmtime
      * are ASCII-only and portable; a failure leaves the field empty rather than
@@ -2288,6 +2346,38 @@ int
 jt_write(struct gcv_context *context, const struct gcv_opts *gcv_options,
     const void *options_data, const char *dest_path)
 {
+    jt_write_options opts = jt_parse_write_options(options_data);
+    if (!opts.version_valid) {
+	bu_log("JT output version is unsupported\n");
+	return 0;
+    }
+    const struct bu_mime_traits *requested = gcv_target_traits(context);
+    if (const char *selected = bu_mime_traits_get(requested, "version")) {
+	unsigned major = 0;
+	for (const auto &version : jt_output_versions)
+	    if (BU_STR_EQUAL(version.name, selected)) major = version.major;
+	if (!major || (opts.version_explicit && opts.version != major)) {
+	    bu_log("JT output options contradict the selected version\n");
+	    return 0;
+	}
+	opts.version = major;
+    }
+    /* The legacy 9/10 header switches still use the JT 8 LOD payload. Newer
+     * payload encoders are converter follow-up work, not MIME capabilities. */
+    if (gcv_target_mime(context) && opts.version != JT_WRITER_VERSION) {
+	bu_log("JT MIME output supports version 8.0\n");
+	return 0;
+    }
+    const std::string major = std::to_string(opts.version);
+    const struct bu_mime_trait values[] = {
+	BU_MIME_TRAIT_STRING("version", jt_output_version_name(opts.version)),
+	BU_MIME_TRAIT_STRING("jt.major-version", major.c_str()),
+	BU_MIME_TRAIT_STRING("encoding", "binary"), BU_MIME_TRAIT_STRING("byte-order", "little-endian")};
+    const struct bu_mime_traits observed = {values, sizeof(values) / sizeof(values[0])};
+    if (!gcv_probe_traits_match("model/jt", &observed, requested)) {
+	bu_log("JT output options contradict the selected profile\n");
+	return 0;
+    }
     struct jt_write_state state;
     struct db_tree_state tree_state;
     struct gcv_region_end_data gcvwriter;
@@ -2326,11 +2416,6 @@ jt_write(struct gcv_context *context, const struct gcv_opts *gcv_options,
     }
     const uint32_t triangles = static_cast<uint32_t>(state.triangles);
     const uint32_t vertex_count = triangles * 3;
-
-    /* EXP-015: parse write-time options (version/compression/quantization/LOD/
-     * segment size) from the caller's options_data, falling back to conservative
-     * interoperable defaults (EXP-001/034/040). */
-    jt_write_options opts = jt_parse_write_options(options_data);
 
     /* EXP-010: when more than one LOD is requested, populate the decimation ratios
      * for the coarse levels.  The finest (ratio 1.0) is always emitted implicitly
@@ -2440,9 +2525,8 @@ jt_write(struct gcv_context *context, const struct gcv_opts *gcv_options,
 
     char version[jt::VERSION_LENGTH];
     std::fill(version, version + sizeof(version), ' ');
-    const char *sig = "Version 8.0 BRL-CAD JT Writer";
-    if (opts.version == 9) sig = "Version 9.5 BRL-CAD JT Writer";
-    else if (opts.version == 10) sig = "Version 10.3 BRL-CAD JT Writer";
+    const std::string signature = std::string("Version ") + jt_output_version_name(opts.version) + " BRL-CAD JT Writer";
+    const char *sig = signature.c_str();
     std::memcpy(version, sig, strlen(sig));
     size_t meta_pos = strlen(sig) + 1;
     for (size_t i = 0; i < meta.size() && meta_pos < jt::VERSION_LENGTH; ++i, ++meta_pos)
@@ -2667,9 +2751,13 @@ static const struct gcv_filter gcv_conv_jt_read = {
     "JT Reader", GCV_FILTER_READ, BU_MIME_MODEL_JT, jt_can_read, NULL, NULL, jt_read
 };
 
+static const struct gcv_conversion gcv_conv_jt_read_execution = {"JT Reader", GCV_FILTER_READ, NULL, NULL, jt_read};
+
 static const struct gcv_filter gcv_conv_jt_write = {
     "JT Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_JT, NULL, NULL, NULL, jt_write
 };
+
+static const struct gcv_conversion gcv_conv_jt_write_execution = {"JT Writer", GCV_FILTER_WRITE, NULL, NULL, jt_write};
 
 static const struct gcv_filter * const filters[] = {&gcv_conv_jt_read, &gcv_conv_jt_write, NULL};
 const struct gcv_plugin gcv_plugin_info_s = {filters};
@@ -2679,4 +2767,31 @@ gcv_plugin_info(void)
 {
     return &gcv_plugin_info_s;
 }
+}
+
+extern "C" COMPILER_DLLEXPORT const struct gcv_plugin_v2 *
+gcv_plugin_info_v2(void)
+{
+    static const struct bu_mime_trait read8[] = {
+	BU_MIME_TRAIT_STRING("jt.major-version", "8"), BU_MIME_TRAIT_STRING("encoding", "binary")};
+    static const struct bu_mime_trait read9[] = {
+	BU_MIME_TRAIT_STRING("jt.major-version", "9"), BU_MIME_TRAIT_STRING("encoding", "binary")};
+    static const struct bu_mime_trait read10[] = {
+	BU_MIME_TRAIT_STRING("jt.major-version", "10"), BU_MIME_TRAIT_STRING("encoding", "binary")};
+    static const struct bu_mime_capability inputs[] = {
+	{"model/jt", read8, sizeof(read8) / sizeof(read8[0]), 0, BU_MIME_DEFER_INPUT_VALIDATION},
+	{"model/jt", read9, sizeof(read9) / sizeof(read9[0]), 0, BU_MIME_DEFER_INPUT_VALIDATION},
+	{"model/jt", read10, sizeof(read10) / sizeof(read10[0]), 0, BU_MIME_DEFER_INPUT_VALIDATION}};
+    static const struct bu_mime_trait write8[] = {
+	BU_MIME_TRAIT_STRING("version", jt_output_version_name(8)), BU_MIME_TRAIT_STRING("jt.major-version", "8"),
+	BU_MIME_TRAIT_STRING("encoding", "binary"), BU_MIME_TRAIT_STRING("byte-order", "little-endian")};
+    static const struct bu_mime_capability outputs[] = {
+	BU_MIME_CAPABILITY("model/jt", write8, sizeof(write8) / sizeof(write8[0]), 0)};
+    static const struct gcv_handler handlers[] = {
+	{&gcv_conv_jt_read_execution, inputs, sizeof(inputs) / sizeof(inputs[0]), BU_MIME_DEFAULT_PRIORITY, jt_probe, NULL},
+	{&gcv_conv_jt_write_execution, outputs, sizeof(outputs) / sizeof(outputs[0]), BU_MIME_DEFAULT_PRIORITY, NULL, NULL},
+    };
+    static const struct gcv_plugin_v2 plugin = {GCV_PLUGIN_ABI_VERSION, sizeof(struct gcv_plugin_v2),
+	NULL, 0, handlers, sizeof(handlers) / sizeof(handlers[0])};
+    return &plugin;
 }

@@ -119,6 +119,8 @@ const struct gcv_filter iges_writer = {
     iges_create_options, iges_free_options, iges_write
 };
 
+const struct gcv_conversion iges_writer_execution = {"IGES Writer", GCV_FILTER_WRITE, iges_create_options, iges_free_options, iges_write};
+
 /*
  * Local Variables:
  * mode: C++

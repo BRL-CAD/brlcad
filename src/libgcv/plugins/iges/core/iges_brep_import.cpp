@@ -5720,6 +5720,7 @@ Importer::run()
 	if (!repaired)
 	    continue;
 	++result_.statistics.repairs;
+	++result_.statistics.source_repairs;
 	if (options_.repair == RepairMode::None || options_.exact ||
 		options_.strict)
 	    diagnose(Severity::Error, "repair_disallowed",
@@ -5924,6 +5925,7 @@ Importer::run()
 	if (associativity_parameter(document_.parameters(entry.id), entry, metadata_parameter)) {
 	    if (!property_entities(document_, document_.parameters(entry.id), metadata_parameter).valid) {
 		++result_.statistics.repairs;
+		++result_.statistics.metadata_repairs;
 		diagnose(options_.strict || options_.exact || options_.repair == RepairMode::None ?
 		    Severity::Error : Severity::Warning, "invalid_property_reference",
 		    "optional metadata has invalid counts or entity references", &entry);

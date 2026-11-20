@@ -34,9 +34,19 @@
 
 #include "common.h"
 
+#include <stdio.h>
+
+#include "rply.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* Return the storage mode after a successful header read or creation. */
+e_ply_storage_mode ply_get_storage_mode(p_ply ply);
+
+/* The concrete storage mode used for PLY_DEFAULT. */
+e_ply_storage_mode ply_get_native_storage_mode(void);
 
 /* ----------------------------------------------------------------------
  * Opens a PLY file for reading (fails if file is not a PLY file)

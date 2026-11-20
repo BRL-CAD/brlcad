@@ -40,6 +40,7 @@
 
 
 #include "common.h"
+#include "../mime_probe.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -57,7 +58,13 @@
 #include "bv/plot3.h"
 #include "obj_parser.h"
 #include "tri_face.h"
+#include "obj_mime.h"
 
+
+static const struct bu_mime_trait obj_text_traits[] = {
+    BU_MIME_TRAIT_STRING("obj.serialization", "text"),
+    BU_MIME_TRAIT_STRING("text.code-unit-width", "8")
+};
 
 /* grouping type */
 #define GRP_NONE     0 /* perform no grouping */
@@ -3525,6 +3532,7 @@ obj_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
 	return 0;
     }
 
+    if (!obj_input_profile(context, source_path, gcv_target_request_traits(context))) return 0;
     memset(&ga, 0, sizeof(ga));
 
     ga.gcv_options = gcv_options;
@@ -3570,6 +3578,7 @@ obj_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
 	    return 0;
 	}
 
+
 	collect_global_obj_file_attributes(&ga);
     }
 
@@ -3592,42 +3601,50 @@ obj_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
 static int
 obj_can_read(const char *source_path)
 {
-    FILE *fp;
-    int ret;
-    obj_contents_t contents; /* obj_fparse */
-    obj_parser_t parser;     /* obj_parser_create */
-
-    if (obj_parser_create(&parser)) {
-	obj_parser_destroy(parser);
-	return 0;
-    }
-    if (!(fp = fopen(source_path, "rb"))) {
-	obj_parser_destroy(parser);
-	return 0;
-    }
-
-    ret = !obj_fparse(fp, parser, &contents);
-    obj_contents_destroy(contents);
-    obj_parser_destroy(parser);
-    fclose(fp);
-    return ret;
+    return gcv_probe_file(source_path, obj_probe, "model/obj");
 }
-
-
 
 static const struct gcv_filter gcv_conv_obj_read = {
     "OBJ Reader", GCV_FILTER_READ, BU_MIME_MODEL_OBJ, obj_can_read,
     obj_read_create_opts, obj_read_free_opts, obj_read
 };
 
+static const struct gcv_conversion gcv_conv_obj_read_execution = {"OBJ Reader", GCV_FILTER_READ, obj_read_create_opts, obj_read_free_opts, obj_read};
+
 
 extern const struct gcv_filter gcv_conv_obj_write;
+extern const struct gcv_conversion gcv_conv_obj_write_execution;
 static const struct gcv_filter * const filters[] = {&gcv_conv_obj_read, &gcv_conv_obj_write, NULL};
 
 const struct gcv_plugin gcv_plugin_info_s = { filters };
 
 COMPILER_DLLEXPORT const struct gcv_plugin *
 gcv_plugin_info(void){ return &gcv_plugin_info_s; }
+
+COMPILER_DLLEXPORT const struct gcv_plugin_v2 *
+gcv_plugin_info_v2(void)
+{
+    static const struct bu_mime_capability readers[] = {
+	{"model/obj", obj_text_traits, sizeof(obj_text_traits) / sizeof(obj_text_traits[0]), 0, BU_MIME_DEFER_INPUT_VALIDATION}
+    };
+    static const struct bu_mime_trait output[] = {
+	BU_MIME_TRAIT_STRING("obj.serialization", "text"),
+	BU_MIME_TRAIT_STRING("text.code-unit-width", "8"),
+	BU_MIME_TRAIT_STRING("obj.text-bom", "false"),
+	BU_MIME_TRAIT_STRING("encoding", "ascii")
+    };
+    static const struct bu_mime_capability writers[] = {
+	BU_MIME_CAPABILITY("model/obj", output, sizeof(output) / sizeof(output[0]) - 1, 0),
+	BU_MIME_CAPABILITY("model/obj", output, sizeof(output) / sizeof(output[0]), 0)
+    };
+    static const struct gcv_handler handlers[] = {
+	{&gcv_conv_obj_read_execution, readers, sizeof(readers) / sizeof(readers[0]), BU_MIME_DEFAULT_PRIORITY, obj_probe, NULL},
+	{&gcv_conv_obj_write_execution, writers, sizeof(writers) / sizeof(writers[0]), BU_MIME_DEFAULT_PRIORITY, NULL, NULL},
+    };
+    static const struct gcv_plugin_v2 plugin = {GCV_PLUGIN_ABI_VERSION, sizeof(struct gcv_plugin_v2),
+	NULL, 0, handlers, sizeof(handlers) / sizeof(handlers[0])};
+    return &plugin;
+}
 
 /*
  * Local Variables:

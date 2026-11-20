@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include "bu/app.h"
+#include "bu/endian.h"
 #include "bu/exit.h"
 #include "bu/file.h"
 #include "bu/log.h"
@@ -460,6 +461,68 @@ colors_test(void)
     return valid ? 0 : 1;
 }
 
+static const char output_marker[] = "existing output\n";
+
+static int
+marker_unchanged(const char *path)
+{
+    char contents[sizeof(output_marker)] = {0};
+    FILE *file = fopen(path, "rb");
+    int valid = file && fread(contents, 1, sizeof(output_marker) - 1, file) == sizeof(output_marker) - 1 &&
+	BU_STR_EQUAL(contents, output_marker) && fgetc(file) == EOF && !ferror(file);
+    if (file && fclose(file)) valid = 0;
+    return valid;
+}
+
+static int
+profiles_test(void)
+{
+    const int native_big = bu_byteorder() == BU_BIG_ENDIAN;
+    const char *native_order = native_big ? "big-endian" : "little-endian";
+    const char *other_order = native_big ? "little-endian" : "big-endian";
+    const char *native_type = native_big ? "be" : "le";
+    const struct {const char *key; const char *value; const char *option; const char *wire;} cases[] = {
+	{"version", "1.0", "asc", "asc"}, {"version", "1.0", "le", "le"}, {"version", "1.0", "be", "be"},
+	{"encoding", "binary", "be", "be"}, {"encoding", "binary", "le", "le"},
+	{"encoding", "binary", "de", native_type}, {"version", "1.0", "de", native_type},
+	{"byte-order", native_order, "de", native_type}, {"byte-order", other_order, "de", NULL},
+	{"encoding", "ascii", "de", NULL}, {"encoding", "ascii", "be", NULL},
+	{"byte-order", "big-endian", "le", NULL},
+	{"version", "1.0", NULL, "asc"}, {"encoding", "binary", NULL, "le"},
+	{"byte-order", "big-endian", NULL, "be"}, {NULL, NULL, NULL, native_type}
+    };
+    struct gcv_context source;
+    char path[MAXPATHLEN] = {0};
+    gcv_context_init(&source);
+    int valid = create_geometry(&source, 0);
+    FILE *file = bu_temp_file(path, sizeof(path));
+    if (!file) valid = 0;
+    else if (fclose(file)) valid = 0;
+    const struct gcv_filter *writer = gcv_select_filter(&source, GCV_FILTER_WRITE,
+	"application/x-ply", "PLY Writer", NULL);
+    if (!writer) valid = 0;
+    for (size_t i = 0; valid && i < sizeof(cases) / sizeof(cases[0]); ++i) {
+	const struct bu_mime_trait property = BU_MIME_TRAIT_STRING(cases[i].key, cases[i].value);
+	const struct bu_mime_traits request = {&property, 1};
+	const char *arguments[] = {"--type", cases[i].option};
+	file = fopen(path, "wb");
+	if (!file) {valid = 0; break;}
+	valid = fwrite(output_marker, 1, sizeof(output_marker) - 1, file) == sizeof(output_marker) - 1;
+	if (fclose(file)) valid = 0;
+	if (!valid) break;
+	const int converted = gcv_execute_variant(&source, writer, "application/x-ply", cases[i].key ? &request : NULL,
+	    NULL, cases[i].option ? 2 : 0, cases[i].option ? arguments : NULL, path);
+	valid = cases[i].wire ? converted && read_export(path, cases[i].wire, 0, TETRA_COUNT) :
+	    !converted && marker_unchanged(path);
+	if (!valid) bu_log("PLY profile case %zu failed: %s=%s, --type %s\n", i,
+	    cases[i].key ? cases[i].key : "default", cases[i].value ? cases[i].value : "default",
+	    cases[i].option ? cases[i].option : "default");
+    }
+    if (path[0]) bu_file_delete(path);
+    gcv_context_destroy(&source);
+    return valid ? 0 : 1;
+}
+
 static int
 failure_test(const char *mode, const char *full_device)
 {
@@ -470,7 +533,6 @@ failure_test(const char *mode, const char *full_device)
     const char *arguments[] = {"-t", "asc", "-s"};
     int separate = strstr(mode, "separate") != NULL;
     const char *missing_object[] = {"missing.r"};
-    const char marker[] = "existing output\n";
     gcv_context_init(&source);
     gcv_opts_default(&options);
     int empty = BU_STR_EQUAL(mode, "empty");
@@ -478,7 +540,7 @@ failure_test(const char *mode, const char *full_device)
     FILE *file = bu_temp_file(path, sizeof(path));
     if (!file) valid = 0;
     else {
-	int written = fwrite(marker, 1, sizeof(marker) - 1, file) == sizeof(marker) - 1;
+	int written = fwrite(output_marker, 1, sizeof(output_marker) - 1, file) == sizeof(output_marker) - 1;
 	int closed = fclose(file) == 0;
 	if (!written || !closed) valid = 0;
     }
@@ -527,11 +589,7 @@ failure_test(const char *mode, const char *full_device)
 #endif
     if (valid && (empty || BU_STR_EQUAL(mode, "objects") || BU_STR_EQUAL(mode, "type") ||
 	    BU_STR_EQUAL(mode, "tessellation") || BU_STR_EQUAL(mode, "boolean-error"))) {
-	char contents[sizeof(marker)] = {0};
-	file = fopen(path, "rb");
-	valid = file && fread(contents, 1, sizeof(marker) - 1, file) == sizeof(marker) - 1 &&
-	    BU_STR_EQUAL(contents, marker) && fgetc(file) == EOF && !ferror(file);
-	if (file && fclose(file)) valid = 0;
+	valid = marker_unchanged(path);
 	if (!valid) bu_log("PLY writer changed existing output before rejecting %s\n", mode);
     }
     if (valid && empty) valid = create_geometry(&source, 0);
@@ -559,6 +617,7 @@ main(int argc, const char **argv)
     if (argc == 2 && BU_STR_EQUAL(argv[1], "boolean")) return geometry_test(1);
     if (argc == 2 && BU_STR_EQUAL(argv[1], "separate")) return separate_test();
     if (argc == 2 && BU_STR_EQUAL(argv[1], "colors")) return colors_test();
+    if (argc == 2 && BU_STR_EQUAL(argv[1], "profiles")) return profiles_test();
     if (argc == 2 && (BU_STR_EQUAL(argv[1], "open") || BU_STR_EQUAL(argv[1], "type") ||
 	    BU_STR_EQUAL(argv[1], "objects") || BU_STR_EQUAL(argv[1], "empty")))
 	return failure_test(argv[1], NULL);

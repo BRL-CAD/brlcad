@@ -44,6 +44,8 @@
 #include "bu/units.h"
 #include "bu/vls.h"
 #include "gcv/api.h"
+#include "../mime_probe.h"
+#include "mime_stl.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -53,10 +55,10 @@
 
 struct stl_read_options
 {
-    int binary;	        	/* flag indicating input is binary format */
+    int binary; /* flag indicating input is binary format */
     int starting_id;
-    int const_id;		/* Constant ident number (assigned to all regions if non-negative) */
-    int mat_code;		/* default material code */
+    int const_id; /* Constant ident number (assigned to all regions if non-negative) */
+    int mat_code; /* default material code */
 };
 
 
@@ -65,17 +67,18 @@ struct conversion_state
     const struct gcv_opts *gcv_options;
     const struct stl_read_options *stl_read_options;
 
-    const char *input_file;	/* name of the input file */
-    FILE *fd_in;		/* input file */
-    struct rt_wdb *fd_out;	/* Resulting BRL-CAD file */
+    const char *input_file; /* name of the input file */
+    FILE *fd_in;	    /* input file */
+    struct rt_wdb *fd_out;  /* Resulting BRL-CAD file */
 
     struct wmember all_head;
     struct bg_vert_tree *tree;
-    int *bot_faces;	        /* array of ints (indices into tree->the_array array) three per face */
+    int *bot_faces; /* array of ints (indices into tree->the_array array) three per face */
 
-    int id_no;	            	/* Ident numbers */
-    int bot_fsize;		/* current size of the bot_faces array */
-    int bot_fcurr;		/* current bot face */
+    int64_t id_no;   /* Ident numbers */
+    int bot_fsize; /* current size of the bot_faces array */
+    int bot_fcurr; /* current bot face */
+    int failed;
 };
 
 
@@ -84,17 +87,24 @@ struct conversion_state
 
 #define MAX_LINE_SIZE 512
 
-
 static void
-Add_face(struct conversion_state *pstate, int face[3])
+stl_add_face(struct conversion_state *pstate, int face[3])
 {
+    const size_t maximum_faces = SIZE_MAX / (3 * sizeof(int)) < INT_MAX / 3 ?
+	SIZE_MAX / (3 * sizeof(int)) : INT_MAX / 3;
+    if ((size_t)pstate->bot_fcurr >= maximum_faces) {
+	pstate->failed = 1;
+	return;
+    }
     if (!pstate->bot_faces) {
 	pstate->bot_faces = (int *)bu_malloc(3 * BOT_FBLOCK * sizeof(int), "bot_faces");
 	pstate->bot_fsize = BOT_FBLOCK;
 	pstate->bot_fcurr = 0;
     } else if (pstate->bot_fcurr >= pstate->bot_fsize) {
-	pstate->bot_fsize += BOT_FBLOCK;
-	pstate->bot_faces = (int *)bu_realloc((void *)pstate->bot_faces, 3 * pstate->bot_fsize * sizeof(int), "bot_faces increase");
+	size_t capacity = (size_t)pstate->bot_fsize + BOT_FBLOCK;
+	if (capacity > maximum_faces) capacity = maximum_faces;
+	pstate->bot_fsize = (int)capacity;
+	pstate->bot_faces = (int *)bu_realloc(pstate->bot_faces, 3 * capacity * sizeof(int), "bot_faces increase");
     }
 
     VMOVE(&pstate->bot_faces[3*pstate->bot_fcurr], face);
@@ -102,7 +112,7 @@ Add_face(struct conversion_state *pstate, int face[3])
 }
 
 static int
-_db_uniq_test(struct bu_vls *n, void *data)
+stl_name_available(struct bu_vls *n, void *data)
 {
     struct db_i *dbip = (struct db_i *)data;
     if (db_lookup(dbip, bu_vls_cstr(n), LOOKUP_QUIET) == RT_DIR_NULL) return 1;
@@ -110,7 +120,7 @@ _db_uniq_test(struct bu_vls *n, void *data)
 }
 
 static void
-mk_unique_brlcad_name(struct conversion_state *pstate, struct bu_vls *name)
+stl_unique_name(struct conversion_state *pstate, struct bu_vls *name)
 {
     struct db_i *dbip = pstate->fd_out->dbip;
 
@@ -142,14 +152,35 @@ mk_unique_brlcad_name(struct conversion_state *pstate, struct bu_vls *name)
     bu_vls_simplify(&tname, keep_chars, dedup_chars, collapse_chars);
 
     if (db_lookup(dbip, bu_vls_cstr(&tname), LOOKUP_QUIET) != RT_DIR_NULL)
-	bu_vls_incr(&tname, NULL, NULL, &_db_uniq_test, (void *)dbip);
+	bu_vls_incr(&tname, NULL, NULL, &stl_name_available, (void *)dbip);
 
     bu_vls_sprintf(name, "%s", bu_vls_cstr(&tname));
     bu_vls_free(&tname);
 }
 
+static int
+stl_write_part(struct conversion_state *state, const char *solid, const char *region, const unsigned char *color)
+{
+    struct wmember members;
+    BU_LIST_INIT(&members.l);
+    if (state->id_no > INT_MAX ||
+	mk_bot(state->fd_out, solid, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0,
+	    state->tree->curr_vert, state->bot_fcurr, state->tree->the_array,
+	    state->bot_faces, NULL, NULL) ||
+	db5_update_attribute(solid, "importer", "gcv-stl", state->fd_out->dbip))
+	return 0;
+    int status = mk_addmember(solid, &members.l, NULL, WMOP_UNION) != WMEMBER_NULL &&
+	!mk_lrcomb(state->fd_out, region, &members, 1, NULL, NULL, color,
+	    (int)state->id_no, 0, state->stl_read_options->mat_code, 100, 0) &&
+	mk_addmember(region, &state->all_head.l, NULL, WMOP_UNION) != WMEMBER_NULL;
+    mk_freemembers(&members.l);
+    if (status && !state->stl_read_options->const_id)
+	++state->id_no;
+    return status;
+}
+
 static void
-Convert_part_ascii(struct conversion_state *pstate, char line[MAX_LINE_SIZE])
+stl_read_ascii_part(struct conversion_state *pstate, char line[MAX_LINE_SIZE])
 {
     char line1[MAX_LINE_SIZE];
     struct bu_vls solid_name = BU_VLS_INIT_ZERO;
@@ -161,11 +192,11 @@ Convert_part_ascii(struct conversion_state *pstate, char line[MAX_LINE_SIZE])
     int degenerate_count=0;
     float colr[3]={0.5, 0.5, 0.5};
     unsigned char color[3]={ 128, 128, 128 };
-    struct wmember head;
     vect_t normal={0, 0, 0};
-    int solid_in_region=0;
+    int complete = 0;
 
-    BU_LIST_INIT(&head.l);
+    pstate->bot_fcurr = 0;
+    bg_vert_tree_clean(pstate->tree);
 
 
     bu_vls_sprintf(&region_name, "%s", line);
@@ -173,7 +204,7 @@ Convert_part_ascii(struct conversion_state *pstate, char line[MAX_LINE_SIZE])
 
     /* Sanity */
     if (bu_strncmp(bu_vls_cstr(&region_name), "solid", 5) && bu_strncmp(bu_vls_cstr(&region_name), "SOLID", 5)) {
-	bu_log("Convert_part_ascii: Called for non-part\n%s\n", line);
+	bu_log("stl_read_ascii_part: Called for non-part\n%s\n", line);
 	bu_vls_free(&region_name);
 	return;
     }
@@ -188,50 +219,59 @@ Convert_part_ascii(struct conversion_state *pstate, char line[MAX_LINE_SIZE])
 
     // Do the unique name check before adding the suffix to clean up the name
     // as much as possible
-    mk_unique_brlcad_name(pstate, &region_name);
+    stl_unique_name(pstate, &region_name);
 
     // Add the suffix
     bu_vls_printf(&region_name, ".r");
 
     // Make sure we're still unique
-    mk_unique_brlcad_name(pstate, &region_name);
+    stl_unique_name(pstate, &region_name);
     bu_log("Converting Part: %s\n", bu_vls_cstr(&region_name));
 
     bu_path_component(&solid_name, bu_vls_cstr(&region_name), BU_PATH_BASENAME_EXTLESS);
-    mk_unique_brlcad_name(pstate, &solid_name);
+    stl_unique_name(pstate, &solid_name);
     bu_vls_printf(&solid_name, ".s");
-    mk_unique_brlcad_name(pstate, &solid_name);
+    stl_unique_name(pstate, &solid_name);
 
     if (pstate->gcv_options->verbosity_level)
 	bu_log("\tUsing solid name: %s\n", bu_vls_cstr(&solid_name));
 
     while (bu_fgets(line1, MAX_LINE_SIZE, pstate->fd_in) != NULL) {
 	start = (-1);
-	while (isspace((int)line1[++start]));
+	while (isspace((unsigned char)line1[++start]));
 	if (!bu_strncmp(&line1[start], "endsolid", 8) || !bu_strncmp(&line1[start], "ENDSOLID", 8)) {
+	    complete = 1;
 	    break;
 	} else if (!bu_strncmp(&line1[start], "color", 5) || !bu_strncmp(&line1[start], "COLOR", 5)) {
-	    sscanf(&line1[start+5], "%f%f%f", &colr[0], &colr[1], &colr[2]);
-	    for (i=0; i<3; i++)
-		color[i] = (int)(colr[i] * 255.0);
+	    if (bu_sscanf(&line1[start+5], "%f%f%f", &colr[0], &colr[1], &colr[2]) != 3)
+		goto invalid;
+	    for (i=0; i<3; i++) {
+		if (!isfinite(colr[i]) || colr[i] < 0.0 || colr[i] > 1.0)
+		    goto invalid;
+		color[i] = (unsigned char)(colr[i] * 255.0);
+	    }
 	} else if (!bu_strncmp(&line1[start], "normal", 6) || !bu_strncmp(&line1[start], "NORMAL", 6)) {
 	    float x, y, z;
 
 	    start += 6;
-	    sscanf(&line1[start], "%f%f%f", &x, &y, &z);
+	    if (bu_sscanf(&line1[start], "%f%f%f", &x, &y, &z) != 3 ||
+		!isfinite(x) || !isfinite(y) || !isfinite(z))
+		goto invalid;
 	    VSET(normal, x, y, z);
 	} else if (!bu_strncmp(&line1[start], "facet", 5) || !bu_strncmp(&line1[start], "FACET", 5)) {
 	    VSET(normal, 0.0, 0.0, 0.0);
 
 	    start += 4;
-	    while (line1[++start] && isspace((int)line1[start]));
+	    while (line1[++start] && isspace((unsigned char)line1[start]));
 
 	    if (line1[start]) {
 		if (!bu_strncmp(&line1[start], "normal", 6) || !bu_strncmp(&line1[start], "NORMAL", 6)) {
 		    float x, y, z;
 
 		    start += 6;
-		    sscanf(&line1[start], "%f%f%f", &x, &y, &z);
+		    if (bu_sscanf(&line1[start], "%f%f%f", &x, &y, &z) != 3 ||
+			!isfinite(x) || !isfinite(y) || !isfinite(z))
+			goto invalid;
 		    VSET(normal, x, y, z);
 		}
 	    }
@@ -242,35 +282,32 @@ Convert_part_ascii(struct conversion_state *pstate, char line[MAX_LINE_SIZE])
 
 	    while (!endloop) {
 		if (bu_fgets(line1, MAX_LINE_SIZE, pstate->fd_in) == NULL)
-		    bu_exit(EXIT_FAILURE, "Unexpected EOF while reading a loop in a part!\n");
+		    goto invalid;
 
 		start = (-1);
-		while (isspace((int)line1[++start]));
+		while (isspace((unsigned char)line1[++start]));
 
 		if (!bu_strncmp(&line1[start], "endloop", 7) || !bu_strncmp(&line1[start], "ENDLOOP", 7))
 		    endloop = 1;
 		else if (!bu_strncmp(&line1[start], "vertex", 6) || !bu_strncmp(&line1[start], "VERTEX", 6)) {
 		    double x, y, z;
 
-		    sscanf(&line1[start+6], "%lf%lf%lf", &x, &y, &z);
-
-		    if (vert_no > 2) {
-			int n;
-
-			bu_log("Non-triangular loop:\n");
-			for (n=0; n<3; n++)
-			    bu_log("\t(%g %g %g)\n", V3ARGS(&pstate->tree->the_array[tmp_face[n]]));
-
-			bu_log("\t(%g %g %g)\n", x, y, z);
-		    }
+		    if (vert_no >= 3 || bu_sscanf(&line1[start+6], "%lf%lf%lf", &x, &y, &z) != 3)
+			goto invalid;
 		    x *= pstate->gcv_options->scale_factor;
 		    y *= pstate->gcv_options->scale_factor;
 		    z *= pstate->gcv_options->scale_factor;
-		    tmp_face[vert_no++] = bg_vert_tree_add( pstate->tree,x, y, z, pstate->gcv_options->calculational_tolerance.dist_sq);
+		    if (!isfinite(x) || !isfinite(y) || !isfinite(z))
+			goto invalid;
+		    size_t vertex = bg_vert_tree_add(pstate->tree, x, y, z, pstate->gcv_options->calculational_tolerance.dist_sq);
+		    if (vertex > INT_MAX) goto invalid;
+		    tmp_face[vert_no++] = (int)vertex;
 		} else {
-		    bu_log("Unrecognized line: %s\n", line1);
+		    goto invalid;
 		}
 	    }
+
+	    if (vert_no != 3) goto invalid;
 
 	    /* check for degenerate faces */
 	    if (tmp_face[0] == tmp_face[1]) {
@@ -297,10 +334,13 @@ Convert_part_ascii(struct conversion_state *pstate, char line[MAX_LINE_SIZE])
 		VPRINT(" normal", normal);
 	    }
 
-	    Add_face(pstate, tmp_face);
+	    stl_add_face(pstate, tmp_face);
+	    if (pstate->failed) goto invalid;
 	    face_count++;
 	}
     }
+
+    if (!complete || ferror(pstate->fd_in)) goto invalid;
 
     /* Check if this part has any solid parts */
     if (face_count == 0) {
@@ -316,104 +356,61 @@ Convert_part_ascii(struct conversion_state *pstate, char line[MAX_LINE_SIZE])
 	    bu_log("\t%d faces were degenerate\n", degenerate_count);
     }
 
-    mk_bot(pstate->fd_out, bu_vls_cstr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, pstate->tree->curr_vert, pstate->bot_fcurr,
-	   pstate->tree->the_array, pstate->bot_faces, NULL, NULL);
-    bg_vert_tree_clean(pstate->tree);
-
-    if (db5_update_attribute(bu_vls_cstr(&solid_name), "importer", "gcv-stl", pstate->fd_out->dbip))
-        bu_bomb("db5_update_attribute() failed");
-
-    if (face_count && !solid_in_region) {
-	(void)mk_addmember(bu_vls_cstr(&solid_name), &head.l, NULL, WMOP_UNION);
-    }
-
-    if (pstate->gcv_options->verbosity_level)
-	bu_log("\tMaking region (%s)\n", bu_vls_cstr(&region_name));
-
-    if (pstate->stl_read_options->const_id) {
-	mk_lrcomb(pstate->fd_out, bu_vls_cstr(&region_name), &head, 1, (char *)NULL,
-		  (char *)NULL, color, pstate->id_no, 0, pstate->stl_read_options->mat_code, 100, 0);
-	if (face_count) {
-	    (void)mk_addmember(bu_vls_cstr(&region_name), &pstate->all_head.l, NULL, WMOP_UNION);
-	}
-    } else {
-	mk_lrcomb(pstate->fd_out, bu_vls_cstr(&region_name), &head, 1, (char *)NULL, (char *)NULL, color, pstate->id_no, 0, pstate->stl_read_options->mat_code, 100, 0);
-	if (face_count)
-	    (void)mk_addmember(bu_vls_cstr(&region_name), &pstate->all_head.l, NULL, WMOP_UNION);
-	pstate->id_no++;
-    }
-
+    if (!stl_write_part(pstate, bu_vls_cstr(&solid_name), bu_vls_cstr(&region_name), color))
+	goto invalid;
+    goto cleanup;
+invalid:
+    pstate->failed = 1;
+    bu_log("STL: malformed or incomplete ASCII part\n");
+cleanup:
     bu_vls_free(&region_name);
     bu_vls_free(&solid_name);
-
-    return;
-}
-
-/* Byte swaps a 4-byte val */
-static void stl_read_lswap(unsigned int *v)
-{
-    unsigned int r;
-
-    r = *v;
-    *v = ((r & 0xff) << 24) | ((r & 0xff00) << 8) | ((r & 0xff0000) >> 8)
-	| ((r & 0xff000000) >> 24);
 }
 
 static void
-Convert_part_binary(struct conversion_state *pstate)
+stl_read_binary_part(struct conversion_state *pstate)
 {
-    unsigned char buf[51];
-    unsigned long num_facets=0;
+    unsigned char buf[MIME_STL_TRIANGLE_SIZE];
+    unsigned char network[48];
+    uint32_t num_facets=0;
     float flts[12];
     vect_t normal;
     int tmp_face[3];
-    struct wmember head;
     struct bu_vls solid_name = BU_VLS_INIT_ZERO;
     struct bu_vls region_name = BU_VLS_INIT_ZERO;
     int face_count=0;
     int degenerate_count=0;
-    size_t ret;
 
     bu_vls_strcat(&solid_name, "s.stl");
     bu_vls_strcat(&region_name, "r.stl");
+    stl_unique_name(pstate, &solid_name);
+    stl_unique_name(pstate, &region_name);
     bu_log("\tUsing solid name: %s\n", bu_vls_cstr(&solid_name));
 
 
-    ret = fread(buf, 4, 1, pstate->fd_in);
-    if (ret != 1)
-	perror("fread");
-
-    /* swap bytes to convert from Little-endian to network order (big-endian) */
-    stl_read_lswap((unsigned int *)buf);
-
-    /* now use our network to native host format conversion tools */
-    num_facets = ntohl(*(uint32_t *)buf);
-
-    bu_log("\t%ld facets\n", num_facets);
-    while (fread(buf, 48, 1, pstate->fd_in)) {
-	int i;
+    if (fread(buf, 1, 4, pstate->fd_in) != 4)
+	goto invalid;
+    num_facets = (uint32_t)buf[0] | ((uint32_t)buf[1] << 8) |
+	((uint32_t)buf[2] << 16) | ((uint32_t)buf[3] << 24);
+    bu_log("\t%u facets\n", num_facets);
+    for (uint32_t facet = 0; facet < num_facets; ++facet) {
 	double pt[3];
-
-	/* swap bytes to convert from Little-endian to network order (big-endian) */
-	for (i=0; i<12; i++) {
-	    stl_read_lswap((unsigned int *)&buf[i*4]);
-	}
-
-	/* now use our network to native host format conversion tools */
-	bu_cv_ntohf((unsigned char *)flts, buf, 12);
-
-	/* unused attribute byte count */
-	ret = fread(buf, 2, 1, pstate->fd_in);
-	if (ret != 1)
-	    perror("fread");
-
+	if (fread(buf, 1, MIME_STL_TRIANGLE_SIZE, pstate->fd_in) != MIME_STL_TRIANGLE_SIZE)
+	    goto invalid;
+	for (size_t i = 0; i < 12; ++i)
+	    for (size_t byte = 0; byte < 4; ++byte)
+		network[i * 4 + byte] = buf[i * 4 + 3 - byte];
+	bu_cv_ntohf((unsigned char *)flts, network, 12);
+	for (size_t i = 0; i < 12; ++i)
+	    if (!isfinite(flts[i])) goto invalid;
 	VMOVE(normal, flts);
-	VSCALE(pt, &flts[3], pstate->gcv_options->scale_factor);
-	tmp_face[0] = bg_vert_tree_add(pstate->tree, V3ARGS(pt), pstate->gcv_options->calculational_tolerance.dist_sq);
-	VSCALE(pt, &flts[6], pstate->gcv_options->scale_factor);
-	tmp_face[1] = bg_vert_tree_add(pstate->tree, V3ARGS(pt), pstate->gcv_options->calculational_tolerance.dist_sq);
-	VSCALE(pt, &flts[9], pstate->gcv_options->scale_factor);
-	tmp_face[2] = bg_vert_tree_add(pstate->tree, V3ARGS(pt), pstate->gcv_options->calculational_tolerance.dist_sq);
+	for (size_t vertex = 0; vertex < 3; ++vertex) {
+	    VSCALE(pt, flts + (vertex + 1) * 3, pstate->gcv_options->scale_factor);
+	    if (!isfinite(pt[0]) || !isfinite(pt[1]) || !isfinite(pt[2])) goto invalid;
+	    size_t index = bg_vert_tree_add(pstate->tree, V3ARGS(pt), pstate->gcv_options->calculational_tolerance.dist_sq);
+	    if (index > INT_MAX) goto invalid;
+	    tmp_face[vertex] = (int)index;
+	}
 
 	/* check for degenerate faces */
 	if (tmp_face[0] == tmp_face[1]) {
@@ -440,81 +437,62 @@ Convert_part_binary(struct conversion_state *pstate)
 	    VPRINT(" normal", normal);
 	}
 
-	Add_face(pstate, tmp_face);
+	stl_add_face(pstate, tmp_face);
+	if (pstate->failed) goto invalid;
 	face_count++;
     }
+
+    if (fgetc(pstate->fd_in) != EOF || ferror(pstate->fd_in)) goto invalid;
 
     /* Check if this part has any solid parts */
     if (face_count == 0) {
 	bu_log("\tpart has no solid parts, ignoring\n");
 	if (degenerate_count)
 	    bu_log("\t%d faces were degenerate\n", degenerate_count);
-	return;
+	goto cleanup;
     } else {
 	if (degenerate_count)
 	    bu_log("\t%d faces were degenerate\n", degenerate_count);
     }
 
-    mk_bot(pstate->fd_out, bu_vls_cstr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0,
-	   pstate->tree->curr_vert, pstate->bot_fcurr, pstate->tree->the_array, pstate->bot_faces, NULL, NULL);
-    bg_vert_tree_clean(pstate->tree);
-
-    if (db5_update_attribute(bu_vls_cstr(&solid_name), "importer", "gcv-stl", pstate->fd_out->dbip))
-        bu_bomb("db5_update_attribute() failed");
-
-    BU_LIST_INIT(&head.l);
-    if (face_count) {
-	(void)mk_addmember(bu_vls_cstr(&solid_name), &head.l, NULL, WMOP_UNION);
-    }
-
-    if (pstate->gcv_options->verbosity_level)
-	bu_log("\tMaking region (%s)\n", bu_vls_cstr(&region_name));
-
-    if (pstate->stl_read_options->const_id) {
-	mk_lrcomb(pstate->fd_out, bu_vls_cstr(&region_name), &head, 1, (char *)NULL,
-		  (char *)NULL, NULL, pstate->id_no, 0, pstate->stl_read_options->mat_code, 100, 0);
-	if (face_count) {
-	    (void)mk_addmember(bu_vls_cstr(&region_name), &pstate->all_head.l, NULL, WMOP_UNION);
-	}
-    } else {
-	mk_lrcomb(pstate->fd_out, bu_vls_cstr(&region_name), &head, 1, (char *)NULL, (char *)NULL, NULL, pstate->id_no, 0, pstate->stl_read_options->mat_code, 100, 0);
-	if (face_count)
-	    (void)mk_addmember(bu_vls_cstr(&region_name), &pstate->all_head.l, NULL, WMOP_UNION);
-	pstate->id_no++;
-    }
-
-    return;
+    if (!stl_write_part(pstate, bu_vls_cstr(&solid_name), bu_vls_cstr(&region_name), NULL))
+	goto invalid;
+    goto cleanup;
+invalid:
+    pstate->failed = 1;
+    bu_log("STL: invalid or truncated binary triangle records\n");
+cleanup:
+    bu_vls_free(&region_name);
+    bu_vls_free(&solid_name);
 }
 
 
 static void
-Convert_input(struct conversion_state *pstate)
+stl_read_input(struct conversion_state *pstate)
 {
     char line[ MAX_LINE_SIZE ];
 
     if (pstate->stl_read_options->binary) {
-	if (fread(line, 80, 1, pstate->fd_in) < 1) {
-	    if (feof(pstate->fd_in)) {
-		bu_exit(EXIT_FAILURE, "Unexpected EOF in input file!\n");
-	    } else {
-		bu_log("Error reading input file\n");
-		perror("gcv-stl");
-		bu_exit(EXIT_FAILURE, "Error reading input file\n");
-	    }
+	if (fread(line, 80, 1, pstate->fd_in) != 1) {
+	    pstate->failed = 1;
+	    bu_log("STL: truncated binary header\n");
+	    return;
 	}
 	line[80] = '\0';
 	bu_log("header data:\n%s\n\n", line);
-	Convert_part_binary(pstate);
+	stl_read_binary_part(pstate);
     } else {
 	while (bu_fgets(line, MAX_LINE_SIZE, pstate->fd_in) != NULL) {
 	    int start = 0;
-	    while (line[start] != '\0' && isspace((int)line[start])) {
+	    while (line[start] != '\0' && isspace((unsigned char)line[start])) {
 		start++;
 	    }
+	    if (!line[start]) continue;
 	    if (!bu_strncmp(&line[start], "solid", 5) || !bu_strncmp(&line[start], "SOLID", 5))
-		Convert_part_ascii(pstate, line);
+		stl_read_ascii_part(pstate, line);
 	    else
-		bu_log("Unrecognized line:\n%s\n", line);
+		pstate->failed = 1;
+	    if (pstate->failed) return;
 	}
     }
 }
@@ -539,7 +517,7 @@ stl_read_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data
 	    "specify that the input is in binary STL format");
 
     BU_OPT((*options_desc)[1], NULL, "starting-ident", "number",
-	    bu_opt_int, options_data,
+	    bu_opt_int, &options_data->starting_id,
 	    "specify the starting ident for the regions created");
 
     BU_OPT((*options_desc)[2], NULL, "constant-ident", NULL,
@@ -565,11 +543,20 @@ static int
 stl_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *source_path)
 {
     struct conversion_state state;
+    struct stl_read_options read_options = *(const struct stl_read_options *)options_data;
+    const char *encoding = bu_mime_traits_get(gcv_target_traits(context), "encoding");
+    if (encoding) {
+	if (read_options.binary && BU_STR_EQUAL(encoding, "ascii")) {
+	    bu_log("STL encoding=ascii conflicts with --binary\n");
+	    return 0;
+	}
+	read_options.binary = BU_STR_EQUAL(encoding, "binary");
+    }
 
     memset(&state, 0, sizeof(state));
 
     state.gcv_options = gcv_options;
-    state.stl_read_options = (struct stl_read_options *)options_data;
+    state.stl_read_options = &read_options;
     state.id_no = state.stl_read_options->starting_id;
     state.input_file = source_path;
     struct rt_wdb *wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
@@ -578,8 +565,22 @@ stl_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
     if ((state.fd_in = fopen(source_path, "rb")) == NULL) {
 	bu_log("Cannot open input file (%s)\n", source_path);
 	perror("libgcv");
-	bu_exit(1, NULL);
+	return 0;
     }
+
+    const struct bu_mime_traits *requested = gcv_target_request_traits(context);
+    const struct mime_stl_profile profile = mime_stl_file_profile(state.fd_in, bu_mime_traits_get(requested, "encoding") != NULL);
+    struct bu_mime_traits observed = BU_MIME_TRAITS_INIT_ZERO;
+    int valid = !ferror(state.fd_in) && mime_stl_append(&profile, &observed) &&
+	gcv_probe_file_traits_match(context, source_path, "model/stl", &observed, gcv_target_request_traits(context));
+    bu_mime_traits_free(&observed);
+    if ((profile.kind == MIME_STL_ASCII && read_options.binary) || profile.bom) valid = 0;
+    if (!valid || fseek(state.fd_in, 0, SEEK_SET)) {
+	fclose(state.fd_in);
+	bu_log("STL input does not establish the selected layout and MIME traits\n");
+	return 0;
+    }
+    read_options.binary = profile.kind == MIME_STL_BINARY;
 
     mk_id_units(state.fd_out, "Conversion from Stereolithography format", "mm");
 
@@ -588,105 +589,63 @@ stl_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
     /* create a tree structure to hold the input vertices */
     state.tree = bg_vert_tree_create();
 
-    Convert_input(&state);
+    stl_read_input(&state);
 
-    /* make a top level group */
-    mk_lcomb(wdbp, "all", &state.all_head, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
-
-    fclose(state.fd_in);
-
-    return 1;
+    int status = !state.failed && !ferror(state.fd_in) && !BU_LIST_IS_EMPTY(&state.all_head.l);
+    if (status && mk_lcomb(wdbp, "all", &state.all_head, 0, NULL, NULL, NULL, 0))
+	status = 0;
+    if (fclose(state.fd_in)) status = 0;
+    mk_freemembers(&state.all_head.l);
+    bg_vert_tree_destroy(state.tree);
+    bu_free(state.bot_faces, "STL faces");
+    return status;
 }
-
-/* Try to guide the flow of this logic according to this discussion:
- *
- * https://stackoverflow.com/questions/26171521/verifying-that-an-stl-file-is-ascii-or-binary
- *
- * The STL format is so simple this is actually a bit tricky to do reliably...
- */
-static int
-stl_can_read(const char *data)
-{
-    struct stat stat_buf;
-    char ascii_header[6];
-    FILE *fp;
-    size_t fsize = 3*sizeof(float) + 3*3*sizeof(float) + sizeof(uint16_t);
-    if(!data) return 0;
-
-    /* First, try an ASCII file */
-    fp = fopen(data, "r");
-    if (!fp) return 0;
-
-    /* If it's too small, don't bother */
-    if (fstat(fileno(fp), &stat_buf) || stat_buf.st_size < 15) {
-	fclose(fp);
-	return 0;
-    }
-
-    if (bu_fgets(ascii_header, 5, fp) != NULL && BU_STR_EQUAL(ascii_header, "solid")) {
-	/* We've got solid at the beginning, so look for "endsolid" later in the file.
-	 * If we find it, this is probably an ASCII file. */
-	int found_endsolid = 0;
-	struct bu_vls ves = BU_VLS_INIT_ZERO;
-	struct bu_vls nline = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&ves, "endsolid");
-	while (bu_vls_gets(&nline, fp) && !found_endsolid) {
-	    bu_vls_trimspace(&nline);
-	    if (bu_vls_strncmp(&nline, &ves, bu_vls_strlen(&ves)) == 0) found_endsolid = 1;
-	}
-	bu_vls_free(&ves);
-	bu_vls_free(&nline);
-	if (found_endsolid) {
-	    fclose(fp);
-	    return 1;
-	}
-    }
-    fclose(fp);
-
-    /* If that didn't work, see if it looks like a binary */
-
-    /* If it's too small, don't bother */
-    if (stat_buf.st_size < 84) return 0;
-
-    /* Open as a binary file this time */
-    fp = fopen(data, "rb");
-    if (!fp) return 0;
-    {
-	uint32_t tri_cnt;
-	unsigned char buffer[1000];
-	if (fread(buffer, 80, 1, fp) != 1) {
-	    fclose(fp);
-	    return 0;
-	}
-	/* Note: we're assuming little-endian... */
-	if (fread(((void *)&tri_cnt), 4, 1, fp) != 1) {
-	    fclose(fp);
-	    return 0;
-	}
-	if ((size_t)stat_buf.st_size == (84 + (tri_cnt * fsize))) {
-	    fclose(fp);
-	    return 1;
-	}
-    }
-    fclose(fp);
-
-    return 0;
-}
-
 
 static const struct gcv_filter gcv_conv_stl_read = {
-    "STL Reader", GCV_FILTER_READ, BU_MIME_MODEL_STL, stl_can_read,
+    "STL Reader", GCV_FILTER_READ, BU_MIME_MODEL_STL, NULL,
     stl_read_create_opts, stl_read_free_opts, stl_read
 };
 
+static const struct gcv_conversion gcv_conv_stl_read_execution = {
+    "STL Reader", GCV_FILTER_READ, stl_read_create_opts, stl_read_free_opts, stl_read
+};
 
 extern const struct gcv_filter gcv_conv_stl_write;
-static const struct gcv_filter * const filters[] = {&gcv_conv_stl_read, &gcv_conv_stl_write, NULL};
-
-const struct gcv_plugin gcv_plugin_info_s = { filters };
+extern const struct gcv_conversion gcv_conv_stl_write_execution;
+static const struct gcv_filter *const filters[] = {&gcv_conv_stl_read, &gcv_conv_stl_write, NULL};
+const struct gcv_plugin gcv_plugin_info_s = {filters};
 
 COMPILER_DLLEXPORT const struct gcv_plugin *
-gcv_plugin_info(void){ return &gcv_plugin_info_s; }
+gcv_plugin_info(void)
+{
+    return &gcv_plugin_info_s;
+}
+
+COMPILER_DLLEXPORT const struct gcv_plugin_v2 *
+gcv_plugin_info_v2(void)
+{
+    static const struct bu_mime_trait ascii[] = {BU_MIME_TRAIT_STRING("encoding", "ascii"),
+	BU_MIME_TRAIT_STRING("stl.serialization", "text"), BU_MIME_TRAIT_STRING("stl.utf8-bom", "false")};
+    static const struct bu_mime_trait binary[] = {
+	BU_MIME_TRAIT_STRING("encoding", "binary"),
+	BU_MIME_TRAIT_STRING("byte-order", "little-endian"),
+	BU_MIME_TRAIT_STRING("stl.serialization", "binary"),
+    };
+    static const struct bu_mime_trait text[] = {BU_MIME_TRAIT_STRING("stl.serialization", "text"), BU_MIME_TRAIT_STRING("stl.utf8-bom", "false")};
+    static const struct bu_mime_capability types[] = {
+	{"model/stl", text, sizeof(text) / sizeof(text[0]), 0, BU_MIME_DEFER_INPUT_VALIDATION},
+	{"model/stl", binary, sizeof(binary) / sizeof(binary[0]), 0, BU_MIME_DEFER_INPUT_VALIDATION}};
+    static const struct bu_mime_capability outputs[] = {
+	BU_MIME_CAPABILITY("model/stl", text, sizeof(text) / sizeof(text[0]), 0),
+	BU_MIME_CAPABILITY("model/stl", ascii, sizeof(ascii) / sizeof(ascii[0]), 0),
+	BU_MIME_CAPABILITY("model/stl", binary, sizeof(binary) / sizeof(binary[0]), 0)};
+    static const struct gcv_handler handlers[] = {
+	{&gcv_conv_stl_read_execution, types, sizeof(types) / sizeof(types[0]), BU_MIME_DEFAULT_PRIORITY, NULL, NULL},
+	{&gcv_conv_stl_write_execution, outputs, sizeof(outputs) / sizeof(outputs[0]), BU_MIME_DEFAULT_PRIORITY, NULL, NULL}};
+    static const struct gcv_plugin_v2 plugin = {
+	GCV_PLUGIN_ABI_VERSION, sizeof(struct gcv_plugin_v2), NULL, 0, handlers, 2};
+    return &plugin;
+}
 
 /*
  * Local Variables:

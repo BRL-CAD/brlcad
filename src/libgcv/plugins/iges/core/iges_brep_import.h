@@ -50,6 +50,9 @@ struct BrepImportStatistics {
     double maximum_repair_tolerance_used = 0.0;
     size_t omitted = 0;
     size_t repairs = 0;
+    /* Subsets of repairs; the remainder affects geometry/topology. */
+    size_t source_repairs = 0;
+    size_t metadata_repairs = 0;
     size_t orientation_faces_reversed = 0;
 };
 

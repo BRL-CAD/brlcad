@@ -157,7 +157,8 @@ write_brep_import_report(const std::string &path, const Document &document,
 	<< ", \"maximum_repair_tolerance_used\": "
 	<< result.statistics.maximum_repair_tolerance_used << ", \"omitted\": "
 	<< result.statistics.omitted << ", \"repairs\": "
-	<< result.statistics.repairs << ", \"orientation_faces_reversed\": "
+	<< result.statistics.repairs << ", \"source_repairs\": " << result.statistics.source_repairs
+	<< ", \"metadata_repairs\": " << result.statistics.metadata_repairs << ", \"orientation_faces_reversed\": "
 	<< result.statistics.orientation_faces_reversed << ", \"parameter_loops_reoriented\": "
 	<< reoriented_loops << "},\n  \"orientation\": ";
     write_orientation_json(output, result.orientation);
@@ -189,7 +190,8 @@ write_import_report(const std::string &path, const Document &document,
 	<< ", \"semantic_groups_written\": "
 	<< result.statistics.semantic_groups_written << ", \"omitted\": "
 	<< result.statistics.omitted << ", \"repairs\": "
-	<< result.statistics.repairs << "},\n"
+	<< result.statistics.repairs << ", \"source_repairs\": " << result.statistics.source_repairs
+	<< ", \"metadata_repairs\": " << result.statistics.metadata_repairs << "},\n"
 	<< "  \"diagnostics\": [";
 
 

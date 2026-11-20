@@ -75,6 +75,9 @@ struct ImportStatistics {
     size_t semantic_groups_written = 0;
     size_t omitted = 0;
     size_t repairs = 0;
+    /* Subsets of repairs; the remainder affects geometry/topology. */
+    size_t source_repairs = 0;
+    size_t metadata_repairs = 0;
 };
 
 struct ImportDiagnostic {

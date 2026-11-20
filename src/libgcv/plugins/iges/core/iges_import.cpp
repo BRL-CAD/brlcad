@@ -1642,8 +1642,10 @@ Translator::run()
 	const bool repair = diagnostic.code == "inferred_parameter_count" ||
 	    diagnostic.code == "parameter_owner_repaired" ||
 	    diagnostic.code == "record_data_too_long";
-	if (repair)
+	if (repair) {
 	    ++result_.statistics.repairs;
+	    ++result_.statistics.source_repairs;
+	}
 	if (repair && (options_.repair == RepairMode::None || options_.exact ||
 		options_.strict)) {
 	    diagnose(Severity::Error, "repair_disallowed",

@@ -35,7 +35,7 @@
 #include "bu/malloc.h"
 #include "bu/path.h"
 #include "raytrace.h"
-#include "rply.h"
+#include "rplyfile.h"
 
 struct ply_write_options
 {
@@ -94,14 +94,37 @@ ply_output_error(p_ply output, const char *message)
 }
 
 static e_ply_storage_mode
-ply_output_storage_mode(const char *type)
+ply_output_storage_mode(const char *type, const struct bu_mime_traits *requested)
 {
-    if (!type || BU_STR_EQUAL(type, "de")) return PLY_DEFAULT;
-    if (BU_STR_EQUAL(type, "asc")) return PLY_ASCII;
-    if (BU_STR_EQUAL(type, "le")) return PLY_LITTLE_ENDIAN;
-    if (BU_STR_EQUAL(type, "be")) return PLY_BIG_ENDIAN;
-    bu_log("PLY writer: unsupported storage type %s\n", type);
-    return PLY_INVALID_STORAGE;
+    e_ply_storage_mode mode = ply_get_native_storage_mode();
+    if (type) {
+	if (BU_STR_EQUAL(type, "asc")) mode = PLY_ASCII;
+	else if (BU_STR_EQUAL(type, "le")) mode = PLY_LITTLE_ENDIAN;
+	else if (BU_STR_EQUAL(type, "be")) mode = PLY_BIG_ENDIAN;
+	else if (!BU_STR_EQUAL(type, "de")) {
+	    bu_log("PLY writer: unsupported storage type %s\n", type);
+	    return PLY_INVALID_STORAGE;
+	}
+    } else {
+	const char *encoding = bu_mime_traits_get(requested, "encoding");
+	const char *byte_order = bu_mime_traits_get(requested, "byte-order");
+	if (encoding && BU_STR_EQUAL(encoding, "ascii")) mode = PLY_ASCII;
+	else if (byte_order && BU_STR_EQUAL(byte_order, "little-endian")) mode = PLY_LITTLE_ENDIAN;
+	else if (byte_order && BU_STR_EQUAL(byte_order, "big-endian")) mode = PLY_BIG_ENDIAN;
+    }
+    const struct bu_mime_trait values[] = {
+	BU_MIME_TRAIT_STRING("version", "1.0"),
+	BU_MIME_TRAIT_STRING("encoding", mode == PLY_ASCII ? "ascii" : "binary"),
+	BU_MIME_TRAIT_STRING("byte-order", mode == PLY_BIG_ENDIAN ? "big-endian" : "little-endian")
+    };
+    size_t count = sizeof(values) / sizeof(values[0]);
+    if (mode == PLY_ASCII) --count;
+    const struct bu_mime_capability profile = BU_MIME_CAPABILITY("application/x-ply", values, count, 0);
+    if (!bu_mime_capability_match(&profile, requested, BU_MIME_OUTPUT)) {
+	bu_log("PLY writer: storage mode contradicts requested output traits\n");
+	return PLY_INVALID_STORAGE;
+    }
+    return mode;
 }
 
 static p_ply
@@ -677,7 +700,7 @@ ply_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_dat
     options_data->norm = -1;
     options_data->dist = -1;
     options_data->o_file = NULL;
-    options_data->type = "de";
+    options_data->type = NULL;
     options_data->separate = 0;
     options_data->verbose = 0;
     options_data->x = NULL;
@@ -688,7 +711,7 @@ ply_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_dat
     BU_OPT((*options_desc)[2],  "n", "norm_tess_tol", "decimal", bu_opt_fastf_t, &options_data->norm,      "specify the surface normal tessolation tolerance");
     BU_OPT((*options_desc)[3],  "D", "dist_calc_tol", "decimal", bu_opt_fastf_t, &options_data->dist,      "specify the distance calculation tolerance");
     BU_OPT((*options_desc)[4],  "o", "output_file",   "str",   bu_opt_str,     &options_data->o_file,    "specify the output file name");
-    BU_OPT((*options_desc)[5],  "t", "type",          "str",   bu_opt_str,     &options_data->type,      "specify the output file type (asc: ascii), (le: little endian), (be: big endian)");
+    BU_OPT((*options_desc)[5],  "t", "type",          "str",   bu_opt_str,     &options_data->type,      "specify output storage (asc: ASCII), (le: little endian), (be: big endian), (de: native binary)");
     BU_OPT((*options_desc)[6],  "s", "separate",      "",      NULL,           &options_data->separate, "specify a flag to generate a separate file per object");
     BU_OPT((*options_desc)[7],  "v", "verbose",       "",      NULL,           &options_data->verbose,   "specify a flag for verbose output");
     BU_OPT((*options_desc)[8],  "x", "rt_debug",      "str",   bu_opt_str,     &options_data->x,         "specify debug script for rt_debug");
@@ -720,8 +743,13 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
 
     memset(&state, 0, sizeof(state));
     state.gcv_options = gcv_options;
-    state.ply_write_options = (const struct ply_write_options *)options_data;
-    state.storage_mode = ply_output_storage_mode(state.ply_write_options->type);
+    struct ply_write_options output_options = *(const struct ply_write_options *)options_data;
+    /* An explicit legacy mode can choose another compatible variant;
+     * defaults from the first MIME clause are not caller assertions. */
+    const struct bu_mime_traits *requested = output_options.type ?
+	gcv_target_request_traits(context) : gcv_target_traits(context);
+    state.ply_write_options = &output_options;
+    state.storage_mode = ply_output_storage_mode(output_options.type, requested);
     if (state.storage_mode == PLY_INVALID_STORAGE)
 	return 0;
     state.output_file = dest_path;
@@ -804,6 +832,12 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
     if (state.failed || !state.cur_region)
 	goto free_all;
 
+    if (!state.ply_write_options->separate && state.colored_regions &&
+	state.colored_regions < (size_t)state.cur_region &&
+	!gcv_report_loss(context, GCV_LOSS_APPEARANCE, "ply.region-colors", state.colored_regions,
+	    "Region colors are omitted when merged output includes uncolored regions"))
+	goto free_all;
+
     if (!state.ply_write_options->separate) {
 	const int output_colors = state.colored_regions == (size_t)state.cur_region;
 	int ri;
@@ -855,12 +889,9 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
     if (state.failed)
 	goto free_all;
 
-    if (!state.ply_write_options->separate && state.colored_regions) {
-	if (state.colored_regions < (size_t)state.cur_region)
-	    bu_log("PLY writer: region colors omitted because some regions have no color\n");
-	else if (state.ply_write_options->verbose || state.gcv_options->verbosity_level)
-	    bu_log("Wrote region colors as PLY face colors.\n");
-    }
+    if (!state.ply_write_options->separate && state.colored_regions == (size_t)state.cur_region &&
+	(state.ply_write_options->verbose || state.gcv_options->verbosity_level))
+	bu_log("Wrote region colors as PLY face colors.\n");
 
     double percent;
     if (state.regions_tried > 0) {
@@ -912,6 +943,8 @@ const struct gcv_filter gcv_conv_ply_write = {
     "PLY Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_PLY, NULL,
     ply_write_create_opts, ply_write_free_opts, ply_write_gcv
 };
+
+const struct gcv_conversion gcv_conv_ply_write_execution = {"PLY Writer", GCV_FILTER_WRITE, ply_write_create_opts, ply_write_free_opts, ply_write_gcv};
 
 /*
  * Local Variables:

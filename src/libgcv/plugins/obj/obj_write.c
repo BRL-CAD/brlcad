@@ -35,6 +35,7 @@
 #include "bu/path.h"
 #include "raytrace.h"
 #include "gcv/api.h"
+#include "../mime_output.h"
 
 #define V3ARGS_SCALE(v, factor)       (v)[X] * (factor), (v)[Y] * (factor), (v)[Z] * (factor)
 
@@ -779,6 +780,23 @@ obj_write_free_opts(void *options_data)
 
 
 static int
+obj_output_profile(struct gcv_context *context, const struct gcv_opts *options, const char *path)
+{
+    const struct bu_mime_traits *requested = gcv_target_request_traits(context);
+    if (!BU_STR_EQUAL(bu_mime_traits_get(requested, "encoding"), "ascii")) return 1;
+    int valid = gcv_output_ascii_paths(context, options);
+    for (size_t i = 0; valid && i < options->num_objects; ++i)
+	valid = gcv_output_ascii_text(options->object_names[i]);
+    struct bu_vls basename = BU_VLS_INIT_ZERO;
+    if (bu_path_component(&basename, path, BU_PATH_BASENAME_EXTLESS))
+	valid = valid && gcv_output_ascii_text(bu_vls_addr(&basename));
+    bu_vls_free(&basename);
+    if (!valid) bu_log("OBJ encoding=ascii requires ASCII selected names, region paths, material filename and numeric locale\n");
+    return valid;
+}
+
+
+static int
 obj_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *dest_path)
 {
     size_t i;
@@ -786,6 +804,7 @@ obj_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
     struct db_tree_state tree_state;
     struct conversion_state state;
 
+    if (!obj_output_profile(context, gcv_options, dest_path)) return 0;
     memset(&state, 0, sizeof(state));
     state.gcv_options = gcv_options;
     state.obj_write_options = (struct obj_write_options *)options_data;
@@ -855,6 +874,8 @@ const struct gcv_filter gcv_conv_obj_write = {
     "OBJ Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_OBJ, NULL,
     obj_write_create_opts, obj_write_free_opts, obj_write
 };
+
+const struct gcv_conversion gcv_conv_obj_write_execution = {"OBJ Writer", GCV_FILTER_WRITE, obj_write_create_opts, obj_write_free_opts, obj_write};
 
 
 /*

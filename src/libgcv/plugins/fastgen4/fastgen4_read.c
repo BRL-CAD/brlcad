@@ -45,6 +45,7 @@
 #include "wdb.h"
 #include "bv/plot3.h"
 #include "gcv/api.h"
+#include "fastgen4_mime.h"
 
 
 #define PUSH(ptr) bu_ptbl_ins(&pstate->stack, (long *)ptr)
@@ -2876,6 +2877,43 @@ fastgen4_free_opts(void *options_data)
 
 
 static int
+fastgen4_input_profile(struct gcv_context *context, FILE *stream, const char *source_path)
+{
+    struct bu_vls record = BU_VLS_INIT_ZERO;
+    int valid = 0;
+    for (;;) {
+	struct bu_mime_result *result = NULL;
+	int recognized = 0;
+	bu_vls_trunc(&record, 0);
+	if (bu_vls_gets(&record, stream) < 0)
+	    break;
+	bu_vls_trimspace(&record);
+	if (bu_strncmp(bu_vls_cstr(&record), "SECTION", sizeof("SECTION") - 1))
+	    continue;
+	if (bu_mime_detect(gcv_mime_registry(context), NULL, bu_vls_cstr(&record), bu_vls_strlen(&record), 1, &result) == BU_MIME_ERROR)
+	    break;
+	for (size_t i = 0; result && i < result->count; ++i) {
+	    const struct bu_mime_candidate *candidate = &result->candidates[i];
+	    const struct bu_mime_capability profile = BU_MIME_CAPABILITY("model/vnd.fastgen", fastgen4_profile.items,
+		fastgen4_profile.count, 0);
+	    if (BU_STR_EQUAL(candidate->name, "model/vnd.fastgen")) {
+		recognized = 1;
+		valid = bu_mime_capability_match(&profile, &candidate->traits, BU_MIME_INPUT) &&
+		    gcv_probe_file_traits_match(context, source_path, candidate->name, &candidate->traits, gcv_target_request_traits(context));
+	    }
+	}
+	bu_mime_result_free(result);
+	if (recognized) break;
+    }
+    bu_vls_free(&record);
+    if (ferror(stream) || bu_fseek(stream, 0, SEEK_SET))
+	valid = 0;
+    if (!valid)
+	bu_log("Unsupported, unestablished or conflicting FASTGEN4 input profile\n");
+    return valid;
+}
+
+static int
 fastgen4_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *source_path)
 {
     const struct fastgen4_read_options * const fg4_read_options =
@@ -2886,7 +2924,21 @@ fastgen4_read(struct gcv_context *context, const struct gcv_opts *gcv_options, c
     fg4_zero_conversion_state(&state);
     state.gcv_options = gcv_options;
 
+    if ((state.fpin=fopen(source_path, "rb")) == (FILE *)NULL) {
+	bu_log("Cannot open FASTGEN4 file (%s)\n", source_path);
+	fg4_free_conversion_state(&state);
+	return 0;
+    }
+
+    if (!fastgen4_input_profile(context, state.fpin, source_path)) {
+	fg4_free_conversion_state(&state);
+	return 0;
+    }
     state.fpout = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
+    if (!state.fpout) {
+	fg4_free_conversion_state(&state);
+	return 0;
+    }
 
     if (fg4_read_options->muves_path)
 	if ((state.fp_muves=fopen(fg4_read_options->muves_path, "wb")) == (FILE *)NULL) {
@@ -2894,12 +2946,6 @@ fastgen4_read(struct gcv_context *context, const struct gcv_opts *gcv_options, c
 	    fg4_free_conversion_state(&state);
 	    return 0;
 	}
-
-    if ((state.fpin=fopen(source_path, "rb")) == (FILE *)NULL) {
-	bu_log("Cannot open FASTGEN4 file (%s)\n", source_path);
-	fg4_free_conversion_state(&state);
-	return 0;
-    }
 
     if (fg4_read_options->plot_path) {
 	if ((state.fp_plot=fopen(fg4_read_options->plot_path, "wb")) == NULL) {
@@ -2973,14 +3019,33 @@ static const struct gcv_filter gcv_conv_fastgen4_read = {
     fastgen4_create_opts, fastgen4_free_opts, fastgen4_read
 };
 
+static const struct gcv_conversion gcv_conv_fastgen4_read_execution = {"FASTGEN4 Reader", GCV_FILTER_READ, fastgen4_create_opts, fastgen4_free_opts, fastgen4_read};
+
 
 extern const struct gcv_filter gcv_conv_fastgen4_write;
+extern const struct gcv_conversion gcv_conv_fastgen4_write_execution;
 static const struct gcv_filter * const filters[] = {&gcv_conv_fastgen4_read, &gcv_conv_fastgen4_write, NULL};
 
 const struct gcv_plugin gcv_plugin_info_s = { filters };
 
 COMPILER_DLLEXPORT const struct gcv_plugin *
 gcv_plugin_info(void){ return &gcv_plugin_info_s; }
+
+COMPILER_DLLEXPORT const struct gcv_plugin_v2 *
+gcv_plugin_info_v2(void)
+{
+    static const struct bu_mime_capability inputs[] = {{"model/vnd.fastgen", fastgen4_traits,
+	sizeof(fastgen4_traits) / sizeof(fastgen4_traits[0]), 0, BU_MIME_DEFER_INPUT_VALIDATION}};
+    static const struct bu_mime_capability outputs[] = {BU_MIME_CAPABILITY("model/vnd.fastgen", fastgen4_traits,
+	sizeof(fastgen4_traits) / sizeof(fastgen4_traits[0]), 0)};
+    static const struct gcv_handler handlers[] = {
+	{&gcv_conv_fastgen4_read_execution, inputs, 1, BU_MIME_DEFAULT_PRIORITY, NULL, NULL},
+	{&gcv_conv_fastgen4_write_execution, outputs, 1, BU_MIME_DEFAULT_PRIORITY, NULL, NULL},
+    };
+    static const struct gcv_plugin_v2 plugin = {GCV_PLUGIN_ABI_VERSION, sizeof(struct gcv_plugin_v2),
+	NULL, 0, handlers, sizeof(handlers) / sizeof(handlers[0])};
+    return &plugin;
+}
 
 /*
  * Local Variables:

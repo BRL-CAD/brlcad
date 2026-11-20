@@ -8,6 +8,7 @@
  */
 
 #include "common.h"
+#include "../mime_probe.h"
 
 #include <algorithm>
 #include <memory>
@@ -80,6 +81,40 @@ iges_can_read(const char *source_path)
     }
 }
 
+bool
+matches_document_profile(const Document &document, struct gcv_context *context, const char *source_path)
+{
+    /* Global parameter 23 declares the IGES standard, independently of the
+     * producer's version string. ANSI editions retain only their raw code. */
+    constexpr size_t version_parameter = 23;
+    const struct {int code; const char *version;} versions[] = {
+	{1, "1.0"}, {3, "2.0"}, {4, "3.0"}, {6, "4.0"},
+	{8, "5.0"}, {9, "5.1"}, {10, "5.2"}, {11, "5.3"}
+    };
+    struct bu_mime_traits observed = BU_MIME_TRAITS_INIT_ZERO;
+    bool valid = bu_mime_traits_add(&observed, "encoding", "ascii") != 0;
+    const auto &parameters = document.global().parameters;
+    if (parameters.size() >= version_parameter) {
+	Parameter parameter;
+	parameter.raw = parameters[version_parameter - 1];
+	int64_t code;
+	if (parameter.integer(code)) {
+	    valid = valid && bu_mime_traits_add(&observed, "iges.version-code", std::to_string(code).c_str());
+	    for (const auto &version : versions)
+		if (code == version.code) valid = valid && bu_mime_traits_add(&observed, "version", version.version);
+	}
+    }
+    valid = valid && gcv_probe_file_traits_match(context, source_path, "model/iges", &observed, gcv_target_request_traits(context));
+    if (!valid) {
+	struct bu_vls description = BU_VLS_INIT_ZERO;
+	bu_mime_traits_describe(&observed, &description);
+	bu_log("IGES input traits do not match the parsed document:%s\n", bu_vls_cstr(&description));
+	bu_vls_free(&description);
+    }
+    bu_mime_traits_free(&observed);
+    return valid;
+}
+
 int
 read_document(struct gcv_context *context, const struct gcv_opts &gcv_options,
     const IgesReadOptions &reader, const char *source_path)
@@ -110,6 +145,9 @@ read_document(struct gcv_context *context, const struct gcv_opts &gcv_options,
 	return 0;
     }
 
+    if (!matches_document_profile(document, context, source_path))
+	return 0;
+
     // The context owns this database and its writer; do not close either here.
     struct rt_wdb *database = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
     if (!database)
@@ -134,6 +172,19 @@ read_document(struct gcv_context *context, const struct gcv_opts &gcv_options,
 	// another successful representation in the same document.
 	failed = failed || (!result.success &&
 	    (result.statistics.objects_written > 0 || (options.strict && result.statistics.omitted > 0)));
+	if (result.statistics.omitted && !gcv_report_loss(context, GCV_LOSS_GEOMETRY, "iges.omitted-entities",
+		result.statistics.omitted, "Unsupported or unconvertible entities were omitted"))
+	    failed = true;
+	if (result.statistics.source_repairs > result.statistics.repairs ||
+	    result.statistics.metadata_repairs > result.statistics.repairs - result.statistics.source_repairs)
+	    throw std::logic_error("inconsistent IGES repair statistics");
+	const size_t geometry_repairs = result.statistics.repairs - result.statistics.source_repairs - result.statistics.metadata_repairs;
+	if (geometry_repairs && !gcv_report_loss(context, GCV_LOSS_GEOMETRY, "iges.geometry-repairs",
+		geometry_repairs, "Source geometry or topology was repaired during conversion"))
+	    failed = true;
+	if (result.statistics.metadata_repairs && !gcv_report_loss(context, GCV_LOSS_METADATA, "iges.metadata-repairs",
+		result.statistics.metadata_repairs, "Invalid optional metadata was discarded or repaired"))
+	    failed = true;
     };
     const bool model_geometry = has_model_geometry(document);
     if (!reader.drawings_only && (reader.breps_only || model_geometry))
@@ -179,6 +230,8 @@ const struct gcv_filter iges_reader = {
     "IGES Reader", GCV_FILTER_READ, BU_MIME_MODEL_IGES, iges_can_read,
     iges_create_options, iges_free_options, iges_read
 };
+
+const struct gcv_conversion iges_reader_execution = {"IGES Reader", GCV_FILTER_READ, iges_create_options, iges_free_options, iges_read};
 
 /*
  * Local Variables:

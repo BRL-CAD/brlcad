@@ -30,6 +30,7 @@
  */
 
 #include "common.h"
+#include "../mime_probe.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -100,32 +101,35 @@ scad_read_free_opts(void *options_data)
 /* recognition                                                        */
 /* ------------------------------------------------------------------ */
 
-static int
-scad_can_read(const char *data)
+static enum bu_mime_probe_status
+scad_probe(const struct bu_mime_probe_input *input, const char *UNUSED(type))
 {
-    FILE *fp;
-    char buf[4096];
-    size_t nread;
-    static const char *sig[] = {
+    static const char * sig[] = {
 	"module ", "function ", "cube(", "cube (", "sphere(", "sphere (",
 	"cylinder(", "cylinder (", "polyhedron(", "linear_extrude",
 	"rotate_extrude", "difference(", "difference (", "union(",
 	"intersection(", "translate(", "translate (", "$fn", NULL
     };
-    int i;
+    struct bu_vls text = BU_VLS_INIT_ZERO;
+    if (!input->size)
+	return input->complete ? BU_MIME_PROBE_NO_MATCH : BU_MIME_PROBE_INCOMPLETE;
+    if (memchr(input->data, '\0', input->size))
+	return BU_MIME_PROBE_NO_MATCH;
+    gcv_probe_text(&text, input->data, input->size);
+    enum bu_mime_probe_status status = BU_MIME_PROBE_NO_MATCH;
+    for (size_t i = 0; sig[i]; ++i)
+	if (strstr(bu_vls_cstr(&text), sig[i])) {
+	    status = BU_MIME_PROBE_HEURISTIC;
+	    break;
+	}
+    bu_vls_free(&text);
+    return status;
+}
 
-    if (!data) return 0;
-    fp = fopen(data, "rb");
-    if (!fp) return 0;
-    nread = fread(buf, 1, sizeof(buf) - 1, fp);
-    fclose(fp);
-    if (nread == 0) return 0;
-    buf[nread] = '\0';
-
-    for (i = 0; sig[i]; i++)
-	if (strstr(buf, sig[i]))
-	    return 1;
-    return 0;
+static int
+scad_can_read(const char *path)
+{
+    return gcv_probe_file(path, scad_probe, "application/x-openscad");
 }
 
 
@@ -146,6 +150,13 @@ scad_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     size_t nprog = 0;
     struct scad_geom *emit_root;
     int ok = 0;
+
+    /* This reader currently establishes no additional source traits. */
+    const struct bu_mime_traits observed = BU_MIME_TRAITS_INIT_ZERO;
+    if (!gcv_probe_file_traits_match(context, source_path, "application/x-openscad", &observed, gcv_target_request_traits(context))) {
+	bu_log("OpenSCAD input cannot establish the requested MIME traits\n");
+	return 0;
+    }
 
     memset(&st, 0, sizeof(st));
     st.gcv_options = gcv_options;
@@ -170,8 +181,9 @@ scad_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 
     bu_path_component(&title, source_path, BU_PATH_BASENAME);
 
-    mk_id_units(st.wdbp, bu_vls_cstr(&title),
-		(opts && opts->units) ? opts->units : "mm");
+    if (mk_id_units(st.wdbp, bu_vls_cstr(&title),
+		(opts && opts->units) ? opts->units : "mm") < 0)
+	goto done;
 
     prog = scad_parse(&st, text, source_path, &nprog);
     if (!prog) {
@@ -183,6 +195,9 @@ scad_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	bu_log("scad: evaluation failed\n");
 	goto done;
     }
+    if (st.dropped && !gcv_report_loss(context, GCV_LOSS_GEOMETRY, "openscad.unsupported-constructs",
+	    (size_t)st.dropped, "Unsupported constructs were skipped or approximated"))
+	goto done;
 
     emit_root = st.root_only ? st.root_only : st.root;
     ok = scad_emit(&st, emit_root);
@@ -195,9 +210,6 @@ scad_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	}
     }
 
-    if (st.dropped)
-	bu_log("scad: %d construct(s) were unsupported and were skipped or approximated.\n",
-	       st.dropped);
     if (!ok)
 	bu_log("scad: warning, no geometry was created from %s\n", source_path);
 
@@ -222,19 +234,34 @@ static const struct gcv_filter gcv_conv_scad_read = {
     scad_read_create_opts, scad_read_free_opts, scad_read
 };
 
+static const struct gcv_conversion gcv_conv_scad_read_execution = {"OpenSCAD Reader", GCV_FILTER_READ, scad_read_create_opts, scad_read_free_opts, scad_read};
+
 static const struct gcv_filter gcv_conv_scad_read_auto = {
     "OpenSCAD Reader (auto)", GCV_FILTER_READ, BU_MIME_MODEL_AUTO, scad_can_read,
     scad_read_create_opts, scad_read_free_opts, scad_read
 };
 
-static const struct gcv_filter * const filters[] = {
-    &gcv_conv_scad_read, &gcv_conv_scad_read_auto, NULL
+static const struct gcv_filter * const filters[] = {&gcv_conv_scad_read, &gcv_conv_scad_read_auto, NULL
 };
 
 const struct gcv_plugin gcv_plugin_info_s = { filters };
 
 COMPILER_DLLEXPORT const struct gcv_plugin *
 gcv_plugin_info(void){ return &gcv_plugin_info_s; }
+
+COMPILER_DLLEXPORT const struct gcv_plugin_v2 *
+gcv_plugin_info_v2(void)
+{
+    static const struct bu_mime_capability types[] = {
+        BU_MIME_CAPABILITY("application/x-openscad", NULL, 0, 0),
+    };
+    static const struct gcv_handler handlers[] = {
+	{&gcv_conv_scad_read_execution, types, 1, BU_MIME_DEFAULT_PRIORITY, scad_probe, NULL},
+    };
+    static const struct gcv_plugin_v2 plugin = {GCV_PLUGIN_ABI_VERSION, sizeof(struct gcv_plugin_v2),
+	NULL, 0, handlers, sizeof(handlers) / sizeof(handlers[0])};
+    return &plugin;
+}
 
 /*
  * Local Variables:

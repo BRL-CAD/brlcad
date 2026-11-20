@@ -27,25 +27,22 @@
 
 #include "bio.h"
 
+#include "bu/app.h"
+#include "bu/file.h"
+#include "bu/str.h"
 #include "rt/db4.h"
+#include "rt/db_instance.h"
 #include "rt/db_io.h"
+#include "rt/wdb.h"
 #include "gcv/api.h"
 #include "gcv/util.h"
+#include "../mime_probe.h"
 
 
 extern int asc_read_v4(struct gcv_context *c, const struct gcv_opts *o, std::ifstream &fs);
-extern int asc_read_v5(struct gcv_context *c, const struct gcv_opts *o, std::ifstream &fs);
-extern int asc_write_v4(struct gcv_context *c, const struct gcv_opts *o, const char *dest_path);
+extern int asc_read_v5(struct gcv_context *c, const struct gcv_opts *o, std::ifstream &fs, const char *source_path);
+extern int asc_write_v4(struct db_i *database, const char *dest_path);
 extern int asc_write_v5(struct gcv_context *c, const struct gcv_opts *o, const char *dest_path);
-
-
-static int
-asc_can_read(const char *data)
-{
-    if (!data) return 0;
-    bu_log("asc can read: %s\n", data);
-    return 1;
-}
 
 
 static int
@@ -77,25 +74,52 @@ asc_read(struct gcv_context *context, const struct gcv_opts *options,
 	    bu_log("Unsupported ASC syntax or initial command: %s\n", command.c_str());
 	    return 0;
 	}
+	const char *syntax = bu_mime_traits_get(gcv_target_traits(context), "asc.syntax");
+	if (syntax && !BU_STR_EQUAL(syntax, script ? "tcl-commands" : "legacy-records")) {
+	    bu_log("ASC syntax contradicts the selected profile\n");
+	    return 0;
+	}
+	if (legacy) {
+	    const bu_mime_trait value = BU_MIME_TRAIT_STRING("asc.syntax", "legacy-records");
+	    const bu_mime_traits observed = {&value, 1};
+	    if (!gcv_probe_file_traits_match(context, source_path, "application/vnd.brlcad.script", &observed, gcv_target_request_traits(context))) return 0;
+	}
 	input.clear();
 	input.seekg(0);
 	if (!input)
 	    return 0;
-	return (script ? asc_read_v5(context, options, input) : asc_read_v4(context, options, input)) == 1;
+	return (script ? asc_read_v5(context, options, input, source_path) : asc_read_v4(context, options, input)) == 1;
     }
     bu_log("ASC input contains no database records: %s\n", source_path);
     return 0;
 }
 
 static int
-asc_write(struct gcv_context *c, const struct gcv_opts *o,
-	       const void *UNUSED(odata), const char *dest_path)
+asc_write(struct gcv_context *context, const struct gcv_opts *options,
+    const void *UNUSED(options_data), const char *destination)
 {
-    if (!c || !o || !dest_path) return 0;
-    if (db_version(c->dbip) < 5) {
-	return asc_write_v4(c, o, dest_path);
-    }
-    return asc_write_v5(c, o, dest_path);
+    if (!context || !options || !destination)
+	return 0;
+    const char *syntax = bu_mime_traits_get(gcv_target_traits(context), "asc.syntax");
+    if (!syntax || BU_STR_EQUAL(syntax, "tcl-commands"))
+	return asc_write_v5(context, options, destination);
+    if (!BU_STR_EQUAL(syntax, "legacy-records")) return 0;
+    struct temporary_database {
+	char path[MAXPATHLEN] = {0};
+	struct db_i *database = NULL;
+	~temporary_database() {
+	    if (database) db_close(database);
+	    if (path[0]) bu_file_delete(path);
+	}
+    } temporary;
+    FILE *file = bu_temp_file(temporary.path, sizeof(temporary.path));
+    if (!file) return 0;
+    if (fclose(file)) return 0;
+    struct rt_wdb *writer = wdb_fopen_v(temporary.path, 4);
+    if (!writer) return 0;
+    temporary.database = writer->dbip;
+    if (!gcv_db_copy(context, writer, context->dbip)) return 0;
+    return asc_write_v4(temporary.database, destination);
 }
 
 
@@ -106,11 +130,13 @@ extern "C"
 	"ASC Reader",
 	GCV_FILTER_READ,
 	BU_MIME_MODEL_VND_BRLCAD_PLUS_ASC,
-	asc_can_read,
+	NULL,
 	NULL,
 	NULL,
 	asc_read
     };
+
+    static const struct gcv_conversion gcv_conv_asc_read_execution = {"ASC Reader", GCV_FILTER_READ, NULL, NULL, asc_read};
 
     struct gcv_filter gcv_conv_asc_write =
     {
@@ -123,9 +149,34 @@ extern "C"
        	asc_write
     };
 
+    static const struct gcv_conversion gcv_conv_asc_write_execution = {"ASC Writer", GCV_FILTER_WRITE, NULL, NULL, asc_write};
+
     static const struct gcv_filter * const filters[] = {&gcv_conv_asc_read, &gcv_conv_asc_write, NULL};
     const struct gcv_plugin gcv_plugin_info_s = { filters };
     COMPILER_DLLEXPORT const struct gcv_plugin *gcv_plugin_info(){return &gcv_plugin_info_s;}
+}
+
+extern "C" COMPILER_DLLEXPORT const struct gcv_plugin_v2 *
+gcv_plugin_info_v2(void)
+{
+    static const char *const commands[] = {"title", "units", "put", "attr", "color"};
+    static const struct bu_mime_trait tcl_reader[] = {
+	BU_MIME_TRAIT_STRING("asc.syntax", "tcl-commands"),
+	BU_MIME_TRAIT_SET("asc.commands", commands, sizeof(commands) / sizeof(commands[0]))};
+    static const struct bu_mime_trait tcl_writer[] = {BU_MIME_TRAIT_STRING("asc.syntax", "tcl-commands")};
+    static const struct bu_mime_trait legacy[] = {BU_MIME_TRAIT_STRING("asc.syntax", "legacy-records")};
+    static const struct bu_mime_capability readers[] = {
+	{"application/vnd.brlcad.script", tcl_reader, 2, 0, BU_MIME_DEFER_INPUT_VALIDATION},
+	{"application/vnd.brlcad.script", legacy, 1, 0, BU_MIME_DEFER_INPUT_VALIDATION}};
+    static const struct bu_mime_capability writers[] = {
+	BU_MIME_CAPABILITY("application/vnd.brlcad.script", tcl_writer, 1, 0),
+	BU_MIME_CAPABILITY("application/vnd.brlcad.script", legacy, 1, 0)};
+    static const struct gcv_handler handlers[] = {
+	{&gcv_conv_asc_read_execution, readers, 2, BU_MIME_DEFAULT_PRIORITY, NULL, NULL},
+	{&gcv_conv_asc_write_execution, writers, 2, BU_MIME_DEFAULT_PRIORITY, NULL, NULL}};
+    static const struct gcv_plugin_v2 plugin = {GCV_PLUGIN_ABI_VERSION, sizeof(struct gcv_plugin_v2),
+	NULL, 0, handlers, sizeof(handlers) / sizeof(handlers[0])};
+    return &plugin;
 }
 
 // Local Variables:

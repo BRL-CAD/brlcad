@@ -40,6 +40,9 @@ set(iges_test_outputs
   ${CMAKE_CURRENT_BINARY_DIR}/plugin-brep.igs
   ${CMAKE_CURRENT_BINARY_DIR}/plugin-missing.igs
   ${CMAKE_CURRENT_BINARY_DIR}/plugin-scaled.igs
+  ${CMAKE_CURRENT_BINARY_DIR}/plugin-profile-0.igs
+  ${CMAKE_CURRENT_BINARY_DIR}/plugin-profile-1.igs
+  ${CMAKE_CURRENT_BINARY_DIR}/plugin-profile-2.igs
   )
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${iges_test_outputs}")
 distclean(${iges_test_outputs})

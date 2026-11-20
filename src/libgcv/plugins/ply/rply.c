@@ -577,7 +577,6 @@ static void *ply_grow_array(p_ply ply, void **pointer, long *nmemb, long size);
 /* ----------------------------------------------------------------------
  * Special functions
  * ---------------------------------------------------------------------- */
-static e_ply_storage_mode ply_arch_endian(void);
 static int ply_type_check(void);
 
 /* ----------------------------------------------------------------------
@@ -684,6 +683,10 @@ p_ply ply_open_from_file(FILE *fp, p_ply_error_cb error_cb,
     return ply;
 }
 
+e_ply_storage_mode ply_get_storage_mode(p_ply ply) {
+    return ply ? ply->storage_mode : PLY_INVALID_STORAGE;
+}
+
 int ply_read_header(p_ply ply) {
     assert(ply && ply->fp && ply->io_mode == PLY_READ);
     if (!ply_read_header_magic(ply)) return 0;
@@ -780,9 +783,9 @@ p_ply ply_create_to_file(FILE *fp, e_ply_storage_mode storage_mode,
     ply->idata = idata;
     ply->pdata = pdata;
     ply->io_mode = PLY_WRITE;
-    if (storage_mode == PLY_DEFAULT) storage_mode = ply_arch_endian();
+    if (storage_mode == PLY_DEFAULT) storage_mode = ply_get_native_storage_mode();
     if (storage_mode == PLY_ASCII) ply->odriver = &ply_odriver_ascii;
-    else if (storage_mode == ply_arch_endian())
+    else if (storage_mode == ply_get_native_storage_mode())
         ply->odriver = &ply_odriver_binary;
     else ply->odriver = &ply_odriver_binary_reverse;
     ply->storage_mode = storage_mode;
@@ -1557,7 +1560,7 @@ static int ply_read_header_format(p_ply ply) {
     ply->storage_mode = ply_find_storage_string(BWORD(ply));
     if (ply->storage_mode == PLY_INVALID_STORAGE) return 0;
     if (ply->storage_mode == PLY_ASCII) ply->idriver = &ply_idriver_ascii;
-    else if (ply->storage_mode == ply_arch_endian())
+    else if (ply->storage_mode == ply_get_native_storage_mode())
         ply->idriver = &ply_idriver_binary;
     else ply->idriver = &ply_idriver_binary_reverse;
     if (!ply_read_word(ply)) return 0;
@@ -1652,7 +1655,7 @@ static void ply_ferror(p_ply ply, const char *fmt, ...) {
     ply->error_cb(ply, buffer);
 }
 
-static e_ply_storage_mode ply_arch_endian(void) {
+e_ply_storage_mode ply_get_native_storage_mode(void) {
     unsigned long i = 1;
     unsigned char *s = (unsigned char *) &i;
     if (*s == 1) return PLY_LITTLE_ENDIAN;

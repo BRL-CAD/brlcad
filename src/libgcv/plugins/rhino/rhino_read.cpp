@@ -25,8 +25,10 @@
 
 
 #include "common.h"
+#include "../mime_probe.h"
 
 #include "bu/path.h"
+#include "bu/str.h"
 #include "bu/units.h"
 #include "bg/trimesh.h"
 #include "gcv/api.h"
@@ -42,6 +44,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
+#include <vector>
 
 
 namespace rhino_read
@@ -278,15 +281,74 @@ chk_name(const ON_wString& _name, std::unordered_map <std::string, int>& used_na
     return name;
 }
 
+static const std::vector<bu_mime_capability>&
+rhino_formats()
+{
+    struct Formats {
+	std::vector<std::string> versions;
+	std::vector<std::vector<bu_mime_trait>> traits;
+	std::vector<bu_mime_capability> capabilities;
+
+	Formats() : versions({"1", "2", "3", "4", "5"})
+	{
+	    /* Early archives use consecutive versions. Since 50, archive
+	     * versions advance by ten and use 64-bit chunk lengths. */
+	    for (int version = 50; version <= ON_BinaryArchive::CurrentArchiveVersion(); version += 10)
+		versions.push_back(std::to_string(version));
+	    for (const auto &version : versions)
+		traits.push_back({BU_MIME_TRAIT_STRING("version", version.c_str()),
+		    BU_MIME_TRAIT_STRING("encoding", "binary"),
+		    BU_MIME_TRAIT_STRING("byte-order", "little-endian")});
+	    for (const auto &profile : traits)
+		capabilities.push_back({"model/vnd.mcneel.3dm", profile.data(), profile.size(), 0,
+		    BU_MIME_DEFER_INPUT_VALIDATION});
+	}
+    };
+    static const Formats formats;
+    return formats.capabilities;
+}
+
+static bool
+rhino_input_profile(gcv_context *context, ON_BinaryArchive &archive, const char *source_path)
+{
+    /* Reuse the shared wire-header interpretation. The SDK may repair a
+     * V1 header with a V2 body, so its effective model version is not the
+     * same fact as the declared archive version. ArchiveStartOffset also
+     * preserves support for archives embedded after an OLE prefix. */
+    const size_t header_size = 32;
+    unsigned char header[header_size];
+    if (!archive.SeekFromStart(archive.ArchiveStartOffset()) || !archive.ReadByte(sizeof(header), header))
+	return false;
+    bu_mime_result *result = NULL;
+    bool inspected = bu_mime_detect(gcv_mime_registry(context), NULL, header, sizeof(header), 0, &result) != BU_MIME_ERROR;
+    AutoPtr<bu_mime_result, bu_mime_result_free> autofree_result(result);
+    for (size_t i = 0; inspected && result && i < result->count; ++i) {
+	const auto &candidate = result->candidates[i];
+	if (!BU_STR_EQUAL(candidate.name, "model/vnd.mcneel.3dm"))
+	    continue;
+	if (!gcv_probe_file_traits_match(context, source_path, candidate.name, &candidate.traits, gcv_target_request_traits(context)))
+	    return false;
+	for (auto profile : rhino_formats()) {
+	    profile.flags = 0;
+	    if (bu_mime_capability_match(&profile, &candidate.traits, BU_MIME_INPUT))
+		return true;
+	}
+    }
+    return false;
+}
+
 /* loads model and then maps component id to a unique name */
 std::unordered_map <std::string, std::string>
-load_model(const char* default_name, const std::string& path, ONX_Model& model)
+load_model(gcv_context *context, const char* default_name, const std::string& path, ONX_Model& model)
 {
     if (!bu_file_exists(path.c_str(), NULL))
 	throw InvalidRhinoModelError("Specified file not found.");
 
-    if (!model.Read(path.c_str()))
-	throw InvalidRhinoModelError("ONX_Model::Read() failed.\n\nNote:  if this file was saved from Rhino3D, make sure it was saved using\nRhino's v8 format or lower - newer versions of the 3dm format are not\ncurrently supported by BRL-CAD.");
+    ON_BinaryFile archive(ON::archive_mode::read3dm, path.c_str());
+    if (!archive.FileIsOpen() || !model.Read(archive))
+	throw InvalidRhinoModelError("ONX_Model::Read() failed.");
+    if (!rhino_input_profile(context, archive, path.c_str()))
+	throw InvalidRhinoModelError("Unsupported or conflicting 3DM archive profile.");
 
     std::unordered_map <std::string, std::string> uuid_to_name;
     std::unordered_map <std::string, int> used_names;			/* used names, times used */
@@ -1133,13 +1195,16 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	root_name = bu_vls_addr(&temp);
     }
 
-    struct rt_wdb *wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
+    struct rt_wdb *wdbp = NULL;
 
     try {
 	/* Use the openNURBS extension to read the whole 3dm file into memory. */
 	ONX_Model model;
 	std::unordered_map <std::string, std::string> uuid_to_names;
-	uuid_to_names = load_model(gcv_options->default_name, source_path, model);
+	uuid_to_names = load_model(context, gcv_options->default_name, source_path, model);
+	wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
+	if (!wdbp)
+	    return 0;
 	/* the root layer created in import_model_layers always has 0 id - map it to root_name */
 	uuid_to_names.insert({"00000000-0000-0000-0000-000000000000", root_name});
 
@@ -1156,19 +1221,16 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
     return 1;
 }
 
+static enum bu_mime_probe_status
+rhino_probe(const struct bu_mime_probe_input *input, const char *)
+{
+    return gcv_probe_prefix(input, "3D Geometry File Format ");
+}
+
 int
 rhino_can_read(const char *source_path)
 {
-    int fv;
-    ON_String mSC;
-    ON_3dmProperties mprop;
-    if (!source_path) return 0;
-    FILE *fp = ON::OpenFile(source_path,"rb");
-    if (!fp) return 0;
-    ON_BinaryFile file(ON::archive_mode::read3dm,fp);
-    if (!file.Read3dmStartSection(&fv, mSC)) return 0;
-    if (!file.Read3dmProperties(mprop)) return 0;
-    return 1;
+    return gcv_probe_file(source_path, rhino_probe, "model/vnd.mcneel.3dm");
 }
 
 
@@ -1176,6 +1238,8 @@ struct gcv_filter gcv_conv_rhino_read = {
     "Rhino Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_RHINO, rhino_can_read,
     NULL, NULL, rhino_read
 };
+
+static const struct gcv_conversion rhino_execution = {"Rhino Reader", GCV_FILTER_READ, NULL, NULL, rhino_read};
 
 static const gcv_filter * const filters[] = {&gcv_conv_rhino_read, NULL};
 
@@ -1193,6 +1257,18 @@ extern "C"
     }
 }
 
+
+extern "C" COMPILER_DLLEXPORT const struct gcv_plugin_v2 *
+gcv_plugin_info_v2(void)
+{
+    const auto &types = rhino_read::rhino_formats();
+    static const struct gcv_handler handlers[] = {
+	{&rhino_read::rhino_execution, types.data(), types.size(), BU_MIME_DEFAULT_PRIORITY, rhino_read::rhino_probe, NULL},
+    };
+    static const struct gcv_plugin_v2 plugin = {GCV_PLUGIN_ABI_VERSION, sizeof(struct gcv_plugin_v2),
+	NULL, 0, handlers, sizeof(handlers) / sizeof(handlers[0])};
+    return &plugin;
+}
 
 // Local Variables:
 // tab-width: 8

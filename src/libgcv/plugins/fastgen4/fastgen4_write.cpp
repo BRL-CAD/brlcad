@@ -45,6 +45,7 @@ extern "C" b_off_t ftello(FILE *);
 #include "raytrace.h"
 #include "gcv/api.h"
 #include "gcv/util.h"
+#include "fastgen4_mime.h"
 
 namespace fastgen4_write
 {
@@ -2480,6 +2481,10 @@ static int
 fastgen4_write(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	       const void *UNUSED(options_data), const char *dest_path)
 {
+    if (!gcv_probe_traits_match("model/vnd.fastgen", &fastgen4_profile, gcv_target_traits(context))) {
+	bu_log("Unsupported or conflicting FASTGEN4 output profile\n");
+	return 0;
+    }
     try {
 	const std::set<const directory *> failed_regions =
 	    do_conversion(*context->dbip, *gcv_options, dest_path);
@@ -2504,6 +2509,8 @@ extern "C"
 {
     struct gcv_filter gcv_conv_fastgen4_write =
     {"FASTGEN4 Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VND_FASTGEN, NULL, NULL, NULL, fastgen4_write::fastgen4_write};
+
+    extern const struct gcv_conversion gcv_conv_fastgen4_write_execution = {"FASTGEN4 Writer", GCV_FILTER_WRITE, NULL, NULL, fastgen4_write::fastgen4_write};
 }
 
 

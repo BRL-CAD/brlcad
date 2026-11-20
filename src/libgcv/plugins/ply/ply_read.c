@@ -36,8 +36,10 @@
 #include "bu/malloc.h"
 #include "bu/path.h"
 #include "gcv/api.h"
+#include "../mime_probe.h"
 #include "wdb.h"
 #include "rply.h"
+#include "rplyfile.h"
 
 #define PLY_COMPONENTS 3
 #define PLY_MAX_FACE_VERTICES 4
@@ -143,6 +145,24 @@ face_cb(p_ply_argument argument)
 }
 
 static int
+ply_validate_profile(struct gcv_context *context, p_ply input, const char *source_path)
+{
+    const struct bu_mime_traits *requested = gcv_target_request_traits(context);
+    e_ply_storage_mode mode = ply_get_storage_mode(input);
+    struct bu_mime_traits observed = BU_MIME_TRAITS_INIT_ZERO;
+    int status = mode == PLY_ASCII || mode == PLY_LITTLE_ENDIAN || mode == PLY_BIG_ENDIAN;
+    /* RPly accepts only version 1.0 when reading the complete header. */
+    status = status && bu_mime_traits_add(&observed, "version", "1.0") &&
+	bu_mime_traits_add(&observed, "encoding", mode == PLY_ASCII ? "ascii" : "binary");
+    if (status && mode != PLY_ASCII)
+	status = bu_mime_traits_add(&observed, "byte-order", mode == PLY_LITTLE_ENDIAN ? "little-endian" : "big-endian");
+    status = status && gcv_probe_file_traits_match(context, source_path, "application/x-ply", &observed, requested);
+    bu_mime_traits_free(&observed);
+    if (!status) bu_log("PLY header contradicts the selected profile\n");
+    return status;
+}
+
+static int
 ply_read_gcv(struct gcv_context *context, const struct gcv_opts *gcv_options,
     const void *options_data, const char *source_path)
 {
@@ -170,7 +190,7 @@ ply_read_gcv(struct gcv_context *context, const struct gcv_opts *gcv_options,
     if (!isfinite(state.scale) || ZERO(state.scale))
 	goto cleanup;
     input = ply_open(source_path, NULL, 0, NULL);
-    if (!input || !ply_read_header(input))
+    if (!input || !ply_read_header(input) || !ply_validate_profile(context, input, source_path))
 	goto cleanup;
     vertices = ply_set_read_cb(input, "vertex", "x", vertex_cb, &state, 0);
     if (vertices <= 0 || vertices > INT_MAX ||
@@ -205,6 +225,9 @@ ply_read_gcv(struct gcv_context *context, const struct gcv_opts *gcv_options,
     }
     input = NULL;
     bot.num_faces = state.face_count;
+    if (state.color[3] && !gcv_report_loss(context, GCV_LOSS_APPEARANCE, "ply.face-colors", (size_t)faces,
+	"Per-face colors cannot be represented by a single region color"))
+	goto cleanup;
     database = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
     if (!database)
 	goto cleanup;
@@ -229,8 +252,6 @@ ply_read_gcv(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	for (size_t i = 0; i < PLY_COMPONENTS; ++i)
 	    rgb[i] = (unsigned char)state.color[i];
 	color = rgb;
-    } else if (state.color[3]) {
-	bu_log("PLY: varying face colors cannot be represented by one region color\n");
     }
     if (mk_comb(database, bu_vls_cstr(&region), &members.l, 1, NULL, NULL, color, 1000, 0, 0, 100, 0, 0, 0))
 	goto cleanup;
@@ -293,13 +314,52 @@ static const struct gcv_filter gcv_conv_ply_read = {
     ply_read_create_opts, ply_read_free_opts, ply_read_gcv
 };
 
+static const struct gcv_conversion gcv_conv_ply_read_execution = {"PLY Reader", GCV_FILTER_READ, ply_read_create_opts, ply_read_free_opts, ply_read_gcv};
+
 extern const struct gcv_filter gcv_conv_ply_write;
+extern const struct gcv_conversion gcv_conv_ply_write_execution;
 static const struct gcv_filter* const filters[] = {&gcv_conv_ply_read, &gcv_conv_ply_write, NULL};
 
 const struct gcv_plugin gcv_plugin_info_s = { filters };
 
 COMPILER_DLLEXPORT const struct gcv_plugin *
 gcv_plugin_info(void){ return &gcv_plugin_info_s; }
+
+COMPILER_DLLEXPORT const struct gcv_plugin_v2 *
+gcv_plugin_info_v2(void)
+{
+    static const struct bu_mime_trait ascii[] = {
+        BU_MIME_TRAIT_STRING("encoding", "ascii"),
+        BU_MIME_TRAIT_STRING("version", "1.0"),
+    };
+    static const struct bu_mime_trait little[] = {
+        BU_MIME_TRAIT_STRING("encoding", "binary"),
+        BU_MIME_TRAIT_STRING("byte-order", "little-endian"),
+        BU_MIME_TRAIT_STRING("version", "1.0"),
+    };
+    static const struct bu_mime_trait big[] = {
+        BU_MIME_TRAIT_STRING("encoding", "binary"),
+        BU_MIME_TRAIT_STRING("byte-order", "big-endian"),
+        BU_MIME_TRAIT_STRING("version", "1.0"),
+    };
+    static const struct bu_mime_capability readers[] = {
+	{"application/x-ply", ascii, sizeof(ascii) / sizeof(ascii[0]), 0, BU_MIME_DEFER_INPUT_VALIDATION},
+	{"application/x-ply", little, sizeof(little) / sizeof(little[0]), 0, BU_MIME_DEFER_INPUT_VALIDATION},
+	{"application/x-ply", big, sizeof(big) / sizeof(big[0]), 0, BU_MIME_DEFER_INPUT_VALIDATION}
+    };
+    static const struct bu_mime_capability types[] = {
+	BU_MIME_CAPABILITY("application/x-ply", ascii, sizeof(ascii) / sizeof(ascii[0]), 0),
+	BU_MIME_CAPABILITY("application/x-ply", little, sizeof(little) / sizeof(little[0]), 0),
+	BU_MIME_CAPABILITY("application/x-ply", big, sizeof(big) / sizeof(big[0]), 0)
+    };
+    static const struct gcv_handler handlers[] = {
+	{&gcv_conv_ply_read_execution, readers, sizeof(readers) / sizeof(readers[0]), BU_MIME_DEFAULT_PRIORITY, NULL, NULL},
+	{&gcv_conv_ply_write_execution, types, sizeof(types) / sizeof(types[0]), BU_MIME_DEFAULT_PRIORITY, NULL, NULL},
+    };
+    static const struct gcv_plugin_v2 plugin = {GCV_PLUGIN_ABI_VERSION, sizeof(struct gcv_plugin_v2),
+	NULL, 0, handlers, sizeof(handlers) / sizeof(handlers[0])};
+    return &plugin;
+}
 
 /*
  * Local Variables:

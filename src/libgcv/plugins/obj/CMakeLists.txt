@@ -8,9 +8,10 @@ endif(TARGET libwfobj-static)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/wfobj ${CMAKE_CURRENT_BINARY_DIR}/wfobj)
 
-set(OBJ_SRCS obj_read.c obj_write.c tri_face.c)
+set(OBJ_SRCS obj_read.c obj_write.c obj_mime.cpp tri_face.c)
 
 gcv_plugin_library(gcv-obj SHARED ${OBJ_SRCS})
+target_include_directories(gcv-obj PRIVATE "${BRLCAD_SOURCE_DIR}/src/libbu")
 target_link_libraries(gcv-obj libwdb librt libwfobj)
 set_property(TARGET gcv-obj APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 validate_style(gcv-obj "${OBJ_SRCS}")
@@ -20,6 +21,7 @@ set(
   obj_ignore_files
   CMakeLists.txt
   ${OBJ_SRCS}
+  obj_mime.h
   tri_face.h
   wfobj/CMake/FindLEMON.cmake
   wfobj/CMake/FindPERPLEX.cmake

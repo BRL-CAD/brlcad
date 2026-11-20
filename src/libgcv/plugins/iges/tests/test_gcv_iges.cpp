@@ -7,6 +7,8 @@
 
 #include <algorithm>
 #include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -42,14 +44,13 @@ public:
     Context &operator=(const Context &) = delete;
 
     int execute(enum gcv_filter_type type, const fs::path &path,
-	const std::vector<const char *> &arguments = {}, const struct gcv_opts *options = nullptr)
+	const std::vector<const char *> &arguments = {}, const struct gcv_opts *options = nullptr,
+	const struct bu_mime_traits *traits = nullptr)
     {
-	const auto *filters = gcv_list_filters(&value);
-	for (size_t index = 0; index < BU_PTBL_LEN(filters); ++index) {
-	    const auto *filter = reinterpret_cast<const struct gcv_filter *>(BU_PTBL_GET(filters, index));
-	    if (filter->filter_type == type && filter->mime_type == BU_MIME_MODEL_IGES)
-		return gcv_execute(&value, filter, options, arguments.size(), arguments.data(), path.string().c_str());
-	}
+	const auto *filter = gcv_select_filter(&value, type, "model/iges", nullptr, nullptr);
+	if (filter)
+	    return gcv_execute_variant(&value, filter, "model/iges", traits, options,
+		arguments.size(), arguments.data(), path.string().c_str());
 	throw std::runtime_error("IGES reader or writer plugin was not loaded");
     }
 
@@ -62,6 +63,84 @@ read_object(Context &context, const char *name, int type, Internal &internal)
     const auto *entry = db_lookup(context.value.dbip, name, LOOKUP_QUIET);
     require(entry && rt_db_get_internal(&internal.value, entry, context.value.dbip, nullptr) >= 0 &&
 	internal.value.idb_type == type, std::string("missing or incorrect object: ") + name);
+}
+
+const struct bu_mime_trait profile_values[] = {
+    BU_MIME_TRAIT_STRING("encoding", "ascii"), BU_MIME_TRAIT_STRING("version", "5.3"),
+    BU_MIME_TRAIT_STRING("iges.version-code", "11")
+};
+const struct bu_mime_traits profile = {profile_values, sizeof(profile_values) / sizeof(profile_values[0])};
+
+std::string
+read_file(const fs::path &path)
+{
+    std::ifstream input(path, std::ios::binary);
+    require(input.is_open(), "cannot open IGES test output");
+    std::string contents{std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>()};
+    require(!input.bad(), "cannot read IGES test output");
+    return contents;
+}
+
+void
+check_profile(const Document &document)
+{
+    constexpr size_t version_parameter = 23;
+    require(document.valid() && document.global().parameters.size() >= version_parameter &&
+	document.global().parameters[version_parameter - 1] == "11", "output does not declare IGES 5.3");
+}
+
+void
+test_profiles(const fs::path &fixtures, const fs::path &outputs)
+{
+    const auto source = fixtures / "native-csg.igs";
+    Context preserved;
+    auto *database = wdb_dbopen(preserved.value.dbip, RT_WDB_TYPE_DB_INMEM);
+    const point_t center = {1, 2, 3};
+    require(database && mk_id_units(database, "Before IGES profile validation", "cm") == 0 &&
+	mk_sph(database, "kept.s", center, 1) == 0, "cannot prepare IGES profile sentinel");
+    const fastf_t original_units = preserved.value.dbip->dbi_local2base;
+    const auto unchanged = [&]() {
+	require(std::string(preserved.value.dbip->dbi_title) == "Before IGES profile validation" &&
+	    EQUAL(preserved.value.dbip->dbi_local2base, original_units) &&
+	    check_output(preserved.value.dbip).objects == 1 &&
+	    db_lookup(preserved.value.dbip, "kept.s", LOOKUP_QUIET), "rejected IGES profile changed the database");
+    };
+    for (const auto &property : std::vector<bu_mime_trait>{
+	BU_MIME_TRAIT_STRING("encoding", "binary"), BU_MIME_TRAIT_STRING("version", "5.2"),
+	BU_MIME_TRAIT_STRING("version", "7.45.0"), BU_MIME_TRAIT_STRING("fixture.unestablished", "assertion")}) {
+	const struct bu_mime_traits request = {&property, 1};
+	require(preserved.execute(GCV_FILTER_READ, source, {}, nullptr, &request) == 0,
+	    "incorrect or unestablished IGES assertion was accepted");
+	unchanged();
+    }
+    const std::string original = read_file(source);
+    const size_t code = original.find(",11,0,");
+    require(code != std::string::npos && original.find(",11,0,", code + 1) == std::string::npos,
+	"IGES rejection fixture has no unique version code");
+    size_t index = 0;
+    for (const char *replacement : {"12", "  ", " 2"}) {
+	/* These are rejection fixtures, not evidence of another edition's support. */
+	std::string changed = original;
+	changed.replace(code + 1, 2, replacement);
+	const fs::path path = outputs / ("plugin-profile-" + std::to_string(index++) + ".igs");
+	std::ofstream output(path, std::ios::binary);
+	output << changed;
+	output.close();
+	require(output.good() && Document::parse_file(path.string()).valid(), "cannot prepare IGES profile fixture");
+	require(preserved.execute(GCV_FILTER_READ, path, {}, nullptr, &profile) == 0,
+	    "unknown or incompatible IGES declaration satisfied a 5.3 request");
+	unchanged();
+    }
+    Context imported;
+    const auto *reader = gcv_select_filter(&imported.value, GCV_FILTER_READ, "application/iges", "IGES Reader", nullptr);
+    require(reader && reader == gcv_select_filter(&imported.value, GCV_FILTER_READ, "model/iges", "IGES Reader", nullptr),
+	"obsolete IGES name did not resolve to the canonical reader");
+    require(gcv_execute_variant(&imported.value, reader, "application/iges", &profile, nullptr,
+	0, nullptr, source.string().c_str()) == 1, "IGES 5.3 profile import failed");
+    Internal sphere;
+    read_object(imported, "sphere.0", ID_ELL, sphere);
+    require(NEAR_EQUAL(MAGNITUDE(static_cast<const struct rt_ell_internal *>(sphere.value.idb_ptr)->a),
+	10.0, SMALL_FASTF), "profile-aware IGES import changed sphere geometry");
 }
 
 void
@@ -93,6 +172,24 @@ test_imports(const fs::path &fixtures)
 	require(context.execute(GCV_FILTER_READ, fixtures / "bad-property.igs",
 	    strict ? std::vector<const char *>{"--strict"} : std::vector<const char *>{}) == (strict ? 0 : 1),
 	    "plugin did not preserve strict versus best-effort policy");
+    }
+    for (unsigned int rejected : {0u, static_cast<unsigned int>(GCV_LOSS_GEOMETRY),
+	    static_cast<unsigned int>(GCV_LOSS_METADATA)}) {
+	Context context;
+	struct gcv_opts options;
+	gcv_opts_default(&options);
+	options.reject_losses = rejected;
+	struct gcv_conversion_result result = GCV_CONVERSION_RESULT_INIT_ZERO;
+	const auto *reader = gcv_select_filter(&context.value, GCV_FILTER_READ, "model/iges", nullptr, nullptr);
+	const auto path = (fixtures / "bad-property.igs").string();
+	const auto status = gcv_execute_result(&context.value, reader, "model/iges", nullptr,
+	    &options, 0, nullptr, path.c_str(), &result);
+	require(status == (rejected == GCV_LOSS_METADATA ? GCV_CONVERSION_FAILED : GCV_CONVERSION_PARTIAL),
+	    "optional IGES metadata repair was classified as geometry loss");
+	require(result.loss_count == 1 && result.losses[0].kind == GCV_LOSS_METADATA &&
+	    std::string(result.losses[0].feature) == "iges.metadata-repairs",
+	    "optional IGES metadata repair was not reported");
+	gcv_conversion_result_free(&result);
     }
     for (const auto &arguments : std::vector<std::vector<const char *>>{
 	{"--drawings-only", "--breps-only"}, {"--relative-tolerance", "-1"},
@@ -131,8 +228,9 @@ test_exports(const fs::path &fixtures, const fs::path &outputs)
     require(source.execute(GCV_FILTER_READ, fixtures / "native-csg.igs") == 1,
 	"could not prepare export source");
     const fs::path native = outputs / "plugin-native.igs";
-    require(source.execute(GCV_FILTER_WRITE, native) == 1, "native CSG plugin export failed");
+    require(source.execute(GCV_FILTER_WRITE, native, {}, nullptr, &profile) == 1, "native CSG plugin export failed");
     const auto document = Document::parse_file(native.string());
+    check_profile(document);
     require(document.valid() && std::any_of(document.entities().begin(), document.entities().end(),
 	[](const DirectoryEntry &entry) { return entry.type == 158 || entry.type == 168; }),
 	"native sphere exported without CSG");
@@ -155,8 +253,9 @@ test_exports(const fs::path &fixtures, const fs::path &outputs)
     };
     for (size_t mode = 0; mode < modes.size(); ++mode) {
 	const fs::path path = outputs / ("plugin-faceted-" + std::to_string(mode) + ".igs");
-	require(box.execute(GCV_FILTER_WRITE, path, modes[mode]) == 1,
+	require(box.execute(GCV_FILTER_WRITE, path, modes[mode], nullptr, &profile) == 1,
 	    "faceted plugin export failed");
+	check_profile(Document::parse_file(path.string()));
 	Context imported;
 	require(imported.execute(GCV_FILTER_READ, path, {"--breps-only", "--strict"}) == 1 &&
 	    check_output(imported.value.dbip).unresolved == 0, "faceted plugin round trip failed");
@@ -177,6 +276,14 @@ test_exports(const fs::path &fixtures, const fs::path &outputs)
 	require(statistics.objects == 2 && statistics.unresolved == 0,
 	    "mixed CSG/B-Rep plugin round trip: objects=" + std::to_string(statistics.objects) +
 	    ", unresolved references=" + std::to_string(statistics.unresolved));
+    }
+    const std::string before = read_file(native);
+    for (const auto &property : std::vector<bu_mime_trait>{
+	BU_MIME_TRAIT_STRING("encoding", "binary"), BU_MIME_TRAIT_STRING("version", "5.2"),
+	BU_MIME_TRAIT_STRING("iges.version-code", "10"), BU_MIME_TRAIT_STRING("iges.representation", "csg")}) {
+	const struct bu_mime_traits request = {&property, 1};
+	require(source.execute(GCV_FILTER_WRITE, native, {}, nullptr, &request) == 0 && read_file(native) == before,
+	    "unsupported IGES output profile replaced the destination");
     }
     require(source.execute(GCV_FILTER_WRITE, native, {"--faceted", "--trimmed-surfaces"}) == 0 &&
 	Document::parse_file(native.string()).valid(), "invalid output options replaced existing output");
@@ -205,6 +312,7 @@ main(int argc, char **argv)
     try {
 	test_imports(argv[1]);
 	test_datums(argv[1]);
+	test_profiles(argv[1], argv[2]);
 	test_exports(argv[1], argv[2]);
 	return 0;
     } catch (const std::exception &error) {

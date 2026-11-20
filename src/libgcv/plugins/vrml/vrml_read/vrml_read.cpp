@@ -26,6 +26,11 @@
 
 #include "common.h"
 
+#include <fstream>
+#include <sstream>
+#include <string>
+#include "../../mime_probe.h"
+
 #include "file_util.h"
 #include "string_util.h"
 #include "node_type.h"
@@ -198,6 +203,24 @@ Parse_input(std::vector<NODE*> &childlist)
 }
 
 
+static bool
+vrml_profile_matches(struct gcv_context *context, const char *source_path, int type)
+{
+    std::ifstream input(source_path, std::ios::binary);
+    std::string line, magic, version, charset;
+    if (!std::getline(input, line)) return false;
+    std::istringstream declaration(line);
+    if (!(declaration >> magic >> version >> charset) || magic != "#VRML") return false;
+    const bool version1 = type == FILEUTIL_TYPE_VRML1;
+    if (version != (version1 ? "V1.0" : "V2.0") || charset != (version1 ? "ascii" : "utf8")) return false;
+    const struct bu_mime_trait values[] = {
+	BU_MIME_TRAIT_STRING("version", version1 ? "1.0" : "2.0"),
+	BU_MIME_TRAIT_STRING("encoding", version1 ? "ascii" : "utf-8")
+    };
+    const struct bu_mime_traits observed = {values, sizeof(values) / sizeof(values[0])};
+    return gcv_probe_file_traits_match(context, source_path, "model/vrml", &observed, gcv_target_request_traits(context)) != 0;
+}
+
 static int
 vrml_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *UNUSED(options_data), const char *source_path)
 {
@@ -212,12 +235,13 @@ vrml_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 
     type = infile.getFileType();
 
-    if (type == FILEUTIL_TYPE_VRML1)
-	return vrml1_read(context, gcv_options, source_path);
-    if (type != FILEUTIL_TYPE_VRML) {
-	bu_log("Can not open or identify the file type\n");
+    if ((type != FILEUTIL_TYPE_VRML1 && type != FILEUTIL_TYPE_VRML) ||
+	!vrml_profile_matches(context, source_path, type)) {
+	bu_log("VRML input does not match the selected version and encoding\n");
 	return 0;
     }
+    if (type == FILEUTIL_TYPE_VRML1)
+	return vrml1_read(context, gcv_options, source_path);
 
     //fptr get file data
     fptr = infile.storeFileInput();
@@ -269,18 +293,29 @@ vrml_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 
 
 
+extern "C" enum bu_mime_probe_status
+vrml_probe(const struct bu_mime_probe_input *input, const char *)
+{
+    bu_mime_probe_status first = gcv_probe_prefix(input, "#VRML V1.0 ascii");
+    bu_mime_probe_status second = gcv_probe_prefix(input, "#VRML V2.0 utf8");
+    if (first == BU_MIME_PROBE_SIGNATURE || second == BU_MIME_PROBE_SIGNATURE)
+	return BU_MIME_PROBE_SIGNATURE;
+    if (first == BU_MIME_PROBE_INCOMPLETE || second == BU_MIME_PROBE_INCOMPLETE)
+	return BU_MIME_PROBE_INCOMPLETE;
+    return BU_MIME_PROBE_NO_MATCH;
+}
+
 static int
 vrml_can_read(const char *source_path)
 {
-    if (!source_path) return 0;
-    FileUtil infile(source_path);
-    const int type = infile.getFileType();
-    return type == FILEUTIL_TYPE_VRML1 || type == FILEUTIL_TYPE_VRML;
+    return gcv_probe_file(source_path, vrml_probe, "model/vrml");
 }
 
 extern "C" {
     struct gcv_filter gcv_conv_vrml_read =
     {"VRML Reader", GCV_FILTER_READ, BU_MIME_MODEL_VRML, vrml_can_read, NULL, NULL, vrml_read};
+
+    extern const struct gcv_conversion gcv_conv_vrml_read_execution = {"VRML Reader", GCV_FILTER_READ, NULL, NULL, vrml_read};
 }
 
 

@@ -42,6 +42,7 @@
  */
 
 #include "common.h"
+#include "../mime_probe.h"
 
 #include <stdlib.h>
 #include <math.h>
@@ -2141,81 +2142,17 @@ vtk_read_free_opts(void *options_data)
 }
 
 
-/*
- * Recognition: legacy ASCII/binary header, or XML.  Returns 1 if this
- * looks like a VTK file we should claim (so vtk_read can emit a precise
- * message even for the formats we do not yet handle).
- */
-static int
-vtk_can_read(const char *data)
+/* XML VTK has its own catalog identity and is recognized by libbu. */
+static enum bu_mime_probe_status
+vtk_probe(const struct bu_mime_probe_input *input, const char *UNUSED(type))
 {
-    FILE *fp;
-    char buf[512]; /* Read a larger buffer to accommodate XML headers */
-    int ret = 0;
+    return gcv_probe_prefix(input, "# vtk DataFile Version");
+}
 
-    if (!data)
-	return 0;
-
-    fp = fopen(data, "rb");
-    if (!fp)
-	return 0;
-
-    /* Read up to 511 bytes and null-terminate the buffer safely */
-    size_t bytes_read = fread(buf, 1, sizeof(buf) - 1, fp);
-    fclose(fp);
-
-    if (bytes_read == 0)
-	return 0;
-
-    buf[bytes_read] = '\0';
-
-    /* 1. Check for Legacy VTK File Format */
-    if (bu_strncmp(buf, "# vtk DataFile Version", 22) == 0) {
-	return 1;
-    }
-
-    /* 2. Check for Modern VTK XML File Format */
-    const char *ptr = buf;
-
-    /* Skip leading whitespace if any */
-    while (*ptr && isspace((unsigned char)*ptr)) {
-	ptr++;
-    }
-
-    /* Skip the XML declaration if present: <?xml ... ?> */
-    if (bu_strncmp(ptr, "<?xml", 5) == 0) {
-	ptr = strstr(ptr, "?>");
-	if (!ptr) {
-	    return 0; /* Malformed XML declaration */
-	}
-	ptr += 2; /* Move past "?>" */
-
-	/* Skip whitespace between xml declaration and root tag */
-	while (*ptr && isspace((unsigned char)*ptr)) {
-	    ptr++;
-	}
-    }
-
-    /* Skip potential XML comments: <!-- ... --> */
-    while (bu_strncmp(ptr, "<!--", 4) == 0) {
-	ptr = strstr(ptr, "-->");
-	if (!ptr) {
-	    return 0; /* Malformed comment */
-	}
-	ptr += 3; /* Move past "-->" */
-
-	/* Skip trailing whitespace */
-	while (*ptr && isspace((unsigned char)*ptr)) {
-	    ptr++;
-	}
-    }
-
-    /* Verify if the first major element tag is <VTKFile */
-    if (bu_strncmp(ptr, "<VTKFile", 8) == 0) {
-	ret = 1;
-    }
-
-    return ret;
+static int
+vtk_can_read(const char *path)
+{
+    return gcv_probe_file(path, vtk_probe, "application/vnd.kitware.vtk");
 }
 
 
@@ -2307,6 +2244,19 @@ vtk_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	bu_vls_free(&work);
     }
 
+    {
+	const struct bu_mime_trait values[] = {
+	    BU_MIME_TRAIT_STRING("encoding", "ascii"),
+	    BU_MIME_TRAIT_STRING("vtk.dataset", bu_vls_cstr(&dtype))
+	};
+	const struct bu_mime_traits observed = {values, sizeof(values) / sizeof(values[0])};
+	int matches = gcv_probe_file_traits_match(context, source_path, "application/vnd.kitware.vtk", &observed, gcv_target_request_traits(context));
+	if (!matches) {
+	    bu_log("VTK input does not match the selected dataset and encoding\n");
+	    goto fail;
+	}
+    }
+
     BU_LIST_INIT(&s.all_head.l);
 
     mk_id_units(s.wdbp, bu_vls_cstr(&s.title),
@@ -2375,20 +2325,55 @@ static const struct gcv_filter gcv_conv_vtk_read = {
     vtk_read_create_opts, vtk_read_free_opts, vtk_read
 };
 
+static const struct gcv_conversion gcv_conv_vtk_read_execution = {"VTK Reader", GCV_FILTER_READ, vtk_read_create_opts, vtk_read_free_opts, vtk_read};
+
 static const struct gcv_filter gcv_conv_vtk_read_auto = {
     "VTK Reader (auto)", GCV_FILTER_READ, BU_MIME_MODEL_AUTO, vtk_can_read,
     vtk_read_create_opts, vtk_read_free_opts, vtk_read
 };
 
 
-static const struct gcv_filter * const filters[] = {
-    &gcv_conv_vtk_read, &gcv_conv_vtk_read_auto, NULL
+static const struct gcv_filter * const filters[] = {&gcv_conv_vtk_read, &gcv_conv_vtk_read_auto, NULL
 };
 
 const struct gcv_plugin gcv_plugin_info_s = { filters };
 
 COMPILER_DLLEXPORT const struct gcv_plugin *
 gcv_plugin_info(void){ return &gcv_plugin_info_s; }
+
+COMPILER_DLLEXPORT const struct gcv_plugin_v2 *
+gcv_plugin_info_v2(void)
+{
+    static const struct bu_mime_trait polydata[] = {
+	BU_MIME_TRAIT_STRING("encoding", "ascii"), BU_MIME_TRAIT_STRING("vtk.dataset", "POLYDATA")
+    };
+    static const struct bu_mime_trait unstructured[] = {
+	BU_MIME_TRAIT_STRING("encoding", "ascii"), BU_MIME_TRAIT_STRING("vtk.dataset", "UNSTRUCTURED_GRID")
+    };
+    static const struct bu_mime_trait points[] = {
+	BU_MIME_TRAIT_STRING("encoding", "ascii"), BU_MIME_TRAIT_STRING("vtk.dataset", "STRUCTURED_POINTS")
+    };
+    static const struct bu_mime_trait rectilinear[] = {
+	BU_MIME_TRAIT_STRING("encoding", "ascii"), BU_MIME_TRAIT_STRING("vtk.dataset", "RECTILINEAR_GRID")
+    };
+    static const struct bu_mime_trait structured[] = {
+	BU_MIME_TRAIT_STRING("encoding", "ascii"), BU_MIME_TRAIT_STRING("vtk.dataset", "STRUCTURED_GRID")
+    };
+    /* The full reader checks the encoding and selected dataset family. */
+    static const struct bu_mime_capability types[] = {
+	{"application/vnd.kitware.vtk", polydata, sizeof(polydata) / sizeof(polydata[0]), 0, BU_MIME_DEFER_INPUT_VALIDATION},
+	{"application/vnd.kitware.vtk", unstructured, sizeof(unstructured) / sizeof(unstructured[0]), 0, BU_MIME_DEFER_INPUT_VALIDATION},
+	{"application/vnd.kitware.vtk", points, sizeof(points) / sizeof(points[0]), 0, BU_MIME_DEFER_INPUT_VALIDATION},
+	{"application/vnd.kitware.vtk", rectilinear, sizeof(rectilinear) / sizeof(rectilinear[0]), 0, BU_MIME_DEFER_INPUT_VALIDATION},
+	{"application/vnd.kitware.vtk", structured, sizeof(structured) / sizeof(structured[0]), 0, BU_MIME_DEFER_INPUT_VALIDATION}
+    };
+    static const struct gcv_handler handlers[] = {
+	{&gcv_conv_vtk_read_execution, types, sizeof(types) / sizeof(types[0]), BU_MIME_DEFAULT_PRIORITY, vtk_probe, NULL}
+    };
+    static const struct gcv_plugin_v2 plugin = {GCV_PLUGIN_ABI_VERSION, sizeof(struct gcv_plugin_v2),
+	NULL, 0, handlers, sizeof(handlers) / sizeof(handlers[0])};
+    return &plugin;
+}
 
 /*
  * Local Variables:

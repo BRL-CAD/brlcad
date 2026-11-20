@@ -48,6 +48,8 @@ extern "C" {
 #include "raytrace.h"
 #include "gcv.h"
 }
+#include "mime_stl.h"
+#include "../mime_output.h"
 
 #define V3ARGS_SCALE(v, factor)       (v)[X] * (factor), (v)[Y] * (factor), (v)[Z] * (factor)
 
@@ -354,12 +356,36 @@ stl_write_free_opts(void *options_data)
 
 
 static int
+stl_output_profile(struct gcv_context *context, const struct gcv_opts *options, struct stl_write_options *output)
+{
+    const struct bu_mime_traits *requested = gcv_target_request_traits(context);
+    const char *serialization = bu_mime_traits_get(gcv_target_traits(context), "stl.serialization");
+    if (!output->binary && serialization) output->binary = BU_STR_EQUAL(serialization, "binary");
+    struct mime_stl_profile profile = {output->binary ? MIME_STL_BINARY : MIME_STL_ASCII, 0, 0};
+    if (!output->binary && BU_STR_EQUAL(bu_mime_traits_get(requested, "encoding"), "ascii")) {
+	if (!gcv_output_ascii_paths(context, options)) {
+	    bu_log("STL encoding=ascii requires ASCII region paths and numeric locale\n");
+	    return 0;
+	}
+	profile.ascii = 1;
+    }
+    struct bu_mime_traits facts = BU_MIME_TRAITS_INIT_ZERO;
+    int valid = mime_stl_append(&profile, &facts);
+    const struct bu_mime_capability actual = BU_MIME_CAPABILITY("model/stl", facts.items, facts.count, 0);
+    valid = valid && bu_mime_capability_match(&actual, requested, BU_MIME_OUTPUT);
+    bu_mime_traits_free(&facts);
+    if (!valid) bu_log("STL output layout does not match the requested MIME traits\n");
+    return valid;
+}
+
+static int
 stl_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *dest_path)
 {
     int ret;
     double percent = 0.0;
     struct db_tree_state tree_state;
     struct conversion_state state;
+    struct stl_write_options write_options = *static_cast<const struct stl_write_options *>(options_data);
     struct gcv_region_end_data gcvwriter;
 
     gcvwriter.write_region = nmg_to_stl;
@@ -367,7 +393,8 @@ stl_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 
     memset(&state, 0, sizeof(state));
     state.gcv_options = gcv_options;
-    state.stl_write_options = (struct stl_write_options *)options_data;
+    if (!stl_output_profile(context, gcv_options, &write_options)) return 0;
+    state.stl_write_options = &write_options;
     state.output_file = dest_path;
     state.dbip = context->dbip;
     BU_VLS_INIT(&state.file_name);
@@ -474,6 +501,8 @@ extern "C" const struct gcv_filter gcv_conv_stl_write = {
     "STL Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_STL, NULL,
     stl_write_create_opts, stl_write_free_opts, stl_write
 };
+
+extern "C" const struct gcv_conversion gcv_conv_stl_write_execution = {"STL Writer", GCV_FILTER_WRITE, stl_write_create_opts, stl_write_free_opts, stl_write};
 
 
 // Local Variables:

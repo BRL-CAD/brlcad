@@ -1382,13 +1382,43 @@ static const struct gcv_filter gcv_conv_vrml_write = {
     vrml_write_create_opts, vrml_write_free_opts, vrml_write
 };
 
+static const struct gcv_conversion gcv_conv_vrml_write_execution = {"VRML Writer", GCV_FILTER_WRITE, vrml_write_create_opts, vrml_write_free_opts, vrml_write};
+
 extern const struct gcv_filter gcv_conv_vrml_read;
+extern const struct gcv_conversion gcv_conv_vrml_read_execution;
 static const struct gcv_filter * const filters[] = {&gcv_conv_vrml_read, &gcv_conv_vrml_write, NULL};
 
 const struct gcv_plugin gcv_plugin_info_s = { filters };
 
 COMPILER_DLLEXPORT const struct gcv_plugin *
 gcv_plugin_info(void){ return &gcv_plugin_info_s; }
+
+extern enum bu_mime_probe_status vrml_probe(const struct bu_mime_probe_input *, const char *);
+
+COMPILER_DLLEXPORT const struct gcv_plugin_v2 *
+gcv_plugin_info_v2(void)
+{
+    static const struct bu_mime_trait version1[] = {
+	BU_MIME_TRAIT_STRING("version", "1.0"), BU_MIME_TRAIT_STRING("encoding", "ascii")
+    };
+    static const struct bu_mime_trait version2[] = {
+	BU_MIME_TRAIT_STRING("version", "2.0"), BU_MIME_TRAIT_STRING("encoding", "utf-8")
+    };
+    static const struct bu_mime_capability inputs[] = {
+	{"model/vrml", version1, sizeof(version1) / sizeof(version1[0]), 0, BU_MIME_DEFER_INPUT_VALIDATION},
+	{"model/vrml", version2, sizeof(version2) / sizeof(version2[0]), 0, BU_MIME_DEFER_INPUT_VALIDATION}
+    };
+    static const struct bu_mime_capability outputs[] = {
+	BU_MIME_CAPABILITY("model/vrml", version2, sizeof(version2) / sizeof(version2[0]), 0)
+    };
+    static const struct gcv_handler handlers[] = {
+	{&gcv_conv_vrml_read_execution, inputs, sizeof(inputs) / sizeof(inputs[0]), BU_MIME_DEFAULT_PRIORITY, vrml_probe, NULL},
+	{&gcv_conv_vrml_write_execution, outputs, sizeof(outputs) / sizeof(outputs[0]), BU_MIME_DEFAULT_PRIORITY, NULL, NULL}
+    };
+    static const struct gcv_plugin_v2 plugin = {GCV_PLUGIN_ABI_VERSION, sizeof(struct gcv_plugin_v2),
+	NULL, 0, handlers, sizeof(handlers) / sizeof(handlers[0])};
+    return &plugin;
+}
 
 /*
  * Local Variables:

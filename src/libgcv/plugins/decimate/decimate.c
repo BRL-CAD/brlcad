@@ -98,11 +98,22 @@ decimate_filter(struct gcv_context *context, const struct gcv_opts *gcv_options,
 static const struct gcv_filter gcv_filter_decimate =
 {"Decimate", GCV_FILTER_FILTER, BU_MIME_MODEL_UNKNOWN, NULL, NULL, NULL, decimate_filter};
 
+static const struct gcv_conversion gcv_filter_decimate_execution = {"Decimate", GCV_FILTER_FILTER, NULL, NULL, decimate_filter};
+
 static const struct gcv_filter * const filters[] = {&gcv_filter_decimate, NULL};
 const struct gcv_plugin gcv_plugin_info_s = {filters};
 
 COMPILER_DLLEXPORT const struct gcv_plugin *
 	gcv_plugin_info(void){ return &gcv_plugin_info_s; }
+
+COMPILER_DLLEXPORT const struct gcv_plugin_v2 *
+gcv_plugin_info_v2(void)
+{
+    static const struct gcv_handler handler = {&gcv_filter_decimate_execution, NULL, 0, BU_MIME_DEFAULT_PRIORITY, NULL, NULL};
+    static const struct gcv_plugin_v2 plugin = {GCV_PLUGIN_ABI_VERSION, sizeof(struct gcv_plugin_v2),
+	NULL, 0, &handler, 1};
+    return &plugin;
+}
 
 /*
  * Local Variables:

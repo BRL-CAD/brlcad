@@ -25,6 +25,8 @@
 #include <cerrno>
 #include <cmath>
 #include <cstdlib>
+#include <set>
+#include <vector>
 #include <fstream>
 #include <string>
 #include <cstring>
@@ -37,6 +39,7 @@
 #include "raytrace.h"
 #include "gcv/api.h"
 #include "gcv/util.h"
+#include "../mime_probe.h"
 
 /* Track Tcl-list word boundaries incrementally so large serialized objects
  * are scanned once. Quotes inside brace words are literal characters. */
@@ -174,17 +177,18 @@ asc_set_attributes(struct db_i *database, int count, const char **arguments)
  * technically be a completely arbitrary Tcl script. For this plugin we
  * assume only commands that g2asc emits: color, title, units, attr, put.
  */
-int
-asc_read_v5(struct gcv_context *context, const struct gcv_opts *UNUSED(options), std::ifstream &input)
+static int
+asc_read_v5_pass(struct gcv_context *context, std::ifstream &input, bool execute, const char *source_path)
 {
     if (!context)
 	return 0;
-    struct rt_wdb *wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
-    if (!wdbp)
+    struct rt_wdb *wdbp = execute ? wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM) : NULL;
+    if (execute && !wdbp)
 	return 0;
     struct bu_vls command = BU_VLS_INIT_ZERO;
     struct bu_vls messages = BU_VLS_INIT_ZERO;
     asc_parse_state state;
+    std::set<std::string> commands;
     std::string line;
     int status = 1;
     while (std::getline(input, line)) {
@@ -214,22 +218,26 @@ asc_read_v5(struct gcv_context *context, const struct gcv_opts *UNUSED(options),
 	    status = 0;
 	    break;
 	}
-	int result = BRLCAD_ERROR;
+	if (!execute) commands.insert(arguments[0]);
+	int result = BRLCAD_OK;
 	if (BU_STR_EQUAL(arguments[0], "attr")) {
-	    /* Serialized names are literal, including pattern characters. */
-	    result = count > 1 && BU_STR_EQUAL(arguments[1], "set") ?
+	    /* Serialized object names are literal references, including names
+	     * containing characters that interactive attr treats as patterns. */
+	    if (execute) result = count > 1 && BU_STR_EQUAL(arguments[1], "set") ?
 		asc_set_attributes(context->dbip, count, arguments) : rt_cmd_attr(&messages, context->dbip, count, arguments);
 	}
-	else if (BU_STR_EQUAL(arguments[0], "color"))
-	    result = rt_cmd_color(&messages, context->dbip, count, arguments);
-	else if (BU_STR_EQUAL(arguments[0], "put"))
-	    result = rt_cmd_put(&messages, wdbp, count, arguments);
-	else if (BU_STR_EQUAL(arguments[0], "title"))
-	    result = rt_cmd_title(&messages, context->dbip, count, arguments);
-	else if (BU_STR_EQUAL(arguments[0], "units"))
-	    result = rt_cmd_units(&messages, context->dbip, count, arguments);
-	else
+	else if (BU_STR_EQUAL(arguments[0], "color")) {
+	    if (execute) result = rt_cmd_color(&messages, context->dbip, count, arguments);
+	} else if (BU_STR_EQUAL(arguments[0], "put")) {
+	    if (execute) result = rt_cmd_put(&messages, wdbp, count, arguments);
+	} else if (BU_STR_EQUAL(arguments[0], "title")) {
+	    if (execute) result = rt_cmd_title(&messages, context->dbip, count, arguments);
+	} else if (BU_STR_EQUAL(arguments[0], "units")) {
+	    if (execute) result = rt_cmd_units(&messages, context->dbip, count, arguments);
+	} else {
 	    bu_vls_printf(&messages, "Unsupported ASC command: %s\n", arguments[0]);
+	    result = BRLCAD_ERROR;
+	}
 	bu_free((void *)arguments, "ASC arguments");
 	if (result != BRLCAD_OK) {
 	    status = 0;
@@ -242,11 +250,38 @@ asc_read_v5(struct gcv_context *context, const struct gcv_opts *UNUSED(options),
 	bu_vls_strcat(&messages, "Incomplete or unreadable ASC command\n");
 	status = 0;
     }
+    if (status && !execute) {
+	struct bu_mime_traits observed = BU_MIME_TRAITS_INIT_ZERO;
+	std::vector<const char *> names;
+	for (const auto &name : commands) names.push_back(name.c_str());
+	status = bu_mime_traits_add(&observed, "asc.syntax", "tcl-commands") &&
+	    bu_mime_traits_add_set(&observed, "asc.commands", names.data(), names.size()) &&
+	    gcv_probe_file_traits_match(context, source_path, "application/vnd.brlcad.script", &observed, gcv_target_request_traits(context));
+	if (!status) bu_vls_strcat(&messages, "ASC command set contradicts the selected profile\n");
+	bu_mime_traits_free(&observed);
+    }
     if (bu_vls_strlen(&messages))
 	bu_log("%s", bu_vls_cstr(&messages));
     bu_vls_free(&messages);
     bu_vls_free(&command);
     return status;
+}
+
+int
+asc_read_v5(struct gcv_context *context, const struct gcv_opts *UNUSED(options), std::ifstream &input, const char *source_path)
+{
+    if (!context) return 0;
+    const bu_mime_traits *requested = gcv_target_request_traits(context);
+    if (requested && requested->count) {
+	/* Complete command-set assertions must fail before executing commands.
+	 * Unasserted input keeps the existing single-pass conversion path. */
+	const std::streampos start = input.tellg();
+	if (start == std::streampos(-1) || !asc_read_v5_pass(context, input, false, source_path)) return 0;
+	input.clear();
+	input.seekg(start);
+	if (!input) return 0;
+    }
+    return asc_read_v5_pass(context, input, true, source_path);
 }
 
 
@@ -318,6 +353,8 @@ asc_write_v5(struct gcv_context *context, const struct gcv_opts *UNUSED(options)
 	struct bu_vls description = BU_VLS_INIT_ZERO;
 	bool combination = (entry->d_flags & RT_DIR_COMB) != 0;
 	if (!object.idb_meth->ft_get || object.idb_meth->ft_get(&description, &object, combination ? "tree" : NULL)) {
+	    (void)gcv_report_loss(context, GCV_LOSS_GEOMETRY, "asc.unserializable-object", 1,
+		"An object has no supported ASC serialization");
 	    bu_log("Cannot serialize ASC object %s: %s\n", entry->d_namep, bu_vls_cstr(&description));
 	    status = 0;
 	} else if (combination) {

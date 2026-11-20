@@ -13,6 +13,8 @@ void validate_plugin_options(const struct gcv_opts &options);
 
 extern const struct gcv_filter iges_reader;
 extern const struct gcv_filter iges_writer;
+extern const struct gcv_conversion iges_reader_execution;
+extern const struct gcv_conversion iges_writer_execution;
 
 #endif
 
