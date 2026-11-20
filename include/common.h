@@ -326,8 +326,9 @@ typedef ptrdiff_t ssize_t;
 
 /* This is so we can use gcc's "format string vs arguments"-check for
  * various printf-like functions, and still maintain compatibility.
+ * Clang supports these attributes even in its MSVC-compatible mode.
  */
-#ifndef __attribute__
+#if !defined(__clang__) && !defined(__attribute__)
 /* This feature is only available in gcc versions 2.5 and later. */
 #  if !GCC_PREREQ(2, 5)
 #    define __attribute__(ignore) /* empty */
@@ -345,7 +346,7 @@ typedef ptrdiff_t ssize_t;
 /* gcc 3.4 doesn't seem to support always_inline with -O0 (yet -Os
  * reportedly works), so turn it off.
  */
-#if !GCC_PREREQ(3, 5)
+#if !defined(__clang__) && !GCC_PREREQ(3, 5)
 #  define always_inline noinline
 #endif
 

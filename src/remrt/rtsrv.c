@@ -30,6 +30,7 @@
 #include <stdarg.h>
 #include <ctype.h>
 #if defined(_WIN32) && !defined(__CYGWIN__)
+#  include <direct.h>
 #  include <process.h>
 #endif
 #ifdef HAVE_SYS_TIME_H

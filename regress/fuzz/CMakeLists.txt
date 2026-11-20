@@ -9,9 +9,10 @@ set(FUZZER_SUPPORTED OFF)
 set(CHECK_FUZZER_CODE "
 #include <stdint.h>
 #include <stddef.h>
+#include <string>
 extern \"C\" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
-  (void)data;
-  (void)size;
+  const std::string input(reinterpret_cast<const char *>(data), size);
+  (void)input;
   return 0;
 }
 ")
@@ -22,6 +23,19 @@ function(check_libfuzzer_flags out_supported out_no_link_flag out_full_flag)
   set(${out_full_flag} "" PARENT_SCOPE)
 
   set(_fuzzer_flag_prefixes "-fsanitize" "/fsanitize")
+
+  # The fuzzer runtime must match the CRT used by the target configuration.
+  # A Debug try-compile can succeed even when the Release driver cannot link.
+  set(_configurations ${CMAKE_CONFIGURATION_TYPES})
+  if(NOT _configurations)
+    if(CMAKE_BUILD_TYPE)
+      set(_configurations "${CMAKE_BUILD_TYPE}")
+    elseif(CMAKE_TRY_COMPILE_CONFIGURATION)
+      set(_configurations "${CMAKE_TRY_COMPILE_CONFIGURATION}")
+    else()
+      set(_configurations "default")
+    endif()
+  endif()
 
   # Some compilers (notably MSVC's cl.exe and link.exe) only *warn* about an
   # unrecognized flag and still exit successfully, so a plain exit-code check
@@ -52,25 +66,37 @@ function(check_libfuzzer_flags out_supported out_no_link_flag out_full_flag)
       set(_prefix_tag "dash")
     endif()
 
-    string(MAKE_C_IDENTIFIER "HAVE_CXX_${_prefix_tag}_${_no_link_flag}" _have_no_link_var)
-    string(MAKE_C_IDENTIFIER "HAVE_CXX_${_prefix_tag}_${_full_flag}" _have_full_var)
+    set(_prefix_supported ON)
+    foreach(_config IN LISTS _configurations)
+      if(NOT _config STREQUAL "default")
+        set(CMAKE_TRY_COMPILE_CONFIGURATION "${_config}")
+      endif()
+      string(MAKE_C_IDENTIFIER "HAVE_CXX_${_prefix_tag}_${_no_link_flag}_${_config}" _have_no_link_var)
+      string(MAKE_C_IDENTIFIER "HAVE_CXX_LIBFUZZER_RUNTIME_${_prefix_tag}_${_full_flag}_${_config}" _have_full_var)
 
-    cmake_push_check_state(RESET)
-      set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
-      set(CMAKE_REQUIRED_FLAGS "${_no_link_flag}")
-      check_cxx_source_compiles("int fuzzer_flag_probe(void) { return 0; }" ${_have_no_link_var}
-	FAIL_REGEX ${_fuzzer_fail_regex})
-    cmake_pop_check_state()
-
-    cmake_push_check_state(RESET)
-      set(CMAKE_TRY_COMPILE_TARGET_TYPE EXECUTABLE)
-      set(CMAKE_REQUIRED_FLAGS "${_no_link_flag}")
-      set(CMAKE_REQUIRED_LINK_OPTIONS "${_full_flag}")
-      check_cxx_source_compiles("${CHECK_FUZZER_CODE}" ${_have_full_var}
-	FAIL_REGEX ${_fuzzer_fail_regex})
+      cmake_push_check_state(RESET)
+        set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+        set(CMAKE_REQUIRED_FLAGS "${_no_link_flag}")
+        check_cxx_source_compiles("int fuzzer_flag_probe(void) { return 0; }" ${_have_no_link_var}
+          FAIL_REGEX ${_fuzzer_fail_regex})
       cmake_pop_check_state()
 
-    if(${_have_no_link_var} AND ${_have_full_var})
+      if(${_have_no_link_var})
+        cmake_push_check_state(RESET)
+          set(CMAKE_TRY_COMPILE_TARGET_TYPE EXECUTABLE)
+          set(CMAKE_REQUIRED_FLAGS "${_no_link_flag}")
+          set(CMAKE_REQUIRED_LINK_OPTIONS "${_full_flag}")
+          check_cxx_source_compiles("${CHECK_FUZZER_CODE}" ${_have_full_var}
+            FAIL_REGEX ${_fuzzer_fail_regex})
+        cmake_pop_check_state()
+      endif()
+      if(NOT ${_have_no_link_var} OR NOT ${_have_full_var})
+        set(_prefix_supported OFF)
+        break()
+      endif()
+    endforeach()
+
+    if(_prefix_supported)
       set(${out_supported} ON PARENT_SCOPE)
       set(${out_no_link_flag} "${_no_link_flag}" PARENT_SCOPE)
       set(${out_full_flag} "${_full_flag}" PARENT_SCOPE)

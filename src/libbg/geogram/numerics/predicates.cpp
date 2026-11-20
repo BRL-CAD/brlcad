@@ -150,7 +150,7 @@ namespace {
      * \param[in] end one position past the pointer to the last point.
      * \param[in] dim the dimension of the points.
      */
-    void GEOBRLCAD_API SOS_sort(
+    void SOS_sort(
         const double** begin, const double** end, index_t dim
     ) {
         if(SOS_mode_ == PCK::SOS_ADDRESS) {

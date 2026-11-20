@@ -216,7 +216,7 @@ set(CMAKE_FIND_USE_PACKAGE_REGISTRY FALSE)
 # Prepare to manage and build BRL-CAD's external dependencies. Specifies a
 # specific commit hash to use in the 'bext' repository.
 include(BRLCAD_ExternalDeps)
-brlcad_bext_init(fe810b4937ad39206556af7fc3d2f1275f531747)
+brlcad_bext_init(d4e9aa9a24eb1c134cb3baef277c19eeb8439ae4)
 
 #---------------------------------------------------------------------
 # Define various utilities.
@@ -2782,10 +2782,8 @@ if(MSVC)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /utf-8")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8 /bigobj")
 
-  # Before we finalize, set some specific global linker flags
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
-  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
-  set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
+  # Allow MSVC-style compiler drivers to forward these options to the linker.
+  add_link_options("LINKER:/STACK:10000000" "LINKER:/NOLOGO")
 endif(MSVC)
 
 # Enable sanitizers only after the configure-time platform tests have run.
