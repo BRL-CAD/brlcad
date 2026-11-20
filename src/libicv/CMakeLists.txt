@@ -27,6 +27,9 @@ if(TARGET JPEG::JPEG)
   endif()
 endif()
 
+if(BRLCAD_MIME_FUZZING)
+  set_property(SOURCE codec.cpp APPEND PROPERTY COMPILE_OPTIONS -fsanitize=fuzzer-no-link)
+endif()
 
 set(
   LIBICV_SOURCES

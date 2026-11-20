@@ -667,15 +667,18 @@ if(MSVC)
   set(HIDE_INTERNAL_SYMBOLS_EXT 1)
 endif(MSVC)
 
+option(BRLCAD_MIME_FUZZING "Build the coverage-guided MIME fuzz harness" OFF)
+mark_as_advanced(BRLCAD_MIME_FUZZING)
+
 # Link-time checks used by BRL-CAD library validation.  These must be probed
 # before use so platforms without GNU/LLVM-style linker options are skipped.
 brlcad_check_linker_flag(C "LINKER:--no-undefined" BRLCAD_LINKER_NO_UNDEFINED_C_FLAG_FOUND)
 brlcad_check_linker_flag(CXX "LINKER:--no-undefined" BRLCAD_LINKER_NO_UNDEFINED_CXX_FLAG_FOUND)
 if(BRLCAD_LINKER_NO_UNDEFINED_C_FLAG_FOUND AND BRLCAD_LINKER_NO_UNDEFINED_CXX_FLAG_FOUND
-   AND NOT BRLCAD_ENABLE_ADDRESS_SANITIZER)
+   AND NOT BRLCAD_ENABLE_ADDRESS_SANITIZER AND NOT BRLCAD_MIME_FUZZING)
   set(BRLCAD_LINKER_NO_UNDEFINED_FLAG "LINKER:--no-undefined" CACHE STRING "Linker flag requiring resolved shared library symbols" FORCE)
 else()
-  # Clang links the AddressSanitizer runtime into executables, leaving its
+  # Clang links sanitizer and coverage runtimes into executables, leaving
   # shared-library instrumentation symbols unresolved until then.
   set(BRLCAD_LINKER_NO_UNDEFINED_FLAG "" CACHE STRING "Linker flag requiring resolved shared library symbols" FORCE)
 endif()
@@ -2785,6 +2788,15 @@ if(MSVC)
   # Allow MSVC-style compiler drivers to forward these options to the linker.
   add_link_options("LINKER:/STACK:10000000" "LINKER:/NOLOGO")
 endif(MSVC)
+
+if(BRLCAD_MIME_FUZZING)
+  if(NOT CMAKE_C_COMPILER_ID MATCHES "Clang" OR NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    message(FATAL_ERROR "BRLCAD_MIME_FUZZING requires Clang with libFuzzer")
+  endif()
+  # Instrumented shared libraries also need coverage callbacks when used by
+  # the regular test executables in this dedicated build.
+  add_link_options(-fsanitize=fuzzer-no-link)
+endif()
 
 # Enable sanitizers only after the configure-time platform tests have run.
 # Instrumenting try_run executables can make otherwise valid feature checks

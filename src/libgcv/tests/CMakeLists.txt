@@ -171,3 +171,23 @@ cmakefiles(CMakeLists.txt test_context.c)
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
+
+if(BRLCAD_MIME_FUZZING)
+  set_property(SOURCE "${BRLCAD_SOURCE_DIR}/src/libbu/mime_registry.cpp"
+    "${BRLCAD_SOURCE_DIR}/src/libbu/mime_traits.cpp"
+    "${BRLCAD_SOURCE_DIR}/src/libbu/mime_inspect.cpp"
+    "${BRLCAD_SOURCE_DIR}/src/libbu/mime_gltf.cpp"
+    TARGET_DIRECTORY libbu APPEND PROPERTY COMPILE_OPTIONS -fsanitize=fuzzer-no-link)
+  set_property(SOURCE "${BRLCAD_SOURCE_DIR}/src/libgcv/mime.cpp"
+    TARGET_DIRECTORY libgcv APPEND PROPERTY COMPILE_OPTIONS -fsanitize=fuzzer-no-link)
+  foreach(plugin obj vtk vrml stl scad jt rhino iges gltf)
+    if(TARGET gcv-${plugin})
+      target_compile_options(gcv-${plugin} PRIVATE -fsanitize=fuzzer-no-link)
+    endif()
+  endforeach()
+  brlcad_addexec(mime_fuzz mime_fuzz.cpp "libgcv;libicv" TEST)
+  target_compile_options(mime_fuzz PRIVATE -fsanitize=fuzzer)
+  target_link_options(mime_fuzz PRIVATE -fsanitize=fuzzer)
+  add_dependencies(mime_fuzz gcv_plugins)
+endif()
+cmakefiles(mime_fuzz.cpp)
