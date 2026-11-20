@@ -38,9 +38,9 @@
  * pkg IPC path (fbs_open_ipc):
  *   Instead of binding a TCP listen socket, creates a pkg_pair() and
  *   immediately wraps the parent end as a pre-connected pkg_conn client.
- *   The child-end address is retrieved via fbs_ipc_child_addr_env() and
- *   passed to the spawned rt subprocess via the PKG_ADDR environment
- *   variable (set with bu_setenv() before the fork, cleared after).
+ *   The child-end address and descriptors are retrieved with the APIs below,
+ *   passed only to the spawned subprocess, and released in the parent after
+ *   process creation.
  *
  */
 
@@ -114,7 +114,8 @@ struct fbserv_obj {
     /**
      * @brief Optional IPC-specific client close handler (mirrors fbs_close_client_handler).
      *
-     * When non-NULL, called by drop_client() for IPC clients (fbsc_is_ipc != 0).
+     * When non-NULL, called by fbs_drop_client() for IPC clients
+     * (fbsc_is_ipc != 0).
      * May be NULL, in which case fbs_close_client_handler is used.
      */
     void (*fbs_close_ipc_client_handler)(struct fbserv_obj *, int);
@@ -126,7 +127,6 @@ struct fbserv_obj {
 
     char fbs_auth_token[65];  /**< @brief session token (64 hex chars + NUL); empty = no auth required */
     int fbs_require_auth;     /**< @brief !0 = reject clients that don't send MSG_FBAUTH */
-    void *fbs_tls_ctx;        /**< @brief opaque SSL_CTX* for TLS; NULL = no TLS */
 };
 
 DM_EXPORT extern int fbs_open(struct fbserv_obj *fbsp, int port);
@@ -134,6 +134,7 @@ DM_EXPORT extern int fbs_close(struct fbserv_obj *fbsp);
 DM_EXPORT extern struct pkg_switch *fbs_pkg_switch(void);
 DM_EXPORT extern void fbs_setup_socket(int fd);
 DM_EXPORT extern int fbs_new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp, void *data);
+DM_EXPORT extern void fbs_drop_client(struct fbserv_obj *fbsp, int sub);
 DM_EXPORT extern void fbs_existing_client_handler(void *clientData, int mask);
 
 /**
@@ -148,12 +149,14 @@ DM_EXPORT extern void fbs_existing_client_handler(void *clientData, int mask);
  * Callers should:
  *   1. Call fbs_open_ipc() to start the server.
  *   2. Call fbs_ipc_child_addr_env() to get "PKG_ADDR=<addr>".
- *   3. Set that variable in the parent env (bu_setenv) before spawning rt.
- *   4. Clear the variable after bu_process_create() returns.
- *   5. Pass "-F 0" (or any port spec) to rt so it opens a remote framebuffer;
+ *   3. Supply that variable as a per-child environment override.
+ *   4. Pass the descriptors reported by fbs_ipc_child_fds() to the child.
+ *   5. Call fbs_close_ipc_child() after process creation returns.
+ *   6. Pass "-F 0" (or any port spec) to rt so it opens a remote framebuffer;
  *      if_remote.c will detect PKG_ADDR and use the IPC channel instead.
  *
- * The child end is closed (pkg_close) when fbs_close() is called.
+ * fbs_close() also closes the child end if the caller has not already done
+ * so with fbs_close_ipc_child().
  *
  * @return BRLCAD_OK on success, BRLCAD_ERROR if pkg_pair fails.
  */
@@ -162,13 +165,31 @@ DM_EXPORT extern int fbs_open_ipc(struct fbserv_obj *fbsp);
 /**
  * @brief Return the "PKG_ADDR=<addr>" env string for the spawned child.
  *
- * Valid after a successful fbs_open_ipc() call and until fbs_close() is
- * called.  Returns NULL if no IPC channel is active.
+ * Valid after a successful fbs_open_ipc() call and until
+ * fbs_close_ipc_child() or fbs_close() is called.  Returns NULL if no IPC
+ * child endpoint is active.
  *
  * The string is owned by the internal channel struct and must not be freed
  * by the caller.
  */
 DM_EXPORT extern const char *fbs_ipc_child_addr_env(struct fbserv_obj *fbsp);
+
+/**
+ * Return the descriptors backing the IPC child endpoint.
+ *
+ * @param[in] fbsp framebuffer server object
+ * @param[out] fds receives the read and write descriptors
+ *
+ * @return 1 if both directions share one descriptor, 2 if they are separate,
+ * or 0 if no IPC child endpoint is active.
+ */
+DM_EXPORT extern size_t fbs_ipc_child_fds(struct fbserv_obj *fbsp, int fds[2]);
+
+/**
+ * Release the parent's copy of the IPC child endpoint after spawning the
+ * child.  The server endpoint remains active until the child disconnects.
+ */
+DM_EXPORT extern void fbs_close_ipc_child(struct fbserv_obj *fbsp);
 
 /**
  * Initialise @p fbsp->fbs_auth_token for session authentication.
@@ -187,6 +208,9 @@ DM_EXPORT extern const char *fbs_ipc_child_addr_env(struct fbserv_obj *fbsp);
  * connecting client.  Returns a pointer to fbsp->fbs_auth_token.
  */
 DM_EXPORT extern const char *fbs_generate_token(struct fbserv_obj *fbsp);
+
+/** Generate a fresh framebuffer authentication token into a 65-byte buffer. */
+DM_EXPORT extern int fbs_create_token(char *token, size_t token_size);
 
 
 __END_DECLS

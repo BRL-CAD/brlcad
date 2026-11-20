@@ -160,7 +160,8 @@ int fb_setup(void) {
 	 * preserving exact dimensions for disk output.
 	 */
 	if (((size_t)fb_getwidth(fbp) < xx || (size_t)fb_getheight(fbp) < yy)
-	    && !BU_STR_EQUAL(fb_gettype(fbp), disk_file_interface)) {
+	    && !BU_STR_EQUAL(fb_gettype(fbp), disk_file_interface)
+	    && !fb_is_remote_ipc(fbp)) {
 	    (void)fb_close(fbp);
 	    fbp = fb_open(framebuffer, xx, yy);
 	    if (fbp == FB_NULL) {

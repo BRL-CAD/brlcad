@@ -68,6 +68,8 @@ extern void fbserv_drop_client(int sub);
 extern void fbserv_request_drop(int sub);
 extern int fbserv_client_auth_ok(int idx);
 extern void fbserv_set_client_auth(int idx, int val);
+extern int fbserv_client_transport_ready(int idx);
+extern int fbserv_begin_tls(int idx);
 
 
 /**
@@ -84,9 +86,20 @@ static int
 fbserv_guard(struct pkg_conn *pcp, char *buf)
 {
     char erbuf[NET_LONG_LEN+1];
+    int idx = fbserv_conn_idx(pcp);
+
+    if (idx < 0 || !fbserv_client_transport_ready(idx)) {
+	fb_log("fbserv: request type %d before TLS establishment rejected\n",
+	       pcp ? pcp->pkc_type : -1);
+	(void)pkg_plong(erbuf, -1);
+	(void)pkg_send(MSG_RETURN, erbuf, NET_LONG_LEN, pcp);
+	if (idx >= 0)
+	    fbserv_request_drop(idx);
+	if (buf) (void)free(buf);
+	return -1;
+    }
 
     if (fbserv_require_auth()) {
-	int idx = fbserv_conn_idx(pcp);
 	if (idx < 0) {
 	    /* Connection not in clients[] table — should not happen in normal
 	     * operation, but guard defensively.  fbserv_request_drop(-1) is a
@@ -122,6 +135,22 @@ fbserv_guard(struct pkg_conn *pcp, char *buf)
 }
 
 
+static void
+fb_server_fb_tls(struct pkg_conn *pcp, char *buf)
+{
+    const char unsupported = 0;
+    const char supported = 1;
+    int idx = fbserv_conn_idx(pcp);
+    int enable = idx >= 0 && buf && pcp->pkc_len == 1 && buf[0] == 1 &&
+	fbserv_begin_tls(idx);
+
+    (void)pkg_send(MSG_FBTLS, enable ? &supported : &unsupported, 1, pcp);
+    if (!enable && idx >= 0)
+	fbserv_request_drop(idx);
+    if (buf) (void)free(buf);
+}
+
+
 /*
  * This is where we go for message types we don't understand.
  *
@@ -132,9 +161,17 @@ fbserv_guard(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_unknown(struct pkg_conn *pcp, char *buf)
 {
+    int idx = fbserv_conn_idx(pcp);
+
+    if (idx >= 0 && !fbserv_client_transport_ready(idx)) {
+	fbserv_request_drop(idx);
+	if (buf) (void)free(buf);
+	return;
+    }
+
     fb_log("fb_server_fb_unknown: message type %d not part of remote LIBFB protocol, ignored.\n",
 	   pcp->pkc_type);
-    (void)free(buf);
+    if (buf) (void)free(buf);
 }
 
 
@@ -162,6 +199,11 @@ fb_server_fb_auth(struct pkg_conn *pcp, char *buf)
 
     idx = fbserv_conn_idx(pcp);
     if (idx < 0) {
+	if (buf) (void)free(buf);
+	return;
+    }
+    if (!fbserv_client_transport_ready(idx)) {
+	fbserv_request_drop(idx);
 	if (buf) (void)free(buf);
 	return;
     }
@@ -200,6 +242,7 @@ static void
 fb_server_fb_open(struct pkg_conn *pcp, char *buf)
 {
     int height, width;
+    int idx;
     char rbuf[5*NET_LONG_LEN+1];
     int want;
 
@@ -208,10 +251,24 @@ fb_server_fb_open(struct pkg_conn *pcp, char *buf)
     if (pcp == PKC_NULL)
        	return;
 
+    idx = fbserv_conn_idx(pcp);
+    if (idx < 0 || !fbserv_client_transport_ready(idx)) {
+	fb_log("fbserv: MSG_FBOPEN before TLS establishment rejected\n");
+	(void)pkg_plong(&rbuf[0*NET_LONG_LEN], -1);
+	(void)pkg_plong(&rbuf[1*NET_LONG_LEN], 0);
+	(void)pkg_plong(&rbuf[2*NET_LONG_LEN], 0);
+	(void)pkg_plong(&rbuf[3*NET_LONG_LEN], 0);
+	(void)pkg_plong(&rbuf[4*NET_LONG_LEN], 0);
+	(void)pkg_send(MSG_RETURN, rbuf, 5*NET_LONG_LEN, pcp);
+	if (idx >= 0)
+	    fbserv_request_drop(idx);
+	(void)free(buf);
+	return;
+    }
+
     /* Auth check: if strict mode, reject unauthenticated clients. */
     if (fbserv_require_auth()) {
-	int idx = fbserv_conn_idx(pcp);
-	if (idx < 0 || !fbserv_client_auth_ok(idx)) {
+	if (!fbserv_client_auth_ok(idx)) {
 	    fb_log("fbserv: unauthenticated MSG_FBOPEN rejected (strict mode)\n");
 	    (void)pkg_plong(&rbuf[0*NET_LONG_LEN], -1);
 	    (void)pkg_plong(&rbuf[1*NET_LONG_LEN], 0);
@@ -222,11 +279,7 @@ fb_server_fb_open(struct pkg_conn *pcp, char *buf)
 	    /* Use deferred drop rather than pkg_close() directly: this handler
 	     * is called from pkg_process() which still holds a reference to pcp.
 	     * Freeing pcp here causes a use-after-free in pkg_process's loop. */
-	    if (idx >= 0) {
-		fbserv_request_drop(idx);
-	    } else {
-		pkg_close(pcp);
-	    }
+	    fbserv_request_drop(idx);
 	    (void)free(buf);
 	    return;
 	}
@@ -945,6 +998,7 @@ fb_server_fb_help(struct pkg_conn *pcp, char *buf)
 }
 
 struct pkg_switch pkg_switch[] = {
+    { MSG_FBTLS,                        fb_server_fb_tls,         "TLS Capability", NULL },
     { MSG_FBAUTH,                       fb_server_fb_auth,        "Session Authentication", NULL },
     { MSG_FBOPEN,                       fb_server_fb_open,        "Open Framebuffer", NULL },
     { MSG_FBCLOSE,                      fb_server_fb_close,       "Close Framebuffer", NULL },

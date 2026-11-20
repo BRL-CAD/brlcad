@@ -167,11 +167,41 @@ static int clients_pending_drop[MAX_CLIENTS];
  */
 #ifdef HAVE_OPENSSL_SSL_H
 static SSL_CTX *fbserv_ssl_ctx = NULL;
+
+static int
+publish_tls_fingerprint(const char *fingerprint)
+{
+    const char *path = getenv("FBSERV_TLS_PIN_FILE");
+    FILE *stream;
+    int result = 1;
+
+    if (!path || path[0] == '\0')
+	return 1;
+    stream = fopen(path, "wb");
+    if (!stream)
+	return 0;
+    if (fprintf(stream, "%s\n", fingerprint) < 0)
+	result = 0;
+    if (fclose(stream) != 0)
+	result = 0;
+    return result;
+}
 #endif
 
 
 #define MAX_CLIENTS 32
 struct pkg_conn *clients[MAX_CLIENTS];
+#define FBSERV_TLS_POLL_USEC 10000
+#ifdef HAVE_OPENSSL_SSL_H
+enum fbserv_tls_state {
+    FBSERV_TLS_PLAIN = 0,
+    FBSERV_TLS_NEGOTIATING,
+    FBSERV_TLS_HANDSHAKING,
+    FBSERV_TLS_READY
+};
+static int clients_tls_state[MAX_CLIENTS];
+static int64_t clients_tls_deadline[MAX_CLIENTS];
+#endif
 
 int verbose = 0;
 
@@ -189,6 +219,34 @@ int fbserv_client_auth_ok(int idx)   { return clients_auth[idx]; }
 int fbserv_require_auth(void)        { return require_auth; }
 const char *fbserv_session_token(void) { return session_token; }
 void fbserv_set_client_auth(int idx, int val) { clients_auth[idx] = val; }
+
+int
+fbserv_client_transport_ready(int idx)
+{
+#ifdef HAVE_OPENSSL_SSL_H
+    if (idx < 0 || idx >= MAX_CLIENTS)
+	return 0;
+    return !use_tls || clients_tls_state[idx] == FBSERV_TLS_READY;
+#else
+    (void)idx;
+    return 1;
+#endif
+}
+
+int
+fbserv_begin_tls(int idx)
+{
+#ifdef HAVE_OPENSSL_SSL_H
+    if (idx < 0 || idx >= MAX_CLIENTS || !use_tls || !fbserv_ssl_ctx ||
+	clients_tls_state[idx] != FBSERV_TLS_NEGOTIATING)
+	return 0;
+    clients_tls_state[idx] = FBSERV_TLS_HANDSHAKING;
+    return 1;
+#else
+    (void)idx;
+    return 0;
+#endif
+}
 
 /* Request that main_loop drop client idx after the current pkg_process
  * dispatch returns.  Safe to call from inside a handler because it does
@@ -235,6 +293,8 @@ Token authentication (works with or without TLS):\n\
   that connects to this server.\n\
   If FBSERV_TOKEN is NOT set, fbserv generates a fresh token at\n\
   startup and prints it to stderr.\n\
+  TLS clients must set FBSERV_TLS_PIN to the 64-character public-key\n\
+  pin printed by the server before sending authentication data.\n\
 ";
 
 static int
@@ -417,6 +477,113 @@ fbserv_drop_client(int sub)
     clients[sub] = PKC_NULL;
     clients_auth[sub] = 0;
     clients_pending_drop[sub] = 0;
+#ifdef HAVE_OPENSSL_SSL_H
+    clients_tls_state[sub] = FBSERV_TLS_PLAIN;
+    clients_tls_deadline[sub] = 0;
+#endif
+}
+
+
+static int
+fbserv_client_tls_ready(int sub)
+{
+#ifdef HAVE_OPENSSL_SSL_H
+    int status;
+
+    if (clients_tls_state[sub] == FBSERV_TLS_PLAIN ||
+	clients_tls_state[sub] == FBSERV_TLS_READY)
+	return 1;
+    if (bu_gettime() >= clients_tls_deadline[sub]) {
+	fprintf(stderr, "fbserv: TLS negotiation timed out for client %d\n", sub);
+	fbserv_drop_client(sub);
+	return -1;
+    }
+    if (clients_tls_state[sub] == FBSERV_TLS_NEGOTIATING)
+	return 1;
+
+    status = fbserv_tls_accept_step(fbserv_ssl_ctx, clients[sub]);
+    if (status == FBSERV_TLS_OK) {
+	clients_tls_state[sub] = FBSERV_TLS_READY;
+	if (verbose)
+	    fprintf(stderr, "fbserv: TLS established with client %d\n", sub);
+	return 1;
+    }
+    if (status == FBSERV_TLS_PENDING)
+	return 0;
+
+    fprintf(stderr, "fbserv: TLS handshake failed for client %d; dropping connection\n",
+	sub);
+    fbserv_drop_client(sub);
+    return -1;
+#else
+    (void)sub;
+    return 1;
+#endif
+}
+
+
+static int
+fbserv_tls_pending(void)
+{
+#ifdef HAVE_OPENSSL_SSL_H
+    int i;
+
+    for (i = 0; i < MAX_CLIENTS; i++) {
+	if (clients[i] != PKC_NULL &&
+	    (clients_tls_state[i] == FBSERV_TLS_NEGOTIATING ||
+	     clients_tls_state[i] == FBSERV_TLS_HANDSHAKING))
+	    return 1;
+    }
+#endif
+    return 0;
+}
+
+
+static int
+fbserv_wait(fd_set *ready, int64_t timeout_usec)
+{
+    int64_t deadline = bu_gettime() + timeout_usec;
+
+    while (1) {
+	int64_t remaining = deadline - bu_gettime();
+	struct timeval timeout;
+	int selected;
+	int i;
+
+	FD_ZERO(ready);
+	selected = 0;
+	for (i = 0; i < MAX_CLIENTS; i++) {
+	    int fd;
+
+	    if (clients[i] == PKC_NULL ||
+		fbserv_client_tls_ready(i) <= 0 ||
+		pkg_conn_poll(clients[i]) != 1)
+		continue;
+	    fd = pkg_get_read_fd(clients[i]);
+	    FD_SET(fd, ready);
+	    selected++;
+	}
+	if (selected > 0)
+	    return selected;
+
+	if (remaining < 0)
+	    remaining = 0;
+	*ready = select_list;
+	timeout.tv_sec = (long)(remaining / 1000000);
+	timeout.tv_usec = (long)(remaining % 1000000);
+	selected = select(max_fd + 1, ready, NULL, NULL, &timeout);
+	if (selected >= 0)
+	    return selected;
+#ifdef _WIN32
+	if (WSAGetLastError() != WSAEINTR)
+	    return -1;
+#else
+	if (errno != EINTR)
+	    return -1;
+#endif
+	if (bu_gettime() >= deadline)
+	    return 0;
+    }
 }
 
 static int
@@ -433,6 +600,12 @@ fbserv_add_client(struct pkg_conn *pcp, int watch_fd)
 	clients[i] = pcp;
 	clients_auth[i] = 0;  /* not yet authenticated */
 	clients_pending_drop[i] = 0;
+#ifdef HAVE_OPENSSL_SSL_H
+	clients_tls_state[i] = (use_tls && fbserv_ssl_ctx) ?
+	    FBSERV_TLS_NEGOTIATING : FBSERV_TLS_PLAIN;
+	clients_tls_deadline[i] = bu_gettime() +
+	    (int64_t)FBSERV_TLS_HANDSHAKE_TIMEOUT_MS * 1000;
+#endif
 	{
 	    int rfd = pkg_get_read_fd(pcp);
 	    if (watch_fd) {
@@ -442,27 +615,9 @@ fbserv_add_client(struct pkg_conn *pcp, int watch_fd)
 	    }
 	}
 
-#ifdef HAVE_OPENSSL_SSL_H
-	/* Optional TLS: perform server-side handshake before any PKG
-	 * messages are exchanged. */
-	if (use_tls && fbserv_ssl_ctx) {
-	    if (fbserv_tls_accept(fbserv_ssl_ctx, pcp) == FBSERV_TLS_OK) {
-		if (verbose)
-		    fprintf(stderr, "fbserv: TLS established with client %d\n", i);
-	    } else {
-		fprintf(stderr, "fbserv: TLS handshake failed for client %d; "
-			"dropping connection\n", i);
-		if (watch_fd)
-		    FD_CLR(pkg_get_read_fd(pcp), &select_list);
-		pkg_close(pcp);
-		clients[i] = PKC_NULL;
-		clients_auth[i] = 0;
-		return -1;
-	    }
-	}
-#endif
+	(void)fbserv_client_tls_ready(i);
 
-	return i;
+	return clients[i] == PKC_NULL ? -1 : i;
     }
     fprintf(stderr, "fbserv: too many clients\n");
     pkg_close(pcp);
@@ -477,44 +632,72 @@ fbserv_new_client(struct pkg_conn *pcp)
 
 
 #ifdef _WIN32
+#  define IPC_LISTENER_POLL_USEC 10000
+
 static void
 ipc_listener_loop(void)
 {
     while (!fb_server_got_fb_free) {
-	struct pkg_conn *pcp;
-	int idx;
+	int accepted;
+	int did_work = 0;
+	int i;
 
-	pcp = pkg_accept(netlistener, pkg_switch, communications_error, 0);
-	if (pcp == PKC_ERROR)
-	    break;
-	if (pcp == PKC_NULL)
-	    continue;
+	/* Bound each accept batch so a connection flood cannot starve
+	 * established clients or framebuffer events. */
+	for (accepted = 0; accepted < MAX_CLIENTS; accepted++) {
+	    struct pkg_conn *pcp;
 
-	idx = fbserv_add_client(pcp, 0);
-	if (idx < 0)
-	    continue;
+	    pcp = pkg_accept(netlistener, pkg_switch, communications_error, 1);
+	    if (pcp == PKC_ERROR)
+		return;
+	    if (pcp == PKC_NULL)
+		break;
+	    (void)fbserv_add_client(pcp, 0);
+	    did_work = 1;
+	}
 
-	while (!fb_server_got_fb_free && clients[idx] != NULL) {
+	for (i = 0; i < MAX_CLIENTS && !fb_server_got_fb_free; i++) {
 	    int pkgr;
 
-	    pkgr = pkg_process(clients[idx]);
-	    if (pkgr < 0 || clients_pending_drop[idx]) {
-		fbserv_drop_client(idx);
-		break;
-	    }
+	    if (clients[i] == NULL)
+		continue;
+	    if (fbserv_client_tls_ready(i) <= 0)
+		continue;
 
-	    pkgr = pkg_suckin(clients[idx]);
+	    pkgr = pkg_process(clients[i]);
+	    if (pkgr < 0 || clients_pending_drop[i]) {
+		fbserv_drop_client(i);
+		did_work = 1;
+		continue;
+	    }
+	    if (pkgr > 0)
+		did_work = 1;
+
+	    pkgr = pkg_conn_poll(clients[i]);
+	    if (pkgr < 0) {
+		fbserv_drop_client(i);
+		did_work = 1;
+		continue;
+	    }
+	    if (pkgr == 0)
+		continue;
+
+	    pkgr = pkg_suckin(clients[i]);
+	    did_work = 1;
 	    if (pkgr <= 0) {
-		fbserv_drop_client(idx);
-		break;
+		fbserv_drop_client(i);
+		continue;
 	    }
 
-	    pkgr = pkg_process(clients[idx]);
-	    if (pkgr < 0 || clients_pending_drop[idx]) {
-		fbserv_drop_client(idx);
-		break;
-	    }
+	    pkgr = pkg_process(clients[i]);
+	    if (pkgr < 0 || clients_pending_drop[i])
+		fbserv_drop_client(i);
 	}
+
+	if (fb_server_fbp != FB_NULL && fb_poll(fb_server_fbp))
+	    break;
+	if (!did_work)
+	    bu_snooze(IPC_LISTENER_POLL_USEC);
     }
 }
 #endif
@@ -534,9 +717,8 @@ main_loop(void)
 
     while (!fb_server_got_fb_free) {
 	long refresh_rate = 60000000; /* old default */
-	long usec_to_sec = 1000000;
 	fd_set infds;
-	struct timeval tv;
+	int selected;
 	int i;
 
 	if (fb_server_fbp) {
@@ -544,11 +726,19 @@ main_loop(void)
 		refresh_rate = fb_poll_rate(fb_server_fbp);
 	}
 
-	infds = select_list;	/* struct copy */
-
-	tv.tv_sec = refresh_rate / usec_to_sec;
-	tv.tv_usec = refresh_rate % usec_to_sec;
-	if ((select(max_fd+1, &infds, (fd_set *)0, (fd_set *)0, (struct timeval *)&tv) == 0)) {
+	for (i = 0; i < MAX_CLIENTS; i++) {
+	    if (clients[i] != PKC_NULL)
+		(void)fbserv_client_tls_ready(i);
+	}
+	if (fbserv_tls_pending() && refresh_rate > FBSERV_TLS_POLL_USEC) {
+	    refresh_rate = FBSERV_TLS_POLL_USEC;
+	}
+	selected = fbserv_wait(&infds, refresh_rate);
+	if (selected < 0) {
+	    communications_error("fbserv: select failed\n");
+	    return;
+	}
+	if (selected == 0) {
 	    /* Process fb events while waiting for client */
 	    /*printf("select timeout waiting for client\n");*/
 	    if (fb_server_fbp) {
@@ -573,8 +763,12 @@ main_loop(void)
 	/* First, pull the data out of the kernel buffers */
 	for (i = MAX_CLIENTS-1; i >= 0; i--) {
 	    if (clients[i] == NULL) continue;
+	    if (fbserv_client_tls_ready(i) <= 0) continue;
 	    if (pkg_process(clients[i]) < 0) {
 		fprintf(stderr, "pkg_process error encountered (1)\n");
+		fbserv_drop_client(i);
+		ncloses++;
+		continue;
 	    }
 	    /* A handler (e.g. token-mismatch auth) may have requested a
 	     * deferred drop.  Act on it now that pkg_process has returned
@@ -596,8 +790,12 @@ main_loop(void)
 	/* Second, process all the finished ones that we just got */
 	for (i = MAX_CLIENTS-1; i >= 0; i--) {
 	    if (clients[i] == NULL) continue;
+	    if (fbserv_client_tls_ready(i) <= 0) continue;
 	    if (pkg_process(clients[i]) < 0) {
 		fprintf(stderr, "pkg_process error encountered (2)\n");
+		fbserv_drop_client(i);
+		ncloses++;
+		continue;
 	    }
 	    /* Deferred drop from second-pass handler */
 	    if (clients_pending_drop[i]) {
@@ -758,19 +956,27 @@ main(int argc, char **argv)
     if (use_tls || getenv("FBSERV_TLS")) {
 	const char *certfile = getenv("FBSERV_TLS_CERT");
 	const char *keyfile  = getenv("FBSERV_TLS_KEY");
+	char fingerprint[FBSERV_TLS_FINGERPRINT_HEX_LEN + 1] = {0};
 	fbserv_ssl_ctx = fbserv_tls_server_ctx(certfile, keyfile);
-	if (fbserv_ssl_ctx) {
-	    fprintf(stderr, "fbserv: TLS enabled (%s)\n",
-		    (certfile && keyfile) ? "custom cert" : "self-signed cert");
-	} else {
-	    fprintf(stderr, "fbserv: WARNING: TLS context creation failed; "
-		    "continuing without TLS\n");
+	if (!fbserv_ssl_ctx ||
+	    !fbserv_tls_server_fingerprint(fbserv_ssl_ctx, fingerprint,
+		sizeof(fingerprint)) ||
+	    !publish_tls_fingerprint(fingerprint)) {
+	    fprintf(stderr, "fbserv: TLS initialization failed\n");
+	    if (fbserv_ssl_ctx)
+		SSL_CTX_free(fbserv_ssl_ctx);
+	    return 1;
 	}
+	use_tls = 1;
+	fprintf(stderr, "fbserv: TLS enabled (%s)\n",
+		(certfile && keyfile) ? "custom cert" : "self-signed cert");
+	fprintf(stderr, "fbserv: TLS public-key pin: %s\n", fingerprint);
     }
 #else
-    if (use_tls)
-	fprintf(stderr, "fbserv: WARNING: -T flag given but TLS support was "
-		"not compiled in (no OpenSSL)\n");
+    if (use_tls || getenv("FBSERV_TLS")) {
+	fprintf(stderr, "fbserv: TLS requested but OpenSSL support is unavailable\n");
+	return 1;
+    }
 #endif
 
     /* Single-Frame-Buffer Server */
@@ -891,6 +1097,10 @@ fb_log(const char *fmt, ...)
     want = strlen(outbuf)+1;
     for (i = MAX_CLIENTS-1; i >= 0; i--) {
 	if (clients[i] == NULL) continue;
+#ifdef HAVE_OPENSSL_SSL_H
+	if (clients_tls_state[i] != FBSERV_TLS_PLAIN &&
+	    clients_tls_state[i] != FBSERV_TLS_READY) continue;
+#endif
 	if (pkg_send(MSG_ERROR, outbuf, want, clients[i]) != want) {
 	    communications_error("pkg_send error in fb_log, message was:\n");
 	    communications_error(outbuf);

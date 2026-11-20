@@ -39,7 +39,6 @@ set_property(
 )
 
 brlcad_find_package(PNG REQUIRED)
-find_package(OpenSSL QUIET)
 
 set(DM_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}

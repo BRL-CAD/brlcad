@@ -52,6 +52,7 @@
 
 // FIXME: Global
 extern struct pkg_switch pkg_switch[];
+static int mged_conn_idx(struct pkg_conn *pcp);
 
 /*
  * Communication error.  An error occurred on the PKG link.
@@ -154,8 +155,11 @@ found:
 	if (clients[i].c_fd == 0)
 	    continue;
 
-	if ((npp = pkg_process(clients[i].c_pkg)) < 0)
+	if ((npp = pkg_process(clients[i].c_pkg)) < 0) {
 	    bu_log("pkg_process error encountered (1)\n");
+	    fbserv_drop_client(i);
+	    continue;
+	}
 
 	/* Act on any deferred drop requested by a handler (e.g. token mismatch).
 	 * We must not call pkg_close() from inside pkg_process's dispatch loop. */
@@ -179,8 +183,11 @@ found:
 	    continue;
 	}
 
-	if ((npp = pkg_process(clients[i].c_pkg)) < 0)
+	if ((npp = pkg_process(clients[i].c_pkg)) < 0) {
 	    bu_log("pkg_process error encountered (2)\n");
+	    fbserv_drop_client(i);
+	    continue;
+	}
 
 	/* Deferred drop from second-pass handler */
 	if (clients[i].c_pending_drop) {
@@ -202,9 +209,9 @@ found:
 static struct pkg_conn *
 fbserv_makeconn(int fd, const struct pkg_switch *switchp)
 {
-    struct pkg_conn *pc = pkg_adopt_socket(fd, switchp, communications_error);
+    struct pkg_conn *pc = pkg_borrow_socket(fd, switchp, communications_error);
     if (pc == PKC_ERROR) {
-	communications_error("fbserv_makeconn: pkg_adopt_socket failure\n");
+	communications_error("fbserv_makeconn: pkg_borrow_socket failure\n");
     }
     return pc;
 }
@@ -441,6 +448,20 @@ fb_server_fb_unknown(struct pkg_conn *pcp, char *buf)
 }
 
 
+static void
+fb_server_fb_tls(struct pkg_conn *pcp, char *buf)
+{
+    struct mged_state *s = MGED_STATE;
+    const char unsupported = 0;
+    int idx = mged_conn_idx(pcp);
+
+    (void)pkg_send(MSG_FBTLS, &unsupported, 1, pcp);
+    if (idx >= 0)
+	clients[idx].c_pending_drop = 1;
+    if (buf) (void)free(buf);
+}
+
+
 /******** Here's where the hooks lead *********/
 
 /**
@@ -484,8 +505,6 @@ mged_data_guard(struct pkg_conn *pcp, char *buf)
 	    pkg_send(MSG_RETURN, erbuf, NET_LONG_LEN, pcp);
 	    if (idx >= 0)
 		clients[idx].c_pending_drop = 1;
-	    else
-		pkg_close(pcp);
 	    if (buf) (void)free(buf);
 	    return -1;
 	}
@@ -545,8 +564,6 @@ fb_server_fb_auth(struct pkg_conn *pcp, char *buf)
 	 * Freeing it here causes a use-after-free in pkg_process's loop. */
 	if (idx >= 0)
 	    clients[idx].c_pending_drop = 1;
-	else
-	    pkg_close(pcp); /* not tracked — close immediately (safe here) */
     }
 
     if (buf) (void)free(buf);
@@ -579,8 +596,6 @@ fb_server_fb_open(struct pkg_conn *pcp, char *buf)
 	    /* Deferred drop: pkg_process still holds pcp; close after it returns */
 	    if (idx >= 0)
 		clients[idx].c_pending_drop = 1;
-	    else
-		pkg_close(pcp);
 	    (void)free(buf);
 	    return;
 	}
@@ -1220,6 +1235,7 @@ fb_server_fb_help(struct pkg_conn *pcp, char *buf)
 }
 
 struct pkg_switch pkg_switch[] = {
+    { MSG_FBTLS,                        fb_server_fb_tls,         "TLS Capability", NULL },
     { MSG_FBAUTH,                       fb_server_fb_auth,        "Session Authentication", NULL },
     { MSG_FBOPEN,                       fb_server_fb_open,        "Open Framebuffer", NULL },
     { MSG_FBCLOSE,                      fb_server_fb_close,       "Close Framebuffer", NULL },

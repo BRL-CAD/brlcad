@@ -227,7 +227,9 @@ rem_open(register struct fb *ifp, const char *file, int width, int height)
     char portname[MAX_HOSTNAME] = {0};
     char device[MAX_HOSTNAME] = {0};
     int port = 0;
+    int is_ipc = 0;
     const char *auth_token;
+    const char *tls_pin;
 
     FB_CK_FB(ifp->i);
 
@@ -242,6 +244,7 @@ rem_open(register struct fb *ifp, const char *file, int width, int height)
 	}
 	PCPL(ifp) = (char *)pc;
 	ifp->i->if_fd = pkg_get_read_fd(pc);
+	is_ipc = 1;
 	goto ipc_connected;
     }
 
@@ -258,6 +261,7 @@ rem_open(register struct fb *ifp, const char *file, int width, int height)
 	    if (pc != PKC_ERROR && pc != PKC_NULL) {
 		PCPL(ifp) = (char *)pc;
 		ifp->i->if_fd = pkg_get_read_fd(pc);
+		is_ipc = 1;
 		/* Fall through to MSG_FBOPEN / MSG_RETURN handshake below. */
 		goto ipc_connected;
 	    }
@@ -294,26 +298,40 @@ rem_open(register struct fb *ifp, const char *file, int width, int height)
 
 ipc_connected:
 
+    ifp->i->u2.l = is_ipc;
+    tls_pin = fb_tls_pin_override();
+    if (!tls_pin)
+	tls_pin = getenv("FBSERV_TLS_PIN");
+
 #ifdef HAVE_OPENSSL_SSL_H
-    /* Optional TLS: attempt client-side handshake if requested.
-     * The server must also be running with TLS enabled. */
-    if (getenv("FBSERV_TLS")) {
+    /* Local IPC is already protected by the inherited transport. */
+    if (!is_ipc && (getenv("FBSERV_TLS") || tls_pin)) {
 	SSL_CTX *tls_ctx = fbserv_tls_client_ctx();
-	if (tls_ctx) {
-	    if (fbserv_tls_connect(tls_ctx, pc) == FBSERV_TLS_OK) {
-		fb_log("rem_open: TLS established with %s\n", hostname);
-	    } else {
-		fb_log("rem_open: TLS handshake failed; continuing without TLS\n");
-	    }
-	    SSL_CTX_free(tls_ctx);
+	if (!tls_ctx || fbserv_tls_connect(tls_ctx, pc, tls_pin) != FBSERV_TLS_OK) {
+	    fb_log("rem_open: authenticated TLS connection to %s failed\n", hostname);
+	    if (tls_ctx)
+		SSL_CTX_free(tls_ctx);
+	    pkg_close(pc);
+	    PCPL(ifp) = NULL;
+	    return -9;
 	}
+	fb_log("rem_open: TLS established with %s\n", hostname);
+	SSL_CTX_free(tls_ctx);
+    }
+#else
+    if (!is_ipc && (getenv("FBSERV_TLS") || tls_pin)) {
+	fb_log("rem_open: TLS requested but OpenSSL support is unavailable\n");
+	pkg_close(pc);
+	PCPL(ifp) = NULL;
+	return -9;
     }
 #endif
 
-    /* Optional authentication: if FBSERV_TOKEN is set in the
-     * environment, send MSG_FBAUTH with the token before MSG_FBOPEN.
-     * This lets the server verify this is an authorized client. */
-    auth_token = getenv("FBSERV_TOKEN");
+    /* Optional authentication: prefer the current call's explicit token,
+     * then fall back to FBSERV_TOKEN for existing callers. */
+    auth_token = fb_auth_token_override();
+    if (!auth_token)
+	auth_token = getenv("FBSERV_TOKEN");
     if (auth_token && auth_token[0] != '\0') {
 	size_t tlen = strlen(auth_token);
 	if (pkg_send(MSG_FBAUTH, auth_token, tlen, pc) != (int)tlen) {

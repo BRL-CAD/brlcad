@@ -1254,6 +1254,8 @@ to_open_tcl(ClientData UNUSED(clientData),
 	return TCL_ERROR;
     }
     gedp->ged_interp = (void *)interp;
+    gedp->ged_fbs->fbs_interp = interp;
+    tclcad_configure_ipc_handlers(gedp->ged_fbs);
 
     /* Set the Tcl specific I/O handlers for asynchronous subprocess I/O */
     struct tclcad_io_data *t_iod = tclcad_create_io_data();

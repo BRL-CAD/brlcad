@@ -45,6 +45,26 @@
 #include "./include/private.h"
 
 
+static thread_local std::string fb_auth_override;
+static thread_local bool fb_auth_override_set = false;
+static thread_local std::string fb_tls_pin;
+static thread_local bool fb_tls_pin_set = false;
+
+
+extern "C" const char *
+fb_auth_token_override(void)
+{
+    return fb_auth_override_set ? fb_auth_override.c_str() : NULL;
+}
+
+
+extern "C" const char *
+fb_tls_pin_override(void)
+{
+    return fb_tls_pin_set ? fb_tls_pin.c_str() : NULL;
+}
+
+
 extern "C" struct dm *
 dm_open(void *ctx, void *interp, const char *type, int argc, const char *argv[])
 {
@@ -529,6 +549,42 @@ found_interface:
         return FB_NULL;
     }
     return ifp;
+}
+
+
+extern "C" struct fb *
+fb_open_with_auth(const char *file, int width, int height, const char *auth_token)
+{
+    return fb_open_with_auth_and_tls(file, width, height, auth_token, NULL);
+}
+
+
+extern "C" struct fb *
+fb_open_with_auth_and_tls(const char *file, int width, int height,
+    const char *auth_token, const char *tls_pin)
+{
+    std::string previous_auth = fb_auth_override;
+    std::string previous_pin = fb_tls_pin;
+    bool previous_auth_set = fb_auth_override_set;
+    bool previous_pin_set = fb_tls_pin_set;
+    fb_auth_override = auth_token ? auth_token : "";
+    fb_auth_override_set = auth_token != NULL;
+    fb_tls_pin = tls_pin ? tls_pin : "";
+    fb_tls_pin_set = tls_pin != NULL;
+    struct fb *ifp = fb_open(file, width, height);
+    fb_auth_override = previous_auth;
+    fb_auth_override_set = previous_auth_set;
+    fb_tls_pin = previous_pin;
+    fb_tls_pin_set = previous_pin_set;
+    return ifp;
+}
+
+
+extern "C" int
+fb_is_remote_ipc(const struct fb *ifp)
+{
+    return ifp && ifp->i && ifp->i->type_magic == FB_REMOTE_MAGIC &&
+	ifp->i->u2.l != 0;
 }
 
 
