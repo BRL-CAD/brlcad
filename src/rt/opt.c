@@ -33,12 +33,14 @@
 #include <math.h>
 #include <string.h>
 
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "bu/file.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/arg.h"
 #include "bu/parallel.h"
+#include "bu/path.h"
 #include "bu/units.h"
 #include "bn/str.h"
 #include "vmath.h"
@@ -1259,9 +1261,17 @@ static const struct bu_arg_schema rt_schema = BU_ARG_SCHEMA_PRESENTED(
 int
 rt_arg_introspect(struct bu_vls *output, int argc, const char * const *argv)
 {
-    const struct bu_arg_grammar grammar = {&rt_schema, NULL, NULL};
+    struct bu_arg_schema schema = rt_schema;
+    struct bu_arg_grammar grammar = {&schema, NULL, NULL};
+    struct bu_vls name = BU_VLS_INIT_ZERO;
+    int ret;
 
-    return bu_arg_introspect(output, &grammar, argc, argv);
+    if (bu_path_component(&name, bu_getprogname(),
+	    BU_PATH_BASENAME_EXTLESS) && bu_vls_strlen(&name) > 0)
+	schema.name = bu_vls_cstr(&name);
+    ret = bu_arg_introspect(output, &grammar, argc, argv);
+    bu_vls_free(&name);
+    return ret;
 }
 
 
