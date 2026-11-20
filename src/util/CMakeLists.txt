@@ -5,8 +5,8 @@ if(MSVC)
 endif(MSVC)
 
 if(BRLCAD_ENABLE_TK)
-  brlcad_addexec(bombardier bombardier.c "libtclcad;libbu;${TK_LIBRARY};${TCL_LIBRARY}")
-  brlcad_addexec(plot3-dm plot3-dm.c "libtclcad;libdm;libbv;libbu;${TK_LIBRARY};${TCL_LIBRARY};${M_LIBRARY}")
+  brlcad_addexec(bombardier bombardier.c "libtclcad;libbu;${TK_LIBRARY};${TCL_LIBRARY}" ARG_SCHEMA)
+  brlcad_addexec(plot3-dm plot3-dm.c "libtclcad;libdm;libbv;libbu;${TK_LIBRARY};${TCL_LIBRARY};${M_LIBRARY}" ARG_SCHEMA)
   add_target_deps(plot3-dm dm_plugins)
 else(BRLCAD_ENABLE_TK)
   cmakefiles(

@@ -36,6 +36,12 @@
 #include "tcl.h"
 
 #include "bu/app.h"
+#include "bu/arg.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 #include "tclcad.h"
 
 // Tclcad pulls in OpenNURBS in C++, which defines None, which
@@ -44,6 +50,33 @@
 #include "tk.h"
 
 #include "./bombardier.h"
+
+
+struct bombardier_args {
+    int help;
+};
+
+static const struct bu_arg_option bombardier_options[] = {
+    BU_ARG_FLAG("h", "help", struct bombardier_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand bombardier_operands[] = {
+    BU_ARG_OPERAND("logfile", BU_ARG_VALUE_FILE, 1, BU_ARG_COUNT_UNLIMITED,
+	"BRL-CAD crash log file", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema bombardier_schema = BU_ARG_SCHEMA(
+    "bombardier", "Review and submit BRL-CAD crash reports",
+    bombardier_options, bombardier_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar bombardier_grammar = {
+    &bombardier_schema, NULL, NULL
+};
 
 
 /* here be bombardier's gui in all its glory
@@ -287,33 +320,48 @@ init(Tcl_Interp *interp)
 int
 main(int argc, char *argv[])
 {
+    struct bombardier_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     int tkargc = 1;
     char *tkargv[2] = {NULL, NULL};
+    int introspection;
+    int operand_index;
+    int i;
 
     bu_setprogname(argv[0]);
 
-    if (argc > 1) {
-	if (BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) {
-		bu_exit(1, "Usage: %s logfile(s)\n", argv[0]);
-	}
+    introspection = bu_arg_introspect(&msg, &bombardier_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    operand_index = bu_arg_schema_parse_complete(&bombardier_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_log("%s\n", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&bombardier_schema, "bombardier");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "bombardier help");
+	return 0;
     }
 
     tkargv[0] = argv[0];
 
-    if (argc <= 1) {
-	bu_exit(1, "Usage: %s logfile(s)\n", argv[0]);
-    }
-
     /* load all file arguments into our buffer */
-    while (argc > 1) {
-	if (!bu_file_exists(argv[1], NULL)) {
-	    bu_log("WARNING: Log file [%s] does not exist\n", argv[1]);
+    for (i = operand_index + 1; i < argc; i++) {
+	if (!bu_file_exists(argv[i], NULL)) {
+	    bu_log("WARNING: Log file [%s] does not exist\n", argv[i]);
 	} else {
-	    bu_log("Processing %s\n", argv[1]);
-	    load_file(argv[1]);
+	    bu_log("Processing %s\n", argv[i]);
+	    load_file(argv[i]);
 	}
-	argc--;
-	argv++;
     }
 
     /* no tcl shell prompt */
