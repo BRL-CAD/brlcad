@@ -690,7 +690,7 @@ test_memory_codecs(void)
 	};
 	CHECK(icv_read_mem(garbage, 3, BU_MIME_IMAGE_PIX, 2, 2) == NULL, "icv_read_mem rejects undersized PIX buffers");
 	CHECK(icv_read_mem(garbage, 3, BU_MIME_IMAGE_BW, 2, 2) == NULL, "icv_read_mem rejects undersized BW buffers");
-	CHECK(icv_read_mem(garbage, 8, BU_MIME_IMAGE_DPIX, 2, 2) == NULL, "icv_read_mem rejects undersized DPIX buffers");
+	CHECK(icv_read_mem(garbage, sizeof(garbage), BU_MIME_IMAGE_DPIX, 2, 2) == NULL, "icv_read_mem rejects undersized DPIX buffers");
 	CHECK(icv_read_mem(bad_ppm, sizeof(bad_ppm), BU_MIME_IMAGE_PPM, 0, 0) == NULL, "icv_read_mem rejects invalid PPM buffers");
 	CHECK(icv_read_mem(garbage, sizeof(garbage), BU_MIME_IMAGE_PNG, 0, 0) == NULL, "icv_read_mem rejects invalid PNG buffers");
 	CHECK(icv_read_mem(garbage, sizeof(garbage), BU_MIME_IMAGE_JPEG, 0, 0) == NULL, "icv_read_mem rejects invalid JPEG buffers");
