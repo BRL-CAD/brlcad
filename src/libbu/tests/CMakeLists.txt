@@ -897,6 +897,11 @@ add_subdirectory(dylib)
 cmakefiles(
   CMakeLists.txt
   test_api.h
+  mime_tar_fixture.h
+  mime_heightfield_fixture.h
+  mime_raster_label_fixture.h
+  mime_science_fixture.h
+  mime_product_fixture.h
   bu_test.cpp.in
   dylib/CMakeLists.txt
   dylib/README.txt
@@ -910,6 +915,9 @@ cmakefiles(
   tests_vls.cmake
   test_semchk.cpp
 )
+
+brlcad_addexec(bu_mime_test mime_registry.cpp "libbu;Threads::Threads" TEST)
+brlcad_add_test(NAME bu_mime_registry COMMAND bu_mime_test)
 
 # Local Variables:
 # tab-width: 8

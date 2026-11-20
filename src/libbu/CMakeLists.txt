@@ -15,6 +15,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/m
 
 # Run the generation process
 include(${CMAKE_CURRENT_SOURCE_DIR}/mime.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/mime_catalog.cmake)
 
 # We do want to install the mime header
 set_source_files_properties("${BU_MIME_TYPES_H_FILE}" PROPERTIES GENERATED TRUE)
@@ -82,6 +83,11 @@ set(
   magic.c
   malloc.c
   mappedfile.c
+  mime_registry.cpp
+  mime_traits.cpp
+  mime_inspect.cpp
+  mime_gltf.cpp
+  mime_legacy.cpp
   ${BU_MIME_C_FILE}
   mread.c
   num.c
@@ -167,7 +173,7 @@ set(
 set(BU_INCLUDE_DIRS ${BRLCAD_BINARY_DIR}/include ${BRLCAD_SOURCE_DIR}/include)
 
 # locally used but not needed by users of the library
-set(BU_LOCAL_INCLUDE_DIRS ${BSON_INCLUDE_DIR} ${LMDB_INCLUDE_DIR} ${UUID_INCLUDE_DIR})
+set(BU_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR} ${BSON_INCLUDE_DIR} ${LMDB_INCLUDE_DIR} ${UUID_INCLUDE_DIR})
 
 brlcad_addlib(libbu "${LIBBU_SOURCES}" "${BU_INCLUDE_DIRS}" "${BU_LOCAL_INCLUDE_DIRS}"
   PRIVATE_LIBS ${BU_PRIVATE_LIBS}
