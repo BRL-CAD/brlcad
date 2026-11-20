@@ -1,4 +1,4 @@
-brlcad_addexec(brledit brledit.cpp "" "")
+brlcad_addexec(brledit brledit.cpp "" SELF_CONTAINED_OPTIONS)
 target_include_directories(brledit BEFORE PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/libtermio

@@ -3420,18 +3420,27 @@ endif(_brlcad_missing_manpages)
 
 get_property(_brlcad_arg_schema_execs GLOBAL PROPERTY BRLCAD_EXEC_ARG_SCHEMA_TARGETS)
 get_property(_brlcad_no_options_execs GLOBAL PROPERTY BRLCAD_EXEC_NO_OPTIONS_TARGETS)
+get_property(
+  _brlcad_self_contained_execs
+  GLOBAL
+  PROPERTY BRLCAD_EXEC_SELF_CONTAINED_OPTIONS_TARGETS
+)
 get_property(_brlcad_unclassified_execs GLOBAL PROPERTY BRLCAD_EXEC_UNCLASSIFIED_TARGETS)
 list(REMOVE_DUPLICATES _brlcad_arg_schema_execs)
 list(REMOVE_DUPLICATES _brlcad_no_options_execs)
+list(REMOVE_DUPLICATES _brlcad_self_contained_execs)
 list(REMOVE_DUPLICATES _brlcad_unclassified_execs)
 list(LENGTH _brlcad_arg_schema_execs _brlcad_arg_schema_execs_count)
 list(LENGTH _brlcad_no_options_execs _brlcad_no_options_execs_count)
+list(LENGTH _brlcad_self_contained_execs _brlcad_self_contained_execs_count)
 list(LENGTH _brlcad_unclassified_execs _brlcad_unclassified_execs_count)
 string(
   CONCAT
   _brlcad_exec_option_summary
   "Executable option handling: ${_brlcad_arg_schema_execs_count} BU_ARG, "
-  "${_brlcad_no_options_execs_count} optionless, ${_brlcad_unclassified_execs_count} unclassified"
+  "${_brlcad_no_options_execs_count} optionless, "
+  "${_brlcad_self_contained_execs_count} self-contained, "
+  "${_brlcad_unclassified_execs_count} unclassified"
 )
 message(STATUS "${_brlcad_exec_option_summary}")
 
