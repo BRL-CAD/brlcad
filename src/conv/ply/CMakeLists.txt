@@ -1,5 +1,5 @@
 brlcad_addexec(ply-g ply-g.c "libgcv" FOLDER Conv ARG_SCHEMA)
-brlcad_addexec(g-ply g-ply.c "libgcv" FOLDER Conv)
+brlcad_addexec(g-ply g-ply.c "libgcv" FOLDER Conv ARG_SCHEMA)
 add_dependencies(ply-g gcv_plugins)
 add_dependencies(g-ply gcv_plugins)
 
