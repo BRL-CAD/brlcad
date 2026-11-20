@@ -102,7 +102,7 @@ brlcad_addexec(patch-g patch/patch-g.c "libwdb;librt;libnmg;libbu;${M_LIBRARY}" 
 
 brlcad_addexec(rpatch patch/rpatch.c "librt;libbu" FOLDER Conv ARG_SCHEMA)
 
-brlcad_addexec(tankill-g tankill/tankill-g.c "libwdb;librt;libnmg;libbu" FOLDER Conv)
+brlcad_addexec(tankill-g tankill/tankill-g.c "libwdb;librt;libnmg;libbu" FOLDER Conv ARG_SCHEMA)
 
 brlcad_addexec(g-var g-var.c "librt;libbu;${M_LIBRARY}" FOLDER Conv ARG_SCHEMA)
 

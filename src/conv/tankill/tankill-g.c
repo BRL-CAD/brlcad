@@ -35,7 +35,10 @@
 
 /* interface headers */
 #include "bu/app.h"
-#include "bu/getopt.h"
+#include "bu/arg.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -109,29 +112,72 @@ Add_solid(int comp_code_num)
 }
 
 
-/*
- * Converts "tankill" format geometry to BRL-CAD model
- */
-static void
-usage(void)
+struct tankill_args {
+    int help;
+    int verbose;
+    int keep_1001;
+    int nmg;
+    fastf_t tolerance;
+    unsigned int rt_debug;
+    unsigned int nmg_debug;
+    const char *input_file;
+    const char *output_file;
+};
+
+static const struct bu_arg_option tankill_options[] = {
+    BU_ARG_FLAG("h", "help", struct tankill_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("v", "verbose", struct tankill_args, verbose,
+	"Report each component, solid, region, and group"),
+    BU_ARG_FLAG("k", "keep-1001", struct tankill_args, keep_1001,
+	"Keep normally skipped component code 1001"),
+    BU_ARG_FLAG("n", "nmg", struct tankill_args, nmg,
+	"Write NMG solids instead of the default BoTs"),
+    BU_ARG_VALUE_VALIDATE("t", "tolerance", struct tankill_args, tolerance,
+	BU_ARG_VALUE_NUMBER, bu_arg_nonnegative_number_validate, "distance",
+	"Set vertex merging distance in millimeters (default 0.0005)"),
+    BU_ARG_VALUE("x", "rt-debug", struct tankill_args, rt_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set librt hexadecimal debug flags"),
+    BU_ARG_VALUE("X", "nmg-debug", struct tankill_args, nmg_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set libnmg hexadecimal debug flags"),
+    BU_ARG_VALUE("i", "input", struct tankill_args, input_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "input.tankill",
+	"Read TANKILL data from this file instead of standard input"),
+    BU_ARG_VALUE("o", "output", struct tankill_args, output_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "output.g",
+	"Write the BRL-CAD database to this file (default tankill.g)"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema tankill_schema = BU_ARG_SCHEMA(
+    "tankill-g", "Convert UK TANKILL triangle strips to BRL-CAD",
+    tankill_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar tankill_grammar = {
+    &tankill_schema, NULL, NULL
+};
+
+static int
+tankill_help(FILE *stream, int status)
 {
-    bu_log("Usage: tankill-g [-v] [-p] [-k] [-t tolerance] [-x lvl] [-X lvl] [-i input_tankill_file] [-o output_brlcad_model]\n");
-    bu_log("    where tolerance is the minimum distance (mm) between distinct vertices,\n");
-    bu_log("    input_tankill_file is the file name for input TANKILL model\n");
-    bu_log("    output_brlcad_model is the file name for output BRL-CAD model\n");
-    bu_log("	-v -> verbose\n");
-    bu_log("	-p -> write output as polysolids rather than NMG's\n");
-    bu_log("	-k -> keep components with id = 1001 (normally skipped)\n");
-    bu_log("	-x lvl -> sets the librt debug flag to lvl\n");
-    bu_log("	-X lvl -> sets the NMG debug flag to lvl\n");
+    char *help = bu_arg_schema_help(&tankill_schema, "tankill-g");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "tankill-g help");
+    return status;
 }
 
 
 int
 main(int argc, char **argv)
 {
-    int c;
+    struct tankill_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     int i;
+    int introspection;
     int vert1, vert2;
     int vert_no;
     int no_of_verts;
@@ -150,8 +196,8 @@ main(int argc, char **argv)
     struct wmember reg_head;
     struct comp_idents *ptr;
     char name[NAMESIZE+1];
-    char input_file[START_ARRAY_SIZE] = {0};				/* input file name */
-    const char *output_file = "tankill.g";
+    const char *input_file = NULL;
+    const char *output_file;
     FILE *in_fp;					/* input file pointer */
     struct rt_wdb *out_fp;				/* output file pointer */
     int polysolids;					/* flag indicating polysolid output */
@@ -170,58 +216,57 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    in_fp = stdin;
-    setmode(fileno(in_fp), O_BINARY);
-    polysolids = 1;
+    args.tolerance = tol.dist;
+    args.output_file = "tankill.g";
+    introspection = bu_arg_introspect(&msg, &tankill_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+    if (bu_arg_schema_parse_complete(&tankill_schema, &args, &msg,
+	    argc - 1, (const char **)(argv + 1)) < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return tankill_help(stderr, EXIT_FAILURE);
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return tankill_help(stdout, EXIT_SUCCESS);
+
+    verbose = args.verbose;
+    keep_1001 = args.keep_1001;
+    polysolids = !args.nmg;
+    tol.dist = args.tolerance;
+    tol.dist_sq = tol.dist * tol.dist;
+    rt_debug = args.rt_debug;
+    nmg_debug = args.nmg_debug;
+    input_file = args.input_file;
+    output_file = args.output_file;
+
+    if (input_file) {
+	in_fp = fopen(input_file, "rb");
+	if (!in_fp) {
+	    fprintf(stderr, "Cannot open %s\n", input_file);
+	    perror("tankill-g");
+	    return EXIT_FAILURE;
+	}
+    } else {
+	in_fp = stdin;
+	setmode(fileno(in_fp), O_BINARY);
+    }
+    if (args.rt_debug) {
+	bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
+	bu_log("\n");
+    }
+    if (args.nmg_debug) {
+	bu_printb("librt nmg_debug", nmg_debug, NMG_DEBUG_FORMAT);
+	bu_log("\n");
+    }
+
     id_root = (struct comp_idents *)NULL;
     bu_ptbl_init( &faces, 64, " &faces ");
-
-    /* get command line arguments */
-    while ((c = bu_getopt(argc, argv, "vknt:i:o:x:X:")) != -1)
-    {
-	switch ( c )
-	{
-	    case 'v':
-		verbose = 1;
-		break;
-	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_debug );
-		bu_printb( "librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT );
-		bu_log("\n");
-		break;
-	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&nmg_debug );
-		bu_printb( "librt nmg_debug", nmg_debug, NMG_DEBUG_FORMAT );
-		bu_log("\n");
-		break;
-	    case 'k': /* keep component codes of 1001 */
-		keep_1001 = 1;
-		break;
-	    case 'n': /* choose NMG output */
-		polysolids = 0;
-		break;
-	    case 't': /* tolerance */
-		tol.dist = atof( bu_optarg );
-		tol.dist_sq = tol.dist * tol.dist;
-		break;
-	    case 'i': /* input file name */
-		if ( (in_fp = fopen( bu_optarg, "rb" )) == NULL )
-		{
-		    fprintf( stderr, "Cannot open %s\n", bu_optarg );
-		    perror( "tankill-g" );
-		    bu_exit( EXIT_FAILURE,  "Cannot open input file" );
-		}
-		bu_strlcpy( input_file, bu_optarg, sizeof(input_file) );
-		break;
-	    case 'o': /* output file name */
-		output_file = bu_optarg;
-		break;
-	    default:
-		usage();
-		bu_exit( EXIT_FAILURE,  NULL );
-		break;
-	}
-    }
 
     if ( (out_fp = wdb_fopen( output_file )) == NULL )
     {
@@ -231,7 +276,7 @@ main(int argc, char **argv)
     }
 
     /* use the input file name as the title (if available) */
-    if ( input_file[0] == 0 )
+    if (!input_file)
 	mk_id( out_fp, "Conversion from TANKILL" );
     else
 	mk_id( out_fp, input_file );

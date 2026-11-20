@@ -8,11 +8,11 @@ tankill-g - convert UK TANKILL triangular mesh geometry to a BRL-CAD database
 
 == SYNOPSIS
 
-[source]
-----
-tankill-g [-v] [-n] [-k] [-t _tolerance_] [-x _lvl_] [-X _lvl_] [-i _input.tankill_] [-o _output.g_]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*tankill-g* [*-v*] [*-k*] [*-n*] [*-t* _distance_] [*-x* _mask_] [*-X* _mask_]
+          [*-i* _input.tankill_] [*-o* _output.g_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -37,30 +37,33 @@ written to _tankill.g_ unless *-o* is used.
 [[options]]
 == OPTIONS
 
-*-v*::
+*-v*, *--verbose*::
   Verbose output; report each component, solid, region, and group as it is created.
 
-*-n*::
+*-n*, *--nmg*::
   Write each object as an *nmg*(5) solid instead of the default *bot*(5) solid.
 
-*-k*::
+*-k*, *--keep-1001*::
   Keep components with id 1001 (these are normally skipped as non-physical).
 
-*-t* _tolerance_::
+*-t* _distance_, *--tolerance* _distance_::
   Minimum distance, in millimeters, below which two vertices are treated as
   the same vertex. The default is 0.0005.
 
-*-x* _lvl_::
+*-x* _mask_, *--rt-debug* _mask_::
   Set the librt debug flag to the given hexadecimal value.
 
-*-X* _lvl_::
+*-X* _mask_, *--nmg-debug* _mask_::
   Set the NMG debug flag to the given hexadecimal value.
 
-*-i* _input.tankill_::
+*-i* _input.tankill_, *--input* _input.tankill_::
   Read the TANKILL model from the named file instead of standard input.
 
-*-o* _output.g_::
+*-o* _output.g_, *--output* _output.g_::
   Write the BRL-CAD database to the named file instead of _tankill.g_.
+
+*-h*, *-?*, *--help*::
+  Print help and exit.
 
 [[examples]]
 == EXAMPLES
