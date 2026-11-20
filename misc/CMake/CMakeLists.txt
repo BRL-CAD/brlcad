@@ -14,6 +14,7 @@ set(
   BRLCAD_Install_Prefix.cmake
   BRLCAD_Path_Privacy.cmake
   BRLCAD_Package_Name.cmake
+  BRLCAD_Package_Bundle.cmake
   InstallPathPrivacy.cmake.in
   BRLCAD_Options.cmake
   BRLCAD_Probe_Validation.cmake
@@ -114,12 +115,22 @@ set(
   scripts/tcl_mkindex.cmake
   scripts/timestamp.cmake
   package_name_test.cmake
+  package_bundle_test.cmake
 )
 cmakefiles(${cmake_ignore_files})
 
 cmakefiles(NOTES)
 
 if(BUILD_TESTING)
+  add_test(
+    NAME cmake-package-bundle
+    COMMAND "${CMAKE_COMMAND}"
+      "-DTEST_ROOT=${CMAKE_CURRENT_BINARY_DIR}/package-bundle-test"
+      "-DMODULE_FILE=${CMAKE_CURRENT_SOURCE_DIR}/BRLCAD_Package_Bundle.cmake"
+      "-DTEST_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}"
+      "-DTEST_STRCLEAR=${STRCLEAR_EXECUTABLE}"
+      -P "${CMAKE_CURRENT_SOURCE_DIR}/package_bundle_test.cmake"
+  )
   find_package(Git QUIET)
   if(GIT_EXECUTABLE)
     add_test(

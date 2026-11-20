@@ -37,6 +37,23 @@
 # To pass variables to cpack from cmake, they must be configured
 # in this file.
 
+if(NOT DEFINED BRLCAD_BUNDLE_MANIFESTS)
+  set(BRLCAD_BUNDLE_MANIFESTS "@BRLCAD_BUNDLE_MANIFESTS@")
+endif()
+if(NOT DEFINED BRLCAD_BUNDLE_CONFLICT_POLICY)
+  set(BRLCAD_BUNDLE_CONFLICT_POLICY "@BRLCAD_BUNDLE_CONFLICT_POLICY@")
+endif()
+if(BRLCAD_BUNDLE_MANIFESTS AND NOT CPACK_INSTALLED_DIRECTORIES)
+  set(BRLCAD_BUNDLE_SYSTEM_NAME "@CMAKE_SYSTEM_NAME@")
+  set(BRLCAD_BUNDLE_INSTALL_PREFIX "@CMAKE_INSTALL_PREFIX@")
+  set(BRLCAD_BUNDLE_LIB_DIR "@LIB_DIR@")
+  set(BRLCAD_BUNDLE_AUDIT_DIR "@CMAKE_BINARY_DIR@/bundle-audit")
+  set(BRLCAD_BUNDLE_STRCLEAR "@STRCLEAR_EXECUTABLE@")
+  set(BRLCAD_BUNDLE_PLIEF "@P_RPATH_EXECUTABLE@")
+  list(APPEND CPACK_PRE_BUILD_SCRIPTS
+    "@BRLCAD_CMAKE_DIR@/BRLCAD_Package_Bundle.cmake")
+endif()
+
 # Resolve development checkout revisions when CPack runs so package names
 # cannot retain a commit recorded by an earlier CMake configuration.
 if(NOT CPACK_INSTALLED_DIRECTORIES)

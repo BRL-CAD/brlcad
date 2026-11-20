@@ -51,6 +51,13 @@ set(CPACK_PACKAGE_VERSION_PATCH ${BRLCAD_VERSION_PATCH})
 # By default, we want debugging information
 set(CPACK_STRIP_FILES FALSE)
 
+set(BRLCAD_BUNDLE_MANIFESTS "" CACHE STRING
+  "Ordered external manifests to merge into binary package staging")
+set(BRLCAD_BUNDLE_CONFLICT_POLICY "BRLCAD_WINS" CACHE STRING
+  "External package collision policy (BRLCAD_WINS or MANIFEST_WINS)")
+set_property(CACHE BRLCAD_BUNDLE_CONFLICT_POLICY PROPERTY STRINGS
+  BRLCAD_WINS MANIFEST_WINS)
+
 # If we're not on Windows, set the install prefix and create
 # TGZ and TBZ2 packages by default
 if(NOT WIN32)

@@ -452,6 +452,48 @@ This number, when specified, describes how many compilation threads to use
 when compiling bext sources.  Default is 8.
 
 
+--- BRLCAD_BUNDLE_MANIFESTS ---
+
+An ordered, semicolon-separated list of JSON manifests whose files are added
+only to binary package staging.  These files do not participate in the BRL-CAD
+build or normal install.  Each schema 1 manifest supplies the target platform,
+an explicit install root, and a file list.  For example:
+
+{
+  "schema": 1,
+  "platform": "Linux",
+  "install_root": "/path/to/upstream/install",
+  "install_prefixes": ["/path/to/upstream/build"],
+  "files": ["bin/tool", "/path/to/upstream/install/lib/libtool.so"]
+}
+
+Relative file entries are resolved below install_root.  Absolute entries must
+also be below that root and are converted to package-relative paths.  Existing
+bext-install-manifest.json files satisfy this format.  Relative symbolic links
+are preserved when they remain inside the root; unsafe or missing entries stop
+package generation.
+
+The configured list is used by the package target.  A specific package run may
+override it without reconfiguring BRL-CAD:
+
+cpack -D "BRLCAD_BUNDLE_MANIFESTS=/path/one.json;/path/two.json"
+
+Bundled text paths are replaced with CMAKE_INSTALL_PREFIX, and binary paths
+and RPATHs are processed for relocation.  Each run writes an audit log under
+the build directory's bundle-audit directory, including every text-prefix
+replacement.
+
+
+--- BRLCAD_BUNDLE_CONFLICT_POLICY ---
+
+Controls package-path conflicts for BRLCAD_BUNDLE_MANIFESTS.  BRLCAD_WINS is
+the default and preserves files installed by BRL-CAD.  MANIFEST_WINS permits
+external files to replace them.  In both modes, later manifests replace files
+from earlier manifests.  It may also be overridden for one direct CPack run:
+
+cpack -D BRLCAD_BUNDLE_CONFLICT_POLICY=MANIFEST_WINS
+
+
 --- BRLCAD_DEBUGGING ---
 
 Add compiler flags to aid in program debugging.  Defaults to ON.
