@@ -1488,7 +1488,7 @@ refine_edges(struct shell *s, struct bu_list *vlfree)
 }
 
 
-static void
+static int
 Make_shell(struct bu_list *vlfree)
 {
     int i;
@@ -1612,6 +1612,12 @@ Make_shell(struct bu_list *vlfree)
 	    break;
     }
 
+    if (BU_LIST_IS_EMPTY(&s->fu_hd)) {
+	bu_log("ERROR: grid sampling produced no facets\n");
+	nmg_km(m);
+	return 0;
+    }
+
     nmg_rebound(m, &tol);
 
     if (do_extra_rays)
@@ -1648,6 +1654,8 @@ Make_shell(struct bu_list *vlfree)
 	mk_bot_from_nmg(fd_out, "shell", s);
     else
 	mk_nmg(fd_out, "shell", m);
+
+    return 1;
 }
 
 
@@ -1723,6 +1731,7 @@ main(int argc, char **argv)
     size_t i, j;
     size_t loaded = 0;
     int c;
+    int shell_created;
     fastf_t x_start, y_start, z_start;
     fastf_t bb_area[3];
     struct bu_list *vlfree = &rt_vlfree;
@@ -1995,9 +2004,9 @@ main(int argc, char **argv)
 	    break;
     }
 
-    Make_shell(vlfree);
+    shell_created = Make_shell(vlfree);
     db_close(fd_out->dbip);
-    return 0;
+    return shell_created ? 0 : 1;
 }
 
 
