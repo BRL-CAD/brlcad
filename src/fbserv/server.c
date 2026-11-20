@@ -216,7 +216,7 @@ fb_server_fb_auth(struct pkg_conn *pcp, char *buf)
     }
 
     if (buf && pcp->pkc_len >= FBSERV_AUTH_TOKEN_LEN)
-	bu_strlcpy(provided, buf, sizeof(provided));
+	memcpy(provided, buf, FBSERV_AUTH_TOKEN_LEN);
 
     if (fbserv_verify_token(provided, expected)) {
 	fbserv_set_client_auth(idx, 1);
