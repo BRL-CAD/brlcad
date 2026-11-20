@@ -851,6 +851,9 @@ parse_args(int argc, char **argv)
     bool trunk_radius_supplied = false;
     bool age_supplied = false;
     bool detail_supplied = false;
+    bool offset_x_supplied = false;
+    bool offset_y_supplied = false;
+    bool offset_z_supplied = false;
     preset_type cli_preset = opts.preset;
     output_mode cli_mode = opts.mode;
     leaf_mode cli_leaf_mode = opts.leaves;
@@ -859,6 +862,9 @@ parse_args(int argc, char **argv)
     double cli_height = opts.height;
     double cli_trunk_radius = opts.trunk_radius;
     double cli_age = opts.age;
+    double cli_offset_x = opts.offset_x;
+    double cli_offset_y = opts.offset_y;
+    double cli_offset_z = opts.offset_z;
 
     for (int i = 1; i < argc; ++i) {
 	const char *arg = argv[i];
@@ -910,10 +916,16 @@ parse_args(int argc, char **argv)
 		opts.demo_file = value ? value : next_value(argc, argv, i, arg);
 	    } else if (key == "x-offset") {
 		opts.offset_x = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
+		cli_offset_x = opts.offset_x;
+		offset_x_supplied = true;
 	    } else if (key == "y-offset") {
 		opts.offset_y = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
+		cli_offset_y = opts.offset_y;
+		offset_y_supplied = true;
 	    } else if (key == "z-offset") {
 		opts.offset_z = parse_double_arg(arg, value ? value : next_value(argc, argv, i, arg));
+		cli_offset_z = opts.offset_z;
+		offset_z_supplied = true;
 	    } else if (key == "force") {
 		if (value)
 		    throw std::runtime_error("--force does not take a value");
@@ -963,6 +975,12 @@ parse_args(int argc, char **argv)
 	opts.age = cli_age;
     if (detail_supplied)
 	opts.detail = cli_detail;
+    if (offset_x_supplied)
+	opts.offset_x = cli_offset_x;
+    if (offset_y_supplied)
+	opts.offset_y = cli_offset_y;
+    if (offset_z_supplied)
+	opts.offset_z = cli_offset_z;
     if (detail_supplied) {
 	if (opts.detail == detail_level::low) {
 	    opts.branch_sides = 7;
