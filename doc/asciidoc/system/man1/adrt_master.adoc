@@ -9,11 +9,11 @@ adrt_master - dispatch and coordinate distributed ADRT ray tracing slaves
 
 == SYNOPSIS
 
-[source]
-----
-adrt_master [-bdv] [-c _comp_host_] [-e _script_] [-l _slave_list_] [-o _obs_port_] [-p _port_]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*adrt_master* [*-c* _host_] [*-d*] [*-e* _script_] [*-l* _file_] [*-o* _port_] [*-p* _port_] [*-b*]
+            [*-v*]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -38,39 +38,39 @@ exits.
 [[options]]
 == OPTIONS
 
-*-b*::
+*-b*, *--build*::
   Print the build date and time of this *adrt_master* binary and exit.
 
-*-c* _comp_host_::
-  Connect to the component-name server running on _comp_host_ (port 1983).
+*-c* _host_, *--component-host*=_host_::
+  Connect to the component-name server running on _host_ (port 1983).
   This server supplies geometry component names used when reporting
   shotline intersections.
 
-*-d*::
+*-d*, *--daemon*::
   Run in daemon mode. Once both the master and observer listening sockets
   are bound, *adrt_master* detaches from the controlling terminal and runs
   in the background.
 
-*-e* _script_::
+*-e* _script_, *--slave-exec*=_script_::
   Path to a script that *adrt_master* executes to start the slave compute
   nodes.
 
-*-l* _slave_list_::
+*-l* _file_, *--slave-list*=_file_::
   Path to a file containing the list of slave hosts to use as compute
   nodes.
 
-*-o* _obs_port_::
+*-o* _port_, *--observer-port*=_port_::
   Set the observer port that client applications (such as *isst*(1))
-  connect to. The default is 1982.
+  connect to. The default is 1982; the value must be in the range 1-65535.
 
-*-p* _port_::
+*-p* _port_, *--port*=_port_::
   Set the master port that *adrt_slave*(1) compute nodes connect to. The
-  default is 1980.
+  default is 1980; the value must be in the range 1-65535.
 
-*-v*::
+*-v*, *--verbose*::
   Enable verbose output.
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a usage summary and exit.
 
 [[examples]]
