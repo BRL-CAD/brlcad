@@ -46,7 +46,14 @@ if(BRLCAD_ENABLE_STEP)
   brlcad_addexec(g-step "../StepExportHost.cpp" "libbu" NO_STRICT FOLDER Conv)
   target_include_directories(g-step BEFORE PRIVATE ${gstep_INCLUDE_DIRS})
 
-  if (TARGET mged)
+  # Converters are configured before MGED, including in component builds.
+  # Resolve this test's optional target dependency after target creation.
+  function(STEP_ADD_VALID_OUTPUT_TEST)
+    if(NOT TARGET mged OR NOT TARGET g-step OR NOT TARGET step-g)
+      return()
+    endif()
+    get_target_property(_step_export_source g-step SOURCE_DIR)
+    get_target_property(_step_export_binary g-step BINARY_DIR)
     brlcad_add_test(
       NAME g_step_valid_output
       COMMAND
@@ -54,10 +61,11 @@ if(BRLCAD_ENABLE_STEP)
       -DG_STEP=$<TARGET_FILE:g-step>
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
-      -DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}
-      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/g_step_valid_output.cmake
+      -DOUTPUT_DIR=${_step_export_binary}
+      -P ${_step_export_source}/tests/g_step_valid_output.cmake
     )
-  endif()
+  endfunction()
+  cmake_language(DEFER DIRECTORY "${CMAKE_SOURCE_DIR}" CALL STEP_ADD_VALID_OUTPUT_TEST)
 
   if (TARGET mged AND TARGET asc2g)
     brlcad_add_test(
