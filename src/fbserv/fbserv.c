@@ -55,6 +55,7 @@
 #include <stdarg.h>
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
 #include <string.h>
 #include <time.h>
 #ifdef HAVE_SYSLOG_H
@@ -236,6 +237,24 @@ Token authentication (works with or without TLS):\n\
   startup and prints it to stderr.\n\
 ";
 
+static int
+parse_int_arg(const char *arg, int minimum, int maximum, const char *label,
+	int *value)
+{
+    char *end = NULL;
+    long parsed;
+
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (errno == ERANGE || end == arg || *end || parsed < minimum ||
+	    parsed > maximum) {
+	bu_log("fbserv: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+    *value = (int)parsed;
+    return 1;
+}
+
 int
 get_args(int argc, char **argv)
 {
@@ -262,18 +281,23 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 	    case 'S':
-		height = width = atoi(bu_optarg);
+		if (!parse_int_arg(bu_optarg, 0, INT_MAX, "square size", &width))
+		    return 0;
+		height = width;
 		break;
 	    case 'w':
 	    case 'W':
-		width = atoi(bu_optarg);
+		if (!parse_int_arg(bu_optarg, 0, INT_MAX, "width", &width))
+		    return 0;
 		break;
 	    case 'n':
 	    case 'N':
-		height = atoi(bu_optarg);
+		if (!parse_int_arg(bu_optarg, 0, INT_MAX, "height", &height))
+		    return 0;
 		break;
 	    case 'p':
-		port = atoi(bu_optarg);
+		if (!parse_int_arg(bu_optarg, 0, 65535, "port", &port))
+		    return 0;
 		port_set = 1;
 		break;
 
@@ -283,7 +307,8 @@ get_args(int argc, char **argv)
     }
     /* If no "-p port", port comes from 1st extra */
     if ((bu_optind < argc) && (port_set == 0)) {
-	port = atoi(argv[bu_optind++]);
+	if (!parse_int_arg(argv[bu_optind++], 0, 65535, "port", &port))
+	    return 0;
 	port_set = 1;
     }
     /* If no "-F framebuffer", fb comes from 2nd extra */
