@@ -30,65 +30,71 @@
 
 #include "common.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/cmd.h"
-#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/vls.h"
 #include "ged.h"
 
-static char usage[] = "Usage: %s [-A A|a|b|e|g|o|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper, lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p plotPrefix] [-P ncpus] [-q] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol] model object [objects...]\n";
+#define GQA_SCHEMA_STANDALONE
+#include "../libged/gqa/gqa_schema.h"
+
+static const struct bu_arg_grammar gqa_grammar = {
+    &gqa_schema, NULL, NULL
+};
+
+
+static int
+gqa_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&gqa_schema, "gqa");
+
+    if (help) {
+	bu_flog(stream, "%s", help);
+	bu_free(help, "gqa help");
+    }
+    return status;
+}
 
 int
 main(int argc, char *argv[])
 {
     int i, j;
     int db_index;
-    int c;
+    int introspection;
+    int operand_index;
     int ret;
     const char **av;
     struct ged *gedp;
+    struct gqa_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
 
-    bu_opterr = 0;
-    bu_optind = 1;
-
-    /* Get past command line options. */
-    while ((c = bu_getopt(argc, argv, "A:a:de:f:g:Gn:N:p:P:qrS:t:U:u:vV:W:h?")) != -1) {
-	switch (c) {
-	    case 'A':
-	    case 'a':
-	    case 'e':
-	    case 'd':
-	    case 'f':
-	    case 'g':
-	    case 'G':
-	    case 'n':
-	    case 'N':
-	    case 'p':
-	    case 'P':
-	    case 'q':
-	    case 'r':
-	    case 'S':
-	    case 't':
-	    case 'v':
-	    case 'V':
-	    case 'W':
-	    case 'U':
-	    case 'u':
-		break;
-	    default:
-		bu_exit(1, usage, argv[0]);
-		break;
-	}
+    introspection = bu_arg_introspect(&msg, &gqa_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
 
-    if (bu_optind >= argc) {
-	bu_exit(1, usage, argv[0]);
+    args.views = INT_MIN;
+    operand_index = bu_arg_schema_parse_complete(&gqa_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
     }
+    bu_vls_free(&msg);
+    if (args.help)
+	return gqa_help(stdout, 0);
 
     av = (const char **)bu_calloc(argc, sizeof(char *), "av");
 
-    db_index = bu_optind;
+    db_index = operand_index + 1;
     for (i = j = 0; i < argc; ++i) {
 	if (i == db_index)
 	    continue;
@@ -101,7 +107,9 @@ main(int argc, char *argv[])
 
     if ((gedp = ged_open("db", argv[db_index], 1)) == GED_NULL) {
 	bu_free((void *)av, "av");
-	bu_exit(1, usage, argv[0]);
+	bu_flog(stderr, "%s: unable to open database %s\n", argv[0],
+	    argv[db_index]);
+	return 1;
     }
 
     ret = ged_exec_gqa(gedp, j, av);

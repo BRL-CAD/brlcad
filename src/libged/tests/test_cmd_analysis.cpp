@@ -5756,7 +5756,7 @@ main(int ac, char *av[])
 	static const alias_expectation compact_aliases[] = {
 	    {"edcolor", "?", "help"},
 	    {"editit", "?", "help"},
-	    {"gqa", "?", "h"},
+	    {"gqa", "?", "help"},
 	    {"human", "?", "help"},
 	    {"human", "l", "location"},
 	    {"ls", "s", "primitives"},
