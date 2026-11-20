@@ -172,8 +172,6 @@ static int _pkg_send_win(int d, const void *buf, int nbytes) {
 #endif
 
 int pkg_nochecking = 0;	/* set to disable extra checking for input */
-static int pkg_permport = 0;	/* TCP port that pkg_listen() is listening on (internal) */
-
 /* Internal sentinel fd value for split-fd (pipe) transport mode.
  * Not exposed publicly; use pkg_is_stdio_mode() to test.         */
 #define PKG_STDIO_MODE (-3)
@@ -481,6 +479,7 @@ _pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog)(const cha
     pc->pkc_incur = pc->pkc_inend = 0;
     pc->pkc_tx_kind   = (fd == PKG_STDIO_MODE) ? 1 : 0;
     pc->pkc_listen_fd = -1;
+    pc->pkc_owns_fd   = 1;
     pc->pkc_addr[0]   = '\0';
     pc->pkc_addr_env[0] = '\0';
     return pc;
@@ -544,6 +543,7 @@ pkg_open_fds(int rfd, int wfd, const struct pkg_switch *switchp, void (*errlog)(
 struct pkg_conn *
 pkg_adopt_socket(int fd, const struct pkg_switch *switchp, pkg_errlog errlog)
 {
+    struct pkg_conn *pc;
 #ifdef HAVE_WINSOCK_H
     WORD wVersionRequested;
     WSADATA wsaData;
@@ -564,7 +564,23 @@ pkg_adopt_socket(int fd, const struct pkg_switch *switchp, pkg_errlog errlog)
     }
 #endif
 
-    return _pkg_makeconn(fd, switchp, errlog);
+    pc = _pkg_makeconn(fd, switchp, errlog);
+#ifdef HAVE_WINSOCK_H
+    if (pc == PKC_ERROR || pc == PKC_NULL)
+	WSACleanup();
+#endif
+    return pc;
+}
+
+
+struct pkg_conn *
+pkg_borrow_socket(int fd, const struct pkg_switch *switchp, pkg_errlog errlog)
+{
+    struct pkg_conn *pc = pkg_adopt_socket(fd, switchp, errlog);
+
+    if (pc != PKC_ERROR && pc != PKC_NULL)
+	pc->pkc_owns_fd = 0;
+    return pc;
 }
 
 
@@ -678,6 +694,7 @@ pkg_set_tls(struct pkg_conn *pc,
 	    void *tls_ctx,
 	    ptrdiff_t (*tls_read)(void *ctx, void *buf, size_t n),
 	    ptrdiff_t (*tls_write)(void *ctx, const void *buf, size_t n),
+	    int (*tls_pending)(void *ctx),
 	    void (*tls_free)(void *ctx))
 {
     if (pc == PKC_NULL || pc == PKC_ERROR)
@@ -685,6 +702,7 @@ pkg_set_tls(struct pkg_conn *pc,
     pc->pkc_tls_ctx   = tls_ctx;
     pc->pkc_tls_read  = tls_read;
     pc->pkc_tls_write = tls_write;
+    pc->pkc_tls_pending = tls_pending;
     pc->pkc_tls_free  = tls_free;
     return 0;
 }
@@ -961,7 +979,6 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 	memcpy(sunme.sun_path + 1, name, name_len);
 	addr = (struct sockaddr *) &sunme;
 	addrlen = offsetof(struct sockaddr_un, sun_path) + 1 + name_len;
-	pkg_permport = -1;
 	goto ready;
 #    else
 	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
@@ -984,7 +1001,6 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 	sunme.sun_family = AF_UNIX;
 	addr = (struct sockaddr *) &sunme;
 	addrlen = offsetof(struct sockaddr_un, sun_path) + strlen(sunme.sun_path) + 1;
-	pkg_permport = -1;
 	goto ready;
     }
 #  endif /* HAVE_SYS_UN_H */
@@ -1001,7 +1017,6 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 	}
 	sinme.sin_port = sp->s_port;
     }
-    pkg_permport = sinme.sin_port;		/* XXX -- needs formal I/F */
     sinme.sin_family = AF_INET;
     sinme.sin_addr = iface;
     addr = (struct sockaddr *) &sinme;
@@ -1207,14 +1222,16 @@ pkg_close(struct pkg_conn *pc)
 #endif
 	    pc->pkc_listen_fd = -1;
 	}
-	if (pc->pkc_fd >= 0) {
+	if (pc->pkc_fd >= 0 && pc->pkc_owns_fd) {
 #ifdef HAVE_WINSOCK_H
 	    (void)closesocket(pc->pkc_fd);
-	    WSACleanup();
 #else
 	    (void)close(pc->pkc_fd);
 #endif
 	}
+#ifdef HAVE_WINSOCK_H
+	WSACleanup();
+#endif
     }
 
     pc->pkc_fd = -1;		/* safety */
@@ -1265,62 +1282,29 @@ _pkg_inget(struct pkg_conn *pc, char *buf, size_t count)
  * This is a private implementation function.
  */
 static void
-_pkg_checkin(struct pkg_conn *pc, int nodelay)
+_pkg_checkin(struct pkg_conn *pc)
 {
+    int ready;
 
-    struct timeval tv;
-    fd_set bits;
-    ssize_t i;
-    unsigned int j;
+    /* TLS control records can make the socket readable without providing
+     * application data.  A speculative SSL_read() on the blocking transport
+     * would then wait for a later application record.  Explicit receive paths
+     * perform the required read when the caller is ready to wait for data. */
+    if (pc->pkc_tls_read)
+	return;
 
-    /* Check socket for unexpected input */
-    tv.tv_sec = 0;
-    if (nodelay)
-	tv.tv_usec = 0;		/* poll -- no waiting */
-    else
-	tv.tv_usec = 20000;	/* 20 ms */
-
-    errno = 0;
-    FD_ZERO(&bits);
-    if (pc->pkc_tx_kind == 1) {
-	FD_SET(pc->pkc_in_fd, &bits);
-    } else {
-	FD_SET(pc->pkc_fd, &bits);
-    }
-    if (pc->pkc_tx_kind == 1) {
-	// TODO - select doesn't work on non-socket file descriptors on Windows,
-	// so this isn't going to fly there.
-	i = select(pc->pkc_in_fd+1, &bits, (fd_set *)0, (fd_set *)0, &tv);
-    } else {
-	i = select(pc->pkc_fd+1, &bits, (fd_set *)0, (fd_set *)0, &tv);
-    }
+    ready = pkg_conn_poll(pc);
     if (_pkg_debug) {
 	_pkg_timestamp();
 	fprintf(_pkg_debug,
-		"_pkg_checkin: select on fd %d returned %ld\n",
-		pc->pkc_fd,
-		(long int)i);
+		"_pkg_checkin: poll on fd %d returned %d\n",
+		pkg_get_read_fd(pc), ready);
 	fflush(_pkg_debug);
     }
-    if (i > 0) {
-	for (j = 0; j < FD_SETSIZE; j++)
-	    if (FD_ISSET(j, &bits)) break;
-
-	if (j < FD_SETSIZE) {
-	    /* Some fd is ready for I/O */
-	    (void)pkg_suckin(pc);
-	} else {
-	    /* Odd condition, bits! */
-	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
-		     "_pkg_checkin: select returned %ld, bits=0\n",
-		     (long int)i);
-	    (pc->pkc_errlog)(_pkg_errbuf);
-	}
-    } else if (i < 0) {
-	/* Error condition */
-	if (errno != EINTR && errno != EBADF)
-	    _pkg_perror(pc->pkc_errlog, "_pkg_checkin: select");
-    }
+    if (ready > 0)
+	(void)pkg_suckin(pc);
+    else if (ready < 0)
+	pc->pkc_errlog("_pkg_checkin: input poll failed\n");
 }
 
 
@@ -1345,7 +1329,7 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
 
     /* Check for any pending input, no delay */
     /* Input may be read, but not acted upon, to prevent deep recursion */
-    _pkg_checkin(pc, 1);
+    _pkg_checkin(pc);
 
     /* Flush any queued stream output first. */
     if (pc->pkc_strpos > 0) {
@@ -1514,7 +1498,7 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 
     /* Check for any pending input, no delay */
     /* Input may be read, but not acted upon, to prevent deep recursion */
-    _pkg_checkin(pc, 1);
+    _pkg_checkin(pc);
 
     /* Flush any queued stream output first. */
     if (pc->pkc_strpos > 0) {
@@ -2327,7 +2311,6 @@ pkg_suckin(struct pkg_conn *pc)
 
 struct pkg_listener {
     int fd;
-    int hold_fd;
     int port;
     int kind;
 #ifdef _WIN32
@@ -2335,8 +2318,6 @@ struct pkg_listener {
 #endif
     pkg_errlog errlog;
     char path[MAXPATHLEN];
-    char pending[MAXPATHLEN * 4];
-    size_t pending_len;
 };
 
 pkg_listener_t *
@@ -2346,6 +2327,7 @@ pkg_listen(const char *service, const char *iface_or_null, int backlog, pkg_errl
     struct pkg_listener *L;
     const char *listen_service = service;
     int kind = 0;
+    int port = -1;
 #ifdef _WIN32
     HANDLE pipe_h = INVALID_HANDLE_VALUE;
 #endif
@@ -2367,29 +2349,28 @@ pkg_listen(const char *service, const char *iface_or_null, int backlog, pkg_errl
     }
 #endif
 
-#ifndef _WIN32
-    if (service && strncmp(service, "fifo:", 5) == 0) {
-	listen_service = service + 5;
-	(void)remove(listen_service);
-	if (mkfifo(listen_service, 0600) < 0)
-	    return NULL;
-	lfd = open(listen_service, O_RDONLY | O_NONBLOCK);
-	if (lfd < 0) {
-	    (void)remove(listen_service);
-	    return NULL;
-	}
-	kind = 1;
-	goto have_lfd;
-    }
-#endif
-
     if (service && strncmp(service, "unix:", 5) == 0)
 	listen_service = service + 5;
 
     lfd = pkg_permserver(listen_service, "tcp", backlog, errlog);
     if (lfd < 0) return NULL;
 
+    {
+	struct sockaddr_in addr;
+#ifdef _WIN32
+	int addrlen = (int)sizeof(addr);
+#else
+	socklen_t addrlen = (socklen_t)sizeof(addr);
+#endif
+	memset(&addr, 0, sizeof(addr));
+	if (getsockname(lfd, (struct sockaddr *)&addr, &addrlen) == 0 &&
+	    addr.sin_family == AF_INET)
+	    port = (int)ntohs(addr.sin_port);
+    }
+
+#ifdef _WIN32
 have_lfd:
+#endif
     L = (struct pkg_listener *)malloc(sizeof(struct pkg_listener));
     if (!L) {
 #ifdef _WIN32
@@ -2402,30 +2383,21 @@ have_lfd:
 #else
 	close(lfd);
 #endif
-	if (kind == 1)
-	    (void)remove(listen_service);
 	return NULL;
     }
     L->fd     = lfd;
-    L->hold_fd = -1;
-    L->port   = (kind == 0) ? pkg_permport : -1;   /* pkg_permserver() sets this global */
+    L->port   = port;
     L->kind   = kind;
 #ifdef _WIN32
     L->pipe_h = pipe_h;
 #endif
     L->errlog = errlog;
     L->path[0] = '\0';
-    L->pending[0] = '\0';
-    L->pending_len = 0;
     if (listen_service && listen_service[0] == '/')
 	snprintf(L->path, sizeof(L->path), "%s", listen_service);
 #ifdef _WIN32
     if (kind == 2)
 	snprintf(L->path, sizeof(L->path), "%s", listen_service);
-#endif
-#ifndef _WIN32
-    if (kind == 1)
-	L->hold_fd = open(listen_service, O_WRONLY | O_NONBLOCK);
 #endif
     return L;
 }
@@ -2450,13 +2422,30 @@ pkg_accept(pkg_listener_t *L, const struct pkg_switch *switchp, pkg_errlog errlo
 	BOOL connected;
 	DWORD err;
 
-	if (nonblocking)
-	    return PKC_NULL;
 	if (L->pipe_h == INVALID_HANDLE_VALUE || L->path[0] == '\0')
 	    return PKC_ERROR;
+	if (nonblocking) {
+	    DWORD nowait_mode = PIPE_NOWAIT;
+	    if (!SetNamedPipeHandleState(L->pipe_h, &nowait_mode, NULL, NULL))
+		return PKC_ERROR;
+	}
 
 	connected = ConnectNamedPipe(L->pipe_h, NULL);
 	err = connected ? ERROR_SUCCESS : GetLastError();
+	if (nonblocking) {
+	    DWORD wait_mode = PIPE_WAIT;
+	    if (!SetNamedPipeHandleState(L->pipe_h, &wait_mode, NULL, NULL)) {
+		if (connected || err == ERROR_PIPE_CONNECTED)
+		    (void)DisconnectNamedPipe(L->pipe_h);
+		return PKC_ERROR;
+	    }
+	}
+	if (!connected && nonblocking && err == ERROR_NO_DATA) {
+	    (void)DisconnectNamedPipe(L->pipe_h);
+	    return PKC_NULL;
+	}
+	if (!connected && nonblocking && err == ERROR_PIPE_LISTENING)
+	    return PKC_NULL;
 	if (!connected && err != ERROR_PIPE_CONNECTED)
 	    return PKC_ERROR;
 
@@ -2483,82 +2472,6 @@ pkg_accept(pkg_listener_t *L, const struct pkg_switch *switchp, pkg_errlog errlo
 	    (void)close(wfd);
 	}
 	return pc;
-    }
-#endif
-
-#ifndef _WIN32
-    if (L && L->kind == 1) {
-	char *nl1 = NULL;
-	char *nl2 = NULL;
-	char c2s[MAXPATHLEN] = {0};
-	char s2c[MAXPATHLEN] = {0};
-	int rfd = -1;
-	int wfd = -1;
-
-	while (!(nl1 && nl2)) {
-	    ssize_t got;
-	    size_t avail;
-
-	    avail = sizeof(L->pending) - L->pending_len - 1;
-	    if (avail == 0)
-		return PKC_ERROR;
-
-	    got = read(L->fd, L->pending + L->pending_len, avail);
-	    if (got < 0) {
-		if (errno == EAGAIN || errno == EWOULDBLOCK) {
-		    if (nonblocking)
-			return PKC_NULL;
-		    fd_set rfds;
-		    FD_ZERO(&rfds);
-		    FD_SET(L->fd, &rfds);
-		    if (select(L->fd + 1, &rfds, NULL, NULL, NULL) < 0) {
-			if (errno == EINTR)
-			    continue;
-			return PKC_ERROR;
-		    }
-		    continue;
-		}
-		return PKC_ERROR;
-	    }
-	    if (got == 0) {
-		if (nonblocking)
-		    return PKC_NULL;
-		continue;
-	    }
-
-	    L->pending_len += (size_t)got;
-	    L->pending[L->pending_len] = '\0';
-	    nl1 = strchr(L->pending, '\n');
-	    nl2 = nl1 ? strchr(nl1 + 1, '\n') : NULL;
-	}
-
-	if ((size_t)(nl1 - L->pending) >= sizeof(c2s) ||
-		(size_t)(nl2 - nl1 - 1) >= sizeof(s2c))
-	    return PKC_ERROR;
-
-	memcpy(c2s, L->pending, (size_t)(nl1 - L->pending));
-	c2s[nl1 - L->pending] = '\0';
-	memcpy(s2c, nl1 + 1, (size_t)(nl2 - nl1 - 1));
-	s2c[nl2 - nl1 - 1] = '\0';
-
-	{
-	    size_t used = (size_t)(nl2 - L->pending + 1);
-	    memmove(L->pending, L->pending + used, L->pending_len - used);
-	    L->pending_len -= used;
-	    L->pending[L->pending_len] = '\0';
-	}
-
-	rfd = open(c2s, O_RDONLY);
-	if (rfd < 0)
-	    return PKC_ERROR;
-	wfd = open(s2c, O_WRONLY);
-	if (wfd < 0) {
-	    close(rfd);
-	    return PKC_ERROR;
-	}
-	(void)remove(c2s);
-	(void)remove(s2c);
-	return pkg_open_fds(rfd, wfd, switchp, errlog);
     }
 #endif
 
@@ -2589,13 +2502,6 @@ pkg_listener_close(pkg_listener_t *L)
 	return;
     }
 #endif
-    if (L->hold_fd >= 0) {
-#ifdef HAVE_WINSOCK_H
-	closesocket(L->hold_fd);
-#else
-	close(L->hold_fd);
-#endif
-    }
     if (L->fd >= 0) {
 #ifdef HAVE_WINSOCK_H
 	closesocket(L->fd);

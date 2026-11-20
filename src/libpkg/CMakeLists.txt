@@ -9,7 +9,7 @@ set(PKG_LIBS
 brlcad_addlib(libpkg "${LIBPKG_SOURCES}" "" ""
   PRIVATE_LIBS ${PKG_LIBS}
 )
-set_target_properties(libpkg PROPERTIES VERSION 20.0.1 SOVERSION 20)
+set_target_properties(libpkg PROPERTIES VERSION 21.0.0 SOVERSION 21)
 
 brlcad_adddata(tpkg.c sample_applications)
 if (TARGET libbu)

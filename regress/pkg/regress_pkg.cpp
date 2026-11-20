@@ -110,6 +110,12 @@ server_main(int UNUSED(argc), const char *UNUSED(argv)) {
     if (!listener) {
 	bu_exit(-1, "Unable to start the server");
     }
+    if (pkg_get_listener_port(listener) != port) {
+	int reported_port = pkg_get_listener_port(listener);
+	pkg_listener_close(listener);
+	bu_exit(-1, "Listener reported port %d instead of %d\n",
+		reported_port, port);
+    }
 
     /* listen for a good client indefinitely.  this is a simple
      * handshake that waits for a HELO message from the client.  if it

@@ -28,6 +28,10 @@
 #include "bsocket.h"
 #include "bnetwork.h"
 
+#include <atomic>
+#include <cctype>
+#include <chrono>
+#include <climits>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -56,6 +60,9 @@
 #  include <unistd.h>
 #  include <fcntl.h>
 #  include <sys/stat.h>
+#  ifdef HAVE_POLL_H
+#    include <poll.h>
+#  endif
 #  ifdef HAVE_SYS_SELECT_H
 #    include <sys/select.h>
 #  endif
@@ -81,6 +88,92 @@ _pkg_build_addr_env(struct pkg_conn *pc)
     snprintf(pc->pkc_addr_env, sizeof(pc->pkc_addr_env),
              "%s=%s", PKG_ADDR_ENVVAR, pc->pkc_addr);
 }
+
+
+static int
+_pkg_parse_int(const char *text, int minimum, int maximum, const char **end)
+{
+    char *parse_end = NULL;
+    long value;
+
+    if (!text || !isdigit((unsigned char)text[0])) return -1;
+    errno = 0;
+    value = strtol(text, &parse_end, 10);
+    if (parse_end == text || errno == ERANGE || value < minimum ||
+            value > maximum)
+        return -1;
+    if (end)
+        *end = parse_end;
+    else if (*parse_end != '\0')
+        return -1;
+    return (int)value;
+}
+
+
+static int
+_pkg_parse_fd_pair(const char *text, int *read_fd, int *write_fd)
+{
+    const char *separator;
+
+    if (!read_fd || !write_fd ||
+            (*read_fd = _pkg_parse_int(text, 0, INT_MAX, &separator)) < 0 ||
+            *separator != ',')
+        return -1;
+    *write_fd = _pkg_parse_int(separator + 1, 0, INT_MAX, NULL);
+    return *write_fd < 0 ? -1 : 0;
+}
+
+
+#ifdef _WIN32
+static int
+_pkg_parse_handle_pair(const char *text, uint64_t *read_handle,
+        uint64_t *write_handle)
+{
+    char *separator = NULL;
+    char *end = NULL;
+
+    if (!text || !isxdigit((unsigned char)text[0]) || !read_handle ||
+            !write_handle)
+        return -1;
+    errno = 0;
+    *read_handle = strtoull(text, &separator, 16);
+    if (separator == text || errno == ERANGE || *read_handle > UINTPTR_MAX ||
+            *separator != ',' || !isxdigit((unsigned char)separator[1]))
+        return -1;
+    errno = 0;
+    *write_handle = strtoull(separator + 1, &end, 16);
+    if (end == separator + 1 || errno == ERANGE ||
+            *write_handle > UINTPTR_MAX || *end != '\0')
+        return -1;
+    return 0;
+}
+#endif
+
+
+#ifdef _WIN32
+static int
+_pkg_wsa_start_pair(void)
+{
+    WSADATA wsa;
+
+    /* Each returned connection releases one WinSock reference. */
+    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
+        return -1;
+    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
+        WSACleanup();
+        return -1;
+    }
+    return 0;
+}
+
+
+static void
+_pkg_wsa_cleanup_pair(void)
+{
+    WSACleanup();
+    WSACleanup();
+}
+#endif
 
 
 /* ================================================================== */
@@ -129,36 +222,80 @@ _try_pipe(struct pkg_conn **parent_end, struct pkg_conn **child_end,
     sa.nLength              = sizeof(sa);
     sa.bInheritHandle       = TRUE;
 
-    HANDLE hReadPC, hWritePC;
-    HANDLE hReadCP, hWriteCP;
-    if (!CreatePipe(&hReadPC, &hWritePC, &sa, 0) ||
-            !CreatePipe(&hReadCP, &hWriteCP, &sa, 0))
-        return -1;
+    HANDLE hReadPC = INVALID_HANDLE_VALUE;
+    HANDLE hWritePC = INVALID_HANDLE_VALUE;
+    HANDLE hReadCP = INVALID_HANDLE_VALUE;
+    HANDLE hWriteCP = INVALID_HANDLE_VALUE;
+    int pc_r = -1;
+    int pc_w = -1;
+    int cp_r = -1;
+    int cp_w = -1;
+    int parent_read_fd = -1;
+    int parent_write_fd = -1;
+    uint64_t child_read_handle = 0;
+    uint64_t child_write_handle = 0;
+    struct pkg_conn *pe = PKC_NULL;
+    struct pkg_conn *ce = PKC_NULL;
 
-    SetHandleInformation(hWritePC, HANDLE_FLAG_INHERIT, 0);
-    SetHandleInformation(hReadCP,  HANDLE_FLAG_INHERIT, 0);
+    if (!CreatePipe(&hReadPC, &hWritePC, &sa, 0))
+        goto fail;
+    if (!CreatePipe(&hReadCP, &hWriteCP, &sa, 0))
+        goto fail;
+    if (!SetHandleInformation(hWritePC, HANDLE_FLAG_INHERIT, 0) ||
+            !SetHandleInformation(hReadCP, HANDLE_FLAG_INHERIT, 0))
+        goto fail;
 
-    int pc_r = _open_osfhandle((intptr_t)hReadPC,  _O_RDONLY | _O_BINARY);
-    int pc_w = _open_osfhandle((intptr_t)hWritePC, _O_WRONLY | _O_BINARY);
-    int cp_r = _open_osfhandle((intptr_t)hReadCP,  _O_RDONLY | _O_BINARY);
-    int cp_w = _open_osfhandle((intptr_t)hWriteCP, _O_WRONLY | _O_BINARY);
+    pc_r = _open_osfhandle((intptr_t)hReadPC, _O_RDONLY | _O_BINARY);
+    if (pc_r < 0) goto fail;
+    hReadPC = INVALID_HANDLE_VALUE;
+    pc_w = _open_osfhandle((intptr_t)hWritePC, _O_WRONLY | _O_BINARY);
+    if (pc_w < 0) goto fail;
+    hWritePC = INVALID_HANDLE_VALUE;
+    cp_r = _open_osfhandle((intptr_t)hReadCP, _O_RDONLY | _O_BINARY);
+    if (cp_r < 0) goto fail;
+    hReadCP = INVALID_HANDLE_VALUE;
+    cp_w = _open_osfhandle((intptr_t)hWriteCP, _O_WRONLY | _O_BINARY);
+    if (cp_w < 0) goto fail;
+    hWriteCP = INVALID_HANDLE_VALUE;
 
-    struct pkg_conn *pe = pkg_open_fds(cp_r, pc_w, switchp, errlog);
-    if (pe == PKC_ERROR || pe == PKC_NULL) return -1;
-    struct pkg_conn *ce = pkg_open_fds(pc_r, cp_w, switchp, errlog);
-    if (ce == PKC_ERROR || ce == PKC_NULL) { pkg_close(pe); return -1; }
+    child_read_handle = (uint64_t)(uintptr_t)_get_osfhandle(pc_r);
+    child_write_handle = (uint64_t)(uintptr_t)_get_osfhandle(cp_w);
+    parent_read_fd = cp_r;
+    parent_write_fd = pc_w;
+
+    pe = pkg_open_fds(cp_r, pc_w, switchp, errlog);
+    if (pe == PKC_ERROR || pe == PKC_NULL) goto fail;
+    cp_r = -1;
+    pc_w = -1;
+    ce = pkg_open_fds(pc_r, cp_w, switchp, errlog);
+    if (ce == PKC_ERROR || ce == PKC_NULL) goto fail;
+    pc_r = -1;
+    cp_w = -1;
 
     snprintf(ce->pkc_addr, sizeof(ce->pkc_addr),
              "pipe_win:%" PRIx64 ",%" PRIx64,
-             (uint64_t)(uintptr_t)hReadPC,
-             (uint64_t)(uintptr_t)hWriteCP);
+             child_read_handle, child_write_handle);
     _pkg_build_addr_env(ce);
-    snprintf(pe->pkc_addr, sizeof(pe->pkc_addr), "pipe_parent:%d,%d", cp_r, pc_w);
+    snprintf(pe->pkc_addr, sizeof(pe->pkc_addr), "pipe_parent:%d,%d",
+             parent_read_fd, parent_write_fd);
     _pkg_build_addr_env(pe);
 
     *parent_end = pe;
     *child_end  = ce;
     return 0;
+
+fail:
+    if (ce != PKC_NULL && ce != PKC_ERROR) pkg_close(ce);
+    if (pe != PKC_NULL && pe != PKC_ERROR) pkg_close(pe);
+    if (pc_r >= 0) _close(pc_r);
+    if (pc_w >= 0) _close(pc_w);
+    if (cp_r >= 0) _close(cp_r);
+    if (cp_w >= 0) _close(cp_w);
+    if (hReadPC != INVALID_HANDLE_VALUE) CloseHandle(hReadPC);
+    if (hWritePC != INVALID_HANDLE_VALUE) CloseHandle(hWritePC);
+    if (hReadCP != INVALID_HANDLE_VALUE) CloseHandle(hReadCP);
+    if (hWriteCP != INVALID_HANDLE_VALUE) CloseHandle(hWriteCP);
+    return -1;
 }
 #endif /* _WIN32 */
 
@@ -215,9 +352,13 @@ _try_tcp(struct pkg_conn **parent_end, struct pkg_conn **child_end,
     int opt = 1;
 
 #ifdef _WIN32
-    {   WSADATA wsa; WSAStartup(MAKEWORD(2,2), &wsa); }
+    if (_pkg_wsa_start_pair() != 0)
+        return -1;
     lsock = (int)socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (lsock == (int)INVALID_SOCKET) return -1;
+    if (lsock == (int)INVALID_SOCKET) {
+        _pkg_wsa_cleanup_pair();
+        return -1;
+    }
 #else
     lsock = socket(AF_INET, SOCK_STREAM, 0);
     if (lsock < 0) return -1;
@@ -232,6 +373,7 @@ _try_tcp(struct pkg_conn **parent_end, struct pkg_conn **child_end,
             listen(lsock, 1) < 0) {
 #ifdef _WIN32
         closesocket((SOCKET)lsock);
+        _pkg_wsa_cleanup_pair();
 #else
         close(lsock);
 #endif
@@ -245,7 +387,11 @@ _try_tcp(struct pkg_conn **parent_end, struct pkg_conn **child_end,
 
 #ifdef _WIN32
     csock = (int)socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (csock == (int)INVALID_SOCKET) { closesocket((SOCKET)lsock); return -1; }
+    if (csock == (int)INVALID_SOCKET) {
+        closesocket((SOCKET)lsock);
+        _pkg_wsa_cleanup_pair();
+        return -1;
+    }
 #else
     csock = socket(AF_INET, SOCK_STREAM, 0);
     if (csock < 0) { close(lsock); return -1; }
@@ -258,6 +404,7 @@ _try_tcp(struct pkg_conn **parent_end, struct pkg_conn **child_end,
     if (connect(csock, (struct sockaddr*)&csa, sizeof(csa)) < 0) {
 #ifdef _WIN32
         closesocket((SOCKET)csock); closesocket((SOCKET)lsock);
+        _pkg_wsa_cleanup_pair();
 #else
         close(csock); close(lsock);
 #endif
@@ -269,7 +416,11 @@ _try_tcp(struct pkg_conn **parent_end, struct pkg_conn **child_end,
 #ifdef _WIN32
     psock = (int)accept((SOCKET)lsock, (struct sockaddr*)&peer, &plen);
     closesocket((SOCKET)lsock);
-    if (psock == (int)INVALID_SOCKET) { closesocket((SOCKET)csock); return -1; }
+    if (psock == (int)INVALID_SOCKET) {
+        closesocket((SOCKET)csock);
+        _pkg_wsa_cleanup_pair();
+        return -1;
+    }
 #else
     psock = accept(lsock, (struct sockaddr*)&peer, &plen);
     close(lsock);
@@ -280,6 +431,7 @@ _try_tcp(struct pkg_conn **parent_end, struct pkg_conn **child_end,
     if (pe == PKC_ERROR || pe == PKC_NULL) {
 #ifdef _WIN32
         closesocket((SOCKET)psock); closesocket((SOCKET)csock);
+        _pkg_wsa_cleanup_pair();
 #else
         close(psock); close(csock);
 #endif
@@ -290,16 +442,13 @@ _try_tcp(struct pkg_conn **parent_end, struct pkg_conn **child_end,
         pkg_close(pe);
 #ifdef _WIN32
         closesocket((SOCKET)csock);
+        /* pkg_close(pe) released the other pair reference. */
+        WSACleanup();
 #else
         close(csock);
 #endif
         return -1;
     }
-
-    snprintf(ce->pkc_addr, sizeof(ce->pkc_addr), "tcp:%d", port);
-    _pkg_build_addr_env(ce);
-    snprintf(pe->pkc_addr, sizeof(pe->pkc_addr), "tcp_server:%d", port);
-    _pkg_build_addr_env(pe);
 
     *parent_end = pe;
     *child_end  = ce;
@@ -354,6 +503,10 @@ pkg_pair_prefer(struct pkg_conn **parent_end, struct pkg_conn **child_end,
     int i, pos;
 
     if (!parent_end || !child_end) return -1;
+    *parent_end = PKC_NULL;
+    *child_end = PKC_NULL;
+    if (preferred < PKG_TRANSPORT_AUTO || preferred > PKG_TRANSPORT_TCP)
+        return -1;
 
     order[0] = PKG_TRANSPORT_PIPE;
     order[1] = PKG_TRANSPORT_SOCKET;
@@ -408,16 +561,27 @@ pkg_child_addr(struct pkg_conn *pc)
     return (pc->pkc_addr[0] != '\0') ? pc->pkc_addr : NULL;
 }
 
+
+int
+pkg_addr_uses_inherited_fds(const char *addr)
+{
+    if (!addr)
+        return 0;
+    if (strncmp(addr, "pipe:", 5) == 0)
+        return 1;
+#ifdef _WIN32
+    return strncmp(addr, "pipe_win:", 9) == 0;
+#else
+    return strncmp(addr, "socket:", 7) == 0;
+#endif
+}
+
 int
 pkg_addr_is_ipc_listener(const char *addr)
 {
     if (!addr) return 0;
 #ifdef _WIN32
     if (strncmp(addr, "npipe:", 6) == 0)
-	return 1;
-#endif
-#ifndef _WIN32
-    if (strncmp(addr, "fifo:", 5) == 0)
 	return 1;
 #endif
 #if defined(HAVE_SYS_UN_H) && !defined(_WIN32)
@@ -434,7 +598,7 @@ pkg_addr_is_ipc_listener(const char *addr)
 int
 pkg_ipc_addr(char *addr, size_t len, const char *name_hint)
 {
-    static unsigned long counter = 0;
+    static std::atomic<unsigned long> counter{0};
     const char *hint = (name_hint && name_hint[0]) ? name_hint : "brlcad-pkg";
 #ifndef _WIN32
     const char *tmpdir = getenv("TMPDIR");
@@ -447,22 +611,19 @@ pkg_ipc_addr(char *addr, size_t len, const char *name_hint)
     if (!tmpdir || tmpdir[0] == '\0')
 	tmpdir = "/tmp";
 
-    need = snprintf(addr, len, "fifo:%s/%s-%ld-%lld-%lu",
-		    tmpdir, hint, (long)getpid(), (long long)now, counter++);
-    if (need >= 0 && (size_t)need < len)
-	return 0;
-
 #  if defined(HAVE_SYS_UN_H)
 #  if defined(__linux__)
     need = snprintf(addr, len, "unix-abstract:%s-%ld-%lld-%lu",
-		    hint, (long)getpid(), (long long)now, counter++);
+		    hint, (long)getpid(), (long long)now,
+		    counter.fetch_add(1, std::memory_order_relaxed));
     if (need >= 0 && (size_t)need < len &&
 	    strlen(addr + 14) < sizeof(((struct sockaddr_un *)0)->sun_path) - 1)
 	return 0;
 #  endif
 
     need = snprintf(addr, len, "unix:%s/%s-%ld-%lld-%lu.sock",
-		    tmpdir, hint, (long)getpid(), (long long)now, counter++);
+		    tmpdir, hint, (long)getpid(), (long long)now,
+		    counter.fetch_add(1, std::memory_order_relaxed));
     if (need < 0 || (size_t)need >= len) {
 	addr[0] = '\0';
 	return -1;
@@ -471,7 +632,8 @@ pkg_ipc_addr(char *addr, size_t len, const char *name_hint)
     if (strlen(addr + 5) >= sizeof(((struct sockaddr_un *)0)->sun_path)) {
 	if (strcmp(tmpdir, "/tmp") != 0) {
 	    need = snprintf(addr, len, "unix:/tmp/%s-%ld-%lld-%lu.sock",
-			    hint, (long)getpid(), (long long)now, counter++);
+			    hint, (long)getpid(), (long long)now,
+			    counter.fetch_add(1, std::memory_order_relaxed));
 	    if (need < 0 || (size_t)need >= len ||
 		    strlen(addr + 5) >= sizeof(((struct sockaddr_un *)0)->sun_path)) {
 		addr[0] = '\0';
@@ -509,7 +671,8 @@ pkg_ipc_addr(char *addr, size_t len, const char *name_hint)
 
     need = snprintf(addr, len, "npipe:\\\\.\\pipe\\%s-%lu-%lld-%lu",
 		    safe_hint, (unsigned long)GetCurrentProcessId(),
-		    (long long)now, counter++);
+		    (long long)now,
+		    counter.fetch_add(1, std::memory_order_relaxed));
     if (need < 0 || (size_t)need >= len) {
 	addr[0] = '\0';
 	return -1;
@@ -585,9 +748,22 @@ pkg_connect_addr(const char *addr, const struct pkg_switch *switchp, pkg_errlog 
 
     if (strncmp(addr, "pipe_win:", 9) == 0) {
         uint64_t hr64 = 0, hw64 = 0;
-        if (sscanf(addr + 9, "%" SCNx64 ",%" SCNx64, &hr64, &hw64) == 2) {
+        if (_pkg_parse_handle_pair(addr + 9, &hr64, &hw64) == 0) {
             HANDLE hRead  = (HANDLE)(uintptr_t)hr64;
             HANDLE hWrite = (HANDLE)(uintptr_t)hw64;
+            DWORD read_flags = 0;
+            DWORD write_flags = 0;
+            if (!GetHandleInformation(hRead, &read_flags) ||
+                    !GetHandleInformation(hWrite, &write_flags)) {
+                if (errlog) {
+                    char message[256];
+                    snprintf(message, sizeof(message),
+                        "pkg_connect_addr: inherited pipe handle is invalid "
+                        "(error %lu)\n", (unsigned long)GetLastError());
+                    errlog(message);
+                }
+                return PKC_ERROR;
+            }
             int rfd = _open_osfhandle((intptr_t)hRead,  _O_RDONLY | _O_BINARY);
             int wfd = _open_osfhandle((intptr_t)hWrite, _O_WRONLY | _O_BINARY);
             if (rfd >= 0 && wfd >= 0) {
@@ -598,6 +774,13 @@ pkg_connect_addr(const char *addr, const struct pkg_switch *switchp, pkg_errlog 
                 }
                 return pc;
             }
+            if (errlog) {
+                char message[256];
+                snprintf(message, sizeof(message),
+                    "pkg_connect_addr: could not adopt inherited pipe "
+                    "handles (errno %d)\n", errno);
+                errlog(message);
+            }
             if (rfd >= 0) _close(rfd);
             if (wfd >= 0) _close(wfd);
         }
@@ -607,7 +790,7 @@ pkg_connect_addr(const char *addr, const struct pkg_switch *switchp, pkg_errlog 
 
     if (strncmp(addr, "pipe:", 5) == 0) {
         int rfd = -1, wfd = -1;
-        if (sscanf(addr + 5, "%d,%d", &rfd, &wfd) == 2) {
+        if (_pkg_parse_fd_pair(addr + 5, &rfd, &wfd) == 0) {
             struct pkg_conn *pc = pkg_adopt_fds(rfd, wfd, switchp, errlog);
             if (pc != PKC_ERROR && pc != PKC_NULL) {
                 snprintf(pc->pkc_addr, sizeof(pc->pkc_addr), "%s", addr);
@@ -620,7 +803,7 @@ pkg_connect_addr(const char *addr, const struct pkg_switch *switchp, pkg_errlog 
 
     if (strncmp(addr, "pipe_parent:", 12) == 0) {
         int rfd = -1, wfd = -1;
-        if (sscanf(addr + 12, "%d,%d", &rfd, &wfd) == 2) {
+        if (_pkg_parse_fd_pair(addr + 12, &rfd, &wfd) == 0) {
             struct pkg_conn *pc = pkg_adopt_fds(rfd, wfd, switchp, errlog);
             if (pc != PKC_ERROR && pc != PKC_NULL) {
                 snprintf(pc->pkc_addr, sizeof(pc->pkc_addr), "%s", addr);
@@ -630,81 +813,6 @@ pkg_connect_addr(const char *addr, const struct pkg_switch *switchp, pkg_errlog 
         }
         return PKC_ERROR;
     }
-
-#ifndef _WIN32
-    if (strncmp(addr, "fifo:", 5) == 0) {
-	static unsigned long counter = 0;
-	const char *base = addr + 5;
-	time_t now = time(NULL);
-	char c2s[MAXPATHLEN] = {0};
-	char s2c[MAXPATHLEN] = {0};
-	char msg[MAXPATHLEN * 2 + 8] = {0};
-	int cfd = -1;
-	int rfd = -1;
-	int wfd = -1;
-	int need;
-
-	if (base[0] == '\0')
-	    return PKC_ERROR;
-
-	need = snprintf(c2s, sizeof(c2s), "%s.%ld.%lld.%lu.c2s",
-			base, (long)getpid(), (long long)now, counter);
-	if (need < 0 || (size_t)need >= sizeof(c2s))
-	    return PKC_ERROR;
-	need = snprintf(s2c, sizeof(s2c), "%s.%ld.%lld.%lu.s2c",
-			base, (long)getpid(), (long long)now, counter++);
-	if (need < 0 || (size_t)need >= sizeof(s2c))
-	    return PKC_ERROR;
-
-	if (mkfifo(c2s, 0600) < 0)
-	    return PKC_ERROR;
-	if (mkfifo(s2c, 0600) < 0) {
-	    (void)unlink(c2s);
-	    return PKC_ERROR;
-	}
-
-	cfd = open(base, O_WRONLY);
-	if (cfd < 0) {
-	    (void)unlink(c2s);
-	    (void)unlink(s2c);
-	    return PKC_ERROR;
-	}
-
-	need = snprintf(msg, sizeof(msg), "%s\n%s\n", c2s, s2c);
-	if (need < 0 || (size_t)need >= sizeof(msg) ||
-		write(cfd, msg, strlen(msg)) != (ssize_t)strlen(msg)) {
-	    close(cfd);
-	    (void)unlink(c2s);
-	    (void)unlink(s2c);
-	    return PKC_ERROR;
-	}
-	close(cfd);
-
-	wfd = open(c2s, O_WRONLY);
-	if (wfd < 0) {
-	    (void)unlink(c2s);
-	    (void)unlink(s2c);
-	    return PKC_ERROR;
-	}
-	rfd = open(s2c, O_RDONLY);
-	if (rfd < 0) {
-	    close(wfd);
-	    (void)unlink(c2s);
-	    (void)unlink(s2c);
-	    return PKC_ERROR;
-	}
-
-	(void)unlink(c2s);
-	(void)unlink(s2c);
-
-	struct pkg_conn *pc = pkg_adopt_fds(rfd, wfd, switchp, errlog);
-	if (pc != PKC_ERROR && pc != PKC_NULL) {
-	    snprintf(pc->pkc_addr, sizeof(pc->pkc_addr), "%s", addr);
-	    _pkg_build_addr_env(pc);
-	}
-	return pc;
-    }
-#endif
 
 #if defined(HAVE_SYS_UN_H) && !defined(_WIN32)
     if (strncmp(addr, "unix-abstract:", 14) == 0) {
@@ -775,7 +883,8 @@ pkg_connect_addr(const char *addr, const struct pkg_switch *switchp, pkg_errlog 
 
     if (strncmp(addr, "socket:", 7) == 0) {
         int sfd = -1;
-        if (sscanf(addr + 7, "%d", &sfd) == 1) {
+        sfd = _pkg_parse_int(addr + 7, 0, INT_MAX, NULL);
+        if (sfd >= 0) {
             struct pkg_conn *pc = pkg_adopt_fds(sfd, sfd, switchp, errlog);
             if (pc != PKC_ERROR && pc != PKC_NULL) {
                 snprintf(pc->pkc_addr, sizeof(pc->pkc_addr), "%s", addr);
@@ -788,7 +897,8 @@ pkg_connect_addr(const char *addr, const struct pkg_switch *switchp, pkg_errlog 
 
     if (strncmp(addr, "socket_parent:", 14) == 0) {
         int sfd = -1;
-        if (sscanf(addr + 14, "%d", &sfd) == 1) {
+        sfd = _pkg_parse_int(addr + 14, 0, INT_MAX, NULL);
+        if (sfd >= 0) {
             struct pkg_conn *pc = pkg_adopt_fds(sfd, sfd, switchp, errlog);
             if (pc != PKC_ERROR && pc != PKC_NULL) {
                 snprintf(pc->pkc_addr, sizeof(pc->pkc_addr), "%s", addr);
@@ -801,13 +911,19 @@ pkg_connect_addr(const char *addr, const struct pkg_switch *switchp, pkg_errlog 
 
     if (strncmp(addr, "tcp:", 4) == 0) {
         int port = 0;
-        if (sscanf(addr + 4, "%d", &port) == 1) {
+        port = _pkg_parse_int(addr + 4, 1, 65535, NULL);
+        if (port >= 0) {
             int csock;
             struct sockaddr_in csa;
 #ifdef _WIN32
-            {   WSADATA wsa; WSAStartup(MAKEWORD(2,2), &wsa); }
+            WSADATA wsa;
+            if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
+                return PKC_ERROR;
             csock = (int)socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-            if (csock == (int)INVALID_SOCKET) return PKC_ERROR;
+            if (csock == (int)INVALID_SOCKET) {
+                WSACleanup();
+                return PKC_ERROR;
+            }
 #else
             csock = socket(AF_INET, SOCK_STREAM, 0);
             if (csock < 0) return PKC_ERROR;
@@ -819,6 +935,7 @@ pkg_connect_addr(const char *addr, const struct pkg_switch *switchp, pkg_errlog 
             if (connect(csock, (struct sockaddr*)&csa, sizeof(csa)) < 0) {
 #ifdef _WIN32
                 closesocket((SOCKET)csock);
+                WSACleanup();
 #else
                 close(csock);
 #endif
@@ -828,6 +945,13 @@ pkg_connect_addr(const char *addr, const struct pkg_switch *switchp, pkg_errlog 
             if (pc != PKC_ERROR && pc != PKC_NULL) {
                 snprintf(pc->pkc_addr, sizeof(pc->pkc_addr), "%s", addr);
                 _pkg_build_addr_env(pc);
+            } else {
+#ifdef _WIN32
+                closesocket((SOCKET)csock);
+                WSACleanup();
+#else
+                close(csock);
+#endif
             }
             return pc;
         }
@@ -867,24 +991,94 @@ pkg_adopt_stdio(const struct pkg_switch *switchp, pkg_errlog errlog)
 /* pkg_move_high_fd                                                     */
 /* ================================================================== */
 
+#ifdef _WIN32
+static int
+_pkg_dup_fd_min(int fd, int min_fd)
+{
+    std::vector<int> low_fds;
+    int moved_fd;
+    HANDLE source_handle = (HANDLE)_get_osfhandle(fd);
+    DWORD source_flags = 0;
+
+    if (fd >= min_fd)
+        return fd;
+    if (source_handle == INVALID_HANDLE_VALUE ||
+            !GetHandleInformation(source_handle, &source_flags))
+        return -1;
+    while ((moved_fd = _dup(fd)) >= 0 && moved_fd < min_fd)
+        low_fds.push_back(moved_fd);
+    for (int low_fd : low_fds)
+        (void)_close(low_fd);
+    if (moved_fd >= 0) {
+        HANDLE moved_handle = (HANDLE)_get_osfhandle(moved_fd);
+        if (moved_handle == INVALID_HANDLE_VALUE ||
+                !SetHandleInformation(moved_handle, HANDLE_FLAG_INHERIT,
+                    source_flags & HANDLE_FLAG_INHERIT)) {
+            (void)_close(moved_fd);
+            return -1;
+        }
+    }
+    return moved_fd;
+}
+#endif
+
+
 int
 pkg_move_high_fd(struct pkg_conn *pc, int min_fd)
 {
     if (!pc || pc == PKC_ERROR || min_fd < 3) return -1;
 
 #ifdef _WIN32
-    (void)min_fd;
+    if (pc->pkc_tx_kind != 1)
+        return pc->pkc_fd >= min_fd ? 0 : -1;
+
+    int moved_read_fd = _pkg_dup_fd_min(pc->pkc_in_fd, min_fd);
+    if (moved_read_fd < 0)
+        return -1;
+    int moved_write_fd = pc->pkc_out_fd == pc->pkc_in_fd ? moved_read_fd :
+        _pkg_dup_fd_min(pc->pkc_out_fd, min_fd);
+    if (moved_write_fd < 0) {
+        if (moved_read_fd != pc->pkc_in_fd)
+            (void)_close(moved_read_fd);
+        return -1;
+    }
+
+    if (moved_read_fd != pc->pkc_in_fd)
+        (void)_close(pc->pkc_in_fd);
+    if (moved_write_fd != pc->pkc_out_fd && pc->pkc_out_fd != pc->pkc_in_fd)
+        (void)_close(pc->pkc_out_fd);
+    pc->pkc_in_fd = moved_read_fd;
+    pc->pkc_out_fd = moved_write_fd;
+
+    if (strncmp(pc->pkc_addr, "pipe_win:", 9) == 0) {
+        uint64_t read_handle = (uint64_t)(uintptr_t)_get_osfhandle(moved_read_fd);
+        uint64_t write_handle = (uint64_t)(uintptr_t)_get_osfhandle(moved_write_fd);
+        snprintf(pc->pkc_addr, sizeof(pc->pkc_addr),
+            "pipe_win:%" PRIx64 ",%" PRIx64, read_handle, write_handle);
+        _pkg_build_addr_env(pc);
+    } else if (strncmp(pc->pkc_addr, "pipe_parent:", 12) == 0) {
+        snprintf(pc->pkc_addr, sizeof(pc->pkc_addr), "pipe_parent:%d,%d",
+            moved_read_fd, moved_write_fd);
+        _pkg_build_addr_env(pc);
+    }
     return 0;
 #else
     if (pc->pkc_tx_kind != 1) {
         /* Socket/TCP: move pkc_fd */
         if (pc->pkc_fd >= 0 && pc->pkc_fd < min_fd) {
+            const bool child_endpoint = strncmp(pc->pkc_addr, "socket:", 7) == 0;
+            const bool parent_endpoint = strncmp(pc->pkc_addr, "socket_parent:", 14) == 0;
             int nfd = fcntl(pc->pkc_fd, F_DUPFD, min_fd);
             if (nfd < 0) return -1;
             close(pc->pkc_fd);
             pc->pkc_fd     = nfd;
             pc->pkc_in_fd  = nfd;
             pc->pkc_out_fd = nfd;
+            if (child_endpoint || parent_endpoint) {
+                snprintf(pc->pkc_addr, sizeof(pc->pkc_addr), "%s%d",
+                    child_endpoint ? "socket:" : "socket_parent:", nfd);
+                _pkg_build_addr_env(pc);
+            }
         }
         return 0;
     }
@@ -909,15 +1103,85 @@ pkg_move_high_fd(struct pkg_conn *pc, int min_fd)
         pc->pkc_out_fd = nfd;
     }
 
-    /* Update address string with new fd numbers */
+    /* Preserve which side of the pair this address represents. */
     if (pc->pkc_addr[0] != '\0') {
-        snprintf(pc->pkc_addr, sizeof(pc->pkc_addr), "pipe:%d,%d",
+        const bool parent_endpoint = strncmp(pc->pkc_addr,
+            "pipe_parent:", 12) == 0;
+        snprintf(pc->pkc_addr, sizeof(pc->pkc_addr), "%s%d,%d",
+                 parent_endpoint ? "pipe_parent:" : "pipe:",
                  pc->pkc_in_fd, pc->pkc_out_fd);
         _pkg_build_addr_env(pc);
     }
 
     return 0;
 #endif
+}
+
+
+static int
+_pkg_fd_poll(int fd, int is_socket [[maybe_unused]])
+{
+    if (fd < 0)
+        return -1;
+
+#ifdef _WIN32
+    if (!is_socket) {
+        HANDLE pipe_handle = (HANDLE)_get_osfhandle(fd);
+        DWORD available = 0;
+        if (pipe_handle == INVALID_HANDLE_VALUE)
+            return -1;
+        if (GetFileType(pipe_handle) == FILE_TYPE_PIPE) {
+            if (PeekNamedPipe(pipe_handle, NULL, 0, NULL, &available, NULL))
+                return available > 0 ? 1 : 0;
+            DWORD error = GetLastError();
+            if (error == ERROR_BROKEN_PIPE || error == ERROR_NO_DATA ||
+                    error == ERROR_PIPE_NOT_CONNECTED)
+                return 1;
+            return -1;
+        }
+        DWORD wait_result = WaitForSingleObject(pipe_handle, 0);
+        if (wait_result == WAIT_OBJECT_0)
+            return 1;
+        return wait_result == WAIT_TIMEOUT ? 0 : -1;
+    }
+#endif
+
+#if defined(HAVE_POLL_H) && !defined(_WIN32)
+    struct pollfd descriptor = {fd, POLLIN, 0};
+    int selected;
+    do {
+        selected = poll(&descriptor, 1, 0);
+    } while (selected < 0 && errno == EINTR);
+    if (selected <= 0)
+        return selected;
+    return (descriptor.revents & (POLLIN | POLLHUP)) ? 1 :
+        ((descriptor.revents & (POLLERR | POLLNVAL)) ? -1 : 0);
+#else
+    fd_set readable;
+    struct timeval timeout = {0, 0};
+#ifndef _WIN32
+    if (fd >= FD_SETSIZE)
+        return -1;
+#endif
+    FD_ZERO(&readable);
+    FD_SET(fd, &readable);
+    int selected = select(fd + 1, &readable, NULL, NULL, &timeout);
+    if (selected <= 0)
+        return selected;
+    return FD_ISSET(fd, &readable) ? 1 : 0;
+#endif
+}
+
+
+int
+pkg_conn_poll(const struct pkg_conn *pc)
+{
+    if (!pc || pc == PKC_ERROR)
+        return -1;
+    if (pc->pkc_tls_pending && pc->pkc_tls_ctx &&
+            pc->pkc_tls_pending(pc->pkc_tls_ctx))
+        return 1;
+    return _pkg_fd_poll(pkg_get_read_fd(pc), pc->pkc_tx_kind == 0);
 }
 
 
@@ -928,19 +1192,14 @@ pkg_move_high_fd(struct pkg_conn *pc, int min_fd)
 #ifndef _WIN32
 
 struct pkg_mux {
-    fd_set watch;
-    fd_set ready;
-    int maxfd;
+    std::vector<int> entries;
+    std::vector<int> ready;
 };
 
 pkg_mux_t *
 pkg_mux_create(void)
 {
-    pkg_mux_t *m = new pkg_mux_t();
-    FD_ZERO(&m->watch);
-    FD_ZERO(&m->ready);
-    m->maxfd = -1;
-    return m;
+    return new pkg_mux_t();
 }
 
 void
@@ -954,9 +1213,9 @@ int
 pkg_mux_add_fd(pkg_mux_t *m, int fd, int /*is_socket*/)
 {
     if (!m || fd < 0) return -1;
-    if (FD_ISSET(fd, &m->watch)) return 0;
-    FD_SET(fd, &m->watch);
-    if (fd > m->maxfd) m->maxfd = fd;
+    for (int entry : m->entries)
+        if (entry == fd) return 0;
+    m->entries.push_back(fd);
     return 0;
 }
 
@@ -980,33 +1239,93 @@ void
 pkg_mux_remove_fd(pkg_mux_t *m, int fd)
 {
     if (!m || fd < 0) return;
-    FD_CLR(fd, &m->watch);
-    if (fd == m->maxfd) {
-        m->maxfd = -1;
-        for (int i = fd - 1; i >= 0; --i)
-            if (FD_ISSET(i, &m->watch)) { m->maxfd = i; break; }
-    }
+    for (auto it = m->entries.begin(); it != m->entries.end(); ++it)
+        if (*it == fd) { m->entries.erase(it); return; }
 }
 
 int
 pkg_mux_wait(pkg_mux_t *m, int timeout_ms)
 {
     if (!m) return -1;
-    m->ready = m->watch;
-    struct timeval tv, *tvp = NULL;
-    if (timeout_ms >= 0) {
-        tv.tv_sec  = timeout_ms / 1000;
-        tv.tv_usec = (timeout_ms % 1000) * 1000;
-        tvp = &tv;
+    m->ready.clear();
+    if (m->entries.empty()) return 0;
+#ifdef HAVE_POLL_H
+    std::vector<struct pollfd> descriptors;
+    descriptors.reserve(m->entries.size());
+    for (int fd : m->entries)
+        descriptors.push_back({fd, POLLIN, 0});
+    const auto deadline = std::chrono::steady_clock::now() +
+        std::chrono::milliseconds(timeout_ms > 0 ? timeout_ms : 0);
+    int wait_ms = timeout_ms;
+    int selected;
+    do {
+        selected = poll(descriptors.data(), descriptors.size(), wait_ms);
+        if (selected >= 0 || errno != EINTR)
+            break;
+        if (timeout_ms < 0)
+            continue;
+        const auto remaining = deadline - std::chrono::steady_clock::now();
+        if (remaining <= std::chrono::steady_clock::duration::zero())
+            return 0;
+        wait_ms = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(
+            remaining + std::chrono::milliseconds(1) -
+            std::chrono::steady_clock::duration(1)).count());
+    } while (true);
+    if (selected <= 0)
+        return selected;
+    for (const auto &descriptor : descriptors) {
+        if (descriptor.revents & (POLLIN | POLLHUP))
+            m->ready.push_back(descriptor.fd);
+        else if (descriptor.revents & (POLLERR | POLLNVAL))
+            return -1;
     }
-    return select(m->maxfd + 1, &m->ready, NULL, NULL, tvp);
+    return (int)m->ready.size();
+#else
+    if (m->entries.size() > FD_SETSIZE)
+        return -1;
+    int max_fd = -1;
+    for (int fd : m->entries) {
+        if (fd >= FD_SETSIZE)
+            return -1;
+        if (fd > max_fd) max_fd = fd;
+    }
+    const auto deadline = std::chrono::steady_clock::now() +
+        std::chrono::milliseconds(timeout_ms > 0 ? timeout_ms : 0);
+    fd_set readable;
+    int selected;
+    do {
+        FD_ZERO(&readable);
+        for (int fd : m->entries)
+            FD_SET(fd, &readable);
+        struct timeval tv, *tvp = NULL;
+        if (timeout_ms >= 0) {
+            auto remaining = deadline - std::chrono::steady_clock::now();
+            if (timeout_ms == 0)
+                remaining = std::chrono::steady_clock::duration::zero();
+            if (remaining <= std::chrono::steady_clock::duration::zero() && timeout_ms > 0)
+                return 0;
+            const auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(remaining);
+            tv.tv_sec = static_cast<long>(microseconds.count() / 1000000);
+            tv.tv_usec = static_cast<long>(microseconds.count() % 1000000);
+            tvp = &tv;
+        }
+        selected = select(max_fd + 1, &readable, NULL, NULL, tvp);
+    } while (selected < 0 && errno == EINTR);
+    if (selected <= 0)
+        return selected;
+    for (int fd : m->entries)
+        if (FD_ISSET(fd, &readable)) m->ready.push_back(fd);
+    return (int)m->ready.size();
+#endif
 }
 
 int
 pkg_mux_is_ready_fd(const pkg_mux_t *m, int fd)
 {
     if (!m || fd < 0) return 0;
-    return FD_ISSET(fd, &m->ready) ? 1 : 0;
+    for (int ready_fd : m->ready)
+        if (ready_fd == fd) return 1;
+    return 0;
 }
 
 int
@@ -1096,112 +1415,32 @@ pkg_mux_remove_fd(pkg_mux_t *m, int fd)
 int
 pkg_mux_wait(pkg_mux_t *m, int timeout_ms)
 {
-    if (!m || m->entries.empty()) return 0;
+    if (!m) return -1;
     m->ready.clear();
-
-    HANDLE   wait_handles[MAXIMUM_WAIT_OBJECTS];
-    int      entry_idx[MAXIMUM_WAIT_OBJECTS];
-    WSAEVENT wsa_evs[MAXIMUM_WAIT_OBJECTS];
-    int      sock_hidx[MAXIMUM_WAIT_OBJECTS];
-    int      n_handles = 0, n_wsa = 0;
-
-    for (int i = 0; i < (int)m->entries.size() && n_handles < MAXIMUM_WAIT_OBJECTS; ++i) {
-        auto &e = m->entries[i];
-        if (e.is_socket) {
-            WSAEVENT ev = WSACreateEvent();
-            if (ev == WSA_INVALID_EVENT) continue;
-            WSAEventSelect((SOCKET)(uintptr_t)e.fd, ev, FD_READ | FD_ACCEPT | FD_CLOSE);
-            wait_handles[n_handles]  = ev;
-            entry_idx[n_handles]     = i;
-            sock_hidx[n_wsa]         = n_handles;
-            wsa_evs[n_wsa]           = ev;
-            ++n_handles; ++n_wsa;
-        } else if (e.pipe_h != INVALID_HANDLE_VALUE &&
-                   GetFileType(e.pipe_h) != FILE_TYPE_PIPE) {
-            /* Console and other genuinely waitable handles may use the native
-             * wait set.  Anonymous pipes are polled with PeekNamedPipe below:
-             * their handles do not provide a reliable readability signal to
-             * WaitForMultipleObjects. */
-            wait_handles[n_handles] = e.pipe_h;
-            entry_idx[n_handles] = i;
-            ++n_handles;
-        }
-    }
-
-    int n_ready = 0;
-    int wait_error = 0;
+    if (m->entries.empty()) return 0;
     const ULONGLONG start = GetTickCount64();
     for (;;) {
-        /* Anonymous pipes must be tested for bytes, not waited on as kernel
-         * objects.  Treat a broken pipe as readable so the caller can consume
-         * EOF and retire the connection. */
-        for (int i = 0; i < (int)m->entries.size(); ++i) {
-            auto &e = m->entries[i];
-            if (e.is_socket || e.pipe_h == INVALID_HANDLE_VALUE ||
-                GetFileType(e.pipe_h) != FILE_TYPE_PIPE)
-                continue;
-            DWORD available = 0;
-            const BOOL peek_ok = PeekNamedPipe(e.pipe_h, NULL, 0, NULL,
-                &available, NULL);
-            if ((peek_ok && available > 0) ||
-                (!peek_ok && GetLastError() == ERROR_BROKEN_PIPE)) {
-                m->ready.push_back(e.fd);
-                ++n_ready;
-            }
+        for (const auto &entry : m->entries) {
+            int status = _pkg_fd_poll(entry.fd, entry.is_socket);
+            if (status < 0)
+                return -1;
+            if (status > 0)
+                m->ready.push_back(entry.fd);
         }
-        if (n_ready > 0)
-            break;
+        if (!m->ready.empty() || timeout_ms == 0)
+            return (int)m->ready.size();
 
-        DWORD slice = 10;
+        DWORD delay = 10;
         if (timeout_ms > 0) {
-            const ULONGLONG elapsed = GetTickCount64() - start;
+            ULONGLONG elapsed = GetTickCount64() - start;
             if (elapsed >= (ULONGLONG)timeout_ms)
-                break;
-            const ULONGLONG remaining = (ULONGLONG)timeout_ms - elapsed;
-            if (remaining < slice)
-                slice = (DWORD)remaining;
-        } else if (timeout_ms == 0) {
-            /* Perform one nonblocking wait for sockets as well as pipes. */
-            slice = 0;
+                return 0;
+            ULONGLONG remaining = (ULONGLONG)timeout_ms - elapsed;
+            if (remaining < delay)
+                delay = (DWORD)remaining;
         }
-
-        if (n_handles > 0) {
-            DWORD ret = WaitForMultipleObjects((DWORD)n_handles, wait_handles,
-                FALSE, slice);
-            if (ret == WAIT_FAILED) {
-                wait_error = 1;
-                break;
-            }
-            if (ret >= WAIT_OBJECT_0 &&
-                ret < WAIT_OBJECT_0 + (DWORD)n_handles) {
-                for (int i = 0; i < n_handles; ++i) {
-                    if (WaitForSingleObject(wait_handles[i], 0) ==
-                        WAIT_OBJECT_0) {
-                        m->ready.push_back(m->entries[entry_idx[i]].fd);
-                        ++n_ready;
-                    }
-                }
-                if (n_ready > 0)
-                    break;
-            }
-        } else if (slice > 0) {
-            Sleep(slice);
-        }
-
-        if (timeout_ms == 0)
-            break;
+        Sleep(delay);
     }
-
-    for (int j = 0; j < n_wsa; ++j) {
-        int hidx = sock_hidx[j];
-        int fd   = m->entries[entry_idx[hidx]].fd;
-        WSAEventSelect((SOCKET)(uintptr_t)fd, wsa_evs[j], 0);
-        u_long blk = 0;
-        ioctlsocket((SOCKET)(uintptr_t)fd, FIONBIO, &blk);
-        WSACloseEvent(wsa_evs[j]);
-    }
-
-    return wait_error ? -1 : n_ready;
 }
 
 int
