@@ -34,33 +34,10 @@
 
 #include "../ged_private.h"
 
-static int
-overlay_image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
-{
-    int type_int;
-    bu_mime_image_t type = BU_MIME_IMAGE_UNKNOWN;
-    bu_mime_image_t *set_type = (bu_mime_image_t *)set_mime;
-
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "mime format");
-
-    type_int = bu_file_mime(argv[0], BU_MIME_IMAGE);
-    type = (type_int < 0) ? BU_MIME_IMAGE_UNKNOWN : (bu_mime_image_t)type_int;
-    if (type == BU_MIME_IMAGE_UNKNOWN) {
-	if (msg) {
-	    bu_vls_sprintf(msg, "Error - unknown geometry file type: %s \n", argv[0]);
-	}
-	return -1;
-    }
-    if (set_type) {
-	(*set_type) = type;
-    }
-    return 1;
-}
-
 int
 ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 {
-    bu_mime_image_t type = BU_MIME_IMAGE_UNKNOWN;
+    char *type = NULL;
     double size = 0.0;
     int clear = 0;
     int height = 0;  /* may need to specify for some formats (such as PIX) */
@@ -95,7 +72,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[10],  "w", "width",          "#",    &bu_opt_int,     &width,            "[Fb]   image width");
     BU_OPT(d[11], "n", "height",         "#",    &bu_opt_int,     &height,           "[Fb]   image height");
     BU_OPT(d[12], "S", "square",         "#",    &bu_opt_int,     &square,           "[Fb]   image width/height (for square image)");
-    BU_OPT(d[13], "",  "format",         "fmt",  &overlay_image_mime,     &type,             "[Fb]   image file format");
+    BU_OPT(d[13], "",  "format",         "fmt",  &bu_opt_str,     &type,             "[Fb]   image file format");
     BU_OPT_NULL(d[14]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -108,6 +85,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     if (!gedp->ged_gvp) {
 	bu_vls_printf(gedp->ged_result_str, ": no current view set\n");
 	bu_vls_free(&vname);
+
 	return BRLCAD_ERROR;
     }
 
@@ -115,6 +93,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     if (!dmp) {
 	bu_vls_printf(gedp->ged_result_str, ": no display manager currently active");
 	bu_vls_free(&vname);
+
 	return BRLCAD_ERROR;
     }
 
@@ -122,6 +101,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	_ged_cmd_help(gedp, usage, d);
 	bu_vls_free(&vname);
+
 	return GED_HELP;
     }
 
@@ -132,6 +112,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     if (print_help) {
 	_ged_cmd_help(gedp, usage, d);
 	bu_vls_free(&vname);
+
 	return GED_HELP;
     }
 
@@ -139,6 +120,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	if (!gedp->ged_gvp) {
 	    bu_vls_printf(gedp->ged_result_str, ": no character size specified, and could not determine default value");
 	    bu_vls_free(&vname);
+
 	    return BRLCAD_ERROR;
 	}
 	size = gedp->ged_gvp->gv_scale * 0.01;
@@ -151,6 +133,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	if (!fbp) {
 	    bu_vls_printf(gedp->ged_result_str, ": display manager does not have a framebuffer");
 	    bu_vls_free(&vname);
+
 	    return BRLCAD_ERROR;
 	}
     }
@@ -159,12 +142,14 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     if (!argc) {
 	_ged_cmd_help(gedp, usage, d);
 	bu_vls_free(&vname);
+
 	return GED_HELP;
     }
     /* check arg cnt */
     if (argc > 2) {
 	_ged_cmd_help(gedp, usage, d);
 	bu_vls_free(&vname);
+
 	return GED_HELP;
     }
 
@@ -200,6 +185,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "ged_overlay_core: failed to open file - %s\n", argv[1]);
 		bu_vls_free(&nroot);
 		bu_vls_free(&vname);
+
 		return BRLCAD_ERROR;
 	    }
 	    vbp = bv_vlblock_init(vlfree, 32);
@@ -209,6 +195,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 		    bu_argv_free(count, files);
 		    bu_vls_free(&nroot);
 		    bu_vls_free(&vname);
+
 		    return BRLCAD_ERROR;
 		}
 		ret = rt_uplot_to_vlist(vbp, fp, size, gedp->i->ged_gdp->gd_uplotOutputMode);
@@ -218,6 +205,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 		    bu_argv_free(count, files);
 		    bu_vls_free(&nroot);
 		    bu_vls_free(&vname);
+
 		    return BRLCAD_ERROR;
 		}
 	    }
@@ -230,6 +218,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 		bv_vlblock_free(vbp);
 		bu_vls_free(&nroot);
 		bu_vls_free(&vname);
+
 		return BRLCAD_ERROR;
 	    }
 	}
@@ -245,6 +234,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&nroot);
 	bu_vls_free(&vname);
 
+
 	return BRLCAD_OK;
 
     } else {
@@ -252,25 +242,11 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	if (!bu_file_exists(argv[0], NULL)) {
 	    bu_vls_printf(gedp->ged_result_str, ": file %s not found", argv[0]);
 	    bu_vls_free(&vname);
+
 	    return BRLCAD_ERROR;
 	}
 
 	const char *file_name = argv[0];
-
-	/* Find out what input file type we are dealing with */
-	if (type == BU_MIME_IMAGE_UNKNOWN) {
-	    struct bu_vls c = BU_VLS_INIT_ZERO;
-	    if (bu_path_component(&c, file_name, BU_PATH_EXT)) {
-		int itype = bu_file_mime(bu_vls_cstr(&c), BU_MIME_IMAGE);
-		type = (bu_mime_image_t)itype;
-	    } else {
-		bu_vls_printf(gedp->ged_result_str, "no input file image type specified - need either a specified input image type or a path that provides MIME information.\n");
-		bu_vls_free(&c);
-		bu_vls_free(&vname);
-		return BRLCAD_ERROR;
-	    }
-	    bu_vls_free(&c);
-	}
 
 	// If we're square, let width and height know
 	if (square && !width && !height) {
@@ -278,27 +254,8 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	    height = square;
 	}
 
-	/* If we have no width or height specified, and we have an input format that
-	 * does not encode that information, make an educated guess */
-	if (!width && !height && (type == BU_MIME_IMAGE_PIX || type == BU_MIME_IMAGE_BW)) {
-	    struct stat sbuf;
-	    if (stat(file_name, &sbuf) < 0) {
-		bu_vls_printf(gedp->ged_result_str, "unable to stat input file");
-		bu_vls_free(&vname);
-		return BRLCAD_ERROR;
-	    }
-	    size_t lwidth, lheight;
-	    if (!icv_image_size(NULL, 0, (size_t)sbuf.st_size, type, &lwidth, &lheight)) {
-		bu_vls_printf(gedp->ged_result_str, "input image type does not have dimension information encoded, and libicv was not able to deduce a size.  Please specify image width in pixels with the \"-w\" option and image height in pixels with the \"-n\" option.\n");
-		bu_vls_free(&vname);
-		return BRLCAD_ERROR;
-	    } else {
-		width = (int)lwidth;
-		height = (int)lheight;
-	    }
-	}
-
-	icv_image_t *img = icv_read(file_name, type, width, height);
+	icv_image_t *img = icv_read_with_context(ged_image_context(gedp), file_name, type, NULL,
+	    (size_t)width, (size_t)height, gedp->ged_result_str);
 
 	if (!img) {
 	    if (!argc) {
@@ -308,6 +265,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    icv_destroy(img);
 	    bu_vls_free(&vname);
+
 	    return BRLCAD_ERROR;
 	}
 
@@ -319,6 +277,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 
 	icv_destroy(img);
 	bu_vls_free(&vname);
+
 	return ret;
 
     }

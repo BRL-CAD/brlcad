@@ -806,14 +806,13 @@ fb_read_icv(struct fb *ifp, icv_image_t *img_in, int file_xoff_in, int file_yoff
     int scr_width;
     int scr_height;
 
-    /* Make a copy so we can edit if the options require */
-    icv_image_t *img = icv_create(img_in->width, img_in->height, img_in->color_space);
+    /* Framebuffers require RGB, irrespective of the decoder's channel layout. */
+    icv_image_t *img = icv_flatten(img_in, NULL);
     if (!img) {
 	if (result)
 	    bu_vls_printf(result, "failed to create image copy");
 	return BRLCAD_ERROR;
     }
-    memcpy(img->data, img_in->data, img_in->width * img_in->height * img_in->channels * sizeof(double));
 
     int file_xoff = file_xoff_in;
     int file_yoff = file_yoff_in;
@@ -838,6 +837,10 @@ fb_read_icv(struct fb *ifp, icv_image_t *img_in, int file_xoff_in, int file_yoff
     }
 
     unsigned char *data = icv_data2uchar(img);
+    if (!data) {
+	icv_destroy(img);
+	return BRLCAD_ERROR;
+    }
      /* create rows array */
     scanline = (unsigned char **)bu_calloc(img->height, sizeof(unsigned char *), "scanline");
     for (unsigned int i=0; i<img->height; i++) {

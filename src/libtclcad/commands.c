@@ -3347,7 +3347,7 @@ to_fit_png_image(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    img = icv_read(argv[1], BU_MIME_IMAGE_PNG, 0, 0);
+    img = icv_read_with_context(ged_image_context(gedp), argv[1], "image/png", NULL, 0, 0, NULL);
     if (img == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s does not exist or is not a png file", argv[0], argv[1]);
 	return BRLCAD_ERROR;
@@ -3359,8 +3359,7 @@ to_fit_png_image(struct ged *gedp,
 	return ret;
     }
 
-    /* icv_write should return < 0 for errors but doesn't */
-    if (icv_write(img, argv[5], BU_MIME_IMAGE_PNG) == 0) {
+    if (icv_write_with_context(ged_image_context(gedp), img, argv[5], "image/png", NULL, gedp->ged_result_str) != BRLCAD_OK) {
 	icv_destroy(img);
 	return BRLCAD_ERROR;
     }

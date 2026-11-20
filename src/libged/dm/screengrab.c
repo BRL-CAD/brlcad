@@ -33,29 +33,6 @@
 
 #include "../ged_private.h"
 
-static int
-screengrab_image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
-{
-    int type_int;
-    bu_mime_image_t type = BU_MIME_IMAGE_UNKNOWN;
-    bu_mime_image_t *set_type = (bu_mime_image_t *)set_mime;
-
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "mime format");
-
-    type_int = bu_file_mime(argv[0], BU_MIME_IMAGE);
-    type = (type_int < 0) ? BU_MIME_IMAGE_UNKNOWN : (bu_mime_image_t)type_int;
-    if (type == BU_MIME_IMAGE_UNKNOWN) {
-	if (msg) {
-	    bu_vls_sprintf(msg, "Error - unknown geometry file type: %s \n", argv[0]);
-	}
-	return -1;
-    }
-    if (set_type) {
-	(*set_type) = type;
-    }
-    return 1;
-}
-
 int
 ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
 {
@@ -70,14 +47,14 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
     struct icv_image *bif = NULL;	/**< icv image container for saving images */
     struct fb *fbp = NULL;
     struct bu_vls dm_name = BU_VLS_INIT_ZERO;
-    bu_mime_image_t type = BU_MIME_IMAGE_AUTO;
+    char *type = NULL;
     static char usage[] = "Usage: screengrab [-h] [-F] [-D name] [--format fmt] [file.img]\n";
 
     struct bu_opt_desc d[5];
     BU_OPT(d[0], "h", "help",           "",     NULL,             &print_help,       "Print help and exit");
     BU_OPT(d[1], "F", "fb",             "",     NULL,             &grab_fb,          "screengrab framebuffer instead of scene display");
     BU_OPT(d[2], "D", "dm",             "name", &bu_opt_vls,      &dm_name,          "name of DM to screengrab");
-    BU_OPT(d[3], "",  "format",         "fmt",  &screengrab_image_mime,      &type,             "output image file format");
+    BU_OPT(d[3], "",  "format",         "fmt",  &bu_opt_str,      &type,             "output image file format");
     BU_OPT_NULL(d[4]);
 
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
@@ -93,6 +70,7 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
 
     if (print_help) {
 	_ged_cmd_help(gedp, usage, d);
+
 	return GED_HELP;
     }
 
@@ -114,6 +92,7 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
 	if (!dmp) {
 	    bu_vls_sprintf(gedp->ged_result_str, "DM %s specified, but not found in active set\n", bu_vls_cstr(&dm_name));
 	    bu_vls_free(&dm_name);
+
 	    return BRLCAD_ERROR;
 	}
     }
@@ -124,6 +103,7 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
 
     if (!dmp) {
 	bu_vls_printf(gedp->ged_result_str, ": no current display manager set and no valid name specified\n");
+
 	return BRLCAD_ERROR;
     }
 
@@ -131,6 +111,7 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
 	fbp = dm_get_fb(dmp);
 	if (!fbp) {
 	    bu_vls_printf(gedp->ged_result_str, ": display manager does not have a framebuffer");
+
 	    return BRLCAD_ERROR;
 	}
     }
@@ -138,6 +119,7 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (!argc) {
 	_ged_cmd_help(gedp, usage, d);
+
 	return GED_HELP;
     }
 
@@ -150,11 +132,13 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
 	dm_get_display_image(dmp, &idata, 1, 0);
 	if (!idata) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: display manager did not return image data.", argv[1]);
+
 	    return BRLCAD_ERROR;
 	}
 	bif = icv_create(dm_get_width(dmp), dm_get_height(dmp), ICV_COLOR_SPACE_RGB);
 	if (bif == NULL) {
 	    bu_vls_printf(gedp->ged_result_str, ": could not create icv_image write structure.");
+
 	    return BRLCAD_ERROR;
 	}
 	rows = (unsigned char **)bu_calloc(dm_get_height(dmp), sizeof(unsigned char *), "rows");
@@ -170,14 +154,16 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
 	bif = fb_write_icv(fbp, 0, 0, fb_getwidth(fbp), fb_getheight(fbp));
 	if (bif == NULL) {
 	    bu_vls_printf(gedp->ged_result_str, ": could not create icv_image from framebuffer.");
+
 	    return BRLCAD_ERROR;
 	}
     }
 
-    icv_write(bif, argv[0], type);
+    int status = icv_write_with_context(ged_image_context(gedp), bif, argv[0], type, NULL, gedp->ged_result_str);
     icv_destroy(bif);
 
-    return BRLCAD_OK;
+
+    return status;
 }
 
 /*

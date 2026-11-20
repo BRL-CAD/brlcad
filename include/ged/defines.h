@@ -301,6 +301,11 @@ GED_EXPORT void ged_destroy(struct ged *);
 // done with it.
 GED_EXPORT extern void ged_init(struct ged *gedp);
 GED_EXPORT extern void ged_free(struct ged *gedp);
+/** Return the session-owned image codec context, creating it on first use.
+ * Applications may load codecs here for overlays, screenshots and exports.
+ * Do not destroy it separately. Session operations require serialization. */
+struct icv_context;
+GED_EXPORT struct icv_context *ged_image_context(struct ged *gedp);
 
 /** Set the available columns for human-readable command listings in this
  * session.  Zero restores the default of 80.  Hosts should supply their current

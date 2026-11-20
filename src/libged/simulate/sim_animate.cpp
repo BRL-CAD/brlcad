@@ -43,6 +43,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "bio.h"
 
@@ -524,44 +525,23 @@ SimAnimState::readPixToJpeg(const std::string &pix_path,
 			    std::vector<unsigned char> &jpeg_data) const
 {
 #ifdef HAVE_JPEGLIB_H
+    icv_context *codecs = ged_image_context(m_gedp);
     /* Read the PIX file into an icv_image */
-    icv_image_t *img = icv_read(pix_path.c_str(), BU_MIME_IMAGE_PIX,
-				(size_t)m_opts.width, (size_t)m_opts.height);
+    icv_image_t *img = icv_read_with_context(codecs, pix_path.c_str(), "image/vnd.brlcad.pix", NULL, (size_t)m_opts.width, (size_t)m_opts.height, NULL);
     if (!img) {
 	bu_log("simulate: failed to read PIX frame '%s'\n", pix_path.c_str());
 	return BRLCAD_ERROR;
     }
 
-    /* Write JPEG to a named temporary file, then read the bytes back */
-    char tmp_jpg[MAXPATHLEN];
-    bu_dir(tmp_jpg, MAXPATHLEN, BU_DIR_TEMP, NULL);
-    std::ostringstream tss;
-    tss << std::string(tmp_jpg) << "/sim_jpgtmp_" << (long)bu_pid() << ".jpg";
-    std::string tmp_jpg_path = tss.str();
-
-    if (icv_write(img, tmp_jpg_path.c_str(), BU_MIME_IMAGE_JPEG) != BRLCAD_OK) {
-	icv_destroy(img);
-	return BRLCAD_ERROR;
-    }
+    unsigned char *encoded = NULL;
+    size_t encoded_size = 0;
+    int status = icv_write_mem_with_context(codecs, img, &encoded, &encoded_size,
+	"image/jpeg", NULL, NULL);
     icv_destroy(img);
-
-    FILE *rfp = fopen(tmp_jpg_path.c_str(), "rb");
-    if (!rfp) {
-	bu_file_delete(tmp_jpg_path.c_str());
+    if (status != BRLCAD_OK)
 	return BRLCAD_ERROR;
-    }
-    fseek(rfp, 0, SEEK_END);
-    long jsize = ftell(rfp);
-    fseek(rfp, 0, SEEK_SET);
-    if (jsize > 0) {
-	jpeg_data.resize((size_t)jsize);
-	size_t nr = fread(jpeg_data.data(), 1, (size_t)jsize, rfp);
-	if ((long)nr != jsize)
-	    jpeg_data.clear();
-    }
-    fclose(rfp);
-    bu_file_delete(tmp_jpg_path.c_str());
-
+    jpeg_data.assign(encoded, encoded + encoded_size);
+    bu_free(encoded, "encoded JPEG frame");
     return jpeg_data.empty() ? BRLCAD_ERROR : BRLCAD_OK;
 
 #else
@@ -578,19 +558,25 @@ SimAnimState::encodeVideo()
     if (m_opts.output_file.empty() || m_frame_count == 0)
         return BRLCAD_OK;
 
-    icv_anim_format_t fmt = ICV_ANIM_UNKNOWN;
-    if (m_opts.output_file.find(".apng") != std::string::npos ||
-        m_opts.output_file.find(".png") != std::string::npos) {
-        fmt = ICV_ANIM_APNG;
-    } else if (m_opts.output_file.find(".avi") != std::string::npos ||
-               m_opts.output_file.find(".mjpg") != std::string::npos) {
-        fmt = ICV_ANIM_MJPG;
-    } else {
-        bu_log("simulate: output file extension not recognized for animation, defaulting to AVI\n");
-        fmt = ICV_ANIM_MJPG;
+    icv_context *codecs = ged_image_context(m_gedp);
+    bu_mime_result *detected = NULL;
+    const bu_mime_status status = bu_mime_detect(icv_mime_registry(codecs), m_opts.output_file.c_str(), NULL, 0, 0, &detected);
+    const bool unassociated = status != BU_MIME_ERROR && detected && !detected->count;
+    bu_mime_result_free(detected);
+    const char *fallback = unassociated ? "video/x-msvideo" : NULL;
+    if (unassociated)
+	bu_log("simulate: output filename has no format association, defaulting to AVI\n");
+    bu_vls selected = BU_VLS_INIT_ZERO;
+    const bool available = status != BU_MIME_ERROR && icv_resolve_variant(codecs, ICV_CODEC_WRITE_SEQUENCE,
+	m_opts.output_file.c_str(), fallback, NULL, NULL, &selected, NULL, NULL, NULL);
+    const std::string output_type = bu_vls_cstr(&selected);
+    bu_vls_free(&selected);
+    if (!available) {
+	bu_log("simulate: no animation writer for '%s'\n", m_opts.output_file.c_str());
+	return BRLCAD_ERROR;
     }
 
-    icv_anim_t *anim = icv_anim_create(fmt, m_opts.width, m_opts.height, m_opts.fps);
+    icv_anim_t *anim = icv_anim_create(ICV_ANIM_UNKNOWN, m_opts.width, m_opts.height, m_opts.fps);
     if (!anim) {
         bu_log("simulate: failed to create animation context\n");
         return BRLCAD_ERROR;
@@ -604,9 +590,7 @@ SimAnimState::encodeVideo()
             continue;
         }
 
-        icv_image_t *img = icv_read(ppath.c_str(), BU_MIME_IMAGE_PIX,
-                                    (size_t)m_opts.width,
-                                    (size_t)m_opts.height);
+	icv_image_t *img = icv_read_with_context(codecs, ppath.c_str(), "image/vnd.brlcad.pix", NULL, (size_t)m_opts.width, (size_t)m_opts.height, NULL);
         if (!img) {
             bu_log("simulate: could not read frame '%s'\n", ppath.c_str());
             continue;
@@ -623,7 +607,7 @@ SimAnimState::encodeVideo()
         return BRLCAD_ERROR;
     }
 
-    if (icv_anim_write(anim, m_opts.output_file.c_str()) != 0) {
+    if (icv_anim_write_variant(codecs, anim, m_opts.output_file.c_str(), output_type.c_str(), NULL, NULL, NULL) != 0) {
         bu_log("simulate: failed to write animation '%s'\n", m_opts.output_file.c_str());
         icv_anim_destroy(anim);
         return BRLCAD_ERROR;

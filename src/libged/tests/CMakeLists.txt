@@ -1,3 +1,11 @@
+if(TARGET icv-codec-fixture)
+  brlcad_addexec(ged_image_context_test image_context.c "libged;libicv;libbu" TEST)
+  if(TARGET ged_image_context_test)
+    add_dependencies(ged_image_context_test icv-codec-fixture)
+  endif()
+  brlcad_add_test(NAME ged_image_context COMMAND ged_image_context_test $<TARGET_FILE:icv-codec-fixture>)
+endif()
+
 brlcad_addexec(ged_test_terminal_columns terminal_columns.cpp libged TEST)
 if(TARGET ged_test_terminal_columns)
   add_dependencies(ged_test_terminal_columns ged_plugins)

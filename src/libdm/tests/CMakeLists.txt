@@ -30,6 +30,9 @@ brlcad_add_test(NAME dm_fb_standard_stream COMMAND test_fb_standard_stream)
 brlcad_addexec(test_fb_disk_fd test_fb_disk_fd.c "libdm;libbu" TEST)
 brlcad_add_test(NAME dm_fb_disk_fd COMMAND test_fb_disk_fd)
 
+brlcad_addexec(test_fb_icv test_fb_icv.c "libdm;libicv;libbu" TEST)
+brlcad_add_test(NAME dm_fb_icv COMMAND test_fb_icv)
+
 cmakefiles(CMakeLists.txt)
 cmakefiles(
   dm_test.c
@@ -37,6 +40,7 @@ cmakefiles(
   test_dlist_sensor.c
   #test_fb_standard_stream.c
   test_fb_disk_fd.c
+  test_fb_icv.c
 )
 
 # Local Variables:

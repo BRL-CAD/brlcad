@@ -40,6 +40,7 @@
 
 
 #include "bu/sort.h"
+#include "icv.h"
 #include "vmath.h"
 #include "bn.h"
 #include "rt/geom.h"
@@ -506,6 +507,16 @@ ged_terminal_columns(const struct ged *gedp)
 	? gedp->i->i->terminal_columns : _GED_TERMINAL_WIDTH;
 }
 
+struct icv_context *
+ged_image_context(struct ged *gedp)
+{
+    if (!gedp || !gedp->i)
+	return NULL;
+    if (!gedp->i->image_context)
+	gedp->i->image_context = icv_context_create(NULL);
+    return gedp->i->image_context;
+}
+
 void
 ged_init(struct ged *gedp)
 {
@@ -515,6 +526,7 @@ ged_init(struct ged *gedp)
     /* Create internal containers */
     BU_GET(gedp->i, struct ged_impl);
     gedp->i->magic = GED_MAGIC;
+    gedp->i->image_context = NULL;
     gedp->i->i = new Ged_Internal;
     gedp->i->i->terminal_columns = _GED_TERMINAL_WIDTH;
 
@@ -679,6 +691,7 @@ ged_free(struct ged *gedp)
     bu_ptbl_free(&gedp->terminal_opts);
     bu_ptbl_free(&gedp->ged_uptrs);
 
+    icv_context_destroy(gedp->i->image_context);
     /* Free internal containers */
     delete gedp->i->i;
     gedp->i->i = NULL;

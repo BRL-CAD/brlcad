@@ -191,9 +191,12 @@ class Ged_Internal {
 
 #endif
 
+struct icv_context;
+
 struct ged_impl {
     uint32_t magic;
     Ged_Internal *i;
+    struct icv_context *image_context;
 
     struct ged_drawable *ged_gdp;
 };
