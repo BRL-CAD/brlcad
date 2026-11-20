@@ -36,7 +36,7 @@
 
 /* interface headers */
 #include "bu/app.h"
-#include "bu/getopt.h"
+#include "bu/arg.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -56,38 +56,9 @@
 }
 
 
-void
-usage(const char *argv0)
-{
-    bu_log("Usage: %s [-v] [-i] [-p] [-xX lvl]\n\
-       [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol]\n\
-       [-o output_file_name.dxf] [-P #_of_CPUs] brlcad_db.g object(s)\n\n", argv0);
-
-    bu_log("Options:\n\
- -v	Verbose output\n\
- -i	Output using inches (instead of default mm)\n\
- -p	Output POLYFACE MESH (instead of default 3DFACE) entities\n\n");
-
-    bu_log("\
- -x #	Specify an RT debug flag\n\
- -X #	Specify an NMG debug flag\n\n");
-
-    bu_log("\
- -a #	Specify an absolute tessellation tolerance (in mm)\n\
- -r #	Specify a relative tessellation tolerance (in mm)\n\
- -n #	Specify a surface normal tessellation tolerance (in degrees)\n\
- -D #	Specify a calculation distance tolerance (in mm)\n\n");
-
-    bu_log("\
- -P #	DISABLED: Specify number of CPUS to be used (value accepted, but not used)\n\n");
-
-    bu_log("\
- -o dxf	Output to the specified dxf filename\n\n---\n");
-}
-
 static int	verbose;
 static int	polyface_mesh = 0;	/* flag for output type (default is 3DFACE) */
-static char	*output_file = NULL;	/* output filename */
+static const char *output_file = NULL;	/* output filename */
 static FILE	*fp;		/* Output file pointer */
 static struct db_i		*dbip;
 static struct bg_tess_tol	ttol;	/* tessellation tolerance in mm */
@@ -101,6 +72,151 @@ static int		regions_converted = 0;
 static int		regions_written = 0;
 static int		inches = 0;
 static unsigned int	tot_polygons = 0;
+
+struct g_dxf_args {
+    struct g_dxf_args *self;
+    int help;
+    int verbose;
+    int inches;
+    int polyface_mesh;
+    fastf_t absolute_tolerance;
+    fastf_t relative_tolerance;
+    fastf_t normal_tolerance;
+    fastf_t distance_tolerance;
+    int distance_tolerance_set;
+    int processors;
+    unsigned int rt_debug;
+    unsigned int nmg_debug;
+    const char *output_file;
+};
+
+enum g_dxf_tolerance_kind {
+    G_DXF_ABSOLUTE_TOLERANCE,
+    G_DXF_NORMAL_TOLERANCE
+};
+
+static int
+g_dxf_tolerance_consume(struct bu_vls *msg, size_t argc, const char **argv,
+	void *storage, enum g_dxf_tolerance_kind kind)
+{
+    struct g_dxf_args *args = storage ? *(struct g_dxf_args **)storage : NULL;
+    fastf_t value;
+
+    if (argc != 1 || bu_arg_nonnegative_number_validate(msg, argv[0]) < 0 ||
+	!bu_arg_number_from_str(msg, &value, argv[0]))
+	return -1;
+    if (!args)
+	return 0;
+
+    if (kind == G_DXF_ABSOLUTE_TOLERANCE)
+	args->absolute_tolerance = value;
+    else
+	args->normal_tolerance = value * DEG2RAD;
+    args->relative_tolerance = 0.0;
+    return 0;
+}
+
+static int
+g_dxf_absolute_tolerance_consume(struct bu_vls *msg, size_t argc,
+	const char **argv, void *storage)
+{
+    return g_dxf_tolerance_consume(msg, argc, argv, storage,
+	G_DXF_ABSOLUTE_TOLERANCE);
+}
+
+static int
+g_dxf_normal_tolerance_consume(struct bu_vls *msg, size_t argc,
+	const char **argv, void *storage)
+{
+    return g_dxf_tolerance_consume(msg, argc, argv, storage,
+	G_DXF_NORMAL_TOLERANCE);
+}
+
+static int
+g_dxf_distance_tolerance_consume(struct bu_vls *msg, size_t argc,
+	const char **argv, void *storage)
+{
+    struct g_dxf_args *args = storage ? *(struct g_dxf_args **)storage : NULL;
+    fastf_t value;
+
+    if (argc != 1 || bu_arg_nonnegative_number_validate(msg, argv[0]) < 0 ||
+	!bu_arg_number_from_str(msg, &value, argv[0]))
+	return -1;
+    if (args) {
+	args->distance_tolerance = value;
+	args->distance_tolerance_set = 1;
+    }
+    return 0;
+}
+
+static const struct bu_arg_option g_dxf_options[] = {
+    BU_ARG_FLAG("h", "help", struct g_dxf_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_COUNTING_FLAG("v", "verbose", struct g_dxf_args, verbose,
+	BU_ARG_VALUE_INTEGER, "Increase conversion reporting"),
+    BU_ARG_FLAG("i", "inches", struct g_dxf_args, inches,
+	"Write coordinates in inches instead of millimeters"),
+    BU_ARG_FLAG("p", "polyface-mesh", struct g_dxf_args, polyface_mesh,
+	"Write POLYFACE MESH entities instead of 3DFACE entities"),
+    BU_ARG_VALUE("x", "rt-debug", struct g_dxf_args, rt_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set librt hexadecimal debug flags"),
+    BU_ARG_VALUE("X", "nmg-debug", struct g_dxf_args, nmg_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set libnmg hexadecimal debug flags"),
+    BU_ARG_OPTION_SHAPED("a", "absolute-tolerance", "absolute-tolerance",
+	struct g_dxf_args, self, BU_ARG_VALUE_NUMBER, "distance",
+	"Set nonnegative chord deviation in millimeters and clear relative "
+	"tolerance", BU_ARG_REQUIRED, NULL,
+	g_dxf_absolute_tolerance_consume),
+    BU_ARG_VALUE_VALIDATE("r", "relative-tolerance", struct g_dxf_args,
+	relative_tolerance, BU_ARG_VALUE_NUMBER,
+	bu_arg_nonnegative_number_validate, "fraction",
+	"Set nonnegative tolerance as a fraction of bounding-box size"),
+    BU_ARG_OPTION_SHAPED("n", "normal-tolerance", "normal-tolerance",
+	struct g_dxf_args, self, BU_ARG_VALUE_NUMBER, "degrees",
+	"Set nonnegative surface-normal tolerance in degrees and clear "
+	"relative tolerance", BU_ARG_REQUIRED, NULL,
+	g_dxf_normal_tolerance_consume),
+    BU_ARG_OPTION_SHAPED("D", "distance-tolerance", "distance-tolerance",
+	struct g_dxf_args, self, BU_ARG_VALUE_NUMBER, "distance",
+	"Set the vertex-coincidence distance in millimeters", BU_ARG_REQUIRED,
+	NULL, g_dxf_distance_tolerance_consume),
+    BU_ARG_VALUE_VALIDATE("P", "processors", struct g_dxf_args, processors,
+	BU_ARG_VALUE_INTEGER, bu_arg_positive_integer_validate, "count",
+	"Accept a legacy processor count; conversion remains serial"),
+    BU_ARG_VALUE("o", "output", struct g_dxf_args, output_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "output.dxf",
+	"Write DXF output to this file instead of standard output"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand g_dxf_operands[] = {
+    BU_ARG_OPERAND("database.g", BU_ARG_VALUE_FILE, 1, 1,
+	"Input BRL-CAD database", NULL),
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1,
+	BU_ARG_COUNT_UNLIMITED, "Database object to convert", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema g_dxf_schema = BU_ARG_SCHEMA(
+    "g-dxf", "Convert BRL-CAD geometry to AutoCAD DXF",
+    g_dxf_options, g_dxf_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar g_dxf_grammar = {
+    &g_dxf_schema, NULL, NULL
+};
+
+static int
+g_dxf_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&g_dxf_schema, "g-dxf");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "g-dxf help");
+    return status;
+}
 
 
 static int
@@ -381,7 +497,10 @@ static struct gcv_region_end_data gcvwriter = {nmg_to_dxf, NULL, NULL};
 int
 main(int argc, char *argv[])
 {
-    int c;
+    struct g_dxf_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int introspection;
+    int operand_index;
     double percent;
 
     bu_setprogname(argv[0]);
@@ -409,57 +528,43 @@ main(int argc, char *argv[])
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:n:o:pr:vx:D:P:X:ih?")) != -1) {
-	switch (c) {
-	    case 'a':		/* Absolute tolerance. */
-		ttol.abs = atof(bu_optarg);
-		ttol.rel = 0.0;
-		break;
-	    case 'n':		/* Surface normal tolerance. */
-		ttol.norm = atof(bu_optarg) * DEG2RAD;
-		ttol.rel = 0.0;
-		break;
-	    case 'o':		/* Output file name. */
-		output_file = bu_optarg;
-		break;
-	    case 'p':
-		polyface_mesh = 1;
-		break;
-	    case 'r':		/* Relative tolerance. */
-		ttol.rel = atof(bu_optarg);
-		break;
-	    case 'v':
-		verbose++;
-		break;
-	    case 'P':
-		/* Accept the legacy option; output callbacks run serially. */
-		break;
-	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
-		break;
-	    case 'D':
-		tol.dist = atof(bu_optarg);
-		tol.dist_sq = tol.dist * tol.dist;
-		rt_pr_tol(&tol);
-		break;
-	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
-		break;
-	    case 'i':
-		inches = 1;
-		break;
-	    default:
-		usage(argv[0]);
-		bu_exit(1, "%s\n", brlcad_ident("BRL-CAD to DXF Exporter"));
-		break;
-	}
+    args.self = &args;
+    args.absolute_tolerance = ttol.abs;
+    args.relative_tolerance = ttol.rel;
+    args.normal_tolerance = ttol.norm;
+    args.distance_tolerance = tol.dist;
+    introspection = bu_arg_introspect(&msg, &g_dxf_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
     }
+    operand_index = bu_arg_schema_parse_complete(&g_dxf_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	bu_flog(stderr, "%s\n", brlcad_ident("BRL-CAD to DXF Exporter"));
+	return g_dxf_help(stderr, EXIT_FAILURE);
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return g_dxf_help(stdout, EXIT_SUCCESS);
 
-    if (bu_optind+1 >= argc) {
-	usage(argv[0]);
-	bu_exit(1, "%s\n", brlcad_ident("BRL-CAD to DXF Exporter"));
-    }
+    verbose = args.verbose;
+    inches = args.inches;
+    polyface_mesh = args.polyface_mesh;
+    output_file = args.output_file;
+    rt_debug = args.rt_debug;
+    nmg_debug = args.nmg_debug;
+    ttol.abs = args.absolute_tolerance;
+    ttol.rel = args.relative_tolerance;
+    ttol.norm = args.normal_tolerance;
+    tol.dist = args.distance_tolerance;
+    tol.dist_sq = tol.dist * tol.dist;
+    if (args.distance_tolerance_set)
+	rt_pr_tol(&tol);
 
     if (!output_file) {
 	fp = stdout;
@@ -473,8 +578,8 @@ main(int argc, char *argv[])
     }
 
     /* Open BRL-CAD database */
-    argc -= bu_optind;
-    argv += bu_optind;
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
     if ((dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[0]);
 	bu_exit(1, "Unable to open geometry database file (%s)\n", argv[0]);
