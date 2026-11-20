@@ -38,6 +38,7 @@
 #include "ged.h"
 
 #define DEFAULT_TIRE_FILENAME "tire.g"
+#define LIST_TREAD_PATTERNS_OPTION "--list-tread-patterns"
 
 static int
 demo_file_arg(int ac, char *av[], const char **filename)
@@ -65,11 +66,25 @@ demo_file_arg(int ac, char *av[], const char **filename)
 }
 
 
+static int
+list_tread_patterns_arg(int ac, char *av[])
+{
+    int i;
+
+    for (i = 1; i < ac; i++) {
+	if (BU_STR_EQUAL(av[i], LIST_TREAD_PATTERNS_OPTION))
+	    return 1;
+    }
+    return 0;
+}
+
+
 int main(int ac, char *av[])
 {
     struct rt_wdb *wdbp = NULL;
     const char *filename = NULL;
     struct ged ged;
+    int list_patterns;
     int ret;
 
     bu_setprogname(av[0]);
@@ -78,25 +93,40 @@ int main(int ac, char *av[])
     ret = demo_file_arg(ac, av, &filename);
     if (ret < 0)
 	bu_exit(1, "ERROR - --demo-file requires an output file name.\n");
-
-    if (bu_file_exists(filename, NULL))
-	bu_exit(1, "ERROR - refusing to overwrite existing [%s] file.", filename);
-    wdbp = wdb_fopen(filename);
-    mk_id(wdbp, "Tire");
+    list_patterns = list_tread_patterns_arg(ac, av);
 
     ged_init(&ged);
-    ged.dbip =  wdbp->dbip;
+    if (list_patterns) {
+	ged.dbip = db_create_inmem();
+	if (ged.dbip == DBI_NULL) {
+	    ged_free(&ged);
+	    bu_exit(1, "ERROR - unable to create an in-memory database.\n");
+	}
+    } else {
+	if (bu_file_exists(filename, NULL)) {
+	    ged_free(&ged);
+	    bu_exit(1, "ERROR - refusing to overwrite existing [%s] file.", filename);
+	}
+	wdbp = wdb_fopen(filename);
+	mk_id(wdbp, "Tire");
+	ged.dbip = wdbp->dbip;
+    }
 
     /* create the tire */
+    av[0] = (char *)"tire";
     ret = ged_exec_tire(&ged, ac, (const char **)av);
 
     /* Close database */
-    db_close(wdbp->dbip);
+    db_close(ged.dbip);
     if (ret & BRLCAD_ERROR) {
-	bu_file_delete(filename);
+	if (!list_patterns)
+	    bu_file_delete(filename);
 	bu_log("%s", bu_vls_addr(ged.ged_result_str));
-    } else
+    } else if (list_patterns) {
+	bu_log("%s", bu_vls_addr(ged.ged_result_str));
+    } else {
 	bu_log("%s file created\n", filename);
+    }
 
     /* release our ged instance memory */
     ged_free(&ged);
