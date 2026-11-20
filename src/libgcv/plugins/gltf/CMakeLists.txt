@@ -1,14 +1,17 @@
 BRLCAD_Find_Package(TinyGLTF REQUIRED)
 
-gcv_plugin_library(gcv-gltf SHARED gltf_read.cpp)
+gcv_plugin_library(gcv-gltf SHARED gltf_read.cpp gltf_scene.cpp)
+target_include_directories(gcv-gltf PRIVATE ${BRLCAD_SOURCE_DIR}/src/libbu)
 target_link_libraries(gcv-gltf libgcv libwdb librt tinygltf::tinygltf)
 set_property(TARGET gcv-gltf APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(gcv-gltf gltf_read.cpp)
+validate_style(gcv-gltf "gltf_read.cpp;gltf_scene.cpp")
 plugin_setup(gcv-gltf gcv)
 
 cmakefiles(
   gltf_read.cpp
   gltf_read_util.h
+  gltf_scene.cpp
+  gltf_scene.h
   CMakeLists.txt
 )
 
