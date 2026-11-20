@@ -1,0 +1,126 @@
+Runtime media-type catalog
+==========================
+
+This directory maintains runtime MIME identities independently of the frozen
+legacy enum inputs in misc/mime.types and misc/mime_cad.types. Builds use the
+checked-in data and require no network access or desktop MIME installation.
+
+Files
+-----
+
+upstream.types       Deterministic projection of a pinned mime-db snapshot.
+upstream.json        Upstream commit, URL, SHA-256 and license.
+mime-db.LICENSE      License text for that snapshot.
+supplement.json      Reviewed identities, extensions, aliases and provenance.
+update.py            Reproducible upstream snapshot updater.
+desktop.cmake        Private desktop-database association checks.
+
+src/libbu/mime_catalog.cmake combines the upstream projection and supplement
+into runtime tables. Legacy enum translation is generated separately by
+src/libbu/mime.cmake. Keep the old input rows and order unchanged: their enum
+integers remain compatibility values during the deprecation window.
+
+Naming policy
+-------------
+
+1. Prefer the IANA media-types registry, including its top-level category.
+   For example, DXF is image/vnd.dxf.
+2. For an unregistered format, prefer an established name published by its
+   owner or desktop metadata. FreeCAD publishes application/x-extension-fcstd
+   and OpenSCAD publishes application/x-openscad. Compatibility with those
+   existing names is not a policy of creating new x- names.
+3. Fill genuine gaps with convention-compliant vendor- or personal-tree
+   proposals following RFC 6838. Mark them proposed. They are neither IANA
+   registrations nor endorsements by the named projects. Registration needs
+   the owner's involvement, a stable specification and a completed template.
+
+Do not manufacture names from SDK driver identifiers. A backend is an
+implementation, not a data format. A structured suffix identifies a
+registered underlying syntax, such as +xml; do not invent +asc or +binary.
+OGC discussion paper 12-029's x-ogc proposals are scoped to web services and
+are not a general desktop naming scheme.
+
+Keep distinct representations separate. A label, its raster data and an
+archive containing both may require different identities. A shared extension
+is an association, not an alias: .vtu, for example, can refer to registered
+Virtue3D model/vnd.vtu or proposed application/vnd.kitware.vtk+xml.
+
+Supplement records
+------------------
+
+Each type records its name, status, extensions and primary references.
+Statuses distinguish registered names, established unregistered names and
+local proposals. Notes explain identity boundaries or non-obvious choices;
+format revisions and decoder support belong in traits and capabilities.
+registration_candidate is informational and creates no identity or alias.
+
+Use references from IANA, the format owner, its specification or published
+desktop metadata. Preserve the distinction between owner-provided desktop
+XML and the central shared-mime-info database. An SDK's extension list alone
+does not establish a MIME identity or conversion support.
+
+Aliases must name the same format family. They do not assert a revision,
+encoding or other profile. Retain published external names when needed;
+incorrect internal labels translate only at the legacy enum boundary. The
+supplement's legacy map can translate an old label or retire it with null.
+Do not publish every obsolete internal spelling as a runtime alias.
+
+BRL-CAD conventions
+------------------
+
+Native V4 and V5 databases use proposed model/vnd.brlcad, distinguished by a
+version trait. The published packaging labels application/brlcad-v4,
+application/brlcad-v5 and application/brlcad-unknown remain aliases.
+ASC uses proposed application/vnd.brlcad.script for its separate grammar.
+
+Debian desktop entries, MIME XML and icon aliases must agree on the canonical
+identity. Content rules recognize a full 128-byte V4 identification record
+and the eight-byte V5 header, including empty V5 databases. Filename globs
+alone do not distinguish native databases from unrelated .g files.
+
+Updating upstream data
+----------------------
+
+Pin a full upstream commit rather than a moving branch:
+
+    python3 misc/mime/update.py --commit <full-commit>
+
+For an offline update or verification, supply the matching upstream files:
+
+    python3 misc/mime/update.py --commit <full-commit> \
+        --source /path/to/db.json --license /path/to/LICENSE
+    python3 misc/mime/update.py --check \
+        --source /path/to/db.json --license /path/to/LICENSE
+
+Review upstream.types, upstream.json and mime-db.LICENSE together. Review
+extension collisions and supplement overrides; do not copy the snapshot
+back into the frozen enum inputs. The updater does not edit local proposals
+or decide that two names are aliases.
+
+Adding or changing an identity
+-----------------------------
+
+* Check authoritative sources and existing supplement records first.
+* Record status and provenance, with notes only where the boundary needs
+  explanation. Mark proposed names accurately.
+* Preserve extension collisions and review every alias explicitly.
+* Add recognition separately from decoder capabilities. Advertise only
+  variants and operations implemented by the configured handler.
+* Check canonicalization, aliases, detection and affected conversions.
+  Run bu_mime_registry and bu_mime_desktop when applicable, plus the
+  regress-repository and regress-licenses targets.
+
+The runtime API, trait contracts and plugin guidance are documented in
+  doc/asciidoc/articles/mime.adoc
+The deprecation inventory and removal gates are in
+  doc/changes/deprecated.adoc
+
+References
+----------
+
+IANA registry: https://www.iana.org/assignments/media-types/media-types.xhtml
+Naming rules: https://www.rfc-editor.org/rfc/rfc6838
+Structured suffixes: https://www.iana.org/assignments/media-type-structured-suffix/media-type-structured-suffix.xhtml
+Desktop metadata: https://specifications.freedesktop.org/shared-mime-info-spec/latest/
+Upstream data: https://github.com/jshttp/mime-db
+Per-format primary sources are recorded in supplement.json.

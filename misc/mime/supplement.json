@@ -1,0 +1,2522 @@
+{
+  "version": 1,
+  "types": [
+    {
+      "name": "application/vnd.esri.compact-cache+xml",
+      "status": "proposed",
+      "description": "Esri compact-cache XML label",
+      "extensions": [],
+      "references": [
+        "https://github.com/Esri/raster-tiles-compactcache",
+        "https://gdal.org/en/stable/drivers/raster/esric.html"
+      ],
+      "notes": "Local vendor-tree proposal, neither an IANA registration nor an owner-approved name. Identifies conf.xml metadata separately from JSON metadata, enclosing packages and bundle tile payloads. The current binding confirms compact V2 storage, 128 by 128 tile packets, positive square tiles and JPEG/PNG/MIXED declarations. Source-declared fields remain distinct from decoder defaults or decoded image precision."
+    },
+    {
+      "name": "application/vnd.esri.compact-cache+json",
+      "status": "proposed",
+      "description": "Esri compact-cache JSON label",
+      "extensions": [],
+      "references": [
+        "https://github.com/Esri/tile-package-spec/blob/master/docs/root.md",
+        "https://gdal.org/en/stable/drivers/raster/esric.html"
+      ],
+      "notes": "Local vendor-tree proposal, neither an IANA registration nor an owner-approved name. Identifies root.json metadata by owned cache objects, not arbitrary JSON or iteminfo.json. Package specification revision, bundle storage format and tile image format are separate observations. Future declared package revisions remain recognizable without a current conversion binding."
+    },
+    {
+      "name": "application/vnd.esri.tile-package+zip",
+      "status": "proposed",
+      "description": "Esri TPKX tile package",
+      "extensions": [
+        "tpkx"
+      ],
+      "references": [
+        "https://github.com/Esri/tile-package-spec",
+        "https://github.com/Esri/raster-tiles-compactcache",
+        "https://gdal.org/en/stable/drivers/raster/esric.html"
+      ],
+      "notes": "Local vendor-tree proposal, neither an IANA registration nor an owner-approved name. Names the TPKX ZIP package with root.json metadata and compact V2 tile bundles. Not an alias of a standalone XML/JSON label, vector tile package or older TPK package. The existing archive-capable decoder opens the package, then independently inspected original metadata confirms source traits."
+    },
+    {
+      "name": "application/vnd.esa.safe+xml",
+      "status": "proposed",
+      "description": "ESA SAFE XML manifest",
+      "extensions": [],
+      "references": [
+        "https://sentiwiki.copernicus.eu/web/s1-products",
+        "https://gdal.org/en/stable/drivers/raster/safe.html"
+      ],
+      "notes": "Local vendor-tree proposal, neither an IANA registration nor an owner-approved name. Identifies an XFDU manifest with the ESA SAFE profile declaration, independently of arbitrary XFDU documents and separately from measurement images or enclosing product archives. safe.profile is a profile path, not a numeric wire revision. Current GCV terrain conversion does not support the GCP georeferencing of the tested Sentinel-1 products."
+    },
+    {
+      "name": "application/vnd.esa.sentinel-2+xml",
+      "status": "proposed",
+      "description": "ESA Sentinel-2 XML metadata",
+      "extensions": [],
+      "references": [
+        "https://gdal.org/en/stable/drivers/raster/sentinel2.html",
+        "https://sentiwiki.copernicus.eu/web/s2-products"
+      ],
+      "notes": "Local vendor-tree proposal, neither an IANA registration nor an owner-approved name. Namespace-qualified product, granule, tile and datastrip metadata retain processing level and metadata role independently of the PSD schema namespace revision or processing baseline. The metadata is separate from SAFE manifests, JPEG2000 measurements and product archives. Current physical entrypoints expose subdataset catalogues and have no GCV conversion binding."
+    },
+    {
+      "name": "application/vnd.vaisala.iris.product",
+      "status": "proposed",
+      "description": "Vaisala IRIS product file",
+      "extensions": [],
+      "references": [
+        "https://ftp.sigmet.vaisala.com/files/html_docs/IRIS-Programming-Guide-Webhelp/product_file_format.html",
+        "https://ftp.sigmet.vaisala.com/files/html_docs/IRIS-Programming-Guide-Webhelp/structure_header_structure.html",
+        "https://gdal.org/en/stable/drivers/raster/iris.html"
+      ],
+      "notes": "Local vendor-tree proposal, neither an IANA registration nor an owner-approved name. Product files have a common structure header, independently of raw ingest streams and non-Cartesian product payloads. Product-header and configuration revisions, product and quantity codes, byte order and payload layout are separate observations. Published application/x-ppi and application/x-cappi are narrower product views, not aliases of this complete family."
+    },
+    {
+      "name": "application/x-ppi",
+      "status": "established",
+      "description": "IRIS plan-position-indicator product",
+      "extensions": [
+        "ppi"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://ftp.sigmet.vaisala.com/files/html_docs/IRIS-Programming-Guide-Webhelp/product_configuration_structure.html"
+      ],
+      "notes": "Published Tika spelling for the PPI product. The IRIS binding requires encoded product code 1, independently of the filename hint. Not an alias of other IRIS products or the whole IRIS family."
+    },
+    {
+      "name": "application/x-cappi",
+      "status": "established",
+      "description": "IRIS constant-altitude plan-position-indicator product",
+      "extensions": [
+        "cappi"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://ftp.sigmet.vaisala.com/files/html_docs/IRIS-Programming-Guide-Webhelp/product_configuration_structure.html"
+      ],
+      "notes": "Published Tika spelling for the CAPPI product. The IRIS binding requires encoded product code 3. Not an alias of PPI or the whole IRIS family."
+    },
+    {
+      "name": "application/vnd.racurs.photomod.raster+xml",
+      "status": "proposed",
+      "description": "Racurs PHOTOMOD raster XML label",
+      "extensions": [
+        "prf",
+        "x-dem"
+      ],
+      "references": [
+        "https://gdal.org/en/stable/drivers/raster/prf.html",
+        "https://www.racurs.ru/"
+      ],
+      "notes": "Local vendor-tree proposal, neither an IANA registration nor an owner-approved name. An unqualified phini XML label describes tiled imagery or elevation data. photomod.filename-kind retains the native prf/x-dem entrypoint convention; the XML root alone does not distinguish these roles. Declared channel type and channel bytes describe the mosaic, not the wire representation of independently typed TIFF or JPEG2000 tiles. The existing terrain binding requires identity vertical offset."
+    },
+    {
+      "name": "image/vnd.noaa.ngs-b-grid",
+      "status": "proposed",
+      "description": "NOAA NGS .b geodetic grid",
+      "extensions": [],
+      "references": [
+        "https://geodesy.noaa.gov/library/pdfs/NOAA_TR_NOS_NGS_0063.pdf",
+        "https://gdal.org/en/stable/drivers/raster/noaa_b.html"
+      ],
+      "notes": "Local vendor-tree proposal, neither an IANA registration nor an owner-approved name. Names the Fortran-record .b representation used by GEOCON and NADCON5, independently of earlier NGS grid formats or NOAA imagery. Header and payload byte order and encoded kind are source facts. Kind -1 remains distinct from ordinary signed 16-bit samples. No release version or CRS is inferred from the filename or decoder guesses."
+    },
+    {
+      "name": "image/vnd.nsidc.sea-ice-concentration",
+      "status": "proposed",
+      "description": "NSIDC sea-ice concentration binary raster",
+      "extensions": [],
+      "references": [
+        "https://nsidc.org/sites/default/files/documents/user-guide/nsidc-0051-v001-userguide.pdf",
+        "https://gdal.org/en/stable/drivers/raster/nsidcbin.html"
+      ],
+      "notes": "Local vendor-tree proposal, neither an IANA registration nor an owner-approved name. The header300 layout is the archived NSIDC-0051 version-1 binary representation, separately from version-2 netCDF and accompanying PNG browse images or XML metadata. Scaling factor, missing value and channel are encoded header observations. One-byte samples do not establish multibyte endianness. The current GDAL terrain adapter has no binding because it does not interpret concentration scale and reserved mask values."
+    },
+    {
+      "name": "application/vnd.rspatial.raster",
+      "status": "proposed",
+      "description": "R Spatial rasterfile INI label",
+      "extensions": [
+        "grd"
+      ],
+      "references": [
+        "https://rspatial.org/raster/pkg/appendix2.html",
+        "https://gdal.org/en/stable/drivers/raster/rraster.html"
+      ],
+      "notes": "Local vendor-tree proposal, neither an IANA registration nor an owner-approved name. The text .grd label is the GDAL dataset entrypoint; the referenced .gri pixels have a separate image identity. Not an alias of R object serialization, a Surfer grid or the raw pixel payload. Declared datatype, band order and byte order are label observations. An absent byteorder specifies producing-platform order without identifying that order portably."
+    },
+    {
+      "name": "image/vnd.rspatial.raster",
+      "status": "proposed",
+      "description": "R Spatial rasterfile pixel payload",
+      "extensions": [
+        "gri"
+      ],
+      "references": [
+        "https://rspatial.org/raster/pkg/appendix2.html",
+        "https://gdal.org/en/stable/drivers/raster/rraster.html"
+      ],
+      "notes": "Local vendor-tree proposal, neither an IANA registration nor an owner-approved name. Binary .gri pixels accompany a separate INI .grd label. This payload identity is not an alias of its label, and does not advertise a decoder entrypoint without the needed metadata."
+    },
+    {
+      "name": "application/vnd.jpl.roi-pac",
+      "status": "proposed",
+      "description": "JPL ROI_PAC resource label",
+      "extensions": [],
+      "references": [
+        "https://gdal.org/en/stable/drivers/raster/roi_pac.html",
+        "https://aws.roipac.org/"
+      ],
+      "notes": "Local vendor-tree proposal, neither an IANA registration nor an owner-approved name. Text resource metadata accompanies the image file as an appended .rsc sidecar. Keep the label distinct from the raw pixel file. Numeric scale and offset declarations are independent source facts."
+    },
+    {
+      "name": "image/vnd.jpl.roi-pac",
+      "status": "proposed",
+      "description": "JPL ROI_PAC pixel payload",
+      "extensions": [],
+      "references": [
+        "https://gdal.org/en/stable/drivers/raster/roi_pac.html",
+        "https://aws.roipac.org/"
+      ],
+      "notes": "Local vendor-tree proposal, neither an IANA registration nor an owner-approved name. The paired .rsc label and supported filename class determine the current reader interpretation; a bare .dem, .raw or .int suffix does not globally establish ROI_PAC. roi-pac.filename-kind records that filename convention rather than pretending it is an encoded header field. The current terrain adapter declares real-valued file classes with an identity scale/offset. No source byte order is invented from a decoder constant."
+    },
+    {
+      "name": "application/vnd.nasa.isce+xml",
+      "status": "proposed",
+      "description": "NASA ISCE image XML label",
+      "extensions": [],
+      "references": [
+        "https://github.com/isce-framework/isce2",
+        "https://gdal.org/en/stable/drivers/raster/isce.html"
+      ],
+      "notes": "Local vendor-tree proposal, neither an IANA registration nor an owner-approved name. An unnamespaced imageFile XML document describes a separate raw image. Keep this metadata label distinct from the pixel payload. Schema and source label facts are independent of the SDK release or its assumed WGS84 reference."
+    },
+    {
+      "name": "image/vnd.nasa.isce",
+      "status": "proposed",
+      "description": "NASA ISCE pixel payload",
+      "extensions": [],
+      "references": [
+        "https://github.com/isce-framework/isce2",
+        "https://gdal.org/en/stable/drivers/raster/isce.html"
+      ],
+      "notes": "Local vendor-tree proposal, neither an IANA registration nor an owner-approved name. Raw pixels use an appended XML label. Scheme, datatype and any explicit byte-order declaration come from that label, not a decoded band type. The XML document is not a raster payload alias, and no generic .bin extension association is manufactured."
+    },
+    {
+      "name": "application/vnd.esri.ehdr",
+      "status": "proposed",
+      "description": "Esri BIL/BIP/BSQ raster header label",
+      "extensions": [],
+      "references": [
+        "https://downloads.esri.com/support/whitepapers/other_/eximgav.pdf",
+        "https://gdal.org/en/stable/drivers/raster/ehdr.html"
+      ],
+      "notes": "Local vendor-tree proposal, neither an IANA registration nor an owner-approved name. Text .hdr metadata describes a separate binary raster. Distinct from ENVI metadata and from the pixel payload. Format-defined BIL layout when LAYOUT is omitted does not identify a producer byte order."
+    },
+    {
+      "name": "image/vnd.esri.ehdr",
+      "status": "proposed",
+      "description": "Esri header-labelled raster payload",
+      "extensions": [
+        "bip",
+        "bsq"
+      ],
+      "references": [
+        "https://downloads.esri.com/support/whitepapers/other_/eximgav.pdf",
+        "https://gdal.org/en/stable/drivers/raster/ehdr.html"
+      ],
+      "notes": "Local vendor-tree proposal, neither an IANA registration nor an owner-approved name. Vendor-family identity for binary Esri header-labelled BIL/BIP/BSQ data. Published image/bil remains a BIL-specific view, not an alias that silently broadens to BIP/BSQ. Labels remain separate application documents. Bare .hdr files are not advertised as pixel entrypoints."
+    },
+    {
+      "name": "image/bil",
+      "status": "established",
+      "description": "Band-interleaved-by-line raster payload",
+      "extensions": [
+        "bil"
+      ],
+      "references": [
+        "https://doc.esri.com/en/arcgis-enterprise/latest/administer/communicating-with-a-wms-service-in-a-web-browser.html",
+        "https://downloads.esri.com/support/whitepapers/other_/eximgav.pdf",
+        "https://gdal.org/en/stable/drivers/raster/ehdr.html"
+      ],
+      "notes": "Published Esri MIME spelling for BIL image responses. The GDAL binding requires independently established BIL layout and an Esri header. It does not silently identify BIP/BSQ or an ENVI label as BIL."
+    },
+    {
+      "name": "image/x-revolsys-sigdem",
+      "status": "established",
+      "description": "Revolsys Scaled Integer Gridded Digital Elevation Model",
+      "extensions": [
+        "sigdem"
+      ],
+      "references": [
+        "https://github.com/revolsys/sigdem",
+        "https://gdal.org/en/stable/drivers/raster/sigdem.html"
+      ],
+      "notes": "Use the format owner's published MIME spelling. Revision 1 stores big-endian offset-scaled signed 32-bit integers; an SDK Float64 band does not establish IEEE source samples. Future encoded revisions remain observations without receiving revision-1 layout facts or conversion support. The current adapter declares compression=none; owner-documented gzip/ZIP representations do not inherit this raw-input binding."
+    },
+    {
+      "name": "image/vnd.bundysoft.hf2",
+      "status": "proposed",
+      "description": "Bundysoft L3DT HF2 heightfield",
+      "extensions": [
+        "hf2",
+        "hfz"
+      ],
+      "references": [
+        "https://www.bundysoft.com/docs/doku.php?id=l3dt:formats:specs:hf2",
+        "https://gdal.org/en/stable/drivers/raster/hf2.html"
+      ],
+      "notes": "Local vendor-tree proposal, neither an IANA registration nor an owner-approved name. The format family name HF2 is distinct from its encoded header revision, currently zero. Raw HF2 and gzip-wrapped HFZ retain separate compression observations. Revision zero uses tile scales and offsets plus integer deltas of varying word sizes; decoded Float32 does not establish IEEE source samples or a single encoded bit depth. A gzip signature alone does not identify HF2."
+    },
+    {
+      "name": "image/vnd.nrcan.byn",
+      "status": "proposed",
+      "description": "Natural Resources Canada BYN gridded data",
+      "extensions": [
+        "byn",
+        "err"
+      ],
+      "references": [
+        "https://gdal.org/en/stable/drivers/raster/byn.html",
+        "https://github.com/OSGeo/gdal/blob/master/frmts/raw/byndataset.h"
+      ],
+      "notes": "Local vendor-tree proposal, neither an IANA registration nor an owner-approved name. BYN and its error-estimate .err files share one header grammar. Header fields are little-endian independently of the selected payload byte order. Encoded signed integers are 16 or 32 bits and use the header factor; current terrain conversion is restricted to a unit factor because its existing path does not apply GDAL band scaling. This header has no magic signature, so content identification remains heuristic."
+    },
+    {
+      "name": "application/vnd.isgeoid.isg",
+      "status": "proposed",
+      "description": "International Service for the Geoid exchange data",
+      "extensions": [
+        "isg"
+      ],
+      "references": [
+        "https://www.isgeoid.polimi.it/Geoid/format_specs.html",
+        "https://www.isgeoid.polimi.it/Geoid/ISG_format_v10_20160121.pdf",
+        "https://www.isgeoid.polimi.it/Geoid/ISG_format_v101_20180915.pdf",
+        "https://www.isgeoid.polimi.it/Geoid/ISG_format_v20_20200625.pdf",
+        "https://gdal.org/en/stable/drivers/raster/isg.html"
+      ],
+      "notes": "Local vendor-tree proposal, neither an IANA registration nor an owner-approved name. Covers grid and sparse-point representations independently of the current raster reader subset. Preserve literal isg.format-version values such as 1.01 rather than treating them as decimal or normalized semantic versions. Source ordering, coordinate type and units are separate facts. The SDK's arbitrary WGS84 interpolation CRS is not an observation of the encoded source reference frame."
+    },
+    {
+      "name": "application/leveller",
+      "status": "established",
+      "description": "Daylon Leveller heightfield",
+      "extensions": [
+        "ter"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/leveller.html",
+        "https://www.daylongraphics.com/"
+      ],
+      "notes": "Published Apache Tika spelling, not an IANA registration. The trrn header and encoded revision distinguish this heightfield from unrelated Terragen .ter files. Revisions 4 and 5 encode signed 16.16 fixed-point values; a decoded Float32 band does not establish IEEE source samples. Later known revisions use IEEE 32-bit values. The current terrain adapter binds geodetically referenced revisions 7 through 12; older and local coordinate-system inputs retain their identity without advertising the existing converter's unsupported reprojection path."
+    },
+    {
+      "name": "image/vnd.esri.lerc",
+      "status": "proposed",
+      "description": "Esri Limited Error Raster Compression",
+      "extensions": [
+        "lrc",
+        "lerc"
+      ],
+      "references": [
+        "https://github.com/Esri/lerc",
+        "https://github.com/Esri/lerc/blob/master/src/LercLib/Lerc2.cpp",
+        "https://gdal.org/en/stable/drivers/raster/marfa.html"
+      ],
+      "notes": "Local owner-aligned vendor-tree proposal, not an IANA registration or an owner-approved submission. Standalone LERC tiles and concatenated blobs are independent of MRF XML labels and TAR packages. Lerc1/Lerc2 codec names, their wire revisions and software library releases are separate concepts. Bounded inspection describes the first blob; global sample facts require an extent accounting for the complete source. Lerc1 image type 8 denotes CntZ and does not establish an unsigned eight-bit raster interpretation. MRF-written tiles may carry three historical decoder-padding bytes after the encoded blob; the standalone binding distinguishes that known padding from other unexplained trailers."
+    },
+    {
+      "name": "application/vnd.nasa.pds4+xml",
+      "status": "proposed",
+      "description": "NASA PDS4 XML label",
+      "extensions": [
+        "xml"
+      ],
+      "references": [
+        "https://pds.nasa.gov/datastandards/documents/current-version.shtml",
+        "https://gdal.org/en/stable/drivers/raster/pds4.html"
+      ],
+      "notes": "Local vendor-tree proposal for the PDS4 XML label, not an IANA registration or an owner-approved submission. Referenced raw imagery, tables and GeoTIFF payloads remain independent resources. The PDS4 family name and namespace do not establish an exact information-model release. PDS3 labels retain their distinct existing identity; they are not compatibility aliases of this XML grammar."
+    },
+    {
+      "name": "application/vnd.nasa.mrf+xml",
+      "status": "proposed",
+      "description": "NASA Meta Raster Format XML metadata",
+      "extensions": [
+        "mrf"
+      ],
+      "references": [
+        "https://github.com/nasa-gibs/mrf/blob/master/doc/MUG.md",
+        "https://gdal.org/en/stable/drivers/raster/marfa.html"
+      ],
+      "notes": "Local vendor-tree proposal for the MRF XML control document, not an IANA registration or an owner-approved submission. The index and packed raster tiles remain independent source components; their compression is not the XML label encoding. A guide release or a dataset history/version index does not establish an encoded format revision. TAR packages and standalone LERC tiles opened by the same SDK driver are not aliases of this XML entrypoint."
+    },
+    {
+      "name": "application/vnd.zarr",
+      "status": "established",
+      "description": "Zarr array store",
+      "extensions": [
+        "zarr"
+      ],
+      "references": [
+        "https://pystac.readthedocs.io/en/stable/api/media_type.html",
+        "https://github.com/radiantearth/stac-best-practices/blob/main/best-practices-zarr.md",
+        "https://zarr-specs.readthedocs.io/en/latest/v3/core/index.html",
+        "https://zarr-specs.readthedocs.io/en/latest/v2/v2.0.html",
+        "https://gdal.org/en/stable/drivers/raster/zarr.html"
+      ],
+      "notes": "Published STAC/PySTAC spelling, not an IANA registration. The .zarr association is a hint for an array store, not proof of its contents or a JSON/archive alias. The deprecated application/vnd+zarr spelling is retained for existing STAC assets. Runtime traits distinguish directory and metadata entrypoints and retain the declared zarr_format major version independently of specification minor revisions and the SDK release. Native stores remain distinct from Kerchunk reference documents and archive/virtual filesystem connection strings."
+    },
+    {
+      "name": "application/vnd.nasa.vicar",
+      "status": "proposed",
+      "description": "NASA VICAR labelled data",
+      "extensions": [
+        "img",
+        "vicar"
+      ],
+      "references": [
+        "https://planetarydata.jpl.nasa.gov/img/w10n/voyager/VGISS_0031/DOCUMENT/VICAR.HTML",
+        "https://planetarydata.jpl.nasa.gov/img/data/cassini/cassini_orbiter/coiss_0011_v4.2/document/iss_data_user_guide_180916.pdf",
+        "https://raw.githubusercontent.com/ImageMagick/ImageMagick/main/coders/vicar.c",
+        "https://gdal.org/en/stable/drivers/raster/vicar.html"
+      ],
+      "notes": "Proposed owner-aligned vendor name, not an IANA registration or owner-approved submission. Application covers the image, parameter, tabular and graphics members of the family. A leading LBLSIZE declaration recognizes vicar.header-layout=lblsize heuristically; it does not establish the file kind, pixel format, interleaving, byte order, compression or a revision. GDAL advertises its existing binary raster reader only. PDS-labelled files containing an embedded VICAR header retain their separate wrapper identity even when the SDK selects the VICAR driver. No image/x-vicar alias is created without a primary published identity and compatible family scope."
+    },
+    {
+      "name": "application/cals-1840",
+      "status": "registered",
+      "description": "CALS MIL-STD-1840 interchange data",
+      "extensions": [
+        "cal",
+        "ct1"
+      ],
+      "references": [
+        "https://www.rfc-editor.org/rfc/rfc1895.txt",
+        "https://gdal.org/en/stable/drivers/raster/cals.html"
+      ],
+      "notes": "The registered family includes declaration and data files with their original interchange headers. The cal/ct1 filename hints conventionally denote raster files; they do not establish a raster subtype. GDAL supports only Type 1 rasters, declared by cals.raster-type=1 with binary one-bit CCITT Group 4 data. The header does not establish a MIL-STD-1840 revision or the formal transfer-unit filename parameter; neither is inferred from local names or the SDK version."
+    },
+    {
+      "name": "application/x-pcidsk",
+      "status": "established",
+      "description": "PCIDSK Database File",
+      "extensions": [
+        "pix"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/pcidsk.html"
+      ],
+      "notes": "Published Tika identity for the PCI raster database, distinct from BRL-CAD and Autodesk PIX formats sharing the .pix suffix. The PCIDSK header establishes the binary family, without inferring a dataset revision, pixel interleaving, compression, sample word size or byte order from an SDK version or decoded band type."
+    },
+    {
+      "name": "application/vrt",
+      "status": "established",
+      "description": "Virtual Raster",
+      "extensions": [
+        "vrt"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/vrt.html"
+      ],
+      "notes": "Published Tika identity for a GDAL virtual raster XML document. Keep it distinct from generic XML and vector OGR VRT descriptions. Source datasets must remain available; the format identity does not promise embedded raster samples. No file revision or charset is inferred from a successful decoder open."
+    },
+    {
+      "name": "application/x-envi",
+      "status": "established",
+      "description": "ENVI .hdr Labelled",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/envi.html"
+      ],
+      "notes": "Published Tika identity for raw raster data accompanied by an ENVI header. Select the binary data file, not the .hdr metadata file. No extension is manufactured for headerless data, and no alias equates an ENVI header with the raster payload. Interleaving, scalar layout and byte order remain unknown without source observations."
+    },
+    {
+      "name": "application/x-ers",
+      "status": "established",
+      "description": "ERMapper .ers Labelled",
+      "extensions": [
+        "ers"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/ers.html"
+      ],
+      "notes": "Published Tika identity for an ERMapper labelled raster dataset. The .ers label may refer to companion raster data. Header metadata and decoded sample types do not become unobserved MIME traits."
+    },
+    {
+      "name": "application/x-rmf",
+      "status": "established",
+      "description": "Raster Matrix Format",
+      "extensions": [
+        "rsw"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/rmf.html"
+      ],
+      "notes": "Published Tika identity for Raster Matrix Format datasets. The configured driver accepts multiple sample and storage layouts; this identity binding does not invent a fixed bit depth, version or compression profile."
+    },
+    {
+      "name": "image/x-pcraster",
+      "status": "established",
+      "description": "PCRaster Raster File",
+      "extensions": [
+        "map"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/pcraster.html"
+      ],
+      "notes": "Published Tika identity for PCRaster raster maps. Keep the .map association distinct from OziExplorer map labels and unrelated .map formats. Value scale and stored sample layout require source observations rather than interpretation of the SDK output band."
+    },
+    {
+      "name": "image/ilwis",
+      "status": "established",
+      "description": "ILWIS Raster Map",
+      "extensions": [
+        "mpr",
+        "mpl"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/ilwis.html"
+      ],
+      "notes": "Published Tika identity for ILWIS raster maps and map lists. Companion files may be required. The .mpr and .mpl hints do not establish a scalar layout or a dataset revision."
+    },
+    {
+      "name": "application/x-rst",
+      "status": "established",
+      "description": "Idrisi Raster A.1",
+      "extensions": [
+        "rst"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/Idrisi.html"
+      ],
+      "notes": "Published Tika identity for Idrisi raster data. Companion documentation supplies layout and georeferencing. The binding does not infer a source revision, bit depth or byte order from the SDK-decoded raster band. The current terrain adapter requires raster.value-dimension=length, established from explicitly recognized linear value units after opening the source. Unspecified or unrecognized units are excluded before database changes; broader terrain unit handling remains converter follow-up."
+    },
+    {
+      "name": "application/x-gtx",
+      "status": "established",
+      "description": "NOAA Vertical Datum .GTX",
+      "extensions": [
+        "gtx"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://github.com/OSGeo/gdal/blob/master/frmts/raw/gtxdataset.cpp"
+      ],
+      "notes": "Published Tika identity for NOAA vertical datum grids. The data are not interchangeable with arbitrary .gtx files. The family binding does not turn vertical-datum displacement values into an asserted source height unit or coordinate-system revision."
+    },
+    {
+      "name": "application/x-sdat",
+      "status": "established",
+      "description": "SAGA GIS Binary Grid (.sdat, .sg-grd-z)",
+      "extensions": [
+        "sdat",
+        "sg-grd-z"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/sdat.html"
+      ],
+      "notes": "Published Tika identity for SAGA grid datasets, including the SDK-supported native and wrapped representations. Do not equate a generic ZIP prefix with a SAGA grid. Header/data companions or a complete container may be required. Container, sample layout and byte order remain unestablished without source inspection."
+    },
+    {
+      "name": "application/dted",
+      "status": "established",
+      "description": "Digital Terrain Elevation Data",
+      "extensions": [
+        "dt0",
+        "dt1",
+        "dt2",
+        "dted"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/dted.html",
+        "https://github.com/OSGeo/gdal/blob/master/frmts/dted/dted_create.c",
+        "https://github.com/OSGeo/gdal/blob/master/frmts/dted/dted_api.c"
+      ],
+      "notes": "Published Tika family identity. Recognize the UHL and following DSI records, including optional 80-byte tape labels. Preserve the literal DSI designator and its numeric DTED level independently of any format revision. Historical shifted DSI fields are observed explicitly. Samples are signed 16-bit big-endian integers; a signed-magnitude or nonconforming two's-complement interpretation is not inferred from the header. No invented level upper bound or conformance promise is added."
+    },
+    {
+      "name": "application/x-gxf",
+      "status": "established",
+      "description": "Geosoft Grid Exchange File",
+      "extensions": [
+        "gxf"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/gxf.html",
+        "https://github.com/OSGeo/gdal/blob/master/frmts/gxf/gxfopen.c",
+        "https://www.microfocus.com/documentation/idol/knowledge-discovery-25.1/KeyviewViewingSDK_25.1_Documentation/Guides/html/Content/kv_formats/_KV_FMT__AllDetected.htm"
+      ],
+      "notes": "Published Tika identity for Geosoft scalar grids. Keep application/gxf, used for the unrelated General Exchange Format audiovisual container, distinct despite the shared extension. A coherent POINTS/ROWS/GRID header supplies heuristic evidence. Preserve the raw GTYPE declaration; known values distinguish decimal and base90-encoded text without claiming a source floating-point word size or a file revision. GXF-3 in a decoder description is not an encoded version assertion. The adapter excludes BOM-marked headers because this SDK can discard their first keyword, although files with an initial optional title may still decode. Decoder restructuring is separate work. Shared inspection preserves inline header values and reports gxf.inline-header-values after the complete header. This adapter requires separate-line values because the configured SDK can interpret an inline GTYPE as 0. An inline declaration is never replaced by a fabricated default."
+    },
+    {
+      "name": "application/x-zmap",
+      "status": "established",
+      "description": "ZMap Plus scalar grid",
+      "extensions": [
+        "dat"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/zmap.html",
+        "https://github.com/OSGeo/gdal/blob/master/frmts/zmap/zmapdataset.cpp"
+      ],
+      "notes": "Published Tika family identity. The comma-separated GRID header supplies heuristic evidence independently of the generic .dat extension. Preserve values-per-line and field-width declarations when present; the decoded Float64 band type does not specify a wire sample size. Source charset, code-unit width and BOM remain independent of numeric fields and the SDK pixel-is-point configuration. No file revision is inferred from the product name."
+    },
+    {
+      "name": "application/grass-ascii-grid",
+      "status": "established",
+      "description": "GRASS ASCII raster grid",
+      "extensions": [
+        "asc"
+      ],
+      "registration_candidate": "image/vnd.osgeo.grass.ascii-grid",
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://grass.osgeo.org/grass-stable/manuals/r.in.ascii.html",
+        "https://gdal.org/en/stable/drivers/raster/grassasciigrid.html"
+      ],
+      "notes": "Published Apache Tika identity, distinct from Esri ASCII Grid. Source serialization, width, BOM and charset are independent of the numeric header and decoded band type. No GRASS product revision is invented from the file. The registration candidate is informational only."
+    },
+    {
+      "name": "application/x-ascii-xyz",
+      "status": "established",
+      "description": "ASCII XYZ coordinate/value table",
+      "extensions": [
+        "xyz"
+      ],
+      "references": [
+        "https://www.maanmittauslaitos.fi/en/e-services/open-data-file-download-service/open-data-file-updating-service-interface",
+        "https://gdal.org/en/stable/drivers/raster/xyz.html",
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java"
+      ],
+      "notes": "Published National Land Survey of Finland identity for ASCII XYZ. Numeric columns alone do not establish this identity independently of a filename hint or explicit caller choice. Preserve chemical/x-xyz as a distinct extension association. The GDAL adapter declares regular-grid topology only; successful driver parsing establishes that interpretation, independently of the caller request."
+    },
+    {
+      "name": "image/vnd.goldensoftware.surfer-grid",
+      "status": "proposed",
+      "description": "Golden Software Surfer scalar grid",
+      "extensions": [
+        "grd"
+      ],
+      "references": [
+        "https://surferhelp.goldensoftware.com/topics/ascii_grid_file_format.htm",
+        "https://surferhelp.goldensoftware.com/topics/surfer_6_grid_file_format.htm",
+        "https://surferhelp.goldensoftware.com/topics/surfer_7_grid_file_format.htm",
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java"
+      ],
+      "notes": "Vendor-tree proposal for classic text/binary and tagged binary Surfer grids. Shared observations keep surfer.layout and surfer.serialization separate from the tagged header revision. No product version is inferred. Published Tika labels normalize to the family without asserting a source layout; callers needing one must request its traits explicitly."
+    },
+    {
+      "name": "application/x-erdas-hfa",
+      "status": "established",
+      "description": "ERDAS Hierarchical File Architecture container",
+      "extensions": [
+        "img",
+        "hfa"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/rails/marcel/main/lib/marcel/tables.rb",
+        "https://gdal.org/en/stable/drivers/raster/hfa.html",
+        "https://github.com/OSGeo/gdal/blob/master/frmts/hfa/hfaopen.cpp"
+      ],
+      "notes": "Published HFA identity used by MIME catalogs. The EHFA_HEADER_TAG also identifies auxiliary HFA containers; recognition does not promise an available raster layer. The configured GDAL HFA reader establishes raster availability during decoding. No HFA revision is inferred from this tag."
+    },
+    {
+      "name": "application/x-ascii-grid",
+      "status": "established",
+      "description": "Esri ASCII raster grid",
+      "extensions": [
+        "asc"
+      ],
+      "references": [
+        "https://www.maanmittauslaitos.fi/en/e-services/open-data-file-download-service/open-data-file-updating-service-interface",
+        "https://www.maanmittauslaitos.fi/en/maps-and-spatial-data/datasets-and-interfaces/topographic-data-and-how-acquire-it/formats-national",
+        "https://docs.geoserver.org/main/en/user/installation/upgrade2/",
+        "https://desktop.arcgis.com/en/arcmap/latest/manage-data/raster-and-images/esri-ascii-raster-format.htm",
+        "https://gdal.org/en/stable/drivers/raster/aaigrid.html",
+        "https://github.com/OSGeo/gdal/blob/master/frmts/aaigrid/aaigriddataset.cpp"
+      ],
+      "notes": "Published identity used by the National Land Survey of Finland for Esri ASCII Grid, distinct from Arc/Info binary grid and BRL-CAD ASC scripts. Recognize a coherent dimensions, origin and cell-spacing header as heuristic evidence. Source serialization, code-unit width, BOM and complete charset/repertoire observations stay separate. The configured GDAL reader requires 8-bit source without a BOM. No file revision is invented from a product version or the NODATA value. GeoServer publishes application/arcgrid for its AAIGrid output; retain it as an external compatibility alias. The vendor-tree registration candidate is informational and creates no runtime type or alias.",
+      "registration_candidate": "image/vnd.esri.ascii-grid"
+    },
+    {
+      "name": "application/x-bt",
+      "status": "established",
+      "description": "Virtual Terrain Project Binary Terrain elevation grid",
+      "extensions": [
+        "bt"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/bt.html",
+        "https://github.com/OSGeo/gdal/blob/master/frmts/raw/btdataset.cpp",
+        "https://vterrain.org/Implementation/Formats/BT.html"
+      ],
+      "notes": "Published Apache Tika identity for the VTP Binary Terrain family. Preserve the literal binterr header revision and little-endian sample-size/float-flag declarations. The configured GDAL decoder supports signed 16/32-bit and IEEE 32-bit scalar grids; it does not advertise an invented upper revision bound. Unfamiliar declarations remain literal rather than acquiring a guessed sample layout. Gzip wrapping is not implied by the native .bt binding. The vendor-tree candidate is informational only.",
+      "registration_candidate": "image/vnd.vtp.bt"
+    },
+    {
+      "name": "model/obj",
+      "status": "registered",
+      "description": "Wavefront OBJ geometry",
+      "extensions": [
+        "obj"
+      ],
+      "references": [
+        "https://www.iana.org/assignments/media-types/model/obj",
+        "https://www.iana.org/assignments/media-types/model/mtl",
+        "https://www.loc.gov/preservation/digital/formats/fdd/fdd000507.shtml",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/Obj/ObjExporter.cpp",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/Obj/ObjFileParser.cpp"
+      ],
+      "notes": "The registered OBJ and companion model/mtl identities specify 8bit transport and no magic number, without declaring a universal character encoding. OBJ text serialization is separate from an ASCII charset assertion. Native and SDK output advertise text with 8-bit code units and no BOM; explicit ASCII additionally checks emitted names and material references before opening outputs. The SDK objnomtl backend omits material names and the companion reference, while ordinary obj writes an MTL sidecar. Native material-file failure reporting remains converter follow-up; its MIME declaration does not promise successful sidecar creation. Shared recognition requires plausible vertex and indexed geometry records rather than metadata alone. Native and SDK readers accept 8-bit source text, including a UTF-8 BOM, and validate requested charset and repertoire against the complete original source. Wide BOM-marked text may be recognized independently but is excluded by these decoders. obj.material-library-reference records a source mtllib reference without promising sidecar availability or material conversion; absence is known only after a complete scan."
+    },
+    {
+      "name": "model/vnd.opengex",
+      "status": "registered",
+      "description": "Open Game Engine Exchange scene",
+      "extensions": [
+        "ogex"
+      ],
+      "references": [
+        "https://www.iana.org/assignments/media-types/model/vnd.opengex",
+        "https://opengex.org/",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/OpenGEX/OpenGEXImporter.cpp",
+        "https://github.com/assimp/assimp/blob/master/contrib/openddlparser/code/OpenDDLParser.cpp"
+      ],
+      "notes": "The registration specifies UTF-8 text and no magic number. Use top-level OpenGEX structure headers only as heuristic evidence; generic Metric structures, comments and quoted names alone do not establish identity. Preserve source code-unit width and BOM independently of decoder support. Complete valid ASCII content is the registered UTF-8 subset; text.ascii-only records its character repertoire separately. The configured SDK accepts 8-bit text with or without a UTF-8 BOM, while wide source encodings are excluded before decoding. No file revision is inferred from a specification edition or producer comment."
+    },
+    {
+      "name": "application/vnd.autodesk.fbx",
+      "status": "established",
+      "description": "Autodesk FBX scene",
+      "extensions": [
+        "fbx"
+      ],
+      "references": [
+        "misc/mime/upstream.types",
+        "https://help.autodesk.com/cloudhelp/2020/ENU/FBX-Developer-Help/files/cpp_ref/FBX_Developer_Help_cpp_ref_fbxio_8h_source_html.html",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/FBX/FBXImporter.cpp",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/FBX/FBXDocument.cpp",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/FBX/FBXConverter.cpp",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/FBX/FBXExporter.cpp"
+      ],
+      "notes": "Retain the existing upstream custom identity for text and binary FBX. Keep fbx.binary-header-version-code separate from fbx.document-version-code; only the decoded document supplies the general version trait. Known revision codes are normalized explicitly, while unknown codes remain literal. The configured SDK reads 8-bit text without a BOM and little-endian binary and attempts newer versions by default. Text output has no default charset claim; explicit ASCII output additionally validates emitted node, mesh and material names and the formatting locale before opening the destination."
+    },
+    {
+      "name": "model/3mf",
+      "status": "registered",
+      "description": "3D Manufacturing Format package",
+      "extensions": [
+        "3mf"
+      ],
+      "references": [
+        "https://www.iana.org/assignments/media-types/model/3mf",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/3MF/D3MFImporter.cpp",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/3MF/D3MFOpcPackage.cpp",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/3MF/XmlSerializer.cpp"
+      ],
+      "notes": "The registered identity describes the ZIP package, not a bare model XML document. Successful SDK package decoding establishes binary encoding and container=zip independently of the input request. The reader does not expose the selected model member's charset, namespace or revision as source metadata; those assertions remain unestablished. The writer separately declares its fixed UTF-8 model member, without inferring a specification revision from its namespace."
+    },
+    {
+      "name": "image/x-3ds",
+      "status": "established",
+      "description": "Autodesk 3D Studio binary scene and project",
+      "extensions": [
+        "3ds",
+        "prj"
+      ],
+      "references": [
+        "misc/mime/upstream.types",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/3DS/3DSHelper.h",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/3DS/3DSLoader.cpp",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/3DS/3DSExporter.cpp"
+      ],
+      "notes": "Retain the established upstream identity. Main and project chunk headers establish binary little-endian representation, not a format revision. Optional version chunks require separate observations. The configured SDK does not gate decoding on those chunks and its writer supplies no version declaration."
+    },
+    {
+      "name": "application/x-blender",
+      "status": "established",
+      "description": "Blender native scene",
+      "extensions": [
+        "blend"
+      ],
+      "references": [
+        "https://gitlab.freedesktop.org/xdg/shared-mime-info/-/blob/master/data/freedesktop.org.xml.in",
+        "https://github.com/blender/blender/blob/main/source/blender/blenloader_core/BLO_core_blend_header.hh",
+        "https://github.com/blender/blender/blob/main/scripts/modules/_blendfile_header.py",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/Blender/BlenderLoader.cpp"
+      ],
+      "notes": "Retain the established desktop identity. The native block layout revision is separate from the header's Blender file-version code. Pointer width, byte order and compression are source traits. The configured SDK reads the legacy layout and optionally gzip compression; recognizing the newer layout does not claim decoding support. A generic gzip or Zstandard signature alone does not identify a Blender payload."
+    },
+    {
+      "name": "image/vnd.dxf",
+      "status": "registered",
+      "description": "Autodesk Drawing Interchange Format",
+      "extensions": [
+        "dxf"
+      ],
+      "references": [
+        "https://www.iana.org/assignments/media-types/image/vnd.dxf",
+        "https://help.autodesk.com/cloudhelp/2023/ENU/AutoCAD-DXF/files/GUID-FC1C3C69-DBC2-49E4-893A-000D6538C0FE.htm",
+        "https://help.autodesk.com/cloudhelp/2023/ENU/AutoCAD-DXF/files/GUID-A85E8E67-27CD-4C59-BE61-4DC9FADBE74A.htm",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/DXF/DXFLoader.cpp",
+        "src/conv/dxf/g-dxf.c"
+      ],
+      "notes": "Retain the registered image identity for both text and binary DXF. dxf.serialization distinguishes the representation. Preserve literal ACADVER and DWGCODEPAGE declarations without inventing a numeric release or actual charset from them. Binary recognition establishes little-endian numeric fields but no particular group-code width or revision. Native g-dxf emits a HEADER section without an ACADVER declaration."
+    },
+    {
+      "name": "image/bmp",
+      "status": "registered",
+      "description": "Windows and OS/2 bitmap image",
+      "extensions": [
+        "bmp",
+        "dib"
+      ],
+      "references": [
+        "https://www.iana.org/assignments/media-types/image/bmp",
+        "https://gitlab.freedesktop.org/xdg/shared-mime-info/-/blob/master/data/freedesktop.org.xml.in",
+        "https://gdal.org/en/stable/drivers/raster/bmp.html"
+      ],
+      "notes": "Use the registered identity and the shared-mime-info compatibility aliases. The DIB header size and compression code are source fields, not inferred BMP release numbers. GDAL's raster reader is distinct from an ICV pixel decoder."
+    },
+    {
+      "name": "application/vnd.nitf",
+      "status": "registered",
+      "description": "National Imagery Transmission Format",
+      "extensions": [
+        "ntf",
+        "nitf"
+      ],
+      "references": [
+        "https://www.iana.org/assignments/media-types/application/vnd.nitf",
+        "https://gdal.org/en/stable/drivers/raster/nitf.html"
+      ],
+      "notes": "GDAL groups NITF and NSIF imagery in this format family. nitf.standard and nitf.header-version preserve their distinct declarations; an NSIF header does not become NITF version 2.1. Compression, image segments and terrain suitability remain separate from the container identity."
+    },
+    {
+      "name": "application/geopackage+sqlite3",
+      "status": "registered",
+      "description": "OGC GeoPackage database",
+      "extensions": [
+        "gpkg"
+      ],
+      "references": [
+        "https://www.iana.org/assignments/media-types/application/geopackage+sqlite3",
+        "https://www.geopackage.org/spec140/index.html",
+        "https://sqlite.org/fileformat.html#the_database_header",
+        "https://gdal.org/en/stable/drivers/raster/gpkg.html"
+      ],
+      "notes": "Identify native GeoPackages from the SQLite header and the GPKG, GP10 or GP11 application identifier. Retain user_version separately; the common version denotes major/minor as in the registered parameter. A generic SQLite database or a ZIP-wrapped package is not the same source identity."
+    },
+    {
+      "name": "application/grib",
+      "status": "registered",
+      "description": "WMO GRIB meteorological messages",
+      "extensions": [
+        "grb",
+        "grb2",
+        "grib",
+        "grib2",
+        "gb"
+      ],
+      "references": [
+        "https://www.iana.org/assignments/media-types/application/grib",
+        "https://wmo-im.github.io/wis2-notification-message/standard/wis2-notification-message-STABLE.html",
+        "https://docs.ogc.org/is/20-004r1/20-004r1.html",
+        "https://codes.ecmwf.int/grib/format/grib1/sections/0/",
+        "https://codes.ecmwf.int/grib/format/grib2/sections/0/"
+      ],
+      "notes": "WMO WIS2 uses this bare family identity; OGC documents the older x-grib spelling. The IANA template lists edition=3 as a required parameter, so bare internal identities are not complete external Content-Type fields. Retain observed edition facts independently. A file may concatenate editions 1 and 2; grib.first-edition describes only its first message and does not establish a file-wide edition."
+    },
+    {
+      "name": "application/p21",
+      "status": "registered",
+      "description": "EXPRESS Part 21 exchange file",
+      "extensions": [
+        "ifc"
+      ],
+      "references": [
+        "https://www.iana.org/assignments/media-types/application/p21"
+      ],
+      "notes": "The registration explicitly includes IFC-SPF. Complete p21.schemas declarations distinguish IFC from ISO 10303 product-model schemas, which may additionally identify model/step. Neither a STEP suffix nor Part 21 syntax alone establishes an application schema or character encoding."
+    },
+    {
+      "name": "application/zip",
+      "status": "registered",
+      "description": "ZIP archive",
+      "extensions": [
+        "ifczip"
+      ],
+      "references": [
+        "https://www.iana.org/assignments/media-types/application/zip",
+        "https://github.com/buildingSMART/technical.buildingsmart.org/blob/main/IFC-Formats.md"
+      ],
+      "notes": "buildingSMART uses application/zip for IFCZIP, whose member may be SPF or XML. The suffix does not identify a contained schema or establish geometry support."
+    },
+    {
+      "name": "model/vnd.collada+xml+zip",
+      "status": "established",
+      "description": "COLLADA ZAE asset archive",
+      "extensions": [
+        "zae"
+      ],
+      "references": [
+        "https://github.com/Ultimaker/Cura/blob/main/plugins/TrimeshReader/TrimeshReader.py",
+        "https://www.khronos.org/files/collada_1_5_1_release_notes.pdf"
+      ],
+      "notes": "Unregistered desktop convention published by Cura, distinct from registered model/vnd.collada+xml. ZAE packages a root COLLADA document and resources in ZIP. Container facts, the selected document revision and archive manifest behavior remain separate from a package revision."
+    },
+    {
+      "name": "model/gltf-binary",
+      "status": "registered",
+      "description": "glTF binary model",
+      "extensions": [
+        "glb",
+        "vrm"
+      ],
+      "references": [
+        "https://www.iana.org/assignments/media-types/model/gltf-binary",
+        "https://github.com/vrm-c/vrm-specification/blob/master/specification/VRMC_vrm-1.0/README.md"
+      ],
+      "notes": "VRM uses the glTF 2.0 binary container. glTF extension declarations and VRM specification versions are separate profile facts; the .vrm suffix alone establishes neither an avatar profile nor support for its semantics."
+    },
+    {
+      "name": "model/vnd.epicgames.unreal.mesh",
+      "status": "proposed",
+      "description": "Legacy Unreal vertex-mesh component",
+      "extensions": [
+        "3d"
+      ],
+      "references": [
+        "https://www.oldunreal.com/wiki/index.php?title=Importing_vertex_meshes_into_Unreal",
+        "https://github.com/assimp/assimp/tree/master/code/AssetLib/Unreal"
+      ],
+      "notes": "Local vendor-tree proposal for the paired _d.3d topology and _a.3d frame files. The unreal.part trait distinguishes data and animation components. Headers declare counts rather than an engine or format revision. Vertex stride requires the paired topology header; do not infer a packing layout from animation bytes alone."
+    },
+    {
+      "name": "text/vnd.epicgames.unrealscript",
+      "status": "proposed",
+      "description": "UnrealScript source",
+      "extensions": [
+        "uc"
+      ],
+      "references": [
+        "https://www.oldunreal.com/wiki/index.php?title=Importing_vertex_meshes_into_Unreal",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/Unreal/UnrealLoader.cpp"
+      ],
+      "notes": "Local vendor-tree proposal for the source language, independently of binary Unreal mesh data. The SDK's geometry adapter uses same-basename mesh companions and only selected exec settings; recognizing source text does not establish geometry availability or complete language interpretation."
+    },
+    {
+      "name": "model/vnd.idsoftware.bsp",
+      "status": "proposed",
+      "description": "Id Software IBSP compiled map",
+      "extensions": [
+        "bsp"
+      ],
+      "references": [
+        "https://github.com/id-Software/Quake-III-Arena/blob/master/code/qcommon/qfiles.h"
+      ],
+      "notes": "Local vendor-tree proposal for the IBSP family, including Quake II and Quake III revisions. The little-endian wire version distinguishes layouts. Neither the suffix nor this identity establishes support for a particular revision. Valve VBSP and ZIP-packaged maps remain distinct formats."
+    },
+    {
+      "name": "application/vnd.idsoftware.pk3+zip",
+      "status": "proposed",
+      "description": "Quake III PK3 asset package",
+      "extensions": [
+        "pk3"
+      ],
+      "references": [
+        "https://github.com/id-Software/Quake-III-Arena/blob/master/code/qcommon/files.c",
+        "https://github.com/assimp/assimp/tree/master/code/AssetLib/Q3BSP"
+      ],
+      "notes": "Local vendor-tree proposal for the ZIP-based asset package, which may contain maps, textures and other game data. A ZIP signature alone does not establish PK3. Package identity is separate from any contained BSP revision; a reader's map selection policy is conversion behavior."
+    },
+    {
+      "name": "model/vnd.ogre.mesh",
+      "status": "proposed",
+      "description": "Ogre binary mesh",
+      "extensions": [
+        "mesh"
+      ],
+      "references": [
+        "https://github.com/OGRECave/ogre/blob/master/OgreMain/src/OgreMeshSerializer.cpp",
+        "https://github.com/OGRECave/ogre-next/blob/master/OgreMain/src/OgreMesh2SerializerImpl.cpp",
+        "https://github.com/assimp/assimp/tree/master/code/AssetLib/Ogre"
+      ],
+      "notes": "Local vendor-tree proposal, distinct from registered model/mesh. The endian-sensitive 0x1000 header and MeshSerializer tag identify the grammar. Serializer revision labels are not Ogre product release numbers; retain the literal tag, including labels that cannot be normalized as numeric versions."
+    },
+    {
+      "name": "model/vnd.ogre.mesh+xml",
+      "status": "proposed",
+      "description": "Ogre XML mesh",
+      "extensions": [
+        "mesh.xml"
+      ],
+      "references": [
+        "https://github.com/OGRECave/ogre/blob/master/Tools/XMLConverter/src/OgreXMLMeshSerializer.cpp",
+        "https://github.com/assimp/assimp/tree/master/code/AssetLib/Ogre"
+      ],
+      "notes": "Local vendor-tree proposal for the distinct XML serialization. A generic mesh root alone is insufficient evidence; Ogre submeshes or shared geometry establish contextual recognition. XML syntax version is not a mesh serializer revision."
+    },
+    {
+      "name": "model/vnd.realitywave.xgl+xml",
+      "status": "proposed",
+      "description": "XGL visualization scene",
+      "extensions": [
+        "xgl"
+      ],
+      "references": [
+        "https://people.math.sc.edu/Burkardt/data/xgl/xgl_spec.html",
+        "https://www.okino.com/conv/filefrmt_3dimport.htm",
+        "https://github.com/assimp/assimp/tree/master/code/AssetLib/XGL"
+      ],
+      "notes": "Local vendor-tree proposal for RealityWave's XML visualization grammar, unrelated to the graphics API of the same name. WORLD alone is generic; scene structure supplies contextual evidence. XML syntax version is not a format revision."
+    },
+    {
+      "name": "model/vnd.realitywave.zgl",
+      "status": "proposed",
+      "description": "Zlib-compressed XGL visualization scene",
+      "extensions": [
+        "zgl"
+      ],
+      "references": [
+        "https://www.okino.com/conv/imp_xgl.htm",
+        "https://github.com/assimp/assimp/tree/master/code/AssetLib/XGL"
+      ],
+      "notes": "Local vendor-tree proposal for the intrinsic zlib-compressed representation. It cannot carry the XML syntax suffix because its file bytes require decompression. Wire encoding and compression are distinct from the inner XML character encoding. A zlib header alone does not establish this format."
+    },
+    {
+      "name": "model/vnd.irrlicht.mesh+xml",
+      "status": "proposed",
+      "description": "Irrlicht static mesh",
+      "extensions": [
+        "irrmesh",
+        "xml"
+      ],
+      "references": [
+        "https://github.com/zaki/irrlicht/blob/master/source/Irrlicht/CIrrMeshWriter.cpp",
+        "https://github.com/assimp/assimp/tree/master/code/AssetLib/Irr"
+      ],
+      "notes": "Vendor-tree proposal with the registered XML syntax suffix. Mesh and scene grammars remain distinct. XML declaration version is not an Irrlicht file revision; root namespaces, qualified names and explicitly declared format versions guide recognition."
+    },
+    {
+      "name": "model/vnd.irrlicht.scene+xml",
+      "status": "proposed",
+      "description": "Irrlicht scene graph",
+      "extensions": [
+        "irr",
+        "xml"
+      ],
+      "references": [
+        "https://irrlicht.sourceforge.io/docu/example015.html",
+        "https://github.com/assimp/assimp/tree/master/code/AssetLib/Irr"
+      ],
+      "notes": "Vendor-tree proposal with the registered XML syntax suffix. Mesh and scene grammars remain distinct. XML declaration version is not an Irrlicht file revision; root namespaces, qualified names and explicitly declared format versions guide recognition."
+    },
+    {
+      "name": "model/vnd.quick3d",
+      "status": "proposed",
+      "description": "Quick3D binary object or scene",
+      "extensions": [
+        "q3o",
+        "q3s"
+      ],
+      "references": [
+        "https://www.paulbourke.org/dataformats/q3o/",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/Q3D/Q3DLoader.cpp"
+      ],
+      "notes": "Vendor-tree proposal for the quick3Do/quick3Ds binary family, separate from Apple QuickDraw 3D. The final magic character declares object versus scene; two following decimal characters declare format version. Extension does not override the header kind."
+    },
+    {
+      "name": "model/vnd.mikumikudance.pmx",
+      "status": "proposed",
+      "description": "MikuMikuDance PMX model",
+      "extensions": [
+        "pmx"
+      ],
+      "references": [
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/MMD/MMDPmxParser.cpp",
+        "https://github.com/dskjal/OpenMMD/blob/main/docs/specification/pmx2.1-specification.md"
+      ],
+      "notes": "Vendor-tree proposal for the MMD ecosystem model format, distinct from PMD and unrelated music typesetting PMX files. Binary32 version declarations and global text/index layout guide recognition; geometry support does not imply physics or deformation fidelity."
+    },
+    {
+      "name": "model/vnd.povray.raw",
+      "status": "proposed",
+      "description": "POV-Ray ASCII raw triangle mesh",
+      "extensions": [
+        "raw"
+      ],
+      "references": [
+        "https://paulbourke.net/dataformats/povraw/",
+        "https://github.com/assimp/assimp-web/blob/master/main_features_formats.html"
+      ],
+      "notes": "Vendor-tree proposal for the RAW2POV family: nine coordinates per triangle, optional leading RGB colors, trailing texture names and named groups. No magic identifier or version field. Camera RAW and IABG plate attributes are not implied by the extension."
+    },
+    {
+      "name": "model/vnd.iabg.raw",
+      "status": "proposed",
+      "description": "IABG named raw triangles with plate attributes",
+      "extensions": [
+        "raw"
+      ],
+      "references": [
+        "doc/asciidoc/system/man1/raw-g.adoc",
+        "src/conv/raw/raw-g.cpp"
+      ],
+      "notes": "Vendor-tree proposal for the named triangle interchange read by raw-g. A thickf= attribute on a name line establishes this plate variant. Plain named nine-coordinate triangles overlap the POV-Ray family; no origin is inferred from that shared subset."
+    },
+    {
+      "name": "model/vnd.biovision.bvh",
+      "status": "proposed",
+      "description": "BioVision hierarchical motion capture",
+      "extensions": [
+        "bvh"
+      ],
+      "references": [
+        "https://help.autodesk.com/cloudhelp/2016/ENU/3DSMax/files/GUID-0BDFC098-7984-44CF-AE6A-EF3CB9DBC8FC.htm",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/BVH/BVHLoader.cpp"
+      ],
+      "notes": "Vendor-tree proposal for the ASCII HIERARCHY/ROOT and MOTION grammar. The configured SDK produces animation and an optional generated skeleton preview, which does not establish geometry conversion support."
+    },
+    {
+      "name": "model/vnd.autodesk.csm",
+      "status": "proposed",
+      "description": "Character Studio motion capture marker data",
+      "extensions": [
+        "csm"
+      ],
+      "references": [
+        "https://help.autodesk.com/cloudhelp/2016/ENU/3DSMax/files/GUID-0BDFC098-7984-44CF-AE6A-EF3CB9DBC8FC.htm",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/CSM/CSMLoader.cpp"
+      ],
+      "notes": "Vendor-tree proposal for ASCII positional marker data. Filename, order and point declarations guide recognition. The SDK skeleton preview does not establish geometry conversion support."
+    },
+    {
+      "name": "model/vnd.newtek.motion",
+      "status": "proposed",
+      "description": "LightWave LWMO motion data",
+      "extensions": [
+        "mot"
+      ],
+      "references": [
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/LWS/LWSLoader.cpp",
+        "https://documentation.help/LightWave/filetype.html"
+      ],
+      "notes": "Vendor-tree proposal for the ASCII LWMO declaration. Distinct from LWSC scenes and image/x-lws; a shared SDK loader does not make motion data a scene. Header version is a format fact, not a product release."
+    },
+    {
+      "name": "model/prs.haines.nff",
+      "status": "proposed",
+      "description": "Eric Haines Neutral File Format scene",
+      "extensions": [
+        "nff",
+        "enff"
+      ],
+      "references": [
+        "https://www.realtimerendering.com/resources/SPD/NFF.TXT",
+        "https://www.rfc-editor.org/rfc/rfc6838#section-3.3"
+      ],
+      "notes": "Personal-tree proposal for the published rendering-test scene language. It has no file version declaration; specification revision numbers are not file versions. SDK extensions are separate complete-set traits. Distinct from Sense8 NFF; enff is also accepted by the configured SDK."
+    },
+    {
+      "name": "model/vnd.sense8.nff",
+      "status": "proposed",
+      "description": "Sense8 Neutral ASCII File Format polygon geometry",
+      "extensions": [
+        "nff",
+        "enff"
+      ],
+      "references": [
+        "https://paulbourke.org/dataformats/nff/nff2.html"
+      ],
+      "notes": "Vendor-tree proposal based on Sense8's published specification. The initial nff declaration distinguishes this indexed-polygon format from Haines NFF. An optional version declaration is observed without inventing a version when absent."
+    },
+    {
+      "name": "model/vnd.brlcad",
+      "status": "proposed",
+      "description": "BRL-CAD binary geometry database",
+      "extensions": [
+        "g",
+        "brlcad"
+      ],
+      "references": [
+        "doc/asciidoc/system/man1/mged.adoc",
+        "include/rt/db5.h"
+      ],
+      "notes": "Vendor-tree candidate for the native binary database. Database version is a format trait, not a structured suffix."
+    },
+    {
+      "name": "application/vnd.brlcad.script",
+      "status": "proposed",
+      "description": "BRL-CAD ASCII database script",
+      "extensions": [
+        "asc"
+      ],
+      "references": [
+        "src/libgcv/plugins/asc/asc.cpp",
+        "doc/asciidoc/system/man1/g2asc.adoc"
+      ],
+      "notes": "Older ASCII record and Tcl command representations use a distinct text grammar and reader. A syntax trait may distinguish them; +asc is not a registered suffix."
+    },
+    {
+      "name": "image/vnd.brlcad.pix",
+      "status": "proposed",
+      "description": "BRL-CAD RGB byte raster",
+      "extensions": [
+        "pix"
+      ],
+      "references": [
+        "doc/asciidoc/system/man5/pix.adoc"
+      ],
+      "notes": "Headerless; dimensions and sample layout must be supplied or inferred separately."
+    },
+    {
+      "name": "image/vnd.brlcad.bw",
+      "status": "proposed",
+      "description": "BRL-CAD grayscale byte raster",
+      "extensions": [
+        "bw"
+      ],
+      "references": [
+        "doc/asciidoc/system/man5/bw.adoc"
+      ],
+      "notes": "Headerless; dimensions and sample layout must be supplied or inferred separately."
+    },
+    {
+      "name": "image/vnd.brlcad.dpix",
+      "status": "proposed",
+      "description": "BRL-CAD network-order binary64 RGB raster",
+      "extensions": [
+        "dpix"
+      ],
+      "references": [
+        "doc/asciidoc/system/man5/dpix.adoc"
+      ],
+      "notes": "Headerless; dimensions and sample layout must be supplied or inferred separately."
+    },
+    {
+      "name": "image/vnd.brlcad.spm",
+      "status": "proposed",
+      "description": "BRL-CAD spherical pixel map",
+      "extensions": [
+        "spm"
+      ],
+      "references": [
+        "include/bn/spm.h",
+        "doc/asciidoc/system/man1/pix-spm.adoc"
+      ],
+      "notes": ""
+    },
+    {
+      "name": "application/x-extension-fcstd",
+      "status": "established",
+      "description": "FreeCAD document",
+      "extensions": [
+        "fcstd"
+      ],
+      "references": [
+        "https://github.com/FreeCAD/FreeCAD/blob/main/src/XDGData/org.freecad.FreeCAD.xml",
+        "https://github.com/FreeCAD/FreeCAD/issues/17727"
+      ],
+      "notes": "Canonical name published by FreeCAD desktop metadata. The native document is ZIP-based. The vendor-tree name is a candidate only.",
+      "registration_candidate": "application/vnd.freecad+zip"
+    },
+    {
+      "name": "application/x-openscad",
+      "status": "established",
+      "description": "OpenSCAD source or CSG program",
+      "extensions": [
+        "scad",
+        "csg"
+      ],
+      "references": [
+        "https://github.com/openscad/openscad/blob/master/resources/icons/openscad.xml",
+        "https://openscad.org/documentation.html"
+      ],
+      "notes": "Canonical name published by OpenSCAD desktop metadata. CSG output is a restricted profile of the language.",
+      "registration_candidate": "application/vnd.openscad"
+    },
+    {
+      "name": "application/x-ply",
+      "status": "established",
+      "description": "Stanford polygon file",
+      "extensions": [
+        "ply"
+      ],
+      "references": [
+        "https://graphics.stanford.edu/data/3Dscanrep/",
+        "https://paulbourke.net/dataformats/ply/index.html",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/Ply/PlyLoader.cpp",
+        "https://ref.rerun.io/docs/python/main/common/components/"
+      ],
+      "notes": "An existing primary-source media label is preferred to a new local invention. ASCII and binary variants use encoding and byte-order traits from the format line; the literal version is preserved independently of decoder defaults. Unknown format tokens do not acquire guessed layout facts. Native RPly supports version 1.0; the configured SDK ignores the version word and advertises its three existing wire representations without an invented version gate.",
+      "registration_candidate": "model/vnd.stanford.ply"
+    },
+    {
+      "name": "model/vnd.mcneel.3dm",
+      "status": "proposed",
+      "description": "Rhino 3DM model",
+      "extensions": [
+        "3dm"
+      ],
+      "references": [
+        "https://www.rhino3d.com/opennurbs/"
+      ],
+      "notes": "The file format is 3DM; openNURBS is an implementation, not a separate media type."
+    },
+    {
+      "name": "application/vnd.kitware.vtk",
+      "status": "proposed",
+      "description": "VTK legacy dataset",
+      "extensions": [
+        "vtk"
+      ],
+      "references": [
+        "https://docs.vtk.org/en/latest/vtk_file_formats/vtk_legacy_file_format.html"
+      ],
+      "notes": "Can contain structured and unstructured scientific datasets. Encoding and dataset kind are traits."
+    },
+    {
+      "name": "application/vnd.kitware.vtk+xml",
+      "status": "proposed",
+      "description": "VTK XML dataset",
+      "extensions": [
+        "vtu",
+        "vtp",
+        "vti",
+        "vtr",
+        "vts",
+        "vtm",
+        "pvtu",
+        "pvtp",
+        "pvti",
+        "pvtr",
+        "pvts"
+      ],
+      "references": [
+        "https://docs.vtk.org/en/latest/vtk_file_formats/vtkxml_file_format.html"
+      ],
+      "notes": "Distinct from the registered model/vnd.vtu, which identifies Virtue3D data. The root type attribute identifies the dataset kind."
+    },
+    {
+      "name": "model/vnd.fastgen",
+      "status": "proposed",
+      "description": "FASTGEN geometry",
+      "extensions": [
+        "fas",
+        "fg",
+        "fg4"
+      ],
+      "references": [
+        "doc/asciidoc/system/man1/fast4-g.adoc",
+        "src/libgcv/plugins/fastgen4/fastgen4_read.c"
+      ],
+      "notes": "Version is a trait. The bdf extension is not claimed: Nastran bulk data is a different format."
+    },
+    {
+      "name": "model/vnd.gift",
+      "status": "proposed",
+      "description": "GIFT combinatorial geometry",
+      "extensions": [
+        "cg",
+        "comgeom"
+      ],
+      "references": [
+        "src/conv/comgeom",
+        "doc/asciidoc/system/man1/comgeom-g.adoc"
+      ],
+      "notes": ""
+    },
+    {
+      "name": "model/vnd.intaval",
+      "status": "proposed",
+      "description": "INTAVAL target geometry",
+      "extensions": [
+        "tgf"
+      ],
+      "references": [
+        "src/conv/intaval"
+      ],
+      "notes": ""
+    },
+    {
+      "name": "image/rle",
+      "status": "established",
+      "description": "Utah Raster Toolkit RLE image",
+      "extensions": [
+        "rle"
+      ],
+      "references": [
+        "src/libicv/rle.hpp",
+        "src/libicv/rle.cpp",
+        "https://sources.debian.org/src/shared-mime-info/2.4-5/data/freedesktop.org.xml.in/"
+      ],
+      "notes": "The shared-mime-info label is generic. Utah RLE is identified by its header and the rle.variant=utah trait.",
+      "registration_candidate": "image/vnd.utah.rle"
+    },
+    {
+      "name": "image/x-sun-raster",
+      "status": "established",
+      "description": "Sun raster image",
+      "extensions": [
+        "sun",
+        "ras",
+        "rast"
+      ],
+      "references": [
+        "src/util/sun-pix.c",
+        "https://sources.debian.org/src/shared-mime-info/2.4-5/data/freedesktop.org.xml.in/"
+      ],
+      "notes": "",
+      "registration_candidate": "image/vnd.sun.raster"
+    },
+    {
+      "name": "image/vnd.autodesk.alias-pix",
+      "status": "proposed",
+      "description": "Alias PIX image",
+      "extensions": [
+        "alias",
+        "pix"
+      ],
+      "references": [
+        "src/util/alias-pix.c"
+      ],
+      "notes": "Alias PIX is different from the headerless BRL-CAD PIX format; their shared pix extension is genuinely ambiguous."
+    },
+    {
+      "name": "application/vnd.shp",
+      "status": "registered",
+      "description": "ESRI shapefile geometry",
+      "extensions": [
+        "shp"
+      ],
+      "references": [
+        "https://www.iana.org/assignments/media-types/application/vnd.shp"
+      ],
+      "notes": ""
+    },
+    {
+      "name": "application/vnd.shx",
+      "status": "registered",
+      "description": "ESRI shapefile index",
+      "extensions": [
+        "shx"
+      ],
+      "references": [
+        "https://www.iana.org/assignments/media-types/application/vnd.shx"
+      ],
+      "notes": ""
+    },
+    {
+      "name": "application/vnd.dbf",
+      "status": "registered",
+      "description": "DBF attribute table",
+      "extensions": [
+        "dbf"
+      ],
+      "references": [
+        "https://www.iana.org/assignments/media-types/application/vnd.dbf"
+      ],
+      "notes": ""
+    },
+    {
+      "name": "model/e57",
+      "status": "registered",
+      "description": "ASTM E57 point cloud",
+      "extensions": [
+        "e57"
+      ],
+      "references": [
+        "https://www.iana.org/assignments/media-types/model/e57"
+      ],
+      "notes": ""
+    },
+    {
+      "name": "model/vnd.inivis.ac3d",
+      "status": "proposed",
+      "description": "AC3D model",
+      "extensions": [
+        "ac",
+        "acc",
+        "ac3d"
+      ],
+      "references": [
+        "https://www.inivis.com/ac3d/man/ac3dfileformat.html",
+        "https://www.inivis.com/ac3d8.html",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/AC/ACLoader.cpp"
+      ],
+      "notes": "Vendor-tree candidate for the AC3D format, unrelated to American Dynamics ACC data. Preserve the hexadecimal header revision as a source version. ac3d.serialization and text.code-unit-width distinguish the textual representation without guessing a body charset from its header. The current SDK accepts eight-bit text, including BOM-marked UTF-8 under a native AC3D suffix. Source revision observations do not certify complete support for newer material or scene features."
+    },
+    {
+      "name": "model/vnd.geomview.off",
+      "status": "proposed",
+      "description": "Geomview Object File Format",
+      "extensions": [
+        "off"
+      ],
+      "references": [
+        "https://www.geomview.org/docs/html/OFF.html",
+        "https://sources.debian.org/src/geomview/1.9.5-5/doc/geomview.html/OFF.html",
+        "https://sources.debian.org/src/geomview/1.9.5-5/doc/geomview.html/Binary-format.html",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/OFF/OFFLoader.cpp"
+      ],
+      "notes": "Vendor-tree candidate for the OFF polygon format. Shared header observations distinguish ASCII/binary encoding, coordinate dimension, vertex attributes and header comments without inventing a revision. Headerless numeric records need an explicit format interpretation rather than global recognition. The configured SDK's reader is textual; supported variants are declared independently of its broad importer flags."
+    },
+    {
+      "name": "model/amf",
+      "status": "established",
+      "description": "Additive Manufacturing File Format",
+      "extensions": [
+        "amf"
+      ],
+      "references": [
+        "https://ftp.pwg.org/pub/pwg/candidates/cs-ipp3d10-20170210-5100.21.pdf",
+        "https://nvlpubs.nist.gov/nistpubs/ams/NIST.AMS.300-10.pdf",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/AMF/AMFImporter.cpp"
+      ],
+      "notes": "Established media type published by PWG IPP 3D Printing, distinct from Adobe Action Message Format application/x-amf. Packaging is a separate source property: plain XML has container=none, while a generic ZIP signature alone does not identify an AMF member. Preserve explicit unit attribute values without implying effective unit scaling or complete AMF feature preservation."
+    },
+    {
+      "name": "model/vnd.microsoft.x",
+      "status": "proposed",
+      "description": "Direct3D X model",
+      "extensions": [
+        "x"
+      ],
+      "references": [
+        "https://learn.microsoft.com/en-us/windows/win32/direct3d9/x-files--legacy-",
+        "https://learn.microsoft.com/en-us/windows/win32/direct3d9/reserved-words--header--and-comments",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/X/XFileParser.cpp"
+      ],
+      "notes": "Vendor-tree candidate for Direct3D X files. The fixed header declares version, serialization, float width and MSZIP compression separately. x.serialization distinguishes text/binary payload grammar even when the outer representation is compressed binary. Text character encoding requires a BOM or complete content evidence. The configured SDK's binary float layouts and optional MSZIP support are advertised independently of its broad descriptor flags; its writer emits uncompressed text with the 0032 float declaration."
+    },
+    {
+      "name": "model/vnd.assimp.binary",
+      "status": "proposed",
+      "description": "Assimp binary scene",
+      "extensions": [
+        "assbin"
+      ],
+      "references": [
+        "https://github.com/assimp/assimp/tree/master/code/AssetLib/Assbin",
+        "https://github.com/assimp/assimp/blob/master/code/Common/assbin_chunks.h",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/Assbin/AssbinLoader.cpp",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/Assbin/AssbinFileWriter.cpp",
+        "https://github.com/assimp/assimp/blob/master/include/assimp/version.h"
+      ],
+      "notes": "Vendor-tree candidate for the actual serialized scene format, not a catch-all implementation identity. Known 1.0 words distinguish little-endian files and native big-endian SDK dumps. Unfamiliar version words remain raw observations without guessed byte order, format version or body flags. Compile flags declare 32/64-bit real layout; shortened and compressed flags retain their raw values as well as the SDK's nonzero boolean meaning. The configured reader requires its native real width and byte order and rejects shortened dumps; the writer emits full, uncompressed dumps."
+    },
+    {
+      "name": "model/vnd.assimp+xml",
+      "status": "proposed",
+      "description": "Assimp XML scene",
+      "extensions": [
+        "assxml"
+      ],
+      "references": [
+        "https://github.com/assimp/assimp/tree/master/code/AssetLib/Assxml"
+      ],
+      "notes": "Vendor-tree candidate for the Assimp XML scene serialization."
+    },
+    {
+      "name": "model/vnd.assimp+json",
+      "status": "proposed",
+      "description": "Assimp JSON scene",
+      "extensions": [
+        "assjson"
+      ],
+      "references": [
+        "https://github.com/assimp/assimp/tree/master/code/AssetLib/Assjson"
+      ],
+      "notes": "Vendor-tree candidate for Assimp JSON scene serialization. Generic .json alone does not identify it."
+    },
+    {
+      "name": "image/x-lwo",
+      "status": "established",
+      "description": "LightWave object",
+      "extensions": [
+        "lwo",
+        "lwob"
+      ],
+      "references": [
+        "https://gitlab.freedesktop.org/xdg/shared-mime-info/-/blob/master/data/freedesktop.org.xml.in"
+      ],
+      "notes": "Existing shared-mime-info name for LightWave objects. Modo LXO is not assumed to be the same format."
+    },
+    {
+      "name": "model/vnd.foundry.lxo",
+      "status": "proposed",
+      "description": "Modo LXOB scene",
+      "extensions": [
+        "lxo"
+      ],
+      "references": [
+        "https://learn.foundry.com/modo/developers/latest/SDK/pages/general/general/File%20Formats.html",
+        "https://learn.foundry.com/modo/developers/latest/SDK/pages/tutorials/Reading%20Files%20with%20Python.html"
+      ],
+      "notes": "Vendor-tree proposal for the Modo LXOB scene container. It extends LightWave's IFF layout but has a separate scene identity. The VRSN revision is independent of product release numbers. LXPR/LXPE/LXPM presets are not included."
+    },
+    {
+      "name": "image/x-lws",
+      "status": "established",
+      "description": "LightWave scene",
+      "extensions": [
+        "lws"
+      ],
+      "references": [
+        "https://gitlab.freedesktop.org/xdg/shared-mime-info/-/blob/master/data/freedesktop.org.xml.in"
+      ],
+      "notes": "Existing shared-mime-info name for LightWave scenes. LightWave motion files use a different declaration and are not included."
+    },
+    {
+      "name": "model/vnd.autodesk.ase",
+      "status": "proposed",
+      "description": "Autodesk ASCII scene export",
+      "extensions": [
+        "ase",
+        "ask"
+      ],
+      "references": [
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/ASE/ASELoader.cpp",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/ASE/ASEParser.cpp"
+      ],
+      "notes": "Vendor-tree proposal for the scene export grammar. The export declaration supplies its format version; a missing declaration does not acquire the SDK's extension-based parser default. ase.serialization and text.code-unit-width distinguish textual layout. Character encoding requires a BOM or complete content evidence. The configured SDK accepts eight-bit text rather than UTF-16/UTF-32 input."
+    },
+    {
+      "name": "model/vnd.blitzresearch.b3d",
+      "status": "proposed",
+      "description": "Blitz3D model",
+      "extensions": [
+        "b3d"
+      ],
+      "references": [
+        "https://github.com/blitz-research/blitz3d",
+        "https://docs.luanti.org/for-creators/models/b3d-spec/",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/B3D/B3DImporter.cpp"
+      ],
+      "notes": "Vendor-tree proposal for the little-endian BB3D chunk format. b3d.version-code preserves the packed major*100+minor word, while version exposes major/minor (code 1 is version 0.01). b3d.payload-size records the root chunk's declared payload length. The configured SDK reads native int/float words and requires a .b3d suffix, so its reader capability is limited to little-endian binary32/int32 hosts."
+    },
+    {
+      "name": "model/vnd.interquake.iqm",
+      "status": "proposed",
+      "description": "Inter-Quake model",
+      "extensions": [
+        "iqm"
+      ],
+      "references": [
+        "https://github.com/lsalzman/iqm/blob/master/iqm.h"
+      ],
+      "notes": "Vendor-tree proposal for the Inter-Quake binary model format. Its header declares the version."
+    },
+    {
+      "name": "model/vnd.valve.smd",
+      "status": "proposed",
+      "description": "Valve studio model source data",
+      "extensions": [
+        "smd",
+        "vta"
+      ],
+      "references": [
+        "https://developer.valvesoftware.com/wiki/Studiomdl_Data",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/SMD/SMDLoader.cpp"
+      ],
+      "notes": "Vendor-tree proposal for versioned SMD/VTA text data. Mesh, vertex-animation and skeleton-only variants are separate traits. Geometry import does not imply support for VTA topology or skeleton preview conversion. Valve binary studio models use a separate identity."
+    },
+    {
+      "name": "model/vnd.idsoftware.md5",
+      "status": "proposed",
+      "description": "Doom MD5 skeletal exchange data",
+      "extensions": [
+        "md5mesh",
+        "md5anim",
+        "md5camera"
+      ],
+      "references": [
+        "https://github.com/id-Software/DOOM-3/blob/master/neo/renderer/Model_md5.cpp",
+        "https://github.com/id-Software/DOOM-3/blob/master/neo/anim/Anim.cpp",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/MD5/MD5Loader.cpp"
+      ],
+      "notes": "Vendor-tree proposal for the MD5Version text family. Version and mesh/animation/camera kind are separate traits. The MD5 name here identifies skeletal exchange data, not the unrelated message-digest algorithm."
+    },
+    {
+      "name": "model/vnd.idsoftware.mdl",
+      "status": "proposed",
+      "description": "Quake alias model",
+      "extensions": [
+        "mdl"
+      ],
+      "references": [
+        "https://github.com/id-Software/Quake/blob/master/WinQuake/modelgen.h"
+      ],
+      "notes": "Vendor-tree proposal for the IDPO alias-model family. Version is a little-endian header word. GameStudio and Valve MDL families have separate identities despite sharing the extension."
+    },
+    {
+      "name": "model/vnd.conitec.mdl",
+      "status": "proposed",
+      "description": "GameStudio model",
+      "extensions": [
+        "mdl"
+      ],
+      "references": [
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/MDL/MDLFileData.h",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/MDL/MDLLoader.cpp"
+      ],
+      "notes": "Vendor-tree proposal for GameStudio MDL2/3/4/5/7. Format version comes from the magic tag; the following legacy header word is ignored by the SDK. This does not include Quake IDPO or Valve IDST/IDSQ models."
+    },
+    {
+      "name": "model/vnd.valve.mdl",
+      "status": "proposed",
+      "description": "Valve studio model",
+      "extensions": [
+        "mdl"
+      ],
+      "references": [
+        "https://github.com/ValveSoftware/halflife/blob/master/engine/studio.h",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/MDL/MDLLoader.cpp"
+      ],
+      "notes": "Vendor-tree proposal for the IDST studio-model and IDSQ sequence-group family. Version and model/sequence-group kind are distinct traits; recognition of later Source versions does not establish decoder support. SMD source data is a separate text format."
+    },
+    {
+      "name": "image/vnd.conitec.hmp",
+      "status": "proposed",
+      "description": "GameStudio terrain heightfield",
+      "extensions": [
+        "hmp"
+      ],
+      "references": [
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/HMP/HMPFileData.h",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/HMP/HMPLoader.cpp"
+      ],
+      "notes": "Vendor-tree proposal for HMP4/5/7 heightfields. Revision comes from the magic tag, independently of the following ignored legacy word. HMP4 is recognizable although the configured SDK implements HMP5 and HMP7 only."
+    },
+    {
+      "name": "model/vnd.idsoftware.md2",
+      "status": "proposed",
+      "description": "Quake II MD2 model",
+      "extensions": [
+        "md2"
+      ],
+      "references": [
+        "https://github.com/id-Software/Quake-2/blob/master/qcommon/qfiles.h"
+      ],
+      "notes": "Vendor-tree proposal for the IDP2 model format. Quake MDL and Quake III MD3 are separate formats."
+    },
+    {
+      "name": "model/vnd.idsoftware.md3",
+      "status": "proposed",
+      "description": "Quake III MD3 model",
+      "extensions": [
+        "md3"
+      ],
+      "references": [
+        "https://github.com/id-Software/Quake-III-Arena/blob/master/code/qcommon/qfiles.h"
+      ],
+      "notes": "Vendor-tree proposal for the IDP3 model format, independently identified from MD2."
+    },
+    {
+      "name": "model/vnd.pbrt.scene",
+      "status": "proposed",
+      "description": "pbrt scene description",
+      "extensions": [
+        "pbrt"
+      ],
+      "references": [
+        "https://pbrt.org/fileformat-v4",
+        "https://github.com/assimp/assimp/blob/master/code/Pbrt/PbrtExporter.cpp"
+      ],
+      "notes": "Vendor-tree proposal for the scene description family. The configured SDK exporter emits version 4 and requires a lowercase .pbrt destination suffix."
+    },
+    {
+      "name": "model/vnd.idsoftware.mdc",
+      "status": "proposed",
+      "description": "Return to Castle Wolfenstein compressed model",
+      "extensions": [
+        "mdc"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/id-Software/Enemy-Territory/master/src/qcommon/qfiles.h",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/MDC/MDCLoader.cpp"
+      ],
+      "notes": "Binary little-endian IDPC container. The supported SDK profile is version 2; recognition reports other declared versions independently."
+    },
+    {
+      "name": "model/vnd.chumbalumsoft.ms3d",
+      "status": "proposed",
+      "description": "MilkShape 3D model",
+      "extensions": [
+        "ms3d"
+      ],
+      "references": [
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/MS3D/MS3DLoader.cpp"
+      ],
+      "notes": "Binary little-endian native MilkShape model. The main header version is separate from optional extension subversions."
+    },
+    {
+      "name": "model/vnd.izware.nendo",
+      "status": "proposed",
+      "description": "Nendo model",
+      "extensions": [
+        "ndo"
+      ],
+      "references": [
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/NDO/NDOLoader.cpp"
+      ],
+      "notes": "Native Nendo binary model, distinct from other object and scene containers. Version and big-endian payload handling belong to its profile."
+    },
+    {
+      "name": "model/vnd.nevercenter.sib",
+      "status": "proposed",
+      "description": "Silo binary scene",
+      "extensions": [
+        "sib"
+      ],
+      "references": [
+        "https://nevercenter.com/silo/features/",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/SIB/SIBImporter.cpp"
+      ],
+      "notes": "Native chunked binary Silo scene. This does not identify the separate SIA text representation. The SDK interpretation is reverse engineered."
+    },
+    {
+      "name": "model/vnd.caligari.cob",
+      "status": "proposed",
+      "description": "Caligari trueSpace object or scene",
+      "extensions": [
+        "cob",
+        "scn"
+      ],
+      "references": [
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/COB/COBLoader.cpp"
+      ],
+      "notes": "COB and SCN share the Caligari container grammar. ASCII versus binary encoding and byte order are profile facts; neither suffix alone determines the encoding."
+    },
+    {
+      "name": "application/terragen",
+      "status": "established",
+      "description": "Terragen terrain heightfield",
+      "extensions": [
+        "ter",
+        "terrain"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://docs.planetside.co.uk/wiki/Terragen_.TER_Format",
+        "https://gdal.org/en/stable/drivers/raster/terragen.html"
+      ],
+      "notes": "Published Apache Tika spelling, not an IANA registration. Binary little-endian elevation raster beginning TERRAGENTERRAIN followed by a space. Distinct from Terragen scene descriptions and from Leveller heightfields, which also use .ter."
+    },
+    {
+      "name": "model/stl",
+      "status": "registered",
+      "description": "Stereolithography triangle mesh",
+      "extensions": [
+        "stl"
+      ],
+      "references": [
+        "https://www.iana.org/assignments/media-types/model/stl",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/STL/STLLoader.cpp",
+        "https://github.com/assimp/assimp/blob/master/code/AssetLib/STL/STLExporter.cpp"
+      ],
+      "notes": "The registration covers text and binary layouts under one MIME identity. stl.serialization records layout separately from charset; stl.utf8-bom is a text property. Binary count and record-size evidence takes precedence over header text. Unmarked ASCII encoding requires complete input or a full-reader scan. Native and SDK reader declarations describe their existing BOM, host-word and record-size behavior without adding decoder features. Native text output has no default charset guarantee; explicit ASCII output checks the selected emitted paths and numeric formatting before opening output. Unasserted text preserves existing label bytes."
+    },
+    {
+      "name": "application/x-ace2",
+      "status": "established",
+      "description": "ACE2",
+      "extensions": [
+        "ace2"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/ace2.html"
+      ],
+      "notes": "ACE2 DEM products contain elevation and ancillary quality, source and confidence grids. Filename conventions determine georeferencing. The media type alone does not establish the stored sample layout or the role of a particular grid."
+    },
+    {
+      "name": "image/adrg",
+      "status": "established",
+      "description": "ARC Digitized Raster Graphics",
+      "extensions": [
+        "gen"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/adrg.html"
+      ]
+    },
+    {
+      "name": "application/aig",
+      "status": "established",
+      "description": "Arc/Info Binary Grid",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/aig.html"
+      ]
+    },
+    {
+      "name": "image/x-airsar",
+      "status": "established",
+      "description": "AirSAR Polarimetric Image",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/airsar.html"
+      ]
+    },
+    {
+      "name": "image/bsb",
+      "status": "established",
+      "description": "Maptech BSB Nautical Charts",
+      "extensions": [
+        "kap"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/bsb.html"
+      ]
+    },
+    {
+      "name": "image/ceos",
+      "status": "established",
+      "description": "CEOS Image",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/ceos.html"
+      ]
+    },
+    {
+      "name": "application/x-coasp",
+      "status": "established",
+      "description": "DRDC COASP SAR Processor Raster",
+      "extensions": [
+        "hdr"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/coasp.html"
+      ],
+      "notes": "The .hdr association names this format's dataset label. It is not an alias for other .hdr-labelled raster families or their binary payloads."
+    },
+    {
+      "name": "application/x-cosar",
+      "status": "established",
+      "description": "COSAR Annotated Binary Matrix (TerraSAR-X)",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/cosar.html"
+      ]
+    },
+    {
+      "name": "application/x-cpg",
+      "status": "established",
+      "description": "Convair PolGASP",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/index.html"
+      ]
+    },
+    {
+      "name": "application/x-ctg",
+      "status": "established",
+      "description": "USGS LULC Composite Theme Grid",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/ctg.html"
+      ]
+    },
+    {
+      "name": "image/x-dimap",
+      "status": "established",
+      "description": "SPOT DIMAP",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/dimap.html"
+      ]
+    },
+    {
+      "name": "application/x-doq1",
+      "status": "established",
+      "description": "USGS DOQ (Old Style)",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/doq1.html"
+      ]
+    },
+    {
+      "name": "application/x-doq2",
+      "status": "established",
+      "description": "USGS DOQ (New Style)",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/doq2.html"
+      ]
+    },
+    {
+      "name": "application/x-ecrg-toc",
+      "status": "established",
+      "description": "ECRG TOC format",
+      "extensions": [
+        "xml"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/ecrgtoc.html"
+      ],
+      "notes": "The XML suffix is extension evidence only. Generic XML does not establish an ECRG table of contents."
+    },
+    {
+      "name": "image/eir",
+      "status": "established",
+      "description": "Erdas Imagine Raw",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/eir.html"
+      ]
+    },
+    {
+      "name": "image/envisat",
+      "status": "established",
+      "description": "Envisat Image Format",
+      "extensions": [
+        "n1"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/esat.html"
+      ]
+    },
+    {
+      "name": "application/x-fast",
+      "status": "established",
+      "description": "EOSAT FAST Format",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/fast.html"
+      ]
+    },
+    {
+      "name": "application/gff",
+      "status": "established",
+      "description": "Ground-based SAR Applications Testbed File Format (.gff)",
+      "extensions": [
+        "gff"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/gff.html"
+      ]
+    },
+    {
+      "name": "application/x-gsc",
+      "status": "established",
+      "description": "GSC Geogrid",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/gsc.html"
+      ]
+    },
+    {
+      "name": "application/x-generic-bin",
+      "status": "established",
+      "description": "Generic Binary (.hdr Labelled)",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/genbin.html"
+      ]
+    },
+    {
+      "name": "application/x-isis2",
+      "status": "established",
+      "description": "USGS Astrogeology ISIS cube (Version 2)",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/isis2.html"
+      ],
+      "notes": "This published identity distinguishes the ISIS cube family from the other ISIS generation. A decoder release or output band type does not establish an encoded revision or sample layout."
+    },
+    {
+      "name": "application/x-isis3",
+      "status": "established",
+      "description": "USGS Astrogeology ISIS cube (Version 3)",
+      "extensions": [
+        "lbl",
+        "cub"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/isis3.html"
+      ],
+      "notes": "This published identity distinguishes the ISIS cube family from the other ISIS generation. A decoder release or output band type does not establish an encoded revision or sample layout."
+    },
+    {
+      "name": "application/jaxa-pal-sar",
+      "status": "established",
+      "description": "JAXA PALSAR Product Reader (Level 1.1/1.5)",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/palsar.html"
+      ]
+    },
+    {
+      "name": "application/jdem",
+      "status": "established",
+      "description": "Japanese DEM (.mem)",
+      "extensions": [
+        "mem"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/jdem.html"
+      ]
+    },
+    {
+      "name": "application/x-kro",
+      "status": "established",
+      "description": "KOLOR Raw",
+      "extensions": [
+        "kro"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/index.html"
+      ]
+    },
+    {
+      "name": "application/x-l1b",
+      "status": "established",
+      "description": "NOAA Polar Orbiter Level 1b Data Set",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/l1b.html"
+      ]
+    },
+    {
+      "name": "application/x-lan",
+      "status": "established",
+      "description": "Erdas .LAN/.GIS",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/lan.html"
+      ]
+    },
+    {
+      "name": "application/x-lcp",
+      "status": "established",
+      "description": "FARSITE v.4 Landscape File (.lcp)",
+      "extensions": [
+        "lcp"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/lcp.html"
+      ]
+    },
+    {
+      "name": "application/x-los-las",
+      "status": "established",
+      "description": "NADCON .los/.las Datum Grid Shift",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/index.html"
+      ],
+      "notes": "This format describes a geodetic correction grid. Its identity does not interpret correction values as terrain elevation or establish their units."
+    },
+    {
+      "name": "application/x-map",
+      "status": "established",
+      "description": "OziExplorer .MAP",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/map.html"
+      ]
+    },
+    {
+      "name": "image/x-mff",
+      "status": "established",
+      "description": "Vexcel MFF Raster",
+      "extensions": [
+        "hdr"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/mff.html"
+      ],
+      "notes": "The .hdr association names this format's dataset label. It is not an alias for other .hdr-labelled raster families or their binary payloads."
+    },
+    {
+      "name": "image/x-mff2",
+      "status": "established",
+      "description": "Vexcel MFF2 (HKV) Raster",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/mff2.html"
+      ]
+    },
+    {
+      "name": "application/x-msgn",
+      "status": "established",
+      "description": "EUMETSAT Archive native (.nat)",
+      "extensions": [
+        "nat"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/msgn.html"
+      ]
+    },
+    {
+      "name": "application/x-ndf",
+      "status": "established",
+      "description": "NLAPS Data Format",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/ndf.html"
+      ]
+    },
+    {
+      "name": "application/x-ngs-geoid",
+      "status": "established",
+      "description": "NOAA NGS Geoid Height Grids",
+      "extensions": [
+        "bin"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/ngsgeoid.html"
+      ],
+      "notes": "This format describes a geodetic correction grid. Its identity does not interpret correction values as terrain elevation or establish their units."
+    },
+    {
+      "name": "application/x-ntv2",
+      "status": "established",
+      "description": "NTv2 Datum Grid Shift",
+      "extensions": [
+        "gsb",
+        "gvb"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/index.html"
+      ],
+      "notes": "This format describes a geodetic correction grid. Its identity does not interpret correction values as terrain elevation or establish their units."
+    },
+    {
+      "name": "application/x-nwt-grc",
+      "status": "established",
+      "description": "Northwood Classified Grid Format .grc/.tab",
+      "extensions": [
+        "grc"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/nwtgrd.html#driver-capabilities-nwt-grc"
+      ]
+    },
+    {
+      "name": "application/x-nwt-grd",
+      "status": "established",
+      "description": "Northwood Numeric Grid Format .grd/.tab",
+      "extensions": [
+        "grd"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/nwtgrd.html"
+      ]
+    },
+    {
+      "name": "application/x-p-aux",
+      "status": "established",
+      "description": "PCI .aux Labelled",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/paux.html"
+      ]
+    },
+    {
+      "name": "application/x-pds",
+      "status": "established",
+      "description": "NASA Planetary Data System",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/pds.html"
+      ]
+    },
+    {
+      "name": "application/x-rik",
+      "status": "established",
+      "description": "Swedish Grid RIK (.rik)",
+      "extensions": [
+        "rik"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/rik.html"
+      ]
+    },
+    {
+      "name": "application/x-rpf-toc",
+      "status": "established",
+      "description": "Raster Product Format TOC format",
+      "extensions": [
+        "toc"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/rpftoc.html"
+      ]
+    },
+    {
+      "name": "application/x-rs2",
+      "status": "established",
+      "description": "RadarSat 2 XML Product",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/rs2.html"
+      ]
+    },
+    {
+      "name": "image/sar-ceos",
+      "status": "established",
+      "description": "CEOS SAR Image",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/sar_ceos.html"
+      ]
+    },
+    {
+      "name": "application/x-snodas",
+      "status": "established",
+      "description": "Snow Data Assimilation System",
+      "extensions": [
+        "hdr"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/snodas.html"
+      ],
+      "notes": "The .hdr association names this format's dataset label. It is not an alias for other .hdr-labelled raster families or their binary payloads."
+    },
+    {
+      "name": "image/x-srp",
+      "status": "established",
+      "description": "Standard Raster Product (ASRP/USRP)",
+      "extensions": [
+        "img"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/srp.html"
+      ]
+    },
+    {
+      "name": "application/x-srtmhgt",
+      "status": "established",
+      "description": "SRTMHGT File Format",
+      "extensions": [
+        "hgt"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/srtmhgt.html"
+      ]
+    },
+    {
+      "name": "application/x-til",
+      "status": "established",
+      "description": "EarthWatch .TIL",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/til.html"
+      ]
+    },
+    {
+      "name": "application/x-tsx",
+      "status": "established",
+      "description": "TerraSAR-X Product",
+      "extensions": [],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/tsx.html"
+      ]
+    },
+    {
+      "name": "application/x-usgs-dem",
+      "status": "established",
+      "description": "USGS Optional ASCII DEM (and CDED)",
+      "extensions": [
+        "dem"
+      ],
+      "references": [
+        "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java",
+        "https://gdal.org/en/stable/drivers/raster/usgsdem.html"
+      ]
+    }
+  ],
+  "aliases": [
+    {
+      "name": "image/x-bmp",
+      "canonical": "image/bmp",
+      "reference": "https://sources.debian.org/src/shared-mime-info/2.4-5/data/freedesktop.org.xml.in/"
+    },
+    {
+      "name": "image/x-ms-bmp",
+      "canonical": "image/bmp",
+      "reference": "https://sources.debian.org/src/shared-mime-info/2.4-5/data/freedesktop.org.xml.in/"
+    },
+    {
+      "name": "application/x-grib",
+      "canonical": "application/grib",
+      "reference": "https://docs.ogc.org/is/20-004r1/20-004r1.html"
+    },
+    {
+      "name": "application/iges",
+      "canonical": "model/iges",
+      "reference": "https://www.iana.org/assignments/media-types/model/iges"
+    },
+    {
+      "name": "model/x3d+vrml",
+      "canonical": "model/x3d-vrml",
+      "reference": "https://www.iana.org/assignments/media-types/model/x3d-vrml"
+    },
+    {
+      "name": "model/x3d+binary",
+      "canonical": "model/x3d+fastinfoset",
+      "reference": "https://www.iana.org/assignments/media-types/model/x3d+fastinfoset"
+    },
+    {
+      "name": "application/vnd.ms-3mfdocument",
+      "canonical": "model/3mf",
+      "reference": "https://sources.debian.org/src/shared-mime-info/2.4-5/data/freedesktop.org.xml.in/"
+    },
+    {
+      "name": "application/brlcad-v4",
+      "canonical": "model/vnd.brlcad",
+      "reference": "misc/debian/brlcad.xml"
+    },
+    {
+      "name": "application/brlcad-v5",
+      "canonical": "model/vnd.brlcad",
+      "reference": "misc/debian/brlcad.xml"
+    },
+    {
+      "name": "application/brlcad-unknown",
+      "canonical": "model/vnd.brlcad",
+      "reference": "misc/debian/brlcad.xml"
+    },
+    {
+      "name": "application/arcgrid",
+      "canonical": "application/x-ascii-grid",
+      "reference": "https://docs.geoserver.org/main/en/user/installation/upgrade2/"
+    },
+    {
+      "name": "application/x-xyz",
+      "canonical": "application/x-ascii-xyz",
+      "reference": "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java"
+    },
+    {
+      "name": "application/x-gsag",
+      "canonical": "image/vnd.goldensoftware.surfer-grid",
+      "reference": "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java"
+    },
+    {
+      "name": "application/x-gsbg",
+      "canonical": "image/vnd.goldensoftware.surfer-grid",
+      "reference": "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java"
+    },
+    {
+      "name": "application/x-gs7bg",
+      "canonical": "image/vnd.goldensoftware.surfer-grid",
+      "reference": "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java"
+    },
+    {
+      "name": "image/hfa",
+      "canonical": "application/x-erdas-hfa",
+      "reference": "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java"
+    },
+    {
+      "name": "application/aaigrid",
+      "canonical": "application/x-ascii-grid",
+      "reference": "https://raw.githubusercontent.com/apache/tika/56bf55f7f997ce344a06666529aa8a1bed63f2b1/tika-parsers/tika-parsers-extended/tika-parser-scientific-module/src/main/java/org/apache/tika/parser/gdal/GDALParser.java"
+    },
+    {
+      "name": "application/vnd+zarr",
+      "canonical": "application/vnd.zarr",
+      "notes": "Deprecated PySTAC spelling for the same Zarr store family; retained for published STAC assets.",
+      "reference": "https://pystac.readthedocs.io/en/latest/_modules/pystac/media_type.html"
+    }
+  ],
+  "legacy": {
+    "image/alias": "image/vnd.autodesk.alias-pix",
+    "image/bw": "image/vnd.brlcad.bw",
+    "image/ci": null,
+    "image/dpix": "image/vnd.brlcad.dpix",
+    "image/pix": "image/vnd.brlcad.pix",
+    "image/ppm": "image/x-portable-pixmap",
+    "image/ps": "application/postscript",
+    "image/rle": "image/rle",
+    "image/spm": "image/vnd.brlcad.spm",
+    "image/sun": "image/x-sun-raster",
+    "image/yuv": null,
+    "model/dxf": "image/vnd.dxf",
+    "model/gltf": "model/gltf+json",
+    "model/ply": "application/x-ply",
+    "model/shp": "application/vnd.shp",
+    "model/vnd.brlcad+binary": "model/vnd.brlcad",
+    "model/vnd.brlcad+asc": "application/vnd.brlcad.script",
+    "model/vnd.rhino": "model/vnd.mcneel.3dm",
+    "model/vnd.vtk": "application/vnd.kitware.vtk",
+    "model/vnd.openscad": "application/x-openscad",
+    "model/vnd.gdal": null,
+    "model/vnd.assetimport": null,
+    "model/x3d+vrml": "model/x3d-vrml",
+    "model/x3d+binary": "model/x3d+fastinfoset"
+  },
+  "desktop_reference": {
+    "project": "shared-mime-info",
+    "version": "2.4",
+    "url": "https://sources.debian.org/src/shared-mime-info/2.4-5/data/freedesktop.org.xml.in/",
+    "notes": "Audited for names and aliases; application-supplied packages are separate from this central database. No detection rules or descriptions are imported."
+  }
+}

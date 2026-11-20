@@ -114,6 +114,12 @@ set(
   macosx/Resources/Welcome.rtfd/brlcad_logo_tiny.png
   macosx/background.png
   macosx/openUp.c
+  mime/README
+  mime/update.py
+  mime/upstream.types
+  mime/upstream.json
+  mime/supplement.json
+  mime/mime-db.LICENSE
   mime.types
   mime_cad.types
   cpack/exe/header.bmp

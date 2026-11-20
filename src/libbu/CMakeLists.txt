@@ -242,6 +242,7 @@ set(
   fort.h
   json.hpp
   mime.cmake
+  mime_catalog.cmake
   parallel.h
   parallel_cpp11thread.cpp
   process_private.h
