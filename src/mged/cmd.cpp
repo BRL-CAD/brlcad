@@ -192,8 +192,7 @@ mged_run_on_gui_thread(struct mged_state *s, mged_gui_callback_t callback,
     if (!s || !callback)
 	return;
 
-    /* Classic and non-interactive sessions do not have a GUI thread. */
-    if (!s->interactive || s->classic_mged || !s->gui_thread_id ||
+    if (s->startup.ui != MGED_UI_GUI || !s->gui_thread_id ||
 	Tcl_GetCurrentThread() == s->gui_thread_id) {
 	callback(data);
 	return;
@@ -223,11 +222,11 @@ mged_terminal_columns(struct mged_state *s)
 {
     int columns = 0;
     if (!s->gedp) return;
-    if (s->classic_mged && s->interactive) {
+    if (s->startup.ui == MGED_UI_CLASSIC) {
 	if (termio_get_winsize(fileno(stdout), NULL, &columns) != 0) columns = 0;
     }
 #ifdef HAVE_TK
-    else if (s->interactive && curr_cmd_list && tkwin) {
+    else if (s->startup.ui == MGED_UI_GUI && curr_cmd_list && tkwin) {
 	struct bu_vls path = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&path, ".%s.t", bu_vls_cstr(&curr_cmd_list->cl_name));
 	Tcl_InterpState saved = Tcl_SaveInterpState(s->interp, TCL_OK);
@@ -289,7 +288,7 @@ run_ged_async(struct mged_state *s, std::function<int()> func)
     s->command_state = &command_state;
     s->cmd_running = 1;
 
-    if (s->classic_mged || !s->interactive) {
+    if (s->startup.ui != MGED_UI_GUI) {
 	int command_result = func();
 	delete_search_interp(&command_state);
 	s->command_state = NULL;
@@ -2288,7 +2287,7 @@ f_comm(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *arg
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
-    if (argc != 1 || !s->classic_mged || curr_cmd_list != &head_cmd_list) {
+    if (argc != 1 || s->startup.ui != MGED_UI_CLASSIC || curr_cmd_list != &head_cmd_list) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_printf(&vls, "help %s", argv[0]);
@@ -3143,7 +3142,7 @@ cmd_stuff_str(ClientData clientData, Tcl_Interp *interpreter, int argc, const ch
 	return TCL_ERROR;
     }
 
-    if (s->classic_mged) {
+    if (s->startup.ui == MGED_UI_CLASSIC) {
 	bu_log("\r%s\n", argv[1]);
 	pr_prompt(s);
 	bu_log("%s", bu_vls_addr(&s->input_str));

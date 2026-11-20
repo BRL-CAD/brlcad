@@ -164,7 +164,7 @@ int main(int UNUSED(argc), const char **argv)
      * style if the supplied options give us all we need to run a job or
      * interactive mode is disabled by explicit option, but at this stage we
      * just expose the two command driven modes.) */
-    if (bu_interactive()) {
+    if (bu_file_is_terminal(stdin)) {
 	linenoise::linenoiseState l("ganalyze: ");
 	while (true) {
 	    std::string line;

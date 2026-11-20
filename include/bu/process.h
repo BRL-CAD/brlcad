@@ -189,19 +189,25 @@ BU_EXPORT extern int bu_process_terminate(struct bu_process *pinfo);
 
 
 /**
- * @brief Check a process descriptor for readable data without blocking.
+ * Report whether a descriptor can be read without blocking.
  *
- * This is a readiness hint.  A zero result does not distinguish between no
- * data, EOF, and an invalid descriptor or other error.  Use
- * bu_process_poll() to detect completion, perform any final reads, and then
- * call bu_process_wait_n() to release the process.
+ * Readable end-of-file is reported as ready.  This tests the descriptor, not
+ * any data already buffered by a FILE stream associated with it.  Device
+ * semantics may make the result advisory, particularly for terminal input.
  *
  * @param[in] fd - file descriptor of interest
+ * @param[in] timeout_ms - maximum wait in milliseconds, 0 to poll, or -1 to
+ * wait indefinitely
  *
  * @return
- * 1 if a read can be attempted without blocking; otherwise 0
+ * 1 if a read can be attempted without blocking, 0 on timeout, or -1 on
+ * invalid input or polling error
  */
-BU_EXPORT extern int bu_process_pending(int fd);
+BU_EXPORT extern int bu_fd_read_ready(int fd, int timeout_ms);
+
+
+/** @deprecated Use bu_fd_read_ready(). */
+DEPRECATED BU_EXPORT extern int bu_process_pending(int fd);
 
 
 /**
@@ -326,12 +332,22 @@ BU_EXPORT extern int bu_pid_terminate(int pid);
 
 
 /**
- * @brief detect whether or not a program is being run in interactive mode
- *
- * @return
- * 1 if interactive, else 0
+ * Return 1 when stream is attached to a terminal, else 0.  A NULL
+ * stream is not a terminal.
  */
-BU_EXPORT extern int bu_interactive(void);
+BU_EXPORT extern int bu_file_is_terminal(FILE *stream);
+
+
+/**
+ * Return 1 when stream has a valid underlying file descriptor, else 0.
+ * This does not indicate whether data is pending or whether the stream
+ * supports reading or writing.  A NULL stream is not open.
+ */
+BU_EXPORT extern int bu_file_is_open(FILE *stream);
+
+
+/** @deprecated Use explicit bu_file_is_terminal() and bu_file_is_open() queries. */
+DEPRECATED BU_EXPORT extern int bu_interactive(void);
 
 
 /** @name Deprecated process APIs

@@ -57,7 +57,7 @@ facetize_process_drain_stdout(struct _ged_facetize_state *state,
     FacetizeWorkerStatus ignored_status;
     FacetizeWorkerStatus *output_status = status ? status : &ignored_status;
     std::vector<std::string> diagnostics;
-    while (fd >= 0 && bu_process_pending(fd)) {
+    while (fd >= 0 && bu_fd_read_ready(fd, 0) > 0) {
 	int count = bu_process_read_n(process, BU_PROCESS_STDOUT,
 		(int)sizeof(buffer), buffer);
 	if (count <= 0)
@@ -75,7 +75,7 @@ facetize_process_drain_stderr(struct _ged_facetize_state *state,
 {
     char buffer[FACETIZE_PROCESS_IO_BUFFER_SIZE];
     int fd = bu_process_fileno(process, BU_PROCESS_STDERR);
-    while (fd >= 0 && bu_process_pending(fd)) {
+    while (fd >= 0 && bu_fd_read_ready(fd, 0) > 0) {
 	int count = bu_process_read_n(process, BU_PROCESS_STDERR,
 		(int)sizeof(buffer), buffer);
 	if (count <= 0)

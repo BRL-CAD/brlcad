@@ -16,6 +16,23 @@ removed at any time.
 
 == 7.48
 
+include/bu/process.h
+
+	bu_interactive -> bu_file_is_terminal, bu_file_is_open
+
+	The legacy function combines terminal and input-readiness concepts and
+	has platform-dependent behavior.  Callers should test whether the
+	specific stream governing their behavior is open or attached to a
+	terminal, as appropriate.
+	[deprecated 7.48]
+
+	bu_process_pending -> bu_fd_read_ready
+
+	The replacement is descriptor-oriented rather than process-specific,
+	supports optional waiting, reports errors separately from timeouts, and
+	treats end-of-file as readable.
+	[deprecated 7.48]
+
 libged commands
 
 	bot_condense -> bot condense

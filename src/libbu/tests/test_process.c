@@ -75,6 +75,31 @@ process_poll_until_complete(struct bu_process *process, int *exit_status)
 }
 
 
+static int
+test_file_state(const char *UNUSED(cmd))
+{
+    FILE *stream = tmpfile();
+
+    if (!stream) {
+	fprintf(stderr, "bu_process_test[\"file_state\"] - tmpfile failed\n");
+	return PROCESS_FAIL;
+    }
+    if (!bu_file_is_open(stream)) {
+	fprintf(stderr, "bu_process_test[\"file_state\"] - open stream reported closed\n");
+	fclose(stream);
+	return PROCESS_FAIL;
+    }
+    if (bu_file_is_open(NULL) || bu_file_is_terminal(NULL)) {
+	fprintf(stderr, "bu_process_test[\"file_state\"] - NULL stream reported usable\n");
+	fclose(stream);
+	return PROCESS_FAIL;
+    }
+
+    fclose(stream);
+    return PROCESS_PASS;
+}
+
+
 #ifndef _WIN32
 struct process_func_test_data {
     const char *out;
@@ -447,7 +472,7 @@ test_ids(const char* cmd)
  *  bu_process_open(),
  *  bu_process_close(),
  *  bu_process_fileno(),
- *  bu_process_pending()
+ *  bu_fd_read_ready()
  * also relies on:
  *  bu_process_create(),
  *  bu_process_wait()
@@ -458,8 +483,8 @@ test_streams(const char* cmd)
     struct bu_process* p = NULL;
     const char* run_av[3] = {cmd, "echo", NULL};
 
-    if (bu_process_pending(-1)) {
-	fprintf(stderr, "bu_process_test[\"streams\"] - invalid descriptor reported pending\n");
+    if (bu_fd_read_ready(-1, 0) != -1 || bu_fd_read_ready(0, -2) != -1) {
+	fprintf(stderr, "bu_process_test[\"streams\"] - invalid readiness input accepted\n");
 	return PROCESS_FAIL;
     }
 
@@ -468,9 +493,9 @@ test_streams(const char* cmd)
     FILE* f_in = bu_process_file_open(p, BU_PROCESS_STDIN);
     int fd_out = bu_process_fileno(p, BU_PROCESS_STDOUT);
     int64_t pending_start = bu_gettime();
-    (void)bu_process_pending(fd_out);
+    (void)bu_fd_read_ready(fd_out, 0);
     if ((bu_gettime() - pending_start) > PROCESS_NONBLOCKING_CALL_LIMIT_USEC) {
-	fprintf(stderr, "bu_process_test[\"streams\"] - process_pending blocked\n");
+	fprintf(stderr, "bu_process_test[\"streams\"] - read_ready poll blocked\n");
 	return PROCESS_FAIL;
     }
 
@@ -487,22 +512,21 @@ test_streams(const char* cmd)
     FILE* f_err = bu_process_file_open(p, BU_PROCESS_STDERR);
     int fd_err = bu_process_fileno(p, BU_PROCESS_STDERR);
 
-    // give up to 5 seconds for process_pending to get the echo
-    int64_t start = bu_gettime();
-    while (!bu_process_pending(fd_out) || !bu_process_pending(fd_err)) {
-	if ((bu_gettime() - start) > PROCESS_COMPLETION_TIMEOUT_USEC) {
-	    fprintf(stderr, "bu_process_test[\"streams\"] - process_pending check failed\n");
-	    return PROCESS_FAIL;
-	}
-	(void)bu_snooze(PROCESS_POLL_INTERVAL_USEC);
+    const int readiness_timeout_ms = 5000;
+    if (bu_fd_read_ready(fd_out, readiness_timeout_ms) <= 0 ||
+	    bu_fd_read_ready(fd_err, readiness_timeout_ms) <= 0) {
+	fprintf(stderr, "bu_process_test[\"streams\"] - timed readiness check failed\n");
+	return PROCESS_FAIL;
     }
 
-    if (!bu_process_pending(fd_out) || (bu_fgets(out_read, 10, f_out) == NULL)) {
+    if (bu_fd_read_ready(fd_out, 0) <= 0 ||
+	    (bu_fgets(out_read, 10, f_out) == NULL)) {
 	fprintf(stderr, "bu_process_test[\"streams\"] - expected pending data on stdout\n");
 	return PROCESS_FAIL;
     }
 
-    if (!bu_process_pending(fd_err) || (bu_fgets(err_read, 10, f_err) == NULL)) {
+    if (bu_fd_read_ready(fd_err, 0) <= 0 ||
+	    (bu_fgets(err_read, 10, f_err) == NULL)) {
 	fprintf(stderr, "bu_process_test[\"streams\"] - expected pending data on stderr\n");
 	return PROCESS_FAIL;
     }
@@ -514,6 +538,18 @@ test_streams(const char* cmd)
     }
 
     bu_process_file_close(p, BU_PROCESS_STDIN);
+
+    int exit_status = 0;
+    if (process_poll_until_complete(p, &exit_status) != 1 || exit_status != 0) {
+	fprintf(stderr, "bu_process_test[\"streams\"] - child did not complete\n");
+	return PROCESS_FAIL;
+    }
+    if (bu_fd_read_ready(fd_out, readiness_timeout_ms) != 1 ||
+	    bu_fd_read_ready(fd_err, readiness_timeout_ms) != 1) {
+	fprintf(stderr, "bu_process_test[\"streams\"] - EOF was not readable\n");
+	return PROCESS_FAIL;
+    }
+
     bu_process_file_close(p, BU_PROCESS_STDOUT);
     bu_process_file_close(p, BU_PROCESS_STDERR);
 
@@ -965,6 +1001,7 @@ typedef struct {
 } ProcessTest;
 
 ProcessTest tests[] = {
+    {"file_state", test_file_state},
     {"exec_wait", test_exec_wait},
     {"create_opts", test_create_opts},
     {"create_timeout", test_create_timeout},

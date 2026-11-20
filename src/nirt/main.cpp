@@ -547,7 +547,7 @@ main(int argc, const char **argv)
 
     /* Check if we're on a terminal or not - it has implications for the modes */
     if (optv.silent_mode == NIRT_SILENT_UNSET) {
-	optv.silent_mode = (bu_interactive()) ? NIRT_SILENT_NO : NIRT_SILENT_YES;
+	optv.silent_mode = (bu_file_is_terminal(stdin)) ? NIRT_SILENT_NO : NIRT_SILENT_YES;
     }
 
     if (optv.silent_mode != NIRT_SILENT_YES && optv.header_mode) {

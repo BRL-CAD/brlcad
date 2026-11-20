@@ -1507,7 +1507,8 @@ include/bu/process.h: BU_EXPORT extern int bu_process_wait_n(struct bu_process *
 include/bu/process.h: BU_EXPORT extern int bu_process_alive(struct bu_process *pinfo);
 include/bu/process.h: BU_EXPORT extern int bu_process_poll(struct bu_process *pinfo, int *exit_status);
 include/bu/process.h: BU_EXPORT extern int bu_process_terminate(struct bu_process *pinfo);
-include/bu/process.h: BU_EXPORT extern int bu_process_pending(int fd);
+include/bu/process.h: BU_EXPORT extern int bu_fd_read_ready(int fd, int timeout_ms);
+include/bu/process.h: DEPRECATED BU_EXPORT extern int bu_process_pending(int fd);
 include/bu/process.h: BU_EXPORT extern int bu_process_read_n(struct bu_process *pinfo, bu_process_io_t d, int n, char *buff);
 include/bu/process.h: BU_EXPORT extern FILE *bu_process_file_open(struct bu_process *pinfo, bu_process_io_t d);
 include/bu/process.h: BU_EXPORT extern void bu_process_file_close(struct bu_process *pinfo, bu_process_io_t d);
@@ -1517,7 +1518,9 @@ include/bu/process.h: BU_EXPORT int bu_process_args_n(struct bu_process *pinfo, 
 include/bu/process.h: BU_EXPORT extern int bu_pid(void);
 include/bu/process.h: BU_EXPORT extern int bu_pid_alive(int pid);
 include/bu/process.h: BU_EXPORT extern int bu_pid_terminate(int pid);
-include/bu/process.h: BU_EXPORT extern int bu_interactive(void);
+include/bu/process.h: BU_EXPORT extern int bu_file_is_terminal(FILE *stream);
+include/bu/process.h: BU_EXPORT extern int bu_file_is_open(FILE *stream);
+include/bu/process.h: DEPRECATED BU_EXPORT extern int bu_interactive(void);
 include/bu/process.h: DEPRECATED BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd, int argc, const char **argv, int out_eql_err, int hide_window);
 include/bu/process.h: DEPRECATED BU_EXPORT extern int bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime);
 include/bu/process.h: DEPRECATED BU_EXPORT extern int bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_t d, int n);

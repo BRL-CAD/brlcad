@@ -84,7 +84,7 @@ f_edcolor(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc, cons
 
     CHECK_DBI_NULL;
 
-    if (!ged_set_editor(s->gedp, s->classic_mged))
+    if (!ged_set_editor(s->gedp, s->startup.ui == MGED_UI_CLASSIC))
 	return TCL_ERROR;
 
     ged_exec(s->gedp, argc, argv);
@@ -111,7 +111,7 @@ f_edcodes(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 	return TCL_ERROR;
     }
 
-    if (!ged_set_editor(s->gedp, s->classic_mged))
+    if (!ged_set_editor(s->gedp, s->startup.ui == MGED_UI_CLASSIC))
 	return TCL_ERROR;
 
     ged_exec(s->gedp, argc, argv);
@@ -139,7 +139,7 @@ f_edmater(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 	return TCL_ERROR;
     }
 
-    if (!ged_set_editor(s->gedp, s->classic_mged))
+    if (!ged_set_editor(s->gedp, s->startup.ui == MGED_UI_CLASSIC))
 	return TCL_ERROR;
 
     ged_exec(s->gedp, argc, argv);
@@ -167,7 +167,7 @@ f_red(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv
 	return TCL_ERROR;
     }
 
-    ged_set_editor(s->gedp, s->classic_mged);
+    ged_set_editor(s->gedp, s->startup.ui == MGED_UI_CLASSIC);
 
     if (ged_exec(s->gedp, argc, argv) & BRLCAD_ERROR) {
 	mged_pr_output(interpreter);

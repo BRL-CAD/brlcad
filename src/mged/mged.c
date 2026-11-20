@@ -405,7 +405,7 @@ mgedInvalidParameterHandler(const wchar_t* UNUSED(expression),
 void
 pr_prompt(struct mged_state *s)
 {
-    if (s->interactive)
+    if (s->startup.show_prompt)
 	bu_log("%s", bu_vls_addr(&s->mged_prompt));
 }
 
@@ -607,7 +607,7 @@ struct mged_color_opt {
  * apply_cli_overrides() can distinguish "not set" from an explicit zero.
  *
  * Two usage phases:
- *   (a) Early options (attach, classic_mged, …) are applied immediately
+ *   (a) Early options that select startup behavior are resolved immediately
  *       after bu_opt_parse returns, before Tcl/DM initialisation.
  *   (b) Deferred options (mged_variables, grid, colours, …) are applied by
  *       apply_cli_overrides() after do_rc() so that CLI flags always win
@@ -1900,7 +1900,7 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	     * bu_log) so it is never swallowed by the Tcl log-redirect
 	     * machinery.  The numeric status lets the parent distinguish
 	     * CMD_OK (919), CMD_BAD (920), and CMD_MORE (921). */
-	    if (s->pipe_mode) {
+	    if (s->startup.emit_cmd_done) {
 		fprintf(stdout, "MGED_CMD_DONE %d\n", cmd_status);
 		fflush(stdout);
 	    }
@@ -2588,7 +2588,6 @@ main(int argc, char *argv[])
 
     int parent_pipe[2] = {0, 0};
     int use_pipe = 0;
-    int run_in_foreground=1;
 
 #ifdef HAVE_PIPE
     int result;
@@ -2604,11 +2603,13 @@ main(int argc, char *argv[])
     MGED_STATE->s_edit->e = rt_edit_create(NULL, NULL, NULL, NULL);
     struct mged_state *s = MGED_STATE;
     s->magic = MGED_STATE_MAGIC;
-    s->classic_mged = 1;
-    s->interactive = 0; /* >0 means interactive, intentionally starts
-                         * 0 to know when interactive, e.g., via -C
-                         * option
-			 */
+    memset(&s->startup, 0, sizeof(s->startup));
+    s->startup.input = MGED_INPUT_STREAM;
+    s->startup.ui = MGED_UI_HEADLESS;
+    s->startup.dm = MGED_DM_NONE;
+    s->startup.rc = MGED_RC_SKIP;
+    s->startup.run_in_foreground = 1;
+    s->startup.monitor_stdin = 1;
     bu_vls_init(&s->input_str);
     bu_vls_init(&s->input_str_prefix);
     bu_vls_init(&s->scratchline);
@@ -2627,7 +2628,6 @@ main(int argc, char *argv[])
 #ifdef HAVE_TK
     s->tk_generic_handler_active = 0;
 #endif
-    s->pipe_mode = 0;
 
     /* Initialize s->i (MGED_Internal C++ callback map) and register all
      * default callbacks.  This must happen before any solid/object editing
@@ -2642,7 +2642,6 @@ main(int argc, char *argv[])
     MGED_OPENDB_CTX_INIT(&mged_global_db_ctx);
     mged_global_db_ctx.init_flag = 1;
 
-    char *attach = (char *)NULL;
     BU_ALLOC(s->mged_curr_dm, struct mged_dm);
     bu_ptbl_init(&active_dm_set, 8, "dm set");
     bu_ptbl_ins(&active_dm_set, (long *)s->mged_curr_dm);
@@ -2658,12 +2657,6 @@ main(int argc, char *argv[])
 #endif
 
     bu_setprogname(argv[0]);
-
-#if defined(HAVE_TK)
-    if (dm_have_graphics()) {
-	s->classic_mged = 0;
-    }
-#endif
 
     /*
      * Parse command-line options using bu_opt.  All values are collected into
@@ -2849,10 +2842,6 @@ main(int argc, char *argv[])
     rt_debug = (int)cl.rt_debug_val;
     bu_debug = (unsigned int)cl.bu_debug_val;
 
-    /* -a / --attach */
-    if (cl.attach)
-	attach = (char *)cl.attach;
-
     /*
      * In classic mode, -a directly controls the attach target.
      * In GUI mode, the startup scripts choose the DM from
@@ -2870,21 +2859,24 @@ main(int argc, char *argv[])
     if (cl.read_only)
 	read_only_flag = 1;
 
-    /* -p / --pipe */
-    if (cl.pipe_mode)
-	s->pipe_mode = 1;
-
-    /* -b / --background */
-    if (cl.background)
-	run_in_foreground = 0;
-
-    /* -c / --classic and -C / --gui (mutually exclusive; last one wins) */
-    if (cl.classic_mode) {
-	s->classic_mged = 2; /* >1 to indicate explicitly requested */
-    }
-    if (cl.gui_mode) {
-	s->classic_mged = 0;
-	s->interactive = 2;  /* >1 to indicate explicitly requested */
+    {
+	struct mged_startup_request request;
+	memset(&request, 0, sizeof(request));
+	request.positional_argc = argc;
+	request.stdin_is_terminal = bu_file_is_terminal(stdin);
+	request.stdin_is_open = bu_file_is_open(stdin);
+	request.stdout_is_terminal = bu_file_is_terminal(stdout);
+#if defined(HAVE_TK)
+	request.graphics_available = dm_have_graphics();
+#endif
+	request.pipe_mode = cl.pipe_mode;
+	request.classic_mode = cl.classic_mode;
+	request.gui_mode = cl.gui_mode;
+	request.background = cl.background;
+	request.skip_rc = cl.skip_rc;
+	request.rcfile = cl.rcfile;
+	request.attach = cl.attach;
+	mged_startup_plan_resolve(&s->startup, &request);
     }
 
     /* Change the working directory to BU_DIR_HOME if invoked with no
@@ -2896,18 +2888,13 @@ main(int argc, char *argv[])
 	}
     }
 
-    if (argc > 1) {
-	/* if there is more than a file name remaining, mged is not interactive */
-	s->interactive = 0;
-    } else {
-	/* we init to 0, so if we're non-0 here, it was probably requested */
-	if (!s->interactive) {
-	    s->interactive = bu_interactive();
-	}
-    } /* argc > 1 */
-
-    if (bu_debug > 0)
-	fprintf(stdout, "DEBUG: interactive=%d, classic_mged=%d\n", s->interactive, s->classic_mged);
+    if (bu_debug > 0) {
+	fprintf(stdout, "DEBUG: input=%s, ui=%s, dm=%s, rc=%s\n",
+		mged_input_mode_name(s->startup.input),
+		mged_ui_mode_name(s->startup.ui),
+		mged_dm_mode_name(s->startup.dm),
+		mged_rc_mode_name(s->startup.rc));
+    }
 
 
 #if defined(SIGPIPE) && defined(SIGINT)
@@ -2926,7 +2913,7 @@ main(int argc, char *argv[])
 #if defined(HAVE_PIPE) && !defined(HAVE_WINDOWS_H)
     /* fork()-based background detach: POSIX only. fork() and select() on
      * pipe file descriptors are not available on Windows. */
-    if (!s->classic_mged && !run_in_foreground) {
+    if (s->startup.ui == MGED_UI_GUI && !s->startup.run_in_foreground) {
 	pid_t pid;
 
 	fprintf(stdout, "Initializing and backgrounding, please wait...");
@@ -3075,9 +3062,8 @@ main(int argc, char *argv[])
     (void)Tcl_Eval(s->interp, bu_vls_addr(&s->input_str));
     bu_vls_trunc(&s->input_str, 0);
 
-    /* show ourselves */
-    if (s->interactive) {
-	if (s->classic_mged) {
+    /* Initialize the selected command interface. */
+    if (s->startup.ui == MGED_UI_CLASSIC) {
 	    /* identify */
 
 	    (void)Tcl_Eval(s->interp, "set mged_console_mode classic");
@@ -3085,14 +3071,14 @@ main(int argc, char *argv[])
 	    bu_log("%s\n", brlcad_ident("Geometry Editor (MGED)"));
 
 #ifndef HAVE_WINDOWS_H
-	    if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {
+	    if (s->startup.line_editing) {
 		/* Set up for character-at-a-time terminal IO. */
 		cbreak_mode = COMMAND_LINE_EDITING;
 		save_Tty(fileno(stdin));
 	    }
 #endif
 
-	} else {
+    } else if (s->startup.ui == MGED_UI_GUI) {
 	    /* start up the gui */
 
 	    int status;
@@ -3109,19 +3095,18 @@ main(int argc, char *argv[])
 	    bu_vls_strcpy(&error, Tcl_GetStringResult(s->interp));
 
 	    if (status != TCL_OK) {
-		if (!run_in_foreground && use_pipe) {
+		if (!s->startup.run_in_foreground && use_pipe) {
 		    notify_parent_done(parent_pipe[1]);
 		}
 		bu_log("%s\nMGED Aborted.\n", bu_vls_addr(&error));
 		mged_finish(s, 1);
 	    }
 	    bu_vls_free(&error);
-	}
     } else {
 	(void)Tcl_Eval(s->interp, "set mged_console_mode batch");
     }
 
-    if (!s->interactive || s->classic_mged || old_mged_gui) {
+    if (s->startup.ui != MGED_UI_GUI || old_mged_gui) {
 	/* Open the database */
 	if (argc >= 1) {
 	    const char *av[4];
@@ -3139,7 +3124,7 @@ main(int argc, char *argv[])
 	     */
 	    struct cmdtab ec = {MGED_CMD_MAGIC, NULL, NULL, NULL, s};
 	    if (f_opendb(&ec, s->interp, 3, av) == TCL_ERROR) {
-		if (!run_in_foreground && use_pipe) {
+		if (!s->startup.run_in_foreground && use_pipe) {
 		    notify_parent_done(parent_pipe[1]);
 		}
 		mged_finish(s, 1);
@@ -3159,29 +3144,17 @@ main(int argc, char *argv[])
 	ged_dl_notify_func_set(s->gedp, mged_notify);
     }
 
-    /* --- Now safe to process commands. --- */
-    if (s->interactive) {
+    /* Apply startup configuration before initializing the selected UI. */
+    if (s->startup.rc != MGED_RC_SKIP)
+	do_rc(s, 0, s->startup.rcfile);
 
-	/* This is an interactive mged, process .mgedrc (unless --no-rc or
-	 * --rcfile overrides the default search logic). */
-	do_rc(s, cl.skip_rc, cl.rcfile);
+    /* Apply CLI overrides AFTER startup files so command-line flags win. */
+    apply_cli_overrides(s, &cl);
 
-	/* Apply CLI overrides AFTER .mgedrc so command-line flags always win. */
-	apply_cli_overrides(s, &cl);
-
-	/*
-	 * Initialize variables here in case the user specified changes
-	 * to the defaults in their .mgedrc file.
-	 */
-
-	if (s->classic_mged) {
-	    /* start up a text command console */
-
-	    if (!run_in_foreground && use_pipe) {
-		notify_parent_done(parent_pipe[1]);
-	    }
-
-	} else {
+    if (s->startup.ui == MGED_UI_CLASSIC) {
+	if (!s->startup.run_in_foreground && use_pipe)
+	    notify_parent_done(parent_pipe[1]);
+    } else if (s->startup.ui == MGED_UI_GUI) {
 	    /* start up the GUI */
 
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -3193,12 +3166,12 @@ main(int argc, char *argv[])
 #endif
 
 	    if (old_mged_gui) {
-		if (attach && strlen(attach) > 0) {
-		    Tcl_SetVar2(s->interp, "mged_default", "dm_type", attach, TCL_GLOBAL_ONLY);
-		    if (BU_STR_EQUAL(attach, "tkswrast")) {
-			bu_vls_printf(&vls, "gui -dt %s -config g", attach);
+		if (s->startup.dm_type && strlen(s->startup.dm_type) > 0) {
+		    Tcl_SetVar2(s->interp, "mged_default", "dm_type", s->startup.dm_type, TCL_GLOBAL_ONLY);
+		    if (BU_STR_EQUAL(s->startup.dm_type, "tkswrast")) {
+			bu_vls_printf(&vls, "gui -dt %s -config g", s->startup.dm_type);
 		    } else {
-			bu_vls_printf(&vls, "gui -dt %s", attach);
+			bu_vls_printf(&vls, "gui -dt %s", s->startup.dm_type);
 		    }
 		} else {
 		    bu_vls_strcpy(&vls, "gui");
@@ -3221,7 +3194,7 @@ main(int argc, char *argv[])
 	     * parent process know that we are done initializing so
 	     * that it may exit.
 	     */
-	    if (!run_in_foreground && use_pipe) {
+	    if (!s->startup.run_in_foreground && use_pipe) {
 		notify_parent_done(parent_pipe[1]);
 	    }
 #endif /* HAVE_PIPE */
@@ -3234,7 +3207,7 @@ main(int argc, char *argv[])
 		    mged_finish(s, 1);
 		}
 		bu_log("%s\nMGED unable to initialize gui, reverting to classic mode.\n", Tcl_GetStringResult(s->interp));
-		s->classic_mged = 1;
+		mged_startup_plan_gui_failed(&s->startup, bu_file_is_terminal(stdout));
 
 #ifndef HAVE_WINDOWS_H
 		cbreak_mode = COMMAND_LINE_EDITING;
@@ -3244,6 +3217,7 @@ main(int argc, char *argv[])
 	    } else {
 
 #ifdef HAVE_PIPE
+		if (s->startup.redirect_output) {
 		/* we're going to close out stdout/stderr as we
 		 * proceed in GUI mode, so create some pipes.
 		 */
@@ -3253,6 +3227,7 @@ main(int argc, char *argv[])
 		result = mged_create_output_pipe(pipe_err);
 		if (result == -1)
 		    perror("pipe");
+		}
 #endif  /* HAVE_PIPE */
 
 		/* since we're in GUI mode, display any bu_bomb()
@@ -3260,17 +3235,9 @@ main(int argc, char *argv[])
 		 */
 		bu_bomb_add_hook(mged_bomb_hook, s);
 	    } /* status -- gui initialized */
-	} /* classic */
-
-    } else {
-	/* !interactive: no .mgedrc is processed, but CLI overrides still apply */
-	apply_cli_overrides(s, &cl);
-
-	if (!run_in_foreground && use_pipe) {
-	    notify_parent_done(parent_pipe[1]);
-	}
-
-    } /* interactive */
+    } else if (!s->startup.run_in_foreground && use_pipe) {
+	notify_parent_done(parent_pipe[1]);
+    }
 
     /* All entries point into argv and are non-owning; only the tables need
      * releasing once the deferred overrides have been applied. */
@@ -3286,12 +3253,13 @@ main(int argc, char *argv[])
 	dm_set_bg(DMP, dm_bg[0], dm_bg[1], dm_bg[2], dm_bg[0], dm_bg[1], dm_bg[2]);
     }
 
-    /* initialize a display manager */
-    if ((s->interactive && s->classic_mged) || (!s->interactive && attach)) {
-	if (!attach) {
+    /* Initialize a display manager outside the full GUI startup path. */
+    if ((s->startup.ui == MGED_UI_CLASSIC && s->startup.dm != MGED_DM_NONE) ||
+	(s->startup.ui == MGED_UI_HEADLESS && s->startup.dm == MGED_DM_EXPLICIT)) {
+	if (s->startup.dm != MGED_DM_EXPLICIT) {
 	    get_attached(s);
 	} else {
-	    attach_display_manager(s->interp, attach, s->dpy_string);
+	    attach_display_manager(s->interp, s->startup.dm_type, s->dpy_string);
 	}
 
 	/* In GUI mode, openw.tcl's init_mged_gui applies mged_default(ggeom)
@@ -3346,7 +3314,7 @@ main(int argc, char *argv[])
 
     /* GUI pipe mode keeps standard I/O connected to the driving process
      * instead of redirecting it into the Tk command window. */
-    if (s->classic_mged || !s->interactive || s->pipe_mode) {
+    if (s->startup.monitor_stdin) {
 	struct stdio_data *sd;
 	BU_GET(sd, struct stdio_data);
 	sd->s = s;

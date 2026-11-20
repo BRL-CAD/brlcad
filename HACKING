@@ -1143,6 +1143,15 @@ the following format should be used as the filename convention:
 
   BRL-CAD_{VERSION}[_{OS}][_{VENDOR}][_{CPU}][_{NOTE}].{EXTENSION}
 
+This convention remains authoritative for release package names and
+defines the core name of development packages.  When BRL-CAD's standard
+package targets run from a Git checkout that is not exactly at a rel-*
+tag, they append _{GIT_ABBREV} immediately before the extension.
+GIT_ABBREV is Git's default abbreviation from "git rev-parse --short
+HEAD".  This development qualifier is omitted for release-tagged
+checkouts, non-Git source trees, or when the noninteractive Git queries
+cannot be completed.
+
 Notably, the filename should use 'BRL-CAD' instead of 'brlcad' for the
 name unless technically problematic, it should delimit sections of the
 filename with underscores instead of spaces, dots, or dashes, and

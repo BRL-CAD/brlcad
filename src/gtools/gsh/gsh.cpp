@@ -737,7 +737,7 @@ g_cmdline(
 	    tmp_av.clear();
 
 	    // In case we had a custom prompt from MORE, restore our standard prompt
-	    std::string p = (bu_interactive()) ? std::string(DEFAULT_GSH_PROMPT) : std::string("");
+	    std::string p = (bu_file_is_terminal(stdin)) ? std::string(DEFAULT_GSH_PROMPT) : std::string("");
 	    l.get()->SetPrompt(p);
 	}
 
@@ -888,7 +888,7 @@ main(int argc, const char **argv)
     //gs.get()->l->EnableMultiLine();
 
     // If we're handling commands from stdin, we want an empty prompt
-    std::string p = (bu_interactive()) ? std::string(DEFAULT_GSH_PROMPT) : std::string("");
+    std::string p = (bu_file_is_terminal(stdin)) ? std::string(DEFAULT_GSH_PROMPT) : std::string("");
     gs.get()->l->SetPrompt(p);
 
     // Launch blocking linenoise input gathering in a separate thread, to allow

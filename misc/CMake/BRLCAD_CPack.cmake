@@ -152,6 +152,8 @@ if(WIN32)
     set(BRLINST_EXECUTABLE "")
     set(BRLINST_FORMATS exe msi)
     set(BRLINST_ZIP_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}")
+    set(BRLINST_PACKAGE_NAME_MODULE "${BRLCAD_CMAKE_DIR}/BRLCAD_Package_Name.cmake")
+    set(BRLINST_PACKAGE_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
     set(BRLI_FILTER_SHORTCUTS "${BRLINST_FILTER_SHORTCUTS}")
     set(_brlinst_package_script "${CMAKE_BINARY_DIR}/BrlinstPackage.cmake")
     configure_file("${CMAKE_SOURCE_DIR}/misc/tools/brlinst/cmake/Package.cmake.in"

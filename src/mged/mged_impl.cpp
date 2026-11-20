@@ -56,11 +56,13 @@ mged_state_create(void)
     BU_GET(s->i, struct mged_state_impl);
     s->i->i = new MGED_Internal;
 
-    s->classic_mged = 1;
-    s->interactive = 0; /* >0 means interactive, intentionally starts
-			 * 0 to know when interactive, e.g., via -C
-			 * option
-			 */
+    s->startup = {};
+    s->startup.input = MGED_INPUT_STREAM;
+    s->startup.ui = MGED_UI_HEADLESS;
+    s->startup.dm = MGED_DM_NONE;
+    s->startup.rc = MGED_RC_SKIP;
+    s->startup.run_in_foreground = 1;
+    s->startup.monitor_stdin = 1;
     bu_vls_init(&s->input_str);
     bu_vls_init(&s->input_str_prefix);
     bu_vls_init(&s->scratchline);
