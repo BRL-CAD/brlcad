@@ -67,12 +67,14 @@ demo_file_arg(int ac, char *av[], const char **filename)
 
 
 static int
-list_tread_patterns_arg(int ac, char *av[])
+informational_arg(int ac, char *av[])
 {
     int i;
 
     for (i = 1; i < ac; i++) {
-	if (BU_STR_EQUAL(av[i], LIST_TREAD_PATTERNS_OPTION))
+	if (BU_STR_EQUAL(av[i], LIST_TREAD_PATTERNS_OPTION) ||
+	    BU_STR_EQUAL(av[i], "-h") || BU_STR_EQUAL(av[i], "-?") ||
+	    BU_STR_EQUAL(av[i], "--help"))
 	    return 1;
     }
     return 0;
@@ -84,7 +86,7 @@ int main(int ac, char *av[])
     struct rt_wdb *wdbp = NULL;
     const char *filename = NULL;
     struct ged ged;
-    int list_patterns;
+    int informational;
     int ret;
 
     bu_setprogname(av[0]);
@@ -93,10 +95,10 @@ int main(int ac, char *av[])
     ret = demo_file_arg(ac, av, &filename);
     if (ret < 0)
 	bu_exit(1, "ERROR - --demo-file requires an output file name.\n");
-    list_patterns = list_tread_patterns_arg(ac, av);
+    informational = informational_arg(ac, av);
 
     ged_init(&ged);
-    if (list_patterns) {
+    if (informational) {
 	ged.dbip = db_create_inmem();
 	if (ged.dbip == DBI_NULL) {
 	    ged_free(&ged);
@@ -119,10 +121,10 @@ int main(int ac, char *av[])
     /* Close database */
     db_close(ged.dbip);
     if (ret & BRLCAD_ERROR) {
-	if (!list_patterns)
+	if (!informational)
 	    bu_file_delete(filename);
 	bu_log("%s", bu_vls_addr(ged.ged_result_str));
-    } else if (list_patterns) {
+    } else if (informational) {
 	bu_log("%s", bu_vls_addr(ged.ged_result_str));
     } else {
 	bu_log("%s file created\n", filename);
@@ -130,7 +132,7 @@ int main(int ac, char *av[])
 
     /* release our ged instance memory */
     ged_free(&ged);
-    return ret;
+    return (ret & BRLCAD_ERROR) ? 1 : 0;
 }
 
 

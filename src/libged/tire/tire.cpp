@@ -714,7 +714,7 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&parse_msg);
     if (print_help) {
 	_tire_show_help(gedp, cmd_name, d);
-	return BRLCAD_ERROR;
+	return GED_HELP;
     }
     if (list_patterns) {
 	list_tread_patterns(gedp->ged_result_str);
