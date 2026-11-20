@@ -85,6 +85,14 @@ namespace eval RtWizard {
 
 	protected {
 	    method hexToRGB {hexRGB} {}
+	    method writeImage {filename w h fb} {
+		if {[info exists ::RtWizard::wizard_state(make_animation)] && $::RtWizard::wizard_state(make_animation)} {
+		    return
+		}
+		if {[catch {rtwizard_image_write $filename $w $h $fb} output_error]} {
+		    tk_messageBox -message "Generation of image $filename failed: $output_error" -type ok
+		}
+	    }
 
 	    variable title
 	    variable sampleImage

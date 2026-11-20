@@ -900,6 +900,27 @@ validate_raytrace(struct rt_i *rtip)
 }
 
 
+static int
+resolve_image_type(struct icv_context *context, const char *filename, struct bu_vls *type)
+{
+    struct bu_mime_result *formats = NULL;
+    enum bu_mime_status status = context ?
+	bu_mime_detect(icv_mime_registry(context), filename, NULL, 0, 0, &formats) : BU_MIME_ERROR;
+    int selected = 0;
+
+    bu_vls_trunc(type, 0);
+    if (status == BU_MIME_UNKNOWN_RESULT) {
+	bu_vls_strcpy(type, "image/vnd.brlcad.pix");
+	selected = 1;
+    } else if (status != BU_MIME_ERROR) {
+	selected = icv_select_variant(context, ICV_CODEC_WRITE, NULL, NULL, formats, NULL,
+	    type, NULL, NULL, NULL);
+    }
+    bu_mime_result_free(formats);
+    return selected;
+}
+
+
 /**
  * Do all the actual work to run a frame.
  *
@@ -909,6 +930,7 @@ int
 do_frame(int framenumber)
 {
     struct bu_vls times = BU_VLS_INIT_ZERO;
+    int image_status = 0;
     char framename[256] = {0};		/* File name to hold current frame */
     struct rt_i *rtip = APP.a_rt_i;
     double utime = 0.0;			/* CPU time used */
@@ -916,6 +938,9 @@ do_frame(int framenumber)
     double wallclock = 0.0;		/* # seconds of wall clock time */
     vect_t work, temp;
     quat_t quat;
+#if defined(HAVE_SYS_STAT_H) && !defined(RT_RAW_OUTPUT)
+    int allow_restart = 1;
+#endif
 
     if (rt_verbosity & VERBOSE_FRAMENUMBER)
 	bu_log("\n...................Frame %5d...................\n",
@@ -1039,6 +1064,24 @@ do_frame(int framenumber)
 	return -1;
     }
 
+#if !defined(RT_TXT_OUTPUT) && !defined(RT_RAW_OUTPUT)
+    if (outputfile) {
+	struct icv_context *image_context = icv_context_create(NULL);
+	struct bu_vls image_type = BU_VLS_INIT_ZERO;
+	int selected = resolve_image_type(image_context, outputfile, &image_type);
+#  if defined(HAVE_SYS_STAT_H)
+	/* Encoded images cannot be resumed as byte-addressed RGB pixels. */
+	allow_restart = selected && BU_STR_EQUAL(bu_vls_cstr(&image_type), "image/vnd.brlcad.pix");
+#  endif
+	bu_vls_free(&image_type);
+	icv_context_destroy(image_context);
+	if (!selected) {
+	    bu_log("rt: no registered image writer for %s\n", outputfile);
+	    return -1;
+	}
+    }
+#endif
+
     /* Allocate data for pixel map for rerendering of black pixels */
     if (pixmap == NULL) {
 	pixmap = (unsigned char*)bu_calloc(sizeof(RGBpixel), width*height, "pixmap allocate");
@@ -1079,7 +1122,7 @@ do_frame(int framenumber)
 	    int ret;
 	    struct stat sb;
 
-	    if (bu_file_exists(framename, NULL)) {
+	    if (allow_restart && bu_file_exists(framename, NULL)) {
 		/* File exists, maybe with partial results */
 		outfp = NULL;
 		fd = open(framename, O_RDWR);
@@ -1335,7 +1378,19 @@ do_frame(int framenumber)
 	    }
 	}
 
-	icv_write(bif, framename, BU_MIME_IMAGE_AUTO);
+	struct icv_context *image_context = icv_context_create(NULL);
+	struct bu_vls resolved_type = BU_VLS_INIT_ZERO;
+	/* Frame numbers are appended after the requested suffix. Select
+	 * from the base name, narrowing shared suffixes to available writers.
+	 * Unrecognized names retain rt's default raw PIX output. */
+	int selected = resolve_image_type(image_context, outputfile, &resolved_type);
+	if (!selected ||
+	    icv_write_with_context(image_context, bif, framename, bu_vls_cstr(&resolved_type), NULL, NULL)) {
+	    bu_log("rt: cannot write image frame %s\n", framename);
+	    image_status = -1;
+	}
+	bu_vls_free(&resolved_type);
+	icv_context_destroy(image_context);
 	icv_destroy(bif);
 	bif = NULL;
     }
@@ -1353,7 +1408,7 @@ do_frame(int framenumber)
     bu_log("\n");
     bu_free(pixmap, "pixmap allocate");
     pixmap = (unsigned char *)NULL;
-    return 0;		/* OK */
+    return image_status;
 }
 
 

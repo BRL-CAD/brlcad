@@ -152,7 +152,7 @@ Splash image
 The splash is a BRL-CAD-relevant *rendered* image.  It is produced by
 raytracing one of the bundled sample databases (e.g. share/db/moss.g) with the
 already-built "rt" tool and committing the resulting PNG as a build asset under
-assets/.  At run time it is loaded with icv_read() and blitted to the window
+assets/.  At run time it is loaded with icv_read_with_context() and blitted to the window
 with fb_write().  If the asset is missing, the launcher falls back to the
 bundled BRL-CAD logo, and failing that, to a solid background -- it never hard
 errors on a missing image.

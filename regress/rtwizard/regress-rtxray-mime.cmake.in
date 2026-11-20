@@ -1,0 +1,61 @@
+set(INPUTFILE "@INPUT_FILE@")
+set(BIN_DIR "@BIN_DIR@")
+set(TEST_DIR "@CMAKE_CURRENT_BINARY_DIR@/rtxray-mime")
+set(IMAGE_SIZE 8)
+
+string(REPLACE "\\" "" RTXRAY "${EXEC}")
+get_filename_component(BDIR "${RTXRAY}" DIRECTORY)
+string(REGEX REPLACE "${BIN_DIR}$" "" RDIR "${BDIR}")
+set(SRCFILE "${RDIR}/${INPUTFILE}")
+file(MAKE_DIRECTORY "${TEST_DIR}")
+
+function(render_xray output mode expected result)
+  file(REMOVE "${output}" "${expected}")
+  execute_process(
+    COMMAND "${RTXRAY}" -B -s ${IMAGE_SIZE} -l ${mode} -o "${output}" "${SRCFILE}" component
+    RESULT_VARIABLE status
+    OUTPUT_VARIABLE render_log
+    ERROR_VARIABLE render_log
+  )
+  if(status OR NOT EXISTS "${expected}")
+    message(FATAL_ERROR "rtxray output naming failed for ${output}:\n${render_log}")
+  endif()
+  if(NOT expected STREQUAL output AND EXISTS "${output}")
+    message(FATAL_ERROR "rtxray retained an image suffix for floating-point data")
+  endif()
+  file(READ "${expected}" data HEX)
+  set(${result} "${data}" PARENT_SCOPE)
+  file(REMOVE "${expected}")
+endfunction()
+
+# Compare native floating-point records with an explicit .los control;
+# the naming test does not assume a byte order or double representation.
+render_xray("${TEST_DIR}/reference.los" 1 "${TEST_DIR}/reference.los" reference)
+string(LENGTH "${reference}" reference_length)
+math(EXPR remainder "${reference_length} % (2 * ${IMAGE_SIZE} * ${IMAGE_SIZE})")
+if(NOT reference_length OR remainder)
+  message(FATAL_ERROR "rtxray did not produce complete floating-point records")
+endif()
+
+foreach(extension pix png PNG bw tif bmp jpg ppm ras)
+  set(OUTPUT "${TEST_DIR}/floating.${extension}")
+  render_xray("${OUTPUT}" 1 "${OUTPUT}.los" data)
+  if(NOT data STREQUAL reference)
+    message(FATAL_ERROR "Image suffix ${extension} changed floating-point output")
+  endif()
+endforeach()
+
+render_xray("${TEST_DIR}/unassociated" 1 "${TEST_DIR}/unassociated" data)
+if(NOT data STREQUAL reference)
+  message(FATAL_ERROR "Unassociated output name changed floating-point data")
+endif()
+
+# The specialized grayscale renderer writes raw BW, independently of its
+# filename. It does not advertise an image encoder through these suffixes.
+render_xray("${TEST_DIR}/grayscale.bw" 0 "${TEST_DIR}/grayscale.bw" grayscale)
+render_xray("${TEST_DIR}/grayscale.png" 0 "${TEST_DIR}/grayscale.png" named_png)
+string(LENGTH "${grayscale}" grayscale_length)
+math(EXPR expected_length "2 * ${IMAGE_SIZE} * ${IMAGE_SIZE}")
+if(NOT grayscale_length EQUAL expected_length OR NOT grayscale STREQUAL named_png)
+  message(FATAL_ERROR "rtxray grayscale output is not the declared raw BW layout")
+endif()

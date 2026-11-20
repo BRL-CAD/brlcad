@@ -158,7 +158,6 @@
 #include "optical/defines.h"
 #include "icv.h"		/* image save/convert */
 #include "bu/file.h"	/* bu_file_delete */
-#include "bu/mime.h"	/* BU_MIME_IMAGE_AUTO */
 #include "bu/str.h"	/* BU_STR_EQUIV */
 
 #include "brlcad_ident.h"
@@ -1276,9 +1275,9 @@ art_save_image(asr::Project& project, const char* filename)
     bu_vls_sprintf(&tmpname, "%s.tmp.png", filename);
     project.get_frame()->write_main_image(bu_vls_cstr(&tmpname));
 
-    icv_image_t* img = icv_read(bu_vls_cstr(&tmpname), BU_MIME_IMAGE_AUTO, 0, 0);
+    icv_image_t* img = icv_read_with_context(NULL, bu_vls_cstr(&tmpname), NULL, NULL, 0, 0, NULL);
     if (img) {
-	if (icv_write(img, filename, BU_MIME_IMAGE_AUTO) != 0)
+	if (icv_write_with_context(NULL, img, filename, NULL, NULL, NULL) != 0)
 	    bu_log("art: warning: could not write '%s'; PNG left at '%s'\n",
 		   filename, bu_vls_cstr(&tmpname));
 	else

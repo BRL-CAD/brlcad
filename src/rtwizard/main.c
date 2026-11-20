@@ -51,6 +51,7 @@ __declspec(dllimport) int __stdcall SetHandleInformation(void *, unsigned long, 
 #include "bu/opt.h"
 #include "bu/str.h"
 #include "bv/vlist.h"
+#include "dm.h"
 #include "icv.h"
 #include "icv/anim.h"
 #include "pkg.h"
@@ -701,37 +702,18 @@ void print_rtwizard_state(struct rtwizard_settings *s) {
 }
 
 
-static icv_anim_format_t rtwizard_anim_format(const char *path);
-
-
-int rtwizard_imgformat_supported(int fmt) {
-    if (fmt == BU_MIME_IMAGE_DPIX)
-	return 1;
-    if (fmt == BU_MIME_IMAGE_PIX)
-	return 1;
-    if (fmt == BU_MIME_IMAGE_PNG)
-	return 1;
-    if (fmt == BU_MIME_IMAGE_PPM)
-	return 1;
-    if (fmt == BU_MIME_IMAGE_BW)
-	return 1;
-    return 0;
-}
-
-
 static int
 rtwizard_anim_path_supported(const char *path)
 {
-    return (rtwizard_anim_format(path) != ICV_ANIM_UNKNOWN);
+    return icv_resolve_variant(NULL, ICV_CODEC_WRITE_SEQUENCE, path, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 }
 
 
 static int
 rtwizard_anim_only_path(const char *path)
 {
-    const char *ext = strrchr(path, '.');
-    return (ext && (BU_STR_EQUIV(ext, ".apng") || BU_STR_EQUIV(ext, ".avi") ||
-	BU_STR_EQUIV(ext, ".mjpg")));
+    return rtwizard_anim_path_supported(path) &&
+	!icv_resolve_variant(NULL, ICV_CODEC_WRITE, path, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 }
 
 
@@ -779,30 +761,127 @@ rtwizard_set_state_ptbl(Tcl_Interp *interp, const char *key, struct bu_ptbl *ptb
 }
 
 
-static icv_anim_format_t
-rtwizard_anim_format(const char *path)
+static void
+rtwizard_image_context_delete(ClientData client_data, Tcl_Interp *UNUSED(interp))
 {
-    const char *ext = strrchr(path, '.');
-
-    if (!ext)
-	return ICV_ANIM_UNKNOWN;
-    if (BU_STR_EQUIV(ext, ".apng") || BU_STR_EQUIV(ext, ".png"))
-	return ICV_ANIM_APNG;
-    if (BU_STR_EQUIV(ext, ".avi") || BU_STR_EQUIV(ext, ".mjpg"))
-	return ICV_ANIM_MJPG;
-
-    return ICV_ANIM_UNKNOWN;
+    icv_context_destroy((struct icv_context *)client_data);
 }
 
 
-/* Tcl bridge used by the orchestration script after all PIX frames have
- * been rendered.  Keeping encoding here lets rtwizard use its linked libicv
- * directly rather than repeatedly invoking the icv command line tool. */
 static int
-rtwizard_anim_write_cmd(ClientData UNUSED(client_data), Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+rtwizard_image_extensions_cmd(ClientData client_data, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
 {
+    struct icv_context *codecs = (struct icv_context *)client_data;
+    struct bu_mime_info *types = NULL;
+    size_t count = 0;
+    Tcl_Obj *extensions;
+    struct bu_vls filename = BU_VLS_INIT_ZERO;
+
+    if (objc != 1) {
+	Tcl_WrongNumArgs(interp, 1, objv, NULL);
+	return TCL_ERROR;
+    }
+    if (!bu_mime_list(icv_mime_registry(codecs), NULL, &types, &count)) {
+	Tcl_SetObjResult(interp, Tcl_NewStringObj("cannot list image types", -1));
+	return TCL_ERROR;
+    }
+
+    extensions = Tcl_NewListObj(0, NULL);
+    Tcl_IncrRefCount(extensions);
+    for (size_t i = 0; i < count; ++i) {
+	if (!icv_supports(codecs, types[i].name, ICV_CODEC_WRITE) &&
+	    !icv_supports(codecs, types[i].name, ICV_CODEC_WRITE_SEQUENCE))
+	    continue;
+	for (size_t j = 0; j < types[i].extension_count; ++j) {
+	    bu_vls_sprintf(&filename, "rtwizard.%s", types[i].extensions[j]);
+	    /* A dialog suffix must also resolve without an explicit type. */
+	    if (icv_resolve_variant(codecs, ICV_CODEC_WRITE, bu_vls_cstr(&filename), NULL, NULL, NULL, NULL, NULL, NULL, NULL) ||
+		icv_resolve_variant(codecs, ICV_CODEC_WRITE_SEQUENCE, bu_vls_cstr(&filename), NULL, NULL, NULL, NULL, NULL, NULL, NULL))
+		Tcl_ListObjAppendElement(interp, extensions, Tcl_ObjPrintf(".%s", types[i].extensions[j]));
+	}
+    }
+    bu_vls_free(&filename);
+    bu_mime_list_free(types, count);
+    Tcl_SetObjResult(interp, extensions);
+    Tcl_DecrRefCount(extensions);
+    return TCL_OK;
+}
+
+
+static int
+rtwizard_image_write_cmd(ClientData client_data, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+{
+    struct icv_context *codecs = (struct icv_context *)client_data;
+    struct fb *framebuffer;
+    icv_image_t *image;
+    RGBpixel *scanline;
+    const char *output;
+    int width, height;
+    int captured = 1;
+    int status;
+    struct bu_vls messages = BU_VLS_INIT_ZERO;
+
+    if (objc != 5) {
+	Tcl_WrongNumArgs(interp, 1, objv, "output width height framebuffer");
+	return TCL_ERROR;
+    }
+    output = Tcl_GetString(objv[1]);
+    if (Tcl_GetIntFromObj(interp, objv[2], &width) != TCL_OK ||
+	Tcl_GetIntFromObj(interp, objv[3], &height) != TCL_OK)
+	return TCL_ERROR;
+    if (width <= 0 || height <= 0) {
+	Tcl_SetObjResult(interp, Tcl_NewStringObj("image width and height must be positive", -1));
+	return TCL_ERROR;
+    }
+    if (!icv_resolve_variant(codecs, ICV_CODEC_WRITE, output, NULL, NULL, NULL, NULL, NULL, NULL, NULL)) {
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf("no registered image writer for '%s'", output));
+	return TCL_ERROR;
+    }
+
+    framebuffer = fb_open(Tcl_GetString(objv[4]), width, height);
+    if (!framebuffer) {
+	Tcl_SetObjResult(interp, Tcl_NewStringObj("cannot open image framebuffer", -1));
+	return TCL_ERROR;
+    }
+    image = icv_create((size_t)width, (size_t)height, ICV_COLOR_SPACE_RGB);
+    if (!image) {
+	(void)fb_close(framebuffer);
+	Tcl_SetObjResult(interp, Tcl_NewStringObj("cannot allocate output image", -1));
+	return TCL_ERROR;
+    }
+    scanline = (RGBpixel *)bu_calloc((size_t)width, sizeof(RGBpixel), "image scanline");
+    for (int y = 0; y < height; ++y) {
+	if (fb_read(framebuffer, 0, y, (unsigned char *)scanline, (size_t)width) != width ||
+	    icv_writeline(image, y, (unsigned char *)scanline, ICV_DATA_UCHAR) != 0) {
+	    captured = 0;
+	    break;
+	}
+    }
+    bu_free(scanline, "image scanline");
+    if (fb_close(framebuffer) != 0)
+	captured = 0;
+    if (!captured) {
+	icv_destroy(image);
+	Tcl_SetObjResult(interp, Tcl_NewStringObj("cannot capture image framebuffer", -1));
+	return TCL_ERROR;
+    }
+
+    status = icv_write_with_context(codecs, image, output, NULL, NULL, &messages);
+    icv_destroy(image);
+    if (status != 0)
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf("cannot write image '%s': %s", output, bu_vls_cstr(&messages)));
+    bu_vls_free(&messages);
+    return status == 0 ? TCL_OK : TCL_ERROR;
+}
+
+
+/* Encoding shares the interpreter's codec context with still-image output
+ * and save-dialog discovery, including any runtime registrations. */
+static int
+rtwizard_anim_write_cmd(ClientData client_data, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+{
+    struct icv_context *codecs = (struct icv_context *)client_data;
     icv_anim_t *anim = NULL;
-    icv_anim_format_t fmt;
     const char *output;
     int width, height, fps;
     int i;
@@ -824,14 +903,13 @@ rtwizard_anim_write_cmd(ClientData UNUSED(client_data), Tcl_Interp *interp, int 
 	return TCL_ERROR;
     }
 
-    fmt = rtwizard_anim_format(output);
-    if (fmt == ICV_ANIM_UNKNOWN) {
+    if (!icv_resolve_variant(codecs, ICV_CODEC_WRITE_SEQUENCE, output, NULL, NULL, NULL, NULL, NULL, NULL, NULL)) {
 	Tcl_SetObjResult(interp, Tcl_NewStringObj(
-		"animation output must use .apng, .png, .avi, or .mjpg", -1));
+		"no registered animation writer for output", -1));
 	return TCL_ERROR;
     }
 
-    anim = icv_anim_create(fmt, (uint32_t)width, (uint32_t)height, fps);
+    anim = icv_anim_create(ICV_ANIM_UNKNOWN, (uint32_t)width, (uint32_t)height, fps);
     if (!anim) {
 	Tcl_SetObjResult(interp, Tcl_NewStringObj("failed to create libicv animation", -1));
 	return TCL_ERROR;
@@ -839,7 +917,7 @@ rtwizard_anim_write_cmd(ClientData UNUSED(client_data), Tcl_Interp *interp, int 
 
     for (i = 5; i < objc; i++) {
 	const char *frame = Tcl_GetString(objv[i]);
-	icv_image_t *img = icv_read(frame, BU_MIME_IMAGE_PIX, (size_t)width, (size_t)height);
+	icv_image_t *img = icv_read_with_context(codecs, frame, "image/vnd.brlcad.pix", NULL, (size_t)width, (size_t)height, NULL);
 	if (!img || icv_anim_add_frame(anim, img) != 0) {
 	    if (img)
 		icv_destroy(img);
@@ -850,7 +928,7 @@ rtwizard_anim_write_cmd(ClientData UNUSED(client_data), Tcl_Interp *interp, int 
 	icv_destroy(img);
     }
 
-    if (icv_anim_write(anim, output) != 0) {
+    if (icv_anim_write_variant(codecs, anim, output, NULL, NULL, NULL, NULL) != 0) {
 	icv_anim_destroy(anim);
 	(void)bu_file_delete(output);
 	Tcl_SetObjResult(interp, Tcl_ObjPrintf("failed to write animation '%s'", output));
@@ -1544,15 +1622,18 @@ main(int argc, char **argv)
 	bu_exit(EXIT_FAILURE, "ERROR: Specified %s as .g file, but file does not exist.\n", bu_vls_addr(s->input_file));
     }
 
+    struct icv_context *image_context = icv_context_create(NULL);
     /* Handle any leftover arguments per established conventions */
     for (i = 0; i < uac; i++) {
 	struct bu_vls c = BU_VLS_INIT_ZERO;
 	/* First, see if we have an input .g file */
 	if (bu_vls_strlen(s->input_file) == 0) {
 	    if (bu_path_component(&c, argv[i], BU_PATH_EXT)) {
-		if (bu_file_mime(bu_vls_addr(&c), BU_MIME_MODEL) == BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY) {
+		if (bu_mime_resolve(icv_mime_registry(image_context), bu_vls_cstr(&c), &c) == BU_MIME_MATCH &&
+		    BU_STR_EQUAL(bu_vls_cstr(&c), "model/vnd.brlcad")) {
 		    if (bu_file_exists(argv[i], NULL)) {
 			bu_vls_sprintf(s->input_file, "%s", argv[i]);
+			bu_vls_free(&c);
 			/* This was the .g name - don't add it to the color list */
 			continue;
 		    } else {
@@ -1565,9 +1646,10 @@ main(int argc, char **argv)
 	/* Next, see if we have an image specified as an output destination */
 	if (bu_vls_strlen(s->output_file) == 0 && bu_vls_strlen(s->fb_dev) == 0) {
 	    if (bu_path_component(&c, argv[i], BU_PATH_EXT)) {
-		if (rtwizard_imgformat_supported(bu_file_mime(bu_vls_addr(&c), BU_MIME_IMAGE)) ||
-		    rtwizard_anim_path_supported(argv[i])) {
+		if (icv_resolve_variant(image_context, ICV_CODEC_WRITE, argv[i], NULL, NULL, NULL, NULL, NULL, NULL, NULL) ||
+		    icv_resolve_variant(image_context, ICV_CODEC_WRITE_SEQUENCE, argv[i], NULL, NULL, NULL, NULL, NULL, NULL, NULL)) {
 		    bu_vls_sprintf(s->output_file, "%s", argv[i]);
+		    bu_vls_free(&c);
 		    /* This looks like the output image name - don't add it to the color list */
 		    continue;
 		}
@@ -1575,7 +1657,9 @@ main(int argc, char **argv)
 	}
 	/* If it's none of the above, assume a color object in the .g file */
 	bu_ptbl_ins(s->color, (long *)bu_strdup(argv[i]));
+	bu_vls_free(&c);
     }
+    icv_context_destroy(image_context);
 
     if (rtwizard_view_opts_check(&info_msg, s)) {
 	bu_log("%s\n", bu_vls_addr(&info_msg));
@@ -1594,10 +1678,10 @@ main(int argc, char **argv)
 	bu_exit(EXIT_FAILURE, "ERROR: a file output is required for a cutting-plane animation.\n");
     if (s->cut_steps && bu_vls_strlen(s->output_file) &&
 	!rtwizard_anim_path_supported(bu_vls_addr(s->output_file)))
-	bu_exit(EXIT_FAILURE, "ERROR: animation output must use .apng, .png, .avi, or .mjpg.\n");
+	bu_exit(EXIT_FAILURE, "ERROR: no animation writer is available for the output filename.\n");
     if (!s->cut_steps && !s->use_gui && bu_vls_strlen(s->output_file) &&
 	rtwizard_anim_only_path(bu_vls_addr(s->output_file)))
-	bu_exit(EXIT_FAILURE, "ERROR: .apng, .avi, and .mjpg outputs require --cut-steps.\n");
+	bu_exit(EXIT_FAILURE, "ERROR: sequence-only output formats require --cut-steps.\n");
 
     if (!s->use_gui && !rtwizard_info_sufficient(&info_msg, s, type)) {
 	if ((!s->use_gui) && (!s->no_gui)) {
@@ -1622,6 +1706,7 @@ main(int argc, char **argv)
 	const char *result = NULL;
 	Tcl_DString temp;
 	Tcl_Interp *interp = Tcl_CreateInterp();
+	struct icv_context *image_codecs = icv_context_create(NULL);
 
 
 	/* The subsequent Tcl scripts will take of Tk, so at this
@@ -1631,8 +1716,14 @@ main(int argc, char **argv)
 	    bu_log("tclcad init failure:\n%s\n", bu_vls_addr(&tlog));
 	}
 	bu_vls_free(&tlog);
-	(void)Tcl_CreateObjCommand(interp, "rtwizard_anim_write",
-		rtwizard_anim_write_cmd, NULL, NULL);
+	if (!image_codecs) {
+	    bu_exit(EXIT_FAILURE, "ERROR: cannot initialize image codecs.\n");
+	}
+	Tcl_SetAssocData(interp, "rtwizard.image_codecs", rtwizard_image_context_delete, image_codecs);
+	if (!Tcl_CreateObjCommand(interp, "rtwizard_anim_write", rtwizard_anim_write_cmd, image_codecs, NULL) ||
+	    !Tcl_CreateObjCommand(interp, "rtwizard_image_write", rtwizard_image_write_cmd, image_codecs, NULL) ||
+	    !Tcl_CreateObjCommand(interp, "rtwizard_image_extensions", rtwizard_image_extensions_cmd, image_codecs, NULL))
+	    bu_exit(EXIT_FAILURE, "ERROR: cannot initialize image commands.\n");
 	(void)Tcl_CreateObjCommand(interp, "rtwizard_cut_bounds",
 		rtwizard_cut_bounds_cmd, NULL, NULL);
 

@@ -126,6 +126,17 @@ set(TARGET_NAME png_bw)
 brlcad_regression_test(regress-png_bw "pixcmp;icv" TEST_SCRIPT "${TEXPORT}" EXEC icv)
 distclean(${LOG_FILE} ${TARGET_IMAGE})
 
+if(BUILD_TESTING AND TARGET adrt AND TARGET icv AND TARGET m35.g)
+  set(INPUT_FILE "${DATA_DIR}/db/m35.g")
+  brlcad_regression_test(
+    regress-adrt_mime_output
+    "adrt;icv;m35.g"
+    TEST_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-adrt-mime.cmake.in"
+    EXEC adrt
+  )
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/adrt-mime")
+endif()
+
 cmakefiles(
   CMakeLists.txt
   m35.png
@@ -136,6 +147,7 @@ cmakefiles(
   m35.bw.tbz2
   regress-icv_export.cmake.in
   regress-icv_import.cmake.in
+  regress-adrt-mime.cmake.in
   teapot.rle
   teapot.ppm
 )

@@ -43,9 +43,8 @@
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/mime.h"
+#include "bu/mime_runtime.h"
 #include "bu/parallel.h"
-#include "bu/path.h"
 #include "bu/str.h"
 #include "bu/datetime.h"
 #include "bu/vls.h"
@@ -81,6 +80,32 @@ usage(const char *name)
 }
 
 
+static int
+adrt_write_image(icv_image_t *image, const char *filename)
+{
+    struct icv_context *context = icv_context_create(NULL);
+    struct bu_mime_result *formats = NULL;
+    struct bu_vls messages = BU_VLS_INIT_ZERO;
+    enum bu_mime_status identified = context ?
+	bu_mime_detect(icv_mime_registry(context), filename, NULL, 0, 0, &formats) : BU_MIME_ERROR;
+    int status = BRLCAD_ERROR;
+
+    /* Preserve PNG for unassociated names. Known suffixes require an
+     * available still-image writer, including ambiguous associations. */
+    if (identified != BU_MIME_ERROR)
+	status = icv_write_with_context(context, image, filename,
+	    identified == BU_MIME_UNKNOWN_RESULT ? "image/png" : NULL, NULL, &messages);
+    else
+	bu_vls_strcpy(&messages, "Cannot resolve image output format\n");
+    if (status)
+	bu_log("%s", bu_vls_cstr(&messages));
+    bu_vls_free(&messages);
+    bu_mime_result_free(formats);
+    icv_context_destroy(context);
+    return status;
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -108,7 +133,6 @@ main(int argc, char **argv)
     int64_t t_start, t_end;
     size_t i, j;
     uint8_t *px;
-    bu_mime_image_t fmt;
 
     bu_setprogname(argv[0]);
 
@@ -271,18 +295,7 @@ main(int argc, char **argv)
 	    img->data[dst + i] = px[src + i] / 255.0;
     }
 
-    fmt = BU_MIME_IMAGE_PNG;
-    {
-	struct bu_vls ext = BU_VLS_INIT_ZERO;
-	if (bu_path_component(&ext, output, BU_PATH_EXT)) {
-	    int t = bu_file_mime(bu_vls_cstr(&ext), BU_MIME_IMAGE);
-	    if (t >= 0)
-		fmt = (bu_mime_image_t)t;
-	}
-	bu_vls_free(&ext);
-    }
-
-    if (icv_write(img, output, fmt) != 0) {
+    if (adrt_write_image(img, output) != 0) {
 	bu_log("ERROR: failed to write %s\n", output);
 	icv_destroy(img);
 	return EXIT_FAILURE;

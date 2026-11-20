@@ -1,0 +1,162 @@
+# Values set at CMake configure time
+set(INPUTFILE "@INPUT_FILE@")
+set(BIN_DIR "@BIN_DIR@")
+set(CALLER "@MIME_CALLER@")
+set(TEST_DIR "@CMAKE_CURRENT_BINARY_DIR@/mime-${CALLER}-output")
+
+string(REPLACE "\\" "" RENDER_EXEC "${EXEC}")
+get_filename_component(BDIR "${RENDER_EXEC}" DIRECTORY)
+get_filename_component(EXE_SUFFIX "${RENDER_EXEC}" EXT)
+set(ICV_EXEC "${BDIR}/icv${EXE_SUFFIX}")
+set(PIXCMP_EXEC "${BDIR}/pixcmp${EXE_SUFFIX}")
+string(REGEX REPLACE "${BIN_DIR}$" "" RDIR "${BDIR}")
+set(SRCFILE "${RDIR}/${INPUTFILE}")
+file(MAKE_DIRECTORY "${TEST_DIR}")
+
+if(CALLER STREQUAL "rt")
+  set(WIDTH 8)
+  set(HEIGHT 8)
+else()
+  set(WIDTH 32)
+  set(HEIGHT 16)
+
+  # Exercise the same Tcl commands used by the save dialog and GUI writers
+  # without requiring a display or changing the user's startup file.
+  set(RC "${TEST_DIR}/output.rc")
+  file(WRITE "${RC}" [=[
+set extensions [rtwizard_image_extensions]
+foreach suffix {.png .jpg .pix .apng .avi} {
+    if {[lsearch -exact $extensions $suffix] < 0} {
+        error "Missing writable suffix $suffix"
+    }
+}
+foreach suffix {unsupported avi} {
+    set unsupported [file join $::env(RTWIZARD_MIME_DIR) retained.$suffix]
+    set channel [open $unsupported w]
+    puts -nonewline $channel "retained destination"
+    close $channel
+    if {![catch {rtwizard_image_write $unsupported 32 16 /dev/null} message] ||
+        ![string match "no registered image writer*" $message]} {
+        error "Unsupported still output did not fail codec preflight: $message"
+    }
+    set channel [open $unsupported r]
+    set retained [read $channel]
+    close $channel
+    if {$retained ne "retained destination"} {
+        error "Unsupported output changed an existing destination"
+    }
+    file delete $unsupported
+}
+set channel [open [file join $::env(RTWIZARD_MIME_DIR) checked] w]
+puts $channel "checked"
+close $channel
+  ]=])
+endif()
+
+foreach(extension pix PNG jpg)
+  set(OUTPUT "${TEST_DIR}/render.${extension}")
+  file(REMOVE "${OUTPUT}" "${TEST_DIR}/checked")
+  if(CALLER STREQUAL "rt")
+    if(extension STREQUAL "PNG")
+      file(WRITE "${OUTPUT}" "prior encoded destination")
+    endif()
+    execute_process(
+      COMMAND "${RENDER_EXEC}" -B -w ${WIDTH} -n ${HEIGHT} -P 1 -o "${OUTPUT}" "${SRCFILE}" component
+      RESULT_VARIABLE render_result
+      OUTPUT_VARIABLE render_log
+      ERROR_VARIABLE render_log
+    )
+  else()
+    execute_process(
+      COMMAND "${CMAKE_COMMAND}" -E env "RTWIZARD_RCFILE=${RC}" "RTWIZARD_MIME_DIR=${TEST_DIR}"
+              "${RENDER_EXEC}" --no-gui -i "${SRCFILE}" -o "${OUTPUT}"
+              -c component -w ${WIDTH} -n ${HEIGHT} --benchmark
+      RESULT_VARIABLE render_result
+      OUTPUT_VARIABLE render_log
+      ERROR_VARIABLE render_log
+    )
+    if(NOT EXISTS "${TEST_DIR}/checked")
+      message(FATAL_ERROR "Tcl output discovery or preflight checks failed:\n${render_log}")
+    endif()
+  endif()
+  if(render_result OR NOT EXISTS "${OUTPUT}")
+    message(FATAL_ERROR "${CALLER} ${extension} output failed (${render_result}):\n${render_log}")
+  endif()
+endforeach()
+
+file(READ "${TEST_DIR}/render.PNG" png_header LIMIT 8 HEX)
+file(READ "${TEST_DIR}/render.jpg" jpeg_header LIMIT 2 HEX)
+file(SIZE "${TEST_DIR}/render.pix" pix_size)
+math(EXPR expected_pix_size "${WIDTH} * ${HEIGHT} * 3")
+if(NOT png_header STREQUAL "89504e470d0a1a0a" OR NOT jpeg_header STREQUAL "ffd8" OR NOT pix_size EQUAL expected_pix_size)
+  message(FATAL_ERROR "Output did not match the selected image encoding or dimensions")
+endif()
+
+execute_process(
+  COMMAND "${ICV_EXEC}" "${TEST_DIR}/render.PNG" "${TEST_DIR}/decoded.pix"
+  RESULT_VARIABLE decode_result
+  OUTPUT_VARIABLE decode_log
+  ERROR_VARIABLE decode_log
+)
+execute_process(
+  COMMAND "${PIXCMP_EXEC}" "${TEST_DIR}/render.pix" "${TEST_DIR}/decoded.pix"
+  RESULT_VARIABLE compare_result
+  OUTPUT_VARIABLE compare_log
+  ERROR_VARIABLE compare_log
+)
+if(decode_result OR compare_result)
+  message(FATAL_ERROR "PNG output changed rendered pixels:\n${decode_log}\n${compare_log}")
+endif()
+
+execute_process(
+  COMMAND "${ICV_EXEC}" "${TEST_DIR}/render.jpg" "${TEST_DIR}/jpeg.pix"
+  RESULT_VARIABLE jpeg_decode_result
+  OUTPUT_VARIABLE jpeg_decode_log
+  ERROR_VARIABLE jpeg_decode_log
+)
+if(jpeg_decode_result OR NOT EXISTS "${TEST_DIR}/jpeg.pix")
+  message(FATAL_ERROR "JPEG output could not be decoded:\n${jpeg_decode_log}")
+endif()
+file(SIZE "${TEST_DIR}/jpeg.pix" jpeg_pix_size)
+if(NOT jpeg_pix_size EQUAL expected_pix_size)
+  message(FATAL_ERROR "JPEG output did not preserve the rendered dimensions")
+endif()
+
+if(CALLER STREQUAL "rt")
+  set(DEFAULT_OUTPUT "${TEST_DIR}/without-suffix")
+  file(REMOVE "${DEFAULT_OUTPUT}")
+  execute_process(
+    COMMAND "${RENDER_EXEC}" -B -w ${WIDTH} -n ${HEIGHT} -P 1 -o "${DEFAULT_OUTPUT}" "${SRCFILE}" component
+    RESULT_VARIABLE default_result
+    OUTPUT_VARIABLE default_log
+    ERROR_VARIABLE default_log
+  )
+  if(default_result OR NOT EXISTS "${DEFAULT_OUTPUT}")
+    message(FATAL_ERROR "rt default PIX output failed:\n${default_log}")
+  endif()
+  file(SIZE "${DEFAULT_OUTPUT}" default_size)
+  if(NOT default_size EQUAL expected_pix_size)
+    message(FATAL_ERROR "rt default output was not raw PIX")
+  endif()
+  file(REMOVE "${DEFAULT_OUTPUT}")
+
+  set(UNSUPPORTED_OUTPUT "${TEST_DIR}/retained.apng")
+  file(WRITE "${UNSUPPORTED_OUTPUT}" "retained destination")
+  execute_process(
+    COMMAND "${RENDER_EXEC}" -B -w ${WIDTH} -n ${HEIGHT} -P 1 -o "${UNSUPPORTED_OUTPUT}" "${SRCFILE}" component
+    RESULT_VARIABLE unsupported_result
+    OUTPUT_VARIABLE unsupported_log
+    ERROR_VARIABLE unsupported_log
+  )
+  file(READ "${UNSUPPORTED_OUTPUT}" retained)
+  if(NOT unsupported_result OR NOT retained STREQUAL "retained destination")
+    message(FATAL_ERROR "rt failed to reject unsupported still output:\n${unsupported_log}")
+  endif()
+  file(REMOVE "${UNSUPPORTED_OUTPUT}")
+endif()
+
+if(DEFINED RC)
+  file(REMOVE "${RC}" "${TEST_DIR}/checked")
+endif()
+file(REMOVE "${TEST_DIR}/render.pix" "${TEST_DIR}/render.PNG"
+     "${TEST_DIR}/render.jpg" "${TEST_DIR}/decoded.pix" "${TEST_DIR}/jpeg.pix")

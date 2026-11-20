@@ -1,0 +1,96 @@
+set(INPUTFILE "@INPUT_FILE@")
+set(BIN_DIR "@BIN_DIR@")
+set(TEST_DIR "@CMAKE_CURRENT_BINARY_DIR@/adrt-mime")
+set(IMAGE_SIZE 8)
+set(RGB_CHANNELS 3)
+
+string(REPLACE "\\" "" ADRT "${EXEC}")
+get_filename_component(BDIR "${ADRT}" DIRECTORY)
+get_filename_component(EXE_SUFFIX "${ADRT}" EXT)
+set(ICV "${BDIR}/icv${EXE_SUFFIX}")
+string(REGEX REPLACE "${BIN_DIR}$" "" RDIR "${BDIR}")
+set(SRCFILE "${RDIR}/${INPUTFILE}")
+file(MAKE_DIRECTORY "${TEST_DIR}/plain" "${TEST_DIR}/release.v1")
+
+function(render output success)
+  # One existing prism exercises output routing without the cost of
+  # tessellating the complete truck or a stochastic path-tracing render.
+  execute_process(
+    COMMAND "${ADRT}" -s ${IMAGE_SIZE} -P 1 -m flat -o "${output}" "${SRCFILE}" s1
+    WORKING_DIRECTORY "${TEST_DIR}"
+    RESULT_VARIABLE status
+    OUTPUT_VARIABLE output_log
+    ERROR_VARIABLE output_log
+  )
+  if(success)
+    set(expected_status 0)
+  else()
+    set(expected_status 1)
+  endif()
+  if(NOT status EQUAL expected_status OR
+      (NOT success AND NOT output_log MATCHES "ERROR: failed to write"))
+    message(FATAL_ERROR "ADRT output selection failed for ${output}:\n${output_log}")
+  endif()
+endfunction()
+
+function(png_pixels output result)
+  file(READ "${output}" signature LIMIT 8 HEX)
+  if(NOT signature STREQUAL "89504e470d0a1a0a")
+    message(FATAL_ERROR "ADRT did not encode PNG for ${output}")
+  endif()
+  execute_process(
+    COMMAND "${ICV}" --input-format image/png --output-format image/vnd.brlcad.pix
+      "${output}" "${TEST_DIR}/decoded.pix"
+    RESULT_VARIABLE status
+    OUTPUT_VARIABLE conversion_log
+    ERROR_VARIABLE conversion_log
+  )
+  if(NOT status EQUAL 0)
+    message(FATAL_ERROR "Cannot decode ADRT PNG ${output}:\n${conversion_log}")
+  endif()
+  file(READ "${TEST_DIR}/decoded.pix" pixels HEX)
+  string(LENGTH "${pixels}" length)
+  math(EXPR expected_length "2 * ${IMAGE_SIZE} * ${IMAGE_SIZE} * ${RGB_CHANNELS}")
+  if(NOT length EQUAL expected_length)
+    message(FATAL_ERROR "ADRT PNG dimensions or channel layout changed")
+  endif()
+  set(${result} "${pixels}" PARENT_SCOPE)
+endfunction()
+
+render(control.png TRUE)
+png_pixels("${TEST_DIR}/control.png" reference)
+foreach(name plain/frame release.v1/frame "${TEST_DIR}/absolute-frame"
+    output.unlisted-image-format .preview mixed.PNG)
+  render("${name}" TRUE)
+  if(IS_ABSOLUTE "${name}")
+    set(output "${name}")
+  else()
+    set(output "${TEST_DIR}/${name}")
+  endif()
+  png_pixels("${output}" pixels)
+  if(NOT pixels STREQUAL reference)
+    message(FATAL_ERROR "ADRT filename changed rendered pixels: ${name}")
+  endif()
+endforeach()
+
+render(render.PIX TRUE)
+file(READ "${TEST_DIR}/render.PIX" pixels HEX)
+if(NOT pixels STREQUAL reference)
+  message(FATAL_ERROR "ADRT did not select the raw PIX writer")
+endif()
+
+foreach(extension tif avi)
+  set(output "${TEST_DIR}/unavailable.${extension}")
+  file(REMOVE "${output}")
+  render("${output}" FALSE)
+  if(EXISTS "${output}")
+    message(FATAL_ERROR "ADRT created output without an available still-image writer")
+  endif()
+  set(marker "Preserve the existing destination")
+  file(WRITE "${output}" "${marker}")
+  render("${output}" FALSE)
+  file(READ "${output}" retained)
+  if(NOT retained STREQUAL marker)
+    message(FATAL_ERROR "Rejected ADRT output changed the destination")
+  endif()
+endforeach()

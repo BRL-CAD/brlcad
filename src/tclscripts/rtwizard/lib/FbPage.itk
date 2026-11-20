@@ -666,7 +666,7 @@ namespace eval RtWizard {
     #
     ::itcl::body FbPage::selectFbFile { } {
 	set of [tk_getSaveFile -initialfile rtwizard.png \
-	    -filetypes {{"Images and animations" {.png .apng .avi .mjpg .pix}} {"All files" *}}]
+	    -filetypes [list [list "Images and animations" [lsort -unique [rtwizard_image_extensions]]] [list "All files" *]]]
 	set ::RtWizard::wizard_state(output_filename) $of
     }
 

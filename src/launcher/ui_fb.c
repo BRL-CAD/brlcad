@@ -114,7 +114,11 @@ blit_icv(struct fb *fbp, icv_image_t *img, int sx, int sy)
 
     if (!img)
 	return;
-    rgb = icv_data2uchar(img);
+    icv_image_t *display = icv_flatten(img, NULL);
+    if (!display)
+	return;
+    rgb = icv_data2uchar(display);
+    icv_destroy(display);
     if (!rgb)
 	return;
     iw = (int)img->width;
@@ -142,12 +146,12 @@ load_splash(int maxw, int maxh)
 
     bu_dir(path, sizeof(path), BU_DIR_DATA, "launcher", "splash.png", NULL);
     if (bu_file_exists(path, NULL))
-	img = icv_read(path, BU_MIME_IMAGE_AUTO, 0, 0);
+	img = icv_read_with_context(NULL, path, NULL, NULL, 0, 0, NULL);
 
     if (!img) {
 	bu_dir(path, sizeof(path), BU_DIR_DATA, "images", "brlLogo-nobg.png", NULL);
 	if (bu_file_exists(path, NULL))
-	    img = icv_read(path, BU_MIME_IMAGE_AUTO, 0, 0);
+	    img = icv_read_with_context(NULL, path, NULL, NULL, 0, 0, NULL);
     }
 
     if (!img)

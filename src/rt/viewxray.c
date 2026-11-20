@@ -35,10 +35,12 @@
 #include "common.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "bu/parallel.h"
-#include "bu/mime.h"
-#include "bu/path.h"
+#include "bu/exit.h"
+#include "bu/mime_runtime.h"
+#include "bu/str.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "dm.h"
@@ -90,20 +92,26 @@ view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj),
 
     if (lightmodel == LGT_BW) {
 	scanbuf = (unsigned char *)bu_malloc(width * sizeof(*scanbuf), "scanline buffer");
-    } else {
-	/* XXX - Floating output uses no buffer */
-	/* force change of 'outputfile' to short circuit libicv for LGT_FLOAT outputs, adds '.los' extension */
-	if (outputfile) {
-	    struct bu_vls c = BU_VLS_INIT_ZERO;
-	    char buf[BUFSIZ];
-	    if (bu_path_component(&c, outputfile, BU_PATH_EXT)) {
-		if (bu_file_mime(bu_vls_addr(&c), BU_MIME_IMAGE) != BU_MIME_IMAGE_UNKNOWN) {
-		    bu_strlcpy(buf, outputfile, BUFSIZ);
-		    bu_strlcat(buf, floatfileext, BUFSIZ);
-		    outputfile = floatfilename = bu_strdup(buf);
-		}
-	    }
-	    bu_vls_free(&c);
+    } else if (outputfile) {
+	struct bu_mime_registry *registry = bu_mime_registry_create(0);
+	struct bu_mime_result *formats = NULL;
+	int image_name = 0;
+	enum bu_mime_status status = registry ?
+	    bu_mime_detect(registry, outputfile, NULL, 0, 0, &formats) : BU_MIME_ERROR;
+	/* This naming rule classifies image suffixes, independently of codec
+	 * availability or ambiguity between particular image formats. */
+	for (size_t i = 0; formats && i < formats->count; ++i)
+	    if (!bu_strncmp(formats->candidates[i].name, "image/", sizeof("image/") - 1))
+		image_name = 1;
+	bu_mime_result_free(formats);
+	bu_mime_registry_destroy(registry);
+	if (status == BU_MIME_ERROR)
+	    bu_exit(EXIT_FAILURE, "rtxray: cannot classify output filename\n");
+	if (image_name) {
+	    struct bu_vls destination = BU_VLS_INIT_ZERO;
+	    bu_vls_printf(&destination, "%s%s", outputfile, floatfileext);
+	    outputfile = floatfilename = bu_strdup(bu_vls_cstr(&destination));
+	    bu_vls_free(&destination);
 	}
     }
 

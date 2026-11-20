@@ -445,13 +445,9 @@ if {[info exists ::use_gui]} {
       if {[info exists ::RtWizard::wizard_state(cut_steps)] && $::RtWizard::wizard_state(cut_steps) >= 2} {
 	 set output_generated 1
       }
-      if {!$output_generated && [file extension $::RtWizard::wizard_state(output_filename)] == ".png"} {
-	 exec [file join [bu_dir bin] fb-png] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F [rtwiz_fb_target] $::RtWizard::wizard_state(output_filename) 2>@1
-	 set output_generated 1
-      }
       if {!$output_generated} {
-	 exec [file join [bu_dir bin] fb-pix] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F [rtwiz_fb_target] $::RtWizard::wizard_state(output_filename) 2>@1
-	 set output_generated 1
+	 rtwizard_image_write $::RtWizard::wizard_state(output_filename) \
+	     $::RtWizard::wizard_state(width) $::RtWizard::wizard_state(scanlines) [rtwiz_fb_target]
       }
 
    }

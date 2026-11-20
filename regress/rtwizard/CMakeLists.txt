@@ -101,6 +101,22 @@ if(BUILD_TESTING AND TARGET rtwizard)
     EXEC rtwizard
   )
 
+  set(MIME_CALLER "rtwizard")
+  brlcad_regression_test(
+    regress-rtwiz_mime_output
+    "rtwizard;icv;pixcmp;m35.g"
+    TEST_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-rtwiz-mime.cmake.in"
+    EXEC rtwizard
+  )
+  set(MIME_CALLER "rt")
+  brlcad_regression_test(
+    regress-rt_mime_output
+    "rt;icv;pixcmp;m35.g"
+    TEST_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-rtwiz-mime.cmake.in"
+    EXEC rt
+  )
+  unset(MIME_CALLER)
+
   set(INPUT_FILE "${DATA_DIR}/db/moss.g")
   brlcad_regression_test(
     regress-rtwiz_moss_occlusion
@@ -111,6 +127,16 @@ if(BUILD_TESTING AND TARGET rtwizard)
   distclean(${CMAKE_CURRENT_BINARY_DIR}/moss_multi_occlusion.pix ${CMAKE_CURRENT_BINARY_DIR}/moss_multi_occlusion.log)
 
   distclean(${CMAKE_CURRENT_BINARY_DIR}/rtedge.log)
+endif()
+
+if(BUILD_TESTING AND TARGET rtxray)
+  set(INPUT_FILE "${DATA_DIR}/db/m35.g")
+  brlcad_regression_test(
+    regress-rtxray_mime_names
+    "rtxray;m35.g"
+    TEST_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-rtxray-mime.cmake.in"
+    EXEC rtxray
+  )
 endif()
 
 cmakefiles(
@@ -126,6 +152,8 @@ cmakefiles(
   regress-rtwiz.cmake.in
   regress-rtwiz-occlusion.cmake.in
   regress-rtwiz-anim.cmake.in
+  regress-rtwiz-mime.cmake.in
+  regress-rtxray-mime.cmake.in
 )
 
 # Local Variables:
