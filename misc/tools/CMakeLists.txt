@@ -105,6 +105,7 @@ cmakefiles(
   asciiquack/reader.hpp
   asciiquack/substitutors.hpp
   asciiquack/vendor/cxxopts.hpp
+  brlinst/.gitignore
   brlinst/CMakeLists.txt
   brlinst/COPYING
   brlinst/README.adoc
