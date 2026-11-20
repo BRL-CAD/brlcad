@@ -73,9 +73,9 @@ _post_opendb_failed(struct mged_state *s, struct ged *gedp, struct mged_opendb_c
 
     /* File does not exist, but nobody told us one way or the other
      * about creation - ask */
-    if (s->interactive && !ctx->force_create) {
+    if (s->startup.ui != MGED_UI_HEADLESS && !ctx->force_create) {
 	if (ctx->init_flag) {
-	    if (s->classic_mged) {
+	    if (s->startup.ui == MGED_UI_CLASSIC) {
 		bu_log("Create new database (y|n)[n]? ");
 		(void)bu_fgets(line, sizeof(line), stdin);
 		if (bu_str_false(line)) {
@@ -254,7 +254,7 @@ mged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *vgedp, vo
     set_localunit_TclVar(s);
 
     /* Print title/units information */
-    if (s->interactive) {
+    if (s->startup.ui != MGED_UI_HEADLESS) {
 	bu_vls_printf(gedp->ged_result_str, "%s (units=%s)\n", s->dbip->dbi_title,
 		      bu_units_string(s->dbip->dbi_local2base));
     }
@@ -271,7 +271,7 @@ mged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *vgedp, vo
 	    (void)Tcl_Eval(mctx->interpreter, "after idle dbupgrade -f y");
 	} else {
 	    if (mctx->db_warn) {
-		if (s->classic_mged)
+		if (s->startup.ui == MGED_UI_CLASSIC)
 		    bu_vls_printf(gedp->ged_result_str, "Warning:\n\tDatabase version is old.\n\tSee the dbupgrade command.");
 		else
 		    bu_vls_printf(gedp->ged_result_str, "Warning:\n\tDatabase version is old.\n\tSelect Tools-->Upgrade Database for info.");

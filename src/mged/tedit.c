@@ -60,7 +60,7 @@ editit(struct mged_state *s, const char *tempfile) {
 
     CHECK_DBI_NULL;
 
-    if (!ged_set_editor(s->gedp, s->classic_mged))
+    if (!ged_set_editor(s->gedp, s->startup.ui == MGED_UI_CLASSIC))
        return TCL_ERROR;
 
     av[0] = "editit";

@@ -27,6 +27,8 @@ Technically, _MGED_ can be opened without a database file being supplied, but un
 
 Options that affect per-session appearance (variables, grid, colour) are applied _after_ any `.mgedrc` file is processed, so command-line flags always take precedence over saved settings.
 
+When no mode option is specified, _MGED_ starts its graphical interface if standard input is a terminal and graphics support is available. It starts headless when standard input is redirected or connected to a pipe. Use *-C* to request the GUI or *-c* to request the classic command-line interface explicitly; these choices do not depend on whether standard input or output is attached to a terminal. Supplying an _mged_command_ selects one-shot headless operation.
+
 
 [[options]]
 == OPTIONS
@@ -36,7 +38,7 @@ Options that affect per-session appearance (variables, grid, colour) are applied
 *-a* _type_, *--attach* _type_::
 Specifies a display manager to automatically attach to when starting _MGED_.
 +
-Without specifying this option, _MGED_ will prompt which display manager to attach during startup: `attach (nu|X|ogl)[nu]?`
+In an interactive classic session, omitting this option prompts for the display manager during startup: `attach (nu|X|ogl)[nu]?`. Headless sessions do not prompt or attach a display manager unless *-a* is specified.
 +
 The list of available display managers varies from platform to platform and across releases. Commonly available options include the _nu_ (NULL) display manager (starts without any graphical display), the _X_ display manager (X11 wireframe display), and the _ogl_ display manager (OpenGL wireframe display).
 
@@ -58,15 +60,15 @@ Sets the 3D graphics/geometry window position and size in standard X geometry fo
 Runs _MGED_ as a background process, freeing the terminal from which it was started.
 
 *-c*, *--classic*::
-Instructs _MGED_ to start using classic mode instead of the default Tcl/Tk-based GUI. The *-c* option is often used when specifying an *mged_command* to indicate that _MGED_ is being run in a command-mode without a default GUI.
+Instructs _MGED_ to use the classic command-line interface instead of the Tcl/Tk-based GUI. With redirected input, classic mode reads commands without displaying terminal prompts or asking which display manager to attach.
 
 *-C*, *--gui*::
-Instructs _MGED_ to start in GUI (non-classic) mode. This is the default on platforms that support graphics.
+Instructs _MGED_ to start in GUI (non-classic) mode. This is the default when standard input is a terminal on platforms that support graphics. It also explicitly requests the GUI when standard input or output is redirected. With redirected input, commands and output remain connected to the invoking process without terminal prompts; add *-p* when command-completion sentinels are also needed.
 
 *-p*, *--pipe*::
 Enables pipe mode. In this mode _MGED_ emits a `MGED_CMD_DONE <status>` sentinel to stdout after every command completes on stdin, making it suitable for use as a subprocess driven by an automated tool.
 Pipe mode may be used with the graphical interface; stdin commands update the active graphics window while command output and completion sentinels remain available to the parent process.
-Combine *-p* with *-c* when no graphical command window is wanted.
+Combine *-p* with *-C* to request that behavior explicitly, or with *-c* for a headless classic command processor. Pipe mode never emits interactive prompts.
 
 *-r*, *--read-only*::
 Opens the `database.g` file in read-only mode.
@@ -219,7 +221,7 @@ _MGED_ searches for a startup configuration file (`.mgedrc`) in three locations,
 . If the environment variable `HOME` is set, `$HOME/.mgedrc` is used.
 . If `.mgedrc` exists in the current working directory, it is used.
 
-The first file found is used and the others are ignored. Use *--rcfile* to specify an explicit path, or *--no-rc* to skip rc file processing entirely.
+The first file found is used and the others are ignored. Default rc file discovery is skipped in headless operation. Use *--rcfile* to load an explicit file in any mode, including headless operation, or *--no-rc* to skip rc file processing entirely.
 
 Command-line options that affect MGED variables (all the long options listed above) are applied _after_ the rc file is processed, so they always take precedence.
 

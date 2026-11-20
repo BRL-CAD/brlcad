@@ -73,6 +73,7 @@
 #include "bu/vls.h"
 #include "ged.h"
 #include "wdb.h"
+#include "mged_startup.h"
 
 /* Needed to define struct bv_scene_obj */
 #include "bv/defines.h"
@@ -228,10 +229,7 @@ struct mged_state {
     struct mged_tol tol;
     Tcl_Interp *interp;
 
-    /* >0 means interactive. Gets set to 0 if there's libdm graphics support,
-     * and forced with -c option. */
-    int classic_mged;
-    int interactive; /* for pr_prompt */
+    struct mged_startup_plan startup;
 
     /* Prompt and input lines */
     size_t input_str_index;
@@ -276,14 +274,6 @@ struct mged_state {
 #ifdef HAVE_TK
     int tk_generic_handler_active;
 #endif
-
-    /* When non-zero, a machine-readable "MGED_CMD_DONE <status>" sentinel
-     * line is written to stdout after every command completes in the
-     * non-interactive (piped) stdin path.  Enabled by the -p flag so that
-     * a parent process driving MGED via stdin/stdout can detect command
-     * completion even for commands that produce no output.
-     * Status codes: CMD_OK (919), CMD_BAD (920), CMD_MORE (921). */
-    int pipe_mode;
 
     /* search_snapshot is captured from interp before an asynchronous search
      * starts, then replayed into the worker-owned search interpreter. */
