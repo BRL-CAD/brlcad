@@ -3287,7 +3287,7 @@ main(int argc, char *argv[])
     }
 
     /* initialize a display manager */
-    if (s->interactive && s->classic_mged) {
+    if ((s->interactive && s->classic_mged) || (!s->interactive && attach)) {
 	if (!attach) {
 	    get_attached(s);
 	} else {
