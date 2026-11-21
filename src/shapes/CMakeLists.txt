@@ -9,7 +9,7 @@ add_subdirectory(tree)
 
 brlcad_addexec(bolt bolt.c "libwdb;${M_LIBRARY}" FOLDER Shapes ARG_SCHEMA)
 brlcad_addexec(coil coil.c "libged;libwdb;${M_LIBRARY}" FOLDER Shapes ARG_SCHEMA)
-brlcad_addexec(fence fence.c "libwdb;${M_LIBRARY}" FOLDER Shapes)
+brlcad_addexec(fence fence.c "libwdb;${M_LIBRARY}" FOLDER Shapes ARG_SCHEMA)
 brlcad_addexec(gastank gastank.c libwdb FOLDER Shapes ARG_SCHEMA)
 brlcad_addexec(handle handle.c libwdb FOLDER Shapes ARG_SCHEMA)
 brlcad_addexec(human human.c "libged;libwdb" FOLDER Shapes ARG_SCHEMA)
