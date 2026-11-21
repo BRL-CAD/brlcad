@@ -22,6 +22,8 @@
 package require Iwidgets
 package require ManBrowser 1.0
 
+namespace eval ::brlman {}
+
 proc ::brlman::quitKey {window} {
     set widgetClass [winfo class $window]
     if {$widgetClass in {Entry TEntry}} {

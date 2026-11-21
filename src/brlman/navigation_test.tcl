@@ -71,6 +71,28 @@ if {[catch {
     set scripts [file join [file dirname [info script]] .. tclscripts]
     source [file join $scripts helpcomm.tcl]
     source [file join $scripts man_browser.tcl]
+
+    set ::brlman_test_doc_root [file join $root startup]
+    write_page [file join $::brlman_test_doc_root html] mann Introduction \
+	{<p>Startup fixture.</p>}
+    proc bu_dir {kind} {
+	if {$kind eq "doc"} {
+	    return $::brlman_test_doc_root
+	}
+	error "Unexpected bu_dir request for '$kind'"
+    }
+    rename vwait brlman_test_vwait
+    proc vwait {args} {}
+    try {
+	source [file join [file dirname [info script]] brlman.tcl]
+    } finally {
+	rename vwait {}
+	rename brlman_test_vwait vwait
+	rename bu_dir {}
+	unset ::brlman_test_doc_root
+    }
+    destroy .browser
+
     wm withdraw .
     set ::background_errors {}
     proc bgerror {message} {
