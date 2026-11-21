@@ -151,6 +151,7 @@ set(
   isst.adoc
   istats.adoc
   jack-g.adoc
+  k-g.adoc
   loop.adoc
   lowp.adoc
   mac-pix.adoc

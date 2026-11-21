@@ -1,0 +1,74 @@
+= K-G(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+k-g - convert an LS-DYNA keyword model to a BRL-CAD database
+
+== SYNOPSIS
+
+[verse]
+*k-g* _input.k_ _output.g_
+
+[[description]]
+== DESCRIPTION
+
+*k-g* reads an LS-DYNA keyword model from _input.k_ and writes the supported
+geometry to the BRL-CAD database _output.g_. Included keyword files are read
+recursively. Model parts become BRL-CAD regions named from the numeric part ID
+and part title, and supported part attributes are copied to those regions.
+
+The converter handles supported shell, solid, beam, seat-belt, and discrete
+sphere definitions. Depending on the element and section definition, it emits
+BoT meshes, ARB solids, pipes, extrusions, sketches, or spheres. Unsupported or
+malformed keyword cards are reported during conversion and may be omitted from
+the output database.
+
+*k-g* multiplies imported coordinates and other linear dimensions by 10. Input
+dimensions should therefore be expressed in centimeters when millimeter-valued
+BRL-CAD geometry is desired.
+
+[[operands]]
+== OPERANDS
+
+_input.k_::
+  LS-DYNA keyword file to read.
+
+_output.g_::
+  BRL-CAD database to create.
+
+[[examples]]
+== EXAMPLES
+
+.Convert an LS-DYNA model and inspect it
+====
+[source,console]
+----
+$ k-g vehicle.k vehicle.g
+$ mged vehicle.g
+----
+Reads _vehicle.k_ and any keyword files that it includes, writes the supported
+geometry to _vehicle.g_, and opens the result in *mged*(1).
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *gcv*(1), *mged*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
