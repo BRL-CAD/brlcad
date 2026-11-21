@@ -8,10 +8,13 @@ rtshot - fire a single ray at a BRL-CAD model and report what it hits
 
 == SYNOPSIS
 
-[source]
-----
-rtshot {-p|-d|-a} _x_ _y_ _z_ {-p|-d|-a} _x_ _y_ _z_ [options] model.g [objects...]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rtshot* [*-p* _x y z_] [*-d* _x y z_] [*-a* _x y z_] [*-U* _value_] [*-o* _count_]
+       [*-r* _millimeters_] [*-O* _mode_] [*-v* _names_] [*-A* _name_] [*-n* _count_] [*-c* _count_]
+       [*-R* _millimeters_] [*-g* _millimeters_] [*-u* _mask_] [*-x* _mask_] [*-X* _mask_]
+       [*-N* _mask_] _model.g_ [_object_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 
 [[description]]
@@ -46,75 +49,88 @@ pixel of *rt*(1) would cast.
 [[options]]
 == OPTIONS
 
-*-p* _x_ _y_ _z_::
+// BEGIN GENERATED BU_ARG OPTIONS
+=== General
+
+*-h*[_all_], *--help*[=_all_]::
+  Print help and exit.
+
+=== Ray definition
+
+Select exactly two forms.
+
+*-p* _x y z_, *--point*=_x y z_::
   Set the ray starting point.
 
-*-d* _x_ _y_ _z_::
+*-d* _x y z_, *--direction*=_x y z_::
   Set the ray direction vector (normalized before use).
 
-*-a* _x_ _y_ _z_::
-  Set the point the ray is fired "at".
+*-a* _x y z_, *--at*=_x y z_::
+  Set the point toward which the ray is fired.
 
-*-U* _#_::
-  Set reporting of air regions. The default is 1 (air is reported).
+=== Ray behavior
 
-*-o* _#_::
-  Set the onehit flag, stopping the ray after the given number of hits
-  (0, the default, means no limit).
+*-U* _value_, *--use-air*=_value_::
+  Set air-region reporting (default 1).
 
-*-r* _#_::
-  Set the maximum ray length, in millimeters. The default of 0 means unlimited.
+*-o* _count_, *--one-hit*=_count_::
+  Stop after the requested number of hits (0 means unlimited).
 
-*-O* _keyword_::
-  Set overlap-claimant handling. Accepts a keyword or its numeric equivalent:
-  _resolve_ (or 0, the default) resolves all overlaps so none appear in the
-  output; _rebuild_fastgen_ (or 1) mimics FASTGEN4 plate-mode behavior;
-  _rebuild_all_ (or 2) rebuilds and reports every overlap along the ray;
-  _retain_ (or 3) does not resolve overlaps.
+*-r* _millimeters_, *--ray-length*=_millimeters_::
+  Set the maximum ray length in millimeters (0 means unlimited).
 
-*-v* _"attr1 attr2 ..."_::
-  Report the listed region attribute names (and their values) for each region
-  hit. The names are given as a single space-separated string.
+*-O* _mode_, *--overlap*=_mode_::
+  Select overlap-claimant handling. Accepted values: *resolve*, *rebuild_fastgen*, *rebuild_all*, *retain*.
 
-*-A* _name_::
-  Report, for each region carrying the named attribute, the hit points and ray
-  direction transformed into that region's local (untransformed) coordinate
-  system via the inverse of its placement matrix.
+=== Reported attributes
 
-*-n* _#_::
-  Set the number of rings to use for a ray bundle (the central ray is not
-  counted).
+*-v* _names_, *--attributes*=_names_::
+  Report a whitespace-separated list of region attributes.
 
-*-c* _#_::
-  Set the number of rays per ring for a ray bundle. The rings spiral outward and
-  are not aligned ring-to-ring; a central ray is always included.
+*-A* _name_, *--inverse-placement-attribute*=_name_::
+  Transform hits into local coordinates for regions carrying this attribute.
 
-*-R* _#_::
-  Set the ray bundle radius, in millimeters. The outermost ring lies at this
-  radius.
+=== Ray bundles
 
-*-g* _#_::
-  Set the grid spacing, in millimeters, for a circular-grid ray bundle
-  (the default is 1mm).
+*-n* _count_, *--rings*=_count_::
+  Set ray-bundle rings in addition to the central ray.
 
-*-u* _#_::
-  Set the *libbu*(3) debug flags (hexadecimal).
+*-c* _count_, *--rays-per-ring*=_count_::
+  Set the number of rays in each spiral bundle ring.
 
-*-x* _#_::
-  Set the *librt*(3) debug flags (hexadecimal).
+*-R* _millimeters_, *--bundle-radius*=_millimeters_::
+  Set the outer ray-bundle radius in millimeters.
 
-*-X* _#_::
-  Set the optical/rt program debug flags (hexadecimal). Setting the ray-plot
-  bit writes a plot of the ray and its hits to _rtshot.plot3_.
+*-g* _millimeters_, *--grid-spacing*=_millimeters_::
+  Set circular-grid ray spacing (default 1 mm).
 
-*-N* _#_::
-  Set the NMG debug flags (hexadecimal).
+=== Diagnostics
 
-A ray bundle can be cast in two ways. Supplying both *-n* and *-c*
-(with an optional *-R* radius) fires a spiral ring bundle whose
-results are merged as a single ray. Supplying only *-R* (with an
-optional *-g* grid spacing) fires a circular grid of parallel
-rays. The default is to fire a single ray.
+*-u* _mask_, *--bu-debug*=_mask_::
+  Set libbu hexadecimal debug flags.
+
+*-x* _mask_, *--rt-debug*=_mask_::
+  Set librt hexadecimal debug flags.
+
+*-X* _mask_, *--optical-debug*=_mask_::
+  Set optical hexadecimal debug flags; ray plotting writes rtshot.plot3.
+
+*-N* _mask_, *--nmg-debug*=_mask_::
+  Set NMG hexadecimal debug flags.
+
+// END GENERATED BU_ARG OPTIONS
+
+The *--overlap* mode may be *resolve* (or 0, the default), which resolves
+all overlaps before reporting; *rebuild_fastgen* (or 1), which follows
+FASTGEN4 plate-mode behavior; *rebuild_all* (or 2), which rebuilds and
+reports every overlap along the ray; or *retain* (or 3), which leaves
+overlaps unresolved.
+
+A ray bundle can be cast in two ways. Supplying both *--rings* (*-n*) and
+*--rays-per-ring* (*-c*), with an optional *--bundle-radius* (*-R*), fires
+a spiral ring bundle whose results are merged as a single ray. Supplying
+only *--bundle-radius*, with an optional *--grid-spacing* (*-g*), fires a
+circular grid of parallel rays. The default is to fire a single ray.
 
 [[examples]]
 == EXAMPLES
