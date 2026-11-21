@@ -10,14 +10,14 @@ gqa - analyze the currently open geometry database
 
 // BEGIN GENERATED BU_ARG SYNOPSIS
 [verse]
-*gqa* [*-A* _types_] [*-a* _azimuth_] [*-d*] [*-e* _elevation_] [*-f* _file_] [*-g* _spacing_]
-    [*-G*] [*-n* _hits_] [*-N* _views_] [*-p* _prefix_] [*-P* _cpus_] [*-q*] [*-r*] [*-S* _samples_]
-    [*-t* _tolerance_] [*-U* _use_air_] [*-u* _units_] [*-v*] [*-V* _tolerance_] [*-W* _tolerance_]
-    *-h* [_raw_arguments_ ...]
-*gqa* [*-A* _types_] [*-a* _azimuth_] [*-d*] [*-e* _elevation_] [*-f* _file_] [*-g* _spacing_]
-    [*-G*] [*-n* _hits_] [*-N* _views_] [*-p* _prefix_] [*-P* _cpus_] [*-q*] [*-r*] [*-S* _samples_]
-    [*-t* _tolerance_] [*-U* _use_air_] [*-u* _units_] [*-v*] [*-V* _tolerance_] [*-W* _tolerance_]
-    _objects_ ...
+*gqa* [*-A* _types_] [*-a* _angle_] [*-d*] [*-e* _angle_] [*-f* _file_] [*-g* _spacing_] [*-G*]
+    [*-n* _count_] [*-N* _count_] [*-p* _prefix_] [*-P* _count_] [*-q*] [*-r*] [*-S* _count_]
+    [*-t* _distance_] [*-U* _boolean_] [*-u* _length,volume,weight_] [*-v*] [*-V* _volume_]
+    [*-W* _weight_] *-h* [_raw_arguments_ ...]
+*gqa* [*-A* _types_] [*-a* _angle_] [*-d*] [*-e* _angle_] [*-f* _file_] [*-g* _spacing_] [*-G*]
+    [*-n* _count_] [*-N* _count_] [*-p* _prefix_] [*-P* _count_] [*-q*] [*-r*] [*-S* _count_]
+    [*-t* _distance_] [*-U* _boolean_] [*-u* _length,volume,weight_] [*-v*] [*-V* _volume_]
+    [*-W* _weight_] _object_ ...
 // END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
@@ -141,68 +141,68 @@ additional density-table inspection, editing, export, and mapping commands.
 == OPTIONS
 
 // BEGIN GENERATED BU_ARG OPTIONS
-*-A* _types_::
+*-A* _types_, *--analysis*=_types_::
   Select analyses. Accepted values: *A*, *a*, *b*, *c*, *e*, *g*, *m*, *o*, *p*, *v*, *w*.
 
-*-a* _azimuth_::
-  Set azimuth angle.
+*-a* _angle_, *--azimuth*=_angle_::
+  Set the azimuth angle.
 
-*-d*::
-  Enable debug output.
+*-d*, *--debug*::
+  Enable diagnostic output.
 
-*-e* _elevation_::
-  Set elevation angle.
+*-e* _angle_, *--elevation*=_angle_::
+  Set the elevation angle.
 
-*-f* _file_::
-  Read densities from file.
+*-f* _file_, *--density-file*=_file_::
+  Read material densities from this file.
 
-*-g* _spacing_::
-  Set grid spacing or range.
+*-g* _spacing_, *--grid-spacing*=_spacing_::
+  Set the grid-spacing limit or initial and limiting spacings.
 
-*-G*::
+*-G*, *--overlap-assemblies*::
   Create overlap assemblies (not implemented).
 
-*-n* _hits_::
-  Set required hits per region.
+*-n* _count_, *--required-hits*=_count_::
+  Require at least this many ray hits per region.
 
-*-N* _views_::
-  Set number of views.
+*-N* _count_, *--views*=_count_::
+  Compute the first one, two, or three views.
 
-*-p* _prefix_::
-  Set plot file prefix.
+*-p* _prefix_, *--plot-prefix*=_prefix_::
+  Write analysis plot files using this prefix.
 
-*-P* _cpus_::
-  Set processor count.
+*-P* _count_, *--processors*=_count_::
+  Use at most this many processors.
 
-*-q*::
-  Suppress not-hit reporting.
+*-q*, *--quiet*::
+  Suppress reporting for regions that were not hit.
 
-*-r*::
-  Print per-region statistics.
+*-r*, *--region-stats*::
+  Print per-region weight and volume statistics.
 
-*-S* _samples_::
-  Set minimum samples per model axis.
+*-S* _count_, *--samples*=_count_::
+  Set the minimum samples per model axis (greater than 1).
 
-*-t* _tolerance_::
-  Set overlap tolerance.
+*-t* _distance_, *--overlap-tolerance*=_distance_::
+  Ignore overlaps shorter than this nonnegative distance.
 
-*-U* _use_air_::
-  Include air regions.
+*-U* _boolean_, *--use-air*=_boolean_::
+  Include or exclude air regions.
 
-*-u* _units_::
-  Set reporting units.
+*-u* _length,volume,weight_, *--units*=_length,volume,weight_::
+  Set the reporting units.
 
-*-v*::
-  Enable verbose output.
+*-v*, *--verbose*::
+  Report analysis progress.
 
-*-V* _tolerance_::
-  Set volume tolerance.
+*-V* _volume_, *--volume-tolerance*=_volume_::
+  Set the convergence tolerance for volume calculations.
 
-*-W* _tolerance_::
-  Set weight tolerance.
+*-W* _weight_, *--weight-tolerance*=_weight_::
+  Set the convergence tolerance for weight calculations.
 
-*-h*, *-?*::
-  Print command help.
+*-h*, *--help*::
+  Print help and exit.
 
 // END GENERATED BU_ARG OPTIONS
 
