@@ -141,22 +141,22 @@ struct TireArgs {
 /* This list is the command's sole authored option schema. */
 #define TIRE_OPTION_ROWS(X, A) \
     X(FLAG,          "h", "help",                help,                "",           "Print help and exit") \
-    X(STRING,        "n", "obj-name",            name,                "name",       "Set top-level object name") \
-    X(BOOL,          "w", "wheel",               wheel,               "bool",       "Enable/disable wheel (default is enabled).") \
-    X(CUSTOM,        "d", "dimensions",          isoarray,            ISO_TIRE_FMT,  "Specify tire dimensions using ISO style inputs") \
-    X(NUMBER,        "W", "width",               width,               "mm",         "Tire width. Overrides --dimensions.") \
-    X(NUMBER,        "R", "aspect-ratio",        aspect,              "percent",    "Aspect ratio. Overrides --dimensions.") \
-    X(NUMBER,        "D", "rim-diameter",        rim_diameter,        "in",         "Rim diameter. Overrides --dimensions.") \
-    X(NUMBER,        "g", "tread-depth",         tread_depth,         "1/32 in",    "Tread depth") \
-    X(NUMBER,        "j", "hub-width",           hub_width,           "in",         "Rim width") \
-    X(NUMBER,        "s", "max-sidewall-radius", max_sidewall_radius, "mm",         "Maximum sidewall radius") \
-    X(NUMBER,        "u", "tire-thickness",      tire_thickness,      "mm",         "Tire thickness") \
-    X(STRING,        "p", "tread-pattern",       tread_pattern,       "name",       "Tread pattern preset name. Legacy aliases 1 and 2 are accepted.") \
-    X(INTEGER,       "c", "tread-pattern-cnt",   tread_pattern_count, "#",          "Number of tread patterns around tire") \
-    X(INTEGER_RANGE, "t", "tread-shape",         tread_shape,         "0|1|2",      "Tread shape profile") \
-    X(FILE,          "",  "tread-pattern-file",  tread_pattern_file,  "file.json",  "Read a custom JSON tread pattern definition") \
+    X(STRING,        "n", "obj-name",            name,                "name",       "Set the top-level object name and generated child-object suffix") \
+    X(BOOL,          "w", "wheel",               wheel,               "bool",       "Enable or disable the wheel; enabled by default") \
+    X(CUSTOM,        "d", "dimensions",          isoarray,            ISO_TIRE_FMT,  "Set the tire width in millimeters, aspect ratio in percent, and rim diameter in inches using ISO notation") \
+    X(NUMBER,        "W", "width",               width,               "mm",         "Override the tire width from --dimensions; fractional values are accepted") \
+    X(NUMBER,        "R", "aspect-ratio",        aspect,              "percent",    "Override the aspect ratio from --dimensions; fractional values are accepted") \
+    X(NUMBER,        "D", "rim-diameter",        rim_diameter,        "in",         "Override the rim diameter from --dimensions; fractional values are accepted") \
+    X(NUMBER,        "g", "tread-depth",         tread_depth,         "1/32 in",    "Set tread depth in 32nds of an inch; the default is 11") \
+    X(NUMBER,        "j", "hub-width",           hub_width,           "in",         "Set rim (hub) width in inches") \
+    X(NUMBER,        "s", "max-sidewall-radius", max_sidewall_radius, "mm",         "Set the widest sidewall radius in millimeters; it must lie between the rim and tire radii") \
+    X(NUMBER,        "u", "tire-thickness",      tire_thickness,      "mm",         "Set tire wall thickness in millimeters") \
+    X(STRING,        "p", "tread-pattern",       tread_pattern,       "name",       "Select a named tread preset; legacy values 1 and 2 select legacy-rib and legacy-block") \
+    X(INTEGER,       "c", "tread-pattern-cnt",   tread_pattern_count, "#",          "Override the number of repeats around the tire; each preset defines its valid range") \
+    X(INTEGER_RANGE, "t", "tread-shape",         tread_shape,         "0|1|2",      "Select no explicit profile (0), legacy rib (1), or legacy block (2)") \
+    X(FILE,          "",  "tread-pattern-file",  tread_pattern_file,  "file.json",  "Read a custom JSON tread definition; mutually exclusive with --tread-pattern") \
     X(FLAG,          "",  "list-tread-patterns",  list_patterns,       "",           "List available tread pattern presets and exit") \
-    X(FILE,          "",  "demo-file",           demo_file,           "file.g",     "Generate a grid of varied sample tires") \
+    X(FILE,          "",  "demo-file",           demo_file,           "file.g",     "Write a database containing a grid of varied sample tires and exit") \
     A(SHORT, "?", "help") \
     A(LONG,  "ISO", "dimensions")
 
