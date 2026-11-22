@@ -108,7 +108,9 @@ struct rt_bot_internal *bot_openvdb_repair(struct rt_bot_internal *bot, double v
  *
  * @param rtip       Prepped raytrace instance (rt_prep already called).
  * @param voxel_size Voxel edge length in model units (> 0).
- * @param nx,ny,nz   Output: grid dimensions including padding.
+ * @param[out] nx    Grid size along X, including padding.
+ * @param[out] ny    Grid size along Y, including padding.
+ * @param[out] nz    Grid size along Z, including padding.
  * @return           BoolGrid with active voxels = solid interior cells.
  */
 openvdb::BoolGrid::Ptr rt_rtip_to_occupancy_grid(struct rt_i *rtip,
