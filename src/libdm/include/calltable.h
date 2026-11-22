@@ -34,8 +34,6 @@
 #ifndef DM_CALLTABLE_H
 #define DM_CALLTABLE_H
 
-#include "png.h"
-
 #include "bu/parse.h"
 #include "bu/vls.h"
 #include "dm.h"
