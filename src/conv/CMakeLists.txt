@@ -51,7 +51,7 @@ brlcad_addexec(g-dot g-dot.c "libged;libbu" FOLDER Conv)
 brlcad_addexec(g-dxf dxf/g-dxf.c "librt;libgcv;libnmg;libbu" FOLDER Conv)
 add_dependencies(g-dxf gcv_plugins)
 
-brlcad_addexec(g-egg g-egg.c "libwdb;libgcv;libnmg" FOLDER Conv)
+brlcad_addexec(g-egg g-egg.c "libwdb;libgcv;libnmg;${M_LIBRARY}" FOLDER Conv)
 add_dependencies(g-egg gcv_plugins)
 
 brlcad_addexec(g-nff g-nff.c "libwdb;libnmg;${M_LIBRARY}" FOLDER Conv)
@@ -60,15 +60,15 @@ brlcad_addexec(fast4-g fast4-g.c "libwdb;librt;libnmg;libbu;${M_LIBRARY}" FOLDER
 
 brlcad_addexec(jack-g jack/jack-g.c "libwdb;librt;libnmg;libbu" FOLDER Conv)
 
-brlcad_addexec(g-jack jack/g-jack.c "librt;libnmg;libbu" FOLDER Conv)
+brlcad_addexec(g-jack jack/g-jack.c "librt;libnmg;libbu;${M_LIBRARY}" FOLDER Conv)
 
-brlcad_addexec(g-off off/g-off.c "librt;libnmg;libbu" FOLDER Conv)
+brlcad_addexec(g-off off/g-off.c "librt;libnmg;libbu;${M_LIBRARY}" FOLDER Conv)
 
 brlcad_addexec(off-g off/off-g.c "libwdb;librt;libnmg;libbu" FOLDER Conv)
 
-brlcad_addexec(stl-g stl/stl-g.c "libwdb;librt;libbu;${WINSOCK_LIB}" FOLDER Conv)
+brlcad_addexec(stl-g stl/stl-g.c "libwdb;librt;libbu;${WINSOCK_LIB};${M_LIBRARY}" FOLDER Conv)
 
-brlcad_addexec(g-stl stl/g-stl.c "librt;libgcv;libnmg;libbu;${WINSOCK_LIB}" FOLDER Conv)
+brlcad_addexec(g-stl stl/g-stl.c "librt;libgcv;libnmg;libbu;${WINSOCK_LIB};${M_LIBRARY}" FOLDER Conv)
 add_dependencies(g-stl gcv_plugins)
 
 brlcad_addexec(g4-g5 g4-g5.c "librt;libbu" NO_INSTALL)

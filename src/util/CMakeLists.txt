@@ -52,7 +52,7 @@ brlcad_addexec(double-asc double-asc.c "libdm;libbu" FOLDER Util)
 add_target_deps(double-asc dm_plugins)
 brlcad_addexec(dpix-pix dpix-pix.c libbu FOLDER Util)
 brlcad_addexec(gencolor gencolor.c libbu FOLDER Util)
-brlcad_addexec(halftone halftone.c "librt;libdm;libbu" FOLDER Util)
+brlcad_addexec(halftone halftone.c "librt;libdm;libbu;${M_LIBRARY}" FOLDER Util)
 add_target_deps(halftone dm_plugins)
 
 # This is intended to replace all of the img-img utils eventually
