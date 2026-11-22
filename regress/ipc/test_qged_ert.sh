@@ -1,291 +1,130 @@
 #!/bin/sh
-# test_qged_ert.sh — Integration test: qged ert command via IPC under Xvfb
-#
-# This script verifies the full Phase 3+5 code path end-to-end:
-#   - qged starts under Xvfb with software-rasterizer mode (-s)
-#   - A geometry object is drawn
-#   - The "ert" GED command is issued via xdotool
-#   - We confirm that rt was spawned and the IPC path was taken
-#     (the renderer launch wrapper records its inherited IPC address)
-#
-# Environment variables consumed:
-#   QGED_BIN      path to the qged binary (required)
-#   RT_BIN        path to the rt binary   (required)
-#   TEST_DB       path to a .g file with objects (defaults to boolean-ops.g)
-#   DISPLAY       X display to use — if unset or not usable, start Xvfb
-#
-# Exit status: 0 = all checks passed, 1 = any check failed
+# Run QGED's embedded raytrace on a private X server.
+set -eu
 
-set -e
+build_dir=$(cd "$(dirname "$0")/../.." && pwd)
+QGED_BIN=${QGED_BIN:-$build_dir/bin/qged}
+RT_BIN=${RT_BIN:-$build_dir/bin/rt}
+TEST_DB=${TEST_DB:-$build_dir/share/db/boolean-ops.g}
+XVFB_BIN=${XVFB_BIN:-Xvfb}
+DISPLAY_ATTEMPTS=300
+WINDOW_ATTEMPTS=300
+RENDER_START_ATTEMPTS=300
+RENDER_FINISH_ATTEMPTS=600
+EXIT_ATTEMPTS=100
 
-BDIR="$(cd "$(dirname "$0")/../.." && pwd)"
-
-QGED_BIN="${QGED_BIN:-${BDIR}/bin/qged}"
-RT_BIN="${RT_BIN:-${BDIR}/bin/rt}"
-TEST_DB="${TEST_DB:-${BDIR}/share/db/boolean-ops.g}"
-
-PASS=0
-FAIL=0
-VERBOSE="${VERBOSE:-0}"
-
-pass() { PASS=$((PASS+1)); [ "$VERBOSE" = "1" ] && echo "PASS: $1"; }
-fail() { FAIL=$((FAIL+1)); echo "FAIL: $1"; }
-check() {
-    label="$1"; cond="$2"
-    if eval "test $cond" 2>/dev/null; then pass "$label"; else fail "$label"; fi
-}
-
-TMPDIR_TEST=$(mktemp -d /tmp/test_qged_ert.XXXXXX)
-XVFB_PID=""
-QGED_PID=""
-
-cleanup() {
-    if [ -n "$QGED_PID" ]; then kill "$QGED_PID" 2>/dev/null || true; fi
-    if [ -n "$XVFB_PID" ]; then kill "$XVFB_PID" 2>/dev/null || true; fi
-    rm -rf "$TMPDIR_TEST"
-}
-trap 'cleanup' EXIT
-
-echo "=== qged ert IPC integration test ==="
-
-# -------------------------------------------------------------------
-# 1. Verify required binaries exist
-# -------------------------------------------------------------------
-check "qged binary exists"  "-x $QGED_BIN"
-check "rt binary exists"    "-x $RT_BIN"
-check "test .g file exists" "-f $TEST_DB"
-
-if [ ! -x "$QGED_BIN" ] || [ ! -x "$RT_BIN" ] || [ ! -f "$TEST_DB" ]; then
-    echo "SKIP: required binaries or test database not found"
-    echo "Tests: 0/$((PASS+FAIL)) passed"
-    exit 0
-fi
-
-# -------------------------------------------------------------------
-# 2. Check that xdotool is available (needed to send commands to qged)
-# -------------------------------------------------------------------
-HAVE_XDOTOOL=0
-if command -v xdotool >/dev/null 2>&1; then
-    HAVE_XDOTOOL=1
-fi
-check "xdotool available" "$HAVE_XDOTOOL -eq 1"
-
-# -------------------------------------------------------------------
-# 3. Ensure we have a working X display
-#    When invoked via xvfb-run (from CTest), DISPLAY is pre-set.
-#    If DISPLAY is not set or not usable, start our own Xvfb.
-# -------------------------------------------------------------------
-XVFB_PID=""
-display_ok=0
-if [ -n "$DISPLAY" ]; then
-    # Verify the display accepts connections (up to 5 s to allow startup)
-    for i in $(seq 1 50); do
-        if xdpyinfo -display "$DISPLAY" >/dev/null 2>&1; then
-            display_ok=1; break
-        fi
-        sleep 0.1
-    done
-fi
-
-if [ "$display_ok" -ne 1 ]; then
-    # No usable display - start our own Xvfb
-    DISPLAY=":$(shuf -i 200-299 -n 1)"
-    export DISPLAY
-    Xvfb "$DISPLAY" -screen 0 1280x960x24 &
-    XVFB_PID=$!
-    for i in $(seq 1 50); do
-        if xdpyinfo -display "$DISPLAY" >/dev/null 2>&1; then
-            display_ok=1; break
-        fi
-        sleep 0.1
-    done
-fi
-
-check "X display ($DISPLAY) is usable" "$display_ok -eq 1"
-
-if [ "$display_ok" -ne 1 ]; then
-    echo "ABORT: no usable X display (tried $DISPLAY)"
-    exit 1
-fi
-
-# -------------------------------------------------------------------
-# 4. Start qged under the X display in swrast mode
-# -------------------------------------------------------------------
-QGED_LOG="$TMPDIR_TEST/qged.log"
-QGED_ERRLOG="$TMPDIR_TEST/qged_err.log"
-
-export LD_LIBRARY_PATH="${BDIR}/lib:${LD_LIBRARY_PATH:-}"
-# Do not inherit a developer's saved window size and position.  A geometry
-# larger than the Xvfb screen can put the console completely off-screen and
-# make the input-driving portion of this test a no-op.
-XDG_CONFIG_HOME="$TMPDIR_TEST/config"
-export XDG_CONFIG_HOME
-mkdir -p "$XDG_CONFIG_HOME"
-
-# Capture the child environment before exec rather than sampling /proc after
-# a short render may already have exited.  Keep the real resource directories
-# available under the temporary root used to locate this rt wrapper.
-RT_TEST_ROOT="$TMPDIR_TEST/root"
-RT_IPC_ENV_FILE="$TMPDIR_TEST/rt-ipc-env"
-mkdir -p "$RT_TEST_ROOT/bin"
-for subdir in lib libexec share; do
-    if [ -d "$BDIR/$subdir" ]; then
-        ln -s "$BDIR/$subdir" "$RT_TEST_ROOT/$subdir"
-    fi
-done
-cat > "$RT_TEST_ROOT/bin/rt" <<'RT_WRAPPER'
-#!/bin/sh
-printf '%s\n' "${PKG_ADDR:-}" > "$RT_IPC_ENV_FILE"
-exec "$RT_BIN" "$@"
-RT_WRAPPER
-chmod +x "$RT_TEST_ROOT/bin/rt"
-BRLCAD_ROOT="$RT_TEST_ROOT"
-export BRLCAD_ROOT RT_BIN RT_IPC_ENV_FILE
-
-"$QGED_BIN" -s "$TEST_DB" >"$QGED_LOG" 2>"$QGED_ERRLOG" &
-QGED_PID=$!
-
-# Wait up to 15 s for qged window to appear
-qged_ready=0
-for i in $(seq 1 150); do
-    if xdotool search --pid "$QGED_PID" 2>/dev/null | grep -q .; then
-        qged_ready=1; break
-    fi
-    sleep 0.1
-done
-
-check "qged window appeared under Xvfb" "$qged_ready -eq 1"
-
-if [ "$qged_ready" -ne 1 ]; then
-    echo "qged stdout: $(cat $QGED_LOG 2>/dev/null | head -20)"
-    echo "qged stderr: $(cat $QGED_ERRLOG 2>/dev/null | head -20)"
-    echo "ABORT: qged did not start"
-    exit 1
-fi
-
-# Allow a little more time for qged to finish initialisation
-sleep 2
-
-check "qged process still running after init" "-d /proc/$QGED_PID"
-
-# -------------------------------------------------------------------
-# 5. Draw geometry and run ert via the console widget
-# -------------------------------------------------------------------
-if [ "$HAVE_XDOTOOL" -eq 1 ]; then
-    # Focus and raise the window
-    WIN=$(xdotool search --pid "$QGED_PID" 2>/dev/null | head -1)
-    if [ -n "$WIN" ]; then
-        xdotool windowfocus --sync "$WIN" 2>/dev/null || true
-        xdotool windowraise "$WIN" 2>/dev/null || true
-    fi
-
-    sleep 0.5
-
-    # Click in the console dock text area.
-    # qged lays out its docks as: toolbar at top (~50px), 3D view in centre,
-    # console dock at bottom.  With a default 1100x800 window, the console text
-    # area (QPlainTextEdit dark background) is at approximately y=600-777.
-    # Click at the bottom-centre of the text area to give it keyboard focus.
-    WIN_H=$(xdotool getwindowgeometry "$WIN" 2>/dev/null | awk '/Geometry/{split($2,g,"x"); print g[2]}')
-    WIN_H="${WIN_H:-800}"
-    CONSOLE_Y=$(( WIN_H * 79 / 100 ))   # ~79% from top = upper part of bottom dock
-    CONSOLE_X=550
-    xdotool mousemove --window "$WIN" "$CONSOLE_X" "$CONSOLE_Y" 2>/dev/null || true
-    xdotool click --window "$WIN" 1 2>/dev/null || true
-    sleep 0.5
-
-    # Draw geometry (use "all" which is the top-level group in boolean-ops.g)
-    xdotool type --clearmodifiers "draw all" 2>/dev/null || true
-    sleep 0.2
-    xdotool key Return 2>/dev/null || true
-    sleep 2
-
-    # Use one worker and modest hypersampling to exercise framebuffer delivery.
-    xdotool type --clearmodifiers "ert -P 1 -H 4" 2>/dev/null || true
-    sleep 0.2
-    xdotool key Return 2>/dev/null || true
-
-    # Wait for rt to start (up to 30 s).
-    rt_appeared=0
-    for i in $(seq 1 300); do
-        if [ -f "$RT_IPC_ENV_FILE" ] ||
-            pgrep -P "$QGED_PID" -x rt >/dev/null 2>&1; then
-            rt_appeared=1; break
-        fi
-        sleep 0.1
-    done
-    check "rt process was spawned by ert" "$rt_appeared -eq 1"
-
-    # Wait for rt to finish (up to 60 s); treat zombie as completed
-    rt_done=0
-    for i in $(seq 1 600); do
-        RT_ALIVE=0
-        for pid in $(pgrep -P "$QGED_PID" -x rt 2>/dev/null); do
-            state=$(awk '/^State/{print $2}' /proc/"$pid"/status 2>/dev/null)
-            if [ "$state" != "Z" ]; then
-                RT_ALIVE=1; break
+scratch=$(mktemp -d "${TMPDIR:-/tmp}/test_qged_ert.XXXXXX")
+qged_pid=''
+xvfb_pid=''
+cleanup()
+{
+    if [ "$1" -ne 0 ]; then
+        for log in Xvfb.log qged.log; do
+            if [ -s "$scratch/$log" ]; then
+                echo "$log" >&2
+                tail -40 "$scratch/$log" >&2
             fi
         done
-        if [ "$RT_ALIVE" -eq 0 ]; then
-            rt_done=1; break
+    fi
+    for pid in "$qged_pid" "$xvfb_pid"; do
+        if [ -n "$pid" ]; then
+            kill "$pid" 2>/dev/null || true
+            wait "$pid" 2>/dev/null || true
         fi
+    done
+    rm -rf "$scratch"
+}
+trap 'cleanup "$?"' 0
+trap 'exit 1' HUP INT TERM
+
+fail() { printf '%s\n' "$*" >&2; exit 1; }
+
+wait_for()
+{
+    attempts=$1
+    shift
+    while ! "$@"; do
+        [ "$attempts" -gt 0 ] || return 1
+        attempts=$((attempts - 1))
         sleep 0.1
     done
-    check "rt process completed" "$rt_done -eq 1"
+}
 
-    ipc_used=0
-    if [ -s "$RT_IPC_ENV_FILE" ] && [ -n "$(cat "$RT_IPC_ENV_FILE")" ]; then
-        ipc_used=1
+running()
+{
+    # ps reports a defunct child even where procfs is unavailable.
+    ps -o stat= -p "$1" | awk 'NF && $1 !~ /^Z/ { found = 1 } END { exit !found }'
+}
+
+exited() { ! running "$1"; }
+
+visible_window()
+{
+    window=$(xdotool search --onlyvisible --pid "$qged_pid" 2>/dev/null | head -n 1)
+    [ -n "$window" ]
+}
+
+[ -x "$QGED_BIN" ] || fail "QGED executable missing: $QGED_BIN"
+[ -x "$RT_BIN" ] || fail "rt executable missing: $RT_BIN"
+[ -f "$TEST_DB" ] || fail "Test database missing: $TEST_DB"
+
+# Allocate a display without guessing a display number or using the desktop.
+"$XVFB_BIN" -displayfd 3 -screen 0 1280x960x24 -nolisten tcp \
+    3>"$scratch/display" >"$scratch/Xvfb.log" 2>&1 &
+xvfb_pid=$!
+wait_for "$DISPLAY_ATTEMPTS" test -s "$scratch/display" || fail 'Xvfb did not report a display'
+DISPLAY=:$(cat "$scratch/display")
+XDG_CONFIG_HOME="$scratch/config"
+LIBGL_ALWAYS_SOFTWARE=1
+export DISPLAY XDG_CONFIG_HOME LIBGL_ALWAYS_SOFTWARE
+unset XAUTHORITY
+wait_for "$DISPLAY_ATTEMPTS" xdpyinfo -display "$DISPLAY" >/dev/null 2>&1 || fail 'Xvfb did not accept a connection'
+
+# Keep the renderer's environment and PID even if it exits before polling.
+BRLCAD_ROOT="$scratch/root"
+RT_IPC_ENV_FILE="$scratch/rt-ipc-env"
+RT_PID_FILE="$scratch/rt-pid"
+mkdir -p "$XDG_CONFIG_HOME" "$BRLCAD_ROOT/bin"
+for subdir in lib libexec share; do
+    if [ -d "$build_dir/$subdir" ]; then
+        ln -s "$build_dir/$subdir" "$BRLCAD_ROOT/$subdir"
     fi
-    check "rt received PKG_ADDR_ENVVAR (IPC path taken)" "$ipc_used -eq 1"
+done
+cat > "$BRLCAD_ROOT/bin/rt" <<'RT_WRAPPER'
+#!/bin/sh
+printf '%s\n' "${PKG_ADDR:-}" > "$RT_IPC_ENV_FILE"
+printf '%s\n' "$$" > "$RT_PID_FILE"
+exec "$RT_BIN" "$@"
+RT_WRAPPER
+chmod +x "$BRLCAD_ROOT/bin/rt"
+export BRLCAD_ROOT RT_BIN RT_IPC_ENV_FILE RT_PID_FILE
 
-    # qged should still be alive
-    check "qged process survived ert" "-d /proc/$QGED_PID"
+"$QGED_BIN" -s "$TEST_DB" >"$scratch/qged.log" 2>&1 &
+qged_pid=$!
+wait_for "$WINDOW_ATTEMPTS" visible_window || fail 'QGED main window did not appear'
+xdotool windowfocus --sync "$window"
+xdotool windowraise "$window"
 
-    # Check logs for crash indicators
-    if [ -f "$QGED_ERRLOG" ]; then
-        if grep -q "Segmentation fault\|Aborted\|core dumped" "$QGED_ERRLOG" 2>/dev/null; then
-            fail "qged did not crash during ert"
-        else
-            pass "qged did not crash during ert"
-        fi
-    fi
+# Click the console near the bottom center of the default window.
+height=$(xdotool getwindowgeometry "$window" | awk '/Geometry/{split($2,g,"x"); print g[2]}')
+xdotool mousemove --window "$window" 550 "$((height * 79 / 100))" click 1
+xdotool type --clearmodifiers 'draw all'
+xdotool key Return
+sleep 1
+xdotool type --clearmodifiers 'ert -P 1 -H 4'
+xdotool key Return
 
-    # Verify that the Qt event loop is still responsive after the framebuffer
-    # client finishes.  A stale queued QSocketNotifier activation used to run
-    # after the first activation had drained the IPC descriptor, blocking the
-    # main thread in pkg_suckin() and leaving a living but unresponsive qged.
-    # Select File -> Exit.  qged does not exit through the generic
-    # WM_DELETE_WINDOW path, so xdotool windowclose is not an appropriate
-    # responsiveness check for this application.
-    xdotool mousemove --window "$WIN" 18 11 2>/dev/null || true
-    xdotool click 1 2>/dev/null || true
-    sleep 0.2
-    xdotool mousemove --window "$WIN" 40 153 2>/dev/null || true
-    xdotool click 1 2>/dev/null || true
-    qged_exited=0
-    for i in $(seq 1 100); do
-        if [ ! -d "/proc/$QGED_PID" ]; then
-            qged_exited=1; break
-        fi
-        state=$(awk '/^State/{print $2}' "/proc/$QGED_PID/status" 2>/dev/null)
-        if [ "$state" = "Z" ]; then
-            qged_exited=1; break
-        fi
-        sleep 0.1
-    done
-    check "qged handled File -> Exit after ert" "$qged_exited -eq 1"
-    if [ "$qged_exited" -eq 1 ]; then
-        wait "$QGED_PID" 2>/dev/null || true
-        QGED_PID=""
-    fi
-else
-    echo "SKIP: xdotool not available; skipping interactive ert test"
-fi
+wait_for "$RENDER_START_ATTEMPTS" test -s "$RT_PID_FILE" || fail 'ert did not launch rt'
+[ -n "$(cat "$RT_IPC_ENV_FILE")" ] || fail 'rt did not receive the framebuffer IPC address'
+rt_pid=$(cat "$RT_PID_FILE")
+wait_for "$RENDER_FINISH_ATTEMPTS" exited "$rt_pid" || fail 'rt did not finish'
+running "$qged_pid" || fail 'QGED terminated during rt'
 
-# -------------------------------------------------------------------
-# 6. Summary
-# -------------------------------------------------------------------
-echo ""
-echo "Tests: $PASS/$((PASS+FAIL)) passed"
-[ "$FAIL" -eq 0 ] && exit 0 || exit 1
+# Select the last File menu action independently of the menu's row heights.
+xdotool mousemove --window "$window" 18 11 click 1
+sleep 0.2
+xdotool key Up Return
+wait_for "$EXIT_ATTEMPTS" exited "$qged_pid" || fail 'QGED did not respond to File > Exit'
+wait "$qged_pid" || fail 'QGED exited unsuccessfully'
+qged_pid=''
+echo 'PASS: QGED launched rt over framebuffer IPC and remained responsive'

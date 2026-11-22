@@ -88,35 +88,29 @@ if(HAVE_QT_IPC_DEPS)
 endif(HAVE_QT_IPC_DEPS)
 
 # -------------------------------------------------------------------
-# test_qged_ert: full qged+ert integration under Xvfb (Phase 3+5)
-# Requires qged, xvfb-run, and xdotool.  Skips gracefully if absent.
+# test_qged_ert: full qged+ert integration on a private Xvfb display
 # -------------------------------------------------------------------
-find_program(XVFB_RUN xvfb-run)
-find_program(XDOTOOL  xdotool)
+find_program(XVFB_EXECUTABLE Xvfb)
+find_program(XDOTOOL xdotool)
+find_program(XDPYINFO xdpyinfo)
 
-if(TARGET qged AND XVFB_RUN AND XDOTOOL)
+if(TARGET qged AND TARGET rt AND TARGET boolean-ops.g AND SH_EXEC AND XVFB_EXECUTABLE AND XDOTOOL AND XDPYINFO)
   configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/test_qged_ert.sh
     ${CMAKE_CURRENT_BINARY_DIR}/test_qged_ert.sh
     COPYONLY
   )
   distclean(${CMAKE_CURRENT_BINARY_DIR}/test_qged_ert.sh)
-  file(CHMOD ${CMAKE_CURRENT_BINARY_DIR}/test_qged_ert.sh
-    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
-                GROUP_READ GROUP_EXECUTE
-                WORLD_READ WORLD_EXECUTE
-  )
   brlcad_add_test(
     NAME    regress-qged-ert
-    COMMAND ${XVFB_RUN} -a -s "-screen 0 1280x960x24"
-            ${CMAKE_CURRENT_BINARY_DIR}/test_qged_ert.sh
+    COMMAND "${SH_EXEC}" "${CMAKE_CURRENT_BINARY_DIR}/test_qged_ert.sh"
   )
   set_tests_properties(regress-qged-ert PROPERTIES
-    ENVIRONMENT "QGED_BIN=$<TARGET_FILE:qged>;RT_BIN=$<TARGET_FILE:rt>;TEST_DB=${CMAKE_BINARY_DIR}/share/db/boolean-ops.g;VERBOSE=1"
+    ENVIRONMENT "QGED_BIN=$<TARGET_FILE:qged>;RT_BIN=$<TARGET_FILE:rt>;TEST_DB=${CMAKE_BINARY_DIR}/${DATA_DIR}/db/boolean-ops.g;XVFB_BIN=${XVFB_EXECUTABLE}"
     ENVIRONMENT_MODIFICATION "${ipc_runtime_path_modification}"
-    TIMEOUT 120
+    TIMEOUT 210
   )
-  brlcad_regression_test(regress-qged-ert "qged;rt" STAND_ALONE TEST_DEFINED)
+  brlcad_regression_test(regress-qged-ert "qged;rt;boolean-ops.g" STAND_ALONE TEST_DEFINED)
   distclean(${CMAKE_CURRENT_BINARY_DIR}/regress-qged-ert.log)
 endif()
 

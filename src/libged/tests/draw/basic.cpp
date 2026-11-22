@@ -709,10 +709,10 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec_autoview(gedp, 1, s_av);
 
-    // The point based sampling can vary quite a bit visually, so this has a
-    // looser tolerance than the other tests - we just want to be sure we're
-    // getting a rendering, not that the rendering is exactly the same.
-    ret += img_cmp(24, gedp, lcache, true, clear_images, soft_fail, 0.98, "clear", "v");
+    // The sampled points vary with the available CPU count. An empty frame
+    // scores about 0.947 against this control, below the allowed variation.
+    const fastf_t point_cloud_min_ssim = 0.96;
+    ret += img_cmp(24, gedp, lcache, true, clear_images, soft_fail, point_cloud_min_ssim, "clear", "v");
     bu_log("Done.\n");
 
     bu_log("Test clearing of previous drawing mode (shaded and wireframe)...\n");
