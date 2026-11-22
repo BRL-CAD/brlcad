@@ -2554,13 +2554,12 @@ size_t
 BViewState::count_drawn_paths(int mode, bool list_collapsed)
 {
     std::unordered_map<int, std::vector<std::vector<unsigned long long>>>::iterator m_it;
-    std::vector<std::string> ret;
     if (mode == -1 && list_collapsed)
 	return all_collapsed.size();
 
     if (mode != -1 && list_collapsed) {
 	m_it = mode_collapsed.find(mode);
-	if (m_it == mode_collapsed.end())
+	if (m_it != mode_collapsed.end())
 	    return m_it->second.size();
 	return 0;
     }
@@ -2868,12 +2867,19 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 	    gather_paths(objs, ihash, ms_it->first, v, NULL, m, NULL, cpath, views, &ret);
 	}
 	for (sz_it = draw_invalid_collapsed.begin(); sz_it != draw_invalid_collapsed.end(); sz_it++) {
-	    std::vector<unsigned long long> cpath = ms_it->second[*sz_it];
+	    std::vector<unsigned long long> &cpath = ms_it->second[*sz_it];
+	    unsigned long long phash = dbis->path_hash(cpath, 0);
+	    struct bv_scene_obj *&entry = s_map[phash][ms_it->first];
+	    if (entry)
+		continue;
 	    struct bv_scene_obj *s = bv_obj_get(v, BV_DB_OBJS);
 	    // print path name, set view - otherwise empty
 	    dbis->print_path(&s->s_name, cpath);
 	    s->s_v = v;
-	    s_map[ms_it->first][*iv_it] = s;
+	    s->s_os->s_dmode = ms_it->first;
+	    entry = s;
+	    s_keys[phash] = cpath;
+	    ret = GED_DBISTATE_VIEW_CHANGE;
 
 	    // NOTE: Because there is no geometry to update, these scene objs
 	    // are not added to objs

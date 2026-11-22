@@ -314,6 +314,19 @@ main(int ac, char *av[]) {
     s_av[2] = NULL;
     ged_exec_draw(gedp, 2, s_av);
 
+    BViewState *view_state = dbis->get_view_state(v);
+    const int wireframe_mode = 0;
+    const int shaded_mode = 1;
+    size_t wireframe_count = view_state->count_drawn_paths(wireframe_mode, true);
+    if (!wireframe_count || wireframe_count != view_state->list_drawn_paths(wireframe_mode, true).size()) {
+	bu_log("Collapsed wireframe path count does not match the drawn paths.\n");
+	ret += BRLCAD_ERROR;
+    }
+    if (view_state->count_drawn_paths(shaded_mode, true)) {
+	bu_log("Collapsed path count for the undrawn shaded mode should be zero.\n");
+	ret += BRLCAD_ERROR;
+    }
+
     s_av[0] = "autoview";
     s_av[1] = NULL;
     ged_exec_autoview(gedp, 1, s_av);
