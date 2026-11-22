@@ -1,0 +1,27 @@
+# Explicit installer roots; Anaconda supplies their dependency closure.
+# Boot firmware support is included for the shared UEFI guest recipe.
+bash
+coreutils
+dnf
+dnf-plugins-core
+e2fsprogs
+firewalld
+glibc-langpack-en
+grub2-efi-x64
+grub2-tools
+iproute
+kernel
+NetworkManager
+openssh-clients
+openssh-server
+passwd
+python3.11
+rocky-release
+rocky-repos
+rocky-gpg-keys
+selinux-policy-targeted
+shim-x64
+sudo
+tar
+util-linux
+xfsprogs

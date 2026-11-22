@@ -29,6 +29,7 @@ if(TARGET archer)
 endif(TARGET archer)
 
 add_subdirectory(CMake)
+add_subdirectory(vmpkg)
 
 if(NOT BRLCAD_COMPONENTS)
   add_subdirectory(doxygen)

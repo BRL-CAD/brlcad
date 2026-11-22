@@ -1,0 +1,30 @@
+# Only these repositories participate in the initial RPM lock resolution.
+# Their contents can change. The resulting RPM bytes and NEVRAs are locked.
+[vmpkg-baseos]
+name=Rocky 8.10 BaseOS
+baseurl=https://download.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rockyofficial
+
+[vmpkg-appstream]
+name=Rocky 8.10 AppStream
+baseurl=https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rockyofficial
+
+[vmpkg-powertools]
+name=Rocky 8.10 PowerTools
+baseurl=https://download.rockylinux.org/pub/rocky/8.10/PowerTools/x86_64/os/
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rockyofficial
+
+[vmpkg-epel-x11]
+name=EPEL 8 XCB cursor and X11 test tools
+baseurl=https://dl.fedoraproject.org/pub/epel/8/Everything/x86_64/
+enabled=1
+gpgcheck=1
+includepkgs=xcb-util-cursor,xcb-util-cursor-devel,xdotool,libxdo
+# guest-env.py imports only the checksummed EPEL key before resolving RPMs.

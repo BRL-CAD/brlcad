@@ -1,0 +1,35 @@
+text
+cdrom
+lang en_US.UTF-8
+keyboard us
+timezone UTC --utc
+network --bootproto=dhcp --device=link --activate --hostname=release-builder
+rootpw --lock
+user --name=builder --groups=wheel --lock
+sshkey --username=builder "@SSH_KEY@"
+firewall --enabled --service=ssh
+selinux --enforcing
+services --enabled=sshd,NetworkManager
+firstboot --disable
+ignoredisk --only-use=vda
+zerombr
+clearpart --all --initlabel --drives=vda
+bootloader --location=mbr --boot-drive=vda --append="console=tty0 console=ttyS0,115200n8"
+part /boot/efi --fstype=efi --size=200 --ondisk=vda
+part /boot --fstype=xfs --size=1024 --ondisk=vda
+part / --fstype=xfs --size=8192 --grow --ondisk=vda
+poweroff
+
+%packages --nocore --excludedocs --excludeWeakdeps
+@BASE_PACKAGES@
+%end
+
+%post --erroronfail --log=/root/vmpkg-install.log
+mkdir -p /mnt/vmpkg-inputs /opt/vmpkg
+mount -o ro /dev/disk/by-label/OEMDRV /mnt/vmpkg-inputs
+cp -R /mnt/vmpkg-inputs/vmpkg/. /opt/vmpkg/
+umount /mnt/vmpkg-inputs
+printf '%s\n' 'builder ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/release-builder
+chmod 0440 /etc/sudoers.d/release-builder
+rpm -qa --qf '%{NAME}-%{EPOCHNUM}:%{VERSION}-%{RELEASE}.%{ARCH}\n' | LC_ALL=C sort > /opt/vmpkg/base-rpms.txt
+%end

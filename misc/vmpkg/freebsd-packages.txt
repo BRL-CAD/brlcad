@@ -1,0 +1,20 @@
+# Tools for a native BRL-CAD and bext build.
+cmake
+# The Tk HTML widget tests need a Unicode font available through fontconfig.
+dejavu
+git-lite
+gmake
+libX11
+libXext
+mesa-dri
+mesa-libs
+ninja
+pkgconf
+python3
+qt6-base
+qt6-svg
+sudo
+xauth
+xdotool
+xdpyinfo
+xorg-vfbserver

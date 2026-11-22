@@ -54,6 +54,11 @@ else(NOT N EQUAL 0)
   set(JFLAG)
 endif(NOT N EQUAL 0)
 
+# Honor the caller's CTest limit when several builds share a host.
+if(DEFINED ENV{CTEST_PARALLEL_LEVEL})
+  set(JFLAG)
+endif()
+
 if("${CONFIG}" STREQUAL "")
   set(CONFIG "\"${CMAKE_BUILD_TYPE}\"")
 endif("${CONFIG}" STREQUAL "")
