@@ -43,7 +43,7 @@ jobs:
           # Install tools
           sudo apt-get install astyle re2c xsltproc libxml2-utils
           # Install dependency dev pkgs
-          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev libssl-dev tcl-dev tk-dev
           # Install XCB/OpenGL dev pkgs for Qt - see:
           # https://wiki.qt.io/Building_Qt_6_from_Git
           # https://doc.qt.io/qt-6/linux-requirements.html
@@ -74,7 +74,7 @@ jobs:
       - name: Configure
         run: |
           export PATH=$GITHUB_WORKSPACE:$PATH
-          cmake -S brlcad -B build_linux -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ runner.temp }}/bext_output -DBRLCAD_ENABLE_QT=ON
+          cmake -S brlcad -B build_linux -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ runner.temp }}/bext_output -DBRLCAD_ENABLE_QT=ON -DCMAKE_REQUIRE_FIND_PACKAGE_OpenSSL=ON
 
       - name: Build
         id: build_parallel
@@ -90,6 +90,11 @@ jobs:
           export PATH=$GITHUB_WORKSPACE:$PATH
           cmake --build build_linux --config Release --target check
           cmake --build build_linux --config Release --target package
+
+      - name: Test TLS transports
+        run: |
+          export PATH=$GITHUB_WORKSPACE:$PATH
+          cmake --build build_linux --config Release --target regress-rtwiz_fb_transport regress-remrt-tls -j2
 
   # A full distcheck is too expensive for the runners, but we can run the
   # repository integrity check and make sure we can build source archives.
@@ -238,7 +243,12 @@ jobs:
       - name: Configure
         shell: powershell
         run: |
-          cmake -S brlcad -B build_winninja -G Ninja -DCMAKE_C_COMPILER="cl.exe" -DCMAKE_CXX_COMPILER="cl.exe" -DBRLCAD_EXT_DIR=${{ runner.temp }}\bext_output -DCMAKE_BUILD_TYPE=Release -DBRLCAD_ENABLE_QT=ON
+          $openssl = Join-Path $env:ProgramFiles 'OpenSSL'
+          if (-not (Test-Path (Join-Path $openssl 'include\openssl\ssl.h'))) {
+            throw 'The runner OpenSSL development headers are missing'
+          }
+          Add-Content -Path $env:GITHUB_PATH -Value (Join-Path $openssl 'bin')
+          cmake -S brlcad -B build_winninja -G Ninja -DCMAKE_C_COMPILER="cl.exe" -DCMAKE_CXX_COMPILER="cl.exe" -DBRLCAD_EXT_DIR=${{ runner.temp }}\bext_output -DCMAKE_BUILD_TYPE=Release -DBRLCAD_ENABLE_QT=ON "-DOPENSSL_ROOT_DIR=$openssl" -DCMAKE_REQUIRE_FIND_PACKAGE_OpenSSL=ON
 
       - name: Build
         id: build_parallel
@@ -260,6 +270,9 @@ jobs:
         run: |
           ninja check -v
         working-directory: ${{ github.workspace }}/build_winninja
+
+      - name: Test TLS transports
+        run: cmake --build build_winninja --config Release --target regress-rtwiz_fb_transport regress-remrt-tls -j2
 
       - name: Package
         shell: powershell
@@ -392,6 +405,9 @@ jobs:
         run: |
           brew install xquartz --cask
 
+      - name: Install OpenSSL
+        run: brew list --versions openssl@3 || brew install openssl@3
+
       - name: Checkout
         uses: actions/checkout@v6
         with:
@@ -417,7 +433,9 @@ jobs:
           export PATH=$GITHUB_WORKSPACE:$PATH
           export CC=clang
           export CXX=clang++
-          cmake -S brlcad -B build_osx -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ runner.temp }}/bext_output -DBRLCAD_ENABLE_QT=ON
+          openssl_root=$(brew --prefix openssl@3)
+          export PKG_CONFIG_PATH="$openssl_root/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+          cmake -S brlcad -B build_osx -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ runner.temp }}/bext_output -DBRLCAD_ENABLE_QT=ON "-DOPENSSL_ROOT_DIR=$openssl_root" -DCMAKE_REQUIRE_FIND_PACKAGE_OpenSSL=ON
 
       - name: Build
         id: build_parallel
@@ -438,6 +456,9 @@ jobs:
           export PATH=$GITHUB_WORKSPACE:$PATH
           make check
         working-directory: ${{ github.workspace }}/build_osx
+
+      - name: Test TLS transports
+        run: cmake --build build_osx --config Release --target regress-rtwiz_fb_transport regress-remrt-tls -j2
 
       - name: Package
         run: |
