@@ -102,7 +102,7 @@ configure_file(ttcp_config.h.in ttcp_config.h)
 
 set(TTCP_SOURCE ttcp.c)
 if(COMMAND brlcad_addexec)
-  brlcad_addexec(ttcp ${TTCP_SOURCE} ${TTCP_LIBRARIES} FOLDER Util)
+  brlcad_addexec(ttcp ${TTCP_SOURCE} "${TTCP_LIBRARIES}" FOLDER Util)
 else()
   add_executable(ttcp ${TTCP_SOURCE})
   if(TTCP_LIBRARIES)
