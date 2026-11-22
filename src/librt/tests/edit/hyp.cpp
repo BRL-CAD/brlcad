@@ -23,9 +23,9 @@
  *
  * Reference HYP: Vi=(0,0,0), Hi=(0,0,10), A=(4,0,0), b=3, bnr=0.5
  *
- * HYP descriptors specify absolute lengths in local units for H/A/B and
- * absolute dimensionless ratios for C.  MGED and mouse scale factors are
- * relative.
+ * Numeric input sets absolute lengths in local units for H/A/B and an
+ * absolute dimensionless ratio for C.  Mouse input scales relative to
+ * the current value.
  *
  * Bug fixed: MAT4X3VEC aliasing in ecmd_hyp_rot_h.
  * MGED has the identical bug.  Fix justified: pure rotation must
@@ -188,7 +188,7 @@ rt_edit_test_hyp(void)
     }
 
     /* ================================================================
-     * ECMD_HYP_H  (scale Hi; typed e_para[0] is absolute |Hi|)
+     * ECMD_HYP_H  (scale Hi; numeric e_para[0] is absolute |Hi|)
      * Interactive es_scale=2: Hi'=(0,0,20)
      * Restore: e_para[0]=10, derived es_scale=0.5, Hi'=(0,0,10)
      * ================================================================*/
@@ -203,20 +203,13 @@ rt_edit_test_hyp(void)
     bu_log("ECMD_HYP_H SUCCESS: Hi=%g,%g,%g\n", V3ARGS(edit_hyp->hyp_Hi));
 
     /* Restore via the absolute current-value contract. */
-    s->e_typed_input = 1;    s->e_inpara = 1;
+    s->e_inpara = 1;
     s->e_para[0] = 10.0;
     VMOVE(cmp_hyp->hyp_Hi, orig_hyp->hyp_Hi);
     rt_edit_process(s);
     if (hyp_diff("ECMD_HYP_H restore", cmp_hyp, edit_hyp))
 	bu_exit(1, "ERROR: ECMD_HYP_H restore failed\n");
     bu_log("ECMD_HYP_H SUCCESS: Hi restored to %g,%g,%g\n", V3ARGS(edit_hyp->hyp_Hi));
-
-    s->e_inpara = 1;
-    s->e_para[0] = 2.0;
-    VSCALE(cmp_hyp->hyp_Hi, orig_hyp->hyp_Hi, s->e_para[0]);
-    if (rt_edit_process(s) != BRLCAD_OK ||
-	hyp_diff("ECMD_HYP_H legacy scale factor", cmp_hyp, edit_hyp))
-	bu_exit(1, "ERROR: Legacy HYP keyboard input did not use a scale factor\n");
 
     /* ================================================================
      * ECMD_HYP_SCALE_A  (scale semi-major axis A)
@@ -232,7 +225,6 @@ rt_edit_test_hyp(void)
 	bu_exit(1, "ERROR: ECMD_HYP_SCALE_A failed\n");
     bu_log("ECMD_HYP_SCALE_A SUCCESS: A=%g,%g,%g\n", V3ARGS(edit_hyp->hyp_A));
 
-    s->e_typed_input = 1;
     s->e_inpara = 1;
     s->e_para[0] = 4.0;
     VMOVE(cmp_hyp->hyp_A, orig_hyp->hyp_A);
@@ -255,7 +247,6 @@ rt_edit_test_hyp(void)
 	bu_exit(1, "ERROR: ECMD_HYP_SCALE_B failed\n");
     bu_log("ECMD_HYP_SCALE_B SUCCESS: b=%g\n", edit_hyp->hyp_b);
 
-    s->e_typed_input = 1;
     s->e_inpara = 1;
     s->e_para[0] = 3.0;
     cmp_hyp->hyp_b = 3;
@@ -265,7 +256,7 @@ rt_edit_test_hyp(void)
     bu_log("ECMD_HYP_SCALE_B SUCCESS: b restored to %g\n", edit_hyp->hyp_b);
 
     /* ================================================================
-     * ECMD_HYP_C  (set bnr; absolute typed value must be <= 1.0)
+     * ECMD_HYP_C  (set bnr; absolute numeric value must be <= 1.0)
      * Initial bnr=0.5; es_scale=1.5: bnr'=0.5*1.5=0.75 <= 1.0 ✓
      * Restore: e_para[0]=0.5 sets the ratio directly.
      * ================================================================*/
@@ -281,7 +272,7 @@ rt_edit_test_hyp(void)
     bu_log("ECMD_HYP_C SUCCESS: bnr=%g\n", edit_hyp->hyp_bnr);
 
     /* Restore the absolute ratio. */
-    s->e_typed_input = 1;    s->e_inpara = 1;
+    s->e_inpara = 1;
     s->e_para[0] = 0.5;
     cmp_hyp->hyp_bnr = 0.5;
     rt_edit_process(s);
@@ -307,7 +298,7 @@ rt_edit_test_hyp(void)
 	s->e_mat[15] = path_scale;
 	s->e_invmat[15] = 1.0 / path_scale;
 	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, length_cmds[i]);
-	s->e_typed_input = 1;	s->e_inpara = 1;
+	s->e_inpara = 1;
 	s->e_para[0] = requested_local;
 	switch (length_cmds[i]) {
 	    case ECMD_HYP_H:
@@ -336,12 +327,23 @@ rt_edit_test_hyp(void)
     s->e_mat[15] = path_scale;
     s->e_invmat[15] = 1.0 / path_scale;
     EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_HYP_C);
-    s->e_typed_input = 1;    s->e_inpara = 1;
+    s->e_inpara = 1;
     s->e_para[0] = 1.0;
     cmp_hyp->hyp_bnr = 1.0;
     rt_edit_process(s);
     if (hyp_diff("dimensionless neck ratio", cmp_hyp, edit_hyp))
 	bu_exit(1, "ERROR: HYP neck ratio changed with units or path scale\n");
+
+    s->e_inpara = 1;
+    s->e_para[0] = 1.25;
+    if (rt_edit_process(s) != BRLCAD_ERROR ||
+	hyp_diff("out-of-range neck ratio", cmp_hyp, edit_hyp))
+	bu_exit(1, "ERROR: HYP accepted an out-of-range neck ratio\n");
+
+    s->es_scale = 1.25;
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	hyp_diff("neck ratio at the mouse scaling limit", cmp_hyp, edit_hyp))
+	bu_exit(1, "ERROR: HYP mouse scaling exceeded the neck ratio limit\n");
 
     MAT_IDN(s->e_mat);
     MAT_IDN(s->e_invmat);

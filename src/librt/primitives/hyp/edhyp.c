@@ -296,63 +296,57 @@ ecmd_hyp_rot_h(struct rt_edit *s)
 }
 
 static int
+hyp_set_neck_ratio(struct rt_edit *s, fastf_t *ratio)
+{
+    if (s->e_inpara) {
+	if (s->e_inpara != 1) {
+	    bu_vls_printf(s->log_str, "Exactly one neck ratio is required\n");
+	    return BRLCAD_ERROR;
+	}
+	const fastf_t value = s->e_para[0];
+	if (!isfinite(value) || value <= 0.0 || value > 1.0) {
+	    bu_vls_printf(s->log_str,
+		    "Neck ratio must be finite, positive, and no greater than 1\n");
+	    return BRLCAD_ERROR;
+	}
+	*ratio = value;
+	return BRLCAD_OK;
+    }
+
+    const fastf_t scale = s->es_scale;
+    if (ZERO(scale))
+	return BRLCAD_OK;
+    if (!isfinite(scale) || scale <= 0.0) {
+	bu_vls_printf(s->log_str, "Scale must be finite and positive\n");
+	return BRLCAD_ERROR;
+    }
+
+    /* A mouse drag beyond the upper bound leaves the ratio unchanged. */
+    const fastf_t scaled_ratio = *ratio * scale;
+    if (scaled_ratio <= 1.0)
+	*ratio = scaled_ratio;
+    return BRLCAD_OK;
+}
+
+static int
 rt_edit_hyp_pscale(struct rt_edit *s)
 {
     struct rt_hyp_internal *hyp =
 	(struct rt_hyp_internal *)s->es_int.idb_ptr;
     RT_HYP_CK_MAGIC(hyp);
 
-    if (!s->e_inpara && ZERO(s->es_scale))
-	return BRLCAD_OK;
-    if (s->e_inpara > 1) {
-	bu_vls_printf(s->log_str, "Exactly one scale parameter is required\n");
-	return BRLCAD_ERROR;
-    }
-
-    if (s->e_inpara && s->e_typed_input) {
-	switch (s->edit_flag) {
-	    case ECMD_HYP_H:
-		return edit_scale_length(s, &hyp->hyp_Hi, NULL);
-	    case ECMD_HYP_SCALE_A:
-		return edit_scale_length(s, &hyp->hyp_A, NULL);
-	    case ECMD_HYP_SCALE_B:
-		return edit_scale_length(s, NULL, &hyp->hyp_b);
-	    case ECMD_HYP_C:
-		if (s->e_para[0] <= 0.0 || s->e_para[0] > 1.0) {
-		    bu_vls_printf(s->log_str,
-			    "Neck ratio must be positive and no greater than 1\n");
-		    return BRLCAD_ERROR;
-		}
-		hyp->hyp_bnr = s->e_para[0];
-		return BRLCAD_OK;
-	}
-    }
-
-    /* MGED parameter input and mouse input both supply relative factors. */
-    const fastf_t scale = s->e_inpara ? s->e_para[0] : s->es_scale;
-    if (!isfinite(scale) || scale <= 0.0) {
-	bu_vls_printf(s->log_str, "Scale must be finite and positive\n");
-	return BRLCAD_ERROR;
-    }
     switch (s->edit_flag) {
 	case ECMD_HYP_H:
-	    VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, scale);
-	    break;
+	    return edit_scale_length(s, &hyp->hyp_Hi, NULL);
 	case ECMD_HYP_SCALE_A:
-	    VSCALE(hyp->hyp_A, hyp->hyp_A, scale);
-	    break;
+	    return edit_scale_length(s, &hyp->hyp_A, NULL);
 	case ECMD_HYP_SCALE_B:
-	    hyp->hyp_b *= scale;
-	    break;
-	case ECMD_HYP_C: {
-	    const fastf_t ratio = hyp->hyp_bnr * scale;
-	    if (ratio <= 1.0)
-		hyp->hyp_bnr = ratio;
-	    break;
-	}
+	    return edit_scale_length(s, NULL, &hyp->hyp_b);
+	case ECMD_HYP_C:
+	    return hyp_set_neck_ratio(s, &hyp->hyp_bnr);
+	default:
+	    return BRLCAD_ERROR;
     }
-
-    return BRLCAD_OK;
 }
 
 C_DECL int

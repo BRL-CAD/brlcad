@@ -120,13 +120,12 @@ prim_edit_mouse_check eto_pe.s "Set D"  r_d 1.5 -1
 kill eto_pe.s
 
 puts "--- HYP (one-sheet hyperboloid: H, A, B, c) ---"
-# HYP p command sets a SCALE FACTOR (not absolute length): new = old * p_val.
-# Initial: H.z=10, A.y=5, b=2, bnr=0.5
 in hyp_pe.s hyp 0 0 0  0 0 10  0 5 0  2 0.5
-prim_edit_check      hyp_pe.s "Set H"  2   H   20   2
-prim_edit_check      hyp_pe.s "Set A"  2   A   10   1
-prim_edit_check      hyp_pe.s "Set B"  2   b    4   -1
-prim_edit_check      hyp_pe.s "Set c"  0.5 bnr  0.25 -1
+prim_edit_check      hyp_pe.s "Set H" 20   H   20   2
+prim_edit_check      hyp_pe.s "Set H" 20   H   20   2
+prim_edit_check      hyp_pe.s "Set A" 10   A   10   1
+prim_edit_check      hyp_pe.s "Set B"  4   b    4   -1
+prim_edit_check      hyp_pe.s "Set c"  0.25 bnr 0.25 -1
 prim_edit_mouse_check hyp_pe.s "Set H"  H  20   2
 prim_edit_mouse_check hyp_pe.s "Set A"  A  10   1
 prim_edit_mouse_check hyp_pe.s "Set B"  b  4    -1

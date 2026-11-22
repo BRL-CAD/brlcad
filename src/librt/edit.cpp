@@ -299,7 +299,6 @@ rt_edit_reset(struct rt_edit *s)
     VSETALL(s->acc_sc, 1.0);
     s->base2local = 1.0;
     s->e_inpara = 0;
-    s->e_typed_input = 0;
     s->e_nstr = 0;
     s->e_keyfixed = 0;
     s->e_keytag = NULL;
@@ -1208,7 +1207,6 @@ static void
 rt_edit_clear_input(struct rt_edit *s)
 {
     s->e_inpara = 0;
-    s->e_typed_input = 0;
     s->e_nstr = 0;
     memset(s->e_str, 0, sizeof(s->e_str));
     s->e_mvalid = 0;

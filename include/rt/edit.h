@@ -365,9 +365,6 @@ struct rt_edit {
 
     /* User pointer */
     void *u_ptr;
-
-    /* Numeric input follows the primitive command descriptor. */
-    int e_typed_input;
 };
 
 /** Create and initialize an rt_edit struct */
