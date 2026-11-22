@@ -458,7 +458,8 @@ jobs:
         working-directory: ${{ github.workspace }}/build_osx
 
       - name: Test TLS transports
-        run: cmake --build build_osx --config Release --target regress-rtwiz_fb_transport regress-remrt-tls -j2
+        # Avoid sharing the macOS Make jobserver pipe with CTest.
+        run: cmake --build build_osx --config Release --target regress-rtwiz_fb_transport regress-remrt-tls --parallel 1
 
       - name: Package
         run: |
