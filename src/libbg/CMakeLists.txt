@@ -69,6 +69,14 @@ if(_geo_flags)
         set_source_files_properties(${_src} PROPERTIES COMPILE_OPTIONS "${_geo_flags}")
     endforeach()
 endif()
+
+# Pointer analysis dominates GCC compile time for this translation unit.
+check_cxx_compiler_flag("-fno-ipa-pta" BG_CXX_NO_IPA_PTA)
+if(BG_CXX_NO_IPA_PTA)
+    set_property(SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/geogram/voronoi/RVD.cpp"
+        APPEND PROPERTY COMPILE_OPTIONS "-fno-ipa-pta")
+endif()
+
 # nl_amgcl.cpp includes AMGCL headers that use #pragma omp; suppress the
 # resulting -Wunknown-pragmas diagnostic when that warning group is available
 # (OpenMP is not required here).
