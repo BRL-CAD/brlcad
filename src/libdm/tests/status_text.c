@@ -56,14 +56,14 @@ draw_text(struct dm *dmp, const char *text, fastf_t x, fastf_t y,
     int UNUSED(size), int UNUSED(aspect))
 {
     struct fixture *f = (struct fixture *)dm_get_udata(dmp);
-    int size = dm_get_fontsize(dmp);
+    int font_size = dm_get_fontsize(dmp);
     fastf_t left = (x + 1) * dm_get_width(dmp) * 0.5;
     fastf_t bottom = (y + 1) * dm_get_height(dmp) * 0.5;
-    check(left >= 0 && left + strlen(text) * size * 0.5 <= dm_get_width(dmp), "row exceeds width");
-    check(bottom >= size * 0.25 && bottom + size <= dm_get_height(dmp), "row exceeds height");
+    check(left >= 0 && left + strlen(text) * font_size * 0.5 <= dm_get_width(dmp), "row exceeds width");
+    check(bottom >= font_size * 0.25 && bottom + font_size <= dm_get_height(dmp), "row exceeds height");
     check(!f->rows || y < f->previous_y, "rows not drawn in reading order");
-    if (!f->rows || size < f->smallest) f->smallest = size;
-    if (size > f->largest) f->largest = size;
+    if (!f->rows || font_size < f->smallest) f->smallest = font_size;
+    if (font_size > f->largest) f->largest = font_size;
     f->previous_y = y;
     f->rows++;
     return BRLCAD_OK;
