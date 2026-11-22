@@ -58,3 +58,35 @@ if grep 'old_noop' "$sample" >/dev/null; then
   echo "DROP CALL did not remove old_noop" >&2
   exit 1
 fi
+
+mkdir -p "$test_dir/include"
+cat > "$test_dir/include/api.h" <<'SRC'
+#ifndef TEST_API_H
+#define TEST_API_H
+#define TEST_BRACKET "["
+#define TEST_SEPARATOR ";"
+TEST_EXPORT extern int test_one_line(int value);
+TEST_EXPORT extern const char *
+test_lookup(const int keys[2], /* a semicolon;
+                                  inside a parameter comment */
+            int (*match)(int, int));
+extern TEST_EXPORT void
+test_reset(void);
+#endif
+SRC
+
+baseline="$test_dir/api.adoc"
+"$cmake_bin" \
+  -DCHANGES_SOURCE_DIR="$test_dir" \
+  -DCHANGES_API_BASELINE="$baseline" \
+  -P "$src_dir/changes_api_snapshot.cmake"
+
+grep -Fqx 'include/api.h: #define TEST_BRACKET "["' "$baseline"
+grep -Fqx 'include/api.h: #define TEST_SEPARATOR ";"' "$baseline"
+grep -Fqx 'include/api.h: TEST_EXPORT extern int test_one_line(int value);' "$baseline"
+grep -Fqx 'include/api.h: TEST_EXPORT extern const char * test_lookup(const int keys[2], int (*match)(int, int));' "$baseline"
+grep -Fqx 'include/api.h: extern TEST_EXPORT void test_reset(void);' "$baseline"
+if grep -q 'TEST_API_H' "$baseline"; then
+  echo "Header guard should be omitted from the API baseline" >&2
+  exit 1
+fi
