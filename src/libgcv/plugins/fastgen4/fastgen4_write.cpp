@@ -665,13 +665,7 @@ GridManager::get_unique_grids(const std::vector<Point> &points)
     std::vector<std::size_t> results(points.size());
 
     for (std::size_t i = 0; i < points.size(); ++i) {
-	std::pair<std::map<Point, std::vector<std::size_t>, PointComparator>::iterator, bool>
-	found;
-	{
-	    std::vector<std::size_t> temp(1);
-	    temp.at(0) = m_next_grid_id;
-	    found = m_grids.insert(std::make_pair(points.at(i), temp));
-	}
+	auto found = m_grids.try_emplace(points.at(i), 1, m_next_grid_id);
 	results.at(i) = found.first->second.at(0);
 
 	if (found.second) {

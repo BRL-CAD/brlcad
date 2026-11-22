@@ -1127,7 +1127,8 @@ void
 proc_region(char *name1)
 {
     char tmpname[NAMESIZE*2];
-    char tmpname2[NAMESIZE - 3];
+    char region_name[NAMESIZE + sizeof(int) * CHAR_BIT];
+    const int max_base_length = NAMESIZE - (int)(sizeof(".r00") - 1);
     int chkroot;
     size_t i;
     int cc;
@@ -1154,28 +1155,20 @@ proc_region(char *name1)
 	mir_count = 0;
     }
 
-    /* explicitly shorten tmpname to quell the gcc 8.2 snprintf string length warning/error */
-    bu_strlcpy(tmpname2, tmpname, sizeof(tmpname2));
-
-    if (cc != in[0].cc) {
-	mir_count++;
-	snprintf(cname, NAMESIZE+1, "%s.r%.2d", tmpname2, mir_count);
-    } else {
-	reg_count++;
-	snprintf(cname, NAMESIZE+1, "%s.r%.2d", tmpname2, reg_count);
-    }
-
+    /* Keep the original base limit and allow the region counter to grow. */
+    int region_count = cc == in[0].cc ? ++reg_count : ++mir_count;
+    snprintf(region_name, sizeof(region_name), "%.*s.r%.2d", max_base_length, tmpname, region_count);
 
     if (nm[cc].matcode != 0) {
-	mk_lrcomb(outfp, cname, &head, 1, 0, 0, 0, cc, 0, nm[cc].matcode, nm[cc].eqlos, 0);
+	mk_lrcomb(outfp, region_name, &head, 1, 0, 0, 0, cc, 0, nm[cc].matcode, nm[cc].eqlos, 0);
     } else {
-	mk_lrcomb(outfp, cname, &head, 1, 0, 0, 0, cc, 0, 0, 100, 0);
+	mk_lrcomb(outfp, region_name, &head, 1, 0, 0, 0, cc, 0, 0, 100, 0);
     }
 
     if (cc == in[0].cc) {
-	(void) mk_addmember(cname, &heada.l, NULL, WMOP_UNION);
+	(void) mk_addmember(region_name, &heada.l, NULL, WMOP_UNION);
     } else {
-	(void) mk_addmember(cname, &headb.l, NULL, WMOP_UNION);
+	(void) mk_addmember(region_name, &headb.l, NULL, WMOP_UNION);
     }
 
     last_cc = in[0].cc;

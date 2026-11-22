@@ -99,7 +99,6 @@ float mmtin = 25.4f;
 double conv_mm2in;
 fastf_t third = 0.333333333;
 
-char cname[NAMESIZE+1];
 char tname[NAMESIZE+1];
 char surf[2];
 char thick[3];

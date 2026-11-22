@@ -155,7 +155,7 @@ run_server(int port) {
     validate_port(port);
 
     /* start up the server on the given port */
-    snprintf(portname, MAX_DIGITS, "%d", port);
+    snprintf(portname, sizeof(portname), "%d", port);
     listener = pkg_listen(portname, NULL, 0, NULL);
     if (!listener) {
 	bu_bomb("Unable to start the server");
@@ -257,7 +257,7 @@ run_client(const char *server, int port, const char *file, unsigned int tpkg_buf
     /* open a connection to the server */
     validate_port(port);
 
-    snprintf(s_port, MAX_DIGITS, "%d", port);
+    snprintf(s_port, sizeof(s_port), "%d", port);
     stash.connection = pkg_open(server, s_port, "tcp", NULL, NULL, NULL, NULL);
     if (stash.connection == PKC_ERROR) {
 	bu_log("Connection to %s, port %d, failed.\n", server, port);

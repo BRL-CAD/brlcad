@@ -26,6 +26,8 @@
 
 #include "common.h"
 
+#include <string>
+
 #include "file_util.h"
 #include "string_util.h"
 #include "node_type.h"
@@ -86,20 +88,12 @@ Convert_input(NODE *node)
     int face_count=0;
     struct wmember head;
     int vert_no=0;
-    struct bu_vls solid_name = BU_VLS_INIT_ZERO;
-    struct bu_vls region_name = BU_VLS_INIT_ZERO;
-    char sname[5];
-    char rname[5];
 
     bot_fcurr = 0;
 
-    objnumb++;
-    sprintf(sname, "%d", objnumb);
-    sprintf(rname, "r%d", objnumb);
-
-    bu_vls_strcpy(&solid_name, "s");
-    bu_vls_strcat(&solid_name, sname);
-    bu_vls_strcpy(&region_name, rname);
+    const std::string object_number = std::to_string(++objnumb);
+    const std::string solid_name = "s" + object_number;
+    const std::string region_name = "r" + object_number;
 
     if (node->ispoly) {
 	int tmp_face[3] = {0, 0, 0};
@@ -123,35 +117,29 @@ Convert_input(NODE *node)
 	    objnumb--;
 	    return;
 	}
-	mk_bot(fd_out, bu_vls_addr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, tree->curr_vert, bot_fcurr,
+	mk_bot(fd_out, solid_name.c_str(), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, tree->curr_vert, bot_fcurr,
 	tree->the_array, bot_faces, NULL, NULL);
 	bg_vert_tree_clean(tree);
     }else if (node->nnodetype == NODE_CONE) {
-	mk_tgc(fd_out,bu_vls_addr(&solid_name), &allvert[0], &allvert[3], &allvert[6], &allvert[9], &allvert[12], &allvert[15]);
+	mk_tgc(fd_out, solid_name.c_str(), &allvert[0], &allvert[3], &allvert[6], &allvert[9], &allvert[12], &allvert[15]);
     }else if (node->nnodetype == NODE_BOX) {
-	mk_arb8(fd_out,bu_vls_addr(&solid_name), &allvert[0]);
+	mk_arb8(fd_out, solid_name.c_str(), &allvert[0]);
     }else if (node->nnodetype == NODE_CYLINDER) {
-	mk_tgc(fd_out,bu_vls_addr(&solid_name), &allvert[0], &allvert[3], &allvert[6], &allvert[9], &allvert[6], &allvert[9]);
+	mk_tgc(fd_out, solid_name.c_str(), &allvert[0], &allvert[3], &allvert[6], &allvert[9], &allvert[6], &allvert[9]);
     }else if (node->nnodetype == NODE_SPHERE) {
-	mk_ell(fd_out,bu_vls_addr(&solid_name), &allvert[0], &allvert[3], &allvert[6], &allvert[9]);
+	mk_ell(fd_out, solid_name.c_str(), &allvert[0], &allvert[3], &allvert[6], &allvert[9]);
     } else {
 	objnumb--;
 	return;
     }
 
     BU_LIST_INIT(&head.l);
-    (void)mk_addmember(bu_vls_addr(&solid_name), &head.l, NULL, WMOP_UNION);
+    (void)mk_addmember(solid_name.c_str(), &head.l, NULL, WMOP_UNION);
 
-    mk_lrcomb(fd_out, bu_vls_addr(&region_name), &head, 1, (char *)NULL, (char *)NULL, color, id_no, 0, mat_code, 100, 0);
+    mk_lrcomb(fd_out, region_name.c_str(), &head, 1, (char *)NULL, (char *)NULL, color, id_no, 0, mat_code, 100, 0);
 
-    (void)mk_addmember(bu_vls_addr(&region_name), &all_head.l, NULL, WMOP_UNION);
+    (void)mk_addmember(region_name.c_str(), &all_head.l, NULL, WMOP_UNION);
     id_no++;
-
-
-    bu_vls_free(&region_name);
-    bu_vls_free(&solid_name);
-
-    return;
 }
 
 static void

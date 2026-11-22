@@ -35,6 +35,8 @@
 
 #include "./fence.h"
 
+#include <limits.h>
+
 #include "bu/app.h"
 #include "bu/getopt.h"
 
@@ -602,12 +604,13 @@ void printMatrix(FILE *fp, const char *n, mat_t m)
  ***********************************/
 char *getName(const char *base, int num, const char *paramstring)
 {
-    static char name[DEFAULT_MAXNAMELENGTH];
+    /* Keep the numeric suffix even when the base uses its full input buffer. */
+    static char name[DEFAULT_MAXNAMELENGTH + sizeof(num) * CHAR_BIT];
 
-    memset(name, 0, DEFAULT_MAXNAMELENGTH);
-
-    if (num>=0) snprintf(name, DEFAULT_MAXNAMELENGTH, paramstring, base, num);
-    else snprintf(name, DEFAULT_MAXNAMELENGTH, paramstring, base);
+    if (num >= 0)
+	snprintf(name, sizeof(name), paramstring, base, num);
+    else
+	snprintf(name, sizeof(name), paramstring, base);
 
     if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "getName(): base[%s], num[%d]\n", base, num);
     if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Using name[%s]\n", name);

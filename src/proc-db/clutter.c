@@ -38,6 +38,7 @@
 #include "wdb.h"
 
 #define STRSIZ 64
+#define CLUTTER_NAME_SIZE (STRSIZ + sizeof("crystal") - 1)
 
 double sin60;
 
@@ -194,9 +195,9 @@ crystal_stack(char *cname, double xc, double yc, double size)
     double high;
     double height = 0;
     double esz;
-    char name[STRSIZ];
-    char rppname[STRSIZ];
-    char crystalname[STRSIZ];
+    char name[CLUTTER_NAME_SIZE];
+    char rppname[CLUTTER_NAME_SIZE];
+    char crystalname[CLUTTER_NAME_SIZE];
     vect_t minpt, maxpt;
     struct wmember head;
     struct wmember reg_head;
@@ -213,7 +214,7 @@ crystal_stack(char *cname, double xc, double yc, double size)
 	double rand1 = rand_num(rbuf);
 	double rand2 = rand_num(rbuf);
 
-	snprintf(name, STRSIZ, "%sL%c", cname, 'a'+i);
+	snprintf(name, sizeof(name), "%sL%c", cname, 'a'+i);
 	(void)mk_addmember(name, &head.l, NULL, WMOP_UNION);
 	VSET(center, xc, yc, size/2*i);
 	nsolids = 3 + (rand() & 7);
@@ -223,14 +224,14 @@ crystal_stack(char *cname, double xc, double yc, double size)
     }
 
     /* Build the crystal union */
-    snprintf(crystalname, STRSIZ, "%scrystal", cname);
+    snprintf(crystalname, sizeof(crystalname), "%scrystal", cname);
     mk_lfcomb(outfp, crystalname, &head, 0);
 
     /* Make the trimming RPP */
     esz = size*0.5;	/* dist from ctr to edge of base */
     VSET(minpt, xc-esz, yc-esz, 10);
     VSET(maxpt, xc+esz, yc+esz, height);
-    snprintf(rppname, STRSIZ, "%srpp", cname);
+    snprintf(rppname, sizeof(rppname), "%srpp", cname);
     mk_rpp(outfp, rppname, minpt, maxpt);
 
     /* Build the final combination */
@@ -340,11 +341,11 @@ do_plate(char *name, double xc, double yc, double size)
 {
     double esz;
     vect_t minpt, maxpt;
-    char sname[STRSIZ];
+    char sname[CLUTTER_NAME_SIZE];
     unsigned char rgb[4];		/* needs all 4 */
     int i;
 
-    snprintf(sname, STRSIZ, "%s.s", name);
+    snprintf(sname, sizeof(sname), "%s.s", name);
     /* Make the base */
     esz = size*0.5*0.9;	/* dist from ctr to edge of base */
     VSET(minpt, xc-esz, yc-esz, -9);
@@ -370,7 +371,7 @@ ball_stack(char *bname, double xc, double yc, double size)
     unsigned char rgb[4];		/* needs all 4 */
     int i;
     int n;
-    char name[STRSIZ];
+    char name[CLUTTER_NAME_SIZE];
     struct wmember head;
 
     BU_LIST_INIT(&head.l);
@@ -379,7 +380,7 @@ ball_stack(char *bname, double xc, double yc, double size)
     esz = size*0.5*0.9;	/* dist from ctr to edge of base */
     n = rand()&7;
     for (i=0; i<n; i++) {
-	snprintf(name, STRSIZ, "%s%c", bname, 'A'+i);
+	snprintf(name, sizeof(name), "%s%c", bname, 'A'+i);
 	VSET(center, xc, yc, size/2+i*size);
 	mk_sph(outfp, name, center, esz/2);
 	(void)mk_addmember(name, &head.l, NULL, WMOP_UNION);
