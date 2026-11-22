@@ -20,9 +20,10 @@ g-vdb [-s "dx dy dz"] [-d n] [-t f] model.g objects...
 
 *g-vdb* voxelizes one or more objects from a BRL-CAD geometry database
 (*.g*) and writes the result as an OpenVDB volume.  Each named object is
-sampled on a regular voxel grid via ray tracing; voxels whose fractional
-fill meets the threshold are stored as a signed level set.  The output is
-always written to a file named *file.vdb* in the current directory, which
+sampled on a regular voxel grid via ray tracing. Voxels whose combined
+fractional fill meets the threshold have a value of one in the output
+occupancy grid. Empty voxels have a value of zero. The output is always
+written to *file.vdb* in the current directory, which
 can then be consumed by OpenVDB-aware tools and renderers.
 
 At least one geometry database and one object must be supplied on the

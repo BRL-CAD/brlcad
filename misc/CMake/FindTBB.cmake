@@ -143,12 +143,13 @@ macro(findpkg_finish PREFIX TARGET_NAME)
     set(${PREFIX}_INCLUDE_DIRS ${${PREFIX}_INCLUDE_DIR})
     set(${PREFIX}_LIBRARIES ${${PREFIX}_LIBRARY})
   else()
-    if(${PREFIX}_FIND_REQUIRED AND NOT ${PREFIX}_FIND_QUIETLY)
+    set(${PREFIX}_FOUND FALSE)
+    if(${PREFIX}_FIND_REQUIRED)
       message(FATAL_ERROR "Required library ${PREFIX} not found.")
     endif()
   endif()
 
-  if(NOT TARGET "TBB::${TARGET_NAME}")
+  if(${PREFIX}_FOUND AND NOT TARGET "TBB::${TARGET_NAME}")
     if(${PREFIX}_LIBRARY_RELEASE)
       tbb_extract_real_library(${${PREFIX}_LIBRARY_RELEASE} real_release)
     endif()
@@ -411,11 +412,10 @@ findpkg_finish(TBB_MALLOC_PROXY tbbmalloc_proxy)
 
 #=============================================================================
 #parse all the version numbers from tbb
-if(NOT TBB_VERSION)
+if(TBB_FOUND AND NOT TBB_VERSION)
   if(EXISTS "${TBB_INCLUDE_DIR}/oneapi/tbb/version.h")
     file(STRINGS "${TBB_INCLUDE_DIR}/oneapi/tbb/version.h" TBB_VERSION_CONTENTS REGEX "VERSION")
-  else()
-    #only read the start of the file
+  elseif(EXISTS "${TBB_INCLUDE_DIR}/tbb/tbb_stddef.h")
     file(STRINGS "${TBB_INCLUDE_DIR}/tbb/tbb_stddef.h" TBB_VERSION_CONTENTS REGEX "VERSION")
   endif()
 

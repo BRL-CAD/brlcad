@@ -20,17 +20,20 @@ if(BRLCAD_COMPONENTS)
     deps_expand(${wc} active_dirs)
   endforeach(wc ${BRLCAD_COMPONENTS})
 
-  # Add the directories
   list(REVERSE active_dirs)
-  foreach(ad ${active_dirs})
-    verbose_add_subdirectory(src ${ad})
-  endforeach(ad ${active_dirs})
 else(BRLCAD_COMPONENTS)
-  # Add all directories
-  foreach(od ${ordered_dirs})
-    verbose_add_subdirectory(src ${od})
-  endforeach(od ${ordered_dirs})
+  set(active_dirs ${ordered_dirs})
 endif(BRLCAD_COMPONENTS)
+
+# The parent has staged bext and selected zlib before loading OpenVDB.
+if("conv" IN_LIST active_dirs OR "libged" IN_LIST active_dirs)
+  find_package_openvdb()
+  brlcad_find_cxx_warning_suppression(OPENVDB_NO_WARNINGS_FLAG)
+endif()
+
+foreach(ad ${active_dirs})
+  verbose_add_subdirectory(src ${ad})
+endforeach(ad ${active_dirs})
 
 # Optional monolithic brlcad shared library.  Its contents are registered by
 # BRLCAD_ADDLIB as library targets are defined, so additions, removals, and

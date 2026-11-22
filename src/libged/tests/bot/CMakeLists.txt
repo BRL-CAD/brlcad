@@ -12,9 +12,18 @@ if(TARGET ged_test_bot_split)
 endif(TARGET ged_test_bot_split)
 distclean(${CMAKE_CURRENT_BINARY_DIR}/bot_split.g)
 
+brlcad_addexec(ged_test_bot_vdb bot_vdb.cpp "libged;libwdb;librt;libbg;libbu" TEST)
+brlcad_add_test(NAME ged_test_bot_vdb COMMAND ged_test_bot_vdb "${CMAKE_CURRENT_BINARY_DIR}/bot_vdb.g")
+if(TARGET ged_test_bot_vdb)
+  add_dependencies(ged_test_bot_vdb ged-bot)
+  set_property(TEST ged_test_bot_vdb APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif()
+distclean(${CMAKE_CURRENT_BINARY_DIR}/bot_vdb.g)
+
 cmakefiles(
   CMakeLists.txt
   bot_split.cpp
+  bot_vdb.cpp
   arb4.dxf
   arb4.g
   arb4.obj

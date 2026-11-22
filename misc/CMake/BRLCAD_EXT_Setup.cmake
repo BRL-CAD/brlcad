@@ -514,6 +514,11 @@ function(brlcad_ext_setup)
     list(APPEND CMAKE_CMD_ARGS "-DQT_XMIN_ROOT:PATH=${QT_XMIN_ROOT}")
   endif()
 
+  # Earlier BRL-CAD versions cached an OpenVDB exclusion in managed bext.
+  if(DEFINED BRLCAD_BEXT_OPENVDB)
+    list(APPEND CMAKE_CMD_ARGS -UDISABLE_OPENVDB)
+  endif()
+
   if(BEXT_ENABLE_ALL)
     # Some bext projects cache empty ENABLE_<pkg> entries, which prevents
     # bext's ENABLE_ALL checks from forcing these dependencies on.

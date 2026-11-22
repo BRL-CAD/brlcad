@@ -970,7 +970,11 @@ function(brlcad_bext_process)
     endif(NOT BEXT_EIGEN_ENABLED OR NOT BEXT_OPENCV_ENABLED OR NOT BEXT_ZLIB_ENABLED)
   endif()
 
-  if(NOT EXISTS "${BRLCAD_EXT_INSTALL_DIR}" OR NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}" OR BEXT_REFRESH_NEEDED)
+  # Refresh managed output from before OpenVDB became a regular dependency.
+  if(NOT EXISTS "${BRLCAD_EXT_INSTALL_DIR}" OR NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}"
+      OR BEXT_REFRESH_NEEDED
+      OR (DEFINED BRLCAD_BEXT_OPENVDB AND NOT BRLCAD_BEXT_OPENVDB
+          AND BRLCAD_EXT_DIR STREQUAL "${CMAKE_CURRENT_BINARY_DIR}/bext_output"))
     message("Attempting to prepare our own version of the bext dependencies\n")
     if(BEXT_REFRESH_NEEDED)
       message("Refreshing bext configuration to enforce bundled Eigen, OpenCV, and Zlib.\n")
@@ -978,6 +982,7 @@ function(brlcad_bext_process)
     endif(BEXT_REFRESH_NEEDED)
     brlcad_ext_setup()
   endif()
+  unset(BRLCAD_BEXT_OPENVDB CACHE)
 
   # Never allow an unset or incomplete dependency path to reach the recursive
   # inventory logic below.  An empty root would make its glob scan "/".
@@ -1978,7 +1983,9 @@ endfunction(brlcad_bext_process)
 # Not all packages will define all of these, but it shouldn't matter -
 # an unset of an unused variable shouldn't be harmful
 function(find_package_reset pname trigger_var)
-  unset(${pname}_DIR CACHE)
+  if(NOT "KEEP_CONFIG_DIR" IN_LIST ARGN)
+    unset(${pname}_DIR CACHE)
+  endif()
   unset(${pname}_CONFIG CACHE)
   unset(${pname}_DEFINITIONS CACHE)
   unset(${pname}_FOUND CACHE)
@@ -2004,6 +2011,17 @@ function(find_package_reset pname trigger_var)
     endif()
   endforeach()
 endfunction(find_package_reset pname trigger_var)
+
+# Match the system probe in bext's OpenVDB wrapper.
+function(find_package_openvdb)
+  find_package_reset(OpenVDB RESET_TP KEEP_CONFIG_DIR)
+  if(NOT DEFINED OpenVDB_ROOT AND NOT DEFINED ENV{OpenVDB_ROOT}
+      AND NOT DEFINED OPENVDB_ROOT AND NOT DEFINED ENV{OPENVDB_ROOT})
+    set(OpenVDB_ROOT "${CMAKE_BINARY_DIR}")
+  endif()
+  set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+  find_package(OpenVDB REQUIRED)
+endfunction()
 
 # OpenGL can get complicated.  Define a macro to centralize the "right" way to
 # hunt for this.

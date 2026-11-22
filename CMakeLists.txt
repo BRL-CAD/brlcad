@@ -216,7 +216,7 @@ set(CMAKE_FIND_USE_PACKAGE_REGISTRY FALSE)
 # Prepare to manage and build BRL-CAD's external dependencies. Specifies a
 # specific commit hash to use in the 'bext' repository.
 include(BRLCAD_ExternalDeps)
-brlcad_bext_init(d4e9aa9a24eb1c134cb3baef277c19eeb8439ae4)
+brlcad_bext_init(46a4b19b6f9edd131c84c6241d4d17b528983601)
 
 #---------------------------------------------------------------------
 # Define various utilities.
@@ -3036,18 +3036,6 @@ brlcad_bext_process()
 # PNG.  Select it now so none of those packages can create an imported target
 # from stale cache entries; a later lookup cannot replace an existing target.
 find_package_zlib()
-
-# OpenVDB may be supplied by bext, so it cannot be discovered until bext files
-# have been staged in the build directory.
-if(BRLCAD_ENABLE_OPENVDB)
-  find_package_reset(OpenVDB RESET_TP)
-  set(OpenVDB_ROOT "${CMAKE_BINARY_DIR}")
-  find_package(OpenVDB)
-  if(NOT OpenVDB_FOUND)
-    message("OpenVDB enablement requested, but OpenVDB is not found - disabling")
-    set(BRLCAD_ENABLE_OPENVDB OFF)
-  endif(NOT OpenVDB_FOUND)
-endif(BRLCAD_ENABLE_OPENVDB)
 
 # Define some Tcl related variables for libtclcad
 if(BRLCAD_ITCL_BUILD)

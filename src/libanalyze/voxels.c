@@ -167,8 +167,6 @@ voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*crea
 {
     struct rayInfo voxelHits;
     int            numVoxel[3];
-    int            yMin;
-    int            zMin;
 	int            i, j, k, rayNum;
     fastf_t        *voxelArray;
     fastf_t        rayTraceDistance;
@@ -202,14 +200,10 @@ voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*crea
      * initialize with NULLs */
     voxelHits.regionList = (struct voxelRegion *)bu_calloc(numVoxel[0], sizeof(struct voxelRegion), "voxelize:regionList");
 
-    /* minimum value of bounding box in Y and Z directions */
-    yMin = (int)((rtip->mdl_min)[1]);
-    zMin = (int)((rtip->mdl_min)[2]);
-
     BU_ASSERT(levelOfDetail > 0);
     /* 1.0 / (levelOfDetail + 1) and effectiveDistance have to be used multiple times in the following loops */
     rayTraceDistance  = 1. / levelOfDetail;
-    effectiveDistance = levelOfDetail * levelOfDetail * sizeVoxel[0];
+    effectiveDistance = sizeVoxel[0] * levelOfDetail * levelOfDetail;
 
     /* start shooting */
     for (i = 0; i < numVoxel[2]; ++i) {
@@ -233,8 +227,8 @@ voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*crea
 
 		    /* ray is hit through evenly spaced points of the unit sized voxels */
 		    VSET(ap.a_ray.r_pt, (rtip->mdl_min)[0] - 1.,
-			                yMin + (j + (k + 0.5) * rayTraceDistance) * sizeVoxel[1],
-			                zMin + (i + (rayNum + 0.5) * rayTraceDistance) * sizeVoxel[2]);
+			                rtip->mdl_min[Y] + (j + (k + 0.5) * rayTraceDistance) * sizeVoxel[1],
+			                rtip->mdl_min[Z] + (i + (rayNum + 0.5) * rayTraceDistance) * sizeVoxel[2]);
 		    rt_shootray(&ap);
 		}
 	    }

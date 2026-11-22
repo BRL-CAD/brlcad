@@ -27,11 +27,6 @@
  *  bot_to_sdf()               — BoT triangle mesh → OpenVDB FloatGrid SDF
  *  sdf_to_bot()               — FloatGrid SDF → solid rt_bot_internal
  *  rt_rtip_to_occupancy_grid()— raytrace a prepped rt_i into a BoolGrid
- *
- * All declarations are guarded by OPENVDB_ABI_VERSION_NUMBER so that
- * the header is a no-op when compiled without OpenVDB.  Every translation
- * unit that includes this header is expected to be compiled with the
- * OpenVDB ABI defines (i.e., BRLCAD_ENABLE_OPENVDB is ON).
  */
 
 #ifndef LIBGED_BOT_OPENVDB_H
@@ -39,25 +34,23 @@
 
 #include "common.h"
 
-#ifdef BRLCAD_OPENVDB
-
-#  include "rt/geom.h"
-#  include "raytrace.h"
+#include "rt/geom.h"
+#include "raytrace.h"
 
 /* Suppress warnings from OpenVDB and its transitive headers. */
-#  if defined(__GNUC__)
-#    pragma GCC diagnostic push
-#    pragma GCC diagnostic ignored "-Wunused-parameter"
-#    pragma GCC diagnostic ignored "-Wshadow"
-#    pragma GCC diagnostic ignored "-Wpedantic"
-#    pragma GCC diagnostic ignored "-Wignored-attributes"
-#  endif
+#if defined(__GNUC__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wunused-parameter"
+#  pragma GCC diagnostic ignored "-Wshadow"
+#  pragma GCC diagnostic ignored "-Wpedantic"
+#  pragma GCC diagnostic ignored "-Wignored-attributes"
+#endif
 
-#  include <openvdb/openvdb.h>
+#include <openvdb/openvdb.h>
 
-#  if defined(__GNUC__)
-#    pragma GCC diagnostic pop
-#  endif
+#if defined(__GNUC__)
+#  pragma GCC diagnostic pop
+#endif
 
 /**
  * Convert a BoT triangle mesh to an OpenVDB signed-distance field.
@@ -122,7 +115,6 @@ openvdb::BoolGrid::Ptr rt_rtip_to_occupancy_grid(struct rt_i *rtip,
 						 double voxel_size,
 						 int *nx, int *ny, int *nz);
 
-#endif /* BRLCAD_OPENVDB */
 #endif /* LIBGED_BOT_OPENVDB_H */
 
 /*

@@ -19,54 +19,56 @@
  */
 #include "common.h"
 
+#include <cmath>
+#include <limits>
+
 #include <openvdb/openvdb.h>
-#include <openvdb/tools/SignedFloodFill.h>
-#include <iostream>
 
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "analyze.h"
 
 
-struct voxelizeData
-{
-    fastf_t voxelSize[3];
-    fastf_t threshold;
-    fastf_t bbMin[3];
-    openvdb::FloatGrid::Ptr grid;
+struct voxel_fill {
+    openvdb::FloatGrid::Accessor &accessor;
+    double threshold;
+    openvdb::Coord coord;
+    double fill = 0.0;
+
+    void store() const
+    {
+	if (fill > 0.0 && fill >= threshold)
+	    accessor.setValue(coord, 1.0f);
+    }
 };
 
 
-/**
- * Function to print values to File
- */
 static void
-printToFile(void *callBackData, int x, int y, int z, const char *a, fastf_t fill) {
-    struct voxelizeData *dataValues = (struct voxelizeData *)callBackData;
+accumulate_fill(void *data, int x, int y, int z, const char *region, fastf_t fill)
+{
+    if (!region)
+	return;
 
-    if ((a != NULL) && (dataValues->threshold <= fill)) {
-	fastf_t voxel[3];
-
-	voxel[0] = dataValues->bbMin[0] + (x + 0.5) * dataValues->voxelSize[0];
-	voxel[1] = dataValues->bbMin[1] + (y + 0.5) * dataValues->voxelSize[1];
-	voxel[2] = dataValues->bbMin[2] + (z + 0.5) * dataValues->voxelSize[2];
-
-	openvdb::Coord xyz(voxel[0], voxel[1], voxel[2]);
-	dataValues->grid->getAccessor().setValue(xyz, 0.0);
+    auto &sample = *static_cast<struct voxel_fill *>(data);
+    const openvdb::Coord coord(x, y, z);
+    // The sampler emits each region's share of a voxel before advancing.
+    if (coord != sample.coord) {
+	sample.store();
+	sample.coord = coord;
+	sample.fill = 0.0;
     }
+    sample.fill += fill;
 }
 
 
 int
 main(int argc, char **argv)
 {
-    static struct rt_i *rtip;
     static const char *usage = "[-s \"dx dy dz\"] [-d n] [-t f] model.g objects...\n";
-    struct voxelizeData dataValues;
-    int levelOfDetail;
-    void *callBackData;
-    int c;
-    int gottree = 0;
+    vect_t voxel_size = {1.0, 1.0, 1.0};
+    double threshold = 0.5;
+    int detail = 4;
+    int opt;
 
     char title[1024] = {0};
 
@@ -79,21 +81,11 @@ main(int argc, char **argv)
 	bu_exit(1, "Usage: %s %s", argv[0], usage);
     }
 
-    /* default user parameters */
-
-    dataValues.voxelSize[0] = 1.0;
-    dataValues.voxelSize[1] = 1.0;
-    dataValues.voxelSize[2] = 1.0;
-
-    dataValues.threshold = 0.5;
-
-    levelOfDetail = 4;
-
     bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, (const char *)"s:d:t:")) != -1) {
+    while ((opt = bu_getopt(argc, (char * const *)argv, (const char *)"s:d:t:")) != -1) {
 	double scan[3];
 
-	switch (c) {
+	switch (opt) {
 	    case 's':
 		if (sscanf(bu_optarg, "%lf %lf %lf",
 			   &scan[0],
@@ -102,18 +94,18 @@ main(int argc, char **argv)
 		    bu_exit(1, "Usage: %s %s", argv[0], usage);
 		} else {
 		    /* convert from double to fastf_t */
-		    VMOVE(dataValues.voxelSize, scan);
+		    VMOVE(voxel_size, scan);
 		}
 		break;
 
 	    case 'd':
-		if (sscanf(bu_optarg, "%d", &levelOfDetail) != 1) {
+		if (sscanf(bu_optarg, "%d", &detail) != 1) {
 		    bu_exit(1, "Usage: %s %s", argv[0], usage);
 		}
 		break;
 
 	    case 't':
-		if (sscanf(bu_optarg, "%lf", &dataValues.threshold) != 1) {
+		if (sscanf(bu_optarg, "%lf", &threshold) != 1) {
 		    bu_exit(1, "Usage: %s %s", argv[0], usage);
 		}
 		break;
@@ -125,57 +117,62 @@ main(int argc, char **argv)
     argc -= bu_optind;
     argv += bu_optind;
 
-    /* Load the specified geometry database (i.e., a ".g" file).
-     * rt_dirbuild() returns an "instance" pointer which describes the
-     * database to be raytraced.  It also gives you back the title
-     * string if you provide a buffer.  This builds a directory of the
-     * geometry (i.e., a table of contents) in the file.
-     */
-    rtip = rt_dirbuild(argv[0], title, sizeof(title));
-    if (rtip == RTI_NULL) {
+    if (argc < 2)
+	bu_exit(1, "Usage: %s %s", bu_getprogname(), usage);
+    for (double size : voxel_size) {
+	if (!std::isfinite(size) || size <= 0.0)
+	    bu_exit(1, "Voxel sizes must be finite and positive\n");
+    }
+    if (detail <= 0 || !std::isfinite(threshold) || threshold < 0.0 || threshold > 1.0)
+	bu_exit(1, "Detail must be positive and fill threshold must be in [0, 1]\n");
+
+    struct rt_i *rtip = rt_dirbuild(argv[0], title, sizeof(title));
+    if (rtip == RTI_NULL)
 	bu_exit(2, "Building the database directory for [%s] FAILED\n", argv[0]);
+    for (int i = 1; i < argc; i++) {
+	if (rt_gettree(rtip, argv[i]) < 0) {
+	    rt_i_destroy(rtip);
+	    bu_exit(2, "Loading the geometry for [%s] FAILED\n", argv[i]);
+	}
     }
-    argc--;
-    argv++;
+    rt_prep_parallel(rtip, 1);
 
-    /* Load geometry database objects that were specified on the
-     * command line.
-     */
-    while (argc > 0) {
-	if (rt_gettree(rtip, argv[0]) < 0)
-	    bu_log("Loading the geometry for [%s] FAILED\n", argv[0]);
-	else
-	    gottree = 1;
-
-	argc--;
-	argv++;
+    for (size_t axis = 0; axis < ELEMENTS_PER_POINT; axis++) {
+	const double cells = (rtip->mdl_max[axis] - rtip->mdl_min[axis]) / voxel_size[axis];
+	if (!std::isfinite(cells) || cells <= 0.0 || cells >= std::numeric_limits<int>::max()) {
+	    rt_i_destroy(rtip);
+	    bu_exit(2, "Geometry bounds cannot be sampled at the requested voxel size\n");
+	}
     }
 
-    /* initialize openvdb */
     openvdb::initialize();
-    openvdb::FloatGrid::Ptr grid = openvdb::FloatGrid::create(2.0);
-    dataValues.grid = grid;
+    auto grid = openvdb::FloatGrid::create(0.0f);
+    auto transform = openvdb::math::Transform::createLinearTransform();
+    transform->postScale(openvdb::Vec3d(voxel_size[X], voxel_size[Y], voxel_size[Z]));
+    transform->postTranslate(openvdb::Vec3d(
+	rtip->mdl_min[X] + 0.5 * voxel_size[X],
+	rtip->mdl_min[Y] + 0.5 * voxel_size[Y],
+	rtip->mdl_min[Z] + 0.5 * voxel_size[Z]));
+    grid->setTransform(transform);
 
-    if (gottree != 0) {
-	VMOVE(dataValues.bbMin, rtip->mdl_min);
-
-	callBackData = (void *)(& dataValues);
-
-	/* work horse */
-	voxelize(rtip, dataValues.voxelSize, levelOfDetail, printToFile, callBackData);
+    {
+	auto accessor = grid->getAccessor();
+	struct voxel_fill sample{accessor, threshold, openvdb::Coord(0, 0, 0)};
+	voxelize(rtip, voxel_size, detail, accumulate_fill, &sample);
+	sample.store();
     }
     rt_i_destroy(rtip);
 
-    openvdb::tools::signedFloodFill(grid->tree());
-    grid->setTransform(openvdb::math::Transform::createLinearTransform(0.5));
-
-    grid->setGridClass(openvdb::GRID_LEVEL_SET);
+    grid->pruneGrid();
+    grid->setGridClass(openvdb::GRID_FOG_VOLUME);
     grid->setName("default");
-    openvdb::io::File file("file.vdb");
-    openvdb::GridPtrVec grids;
-    grids.push_back(grid);
-    file.write(grids);
-    file.close();
+
+    try {
+	openvdb::io::File file("file.vdb");
+	file.write(openvdb::GridPtrVec{grid});
+    } catch (const openvdb::Exception &error) {
+	bu_exit(3, "Could not write file.vdb: %s\n", error.what());
+    }
 
     return 0;
 }

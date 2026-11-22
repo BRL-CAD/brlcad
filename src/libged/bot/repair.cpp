@@ -19,17 +19,13 @@
 #include "wdb.h"
 
 #include "./ged_bot.h"
-#include "../ged_private.h"
 
 extern "C" int
 _bot_cmd_repair(void *bs, int argc, const char **argv)
 {
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
-    struct ged *gedp = gb->gedp;
-    (void)gedp;
 
-    int ret = ged_repair(gb->gedp, argc, argv);
-    return ret;
+    return ged_exec_repair(gb->gedp, argc, argv);
 }
 
 // Local Variables:

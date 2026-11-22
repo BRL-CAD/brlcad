@@ -491,14 +491,10 @@ ext_focused2_worker(struct ext_focused2_worker_data *wd)
 }
 
 
-/* Flood-fill classifier lives in bot_flood_exterior.cpp and is only
- * compiled when OpenVDB is available. */
-#ifdef HAVE_OPENVDB_BOT_EXTERIOR
 extern "C" int bot_flood_exterior_classify(struct rt_i *rtip,
 					   struct rt_bot_internal *bot,
 					   int *face_exterior,
 					   double voxel_size);
-#endif
 
 
 /* ======================================================================
@@ -893,7 +889,6 @@ _bot_cmd_exterior(void *bs, int argc, const char **argv)
     int  n_ext;
 
     if (flood_fill) {
-#ifdef HAVE_OPENVDB_BOT_EXTERIOR
 	bu_log("bot exterior: using flood-fill (water-filling) method\n");
 	face_exterior = (int *)bu_calloc(bot->num_faces, sizeof(int), "face_exterior");
 	n_ext = bot_flood_exterior_classify(ap.a_rt_i, bot, face_exterior,
@@ -906,13 +901,6 @@ _bot_cmd_exterior(void *bs, int argc, const char **argv)
 			  "Flood-fill exterior classification failed\n");
 	    return BRLCAD_ERROR;
 	}
-#else
-	bu_vls_printf(gb->gedp->ged_result_str,
-		      "Note: --flood-fill requires OpenVDB (not compiled in); "
-		      "falling back to Crofton ray-sampling\n");
-	bu_log("bot exterior: falling back to Crofton ray-sampling method\n");
-	n_ext = bot_exterior_classify_crofton(ap.a_rt_i, bot, &face_exterior, &opts);
-#endif
     } else {
 	bu_log("bot exterior: using per-triangle ray-sampling method\n");
 	n_ext = bot_exterior_classify_crofton(ap.a_rt_i, bot, &face_exterior, &opts);

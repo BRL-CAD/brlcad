@@ -25,12 +25,6 @@
 
 #include "common.h"
 
-#ifdef OPENVDB_ABI_VERSION_NUMBER
-#  include <openvdb/openvdb.h>
-#  include <openvdb/tools/VolumeToMesh.h>
-#  include <openvdb/tools/MeshToVolume.h>
-#endif /* OPENVDB_ABI_VERSION_NUMBER */
-
 #include "vmath.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
@@ -45,129 +39,21 @@
 #include "ged/objects.h"
 #include "../ged_private.h"
 #include "./ged_bot.h"
+#include "bot_openvdb.h"
 
 
-#ifdef OPENVDB_ABI_VERSION_NUMBER
-
-struct botDataAdapter {
-    struct rt_bot_internal *bot;
-
-    size_t polygonCount() const {
-	return bot->num_faces;
-    };
-    size_t pointCount() const {
-	return bot->num_vertices;
-    };
-    size_t vertexCount(size_t) const {
-	return 3;
-    };
-    void getIndexSpacePoint(size_t n, size_t v, openvdb::Vec3d& pos) const {
-	int idx = bot->faces[(n*3)+v];
-	pos[X] = bot->vertices[(idx*3)+X];
-	pos[Y] = bot->vertices[(idx*3)+Y];
-	pos[Z] = bot->vertices[(idx*3)+Z];
-	return;
-    };
-
-    /* constructor */
-    botDataAdapter(struct rt_bot_internal *bip) : bot(bip) {}
-};
-
-
-static bool
-bot_remesh_vdb(struct ged *UNUSED(gedp), struct rt_bot_internal *bot, double voxelSize)
+static struct rt_bot_internal *
+bot_remesh_vdb(struct ged *gedp, struct rt_bot_internal *bot)
 {
-    const float exteriorBandWidth = 10.0;
-    const float interiorBandWidth = std::numeric_limits<float>::max();
-
-    struct botDataAdapter bda(bot);
-
-    openvdb::initialize();
-
-    bu_log("...voxelizing");
-
-    openvdb::math::Transform::Ptr xform = openvdb::math::Transform::createLinearTransform(voxelSize);
-    openvdb::FloatGrid::Ptr bot2vol = openvdb::tools::meshToVolume<openvdb::FloatGrid, botDataAdapter>(bda, *xform, exteriorBandWidth, interiorBandWidth);
-
-#if 0
-    openvdb::io::File file("mesh.vdb");
-    openvdb::GridPtrVec grids;
-    grids.push_back(bot2vol);
-    file.write(grids);
-    file.close();
-    return false;
-#endif
-
-    bu_log("...devoxelizing");
-
-    std::vector<openvdb::Vec3s> points;
-    std::vector<openvdb::Vec3I> triangles;
-    std::vector<openvdb::Vec4I> quadrilaterals;
-    openvdb::tools::volumeToMesh<openvdb::FloatGrid>(*bot2vol, points, triangles, quadrilaterals);
-
-    bu_log("...storing");
-
-    if (bot->vertices) {
-	bu_free(bot->vertices, "vertices");
-	bot->num_vertices = 0;
-    }
-    if (bot->faces) {
-	bu_free(bot->faces, "faces");
-	bot->num_faces = 0;
-    }
-    if (bot->normals) {
-	bu_free(bot->normals, "normals");
-    }
-    if (bot->face_normals) {
-	bu_free(bot->face_normals, "face normals");
-    }
-
-    bot->num_vertices = points.size();
-    bot->vertices = (fastf_t *)bu_malloc(bot->num_vertices * ELEMENTS_PER_POINT * sizeof(fastf_t), "vertices");
-    for (size_t i = 0; i < points.size(); i++) {
-	bot->vertices[(i*3)+X] = points[i].x();
-	bot->vertices[(i*3)+Y] = points[i].y();
-	bot->vertices[(i*3)+Z] = points[i].z();
-    }
-    bot->num_faces = triangles.size() + (quadrilaterals.size() * 2);
-    bot->faces = (int *)bu_malloc(bot->num_faces * 3 * sizeof(int), "triangles");
-    for (size_t i = 0; i < triangles.size(); i++) {
-	bot->faces[(i*3)+X] = triangles[i].x();
-	bot->faces[(i*3)+Y] = triangles[i].y();
-	bot->faces[(i*3)+Z] = triangles[i].z();
-    }
-    size_t ntri = triangles.size();
-    for (size_t i = 0; i < quadrilaterals.size(); i++) {
-	bot->faces[((ntri+i)*3)+X] = quadrilaterals[i][0];
-	bot->faces[((ntri+i)*3)+Y] = quadrilaterals[i][1];
-	bot->faces[((ntri+i)*3)+Z] = quadrilaterals[i][2];
-
-	bot->faces[((ntri+i+1)*3)+X] = quadrilaterals[i][0];
-	bot->faces[((ntri+i+1)*3)+Y] = quadrilaterals[i][2];
-	bot->faces[((ntri+i+1)*3)+Z] = quadrilaterals[i][3];
-    }
-
-    bu_log("...done!\n");
-
-    return (points.size() > 0);
+    const double auto_voxel_size = 0.0;
+    struct rt_bot_internal *remeshed = bot_openvdb_repair(bot, auto_voxel_size);
+    if (!remeshed)
+	bu_vls_printf(gedp->ged_result_str, "OpenVDB remesh failed\n");
+    return remeshed;
 }
 
-#else /* OPENVDB_ABI_VERSION_NUMBER */
-
-static bool
-bot_remesh_vdb(struct ged *gedp, struct rt_bot_internal *UNUSED(bot), double UNUSED(voxelSize))
-{
-    bu_vls_printf(gedp->ged_result_str,
-		  "WARNING: BoT remeshing is unavailable.\n"
-		  "BRL-CAD needs to be compiled with OpenVDB support.\n"
-		  "(cmake -DBRLCAD_ENABLE_OPENVDB=ON)\n");
-    return false;
-}
-
-#endif /* OPENVDB_ABI_VERSION_NUMBER */
-
-static int
-bot_remesh_geogram(struct rt_bot_internal **obot, struct ged *gedp, struct rt_bot_internal *bot)
+static struct rt_bot_internal *
+bot_remesh_geogram(struct ged *gedp, struct rt_bot_internal *bot)
 {
     int *ifaces = bot->faces;
     int n_ifaces = (int)bot->num_faces;
@@ -187,7 +73,7 @@ bot_remesh_geogram(struct rt_bot_internal **obot, struct ged *gedp, struct rt_bo
 	bu_free(ofaces, "ofaces");
 	bu_free(opnts, "opnts");
 	bu_vls_printf(gedp->ged_result_str, "Remesh failed\n");
-	return BRLCAD_ERROR;
+	return NULL;
     }
 
     /* Check if the remeshed result is a solid. */
@@ -225,9 +111,7 @@ bot_remesh_geogram(struct rt_bot_internal **obot, struct ged *gedp, struct rt_bo
     bu_free(ofaces, "ofaces");
     bu_free(opnts, "opnts");
 
-    *obot = nbot;
-    bu_vls_sprintf(gedp->ged_result_str, "remeshed\n");
-    return BRLCAD_OK;
+    return nbot;
 }
 
 
@@ -287,9 +171,6 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    struct directory *dp_input = RT_DIR_NULL;
-    struct directory *dp_output = RT_DIR_NULL;
-
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     if ((bu_vls_strlen(&output_bot_name) && argc > 1) || argc > 2) {
@@ -306,8 +187,12 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
 	bu_vls_printf(&output_bot_name, "%s", input_bot_name);
 
 
-    if (!BU_STR_EQUAL(input_bot_name, bu_vls_cstr(&output_bot_name))) {
-	GED_CHECK_EXISTS(gedp, bu_vls_cstr(&output_bot_name), LOOKUP_QUIET, BRLCAD_ERROR);
+    const char *output_name = bu_vls_cstr(&output_bot_name);
+    const bool overwrite = BU_STR_EQUAL(input_bot_name, output_name);
+    if (!overwrite && db_lookup(gedp->dbip, output_name, LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s already exists\n", output_name);
+	bu_vls_free(&output_bot_name);
+	return BRLCAD_ERROR;
     }
 
     struct rt_bot_internal *input_bot = (struct rt_bot_internal *)gb->intern->idb_ptr;
@@ -315,61 +200,36 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
 
     bu_log("INPUT BoT has %zu vertices and %zu faces\n", input_bot->num_vertices, input_bot->num_faces);
 
-    /* TODO: stash a backup if overwriting the original */
+    struct rt_bot_internal *remeshed = use_vdb ? bot_remesh_vdb(gedp, input_bot)
+					      : bot_remesh_geogram(gedp, input_bot);
 
-    if (use_vdb) {
-	bool ok = bot_remesh_vdb(gedp, input_bot, 50);
-	if (!ok) {
-	    bu_vls_free(&output_bot_name);
-	    return BRLCAD_ERROR;
-	}
-    } else {
-	struct rt_bot_internal *obot = NULL;
-	if (bot_remesh_geogram(&obot, gedp, input_bot) != BRLCAD_OK || !obot) {
-	    bu_vls_free(&output_bot_name);
-	    return BRLCAD_ERROR;
-	}
+    if (!remeshed) {
+	bu_vls_free(&output_bot_name);
+	return BRLCAD_ERROR;
+    }
 
-	struct rt_db_internal intern;
-	RT_DB_INTERNAL_INIT(&intern);
-	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	intern.idb_type = ID_BOT;
-	intern.idb_meth = &OBJ[ID_BOT];
-	intern.idb_ptr = (void *)obot;
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_type = ID_BOT;
+    intern.idb_meth = &OBJ[ID_BOT];
+    intern.idb_ptr = (void *)remeshed;
+    bu_avs_merge(&intern.idb_avs, &gb->intern->idb_avs);
 
-	const char *rname = bu_vls_cstr(&output_bot_name);
-	struct directory *dp = db_diradd(gedp->dbip, rname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
-	if (dp == RT_DIR_NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "Failed to write out new BoT %s\n", rname);
-	    rt_db_free_internal(&intern);
-	    bu_vls_free(&output_bot_name);
-	    return BRLCAD_ERROR;
-	}
-
-	if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
-	    bu_vls_printf(gedp->ged_result_str, "Failed to write out new BoT %s\n", rname);
-	    rt_db_free_internal(&intern);
-	    bu_vls_free(&output_bot_name);
-	    return BRLCAD_ERROR;
-	}
-
+    struct directory *dp = gb->dp;
+    if (!overwrite)
+	dp = db_diradd(gedp->dbip, output_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
+    if (dp == RT_DIR_NULL || rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
+	if (dp && !overwrite && dp->d_addr == RT_DIR_PHONY_ADDR)
+	    db_dirdelete(gedp->dbip, dp);
+	bu_vls_printf(gedp->ged_result_str, "Failed to write out remeshed BoT %s\n", output_name);
 	rt_db_free_internal(&intern);
-	bu_vls_printf(gedp->ged_result_str, "Remesh complete\n");
-	return BRLCAD_OK;
+	bu_vls_free(&output_bot_name);
+	return BRLCAD_ERROR;
     }
-
-    bu_log("OUTPUT BoT has %zu vertices and %zu faces\n", input_bot->num_vertices, input_bot->num_faces);
-
-    if (BU_STR_EQUAL(input_bot_name, bu_vls_cstr(&output_bot_name))) {
-	dp_output = dp_input;
-    } else {
-	GED_DB_DIRADD(gedp, dp_output, bu_vls_cstr(&output_bot_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&gb->intern->idb_type, BRLCAD_ERROR);
-    }
-
-    GED_DB_PUT_INTERN(gedp, dp_output, gb->intern, BRLCAD_ERROR);
 
     bu_vls_free(&output_bot_name);
-
+    bu_vls_printf(gedp->ged_result_str, "Remesh complete\n");
     return BRLCAD_OK;
 }
 

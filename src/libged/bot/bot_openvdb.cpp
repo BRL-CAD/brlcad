@@ -32,27 +32,25 @@
 
 #include "common.h"
 
-#ifdef BRLCAD_OPENVDB
+#include <cmath>
+#include <algorithm>
+#include <limits>
 
-#  include <cmath>
-#  include <algorithm>
-#  include <limits>
+#include <openvdb/openvdb.h>
+#include <openvdb/tools/MeshToVolume.h>
+#include <openvdb/tools/VolumeToMesh.h>
 
-#  include <openvdb/openvdb.h>
-#  include <openvdb/tools/MeshToVolume.h>
-#  include <openvdb/tools/VolumeToMesh.h>
+#include "vmath.h"
+#include "bg/trimesh.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "rt/application.h"
+#include "rt/ray_partition.h"
+#include "rt/seg.h"
+#include "rt/geom.h"
+#include "raytrace.h"
 
-#  include "vmath.h"
-#  include "bg/trimesh.h"
-#  include "bu/malloc.h"
-#  include "bu/log.h"
-#  include "rt/application.h"
-#  include "rt/ray_partition.h"
-#  include "rt/seg.h"
-#  include "rt/geom.h"
-#  include "raytrace.h"
-
-#  include "bot_openvdb.h"
+#include "bot_openvdb.h"
 
 
 /* -----------------------------------------------------------------------
@@ -89,10 +87,18 @@ struct botDataAdapter {
 openvdb::FloatGrid::Ptr
 bot_to_sdf(struct rt_bot_internal *bot, double voxel_size)
 {
-    if (!bot || !bot->num_vertices || !bot->num_faces)
-	return openvdb::FloatGrid::Ptr();
+    if (!bot || !bot->vertices || !bot->faces || !bot->num_vertices || !bot->num_faces)
+	return nullptr;
 
-    /* Auto-size: aim for ~100 voxels along the longest bbox dimension. */
+    for (size_t face = 0; face < bot->num_faces; face++) {
+	for (size_t corner = 0; corner < ELEMENTS_PER_POINT; corner++) {
+	    const int vertex = bot->faces[face * ELEMENTS_PER_POINT + corner];
+	    if (vertex < 0 || static_cast<size_t>(vertex) >= bot->num_vertices)
+		return nullptr;
+	}
+    }
+
+    /* Auto-size relative to the bounding box diagonal. */
     if (voxel_size <= 0.0) {
 	double xmin = bot->vertices[0], xmax = bot->vertices[0];
 	double ymin = bot->vertices[1], ymax = bot->vertices[1];
@@ -438,8 +444,6 @@ rt_rtip_to_occupancy_grid(struct rt_i *rtip, double voxel_size,
 
     return solid;
 }
-
-#endif /* BRLCAD_OPENVDB */
 
 
 /*

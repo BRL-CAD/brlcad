@@ -548,57 +548,17 @@ function(_BRLCAD_RUN_FLAG_BATCH FLAG_LANG)
   endif()
 endfunction()
 
-# Disable any compilation warning flags currently set
-macro(DISABLE_WARNINGS)
-  # borland-style
-  if(NOT NOWARN_CFLAG)
-    check_c_flag("w-" VARS NOWARN_CFLAG)
-  endif(NOT NOWARN_CFLAG)
-  if(NOT NOWARN_CXXFLAG)
-    check_cxx_flag("w-" VARS NOWARN_CXXFLAG)
-  endif(NOT NOWARN_CXXFLAG)
-
-  # msvc-style (must test before gcc's -w test)
-  if(NOT NOWARN_CFLAG)
-    check_c_flag("W0" VARS NOWARN_CFLAG)
-
-    if(NOWARN_CFLAG)
-      # replace msvc-style warning level C flags, disable with W0
-      string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-      foreach(BTYPE ${CMAKE_BUILD_TYPES})
-        string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_C_FLAGS_${BTYPE} "${CMAKE_C_FLAGS_${BTYPE}}")
-      endforeach(BTYPE ${CMAKE_BUILD_TYPES})
-    endif(NOWARN_CFLAG)
-  endif(NOT NOWARN_CFLAG)
-
-  if(NOT NOWARN_CXXFLAG)
-    check_cxx_flag("W0" VARS NOWARN_CXXFLAG)
-
-    if(NOWARN_CXXFLAG)
-      # replace msvc-style warning level C++ flags, disable with W0
-      string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-      foreach(BTYPE ${CMAKE_BUILD_TYPES})
-        string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_CXX_FLAGS_${BTYPE} "${CMAKE_CXX_FLAGS_${BTYPE}}")
-      endforeach(BTYPE ${CMAKE_BUILD_TYPES})
-    endif(NOWARN_CXXFLAG)
-  endif(NOT NOWARN_CXXFLAG)
-
-  # gcc/llvm-style
-  if(NOT NOWARN_CFLAG)
-    check_c_flag("w" VARS NOWARN_CFLAG)
-  endif(NOT NOWARN_CFLAG)
-  if(NOT NOWARN_CXXFLAG)
-    check_cxx_flag("w" VARS NOWARN_CXXFLAG)
-  endif(NOT NOWARN_CXXFLAG)
-
-  # turn off warnings in the current scope
-  if(NOWARN_CFLAG)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${NOWARN_CFLAG}")
-  endif(NOWARN_CFLAG)
-  if(NOWARN_CXXFLAG)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${NOWARN_CXXFLAG}")
-  endif(NOWARN_CXXFLAG)
-endmacro(DISABLE_WARNINGS)
+# Prefer the native MSVC warning level when the compiler accepts it.
+function(BRLCAD_FIND_CXX_WARNING_SUPPRESSION out_var)
+  set(suppression_flag "")
+  foreach(candidate w- W0 w)
+    check_cxx_flag("${candidate}" VARS suppression_flag)
+    if(suppression_flag)
+      break()
+    endif()
+  endforeach()
+  set(${out_var} "${suppression_flag}" PARENT_SCOPE)
+endfunction()
 
 # Local Variables:
 # tab-width: 8

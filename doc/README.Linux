@@ -54,7 +54,7 @@ that a sibling bext checkout has completed its .build_intel build:
     -DCMAKE_C_COMPILER="$CC" -DCMAKE_CXX_COMPILER="$CXX" \
     -DBRLCAD_EXT_DIR="$bext_build" -DBRLCAD_BUNDLED_LIBS=BUNDLED \
     -DBRLCAD_ENABLE_TCL=ON -DBRLCAD_ENABLE_QT=ON \
-    -DBRLCAD_ENABLE_GDAL=ON -DBRLCAD_ENABLE_OPENVDB=ON \
+    -DBRLCAD_ENABLE_GDAL=ON \
     -DBRLCAD_EXTRADOCS=ON
   cmake --build .build_intel --parallel 4
 
