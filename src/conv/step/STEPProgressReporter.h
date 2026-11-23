@@ -61,6 +61,46 @@ private:
 	return separator == std::string::npos ? path : path.substr(separator + 1);
     }
 
+    void appendRepairEstimate(std::ostringstream &message,
+	const brlcad::step::ImportProgress &progress,
+	std::chrono::steady_clock::time_point now)
+    {
+	if (!progress.geometry_root_entity_id ||
+		progress.secondary_label != "loops" ||
+		!progress.secondary_total ||
+		progress.secondary_completed >= progress.secondary_total) {
+	    estimate_entity = 0;
+	    return;
+	}
+	const uint64_t completed = progress.secondary_completed;
+	if (estimate_entity != progress.geometry_root_entity_id ||
+	    estimate_generation != progress.geometry_progress_generation) {
+	    estimate_entity = progress.geometry_root_entity_id;
+	    estimate_generation = progress.geometry_progress_generation;
+	    estimate_started = now;
+	    estimate_initial_count = completed;
+	    estimate_last_count = completed;
+	    return;
+	}
+	if (completed <= estimate_last_count)
+	    return;
+	estimate_last_count = completed;
+	const uint64_t advanced = completed - estimate_initial_count;
+	/* Sample enough of the current pass to smooth over individual loops.
+	 * Later repair passes can have very different costs. */
+	constexpr double minimum_sample_fraction = 0.1;
+	constexpr int minimum_report_intervals = 2;
+	if (advanced < progress.secondary_total * minimum_sample_fraction ||
+	    now - estimate_started < minimum_report_intervals * report_interval)
+	    return;
+	const double seconds = std::chrono::duration<double>(
+	    now - estimate_started).count();
+	const double remaining = seconds *
+	    (progress.secondary_total - completed) / advanced;
+	message << ", pass ETA ~" << std::fixed << std::setprecision(0)
+	    << remaining << 's';
+    }
+
     void run()
     {
 	std::unique_lock<std::mutex> guard(lock);
@@ -126,9 +166,9 @@ private:
 		message << ", ncpus=" << std::fixed << std::setprecision(2)
 		    << interval_cores;
 
-		if (wrapper.Verbose()) {
+		if (wrapper.Verbose() || progress.geometry_root_entity_id > 0) {
 		    message << ", phase=\"" << progress.phase << '"';
-		    if (progress.current_entity_id > 0)
+		    if (wrapper.Verbose() && progress.current_entity_id > 0)
 			message << ", entity=#" << progress.current_entity_id;
 		    if (!progress.secondary_label.empty()) {
 			message << ", " << progress.secondary_label << '='
@@ -136,6 +176,9 @@ private:
 			if (progress.secondary_total)
 			    message << '/' << progress.secondary_total;
 		    }
+		}
+		appendRepairEstimate(message, progress, now);
+		if (wrapper.Verbose()) {
 		    if (!progress.detail.empty()) message << ", " << progress.detail;
 		    if (wall_seconds > 0.0)
 			message << ", cpu=" << std::setprecision(1) << cpu_seconds
@@ -184,6 +227,11 @@ private:
     const std::clock_t cpu_started;
     std::chrono::steady_clock::time_point last_reported;
     std::clock_t cpu_last;
+    int64_t estimate_entity = 0;
+    uint64_t estimate_generation = 0;
+    uint64_t estimate_initial_count = 0;
+    uint64_t estimate_last_count = 0;
+    std::chrono::steady_clock::time_point estimate_started;
     std::mutex lock;
     std::condition_variable wakeup;
     bool stopping;

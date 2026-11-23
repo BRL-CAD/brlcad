@@ -4399,10 +4399,18 @@ repair_missing_singular_trims(ON_Brep *brep, STEPWrapper *wrapper,
 
     const int repair_budget = brep->m_T.Count();
     int next_loop = 0;
+    int reported_loop = -1;
     for (int repair = 0; repair < repair_budget; ++repair) {
 	bool changed = false;
 	int changed_loop = -1;
 	for (int li = next_loop; li < brep->m_L.Count() && !changed; ++li) {
+	    if (brlcad::PullbackWorkCancelled())
+		return;
+	    if (li > reported_loop && li % kRepairLoopProgressStride == 0) {
+		reported_loop = li;
+		wrapper->SetProgressDetail("checking loops for missing singular trims",
+		    entity_id, li, brep->m_L.Count(), "loops");
+	    }
 	    ON_BrepLoop &loop = brep->m_L[li];
 	    ON_BrepFace *face = loop.m_fi >= 0 && loop.m_fi < brep->m_F.Count() ?
 		&brep->m_F[loop.m_fi] : NULL;
@@ -5286,9 +5294,15 @@ remove_redundant_closed_singular_trims(ON_Brep *brep, STEPWrapper *wrapper,
      * reindexing the BREP.  Recheck only that loop before moving on, and
      * defer whole-BREP compaction until all of the deletions are known. */
     int li = 0;
+    int reported_loop = -1;
     while (li < brep->m_L.Count() && removed < static_cast<size_t>(repair_budget)) {
 	if (brlcad::PullbackWorkCancelled())
 	    break;
+	if (li > reported_loop && li % kRepairLoopProgressStride == 0) {
+	    reported_loop = li;
+	    wrapper->SetProgressDetail("checking loops for redundant singular trims",
+		entity_id, li, brep->m_L.Count(), "loops");
+	}
 	bool changed = false;
 	ON_BrepLoop &loop = brep->m_L[li];
 	const ON_BrepFace *face = loop.Face();

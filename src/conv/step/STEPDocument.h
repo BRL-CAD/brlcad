@@ -67,6 +67,8 @@ struct ImportProgress {
     uint64_t geometry_item_total = 0;
     std::string geometry_item_label;
     int64_t geometry_subentity_id = 0;
+    /** Changes when the oldest job starts a different counted pass. */
+    uint64_t geometry_progress_generation = 0;
     /** Geometry-pipeline occupancy.  Capacity is zero outside the detached
      * conversion pipeline, allowing reporters to omit these fields. */
     uint64_t geometry_jobs_queued = 0;

@@ -1741,10 +1741,13 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
     for (int sweep = 0; sweep < kMaximumEndpointRepairSweeps; ++sweep) {
 	if (brlcad::PullbackWorkCancelled())
 	    return;
+	const size_t loop_total = record_changes ?
+	    static_cast<size_t>(std::count(dirty.begin(), dirty.end(), true)) : 0;
+	size_t loops_checked = 0;
 	if (record_changes)
 	    wrapper->SetProgressDetail(
-		"repairing adjacent exact BREP trim endpoints", entity_id, sweep,
-		kMaximumEndpointRepairSweeps, "sweeps", entity_type);
+		"repairing adjacent exact BREP trim endpoints", entity_id, 0,
+		loop_total, "loops", entity_type);
 	bool changed = false;
 	std::vector<bool> next_dirty(static_cast<size_t>(brep->m_L.Count()), false);
 	for (int li = 0; li < brep->m_L.Count(); ++li) {
@@ -1752,6 +1755,13 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 		continue;
 	    if (brlcad::PullbackWorkCancelled())
 		return;
+	    if (record_changes) {
+		if (loops_checked && loops_checked % kRepairLoopProgressStride == 0)
+		    wrapper->SetProgressDetail(
+			"repairing adjacent exact BREP trim endpoints", entity_id,
+			loops_checked, loop_total, "loops", entity_type);
+		++loops_checked;
+	    }
 	    ON_BrepLoop &loop = brep->m_L[li];
 	    /* A sequence of endpoint-local repairs can otherwise oscillate between
 	     * two equivalent periodic branches.  Exact endpoint state is a complete
@@ -3667,11 +3677,10 @@ repair_paired_seam_loop_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 	return 0;
 
     size_t repaired_pairs = 0;
-    constexpr int progress_loop_interval = 32;
     for (int li = 0; li < brep->m_L.Count(); ++li) {
 	if (brlcad::PullbackWorkCancelled())
 	    return repaired_pairs;
-	if (li % progress_loop_interval == 0)
+	if (li % kRepairLoopProgressStride == 0)
 	    wrapper->SetProgressDetail("checking paired seam loop endpoints", entity_id,
 		static_cast<uint64_t>(li), static_cast<uint64_t>(brep->m_L.Count()), "loops");
 	const ON_BrepLoop &source_loop = brep->m_L[li];

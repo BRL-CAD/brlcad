@@ -124,13 +124,21 @@ with supplied normals. *--exact* or *--repair none* rejects that mismatch.
   Scale automatically calculated per-item conversion budgets.
 
 *--item-budget* _SECONDS_::
-  Set the per-item CPU-work budget explicitly.
+  Set the base per-item CPU-work budget explicitly. By default, the allowance
+  is calibrated to the machine and increases with topology size. The initial
+  trim repair of a solid with at least 1,024 faces uses the no-progress timeout
+  alone unless an explicit CPU-work budget is set.
 
 *--no-item-budget*::
-  Disable per-item CPU-work budgets.
+  Disable per-item CPU-work budgets and retain the no-progress watchdog.
 
 *--stall-timeout* _SECONDS_::
-  Set the no-progress timeout used to detect a stalled conversion.
+  Set the no-progress timeout used to detect a stalled conversion. The
+  default is 60 seconds scaled by the machine calibration.
+
+During a long import, *step-g* reports progress every 15 seconds. A repair
+pass with a known loop count may also show an estimated time remaining in
+that pass once enough loops have been checked.
 
 === Reports
 

@@ -154,6 +154,7 @@ private:
 	std::string item_label;
 	uint64_t secondary_completed = 0;
 	uint64_t secondary_total = 0;
+	uint64_t progress_generation = 0;
 	std::string secondary_label;
 	std::string detail;
     };

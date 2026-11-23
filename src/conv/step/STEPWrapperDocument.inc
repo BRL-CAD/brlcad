@@ -2443,6 +2443,25 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
     if (work_expired("initial OpenNURBS validation"))
 	return;
     if (!job.faceted && needs_initial_trim_repair) {
+	const brlcad::step::ImportOptions &options = wrapper->ImportOptions();
+	/* This repair traverses a finite sequence of topology passes.  On the
+	 * largest solids the amount of work per loop varies with the periodic
+	 * trim geometry, so the face-count CPU allowance can expire while the
+	 * repair is still advancing normally. */
+	const bool stall_only = job.solid && job.work_budget_milliseconds &&
+	    !options.item_budget_milliseconds &&
+	    options.repair == brlcad::step::RepairMode::Safe &&
+	    job.topology_face_count >= kExclusivePullbackTopologyFaceThreshold;
+	uint64_t remaining_work = 0;
+	if (stall_only) {
+	    remaining_work = std::max<uint64_t>(1,
+		brlcad::PullbackWorkRemainingMilliseconds());
+	    pullback_work.Restart(0, options.effective_stall_timeout_milliseconds);
+	    wrapper->RecordDiagnostic(
+		brlcad::step::DiagnosticSeverity::Information, job.entity_id,
+		job.entity_type, "work_budget",
+		"large-solid trim repair is using the no-progress timeout only");
+	}
 	wrapper->SetProgressDetail("repairing exact BREP trim orientations",
 	    job.entity_id, 0, 0, std::string(), job.entity_type);
 	repair_closed_trim_orientations(job.brep.get(), wrapper, job.entity_id,
@@ -2450,6 +2469,9 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	finish_stage("trim_orientation_repair");
 	if (work_expired("trim orientation repair"))
 	    return;
+	if (stall_only)
+	    pullback_work.Restart(remaining_work,
+		options.effective_stall_timeout_milliseconds);
     }
     /* Exact pcurve repair may unwrap a periodic join or prove a duplicate
      * seam bridge that was not visible in the initial topology.  Retry safe

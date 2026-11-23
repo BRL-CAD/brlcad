@@ -1418,6 +1418,21 @@ STEPWrapper::SetProgressDetail(const std::string &phase,
     std::map<std::thread::id, ActiveGeometryJobProgress>::iterator active =
 	active_geometry_job_progress.find(std::this_thread::get_id());
     if (active != active_geometry_job_progress.end()) {
+	/* An inner pullback can report many samples for each completed repair
+	 * loop.  Preserve the outer count until another entity-scoped phase
+	 * starts, while still publishing the latest pullback detail. */
+	if (current_entity_id <= 0 && active->second.secondary_label == "loops" &&
+		active->second.secondary_total) {
+	    active->second.detail = detail;
+	    return;
+	}
+	if (phase != active->second.phase ||
+		secondary_label != active->second.secondary_label ||
+		secondary_total != active->second.secondary_total ||
+		secondary_completed < active->second.secondary_completed ||
+		(current_entity_id > 0 &&
+		 current_entity_id != active->second.current_entity_id))
+	    ++active->second.progress_generation;
 	active->second.phase = phase;
 	/* A face counter is the stable outer item context.  Nested pullback,
 	 * seam, and loop calls may update the operation detail without erasing
@@ -1504,6 +1519,7 @@ STEPWrapper::Progress() const
     snapshot.geometry_item_total = job.item_total;
     snapshot.geometry_item_label = job.item_label;
     snapshot.geometry_subentity_id = job.current_entity_id;
+    snapshot.geometry_progress_generation = job.progress_generation;
     snapshot.secondary_completed = job.secondary_completed;
     snapshot.secondary_total = job.secondary_total;
     snapshot.secondary_label = job.secondary_label;

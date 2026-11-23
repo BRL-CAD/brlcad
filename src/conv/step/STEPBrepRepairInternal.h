@@ -62,6 +62,8 @@
 
 namespace step_brep_detail {
 
+constexpr int kRepairLoopProgressStride = 32;
+
 struct PeriodicPullbackCrossing {
     bool detected = false;
     double trim_fraction = 0.0;
