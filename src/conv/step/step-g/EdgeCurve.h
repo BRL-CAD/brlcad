@@ -48,6 +48,7 @@ public:
     EdgeCurve(STEPWrapper *sw, int step_id);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
+    const Curve *EdgeGeometry() const { return edge_geometry; }
     virtual void Print(int level);
 
     //static methods

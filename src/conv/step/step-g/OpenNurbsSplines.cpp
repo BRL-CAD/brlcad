@@ -23,6 +23,7 @@ class SDAI_Application_instance;
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
+#include <cstring>
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -56,6 +57,10 @@ class SDAI_Application_instance;
 #include "UniformSurface.h"
 
 namespace {
+
+/* Large curves are cheaper to copy than to assemble from the linked STEP
+ * point and knot lists and validate again. */
+constexpr size_t kMinimumCachedSplineControlPoints = 64;
 
 /*
  * ISO 10303 represents a B-spline curve or surface direction with the
@@ -593,6 +598,55 @@ BSplineCurve::LoadONBrep(ON_Brep *brep)
 
 
 bool
+BSplineCurveWithKnots::BuildCurve(ON_NurbsCurve *curve, int dimension,
+	double length_factor, bool canonicalize, size_t *repeated_knots,
+	std::string *failure) const
+{
+    const int count = static_cast<int>(control_points_list.size());
+    if (degree < 1 || count < degree + 1) {
+	std::ostringstream message;
+	message << "degree " << degree << " and control point count " << count
+	    << " cannot define a B-spline curve";
+	*failure = message.str();
+	return false;
+    }
+    if (!curve->Create(dimension, false, degree + 1, count)) {
+	*failure = "could not allocate the OpenNURBS curve";
+	return false;
+    }
+    if (!set_step_curve_knots(curve, knot_multiplicities, knots,
+	    canonicalize, repeated_knots, failure))
+	return false;
+
+    int cv_index = 0;
+    for (CartesianPoint *point : control_points_list) {
+	if (!point || !curve->SetCV(cv_index,
+		ON_3dPoint(point->X() * length_factor, point->Y() * length_factor,
+		    dimension == 3 ? point->Z() * length_factor : 0.0))) {
+	    *failure = "could not set OpenNURBS control point " +
+		std::to_string(cv_index);
+	    return false;
+	}
+	++cv_index;
+    }
+    return validate_step_curve(curve, failure);
+}
+
+
+bool
+BSplineCurveWithKnots::BuildParameterCurve(ON_NurbsCurve *curve) const
+{
+    if (!curve || dynamic_cast<const RationalBSplineCurve *>(this))
+	return false;
+    /* Coordinates belong to the surface parameter domain and carry no
+     * model length conversion. A failed probe leaves the normal pullback. */
+    std::string failure;
+    size_t repeated_knots = 0;
+    return BuildCurve(curve, 2, 1.0, false, &repeated_knots, &failure);
+}
+
+
+bool
 BSplineCurveWithKnots::LoadONBrep(ON_Brep *brep)
 {
     if (!brep) {
@@ -604,22 +658,22 @@ BSplineCurveWithKnots::LoadONBrep(ON_Brep *brep)
 	return true;
     }
 
-    const int t_size = static_cast<int>(control_points_list.size());
-    if (degree < 1 || t_size < degree + 1) {
-	std::ostringstream failure;
-	failure << "degree " << degree << " and control point count "
-	    << t_size << " cannot define a B-spline curve";
-	record_step_curve_failure(step, id, failure.str());
-	return false;
+    const double length_factor = LocalUnits::length;
+    if (exact_curve_cache && !std::memcmp(&cached_length_factor,
+	    &length_factor, sizeof(length_factor))) {
+	SetONId(brep->AddEdgeCurve(new ON_NurbsCurve(*exact_curve_cache)));
+	if (step && GetONId() >= 0)
+	    step->RecordStageTiming("source_spline_reuse", id,
+		"B_SPLINE_CURVE_WITH_KNOTS", 0);
+	return GetONId() >= 0;
     }
 
-    std::unique_ptr<ON_NurbsCurve> curve(
-	ON_NurbsCurve::New(3, false, degree + 1, t_size));
+    std::unique_ptr<ON_NurbsCurve> curve(new ON_NurbsCurve());
     std::string failure;
     size_t repeated_knot_entries = 0;
     const bool canonicalize_repeated_knots = step &&
 	step->ImportOptions().repair == brlcad::step::RepairMode::Safe;
-    if (!set_step_curve_knots(curve.get(), knot_multiplicities, knots,
+    if (!BuildCurve(curve.get(), 3, length_factor,
 	    canonicalize_repeated_knots, &repeated_knot_entries, &failure)) {
 	record_step_curve_failure(step, id, failure);
 	return false;
@@ -627,24 +681,13 @@ BSplineCurveWithKnots::LoadONBrep(ON_Brep *brep)
     record_repeated_step_knot_repair(step, id,
 	"B_SPLINE_CURVE_WITH_KNOTS", "knots", repeated_knot_entries);
 
-    LIST_OF_POINTS::const_iterator i;
-    int cv_index = 0;
-    for (i = control_points_list.begin(); i != control_points_list.end(); ++i) {
-	if (!*i || !curve->SetCV(cv_index,
-		ON_3dPoint((*i)->X() * LocalUnits::length,
-		    (*i)->Y() * LocalUnits::length,
-		    (*i)->Z() * LocalUnits::length))) {
-	    std::ostringstream message;
-	    message << "could not set OpenNURBS control point " << cv_index;
-	    record_step_curve_failure(step, id, message.str());
-	    return false;
-	}
-	cv_index++;
-    }
-
-    if (!validate_step_curve(curve.get(), &failure)) {
-	record_step_curve_failure(step, id, failure);
-	return false;
+    /* Each construction pass owns its BREP. Retain only the unmodified
+     * authored spline so neither edge trimming nor a knot repair can
+     * leak into a later face or the other construction pass. */
+    if (!repeated_knot_entries && control_points_list.size() >=
+	    kMinimumCachedSplineControlPoints) {
+	exact_curve_cache = std::make_shared<ON_NurbsCurve>(*curve);
+	cached_length_factor = length_factor;
     }
     SetONId(brep->AddEdgeCurve(curve.release()));
 

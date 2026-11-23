@@ -654,6 +654,115 @@ split_repeated_interior_pole_face(ON_Brep *brep, int face_index,
 }
 
 
+/* A pole VERTEX_LOOP and contractible inner bounds can describe a sphere
+ * with holes.  Represent the pole on a native outer loop so the identified
+ * sides of the sphere have reciprocal seam trims in OpenNURBS. */
+static bool
+repair_spherical_pole_with_holes(ON_Brep *brep, int face_index)
+{
+    const ON_BrepFace &face = brep->m_F[face_index];
+    if (face.m_li.Count() < 2)
+	return false;
+    const ON_Surface *surface = face.SurfaceOf();
+    if (!surface->IsClosed(0) || surface->IsClosed(1) ||
+	    !surface->IsSingular(0) || !surface->IsSingular(2))
+	return false;
+
+    const ON_Interval u = surface->Domain(0);
+    const ON_Interval v = surface->Domain(1);
+    if (!u.IsIncreasing() || !v.IsIncreasing())
+	return false;
+    const double u_guard = kPeriodicParameterSnapFraction *
+	std::max(1.0, u.Length());
+    const double v_guard = kPeriodicParameterSnapFraction *
+	std::max(1.0, v.Length());
+    int pole_loop = -1;
+    int pole_vertex = -1;
+    bool north_pole = false;
+    ON_BrepLoop::TYPE hole_orientation = ON_BrepLoop::unknown;
+    for (int li = 0; li < face.m_li.Count(); ++li) {
+	const ON_BrepLoop *loop = face.Loop(li);
+	if (!loop || loop->m_loop_user.i <= 0)
+	    return false;
+	const ON_BrepTrim *first = loop->Trim(0);
+	if (loop->TrimCount() == 1 && first &&
+		first->m_type == ON_BrepTrim::singular && first->m_ei < 0) {
+	    if (pole_loop >= 0 || first->m_vi[0] < 0 ||
+		    first->m_vi[0] >= brep->m_V.Count() ||
+		    first->m_vi[0] != first->m_vi[1])
+		return false;
+	    const ON_3dPoint start = first->PointAtStart();
+	    const ON_3dPoint end = first->PointAtEnd();
+	    if (!start.IsValid() || !end.IsValid() ||
+		    fabs(std::min(start.x, end.x) - u.Min()) > u_guard ||
+		    fabs(std::max(start.x, end.x) - u.Max()) > u_guard)
+		return false;
+	    north_pole = fabs(start.y - v.Max()) <= v_guard;
+	    const double pole_v = north_pole ? v.Max() : v.Min();
+	    pole_vertex = first->m_vi[0];
+	    const ON_3dPoint &vertex = brep->m_V[pole_vertex].point;
+	    const ON_3dPoint lift = surface->PointAt(u.Min(), pole_v);
+	    if (fabs(start.y - pole_v) > v_guard ||
+		    fabs(end.y - pole_v) > v_guard || !vertex.IsValid() ||
+		    !lift.IsValid() || lift.DistanceTo(vertex) > LocalUnits::tolerance)
+		return false;
+	    pole_loop = loop->m_loop_index;
+	    continue;
+	}
+	/* A winding loop or a seam-straddling hole needs a different cut.
+	 * There must also be a consistent orientation for all supplied holes. */
+	if (loop->m_type != ON_BrepLoop::inner || !loop->IsValid())
+	    return false;
+	const ON_BrepLoop::TYPE orientation = brep->ComputeLoopType(*loop);
+	if ((orientation != ON_BrepLoop::inner &&
+		orientation != ON_BrepLoop::outer) ||
+		(hole_orientation != ON_BrepLoop::unknown &&
+		    hole_orientation != orientation))
+	    return false;
+	hole_orientation = orientation;
+	for (int ti = 0; ti < loop->TrimCount(); ++ti) {
+	    const ON_BrepTrim *trim = loop->Trim(ti);
+	    if (!trim || trim->m_ei < 0)
+		return false;
+	    const ON_BoundingBox box = trim->BoundingBox();
+	    if (!box.IsValid() || box.m_min.x <= u.Min() + u_guard ||
+		    box.m_max.x >= u.Max() - u_guard ||
+		    box.m_min.y <= v.Min() + v_guard ||
+		    box.m_max.y >= v.Max() - v_guard)
+		return false;
+	}
+    }
+    if (pole_loop < 0 || !surface->IsSphere(nullptr, ON_ZERO_TOLERANCE))
+	return false;
+
+    ON_Brep candidate(*brep);
+    const int source_loop_id = candidate.m_L[pole_loop].m_loop_user.i;
+    candidate.DeleteLoop(candidate.m_L[pole_loop], false);
+    if (hole_orientation == ON_BrepLoop::outer) {
+	/* OpenNURBS expects clockwise holes in surface coordinates.  Reverse
+	 * the face with the holes so the directed shared-edge uses stay intact. */
+	ON_BrepFace &sphere_face = candidate.m_F[face_index];
+	for (int li = 0; li < sphere_face.m_li.Count(); ++li)
+	    candidate.FlipLoop(*sphere_face.Loop(li));
+	sphere_face.m_bRev = !sphere_face.m_bRev;
+    }
+    int vertices[4] = {-1, -1, -1, -1};
+    const int pole_corner = north_pole ? 2 : 0;
+    vertices[pole_corner] = vertices[pole_corner + 1] = pole_vertex;
+    int edges[4] = {-1, -1, -1, -1};
+    bool reversed[4] = {false, false, false, false};
+    ON_BrepLoop *outer = candidate.NewOuterLoop(face_index, vertices, edges,
+	reversed);
+    if (!outer || !candidate.m_F[face_index].IsValid())
+	return false;
+    outer->m_loop_user.i = source_loop_id;
+
+    candidate.Compact();
+    *brep = candidate;
+    return true;
+}
+
+
 /* STEP permits a compact representation of a band on a singly-periodic
  * surface: the two closed boundary edges are separate one-trim loops and the
  * identified surface sides supply the implicit connection between them.
@@ -867,6 +976,12 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 	    wrapper->SetProgressDetail("repairing implicit exact periodic face bands",
 		entity_id, static_cast<uint64_t>(fi + 1),
 		static_cast<uint64_t>(brep->m_F.Count()), "faces", detail.str());
+	}
+	if (repair_spherical_pole_with_holes(brep, fi)) {
+	    ++repaired;
+	    wrapper->RecordRepair(entity_id, entity_type, "face_bound",
+		"represented the pole vertex loop and sphere holes with an exact surface-domain outer boundary");
+	    continue;
 	}
 	int closed_direction = surface->IsClosed(0) ? 0 : 1;
 	/* A toroidal face is closed in both parameter directions.  When its STEP
@@ -1619,17 +1734,52 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 		    last->PointAtEnd() : ON_3dPoint::UnsetPoint;
 		const ON_3dPoint boundary_start_3d = first ?
 		    first->PointAtStart() : ON_3dPoint::UnsetPoint;
+		const ON_BrepLoop::TYPE previous_type = normalized_loop.m_type;
+		bool inferred_outer = false;
+		if (normalized_face && normalized_face->m_li.Count() > 1 &&
+			previous_type != ON_BrepLoop::outer &&
+			!explicit_periodic_topology) {
+		    /* An untyped FACE_BOUND has no planar winding until the pole
+		     * cut closes its parameter-space loop.  The unique proven
+		     * winding identifies the enclosing boundary when every other
+		     * loop is an ordinary contractible hole with no outer claim. */
+		    inferred_outer = true;
+		    for (int index = 0; index < normalized_face->m_li.Count(); ++index) {
+			const int li = normalized_face->m_li[index];
+			if (li == only_loop)
+			    continue;
+			if (li < 0 || li >= brep->m_L.Count()) {
+			    inferred_outer = false;
+			    break;
+			}
+			const ON_BrepLoop &sibling = brep->m_L[li];
+			if (sibling.m_type == ON_BrepLoop::outer ||
+				loop_has_singular_topology(sibling)) {
+			    inferred_outer = false;
+			    break;
+			}
+		    }
+		    if (inferred_outer)
+			normalized_loop.m_type = ON_BrepLoop::outer;
+		}
+		std::string pole_cut_failure;
 		if (first && last && normalized_surface &&
 			step_insert_periodic_pole_cut(brep, normalized_loop,
 			normalized_surface, *last,
 			ON_2dPoint(boundary_end_3d.x, boundary_end_3d.y),
 			ON_2dPoint(boundary_start_3d.x, boundary_start_3d.y),
-			topology_tolerance)) {
+			topology_tolerance, &pole_cut_failure)) {
+		    if (inferred_outer) {
+			brep->SortFaceLoops(brep->m_F[normalized_loop.m_fi]);
+			wrapper->RecordRepair(entity_id, entity_type, "face_bound",
+			    "classified a proven full-period cap boundary around its contractible holes");
+		    }
 		    wrapper->RecordRepair(entity_id, entity_type, "edge_loop",
 			"inserted an exact pole cut for a multi-edge full-period boundary");
 		    ++repaired;
 		    continue;
 		}
+		normalized_loop.m_type = previous_type;
 		/* regenerate_full_period_boundary_chain installs a deep BREP copy,
 		 * invalidating the face/surface references captured at the top of this
 		 * iteration.  Even if the pole proof is rejected, leave the exact
@@ -1639,7 +1789,9 @@ repair_implicit_periodic_face_bands(ON_Brep *brep, STEPWrapper *wrapper,
 		    std::cerr << entity_type << " #" << entity_id
 			<< ": normalized multi-edge full-period loop L"
 			<< only_loop
-			<< " but no exact surface-pole cut was proven" << std::endl;
+			<< " but no exact surface-pole cut was proven"
+			<< (pole_cut_failure.empty() ? "" : ": ")
+			<< pole_cut_failure << std::endl;
 		continue;
 	    }
 	    /* A complete intrinsic boundary need not begin at the native seam.

@@ -152,12 +152,11 @@ normalize_closed_surface_parameter(const ON_Surface *surface,
     if (!surface || !target.IsValid() || !uv.IsValid() || !(tolerance > 0.0))
 	return;
     for (int direction = 0; direction < 2; ++direction) {
-	if (!surface->IsClosed(direction))
-	    continue;
 	const ON_Interval domain = surface->Domain(direction);
 	const double period = domain.Length();
 	if (!(period > ON_ZERO_TOLERANCE) ||
-		(uv[direction] >= domain.Min() && uv[direction] <= domain.Max()))
+		(uv[direction] >= domain.Min() && uv[direction] <= domain.Max()) ||
+		!surface->IsClosed(direction))
 	    continue;
 	double wrapped = fmod(uv[direction] - domain.Min(), period);
 	if (wrapped < 0.0)
@@ -177,13 +176,12 @@ has_unwrapped_closed_parameter(const ON_Surface *surface, const ON_3dPoint &uv)
     if (!surface || !uv.IsValid())
 	return false;
     for (int direction = 0; direction < 2; ++direction) {
-	if (!surface->IsClosed(direction))
-	    continue;
 	const ON_Interval domain = surface->Domain(direction);
 	const double guard = std::max(ON_ZERO_TOLERANCE,
 	    domain.Length() * 1.0e-12);
-	if (uv[direction] < domain.Min() - guard ||
-		uv[direction] > domain.Max() + guard)
+	if ((uv[direction] < domain.Min() - guard ||
+		uv[direction] > domain.Max() + guard) &&
+		surface->IsClosed(direction))
 	    return true;
     }
     return false;
@@ -202,13 +200,13 @@ closed_surface_native_parameter(const ON_Surface *surface, ON_3dPoint uv)
     if (!surface || !uv.IsValid())
 	return ON_3dPoint::UnsetPoint;
     for (int direction = 0; direction < 2; ++direction) {
-	if (!surface->IsClosed(direction))
-	    continue;
+	/* Dense trim validation usually samples native images. A NURBS
+	 * closure check is needed only when a parameter must wrap. */
 	const ON_Interval domain = surface->Domain(direction);
 	const double period = domain.Length();
 	if (!(period > ON_ZERO_TOLERANCE) ||
-		(uv[direction] >= domain.Min() &&
-		 uv[direction] <= domain.Max()))
+		(uv[direction] >= domain.Min() && uv[direction] <= domain.Max()) ||
+		!surface->IsClosed(direction))
 	    continue;
 	double wrapped = fmod(uv[direction] - domain.Min(), period);
 	if (wrapped < 0.0)

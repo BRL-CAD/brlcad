@@ -3203,7 +3203,7 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	    &unresolved_reused_use_count);
 	for (size_t repair = 0; repair < reused_edge_repairs; ++repair)
 	    wrapper->RecordRepair(job.entity_id, job.entity_type, "edge_topology",
-		"separated one STEP edge reused by distinct manifold shell components");
+		"separated the repeated uses of one STEP edge into proven manifold pairs");
 	if (reused_edge_repairs)
 	    solid = job.brep->IsSolid();
 	if (wrapper->Verbose() && !reused_edge_failure.empty())
@@ -3495,6 +3495,120 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 }
 
 
+/* Four distinct faces meeting along a line can describe two touching
+ * material sectors. Planes and cylinders parallel to the edge have constant
+ * inward rays along the edge, so the directed trim uses determine the
+ * occupied angular intervals. */
+static bool
+pair_constant_edge_sectors(const ON_Brep &brep, const ON_BrepEdge &edge,
+	std::vector<std::vector<int> > &pairs)
+{
+    constexpr int sector_boundary_count = 4;
+    if (edge.m_ti.Count() != sector_boundary_count ||
+	    !edge.IsLinear(ON_ZERO_TOLERANCE))
+	return false;
+    const double angular_guard = ON_SQRT_EPSILON * kNumericalToleranceScale;
+    const double edge_midpoint = edge.Domain().Mid();
+    ON_3dVector tangent = edge.TangentAt(edge_midpoint);
+    ON_3dVector radial_axis;
+    if (!tangent.Unitize() || !radial_axis.PerpendicularTo(tangent) ||
+	    !radial_axis.Unitize())
+	return false;
+    const ON_3dVector radial_y = ON_CrossProduct(tangent, radial_axis);
+    const ON_3dPoint edge_point = edge.PointAt(edge_midpoint);
+    if (!edge_point.IsValid())
+	return false;
+
+    struct Ray {
+	double angle;
+	int trim;
+	bool reverse;
+    };
+    Ray rays[sector_boundary_count];
+    std::set<int> faces;
+    for (int i = 0; i < sector_boundary_count; ++i) {
+	const ON_BrepTrim *trim = brep.Trim(edge.m_ti[i]);
+	const ON_BrepFace *face = trim ? trim->Face() : NULL;
+	const ON_Surface *surface = face ? face->SurfaceOf() : NULL;
+	if (!surface || !faces.insert(face->m_face_index).second)
+	    return false;
+	if (!surface->IsPlanar(nullptr, ON_ZERO_TOLERANCE)) {
+	    const ON_RevSurface *revolution = ON_RevSurface::Cast(surface);
+	    ON_Cylinder cylinder;
+	    if (!revolution || !ON_LineCurve::Cast(revolution->m_curve) ||
+		    !revolution->IsCylinder(&cylinder, ON_ZERO_TOLERANCE) ||
+		    ON_CrossProduct(cylinder.Axis(), tangent).Length() >
+			ON_ZERO_TOLERANCE)
+		return false;
+	    /* The linear edge is axial, so its radial separation is constant.
+	     * Also check its ends against the finite native cylinder. */
+	    for (const ON_3dPoint &endpoint : {edge.PointAtStart(), edge.PointAtEnd()}) {
+		const ON_3dPoint on_cylinder = cylinder.ClosestPointTo(endpoint);
+		if (!on_cylinder.IsValid() || on_cylinder.DistanceTo(endpoint) >
+			LocalUnits::tolerance)
+		    return false;
+	    }
+	}
+	const ON_3dPoint uv = trim->PointAt(trim->Domain().Mid());
+	ON_3dPoint lift;
+	ON_3dVector du, dv;
+	if (!uv.IsValid() || !surface->Ev1Der(uv.x, uv.y, lift, du, dv) ||
+	    !lift.IsValid() || lift.DistanceTo(edge_point) > LocalUnits::tolerance)
+	    return false;
+	ON_3dVector normal = ON_CrossProduct(du, dv);
+	if (!normal.Unitize() || fabs(normal * tangent) > angular_guard)
+	    return false;
+	const ON_3dVector interior = ON_CrossProduct(normal,
+	    trim->m_bRev3d ? -tangent : tangent);
+	rays[i] = {atan2(interior * radial_y, interior * radial_axis),
+	    trim->m_trim_index, face->m_bRev != trim->m_bRev3d};
+    }
+    std::sort(rays, rays + sector_boundary_count,
+	[](const Ray &a, const Ray &b) { return a.angle < b.angle; });
+    constexpr int sector_count = sector_boundary_count / 2;
+    int tangencies[sector_count] = {};
+    size_t tangency_count = 0;
+    bool alternating = true;
+    for (int i = 0; i < sector_boundary_count; ++i) {
+	const int next = (i + 1) % sector_boundary_count;
+	const double gap = rays[next].angle - rays[i].angle +
+	    (next == 0 ? 2.0 * ON_PI : 0.0);
+	if (gap <= angular_guard) {
+	    if (tangency_count == sector_count ||
+		    rays[i].reverse == rays[next].reverse)
+		return false;
+	    tangencies[tangency_count++] = i;
+	}
+	alternating = alternating && rays[i].reverse != rays[next].reverse;
+    }
+    if (tangency_count) {
+	/* Opposing trim uses at both limiting rays can be paired across the
+	 * two rays. Pairing within a ray would collapse a material sector. */
+	if (tangency_count != sector_count ||
+		tangencies[1] - tangencies[0] != sector_count)
+	    return false;
+	const int first = tangencies[0];
+	const int second = tangencies[1];
+	const int first_next = (first + 1) % sector_boundary_count;
+	const int second_next = (second + 1) % sector_boundary_count;
+	const bool same_order = rays[first].reverse == rays[second].reverse;
+	pairs.push_back({rays[first].trim, rays[same_order ? second_next : second].trim});
+	pairs.push_back({rays[first_next].trim, rays[same_order ? second : second_next].trim});
+	return true;
+    }
+    if (!alternating)
+	return false;
+    /* A reversed use has its material sector counterclockwise around the
+     * edge tangent, ending at the next forward use. */
+    for (int i = 0; i < sector_boundary_count; ++i) {
+	if (rays[i].reverse)
+	    pairs.push_back({rays[i].trim,
+		rays[(i + 1) % sector_boundary_count].trim});
+    }
+    return true;
+}
+
+
 /* Some exporters reuse one EDGE_CURVE topology entity in otherwise disjoint
  * CLOSED_SHELL components.  OpenNURBS correctly treats the resulting edge
  * with four or more trims as non-manifold.  When the ordinary two-use edges
@@ -3505,8 +3619,8 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
  * The refinement matters for exporters which place multiple otherwise
  * disjoint manifold components in one nominal CLOSED_SHELL and reuse one
  * EDGE_CURVE between them.  This is transactional and cannot guess a pairing:
- * every use must belong to a distinct, proven two-use component and the
- * completed BREP must remain structurally valid. */
+ * each group must have a proven pairing and the completed BREP must remain
+ * structurally valid. */
 static size_t
 split_reused_edges_by_shell_component(ON_Brep *brep, std::string *failure,
 	int *unresolved_step_edge, int *unresolved_use_count)
@@ -3560,6 +3674,7 @@ split_reused_edges_by_shell_component(ON_Brep *brep, std::string *failure,
 	std::vector<std::vector<int> > trim_groups;
     };
     std::vector<SplitPlan> plans;
+    bool constant_sector_pairing = false;
     for (int ei = 0; ei < brep->m_E.Count(); ++ei) {
 	const ON_BrepEdge &edge = brep->m_E[ei];
 	if (edge.m_ti.Count() <= 2)
@@ -3579,6 +3694,23 @@ split_reused_edges_by_shell_component(ON_Brep *brep, std::string *failure,
 	    const int adjacency_component = find_root(face->m_face_index);
 	    by_component[std::make_pair(shell_label, adjacency_component)].push_back(
 		trim->m_trim_index);
+	}
+	if (complete && by_component.size() == 1 && edge.m_ti.Count() == 4) {
+	    /* Angular pairing is used only to close a shell with this one
+	     * unresolved edge. Keep the ordinary component plans independent. */
+	    const ON_BrepEdge *begin = brep->m_E.Array();
+	    const bool other_edges_manifold = std::all_of(begin,
+		begin + brep->m_E.Count(), [&edge](const ON_BrepEdge &other) {
+		    return &other == &edge || other.m_ti.Count() == 2;
+		});
+	    SplitPlan sectors;
+	    sectors.edge_index = ei;
+	    if (other_edges_manifold &&
+		    pair_constant_edge_sectors(*brep, edge, sectors.trim_groups)) {
+		plans.push_back(std::move(sectors));
+		constant_sector_pairing = true;
+		continue;
+	    }
 	}
 	if (!complete || by_component.size() < 2) {
 	    if (failure && failure->empty()) {
@@ -3688,6 +3820,20 @@ split_reused_edges_by_shell_component(ON_Brep *brep, std::string *failure,
 	}
 	*brep = *rollback;
 	return 0;
+    }
+    if (constant_sector_pairing && !brep->IsSolid()) {
+	/* A nonmanifold edge prevents the closed-shell orientation solver
+	 * from running until its exact uses have been separated. */
+	std::string orientation_failure;
+	repair_closed_shell_face_orientations(brep, &orientation_failure);
+	if (!brep->IsSolid()) {
+	    if (failure)
+		*failure = orientation_failure.empty() ?
+		    "the edge-sector pairing did not close the solid" :
+		    orientation_failure;
+	    *brep = *rollback;
+	    return 0;
+	}
     }
     return separated_edges;
 }

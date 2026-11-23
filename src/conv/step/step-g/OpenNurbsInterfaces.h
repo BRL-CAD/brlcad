@@ -13,6 +13,7 @@
 
 #include <cstddef>
 #include <functional>
+#include <memory>
 #include <string>
 
 class ON_Brep;
@@ -22,6 +23,23 @@ class ON_Surface;
 class ON_BrepTrim;
 class ON_2dPoint;
 class ON_3dPoint;
+class CurveDistanceEvaluator;
+
+/* Reuse the bounded source-curve search for related lift checks. */
+class STEPCurveLocus {
+public:
+    explicit STEPCurveLocus(const ON_Curve *curve);
+    ~STEPCurveLocus();
+
+    double DistanceTo(const ON_3dPoint &point, double tolerance) const;
+    /* Measure an exact point on the curve when a tolerance witness fails. */
+    double MeasuredDistanceTo(const ON_3dPoint &point, double tolerance) const;
+    bool ClosestParameter(const ON_3dPoint &point, double *parameter,
+	    double *distance) const;
+
+private:
+    std::unique_ptr<CurveDistanceEvaluator> evaluator;
+};
 
 /* Deterministically prove that every supplied point lies on a bounded curve
  * within the caller's model-space tolerance.  The implementation brackets

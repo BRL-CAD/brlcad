@@ -27,7 +27,11 @@
 #ifndef CONV_STEP_STEP_G_BSPLINECURVEWITHKNOTS_H
 #define CONV_STEP_STEP_G_BSPLINECURVEWITHKNOTS_H
 
+#include <memory>
+
 #include "BSplineCurve.h"
+
+class ON_NurbsCurve;
 
 typedef list<int> LIST_OF_INTEGERS;
 typedef list<double> LIST_OF_REALS;
@@ -37,6 +41,10 @@ class BSplineCurveWithKnots : virtual public BSplineCurve
 private:
     static string entityname;
     static EntityInstanceFunc GetInstance;
+    std::shared_ptr<const ON_NurbsCurve> exact_curve_cache;
+    double cached_length_factor = 0.0;
+    bool BuildCurve(ON_NurbsCurve *curve, int dimension, double length_factor,
+	bool canonicalize, size_t *repeated_knots, std::string *failure) const;
 
 protected:
     LIST_OF_INTEGERS knot_multiplicities;
@@ -51,6 +59,7 @@ public:
     BSplineCurveWithKnots(STEPWrapper *sw, int step_id);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
+    bool BuildParameterCurve(ON_NurbsCurve *curve) const;
     virtual void Print(int level);
 
     //static methods

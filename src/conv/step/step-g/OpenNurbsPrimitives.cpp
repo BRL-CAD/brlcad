@@ -27,7 +27,6 @@ class SDAI_Application_instance;
 #include <cfloat>
 #include <cmath>
 #include <iostream>
-#include <functional>
 #include <memory>
 #include <sstream>
 #include <vector>
@@ -894,195 +893,74 @@ Hyperbola::SetParameterTrim(double start_param, double end_param)
 bool
 Hyperbola::LoadONBrep(ON_Brep *brep)
 {
-    ON_TextLog dump;
-
-    if (!brep) {
-	/* nothing to do */
+    if (!brep)
 	return false;
-    }
 
-    //if (ON_id >= 0)
-    //	return true; // already loaded
-
-    ON_3dPoint origin(GetOrigin());
+    const ON_3dPoint center = ON_3dPoint(GetOrigin()) * LocalUnits::length;
     ON_3dVector xaxis(GetXAxis());
     ON_3dVector yaxis(GetYAxis());
-    ON_3dVector norm(GetNormal());
-
-    norm.Unitize();
-    xaxis.Unitize();
-    yaxis.Unitize();
-
-    ON_3dPoint center = origin * LocalUnits::length;
-    double a = semi_axis * LocalUnits::length;
-    double b = semi_imag_axis * LocalUnits::length;
-    if (!(std::fabs(a) > ON_ZERO_TOLERANCE) ||
-	    !(std::fabs(b) > ON_ZERO_TOLERANCE))
+    const double a = semi_axis * LocalUnits::length;
+    const double b = semi_imag_axis * LocalUnits::length;
+    if (!(a > ON_ZERO_TOLERANCE) || !(b > ON_ZERO_TOLERANCE) ||
+	    !xaxis.Unitize() || !yaxis.Unitize())
 	return false;
 
-    double eccentricity = sqrt(1.0 + (b * b) / (a * a));
-    ON_3dPoint focus = center + (eccentricity * a) * xaxis;
-    ON_3dPoint focusprime = center - (eccentricity * a) * xaxis;
-    // ON_3dPoint vertex = center + a * xaxis;
-    // ON_3dPoint directrix = center + (a / eccentricity) * xaxis;
-
-    ON_3dPoint pnt1;
-    ON_3dPoint pnt2;
-    if (trimmed) { //explicitly trimmed
-	pnt1 = trim_startpoint;
-	pnt2 = trim_endpoint;
-    } else if ((start != NULL) && (end != NULL)) {
-	pnt1 = start->Point3d();
-	pnt2 = end->Point3d();
+    ON_3dPoint endpoints[2];
+    if (trimmed) {
+	endpoints[0] = trim_startpoint;
+	endpoints[1] = trim_endpoint;
+    } else if (start && end) {
+	endpoints[0] = start->Point3d();
+	endpoints[1] = end->Point3d();
     } else {
-	std::cerr << "Error: " << entityname << " #" << id
-	    << " has no endpoints for LoadONBrep(ON_Brep *brep<" << std::hex
-	    << brep << std::dec << ">)" << std::endl;
+	if (step)
+	    step->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error, id,
+		"HYPERBOLA", "trim", "no endpoints bound the STEP hyperbola");
 	return false;
     }
 
-    ON_3dPoint P0 = pnt1 * LocalUnits::length;
-    ON_3dPoint P2 =  pnt2 * LocalUnits::length;
-
-    // calc tangent P0, P2 intersection
-    ON_3dVector ToFocus = focus - P0;
-    ToFocus.Unitize();
-
-    ON_3dVector ToFocusPrime = focusprime - P0;
-    ToFocusPrime.Unitize();
-
-    ON_3dVector bisector = ToFocus + ToFocusPrime;
-    bisector.Unitize();
-
-    ON_Line bs0(P0, P0 + bisector);
-
-    ToFocus = focus - P2;
-    ToFocus.Unitize();
-
-    ToFocusPrime = focusprime - P2;
-    ToFocusPrime.Unitize();
-
-    bisector = ToFocus + ToFocusPrime;
-    bisector.Unitize();
-
-    ON_Line bs2(P2, P2 + bisector);
-    ON_3dPoint P1;
-    if (intersectLines(bs0, bs2, P1) != 1) {
-	/* A single rational conic span becomes ill-conditioned when its endpoint
-	 * tangents are nearly parallel.  Approximate the analytic branch with an
-	 * adaptively refined polyline controlled by the model tolerance instead of
-	 * a fixed segment count. */
-	const double branch0 = (P0 - center) * xaxis;
-	const double branch2 = (P2 - center) * xaxis;
-	if (branch0 * branch2 <= 0.0)
-	    return false;
-	const double branch = branch0 < 0.0 ? -1.0 : 1.0;
-	const double u0 = std::asinh(((P0 - center) * yaxis) / b);
-	const double u2 = std::asinh(((P2 - center) * yaxis) / b);
-	if (!std::isfinite(u0) || !std::isfinite(u2) ||
-		std::fabs(u0 - u2) <= ON_ZERO_TOLERANCE)
-	    return false;
-	const auto evaluate = [&](double parameter) {
-	    return center + branch * a * std::cosh(parameter) * xaxis +
-		b * std::sinh(parameter) * yaxis;
-	};
-	const auto segment_distance = [](const ON_3dPoint &point,
-		const ON_3dPoint &first, const ON_3dPoint &last) {
-	    const ON_3dVector chord = last - first;
-	    const double squared_length = chord * chord;
-	    if (!(squared_length > ON_ZERO_TOLERANCE * ON_ZERO_TOLERANCE))
-		return point.DistanceTo(first);
-	    double fraction = ((point - first) * chord) / squared_length;
-	    fraction = std::max(0.0, std::min(1.0, fraction));
-	    return point.DistanceTo(first + fraction * chord);
-	};
-	const double tolerance = std::max(LocalUnits::tolerance, 1.0e-9);
-	if (evaluate(u0).DistanceTo(P0) > tolerance ||
-		evaluate(u2).DistanceTo(P2) > tolerance)
-	    return false;
-	ON_3dPointArray vertices;
-	vertices.Append(P0);
-	std::function<bool(double, const ON_3dPoint &, double,
-	    const ON_3dPoint &, unsigned int)> refine;
-	refine = [&](double first_parameter, const ON_3dPoint &first,
-		double last_parameter, const ON_3dPoint &last,
-		unsigned int depth) {
-	    const double parameters[3] = {
-		first_parameter + 0.25 * (last_parameter - first_parameter),
-		first_parameter + 0.5 * (last_parameter - first_parameter),
-		first_parameter + 0.75 * (last_parameter - first_parameter)};
-	    ON_3dPoint samples[3] = {evaluate(parameters[0]),
-		evaluate(parameters[1]), evaluate(parameters[2])};
-	    double deviation = 0.0;
-	    for (int sample = 0; sample < 3; ++sample)
-		deviation = std::max(deviation,
-		    segment_distance(samples[sample], first, last));
-	    if (deviation <= tolerance) {
-		if (vertices.Count() >= 65536)
-		    return false;
-		vertices.Append(last);
-		return true;
-	    }
-	    if (depth >= 24)
-		return false;
-	    return refine(first_parameter, first, parameters[1], samples[1],
-		depth + 1) && refine(parameters[1], samples[1], last_parameter,
-		last, depth + 1);
-	};
-	if (!refine(u0, P0, u2, P2, 0))
-	    return false;
-	ON_PolylineCurve *fallback = new ON_PolylineCurve(vertices);
-	if (!fallback->IsValid()) {
-	    delete fallback;
+    endpoints[0] *= LocalUnits::length;
+    endpoints[1] *= LocalUnits::length;
+    const double branch = (endpoints[0] - center) * xaxis < 0.0 ? -1.0 : 1.0;
+    const auto offset = [&](double parameter) {
+	return branch * a * std::cosh(parameter) * xaxis +
+	    b * std::sinh(parameter) * yaxis;
+    };
+    double parameters[2];
+    ON_3dPoint on_curve[2];
+    for (int i = 0; i < 2; ++i) {
+	parameters[i] = std::asinh(((endpoints[i] - center) * yaxis) / b);
+	on_curve[i] = center + offset(parameters[i]);
+	if (!on_curve[i].IsValid() || on_curve[i].DistanceTo(endpoints[i]) >
+		std::max(LocalUnits::tolerance, ON_ZERO_TOLERANCE)) {
+	    if (step)
+		step->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error, id,
+		    "HYPERBOLA", "trim", "STEP endpoints do not lie on one hyperbola branch");
 	    return false;
 	}
-	SetONId(brep->AddEdgeCurve(fallback));
-	if (step)
-	    step->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Information,
-		id, "HYPERBOLA", "trim",
-		"used a model-tolerance adaptive fallback for an ill-conditioned conic span");
-	return GetONId() >= 0;
     }
 
-    ON_Line l1(focus, P1);
-    ON_Line l2(P0, P2);
-    ON_3dPoint M = (P0 + P2) / 2.0;
+    /* In the hyperbola's centered parameter interval [-d,d], the endpoint
+     * tangents meet at x=a/cosh(d).  The middle weight is cosh(d), so the
+     * weighted control point can be constructed directly.  Shifting the
+     * interval applies the corresponding hyperbolic rotation to that point. */
+    const double middle_parameter = 0.5 * (parameters[0] + parameters[1]);
+    const double weight = std::cosh(0.5 * (parameters[1] - parameters[0]));
+    const ON_3dPoint weighted_middle = weight * center + offset(middle_parameter);
+    if (!std::isfinite(weight) || !weighted_middle.IsValid())
+	return false;
 
-    ON_Line ctom(center, M);
-    ON_3dVector dtom = ctom.Direction();
-    dtom.Unitize();
-    double m = (dtom * yaxis) / (dtom * xaxis);
-    double x1 = a * b * sqrt(1.0 / (b * b - m * m * a * a));
-    double y1 = b * sqrt((x1 * x1) / (a * a) - 1.0);
-    if (m < 0.0) {
-	y1 *= -1.0;
-    }
-    ON_3dVector X = x1 * xaxis;
-    ON_3dVector Y = y1 * yaxis;
-    ON_3dPoint Pv = center + X + Y;
-    double mx = M.DistanceTo(Pv);
-    double mp1 = M.DistanceTo(P1);
-    double R = mx / mp1;
-    double w = R / (1 - R);
-
-    P1 = (w) * P1; // must pre-weight before putting into NURB
-
-    // add hyperbola weightings
-    ON_3dPointArray cpts(3);
-    cpts.Append(P0);
-    cpts.Append(P1);
-    cpts.Append(P2);
-    ON_BezierCurve *bcurve = new ON_BezierCurve(cpts);
-    bcurve->MakeRational();
-    bcurve->SetWeight(1, w);
-
-    ON_NurbsCurve *hypernurbscurve = ON_NurbsCurve::New();
-
-    bcurve->GetNurbForm(*hypernurbscurve);
-
-    SetONId(brep->AddEdgeCurve(hypernurbscurve));
-
-    return true;
+    constexpr int quadratic_order = 3;
+    ON_BezierCurve span(3, true, quadratic_order);
+    std::unique_ptr<ON_NurbsCurve> curve(new ON_NurbsCurve());
+    if (!span.SetCV(0, ON_4dPoint(on_curve[0])) ||
+	    !span.SetCV(1, ON_4dPoint(weighted_middle.x, weighted_middle.y,
+		weighted_middle.z, weight)) ||
+	    !span.SetCV(2, ON_4dPoint(on_curve[1])) ||
+	    !span.GetNurbForm(*curve) || !curve->IsValid())
+	return false;
+    SetONId(brep->AddEdgeCurve(curve.release()));
+    return GetONId() >= 0;
 }
 
 

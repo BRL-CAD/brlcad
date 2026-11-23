@@ -36,6 +36,7 @@ class SDAI_Application_instance;
 #include "brep.h"
 
 #include <algorithm>
+#include <chrono>
 #include <map>
 #include <memory>
 #include <set>
@@ -50,10 +51,14 @@ class SDAI_Application_instance;
 #include "PullbackCurve.h"
 #include "Point.h"
 #include "CartesianPoint.h"
+#include "DefinitionalRepresentation.h"
 #include "VertexPoint.h"
 #include "Vector.h"
 #include "EdgeCurve.h"
 #include "OrientedEdge.h"
+#include "PCurve.h"
+#include "PCurveOrSurface.h"
+#include "SurfaceCurve.h"
 #include "OpenNurbsInterfaces.h"
 
 // Curve includes

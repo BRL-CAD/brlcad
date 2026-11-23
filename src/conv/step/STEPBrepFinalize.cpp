@@ -716,23 +716,13 @@ repair_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
 	    ON_3dVector lifted_tangent = uv_tangent.x * du + uv_tangent.y * dv;
 	    if (!lifted_tangent.Unitize())
 		continue;
-	    /* The trim/edge use supplies a directed parameter correspondence.  If
-	     * its exact edge point already proves locus membership, a global NURBS
-	     * closest-point solve cannot improve the acceptance result.  Retain the
-	     * optimizer only for legitimately reparameterized pcurves whose direct
-	     * correspondence falls outside the model tolerance. */
+	    /* The supplied correspondence establishes direction as well as locus
+	     * membership. A different closest point cannot establish direction. */
 	    double edge_parameter = edge_nurbs.Domain().ParameterAt(
 		trim.m_bRev3d ? 1.0 - normalized : normalized);
 	    double edge_distance = lifted_point.DistanceTo(
 		edge_nurbs.PointAt(edge_parameter));
-	    /* This pass only gathers evidence for changing orientation.  A global
-	     * NURBS closest-point solve here used to run as many as fifteen times
-	     * per closed trim and has no bounded/cancellable openNURBS interface.
-	     * When the directed STEP correspondence is outside tolerance, treating
-	     * the sample as inconclusive is both safer and substantially cheaper:
-	     * endpoint proof and the densely validated regeneration path below
-	     * remain available, while an unrelated closest locus cannot be used as
-	     * evidence for reversing an edge use. */
+	    /* Inconclusive samples leave the endpoint and regeneration proofs below. */
 	    if (edge_distance > orientation_tolerance)
 		continue;
 	    ON_3dVector edge_tangent = edge_nurbs.TangentAt(edge_parameter);
@@ -786,6 +776,7 @@ repair_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
 		    alignment = -alignment;
 		valid_reversal = alignment >= 0.0;
 	    }
+	    std::unique_ptr<STEPCurveLocus> edge_locus;
 	    for (int sample = 0; valid_reversal &&
 		    sample <= kDenseValidationSegments; ++sample) {
 		if ((sample & 63) == 0 && brlcad::PullbackWorkCancelled()) {
@@ -804,19 +795,14 @@ repair_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
 			edge_domain.ParameterAt(fraction));
 		    const ON_3dPoint reverse = edge_nurbs.PointAt(
 			edge_domain.ParameterAt(1.0 - fraction));
-		    /* Reversal validation needs geometric-locus membership, not a
-		     * particular parameterization.  Either directed correspondence is
-		     * a sufficient exact-edge witness; consult the global optimizer only
-		     * when both direct witnesses fail. */
+		    /* Either directed correspondence proves the lift. Reuse one
+		     * exact edge search for samples with different parameter speeds. */
 		    double locus_distance = std::min(lifted.DistanceTo(forward),
 			lifted.DistanceTo(reverse));
 		    if (locus_distance > orientation_tolerance) {
-			double closest_parameter = 0.0;
-			if (ON_NurbsCurve_GetClosestPoint(&closest_parameter,
-				&edge_nurbs, lifted))
-			    locus_distance = std::min(locus_distance,
-				lifted.DistanceTo(edge_nurbs.PointAt(
-				    closest_parameter)));
+			if (!edge_locus)
+			    edge_locus.reset(new STEPCurveLocus(&edge));
+			locus_distance = edge_locus->DistanceTo(lifted, orientation_tolerance);
 		    }
 		    valid_reversal = locus_distance <= orientation_tolerance;
 		}

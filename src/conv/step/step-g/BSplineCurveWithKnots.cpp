@@ -64,6 +64,7 @@ BSplineCurveWithKnots::~BSplineCurveWithKnots()
 bool
 BSplineCurveWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
+    exact_curve_cache.reset();
     step = sw;
     id = sse->STEPfile_id;
 

@@ -49,6 +49,7 @@ measured_source_pcurve_tolerance(const ON_BrepTrim &trim,
 	std::max(edge_scale * kRegenerationMaximumRelativeMismatch,
 	    item_scale * kRegenerationMaximumRelativeItemMismatch));
 
+    std::unique_ptr<STEPCurveLocus> edge_locus;
     double measured = 0.0;
     for (int sample = 0; sample <= kDenseValidationSegments; ++sample) {
 	if ((sample & 31) == 0 && brlcad::PullbackWorkCancelled())
@@ -68,15 +69,15 @@ measured_source_pcurve_tolerance(const ON_BrepTrim &trim,
 	double distance = lift.DistanceTo(corresponding);
 	/* Direct parameter correspondence is an upper bound, but differently
 	 * parameterized curves can describe the same locus. */
-	if (distance > std::max(tolerance, measured)) {
-	    double closest_parameter = 0.0;
-	    if (!ON_NurbsCurve_GetClosestPoint(&closest_parameter,
-		    &edge_nurbs, lift))
+	const double established_tolerance = std::max(tolerance, measured);
+	if (distance > established_tolerance) {
+	    if (!edge_locus)
+		edge_locus.reset(new STEPCurveLocus(&edge_nurbs));
+	    const double locus_distance = edge_locus->MeasuredDistanceTo(lift,
+		established_tolerance);
+	    if (locus_distance >= DBL_MAX)
 		return tolerance;
-	    const ON_3dPoint closest = edge_nurbs.PointAt(closest_parameter);
-	    if (!closest.IsValid())
-		return tolerance;
-	    distance = std::min(distance, lift.DistanceTo(closest));
+	    distance = std::min(distance, locus_distance);
 	}
 	measured = std::max(measured, distance);
 	if (measured * kRegenerationToleranceSafety > limit)
@@ -3806,8 +3807,14 @@ repair_invalid_open_pcurves(ON_Brep *brep, STEPWrapper *wrapper,
     if (!brep || !wrapper || !(LocalUnits::tolerance > 0.0))
 	return;
 
+    constexpr int progress_trim_interval = 64;
     const int trim_count = brep->m_T.Count();
     for (int ti = 0; ti < trim_count; ++ti) {
+	if (brlcad::PullbackWorkCancelled())
+	    return;
+	if (ti % progress_trim_interval == 0)
+	    wrapper->SetProgressDetail("screening existing open pcurves", entity_id,
+		static_cast<uint64_t>(ti), static_cast<uint64_t>(trim_count), "trims");
 	ON_BrepTrim &trim = brep->m_T[ti];
 	const ON_Curve *source_curve = trim.TrimCurveOf();
 	if (trim.m_vi[0] < 0 || trim.m_vi[1] < 0 ||
@@ -3867,6 +3874,9 @@ repair_invalid_open_pcurves(ON_Brep *brep, STEPWrapper *wrapper,
 	    invalid_curve_locus = false;
 	    failed_locus_sample = -1;
 	    failed_locus_distance = 0.0;
+	    ON_3dPoint off_parameter[kPcurveLocusScreeningSegments - 1];
+	    int off_parameter_indices[kPcurveLocusScreeningSegments - 1];
+	    size_t off_parameter_count = 0;
 	    for (int sample = 1; !invalid_curve_locus &&
 		    sample < kPcurveLocusScreeningSegments; ++sample) {
 		if ((sample & 31) == 0 && brlcad::PullbackWorkCancelled())
@@ -3880,24 +3890,33 @@ repair_invalid_open_pcurves(ON_Brep *brep, STEPWrapper *wrapper,
 		const ON_3dPoint corresponding = edge.PointAt(
 		    edge_domain.ParameterAt(trim.m_bRev3d ?
 			1.0 - fraction : fraction));
-		double distance = lift.IsValid() && corresponding.IsValid() ?
-		    lift.DistanceTo(corresponding) : DBL_MAX;
-		if (distance > locus_tolerance && lift.IsValid()) {
-		    double closest_parameter = 0.0;
-		    if (ON_NurbsCurve_GetClosestPoint(&closest_parameter,
-			    &edge_nurbs, lift))
-			distance = std::min(distance,
-			    lift.DistanceTo(edge_nurbs.PointAt(closest_parameter)));
-		}
-		if (distance > locus_tolerance) {
+		if (!lift.IsValid()) {
 		    invalid_curve_locus = true;
 		    failed_locus_sample = sample;
-		    failed_locus_distance = distance;
+		    failed_locus_distance = DBL_MAX;
+		} else if (!corresponding.IsValid() ||
+			lift.DistanceTo(corresponding) > locus_tolerance) {
+		    off_parameter[off_parameter_count] = lift;
+		    off_parameter_indices[off_parameter_count++] = sample;
 		}
+	    }
+	    /* Different parameter speeds need an exact geometric witness. Reuse
+	     * the same span brackets for the entire trim instead of rebuilding
+	     * and searching the NURBS sampling grid for each interior point. */
+	    size_t rejected_index = 0;
+	    double rejected_distance = 0.0;
+	    if (off_parameter_count && !step_curve_locus_contains_points(&edge,
+		    off_parameter, off_parameter_count, locus_tolerance,
+		    &rejected_index, &rejected_distance)) {
+		invalid_curve_locus = true;
+		failed_locus_sample = off_parameter_indices[rejected_index];
+		failed_locus_distance = rejected_distance;
 	    }
 	};
 	screen_source_endpoints();
 	screen_source_locus();
+	if (brlcad::PullbackWorkCancelled())
+	    return;
 	/* A dense edge/surface measurement may legitimately enlarge one local
 	 * OpenNURBS tolerance, but it must not hide a repairable periodic branch
 	 * error.  When an internal pair of adjacent trims shares the same topology
@@ -4222,6 +4241,8 @@ repair_invalid_open_pcurves(ON_Brep *brep, STEPWrapper *wrapper,
 		endpoint_tolerance = verified_tolerance;
 		screen_source_endpoints();
 		screen_source_locus();
+		if (brlcad::PullbackWorkCancelled())
+		    return;
 		if (!closed_open_topology && !invalid_exact_endpoint &&
 			!invalid_curve_locus) {
 		    if (validated_trim_loci)

@@ -2909,6 +2909,7 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 			    *failure = "edge NURBS conversion failed";
 			return false;
 		    }
+		    std::unique_ptr<STEPCurveLocus> edge_locus;
 		    const int validation_spans = std::max(original.SpanCount(),
 			candidate.SpanCount());
 		    const int samples = std::min(4096,
@@ -2975,12 +2976,10 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 				std::max(edge_tolerance, join_tolerance) : edge_tolerance;
 			    if (edge_distance > sample_tolerance && sample > 0 &&
 				    sample < samples) {
-				double edge_parameter = 0.0;
-				if (ON_NurbsCurve_GetClosestPoint(&edge_parameter,
-					&edge_nurbs, candidate_lift))
-				    edge_distance = std::min(edge_distance,
-					candidate_lift.DistanceTo(
-					    edge_nurbs.PointAt(edge_parameter)));
+				if (!edge_locus)
+				    edge_locus.reset(new STEPCurveLocus(&edge_nurbs));
+				edge_distance = std::min(edge_distance,
+				    edge_locus->DistanceTo(candidate_lift, sample_tolerance));
 				/* The candidate differs from an already accepted source
 				 * pcurve only by this bounded endpoint edit.  A global
 				 * closest-point solve seeded from the candidate can converge to
@@ -2989,14 +2988,13 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 				 * second exact-locus witness; this changes no tolerance. */
 				if (edge_distance > sample_tolerance) {
 				    double original_edge_parameter = 0.0;
-				    if (ON_NurbsCurve_GetClosestPoint(
-					    &original_edge_parameter, &edge_nurbs,
-					    original_lift)) {
+				    double original_edge_distance = DBL_MAX;
+				    if (edge_locus->ClosestParameter(original_lift,
+					    &original_edge_parameter, &original_edge_distance) &&
+					    original_edge_distance <= edge_tolerance) {
 					const ON_3dPoint original_edge_point =
 					    edge_nurbs.PointAt(original_edge_parameter);
-					if (original_edge_point.IsValid() &&
-						original_lift.DistanceTo(original_edge_point) <=
-						    edge_tolerance)
+					if (original_edge_point.IsValid())
 					    edge_distance = std::min(edge_distance,
 						candidate_lift.DistanceTo(original_edge_point));
 				    }
@@ -3075,6 +3073,7 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 			candidate.SpanCount());
 		    const int samples = std::min(4096,
 			std::max(64, validation_spans * 8));
+		    std::unique_ptr<STEPCurveLocus> edge_locus;
 		    double measured = 0.0;
 		    for (int sample = 0; sample <= samples; ++sample) {
 			if ((sample & 63) == 0 &&
@@ -3101,15 +3100,17 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 			    return false;
 			double distance =
 			    candidate_lift.DistanceTo(corresponding);
-			if (distance > std::max(existing_tolerance, measured) &&
+			const double established_tolerance = std::max(existing_tolerance,
+			    measured);
+			if (distance > established_tolerance &&
 				sample > 0 && sample < samples) {
-			    double edge_parameter = 0.0;
-			    if (!ON_NurbsCurve_GetClosestPoint(&edge_parameter,
-				    &edge_nurbs, candidate_lift))
+			    if (!edge_locus)
+				edge_locus.reset(new STEPCurveLocus(&edge_nurbs));
+			    const double locus_distance = edge_locus->MeasuredDistanceTo(
+				candidate_lift, established_tolerance);
+			    if (locus_distance >= DBL_MAX)
 				return false;
-			    distance = std::min(distance,
-				candidate_lift.DistanceTo(
-				    edge_nurbs.PointAt(edge_parameter)));
+			    distance = std::min(distance, locus_distance);
 			}
 			measured = std::max(measured, distance);
 			if (measured * kRegenerationToleranceSafety >
@@ -3657,7 +3658,13 @@ repair_paired_seam_loop_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 	return 0;
 
     size_t repaired_pairs = 0;
+    constexpr int progress_loop_interval = 32;
     for (int li = 0; li < brep->m_L.Count(); ++li) {
+	if (brlcad::PullbackWorkCancelled())
+	    return repaired_pairs;
+	if (li % progress_loop_interval == 0)
+	    wrapper->SetProgressDetail("checking paired seam loop endpoints", entity_id,
+		static_cast<uint64_t>(li), static_cast<uint64_t>(brep->m_L.Count()), "loops");
 	const ON_BrepLoop &source_loop = brep->m_L[li];
 	const ON_BrepFace *source_face = source_loop.Face();
 	if (face_source_tags && (!source_face || face_source_tags->find(
@@ -3708,6 +3715,7 @@ repair_paired_seam_loop_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 	    };
 	    std::vector<Candidate> candidates;
 	    std::map<int, std::unique_ptr<ON_Curve> > adjacent_candidates;
+	    std::unique_ptr<STEPCurveLocus> seam_edge_locus;
 	    bool complete = true;
 	    bool needs_repair = false;
 	    std::string rejection_reason;
@@ -3889,16 +3897,14 @@ repair_paired_seam_loop_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 		    double distance = lift.IsValid() && edge_point.IsValid() ?
 			lift.DistanceTo(edge_point) : DBL_MAX;
 		    if (distance > tolerance && lift.IsValid()) {
-			double edge_parameter = 0.0;
-			if (ON_NurbsCurve_GetClosestPoint(&edge_parameter,
-				&edge_nurbs, lift))
-			    distance = std::min(distance, lift.DistanceTo(
-				edge_nurbs.PointAt(edge_parameter)));
+			if (!seam_edge_locus)
+			    seam_edge_locus.reset(new STEPCurveLocus(&edge));
+			distance = seam_edge_locus->DistanceTo(lift, tolerance);
 		    }
-		    if (distance > tolerance)
+		    if (distance > tolerance) {
 			rejection_reason = "boundary seam candidate left its exact edge";
-		    if (distance > tolerance)
 			complete = false;
+		    }
 		}
 		if (!complete)
 		    break;
@@ -3939,7 +3945,11 @@ repair_paired_seam_loop_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 		const int samples = std::min(4096,
 		    std::max(64, std::max(original.SpanCount(),
 			adjacent->second->SpanCount()) * 8));
+		std::unique_ptr<STEPCurveLocus> adjacent_edge_locus;
 		for (int sample = 0; complete && sample <= samples; ++sample) {
+		    if (sample % progress_loop_interval == 0 &&
+			    brlcad::PullbackWorkCancelled())
+			return repaired_pairs;
 		    const double fraction = static_cast<double>(sample) / samples;
 		    const double parameter = trim_domain.ParameterAt(fraction);
 		    const ON_3dPoint original_uv = original.PointAt(parameter);
@@ -3959,12 +3969,9 @@ repair_paired_seam_loop_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 		    double edge_distance = edge_point.IsValid() ?
 			candidate_lift.DistanceTo(edge_point) : DBL_MAX;
 		    if (edge_distance > tolerance) {
-			double edge_parameter = 0.0;
-			if (ON_NurbsCurve_GetClosestPoint(&edge_parameter,
-				&adjacent_edge_nurbs, candidate_lift))
-			    edge_distance = std::min(edge_distance,
-				candidate_lift.DistanceTo(adjacent_edge_nurbs.PointAt(
-				    edge_parameter)));
+			if (!adjacent_edge_locus)
+			    adjacent_edge_locus.reset(new STEPCurveLocus(adjacent_edge));
+			edge_distance = adjacent_edge_locus->DistanceTo(candidate_lift, tolerance);
 		    }
 		    complete = edge_distance <= tolerance;
 		}
@@ -4665,6 +4672,28 @@ interpret_closed_periodic_face_bounds(ON_Brep *brep, STEPWrapper *wrapper,
 }
 
 
+static bool
+has_manifold_seam_pair(const ON_Brep &brep, const ON_BrepLoop &loop)
+{
+    for (int lti = 0; lti < loop.TrimCount(); ++lti) {
+	const ON_BrepTrim *trim = loop.Trim(lti);
+	const ON_BrepEdge *edge = trim ? trim->Edge() : NULL;
+	if (!edge || trim->m_type != ON_BrepTrim::seam || edge->m_ti.Count() != 2)
+	    continue;
+	const int other_index = edge->m_ti[0] == trim->m_trim_index ?
+	    edge->m_ti[1] : edge->m_ti[0];
+	if (other_index < 0 || other_index >= brep.m_T.Count() ||
+		other_index == trim->m_trim_index)
+	    continue;
+	const ON_BrepTrim &other = brep.m_T[other_index];
+	if (other.m_li == trim->m_li && other.m_type == ON_BrepTrim::seam &&
+		other.m_bRev3d != trim->m_bRev3d)
+	    return true;
+    }
+    return false;
+}
+
+
 void
 repair_face_bound_classification(ON_Brep *brep, STEPWrapper *wrapper,
 	int entity_id, const std::string &entity_type,
@@ -4725,6 +4754,7 @@ repair_face_bound_classification(ON_Brep *brep, STEPWrapper *wrapper,
 	    std::vector<ON_BrepLoop::TYPE> computed;
 	    computed.reserve(face.m_li.Count());
 	    int computed_outer_count = 0;
+	    int computed_outer_loop = -1;
 	    int computed_inner_count = 0;
 	    bool computed_classification_complete = true;
 	    for (int fli = 0; fli < face.m_li.Count(); ++fli) {
@@ -4732,21 +4762,26 @@ repair_face_bound_classification(ON_Brep *brep, STEPWrapper *wrapper,
 		const ON_BrepLoop::TYPE type = li >= 0 && li < brep->m_L.Count() ?
 		    brep->ComputeLoopType(brep->m_L[li]) : ON_BrepLoop::unknown;
 		computed.push_back(type);
-		if (type == ON_BrepLoop::outer) ++computed_outer_count;
+		if (type == ON_BrepLoop::outer) {
+		    ++computed_outer_count;
+		    computed_outer_loop = li;
+		}
 		else if (type == ON_BrepLoop::inner) ++computed_inner_count;
 		else computed_classification_complete = false;
 	    }
-	    /* Some exporters encode every bound as FACE_BOUND and orient the
-	     * complete p-space face oppositely to OpenNURBS convention.  The
-	     * resulting signature is unambiguous: no declared outer, exactly one
-	     * computed inner loop, and every other loop computed outer.  Complement
-	     * all classifications together so the unique enclosing boundary becomes
-	     * outer and the remaining loops become holes.  Do not apply this rule
-	     * when any loop is unknown/slit or when more than one complementary
-	     * outer candidate exists. */
-	    if (outer_count == 0 && computed_classification_complete &&
-		    computed_inner_count == 1 && computed_outer_count ==
-			face.m_li.Count() - 1) {
+	    /* Some exporters reverse the winding of all FACE_BOUND loops. A unique
+	     * computed inner loop can then identify the enclosing boundary. With
+	     * two loops, the winding counts also describe a correctly oriented
+	     * boundary and hole. OpenNURBS requires a manifold seam pair to be in
+	     * the outer loop, so retain the winding when it already places the pair
+	     * there. */
+	    const bool can_complement_winding = outer_count == 0 &&
+		computed_classification_complete && computed_inner_count == 1 &&
+		computed_outer_count == face.m_li.Count() - 1;
+	    const bool computed_outer_has_seam = can_complement_winding &&
+		face.m_li.Count() == 2 &&
+		has_manifold_seam_pair(*brep, brep->m_L[computed_outer_loop]);
+	    if (can_complement_winding && !computed_outer_has_seam) {
 		for (int fli = 0; fli < face.m_li.Count(); ++fli) {
 		    const int li = face.m_li[fli];
 		    if (li < 0 || li >= brep->m_L.Count())

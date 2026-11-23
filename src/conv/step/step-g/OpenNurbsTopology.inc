@@ -2594,6 +2594,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
     LIST_OF_ORIENTED_EDGES::iterator i;
     list<PBCData *> curve_pullback_samples;
     std::map<PBCData *, ON_Curve *> exact_pullbacks;
+    std::set<PBCData *> authored_pullbacks;
     std::set<PBCData *> rejoined_periodic_pullbacks;
     std::set<PBCData *> split_periodic_pullbacks;
     std::set<PBCData *> native_full_period_pullbacks;
@@ -2662,6 +2663,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 	bool orient_with_curve = true;
 	bool diagnostic_recorded = false;
 	bool inferred_pcurve = false;
+	bool authored_pcurve = false;
 	double inferred_discrepancy = 0.0;
 	double inferred_safe_limit = 0.0;
     };
@@ -2688,6 +2690,12 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
     std::shared_ptr<brlcad::PullbackContext> loop_surface_cache = surface_cache;
     if (!loop_surface_cache)
 	loop_surface_cache.reset(new brlcad::PullbackContext());
+    const bool reuse_authored_pcurves = step &&
+	step->ImportOptions().repair == brlcad::step::RepairMode::Safe &&
+	ON_NurbsSurface::Cast(surface) && !surface->IsClosed(0) &&
+	!surface->IsClosed(1) && !surface->IsSingular(0) &&
+	!surface->IsSingular(1) && !surface->IsSingular(2) &&
+	!surface->IsSingular(3);
     const auto construct_edge_pullback = [&](size_t edge_index) {
 	EdgePullbackResult &result = edge_results[edge_index];
 	result.oriented_edge = ordered_edges[edge_index];
@@ -2757,8 +2765,20 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 	 * source mismatch in the bounded retry below after branch identity is
 	 * known. */
 	const double planar_tolerance_limit = LocalUnits::tolerance;
-	edge_data = exact_planar_pullback(surface, curve, LocalUnits::tolerance,
-	    planar_tolerance_limit, &result.exact_curve);
+	if (reuse_authored_pcurves) {
+	    const auto started = std::chrono::steady_clock::now();
+	    edge_data = authored_spline_pcurve(*result.oriented_edge, *face, curve,
+		LocalUnits::tolerance, &result.exact_curve);
+	    result.authored_pcurve = edge_data != NULL;
+	    if (edge_data)
+		step->RecordStageTiming("authored_parameter_curve_reuse",
+		    result.edge->m_edge_user.i, "EDGE_CURVE", static_cast<uint64_t>(
+			std::chrono::duration_cast<std::chrono::microseconds>(
+			    std::chrono::steady_clock::now() - started).count()));
+	}
+	if (!edge_data)
+	    edge_data = exact_planar_pullback(surface, curve, LocalUnits::tolerance,
+		planar_tolerance_limit, &result.exact_curve);
 	if (!edge_data)
 	    edge_data = exact_isoparametric_line_pullback(surface, curve,
 		LocalUnits::tolerance, planar_tolerance_limit,
@@ -3410,12 +3430,46 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 	result.data = edge_data;
     };
 
-    if (step)
-	step->ParallelForGeometry(edge_results.size(), construct_edge_pullback);
-    else
+    if (step) {
+	const char *stage = step->ImportOptions().repair ==
+	    brlcad::step::RepairMode::None ? "unrepaired_edge_trim_pullback" :
+	    "edge_trim_pullback";
+	step->ParallelForGeometry(edge_results.size(), [&](size_t edge_index) {
+	    const auto started = std::chrono::steady_clock::now();
+	    construct_edge_pullback(edge_index);
+	    const ON_BrepEdge *edge = edge_results[edge_index].edge;
+	    if (edge)
+		step->RecordStageTiming(stage, edge->m_edge_user.i, "EDGE_CURVE",
+		    static_cast<uint64_t>(std::chrono::duration_cast<
+			std::chrono::microseconds>(std::chrono::steady_clock::now() -
+			started).count()), 0, 1);
+	});
+    } else {
 	for (size_t edge_index = 0; edge_index < edge_results.size(); ++edge_index)
 	    construct_edge_pullback(edge_index);
+    }
 
+    using LoopClock = std::chrono::steady_clock;
+    const auto report_loop_phase = [&](const char *phase) {
+	if (step)
+	    step->SetProgressDetail(phase, id);
+    };
+    const auto record_loop_substage = [&](const char *stage,
+	    LoopClock::time_point started) {
+	if (step)
+	    step->RecordStageTiming(stage, id, "EDGE_LOOP",
+		static_cast<uint64_t>(std::chrono::duration_cast<
+		    std::chrono::microseconds>(LoopClock::now() - started).count()));
+    };
+    auto loop_stage_started = LoopClock::now();
+    const auto record_loop_stage = [&](const char *stage) {
+	const auto now = std::chrono::steady_clock::now();
+	if (step)
+	    step->RecordStageTiming(stage, id, "EDGE_LOOP",
+		static_cast<uint64_t>(std::chrono::duration_cast<
+		    std::chrono::microseconds>(now - loop_stage_started).count()));
+	loop_stage_started = now;
+    };
     PBCData *data = NULL;
     for (size_t edge_index = 0; edge_index < edge_results.size(); ++edge_index) {
 	EdgePullbackResult &result = edge_results[edge_index];
@@ -3437,6 +3491,8 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 	}
 	if (result.exact_curve)
 	    exact_pullbacks[data] = result.exact_curve;
+	if (result.authored_pcurve)
+	    authored_pullbacks.insert(data);
 	if (step && data->failed_seam_crossing_searches > 0) {
 	    for (size_t failure = 0;
 		    failure < data->failed_seam_crossing_searches; ++failure)
@@ -3800,6 +3856,18 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
     // seam resolver is intentionally limited to periodic/non-planar results.
     const bool exact_open_surface = exact_pullbacks.size() == curve_pullback_samples.size() &&
 	!surface->IsClosed(0) && !surface->IsClosed(1);
+    report_loop_phase("resolving STEP trim loop branches");
+    const auto matches_saved_samples = [](const PBCData &pullback,
+	    const std::vector<ON_2dPointArray> &saved) {
+	return pullback.segments && pullback.segments->size() == saved.size() &&
+	    std::equal(pullback.segments->begin(), pullback.segments->end(),
+		saved.begin(), [](const ON_2dPointArray *current,
+		    const ON_2dPointArray &original) {
+		    return current && current->Count() == original.Count() &&
+			(current->Count() == 0 || std::equal(current->Array(),
+			    current->Array() + current->Count(), original.Array()));
+		});
+    };
     std::map<PBCData *, std::vector<ON_2dPointArray> > seam_resolution_snapshot;
     const auto pullback_samples_follow_source = [&](PBCData *pullback) {
 	if (!pullback || !pullback->curve || !pullback->surf ||
@@ -3940,8 +4008,13 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 		    LocalUnits::tolerance, item_scale));
 	}
     }
-    // check for seams and singularities
-    if (!exact_open_surface && !check_pullback_data(curve_pullback_samples)) {
+    const auto check_started = LoopClock::now();
+    const bool seam_data_valid = exact_open_surface ||
+	check_pullback_data(curve_pullback_samples);
+    if (!exact_open_surface)
+	record_loop_substage("trim_loop_branch_resolution/seam_and_pole_checks",
+	    check_started);
+    if (!seam_data_valid) {
 	if (step)
 	    step->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error, id,
 		"EDGE_LOOP", "edge_list",
@@ -3981,15 +4054,23 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 	const bool doubly_periodic_surface = surface &&
 	    surface->IsClosed(0) && surface->IsClosed(1);
 	if (exact_open_surface || !seam_resolution_input_valid ||
+		(!has_tolerance_adjusted_edge && !doubly_periodic_surface) ||
 		(singular_surface && !doubly_periodic_surface))
 	    return false;
 	bool seam_resolution_locus_valid = true;
 	bool seam_resolution_topology_valid = true;
 	for (PBCData *pullback : curve_pullback_samples) {
+	    const auto before = seam_resolution_snapshot.find(pullback);
+	    /* The input locus proof still applies when branch processing left every
+	     * UV unchanged.  The source curve and surface are immutable here. */
+	    const bool unchanged = pullback &&
+		before != seam_resolution_snapshot.end() &&
+		matches_saved_samples(*pullback, before->second);
 	    seam_resolution_locus_valid = seam_resolution_locus_valid &&
-		pullback_samples_follow_source(pullback);
-	    seam_resolution_topology_valid = seam_resolution_topology_valid &&
-		pullback_preserves_topology_endpoints(pullback);
+		(unchanged || pullback_samples_follow_source(pullback));
+	    if (doubly_periodic_surface)
+		seam_resolution_topology_valid = seam_resolution_topology_valid &&
+		    pullback_preserves_topology_endpoints(pullback);
 	}
 	/* Preserve the established rollback rule for ordinary periodic surfaces:
 	 * only a tolerance-adjusted edge whose exact locus was subsequently
@@ -4069,11 +4150,17 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 
     if (step && step->ImportOptions().repair == brlcad::step::RepairMode::Safe) {
 	size_t normalized_segments = 0;
+	const auto normalize_started = LoopClock::now();
 	const bool normalized = normalize_periodic_pullback_segments(
 	    curve_pullback_samples, surface, LocalUnits::tolerance, item_scale,
 	    &normalized_segments, step, id);
+	record_loop_substage("trim_loop_branch_resolution/periodic_normalization",
+	    normalize_started);
+	const auto validation_started = LoopClock::now();
 	const bool seam_proposal_rolled_back =
 	    rollback_invalid_seam_resolution();
+	record_loop_substage("trim_loop_branch_resolution/proposal_validation",
+	    validation_started);
 	if (normalized && !seam_proposal_rolled_back) {
 	    for (size_t repair = 0; repair < normalized_segments; ++repair)
 		step->RecordRepair(id, "EDGE_LOOP", "edge_list",
@@ -4282,8 +4369,12 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 		step->RecordRepair(id, "EDGE_LOOP", "edge_list",
 		    "normalized a restored full-period seam pair within model tolerance");
 	}
+	report_loop_phase("reconciling STEP trim loop endpoints");
+	const auto endpoint_started = LoopClock::now();
 	const size_t endpoint_repairs = snap_pullback_loop_endpoints(
 	    curve_pullback_samples, brep, LocalUnits::tolerance);
+	record_loop_substage("trim_loop_branch_resolution/endpoint_reconciliation",
+	    endpoint_started);
 	if (endpoint_repairs) {
 	    for (size_t repair = 0; repair < endpoint_repairs; ++repair)
 		step->RecordRepair(id, "EDGE_LOOP", "edge_list",
@@ -4342,9 +4433,14 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 	 * endpoint choice so the newly closed join cannot leave a one-period jump
 	 * between the endpoint and its first interior pullback sample. */
 	size_t post_snap_normalized_segments = 0;
-	if (normalize_periodic_pullback_segments(curve_pullback_samples, surface,
+	const auto post_snap_started = LoopClock::now();
+	const bool post_snap_normalized = normalize_periodic_pullback_segments(
+		curve_pullback_samples, surface,
 		LocalUnits::tolerance, item_scale,
-		&post_snap_normalized_segments, step, id)) {
+		&post_snap_normalized_segments, step, id);
+	record_loop_substage("trim_loop_branch_resolution/periodic_normalization",
+	    post_snap_started);
+	if (post_snap_normalized) {
 	    for (size_t repair = 0; repair < post_snap_normalized_segments; ++repair)
 		step->RecordRepair(id, "EDGE_LOOP", "edge_list",
 		    "unwrapped a periodic pcurve after exact loop closure");
@@ -4369,10 +4465,13 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 	curve_pullback_samples);
     log_fragmented_pullbacks("before native seam split", curve_pullback_samples,
 	true);
+    record_loop_stage("trim_loop_branch_resolution");
+    report_loop_phase("resolving STEP trim native seams");
     std::map<PBCData *, std::vector<ON_2dPointArray> >
 	native_split_snapshot;
     std::vector<PBCData *> native_split_pullbacks;
     std::vector<bool> native_split_exact_joins;
+    const auto native_split_started = LoopClock::now();
     {
 	for (PBCData *pullback : curve_pullback_samples) {
 	    if (!pullback || !pullback->segments ||
@@ -4677,6 +4776,8 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 		step->RecordRepair(id, "EDGE_LOOP", "edge_list",
 		    "split a periodic pcurve at a proven surface singularity");
 	}
+    record_loop_substage("trim_loop_native_seam_resolution/fragment_processing",
+	native_split_started);
     /* A real seam split may add reciprocal fragments inside one STEP edge,
      * but it must not open a join between two neighboring STEP edges which
      * was already exact.  Restore the unchanged-cardinality edge proposals
@@ -4710,6 +4811,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 		(*current_segment)[0]);
 	}
 	if (!native_proposal_valid) {
+	    const auto restore_started = LoopClock::now();
 	    std::map<PBCData *, std::vector<ON_2dPointArray> >
 		pre_restore_segments;
 	    for (std::map<PBCData *, std::vector<ON_2dPointArray> >::
@@ -4717,7 +4819,8 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 		    saved != native_split_snapshot.end(); ++saved) {
 		if (!saved->first || !saved->first->segments ||
 			!saved->first->curve || !saved->first->surf ||
-			saved->first->segments->size() != saved->second.size())
+			saved->first->segments->size() != saved->second.size() ||
+			matches_saved_samples(*saved->first, saved->second))
 		    continue;
 		/* An exact UV join is not enough: OpenNURBS may extrapolate a
 		 * closed profile outside its declared domain, so the pre-remap
@@ -4757,6 +4860,8 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 		}
 	    }
 	    bool restored_loop_valid = !pre_restore_segments.empty();
+	    record_loop_substage("trim_loop_native_seam_resolution/rollback_locus_validation",
+		restore_started);
 	    for (size_t current = 0; restored_loop_valid &&
 		    current < native_split_pullbacks.size(); ++current) {
 		if (!native_split_exact_joins[current])
@@ -4809,6 +4914,8 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
     log_pullback_endpoint_errors("after native seam split",
 	curve_pullback_samples);
     log_adjusted_endpoints("after endpoint repair", curve_pullback_samples);
+    record_loop_stage(safe_seam_proposal ? "trim_loop_native_seam_resolution" :
+	"trim_loop_unrepaired_resolution");
 
     if (step && !step->ImportOptions().exact &&
 	step->ImportOptions().repair == brlcad::step::RepairMode::Safe) {
@@ -4925,6 +5032,8 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
     list<PBCData *>::iterator cs = curve_pullback_samples.begin();
     list<PBCData *>::iterator next_cs;
     bool trim_construction_failed = false;
+    record_loop_stage("trim_loop_topology_preparation");
+    report_loop_phase("installing validated STEP trim curves");
 
     cs = curve_pullback_samples.begin();
     while (cs != curve_pullback_samples.end()) {
@@ -5099,6 +5208,19 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 			(*samples)[samples->Count() - 1]) <= ON_ZERO_TOLERANCE) {
 		    c2d = exact->second;
 		    exact->second = NULL;
+		} else if (authored_pullbacks.find(data) != authored_pullbacks.end()) {
+		    /* Endpoint reconciliation can adjust an otherwise exact authored
+		     * spline. Keep its interior parameterization if the adjusted
+		     * curve still follows the complete directed edge. */
+		    const ON_2dPoint &start = (*samples)[0];
+		    const ON_2dPoint &end = (*samples)[samples->Count() - 1];
+		    std::unique_ptr<ON_Curve> adjusted(exact->second->DuplicateCurve());
+		    if (adjusted && adjusted->SetStartPoint(ON_3dPoint(start.x, start.y, 0.0)) &&
+			    adjusted->SetEndPoint(ON_3dPoint(end.x, end.y, 0.0)) &&
+			    adjusted->IsValid() &&
+			    pcurve_lift_error(*data->surf, *data->curve, *adjusted,
+				data->order_reversed, data->tolerance) <= data->tolerance)
+			c2d = adjusted.release();
 		}
 	    }
 	    bool regenerated = false;
@@ -6489,6 +6611,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep, int loop_index,
 	}
     }
 
+    record_loop_stage("trim_loop_curve_installation");
     record_pullback_context_statistics(step, curve_pullback_samples);
     while (!curve_pullback_samples.empty()) {
 	data = curve_pullback_samples.front();

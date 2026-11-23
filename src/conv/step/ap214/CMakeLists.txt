@@ -1432,6 +1432,51 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
     )
   endif()
 
+  if(STEPCODE_LAZY_FOUND)
+    set(periodic_face_fixtures
+      authored_spline_pcurve
+      axial_edge_sectors
+      cylinder_hole_large_item
+      doubly_periodic_trim_endpoint
+      hyperbolic_cone_trim
+      periodic_cylinder_seam_hole
+      planar_edge_sectors
+      spherical_pole_holes
+      spherical_pole_holes_reversed
+      untyped_spherical_cap_holes
+    )
+    set(periodic_face_entity_ids 559 312 407 33 59 200 425 381 400 542)
+    set(periodic_face_raw_invalid_counts 1 1 1 1 0 0 1 1 1 1)
+    foreach(fixture entity_id raw_invalid_count IN ZIP_LISTS periodic_face_fixtures periodic_face_entity_ids periodic_face_raw_invalid_counts)
+      set(fixture_input ${fixture})
+      set(require_authored_pcurve OFF)
+      set(expected_repair "")
+      if(fixture STREQUAL "spherical_pole_holes_reversed")
+        set(fixture_input spherical_pole_holes)
+      elseif(fixture STREQUAL "authored_spline_pcurve")
+        set(require_authored_pcurve ON)
+      elseif(fixture STREQUAL "axial_edge_sectors")
+        set(expected_repair "separated the repeated uses of one STEP edge into proven manifold pairs")
+      elseif(fixture STREQUAL "untyped_spherical_cap_holes")
+        set(expected_repair "classified a proven full-period cap boundary around its contractible holes")
+      endif()
+      brlcad_add_test(
+        NAME ap214_${fixture}
+        COMMAND
+        ${CMAKE_COMMAND}
+        -DSTEP_G=$<TARGET_FILE:step-g>
+        -DINPUT=${AP214_TEST_DIR}/ap214_${fixture_input}.stp
+        -DENTITY_ID=${entity_id}
+        -DRAW_INVALID_COUNT=${raw_invalid_count}
+        -DREQUIRE_AUTHORED_PCURVE=${require_authored_pcurve}
+        "-DEXPECTED_REPAIR=${expected_repair}"
+        -DREPORT_SAFE=${CMAKE_CURRENT_BINARY_DIR}/ap214_${fixture}_safe.json
+        -DREPORT_NONE=${CMAKE_CURRENT_BINARY_DIR}/ap214_${fixture}_none.json
+        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_${fixture}_safe.g
+        -P ${AP214_TEST_DIR}/ap214_periodic_face_repair.cmake
+      )
+    endforeach()
+  endif()
   brlcad_add_test(
     NAME ap214_repair_policy
     COMMAND
@@ -1724,6 +1769,16 @@ cmakefiles(
   tests/ap214_distinct_edge_keyhole_rejoin.stp
   tests/ap214_sub_tolerance_torus_seam.cmake
   tests/ap214_sub_tolerance_torus_seam.stp
+  tests/ap214_authored_spline_pcurve.stp
+  tests/ap214_axial_edge_sectors.stp
+  tests/ap214_cylinder_hole_large_item.stp
+  tests/ap214_doubly_periodic_trim_endpoint.stp
+  tests/ap214_hyperbolic_cone_trim.stp
+  tests/ap214_periodic_cylinder_seam_hole.stp
+  tests/ap214_periodic_face_repair.cmake
+  tests/ap214_planar_edge_sectors.stp
+  tests/ap214_spherical_pole_holes.stp
+  tests/ap214_untyped_spherical_cap_holes.stp
   tests/ap214_short_cylinder_seam.stp
   tests/ap214_shifted_two_arc_sphere.cmake
   tests/ap214_shifted_two_arc_sphere.stp
@@ -1764,6 +1819,10 @@ set(_ap214_generated_tests
   distinct_edge_keyhole_rejoin
   distinct_edge_keyhole_rejoin_exact
   dry_run
+  doubly_periodic_trim_endpoint_safe
+  doubly_periodic_trim_endpoint_none
+  periodic_cylinder_seam_hole_safe
+  periodic_cylinder_seam_hole_none
   eccentric_ellipse_arc
   eccentric_ellipse_arc_exact
   entity_selection
