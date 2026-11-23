@@ -174,6 +174,8 @@ extern int curframe;			/* current frame number */
 extern int desiredframe;		/* frame to start at */
 extern int finalframe;			/* frame to halt at */
 extern int matflag;			/* read matrix from stdin */
+extern const char *animation_file;
+extern int rt_load_animation(struct rt_i *rtip, const char *path);
 extern int orientflag;			/* 1 means orientation has been set */
 extern int pix_end;			/* pixel to end at */
 extern int pix_start;			/* pixel to start at */
@@ -187,6 +189,8 @@ extern double airdensity;
 extern double haze[3];
 extern int do_kut_plane;
 extern plane_t kut_plane;
+extern struct partition *rt_cut_partition(const struct xray *ray, struct partition *first,
+    const struct partition *head, fastf_t *distance);
 extern const char *densityfile;
 
 /*** do.c ***/

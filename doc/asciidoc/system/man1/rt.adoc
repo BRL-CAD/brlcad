@@ -221,6 +221,10 @@ sets the final (kill-after) frame number. Used with animation scripts in conjunc
 *-M*, *--read-matrix*::
 causes reading of animation (model2view) matrix or animation script from standard input. Conflicts with *-a* and *-e* options.
 
+*--animation-file* _file_::
+Read one `anim` record per line and apply those database animations before
+loading geometry. This can be used with the usual database and object
+arguments for a single render.
 
 *-N #*, *--nmg-debug #*::
 sets the NMG_debug flags to the given hexadecimalbit vector. See h/nmg.h for the bit definitions.

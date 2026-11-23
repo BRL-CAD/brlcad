@@ -779,46 +779,15 @@ hit_nothing(struct application *ap)
 static struct partition *
 do_kut(const struct application *ap, struct partition *pp, struct partition *PartHeadp)
 {
-    fastf_t slant_factor;
-    fastf_t dist;
-    fastf_t norm_dist;
-
     if (UNLIKELY(!ap || !PartHeadp))
 	return NULL;
 
-    norm_dist = DIST_PNT_PLANE(ap->a_ray.r_pt, kut_plane);
-
-    slant_factor = -VDOT(kut_plane, ap->a_ray.r_dir);
-    if (slant_factor < -1.0e-10) {
-	/* exit point, ignore everything before "dist" */
-	dist = norm_dist/slant_factor;
-	for (; pp != PartHeadp; pp = pp->pt_forw) {
-	    if (pp->pt_outhit->hit_dist >= dist) {
-		if (pp->pt_inhit->hit_dist < dist) {
-		    pp->pt_inhit->hit_dist = dist;
-		    pp->pt_inflip = 0;
-		    pp->pt_inseg->seg_stp = kut_soltab;
-		}
-		break;
-	    }
-	}
-	if (pp == PartHeadp) {
-	    /* we ignored everything, this is now a miss */
-	    return pp;
-	}
-    } else if (slant_factor > 1.0e-10) {
-	/* entry point, ignore everything after "dist" */
-	dist = norm_dist/slant_factor;
-	if (pp->pt_inhit->hit_dist > dist) {
-	    /* everything is after kut plane, this is now a miss */
-	    return NULL;
-	}
-    } else {
-	/* ray is parallel to plane when dir.N == 0.
-	 * If it is inside the solid, this is a miss */
-	if (norm_dist < 0.0) {
-	    return NULL;
-	}
+    fastf_t distance;
+    pp = rt_cut_partition(&ap->a_ray, pp, PartHeadp, &distance);
+    if (pp && distance > pp->pt_inhit->hit_dist) {
+	pp->pt_inhit->hit_dist = distance;
+	pp->pt_inflip = 0;
+	pp->pt_inseg->seg_stp = kut_soltab;
     }
 
     return pp;

@@ -544,6 +544,11 @@ int main(int argc, char *argv[])
     bu_vls_free(&times);
     memory_summary();
 
+    if (animation_file && rt_load_animation(rtip, animation_file) != 0) {
+	ret = 1;
+	goto rt_cleanup;
+    }
+
     /* Copy values from command line options into rtip */
     APP.a_rt_i->rti_space_partition = space_partition;
     APP.a_rt_i->useair = use_air;

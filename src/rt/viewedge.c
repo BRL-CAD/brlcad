@@ -277,12 +277,22 @@ EXTERNCPP const char title[] = "RT Hidden-Line Renderer";
 int handle_main_ray(struct application *ap, register struct partition *PartHeadp, struct seg *segp);
 int diffpixel(RGBpixel a, RGBpixel b);
 
-static int occlusion_hit(struct application *ap, struct partition *pt, struct seg *UNUSED(segp))
+static struct partition *
+edge_partition(const struct application *ap, struct partition *head, fastf_t *distance)
 {
-    struct hit *hitp = pt->pt_forw->pt_inhit;
+    if (!head || head->pt_forw == head) return NULL;
+    if (do_kut_plane)
+	return rt_cut_partition(&ap->a_ray, head->pt_forw, head, distance);
+    *distance = head->pt_forw->pt_inhit->hit_dist;
+    return head->pt_forw;
+}
 
-    ap->a_dist = hitp->hit_dist;
-    return 1;
+static int
+occlusion_hit(struct application *ap, struct partition *pt, struct seg *UNUSED(segp))
+{
+    if (edge_partition(ap, pt, &ap->a_dist)) return 1;
+    ap->a_dist = MAX_FASTF;
+    return 0;
 }
 
 
@@ -413,7 +423,7 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
      */
     ap->a_hit = rayhit;
     ap->a_miss = raymiss;
-    ap->a_onehit = 1;
+    ap->a_onehit = do_kut_plane ? 0 : 1;
 
     /*
      * Does the user want occlusion checking?
@@ -421,7 +431,6 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
      * If so, load and prep.
      */
     if (bu_vls_strlen(&occlusion_objects) != 0) {
-	struct db_i *dbip;
 	size_t nObjs;
 	int split_argc;
 	const char **objs;
@@ -441,28 +450,13 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	}
 
 
-	if ((dbip = db_open(file, DB_OPEN_READONLY)) == DBI_NULL)
-	    bu_exit(EXIT_FAILURE, "rtedge: could not open geometry database file %s.\n", file);
-	RT_CK_DBI(dbip);
-
-#if 0
-	/* FIXME: calling this when db_open()'s mapped file doesn't
-	 * fail will cause duplicate directory entries.  need to make
-	 * sure db_dirbuild rebuilds from scratch or only updates
-	 * existing entries when they exist.
-	 */
-	if (db_dirbuild(dbip) < 0)
-	    bu_exit(EXIT_FAILURE, "rtedge: could not read database.\n");
-#endif
-
-	occlusion_rtip = rt_i_create(dbip); /* clones dbip */
+	/* Use the same database handle so occlusion sees the frame's animation. */
+	occlusion_rtip = rt_i_create(ap->a_rt_i->rti_dbip);
 
 	memset(occlusion_resources, 0, sizeof(occlusion_resources));
 	for (i=0; i < MAX_PSW; i++) {
 	    rt_init_resource(&occlusion_resources[i], i, occlusion_rtip);
 	}
-
-	db_close(dbip);			 /* releases original dbip */
 
 	for (i=0; i<nObjs; ++i)
 	    if (rt_gettree(occlusion_rtip, objs[i]) < 0)
@@ -491,7 +485,7 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 
 	    occlusion_apps[i]->a_rt_i = occlusion_rtip;
 	    occlusion_apps[i]->a_resource = &occlusion_resources[i];
-	    occlusion_apps[i]->a_onehit = 1;
+	    occlusion_apps[i]->a_onehit = do_kut_plane ? 0 : 1;
 	    occlusion_apps[i]->a_hit = occlusion_hit;
 	    occlusion_apps[i]->a_miss = occlusion_miss;
 	    if (rpt_overlap)
@@ -996,39 +990,46 @@ view_end(struct application* UNUSED(ap))
 }
 
 
-int rayhit2(struct application *ap, register struct partition *pt, struct seg *UNUSED(segp))
+static int
+sample_cell(struct cell *cell, struct application *ap, struct partition *head)
 {
-    struct partition *pp = pt->pt_forw;
-    struct hit *hitp = pt->pt_forw->pt_inhit;
-    struct cell *c = (struct cell *)ap->a_uptr;
+    fastf_t distance;
+    struct partition *pp = edge_partition(ap, head, &distance);
+    VMOVE(cell->c_rdir, ap->a_ray.r_dir);
+    if (!pp) {
+	cell->c_ishit = 0;
+	cell->c_region = NULL;
+	cell->c_dist = MISS_DIST;
+	cell->c_id = MISS_ID;
+	VSETALL(cell->c_hit, MISS_DIST);
+	VSETALL(cell->c_normal, 0);
+	return 0;
+    }
 
-    c->c_ishit 		= 1;
-    c->c_region 	= pp->pt_regionp;
-    c->c_id 		= pp->pt_regionp->reg_regionid;
-    VMOVE(c->c_rdir, ap->a_ray.r_dir);
-    VJOIN1(c->c_hit, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
-    RT_HIT_NORMAL(c->c_normal, hitp,
-		  pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);
-    c->c_dist = hitp->hit_dist;
-
+    struct hit *hit = pp->pt_inhit;
+    cell->c_ishit = 1;
+    cell->c_region = pp->pt_regionp;
+    cell->c_id = pp->pt_regionp->reg_regionid;
+    cell->c_dist = distance;
+    VJOIN1(cell->c_hit, ap->a_ray.r_pt, distance, ap->a_ray.r_dir);
+    if (distance > hit->hit_dist) {
+	VREVERSE(cell->c_normal, kut_plane);
+    } else {
+	RT_HIT_NORMAL(cell->c_normal, hit, pp->pt_inseg->seg_stp, &ap->a_ray, pp->pt_inflip);
+    }
     return 1;
 }
 
+static int
+rayhit2(struct application *ap, struct partition *pt, struct seg *UNUSED(segp))
+{
+    return sample_cell((struct cell *)ap->a_uptr, ap, pt);
+}
 
 static int
-raymiss2(register struct application *ap)
+raymiss2(struct application *ap)
 {
-    struct cell *c = (struct cell *)ap->a_uptr;
-
-    c->c_ishit    	= 0;
-    c->c_region   	= 0;
-    c->c_dist     	= MISS_DIST;
-    c->c_id	    	= MISS_ID;
-    VSETALL(c->c_hit, MISS_DIST);
-    VSETALL(c->c_normal, 0);
-    VMOVE(c->c_rdir, ap->a_ray.r_dir);
-
-    return 0;
+    return sample_cell((struct cell *)ap->a_uptr, ap, NULL);
 }
 
 
@@ -1109,7 +1110,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
     /* setup */
     aaap.a_hit = rayhit2;
     aaap.a_miss = raymiss2;
-    aaap.a_onehit = 1;
+    aaap.a_onehit = do_kut_plane ? 0 : 1;
     aaap.a_rt_i = ap->a_rt_i;
     aaap.a_resource = ap->a_resource;
     aaap.a_logoverlap = ap->a_logoverlap;
@@ -1341,9 +1342,6 @@ int
 handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 		struct seg *segp)
 {
-    register struct partition *pp;
-    register struct hit *hitp; /* which hit */
-
     struct application a2;
     struct cell me = CELL_INIT;
     struct cell below = CELL_INIT;
@@ -1370,31 +1368,7 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
     else
 	cpu = ap->a_resource->re_cpu;
 
-    if (PartHeadp == NULL || segp == NULL) {
-	/* The main shotline missed.  pack the application struct
-	 */
-	me.c_ishit    = 0;
-	me.c_dist   = MISS_DIST;
-	me.c_id	    = MISS_ID;
-	me.c_region = 0;
-	VSETALL(me.c_hit, MISS_DIST);
-	VSETALL(me.c_normal, 0);
-	VMOVE(me.c_rdir, ap->a_ray.r_dir);
-    } else {
-	pp = PartHeadp->pt_forw;
-	hitp = pp->pt_inhit;
-	/*
-	 * Stuff the information for this cell.
-	 */
-	me.c_ishit    = 1;
-	me.c_id = pp->pt_regionp->reg_regionid;
-	me.c_dist = hitp->hit_dist;
-	me.c_region = pp->pt_regionp;
-	VMOVE(me.c_rdir, ap->a_ray.r_dir);
-	VJOIN1(me.c_hit, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
-	RT_HIT_NORMAL(me.c_normal, hitp,
-		      pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);
-    }
+    (void)sample_cell(&me, ap, segp ? PartHeadp : NULL);
 
     /*
      * Now, fire a ray for both the cell below and if necessary, the
@@ -1402,7 +1376,7 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
      */
     a2.a_hit = rayhit2;
     a2.a_miss = raymiss2;
-    a2.a_onehit = 1;
+    a2.a_onehit = do_kut_plane ? 0 : 1;
     a2.a_rt_i = ap->a_rt_i;
     a2.a_resource = ap->a_resource;
     a2.a_logoverlap = ap->a_logoverlap;

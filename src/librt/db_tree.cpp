@@ -194,6 +194,37 @@ db_pr_combined_tree_state(const struct combined_tree_state *ctsp)
 }
 
 
+static void apply_anims(const struct db_full_path *, const struct directory *, mat_t, mat_t, struct mater_info *, bool);
+
+static bool
+animation_matches_path(const struct animate *animation, const struct db_full_path *path)
+{
+    const auto &target = animation->an_path;
+    if (target.fp_len > path->fp_len)
+	return false;
+    const size_t offset = path->fp_len - target.fp_len;
+    for (size_t i = 0; i < target.fp_len; ++i) {
+	if (target.fp_names[i] != path->fp_names[offset + i])
+	    return false;
+    }
+    return true;
+}
+
+static void
+apply_animated_material(struct db_tree_state *tsp, const struct db_full_path *path)
+{
+    if (!path || !path->fp_len || (tsp->ts_sofar & TS_SOFAR_REGION))
+	return;
+    const struct directory *dp = DB_FULL_PATH_CUR_DIR(path);
+    struct animate *root = path->fp_len == 1 ? tsp->ts_dbip->i->dbi_anroot : ANIM_NULL;
+    for (struct animate *list : {root, dp->d_animate}) {
+	for (struct animate *anim = list; anim != ANIM_NULL; anim = anim->an_forw) {
+	    if (anim->an_type != RT_AN_MATRIX && animation_matches_path(anim, path))
+		db_do_anim(anim, nullptr, nullptr, &tsp->ts_mater);
+	}
+    }
+}
+
 int
 db_apply_state_from_comb(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *comb)
 {
@@ -273,6 +304,10 @@ db_apply_state_from_comb(struct db_tree_state *tsp, const struct db_full_path *p
 	}
     }
 
+    /* Apply overrides after the combination's attributes, so replacement
+     * wins and append sees the inherited or stored shader. */
+    apply_animated_material(tsp, pathp);
+
     /* Handle combinations which are the top of a "region" */
     if (comb->region_flag) {
 	if (tsp->ts_sofar & TS_SOFAR_REGION) {
@@ -328,14 +363,7 @@ db_apply_state_from_memb2(struct db_tree_state *tsp, struct db_full_path *pathp,
 	MAT_IDN(xmat);
     }
 
-    /* If the owning region it above this node in the tree, it is not
-     * possible to animation region-material properties lower down in
-     * the arc.  So note by sending a NULL pointer.
-     */
-    db_apply_anims(pathp, mdp, old_xlate, xmat,
-		   (tsp->ts_sofar & TS_SOFAR_REGION) ?
-		   (struct mater_info *)NULL :
-		   &tsp->ts_mater);
+    apply_anims(pathp, mdp, old_xlate, xmat, nullptr, true);
 
     bn_mat_mul(tsp->ts_mat, old_xlate, xmat);
 
@@ -746,7 +774,7 @@ db_follow_path(
 
 	    for (anp=tsp->ts_dbip->i->dbi_anroot; anp != ANIM_NULL; anp = anp->an_forw) {
 		RT_CK_ANIMATE(anp);
-		if (dp != anp->an_path.fp_names[0])
+	    if (anp->an_type != RT_AN_MATRIX || dp != anp->an_path.fp_names[0])
 		    continue;
 		MAT_COPY(old_xlate, tsp->ts_mat);
 		MAT_IDN(xmat);
@@ -2208,62 +2236,22 @@ db_walk_tree(struct db_i *dbip,
 }
 
 
-void
-db_apply_anims(struct db_full_path *pathp, struct directory *dp, mat_t stack, mat_t arc, struct mater_info *materp)
+static void
+apply_anims(const struct db_full_path *path, const struct directory *dp, mat_t stack,
+    mat_t arc, struct mater_info *material, bool matrices_only)
 {
-    struct animate *anp;
-    int i, j;
-
-    /* Check here for animation to apply */
-
-    if ((dp->d_animate != ANIM_NULL) && (RT_G_DEBUG & RT_DEBUG_ANIM)) {
-	char *sofar = db_path_to_string(pathp);
-	bu_log("Animate %s with...\n", sofar);
-	bu_free(sofar, "path string");
+    for (struct animate *anim = dp->d_animate; anim != ANIM_NULL; anim = anim->an_forw) {
+	RT_CK_ANIMATE(anim);
+	if ((!matrices_only || anim->an_type == RT_AN_MATRIX) && animation_matches_path(anim, path))
+	    db_do_anim(anim, stack, arc, material);
     }
+}
 
-    /*
-     * For each of the animations attached to the mentioned object,
-     * see if the current accumulated path matches the path specified
-     * in the animation.  Comparison is performed right-to-left (from
-     * leafward to rootward).
-     */
-    for (anp = dp->d_animate; anp != ANIM_NULL; anp = anp->an_forw) {
-	int anim_flag;
-
-	j = pathp->fp_len-1;
-
-	RT_CK_ANIMATE(anp);
-	i = anp->an_path.fp_len-1;
-	anim_flag = 1;
-
-	if (RT_G_DEBUG & RT_DEBUG_ANIM) {
-	    char *str;
-
-	    str = db_path_to_string(&(anp->an_path));
-	    bu_log("\t%s\t", str);
-	    bu_free(str, "path string");
-	    bu_log("an_path.fp_len-1:%d  pathp->fp_len-1:%d\n",
-		   i, j);
-	}
-
-	for (; i >= 0 && j >= 0; i--, j--) {
-	    if (anp->an_path.fp_names[i] != pathp->fp_names[j]) {
-		if (RT_G_DEBUG & RT_DEBUG_ANIM) {
-		    bu_log("%s != %s\n",
-			   anp->an_path.fp_names[i]->d_namep,
-			   pathp->fp_names[j]->d_namep);
-		}
-		anim_flag = 0;
-		break;
-	    }
-	}
-
-	/* anim, stack, arc, mater */
-	if (anim_flag)
-	    db_do_anim(anp, stack, arc, materp);
-    }
-    return;
+void
+db_apply_anims(struct db_full_path *pathp, struct directory *dp, mat_t stack, mat_t arc,
+    struct mater_info *materp)
+{
+    apply_anims(pathp, dp, stack, arc, materp, false);
 }
 
 
@@ -2758,14 +2746,7 @@ db_apply_state_from_memb(struct db_tree_state *tsp, struct db_full_path *pathp, 
         MAT_IDN(xmat);
     }
 
-    /* If the owning region it above this node in the tree, it is not
-     * possible to animation region-material properties lower down in
-     * the arc.  So note by sending a NULL pointer.
-     */
-    db_apply_anims(pathp, mdp, old_xlate, xmat,
-                   (tsp->ts_sofar & TS_SOFAR_REGION) ?
-                   (struct mater_info *)NULL :
-                   &tsp->ts_mater);
+    apply_anims(pathp, mdp, old_xlate, xmat, nullptr, true);
 
     bn_mat_mul(tsp->ts_mat, old_xlate, xmat);
 

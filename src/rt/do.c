@@ -480,6 +480,65 @@ int cm_multiview(const int UNUSED(argc), const char **UNUSED(argv))
 }
 
 
+struct partition *
+rt_cut_partition(const struct xray *ray, struct partition *first,
+    const struct partition *head, fastf_t *distance)
+{
+    const fastf_t parallel_tolerance = 1.0e-10;
+    const fastf_t origin_distance = DIST_PNT_PLANE(ray->r_pt, kut_plane);
+    const fastf_t slope = VDOT(kut_plane, ray->r_dir);
+
+    if (first == head) return NULL;
+    if (slope > parallel_tolerance) {
+	const fastf_t crossing = -origin_distance / slope;
+	while (first != head && first->pt_outhit->hit_dist < crossing)
+	    first = first->pt_forw;
+	if (first == head) return NULL;
+	*distance = FMAX(first->pt_inhit->hit_dist, crossing);
+	return first;
+    }
+
+    *distance = first->pt_inhit->hit_dist;
+    if (slope < -parallel_tolerance)
+	return *distance <= -origin_distance / slope ? first : NULL;
+    return origin_distance >= 0.0 ? first : NULL;
+}
+
+int
+rt_load_animation(struct rt_i *rtip, const char *path)
+{
+    FILE *fp = fopen(path, "rb");
+    if (!fp) {
+	bu_log("rt: unable to open animation file '%s'\n", path);
+	return -1;
+    }
+
+    struct bu_vls line = BU_VLS_INIT_ZERO;
+    size_t line_number = 0;
+    int status = 0;
+    while (bu_vls_gets(&line, fp) >= 0) {
+	int argc = 0;
+	const char **argv = NULL;
+	line_number++;
+	if (bu_argv_from_tcl_list(bu_vls_addr(&line), &argc, &argv) ||
+	    argc < 4 || !BU_STR_EQUAL(argv[0], "anim") ||
+	    db_parse_anim(rtip->rti_dbip, argc, argv) < 0) {
+	    bu_log("rt: invalid animation record in '%s' at line %zu\n", path, line_number);
+	    status = -1;
+	}
+	bu_free((void *)argv, "animation record");
+	if (status) break;
+	bu_vls_trunc(&line, 0);
+    }
+    if (ferror(fp)) {
+	bu_log("rt: unable to read animation file '%s'\n", path);
+	status = -1;
+    }
+    bu_vls_free(&line);
+    fclose(fp);
+    return status;
+}
+
 /**
  * Experimental animation code
  *

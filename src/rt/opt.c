@@ -137,6 +137,7 @@ int finalframe = -1;                    /* frame to halt at */
 int curframe = 0;                       /* current frame number,
 					 * also shared with view.c */
 char *outputfile = (char *)NULL;        /* name of base of output file */
+const char *animation_file = NULL;
 int benchmark = 0;                      /* No random numbers:  benchmark */
 
 int sub_grid_mode = 0;                  /* mode to raytrace a rectangular portion of view */
@@ -976,6 +977,8 @@ static struct bu_opt_desc opt_defs[] = {
      "View aspect ratio width/height (e.g. 1.33 or 4:3)"},
     {"M",  "read-matrix",     "",        NULL,       &matflag,
      "Read model2view matrix (+ animation script) from stdin"},
+    {"", "animation-file", "file", bu_opt_str, &animation_file,
+     "Apply database animation records before loading geometry"},
 
     /* --- Grid / cells -------------------------------------------------- */
     {"g",  "cell-width",      "mm",      rt_opt_cell_width,    NULL,
