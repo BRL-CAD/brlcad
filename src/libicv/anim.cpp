@@ -52,6 +52,7 @@ struct icv_anim {
     uint32_t width;
     uint32_t height;
     int fps;
+    uint32_t plays;
     std::vector<icv_anim_frame> frames;
 };
 
@@ -66,6 +67,7 @@ extern "C" {
 	anim->width = width;
 	anim->height = height;
 	anim->fps = (fps > 0) ? fps : 10;
+	anim->plays = 0;
 	return anim;
     }
 
@@ -103,6 +105,14 @@ extern "C" {
     }
 
     int
+    icv_anim_set_plays(icv_anim_t *anim, uint32_t plays)
+    {
+	if (!anim) return -1;
+	anim->plays = plays;
+	return 0;
+    }
+
+    int
     icv_anim_set_frame_delay(icv_anim_t *anim, size_t index, uint32_t delay_usec)
     {
 	if (!anim || index >= anim->frames.size()) return -1;
@@ -113,7 +123,7 @@ extern "C" {
 }
 
     static apngmini::Frame
-    icv_to_apng(const icv_image_t *img, uint32_t delay_usec)
+    icv_to_apng(const icv_image_t *img, uint32_t delay_usec, int fps)
     {
 	apngmini::Frame f;
 	f.width = img->width;
@@ -123,12 +133,16 @@ extern "C" {
 	f.dispose_op = apngmini::DisposeOp::None;
 	f.blend_op = apngmini::BlendOp::Source;
 
-	// Set delay
-	f.delay.numerator = delay_usec / 1000; // ms
-	f.delay.denominator = 1000;
-	if (f.delay.numerator == 0) {
+	if (fps > 0 && fps <= UINT16_MAX && delay_usec == 1000000u / static_cast<uint32_t>(fps)) {
 	    f.delay.numerator = 1;
-	    f.delay.denominator = 10;
+	    f.delay.denominator = static_cast<uint16_t>(fps);
+	} else {
+	    f.delay.numerator = delay_usec / 1000; // ms
+	    f.delay.denominator = 1000;
+	    if (f.delay.numerator == 0) {
+		f.delay.numerator = 1;
+		f.delay.denominator = 10;
+	    }
 	}
 
 	size_t num_pixels = img->width * img->height;
@@ -296,6 +310,8 @@ extern "C" {
 		if (aapng.frames.empty()) return NULL;
 
 		icv_anim_t *anim = icv_anim_create(ICV_ANIM_APNG, aapng.canvas_width, aapng.canvas_height, 10);
+		if (!anim) return NULL;
+		anim->plays = aapng.num_plays;
 
 		bool use_composed_frames = false;
 		for (size_t i = 0; i < aapng.frames.size(); ++i) {
@@ -517,10 +533,10 @@ extern "C" {
 	    apngmini::Animation aapng;
 	    aapng.canvas_width = w;
 	    aapng.canvas_height = h;
-	    aapng.num_plays = 0;
+	    aapng.num_plays = anim->plays;
 
 	    for (size_t i = 0; i < anim->frames.size(); ++i) {
-		aapng.frames.push_back(icv_to_apng(anim->frames[i].img, anim->frames[i].delay_usec));
+		aapng.frames.push_back(icv_to_apng(anim->frames[i].img, anim->frames[i].delay_usec, anim->fps));
 	    }
 
 	    if (!apngmini::write_file(filename, aapng, 9)) {

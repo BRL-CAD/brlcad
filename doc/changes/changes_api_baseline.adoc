@@ -2843,6 +2843,7 @@ include/icv/anim.h: ICV_EXPORT extern int icv_anim_remove_frame(icv_anim_t *anim
 include/icv/anim.h: ICV_EXPORT extern icv_image_t *icv_anim_get_frame(const icv_anim_t *anim, size_t index);
 include/icv/anim.h: ICV_EXPORT extern size_t icv_anim_num_frames(const icv_anim_t *anim);
 include/icv/anim.h: ICV_EXPORT extern int icv_anim_set_fps(icv_anim_t *anim, int fps);
+include/icv/anim.h: ICV_EXPORT extern int icv_anim_set_plays(icv_anim_t *anim, uint32_t plays);
 include/icv/anim.h: ICV_EXPORT extern int icv_anim_set_frame_delay(icv_anim_t *anim, size_t index, uint32_t delay_usec);
 include/icv/colorspace.h: ICV_EXPORT int icv_gray2rgb(icv_image_t *img);
 include/icv/colorspace.h: #define icv_rgb2gray_ntsc(_a) icv_rgb2gray(_a, ICV_COLOR_RGB, 0.30, 0.59, 0.11)
