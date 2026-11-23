@@ -261,17 +261,20 @@ read_installed_components(const options &opts)
     static const std::regex spdx_id_pattern(R"(^SPDXRef-[A-Za-z0-9.-]+$)");
     std::set<std::string> package_ids;
     for (const auto &entry : manifest.at("packages")) {
-        if (!entry.is_object() || entry.size() != 4 ||
+        if (!entry.is_object() || entry.size() != 5 ||
             !entry.contains("component") || !entry.at("component").is_string() ||
             !entry.contains("id") || !entry.at("id").is_string() ||
             !entry.contains("spdx_id") || !entry.at("spdx_id").is_string() ||
-            !entry.contains("primary") || !entry.at("primary").is_boolean()) {
+            !entry.contains("primary") || !entry.at("primary").is_boolean() ||
+            !entry.contains("output") || !entry.at("output").is_string()) {
             throw std::runtime_error("invalid component package entry");
         }
         const std::string component = entry.at("component").get<std::string>();
         const std::string id = entry.at("id").get<std::string>();
         const std::string spdx_id = entry.at("spdx_id").get<std::string>();
-        if (component.empty() || id.empty() || !std::regex_match(spdx_id, spdx_id_pattern)) {
+        const std::string output = entry.at("output").get<std::string>();
+        if (component.empty() || id.empty() || !std::regex_match(spdx_id, spdx_id_pattern) ||
+            (output != "install" && output != "noinstall")) {
             throw std::runtime_error("invalid component package entry: " + component + ": " + spdx_id);
         }
         if (!package_ids.insert(id).second || !result.package_components.emplace(spdx_id, component).second) {

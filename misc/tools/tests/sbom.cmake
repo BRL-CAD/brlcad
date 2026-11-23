@@ -17,7 +17,7 @@ file(WRITE "${TEST_ROOT}/components.json" [=[
     {"path": "lib/zlib-test.txt", "component": "zlib"}
   ],
   "packages": [
-    {"component": "zlib", "id": "zlib/zlib", "spdx_id": "SPDXRef-Package-zlib", "primary": true}
+    {"component": "zlib", "id": "zlib/zlib", "spdx_id": "SPDXRef-Package-zlib", "primary": true, "output": "install"}
   ]
 }
 ]=])
@@ -186,9 +186,19 @@ if(malformed_package_result EQUAL 0 OR EXISTS "${output}")
 endif()
 
 string(REPLACE
-  [=[{"component": "zlib", "id": "zlib/zlib", "spdx_id": "SPDXRef-Package-zlib", "primary": true}]=]
-  [=[{"component": "zlib", "id": "zlib/zlib", "spdx_id": "SPDXRef-Package-zlib", "primary": true},
-    {"component": "zlib", "id": "zlib/alternate", "spdx_id": "SPDXRef-Package-zlib-alternate", "primary": true}]=]
+  [=["output": "install"]=]
+  [=["output": "invalid"]=]
+  malformed_output_manifest "${valid_component_manifest}")
+file(WRITE "${TEST_ROOT}/components.json" "${malformed_output_manifest}")
+execute_process(COMMAND "${SBOM_TOOL}" ${arguments} RESULT_VARIABLE malformed_output_result ERROR_QUIET)
+if(malformed_output_result EQUAL 0 OR EXISTS "${output}")
+  message(FATAL_ERROR "SBOM generation did not reject an invalid package output")
+endif()
+
+string(REPLACE
+  [=[{"component": "zlib", "id": "zlib/zlib", "spdx_id": "SPDXRef-Package-zlib", "primary": true, "output": "install"}]=]
+  [=[{"component": "zlib", "id": "zlib/zlib", "spdx_id": "SPDXRef-Package-zlib", "primary": true, "output": "install"},
+    {"component": "zlib", "id": "zlib/alternate", "spdx_id": "SPDXRef-Package-zlib-alternate", "primary": true, "output": "install"}]=]
   duplicate_primary_manifest "${valid_component_manifest}")
 file(WRITE "${TEST_ROOT}/components.json" "${duplicate_primary_manifest}")
 execute_process(COMMAND "${SBOM_TOOL}" ${arguments} RESULT_VARIABLE duplicate_primary_result ERROR_QUIET)

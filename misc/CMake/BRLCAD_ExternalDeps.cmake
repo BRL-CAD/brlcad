@@ -870,6 +870,31 @@ function(_brlcad_manifest_strings json key values_var valid_var)
   set(${valid_var} TRUE PARENT_SCOPE)
 endfunction()
 
+# Extract flat JSON objects before decoding them individually.  Calling
+# string(JSON) against the full manifest for every file reparses the complete
+# document each time and makes large dependency manifests prohibitively slow.
+function(_brlcad_manifest_objects json key objects_var valid_var)
+  set(${objects_var} "" PARENT_SCOPE)
+  set(${valid_var} FALSE PARENT_SCOPE)
+  string(JSON array_type ERROR_VARIABLE json_error TYPE "${json}" "${key}")
+  if(NOT "${json_error}" STREQUAL "NOTFOUND" OR NOT "${array_type}" STREQUAL "ARRAY")
+    return()
+  endif()
+  string(JSON array_json GET "${json}" "${key}")
+  string(REPLACE ";" [=[\u003b]=] array_json "${array_json}")
+  set(json_string_pattern [=["([^"\\]|\\.)*"]=])
+  set(json_member_pattern
+    "[ \t\r\n]*${json_string_pattern}[ \t\r\n]*:[ \t\r\n]*${json_string_pattern}[ \t\r\n]*")
+  set(json_object_pattern "[{]${json_member_pattern}(,${json_member_pattern})*[}]")
+  string(REGEX MATCHALL "${json_object_pattern}" object_tokens "${array_json}")
+  string(REGEX REPLACE "${json_object_pattern}" "" array_syntax "${array_json}")
+  if(NOT "${array_syntax}" MATCHES "^\\[[ \t\r\n,]*\\]$")
+    return()
+  endif()
+  set(${objects_var} "${object_tokens}" PARENT_SCOPE)
+  set(${valid_var} TRUE PARENT_SCOPE)
+endfunction()
+
 function(brlcad_load_bext_manifest manifest install_root valid_var reason_var)
   set(${valid_var} FALSE PARENT_SCOPE)
   set(${reason_var} "unknown manifest error" PARENT_SCOPE)
@@ -987,6 +1012,84 @@ function(brlcad_load_bext_install_exclude_manifest manifest install_root valid_v
   set(${reason_var} "" PARENT_SCOPE)
 endfunction(brlcad_load_bext_install_exclude_manifest)
 
+function(brlcad_load_bext_component_manifest manifest install_root valid_var reason_var)
+  set(${valid_var} FALSE PARENT_SCOPE)
+  set(${reason_var} "unknown manifest error" PARENT_SCOPE)
+
+  file(READ "${manifest}" _brlcad_manifest_json)
+  string(JSON _brlcad_root_type ERROR_VARIABLE _brlcad_root_error TYPE "${_brlcad_manifest_json}")
+  string(JSON _brlcad_root_size ERROR_VARIABLE _brlcad_root_size_error LENGTH "${_brlcad_manifest_json}")
+  string(JSON _brlcad_schema ERROR_VARIABLE _brlcad_schema_error GET "${_brlcad_manifest_json}" schema)
+  string(JSON _brlcad_install_root ERROR_VARIABLE _brlcad_install_root_error GET "${_brlcad_manifest_json}" install_root)
+  string(JSON _brlcad_generated_by ERROR_VARIABLE _brlcad_generated_by_error GET "${_brlcad_manifest_json}" generated_by)
+  if(NOT "${_brlcad_root_error}" STREQUAL "NOTFOUND" OR NOT _brlcad_root_type STREQUAL "OBJECT" OR
+     NOT "${_brlcad_root_size_error}" STREQUAL "NOTFOUND" OR
+     NOT _brlcad_root_size EQUAL 6 OR
+     NOT "${_brlcad_schema_error}" STREQUAL "NOTFOUND" OR
+     NOT "${_brlcad_install_root_error}" STREQUAL "NOTFOUND" OR
+     NOT "${_brlcad_generated_by_error}" STREQUAL "NOTFOUND" OR
+     NOT "${_brlcad_install_root}" STREQUAL "install" OR
+     NOT "${_brlcad_generated_by}" STREQUAL "bext" OR
+     NOT "${_brlcad_schema}" STREQUAL "https://brlcad.org/schema/bext-component-manifest-v2")
+    set(${reason_var} "unsupported or invalid schema" PARENT_SCOPE)
+    return()
+  endif()
+
+  string(JSON _brlcad_packages_type ERROR_VARIABLE _brlcad_packages_error TYPE
+    "${_brlcad_manifest_json}" packages)
+  if(NOT "${_brlcad_packages_error}" STREQUAL "NOTFOUND" OR
+     NOT _brlcad_packages_type STREQUAL "ARRAY")
+    set(${reason_var} "manifest has an invalid package list" PARENT_SCOPE)
+    return()
+  endif()
+
+  string(JSON _brlcad_platform ERROR_VARIABLE _brlcad_platform_error GET "${_brlcad_manifest_json}" platform)
+  if(NOT "${_brlcad_platform_error}" STREQUAL "NOTFOUND" OR
+     NOT "${_brlcad_platform}" STREQUAL "${CMAKE_SYSTEM_NAME}")
+    set(${reason_var} "platform does not match the BRL-CAD build" PARENT_SCOPE)
+    return()
+  endif()
+
+  _brlcad_manifest_objects("${_brlcad_manifest_json}" files
+    _brlcad_component_entries _brlcad_component_entries_valid)
+  if(NOT _brlcad_component_entries_valid)
+    set(${reason_var} "manifest is missing the files category" PARENT_SCOPE)
+    return()
+  endif()
+
+  set(_brlcad_component_paths)
+  foreach(_brlcad_entry IN LISTS _brlcad_component_entries)
+    string(JSON _brlcad_entry_type ERROR_VARIABLE _brlcad_entry_type_error TYPE "${_brlcad_entry}")
+    string(JSON _brlcad_entry_size ERROR_VARIABLE _brlcad_entry_size_error LENGTH "${_brlcad_entry}")
+    string(JSON _brlcad_relative ERROR_VARIABLE _brlcad_path_error GET "${_brlcad_entry}" path)
+    string(JSON _brlcad_component ERROR_VARIABLE _brlcad_component_error GET "${_brlcad_entry}" component)
+    if(NOT "${_brlcad_entry_type_error}" STREQUAL "NOTFOUND" OR NOT _brlcad_entry_type STREQUAL "OBJECT" OR
+       NOT "${_brlcad_entry_size_error}" STREQUAL "NOTFOUND" OR NOT _brlcad_entry_size EQUAL 2 OR
+       NOT "${_brlcad_path_error}" STREQUAL "NOTFOUND" OR
+       NOT "${_brlcad_component_error}" STREQUAL "NOTFOUND" OR
+       "${_brlcad_component}" STREQUAL "")
+      set(${reason_var} "malformed component ownership entry" PARENT_SCOPE)
+      return()
+    endif()
+    if(IS_ABSOLUTE "${_brlcad_relative}" OR
+       "${_brlcad_relative}" MATCHES "(^|/)\\.\\.(/|$)" OR
+       NOT EXISTS "${install_root}/${_brlcad_relative}")
+      set(${reason_var} "invalid component ownership entry: ${_brlcad_relative}" PARENT_SCOPE)
+      return()
+    endif()
+    list(APPEND _brlcad_component_paths "${_brlcad_relative}")
+  endforeach()
+  list(LENGTH _brlcad_component_paths _brlcad_component_count)
+  list(REMOVE_DUPLICATES _brlcad_component_paths)
+  list(LENGTH _brlcad_component_paths _brlcad_unique_component_count)
+  if(NOT _brlcad_component_count EQUAL _brlcad_unique_component_count)
+    set(${reason_var} "duplicate component ownership path" PARENT_SCOPE)
+    return()
+  endif()
+  set(${valid_var} TRUE PARENT_SCOPE)
+  set(${reason_var} "" PARENT_SCOPE)
+endfunction(brlcad_load_bext_component_manifest)
+
 #####################################################################
 # Processing for BRLCAD_EXT_INSTALL_DIR contents. We need to
 # keep the build directory copies of ${BRLCAD_EXT_DIR}/install files
@@ -1078,6 +1181,30 @@ function(brlcad_bext_process)
     endif()
     message("Using bext install exclusion manifest: ${BEXT_INSTALL_EXCLUDE_MANIFEST_PATH}")
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${BEXT_INSTALL_EXCLUDE_MANIFEST_PATH}")
+  endif()
+  set(BEXT_COMPONENT_MANIFEST_PATH "${BRLCAD_EXT_DIR}/bext-component-manifest.json")
+  if(EXISTS "${BEXT_COMPONENT_MANIFEST_PATH}")
+    brlcad_load_bext_component_manifest(
+      "${BEXT_COMPONENT_MANIFEST_PATH}"
+      "${BRLCAD_EXT_INSTALL_DIR}"
+      BEXT_COMPONENT_MANIFEST_VALID
+      BEXT_COMPONENT_MANIFEST_ERROR
+    )
+    if(NOT BEXT_COMPONENT_MANIFEST_VALID)
+      message(FATAL_ERROR "Invalid bext component manifest: ${BEXT_COMPONENT_MANIFEST_ERROR}")
+    endif()
+    message("Using bext component manifest: ${BEXT_COMPONENT_MANIFEST_PATH}")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${BEXT_COMPONENT_MANIFEST_PATH}")
+    set_property(GLOBAL PROPERTY BRLCAD_BEXT_COMPONENT_MANIFEST "${BEXT_COMPONENT_MANIFEST_PATH}")
+  else()
+    message("Bext component manifest unavailable; installed SBOM will omit bext package records")
+  endif()
+  set(BEXT_SBOM_PATH "${BRLCAD_EXT_DIR}/bext.spdx.json")
+  if(EXISTS "${BEXT_SBOM_PATH}")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${BEXT_SBOM_PATH}")
+    set_property(GLOBAL PROPERTY BRLCAD_BEXT_SBOM "${BEXT_SBOM_PATH}")
+  elseif(EXISTS "${BEXT_COMPONENT_MANIFEST_PATH}")
+    message(WARNING "Bext component ownership is available but bext.spdx.json is absent; installed SBOM will omit bext package records")
   endif()
   set(BEXT_CONTENT_STAMP_PATH "${BRLCAD_EXT_DIR}/bext-content-stamp")
   if(EXISTS "${BEXT_CONTENT_STAMP_PATH}")
@@ -1940,6 +2067,9 @@ endfunction()
   # since configure re-defines all of these rules on every pass.
   set(TP_INSTALL_FILES ${TP_FILES})
   list(REMOVE_ITEM TP_INSTALL_FILES ${BEXT_INSTALL_EXCLUDED_FILES})
+  if(TP_INSTALL_FILES)
+    set_property(GLOBAL PROPERTY BRLCAD_BEXT_SBOM_REQUIRED TRUE)
+  endif()
   set(_brlcad_ext_text_install_rules 0)
   foreach(tf ${TP_INSTALL_FILES})
     # Rather than doing the PROGRAMS install for all binary files, we
