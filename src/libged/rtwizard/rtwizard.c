@@ -46,7 +46,7 @@ rtwizard_option_matches(const char *arg, char short_name, const char *long_name)
     if (arg[0] != '-')
 	return 0;
     if (arg[1] != '-')
-	return arg[1] == short_name;
+	return short_name && arg[1] == short_name;
     size_t length = strcspn(arg, "=");
     return strlen(long_name) == length && bu_strncmp(arg, long_name, length) == 0;
 }
@@ -114,6 +114,7 @@ ged_rtwizard_core(struct ged *gedp, int argc, const char *argv[])
     int gd_rt_cmd_len = 0;
     int ret = BRLCAD_OK;
     int default_objs = 1;
+    int render_spec = 0;
     int use_embedded_fb = 1;
     int size_supplied = 0;
     int using_ipc = 0;
@@ -137,14 +138,24 @@ ged_rtwizard_core(struct ged *gedp, int argc, const char *argv[])
 	    break;
 	if (rtwizard_option_matches(argv[i], 'o', "--output-file") ||
 	    rtwizard_option_matches(argv[i], 'd', "--fbserv-device") ||
-	    rtwizard_option_matches(argv[i], 'p', "--fbserv-port"))
+	    rtwizard_option_matches(argv[i], 'p', "--fbserv-port") ||
+	    rtwizard_option_matches(argv[i], 0, "--frame-dir") ||
+	    rtwizard_option_matches(argv[i], 0, "--save-view-keyframe"))
 	    use_embedded_fb = 0;
+	if (rtwizard_option_matches(argv[i], 0, "--render-spec"))
+	    render_spec = 1;
 	if (rtwizard_option_matches(argv[i], 'c', "--color-objects") ||
 	    rtwizard_option_matches(argv[i], 'l', "--line-objects") ||
 	    rtwizard_option_matches(argv[i], 'g', "--ghost-objects"))
 	    default_objs = 0;
 	if (rtwizard_option_matches(argv[i], 's', "--size"))
 	    size_supplied = 1;
+    }
+    if (render_spec) {
+	/* A full specification supplies the scene and output.  The partial
+	 * animation overlay still uses the active view and drawn objects. */
+	default_objs = 0;
+	use_embedded_fb = 0;
     }
 
     if (default_objs && !ged_who_argc(gedp)) {
@@ -208,21 +219,22 @@ ged_rtwizard_core(struct ged *gedp, int argc, const char *argv[])
     vp = &gd_rt_cmd[0];
     *vp++ = rtscript;
     *vp++ = "--no-gui";
-    *vp++ = "--viewsize";
-    *vp++ = bu_vls_addr(&size_vls);
-    *vp++ = "--orientation";
-    *vp++ = bu_vls_addr(&orient_vls);
-    *vp++ = "--eye_pt";
-    *vp++ = bu_vls_addr(&eye_vls);
+    if (!render_spec) {
+	*vp++ = "--viewsize";
+	*vp++ = bu_vls_addr(&size_vls);
+	*vp++ = "--orientation";
+	*vp++ = bu_vls_addr(&orient_vls);
+	*vp++ = "--eye_pt";
+	*vp++ = bu_vls_addr(&eye_vls);
 
-    if (gedp->ged_gvp->gv_perspective > 0) {
-	*vp++ = "--perspective";
-	snprintf(perspective, sizeof(perspective), "%g", gedp->ged_gvp->gv_perspective);
-	*vp++ = perspective;
+	if (gedp->ged_gvp->gv_perspective > 0) {
+	    *vp++ = "--perspective";
+	    snprintf(perspective, sizeof(perspective), "%g", gedp->ged_gvp->gv_perspective);
+	    *vp++ = perspective;
+	}
+	*vp++ = "-i";
+	*vp++ = gedp->dbip->dbi_filename;
     }
-
-    *vp++ = "-i";
-    *vp++ = gedp->dbip->dbi_filename;
 
     if (use_embedded_fb) {
 	*vp++ = "-p";

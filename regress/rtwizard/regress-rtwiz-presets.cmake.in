@@ -1,0 +1,124 @@
+# BRL-CAD
+#
+# Copyright (c) 2026 United States Government as represented by
+# the U.S. Army Research Laboratory.
+
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/arb8-animation")
+set(DB "@CMAKE_BINARY_DIR@/@DATA_DIR@/db/arb8_showcase.g")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}")
+
+function(render)
+  execute_process(
+    COMMAND "${EXEC}" --no-gui --benchmark --cpu-count 2 ${ARGN}
+    WORKING_DIRECTORY "${WORK}"
+    RESULT_VARIABLE result OUTPUT_VARIABLE out ERROR_VARIABLE err
+  )
+  if(NOT result EQUAL 0)
+    message(FATAL_ERROR "RtWizard failed (${ARGN}):\n${out}\n${err}")
+  endif()
+  set(render_log "${out}\n${err}" PARENT_SCOPE)
+endfunction()
+
+function(different first second)
+  file(SHA256 "${WORK}/${first}" a)
+  file(SHA256 "${WORK}/${second}" b)
+  if(a STREQUAL b)
+    message(FATAL_ERROR "Expected different images: ${first} and ${second}")
+  endif()
+endfunction()
+
+set(COMMON -i "${DB}" -s 128 -c groundplane.r,arb8_quadrants.c -g arb8_axes.c -l arb8_quadrants.c -t F)
+render(${COMMON} -o control.png)
+
+file(WRITE "${WORK}/orbit.json" [=[
+{
+  "timing": {"frames": 4},
+  "options": {"orbit_angle": 360}
+}
+]=])
+render(${COMMON} --animate orbit --animation-spec orbit.json --frame-dir orbit -o orbit.png)
+render(${COMMON} --animate turntable --turntable-object arb8_quadrants.c
+  --animation-frames 4 --frame-dir turntable -o turntable.png)
+
+foreach(preset orbit turntable)
+  file(READ "${WORK}/${preset}.png" header LIMIT 128 HEX)
+  string(FIND "${header}" "6663544c" frame_control)
+  if(frame_control LESS 0)
+    message(FATAL_ERROR "${preset} has no APNG frame control chunk")
+  endif()
+  math(EXPR delay_offset "${frame_control} + 48")
+  string(SUBSTRING "${header}" ${delay_offset} 8 delay)
+  if(NOT header MATCHES "6163544c0000000400000000" OR NOT delay STREQUAL "00010018")
+    message(FATAL_ERROR "${preset} must produce four looping APNG frames at 24 fps")
+  endif()
+  file(GLOB frames "${WORK}/${preset}/frame-*.png")
+  list(LENGTH frames count)
+  if(NOT count EQUAL 4)
+    message(FATAL_ERROR "Expected four saved PNG frames for ${preset}, found ${count}")
+  endif()
+  different("${preset}/frame-000001.png" "${preset}/frame-000003.png")
+endforeach()
+
+file(SHA256 "${WORK}/control.png" control)
+file(SHA256 "${WORK}/turntable/frame-000001.png" initial)
+if(NOT control STREQUAL initial)
+  message(FATAL_ERROR "Turntable first frame must match the fixed-camera control render")
+endif()
+different("orbit/frame-000002.png" "turntable/frame-000002.png")
+
+render(-i "${DB}" -t B -l arb8_quadrants.c -s 128 --cut-steps 3
+  --cut-direction 1/0/0 --frame-dir line-cut)
+different("line-cut/frame-000001.png" "line-cut/frame-000003.png")
+
+render(${COMMON} --verbose 1 --animate turntable --turntable-object arb8_quadrants.c
+  --animation-frames 4 --frame-dir turntable -o turntable.png --resume)
+if(NOT render_log MATCHES "Reusing frame .*frame-000004.png" OR render_log MATCHES "Rendering frame")
+  message(FATAL_ERROR "Expected resume to reuse all saved frames:\n${render_log}")
+endif()
+
+file(WRITE "${WORK}/turntable/frame-000002.png" "damaged frame")
+render(${COMMON} --verbose 1 --animate turntable --turntable-object arb8_quadrants.c
+  --animation-frames 4 --frame-dir turntable -o turntable.png --resume)
+if(NOT render_log MATCHES "Reusing frame .*frame-000004.png" OR NOT render_log MATCHES "Rendering frame 2/4")
+  message(FATAL_ERROR "Expected resume to replace the damaged frame:\n${render_log}")
+endif()
+
+file(WRITE "${WORK}/tracks.json" "
+{
+  \"schema\": \"brlcad.rtwizard.render\", \"version\": 1,
+  \"database\": \"${DB}\",
+  \"objects\": {\"color\": [\"groundplane.r\", \"arb8_quadrants.c\"]},
+  \"image\": {\"size\": 128, \"type\": \"A\"},
+  \"output\": {\"file\": \"tracks.png\", \"frame_dir\": \"tracks\"},
+  \"animation\": {
+    \"timing\": {\"duration\": 1, \"frames\": 2, \"plays\": 2},
+    \"tracks\": [
+      {\"type\": \"color\", \"path\": \"/groundplane.r\", \"keyframes\": [
+        {\"time\": 0, \"color\": [240, 240, 240]},
+        {\"time\": 1, \"color\": [255, 40, 40]}
+      ]},
+      {\"type\": \"material\", \"path\": \"/groundplane.r\", \"keyframes\": [
+        {\"time\": 0, \"material\": {\"shader\": \"plastic\", \"parameters\": {\"di\": 0.85}}}
+      ]},
+      {\"type\": \"temperature\", \"path\": \"/groundplane.r\", \"keyframes\": [
+        {\"time\": 0, \"temperature\": 25}, {\"time\": 1, \"temperature\": 35}
+      ]}
+    ]
+  }
+}
+")
+render(--render-spec tracks.json)
+different("tracks/frame-000001.png" "tracks/frame-000002.png")
+file(READ "${WORK}/tracks.png" header LIMIT 128 HEX)
+if(NOT header MATCHES "6163544c0000000200000002")
+  message(FATAL_ERROR "The render specification's explicit APNG play count was not honored")
+endif()
+
+render(${COMMON} --save-view-keyframe capture.json --time 0)
+render(${COMMON} --save-view-keyframe capture.json --time 1 --azimuth 80)
+file(READ "${WORK}/capture.json" capture)
+string(JSON frame_count LENGTH "${capture}" animation tracks 0 keyframes)
+if(NOT frame_count EQUAL 2)
+  message(FATAL_ERROR "Expected two captured camera keyframes")
+endif()

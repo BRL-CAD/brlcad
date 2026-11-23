@@ -15,7 +15,7 @@ if(BUILD_TESTING AND TARGET rtwizard)
 
   # This target also acts like the check target in that it depends on the
   # necessary inputs for the CTest tests
-  add_dependencies(regress-rtwizard rtwizard icv pixcmp pixstat m35.g moss.g)
+  add_dependencies(regress-rtwizard rtwizard icv pixcmp pixstat m35.g moss.g arb8_showcase.g)
 
   # All rtwizard tests used the same script
   set(TSCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-rtwiz.cmake.in")
@@ -98,6 +98,13 @@ if(BUILD_TESTING AND TARGET rtwizard)
     TEST_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-rtwiz-anim.cmake.in"
     EXEC rtwizard
   )
+  brlcad_regression_test(
+    regress-rtwiz_animation_presets
+    "rtwizard;arb8_showcase.g"
+    TEST_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-rtwiz-presets.cmake.in"
+    EXEC rtwizard
+  )
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/arb8-animation")
 
   set(INPUT_FILE "${DATA_DIR}/db/moss.g")
   brlcad_regression_test(
@@ -148,6 +155,7 @@ cmakefiles(
   regress-rtwiz.cmake.in
   regress-rtwiz-occlusion.cmake.in
   regress-rtwiz-anim.cmake.in
+  regress-rtwiz-presets.cmake.in
   regress-rtwiz-fb.cmake.in
   regress-rtwiz-files.cmake.in
 )

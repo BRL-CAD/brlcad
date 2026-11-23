@@ -1,4 +1,4 @@
-set(RTWIZARD_SRCS main.c render.cpp)
+set(RTWIZARD_SRCS main.c render.cpp animation.cpp animation_plan.cpp preset_plan.cpp)
 
 if(HAVE_WINDOWS_H)
   # To associate an icon with the application for Windows (needed
@@ -7,7 +7,7 @@ if(HAVE_WINDOWS_H)
   list(APPEND RTWIZARD_SRCS rtwizard.rc)
 endif(HAVE_WINDOWS_H)
 
-set(RTWIZARD_LIBS libged librt libbv libdm libpkg libicv Threads::Threads ${M_LIBRARY})
+set(RTWIZARD_LIBS libged librt libbn libbv libdm libpkg libicv Threads::Threads ${M_LIBRARY})
 set(RTWIZARD_TARGET_DEPS rt rtedge fbserv dm_plugins ged-draw ged-view ged-get_eyemodel)
 set(RTWIZARD_HAVE_TCL 0)
 if(TARGET libtclcad)
@@ -40,11 +40,28 @@ if(RTWIZARD_HAVE_TCL)
   )
 endif(RTWIZARD_HAVE_TCL)
 
+if(BUILD_TESTING)
+  brlcad_addexec(
+    rtwizard_preset_plan_test
+    "preset_plan_test.cpp;animation_plan.cpp;preset_plan.cpp"
+    "libbn;libbu;${M_LIBRARY}"
+    TEST
+  )
+  brlcad_add_test(NAME rtwizard_preset_plan COMMAND rtwizard_preset_plan_test)
+endif(BUILD_TESTING)
+
 cmakefiles(
   CMakeLists.txt
   main.c
   render.cpp
   render.h
+  animation.cpp
+  animation.h
+  animation_plan.cpp
+  animation_plan.h
+  preset_plan.cpp
+  preset_plan.h
+  preset_plan_test.cpp
   settings.h
   rtwizard.rc
   rtwizard.ico

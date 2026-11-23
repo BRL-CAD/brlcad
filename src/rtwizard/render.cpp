@@ -17,6 +17,9 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
+#include <limits>
+#include <locale>
 #include <memory>
 #include <mutex>
 #include <random>
@@ -55,6 +58,8 @@
 #include "pkg.h"
 #include "raytrace.h"
 
+#include "animation.h"
+#include "preset_plan.h"
 #include "render.h"
 #include "settings.h"
 
@@ -634,7 +639,7 @@ executable(const char *name)
 
 static std::vector<std::string>
 base_command(const rtwizard_settings *s, const ViewState &view, const char *program,
-    const fs::path &output, const std::string &cut_plane)
+    const fs::path &output, const std::string &cut_plane, const fs::path &animation_file)
 {
     const size_t width = s->width_set ? s->width : (s->size_set ? s->size : s->width);
     const size_t height = s->height_set ? s->height : (s->size_set ? s->size : s->height);
@@ -645,6 +650,7 @@ base_command(const rtwizard_settings *s, const ViewState &view, const char *prog
         command.push_back("-P");
         command.push_back(std::to_string(s->cpus));
     }
+    if (!animation_file.empty()) command.insert(command.end(), {"--animation-file", animation_file.string()});
     if (!cut_plane.empty()) {
         command.push_back("-k");
         command.push_back(cut_plane);
@@ -700,6 +706,10 @@ read_pix(const fs::path &path, size_t width, size_t height)
 {
     Image image(icv_read(path.string().c_str(), BU_MIME_IMAGE_PIX, width, height));
     if (!image) throw std::runtime_error("unable to read renderer output '" + path.string() + "'");
+    // A later frame must open a fresh PIX file. Renderers treat existing
+    // output as a partial frame to resume.
+    if (!bu_file_delete(path.string().c_str()))
+	throw std::runtime_error("unable to release renderer output '" + path.string() + "'");
     return image;
 }
 
@@ -733,13 +743,13 @@ overlay_non_background(icv_image_t *base, const icv_image_t *overlay,
 static Image
 render_rt(JobContext &job, const rtwizard_settings *s, const ViewState &view,
     const std::vector<std::string> &objects, const std::string &name,
-    const std::string &cut_plane)
+    const std::string &cut_plane, const fs::path &animation_file)
 {
     const size_t width = s->width_set ? s->width : (s->size_set ? s->size : s->width);
     const size_t height = s->height_set ? s->height : (s->size_set ? s->size : s->height);
     const auto background = color_chars(s->bkg_color);
     fs::path output = job.file(name + ".pix");
-    std::vector<std::string> command = base_command(s, view, "rt", output, cut_plane);
+    std::vector<std::string> command = base_command(s, view, "rt", output, cut_plane, animation_file);
     command.insert(command.end(), {"-C", color_string(background, '/')});
     if (s->ao_samples > 0) {
         std::string ambient = "set ambSamples=" + std::to_string(s->ao_samples);
@@ -755,7 +765,7 @@ render_rt(JobContext &job, const rtwizard_settings *s, const ViewState &view,
 static Image
 render_edge(JobContext &job, const rtwizard_settings *s, const ViewState &view,
     const std::vector<std::string> &objects, const std::vector<std::string> &occluders,
-    const std::string &name, const std::string &cut_plane,
+    const std::string &name, const std::string &cut_plane, const fs::path &animation_file,
     std::array<unsigned char, 3> &edge_background,
     std::array<unsigned char, 3> &edge_foreground, bool &mask_only)
 {
@@ -771,7 +781,7 @@ render_edge(JobContext &job, const rtwizard_settings *s, const ViewState &view,
             static_cast<unsigned char>(255 - edge_background[2])}};
     }
     fs::path output = job.file(name + ".pix");
-    std::vector<std::string> command = base_command(s, view, "rtedge", output, cut_plane);
+    std::vector<std::string> command = base_command(s, view, "rtedge", output, cut_plane, animation_file);
     command.insert(command.end(), {"-c", "set fg=" + color_string(render_foreground, ','),
         "-c", "set bg=" + color_string(edge_background, ',')});
     if (!occluders.empty()) {
@@ -791,7 +801,7 @@ render_edge(JobContext &job, const rtwizard_settings *s, const ViewState &view,
 
 static Image
 compose_frame(JobContext &job, const rtwizard_settings *s, const ViewState &view,
-    const std::string &cut_plane, char picture_type)
+    const std::string &cut_plane, char picture_type, const fs::path &animation_file = {})
 {
     const size_t width = s->width_set ? s->width : (s->size_set ? s->size : s->width);
     const size_t height = s->height_set ? s->height : (s->size_set ? s->size : s->height);
@@ -810,11 +820,11 @@ compose_frame(JobContext &job, const rtwizard_settings *s, const ViewState &view
     occluders.erase(std::unique(occluders.begin(), occluders.end()), occluders.end());
 
     Image result = colors.empty() ? blank_image(width, height, background) :
-        render_rt(job, s, view, colors, "color", cut_plane);
+        render_rt(job, s, view, colors, "color", cut_plane, animation_file);
 
     if (!ghosts.empty()) {
-        Image ghost = render_rt(job, s, view, ghosts, "ghost", cut_plane);
-        Image occupied = render_rt(job, s, view, occluders, "occupied", cut_plane);
+        Image ghost = render_rt(job, s, view, ghosts, "ghost", cut_plane, animation_file);
+        Image occupied = render_rt(job, s, view, occluders, "occupied", cut_plane, animation_file);
         Image color_only = copy_image(result.get());
         const double gamma = s->ghost_intensity;
         if (!(gamma > 0.0)) throw std::runtime_error("ghost intensity must be positive");
@@ -844,7 +854,7 @@ compose_frame(JobContext &job, const rtwizard_settings *s, const ViewState &view
         std::array<unsigned char, 3> edge_background;
         std::array<unsigned char, 3> edge_foreground;
         bool mask_only = false;
-        Image edge = render_edge(job, s, view, edges, occluders, "edges", cut_plane,
+        Image edge = render_edge(job, s, view, edges, occluders, "edges", cut_plane, animation_file,
             edge_background, edge_foreground, mask_only);
         if (colors.empty() && ghosts.empty() && !mask_only) {
             result = std::move(edge);
@@ -1016,17 +1026,23 @@ write_framebuffer(JobContext &job, const rtwizard_settings *s, const icv_image_t
 }
 
 static void
-write_image_atomic(const rtwizard_settings *s, icv_image_t *image)
+write_image_atomic(const fs::path &output, icv_image_t *image, bool replace)
 {
-    if (!bu_vls_strlen(s->output_file)) return;
-    const fs::path output(bu_vls_addr(s->output_file));
     const StagedOutput staged(output);
-    if (icv_write(image, staged.path().string().c_str(), BU_MIME_IMAGE_AUTO) != 0) {
-        throw std::runtime_error("unable to write output image '" + output.string() + "'");
-    }
-
-    staged.publish(s->use_gui != 0);
+    if (icv_write(image, staged.path().string().c_str(), BU_MIME_IMAGE_AUTO) != 0)
+	throw std::runtime_error("unable to write output image '" + output.string() + "'");
+    staged.publish(replace);
 }
+
+static void
+write_text(const fs::path &path, const std::string &text)
+{
+    std::ofstream output(path, std::ios::binary);
+    output << text;
+    output.close();
+    if (!output) throw std::runtime_error("unable to write '" + path.string() + "'");
+}
+
 static icv_anim_format_t
 animation_format(const char *path)
 {
@@ -1037,19 +1053,24 @@ animation_format(const char *path)
     return ICV_ANIM_UNKNOWN;
 }
 
-static std::vector<std::string>
-cut_planes(const rtwizard_settings *settings, const ViewState &view, db_i *dbip, char picture_type)
+static void
+object_bounds(db_i *dbip, const std::vector<std::string> &objects, const mat_t transform,
+    point_t minimum, point_t maximum)
 {
-    vect_t direction;
-    if (settings->cut_direction_set) {
-        VMOVE(direction, settings->cut_direction);
-        VUNITIZE(direction);
-    } else {
-        mat_t rotation;
-        quat_quat2mat(rotation, view.orientation);
-        VSET(direction, -rotation[8], -rotation[9], -rotation[10]);
-        VUNITIZE(direction);
-    }
+    std::vector<const char *> names;
+    for (const auto &object : objects) names.push_back(object.c_str());
+    struct bu_vls message = BU_VLS_INIT_ZERO;
+    const int status = rt_obj_bounds_mat(&message, dbip, static_cast<int>(names.size()),
+	names.data(), 0, transform, RT_OBJ_BOUNDS_IGNORE_INFINITE, minimum, maximum);
+    const std::string detail = bu_vls_addr(&message);
+    bu_vls_free(&message);
+    if (status != BRLCAD_OK)
+	throw std::runtime_error("unable to determine animation bounds: " + detail);
+}
+
+static std::pair<double, double>
+projected_bounds(db_i *dbip, const std::vector<std::string> &objects, const vect_t direction)
+{
     vect_t reference, xaxis, yaxis;
     if (std::fabs(direction[Z]) < 0.9) VSET(reference, 0.0, 0.0, 1.0);
     else VSET(reference, 0.0, 1.0, 0.0);
@@ -1063,66 +1084,250 @@ cut_planes(const rtwizard_settings *settings, const ViewState &view, db_i *dbip,
     VMOVE(&projection[4], yaxis);
     VMOVE(&projection[8], direction);
 
-    std::vector<std::string> object_storage = rendered_objects(settings, picture_type);
-    std::vector<const char *> objects;
-    for (const std::string &object : object_storage) objects.push_back(object.c_str());
     point_t minimum, maximum;
-    struct bu_vls bounds_error = BU_VLS_INIT_ZERO;
-    const int bounds_status = rt_obj_bounds_mat(&bounds_error, dbip,
-	static_cast<int>(objects.size()), objects.data(), 0, projection,
-	RT_OBJ_BOUNDS_IGNORE_INFINITE, minimum, maximum);
-    if (bounds_status != BRLCAD_OK) {
-	const std::string detail = bu_vls_addr(&bounds_error);
-	bu_vls_free(&bounds_error);
-	throw std::runtime_error("unable to determine cutting-plane bounds" +
-	    (detail.empty() ? std::string() : ": " + detail));
-    }
-    bu_vls_free(&bounds_error);
-    const double span = maximum[Z] - minimum[Z];
-    if (!(span > 0.0)) throw std::runtime_error("rendered objects have degenerate cutting-plane bounds");
+    object_bounds(dbip, objects, projection, minimum, maximum);
+    return {minimum[Z], maximum[Z]};
+}
 
-    const size_t width = settings->width_set ? settings->width : (settings->size_set ? settings->size : settings->width);
-    const size_t height = settings->height_set ? settings->height : (settings->size_set ? settings->size : settings->height);
-    const double margin = std::max({std::fabs(span) / static_cast<double>(std::max(width, height)), std::fabs(span) * 0.05, 1.0e-9});
-    std::vector<std::string> planes;
-    planes.reserve(static_cast<size_t>(settings->cut_steps));
-    for (int frame = 0; frame < settings->cut_steps; ++frame) {
-        const double fraction = static_cast<double>(frame) / static_cast<double>(settings->cut_steps - 1);
-        const double distance = minimum[Z] - margin + fraction * span;
-        point_t point;
-        VSCALE(point, direction, distance);
-        std::ostringstream plane;
-        plane << std::setprecision(17) << point[X] << ',' << point[Y] << ',' << point[Z] << ',' << direction[X] << ',' << direction[Y] << ',' << direction[Z];
-        planes.push_back(plane.str());
+static AnimationFrame
+frame_view(const ViewState &view)
+{
+    return make_animation_frame(0.0, view.size, {V4ARGS(view.orientation)}, {V3ARGS(view.eye)}, view.perspective);
+}
+
+static AnimationPlan
+plan_animation(const rtwizard_settings *s, const ViewState &view, db_i *dbip, char picture_type)
+{
+    const AnimationFrame base = frame_view(view);
+    if (bu_vls_strlen(s->animation_tracks))
+	return rtwizard_track_plan(s, base, dbip->dbi_local2base);
+
+    PresetSettings preset;
+    preset.preset = s->cut_steps ? "cut" : bu_vls_addr(s->animation_preset);
+    preset.duration = s->animation.duration > 0.0 ? s->animation.duration : RTWIZARD_ANIMATION_DURATION_DEFAULT;
+    preset.fps = s->animation_fps;
+    preset.frame_count = s->animation.frames;
+    preset.cyclic_override = s->animation.cyclic;
+    preset.plays = s->animation.plays;
+    preset.eye = base.eye;
+    preset.orientation = base.orientation;
+    preset.viewsize = view.size;
+    preset.perspective = view.perspective;
+    preset.objects = rendered_objects(s, picture_type);
+
+    PresetSceneFacts facts;
+    if (preset.preset == "cut") {
+	preset.cut_steps = s->cut_steps;
+	preset.width = s->width_set ? s->width : (s->size_set ? s->size : s->width);
+	preset.height = s->height_set ? s->height : (s->size_set ? s->size : s->height);
+	vect_t direction;
+	if (s->cut_direction_set) {
+	    VMOVE(direction, s->cut_direction);
+	} else {
+	    mat_t rotation;
+	    quat_quat2mat(rotation, view.orientation);
+	    VREVERSE(direction, &rotation[8]);
+	}
+	preset.direction = {V3ARGS(direction)};
+	normalize_animation_vector(preset.direction, "cut direction");
+	VMOVE(direction, preset.direction.data());
+	facts.sweep = projected_bounds(dbip, preset.objects, direction);
+    } else {
+	const bool orbit = preset.preset == "orbit";
+	const fastf_t *axis = orbit ? s->animation.orbit_axis : s->animation.turntable_axis;
+	const fastf_t *center = orbit ? s->animation.orbit_center : s->animation.turntable_center;
+	preset.axis = {V3ARGS(axis)};
+	preset.angle = orbit ? s->animation.orbit_angle : s->animation.turntable_angle;
+	if (orbit) {
+	    preset.has_radius = s->animation.orbit_radius < DBL_MAX;
+	    preset.radius = s->animation.orbit_radius;
+	    preset.has_elevation = s->animation.orbit_elevation < DBL_MAX;
+	    preset.elevation = s->animation.orbit_elevation;
+	} else {
+	    preset.object = bu_vls_addr(s->turntable_object);
+	}
+	point_t pivot;
+	if (center[0] < DBL_MAX) {
+	    VMOVE(pivot, center);
+	} else {
+	    point_t minimum, maximum;
+	    const std::vector<std::string> objects = preset.object.empty() ?
+		preset.objects : std::vector<std::string>{preset.object};
+	    object_bounds(dbip, objects, nullptr, minimum, maximum);
+	    VADD2SCALE(pivot, minimum, maximum, 0.5);
+	}
+	facts.center = {V3ARGS(pivot)};
     }
-    return planes;
+    return plan_animation_preset(preset, facts);
+}
+
+static uint64_t
+digest_bytes(uint64_t hash, const char *bytes, size_t count)
+{
+    constexpr uint64_t fnv_prime = UINT64_C(1099511628211);
+    for (size_t i = 0; i < count; ++i) {
+	hash ^= static_cast<unsigned char>(bytes[i]);
+	hash *= fnv_prime;
+    }
+    return hash;
+}
+
+constexpr uint64_t FNV_OFFSET = UINT64_C(14695981039346656037);
+
+static std::string
+file_digest(const fs::path &path)
+{
+    std::ifstream input(path, std::ios::binary);
+    if (!input) throw std::runtime_error("unable to read '" + path.string() + "'");
+    uint64_t hash = FNV_OFFSET;
+    std::array<char, BUFSIZ> buffer;
+    while (input.read(buffer.data(), buffer.size()) || input.gcount())
+	hash = digest_bytes(hash, buffer.data(), static_cast<size_t>(input.gcount()));
+    if (input.bad()) throw std::runtime_error("unable to read '" + path.string() + "'");
+    return std::to_string(hash);
+}
+
+static std::string
+frame_signature(const rtwizard_settings *s, const AnimationPlan &plan, char picture_type,
+    size_t width, size_t height)
+{
+    std::ostringstream signature;
+    signature.imbue(std::locale::classic());
+    signature << std::setprecision(std::numeric_limits<double>::max_digits10)
+	<< "rtwizard-native-frame-v1 " << file_digest(bu_vls_addr(s->input_file))
+	<< ' ' << picture_type << ' ' << width << ' ' << height
+	<< ' ' << s->benchmark << ' ' << s->cpus << ' ' << s->occlusion
+	<< ' ' << s->ghost_intensity << ' ' << s->ao_samples << ' ' << s->ao_radius;
+    for (const auto *color : {s->bkg_color, s->line_color, s->non_line_color})
+	signature << ' ' << color_string(color_chars(color), '/');
+    for (const auto *table : {s->color, s->ghost, s->line}) {
+	const auto objects = table_strings(table);
+	signature << ' ' << objects.size();
+	for (const auto &object : objects) signature << ' ' << std::quoted(object);
+    }
+    signature << ' ' << plan.fps << ' ' << plan.duration << ' ' << plan.cyclic
+	<< ' ' << plan.plays << ' ' << plan.frames.size() << '\n';
+    for (const auto &frame : plan.frames) {
+	signature << frame.time << ' ' << frame.viewsize << ' ' << frame.perspective;
+	for (double v : frame.orientation) signature << ' ' << v;
+	for (double v : frame.eye) signature << ' ' << v;
+	signature << ' ' << std::quoted(frame.cut_plane) << ' ' << frame.operations.size() << '\n';
+	for (const auto &operation : frame.operations) signature << operation_command(operation) << '\n';
+    }
+    const std::string description = signature.str();
+    return std::to_string(digest_bytes(FNV_OFFSET, description.data(), description.size()));
+}
+
+static fs::path
+frame_path(const fs::path &directory, size_t frame)
+{
+    std::ostringstream name;
+    name << "frame-" << std::setfill('0') << std::setw(6) << frame << ".png";
+    return directory / name.str();
+}
+
+static Image
+read_saved_frame(const fs::path &path, const std::string &signature, size_t width, size_t height)
+{
+    std::ifstream input(path.string() + ".rtwizard", std::ios::binary);
+    if (!input || !fs::is_regular_file(path)) return {};
+    const std::string marker((std::istreambuf_iterator<char>(input)), {});
+    const std::string digest = file_digest(path);
+    if (marker != digest + '\n' + signature) return {};
+    Image image(icv_read(path.string().c_str(), BU_MIME_IMAGE_PNG, 0, 0));
+    if (image && image->width == width && image->height == height && file_digest(path) == digest)
+	return image;
+    return {};
 }
 
 static void
-render_cut_animation(JobContext &job, const rtwizard_settings *settings, const ViewState &view, db_i *dbip, char picture_type)
+render_animation(JobContext &job, const rtwizard_settings *s, const ViewState &view, db_i *dbip,
+    char picture_type, const rtwizard_render_callbacks *callbacks, void *callback_data)
 {
-    if (!bu_vls_strlen(settings->output_file)) throw std::runtime_error("cutting-plane animation requires a file output");
-    const icv_anim_format_t format = animation_format(bu_vls_addr(settings->output_file));
-    if (format == ICV_ANIM_UNKNOWN) throw std::runtime_error("animation output must use .png, .apng, .avi, or .mjpg");
-    const size_t width = settings->width_set ? settings->width : (settings->size_set ? settings->size : settings->width);
-    const size_t height = settings->height_set ? settings->height : (settings->size_set ? settings->size : settings->height);
-    std::unique_ptr<icv_anim_t, decltype(&icv_anim_destroy)> animation(icv_anim_create(format, static_cast<uint32_t>(width), static_cast<uint32_t>(height), settings->animation_fps), &icv_anim_destroy);
-    if (!animation) throw std::runtime_error("unable to create output animation");
+    const fs::path output(bu_vls_addr(s->output_file));
+    const fs::path directory(bu_vls_addr(s->frame_dir));
+    if (output.empty() && directory.empty())
+	throw std::runtime_error("animation requires a file output or frame directory");
+    const size_t width = s->width_set ? s->width : (s->size_set ? s->size : s->width);
+    const size_t height = s->height_set ? s->height : (s->size_set ? s->size : s->height);
+    if (width > UINT32_MAX || height > UINT32_MAX)
+	throw std::runtime_error("animation dimensions are too large");
 
-    const std::vector<std::string> planes = cut_planes(settings, view, dbip, picture_type);
-    for (size_t frame = 0; frame < planes.size(); ++frame) {
-        if (job.cancelled()) throw std::runtime_error("render cancelled");
-        job.log("Rendering frame " + std::to_string(frame + 1) + "/" + std::to_string(planes.size()) + "\n");
-        Image image = compose_frame(job, settings, view, planes[frame], picture_type);
-        if (icv_anim_add_frame(animation.get(), image.get()) != 0) throw std::runtime_error("unable to add output animation frame");
-        job.progress(static_cast<int>(frame + 1), static_cast<int>(planes.size()));
+    const AnimationPlan plan = plan_animation(s, view, dbip, picture_type);
+    std::unique_ptr<icv_anim_t, decltype(&icv_anim_destroy)> animation(nullptr, &icv_anim_destroy);
+    if (!output.empty()) {
+	const icv_anim_format_t format = animation_format(bu_vls_addr(s->output_file));
+	if (format == ICV_ANIM_UNKNOWN)
+	    throw std::runtime_error("animation output must use .png, .apng, .avi, or .mjpg");
+	animation.reset(icv_anim_create(format, static_cast<uint32_t>(width),
+	    static_cast<uint32_t>(height), plan.fps));
+	if (!animation || icv_anim_set_plays(animation.get(), plan.plays) != 0)
+	    throw std::runtime_error("unable to create output animation");
     }
-    const fs::path output(bu_vls_addr(settings->output_file));
-    const StagedOutput staged(output);
-    if (icv_anim_write(animation.get(), staged.path().string().c_str()) != 0) {
-        throw std::runtime_error("unable to write output animation '" + output.string() + "'");
+
+    std::string signature;
+    if (!directory.empty()) {
+	fs::create_directories(directory);
+	signature = frame_signature(s, plan, picture_type, width, height);
+	if (!s->animation.resume) {
+	    for (size_t i = 1; i <= plan.frames.size(); ++i) {
+		if (fs::exists(frame_path(directory, i)))
+		    throw std::runtime_error("frame already exists: '" + frame_path(directory, i).string() + "' (use --resume)");
+	    }
+	}
     }
-    staged.publish(settings->use_gui != 0);
+
+    const int total = static_cast<int>(plan.frames.size());
+    Image first_frame;
+    for (size_t i = 0; i < plan.frames.size(); ++i) {
+	if (job.cancelled()) throw std::runtime_error("render cancelled");
+	const AnimationFrame &frame = plan.frames[i];
+	const fs::path path = directory.empty() ? fs::path() : frame_path(directory, i + 1);
+	const std::string provenance = path.empty() ? std::string() : std::to_string(i) + '\n' + signature;
+	Image image;
+	if (!path.empty() && s->animation.resume) image = read_saved_frame(path, provenance, width, height);
+	if (image) {
+	    job.log("Reusing frame " + path.string());
+	} else {
+	    job.log("Rendering frame " + std::to_string(i + 1) + "/" + std::to_string(total));
+	    ViewState frame_camera;
+	    frame_camera.size = frame.viewsize;
+	    frame_camera.perspective = frame.perspective;
+	    HMOVE(frame_camera.orientation, frame.orientation.data());
+	    VMOVE(frame_camera.eye, frame.eye.data());
+	    fs::path records;
+	    if (!frame.operations.empty()) {
+		records = job.file("frame.anim");
+		std::string text;
+		for (const auto &operation : frame.operations) text += operation_command(operation) + '\n';
+		write_text(records, text);
+	    }
+	    image = compose_frame(job, s, frame_camera, frame.cut_plane, picture_type, records);
+	    if (!path.empty()) {
+		const StagedOutput staged_image(path);
+		if (icv_write(image.get(), staged_image.path().string().c_str(), BU_MIME_IMAGE_PNG) != 0)
+		    throw std::runtime_error("unable to write frame '" + path.string() + "'");
+		const StagedOutput marker(path.string() + ".rtwizard");
+		write_text(marker.path(), file_digest(staged_image.path()) + '\n' + provenance);
+		staged_image.publish(s->animation.resume != 0);
+		marker.publish(true);
+	    }
+	}
+	if (animation && icv_anim_add_frame(animation.get(), image.get()) != 0)
+	    throw std::runtime_error("unable to add output animation frame");
+	if (s->use_gui && i == 0) first_frame = std::move(image);
+	job.progress(static_cast<int>(i + 1), total);
+	if (callbacks && callbacks->frame && !path.empty())
+	    callbacks->frame(callback_data, path.string().c_str(), static_cast<int>(i + 1), total);
+    }
+    if (job.cancelled()) throw std::runtime_error("render cancelled");
+    if (animation) {
+	const StagedOutput staged(output);
+	if (icv_anim_write(animation.get(), staged.path().string().c_str()) != 0)
+	    throw std::runtime_error("unable to write output animation '" + output.string() + "'");
+	staged.publish(s->use_gui || s->animation.resume);
+    }
+    if (first_frame) (void)write_framebuffer(job, s, first_frame.get());
 }
 
 } // namespace
@@ -1220,15 +1425,33 @@ rtwizard_render(const rtwizard_settings *settings, char picture_type, const rtwi
         return BRLCAD_ERROR;
     }
     try {
+	const char *preset = bu_vls_addr(settings->animation_preset);
+	if (preset[0] && !BU_STR_EQUAL(preset, "cut") && !BU_STR_EQUAL(preset, "orbit") &&
+	    !BU_STR_EQUAL(preset, "turntable"))
+	    throw std::runtime_error("animation preset must be cut, orbit, or turntable");
+	if (settings->animation.duration < 0.0 || !std::isfinite(settings->animation.duration) ||
+	    settings->animation.plays < 0 || settings->animation.cyclic < -1 || settings->animation.cyclic > 1)
+	    throw std::runtime_error("invalid animation timing");
+	if (settings->animation.resume && (!rtwizard_is_animated(settings) || !bu_vls_strlen(settings->frame_dir)))
+	    throw std::runtime_error("--resume requires an animation and a frame directory");
+	if (bu_vls_strlen(settings->frame_dir) && !rtwizard_is_animated(settings))
+	    throw std::runtime_error("--frame-dir requires an animation");
         JobContext job(callbacks, callback_data, bu_vls_addr(settings->log_file), bu_vls_addr(settings->pid_file), settings->verbose != 0);
         Database database(db_open(bu_vls_addr(settings->input_file), DB_OPEN_READONLY));
         if (!database || db_dirbuild(database.get()) < 0) throw std::runtime_error("unable to open geometry database '" + std::string(bu_vls_addr(settings->input_file)) + "'");
         ViewState view = resolve_view(settings, picture_type);
-        if (settings->cut_steps >= 2) {
-            render_cut_animation(job, settings, view, database.get(), picture_type);
+        if (bu_vls_strlen(settings->save_view_keyframe)) {
+	    const fs::path path(bu_vls_addr(settings->save_view_keyframe));
+	    const bool exists = fs::exists(path);
+	    const StagedOutput staged(path);
+	    write_text(staged.path(), rtwizard_keyframe_document(settings, frame_view(view), database->dbi_local2base));
+	    staged.publish(exists);
+        } else if (rtwizard_is_animated(settings)) {
+            render_animation(job, settings, view, database.get(), picture_type, callbacks, callback_data);
         } else {
             Image image = compose_frame(job, settings, view, std::string(), picture_type);
-            write_image_atomic(settings, image.get());
+            if (bu_vls_strlen(settings->output_file))
+                write_image_atomic(bu_vls_addr(settings->output_file), image.get(), settings->use_gui != 0);
             (void)write_framebuffer(job, settings, image.get());
             job.progress(1, 1);
             if (callbacks && callbacks->frame && bu_vls_strlen(settings->output_file)) callbacks->frame(callback_data, bu_vls_addr(settings->output_file), 1, 1);

@@ -59,8 +59,15 @@ __declspec(dllimport) int __stdcall SetHandleInformation(void *, unsigned long, 
 #  include "tclcad.h"
 #endif
 
+#include "animation.h"
 #include "render.h"
 #include "settings.h"
+
+int
+rtwizard_is_animated(const struct rtwizard_settings *s)
+{
+    return s->cut_steps || bu_vls_strlen(s->animation_preset) || bu_vls_strlen(s->animation_tracks);
+}
 
 struct rtwizard_settings *
 rtwizard_settings_create(void)
@@ -90,6 +97,17 @@ rtwizard_settings_create(void)
     BU_GET(s->pid_file, struct bu_vls);
     bu_vls_init(s->pid_file);
 
+    BU_GET(s->animation_preset, struct bu_vls);
+    bu_vls_init(s->animation_preset);
+    BU_GET(s->animation_tracks, struct bu_vls);
+    bu_vls_init(s->animation_tracks);
+    BU_GET(s->frame_dir, struct bu_vls);
+    bu_vls_init(s->frame_dir);
+    BU_GET(s->turntable_object, struct bu_vls);
+    bu_vls_init(s->turntable_object);
+    BU_GET(s->save_view_keyframe, struct bu_vls);
+    bu_vls_init(s->save_view_keyframe);
+
     BU_GET(s->bkg_color, struct bu_color);
     (void)bu_color_from_rgb_chars(s->bkg_color, white);
     BU_GET(s->line_color, struct bu_color);
@@ -101,7 +119,15 @@ rtwizard_settings_create(void)
     s->cpus = 0;
     s->process_timeout = 0;
     s->cut_steps = 0;
-    s->animation_fps = 10;
+    s->animation_fps = RTWIZARD_ANIMATION_FPS_DEFAULT;
+    s->animation.cyclic = -1;
+    s->animation.orbit_angle = s->animation.turntable_angle = 360.0;
+    VSET(s->animation.orbit_axis, 0.0, 0.0, 1.0);
+    VMOVE(s->animation.turntable_axis, s->animation.orbit_axis);
+    VSETALL(s->animation.orbit_center, DBL_MAX);
+    VSETALL(s->animation.turntable_center, DBL_MAX);
+    s->animation.orbit_radius = s->animation.orbit_elevation = DBL_MAX;
+    s->keyframe_time = -1.0;
     VSETALL(s->cut_direction, 0.0);
     s->cut_direction_set = 0;
     s->ao_samples = 0;
@@ -138,15 +164,22 @@ rtwizard_settings_create(void)
 }
 
 
-void rtwizard_settings_destroy(struct rtwizard_settings *s) {
+static void
+rtwizard_obj_table_clear(struct bu_ptbl *table)
+{
     size_t i;
+    for (i = 0; i < BU_PTBL_LEN(table); i++)
+	bu_free((char *)BU_PTBL_GET(table, i), "rtwizard object name");
+    bu_ptbl_reset(table);
+}
 
-    for (i = 0; i < BU_PTBL_LEN(s->color); i++)
-	bu_free(BU_PTBL_GET(s->color, i), "color object");
-    for (i = 0; i < BU_PTBL_LEN(s->ghost); i++)
-	bu_free(BU_PTBL_GET(s->ghost, i), "ghost object");
-    for (i = 0; i < BU_PTBL_LEN(s->line); i++)
-	bu_free(BU_PTBL_GET(s->line, i), "line object");
+
+void
+rtwizard_settings_destroy(struct rtwizard_settings *s)
+{
+    rtwizard_obj_table_clear(s->color);
+    rtwizard_obj_table_clear(s->ghost);
+    rtwizard_obj_table_clear(s->line);
     bu_ptbl_free(s->color);
     bu_ptbl_free(s->ghost);
     bu_ptbl_free(s->line);
@@ -172,6 +205,16 @@ void rtwizard_settings_destroy(struct rtwizard_settings *s) {
     BU_PUT(s->pid_file, struct bu_vls);
 
 
+    bu_vls_free(s->animation_preset);
+    BU_PUT(s->animation_preset, struct bu_vls);
+    bu_vls_free(s->animation_tracks);
+    BU_PUT(s->animation_tracks, struct bu_vls);
+    bu_vls_free(s->frame_dir);
+    BU_PUT(s->frame_dir, struct bu_vls);
+    bu_vls_free(s->turntable_object);
+    BU_PUT(s->turntable_object, struct bu_vls);
+    bu_vls_free(s->save_view_keyframe);
+    BU_PUT(s->save_view_keyframe, struct bu_vls);
     BU_PUT(s, struct rtwizard_settings);
 }
 
@@ -1198,7 +1241,7 @@ rtwizard_help(struct bu_opt_desc *d)
     bu_vls_sprintf(&str, "\nUsage: rtwizard [options]\n\n");
 
     /* I/O options */
-    bu_vls_sprintf(&filtered, "h help-dev i o s w n cut-steps cut-direction animation-fps");
+    bu_vls_sprintf(&filtered, "h help-dev i o s w n cut-steps cut-direction animation-fps render-spec A animate animation-spec animation-duration animation-frames animation-plays animation-cyclic turntable-object frame-dir resume save-view-keyframe time replace-keyframe");
     settings.accept = bu_vls_addr(&filtered);
     option_help = bu_opt_describe(d, &settings);
     if (option_help) {
@@ -1326,6 +1369,126 @@ rtwizard_rc(Tcl_Interp *interp)
 #endif
 
 
+static int
+rtwizard_argv_has_option(int argc, char **argv, const char *shortopt, const char *longopt)
+{
+    int i;
+    size_t llen = strlen(longopt);
+    for (i = 1; i < argc && !BU_STR_EQUAL(argv[i], "--"); i++) {
+	if ((shortopt && BU_STR_EQUAL(argv[i], shortopt)) || BU_STR_EQUAL(argv[i], longopt) ||
+	    (bu_strncmp(argv[i], longopt, llen) == 0 && argv[i][llen] == '='))
+	    return 1;
+    }
+    return 0;
+}
+
+
+static void
+rtwizard_cli_overlay_prepare(int argc, char **argv, struct rtwizard_settings *s)
+{
+    if (rtwizard_argv_has_option(argc, argv, "-c", "--color-objects")) rtwizard_obj_table_clear(s->color);
+    if (rtwizard_argv_has_option(argc, argv, "-g", "--ghost-objects")) rtwizard_obj_table_clear(s->ghost);
+    if (rtwizard_argv_has_option(argc, argv, "-l", "--line-objects")) rtwizard_obj_table_clear(s->line);
+
+    if (rtwizard_argv_has_option(argc, argv, "-i", "--input-file")) bu_vls_trunc(s->input_file, 0);
+    if (rtwizard_argv_has_option(argc, argv, "-o", "--output-file")) bu_vls_trunc(s->output_file, 0);
+    if (rtwizard_argv_has_option(argc, argv, "-d", "--fbserv-device")) bu_vls_trunc(s->fb_dev, 0);
+    if (rtwizard_argv_has_option(argc, argv, NULL, "--log-file")) bu_vls_trunc(s->log_file, 0);
+    if (rtwizard_argv_has_option(argc, argv, NULL, "--pid-file")) bu_vls_trunc(s->pid_file, 0);
+    if (rtwizard_argv_has_option(argc, argv, NULL, "--frame-dir")) bu_vls_trunc(s->frame_dir, 0);
+
+    if (rtwizard_argv_has_option(argc, argv, NULL, "--cut-steps")) {
+	bu_vls_trunc(s->animation_tracks, 0);
+	bu_vls_strcpy(s->animation_preset, "cut");
+    }
+    if (rtwizard_argv_has_option(argc, argv, NULL, "--turntable-object")) bu_vls_trunc(s->turntable_object, 0);
+    if (rtwizard_argv_has_option(argc, argv, "-s", "--size")) {
+	s->width_set = 0;
+	s->height_set = 0;
+    }
+    if (rtwizard_argv_has_option(argc, argv, "-a", "--azimuth") ||
+	rtwizard_argv_has_option(argc, argv, "-e", "--elevation") ||
+	rtwizard_argv_has_option(argc, argv, "-z", "--zoom") ||
+	rtwizard_argv_has_option(argc, argv, NULL, "--twist") ||
+	rtwizard_argv_has_option(argc, argv, NULL, "--center")) {
+	s->viewsize = DBL_MAX;
+	HSET(s->orientation, DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX);
+	VSETALL(s->eye_pt, DBL_MAX);
+    }
+    if (rtwizard_argv_has_option(argc, argv, NULL, "--viewsize") ||
+	rtwizard_argv_has_option(argc, argv, NULL, "--orientation") ||
+	rtwizard_argv_has_option(argc, argv, NULL, "--eye_pt")) {
+	s->az = s->el = s->tw = s->zoom = DBL_MAX;
+	VSETALL(s->center, DBL_MAX);
+    }
+    if (rtwizard_argv_has_option(argc, argv, NULL, "--gui")) s->no_gui = 0;
+    if (rtwizard_argv_has_option(argc, argv, NULL, "--no-gui")) s->use_gui = 0;
+}
+
+
+static void
+rtwizard_load_specs(int *argc, char **argv, struct rtwizard_settings *s)
+{
+    enum {RENDER_SPEC, ANIMATE, ANIMATION_SPEC};
+    struct {
+	const char *option;
+	const char *alias;
+	const char *value;
+    } options[] = {
+	{"--render-spec", NULL, NULL},
+	{"--animate", "-A", NULL},
+	{"--animation-spec", NULL, NULL}
+    };
+    int remaining = 1;
+
+    for (int i = 1; i < *argc; i++) {
+	const char *arg = argv[i];
+	if (BU_STR_EQUAL(arg, "--")) {
+	    while (i < *argc) argv[remaining++] = argv[i++];
+	    break;
+	}
+
+	size_t index;
+	for (index = 0; index < sizeof(options) / sizeof(options[0]); index++) {
+	    const size_t length = strlen(options[index].option);
+	    const int long_option = !bu_strncmp(arg, options[index].option, length) &&
+		(arg[length] == '\0' || arg[length] == '=');
+	    if (!long_option && !(options[index].alias && BU_STR_EQUAL(arg, options[index].alias)))
+		continue;
+	    if (options[index].value)
+		bu_exit(EXIT_FAILURE, "ERROR: %s may be specified only once.\n", options[index].option);
+	    if (long_option && arg[length] == '=') {
+		options[index].value = arg + length + 1;
+	    } else if (i + 1 < *argc && !BU_STR_EQUAL(argv[i + 1], "--")) {
+		options[index].value = argv[++i];
+	    }
+	    if (!options[index].value || !options[index].value[0])
+		bu_exit(EXIT_FAILURE, "ERROR: %s requires a value.\n", options[index].option);
+	    break;
+	}
+	if (index == sizeof(options) / sizeof(options[0]))
+	    argv[remaining++] = argv[i];
+    }
+    argv[remaining] = NULL;
+    *argc = remaining;
+
+    char *message = NULL;
+    if (options[RENDER_SPEC].value &&
+	rtwizard_spec_apply(options[RENDER_SPEC].value, s, &message) != 0)
+	bu_exit(EXIT_FAILURE, "ERROR: %s\n", message);
+
+    if (options[ANIMATE].value) {
+	bu_vls_strcpy(s->animation_preset, options[ANIMATE].value);
+	bu_vls_trunc(s->animation_tracks, 0);
+    }
+    if (options[ANIMATION_SPEC].value &&
+	rtwizard_animation_spec_apply(options[ANIMATION_SPEC].value, s, &message) != 0)
+	bu_exit(EXIT_FAILURE, "ERROR: %s\n", message);
+
+    rtwizard_cli_overlay_prepare(*argc, argv, s);
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -1338,7 +1501,7 @@ main(int argc, char **argv)
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     struct bu_vls info_msg = BU_VLS_INIT_ZERO;
     struct rtwizard_settings *s = rtwizard_settings_create();
-    struct bu_opt_desc d[41];
+    struct bu_opt_desc d[54];
 
     BU_OPT(d[0],  "h", "help",          "",             NULL,            &need_help,     "Print options help and exit");
     BU_OPT(d[1],  "",  "help-dev",      "",             NULL,            &need_help_dev, "Print development and programmatic options.");
@@ -1390,7 +1553,20 @@ main(int argc, char **argv)
     BU_OPT(d[37], "",  "ao-samples",    "#",            &bu_opt_int,     &s->ao_samples, "Ambient occlusion samples per ray");
     BU_OPT(d[38], "",  "ao-radius",     "<float>",      &bu_opt_fastf_t, &s->ao_radius,  "Ambient occlusion maximum radius");
     BU_OPT(d[39], "",  "process-timeout", "<seconds>",  &bu_opt_int,     &s->process_timeout, "Maximum runtime for each render subprocess (0 disables)");
-    BU_OPT_NULL(d[40]);
+    BU_OPT(d[40], "",  "render-spec", "<file.json>", &bu_opt_vls, NULL, "Load a versioned JSON render specification");
+    BU_OPT(d[41], "A", "animate", "cut|orbit|turntable", &bu_opt_vls, NULL, "Select an animation preset");
+    BU_OPT(d[42], "",  "animation-spec", "<file.json>", &bu_opt_vls, NULL, "Overlay an animation-only JSON specification");
+    BU_OPT(d[43], "",  "animation-duration", "<seconds>", &bu_opt_fastf_t, &s->animation.duration, "Animation duration in seconds");
+    BU_OPT(d[44], "",  "animation-frames", "#", &bu_opt_int, &s->animation.frames, "Exact animation frame count");
+    BU_OPT(d[45], "",  "animation-plays", "#", &bu_opt_int, &s->animation.plays, "Number of APNG plays (default 0, indefinite)");
+    BU_OPT(d[46], "",  "animation-cyclic", "0|1", &bu_opt_int, &s->animation.cyclic, "Exclude the duplicate animation endpoint");
+    BU_OPT(d[47], "",  "turntable-object", "<path>", &bu_opt_vls, s->turntable_object, "Rotate only this object or database path");
+    BU_OPT(d[48], "",  "frame-dir", "<directory>", &bu_opt_vls, s->frame_dir, "Keep numbered PNG frames in this directory");
+    BU_OPT(d[49], "",  "resume", "", NULL, &s->animation.resume, "Reuse matching PNG frames from the frame directory");
+    BU_OPT(d[50], "",  "save-view-keyframe", "<file.json>", &bu_opt_vls, s->save_view_keyframe, "Create or append a camera keyframe");
+    BU_OPT(d[51], "",  "time", "<seconds>", &bu_opt_fastf_t, &s->keyframe_time, "Time of the captured camera keyframe");
+    BU_OPT(d[52], "",  "replace-keyframe", "", NULL, &s->replace_keyframe, "Replace a keyframe at the requested time");
+    BU_OPT_NULL(d[53]);
 
     /* initialize progname for run-time resource finding */
     bu_setprogname(argv[0]);
@@ -1406,6 +1582,9 @@ main(int argc, char **argv)
 	    bu_exit(1, "Failed to change working directory to \"%s\" ", homed);
 	}
     }
+
+    rtwizard_load_specs(&argc, argv, s);
+    type = s->image_type;
 
     /* Skip first arg */
     argv++; argc--;
@@ -1507,14 +1686,18 @@ main(int argc, char **argv)
 	bu_exit(EXIT_FAILURE, "ERROR: --process-timeout may not be negative.\n");
     if (s->cut_direction_set && MAGNITUDE(s->cut_direction) <= SQRT_SMALL_FASTF)
 	bu_exit(EXIT_FAILURE, "ERROR: --cut-direction must be a non-zero vector.\n");
-    if (s->cut_steps && !bu_vls_strlen(s->output_file) && !s->use_gui)
-	bu_exit(EXIT_FAILURE, "ERROR: a file output is required for a cutting-plane animation.\n");
-    if (s->cut_steps && bu_vls_strlen(s->output_file) &&
+    const int animated = rtwizard_is_animated(s);
+    const int capture = bu_vls_strlen(s->save_view_keyframe) != 0;
+    if (s->use_gui && s->no_gui)
+	bu_exit(EXIT_FAILURE, "ERROR: --gui and --no-gui are mutually exclusive.\n");
+    if (animated && !capture && !bu_vls_strlen(s->output_file) && !bu_vls_strlen(s->frame_dir) && !s->use_gui)
+	bu_exit(EXIT_FAILURE, "ERROR: animation requires a file output or frame directory.\n");
+    if (animated && !capture && bu_vls_strlen(s->output_file) &&
 	!rtwizard_anim_path_supported(bu_vls_addr(s->output_file)))
 	bu_exit(EXIT_FAILURE, "ERROR: animation output must use .apng, .png, .avi, or .mjpg.\n");
-    if (!s->cut_steps && !s->use_gui && bu_vls_strlen(s->output_file) &&
+    if (!animated && !s->use_gui && !capture && bu_vls_strlen(s->output_file) &&
 	rtwizard_anim_only_path(bu_vls_addr(s->output_file)))
-	bu_exit(EXIT_FAILURE, "ERROR: .apng, .avi, and .mjpg outputs require --cut-steps.\n");
+	bu_exit(EXIT_FAILURE, "ERROR: .apng, .avi, and .mjpg outputs require an animation.\n");
 
     if (!s->use_gui && !rtwizard_info_sufficient(&info_msg, s, type)) {
 	if ((!s->use_gui) && (!s->no_gui)) {
@@ -1614,11 +1797,11 @@ main(int argc, char **argv)
 #endif
     }
 
-    if (!bu_vls_strlen(s->output_file) && !bu_vls_strlen(s->fb_dev) && s->port < 0) {
+    if (!capture && !animated && !bu_vls_strlen(s->output_file) && !bu_vls_strlen(s->fb_dev) && s->port < 0) {
 	bu_log("Warning - no output file or framebuffer specified - using file rtwizard.pix for output.\n");
 	bu_vls_strcpy(s->output_file, "rtwizard.pix");
     }
-    if (bu_vls_strlen(s->output_file) && bu_file_exists(bu_vls_addr(s->output_file), NULL))
+    if (!capture && !s->animation.resume && bu_vls_strlen(s->output_file) && bu_file_exists(bu_vls_addr(s->output_file), NULL))
 	bu_exit(EXIT_FAILURE, "ERROR: cannot create output file, %s already exists.\n", bu_vls_addr(s->output_file));
 
     {

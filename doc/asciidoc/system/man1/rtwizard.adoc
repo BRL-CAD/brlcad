@@ -101,7 +101,34 @@ preferred.
   the plane advances from the eye into the resolved render view.
 
 *--animation-fps* _#_::
-  Animation playback rate in frames per second (default 10).
+  Animation playback rate in frames per second (default 24). APNG loops by default.
+
+*--animate* _cut|orbit|turntable_::
+  Select a native animation preset. Orbit moves the camera around the model.
+  Turntable keeps the camera fixed and rotates the rendered objects. Use
+  *--turntable-object* to rotate a single object while the rest of the scene
+  stays fixed. Presets default to five seconds at 24 frames per second.
+
+*--animation-frames* _#_::
+  Set an exact frame count. *--animation-duration* sets the duration in seconds
+  when the frame count is calculated from the playback rate.
+
+*--animation-plays* _#_::
+  Number of APNG plays. Zero means continuous playback.
+
+*--render-spec* _file.json_::
+  Load a versioned RtWizard render specification with scene, view, output and
+  animation settings. Explicit command-line options override the file. When
+  invoked through GED, a full render specification supplies its own scene,
+  view and output. Use *--animation-spec* for an animation-only overlay on a
+  render configured on the command line or from the active GED view.
+
+*--frame-dir* _directory_::
+  Save numbered PNG animation frames. Use *--resume* to reuse matching frames.
+
+*--save-view-keyframe* _file.json_::
+  Save the resolved camera as a keyframe at *--time* _seconds_. Use
+  *--replace-keyframe* to update an existing keyframe.
 
 *-t* _A|B|C|D|E|F_, *--type* _A|B|C|D|E|F_::
   Picture type to produce (see the table above).  If a type is requested

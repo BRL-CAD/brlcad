@@ -16,7 +16,25 @@
 #include "bu/vls.h"
 
 #define RTWIZARD_SIZE_DEFAULT 512
+#define RTWIZARD_ANIMATION_FPS_DEFAULT 24
+#define RTWIZARD_ANIMATION_DURATION_DEFAULT 5.0
 #define RTWIZARD_MAGIC 0x72747769
+
+struct rtwizard_animation_options {
+    double duration;
+    int frames;
+    int plays;
+    int cyclic;
+    int resume;
+    double orbit_angle;
+    vect_t orbit_axis;
+    vect_t orbit_center;
+    double orbit_elevation;
+    double orbit_radius;
+    double turntable_angle;
+    vect_t turntable_axis;
+    vect_t turntable_center;
+};
 
 struct rtwizard_settings {
     uint32_t magic;
@@ -58,6 +76,15 @@ struct rtwizard_settings {
     int animation_fps;
     vect_t cut_direction;
     int cut_direction_set;
+    struct rtwizard_animation_options animation;
+    struct bu_vls *animation_preset;
+    struct bu_vls *animation_tracks;
+    struct bu_vls *frame_dir;
+    struct bu_vls *turntable_object;
+    struct bu_vls *save_view_keyframe;
+    double keyframe_time;
+    int replace_keyframe;
+    char image_type;
 
     int ao_samples;
     double ao_radius;
@@ -71,5 +98,9 @@ struct rtwizard_settings {
     double zoom;
     vect_t center;
 };
+
+__BEGIN_DECLS
+int rtwizard_is_animated(const struct rtwizard_settings *s);
+__END_DECLS
 
 #endif /* RTWIZARD_SETTINGS_H */
