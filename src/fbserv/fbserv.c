@@ -78,6 +78,7 @@
 
 #include "bu/app.h"
 #include "bu/color.h"
+#include "bu/datetime.h"
 #include "bu/exit.h"
 #include "bu/getopt.h"
 #include "bu/interrupt.h"
