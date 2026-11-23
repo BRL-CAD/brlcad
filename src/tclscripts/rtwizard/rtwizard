@@ -22,6 +22,7 @@
 
 namespace eval RtWizard {
     variable wizard_state
+    variable default_render_size 512
 
     foreach {name value} {
 	pid_filename {}
@@ -37,8 +38,6 @@ namespace eval RtWizard {
 	ne_color {0 0 0}
 	occmode 1
 	ghost_intensity 6
-	width 512
-	scanlines 512
 	animation_fps 24
 	animation_preset cut
 	turntable_object {}
@@ -75,7 +74,7 @@ namespace eval RtWizard {
 	if {[info exists ::benchmark_mode]} {
 	    dict set render_settings _benchmark_mode $::benchmark_mode
 	}
-	if {!$preview && $animate} {
+	if {$animate} {
 	    dict set render_settings _animation_preset $wizard_state(animation_preset)
 	    dict set render_settings _animation_frames $wizard_state(cut_steps)
 	    dict set render_settings _animation_fps $wizard_state(animation_fps)
@@ -84,12 +83,19 @@ namespace eval RtWizard {
 		[string length $wizard_state(cut_direction)]} {
 		dict set render_settings _cut_direction $wizard_state(cut_direction)
 	    }
+	    if {$preview} {
+		dict set render_settings _w [$::fbp getWidth]
+		dict set render_settings _n [$::fbp getHeight]
+		::RtWizard::AnimationPreview::open $type $render_settings
+		return
+	    }
 	}
 
 	return [rtwizard_render $type $render_settings]
     }
 }
 
+source [file join [file dirname [info script]] AnimationPreview.tcl]
 package require RaytraceWizard
 
 # Local Variables:

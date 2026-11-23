@@ -321,7 +321,7 @@ namespace eval RtWizard {
 
 	$itk_component(menubar) add command .render.preview \
 	    -label "Preview" \
-	    -helpstr "Generate a quarter-size preview image" \
+	    -helpstr "Preview the current still image or animation" \
 	    -command "[itcl::code $this preview]"
 
 	$itk_component(menubar) add command .render.render \

@@ -122,6 +122,7 @@ namespace eval RtWizard {
 
 	    method onToScreen {}
 	    method onToFile {}
+	    method renderDimension {axis}
 
 	    method updateWidth {}
 	    method incrWidth {}
@@ -238,9 +239,6 @@ namespace eval RtWizard {
 	    keep -textbackground
 	}
 
-	$itk_component(width) clear
-	$itk_component(width) insert 0 -1
-
 	itk_component add height {
 	    iwidgets::spinint $szCs.height \
 		-labeltext "Height:" \
@@ -252,8 +250,14 @@ namespace eval RtWizard {
 	    keep -textbackground
 	}
 
-	$itk_component(height) clear
-	$itk_component(height) insert 0 -1
+	foreach {axis setting} {width width height scanlines} {
+	    set value -1
+	    if {[info exists ::RtWizard::wizard_state($setting)]} {
+		set value $::RtWizard::wizard_state($setting)
+	    }
+	    $itk_component($axis) clear
+	    $itk_component($axis) insert 0 $value
+	}
 
 	#
 	# Build the contents of the right-hand-size
@@ -449,12 +453,11 @@ namespace eval RtWizard {
     # when this page is selected.
     #
     ::itcl::body FbPage::onSelect {} {
-	if { [$itk_component(width) get] <= 0 || [$itk_component(height) get] <= 0 } {
-	    if { [winfo width $::mgedObj] > 3 && [winfo height $::mgedObj] > 3 } {
-		$itk_component(width) clear
-		$itk_component(width) insert 0 [winfo width $::mgedObj]
-		$itk_component(height) clear
-		$itk_component(height) insert 0 [winfo height $::mgedObj]
+	foreach axis {width height} {
+	    if {[$itk_component($axis) get] <= 0} {
+		set value [renderDimension $axis]
+		$itk_component($axis) clear
+		$itk_component($axis) insert 0 $value
 	    }
 	}
     }
@@ -490,22 +493,14 @@ namespace eval RtWizard {
     # getWidth - returns the current width
     #
     ::itcl::body FbPage::getWidth {} {
-	if { [$itk_component(width) get] <= 0 || [$itk_component(height) get] <= 0 } {
-	    return [winfo width $::mgedObj]
-	} else {
-	    return [$itk_component(width) get]
-	}
+	return [renderDimension width]
     }
 
     #
     # getHeight - returns the current height
     #
     ::itcl::body FbPage::getHeight {} {
-	if { [$itk_component(width) get] <= 0 || [$itk_component(height) get] <= 0 } {
-	    return [winfo height $::mgedObj]
-	} else {
-	    return [$itk_component(height) get]
-	}
+	return [renderDimension height]
     }
 
     #
@@ -513,17 +508,15 @@ namespace eval RtWizard {
     #
     ::itcl::body FbPage::getFrameBuffer { width height {preview false} } {
 	set mode [$itk_component(radBox) get]
-	set screenOnly [expr {$preview && $::RtWizard::wizard_state(make_animation)}]
-	if {!$preview && $::RtWizard::wizard_state(make_animation)} {
-	    if {$mode ne "toFile" || ($::RtWizard::wizard_state(output_filename) eq "" &&
-		$::RtWizard::wizard_state(frame_dir) eq "")} {
+	if {$::RtWizard::wizard_state(make_animation)} {
+	    if {!$preview && ($mode ne "toFile" || ($::RtWizard::wizard_state(output_filename) eq "" &&
+		$::RtWizard::wizard_state(frame_dir) eq ""))} {
 		error "Choose an animation output file on the framebuffer page."
 	    }
 	    return ""
 	}
 	if {$mode eq "toFile" &&
-	    [string length $::RtWizard::wizard_state(output_filename)] > 0 &&
-	    !$screenOnly} {
+	    [string length $::RtWizard::wizard_state(output_filename)] > 0} {
 	    return ""
 	}
 
@@ -543,6 +536,17 @@ namespace eval RtWizard {
     #--------------------#
     #  Private Methods   #
     #--------------------#
+    ::itcl::body FbPage::renderDimension {axis} {
+	set size [$itk_component($axis) get]
+	if {$size > 0} {return $size}
+	# Before the view has been laid out, its geometry may be only 1x1.
+	if {[info exists ::mgedObj]} {
+	    set size [winfo $axis $::mgedObj]
+	    if {$size > 1} {return $size}
+	}
+	return $::RtWizard::default_render_size
+    }
+
     #
     # onOK - called when the OK button is called
     #

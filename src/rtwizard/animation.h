@@ -24,6 +24,7 @@ __END_DECLS
 
 AnimationPlan rtwizard_track_plan(const rtwizard_settings *settings, const AnimationFrame &base, double local2base);
 std::string rtwizard_keyframe_document(const rtwizard_settings *settings, const AnimationFrame &view, double local2base);
+std::string rtwizard_preview_document(const rtwizard_settings *settings, char picture_type, const std::string &frame_dir);
 std::string operation_command(const DatabaseOperation &operation);
 #endif
 

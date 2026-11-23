@@ -13,6 +13,7 @@
 #include "common.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
@@ -55,6 +56,7 @@ struct CompiledTrack {
     std::string type;
     std::map<std::string, std::vector<JKey>, std::less<>> keys;
     std::map<std::string, std::string, std::less<>> interpolation;
+    std::vector<std::array<fastf_t, 3>> headings;
 };
 
 static bool
@@ -148,7 +150,7 @@ validate_track(const json &track, const std::string &type)
 	check_keys(track, {"type", "name", "interpolation", "keyframes"}, "cut_plane track");
 	properties = {"point", "normal"};
     } else if (type == "transform") {
-	check_keys(track, {"type", "name", "path", "operation", "pivot", "interpolation", "keyframes"}, "transform track");
+	check_keys(track, {"type", "name", "path", "operation", "pivot", "interpolation", "keyframes", "orient_along_path"}, "transform track");
 	properties = {"translation", "rotation", "scale", "matrix"};
     } else if (type == "material") {
 	check_keys(track, {"type", "name", "path", "operation", "interpolation", "keyframes"}, "material track");
@@ -218,6 +220,13 @@ compile_track(const json &track, double duration)
     for (const std::string &property : properties) {
 	compiled.keys[property] = property_keys(track, property.c_str(), duration);
 	compiled.interpolation[property] = interpolation_for(track, property.c_str());
+    }
+    if (track.contains("orient_along_path")) {
+	if (!track["orient_along_path"].is_boolean())
+	    throw std::runtime_error("transform orient_along_path must be a boolean");
+	if (track["orient_along_path"].get<bool>() && (compiled.keys.at("translation").empty() ||
+	    !compiled.keys.at("rotation").empty() || !compiled.keys.at("matrix").empty()))
+	    throw std::runtime_error("orient_along_path requires translation and cannot be combined with rotation or matrix keys");
     }
     return compiled;
 }
@@ -304,6 +313,70 @@ evaluate_keys(const std::vector<JKey> &keys, double t, const std::string &interp
 	return json_smooth(p0, keys[i].value, keys[i+1].value, p3, f);
     }
     return json_lerp(keys[i].value, keys[i+1].value, f);
+}
+
+static double
+sample_time(int frame, int intervals, double duration)
+{
+    return duration * static_cast<double>(frame) / intervals;
+}
+
+static std::vector<double>
+translation_at(const CompiledTrack &track, double time)
+{
+    const auto &keys = track_keys(track, "translation");
+    if (keys.empty()) return {0, 0, 0};
+    return number_array(evaluate_keys(keys, time, track_interpolation(track, "translation")), 3, "translation");
+}
+
+static void
+sample_path_headings(CompiledTrack &track, int frames, int intervals, double duration)
+{
+    std::array<fastf_t, 3> heading = {1, 0, 0};
+    auto position = translation_at(track, 0.0);
+    bool moving = false;
+    track.headings.reserve(static_cast<size_t>(frames));
+    for (int i = 0; i < frames; ++i) {
+	// A cyclic plan samples the duration endpoint for direction only.
+	if (i < intervals) {
+	    auto next = translation_at(track, sample_time(i + 1, intervals, duration));
+	    vect_t step;
+	    VSUB2(step, next.data(), position.data());
+	    const double distance = std::hypot(V3ARGS(step));
+	    if (!std::isfinite(distance))
+		throw std::runtime_error("translation samples are too far apart to determine a heading");
+	    if (distance > SMALL_FASTF) {
+		VSCALE(heading.data(), step, 1.0 / distance);
+		if (!moving) {
+		    std::fill(track.headings.begin(), track.headings.end(), heading);
+		    moving = true;
+		}
+	    }
+	    position = std::move(next);
+	}
+	track.headings.push_back(heading);
+    }
+}
+
+static void
+path_rotation(mat_t matrix, const std::array<fastf_t, 3> &heading)
+{
+    vect_t forward, left, up = {0, 0, 1};
+    VMOVE(forward, heading.data());
+    VCROSS(left, up, forward);
+    // At a pole, use Y as the reference so the basis is still defined.
+    if (MAGNITUDE(left) <= std::sqrt(std::numeric_limits<fastf_t>::epsilon())) {
+	VSET(up, 0, 1, 0);
+	VCROSS(left, up, forward);
+    }
+    VUNITIZE(left);
+    VCROSS(up, forward, left);
+    // Model X, Y, and Z map to the columns of the active rotation.
+    for (int row = 0; row < 3; ++row) {
+	matrix[4 * row] = forward[row];
+	matrix[4 * row + 1] = left[row];
+	matrix[4 * row + 2] = up[row];
+    }
 }
 
 static void
@@ -409,7 +482,7 @@ material_string(const json &value)
 }
 
 static DatabaseOperation
-matrix_operation(const CompiledTrack &track, double t, double local2base)
+matrix_operation(const CompiledTrack &track, int frame, double t, double local2base)
 {
     const json &definition = track.definition;
     std::string path = command_path(definition, "transform");
@@ -435,19 +508,20 @@ matrix_operation(const CompiledTrack &track, double t, double local2base)
 	for (int i = 0; i < 16; ++i) mat[i] = m[(size_t)i];
 	mat[3] *= local2base; mat[7] *= local2base; mat[11] *= local2base;
     } else {
-	std::vector<double> tr = {0, 0, 0};
-	std::vector<double> q = {0, 0, 0, 1};
+	const auto tr = translation_at(track, t);
 	double scale = 1.0;
-	if (!tk.empty()) tr = number_array(evaluate_keys(tk, t, track_interpolation(track, "translation")), 3, "translation");
-	if (!rk.empty()) q = evaluate_quat(rk, t, track_interpolation(track, "rotation"));
+	if (!track.headings.empty()) {
+	    path_rotation(mat, track.headings[static_cast<size_t>(frame)]);
+	} else if (!rk.empty()) {
+	    const auto q = evaluate_quat(rk, t, track_interpolation(track, "rotation"));
+	    quat_quat2mat(mat, q.data());
+	}
 	if (!sk.empty()) {
 	    json sv = evaluate_keys(sk, t, track_interpolation(track, "scale"));
 	    if (!finite_number(sv) || std::fabs(sv.get<double>()) < 1.0e-12)
 		throw std::runtime_error("transform scale must be finite and nonzero");
 	    scale = sv.get<double>();
 	}
-	quat_t qq = {q[0], q[1], q[2], q[3]};
-	quat_quat2mat(mat, qq);
 	mat[15] = 1.0 / scale;
 	if (definition.contains("pivot")) {
 	    std::vector<double> pv = number_array(definition["pivot"], 3, "transform pivot");
@@ -694,9 +768,20 @@ apply_render_spec(const char *path, struct rtwizard_settings *settings)
 
     if (root.contains("output")) {
 	const json &output = root["output"];
-	check_keys(output, {"file", "frame_dir", "framebuffer", "framebuffer_port", "resume"}, "output");
+	check_keys(output, {"file", "frame_dir", "frame_range", "framebuffer", "framebuffer_port", "resume"}, "output");
 	if (output.contains("file")) set_file(settings->output_file, output["file"], base, "output.file");
 	if (output.contains("frame_dir")) set_file(settings->frame_dir, output["frame_dir"], base, "output.frame_dir");
+	if (output.contains("frame_range")) {
+	    const json &range = output["frame_range"];
+	    if (!range.is_array() || range.size() != 2)
+		throw std::runtime_error("output.frame_range must contain the first and last frame numbers");
+	    const int first = integer_value(range[0], "output.frame_range first frame");
+	    const int last = integer_value(range[1], "output.frame_range last frame");
+	    if (first <= 0 || last < first)
+		throw std::runtime_error("output.frame_range must satisfy 1 <= first <= last");
+	    settings->animation.first_frame = first;
+	    settings->animation.last_frame = last;
+	}
 	if (output.contains("framebuffer")) set_string(settings->fb_dev, output["framebuffer"], "output.framebuffer");
 	if (output.contains("framebuffer_port")) settings->port = integer_value(output["framebuffer_port"], "output.framebuffer_port");
 	if (output.contains("resume")) settings->animation.resume = boolean_value(output, "resume", "output");
@@ -785,6 +870,70 @@ operation_command(const DatabaseOperation &operation)
     return command.str();
 }
 
+std::string
+rtwizard_preview_document(const rtwizard_settings *s, char picture_type, const std::string &frame_dir)
+{
+    json root = {
+	{"schema", "brlcad.rtwizard.render"},
+	{"version", 1},
+	{"database", fs::absolute(bu_vls_addr(s->input_file)).string()},
+	{"image", {{"width", s->width}, {"height", s->height}, {"type", std::string(1, picture_type)}}},
+	{"view", {{"view_size", s->viewsize}, {"orientation", {V4ARGS(s->orientation)}},
+		{"eye", {V3ARGS(s->eye_pt)}}, {"perspective", s->perspective}}},
+	{"output", {{"frame_dir", frame_dir}}},
+	{"runtime", {{"no_gui", true}, {"benchmark", s->benchmark != 0},
+		{"cpu_count", s->cpus}, {"process_timeout", s->process_timeout}}}
+    };
+    for (const auto &entry : {std::make_pair("color", s->color), std::make_pair("ghost", s->ghost),
+	    std::make_pair("line", s->line)}) {
+	json objects = json::array();
+	for (size_t i = 0; i < BU_PTBL_LEN(entry.second); ++i)
+	    objects.push_back(reinterpret_cast<const char *>(BU_PTBL_GET(entry.second, i)));
+	root["objects"][entry.first] = std::move(objects);
+    }
+    auto rgb = [](const struct bu_color *color) {
+	unsigned char c[3];
+	bu_color_to_rgb_chars(color, c);
+	return json::array({c[0], c[1], c[2]});
+    };
+    root["style"] = {
+	{"background", rgb(s->bkg_color)}, {"line_color", rgb(s->line_color)},
+	{"non_line_color", rgb(s->non_line_color)}, {"ghost_intensity", s->ghost_intensity},
+	{"occlusion", s->occlusion}, {"ao_samples", s->ao_samples}, {"ao_radius", s->ao_radius}
+    };
+
+    const auto &a = s->animation;
+    json animation;
+    if (bu_vls_strlen(s->animation_tracks)) {
+	animation = json::parse(bu_vls_addr(s->animation_tracks));
+    } else {
+	const char *preset = s->cut_steps ? "cut" : bu_vls_addr(s->animation_preset);
+	animation["preset"] = preset;
+	if (BU_STR_EQUAL(preset, "cut") && s->cut_direction_set)
+	    animation["options"]["cut_direction"] = {V3ARGS(s->cut_direction)};
+	if (BU_STR_EQUAL(preset, "orbit")) {
+	    auto &options = animation["options"];
+	    options = {{"orbit_angle", a.orbit_angle}, {"orbit_axis", {V3ARGS(a.orbit_axis)}}};
+	    if (a.orbit_center[0] < DBL_MAX) options["orbit_center"] = {V3ARGS(a.orbit_center)};
+	    if (a.orbit_elevation < DBL_MAX) options["orbit_elevation"] = a.orbit_elevation;
+	    if (a.orbit_radius < DBL_MAX) options["orbit_radius"] = a.orbit_radius;
+	}
+	if (BU_STR_EQUAL(preset, "turntable")) {
+	    auto &options = animation["options"];
+	    options = {{"turntable_angle", a.turntable_angle}, {"turntable_axis", {V3ARGS(a.turntable_axis)}},
+		{"turntable_object", bu_vls_addr(s->turntable_object)}};
+	    if (a.turntable_center[0] < DBL_MAX) options["turntable_center"] = {V3ARGS(a.turntable_center)};
+	}
+    }
+    animation["timing"] = {
+	{"duration", a.duration}, {"fps", s->animation_fps}, {"plays", a.plays},
+	{"frames", s->cut_steps ? s->cut_steps : a.frames}
+    };
+    if (a.cyclic >= 0) animation["timing"]["cyclic"] = a.cyclic != 0;
+    root["animation"] = std::move(animation);
+    return root.dump();
+}
+
 AnimationPlan
 rtwizard_track_plan(const rtwizard_settings *settings, const AnimationFrame &base, double local2base)
 {
@@ -803,12 +952,16 @@ rtwizard_track_plan(const rtwizard_settings *settings, const AnimationFrame &bas
     const bool cyclic = settings->animation.cyclic > 0;
     const int plays = settings->animation.plays;
     const int frame_count = animation_frame_count(duration, fps, settings->animation.frames, cyclic);
+    const int intervals = cyclic ? frame_count : frame_count - 1;
     if (!root.contains("tracks") || !root["tracks"].is_array() || root["tracks"].empty())
 	throw std::runtime_error("animation tracks must be a nonempty array");
     std::vector<CompiledTrack> tracks;
     tracks.reserve(root["tracks"].size());
-    for (const json &track : root["tracks"])
+    for (const json &track : root["tracks"]) {
 	tracks.push_back(compile_track(track, duration));
+	if (track.value("orient_along_path", false))
+	    sample_path_headings(tracks.back(), frame_count, intervals, duration);
+    }
 
     AnimationPlan plan;
     plan.duration = duration;
@@ -817,8 +970,7 @@ rtwizard_track_plan(const rtwizard_settings *settings, const AnimationFrame &bas
     plan.plays = plays;
     plan.frames.reserve((size_t)frame_count);
     for (int fi = 0; fi < frame_count; ++fi) {
-	double denom = cyclic ? (double)frame_count : (double)(frame_count - 1);
-	double time = duration * (double)fi / denom;
+	double time = sample_time(fi, intervals, duration);
 	std::vector<double> eye = base.eye;
 	std::vector<double> orient = base.orientation;
 	std::vector<double> look;
@@ -877,7 +1029,7 @@ rtwizard_track_plan(const rtwizard_settings *settings, const AnimationFrame &bas
 	       << n[0]/nm << ',' << n[1]/nm << ',' << n[2]/nm;
 	    cut = cs.str();
 	} else if (type == "transform") {
-	    operations.push_back(matrix_operation(track, time, local2base));
+	    operations.push_back(matrix_operation(track, fi, time, local2base));
 	} else if (type == "material" || type == "color" || type == "temperature") {
 	    operations.push_back(value_operation(track, time));
 	} else {

@@ -72,7 +72,8 @@ proc ::rtwizard::xmin::toplevels {} {
 proc ::rtwizard::xmin::dismiss_dialog {} {
     variable dialog_seen
     foreach widget [toplevels] {
-	if {$widget eq "." || ![winfo ismapped $widget]} {
+	# The startup feedback window can still be mapped when an alert opens.
+	if {![winfo ismapped $widget] || [winfo class $widget] ne "Dialog"} {
 	    continue
 	}
 	set dialog_seen [wm title $widget]
@@ -184,6 +185,46 @@ proc ::rtwizard::xmin::check_process_timeout {} {
     }
 }
 
+proc ::rtwizard::xmin::wait_for_preview {condition message} {
+    variable ready_retry_limit
+    variable retry_delay_ms
+    for {set i 0} {$i < $ready_retry_limit} {incr i} {
+	update
+	if {[uplevel 1 [list expr $condition]]} {return}
+	after $retry_delay_ms
+    }
+    error $message
+}
+
+proc ::rtwizard::xmin::exercise_animation_preview {title dimension output} {
+    set win .rtwizard_animation_preview
+    upvar #0 ::RtWizard::AnimationPreview::state preview
+    ::gui::test::invoke_menu_entry . {Render Preview}
+    ::gui::test::require {[winfo exists $win]} "missing animation player for '$title'"
+    wait_for_preview {!$preview(running)} "animation preview did not finish for '$title'"
+    ::gui::test::require {
+	$preview(status) eq "Preview ready (3 frames)" &&
+	[image width $preview(photo)] == $dimension &&
+	[image height $preview(photo)] == $dimension
+    } "unexpected '$title' animation preview: $preview(status)"
+
+    $win.controls.play invoke
+    $win.frame set 1
+    update idletasks
+    set first [$preview(photo) data]
+    $win.frame set 3
+    update idletasks
+    ::gui::test::require {$preview(frame) == 3 && $first ne [$preview(photo) data]} \
+	"scrubbing did not display a different frame for '$title'"
+    $win.controls.play invoke
+    wait_for_preview {$preview(frame) != 3} "playback did not advance or loop for '$title'"
+    set directory $preview(directory)
+    $win.controls.close invoke
+    ::gui::test::require {![winfo exists $win] && ![file exists $directory]} \
+	"closing the '$title' animation preview did not clean up"
+    ::gui::test::require {![file exists $output]} "preview published the final animation for '$title'"
+}
+
 proc ::rtwizard::xmin::run {} {
     variable ready_retries
     variable ready_retry_limit
@@ -282,6 +323,7 @@ proc ::rtwizard::xmin::run {} {
     set_framebuffer_entry turntableObject turntable_object arb8_quadrants.c
     set rgb_bytes_per_pixel 3
     set expected_size [expr {$render_dimension * $render_dimension * $rgb_bytes_per_pixel}]
+    set preview_dimension [expr {$render_dimension / 2}]
     ::gui::test::require {
 	[info exists ::RtWizard::wizard_state(verbose)]
     } "RaytraceWizard did not initialize its optional verbose state"
@@ -315,6 +357,7 @@ proc ::rtwizard::xmin::run {} {
 		"animation menu did not select $motion"
 	    set render_file [file join $::env(GUI_TEST_DIR) rtwizard-$basename-$motion.png]
 	    set_framebuffer_entry fileName output_filename $render_file
+	    exercise_animation_preview "$title / $motion" $preview_dimension $render_file
 	    ::gui::test::invoke_menu_entry . {Render Full-Size}
 	    set prefix [file join $::env(GUI_TEST_DIR) rtwizard-$basename-$motion-frame]
 	    exec [file join [bu_dir bin] icv] anim extract $render_file $prefix
@@ -332,7 +375,6 @@ proc ::rtwizard::xmin::run {} {
 	$animation invoke
     }
 
-    set preview_dimension [expr {$render_dimension / 2}]
     set expected_preview_size [expr {
 	$preview_dimension * $preview_dimension * $rgb_bytes_per_pixel
     }]
@@ -344,11 +386,22 @@ proc ::rtwizard::xmin::run {} {
     } "rtwizard preview did not create the expected half-size image"
 
     $animation invoke
-    set animation_preview [file join $::env(GUI_TEST_DIR) preview-animation.png]
-    set_framebuffer_entry fileName output_filename $animation_preview
+    set_framebuffer_entry fileName output_filename ""
+    set_framebuffer_entry cutSteps cut_steps 120
+    set win .rtwizard_animation_preview
+    upvar #0 ::RtWizard::AnimationPreview::state preview
     ::gui::test::invoke_menu_entry . {Render Preview}
-    ::gui::test::require {![file exists $animation_preview]} \
-	"rtwizard preview published an animation"
+    wait_for_preview {$preview(ready) > 0} "no preview frame arrived before cancellation"
+    ::gui::test::require {$preview(running)} "preview completed before cancellation could be exercised"
+    $win.controls.cancel invoke
+    wait_for_preview {!$preview(running)} "cancelled animation preview did not stop"
+    ::gui::test::require {
+	$preview(status) eq "Preview cancelled" && $preview(ready) < 120 &&
+	[image width $preview(photo)] == $preview_dimension
+    } "cancelling the preview did not stop rendering and retain completed frames"
+    set directory $preview(directory)
+    $win.controls.close invoke
+    ::gui::test::require {![file exists $directory]} "cancelled preview left temporary frames"
     $animation invoke
 
     set ::RtWizard::wizard_state(output_filename) ""

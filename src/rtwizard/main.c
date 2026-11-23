@@ -22,6 +22,8 @@
  */
 
 #include "common.h"
+#include <errno.h>
+#include <limits.h>
 #include <string.h>
 
 #ifdef HAVE_WINDOWS_H
@@ -545,6 +547,29 @@ opt_cut_direction(struct bu_vls *msg, size_t argc, const char **argv, void *sett
 }
 
 
+static int
+opt_frame_range(struct bu_vls *msg, size_t argc, const char **argv, void *settings)
+{
+    struct rtwizard_animation_options *animation = (struct rtwizard_animation_options *)settings;
+    if (argc && argv[0]) {
+	const char *start = argv[0];
+	char *separator, *end;
+	errno = 0;
+	long first = strtol(start, &separator, 10);
+	if (errno == 0 && separator != start && *separator == ':' && first > 0 && first <= INT_MAX) {
+	    long last = strtol(separator + 1, &end, 10);
+	    if (errno == 0 && end != separator + 1 && !*end && last >= first && last <= INT_MAX) {
+		animation->first_frame = (int)first;
+		animation->last_frame = (int)last;
+		return 1;
+	    }
+	}
+    }
+    if (msg) bu_vls_printf(msg, "frame range must be FIRST:LAST with 1 <= FIRST <= LAST");
+    return -1;
+}
+
+
 int
 opt_quat(struct bu_vls *msg, size_t argc, const char **argv, void *inq)
 {
@@ -915,9 +940,16 @@ rtwizard_dict_objects(Tcl_Interp *interp, Tcl_Obj *dict, const char *key, struct
 }
 
 
+struct rtwizard_gui {
+    const struct rtwizard_settings *initial;
+    struct rtwizard_preview *preview;
+};
+
+
 static int
 rtwizard_render_cmd(ClientData client_data, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
 {
+    struct rtwizard_gui *gui = (struct rtwizard_gui *)client_data;
     struct rtwizard_settings *s = NULL;
     Tcl_Obj *obj = NULL;
     const char *type_string;
@@ -925,12 +957,15 @@ rtwizard_render_cmd(ClientData client_data, Tcl_Interp *interp, int objc, Tcl_Ob
     char *render_error = NULL;
     int width;
     int height;
+    int preview = 0;
     int status = TCL_ERROR;
 
-    if (objc != 3) {
-	Tcl_WrongNumArgs(interp, 1, objv, "type render_settings");
+    if (objc != 3 && objc != 4) {
+	Tcl_WrongNumArgs(interp, 1, objv, "type render_settings ?preview?");
 	return TCL_ERROR;
     }
+    if (objc == 4 && Tcl_GetBooleanFromObj(interp, objv[3], &preview) != TCL_OK)
+	return TCL_ERROR;
     type_string = Tcl_GetString(objv[1]);
     if (strlen(type_string) != 1 || type_string[0] < 'A' || type_string[0] > 'F') {
 	Tcl_SetObjResult(interp, Tcl_NewStringObj("render type must be A, B, C, D, E, or F", -1));
@@ -968,7 +1003,7 @@ rtwizard_render_cmd(ClientData client_data, Tcl_Interp *interp, int objc, Tcl_Ob
     if (rtwizard_dict_vls(interp, objv[2], "_animation_preset", 0, s->animation_preset) != TCL_OK)
 	goto cleanup;
     if (bu_vls_strlen(s->animation_preset)) {
-	const struct rtwizard_settings *initial = (const struct rtwizard_settings *)client_data;
+	const struct rtwizard_settings *initial = gui->initial;
 	s->animation = initial->animation;
 	bu_vls_strcpy(s->frame_dir, bu_vls_addr(initial->frame_dir));
 	if (BU_STR_EQUAL(bu_vls_addr(s->animation_preset), "tracks")) {
@@ -1016,16 +1051,68 @@ rtwizard_render_cmd(ClientData client_data, Tcl_Interp *interp, int objc, Tcl_Ob
 	goto cleanup;
     s->benchmark = obj && Tcl_GetCharLength(obj) > 0;
 
-    if (rtwizard_render(s, type, NULL, NULL, &render_error) != BRLCAD_OK) {
-	Tcl_SetObjResult(interp, Tcl_NewStringObj(render_error ? render_error : "render failed", -1));
+    if (preview) {
+	if (gui->preview) {
+	    Tcl_SetObjResult(interp, Tcl_NewStringObj("Close the current animation preview first.", -1));
+	    goto cleanup;
+	}
+	gui->preview = rtwizard_preview_start(s, type, &render_error);
+	if (gui->preview) {
+	    Tcl_SetObjResult(interp, Tcl_NewStringObj(rtwizard_preview_directory(gui->preview), -1));
+	    status = TCL_OK;
+	    goto cleanup;
+	}
+    } else if (rtwizard_render(s, type, NULL, NULL, &render_error) == BRLCAD_OK) {
+	status = TCL_OK;
 	goto cleanup;
     }
-    status = TCL_OK;
+    Tcl_SetObjResult(interp, Tcl_NewStringObj(render_error ? render_error : "render failed", -1));
 
 cleanup:
     bu_free(render_error, "rtwizard render error");
     rtwizard_settings_destroy(s);
     return status;
+}
+
+
+static int
+rtwizard_preview_cmd(ClientData client_data, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+{
+    static const char *const actions[] = {"poll", "cancel", "release", NULL};
+    enum {PREVIEW_POLL, PREVIEW_CANCEL, PREVIEW_RELEASE};
+    struct rtwizard_gui *gui = (struct rtwizard_gui *)client_data;
+    char *error = NULL;
+    int action;
+    int result = BRLCAD_OK;
+    if (objc != 2) {
+	Tcl_WrongNumArgs(interp, 1, objv, "poll|cancel|release");
+	return TCL_ERROR;
+    }
+    if (Tcl_GetIndexFromObj(interp, objv[1], actions, "action", TCL_EXACT, &action) != TCL_OK)
+	return TCL_ERROR;
+    if (!gui->preview) {
+	Tcl_SetObjResult(interp, Tcl_NewStringObj("No animation preview is open.", -1));
+	return TCL_ERROR;
+    }
+    if (action == PREVIEW_POLL) {
+	int running, ready, total;
+	result = rtwizard_preview_poll(gui->preview, &running, &ready, &total, &error);
+	if (result == BRLCAD_OK) {
+	    Tcl_Obj *values[] = {Tcl_NewBooleanObj(running), Tcl_NewIntObj(ready), Tcl_NewIntObj(total)};
+	    Tcl_SetObjResult(interp, Tcl_NewListObj(3, values));
+	}
+    } else if (action == PREVIEW_CANCEL) {
+	result = rtwizard_preview_cancel(gui->preview, &error);
+    } else {
+	rtwizard_preview_destroy(gui->preview);
+	gui->preview = NULL;
+    }
+    if (result != BRLCAD_OK) {
+	Tcl_SetObjResult(interp, Tcl_NewStringObj(error ? error : "animation preview failed", -1));
+	bu_free(error, "animation preview error");
+	return TCL_ERROR;
+    }
+    return TCL_OK;
 }
 
 
@@ -1062,8 +1149,11 @@ rtwizard_fbserv_start_cmd(ClientData UNUSED(client_data), Tcl_Interp *interp, in
 
 
 static void
-rtwizard_fbserv_exit(ClientData UNUSED(client_data))
+rtwizard_gui_exit(ClientData client_data)
 {
+    struct rtwizard_gui *gui = (struct rtwizard_gui *)client_data;
+    rtwizard_preview_destroy(gui->preview);
+    gui->preview = NULL;
     rtwizard_fbserv_stop();
 }
 
@@ -1267,7 +1357,7 @@ rtwizard_help(struct bu_opt_desc *d)
     bu_vls_sprintf(&str, "\nUsage: rtwizard [options]\n\n");
 
     /* I/O options */
-    bu_vls_sprintf(&filtered, "h help-dev i o s w n cut-steps cut-direction animation-fps render-spec A animate animation-spec animation-duration animation-frames animation-plays animation-cyclic turntable-object frame-dir resume save-view-keyframe time replace-keyframe");
+    bu_vls_sprintf(&filtered, "h help-dev i o s w n cut-steps cut-direction animation-fps render-spec A animate animation-spec animation-duration animation-frames animation-plays animation-cyclic turntable-object frame-dir frame-range resume save-view-keyframe time replace-keyframe");
     settings.accept = bu_vls_addr(&filtered);
     option_help = bu_opt_describe(d, &settings);
     if (option_help) {
@@ -1527,7 +1617,7 @@ main(int argc, char **argv)
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     struct bu_vls info_msg = BU_VLS_INIT_ZERO;
     struct rtwizard_settings *s = rtwizard_settings_create();
-    struct bu_opt_desc d[54];
+    struct bu_opt_desc d[56];
 
     BU_OPT(d[0],  "h", "help",          "",             NULL,            &need_help,     "Print options help and exit");
     BU_OPT(d[1],  "",  "help-dev",      "",             NULL,            &need_help_dev, "Print development and programmatic options.");
@@ -1592,7 +1682,9 @@ main(int argc, char **argv)
     BU_OPT(d[50], "",  "save-view-keyframe", "<file.json>", &bu_opt_vls, s->save_view_keyframe, "Create or append a camera keyframe");
     BU_OPT(d[51], "",  "time", "<seconds>", &bu_opt_fastf_t, &s->keyframe_time, "Time of the captured camera keyframe");
     BU_OPT(d[52], "",  "replace-keyframe", "", NULL, &s->replace_keyframe, "Replace a keyframe at the requested time");
-    BU_OPT_NULL(d[53]);
+    BU_OPT(d[53], "",  "frame-range", "FIRST:LAST", &opt_frame_range, &s->animation, "Render only these numbered PNG frames (inclusive, starting at 1)");
+    BU_OPT(d[54], "",  "preview-worker", "", NULL, &s->preview_worker, "Render private animation preview frames");
+    BU_OPT_NULL(d[55]);
 
     /* initialize progname for run-time resource finding */
     bu_setprogname(argv[0]);
@@ -1714,11 +1806,16 @@ main(int argc, char **argv)
 	bu_exit(EXIT_FAILURE, "ERROR: --cut-direction must be a non-zero vector.\n");
     const int animated = rtwizard_is_animated(s);
     const int capture = bu_vls_strlen(s->save_view_keyframe) != 0;
+    const int ranged = s->animation.first_frame != 0;
+    if (s->preview_worker && (!s->no_gui || s->use_gui || capture))
+	bu_exit(EXIT_FAILURE, "ERROR: invalid animation preview request.\n");
     if (s->use_gui && s->no_gui)
 	bu_exit(EXIT_FAILURE, "ERROR: --gui and --no-gui are mutually exclusive.\n");
+    if (ranged && (!animated || capture || !bu_vls_strlen(s->frame_dir)))
+	bu_exit(EXIT_FAILURE, "ERROR: --frame-range requires an animation and a frame directory.\n");
     if (animated && !capture && !bu_vls_strlen(s->output_file) && !bu_vls_strlen(s->frame_dir) && !s->use_gui)
 	bu_exit(EXIT_FAILURE, "ERROR: animation requires a file output or frame directory.\n");
-    if (animated && !capture && bu_vls_strlen(s->output_file) &&
+    if (animated && !capture && !ranged && bu_vls_strlen(s->output_file) &&
 	!rtwizard_anim_path_supported(bu_vls_addr(s->output_file)))
 	bu_exit(EXIT_FAILURE, "ERROR: animation output must use .apng, .png, .avi, or .mjpg.\n");
     if (!animated && !s->use_gui && !capture && bu_vls_strlen(s->output_file) &&
@@ -1745,6 +1842,7 @@ main(int argc, char **argv)
 	const char *result = NULL;
 	Tcl_DString temp;
 	Tcl_Interp *interp = Tcl_CreateInterp();
+	struct rtwizard_gui gui = {s, NULL};
 
 
 	/* The subsequent Tcl scripts will take of Tk, so at this
@@ -1755,10 +1853,12 @@ main(int argc, char **argv)
 	}
 	bu_vls_free(&tlog);
 	(void)Tcl_CreateObjCommand(interp, "rtwizard_render",
-		rtwizard_render_cmd, s, NULL);
+		rtwizard_render_cmd, &gui, NULL);
+	(void)Tcl_CreateObjCommand(interp, "rtwizard_preview",
+		rtwizard_preview_cmd, &gui, NULL);
 	(void)Tcl_CreateObjCommand(interp, "rtwizard_fbserv_start",
 		rtwizard_fbserv_start_cmd, NULL, NULL);
-	Tcl_CreateExitHandler(rtwizard_fbserv_exit, NULL);
+	Tcl_CreateExitHandler(rtwizard_gui_exit, &gui);
 
 	/* Normalize .g and output image file paths, since they're to be used
 	 * in Tcl scripts */
@@ -1814,8 +1914,8 @@ main(int argc, char **argv)
 		bu_log("%s\n", error_info);
 	}
 
-	Tcl_DeleteExitHandler(rtwizard_fbserv_exit, NULL);
-	rtwizard_fbserv_stop();
+	Tcl_DeleteExitHandler(rtwizard_gui_exit, &gui);
+	rtwizard_gui_exit(&gui);
 	/*Tcl_DeleteInterp(interp);*/
 	return status;
 #else
@@ -1827,7 +1927,7 @@ main(int argc, char **argv)
 	bu_log("Warning - no output file or framebuffer specified - using file rtwizard.pix for output.\n");
 	bu_vls_strcpy(s->output_file, "rtwizard.pix");
     }
-    if (!capture && !s->animation.resume && bu_vls_strlen(s->output_file) && bu_file_exists(bu_vls_addr(s->output_file), NULL))
+    if (!capture && !ranged && !s->animation.resume && bu_vls_strlen(s->output_file) && bu_file_exists(bu_vls_addr(s->output_file), NULL))
 	bu_exit(EXIT_FAILURE, "ERROR: cannot create output file, %s already exists.\n", bu_vls_addr(s->output_file));
 
     {

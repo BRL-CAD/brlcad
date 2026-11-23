@@ -158,6 +158,7 @@ Arrays used for points, vectors, quaternions, and colors contain only numbers.
 |`image` |`type` |Picture type `A` through `F`.
 |`output` |`file` |Still or animation filename.
 |`output` |`frame_dir` |Directory for numbered PNG frames.
+|`output` |`frame_range` |Inclusive, one-based array `[first, last]` for rendering a subset into `frame_dir`.
 |`output` |`resume` |Reuse valid, correctly sized frames already in `frame_dir`.
 |`output` |`framebuffer`, `framebuffer_port` |Framebuffer device and optional port.
 |`view` |`azimuth`, `elevation`, `twist`, `zoom` |High-level view controls.
@@ -285,7 +286,7 @@ spherical interpolation for both `linear` and `smooth`.
 
 |`camera` |`eye`; `look_at` or `orientation`; `up`; `view_size`; `perspective` |Each supplied property overlays the initial camera, so a track may animate only the properties it needs. `eye` and `look_at` are three-number points. `orientation` is `[x,y,z,w]` or an axis/degrees object. An optional `up` vector controls roll and requires `look_at`. Do not mix `look_at` and `orientation` in one camera track.
 |`cut_plane` |`point`, `normal` |The normal is normalized. Both properties are required.
-|`transform` |`path`, `operation`, optional `pivot`; keyframe `translation`, `rotation`, `scale`, or `matrix` |Rotation is quaternion or axis/degrees. Scale is uniform and nonzero. A matrix is 16 row-major numbers and is sampled with step interpolation. Do not mix matrix and decomposed values.
+|`transform` |`path`, `operation`, optional `pivot` and `orient_along_path`; keyframe `translation`, `rotation`, `scale`, or `matrix` |Rotation is quaternion or axis/degrees. Scale is uniform and nonzero. A matrix is 16 row-major numbers and is sampled with step interpolation. Do not mix matrix and decomposed values.
 |`color` |`path`; keyframe `color` or `value` |Three channels in the inclusive range 0 through 255.
 |`temperature` |`path`; keyframe `temperature` or `value` |Numeric region temperature.
 |`material` |`path`, `operation`; keyframe `material` or `value` |String or structured material, sampled with step interpolation. Operation is `replace` (default) or `append`.
@@ -302,6 +303,20 @@ BRL-CAD `anim ... matrix` operations.  Animation paths may not contain
 whitespace or command separators.  Material strings may not contain command
 separators.  These restrictions keep the format declarative.
 
+On a transform track, `"orient_along_path": true` turns the transform's
+positive X axis along its translation. It keeps positive Z as close to up as
+possible in the transform's coordinate system and uses Y as the up reference
+for vertical travel. The chosen matrix operation still determines how the
+rotation and translation combine with existing geometry transforms. Use
+translation keys with optional scale and pivot. Rotation and matrix keys
+are incompatible with this option.
+
+The direction points from each sample toward the next sample of the full
+animation. Stationary samples keep the last direction and initial stationary
+samples use the first direction of travel. A fully stationary track retains
+identity orientation. A cyclic plan uses the duration endpoint to compute the
+last heading.
+
 == Frames, restart, and keyframe capture
 
 If `output.frame_dir` is set, each completed frame is atomically stored as
@@ -309,7 +324,14 @@ If `output.frame_dir` is set, each completed frame is atomically stored as
 true.  Resume accepts only readable images whose provenance marker matches the
 database and complete render plan, and rerenders stale or invalid ones.  The
 final animation is also written when
-`output.file` is present.
+`output.file` is present and no frame range is selected.
+
+Set `output.frame_range` to an inclusive range such as `[25, 48]`, or pass
+`--frame-range 25:48` to override it for one invocation. A range requires
+`frame_dir` and preserves the full plan's numbering and sample times. Render
+separate ranges into the same directory, then run the full plan with resume
+enabled to reuse those PNGs and assemble the animation file. Omit the range
+when rendering the full plan.
 
 An interactively selected or command-line view can be captured into a render
 specification without rendering:

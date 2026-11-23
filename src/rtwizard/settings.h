@@ -26,6 +26,8 @@ struct rtwizard_animation_options {
     int plays;
     int cyclic;
     int resume;
+    int first_frame;
+    int last_frame;
     double orbit_angle;
     vect_t orbit_axis;
     vect_t orbit_center;
@@ -80,6 +82,7 @@ struct rtwizard_settings {
     struct bu_vls *animation_preset;
     struct bu_vls *animation_tracks;
     struct bu_vls *frame_dir;
+    int preview_worker;
     struct bu_vls *turntable_object;
     struct bu_vls *save_view_keyframe;
     double keyframe_time;

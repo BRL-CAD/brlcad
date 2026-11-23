@@ -73,6 +73,10 @@ constexpr auto PROCESS_POLL_INTERVAL = std::chrono::milliseconds(10);
 constexpr auto PROCESS_TERMINATE_TIMEOUT = std::chrono::milliseconds(1000);
 constexpr auto PROCESS_OUTPUT_IDLE_TIMEOUT = std::chrono::milliseconds(50);
 constexpr auto FBSERV_GRACEFUL_TIMEOUT = std::chrono::milliseconds(500);
+constexpr auto PREVIEW_CANCEL_TIMEOUT = std::chrono::seconds(3);
+constexpr size_t PREVIEW_LONG_EDGE = 320;
+constexpr char PREVIEW_CANCEL_FILE[] = "preview.cancel";
+constexpr char PREVIEW_PLAN_FILE[] = "preview.plan";
 constexpr size_t PROCESS_DRAIN_CHUNK_LIMIT = 64;
 constexpr size_t FBSERV_TOKEN_SIZE = 65;
 constexpr size_t FBSERV_TLS_PIN_SIZE = 65;
@@ -357,9 +361,9 @@ set_error(char **errmsg, const std::string &message)
 class JobContext {
 public:
     JobContext(const rtwizard_render_callbacks *cb, void *data, const char *log_path,
-        const char *pid_path, bool console_log) : callbacks(cb), callback_data(data),
+        const char *pid_path, bool console_log, const fs::path &scratch_parent) : callbacks(cb), callback_data(data),
         console(console_log), pid_file(pid_path ? pid_path : ""),
-        directory(fs::temp_directory_path())
+        directory(scratch_parent)
     {
         if (log_path && log_path[0]) {
             log_file.open(log_path, std::ios::trunc);
@@ -1248,14 +1252,35 @@ render_animation(JobContext &job, const rtwizard_settings *s, const ViewState &v
     const fs::path directory(bu_vls_addr(s->frame_dir));
     if (output.empty() && directory.empty())
 	throw std::runtime_error("animation requires a file output or frame directory");
-    const size_t width = s->width_set ? s->width : (s->size_set ? s->size : s->width);
-    const size_t height = s->height_set ? s->height : (s->size_set ? s->size : s->height);
+    size_t width = s->width_set ? s->width : (s->size_set ? s->size : s->width);
+    size_t height = s->height_set ? s->height : (s->size_set ? s->size : s->height);
     if (width > UINT32_MAX || height > UINT32_MAX)
 	throw std::runtime_error("animation dimensions are too large");
 
     const AnimationPlan plan = plan_animation(s, view, dbip, picture_type);
+    rtwizard_settings preview_settings;
+    if (s->preview_worker) {
+	// Plan at the final size so size-dependent parameters, such as cut
+	// margins, are identical to those used in the actual animation.
+	const double scale = std::min(0.5, static_cast<double>(PREVIEW_LONG_EDGE) / std::max(width, height));
+	width = std::max<size_t>(1, std::lround(width * scale));
+	height = std::max<size_t>(1, std::lround(height * scale));
+	preview_settings = *s;
+	preview_settings.width = width;
+	preview_settings.height = height;
+	preview_settings.width_set = preview_settings.height_set = 1;
+	s = &preview_settings;
+	const StagedOutput metadata(directory / PREVIEW_PLAN_FILE);
+	write_text(metadata.path(), std::to_string(plan.frames.size()) + '\n');
+	metadata.publish(false);
+    }
+    const bool ranged = s->animation.first_frame != 0;
+    const size_t first = ranged ? static_cast<size_t>(s->animation.first_frame) : 1;
+    const size_t last = ranged ? static_cast<size_t>(s->animation.last_frame) : plan.frames.size();
+    if (last > plan.frames.size())
+	throw std::runtime_error("frame range exceeds the animation's " + std::to_string(plan.frames.size()) + " frames");
     std::unique_ptr<icv_anim_t, decltype(&icv_anim_destroy)> animation(nullptr, &icv_anim_destroy);
-    if (!output.empty()) {
+    if (!ranged && !output.empty()) {
 	const icv_anim_format_t format = animation_format(bu_vls_addr(s->output_file));
 	if (format == ICV_ANIM_UNKNOWN)
 	    throw std::runtime_error("animation output must use .png, .apng, .avi, or .mjpg");
@@ -1268,9 +1293,10 @@ render_animation(JobContext &job, const rtwizard_settings *s, const ViewState &v
     std::string signature;
     if (!directory.empty()) {
 	fs::create_directories(directory);
-	signature = frame_signature(s, plan, picture_type, width, height);
+	if (!s->preview_worker)
+	    signature = frame_signature(s, plan, picture_type, width, height);
 	if (!s->animation.resume) {
-	    for (size_t i = 1; i <= plan.frames.size(); ++i) {
+	    for (size_t i = first; i <= last; ++i) {
 		if (fs::exists(frame_path(directory, i)))
 		    throw std::runtime_error("frame already exists: '" + frame_path(directory, i).string() + "' (use --resume)");
 	    }
@@ -1279,7 +1305,7 @@ render_animation(JobContext &job, const rtwizard_settings *s, const ViewState &v
 
     const int total = static_cast<int>(plan.frames.size());
     Image first_frame;
-    for (size_t i = 0; i < plan.frames.size(); ++i) {
+    for (size_t i = first - 1; i < last; ++i) {
 	if (job.cancelled()) throw std::runtime_error("render cancelled");
 	const AnimationFrame &frame = plan.frames[i];
 	const fs::path path = directory.empty() ? fs::path() : frame_path(directory, i + 1);
@@ -1307,16 +1333,20 @@ render_animation(JobContext &job, const rtwizard_settings *s, const ViewState &v
 		const StagedOutput staged_image(path);
 		if (icv_write(image.get(), staged_image.path().string().c_str(), BU_MIME_IMAGE_PNG) != 0)
 		    throw std::runtime_error("unable to write frame '" + path.string() + "'");
-		const StagedOutput marker(path.string() + ".rtwizard");
-		write_text(marker.path(), file_digest(staged_image.path()) + '\n' + provenance);
-		staged_image.publish(s->animation.resume != 0);
-		marker.publish(true);
+		if (s->preview_worker) {
+		    staged_image.publish(false);
+		} else {
+		    const StagedOutput marker(path.string() + ".rtwizard");
+		    write_text(marker.path(), file_digest(staged_image.path()) + '\n' + provenance);
+		    staged_image.publish(s->animation.resume != 0);
+		    marker.publish(true);
+		}
 	    }
 	}
 	if (animation && icv_anim_add_frame(animation.get(), image.get()) != 0)
 	    throw std::runtime_error("unable to add output animation frame");
-	if (s->use_gui && i == 0) first_frame = std::move(image);
-	job.progress(static_cast<int>(i + 1), total);
+	if (s->use_gui && !ranged && i == 0) first_frame = std::move(image);
+	job.progress(static_cast<int>(i + 2 - first), static_cast<int>(last + 1 - first));
 	if (callbacks && callbacks->frame && !path.empty())
 	    callbacks->frame(callback_data, path.string().c_str(), static_cast<int>(i + 1), total);
     }
@@ -1330,7 +1360,128 @@ render_animation(JobContext &job, const rtwizard_settings *s, const ViewState &v
     if (first_frame) (void)write_framebuffer(job, s, first_frame.get());
 }
 
+static int
+preview_cancelled(void *data)
+{
+    const auto &path = *static_cast<const std::string *>(data);
+    return bu_file_exists(path.c_str(), nullptr);
+}
+
 } // namespace
+
+struct rtwizard_preview {
+    RenderDirectory storage{fs::absolute(fs::temp_directory_path())};
+    std::string directory{storage.path().string()};
+    bu_process *worker = nullptr;
+    std::string diagnostics;
+    std::chrono::steady_clock::time_point cancel_deadline;
+    bool cancelled = false;
+    int ready = 0;
+    int total = 0;
+    int result = 0;
+
+    void cancel()
+    {
+	if (cancelled || !worker) return;
+	write_text(storage.path() / PREVIEW_CANCEL_FILE, "");
+	cancelled = true;
+	cancel_deadline = std::chrono::steady_clock::now() + PREVIEW_CANCEL_TIMEOUT;
+    }
+
+    ~rtwizard_preview()
+    {
+	if (!worker) return;
+	try {
+	    cancel();
+	} catch (const std::exception &error) {
+	    bu_log("rtwizard preview: %s\n", error.what());
+	}
+	(void)stop_process(&worker, PREVIEW_CANCEL_TIMEOUT);
+    }
+};
+
+extern "C" rtwizard_preview *
+rtwizard_preview_start(const rtwizard_settings *s, char picture_type, char **errmsg)
+{
+    if (errmsg) *errmsg = nullptr;
+    try {
+	if (!rtwizard_is_animated(s))
+	    throw std::runtime_error("preview requires an animation");
+	auto preview = std::make_unique<rtwizard_preview>();
+	const fs::path spec = preview->storage.path() / "preview.json";
+	write_text(spec, rtwizard_preview_document(s, picture_type, preview->directory));
+	const std::string program = executable("rtwizard");
+	const std::string filename = spec.string();
+	const char *argv[] = {program.c_str(), "--preview-worker", "--render-spec", filename.c_str(), nullptr};
+	bu_process_create(&preview->worker, argv, BU_PROCESS_OUT_EQ_ERR | BU_PROCESS_HIDE_WINDOW);
+	if (!preview->worker)
+	    throw std::runtime_error("unable to start animation preview");
+	bu_process_file_close(preview->worker, BU_PROCESS_STDIN);
+	return preview.release();
+    } catch (const std::exception &error) {
+	set_error(errmsg, error.what());
+	return nullptr;
+    }
+}
+
+extern "C" int
+rtwizard_preview_poll(rtwizard_preview *preview, int *running, int *ready, int *total, char **errmsg)
+{
+    if (errmsg) *errmsg = nullptr;
+    try {
+	if (preview->worker) {
+	    const int state = wait_for_process(preview->worker, std::chrono::milliseconds(0), &preview->diagnostics);
+	    if (state == 1) {
+		preview->result = bu_process_wait_n(&preview->worker, 0);
+	    } else if (state < 0 || (preview->cancelled && std::chrono::steady_clock::now() >= preview->cancel_deadline)) {
+		(void)stop_process(&preview->worker, std::chrono::milliseconds(0));
+		preview->result = BRLCAD_ERROR;
+	    }
+	}
+	if (!preview->total) {
+	    std::ifstream metadata(preview->storage.path() / PREVIEW_PLAN_FILE);
+	    if (metadata) metadata >> preview->total;
+	}
+	while (preview->ready < preview->total &&
+	    fs::exists(frame_path(preview->storage.path(), static_cast<size_t>(preview->ready) + 1)))
+	    ++preview->ready;
+	*running = preview->worker != nullptr;
+	*ready = preview->ready;
+	*total = preview->total;
+	if (!*running && !preview->cancelled &&
+	    (preview->result != 0 || !*total || *ready != *total))
+	    throw std::runtime_error(preview->diagnostics.empty() ? "animation preview failed" : preview->diagnostics);
+	return BRLCAD_OK;
+    } catch (const std::exception &error) {
+	set_error(errmsg, error.what());
+	return BRLCAD_ERROR;
+    }
+}
+
+extern "C" const char *
+rtwizard_preview_directory(const rtwizard_preview *preview)
+{
+    return preview->directory.c_str();
+}
+
+extern "C" int
+rtwizard_preview_cancel(rtwizard_preview *preview, char **errmsg)
+{
+    if (errmsg) *errmsg = nullptr;
+    try {
+	preview->cancel();
+	return BRLCAD_OK;
+    } catch (const std::exception &error) {
+	set_error(errmsg, error.what());
+	return BRLCAD_ERROR;
+    }
+}
+
+extern "C" void
+rtwizard_preview_destroy(rtwizard_preview *preview)
+{
+    delete preview;
+}
 
 extern "C" int
 rtwizard_fbserv_start(char *target, size_t target_size, int width, int height,
@@ -1434,9 +1585,27 @@ rtwizard_render(const rtwizard_settings *settings, char picture_type, const rtwi
 	    throw std::runtime_error("invalid animation timing");
 	if (settings->animation.resume && (!rtwizard_is_animated(settings) || !bu_vls_strlen(settings->frame_dir)))
 	    throw std::runtime_error("--resume requires an animation and a frame directory");
+	if (settings->animation.first_frame && (!rtwizard_is_animated(settings) ||
+	    !bu_vls_strlen(settings->frame_dir) || bu_vls_strlen(settings->save_view_keyframe)))
+	    throw std::runtime_error("--frame-range requires an animation and a frame directory");
 	if (bu_vls_strlen(settings->frame_dir) && !rtwizard_is_animated(settings))
 	    throw std::runtime_error("--frame-dir requires an animation");
-        JobContext job(callbacks, callback_data, bu_vls_addr(settings->log_file), bu_vls_addr(settings->pid_file), settings->verbose != 0);
+	const rtwizard_render_callbacks preview_callbacks = {nullptr, nullptr, nullptr, preview_cancelled};
+	std::string cancel_path;
+	if (settings->preview_worker) {
+	    if (!rtwizard_is_animated(settings) || !bu_vls_strlen(settings->frame_dir) ||
+		bu_vls_strlen(settings->output_file) || settings->animation.resume ||
+		settings->animation.first_frame || settings->use_gui)
+		throw std::runtime_error("invalid animation preview request");
+	    cancel_path = (fs::path(bu_vls_addr(settings->frame_dir)) / PREVIEW_CANCEL_FILE).string();
+	    callbacks = &preview_callbacks;
+	    callback_data = &cancel_path;
+	}
+	const fs::path scratch = settings->preview_worker ?
+	    fs::path(bu_vls_addr(settings->frame_dir)) : fs::temp_directory_path();
+        JobContext job(callbacks, callback_data, bu_vls_addr(settings->log_file),
+	    bu_vls_addr(settings->pid_file), settings->verbose != 0, scratch);
+	if (job.cancelled()) throw std::runtime_error("render cancelled");
         Database database(db_open(bu_vls_addr(settings->input_file), DB_OPEN_READONLY));
         if (!database || db_dirbuild(database.get()) < 0) throw std::runtime_error("unable to open geometry database '" + std::string(bu_vls_addr(settings->input_file)) + "'");
         ViewState view = resolve_view(settings, picture_type);

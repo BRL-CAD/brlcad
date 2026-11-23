@@ -28,6 +28,25 @@ function(different first second)
   endif()
 endfunction()
 
+function(same first second)
+  file(SHA256 "${WORK}/${first}" a)
+  file(SHA256 "${WORK}/${second}" b)
+  if(NOT a STREQUAL b)
+    message(FATAL_ERROR "Expected matching images: ${first} and ${second}")
+  endif()
+endfunction()
+
+function(reject expected)
+  execute_process(
+    COMMAND "${EXEC}" --no-gui ${ARGN}
+    WORKING_DIRECTORY "${WORK}"
+    RESULT_VARIABLE result OUTPUT_QUIET ERROR_VARIABLE err
+  )
+  if(result EQUAL 0 OR NOT err MATCHES "${expected}")
+    message(FATAL_ERROR "Expected ${expected} (${ARGN}):\n${err}")
+  endif()
+endfunction()
+
 set(COMMON -i "${DB}" -s 128 -c groundplane.r,arb8_quadrants.c -g arb8_axes.c -l arb8_quadrants.c -t F)
 render(${COMMON} -o control.png)
 
@@ -83,6 +102,81 @@ render(${COMMON} --verbose 1 --animate turntable --turntable-object arb8_quadran
 if(NOT render_log MATCHES "Reusing frame .*frame-000004.png" OR NOT render_log MATCHES "Rendering frame 2/4")
   message(FATAL_ERROR "Expected resume to replace the damaged frame:\n${render_log}")
 endif()
+
+set(TURNTABLE ${COMMON} --animate turntable --turntable-object arb8_quadrants.c --animation-frames 4)
+file(WRITE "${WORK}/range.json" [=[
+{
+  "schema": "brlcad.rtwizard.render", "version": 1,
+  "output": {"file": "ranged.png", "frame_dir": "ranged", "frame_range": [2, 3]}
+}
+]=])
+render(${TURNTABLE} --render-spec range.json --frame-range 4:4)
+file(GLOB frames "${WORK}/ranged/frame-*.png")
+if(NOT frames STREQUAL "${WORK}/ranged/frame-000004.png" OR EXISTS "${WORK}/ranged.png")
+  message(FATAL_ERROR "A CLI range override must write only its original numbered frame")
+endif()
+render(${TURNTABLE} --render-spec range.json)
+render(${TURNTABLE} --frame-dir ranged --frame-range 1:1)
+foreach(frame IN ITEMS 000001 000002 000003 000004)
+  same("turntable/frame-${frame}.png" "ranged/frame-${frame}.png")
+endforeach()
+render(${TURNTABLE} --frame-dir ranged --resume --verbose 1 -o ranged.png)
+if(NOT render_log MATCHES "Reusing frame .*frame-000004.png" OR render_log MATCHES "Rendering frame")
+  message(FATAL_ERROR "Full animation did not reuse all ranged PNGs:\n${render_log}")
+endif()
+same(turntable.png ranged.png)
+reject("range exceeds" ${TURNTABLE} --frame-dir unused --frame-range 3:5)
+reject("requires an animation and a frame directory" ${TURNTABLE} --frame-range 1:1)
+
+set(path_spec [=[
+{
+  "schema": "brlcad.rtwizard.render", "version": 1,
+  "database": "__DATABASE__",
+  "objects": {"color": ["groundplane.r", "arb8_quadrants.c"]},
+  "image": {"size": 128, "type": "A"},
+  "output": {"frame_dir": "path"},
+  "animation": {
+    "timing": {"duration": 5, "frames": 6},
+    "tracks": [{
+      "type": "transform", "path": "/arb8_quadrants.c",
+      "operation": "left_multiply", "orient_along_path": true,
+      "keyframes": [
+        {"time": 0, "translation": [0, 0, 0]},
+        {"time": 1, "translation": [0, 0, 0]},
+        {"time": 2, "translation": [0, 120, 0]},
+        {"time": 3, "translation": [0, 120, 0]},
+        {"time": 4, "translation": [140, 120, 0]},
+        {"time": 5, "translation": [140, 120, 0]}
+      ]
+    }]
+  }
+}
+]=])
+string(REPLACE "__DATABASE__" "${DB}" path_spec "${path_spec}")
+file(WRITE "${WORK}/path.json" "${path_spec}")
+render(--render-spec path.json)
+same("path/frame-000001.png" "path/frame-000002.png")
+same("path/frame-000005.png" "path/frame-000006.png")
+different("path/frame-000003.png" "path/frame-000004.png")
+
+# Compare the initial heading, stopped heading, and heading after the
+# turn to explicit +Y, +Y, and +X transforms on the same sample times.
+string(JSON matrix_spec REMOVE "${path_spec}" animation tracks 0 orient_along_path)
+string(JSON matrix_spec SET "${matrix_spec}" animation tracks 0 keyframes [=[
+[
+  {"time": 0, "matrix": [0, -1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]},
+  {"time": 1.5, "matrix": [0, -1, 0, 0, 1, 0, 0, 120, 0, 0, 1, 0, 0, 0, 0, 1]},
+  {"time": 2.5, "matrix": [1, 0, 0, 0, 0, 1, 0, 120, 0, 0, 1, 0, 0, 0, 0, 1]}
+]
+]=])
+file(WRITE "${WORK}/path-control.json" "${matrix_spec}")
+render(--render-spec path-control.json --frame-dir path-control --frame-range 1:4)
+foreach(frame IN ITEMS 000001 000003 000004)
+  same("path/frame-${frame}.png" "path-control/frame-${frame}.png")
+endforeach()
+string(JSON matrix_spec SET "${matrix_spec}" animation tracks 0 orient_along_path true)
+file(WRITE "${WORK}/invalid-path.json" "${matrix_spec}")
+reject("orient_along_path requires translation" --render-spec invalid-path.json --frame-dir unused)
 
 file(WRITE "${WORK}/tracks.json" "
 {

@@ -1,6 +1,6 @@
 add_subdirectory(lib)
 
-set(rtwizard_TCLSCRIPTS RaytraceWizard.tcl rtwizard)
+set(rtwizard_TCLSCRIPTS AnimationPreview.tcl RaytraceWizard.tcl rtwizard)
 if(BRLCAD_ENABLE_TCL)
   brlcad_adddata(rtwizard_TCLSCRIPTS tclscripts/rtwizard)
   pkgindex_build(tclscripts/rtwizard)

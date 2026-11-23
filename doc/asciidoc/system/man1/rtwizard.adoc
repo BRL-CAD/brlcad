@@ -39,6 +39,11 @@ image, *rtwizard* falls back to the GUI unless *--no-gui* is given.
 The command-line renderer does not require Tcl.  The graphical interface is
 available only in builds configured with Tcl/Tk support.
 
+With animation enabled in the GUI, *Render > Preview* opens a low-resolution
+player. It renders in the background and makes frames available for playback
+and scrubbing as they finish. Cancel stops rendering and keeps completed
+preview frames available until the player closes.
+
 The kind of image produced is governed by the *--type* option, or inferred
 from which object lists are supplied.  The six picture types are:
 
@@ -125,6 +130,11 @@ preferred.
 
 *--frame-dir* _directory_::
   Save numbered PNG animation frames. Use *--resume* to reuse matching frames.
+
+*--frame-range* _FIRST:LAST_::
+  Render an inclusive, one-based range into *--frame-dir*, using the numbering
+  and sample times of the full animation. The animation file is skipped for
+  this invocation. Run the full plan with *--resume* to reuse the saved frames.
 
 *--save-view-keyframe* _file.json_::
   Save the resolved camera as a keyframe at *--time* _seconds_. Use
