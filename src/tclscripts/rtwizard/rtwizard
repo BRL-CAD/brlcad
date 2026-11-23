@@ -39,7 +39,11 @@ namespace eval RtWizard {
 	ghost_intensity 6
 	width 512
 	scanlines 512
-	animation_fps 10
+	animation_fps 24
+	animation_preset cut
+	turntable_object {}
+	output_filename {}
+	frame_dir {}
 	ao_samples 0
 	ao_radius 0
 	verbose 0
@@ -49,15 +53,18 @@ namespace eval RtWizard {
 	}
     }
 
-    proc render {type render_settings} {
+    proc render {type render_settings {preview 0}} {
 	variable wizard_state
 
-	if {[info exists wizard_state(output_filename)]} {
+	set animate [expr {[info exists wizard_state(make_animation)] && $wizard_state(make_animation)}]
+	if {!($preview && $animate) && [dict exists $render_settings _port] &&
+	    [dict get $render_settings _port] eq ""} {
 	    dict set render_settings _output_file $wizard_state(output_filename)
 	}
 	foreach {state setting} {
 	    log_file _log_file
 	    pid_filename _pid_filename
+	    cpu_count _cpu_count
 	    process_timeout _process_timeout
 	} {
 	    if {[info exists wizard_state($state)] &&
@@ -68,9 +75,11 @@ namespace eval RtWizard {
 	if {[info exists ::benchmark_mode]} {
 	    dict set render_settings _benchmark_mode $::benchmark_mode
 	}
-	if {[info exists wizard_state(make_animation)] && $wizard_state(make_animation)} {
-	    dict set render_settings _cut_steps $wizard_state(cut_steps)
+	if {!$preview && $animate} {
+	    dict set render_settings _animation_preset $wizard_state(animation_preset)
+	    dict set render_settings _animation_frames $wizard_state(cut_steps)
 	    dict set render_settings _animation_fps $wizard_state(animation_fps)
+	    dict set render_settings _turntable_object $wizard_state(turntable_object)
 	    if {[info exists wizard_state(cut_direction)] &&
 		[string length $wizard_state(cut_direction)]} {
 		dict set render_settings _cut_direction $wizard_state(cut_direction)

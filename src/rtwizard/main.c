@@ -916,7 +916,7 @@ rtwizard_dict_objects(Tcl_Interp *interp, Tcl_Obj *dict, const char *key, struct
 
 
 static int
-rtwizard_render_cmd(ClientData UNUSED(client_data), Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+rtwizard_render_cmd(ClientData client_data, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
 {
     struct rtwizard_settings *s = NULL;
     Tcl_Obj *obj = NULL;
@@ -955,6 +955,7 @@ rtwizard_render_cmd(ClientData UNUSED(client_data), Tcl_Interp *interp, int objc
 	rtwizard_dict_double(interp, objv[2], "_ao_radius", 0, &s->ao_radius) != TCL_OK ||
 	rtwizard_dict_int(interp, objv[2], "_cut_steps", 0, &s->cut_steps) != TCL_OK ||
 	rtwizard_dict_int(interp, objv[2], "_animation_fps", 0, &s->animation_fps) != TCL_OK ||
+	rtwizard_dict_int(interp, objv[2], "_cpu_count", 0, &s->cpus) != TCL_OK ||
 	rtwizard_dict_int(interp, objv[2], "_process_timeout", 0, &s->process_timeout) != TCL_OK ||
 	rtwizard_dict_color(interp, objv[2], "_bgcolor", s->bkg_color) != TCL_OK ||
 	rtwizard_dict_color(interp, objv[2], "_ecolor", s->line_color) != TCL_OK ||
@@ -963,6 +964,25 @@ rtwizard_render_cmd(ClientData UNUSED(client_data), Tcl_Interp *interp, int objc
 	rtwizard_dict_objects(interp, objv[2], "_ghost_objects", s->ghost) != TCL_OK ||
 	rtwizard_dict_objects(interp, objv[2], "_edge_objects", s->line) != TCL_OK)
 	goto cleanup;
+
+    if (rtwizard_dict_vls(interp, objv[2], "_animation_preset", 0, s->animation_preset) != TCL_OK)
+	goto cleanup;
+    if (bu_vls_strlen(s->animation_preset)) {
+	const struct rtwizard_settings *initial = (const struct rtwizard_settings *)client_data;
+	s->animation = initial->animation;
+	bu_vls_strcpy(s->frame_dir, bu_vls_addr(initial->frame_dir));
+	if (BU_STR_EQUAL(bu_vls_addr(s->animation_preset), "tracks")) {
+	    if (!bu_vls_strlen(initial->animation_tracks)) {
+		Tcl_SetObjResult(interp, Tcl_NewStringObj("Load an animation specification with tracks when launching RtWizard.", -1));
+		goto cleanup;
+	    }
+	    bu_vls_strcpy(s->animation_tracks, bu_vls_addr(initial->animation_tracks));
+	    bu_vls_trunc(s->animation_preset, 0);
+	}
+	if (rtwizard_dict_int(interp, objv[2], "_animation_frames", 0, &s->animation.frames) != TCL_OK ||
+	    rtwizard_dict_vls(interp, objv[2], "_turntable_object", 0, s->turntable_object) != TCL_OK)
+	    goto cleanup;
+    }
 
     if (width <= 0 || height <= 0) {
 	Tcl_SetObjResult(interp, Tcl_NewStringObj("render width and height must be positive", -1));
@@ -1152,14 +1172,20 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
     bu_vls_sprintf(&tcl_cmd, "%d", s->process_timeout);
     rtwizard_set_state(interp, "process_timeout", bu_vls_addr(&tcl_cmd));
 
-    if (s->cut_steps) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(cut_steps) %d", s->cut_steps);
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-	(void)Tcl_SetVar2(interp, "::RtWizard::wizard_state", "make_animation", "1", TCL_GLOBAL_ONLY);
+    if (rtwizard_is_animated(s)) {
+	const char *preset = bu_vls_strlen(s->animation_tracks) ? "tracks" :
+	    (s->cut_steps ? "cut" : bu_vls_addr(s->animation_preset));
+	rtwizard_set_state(interp, "animation_preset", preset);
+	rtwizard_set_state(interp, "make_animation", "1");
     }
-
-    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(animation_fps) %d", s->animation_fps);
-    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    if (s->cut_steps || rtwizard_is_animated(s)) {
+	bu_vls_sprintf(&tcl_cmd, "%d", s->cut_steps ? s->cut_steps : s->animation.frames);
+	rtwizard_set_state(interp, "cut_steps", bu_vls_addr(&tcl_cmd));
+    }
+    bu_vls_sprintf(&tcl_cmd, "%d", s->animation_fps);
+    rtwizard_set_state(interp, "animation_fps", bu_vls_addr(&tcl_cmd));
+    rtwizard_set_state(interp, "turntable_object", bu_vls_addr(s->turntable_object));
+    rtwizard_set_state(interp, "frame_dir", bu_vls_addr(s->frame_dir));
 
     if (s->cut_direction_set) {
 	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(cut_direction) \"%0.15f %0.15f %0.15f\"", V3ARGS(s->cut_direction));
@@ -1729,7 +1755,7 @@ main(int argc, char **argv)
 	}
 	bu_vls_free(&tlog);
 	(void)Tcl_CreateObjCommand(interp, "rtwizard_render",
-		rtwizard_render_cmd, NULL, NULL);
+		rtwizard_render_cmd, s, NULL);
 	(void)Tcl_CreateObjCommand(interp, "rtwizard_fbserv_start",
 		rtwizard_fbserv_start_cmd, NULL, NULL);
 	Tcl_CreateExitHandler(rtwizard_fbserv_exit, NULL);

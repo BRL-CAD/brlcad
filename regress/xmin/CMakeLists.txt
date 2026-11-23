@@ -159,7 +159,7 @@ if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN" AND
     endif()
   endif()
 
-  if(TARGET rtwizard AND TARGET libtclcad)
+  if(TARGET rtwizard AND TARGET libtclcad AND TARGET arb8_showcase.g AND TARGET icv)
     brlcad_add_gui_test(
       NAME regress-rtwizard-xmin-smoke
       TIMEOUT 180
@@ -179,13 +179,13 @@ if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN" AND
         "GUI_TEST_LIBRARY=${_gui_test_library}"
         "RTWIZARD_GUI_TEST=${CMAKE_CURRENT_SOURCE_DIR}/rtwizard_xmin_gui.tcl"
         "RTWIZARD_RCFILE=${CMAKE_CURRENT_SOURCE_DIR}/rtwizard_xmin_gui_rc.tcl"
-        "RTWIZARD_TEST_DATABASE=${_gui_test_db}"
+        "RTWIZARD_TEST_DATABASE=${CMAKE_BINARY_DIR}/${DATA_DIR}/db/arb8_showcase.g"
         "RTWIZARD_MENU_MANIFEST=${CMAKE_CURRENT_SOURCE_DIR}/rtwizard_menu_manifest.txt"
       COMMAND "${SH_EXEC}" "${_gui_tcl_runner}" rtwizard
-        $<TARGET_FILE:rtwizard> --gui -i "${_gui_test_db}" -t A --process-timeout 7
+        $<TARGET_FILE:rtwizard> --gui -i "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/arb8_showcase.g" -t A --process-timeout 7
     )
     brlcad_regression_test(regress-rtwizard-xmin-gui
-      "rtwizard;m35.g" STAND_ALONE TEST_DEFINED)
+      "rtwizard;arb8_showcase.g;icv" STAND_ALONE TEST_DEFINED)
   endif()
 
   # qged is still evolving, so keep this fixture deliberately narrow: prove

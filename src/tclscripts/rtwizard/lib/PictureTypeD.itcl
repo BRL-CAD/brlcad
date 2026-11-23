@@ -63,7 +63,7 @@ namespace eval RtWizard {
 	    #
 	    method activate {}
 	    method deactivate {}
-	    method rtimage {w h}
+	    method rtimage {w h {preview 0}}
 	    method preview {}
 	    method fullSize {}
 	}
@@ -120,12 +120,12 @@ namespace eval RtWizard {
     #
     # rtimage - generates a picture.
     #
-    itcl::body PictureTypeD::rtimage {w h} {
+    itcl::body PictureTypeD::rtimage {w h {preview 0}} {
 
 	#
 	# get a framebuffer
 	#
-	set fb [$::fbp getFrameBuffer $w $h]
+	set fb [$::fbp getFrameBuffer $w $h $preview]
 
 
 	#
@@ -194,7 +194,7 @@ namespace eval RtWizard {
 	    _edge_objects $line_objects \
 	    _ao_samples $::RtWizard::wizard_state(ao_samples) \
 	    _ao_radius $::RtWizard::wizard_state(ao_radius)]
-	::RtWizard::render D $rtimage_dict
+	::RtWizard::render D $rtimage_dict $preview
     }
 
 
@@ -211,7 +211,7 @@ namespace eval RtWizard {
 	set h [$::fbp getHeight]
 	set h2 [ expr $h / 2 ]
 
-	rtimage $w2 $h2
+	rtimage $w2 $h2 1
     }
 
     #

@@ -275,6 +275,11 @@ proc ::rtwizard::xmin::run {} {
     }
     [$::fbp component radBox] select toFile
     set ::RtWizard::wizard_state(make_animation) 0
+    set animation [$::fbp component cutAnimation]
+    set preset [$::fbp component animationPreset]
+    set_framebuffer_entry cutSteps cut_steps 3
+    set_framebuffer_entry animationFps animation_fps 24
+    set_framebuffer_entry turntableObject turntable_object arb8_quadrants.c
     set rgb_bytes_per_pixel 3
     set expected_size [expr {$render_dimension * $render_dimension * $rgb_bytes_per_pixel}]
     ::gui::test::require {
@@ -296,12 +301,35 @@ proc ::rtwizard::xmin::run {} {
 	set old_output [open $render_file w]
 	puts $old_output "previous image"
 	close $old_output
-	set ::RtWizard::wizard_state(output_filename) $render_file
+	set_framebuffer_entry fileName output_filename $render_file
 	::gui::test::invoke_menu_entry . {Render Full-Size}
 	::gui::test::require {[file exists $render_file]} \
 	    "rtwizard '$title' render did not create its output file"
 	::gui::test::require {[file size $render_file] == $expected_size} \
 	    "rtwizard '$title' render has an unexpected byte count"
+
+	$animation invoke
+	foreach motion {cut orbit turntable} {
+	    [$preset cget -menu] invoke $motion
+	    ::gui::test::require {$::RtWizard::wizard_state(animation_preset) eq $motion} \
+		"animation menu did not select $motion"
+	    set render_file [file join $::env(GUI_TEST_DIR) rtwizard-$basename-$motion.png]
+	    set_framebuffer_entry fileName output_filename $render_file
+	    ::gui::test::invoke_menu_entry . {Render Full-Size}
+	    set prefix [file join $::env(GUI_TEST_DIR) rtwizard-$basename-$motion-frame]
+	    exec [file join [bu_dir bin] icv] anim extract $render_file $prefix
+	    set files [lsort [glob -- "$prefix*.png"]]
+	    ::gui::test::require {[llength $files] == 3} \
+	        "rtwizard '$title' $motion did not render all three animation frames"
+	    set channel [open [lindex $files 0] rb]
+	    set first [read $channel]
+	    close $channel
+	    set channel [open [lindex $files end] rb]
+	    set last [read $channel]
+	    close $channel
+	    ::gui::test::require {$first ne $last} "rtwizard '$title' $motion animation did not move"
+	}
+	$animation invoke
     }
 
     set preview_dimension [expr {$render_dimension / 2}]
@@ -315,13 +343,21 @@ proc ::rtwizard::xmin::run {} {
 	[file exists $preview_file] && [file size $preview_file] == $expected_preview_size
     } "rtwizard preview did not create the expected half-size image"
 
+    $animation invoke
+    set animation_preview [file join $::env(GUI_TEST_DIR) preview-animation.png]
+    set_framebuffer_entry fileName output_filename $animation_preview
+    ::gui::test::invoke_menu_entry . {Render Preview}
+    ::gui::test::require {![file exists $animation_preview]} \
+	"rtwizard preview published an animation"
+    $animation invoke
+
     set ::RtWizard::wizard_state(output_filename) ""
     [$::fbp component radBox] select toScreen
     ::gui::test::invoke_menu_entry . {Render Preview}
 
     $::wizardInstance select exp
     update
-    finish 0 "PASS: rtwizard menus, pages, controls, preview, and all renderers"
+    finish 0 "PASS: rtwizard menus, controls, preview, and stills and animations for all six picture types"
 }
 
 proc ::rtwizard::xmin::run_checked {} {
@@ -337,8 +373,12 @@ proc ::rtwizard::xmin::run_checked {} {
 namespace eval ::RtWizard {}
 set ::env(RTWIZARD_RCFILE) [file join $::env(GUI_TEST_DIR) .rtwizardrc]
 set ::RtWizard::wizard_state(dbFile) $::env(RTWIZARD_TEST_DATABASE)
-foreach object_list {color_objlist ghost_objlist line_objlist} {
-    set ::RtWizard::wizard_state($object_list) {all.g}
+foreach {role objects} {
+    color {groundplane.r arb8_quadrants.c}
+    ghost {arb8_axes.c}
+    line {arb8_quadrants.c}
+} {
+    set ::RtWizard::wizard_state(${role}_objlist) $objects
 }
 set argv {}
 set argc 0

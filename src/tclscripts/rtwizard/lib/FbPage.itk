@@ -109,7 +109,7 @@ namespace eval RtWizard {
 	    method getStepInfo {}
 	    method getWidth {}
 	    method getHeight {}
-	    method getFrameBuffer {width height {screenOnly false}}
+	    method getFrameBuffer {width height {preview false}}
 	}
 
 	private {
@@ -130,6 +130,7 @@ namespace eval RtWizard {
 	    method updateHeight {}
 	    method incrHeight {}
 	    method decrHeight {}
+	    method onAnimationToggle {}
 
 	    #
 	    # variables
@@ -155,7 +156,7 @@ namespace eval RtWizard {
     ::itcl::body FbPage::constructor {args} {
 	if {![info exists ::RtWizard::wizard_state(make_animation)]} { set ::RtWizard::wizard_state(make_animation) 0 }
 	if {![info exists ::RtWizard::wizard_state(cut_steps)]} { set ::RtWizard::wizard_state(cut_steps) 30 }
-	if {![info exists ::RtWizard::wizard_state(animation_fps)]} { set ::RtWizard::wizard_state(animation_fps) 10 }
+	if {![info exists ::RtWizard::wizard_state(animation_fps)]} { set ::RtWizard::wizard_state(animation_fps) 24 }
 	if {![info exists ::RtWizard::wizard_state(cut_direction)]} { set ::RtWizard::wizard_state(cut_direction) "" }
 	if {![info exists ::RtWizard::wizard_state(ao_samples)]} { set ::RtWizard::wizard_state(ao_samples) 0 }
 	if {![info exists ::RtWizard::wizard_state(ao_radius)]} { set ::RtWizard::wizard_state(ao_radius) 0 }
@@ -303,8 +304,19 @@ namespace eval RtWizard {
 
 	itk_component add cutAnimation {
 	    checkbutton $devCs.cutAnimation \
-		-text "Cutting-plane animation" \
-		-variable ::RtWizard::wizard_state(make_animation)
+		-text "Animate" \
+		-variable ::RtWizard::wizard_state(make_animation) \
+		-command [::itcl::code $this onAnimationToggle]
+	}
+
+	itk_component add animationPreset {
+	    set presets {cut orbit turntable}
+	    if {$::RtWizard::wizard_state(animation_preset) eq "tracks"} {
+		lappend presets tracks
+	    }
+	    set control $devCs.animationPreset
+	    tk_optionMenu $control ::RtWizard::wizard_state(animation_preset) {*}$presets
+	    set control
 	}
 
 	itk_component add cutSteps {
@@ -325,6 +337,12 @@ namespace eval RtWizard {
 	    iwidgets::entryfield $devCs.cutDirection \
 		-labeltext "Direction XYZ (blank = view):" -width 24 \
 		-textvariable ::RtWizard::wizard_state(cut_direction)
+	} { usual }
+
+	itk_component add turntableObject {
+	    iwidgets::entryfield $devCs.turntableObject \
+		-labeltext "Turntable object (optional):" -width 24 \
+		-textvariable ::RtWizard::wizard_state(turntable_object)
 	} { usual }
 
 	itk_component add aoSamples {
@@ -374,9 +392,11 @@ namespace eval RtWizard {
 	pack $itk_component(fileName) -anchor w
 	pack $itk_component(browse)  -anchor e
 	pack $itk_component(cutAnimation) -anchor w
+	pack $itk_component(animationPreset) -anchor w
 	pack $itk_component(cutSteps) -anchor w
 	pack $itk_component(animationFps) -anchor w
 	pack $itk_component(cutDirection) -anchor w
+	pack $itk_component(turntableObject) -anchor w
 	pack $itk_component(aoSamples) -anchor w
 	pack $itk_component(aoRadius) -anchor w
 
@@ -409,7 +429,12 @@ namespace eval RtWizard {
 	#
 	# Select to screen
 	#
-	$itk_component(radBox) select 0
+	if {$::RtWizard::wizard_state(make_animation) ||
+	    $::RtWizard::wizard_state(output_filename) ne ""} {
+	    $itk_component(radBox) select toFile
+	} else {
+	    $itk_component(radBox) select toScreen
+	}
 
 	#
 	# Evaluate any other args
@@ -486,8 +511,16 @@ namespace eval RtWizard {
     #
     # getFrameBuffer - opens a frame buffer and returns its target.
     #
-    ::itcl::body FbPage::getFrameBuffer { width height {screenOnly false} } {
+    ::itcl::body FbPage::getFrameBuffer { width height {preview false} } {
 	set mode [$itk_component(radBox) get]
+	set screenOnly [expr {$preview && $::RtWizard::wizard_state(make_animation)}]
+	if {!$preview && $::RtWizard::wizard_state(make_animation)} {
+	    if {$mode ne "toFile" || ($::RtWizard::wizard_state(output_filename) eq "" &&
+		$::RtWizard::wizard_state(frame_dir) eq "")} {
+		error "Choose an animation output file on the framebuffer page."
+	    }
+	    return ""
+	}
 	if {$mode eq "toFile" &&
 	    [string length $::RtWizard::wizard_state(output_filename)] > 0 &&
 	    !$screenOnly} {
@@ -571,6 +604,12 @@ namespace eval RtWizard {
     ::itcl::body FbPage::onToFile { } {
 	$itk_component(fileName) configure -state normal
 	$itk_component(browse) configure -state normal
+    }
+
+    ::itcl::body FbPage::onAnimationToggle {} {
+	if {$::RtWizard::wizard_state(make_animation)} {
+	    $itk_component(radBox) select toFile
+	}
     }
 
     #
