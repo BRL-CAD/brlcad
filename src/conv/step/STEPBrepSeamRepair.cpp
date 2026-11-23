@@ -5282,77 +5282,85 @@ remove_redundant_closed_singular_trims(ON_Brep *brep, STEPWrapper *wrapper,
 
     size_t removed = 0;
     const int repair_budget = brep->m_T.Count();
-    for (int repair = 0; repair < repair_budget; ++repair) {
+    /* DeleteTrim unlinks an edgeless singular trim from its loop without
+     * reindexing the BREP.  Recheck only that loop before moving on, and
+     * defer whole-BREP compaction until all of the deletions are known. */
+    int li = 0;
+    while (li < brep->m_L.Count() && removed < static_cast<size_t>(repair_budget)) {
+	if (brlcad::PullbackWorkCancelled())
+	    break;
 	bool changed = false;
-	for (int li = 0; li < brep->m_L.Count() && !changed; ++li) {
-	    ON_BrepLoop &loop = brep->m_L[li];
-	    const ON_BrepFace *face = loop.Face();
-	    const ON_Surface *surface = face ? face->SurfaceOf() : NULL;
-	    const int trim_count = loop.TrimCount();
-	    if (!surface || trim_count < 2)
+	ON_BrepLoop &loop = brep->m_L[li];
+	const ON_BrepFace *face = loop.Face();
+	const ON_Surface *surface = face ? face->SurfaceOf() : NULL;
+	const int trim_count = loop.TrimCount();
+	if (!surface || trim_count < 2) {
+	    ++li;
+	    continue;
+	}
+	for (int lti = 0; lti < trim_count; ++lti) {
+	    ON_BrepTrim *trim = loop.Trim(lti);
+	    const ON_Curve *curve = trim ? trim->TrimCurveOf() : NULL;
+	    if (!trim || !curve || trim->m_type != ON_BrepTrim::singular ||
+		    trim->m_ei >= 0 || trim->m_vi[0] < 0 ||
+		    trim->m_vi[0] != trim->m_vi[1] ||
+		    trim->m_vi[0] >= brep->m_V.Count() ||
+		    !curve->IsClosed())
 		continue;
-	    for (int lti = 0; lti < trim_count; ++lti) {
-		ON_BrepTrim *trim = loop.Trim(lti);
-		const ON_Curve *curve = trim ? trim->TrimCurveOf() : NULL;
-		if (!trim || !curve || trim->m_type != ON_BrepTrim::singular ||
-			trim->m_ei >= 0 || trim->m_vi[0] < 0 ||
-			trim->m_vi[0] != trim->m_vi[1] ||
-			trim->m_vi[0] >= brep->m_V.Count() ||
-			!curve->IsClosed())
-		    continue;
-		ON_BrepTrim *previous = loop.Trim(
-		    (lti + trim_count - 1) % trim_count);
-		ON_BrepTrim *next = loop.Trim((lti + 1) % trim_count);
-		if (!previous || !next || previous == trim || next == trim ||
-			previous->m_vi[1] != trim->m_vi[0] ||
-			next->m_vi[0] != trim->m_vi[1] ||
-			previous->m_vi[1] != next->m_vi[0])
-		    continue;
-		const ON_3dPoint previous_uv = previous->PointAtEnd();
-		const ON_3dPoint next_uv = next->PointAtStart();
-		if (!previous_uv.IsValid() || !next_uv.IsValid() ||
-			previous_uv.DistanceTo(next_uv) > ON_ZERO_TOLERANCE)
-		    continue;
-		const ON_3dPoint previous_lift =
-		    surface->PointAt(previous_uv.x, previous_uv.y);
-		const ON_3dPoint next_lift =
-		    surface->PointAt(next_uv.x, next_uv.y);
-		const ON_3dPoint &vertex =
-		    brep->m_V[trim->m_vi[0]].point;
-		double tolerance = std::max(LocalUnits::tolerance,
-		    brep->m_V[trim->m_vi[0]].m_tolerance);
+	    ON_BrepTrim *previous = loop.Trim(
+		(lti + trim_count - 1) % trim_count);
+	    ON_BrepTrim *next = loop.Trim((lti + 1) % trim_count);
+	    if (!previous || !next || previous == trim || next == trim ||
+		    previous->m_vi[1] != trim->m_vi[0] ||
+		    next->m_vi[0] != trim->m_vi[1] ||
+		    previous->m_vi[1] != next->m_vi[0])
+		continue;
+	    const ON_3dPoint previous_uv = previous->PointAtEnd();
+	    const ON_3dPoint next_uv = next->PointAtStart();
+	    if (!previous_uv.IsValid() || !next_uv.IsValid() ||
+		    previous_uv.DistanceTo(next_uv) > ON_ZERO_TOLERANCE)
+		continue;
+	    const ON_3dPoint previous_lift =
+		surface->PointAt(previous_uv.x, previous_uv.y);
+	    const ON_3dPoint next_lift =
+		surface->PointAt(next_uv.x, next_uv.y);
+	    const ON_3dPoint &vertex =
+		brep->m_V[trim->m_vi[0]].point;
+	    double tolerance = std::max(LocalUnits::tolerance,
+		brep->m_V[trim->m_vi[0]].m_tolerance);
+	    tolerance = std::max(tolerance,
+		std::max(previous->m_tolerance[0],
+		    previous->m_tolerance[1]));
+	    tolerance = std::max(tolerance,
+		std::max(next->m_tolerance[0], next->m_tolerance[1]));
+	    if (previous->Edge())
 		tolerance = std::max(tolerance,
-		    std::max(previous->m_tolerance[0],
-			previous->m_tolerance[1]));
+		    previous->Edge()->m_tolerance);
+	    if (next->Edge())
 		tolerance = std::max(tolerance,
-		    std::max(next->m_tolerance[0], next->m_tolerance[1]));
-		if (previous->Edge())
-		    tolerance = std::max(tolerance,
-			previous->Edge()->m_tolerance);
-		if (next->Edge())
-		    tolerance = std::max(tolerance,
-			next->Edge()->m_tolerance);
-		if (!previous_lift.IsValid() || !next_lift.IsValid() ||
-			previous_lift.DistanceTo(vertex) > tolerance ||
-			next_lift.DistanceTo(vertex) > tolerance ||
-			previous_lift.DistanceTo(next_lift) > tolerance)
-		    continue;
+		    next->Edge()->m_tolerance);
+	    if (!previous_lift.IsValid() || !next_lift.IsValid() ||
+		    previous_lift.DistanceTo(vertex) > tolerance ||
+		    next_lift.DistanceTo(vertex) > tolerance ||
+		    previous_lift.DistanceTo(next_lift) > tolerance)
+		continue;
 
-		const int trim_index = trim->m_trim_index;
-		brep->DeleteTrim(brep->m_T[trim_index], true);
-		if (!brep->Compact())
-		    return removed;
-		wrapper->RecordRepair(entity_id, entity_type, "edge_loop",
-		    "removed a redundant closed singular connector after exact "
-		    "periodic branch closure");
-		++removed;
-		changed = true;
-		break;
-	    }
+	    const int trim_index = trim->m_trim_index;
+	    brep->DeleteTrim(brep->m_T[trim_index], true);
+	    wrapper->RecordRepair(entity_id, entity_type, "edge_loop",
+		"removed a redundant closed singular connector after exact "
+		"periodic branch closure");
+	    ++removed;
+	    changed = true;
+	    break;
 	}
 	if (!changed)
-	    break;
+	    ++li;
     }
+    if (removed && !brep->Compact())
+	wrapper->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Warning,
+	    entity_id, entity_type, "edge_loop",
+	    "could not compact the BREP after removing redundant singular trims");
     return removed;
 }
 

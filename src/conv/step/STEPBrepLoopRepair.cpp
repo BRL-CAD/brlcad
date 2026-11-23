@@ -2825,8 +2825,14 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 		    continue;
 		}
 
+		/* The candidate trials at this join leave the 3-D edges immutable.
+		 * Reuse their span bounds and chord grids, and start each candidate
+		 * with a fresh hint so the previous trial cannot affect the proof. */
+		std::unique_ptr<STEPCurveLocus> previous_edge_locus;
+		std::unique_ptr<STEPCurveLocus> next_edge_locus;
 		const auto validates = [brep, surface, &join_tolerance, wrapper,
-		    &boundary_parameter](
+		    &boundary_parameter, previous, &previous_edge_locus,
+		    &next_edge_locus](
 		    const ON_BrepTrim &original,
 		    const ON_Curve &candidate, std::string *failure) {
 		    if (failure)
@@ -2909,7 +2915,10 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 			    *failure = "edge NURBS conversion failed";
 			return false;
 		    }
-		    std::unique_ptr<STEPCurveLocus> edge_locus;
+		    std::unique_ptr<STEPCurveLocus> &edge_locus =
+			&original == previous ? previous_edge_locus : next_edge_locus;
+		    if (edge_locus)
+			edge_locus->ResetSearchHint();
 		    const int validation_spans = std::max(original.SpanCount(),
 			candidate.SpanCount());
 		    const int samples = std::min(4096,
@@ -3911,13 +3920,25 @@ repair_paired_seam_loop_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 		candidates.push_back({trim->m_trim_index, candidate_iso,
 		    std::move(candidate)});
 	    }
+	    const bool complementary = candidates.size() == 2 &&
+		((candidates[0].iso == ON_Surface::W_iso &&
+		  candidates[1].iso == ON_Surface::E_iso) ||
+		 (candidates[0].iso == ON_Surface::E_iso &&
+		  candidates[1].iso == ON_Surface::W_iso) ||
+		 (candidates[0].iso == ON_Surface::S_iso &&
+		  candidates[1].iso == ON_Surface::N_iso) ||
+		 (candidates[0].iso == ON_Surface::N_iso &&
+		  candidates[1].iso == ON_Surface::S_iso));
+	    needs_repair = needs_repair || (complementary &&
+		(candidates[0].iso != brep->m_T[candidates[0].trim_index].m_iso ||
+		 candidates[1].iso != brep->m_T[candidates[1].trim_index].m_iso));
 	    /* The adjacent endpoint projection is admissible only if every complete
 	     * curve remains within its already established source tolerance and on
 	     * the exact 3-D STEP edge.  This supplies the same proof as the ordinary
 	     * endpoint repair, but validates the coupled seam/neighbor edit as one
-	     * transaction. */
+	     * transaction.  Only validate pairs eligible to be installed. */
 	    for (std::map<int, std::unique_ptr<ON_Curve> >::const_iterator adjacent =
-		    adjacent_candidates.begin(); complete &&
+		    adjacent_candidates.begin(); complete && needs_repair && complementary &&
 		    adjacent != adjacent_candidates.end(); ++adjacent) {
 		if (adjacent->first < 0 || adjacent->first >= brep->m_T.Count() ||
 			!adjacent->second) {
@@ -3946,10 +3967,17 @@ repair_paired_seam_loop_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 		    std::max(64, std::max(original.SpanCount(),
 			adjacent->second->SpanCount()) * 8));
 		std::unique_ptr<STEPCurveLocus> adjacent_edge_locus;
-		for (int sample = 0; complete && sample <= samples; ++sample) {
-		    if (sample % progress_loop_interval == 0 &&
+		/* The small endpoint edit can expose a bad fit at either end.
+		 * Check both end bands before spending time on the interior. */
+		constexpr int endpoint_band_samples = 16;
+		for (int visited = 0; complete && visited <= samples; ++visited) {
+		    if ((visited & 63) == 0 &&
 			    brlcad::PullbackWorkCancelled())
 			return repaired_pairs;
+		    const int sample = visited < endpoint_band_samples ? visited :
+			visited < 2 * endpoint_band_samples ?
+			    samples - (visited - endpoint_band_samples) :
+			    visited - endpoint_band_samples;
 		    const double fraction = static_cast<double>(sample) / samples;
 		    const double parameter = trim_domain.ParameterAt(fraction);
 		    const ON_3dPoint original_uv = original.PointAt(parameter);
@@ -3976,18 +4004,6 @@ repair_paired_seam_loop_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 		    complete = edge_distance <= tolerance;
 		}
 	    }
-	    const bool complementary = candidates.size() == 2 &&
-		((candidates[0].iso == ON_Surface::W_iso &&
-		  candidates[1].iso == ON_Surface::E_iso) ||
-		 (candidates[0].iso == ON_Surface::E_iso &&
-		  candidates[1].iso == ON_Surface::W_iso) ||
-		 (candidates[0].iso == ON_Surface::S_iso &&
-		  candidates[1].iso == ON_Surface::N_iso) ||
-		 (candidates[0].iso == ON_Surface::N_iso &&
-		  candidates[1].iso == ON_Surface::S_iso));
-	    needs_repair = needs_repair || (complementary &&
-		(candidates[0].iso != brep->m_T[candidates[0].trim_index].m_iso ||
-		 candidates[1].iso != brep->m_T[candidates[1].trim_index].m_iso));
 	    if (!complete || !needs_repair || !complementary) {
 		if (wrapper->Verbose() && (!complete || needs_repair))
 		    std::cerr << entity_type << " #" << entity_id << ": paired seam "

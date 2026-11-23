@@ -31,6 +31,8 @@ public:
     explicit STEPCurveLocus(const ON_Curve *curve);
     ~STEPCurveLocus();
 
+    /** Begin a separate query sequence on the same immutable curve. */
+    void ResetSearchHint();
     double DistanceTo(const ON_3dPoint &point, double tolerance) const;
     /* Measure an exact point on the curve when a tolerance witness fails. */
     double MeasuredDistanceTo(const ON_3dPoint &point, double tolerance) const;

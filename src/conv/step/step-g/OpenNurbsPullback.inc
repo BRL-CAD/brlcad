@@ -497,6 +497,8 @@ public:
 	return std::isfinite(best_distance);
     }
 
+    void ResetSearchHint() { m_have_previous = false; }
+
     double DistanceTo(const ON_3dPoint &point,
 	    double acceptable_distance = 0.0,
 	    const std::function<void(const char *, size_t, size_t)> &trace =
@@ -924,6 +926,13 @@ STEPCurveLocus::STEPCurveLocus(const ON_Curve *curve)
 
 
 STEPCurveLocus::~STEPCurveLocus() = default;
+
+
+void
+STEPCurveLocus::ResetSearchHint()
+{
+    evaluator->ResetSearchHint();
+}
 
 
 double
