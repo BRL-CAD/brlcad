@@ -77,8 +77,7 @@ volatile bu_sig_t interrupt_signal_func[INTERRUPT_MAX_SIGNUM] = {
 static void
 interrupt_suspend_signal_handler(int signum)
 {
-    if (interrupt_defer_signal[signum])
-	interrupt_signal_pending[signum]++;
+    interrupt_signal_pending[signum] = 1;
 }
 
 
@@ -101,18 +100,16 @@ interrupt_suspend_signal(int signum)
 {
     BU_ASSERT(signum < INTERRUPT_MAX_SIGNUM && "signal number out of range");
 
-    if (interrupt_signal_func[signum] == interrupt_suspend_signal_handler) {
+    if (interrupt_defer_signal[signum])
 	return 1;
-    }
 
-
+    interrupt_signal_pending[signum] = 0;
     interrupt_signal_func[signum] = signal(signum, interrupt_suspend_signal_handler);
 
     if (interrupt_signal_func[signum] == SIG_ERR) {
 	interrupt_signal_func[signum] = (bu_sig_t)0;
 	return 2;
     }
-    interrupt_signal_pending[signum] = 0;
     interrupt_defer_signal[signum]++;
 
     return 0;
@@ -138,28 +135,19 @@ interrupt_restore_signal(int signum)
 {
     BU_ASSERT(signum < INTERRUPT_MAX_SIGNUM && "signal number out of range");
 
-    /* must be before the test to avoid a race condition */
-    interrupt_defer_signal[signum]--;
+    if (!interrupt_defer_signal[signum])
+	return 1;
 
-    if (interrupt_defer_signal[signum] == 0 && interrupt_signal_pending[signum] != 0) {
-	bu_sig_t ret;
-
-	if (interrupt_signal_func[signum] != interrupt_suspend_signal_handler) {
-	    /* unexpected state, how did we get here? */
-	    return 1;
-	}
-
-	ret = signal(signum, interrupt_signal_func[signum]);
-
-	interrupt_signal_func[signum] = (bu_sig_t)0;
+    /* Even a write that received no signal must restore the caller's
+     * handler.  Reinstall it before replaying any deferred interrupt. */
+    if (signal(signum, interrupt_signal_func[signum]) == SIG_ERR)
+	return 2;
+    interrupt_defer_signal[signum] = 0;
+    interrupt_signal_func[signum] = (bu_sig_t)0;
+    if (interrupt_signal_pending[signum]) {
 	interrupt_signal_pending[signum] = 0;
-
-	if (ret == SIG_ERR) {
-	    return 2;
-	}
-	raise(signum);
+	return raise(signum) ? 2 : 0;
     }
-
     return 0;
 }
 

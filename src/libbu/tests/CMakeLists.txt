@@ -29,6 +29,7 @@ set(
   test_heap.cpp
   test_hook.c
   test_humanize_number.c
+  test_interrupt.c
   test_list.c
   test_log.cpp
   test_mappedfile.c
@@ -128,6 +129,7 @@ brlcad_addexec(bu_gethostname test_gethostname.c libbu TEST)
 brlcad_add_test(NAME bu_argv COMMAND bu_test test_argv)
 brlcad_add_test(NAME bu_backtrace COMMAND bu_test test_backtrace)
 brlcad_add_test(NAME bu_bomb COMMAND bu_test test_bomb "$<TARGET_FILE:bu_test>")
+brlcad_add_test(NAME bu_interrupt COMMAND bu_test test_interrupt)
 brlcad_add_test(NAME bu_dir COMMAND bu_test test_dir)
 brlcad_add_test(NAME bu_list_empty COMMAND bu_test test_list 0)
 brlcad_add_test(NAME bu_list_single COMMAND bu_test test_list 1)
