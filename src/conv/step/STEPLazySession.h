@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -66,6 +67,11 @@ struct STEPLazyStatistics {
     bool cancelled = false;
 };
 
+struct STEPLazyInventory {
+    std::map<std::string, uint64_t> ordinary_counts;
+    std::vector<uint64_t> complex_instances;
+};
+
 class STEPLazyBatch {
 public:
     STEPLazyBatch();
@@ -112,9 +118,12 @@ public:
 
     bool Open(const std::string &path);
     std::vector<uint64_t> AllInstances() const;
+    /** Count ordinary entity types and identify records that require complex
+     * entity counting without reading the indexed source records. */
+    STEPLazyInventory Inventory() const;
     std::vector<uint64_t> InstancesByType(const std::string &type) const;
     std::string TypeName(uint64_t id) const;
-    std::vector<std::string> ComponentTypes(uint64_t id) const;
+    const std::vector<std::string> &ComponentTypes(uint64_t id) const;
     /** Copy one exact indexed Part 21 instance record without materializing
      * its SDAI dependency closure. */
     std::string SourceRecord(uint64_t id) const;

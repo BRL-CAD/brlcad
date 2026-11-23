@@ -34,6 +34,8 @@
 
 #include "bu/app.h"
 #include "bu/file.h"
+#include "bu/malloc.h"
+#include "bu/path.h"
 #include "bu/process.h"
 #include "brep/pullback.h"
 
@@ -234,9 +236,8 @@ constexpr uint64_t kMaximumReadyGeometryBytes = 512ULL * 1024ULL * 1024ULL;
 constexpr uint64_t kMaximumGeometrySpoolNameAttempts = 1024;
 
 /* A conversion-completion spool prevents deterministic STEP-ID output order
- * from retaining completed OpenNURBS models in memory.  BU_DIR_CACHE selects
- * the platform user cache and BRL-CAD application subdirectory; BU_DIR_TEMP is
- * a fallback for read-only or unavailable cache locations. */
+ * from retaining completed OpenNURBS models in memory. Prefer the output
+ * filesystem because the spool can be as large as the output database. */
 class TemporaryGeometrySpool
 {
 public:
@@ -246,9 +247,15 @@ public:
 	    bu_file_delete(path.c_str());
     }
 
-    bool CreatePath()
+    bool CreatePath(const std::string &output)
     {
-	static std::atomic<uint64_t> sequence(0);
+	if (!output.empty()) {
+	    char *directory = bu_path_dirname(output.c_str());
+	    const bool created = CreatePathIn(directory);
+	    bu_free(directory, "STEP geometry spool directory");
+	    if (created)
+		return true;
+	}
 	const bu_dir_t locations[] = {BU_DIR_CACHE, BU_DIR_TEMP};
 	for (const bu_dir_t location : locations) {
 	    char directory[MAXPATHLEN] = {0};
@@ -256,37 +263,42 @@ public:
 		    static_cast<const char *>(NULL)))
 		continue;
 	    bu_mkdir(directory);
-	    if (!bu_file_directory(directory) || !bu_file_writable(directory))
-		continue;
-
-	    const uint64_t first_suffix = sequence.fetch_add(1,
-		std::memory_order_relaxed);
-	    for (uint64_t attempt = 0;
-		    attempt < kMaximumGeometrySpoolNameAttempts; ++attempt) {
-		std::ostringstream candidate;
-		candidate << directory << "/step-import-" << bu_pid() << '-'
-		    << (first_suffix + attempt) << ".g";
-		if (!bu_file_exists(candidate.str().c_str(), NULL)) {
-		    /* Directory mode checks can report writable for a path that a
-		     * container policy or network filesystem rejects at open time.
-		     * Probe the actual candidate before committing to this location so
-		     * BU_DIR_TEMP remains a functional fallback. */
-		    std::ofstream probe(candidate.str().c_str(),
-			std::ios::out | std::ios::binary | std::ios::trunc);
-		    if (!probe.is_open())
-			continue;
-		    probe.close();
-		    if (!bu_file_delete(candidate.str().c_str()))
-			continue;
-		    path = candidate.str();
-		    return true;
-		}
-	    }
+	    if (CreatePathIn(directory))
+		return true;
 	}
 	return false;
     }
 
     std::string path;
+
+private:
+    bool CreatePathIn(const char *directory)
+    {
+	static std::atomic<uint64_t> sequence(0);
+	if (!directory || !bu_file_directory(directory) || !bu_file_writable(directory))
+	    return false;
+
+	for (uint64_t attempt = 0;
+		attempt < kMaximumGeometrySpoolNameAttempts; ++attempt) {
+	    std::ostringstream candidate;
+	    candidate << directory << "/step-import-" << bu_pid() << '-'
+		<< sequence.fetch_add(1, std::memory_order_relaxed) << ".g";
+	    const std::string name = candidate.str();
+	    if (bu_file_exists(name.c_str(), NULL))
+		continue;
+	    /* Check the actual open because directory mode bits do not
+	     * describe all container and network filesystem policies. */
+	    std::ofstream probe(name, std::ios::out | std::ios::binary | std::ios::trunc);
+	    if (!probe.is_open())
+		return false;
+	    probe.close();
+	    if (!bu_file_delete(name.c_str()))
+		return false;
+	    path = name;
+	    return true;
+	}
+	return false;
+    }
 };
 
 /* Reference-host CPU-work ceilings.  The startup geometry calibration

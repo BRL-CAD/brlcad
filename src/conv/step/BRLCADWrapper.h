@@ -119,6 +119,7 @@ public:
     virtual ~BRLCADWrapper();
     bool load(std::string &filename);
     bool OpenFile(std::string &filename);
+    const std::string &OutputPath() const { return filename; }
     bool WriteHeader();
     bool WriteSphere(const std::string &name, const double *center, double radius,
 	int64_t step_id = 0, const std::string &original_name = std::string());

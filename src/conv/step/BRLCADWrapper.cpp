@@ -814,21 +814,25 @@ BRLCADWrapper::WriteCombs()
 	    0, 0, 0, 0, 0, 0, 0) < 0) {
 	    success = false;
 	} else if (properties) {
+	    /* Attach occurrence metadata with one database update per
+	     * combination. Updating attributes individually rewrites the
+	     * entire object for every occurrence attribute. */
+	    auto attributes = properties->attributes;
 	    if (properties->step_id > 0)
-		SetAttribute(combname, "step:source_id", std::to_string(properties->step_id));
+		attributes.try_emplace("step:source_id", std::to_string(properties->step_id));
 	    if (!properties->original_name.empty())
-		SetAttribute(combname, "step:original_name",
+		attributes.try_emplace("step:original_name",
 		    brlcad::step::decode_string(properties->original_name));
 	    if (properties->has_style) {
 		const brlcad::step::Style &style = properties->style;
-		if (!style.name.empty()) SetAttribute(combname, "step:style_name", style.name);
+		if (!style.name.empty()) attributes.try_emplace("step:style_name", style.name);
 		if (style.has_rgb) {
 		    std::ostringstream value;
 		    value << style.rgb[0] << ' ' << style.rgb[1] << ' ' << style.rgb[2];
-		    SetAttribute(combname, "step:color_rgb", value.str());
+		    attributes.try_emplace("step:color_rgb", value.str());
 		}
 		if (style.has_transparency)
-		    SetAttribute(combname, "step:transparency",
+		    attributes.try_emplace("step:transparency",
 			std::to_string(style.transparency));
 		if (!style.layers.empty()) {
 		    std::ostringstream value;
@@ -836,7 +840,7 @@ BRLCADWrapper::WriteCombs()
 			if (layer) value << ';';
 			value << style.layers[layer];
 		    }
-		    SetAttribute(combname, "step:layers", value.str());
+		    attributes.try_emplace("step:layers", value.str());
 		}
 		if (!style.source_entity_ids.empty()) {
 		    std::ostringstream value;
@@ -844,13 +848,11 @@ BRLCADWrapper::WriteCombs()
 			if (source) value << ' ';
 			value << style.source_entity_ids[source];
 		    }
-		    SetAttribute(combname, "step:style_source_ids", value.str());
+		    attributes.try_emplace("step:style_source_ids", value.str());
 		}
 	    }
-	    for (std::map<std::string, std::string>::const_iterator attribute =
-		 properties->attributes.begin(); attribute != properties->attributes.end();
-		 ++attribute)
-		SetAttribute(combname, attribute->first, attribute->second);
+	    if (!SetAttributes(combname, attributes))
+		success = false;
 	}
 
 	BU_FREE(head, struct bu_list);

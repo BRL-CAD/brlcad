@@ -168,7 +168,7 @@ private:
     std::unique_ptr<brlcad::step::STEPLazyBatch> lazy_batch;
     std::vector<std::unique_ptr<brlcad::step::STEPLazyBatch> > lazy_supplemental_batches;
     std::vector<uint64_t> lazy_instance_ids;
-    std::vector<uint64_t> lazy_complex_instance_ids;
+    std::vector<uint64_t> lazy_unindexed_complex_instance_ids;
     std::vector<uint64_t> lazy_iteration_ids;
     size_t lazy_iteration_batch_begin = 0;
     size_t lazy_iteration_batch_end = 0;

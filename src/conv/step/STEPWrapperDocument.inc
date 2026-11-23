@@ -4964,11 +4964,11 @@ write_detached_brep_geometry(DetachedBrepJob &job, BRLCADWrapper *database,
 
 
 static void
-commit_spooled_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper,
+commit_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper,
     BRLCADWrapper *spool, BRLCADWrapper *dotg, int dry_run,
     MAP_OF_ENTITY_ID_TO_PRODUCT_ID &process_map)
 {
-    if ((job.status == BREP_WRITE_SUCCESS || job.preserved_invalid) && !dry_run) {
+    if (spool && (job.status == BREP_WRITE_SUCCESS || job.preserved_invalid)) {
 	const bool solid_copied = dotg->CopyObjectFrom(*spool,
 	    job.output_name + ".s");
 	const bool region_copied = solid_copied &&
@@ -5009,8 +5009,11 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
 
     TemporaryGeometrySpool spool_file;
     BRLCADWrapper spool;
-    spool.dry_run = dry_run;
-    if (!dry_run && (!spool_file.CreatePath() ||
+    /* A single item can go straight to the destination without copying a
+     * large solid.  Retain the same on-disk layout for multi-item imports
+     * regardless of the requested worker count. */
+    const bool use_spool = !dry_run && jobs.size() > 1;
+    if (use_spool && (!spool_file.CreatePath(dotg->OutputPath()) ||
 	    !spool.OpenFile(spool_file.path))) {
 	++wrapper->Statistics().output_failures;
 	wrapper->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Fatal, 0,
@@ -5027,11 +5030,11 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
     std::condition_variable queue_changed;
     std::deque<size_t> pending;
     std::deque<size_t> ready_results;
-    std::vector<unsigned char> spooled(jobs.size(), 0);
+    std::vector<unsigned char> written(jobs.size(), 0);
     std::vector<uint64_t> result_bytes(jobs.size(), 0);
     size_t active_workers = 0;
     size_t completed_waiting = 0;
-    size_t spooled_waiting = 0;
+    size_t waiting_to_commit = 0;
     size_t finished_jobs = 0;
     uint64_t ready_bytes = 0;
     bool materializing = false;
@@ -5040,12 +5043,12 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
 	static_cast<size_t>(worker_count) * kRunnableGeometryJobsPerWorker);
     const auto publish_scheduler_locked = [&]() {
 	const size_t observed_in_flight = pending.size() + active_workers +
-	    completed_waiting + spooled_waiting + (materializing ? 1 : 0);
+	    completed_waiting + waiting_to_commit + (materializing ? 1 : 0);
 	wrapper->SetGeometrySchedulerProgress(
 	    static_cast<uint64_t>(pending.size()),
 	    static_cast<uint64_t>(active_workers),
 	    static_cast<uint64_t>(completed_waiting),
-	    static_cast<uint64_t>(spooled_waiting),
+	    use_spool ? static_cast<uint64_t>(waiting_to_commit) : 0,
 	    static_cast<uint64_t>(finished_jobs), materializing ? 1 : 0,
 	    static_cast<uint64_t>(observed_in_flight),
 	    static_cast<uint64_t>(runnable_capacity), ready_bytes,
@@ -5200,21 +5203,22 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
 	}
 	if (ready_index < jobs.size()) {
 	    DetachedBrepJob &job = *jobs[ready_index];
-	    const std::chrono::steady_clock::time_point spool_started =
+	    const std::chrono::steady_clock::time_point write_started =
 		std::chrono::steady_clock::now();
 	    if ((job.status == BREP_WRITE_SUCCESS || job.preserved_invalid) &&
-		!write_detached_brep_geometry(job, &spool, dry_run))
+		!write_detached_brep_geometry(job, use_spool ? &spool : dotg, dry_run))
 	    {
 		job.status = BREP_OUTPUT_FAILED;
 		job.preserved_invalid = false;
 	    }
-	    wrapper->RecordStageTiming("spool_write", job.entity_id,
-		job.entity_type, static_cast<uint64_t>(
-		    std::chrono::duration_cast<std::chrono::microseconds>(
-			std::chrono::steady_clock::now() - spool_started).count()),
-		job.brep ? static_cast<uint64_t>(job.brep->m_F.Count()) : 0,
-		job.brep ? static_cast<uint64_t>(job.brep->m_E.Count()) : 0,
-		job.brep ? static_cast<uint64_t>(job.brep->m_T.Count()) : 0);
+	    if (!dry_run)
+		wrapper->RecordStageTiming(use_spool ? "spool_write" : "geometry_write",
+		    job.entity_id, job.entity_type, static_cast<uint64_t>(
+			std::chrono::duration_cast<std::chrono::microseconds>(
+			    std::chrono::steady_clock::now() - write_started).count()),
+		    job.brep ? static_cast<uint64_t>(job.brep->m_F.Count()) : 0,
+		    job.brep ? static_cast<uint64_t>(job.brep->m_E.Count()) : 0,
+		    job.brep ? static_cast<uint64_t>(job.brep->m_T.Count()) : 0);
 	    job.brep.reset();
 	    job.bot_vertices.clear();
 	    job.bot_vertices.shrink_to_fit();
@@ -5229,23 +5233,23 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
 		result_bytes[ready_index] = 0;
 		if (completed_waiting)
 		    --completed_waiting;
-		spooled[ready_index] = 1;
-		++spooled_waiting;
+		written[ready_index] = 1;
+		++waiting_to_commit;
 		publish_scheduler_locked();
 	    }
 	    queue_changed.notify_all();
 	    continue;
 	}
 
-	bool head_spooled = false;
+	bool head_written = false;
 	{
 	    std::lock_guard<std::mutex> lock(queue_mutex);
-	    head_spooled = spooled[next_commit] != 0;
+	    head_written = written[next_commit] != 0;
 	}
-	if (head_spooled) {
+	if (head_written) {
 	    const std::chrono::steady_clock::time_point commit_started =
 		std::chrono::steady_clock::now();
-	    commit_spooled_brep_job(*jobs[next_commit], wrapper, &spool, dotg,
+	    commit_brep_job(*jobs[next_commit], wrapper, use_spool ? &spool : NULL, dotg,
 		dry_run, process_map);
 	    wrapper->RecordStageTiming("database_commit",
 		jobs[next_commit]->entity_id, jobs[next_commit]->entity_type,
@@ -5255,8 +5259,8 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
 		static_cast<uint64_t>(jobs[next_commit]->topology_face_count));
 	    {
 		std::lock_guard<std::mutex> lock(queue_mutex);
-		if (spooled_waiting)
-		    --spooled_waiting;
+		if (waiting_to_commit)
+		    --waiting_to_commit;
 		publish_scheduler_locked();
 	    }
 	    ++next_commit;
@@ -5302,7 +5306,7 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
 	std::unique_lock<std::mutex> lock(queue_mutex);
 	queue_changed.wait(lock, [&]() {
 	    if (wrapper->CancellationRequested() || !ready_results.empty() ||
-		spooled[next_commit] != 0)
+		written[next_commit] != 0)
 		return true;
 	    const size_t runnable = pending.size() + active_workers +
 		(materializing ? 1 : 0);

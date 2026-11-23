@@ -37,6 +37,30 @@ copy_ids(const View &view)
     return result;
 }
 
+class IndexedInstanceManager : public lazyInstMgr {
+public:
+    STEPLazyInventory Inventory()
+    {
+	STEPLazyInventory inventory;
+	for (auto entry = _instanceTypes->begin(); entry.value;
+	     entry = _instanceTypes->next()) {
+	    const char *type = reinterpret_cast<const char *>(entry.key);
+	    if (*type)
+		inventory.ordinary_counts.emplace(type, entry.value->size());
+	    else
+		inventory.complex_instances = copy_ids(*entry.value);
+	}
+
+	/* STEPcode indexes complex records under every component keyword as
+	 * well as the empty keyword. Leave those records to the caller so its
+	 * census can retain the existing complex-entity counting rules. */
+	for (const auto &record : _instanceComponentTypes)
+	    for (const std::string &type : record.second)
+		--inventory.ordinary_counts.at(type);
+	return inventory;
+    }
+};
+
 STEPLazyDiagnostic
 copy_diagnostic(const LazyDiagnostic &source)
 {
@@ -116,7 +140,7 @@ STEPLazyBatch::Get(uint64_t id) const
 class STEPLazySession::Impl {
 public:
     explicit Impl(const StepSchemaRuntime &runtime)
-	: registry(new Registry(runtime.Initializer())), manager(new lazyInstMgr)
+	: registry(new Registry(runtime.Initializer())), manager(new IndexedInstanceManager)
     {
 	manager->setRegistry(registry.get());
 	for (const StepSchemaRuntime::Alias &alias : runtime.LazyAliases())
@@ -152,7 +176,7 @@ public:
     }
 
     std::unique_ptr<Registry> registry;
-    std::unique_ptr<lazyInstMgr> manager;
+    std::unique_ptr<IndexedInstanceManager> manager;
     mutable std::vector<STEPLazyDiagnostic> diagnostics;
     ProgressCallback progress_callback;
     CancellationCallback cancellation_callback;
@@ -174,6 +198,12 @@ STEPLazySession::AllInstances() const
     return impl ? copy_ids(impl->manager->allInstances()) : std::vector<uint64_t>();
 }
 
+STEPLazyInventory
+STEPLazySession::Inventory() const
+{
+    return impl ? impl->manager->Inventory() : STEPLazyInventory();
+}
+
 std::vector<uint64_t>
 STEPLazySession::InstancesByType(const std::string &type) const
 {
@@ -188,13 +218,11 @@ STEPLazySession::TypeName(uint64_t id) const
     return name ? name : std::string();
 }
 
-std::vector<std::string>
+const std::vector<std::string> &
 STEPLazySession::ComponentTypes(uint64_t id) const
 {
-    if (!impl) return std::vector<std::string>();
-    const std::vector<std::string> &types =
-	impl->manager->componentTypes(static_cast<instanceID>(id));
-    return types;
+    static const std::vector<std::string> empty;
+    return impl ? impl->manager->componentTypes(static_cast<instanceID>(id)) : empty;
 }
 
 std::string

@@ -1096,15 +1096,12 @@ STEPWrapper::LazyInstancesBySchemaType(const std::string &type) const
 {
     std::vector<uint64_t> result;
 #ifdef HAVE_STEPCODE_LAZY
-    if (!lazy_session || !SchemaEntity(type.c_str())) return result;
+    if (!lazy_session) return result;
     const EntityDescriptor *base = SchemaEntity(type.c_str());
+    if (!base) return result;
 
-    /* collectEntityCounts has already identified every distinct ordinary
-     * Part 21 keyword.  Resolve schema inheritance once per keyword, then use
-     * STEPcode's exact-type index instead of repeating a full instance scan
-     * for each requested base type.  Complex instances need their component
-     * descriptors checked individually, so retain their IDs during the same
-     * inventory pass. */
+    /* Resolve inheritance once per Part 21 keyword. STEPcode indexes both
+     * ordinary keywords and the component keywords of complex instances. */
     for (std::map<std::string, uint64_t>::const_iterator entry =
 	    document.entity_counts.begin(); entry != document.entity_counts.end();
 	    ++entry) {
@@ -1113,9 +1110,8 @@ STEPWrapper::LazyInstancesBySchemaType(const std::string &type) const
 	const std::vector<uint64_t> ids = lazy_session->InstancesByType(entry->first);
 	result.insert(result.end(), ids.begin(), ids.end());
     }
-    for (std::vector<uint64_t>::const_iterator id =
-	    lazy_complex_instance_ids.begin(); id != lazy_complex_instance_ids.end(); ++id)
-	if (LazyIsSchemaEntity(*id, type.c_str())) result.push_back(*id);
+    for (uint64_t id : lazy_unindexed_complex_instance_ids)
+	if (LazyIsSchemaEntity(id, type.c_str())) result.push_back(id);
     std::sort(result.begin(), result.end());
     result.erase(std::unique(result.begin(), result.end()), result.end());
 #else
@@ -1931,18 +1927,19 @@ STEPWrapper::HasInferredCurve(int64_t edge_entity_id,
 void
 STEPWrapper::collectEntityCounts()
 {
+    constexpr int progress_stride = 16384;
     document.entity_counts.clear();
     document.unsupported_counts.clear();
     document.entity_counts_complete = true;
 #ifdef HAVE_STEPCODE_LAZY
-    lazy_complex_instance_ids.clear();
+    lazy_unindexed_complex_instance_ids.clear();
 #endif
     statistics.input_instances = static_cast<uint64_t>(InstanceCount());
-    const auto record_type = [this](std::string type) {
+    const auto record_type = [this](std::string type, uint64_t count) {
 	std::transform(type.begin(), type.end(), type.begin(), [](unsigned char c) {
 	    return static_cast<char>(std::toupper(c));
 	});
-	++document.entity_counts[type];
+	document.entity_counts[type] += count;
 	if (type.find("ANNOTATION") != std::string::npos || type.find("CALLOUT") != std::string::npos ||
 	    type.find("CAMERA") != std::string::npos || type.find("DRAUGHTING") != std::string::npos ||
 	    type.find("KINEMATIC") != std::string::npos || type.find("LIGHT_SOURCE") != std::string::npos ||
@@ -1950,32 +1947,35 @@ STEPWrapper::collectEntityCounts()
 	    type.find("DOCUMENT") != std::string::npos || type.find("DATUM") != std::string::npos ||
 	    type.find("SYMBOL") != std::string::npos || type == "COMPOSITE_TEXT" ||
 	    type.compare(0, 5, "TEXT_") == 0 || type.find("TOLERANCE") != std::string::npos)
-	    ++document.unsupported_counts[type];
+	    document.unsupported_counts[type] += count;
     };
 #ifdef HAVE_STEPCODE_LAZY
     if (lazy_session) {
-	uint64_t completed = 0;
-	for (std::vector<uint64_t>::const_iterator id = lazy_instance_ids.begin();
-	     id != lazy_instance_ids.end(); ++id) {
-	    std::string type = lazy_session->TypeName(*id);
-	    if (type.empty() || type == "COMPLEX_ENTITY") {
-		lazy_complex_instance_ids.push_back(*id);
-		const std::vector<std::string> components =
-		    complex_entity_keywords(lazy_session->SourceRecord(*id));
-		if (components.empty()) {
-		    record_type("COMPLEX_ENTITY");
-		} else {
-		    for (std::vector<std::string>::const_iterator component =
-			    components.begin(); component != components.end(); ++component)
-			record_type(*component);
-		}
-	    } else {
-		record_type(type);
-	    }
+	brlcad::step::STEPLazyInventory inventory = lazy_session->Inventory();
+	for (const auto &entry : inventory.ordinary_counts)
+	    if (entry.second)
+		record_type(entry.first, entry.second);
+	uint64_t completed = statistics.input_instances - inventory.complex_instances.size();
+	for (uint64_t id : inventory.complex_instances) {
+	    const std::vector<std::string> components =
+		complex_entity_keywords(lazy_session->SourceRecord(id));
+	    if (components.empty())
+		record_type("COMPLEX_ENTITY", 1);
+	    const std::vector<std::string> &indexed_components = lazy_session->ComponentTypes(id);
+	    /* Revisit a complex record during subtype queries only if STEPcode
+	     * did not index every component recognized by the census. */
+	    if (std::any_of(components.begin(), components.end(),
+		    [&indexed_components](const std::string &component) {
+			return std::find(indexed_components.begin(), indexed_components.end(),
+			    component) == indexed_components.end();
+		    }))
+		lazy_unindexed_complex_instance_ids.push_back(id);
+	    for (const std::string &component : components)
+		record_type(component, 1);
 	    ++completed;
-	    if ((completed & 0x3fff) == 0)
+	    if (completed % progress_stride == 0)
 		SetProgress("counting STEP entity types", completed,
-		    statistics.input_instances, static_cast<int64_t>(*id));
+		    statistics.input_instances, static_cast<int64_t>(id));
 	}
 	SetProgress("counting STEP entity types", completed,
 	    statistics.input_instances);
@@ -1985,8 +1985,8 @@ STEPWrapper::collectEntityCounts()
     for (int i = 0; i < InstanceCount(); ++i) {
 	SDAI_Application_instance *instance = InstanceAt(i);
 	if (!instance || !instance->EntityName()) continue;
-	record_type(instance->EntityName());
-	if ((i & 0x3fff) == 0)
+	record_type(instance->EntityName(), 1);
+	if (i % progress_stride == 0)
 	    SetProgress("counting STEP entity types", static_cast<uint64_t>(i),
 		statistics.input_instances, instance->STEPfile_id);
     }
