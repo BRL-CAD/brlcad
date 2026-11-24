@@ -8,11 +8,10 @@ inside - Creates a new shape that is _inside_ an existing shape.
 
 == SYNOPSIS
 
-[source]
-----
-inside [outside_shape_name new_inside_shape_name] {parameters}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*inside* _outside_object_ [_inside_arguments_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

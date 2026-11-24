@@ -8,11 +8,22 @@ edit - Edit objects in the database by translating, rotating, scaling, and other
 
 == SYNOPSIS
 
-[source]
-----
-edit [options] [geometry_specifier] subcommand [subcommand_args]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*edit* [*-h*] [*-v*] [*-S*] [*-f*] [*-F*] [*-i*] [*--occurrence*] [*--list-all-prim-ops*[=_json_]]
+     [*-O* _key=value_] [_geometry_] [_operation_] [_arguments_ ...]
+*edit*
+*edit translate* [*-a* | *-r*] [*-x*] [*-y*] [*-z*] [*-n*] [*-k* _FROM_] _destination_ ...
+*edit tra* _translation_ ...
+*edit rotate* [*-R*] [*-x*] [*-y*] [*-z*] [*-o*] [*-n*] [*-k* _FROM_] [*-a* _TO_] [*-r* _TO_]
+            [*-c* _CENTER_] [*-O* _ORIGIN_] [*-d* _ANGLE_] [_angle_ ...]
+*edit scale* [*-k* _FROM_] [*-a* _TO_] [*-r* _TO_] [*-c* _CENTER_] [*-n*] [_factor_ ...]
+*edit checkpoint*
+*edit revert*
+*edit reset*
+*edit mat* _element_ ...
+*edit perturb* _factor_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -102,7 +113,7 @@ A geometry specifier identifies the object to act on.  Supported forms:
   only; do not write to the database or close the session.  Use the lifecycle
   subcommands to inspect, commit, or discard the pending state.
 
-*-O key=value*, *--option key=value*::
+*-O* _key=value_, *--option*=_key=value_::
   Pass a dynamic option to the edit session.  The available options depend on
   the selected primitive and operation.
 
@@ -128,7 +139,7 @@ A geometry specifier identifies the object to act on.  Supported forms:
   Print a human-readable list of available descriptor-defined edit
   operations for all primitive types.
 
-*--list-all-prim-ops=json*::
+*--list-all-prim-ops*=_json_::
   Print the same information as a JSON array.
 
 
@@ -188,7 +199,7 @@ complete option reference and examples.
 *-x*, *-y*, *-z*::
   Restrict the translation to the specified axis only.
 
-*-k FROM*::
+*-k* _FROM_::
   Set the reference keypoint.  *FROM* may be an object name or a
   position `x y z`.
 
@@ -224,13 +235,13 @@ model, and examples.
 *-x*, *-y*, *-z*::
   Restrict the rotation to the specified axis (Euler mode).
 
-*-k AXIS_FROM*, *-a/-r AXIS_TO*::
+*-k* _AXIS_FROM_, *-a*\|*-r* _AXIS_TO_::
   Supply an explicit axis of rotation (axis mode).
 
-*-c CENTER*::
+*-c* _CENTER_::
   Set the pivot center (defaults to bounding-box center).
 
-*-O ANGLE_ORIGIN*, *-d DEGREES*::
+*-O* _ANGLE_ORIGIN_, *-d* _DEGREES_::
   Set the angle origin and explicit rotation angle.
 
 .Quick examples
@@ -257,14 +268,14 @@ Scales the object by a uniform or per-axis factor.  See
 *edit scale*(nged) for the complete option reference, the SCALE
 reference-frame model, and examples.
 
-*-k FROM*::
+*-k* _FROM_::
   Reference "from" position.  Defaults to the object keypoint.
 
-*-a TO*, *-r TO*::
+*-a* _TO_, *-r* _TO_::
   "To" position (absolute or relative).  Together with *-k*, defines
   the reference scale vector.
 
-*-c CENTER*::
+*-c* _CENTER_::
   Center of the scaling operation.
 
 .Quick examples

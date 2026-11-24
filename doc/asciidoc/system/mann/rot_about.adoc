@@ -8,11 +8,10 @@ rot_about - get or set the point about which view rotations are performed
 
 == SYNOPSIS
 
-[source]
-----
-rot_about
-rot_about e|k|m|v
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rot_about* [(*e* | *k* | *m* | *v*)]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

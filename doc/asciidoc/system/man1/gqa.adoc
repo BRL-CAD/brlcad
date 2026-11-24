@@ -8,10 +8,17 @@ gqa - quantitative geometry analysis tool
 
 == SYNOPSIS
 
-[source]
-----
-gqa [options] model.g object [object ...]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*gqa* [*-A* _types_] [*-a* _angle_] [*-d*] [*-e* _angle_] [*-f* _file_] [*-g* _spacing_] [*-G*]
+    [*-n* _count_] [*-N* _count_] [*-p* _prefix_] [*-P* _count_] [*-q*] [*-r*] [*-S* _count_]
+    [*-t* _distance_] [*-U* _boolean_] [*-u* _length,volume,weight_] [*-v*] [*-V* _volume_]
+    [*-W* _weight_] *-h* [_raw_arguments_ ...]
+*gqa* [*-A* _types_] [*-a* _angle_] [*-d*] [*-e* _angle_] [*-f* _file_] [*-g* _spacing_] [*-G*]
+    [*-n* _count_] [*-N* _count_] [*-p* _prefix_] [*-P* _count_] [*-q*] [*-r*] [*-S* _count_]
+    [*-t* _distance_] [*-U* _boolean_] [*-u* _length,volume,weight_] [*-v*] [*-V* _volume_]
+    [*-W* _weight_] _database.g_ _object_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 
 [[description]]
@@ -144,8 +151,76 @@ Other analyses in the error detection category behave in a similar manner.
 [[options]]
 == OPTIONS
 
+// BEGIN GENERATED BU_ARG OPTIONS
+*-A* _types_, *--analysis*=_types_::
+  Select analyses. Accepted values: *A*, *a*, *b*, *c*, *e*, *g*, *m*, *o*, *p*, *v*, *w*.
 
-*-A* __analysis_flags__::
+*-a* _angle_, *--azimuth*=_angle_::
+  Set the azimuth angle.
+
+*-d*, *--debug*::
+  Enable diagnostic output.
+
+*-e* _angle_, *--elevation*=_angle_::
+  Set the elevation angle.
+
+*-f* _file_, *--density-file*=_file_::
+  Read material densities from this file.
+
+*-g* _spacing_, *--grid-spacing*=_spacing_::
+  Set the grid-spacing limit or initial and limiting spacings.
+
+*-G*, *--overlap-assemblies*::
+  Create overlap assemblies (not implemented).
+
+*-n* _count_, *--required-hits*=_count_::
+  Require at least this many ray hits per region.
+
+*-N* _count_, *--views*=_count_::
+  Compute the first one, two, or three views.
+
+*-p* _prefix_, *--plot-prefix*=_prefix_::
+  Write analysis plot files using this prefix.
+
+*-P* _count_, *--processors*=_count_::
+  Use at most this many processors.
+
+*-q*, *--quiet*::
+  Suppress reporting for regions that were not hit.
+
+*-r*, *--region-stats*::
+  Print per-region weight and volume statistics.
+
+*-S* _count_, *--samples*=_count_::
+  Set the minimum samples per model axis (greater than 1).
+
+*-t* _distance_, *--overlap-tolerance*=_distance_::
+  Ignore overlaps shorter than this nonnegative distance.
+
+*-U* _boolean_, *--use-air*=_boolean_::
+  Include or exclude air regions.
+
+*-u* _length,volume,weight_, *--units*=_length,volume,weight_::
+  Set the reporting units.
+
+*-v*, *--verbose*::
+  Report analysis progress.
+
+*-V* _volume_, *--volume-tolerance*=_volume_::
+  Set the convergence tolerance for volume calculations.
+
+*-W* _weight_, *--weight-tolerance*=_weight_::
+  Set the convergence tolerance for weight calculations.
+
+*-h*, *--help*::
+  Print help and exit.
+
+// END GENERATED BU_ARG OPTIONS
+
+[[option_details]]
+== OPTION DETAILS
+
+*-A* __analysis_flags__, *--analysis*=__analysis_flags__::
 Specifies which computations are to be performed and reported. The __analysis_flags__ parameter is one or more of the following:
 +
 
@@ -238,25 +313,25 @@ gqa -Am model.g object1 object2
 ----
 
 
-*-a* __azimuth_deg__::
+*-a* __azimuth_deg__, *--azimuth*=__azimuth_deg__::
 Sets the azimuth (in degrees) of a single oblique view direction. Supplying *-a* and/or *-e* replaces the default three axis-aligned (X, Y, Z) views with one view whose ray direction and sampling grid are derived from the given azimuth/elevation via an az/el rotation (azimuth about +Z, elevation from the XY plane). The default is 0. See also *-e* .
 +
 NOTE: Area and mass figures reported for an oblique az/el view are approximate; overlap detection along the specified view direction is exact.
 
 
-*-e* __elevation_deg__::
+*-e* __elevation_deg__, *--elevation*=__elevation_deg__::
 Sets the elevation (in degrees) of a single oblique view direction. Supplying *-a* and/or *-e* replaces the default three axis-aligned (X, Y, Z) views with one view whose ray direction and sampling grid are derived from the given azimuth/elevation via an az/el rotation (elevation from the XY plane). The default is 0. See also *-a* .
 
 
-*-d*::
+*-d*, *--debug*::
 Enables debugging (off by default).
 
 
-*-f* _filename_::
+*-f* _filename_, *--density-file*=_filename_::
 Specifies that density values should be taken from an external file instead of from the *_DENSITIES* object in the database. This option can be useful when developing the density table with a text editor, prior to importing it to the geometric database.
 
 
-*-g* [__initial_grid_spacing__-]__grid_spacing_limit__ or [__initial_grid_spacing__, ]__grid_spacing_limit__::
+*-g* [__initial_grid_spacing__-]__grid_spacing_limit__ or [__initial_grid_spacing__, ]__grid_spacing_limit__, *--grid-spacing*=__spacing__::
 Specifies a limit on how far the grid can be refined and optionally the initial spacing between rays in the grids. The first value (if present) indicates the initial spacing between grid rays. The mandatory argument, __grid_spacing_limit__, indicates a lower bound on how fine the grid spacing may get before computation is terminated. In general, the __initial_grid_spacing__ value should be an integer power of the __grid_spacing_limit__. So for example, if __grid_spacing_limit__ has the value 1, then any __initial_grid_spacing__ specified should be in the sequence 2, 4, 8, 16, 32... so that the grid will refine to precisely the lower limit. The grid spacing may be specified with units. For example: *5 mm* or *10 in* . If units are not provided, millimeters are presumed to be the units.
 +
 The default initial spacing is 50.0 mm.  The default lower limit is ten times
@@ -270,7 +345,7 @@ multiple of it.  For example, *-g 10mm,1mm* tests spacings of 10, 5, 2.5, and
 
 
 
-*-G*::
+*-G*, *--overlap-assemblies*::
 *Not Implemented*
 +
 Specifies that the program should create new _assembly combinations_ in the geometry database to represent the overlap pairs. This flag is meaningless if overlap reporting is not turned on with the *-A* option. If regions _rod.r_ and _disk.r_ overlap, this option will cause the creation of an assembly called `_OVERLAP_rod.r_disk.r`, which includes the following items:
@@ -282,7 +357,7 @@ Specifies that the program should create new _assembly combinations_ in the geom
 The last item is an object to represent the overlapping area so that it can be easily seen. The default is that no groups are created.
 
 
-*-n* __num_hits__::
+*-n* __num_hits__, *--required-hits*=__num_hits__::
 Specifies that the grid be refined until each region has at least __num_hits__ ray intersections. It applies only when weight or volume calculations are being performed. This limit is not applied per-view, but rather per-analysis. So, for example, it is accepted that a thin object might not be hit at all from one view, but might be hit when it is shot from other views.
 +
 The default is 1. Hence, each region must be intersected by a ray at least once during the analysis.
@@ -290,53 +365,57 @@ The default is 1. Hence, each region must be intersected by a ray at least once 
 
 
 
-*-N* __num_views__::
-Specifies that only the first __num_views__ should be computed. This is principally a debugging option.
+*-N* __num_views__, *--views*=__num_views__::
+Specifies that only the first __num_views__ should be computed, where the
+value is 1, 2, or 3. This is principally a debugging option.
 
 
-*-p* __plot_prefix__::
+*-p* __plot_prefix__, *--plot-prefix*=__plot_prefix__::
 Specifies that *gqa* should produce plot files for each of the analyses it performs. Depending on the analysis type(s) requested, plot files will be named with the specified prefix prepended to one of volume.plot3, gaps.plot3, overlaps.plot3, adj_air.plot3, and/or exp_air.plot3 accordingly. Plot data can be visualized in _mged_ with the _overlay_ command. Each of the different analysis types write to a separate plot file and use different colors for drawing.
 
 
-*-P* _ncpu_::
+*-P* _ncpu_, *--processors*=_ncpu_::
 Specifies that _ncpu_ CPUs should be used for performing the calculation. By default, all local CPUs are utilized. This option exists primarily to reduce the number of computation threads from the machine maximum. Note that specifying more CPUs than are present on the machine does not increase the number of computation threads.
 
 
-*-q*::
+*-q*, *--quiet*::
 Quiets (suppresses) the "was not hit" reporting.
 
 
-*-r*::
+*-r*, *--region-stats*::
 Indicates that *gqa* should print per-region statistics for weight and volume as well as the values for the objects specified on the command line.
 
 
-*-S* __samples_per_model_axis__::
+*-S* __samples_per_model_axis__, *--samples*=__samples_per_model_axis__::
 Specifies that the grid spacing will be initially refined so that at least __samples_per_axis_min__ will be shot along each axis of the bounding box of the model. For example, if the objects specified have a bounding box of 0 0 0 -> 4 3 2 and the grid spacing is 1.0, specifying the option *-S 4* will cause the initial grid spacing to be adjusted to 0.5 so that 4 samples will be shot across the Z dimension of the bounding box. The default is to ensure 1 ray per model grid axis.
 
 
-*-t* __overlap_tolerance__::
-Sets the tolerance for computing overlaps. The __overlap_tolerance__ must be a positive number equal to or greater than 0.0. Any overlap smaller than the value specified will be ignored. The default value is 0.0, which causes any overlap to be reported/processed. The value may be specified with a unit specifier such as: *-t 1.0mm* or *-t 0.25in.*
+*-t* __overlap_tolerance__, *--overlap-tolerance*=__overlap_tolerance__::
+Sets the tolerance for computing overlaps. The __overlap_tolerance__ must be
+nonnegative. Any overlap smaller than the value specified will be ignored.
+The default value is 0.0, which causes any overlap to be reported or
+processed. The value may include units, as in *-t 1.0mm* or *-t 0.25in.*.
 
 
-*-U* __use_air__::
+*-U* __use_air__, *--use-air*=__use_air__::
 Specifies the Boolean value (0 or 1) for __use_air__ which indicates whether regions which are marked as "air" should be retained and included in the raytrace. *Unlike other BRL-CAD raytracing applications, the default is to retain air in the raytracing.* The *-U 0* option causes air regions to be discarded prior to raytracing. If you turn off use_air, and request any analysis that requires it (see *-A* above), then the program will exit with an error message.
 
 
-*-u* __distance_units,volume_units,weight_units__::
+*-u* __distance_units,volume_units,weight_units__, *--units*=__distance_units,volume_units,weight_units__::
 Specify the units used when reporting values. Values must be comma delimited and provided in the order __distance_units__, __volume_units__, __weight_units__. For example: *-u "cm,cu ft,kg"* or *-u ,,kg* (The latter example sets only the weight units.) Note that the entire value must be quoted when a unit name, such as _cu ft_, contains a space.
 +
 The default units are millimeters, cubic millimeters, and grams.
 
 
-*-v*::
+*-v*, *--verbose*::
 Turns on verbose reporting of computation progress. This is useful for learning how the computation is progressing, and what tolerances are causing further computation to be necessary.
 
 
-*-V* __volume_tolerance[units]__::
+*-V* __volume_tolerance[units]__, *--volume-tolerance*=__volume_tolerance[units]__::
 Specifies a volumetric tolerance value that the three view computations must be within for computation to complete. If volume calculation is selected and this option is not set, then the tolerance is set to 1/1,000 of the volume of the model bounding box. For large, complex objects (such as entire vehicles), this value might need to be set larger to achieve reasonable runtimes (or even completion). Given the approximate sampling nature of the algorithm, the three separate view computations will not usually produce identical results.
 
 
-*-W* __weight_tolerance[units]__::
+*-W* __weight_tolerance[units]__, *--weight-tolerance*=__weight_tolerance[units]__::
 This is like the volume tolerance, *-V*, but is applied to the weight computation results, not the volume computation results.
 +
 The weight computation tolerance is probably more appropriate when doing whole-vehicle analysis. If weight computation is selected, it is set to a value equal to the weight of an object 1/100 the size of the model, which is made of the most dense material in the table.

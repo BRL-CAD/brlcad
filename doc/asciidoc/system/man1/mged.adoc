@@ -8,11 +8,20 @@ mged - multi-display interactive combinatorial solid geometry editor
 
 == SYNOPSIS
 
-[source]
-----
-mged [options] [_database.g_ [_command_]]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*mged* [*-a* _type_] [*-d* _screen_] [*-r*] [*-p*] [*-c*] [*-C*] [*-b*] [*-x* _hex_] [*-X* _hex_]
+     [*-v*] [*-h*] [*-?*] [*-o*] [*--rcfile* _file_] [*--no-rc*] [*--set* _VAR=VALUE_]
+     [*--rset* _ARGS_] [*--use-air*] [*--no-use-air*] [*--dlist*] [*--no-dlist*] [*--faceplate*]
+     [*--no-faceplate*] [*--predictor*] [*--no-predictor*] [*--linewidth* _#_] [*--linestyle* _s|d_]
+     [*--perspective* _#_] [*--eye-sep-dist* _#_] [*--port* _#_] [*--coords* _m|v_]
+     [*--rotate-about* _m|v|e_] [*--transform* _v|a|e_] [*--nmg-eu-dist* _#_]
+     [*--mouse-behavior* _v|a|e_] [*--predictor-advance* _#_] [*--predictor-length* _#_]
+     [*--perspective-mode* _0|1_] [*--context* _0|1_] [*--sliders* _0|1_] [*--hot-key* _#_]
+     [*--fb-overlay* _0|1|2_] [*--dm-type* _type_] [*--geom* _WxH+X+Y_] [*--ggeom* _WxH+X+Y_]
+     [*--grid-draw* _0|1_] [*--grid-snap* _0|1_] [*--grid-rh* _#_] [*--grid-rv* _#_]
+     [*--grid-mrh* _#_] [*--grid-mrv* _#_] [*--bg* _R G B_] [*--geo-color* _R G B_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -68,6 +77,9 @@ Instructs _MGED_ to use the classic command-line interface instead of the Tcl/Tk
 
 *-C*, *--gui*::
 Instructs _MGED_ to start in GUI (non-classic) mode. This is the default when standard input is a terminal on platforms that support graphics. It also explicitly requests the GUI when standard input or output is redirected. With redirected input, commands and output remain connected to the invoking process without terminal prompts; add *-p* when command-completion sentinels are also needed.
+
+*-o*::
+Uses the legacy GUI implementation. This is a developer compatibility option.
 
 *-p*, *--pipe*::
 Enables pipe mode. In this mode _MGED_ emits a `MGED_CMD_DONE <status>` sentinel to stdout after every command completes on stdin, making it suitable for use as a subprocess driven by an automated tool.
@@ -149,8 +161,8 @@ Sets the NMG edge-use distance tolerance.
 
 === Framebuffer
 
-*--fb*, *--no-fb* (via --set)::
-Use `--set fb=1` or `--set fb=0` to enable or disable framebuffer overlay.
+`fb=1` / `fb=0` (via *--set*)::
+Use *--set* with these values to enable or disable framebuffer overlay.
 
 *--fb-overlay* _0|1|2_::
 Sets the framebuffer overlay mode: `0` (framebuffer under geometry), `1` (interleaved), `2` (framebuffer over geometry).
@@ -224,6 +236,11 @@ _MGED_ searches for a startup configuration file (`.mgedrc`) in three locations,
 . If the environment variable `MGED_RCFILE` is set, that path is used.
 . If the environment variable `HOME` is set, `$HOME/.mgedrc` is used.
 . If `.mgedrc` exists in the current working directory, it is used.
+
+The command prompt completion policy may be persisted with
+`set mged_default(completion_mode) mode` in _.mgedrc_, or selected with the
+*BRLCAD_MGED_COMPLETION_MODE* and *BRLCAD_COMPLETION_MODE* environment
+variables.  See *brlcad-completion*(5) for the supported modes and precedence.
 
 The first file found is used and the others are ignored. Default rc file discovery is skipped in headless operation. Use *--rcfile* to load an explicit file in any mode, including headless operation, or *--no-rc* to skip rc file processing entirely.
 
@@ -350,7 +367,7 @@ $ mged --rset "g snap 1" --rset "g rh 10" model.g
 
 _Computer Graphics for Target Descriptions_, BRL Technical Report ARBRL-TR-02480, _GED: An Interactive Solid Modeling System for Vulnerability Assessments_
 
-*brlcad*(1), *rt*(1), *comgeom-g*(1), *vdeck*(1), *librt*(3)
+*brlcad*(1), *rt*(1), *comgeom-g*(1), *vdeck*(1), *librt*(3), *brlcad-completion*(5)
 
 
 [[diagnostics]]

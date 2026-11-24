@@ -8,10 +8,10 @@ importfg4section - create an object by importing the specified section
 
 == SYNOPSIS
 
-[source]
-----
-importfg4section obj "section_data"
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*importFg4Section* _object_ _section_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

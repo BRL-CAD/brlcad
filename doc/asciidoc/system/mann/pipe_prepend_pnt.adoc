@@ -8,11 +8,10 @@ pipe_prepend_pnt - Insert a control point at the beginning of a PIPE primitive.
 
 == SYNOPSIS
 
-[source]
-----
-pipe_prepend_pnt pipe {x y z}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pipe_prepend_pnt* _pipe_ _point_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,20 +8,15 @@ data_lines - Manage an arbitrary line set attached to the current view.
 
 == SYNOPSIS
 
-[source]
-----
-data_lines draw [0|1]
-data_lines color [r g b]
-data_lines line_width [width]
-data_lines points [{{x y z} {x y z} ...}]
-data_lines snap [0|1]
-view data_lines draw [0|1]
-view data_lines color [r g b]
-view data_lines line_width [width]
-view data_lines points [{{x y z} {x y z} ...}]
-view data_lines snap [0|1]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*data_lines*
+*data_lines draw* [_arguments_ ...]
+*data_lines color* [_arguments_ ...]
+*data_lines line_width* [_arguments_ ...]
+*data_lines points* [_arguments_ ...]
+*data_lines snap* [_arguments_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

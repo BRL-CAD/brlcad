@@ -8,12 +8,11 @@ pixembed - embed a pix image in a larger frame, replicating border pixels
 
 == SYNOPSIS
 
-[source]
-----
-pixembed [-b border_inset] [-s squareinsize] [-w inwidth] [-n inheight]
-         [-S squareoutsize] [-W outwidth] [-N outheight] [in.pix] > out.pix
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixembed* [*-b* _pixels_] [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_] [*-S* _pixels_]
+         [*-W* _pixels_] [*-N* _pixels_] [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -37,27 +36,30 @@ the inset.
 [[options]]
 == OPTIONS
 
-*-b* _border_inset_::
+*-b* _border_inset_, *--border-inset* _border_inset_::
   Inset, in pixels, from the actual image edge at which the replicated border
   color is sampled. The default is 0 (the exact edge pixels are replicated).
 
-*-s* _squareinsize_::
+*-s* _squareinsize_, *--input-size* _squareinsize_::
   Set both the width and height of the input image to _squareinsize_ pixels.
 
-*-w* _inwidth_::
+*-w* _inwidth_, *--input-width* _inwidth_::
   Set the width of the input image to _inwidth_ pixels (default 512).
 
-*-n* _inheight_::
+*-n* _inheight_, *--input-height* _inheight_::
   Set the height of the input image to _inheight_ pixels (default 512).
 
-*-S* _squareoutsize_::
+*-S* _squareoutsize_, *--output-size* _squareoutsize_::
   Set both the width and height of the output image to _squareoutsize_ pixels.
 
-*-W* _outwidth_::
+*-W* _outwidth_, *--output-width* _outwidth_::
   Set the width of the output image to _outwidth_ pixels (default 512).
 
-*-N* _outheight_::
+*-N* _outheight_, *--output-height* _outheight_::
   Set the height of the output image to _outheight_ pixels (default 512).
+
+*-h*, *-?*, *--help*::
+  Print a usage message and exit.
 
 [[examples]]
 == EXAMPLES

@@ -8,11 +8,10 @@ help - Returns a list of available MGED commands along with a one-line usage mes
 
 == SYNOPSIS
 
-[source]
-----
-help [command]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*help* [_topic_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

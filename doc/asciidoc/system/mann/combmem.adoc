@@ -8,11 +8,10 @@ combmem - get or set combination member transformation matrices in decomposed fo
 
 == SYNOPSIS
 
-[source]
-----
-combmem [-i type] [-r type] comb [op1 name1 az1 el1 tw1 x1 y1 z1 sa1 sx1 sy1 sz1 ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*combmem* [*-i* _type_] [*-r* _type_] _combination_ [_member_records_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -25,10 +24,10 @@ With member arguments, it sets the transformation for each listed member, constr
 
 === Options
 
-*-i type*::
+*-i* _type_::
 Set the input format type for interpreting transformation data. Affects how the `az el tw x y z sa sx sy sz` parameters are parsed and assembled into a matrix.
 
-*-r type*::
+*-r* _type_::
 Set the representation type for matrix output when reading.
 
 === Member specification

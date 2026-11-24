@@ -8,11 +8,10 @@ g - Creates a special type of combination often referred to as a group. This bui
 
 == SYNOPSIS
 
-[source]
-----
-g {groupname} {objects}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*g* _output_group_ _objects_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

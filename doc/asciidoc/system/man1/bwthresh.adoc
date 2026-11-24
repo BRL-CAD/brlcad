@@ -8,10 +8,10 @@ bwthresh - threshold a black-and-white bw file into intensity bins
 
 == SYNOPSIS
 
-[source]
-----
-bwthresh [-h | -?] _val_... < file.bw > output.bw
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bwthresh* _threshold_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -34,9 +34,8 @@ supplied.
 [[options]]
 == OPTIONS
 
-*-h*, *-?*::
-  Print a usage message and exit.  Recognized only when given as the sole
-  argument.
+*-h*, *--help*::
+  Print help and exit.
 
 _val_...::
   One or more threshold values.  Each must be an integer between 0 and 255

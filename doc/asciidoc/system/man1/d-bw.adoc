@@ -9,11 +9,10 @@ d-bw - convert double-precision binary numbers to unsigned bytes
 
 == SYNOPSIS
 
-[source]
-----
-d-bw [-n | scale] < doubles > unsigned_chars
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*d-bw* [*-n*] [_scale_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -45,7 +44,10 @@ deprecation warning on startup.
 [[options]]
 == OPTIONS
 
-*-n*::
+*-h*, *--help*::
+  Print command help and exit.
+
+*-n*, *--normalize*::
   Normalize the data by using a scale factor of 255.0, mapping input
   values in the range 0.0 to 1.0 onto the output range 0 to 255.
 

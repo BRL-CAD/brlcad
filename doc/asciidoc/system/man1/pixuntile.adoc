@@ -8,12 +8,11 @@ pixuntile - break image up into separate files
 
 == SYNOPSIS
 
-[source]
-----
-pixuntile [-s _squareinsize_] [-w _in_width_] [-n _in_height_] [-S _squareoutsize_] [-W _out_width_] [-N _out_height_] [-o _startframe_] _basename_ < file.pix
-pixuntile [-s _squareinsize_] [-w _in_width_] [-n _in_height_] [-S _squareoutsize_] [-W _out_width_] [-N _out_height_] _file1_ [_file2_ ... _fileN_] < file.pix
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixuntile* [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_] [*-S* _pixels_] [*-W* _pixels_]
+          [*-N* _pixels_] [*-o* _integer_] _basename-or-file_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -28,26 +27,29 @@ If a single _basename_ is given, the output files are named _basename.num_, wher
 [[options]]
 == OPTIONS
 
-*-s* _squareinsize_::
+*-s* _squareinsize_, *--input-size* _squareinsize_::
   Set the input image width and height to _squareinsize_ pixels.
 
-*-w* _in_width_::
+*-w* _in_width_, *--input-width* _in_width_::
   Set the input image width to _in_width_ pixels (default 512).
 
-*-n* _in_height_::
+*-n* _in_height_, *--input-height* _in_height_::
   Set the input image height to _in_height_ pixels (default 512).
 
-*-S* _squareoutsize_::
+*-S* _squareoutsize_, *--output-size* _squareoutsize_::
   Set the output sub-image width and height to _squareoutsize_ pixels.
 
-*-W* _out_width_::
+*-W* _out_width_, *--output-width* _out_width_::
   Set the output sub-image width to _out_width_ pixels (default 64).
 
-*-N* _out_height_::
+*-N* _out_height_, *--output-height* _out_height_::
   Set the output sub-image height to _out_height_ pixels (default 64).
 
-*-o* _startframe_::
+*-o* _startframe_, *--start-frame* _startframe_::
   Number the first output file _startframe_ instead of 0, when a single _basename_ is given.
+
+*-h*, *-?*, *--help*::
+  Print a usage message and exit.
 
 
 [[examples]]

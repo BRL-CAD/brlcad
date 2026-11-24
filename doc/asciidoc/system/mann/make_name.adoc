@@ -8,10 +8,11 @@ make_name - make a unique name
 
 == SYNOPSIS
 
-[source]
-----
-make_name template | -s [num]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*make_name* *-s* [_[num]_]
+*make_name* _template_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -29,7 +30,7 @@ The counter is shared across all calls within the same session and persists unti
 [[options]]
 == OPTIONS
 
-*-s [num]*::
+*-s* [_num_]::
 Set the internal counter to `num`. If `num` is omitted, the counter is reset to 0.
 
 [[examples]]

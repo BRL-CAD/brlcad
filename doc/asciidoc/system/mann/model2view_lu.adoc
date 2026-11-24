@@ -8,10 +8,10 @@ model2view_lu - convert model xyz to view coordinates (local units)
 
 == SYNOPSIS
 
-[source]
-----
-model2view_lu x y z
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*model2view_lu* _point_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

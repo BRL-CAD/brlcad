@@ -153,14 +153,14 @@ The GCV plugin API is declared in `include/gcv/api.h`. Plugins provide an extern
 |`filter_type`
 |Specifies the type of filter.
 |`create_opts_fn`
-|Optional pointer to a function that allocates and initializes `struct bu_opt_desc` data and an opaque pointer for storing the option data. If non-`NULL`, `free_opts_fn` must also be specified. This member is private for use by libgcv and the associated plugin.
+|Optional pointer to a function that returns a `struct bu_arg_schema` and allocates an opaque pointer for storing the option data. If non-`NULL`, `free_opts_fn` must also be specified. This member is private for use by libgcv and the associated plugin.
 |`free_opts_fn`
 |Optional pointer to a function that frees any opaque pointer allocated by `create_opts_fn`. This member is private for use by libgcv and the associated plugin.
 |`filter_fn`
 |Pointer to a function which performs the filter operation. The `db_i` passed to a writer function within a `gcv_context` is marked read-only (the pointer is to a non-`const` struct due to in-memory data that may be modified). Filters of type `GCV_FILTER_FILTER` receive a `NULL` value for `target`. Must return `1` on success and `0` on failure. This member is private for use by libgcv and the associated plugin.
 |===
 
-As shown in the above table, filters may initialize data structures for processing command-line style option strings via `bu_opt`. Please refer to `include/bu/opt.h` for full documentation on the `bu_opt` API.
+As shown in the above table, filters may publish a `bu_arg_schema` and initialize data structures for processing command-line style option strings. Please refer to `include/bu/arg.h` for the argument API documentation.
 
 === Utility Functions
 

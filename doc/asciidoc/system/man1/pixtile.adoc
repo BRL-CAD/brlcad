@@ -8,12 +8,11 @@ pixtile - paste small images together into one large image
 
 == SYNOPSIS
 
-[source]
-----
-pixtile [-s squareinsize] [-w file_width] [-n file_height] [-S squareoutsize] [-W out_width] [-N out_height] [-o startframe] basename > file.pix
-pixtile [-s squareinsize] [-w file_width] [-n file_height] [-S squareoutsize] [-W out_width] [-N out_height] file1 file2 ... fileN > file.pix
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixtile* [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_] [*-S* _pixels_] [*-W* _pixels_]
+        [*-N* _pixels_] [*-o* _integer_] _basename-or-file_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -22,35 +21,35 @@ pixtile [-s squareinsize] [-w file_width] [-n file_height] [-S squareoutsize] [-
 
 Images are placed from lower left to upper right. The program keeps reading small files until the next one does not exist or the output image is full. The progress of the composition is displayed on standard error.
 
-Two modes of operation are supported. If a single _basename_ is given, the input files are expected to be named _basename.num_, where _num_ is a consecutive series of integers starting at 0 (or at the value of *-o*). If a _basename_ of "-" is given (preceded by "--" to terminate *bu_getopt*(3) processing), the stream of images is read from standard input instead, and may be split apart again with *pixbustup*(1). Alternatively, if more than one filename is supplied, those files are used explicitly and the *-o* flag is not valid.
+Two modes of operation are supported. If a single _basename_ is given, the input files are expected to be named _basename.num_, where _num_ is a consecutive series of integers starting at 0 (or at the value of *-o*). If a _basename_ of "-" is given (preceded by "--" to end option processing), the stream of images is read from standard input instead, and may be split apart again with *pixbustup*(1). Alternatively, if more than one filename is supplied, those files are used explicitly. In that mode, *-o* changes the frame numbers reported in the progress output but does not alter the filenames.
 
 Tiling many small low-resolution frames into a single image allows the collection to serve as an animation preview for a higher-resolution sequence.
 
 [[options]]
 == OPTIONS
 
-*-s* _squareinsize_::
+*-s* _squareinsize_, *--input-size* _squareinsize_::
   Set both the width and height of the input images, in pixels. The default is 64.
 
-*-w* _file_width_::
+*-w* _file_width_, *--input-width* _file_width_::
   Set the width (pixels per scanline) of the input images. The default is 64.
 
-*-n* _file_height_::
+*-n* _file_height_, *--input-height* _file_height_::
   Set the height (number of scanlines) of the input images. The default is 64.
 
-*-S* _squareoutsize_::
+*-S* _squareoutsize_, *--output-size* _squareoutsize_::
   Set both the width and height of the output image, in pixels. The default is 512.
 
-*-W* _out_width_::
+*-W* _out_width_, *--output-width* _out_width_::
   Set the width (pixels per scanline) of the output image. The default is 512.
 
-*-N* _out_height_::
+*-N* _out_height_, *--output-height* _out_height_::
   Set the height (number of scanlines) of the output image. The default is 512.
 
-*-o* _startframe_::
-  Set the starting frame number, substituted for _num_ in _basename.num_. The default is 0. Not valid when an explicit list of filenames is given.
+*-o* _startframe_, *--start-frame* _startframe_::
+  Set the starting frame number. The number is substituted for _num_ in _basename.num_ and labels progress output. The default is 0.
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a usage message and exit.
 
 [[examples]]

@@ -8,11 +8,10 @@ png-pix - convert a PNG image to a BRL-CAD pix image
 
 == SYNOPSIS
 
-[source]
-----
-png-pix [-v] [png_input_file] > pix_output_file
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*png-pix* [*-v*] [_png-input-file_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -29,10 +28,13 @@ bits, and any alpha channel is composited over the image background color.
 [[options]]
 == OPTIONS
 
-*-v*::
+*-v*, *--verbose*::
   Verbose. Print the PNG color type, bit depth, image dimensions, background
   color, gamma, interlace status, embedded text chunks, and modification time to
   standard error.
+
+*-h*, *-?*, *--help*::
+  Print command help and exit.
 
 [[examples]]
 == EXAMPLES

@@ -9,11 +9,11 @@ nastran-g - convert a NASTRAN finite element model to a BRL-CAD database
 
 == SYNOPSIS
 
-[source]
-----
-nastran-g [-n] [-m] [-t _tolerance_] [-x _lvl_] [-X _lvl_] [-i _nastran_file_] -o _database.g_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*nastran-g* [*-n*] [*-m*] [*-t* _millimeters_] [*-i* _model.bdf_] [*-o* _database.g_] [*-x* _mask_]
+          [*-X* _mask_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -39,30 +39,32 @@ model is assumed to be in inches.
 [[options]]
 == OPTIONS
 
-*-n*::
-  Write surfaces created from *CQUAD4* and *CTRIA3* elements as NMG solids
-  rather than as the default BOT solids.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-m*::
-  Treat the NASTRAN input as millimeters rather than the default inches.
+*-n*, *--nmg-surfaces*::
+  Write shell elements as NMG solids instead of BoT solids.
 
-*-t* _tolerance_::
-  Set the distance tolerance, in millimeters: two vertices closer than
-  this are treated as the same vertex. Defaults to the BRL-CAD distance
-  tolerance.
+*-m*, *--millimeters*::
+  Interpret input coordinates as millimeters instead of inches.
 
-*-x* _lvl_::
-  Set the librt debug flags to the given hexadecimal value.
+*-t* _millimeters_, *--distance-tolerance*=_millimeters_::
+  Set the nonnegative vertex-coincidence distance in millimeters (default BRL-CAD distance tolerance).
 
-*-X* _lvl_::
-  Set the NMG debug flags to the given hexadecimal value.
+*-i* _model.bdf_, *--input*=_model.bdf_::
+  Read the NASTRAN bulk data deck from this file instead of standard input.
 
-*-i* _nastran_file_::
-  Read the NASTRAN bulk data deck from _nastran_file_ instead of standard
-  input.
+*-o* _database.g_, *--output*=_database.g_::
+  Write the BRL-CAD database to this file (default nastran.g).
 
-*-o* _database.g_::
-  Write the converted geometry to _database.g_. Defaults to _nastran.g_.
+*-x* _mask_, *--rt-debug*=_mask_::
+  Set librt hexadecimal debug flags.
+
+*-X* _mask_, *--nmg-debug*=_mask_::
+  Set libnmg hexadecimal debug flags.
+
+// END GENERATED BU_ARG OPTIONS
 
 
 [[examples]]

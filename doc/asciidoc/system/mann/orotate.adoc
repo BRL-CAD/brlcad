@@ -8,11 +8,10 @@ orotate - rotate a database object about a keypoint
 
 == SYNOPSIS
 
-[source]
-----
-orotate obj rX rY rZ
-orotate obj rX rY rZ kX kY kZ
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*orotate* _object_ _rotation_ ... [_keypoint_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

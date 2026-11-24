@@ -8,17 +8,17 @@ gdiff - a BRL-CAD differential geometry comparator
 
 == SYNOPSIS
 
-[source]
-----
-gdiff [options]... left_model.g [ancestor_model.g] right_model.g
-----
-
-
-[source]
-----
-gdiff -G [grouping_options]... [pattern]...
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*gdiff* [*-a*] [*-d*] [*-m*] [*-u*] [*-F* _string_] [*-M* _merge.g_] [*-t* _#_] [*-v*]... [*-q*]...
+      [*--filename-threshold* _#_] [*--threshold* _#_] [*--use-objnames*] [*--use-geometry*]
+      [*--fast-geometry*] [*-P* _pattern_] [*--read-hashes* _file_] [*--write-hashes* _file_]
+      [*--display-paths* _mode_] *-G* [_pattern_ ...]
+*gdiff* [*-a*] [*-d*] [*-m*] [*-u*] [*-F* _string_] [*-M* _merge.g_] [*-t* _#_] [*-v*]... [*-q*]...
+      [*--filename-threshold* _#_] [*--threshold* _#_] [*--use-objnames*] [*--use-geometry*]
+      [*--fast-geometry*] [*-P* _pattern_] [*--read-hashes* _file_] [*--write-hashes* _file_]
+      [*--display-paths* _mode_] _left.g_ _ancestor-or-right.g_ [_right.g_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,10 @@ istats - compute basic statistics of a stream of short integers
 
 == SYNOPSIS
 
-[source]
-----
-istats [-h] [file]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*istats* [_file_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -32,7 +31,7 @@ operate on streams of doubles and unsigned chars respectively.
 [[options]]
 == OPTIONS
 
-*-h*::
+*-h*, *--help*::
   Print a usage message and exit. The *-?* form is also accepted.
 
 [[examples]]

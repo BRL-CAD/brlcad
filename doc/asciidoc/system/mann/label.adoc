@@ -8,11 +8,10 @@ label - attach a text label to displayed objects (not yet implemented)
 
 == SYNOPSIS
 
-[source]
-----
-label object(s)
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*label* _objects_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

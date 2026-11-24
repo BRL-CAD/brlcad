@@ -8,10 +8,10 @@ view_func - legacy view control multiplexer
 
 == SYNOPSIS
 
-[source]
-----
-view_func subcommand [args]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*view_func* _SUBCOMMAND_ [_ARGUMENT_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

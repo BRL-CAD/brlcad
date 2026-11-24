@@ -9,11 +9,10 @@ u-f - convert binary unsigned shorts to floats
 
 == SYNOPSIS
 
-[source]
-----
-u-f [-n | scale] < shorts > floats
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*u-f* [*-n*] [_scale_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -36,7 +35,10 @@ binary unsigned-short stream include *u-a*(1), *u-bw*(1), and *u-d*(1).
 [[options]]
 == OPTIONS
 
-*-n*::
+*-h*, *--help*::
+  Print command help and exit.
+
+*-n*, *--normalize*::
   Normalize the data, scaling every sample by 1/65536 so that the
   output values fall roughly between 0.0 and 1.0.
 

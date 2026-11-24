@@ -8,13 +8,19 @@ bot split - Split a BoT into edge-connected components.
 
 == SYNOPSIS
 
-[source]
-----
-bot split [--grp group_name] {bot}
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bot_split* _bot_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
-Compatibility form: `bot_split bot [bot ...]`.
+[[options]]
+== OPTIONS
 
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print command help.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[description]]
 == DESCRIPTION

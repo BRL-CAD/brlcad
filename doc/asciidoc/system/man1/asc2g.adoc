@@ -8,11 +8,10 @@ asc2g - convert a BRL-CAD geometry database from ASCII to binary form
 
 == SYNOPSIS
 
-[source]
-----
-asc2g [-h] input.asc output.g
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*asc2g* _input.asc_ _output.g_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -42,7 +41,7 @@ the current binary version, use *dbupgrade*(1) instead.
 [[options]]
 == OPTIONS
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a usage message and exit.
 
 

@@ -8,11 +8,10 @@ rtabort - terminate all active raytrace subprocess(es)
 
 == SYNOPSIS
 
-[source]
-----
-rtabort
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rtabort*
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

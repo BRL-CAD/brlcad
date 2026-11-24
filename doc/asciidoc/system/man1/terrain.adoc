@@ -8,13 +8,12 @@ terrain - generate a pseudo-terrain height field from procedural noise
 
 == SYNOPSIS
 
-[source]
-----
-terrain [-w x_postings] [-n y_postings] [-s xy_postings]
-        [-L lacunarity] [-H h_value] [-O octaves] [-S scale]
-        [-V x_scale,y_scale,z_scale] [-D x_delta,y_delta,z_delta]
-        [-o offset] [-f function] [-c] [-v] > file.dsp
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*terrain* [*-w* _postings_] [*-n* _postings_] [*-s* _postings_] [*-L* _factor_] [*-H* _value_]
+        [*-O* _count_] [*-S* _factor_] [*-V* _x,y,z_] [*-D* _x,y,z_] [*-o* _value_] [*-f* _name_]
+        [*-c*] [*-v*]
+// END GENERATED BU_ARG SYNOPSIS
 
 
 [[description]]
@@ -28,77 +27,95 @@ as unsigned 16-bit integers in network (big-endian) byte order. The
 default grid is 512 by 512 postings.
 
 The character of the terrain is controlled by selecting a noise function
-with *-f* and by tuning the fractal noise parameters. The standard
+with *--function* and by tuning the fractal noise parameters. The standard
 output must be redirected to a file; *terrain* refuses to write binary
 data to a terminal. The resulting file is in the same binary format
 produced by *asc2dsp*(1) and can be referenced directly by a *dsp* solid
 in MGED.
 
+Vector values may be written as one value with slash, comma, or semicolon
+separators, as one quoted space-separated value, or as three separate
+arguments. Options are applied from left to right. Consequently, a later
+*--width* or *--height* may override one dimension set by *--size*, and a
+later *--scale* or *--vector-scale* replaces the scale established by the
+earlier option.
+
 
 [[options]]
 == OPTIONS
 
-*-w* _x_postings_::
-  Number of grid points (postings) in the X dimension. Default is 512.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-n* _y_postings_::
-  Number of grid points (postings) in the Y dimension. Default is 512.
+*-w* _postings_, *--width*=_postings_::
+  Set X postings (default: 512).
 
-*-s* _xy_postings_::
-  Set the number of postings in both X and Y to the same value, producing
-  a square grid.
+*-n* _postings_, *--height*=_postings_::
+  Set Y postings (default: 512).
 
-*-L* _lacunarity_::
-  Scaling factor between successive octaves of noise. Practical values
-  are non-integer numbers between roughly 1.7 and 4.0. Default is
-  2.1753974.
+*-s* _postings_, *--size*=_postings_::
+  Set equal X and Y postings.
 
-*-H* _h_value_::
-  The fractal increment (H) in the noise equation, controlling how
-  detail diminishes across octaves. Usually near 1.0, which is the
-  default.
+*-L* _factor_, *--lacunarity*=_factor_::
+  Set positive scale between successive noise octaves (default: 2.1753974).
 
-*-O* _octaves_::
-  Number of octaves of noise to layer. Typical values are 2 through 8.
-  Default is 7.
+*-H* _value_, *--fractal-increment*=_value_::
+  Set positive fractal increment controlling detail across octaves (default: 1).
 
-*-S* _scale_::
-  Scale the noise uniformly in X, Y and Z by _scale_. Values below 1.0
-  make the noise pattern finer; values above 1.0 make it coarser. This
-  sets all three components of the vector scale (see *-V*). Default is
-  1.0.
+*-O* _count_, *--octaves*=_count_::
+  Set positive number of noise octaves (default: 7).
 
-*-V* _x_scale,y_scale,z_scale_::
-  Non-uniform scaling of the X, Y and Z dimensions in noise space.
-  Default is 0.0125,0.0125,0.0125.
+*-S* _factor_, *--scale*=_factor_::
+  Set all XYZ noise scales to a positive factor.
 
-*-D* _x_delta,y_delta,z_delta_::
-  Translation (offset) applied in noise space, useful for sampling a
-  different region of the noise field. Default is 1000,1000,1000.
+*-V* _x,y,z_, *--vector-scale*=_x,y,z_::
+  Set independent finite XYZ noise scales (default: 0.0125,0.0125,0.0125).
 
-*-o* _offset_::
-  Offset value used by the multi-fractal (*m*) and ridged (*r*) noise
-  functions. Default is 1.0.
+*-D* _x,y,z_, *--delta*=_x,y,z_::
+  Set finite XYZ noise-space translation (default: 1000,1000,1000).
 
-*-f* _function_::
-  Select the noise function used to generate the field. One of:
-+
-  *f*;; Fractional Brownian motion (fBm). This is the default.
-  *t*;; Turbulence.
-  *T*;; Inverted turbulence: 1.0 - turb(pt).
-  *m*;; Multi-fractal.
-  *r*;; Ridged multi-fractal.
-  *L*;; A lunar-like surface.
-  *l*;; Terrain with detail concentrated on peaks and in valleys.
+*-o* _value_, *--offset*=_value_::
+  Set multifractal and ridged offset (default: 1).
 
-*-c*::
-  Toggle the conversion of output from host to network byte order. By
-  default conversion is on; this only has an effect on little-endian
-  hosts.
+*-f* _name_, *--function*=_name_::
+  Select the noise function (default: fbm). Accepted values: *fbm*, *turbulence*, *inverted-turbulence*, *multifractal*, *ridged-multifractal*, *lunar*, *lee*.
 
-*-v*::
-  Toggle verbose/debug output, printing which noise function is running
-  and clamping diagnostics to standard error.
+*-c*, *--host-order*::
+  Write host byte order instead of portable network byte order.
+
+*-v*, *--verbose*::
+  Print noise-function and clamping diagnostics.
+
+// END GENERATED BU_ARG OPTIONS
+
+
+[[noise_functions]]
+== NOISE FUNCTIONS
+
+The *--function* option accepts the following canonical names. The
+one-letter names in parentheses are compatibility aliases.
+
+*fbm* (*f*)::
+  Fractional Brownian motion. This is the default.
+
+*turbulence* (*t*)::
+  Turbulence noise.
+
+*inverted-turbulence* (*T*)::
+  One minus turbulence noise.
+
+*multifractal* (*m*)::
+  Multifractal noise using the value selected by *--offset*.
+
+*ridged-multifractal* (*r*)::
+  Ridged multifractal noise using the value selected by *--offset*.
+
+*lunar* (*L*)::
+  A lunar-like surface.
+
+*lee* (*l*)::
+  Terrain with detail concentrated on peaks and in valleys.
 
 
 [[examples]]
@@ -108,7 +125,7 @@ in MGED.
 ====
 [source,console]
 ----
-$ terrain -w 256 -n 256 -f r -O 8 -S 1.5 > hills.dsp
+$ terrain -w 256 -n 256 --function ridged-multifractal -O 8 -S 1.5 > hills.dsp
 $ mged terrain.g <<'EOF'
 in mountains.dsp dsp f hills.dsp 256 256 0 ad 1 100
 EOF
@@ -123,7 +140,7 @@ ridgeline of mountains in the database terrain.g.
 ====
 [source,console]
 ----
-$ terrain -s 512 -f f -O 5 -L 2.0 -D 0,0,0 > patch.dsp
+$ terrain -s 512 --function fbm -O 5 -L 2.0 -D 0,0,0 > patch.dsp
 ----
 A 512x512 fractional Brownian motion field generated with five octaves
 and a lacunarity of 2.0, sampled at the origin of noise space for a

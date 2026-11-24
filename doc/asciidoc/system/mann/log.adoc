@@ -8,10 +8,10 @@ log - used to control logging
 
 == SYNOPSIS
 
-[source]
-----
-log get|start|stop
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*log* (*get* | *start* | *stop*)
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,10 @@ debugnmg - Displays a list of all possible debug flags available for NMG process
 
 == SYNOPSIS
 
-[source]
-----
-debugnmg [hex_code]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*debugnmg* [_mask_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

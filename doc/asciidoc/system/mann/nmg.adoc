@@ -8,15 +8,12 @@ nmg - create and edit NMG (Non-Manifold Geometry) objects
 
 == SYNOPSIS
 
-[source]
-----
-nmg object mm name
-nmg object cmface x0 y0 z0 [x1 y1 z1 ...]
-nmg object kill V x y z
-nmg object kill F id
-nmg object move V x_old y_old z_old x_new y_new z_new
-nmg object make V x0 y0 z0 [x1 y1 z1 ...]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*nmg* _nmg_ (*cmface* | *kill* | *move* | *make*) [_arguments_ ...]
+*nmg nmg_mm* _name_
+*nmg* _nmg_ (*cmface* | *kill* | *move* | *make*) [_arguments_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

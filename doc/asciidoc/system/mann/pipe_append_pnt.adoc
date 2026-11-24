@@ -8,11 +8,10 @@ pipe_append_pnt - Append a control point to the end of a PIPE primitive.
 
 == SYNOPSIS
 
-[source]
-----
-pipe_append_pnt pipe {x y z}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pipe_append_pnt* _pipe_ _point_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

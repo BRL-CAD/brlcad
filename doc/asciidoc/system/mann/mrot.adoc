@@ -8,11 +8,10 @@ mrot - Rotates the view using model _x y z_.
 
 == SYNOPSIS
 
-[source]
-----
-mrot {x y z}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*mrot* _angles_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

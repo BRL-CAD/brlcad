@@ -8,11 +8,10 @@ plot3-plot3 - convert an extended UnixPlot file to a simple UnixPlot file
 
 == SYNOPSIS
 
-[source]
-----
-plot3-plot3 [-v] [-S] < unix_plot > unix_plot
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*plot3-plot3* [*-v*] [*-S*]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -40,15 +39,18 @@ command is present, a default space of -32767 to +32767 is assumed.
 [[options]]
 == OPTIONS
 
-*-v*::
+*-v*, *--verbose*::
   Verbose. Print the name of each plot command on standard output as it
   is converted. Note that this intermixes the command names with the
   converted plot data on standard output.
 
-*-S*::
+*-S*, *--scale*::
   Scale. Use the plot's "space" command to center and scale the output
   to fill the full 16 bit signed integer plotting space, rather than
   simply truncating coordinates.
+
+*-h*, *--help*::
+  Print help and exit.
 
 [[diagnostics]]
 == DIAGNOSTICS

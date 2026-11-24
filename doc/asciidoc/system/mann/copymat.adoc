@@ -8,11 +8,10 @@ copymat - Copies the transformation matrix from a member of one combination to t
 
 == SYNOPSIS
 
-[source]
-----
-copymat {comb1/memb1 comb2/memb2}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*copymat* _source_arc_ _destination_arc_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

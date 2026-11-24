@@ -8,11 +8,12 @@ facetize - Creates __new_object__ using __old_object__ as a guide, creating an e
 
 == SYNOPSIS
 
-[source]
-----
-facetize [-h] [-v] [-q] [-n] [-r] [-j jobs] [-s suffix] [-p prefix] [--in-place] [--leaves] [--max-time #] [--max-pnts #] [--resume] [--methods m1,m2,...] [--method-opts METHOD opt1=val opt2=val...] [--no-empty] [--log-file filename] [--nmg-booleval] [--disable-fixup] [--perturb] [--no-perturb] [--perturb-sa-tol #] [--perturb-vol-tol #] [--tolerate-failures] [-B -t threshold] {old_object new_object}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*facetize* [*-h*[_all_]] [*-v*]... [*-q*] [*-n*] [*-r*] [*-j* _count_] [*-s* _suffix_]
+         [*--leaves*] [*-p* _prefix_] [*--in-place*] [*--max-time* _seconds_] [*--max-pnts* _count_] [*--resume*]
+         [*--methods* _method[,method...]_] [_object_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -83,115 +84,291 @@ Before the first primitive conversion, the parent measures write throughput on t
 If a child fails before acknowledging that its write has started, the working database is known to be unchanged and no rollback is needed.  In parallel mode, a failure during a child write affects only that worker's disposable staging database, so the failed object is reported and the worker can be restarted without replaying unrelated objects.  A serial child failure during a direct write, or a writer-process failure after acknowledging write start, is ambiguous because the working database may contain a partial update.  In those cases *facetize* restores its cache-local checkpoint and replays only the conversions not already tied to a specific failure.  The original database remains untouched during this recovery.
 
 
-[[facetize_options]]
-== Options
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+=== General
+
+*-h*[_all_], *--help*[=_all_]::
+  Print help and exit; use --help=all for method and advanced options.
+
+*-v*, *--verbose*::
+  Verbose output; repeat to increase detail. May be repeated.
+
+*-q*, *--quiet*::
+  Suppress all output.
+
+=== Output organization
+
+*-n*, *--nmg-output*::
+  Create N-Manifold Geometry output.
+
+*-r*, *--regions*::
+  Facetize region trees.
+
+*--leaves*::
+  Facetize primitive leaves while preserving parent combinations.
+
+=== Execution and naming
+
+*-j* _count_, *--jobs*=_count_::
+  Maximum facetize worker processes; zero selects an automatic limit.
+
+*-s* _suffix_, *--suffix*=_suffix_::
+  Output suffix.
+
+*-p* _prefix_, *--prefix*=_prefix_::
+  Output prefix.
+
+*--in-place*::
+  Replace input objects.
+
+*--max-time*=_seconds_::
+  Maximum seconds per object.
+
+*--max-pnts*=_count_::
+  Maximum sample points.
+
+*--resume*::
+  Resume conversion.
+
+=== Tessellation methods
+
+*--methods*=_method[,method...]_::
+  Comma-separated tessellation methods. Accepted values: *NMG*, *MDC*, *SPSR*.
+
+*--method-opts*=_"METHOD option=value ..."_::
+  Method-specific options.
+
+=== Validation and recovery
+
+*--no-empty*::
+  Suppress empty outputs.
+
+*--log-file*=_file_::
+  Log file.
+
+*--nmg-booleval*::
+  Use NMG Boolean evaluation.
+
+*--disable-fixup*::
+  Disable mesh fixups.
+
+*--perturb*::
+  Enable perturbation.
+
+*--no-perturb*::
+  Disable perturbation.
+
+=== Experimental BREP processing
+
+*-B*::
+  Use experimental non-overlapping BREP mode.
+
+*-t* _length_, *--threshold*=_length_::
+  Non-overlap threshold.
+
+*--perturb-sa-tol*=_percent_::
+  Perturbation surface-area tolerance.
+
+*--perturb-vol-tol*=_percent_::
+  Perturbation volume tolerance.
+
+*--tolerate-failures*::
+  Generate partial output after failures.
+
+=== --method-opts parameter schemas
+
+==== NMG
+
+N-Manifold Geometry tessellation.
+
+*max_time*=_seconds_::
+  Maximum overall object-conversion time. Default: *30*.
+
+*plate_max_time*=_seconds_::
+  Maximum plate-mode-to-volume conversion time. Default: *1200*.
+
+*nmg_debug*=_flags_::
+  NMG hexadecimal debug flags. Default: *0*.
+
+*tol_abs*=_length_::
+  Absolute distance tolerance. Default: *0*.
+
+*tol_norm*=_value_::
+  Normal tolerance. Default: *0*.
+
+*tol_rel*=_fraction_::
+  Relative distance tolerance. Default: *0.01*.
+
+==== MDC
+
+Ray-driven Manifold Dual Contouring.
+
+*feature_size*=_length_::
+  Maximum finest-cell edge length; zero selects an automatic size. Default: *0*.
+
+*max_rays*=_count_::
+  Ray-budget ceiling; zero selects automatic resource limits. Default: *0*.
+
+*minimum_free_mem*=_bytes_::
+  Stop before free memory falls below this amount. Default: *system default*.
+
+*min_depth*=_depth_::
+  Minimum power-of-two grid depth. Default: *library default*.
+
+*max_depth*=_depth_::
+  Maximum power-of-two grid depth. Default: *library default*.
+
+*max_time*=_seconds_::
+  Maximum run time; zero is unlimited. Default: *library default*.
+
+*verbosity*=_level_::
+  Emit diagnostics when non-zero. Default: *0*.
+
+==== SPSR
+
+Screened Poisson Surface Reconstruction.
+
+*feature_scale*=_fraction_::
+  Fraction of average thickness used as the target feature size. Default: *0.15*.
+
+*feature_size*=_length_::
+  Explicit sampling feature length; overrides feature_scale. Default: *0*.
+
+*d_feature_size*=_length_::
+  Initial decimation feature length. Default: *1.5 times feature_size*.
+
+*max_sample_time*=_seconds_::
+  Maximum point-sampling time. Default: *30*.
+
+*max_pnts*=_count_::
+  Maximum sampled point count. Default: *200000*.
+
+*depth*=_depth_::
+  Maximum reconstruction depth. Default: *8*.
+
+*interpolate*=_weight_::
+  Interpolation weight; lower values produce smoother meshes. Default: *2.0*.
+
+*max_time*=_seconds_::
+  Maximum overall object-conversion time. Default: *600*.
+
+*refinement_passes*=_count_::
+  Maximum adaptive source-refinement passes. Default: *library default*.
+
+*samples_per_node*=_count_::
+  Samples assigned to a cell before refinement. Default: *1.5*.
+
+// END GENERATED BU_ARG OPTIONS
+
+[[option_details]]
+== OPTION DETAILS
+
+=== *-h* [_all_], *--help*[=_all_]
+Print help and exit. Specify *--help=all* to include advanced controls and
+the parameter schemas owned by each tessellation method.
 
 
-*-h, --help*::
-Print help and exit.
-
-
-*-v[v..], --verbose*::
+=== *-v*, *--verbose*
 Prints extra (verbose) information in results. May be overridden by the *--quiet* flag.
 
 
-*-q, --quiet*::
+=== *-q*, *--quiet*
 Suppress all output (overrides verbosity flag.)
 
 
-*-n, --nmg-output*::
+=== *-n*, *--nmg-output*
 Instructs *facetize* to produce NMG solids rather than BoT solids.
 
 
-*-r, --regions*::
+=== *-r*, *--regions*
 Rather than converting all specified inputs to one top level object, walk specified trees and individually convert regions to facetized objects. This mode is useful when wanting to display models in shaded mode while preserving color and region ID properties. If no regions are present a normal conversion is performed instead.
 
 
-*-j, --jobs #*::
+=== *-j, --jobs #*
 Set the maximum number of facetize worker processes. A value of 1 forces serial processing. The default value of 0 selects a conservative automatic limit based on available CPUs and memory. Memory checks may delay or reduce parallel work even when a larger value is requested. In per-region BoT mode the same limit controls parallel CSG reference sampling and initial Manifold Boolean evaluation.
 
 
-*-s, --suffix*::
+=== *-s*, *--suffix* _suffix_
 User specified suffix to use avoiding naming conflicts (naming conflict avoidance is needed when creating objects in *-r* mode.)
 
 
-*-p, --prefix*::
+=== *-p*, *--prefix* _prefix_
 User specified prefix to use avoiding naming conflicts (naming conflict avoidance is needed when creating objects in *-r* mode.)
 
 
-*--in-place*::
+=== *--in-place*
 Replace the specified object(s) with their facetizations. (WARNING: this option is destructive and will change pre-existing geometry!)
 
 
-*--leaves*::
+=== *--leaves*
 Facetize each distinct primitive leaf under the specified objects in a version 5 database.
 The output combination references copies of the selected hierarchies with their Boolean operators and instance matrices.
 With *--in-place*, the original leaves are replaced under their existing names.
 A B-Rep with supported coincident edge contacts may be replaced by a union of two closed BoTs, under the original leaf name.
 If *--tolerate-failures* is specified, failed leaves retain their original geometry.
 
-*--max-time #*::
+=== *--max-time* _seconds_
 Maximum time to spend per object (in seconds). Default is method specific. Note that specifying shorter times may cut off conversions (particularly using sampling methods) that could succeed with longer runtimes. Per-method time limits can also be adjusted to allow longer runtimes on slower methods.
 
 
-*--max-pnts #*::
+=== *--max-pnts* _count_
 Maximum number of pnts per object to use when applying ray sampling methods.
 
 
-*--resume*::
+=== *--resume*
 Resume an incomplete facetization process (will utilize cached data from a previous run rather than starting from scratch.) Re-running without this option will clear any old data and start from the beginning.
 
 
-*--methods*::
+=== *--methods* _method[,method...]_
 Accepts a comma separated list of one or more facetization methods to use. The default tries NMG tessellation first, Manifold Dual Contouring (MDC) second, and SPSR as a final fallback. Other listed methods may be selected explicitly if a user wants to try a specific methodology.
 
 
-*--method-opts*::
-This option can be used to pass parameter values to specific facetize methods. The argument format is "METHOD opt1=val1 opt2=val2 ...". See the *--help* output for which methods and parameters are supported by *facetize*.
+=== *--method-opts* _"METHOD option=value ..."_
+This option can be used to pass parameter values to specific facetize methods. Its complete argument must be quoted: *--method-opts "METHOD opt1=val1 opt2=val2 ..."*. Each setting is a *key=value* pair. The generated option summary lists the parameter schema owned by each method; *--help=all* prints the same schemas at run time.
 
 
-*--no-empty*::
+=== *--no-empty*
 Do not write out empty BoT objects when a Boolean evaluation results in an empty mesh.
 
 
-*--log-file*::
+=== *--log-file* _file_
 Specify a log file in which to store the full verbose output of a facetization process. This is recommended for large or long running facetize runs to allow users to better understand what steps were taken and what problems might have arisen.
 
 
-*--nmg-booleval*::
+=== *--nmg-booleval*
 Use the libnmg boolean evaluation algorithm even when producing BoT output.
 This can be less robust, but may yield cleaner results for some coplanar cases.
 
 
-*--disable-fixup*::
+=== *--disable-fixup*
 By default, BoT facetization will attempt to clear certain categories of undesirable triangles from outputs. Specifying this option will skip that repair attempt.
 
-*--perturb*::
+=== *--perturb*
 Enable the coplanarity-avoidance perturbation step. In per-region mode this behavior is enabled by default; in non-region BoT mode it must be requested explicitly. This option conflicts with *--no-perturb*.
 
-*--no-perturb*::
+=== *--no-perturb*
 Disable the coplanarity-avoidance perturbation retry machinery in BoT Manifold Boolean evaluation. This option conflicts with *--perturb*.
 
-*--perturb-sa-tol #*::
+=== *--perturb-sa-tol* _percent_
 Surface-area percentage threshold (0–100) that triggers the coplanarity-avoidance perturb retry when the per-region Crofton-sampled CSG surface area differs from the initial facetized BoT surface area by more than this amount. Default is 10 (percent).
 
-*--perturb-vol-tol #*::
+=== *--perturb-vol-tol* _percent_
 Volume percentage threshold (0–100) that triggers the coplanarity-avoidance perturb retry when the per-region Crofton-sampled CSG volume differs from the initial facetized BoT volume by more than this amount. Default is 10 (percent).
 
-*--tolerate-failures*::
+=== *--tolerate-failures*
 Continue after failed primitive or subtree evaluations and generate a partial result when possible. Any omitted components are reported at the end of the run, and the resulting output should be treated as incomplete until the reported failures are understood. This option is useful for diagnosis or for extracting a best-effort mesh from a very large model, but should not be used when a complete representation is required.
 
 
-*-B*::
+=== *-B*
 Experimental non-overlapping facetization to BoT objects for union-only brep
 comb trees.
 
 
-*-t* _threshold_, *--threshold* _threshold_::
+=== *-t* _threshold_, *--threshold* _threshold_
 Experimental overlap-threshold length used by *-B* mode.
-
-
-
 
 [[methods]]
 == Facetization Methods
@@ -200,7 +377,7 @@ In broad, there are two stages to a facetization process. The first stage is the
 
 The process of individual primitive to mesh conversion can sometimes be problematic - routines may take extremely long lengths of time trying to resolve a conversion problem. In order to avoid the process hanging indefinitely with no progress, a timeout is established that limits how long each individual conversion process should take. Various methods have defaults defined internally, so this isn't something the user normally needs to concern themselves with, but if they wish to set a limit themselves (either allowing more time or forcing shorter cycles) they can do so with the *--max-time* option.
 
-It can be difficult to produce a mesh from a primitive shape. Simply waiting longer for results often isn't practical or even the right answer - indeed, infinite looping has been observed in some primitive conversion cases. To work around these limitations, BRL-CAD provides multiple methods that can be used to attempt mesh production in case other methods fail. We deliberately do not document those methods in detail here - they are subject to change as new alternatives are identified that can produce better results. What we _do_ document is how to use the facetize command to see what methods are currently available and control them. The *-h* option will list, at the end of its output, information about all currently available methods and what controls they offer. The facetize option *--methods* can be used to restrict the facetize command to a particular subset of the available methodologies, and the *--method-opts* option is used to pass specific parameters to a specific method.
+It can be difficult to produce a mesh from a primitive shape. Simply waiting longer for results often isn't practical or even the right answer - indeed, infinite looping has been observed in some primitive conversion cases. To work around these limitations, BRL-CAD provides multiple methods that can be used to attempt mesh production in case other methods fail. The generated option summary records the controls currently owned by each method, and *--help=all* prints those same method schemas at run time. The facetize option *--methods* can be used to restrict the facetize command to a particular subset of the available methodologies, and the *--method-opts* option is used to pass specific parameters to a specific method.
 
 Because many of the facetization methods are sampling based (the raytracer is used to sample the volume) a top level control is available to specify the maximum number of points to use when generating inputs for such methods. (More points generally means a better conversion at the expense of memory and runtime.)
 

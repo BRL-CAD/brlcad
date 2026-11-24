@@ -8,11 +8,10 @@ cc - create a new constraint object in the database
 
 == SYNOPSIS
 
-[source]
-----
-cc name constraint_expression
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*cc* _name_ _expression_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

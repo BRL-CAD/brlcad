@@ -8,11 +8,10 @@ metaball_delete_pnt - libged command
 
 == SYNOPSIS
 
-[source]
-----
-metaball_delete_pnt metaball pt_i
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*metaball_delete_pnt* _metaball_ _point_index_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

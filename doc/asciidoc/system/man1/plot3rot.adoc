@@ -8,10 +8,12 @@ plot3rot - rotate, translate, or scale a UnixPlot file
 
 == SYNOPSIS
 
-[source]
-----
-plot3rot [-x _angle_] [-y _angle_] [-z _angle_] [-X _dist_] [-Y _dist_] [-Z _dist_] [-s _factor_] [-a _az_] [-e _el_] [-g] [-M] [-m _matrix_] [-S _space_] [-v] [_file_ ...] > unix_plot
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*plot3rot* [*-M*] [*-g*] [*-a* _degrees_] [*-e* _degrees_] [*-x* _degrees_] [*-y* _degrees_]
+         [*-z* _degrees_] [*-X* _distance_] [*-Y* _distance_] [*-Z* _distance_] [*-s* _factor_]
+         [*-m* _matrix_] [*-S* _bounds_] [*-v*]... [_input_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 
 [[description]]
@@ -26,7 +28,10 @@ Any number of transformation options may be given.  Each operation is
 applied left to right in the order it appears on the command line, and
 the operations are concatenated into a single transform.  Because
 rotations are not commutative, the order in which they are specified
-matters.  Invoking the command with no arguments prints a usage summary.
+matters.  The *-m* option is the exception: it replaces transformations
+accumulated before it, while later options compose with the supplied matrix.
+Invoking the command interactively with no input files prints a usage summary;
+when standard input is redirected, the same invocation transforms that input.
 
 The lower case *-x*, *-y*, and *-z* options rotate about the X, Y, and Z
 axes respectively by the given number of degrees; a positive value is a
@@ -61,47 +66,53 @@ giving *-z* -90 *-x* -90 in the same place.  Do not combine *-m* with
 [[options]]
 == OPTIONS
 
-*-x* _angle_::
-  Rotate _angle_ degrees about the X axis.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-y* _angle_::
-  Rotate _angle_ degrees about the Y axis.
+*-M*, *--model-space*::
+  Auto-center and fit a rotation-invariant model space.
 
-*-z* _angle_::
-  Rotate _angle_ degrees about the Z axis.
+*-g*, *--mged-view*::
+  Convert MGED front-view coordinates to display coordinates.
 
-*-X* _dist_::
-  Translate _dist_ units along the X axis.
+*-a* _degrees_, *--azimuth*=_degrees_::
+  Rotate by view azimuth and auto-center.
 
-*-Y* _dist_::
-  Translate _dist_ units along the Y axis.
+*-e* _degrees_, *--elevation*=_degrees_::
+  Rotate by view elevation and auto-center.
 
-*-Z* _dist_::
-  Translate _dist_ units along the Z axis.
+*-x* _degrees_, *--x-rotate*=_degrees_::
+  Rotate about the X axis.
 
-*-s* _factor_::
-  Scale by _factor_ (> 1 enlarges, < 1 shrinks).  A factor of zero is rejected.
+*-y* _degrees_, *--y-rotate*=_degrees_::
+  Rotate about the Y axis.
 
-*-a* _az_::
-  Apply azimuth _az_, a positive Z axis rotation.  Auto-centers the plot and re-bounds the "space" tightly to the rotated plot; should precede *-e*.
+*-z* _degrees_, *--z-rotate*=_degrees_::
+  Rotate about the Z axis.
 
-*-e* _el_::
-  Apply elevation _el_, a negative X axis rotation.  Auto-centers the plot and re-bounds the "space" tightly to the rotated plot.
+*-X* _distance_, *--x-translate*=_distance_::
+  Translate along the X axis.
 
-*-g*::
-  Convert *gift*/MGED front-view azimuth and elevation into UnixPlot display coordinates.  Equivalent to *-z* -90 *-x* -90; usually given last.
+*-Y* _distance_, *--y-translate*=_distance_::
+  Translate along the Y axis.
 
-*-M*::
-  Auto-center the "space" command like the *rt*(1) model RPP, fitting a sphere so the model stays in view from any angle.
+*-Z* _distance_, *--z-translate*=_distance_::
+  Translate along the Z axis.
 
-*-m* _matrix_::
-  Apply the 4x4 transformation matrix given as a quoted string of 16 floating point numbers (see h/vmath.h).  Do not combine with *-a*, *-e*, or *-g*.
+*-s* _factor_, *--scale*=_factor_::
+  Apply a nonzero scale factor.
 
-*-S* _space_::
-  Force the output "space" to a quoted string of six floats ("min_x min_y min_z max_x max_y max_z").  This is emitted immediately and overrides any space derived from the input or other options.
+*-m* _matrix_, *--matrix*=_matrix_::
+  Replace the accumulated transform with a quoted 4x4 matrix.
 
-*-v*::
-  Verbose mode.  Print the initial transformation matrix, and for every "space" command encountered print the old and new bounding RPP.
+*-S* _bounds_, *--space*=_bounds_::
+  Emit and force quoted min-x min-y min-z max-x max-y max-z bounds.
+
+*-v*, *--verbose*::
+  Print transformation and space diagnostics. May be repeated.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

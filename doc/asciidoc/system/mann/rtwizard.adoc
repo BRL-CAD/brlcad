@@ -8,11 +8,10 @@ rtwizard - launch the RtWizard GUI or render using the rtwizard subprocess
 
 == SYNOPSIS
 
-[source]
-----
-rtwizard [options]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rtwizard* [_arguments_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

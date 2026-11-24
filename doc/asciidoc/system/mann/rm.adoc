@@ -8,11 +8,10 @@ rm - safely delete database objects, force-delete objects, or remove a child fro
 
 == SYNOPSIS
 
-[source]
-----
-rm [-h | --help | -?] [-f | --force] [-r | --recursive] [-n | --dry-run] {object-or-path}...
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rm* [*-f*] [*-r*] [*-n*] [*-h*] _objects_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

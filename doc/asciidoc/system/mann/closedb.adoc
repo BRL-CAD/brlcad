@@ -8,11 +8,10 @@ closedb - Close the current database and clear displayed geometry.
 
 == SYNOPSIS
 
-[source]
-----
-closedb
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*closedb*
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

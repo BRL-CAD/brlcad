@@ -8,11 +8,10 @@ csg-g - OpenSCAD CSG Translator (CSG to BRL-CAD)
 
 == SYNOPSIS
 
-[source]
-----
-csg-g [-d] file.csg file.g
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*csg-g* [*-d*] _input_ _output_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -23,7 +22,17 @@ The converter preserves CSG structure, mapping OpenSCAD primitives and boolean o
 
 Polyhedra are matched against ARB4, ARB5, and ARB8 when the vertex and face counts match and the shape is convex. Non-convex polyhedra and unmatched shapes fall back to BOT (bag of triangles).
 
-The *-d* option prints debugging information during conversion.
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
+
+*-d*, *--debug*::
+  Print additional conversion diagnostics.
+
+// END GENERATED BU_ARG OPTIONS
 
 
 [[example]]

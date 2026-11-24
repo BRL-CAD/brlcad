@@ -8,11 +8,10 @@ units - Sets the units being used in _mged_. Without arguments, returns the curr
 
 == SYNOPSIS
 
-[source]
-----
-units [-s] [units_type]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*units* [*-s*] [*-t*] [(*um* | *mm* | *cm* | *m* | *km* | *in* | *ft* | *yd* | *mi*)]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -69,6 +68,18 @@ __Units_type__ strings that may be used, but will not be remembered as the prefe
 * pc
 * parsec
 
+
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-s*::
+  Print only the current unit name.
+
+*-t*::
+  List valid unit names.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

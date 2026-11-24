@@ -1,0 +1,75 @@
+= VIEW_FACEPLATE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+
+view faceplate - inspect and configure view faceplate elements
+
+== SYNOPSIS
+
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*view faceplate* [_OPTION_]... _SUBCOMMAND_ [_ARGUMENT_]...
+// END GENERATED BU_ARG SYNOPSIS
+
+== DESCRIPTION
+
+The *view faceplate* command controls view elements drawn over the model,
+including axes, grids, parameter text, scale indicators, and the interactive
+rectangle.  Each element owns its settings and validates them before changing
+the current view.
+
+== SUBCOMMANDS
+
+// BEGIN GENERATED BU_ARG SUBCOMMANDS
+*center_dot*::
+Query or set the center dot.
+
+*fb*::
+Query or set framebuffer overlay behavior.
+
+*grid*::
+Manage the faceplate grid.
+
+*irect*::
+Manage the interactive rectangle.
+
+*model_axes*::
+Manage model axes.
+
+*params*::
+Manage view parameter overlay.
+
+*scale*::
+Query or set the scale overlay.
+
+*view_axes*::
+Manage view axes.
+
+// END GENERATED BU_ARG SUBCOMMANDS
+
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help.
+
+*-v*, *--verbose*::
+  Increase output detail. May be repeated.
+
+// END GENERATED BU_ARG OPTIONS
+
+== SEE ALSO
+
+*view*(nged)
+
+== AUTHOR
+
+BRL-CAD Team
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to
+devs@brlcad.org.

@@ -8,12 +8,13 @@ tire - Generate tire and optional wheel geometry from tire dimensions.
 
 == SYNOPSIS
 
-[source]
-----
-tire [options]
-tire --demo-file tire_demo.g
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*tire* [*-h*] [*-n* _name_] [*-w* _bool_] [*-d* _<width-mm>/<aspect-percent>R<rim-diameter-in>_]
+     [*-W* _mm_] [*-R* _percent_] [*-D* _in_] [*-g* _1/32 in_] [*-j* _in_] [*-s* _mm_] [*-u* _mm_]
+     [*-p* _name_] [*-c* _#_] [*-t* _0|1|2_] [*--tread-pattern-file* _file.json_]
+     [*--list-tread-patterns*] [*--demo-file* _file.g_] [_obj-name_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

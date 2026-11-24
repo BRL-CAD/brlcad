@@ -9,11 +9,12 @@ g-vrml - convert a BRL-CAD geometry database to a VRML 2.0 file
 
 == SYNOPSIS
 
-[source]
-----
-g-vrml [-b | -e] [-v] [-d _calc_dist_tol_] [-a _abs_tess_tol_] [-r _rel_tess_tol_] [-n _norm_tess_tol_] [-u _units_] [-x _librt_debug_flag_] [-X _NMG_debug_flag_] [-o _output.wrl_] _database.g_ _object_ [_object_ ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*g-vrml* [*-b* | *-e*] [*-v*]... [*-d* _millimeters_] [*-a* _millimeters_] [*-r* _fraction_]
+       [*-n* _degrees_] [*-u* _units_] [*-o* _output.wrl_] [*-x* _mask_] [*-X* _mask_] _database.g_
+       _object_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -35,51 +36,44 @@ different unit. The conversion is the inverse direction of importers such as
 [[options]]
 == OPTIONS
 
-*-b*::
-  Dump *BOT* (Bag of Triangles) primitives directly to the VRML file without
-  performing any Boolean evaluation; non-BOT (CSG) primitives are skipped.
-  Mutually exclusive with *-e*.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-e*::
-  Evaluate all geometry, tessellating and performing the Boolean evaluation
-  of both CSG and BOT primitives. Mutually exclusive with *-b*.
+*-b*, *--bot-only*::
+  Write BoT primitives directly and skip non-BoT geometry.
 
-*-v*::
-  Verbose output; report conversion progress on standard error.
+*-e*, *--evaluate-all*::
+  Evaluate Boolean geometry for both CSG and BoT primitives.
 
-*-d* _calc_dist_tol_::
-  Calculational distance tolerance in millimeters, used to distinguish
-  neighboring vertices. The default is 0.005.
+*-v*, *--verbose*::
+  Increase conversion progress reporting. May be repeated.
 
-*-a* _abs_tess_tol_::
-  Absolute tessellation tolerance in millimeters (maximum chord error).
-  Setting this disables the relative tolerance.
+*-d* _millimeters_, *--distance-tolerance*=_millimeters_::
+  Set nonnegative vertex-coincidence distance in millimeters (default 0.005).
 
-*-r* _rel_tess_tol_::
-  Relative tessellation tolerance, expressed as a fraction of the bounding
-  box of each primitive. The default is 0.01.
+*-a* _millimeters_, *--absolute-tolerance*=_millimeters_::
+  Set nonnegative maximum chord error in millimeters and clear relative tolerance.
 
-*-n* _norm_tess_tol_::
-  Surface normal tessellation tolerance in degrees (maximum allowed angle
-  between approximated and true surface normals). Setting this disables the
-  relative tolerance.
+*-r* _fraction_, *--relative-tolerance*=_fraction_::
+  Set nonnegative tolerance as a fraction of bounding-box size (default 0.01).
 
-*-u* _units_::
-  Units for the resulting VRML file. The default is mm. Any unit name
-  accepted by BRL-CAD (for example m, cm, in, ft) may be used.
+*-n* _degrees_, *--normal-tolerance*=_degrees_::
+  Set nonnegative surface-normal tolerance in degrees and clear relative tolerance.
 
-*-x* _librt_debug_flag_::
-  Set the *librt* debug flag (hexadecimal). See raytrace.h for bit values.
+*-u* _units_, *--units*=_units_::
+  Write coordinates in these recognized BRL-CAD units (default mm).
 
-*-X* _NMG_debug_flag_::
-  Set the NMG debug flag (hexadecimal). See nmg.h for bit values.
+*-o* _output.wrl_, *--output*=_output.wrl_::
+  Write VRML output to this file instead of standard output.
 
-*-o* _output.wrl_::
-  Write output to the named file. If omitted, output is written to standard
-  output.
+*-x* _mask_, *--rt-debug*=_mask_::
+  Set librt hexadecimal debug flags.
 
-*-h*, *-?*::
-  Print a usage message and exit.
+*-X* _mask_, *--nmg-debug*=_mask_::
+  Set libnmg hexadecimal debug flags.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

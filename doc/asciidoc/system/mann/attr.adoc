@@ -8,11 +8,19 @@ attr - Used to create, change, retrieve, or view attributes of database objects.
 
 == SYNOPSIS
 
-[source]
-----
-attr [get] [set] [rm] [append] [list] [show] [sort] [standardize] [copy] {object_name_pattern} [arguments]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*attr* [*-c* _separator_]
+*attr set* _object_pattern_ [_attributes_ ...]
+*attr get* _object_pattern_ [_attributes_ ...]
+*attr show* _object_pattern_ [_attributes_ ...]
+*attr rm* _object_pattern_ [_attributes_ ...]
+*attr append* _object_pattern_ [_attributes_ ...]
+*attr sort* _object_pattern_ [(*case* | *nocase* | *value* | *value-nocase*)]
+*attr list* _object_pattern_ [_attributes_ ...]
+*attr copy* _object_pattern_ _source_attribute_ _destination_attribute_
+*attr standardize* _object_pattern_ [_attributes_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -32,6 +40,12 @@ A newly formed region always has four attributes automatically assigned to it:
 
 
 The 'region' attribute is the 'region flag' mentioned in the edcomb command.
+
+[[options]]
+== OPTIONS
+
+*-c* _separator_::
+Separate output fields with the specified character.
 
 
 [[attr_subcommands]]

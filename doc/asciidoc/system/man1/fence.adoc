@@ -8,11 +8,15 @@ fence - generate a chain-link fence in a BRL-CAD geometry database
 
 == SYNOPSIS
 
-[source]
-----
-fence [options] -o output.g
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*fence* [*-i* | *-I*] [*-v* | *-V*] [*-d* | *-D*] [*-o* _file.g_] [*-k* _string_] [*-u* _units_]
+      [*-n* _x/y/z_ | *-N* _length_] [*-l* _x/y/z_ | *-L* _length_] [*-r* _radius_] [*-R* _radius_]
+      [*-a* _degrees_] [*-j* _distance_] [*-t* _name_] [*-T* _name_] [*-b* _parameters_]
+      [*-B* _parameters_] [*-c* _r/g/b_] [*-C* _r/g/b_] [*-f* _name_] [*-p* _name_] [*-m* _name_]
+      [*-w* _name_] [*-s* _name_] [*-e* _fpmw_ | *-E* _fpmw_] [*-g* _fpm_ | *-G* _fpm_] [*-x*]
+      [*-z*]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -31,10 +35,10 @@ pole spacing, 30mm poles, and 2mm wire at a 45 degree twist, in
 millimeters.  All dimensional values are interpreted in the units set
 with *-u*.
 
-Most options come in a lowercase/uppercase pair.  The lowercase letter
-sets a value directly; the uppercase letter either toggles a mode
-relative to its default, or applies the value to all fence components at
-once (poles, mesh, and wire) rather than to the fence combination alone.
+Canonical long options state whether an operation enables, toggles, or
+applies to all components.  The historical lowercase and uppercase short
+spellings remain available; uppercase spellings that have the same meaning
+as their lowercase counterpart are compatibility aliases.
 
 The resulting database can be visualized or further edited with *mged*(1)
 and rendered with *rt*(1).
@@ -42,90 +46,90 @@ and rendered with *rt*(1).
 [[options]]
 == OPTIONS
 
-*-i*, *-I*::
+*-i*, *--interactive*; *-I*, *--toggle-interactive*::
   Enable (*-i*) or toggle (*-I*) interactive mode, prompting for
   parameters on standard input.
 
-*-v*, *-V*::
+*-v*, *--verbose*; *-V*, *--toggle-verbose*::
   Enable (*-v*) or toggle (*-V*) verbose mode.
 
-*-d*, *-D*::
+*-d*, *--debug*; *-D*, *--toggle-debug*::
   Enable (*-d*) or toggle (*-D*) debug mode.
 
-*-o*, *-O* _filename_::
+*-o*, *-O*, *--output* _file.g_::
   Output geometry database file name (default *fence.g*).
 
-*-k*, *-K* _string_::
+*-k*, *-K*, *--title* _string_::
   Title/identification string stored in the database header.
 
-*-u*, *-U* _units_::
+*-u*, *-U*, *--units* _units_::
   Units for the database and all dimensional values (e.g. *mm*, *in*);
   default *mm*.
 
-*-n* _'x y z'_, *-N* _val_::
+*-n*, *--height-vector* _x/y/z_; *-N*, *--height* _length_::
   Fence height.  *-n* takes a vector; *-N* takes a single scalar applied
   along +Z.  May not be zero.
 
-*-l* _'x y z'_, *-L* _val_::
+*-l*, *--length-vector* _x/y/z_; *-L*, *--length* _length_::
   Fence length (width).  *-l* takes a vector; *-L* takes a single scalar
   applied along +X.  May not be zero.
 
-*-r* _radius_::
+*-r*, *--wire-radius* _radius_::
   Radius of the mesh wires.  May not be zero.
 
-*-R* _radius_::
+*-R*, *--pole-radius* _radius_::
   Radius of the fence poles.  May not be zero.
 
-*-a*, *-A* _angle_::
+*-a*, *-A*, *--wire-angle* _degrees_::
   Primary angle, in degrees, of the wire zig-zag.  May not be zero.
 
-*-j*, *-J* _distance_::
+*-j*, *-J*, *--pole-spacing* _distance_::
   Maximum spacing between poles.  May not be zero.
 
-*-t* _material_, *-T* _material_::
+*-t*, *--fence-material* _name_; *-T*, *--all-material* _name_::
   Shader/material name for the fence region (*-t*) or for every generated
   region (*-T*).
 
-*-b* _parameters_, *-B* _parameters_::
+*-b*, *--fence-material-params* _parameters_; *-B*, *--all-material-params* _parameters_::
   Shader parameter string for the fence region (*-b*) or for every
   generated region (*-B*).
 
-*-c* _'r g b'_, *-C* _'r g b'_::
+*-c*, *--fence-color* _r/g/b_; *-C*, *--all-color* _r/g/b_::
   RGB color (each value 0-255) for the fence region (*-c*) or for every
   generated region (*-C*).
 
-*-f*, *-F* _fencename_::
+*-f*, *-F*, *--fence-name* _name_::
   Base name of the fence object(s) in the database.
 
-*-p*, *-P* _polename_::
+*-p*, *-P*, *--pole-name* _name_::
   Base name of the pole object(s).
 
-*-m*, *-M* _meshname_::
+*-m*, *-M*, *--mesh-name* _name_::
   Base name of the mesh object(s).
 
-*-w*, *-W* _wirename_::
+*-w*, *-W*, *--wire-name* _name_::
   Base name of the wire object(s).
 
-*-s*, *-S* _segmentname_::
+*-s*, *-S*, *--segment-name* _name_::
   Base name of the wire segment object(s).
 
-*-e*, *-E* _fpmw_::
+*-e*, *--edit-components* _fpmw_; *-E*, *--toggle-edit-components* _fpmw_::
   Select which components (*f*ence, *p*ole, *m*esh, *w*ire) are prompted
   for in interactive mode.  *-e* sets the listed components; *-E* toggles
   them relative to their defaults.
 
-*-g*, *-G* _fpm_::
+*-g*, *--generate* _fpm_; *-G*, *--toggle-generate* _fpm_::
   Select which components (*f*ence, *p*ole, *m*esh) to generate.  *-g*
   generates exactly the listed components; *-G* toggles them relative to
   their defaults.
 
-*-x*, *-X*::
+*-x*, *-X*, *--examples*::
   Print command-line usage examples and exit.
 
-*-z*, *-Z*::
+*-z*, *-Z*, *--defaults*::
   Print the default settings and exit.
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a usage message and exit.
 
 [[examples]]

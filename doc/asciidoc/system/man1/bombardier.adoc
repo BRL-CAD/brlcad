@@ -8,11 +8,10 @@ bombardier - BRL-CAD graphical crash reporter
 
 == SYNOPSIS
 
-[source]
-----
-bombardier [-h | -?] _logfile_...
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bombardier* _logfile_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -36,10 +35,7 @@ than invoked by hand.
 [[options]]
 == OPTIONS
 
-*-h*::
-  Print a brief usage message and exit.
-
-*-?*::
+*-h*, *-?*, *--help*::
   Print a brief usage message and exit.
 
 [[examples]]

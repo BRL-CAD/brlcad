@@ -8,10 +8,10 @@ showshot - generate MGED commands representing a ray through some geometry
 
 == SYNOPSIS
 
-[source]
-----
-showshot [-n name] [-r radius] [-?] < input
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*showshot* [*-n* _root_] [*-r* _distance_]
+// END GENERATED BU_ARG SYNOPSIS
 
 
 [[description]]
@@ -41,17 +41,17 @@ with every object named in the input.
 [[options]]
 == OPTIONS
 
-*-n* _name_::
-  Use _name_ as the root for the generated object names: the ray solid is
-  _name_.s, the ray region is _name_.r, and the group is _name_. The default is
-  ray._PID_, where _PID_ is the process ID of *showshot*.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-r* _radius_::
-  Set the radius of the RCC representing the ray, in database units. The
-  default is 1.
+*-n* _root_, *--name*=_root_::
+  Set the generated object-name root.
 
-*-?*::
-  Print a usage message and exit.
+*-r* _distance_, *--radius*=_distance_::
+  Set the positive ray-cylinder radius (default: 1).
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

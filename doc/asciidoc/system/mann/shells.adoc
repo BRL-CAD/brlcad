@@ -8,11 +8,10 @@ shells - Separates the specified NMG shape into its constituent shells.
 
 == SYNOPSIS
 
-[source]
-----
-shells [NMG_shape]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*shells* _nmg_model_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

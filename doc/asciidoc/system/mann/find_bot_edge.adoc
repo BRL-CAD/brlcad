@@ -8,15 +8,20 @@ find_bot_edge - find and identify a BOT (Bag of Triangles) edge
 
 == SYNOPSIS
 
-[source]
-----
-find_bot_edge bot "view_x view_y view_z"
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*find_bot_edge* _bot_ _view_xyz_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
 
 The *find_bot_edge* command searches a BOT (Bag of Triangles) primitive and identifies the edge that is closest to a given view coordinate. 
+
+=== Options
+
+*-h*, *--help*::
+Print command help without requiring an open database or active view.
 
 If successful, the command returns two integers:
 1. The numeric ID of the first vertex (`vi1`) forming the edge.

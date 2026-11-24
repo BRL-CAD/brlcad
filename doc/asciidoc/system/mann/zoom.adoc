@@ -8,11 +8,10 @@ zoom - zoom the view in or out by a scale factor
 
 == SYNOPSIS
 
-[source]
-----
-zoom scale_factor
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*zoom* _scale_factor_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

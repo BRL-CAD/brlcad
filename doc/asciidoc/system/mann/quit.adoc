@@ -8,11 +8,10 @@ quit - Ends the MGED process.
 
 == SYNOPSIS
 
-[source]
-----
-quit
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*quit*
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

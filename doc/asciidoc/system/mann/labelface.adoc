@@ -8,10 +8,10 @@ labelface - label the faces of an NMG (Non-Manifold Geometry) object
 
 == SYNOPSIS
 
-[source]
-----
-labelface object(s)
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*labelface* _object_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

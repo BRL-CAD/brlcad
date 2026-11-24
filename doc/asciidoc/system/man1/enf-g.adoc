@@ -8,11 +8,11 @@ enf-g - convert an Elysium Neutral File (ENF) to a BRL-CAD database
 
 == SYNOPSIS
 
-[source]
-----
-enf-g [-v] [-i starting_ident] [-t tolerance] [-l name_length_limit] [-n part_name_file] input_facets_file output.g
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*enf-g* [*-v*] [*-i* _ident_] [*-t* _millimeters_] [*-n* _file_] [*-l* _characters_] _input_
+      _output_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -26,33 +26,40 @@ combinations. When a part name mapping file is supplied, the original
 ENF part number is also recorded as a *Part_No* attribute on the
 resulting region or combination.
 
+Region ident numbers begin at 1000 by default and increase for each
+region. The default vertex merge distance is BRL-CAD's standard
+distance tolerance; a requested tolerance must be greater than zero.
+Generated object names may optionally be limited to five or more
+characters.
+
+A part-name mapping file contains a part number and legal BRL-CAD
+object name on each line, separated by whitespace. Matching objects
+are renamed, while unmatched objects retain their ENF part number and
+produce a warning.
+
 [[options]]
 == OPTIONS
 
-*-v*::
-  Enable verbose output, reporting each solid, region, and assembly as
-  it is written.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-i* _starting_ident_::
-  Set the ident number assigned to the first region created. Each
-  subsequent region's ident is incremented by one. The default is 1000.
+*-v*, *--verbose*::
+  Report objects as they are written.
 
-*-t* _tolerance_::
-  Set the maximum distance (in mm) at which two vertices are treated as
-  the same vertex. Must be greater than 0.0. The default is the BRL-CAD
-  standard distance tolerance.
+*-i* _ident_, *--starting-ident*=_ident_::
+  Set the first region ident (default 1000).
 
-*-l* _name_length_limit_::
-  Truncate generated BRL-CAD object names to at most this many
-  characters. The value must be at least 5.
+*-t* _millimeters_, *--tolerance*=_millimeters_::
+  Set the positive vertex merge distance.
 
-*-n* _part_name_file_::
-  Read a part-number-to-name mapping from the named file. Each line
-  holds a part number and a legal BRL-CAD object name separated by
-  whitespace. Matching objects are renamed accordingly, while unmatched
-  objects keep their ENF part number and trigger a warning. When this
-  option is given, every resulting region and combination is tagged with
-  its original ENF part number in a *Part_No* attribute.
+*-n* _file_, *--part-name-file*=_file_::
+  Read part-number-to-name mappings from a file.
+
+*-l* _characters_, *--name-length*=_characters_::
+  Limit generated object name length.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

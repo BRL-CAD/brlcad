@@ -8,11 +8,10 @@ rot_point - transform a point by the inverse of the current view rotation
 
 == SYNOPSIS
 
-[source]
-----
-rot_point x y z
-rot_point "x y z"
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rot_point* _point_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

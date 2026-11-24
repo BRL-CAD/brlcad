@@ -8,11 +8,10 @@ asc-plot3 - produce Plot3 instructions from ASCII representation
 
 == SYNOPSIS
 
-[source]
-----
-asc-plot3 [-h] [-?] [file.in [file.plot3]]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*asc-plot3* [_input_] [_output_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -32,8 +31,8 @@ where _c_ is one of the single-character Plot3 command names, followed by white-
 [[options]]
 == OPTIONS
 
-*-h*, *-?*::
-    Print a usage message and exit.
+*-h*, *--help*::
+    Print help and exit.
 
 _file.in_::
     Input ASCII file containing plot3 instructions. If not specified or if '-' is specified, standard input is read.

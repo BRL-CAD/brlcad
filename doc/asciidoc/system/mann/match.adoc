@@ -8,11 +8,10 @@ match - list database objects whose names match a wildcard expression
 
 == SYNOPSIS
 
-[source]
-----
-match expression [expression ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*match* _expressions_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

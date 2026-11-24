@@ -8,10 +8,10 @@ view2model - convert view xyz to model coordinates (vec)
 
 == SYNOPSIS
 
-[source]
-----
-view2model
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*view2model*
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

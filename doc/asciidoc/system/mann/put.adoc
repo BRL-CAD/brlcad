@@ -8,11 +8,10 @@ put - _mged_ command which creates a new object of indicated type with supplied 
 
 == SYNOPSIS
 
-[source]
-----
-put {object type} [attrs]...
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*put* _object_ _primitive_type_ [_attributes_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

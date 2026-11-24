@@ -8,10 +8,10 @@ grid2model_lu - convert grid xy to model coordinates (local units)
 
 == SYNOPSIS
 
-[source]
-----
-grid2model_lu x y
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*grid2model_lu* _grid_coordinates_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

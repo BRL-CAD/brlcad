@@ -8,11 +8,10 @@ cpi - Copies __old_tgc__(an existing TGC shape) to a new TGC shape (__new_tgc__)
 
 == SYNOPSIS
 
-[source]
-----
-cpi {old_tgc new_tgc}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*cpi* _source_ _destination_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

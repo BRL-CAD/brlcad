@@ -8,10 +8,10 @@ pixmerge - merge two pix(5) or bw(5) images using a per-pixel comparison
 
 == SYNOPSIS
 
-[source]
-----
-pixmerge [-glen] [-w _bytes_wide_] [-C _r/g/b_] _foreground.pix_ [_background.pix_] > _out.pix_
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixmerge* [*-g*] [*-l*] [*-e*] [*-n*] [*-w* _bytes_] [*-C* _values_] _foreground_ [_background_]
+// END GENERATED BU_ARG SYNOPSIS
 
 
 [[description]]
@@ -41,37 +41,34 @@ pixmerge -g -C 0/0/0 fg.pix
 ----
 
 If a constant is supplied with *-C*, the _background.pix_ argument is omitted.
-The constant is given as up to _bytes_wide_ slash-separated values.
+The constant is given as exactly _bytes_wide_ slash-separated values.
 
 [[options]]
 == OPTIONS
 
-*-g*::
-  Select the foreground pixel when it is greater than the background.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-l*::
-  Select the foreground pixel when it is less than the background.
+*-g*, *--greater*::
+  Select foreground bytes greater than background bytes.
 
-*-e*::
-  Select the foreground pixel when it is equal to the background.
+*-l*, *--less*::
+  Select foreground bytes less than background bytes.
 
-*-n*::
-  Select the foreground pixel when it is not equal to the background.
+*-e*, *--equal*::
+  Select foreground bytes equal to background bytes.
 
-*-w* _bytes_wide_::
-  Set the width in bytes of each "pixel". The default is 3 (*pix*(5) format);
-  use 1 for *bw*(5) files. The value must be at least 1 and less than 32.
+*-n*, *--not-equal*::
+  Select foreground bytes unequal to background bytes.
 
-*-C* _r/g/b_::
-  Use a constant color in place of the background stream. The constant is given
-  as up to _bytes_wide_ slash-separated byte values (0-255). When this option is
-  used, the _background.pix_ argument is omitted.
+*-w* _bytes_, *--width*=_bytes_::
+  Set element width in bytes (default: 3; use 1 for BW data).
 
-*-c* _r/g/b_::
-  Backward-compatible alias for *-C*.
+*-C* _values_, *--constant*=_values_::
+  Compare against exactly width slash-separated byte values (0-255) instead of a background stream.
 
-*-h*, *-?*::
-  Print a usage message.
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

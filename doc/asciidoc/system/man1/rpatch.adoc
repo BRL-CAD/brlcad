@@ -8,11 +8,10 @@ rpatch - reformat FASTGEN files for input to patch-g
 
 == SYNOPSIS
 
-[source]
-----
-rpatch [-D] [-3] < fastgen_input_file > file.rp
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rpatch* [*-D*] [*-3*]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -30,13 +29,16 @@ re-emitted in the space-delimited layout that *patch-g*(1) reads.
 [[options]]
 == OPTIONS
 
-*-D*::
+*-D*, *--type-3-donuts*::
   Treat type 3 components as donuts rather than triangles.
 
-*-3*::
+*-3*, *--fastgen3*::
   Interpret the input as FASTGEN3 format, in which the coordinate
   fields are each 10 columns wide (the default layout uses narrower
   8- and 9-column coordinate fields).
+
+*-h*, *-?*, *--help*::
+  Print a usage message and exit.
 
 
 [[examples]]

@@ -8,13 +8,11 @@ png2fb - load a PNG image into the current display framebuffer
 
 == SYNOPSIS
 
-[source]
-----
-png2fb [-H -i -c -v -z -1] [-m lines] [-g screen_gamma]
-       [-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]
-       [-S squarescrsize] [file.png]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*png2fb* [*-1*] [*-m* _lines_] [*-g* _gamma_] [*-H*] [*-i*] [*-c*] [*-v*] [*-z*] [*-x* _pixels_]
+       [*-y* _pixels_] [*-X* _pixels_] [*-Y* _pixels_] [*-h*] [_input_file_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -25,46 +23,89 @@ If no `file.png` is given, *png2fb* reads from standard input.
 
 This command requires the current display manager to have an associated framebuffer. If no framebuffer is available, an error is returned.
 
-=== Options
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-1*::
+  Use one-line writes.
+
+*-m* _lines_::
+  Draw multiple lines per write.
+
+*-g* _gamma_::
+  Set screen gamma.
 
 *-H*::
-Use the framebuffer's hardware size rather than the PNG image's size for display dimensions.
+  Read the PNG header only.
 
 *-i*::
-Invert the image (flip vertically when reading from file).
+  Draw upside-down.
 
 *-c*::
-Clear the framebuffer to black before displaying the image.
+  Clear the framebuffer.
 
 *-v*::
-Verbose mode: print additional information while loading.
+  Print verbose reporting.
 
 *-z*::
+  Zoom to fill the screen.
+
+*-x* _pixels_::
+  Set input X offset.
+
+*-y* _pixels_::
+  Set input Y offset.
+
+*-X* _pixels_::
+  Set framebuffer X offset.
+
+*-Y* _pixels_::
+  Set framebuffer Y offset.
+
+*-h*, *--help*::
+  Print command help.
+
+// END GENERATED BU_ARG OPTIONS
+
+[[option_details]]
+== OPTION DETAILS
+
+=== *-H*
+Read the PNG header only; do not load image pixels into the framebuffer.
+
+=== *-i*
+Invert the image (flip vertically when reading from file).
+
+=== *-c*
+Clear the framebuffer to black before displaying the image.
+
+=== *-v*
+Verbose mode: print additional information while loading.
+
+=== *-z*
 Zoom the image to fill the framebuffer.
 
-*-1*::
+=== *-1*
 Use a single line at a time for I/O (slower but uses less memory).
 
-*-m lines*::
+=== *-m* _lines_
 Read `lines` lines at a time from the PNG file (default: vary).
 
-*-g screen_gamma*::
-Apply the specified gamma correction value to the display.
+=== *-g* _screen_gamma_
+Apply the specified positive gamma correction value to the display.
 
-*-x file_xoff*::
+=== *-x* _file_xoff_
 Horizontal offset (in pixels) into the PNG file to start reading.
 
-*-y file_yoff*::
+=== *-y* _file_yoff_
 Vertical offset (in pixels) into the PNG file to start reading.
 
-*-X scr_xoff*::
+=== *-X* _scr_xoff_
 Horizontal offset on the framebuffer screen to begin writing.
 
-*-Y scr_yoff*::
+=== *-Y* _scr_yoff_
 Vertical offset on the framebuffer screen to begin writing.
-
-*-S squarescrsize*::
-Set both the screen width and height to `squarescrsize` pixels.
 
 [[examples]]
 == EXAMPLES

@@ -8,11 +8,10 @@ solid_report - Compatibility alias for the detailed displayed-solid report.
 
 == SYNOPSIS
 
-[source]
-----
-solid_report [level]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*solid_report* [*-h*] [*-V* _name_] [*-m* _number_] [_detail_level_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -21,6 +20,21 @@ Lists all the primitive shapes currently drawn in the MGED display. The _level_ 
 
 This command is a compatibility alias for *who solids*. New scripts and interactive usage should prefer *who solids* so the detailed solid listing stays grouped with the broader *who* display-reporting command family.
 
+
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help.
+
+*-V* _name_, *--view*=_name_::
+  Specify the view.
+
+*-m* _number_, *--mode*=_number_::
+  Restrict the drawing mode.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

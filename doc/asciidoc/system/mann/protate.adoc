@@ -8,10 +8,10 @@ protate - rotate a vector attribute of a primitive by Euler angles
 
 == SYNOPSIS
 
-[source]
-----
-protate obj attribute "rx ry rz"
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*protate* _object_ _attribute_ _rotation_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

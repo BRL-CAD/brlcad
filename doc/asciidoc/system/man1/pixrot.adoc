@@ -8,11 +8,11 @@ pixrot - rotate, invert, or reverse a color pix file
 
 == SYNOPSIS
 
-[source]
-----
-pixrot [-f] [-b] [-r] [-i] [-#bytes] [-s squaresize] [-w width] [-n height] [file.pix] > newfile.pix
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixrot* [*-f*] [*-b*] [*-r*] [*-i*] [*-#* _count_] [*-s* _pixels_] [*-w* _pixels_]
+       [*-n* _scanlines_] [_input-or-width_] [_legacy-height_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -39,32 +39,35 @@ seekable file rather than a pipe for the rotation modes.
 [[options]]
 == OPTIONS
 
-*-f*::
-  Rotate the image ninety degrees forward (clockwise).
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-b*::
-  Rotate the image ninety degrees backward (counter-clockwise).
+*-f*, *--forward*::
+  Rotate 90 degrees clockwise.
 
-*-r*::
-  Reverse each scan line left to right.
+*-b*, *--backward*::
+  Rotate 90 degrees counterclockwise.
 
-*-i*::
-  Invert the image top to bottom.
+*-r*, *--reverse*::
+  Reverse each scanline horizontally.
 
-*-#* _bytes_::
-  Set the number of bytes per pixel (default 3, as in *pix*(5)).
+*-i*, *--invert*::
+  Invert scanline order vertically.
 
-*-s* _squaresize_::
-  Set both the input width and height to _squaresize_ pixels (also *-S*).
+*-#* _count_, *--pixel-bytes*=_count_::
+  Set the bytes per pixel.
 
-*-w* _width_::
-  Set the input width in pixels (default 512, also *-W*).
+*-s* _pixels_, *--size*=_pixels_::
+  Set both input dimensions.
 
-*-n* _height_::
-  Set the input number of scan lines in pixels (default 512, also *-N*).
+*-w* _pixels_, *--width*=_pixels_::
+  Set the input width.
 
-*-h*::
-  Print a usage message.
+*-n* _scanlines_, *--height*=_scanlines_::
+  Set the input height.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

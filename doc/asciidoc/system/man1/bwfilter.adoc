@@ -8,10 +8,11 @@ bwfilter - apply a 3x3 kernel filter to a black and white bw image
 
 == SYNOPSIS
 
-[source]
-----
-bwfilter [-v] [-f _type_] [-d _div_] [-O _offset_] [-s _squaresize_] [-w _width_] [-n _height_] [-o _out_file.bw_] [_file.bw_]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bwfilter* [*-v*] [*-f* _type_] [*-d* _integer_] [*-O* _integer_] [*-s* _pixels_] [*-w* _pixels_]
+         [*-n* _pixels_] [*-o* _file_] [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -30,7 +31,7 @@ filters, an offset that recenters the result; both may be overridden.
 [[options]]
 == OPTIONS
 
-*-f* _type_::
+*-f* _type_, *--filter* _type_::
   Select the filter to apply (default *lo*).  Recognized types are:
 +
 --
@@ -42,34 +43,37 @@ filters, an offset that recenters the result; both may be overridden.
 *b*;; boxcar average (low pass)
 --
 
-*-d* _div_::
+*-d* _div_, *--divisor* _div_::
   Override the kernel divisor.  Most filters divide the result of the
   kernel multiplication by a fixed value to scale it into a 0-255 range
   (for example, the boxcar filter divides by nine).  A divisor of zero
   is rejected.
 
-*-O* _offset_::
+*-O* _offset_, *--offset* _offset_::
   Override the kernel offset.  Some filters add an offset to their
   results; the laplacian, for instance, is centered about zero and adds
   128 to yield a difference from neutral grey.
 
-*-s* _squaresize_::
+*-s* _squaresize_, *--size* _squaresize_::
   Set both the width and height of the input image to _squaresize_.
 
-*-w* _width_::
+*-w* _width_, *--width* _width_::
   Set the width of the input image to _width_ (default 512).
 
-*-n* _height_::
+*-n* _height_, *--height* _height_::
   Set the height of the input image to _height_ (default 512).
 
-*-o* _out_file.bw_::
+*-o* _out_file.bw_, *--output* _out_file.bw_::
   Write the filtered output to _out_file.bw_.  If standard output is
   also non-interactive (redirected or piped), the same output is
   written to both destinations.
 
-*-v*::
+*-v*, *--verbose*::
   Verbose: print the kernel values and the maximum and minimum output
   values to standard error.
+
+*-h*, *-?*, *--help*::
+  Print a usage message and exit.
 
 [[examples]]
 == EXAMPLES

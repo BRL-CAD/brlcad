@@ -9,10 +9,12 @@ g-stl - convert BRL-CAD geometry to the STL file format
 
 == SYNOPSIS
 
-[source]
-----
-g-stl [-bvi8] [-x _rt_debug_] [-X _nmg_debug_] [-a _abs_tol_] [-r _rel_tol_] [-n _norm_tol_] [-D _dist_tol_] [-o _output_file_.stl | -m _directory_] _database.g_ _object_ ...
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*g-stl* [*-b*] [*-v*] [*-i*] [*-8*] [*-a* _distance_] [*-r* _fraction_] [*-n* _degrees_]
+      [*-D* _distance_] [*-x* _mask_] [*-X* _mask_] [*-o* _output.stl_ | *-m* _directory_]
+      _database.g_ _object_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -33,53 +35,47 @@ millimeters; see *-i*. Related converters include *g-obj*(1), *g-ply*(1), and
 [[options]]
 == OPTIONS
 
-*-b*::
-  Write a binary STL file instead of the default ASCII format. Binary output
-  cannot be written to standard output, so *-o* or *-m* is required.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-v*::
-  Enable verbose output, reporting object names, tolerances, and conversion
-  statistics.
+*-b*, *--binary*::
+  Write binary instead of ASCII STL; requires --output or --output-directory.
 
-*-i*::
-  Use inches as the output units (the default is millimeters).
+*-v*, *--verbose*::
+  Report objects, tolerances, and conversion statistics.
 
-*-8*::
-  Tessellate using the marching cubes algorithm rather than the default NMG
-  boolean evaluation.
+*-i*, *--inches*::
+  Write coordinates in inches instead of millimeters (the default).
 
-*-a* _abs_tol_::
-  Set the absolute tessellation tolerance in millimeters (the maximum chord
-  deviation). Setting this clears the relative tolerance.
+*-8*, *--marching-cubes*::
+  Tessellate with marching cubes instead of NMG boolean evaluation.
 
-*-r* _rel_tol_::
-  Set the relative tessellation tolerance as a fraction of the bounding box
-  (default 0.01).
+*-a* _distance_, *--absolute-tolerance*=_distance_::
+  Set nonnegative maximum chord deviation in millimeters and clear relative tolerance.
 
-*-n* _norm_tol_::
-  Set the surface normal tessellation tolerance in degrees. Setting this clears
-  the relative tolerance.
+*-r* _fraction_, *--relative-tolerance*=_fraction_::
+  Set nonnegative tolerance as a fraction of the bounding box (default 0.01).
 
-*-D* _dist_tol_::
-  Set the calculation distance tolerance in millimeters used to decide whether
-  two vertices are coincident (default 0.0005).
+*-n* _degrees_, *--normal-tolerance*=_degrees_::
+  Set nonnegative surface-normal tolerance in degrees and clear relative tolerance.
 
-*-x* _rt_debug_::
-  Set the librt debugging flags as a hexadecimal value.
+*-D* _distance_, *--distance-tolerance*=_distance_::
+  Set nonnegative vertex-coincidence distance in millimeters (default 0.0005).
 
-*-X* _nmg_debug_::
-  Set the libnmg debugging flags as a hexadecimal value.
+*-x* _mask_, *--rt-debug*=_mask_::
+  Set librt hexadecimal debug flags.
 
-*-o* _output_file_.stl::
-  Write all converted geometry to the named output file. Mutually exclusive
-  with *-m*.
+*-X* _mask_, *--nmg-debug*=_mask_::
+  Set libnmg hexadecimal debug flags.
 
-*-m* _directory_::
-  Write each region to its own STL file inside the named directory. Mutually
-  exclusive with *-o*.
+*-o* _output.stl_, *--output*=_output.stl_::
+  Write all geometry to this STL file (mutually exclusive with --output-directory).
 
-*-h*, *-?*::
-  Print a usage message and exit.
+*-m* _directory_, *--output-directory*=_directory_::
+  Write each region to a separate STL file here (mutually exclusive with --output).
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

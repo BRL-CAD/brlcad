@@ -9,10 +9,10 @@ shp-g - convert an Esri Shapefile to a BRL-CAD .g database
 
 == SYNOPSIS
 
-[source]
-----
-shp-g [-v] [-d] [-x rt_debug_flag] shapefile [output.g]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*shp-g* [*-v*] [*-d*] [*-x* _mask_] _shapefile_ [_output.g_]
+// END GENERATED BU_ARG SYNOPSIS
 
 
 [[description]]
@@ -35,17 +35,20 @@ Z and measure values present in the shapefile are ignored.
 [[options]]
 == OPTIONS
 
-*-v*::
-  Verbose output.  Prints the shapefile type, shape count, bounding extents,
-  per-shape detail, and a summary of any shapes with bad loop orientations.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-d*::
-  Enable diagnostic debugging output, including warnings about missing shapes
-  and loops whose winding order had to be corrected.
+*-v*, *--verbose*::
+  Print shapefile type, shape count, bounds, per-shape details, and loop-orientation summary.
 
-*-x* _rt_debug_flag_::
-  Set the librt debugging flags to the given hexadecimal value (see the
-  RT_DEBUG definitions in raytrace.h).
+*-d*, *--debug*::
+  Print diagnostics for missing shapes and corrected loop winding.
+
+*-x* _mask_, *--rt-debug*=_mask_::
+  Set librt hexadecimal debug flags (see RT_DEBUG in raytrace.h).
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

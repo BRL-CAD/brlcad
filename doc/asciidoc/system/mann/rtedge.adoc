@@ -8,11 +8,10 @@ rtedge - Executes the BRL-CAD _rtedge_ program with the default options of "-s51
 
 == SYNOPSIS
 
-[source]
-----
-rtedge [options] [-- objects]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rtedge* [_arguments_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

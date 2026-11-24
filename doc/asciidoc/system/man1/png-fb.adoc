@@ -8,11 +8,12 @@ png-fb - display a PNG image file on a framebuffer
 
 == SYNOPSIS
 
-[source]
-----
-png-fb [-H] [-i] [-c] [-v] [-z] [-1] [-m _#lines_] [-F _framebuffer_] [-g _screen_gamma_] [-S _squarescrsize_] [-W _scr_width_] [-N _scr_height_] [-x _file_xoff_] [-y _file_yoff_] [-X _scr_xoff_] [-Y _scr_yoff_] [_file.png_]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*png-fb* [*-1*] [*-m* _scanlines_] [*-g* _gamma_] [*-H*] [*-i*] [*-c*] [*-v*] [*-z*] [*-F* _device_]
+       [*-x* _pixels_] [*-y* _scanlines_] [*-X* _pixels_] [*-Y* _scanlines_] [*-S* _pixels_]
+       [*-W* _pixels_] [*-N* _scanlines_] [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -30,69 +31,76 @@ framebuffer image to a PNG file, is performed by *fb-png*(1).
 [[options]]
 == OPTIONS
 
-*-H*::
-  Print a single line on standard output giving the image dimensions in a form
-  usable in shell scripts (e.g. `WIDTH=42 HEIGHT=17`) and exit without
-  displaying the image.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-i*::
-  Invert the image, drawing it upside-down.
+*-1*, *--one-line*::
+  Force one scanline per framebuffer write.
 
-*-c*::
-  Clear the framebuffer to black before displaying. By default the new image is
-  written over whatever is already on the screen.
+*-m* _scanlines_, *--multiple-lines*=_scanlines_::
+  Write blocks containing this many scanlines.
 
-*-v*::
-  Be verbose, reporting the color type, bit depth, image size, gamma, interlace
-  status, and any embedded text or modification-time chunks.
+*-g* _gamma_, *--screen-gamma*=_gamma_::
+  Set additional display gamma correction.
 
-*-z*::
-  Zoom and center the image so it fills the display area, using the framebuffer
-  *fb_view*() routine. Only integer zoom factors are available, so non-square
-  displays may find this of limited use.
+*-H*, *--header-only*::
+  Print image dimensions without displaying the image.
 
-*-1*::
-  Force the image to be written one scanline at a time with *fb_write*(3). This
-  is the default and overrides *-m*.
+*-i*, *--invert*::
+  Display scanlines from top to bottom.
 
-*-m* _#lines_::
-  Write the image in rectangular blocks of _#lines_ scanlines using
-  *fb_writerect*(3) rather than one line at a time. This can be significantly
-  faster on some framebuffers. Block writes are only used when the image is not
-  inverted or zoomed and is no wider than the screen; otherwise display falls
-  back to single-line writes.
+*-c*, *--clear*::
+  Clear the framebuffer before writing.
 
-*-F* _framebuffer_::
-  Display on the explicitly named _framebuffer_ instead of the one named by
-  *FB_FILE*.
+*-v*, *--verbose*::
+  Report PNG metadata while reading.
 
-*-g* _screen_gamma_::
-  Additional gamma correction to apply for the display screen (default 1.0,
-  i.e. none). Larger values produce a lighter image.
+*-z*, *--zoom*::
+  Zoom and center the displayed image.
 
-*-S* _squarescrsize_::
-  Set both the framebuffer width and height to _squarescrsize_ pixels.
+*-F* _device_, *--framebuffer*=_device_::
+  Select the framebuffer instead of the FB_FILE environment default.
 
-*-W* _scr_width_::
-  Set the framebuffer width, in pixels.
+*-x* _pixels_, *--input-x-offset*=_pixels_::
+  Skip pixels from the left of each input scanline.
 
-*-N* _scr_height_::
-  Set the framebuffer height, in scanlines.
+*-y* _scanlines_, *--input-y-offset*=_scanlines_::
+  Skip scanlines from the bottom of the input.
 
-*-x* _file_xoff_::
-  Skip _file_xoff_ pixels into the image horizontally before displaying.
+*-X* _pixels_, *--screen-x-offset*=_pixels_::
+  Offset the image horizontally on the framebuffer.
 
-*-y* _file_yoff_::
-  Skip _file_yoff_ pixels into the image vertically before displaying.
+*-Y* _scanlines_, *--screen-y-offset*=_scanlines_::
+  Offset the image vertically on the framebuffer.
 
-*-X* _scr_xoff_::
-  Offset the displayed image _scr_xoff_ pixels horizontally on the screen.
+*-S* _pixels_, *--framebuffer-size*=_pixels_::
+  Set both framebuffer dimensions.
 
-*-Y* _scr_yoff_::
-  Offset the displayed image _scr_yoff_ pixels vertically on the screen.
+*-W* _pixels_, *--framebuffer-width*=_pixels_::
+  Set the framebuffer width.
 
-The coordinate system for the offsets is first quadrant, with the origin at the
-lower left corner of the image.
+*-N* _scanlines_, *--framebuffer-height*=_scanlines_::
+  Set the framebuffer height.
+
+// END GENERATED BU_ARG OPTIONS
+
+*--header-only* writes `WIDTH=_width_ HEIGHT=_height_` to standard output in a
+form suitable for shell scripts.  *--verbose* reports the color type, bit depth,
+image size, gamma, interlace status, embedded text, and modification time when
+present.  Additional screen gamma defaults to 1.0 (no correction), must be
+positive, and lightens the displayed image as it increases.
+
+*--one-line* overrides *--multiple-lines* regardless of option order.  Block
+writes are used only for non-inverted, non-zoomed, unclipped transfers with
+nonnegative framebuffer offsets and can be significantly faster on some
+framebuffers.
+
+Input offsets are nonnegative and measured from the lower-left corner of the
+image.  Framebuffer offsets use the same origin but may be negative.  A zero
+framebuffer width or height tracks the corresponding image dimension.  Zooming
+uses equal integer factors in both directions to preserve the image aspect
+ratio.
 
 [[examples]]
 == EXAMPLES

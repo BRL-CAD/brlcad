@@ -8,11 +8,10 @@ fbclear - clear a frame buffer to a color
 
 == SYNOPSIS
 
-[source]
-----
-fbclear [-c] [-F framebuffer] [-{sS} squaresize] [-{wW} width] [-{nN} height] [gray | r g b]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*fbclear* [*-c*] [*-F* _device_] [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_] [_color_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -34,23 +33,26 @@ in effect.
 [[options]]
 == OPTIONS
 
-*-c*::
+*-c*, *--reset*::
   Also reset the colormap to linear and reset the pan and zoom to their
   default (centered, un-zoomed) values.
 
-*-F* _framebuffer_::
+*-F* _framebuffer_, *--framebuffer* _framebuffer_::
   Use the specified _framebuffer_ device, overriding the `FB_FILE`
   environment variable.
 
-*-s* _squaresize_, *-S* _squaresize_::
-  Set both the width and height of the frame buffer to _squaresize_
+*-s* _pixels_, *--size* _pixels_::
+  Set both the width and height of the frame buffer to _pixels_
   pixels.
 
-*-w* _width_, *-W* _width_::
-  Set the width of the frame buffer to _width_ pixels.
+*-w* _pixels_, *--width* _pixels_::
+  Set the width of the frame buffer to _pixels_ pixels.
 
-*-n* _height_, *-N* _height_::
-  Set the height of the frame buffer to _height_ pixels.
+*-n* _pixels_, *--height* _pixels_::
+  Set the height of the frame buffer to _pixels_ pixels.
+
+*-h*, *--help*::
+  Print command help and exit.
 
 [[examples]]
 == EXAMPLES

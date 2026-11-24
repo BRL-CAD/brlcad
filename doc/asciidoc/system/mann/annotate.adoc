@@ -9,26 +9,10 @@ annotate - create, inspect, show, and hide persistent 3D annotations
 
 == SYNOPSIS
 
-[source]
-----
-annotate text [common-options] [--at x y z] [--plane xy|xz|yz]
-              [--frame] name text
-annotate leader [common-options] [--target x y z] [--at x y z]
-                [--screen-space [--dpi value]] name text
-annotate dimension linear [dimension-options] --from x y z --to x y z name
-annotate dimension angular [dimension-options] --vertex x y z
-                           --from x y z --to x y z name
-annotate dimension radius [dimension-options] --center x y z --to x y z name
-annotate dimension diameter [dimension-options] --center x y z --to x y z name
-annotate dimension ordinate [dimension-options] --origin x y z --to x y z
-                            --axis x|y|z name
-annotate autodim [autodim-options] name [object ...]
-annotate update [--view-only] name ...
-annotate show [--all] name|tree ...
-annotate hide [--all] name|tree ...
-annotate list [pattern ...]
-annotate info name
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*annotate* [_OPTION_]... _SUBCOMMAND_ [_ARGUMENT_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 == DESCRIPTION
 

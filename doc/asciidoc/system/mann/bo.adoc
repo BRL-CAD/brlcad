@@ -8,12 +8,14 @@ bo - Creates or retrieves binary opaque objects.
 
 == SYNOPSIS
 
-[source]
-----
-bo -i u [h|n]type destination source
-bo -o destination source
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bo* *-i* (*-i* | *-o*) *u* (*f* | *d* | *c* | *s* | *i* | *l* | *C* | *S* | *I* | *L* | *hf* |
+   *hd* | *hc* | *hs* | *hi* | *hl* | *hC* | *hS* | *hI* | *hL* | *nf* | *nd* | *nc* | *ns* | *ni* |
+   *nl* | *nC* | *nS* | *nI* | *nL*) _output_object_ _input_file_
+*bo* *-o* (*-i* | *-o*) _output_file_ _input_object_
+*bo* (*-i* | *-o*)
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -47,6 +49,18 @@ Note: this command was previously named "dbbinary".
 On output, _destination_ is the path to a host-order file containing the binary
 object specified as _source_.
 
+
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-i*::
+  Import a file as a binary object.
+
+*-o*::
+  Export a binary object to a file.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

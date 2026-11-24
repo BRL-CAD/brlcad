@@ -8,10 +8,10 @@ ert - evaluate and execute a raytrace
 
 == SYNOPSIS
 
-[source]
-----
-ert [rt_options] [--] [objects]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*ert* [_rt_arguments_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

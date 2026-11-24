@@ -8,11 +8,10 @@ cp - Makes a copy of the given object.
 
 == SYNOPSIS
 
-[source]
-----
-cp {from_object to_object}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*cp* _source_object_ _output_object_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,10 +8,11 @@ stl-g - Stereolithography (STL) to BRL-CAD converter
 
 == SYNOPSIS
 
-[source]
-----
-stl-g [-db] [-t tolerance] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units] [-x rt_debug_flag] input.stl output.g
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*stl-g* [*-b*] [*-d*] [*-t* _tolerance_] [*-N* _object-name_] [*-i* _ident_ | *-I* _ident_]
+      [*-m* _code_] [*-c* _unit_] [*-x* _mask_] _input.stl_ _output.g_
+// END GENERATED BU_ARG SYNOPSIS
 
 
 [[description]]
@@ -35,42 +36,38 @@ The inverse conversion (BRL-CAD to STL) is performed by *g-stl*(1).
 [[options]]
 == OPTIONS
 
-*-b*::
-  Treat the input as a binary STL file. The default is ASCII.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-d*::
-  Print additional debugging information, including each face and its
-  normal as it is read.
+*-b*, *--binary*::
+  Read binary STL instead of ASCII STL (the default).
 
-*-t* _tolerance_::
-  Minimum distance, in millimeters, between two distinct vertices. Any two
-  vertices closer than this are treated as the same vertex. The default is
-  0.0005 mm (the same default used by *mged*(1) and the raytracer).
+*-d*, *--debug*::
+  Print each face and normal as it is read.
 
-*-N* _forced_name_::
-  Use _forced_name_ as the base name for the converted object instead of
-  deriving one from the STL solid name or input file name.
+*-t* _tolerance_, *--tolerance*=_tolerance_::
+  Merge vertices within this positive distance in millimeters (default 0.0005, as used by MGED and the raytracer).
 
-*-i* _initial_ident_::
-  Set the ident (region) number assigned to the first region; it is
-  incremented for each subsequent region. The default is 1000. Conflicts
-  with *-I*.
+*-N* _object-name_, *--name*=_object-name_::
+  Use this base name instead of the STL solid or input file name.
 
-*-I* _constant_ident_::
-  Assign _constant_ident_ to every region created. Must be zero or greater.
-  Conflicts with *-i*.
+*-i* _ident_, *--initial-ident*=_ident_::
+  Set the first region ident and increment subsequent regions (default 1000; conflicts with --constant-ident).
 
-*-m* _material_code_::
-  Set the integer material code (GIFT material code) assigned to all
-  regions. The default is 0.
+*-I* _ident_, *--constant-ident*=_ident_::
+  Assign this nonnegative ident to every region (conflicts with --initial-ident).
 
-*-c* _units_::
-  Specify the units used in the STL file so coordinates can be converted to
-  millimeters. _units_ may be any string accepted by BRL-CAD, such as "mm",
-  "cm", "m", "in", or "ft". The default is "mm".
+*-m* _code_, *--material-code*=_code_::
+  Set the GIFT material code for every region (default 0).
 
-*-x* _rt_debug_flag_::
-  Set the librt debug flag (a hexadecimal value; see raytrace.h).
+*-c* _unit_, *--units*=_unit_::
+  Interpret coordinates in a BRL-CAD length unit such as mm, cm, m, in, or ft (default mm).
+
+*-x* _mask_, *--rt-debug*=_mask_::
+  Set librt hexadecimal debug flags (see RT_DEBUG in raytrace.h).
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

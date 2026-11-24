@@ -8,12 +8,10 @@ instance, i - add an object instance to a combination with a Boolean operator
 
 == SYNOPSIS
 
-[source]
-----
-instance obj comb [op]
-i obj comb [op]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*instance* _object_ _combination_ [(*u* | *-* | *+*)]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -26,7 +24,9 @@ The optional `op` argument specifies the Boolean relationship:
 * `-` — subtraction
 * `+` — intersection
 
-The combination `comb` must already exist. To create a new combination at the same time, use *group*, *comb*, or *region*.
+If the combination `comb` does not already exist, *instance* creates it.  A
+new combination is created as a non-region combination; use *region* when
+region attributes are required.
 
 [[examples]]
 == EXAMPLES

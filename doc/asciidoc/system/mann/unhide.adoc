@@ -8,11 +8,10 @@ unhide - Removes the hidden flag for the specified objects.
 
 == SYNOPSIS
 
-[source]
-----
-unhide {objects}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*unhide* _objects_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

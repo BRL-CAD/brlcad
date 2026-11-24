@@ -8,11 +8,10 @@ joint - manage kinematic joint and constraint data for articulated models
 
 == SYNOPSIS
 
-[source]
-----
-joint subcommand [args]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*joint* _SUBCOMMAND_ [_ARGUMENT_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,10 +8,10 @@ fb-pix - save a framebuffer image as a color pix file
 
 == SYNOPSIS
 
-[source]
-----
-fb-pix [-i] [-c] [-F framebuffer] [-s squaresize] [-w width] [-n height] [-h] [-?] [file.pix]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*fb-pix* [*-c*] [*-i*] [*-F* _device_] [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_] [_output_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -26,29 +26,29 @@ with a first-quadrant coordinate system (origin at the lower left).
 [[options]]
 == OPTIONS
 
-*-i*::
-Use a fourth-quadrant coordinate system (origin at the upper left),
-reading the framebuffer scanlines from top to bottom instead of
-bottom to top.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-c*::
-Apply the framebuffer color map to pixel values before writing.
+*-c*, *--color-map*::
+  Apply a non-linear framebuffer color map.
 
-*-F* _framebuffer_::
-Specify the framebuffer device. Defaults to the `FB_FILE`
-environment variable (see *brlcad*(1)).
+*-i*, *--inverse*::
+  Read framebuffer scanlines from top to bottom.
 
-*-s* _squaresize_::
-Set both width and height to _squaresize_.
+*-F* _device_, *--framebuffer*=_device_::
+  Select the framebuffer device instead of the configured default.
 
-*-w* _width_::
-Set the output width in pixels.
+*-s* _pixels_, *--size*=_pixels_::
+  Set both output dimensions (default: 512).
 
-*-n* _height_::
-Set the output height in pixels.
+*-w* _pixels_, *--width*=_pixels_::
+  Set the output width (default: 512).
 
-*-h, -?*::
-Print a usage message and exit.
+*-n* _pixels_, *--height*=_pixels_::
+  Set the output height (default: 512).
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

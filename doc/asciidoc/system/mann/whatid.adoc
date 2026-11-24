@@ -8,11 +8,10 @@ whatid - report the region identifier (ident) of a region
 
 == SYNOPSIS
 
-[source]
-----
-whatid region
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*whatid* _region_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

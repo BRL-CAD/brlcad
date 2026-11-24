@@ -8,12 +8,10 @@ comb_std, c - create or modify a combination using standard Boolean notation
 
 == SYNOPSIS
 
-[source]
-----
-comb_std comb_name [op1 object1 [op2 object2 ...]]
-c comb_name [op1 object1 [op2 object2 ...]]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*comb_std* [*-c*] [*-r*] [*-?*] _combination_ [_boolean_expression_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -29,6 +27,21 @@ Each member is specified as an operator-object pair:
 Members are listed in order: the first operator applies between the combination and the first object; subsequent operators apply between successive objects.
 
 The *comb_std* command (alias *c*) is a simplified alternative to *comb* that uses infix Boolean expression parsing similar to traditional MGED syntax.
+
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-c*::
+  Create or mark a non-region combination.
+
+*-r*::
+  Create or mark a region.
+
+*-?*::
+  Print command usage.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

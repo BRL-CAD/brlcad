@@ -8,10 +8,10 @@ nmg_cmface - create a manifold face in an NMG solid
 
 == SYNOPSIS
 
-[source]
-----
-nmg_cmface nmg_name x0 y0 z0 x1 y1 z1 x2 y2 z2 [x3 y3 z3 ...]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*nmg_cmface* _nmg_ _vertices_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

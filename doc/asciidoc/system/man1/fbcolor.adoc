@@ -8,10 +8,10 @@ fbcolor - interactively pick a color on a framebuffer
 
 == SYNOPSIS
 
-[source]
-----
-fbcolor [-F framebuffer] [-s|-S squaresize] [-w|-W width] [-n|-N height] [-h]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*fbcolor* [*-F* _device_] [*-s* _pixels_] [*-w* _pixels_] [*-n* _scanlines_]
+// END GENERATED BU_ARG SYNOPSIS
 
 
 [[description]]
@@ -47,33 +47,27 @@ restoring the original color map.
 [[options]]
 == OPTIONS
 
-*-F* _framebuffer_::
-  Specifies the framebuffer device to use. If not given, the environment
-  variable *FB_FILE* is used to select the display device (see
-  *brlcad*(1)). If *FB_FILE* has not been set, the default device for
-  your system is used.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-s* _squaresize_::
-  Sets both the width and height of the framebuffer window to
-  _squaresize_ pixels.
+*-F* _device_, *--framebuffer*=_device_::
+  Select the framebuffer instead of the FB_FILE environment default.
 
-*-S* _squaresize_::
-  Same as *-s*.
+*-s* _pixels_, *--size*=_pixels_::
+  Set both dimensions; zero selects the device default.
 
-*-w* _width_::
-  Sets the width of the framebuffer window to _width_ pixels.
+*-w* _pixels_, *--width*=_pixels_::
+  Set the width; zero selects the device default.
 
-*-W* _width_::
-  Same as *-w*.
+*-n* _scanlines_, *--height*=_scanlines_::
+  Set the height; zero selects the device default.
 
-*-n* _height_::
-  Sets the height of the framebuffer window to _height_ pixels.
+// END GENERATED BU_ARG OPTIONS
 
-*-N* _height_::
-  Same as *-n*.
-
-*-h*::
-  Prints a usage summary and exits.
+The uppercase *-S*, *-W*, and *-N* spellings remain accepted as hidden
+compatibility aliases. If no framebuffer is named, *FB_FILE* selects the
+display device; otherwise the system default is used.
 
 [[examples]]
 == EXAMPLES

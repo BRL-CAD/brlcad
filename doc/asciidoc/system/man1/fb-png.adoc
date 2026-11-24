@@ -8,10 +8,11 @@ fb-png - save a framebuffer image as a Portable Network Graphics (PNG) file
 
 == SYNOPSIS
 
-[source]
-----
-fb-png [-i] [-c] [-# _nbytes/pixel_] [-F _framebuffer_] [-g _gamma_] [-s _squaresize_] [-w _width_] [-n _height_] [file.png]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*fb-png* [*-c*] [*-i*] [*-F* _device_] [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_]
+       [*-g* _value_] [*-#* _1|3_] [_output_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -29,38 +30,35 @@ framebuffer.
 [[options]]
 == OPTIONS
 
-*-i*::
-  Read the framebuffer bottom-to-top, inverting the image vertically
-  (fourth-quadrant order, origin at the upper left).
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-c*::
-  Apply ("crunch") the framebuffer color map to pixel values before
-  writing. Ignored if the framebuffer has no map or a linear one.
+*-c*, *--color-map*::
+  Apply a non-linear framebuffer color map; ignored when no map is present or the map is linear.
 
-*-#* _nbytes/pixel_::
-  Number of bytes per pixel: 1 for grayscale or 3 for color (the
-  default).
+*-i*, *--inverse*::
+  Read bottom-to-top, producing fourth-quadrant output with an upper-left origin.
 
-*-F* _framebuffer_::
-  Specify the framebuffer device. Defaults to the *FB_FILE*
-  environment variable (see *brlcad*(1)).
+*-F* _device_, *--framebuffer*=_device_::
+  Select the framebuffer device instead of the FB_FILE environment default.
 
-*-g* _gamma_::
-  Write the specified gamma correction value into the PNG gAMA chunk.
-  A value of 0.6 approximates PC display monitors. A non-positive
-  value (the default is -1.0) disables writing the gAMA chunk entirely.
+*-s* _pixels_, *--size*=_pixels_::
+  Set both output dimensions (default: 512).
 
-*-s* _squaresize_::
-  Set both width and height to _squaresize_ pixels (default 512).
+*-w* _pixels_, *--width*=_pixels_::
+  Set the output width (default: 512).
 
-*-w* _width_::
-  Set the width in pixels (default 512).
+*-n* _pixels_, *--height*=_pixels_::
+  Set the output height (default: 512).
 
-*-n* _height_::
-  Set the height in pixels (default 512).
+*-g* _value_, *--gamma*=_value_::
+  Set the PNG source gamma (0.6 approximates PC monitors); non-positive values omit the gAMA chunk (default: -1.0).
 
-*-h*, *-?*::
-  Print a usage message and exit.
+*-#* _1|3_, *--pixel-bytes*=_1|3_::
+  Select grayscale (1) or RGB (3) output (default: 3). Accepted values: *1*, *3*.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

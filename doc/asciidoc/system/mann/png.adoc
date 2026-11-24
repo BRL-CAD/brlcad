@@ -8,11 +8,10 @@ png - Writes the current display to a PNG image file.
 
 == SYNOPSIS
 
-[source]
-----
-png [-c r/g/b] [-s size] file
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*png* [*-c* _r/g/b_] [*-s* _pixels_] _output_file_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -21,11 +20,24 @@ Writes the current GED display to the specified PNG _file_.
 
 The implementation supports the following options:
 
-* *-c r/g/b* - Set the background color using RGB values separated by non-numeric delimiters.
+* *-c r/g/b* - Set the background color.  Accepts packed `r/g/b`, `r,g,b`,
+  or `r;g;b` channels, or three separate 0--255 channel values.
 * *-s size* - Set the output image size in pixels. The implementation requires a size of at least 50.
 
 Without options, the command writes a 512x512 PNG image with a white background.
 
+
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-c* _r/g/b_::
+  Set background color.
+
+*-s* _pixels_::
+  Set square image size (at least 50).
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

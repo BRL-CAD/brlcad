@@ -8,11 +8,10 @@ rselect - Returns displayed items or BOT vertices within the previously defined 
 
 == SYNOPSIS
 
-[source]
-----
-rselect [-b bot] [-p] [-z vminz]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rselect* [*-b* _bot_] [*-p*] [*-z* _vminz_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -25,6 +24,21 @@ The implementation supports the following options:
 * *-p* - Use partial-overlap selection.
 * *-z vminz* - Ignore candidates with view-space Z values below _vminz_.
 
+
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-b* _bot_::
+  Select points from a BOT object or path.
+
+*-p*::
+  Select partial display paths.
+
+*-z* _vminz_::
+  Minimum view-space Z coordinate.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

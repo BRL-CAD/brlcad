@@ -8,11 +8,10 @@ ihist - compute a histogram and bit statistics for a stream of short integers
 
 == SYNOPSIS
 
-[source]
-----
-ihist [-v] < input.shorts > output.txt
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*ihist* [*-v*]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -32,7 +31,10 @@ applies arithmetic operations to it.
 [[options]]
 == OPTIONS
 
-*-v*::
+*-h*, *--help*::
+  Print command help and exit.
+
+*-v*, *--verbose*::
   Verbose. In addition to the summary statistics, print the full histogram as
   one "value count" pair per line for every distinct value that occurred.
 

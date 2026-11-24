@@ -9,11 +9,12 @@ adrt - render BRL-CAD geometry with the ADRT triangle ray tracer
 
 == SYNOPSIS
 
-[source]
-----
-adrt [options] model.g object [object ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*adrt* [*-o* _file_] [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_] [*-m* _mode_] [*-H* _count_]
+     [*-b* _string_] [*-A* _degrees_] [*-a* _degrees_] [*-e* _degrees_] [*-E* _x/y/z_]
+     [*-L* _x/y/z_] [*-p* _degrees_] [*-C* _r/g/b_] [*-P* _count_] _model.g_ _object_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -32,53 +33,57 @@ The output format is selected from the extension of the file named by *-o*.
 [[options]]
 == OPTIONS
 
-*-o* _file_::
+*-o* _file_, *--output* _file_::
   Write the rendered image to _file_. Default is _adrt.png_.
 
-*-s* _N_::
-  Set both image dimensions to _N_ pixels. Default is 512.
+*-s* _pixels_, *--size* _pixels_::
+  Set both image dimensions to _pixels_. Default is 512.
 
-*-w* _N_::
+*-w* _pixels_, *--width* _pixels_::
   Set the image width, overriding the width selected by *-s*.
 
-*-n* _N_::
+*-n* _pixels_, *--height* _pixels_::
   Set the image height, overriding the height selected by *-s*.
 
-*-m* _mode_::
-  Select *path*, *phong*, *normal*, *depth*, *flat*, *spall*, or *cut*.
-  Default is *path*.
+*-m* _mode_, *--mode* _mode_::
+  Select *component*, *cut*, *depth*, *flat*, *flos*, *grid*, *normal*,
+  *path*, *phong*, *spall*, or *surfel*. Default is *path*.
 
-*-H* _N_::
-  Use _N_ samples per pixel in path mode. Default is 32.
+*-H* _count_, *--samples* _count_::
+  Use _count_ samples per pixel in path mode. Default is 32.
 
-*-b* _buffer_::
+*-b* _string_, *--shader-argument* _string_::
   Pass a raw initialization string to a mode that accepts one, such as
   *cut* or *spall*. This is an advanced renderer-specific option.
 
-*-A* _angle_::
+*-A* _degrees_, *--spall-angle* _degrees_::
   Set the full spall-cone angle in degrees. Default is 30.
 
-*-a* _azimuth_::
+*-a* _degrees_, *--azimuth* _degrees_::
   Set the view azimuth in degrees. Default is 35.
 
-*-e* _elevation_::
+*-e* _degrees_, *--elevation* _degrees_::
   Set the view elevation in degrees. Default is 25.
 
-*-E* _x,y,z_::
+*-E* _x/y/z_, *--eye* _x/y/z_::
   Set an explicit eye point in model units, overriding *-a* and *-e*.
 
-*-L* _x,y,z_::
+*-L* _x/y/z_, *--look-at* _x/y/z_::
   Set an explicit look-at point in model units. Default is the model center.
 
-*-p* _angle_::
-  Set the perspective half-angle in degrees. Default is 25.
+*-p* _degrees_, *--field-of-view* _degrees_::
+  Set the perspective half-angle in degrees. The angle must be greater than
+  zero and less than 90. Default is 25.
 
-*-C* _r/g/b_::
+*-C* _r/g/b_, *--sky-color* _r/g/b_::
   Set the environment/sky color with 0-255 components. Default is
   230/237/255.
 
-*-P* _N_::
-  Use _N_ render threads. By default all available processors are used.
+*-P* _count_, *--threads* _count_::
+  Use _count_ render threads. By default all available processors are used.
+
+*-h*, *--help*::
+  Print help and exit.
 
 
 [[examples]]

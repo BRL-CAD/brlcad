@@ -8,11 +8,11 @@ window - create a BRL-CAD geometry database of rounded windows
 
 == SYNOPSIS
 
-[source]
-----
-window [-h] [-f_name.g_] [-n_count_] [-H_height_] [-w_width_] [-d_depth_] [-r_radius_]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*window* [*-f* _database.g_] [*-n* _count_] [*-H* _height_] [*-w* _width_] [*-d* _depth_]
+       [*-r* _radius_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -28,33 +28,33 @@ editing in *mged*(1).
 If invoked with no arguments, *window* prints a usage message and then prompts
 interactively for the database name, window count, dimensions, and corner radius.
 When any argument is supplied, all parameters are read from the command line and no
-prompting occurs. Note that an option and its value are written together with no
-intervening space (for example, *-n3*, not *-n 3*).
+prompting occurs. Short-option values may be attached or separated (for example,
+either *-n3* or *-n 3*).
 
 [[options]]
 == OPTIONS
 
-*-h*::
-  Print a brief usage and explanation message, then exit. (*-?* behaves the same.)
+*-h*, *--help*::
+  Print help and exit. The compatibility spelling *-?* behaves the same.
 
-*-f* _name.g_::
+*-f* _name.g_, *--output* _name.g_::
   Name of the output BRL-CAD database to create. Defaults to *window.g* in
   interactive mode if left blank.
 
-*-n* _count_::
-  Number of windows to create. Values greater than 256 are clamped to 256.
+*-n* _count_, *--count* _count_::
+  Number of windows to create, from 1 through 256.
 
-*-H* _height_::
-  Height of each window, in millimeters.
+*-H* _height_, *--height* _height_::
+  Positive height of each window, in millimeters.
 
-*-w* _width_::
-  Width of each window, in millimeters.
+*-w* _width_, *--width* _width_::
+  Positive width of each window, in millimeters.
 
-*-d* _depth_::
-  Depth of each window, in millimeters.
+*-d* _depth_, *--depth* _depth_::
+  Positive depth of each window, in millimeters.
 
-*-r* _radius_::
-  Radius of the rounded corners, in millimeters.
+*-r* _radius_, *--radius* _radius_::
+  Positive radius of the rounded corners, in millimeters.
 
 [[examples]]
 == EXAMPLES

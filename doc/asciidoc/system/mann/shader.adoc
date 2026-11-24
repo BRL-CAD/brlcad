@@ -8,11 +8,10 @@ shader - Assigns shader parameters to the specified combination.
 
 == SYNOPSIS
 
-[source]
-----
-shader {combination} {shader_name} ["{shader_ args}"]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*shader* _combination_ [_shader_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

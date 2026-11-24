@@ -8,11 +8,12 @@ wavelet - perform a Haar wavelet decomposition or reconstruction
 
 == SYNOPSIS
 
-[source]
-----
-wavelet {-d | -r} [-1 | -2] [-t _datatype_] [-# _channels_] [-w _width_] [-n _scanlines_] [-s _squaresize_] [-W _out_size_] [-S _out_size_] [-R _avg_size_] [-D _level_] < datastream > wavelets
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*wavelet* [*-1* | *-2*] (*-d* | *-r*) [*-t* _type_] [*-#* _count_] [*-w* _samples_]
+        [*-n* _scanlines_] [*-s* _samples_] [*-W* _samples_] [*-S* _samples_] [*-R* _samples_]
+        [*-D* _level_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -31,65 +32,57 @@ two-dimensional transform requires a square dataset.
 
 Because the Haar transform sums and differences sample values, results
 can overflow narrow integer types.  For lossless decomposition and
-reconstruction, convert the data to the next larger data type (via the
-*-t* option) before processing.
+reconstruction, first convert the stream to a wider representation with
+*cv*(1), then select that representation with the *-t* option.  The *-t*
+option interprets the input representation; it does not convert it.
 
 [[options]]
 == OPTIONS
 
-*-d*::
-  Perform a decomposition.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-r*::
-  Perform a reconstruction.
+*-1*, *--one-dimensional*::
+  Transform each scanline horizontally and independently (default).
 
-*-1*::
-  Perform a one-dimensional (per-scanline horizontal) transform.  This is
-  the default.
+*-2*, *--two-dimensional*::
+  Transform a square dataset horizontally and vertically.
 
-*-2*::
-  Perform a two-dimensional transform (interleaved horizontal and
-  vertical).  The dataset must be square.
+*-d*, *--decompose*::
+  Decompose samples into average and detail coefficients.
 
-*-t* _datatype_::
-  Specify the data type of the samples, which is also the type used for
-  the wavelet arithmetic.  The letter is the first character of the C
-  type: *c* (char), *s* (short), *i* (int), *l* (long), *f* (float), *d*
-  (double).  The default is char.
+*-r*, *--reconstruct*::
+  Reconstruct samples from average and detail coefficients.
 
-*-#* _channels_::
-  Number of values per sample point.  For example, use *-# 3* to transform
-  a *pix*(5) file so the red, green, and blue channels are transformed
-  individually.  The default is 3.
+*-t* _type_, *--data-type*=_type_::
+  Set the sample and arithmetic C data type (default: c/char). Accepted values: *c*, *s*, *i*, *l*, *f*, *d*.
 
-*-w* _width_::
-  Number of samples per scanline.  The default is 512.
+*-#* _count_, *--channels*=_count_::
+  Set interleaved values per sample (default: 3, as in RGB).
 
-*-n* _scanlines_::
-  Number of scanlines in the dataset.  The default is 512.
+*-w* _samples_, *--width*=_samples_::
+  Set samples per scanline (default: 512).
 
-*-s* _squaresize_::
-  Set the width and number of scanlines simultaneously to the same value
-  (a square dataset).
+*-n* _scanlines_, *--height*=_scanlines_::
+  Set scanline count (default: 512).
 
-*-W* _out_size_::
-  Width of the average image in the output.  Normally a full decomposition
-  reduces this to 1; specify a power-of-two value at which decomposition
-  or reconstruction should stop.  The output then holds an averaged image
-  of the given size with the remaining data stored as detail
-  coefficients.
+*-s* _samples_, *--size*=_samples_::
+  Set equal square width and height.
 
-*-S* _out_size_::
-  Same as *-W*, expressed as the square size of a two-dimensional
-  transform limit.
+*-W* _samples_, *--output-size*=_samples_::
+  Stop decomposition at this power-of-two average width.
 
-*-R* _avg_size_::
-  Resume a transform from a decomposition that left off with an average
-  image of _avg_size_.
+*-S* _samples_, *--square-output-size*=_samples_::
+  Stop a two-dimensional transform at this power-of-two average size.
 
-*-D* _level_::
-  Set the debug output level.  Diagnostic information about data type,
-  channels, width, height, and limit is written to standard error.
+*-R* _samples_, *--average-size*=_samples_::
+  Resume reconstruction from this power-of-two average image size.
+
+*-D* _level_, *--debug*=_level_::
+  Print data type, dimensions, channels, and transform limit diagnostics.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES
@@ -120,7 +113,7 @@ remainder, ready to be inverted with *wavelet -r -2 -s 1024 -R 64*.
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *pix-fb*(1), *pix*(5), *bw*(5)
+*brlcad*(1), *cv*(1), *pix-fb*(1), *pix*(5), *bw*(5)
 
 
 [[author]]

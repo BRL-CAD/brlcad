@@ -8,11 +8,10 @@ prcolor - Lists the entries in the ident-based color table.
 
 == SYNOPSIS
 
-[source]
-----
-prcolor
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*prcolor*
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,11 @@ pixcmp - compare two pix(5) format images pixel by pixel
 
 == SYNOPSIS
 
-[source]
-----
-pixcmp [-b] [-s] [-d] [-q] [-i _SKIP_|_SKIP1:SKIP2_] [-n _COUNT_] _FILE1_ [_FILE2_ [_SKIP1_ [_SKIP2_]]]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixcmp* [*-b*] [*-s*] [*-d*] [*-q*] [*-i* _skip|skip1:skip2_] [*-n* _count_] _file1_ [_file2_]
+       [_skip1_] [_skip2_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -38,32 +38,29 @@ either via *-i* or as the trailing positional _SKIP1_ and _SKIP2_ arguments.
 [[options]]
 == OPTIONS
 
-*-b*::
-  Iterate and report by bytes instead of by pixels.  _SKIP_ and _COUNT_ values
-  are then interpreted as bytes.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-s*::
-  Print every pixel (or byte) whose values match.
+*-b*, *--bytes*::
+  Compare and report bytes instead of pixels; skip and count values are bytes.
 
-*-d*::
-  Print every pixel (or byte) whose values differ.
+*-s*, *--same*::
+  Print every matching pixel or byte.
 
-*-q*::
-  Quiet.  Suppress the header, the size-mismatch warning, and the summary line.
+*-d*, *--different*::
+  Print every differing pixel or byte.
 
-*-i* _SKIP_::
-  Discard the initial _SKIP_ pixels (or bytes with *-b*) from both inputs.
+*-q*, *--quiet*::
+  Suppress the header, size warning, and summary.
 
-*-i* _SKIP1:SKIP2_::
-  Discard the initial _SKIP1_ pixels (or bytes) from _FILE1_ and _SKIP2_ from
-  _FILE2_.
+*-i* _skip|skip1:skip2_, *--skip*=_skip|skip1:skip2_::
+  Discard one initial count from both inputs, or skip1 and skip2 from each input.
 
-*-n* _COUNT_::
-  Compare at most _COUNT_ pixels (or bytes with *-b*).  The default stops at
-  end of file.
+*-n* _count_, *--count*=_count_::
+  Compare at most this many pixels or bytes; otherwise continue to end of file.
 
-*-?*, *-h*::
-  Print a usage message and exit.
+// END GENERATED BU_ARG OPTIONS
 
 
 [[exit_status]]

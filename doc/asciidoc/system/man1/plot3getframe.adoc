@@ -8,11 +8,10 @@ plot3getframe - extract one frame from a multi-frame plot3 file
 
 == SYNOPSIS
 
-[source]
-----
-plot3getframe [-v] desired_frame < unix_plot > frame_plot
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*plot3getframe* [*-v*] _frame_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -30,9 +29,12 @@ this program can process ordinary 2-D plot files as well.
 [[options]]
 == OPTIONS
 
-*-v*::
+*-v*, *--verbose*::
   Verbose. Print the number of each frame as it is counted, to standard
   error.
+
+*-h*, *--help*::
+  Print help and exit.
 
 
 [[examples]]

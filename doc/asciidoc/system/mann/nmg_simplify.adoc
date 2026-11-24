@@ -8,11 +8,10 @@ nmg_simplify - Attempts to convert an existing nmg_shape to a simpler primitive 
 
 == SYNOPSIS
 
-[source]
-----
-nmg_simplify [[arb] | [tgc] | [poly]] {new_shape nmg_shape}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*nmg_simplify* [(*arb* | *tgc* | *poly*)] _new_name_ _nmg_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

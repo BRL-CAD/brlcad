@@ -8,11 +8,13 @@ nirt - interactively ray trace a BRL-CAD geometric model
 
 == SYNOPSIS
 
-[source]
-----
-nirt [options] model.g [objects]...
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*nirt* [*-h*] [*-A* _name_] [*-M*] [*-b*] [*-c*] [*-e* _script_] [*-f* _format_] [*-E*] [*-L*]
+     [*-s*] [*-v*] [*-H* _n_] [*-u* _n_] [*-O* _action_] [*-x* _value_] [*-X* _value_]
+     [*--center* _x,y,z_] [*--plotfile* _filename_] [*--color_odd* _r/g/b_] [*--color_even* _r/g/b_]
+     [*--color_gap* _r/g/b_] [*--color_ovlp* _r/g/b_] [*-B*] [_arguments_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -95,6 +97,11 @@ When standard input is not a terminal (for example, when it is redirected from a
 
 *-B*::
   Deprecated and no longer used; accepted but ignored.
+
+For each color option, the three channels may be supplied as one packed
+_r/g/b_, _r,g,b_, or _r;g;b_ argument, or as three separate _r g b_
+arguments.  The packed compatibility color forms historically accepted by
+*nirt* continue to work as well.
 
 *nirt* also checks for a `.nirtrc` start-up file, first in the current directory and then in the user's home directory. If found, it is read before interaction begins and may contain any *nirt* commands, which is useful for loading predefined states or output formats.
 

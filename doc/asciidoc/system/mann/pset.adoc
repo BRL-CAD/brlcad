@@ -8,10 +8,10 @@ pset - set a scalar parameter of a primitive
 
 == SYNOPSIS
 
-[source]
-----
-pset obj attribute val
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pset* _object_ _attribute_ _value_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,11 @@ rtsurf - estimate exterior surface area of geometry via Monte Carlo ray sampling
 
 == SYNOPSIS
 
-[source]
-----
-rtsurf [-g] [-r] [-n _samples_] [-t _threshold_] [-m _density.txt_] [-o] _model.g_ [_objects..._]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rtsurf* [*-n* _samples_] [*-t* _percent_] [*-r*] [*-g*] [*-m* _density-file_] [*-o*] _model.g_
+       [_object_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -43,34 +43,29 @@ sample points, ray directions, and hit points can be emitted as an
 [[options]]
 == OPTIONS
 
-*-n* _samples_::
-  Use _samples_ rays per iteration.  Without *-t* a single iteration is
-  run; when combined with *-t*, batches of this size are run until the
-  threshold is met.  The default is 1000 rays in the first iteration.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-n* _samples_, *--samples*=_samples_::
+  Use this positive ray count per iteration; the default is 1000.
 
-*-t* _threshold_::
-  Iterate until the percentage change of the estimate falls below
-  _threshold_ (a percentage) over the trailing iterations.  The default
-  threshold is 0, which performs a single iteration.
+*-t* _percent_, *--threshold*=_percent_::
+  Iterate in sample-count batches until trailing estimates converge within this percentage; zero runs once.
 
-*-r*::
-  Print the area estimate broken down per region.
+*-r*, *--regions*::
+  Report area estimates by region.
 
-*-g*::
-  Print the area estimate broken down per combination (group).
+*-g*, *--groups*::
+  Report area estimates by combination.
 
-*-m* _density.txt_::
-  Print the area estimate broken down per material, using the named
-  density/material file (same format consumed by *gqa*(1)) to label
-  materials by name.
+*-m* _density-file_, *--materials*=_density-file_::
+  Report area estimates by material, using a GQA-format density file for names.
 
-*-o*::
-  Emit an *mged*(1) command script to standard output describing the
-  sample points, ray directions, and hit points as geometry so the
-  sampling can be visualized.
+*-o*, *--geometry-script*::
+  Write an MGED script of sample points, ray directions, and hits to standard output.
 
-*-h*::
-  Print a usage message and exit.
+*-h*, *--help*::
+  Print help and exit.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

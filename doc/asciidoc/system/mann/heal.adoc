@@ -8,10 +8,10 @@ heal - perform mesh healing operations to fix gaps, overlaps, or inconsistencies
 
 == SYNOPSIS
 
-[source]
-----
-heal bot_solid [zipper_tol]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*heal* _bot_ [_zipper_tolerance_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

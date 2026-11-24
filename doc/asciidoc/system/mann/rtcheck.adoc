@@ -8,11 +8,10 @@ rtcheck - Executes the BRL-CAD _rtcheck_ program with the default options of "-s
 
 == SYNOPSIS
 
-[source]
-----
-rtcheck [options]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rtcheck* [_arguments_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

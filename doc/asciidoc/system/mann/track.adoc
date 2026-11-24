@@ -8,11 +8,10 @@ track - Builds a simple representation of the linked track of a vehicle such as 
 
 == SYNOPSIS
 
-[source]
-----
-track [parameters>]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*track* _basename_ _dimensions_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,10 +8,12 @@ g-acad - BRL-CAD to Lockheed Martin ACAD facet file converter
 
 == SYNOPSIS
 
-[source]
-----
-g-acad [-vi] [-x lvl] [-X lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-D dist_tol] [-P ncpus] [-e error_file] [-o output_file] database.g object(s)
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*g-acad* [*-v*]... [*-i*] [*-a* _distance_] [*-r* _fraction_] [*-n* _radians_] [*-D* _distance_]
+       [*-P* _count_] [*-e* _diagnostics.log_] [*-x* _mask_] [*-X* _mask_] [*-o* _output.acad_]
+       _database.g_ _object_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -29,48 +31,44 @@ standard output.
 [[options]]
 == OPTIONS
 
-*-v*::
-  Enable verbose output, reporting each region as it is processed.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-i*::
-  Output vertex coordinates in inches (the default is millimeters).
+*-v*, *--verbose*::
+  Increase conversion progress reporting. May be repeated.
 
-*-x* _lvl_::
-  Set the librt debug flag to the given hexadecimal value.
+*-i*, *--inches*::
+  Write vertex coordinates in inches instead of millimeters.
 
-*-X* _lvl_::
-  Set the NMG debug flag to the given hexadecimal value.
+*-a* _distance_, *--absolute-tolerance*=_distance_::
+  Set nonnegative maximum chord deviation in millimeters and clear relative tolerance.
 
-*-a* _abs_tol_::
-  Absolute tessellation tolerance (mm). The maximum permitted distance
-  between a surface and its tessellated approximation. Setting this
-  clears the relative tolerance.
+*-r* _fraction_, *--relative-tolerance*=_fraction_::
+  Set nonnegative tolerance as a fraction of the bounding box (default 0.01).
 
-*-r* _rel_tol_::
-  Relative tessellation tolerance, expressed as a fraction of the
-  bounding box of each object (default is 0.01).
+*-n* _radians_, *--normal-tolerance*=_radians_::
+  Set nonnegative surface-normal tolerance in radians and clear relative tolerance.
 
-*-n* _norm_tol_::
-  Surface normal tolerance (degrees), the maximum angle between
-  adjoining facet normals. Setting this clears the relative tolerance.
+*-D* _distance_, *--distance-tolerance*=_distance_::
+  Set nonnegative vertex-coincidence distance in millimeters.
 
-*-D* _dist_tol_::
-  Calculational distance tolerance (mm). Vertices closer together than
-  this are considered identical.
+*-P* _count_, *--processors*=_count_::
+  Accept a positive worker count for compatibility; conversion remains serial.
 
-*-P* _ncpus_::
-  Number of processors to request (currently informational only;
-  tessellation runs single-threaded).
+*-e* _diagnostics.log_, *--error-file*=_diagnostics.log_::
+  Write diagnostics to this file instead of standard error.
 
-*-e* _error_file_::
-  Write error and diagnostic messages to _error_file_ instead of
-  standard error.
+*-x* _mask_, *--rt-debug*=_mask_::
+  Set librt hexadecimal debug flags.
 
-*-o* _output_file_::
-  Write the ACAD output to _output_file_ instead of standard output.
+*-X* _mask_, *--nmg-debug*=_mask_::
+  Set libnmg hexadecimal debug flags.
 
-*-h*, *-?*::
-  Print a usage message and exit.
+*-o* _output.acad_, *--output*=_output.acad_::
+  Write ACAD facet data to this file instead of standard output.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES
@@ -89,12 +87,12 @@ to _hull.acad_ in millimeters.
 ====
 [source,console]
 ----
-$ g-acad -i -a 0.5 -n 15 -e convert.log -o tank.acad tank.g turret hull tracks
+$ g-acad -i -a 0.5 -n 0.26 -e convert.log -o tank.acad tank.g turret hull tracks
 ----
 Converts three regions to a single ACAD facet file in inches, using a
-0.5 mm absolute tessellation tolerance and a 15-degree normal
-tolerance for finer faceting, while logging diagnostics to
-_convert.log_.
+0.5 mm absolute tessellation tolerance and a 0.26-radian (about
+15-degree) normal tolerance for finer faceting, while logging
+diagnostics to _convert.log_.
 ====
 
 [[see_also]]

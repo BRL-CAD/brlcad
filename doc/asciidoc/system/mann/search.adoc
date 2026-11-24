@@ -8,10 +8,8 @@ search - find and list objects in a BRL-CAD database
 
 == SYNOPSIS
 
-[source]
-----
-search [-a] [-v] [-Q] [-h] [path] [expressions...]
-----
+[verse]
+*search* [_OPTION_]... [_PATH_]... [_EXPRESSION_]
 
 
 [[description]]

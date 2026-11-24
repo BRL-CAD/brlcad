@@ -8,11 +8,10 @@ pix-sun - convert a BRL-CAD PIX image to a Sun rasterfile
 
 == SYNOPSIS
 
-[source]
-----
-pix-sun [-d] [-s _squaresize_] [-w _width_] [-n _height_] < _file.pix_ > _file.ras_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pix-sun* [*-d*] [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -32,18 +31,21 @@ assumed to be 512x512 pixels.
 [[options]]
 == OPTIONS
 
-*-d*::
+*-d*, *--dither*::
   Dither the input while quantizing to 8 bits.  This spreads the quantization
   error to better approximate the original colors at the cost of added noise.
 
-*-s* _squaresize_::
+*-s* _squaresize_, *--size* _squaresize_::
   Set both the input width and height to _squaresize_ pixels.
 
-*-w* _width_::
-  Set the input width to _width_ pixels (must be even).
+*-w* _width_, *--width* _width_::
+  Set the input width to _width_ pixels.
 
-*-n* _height_::
+*-n* _height_, *--height* _height_::
   Set the input height to _height_ scanlines.
+
+*-h*, *-?*, *--help*::
+  Print a usage message and exit.
 
 
 [[examples]]

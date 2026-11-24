@@ -8,11 +8,13 @@ pixscale - change the size of a color pix file
 
 == SYNOPSIS
 
-[source]
-----
-pixscale [-r] [-s _squareinsize_] [-w _inwidth_] [-n _inheight_] [-S _squareoutsize_] [-W _outwidth_] [-N _outheight_] [_in.pix_] > _out.pix_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixscale* [*-r*] [*-s* _pixels_] [*-w* _pixels_] [*-n* _scanlines_] [*-S* _pixels_] [*-W* _pixels_]
+         [*-N* _scanlines_] [_input_]
+*pixscale* [*-r*] [*-s* _pixels_] [*-w* _pixels_] [*-n* _scanlines_] [*-S* _pixels_] [*-W* _pixels_]
+         [*-N* _scanlines_] _input_ _input-width_ _input-height_ _output-width_ _output-height_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -26,26 +28,29 @@ For 2X interpolation, a much faster alternative is *pixinterp2x*(1).
 [[options]]
 == OPTIONS
 
-*-r*::
+*-r*, *--replicate*::
   Use nearest neighbor interpolation (pixel replication) instead of bilinear interpolation when scaling up.
 
-*-s* _squareinsize_::
-  Set both the input width and input height to _squareinsize_ pixels.
+*-s* _pixels_, *--input-size* _pixels_::
+  Set both the input width and input height to _pixels_.
 
-*-w* _inwidth_::
+*-w* _pixels_, *--input-width* _pixels_::
   Set the input file width in pixels (default 512).
 
-*-n* _inheight_::
+*-n* _scanlines_, *--input-height* _scanlines_::
   Set the input file height (number of scan lines) in pixels (default 512).
 
-*-S* _squareoutsize_::
-  Set both the output width and output height to _squareoutsize_ pixels.
+*-S* _pixels_, *--output-size* _pixels_::
+  Set both the output width and output height to _pixels_.
 
-*-W* _outwidth_::
+*-W* _pixels_, *--output-width* _pixels_::
   Set the output file width in pixels (default 512).
 
-*-N* _outheight_::
+*-N* _scanlines_, *--output-height* _scanlines_::
   Set the output file height (number of scan lines) in pixels (default 512).
+
+*-h*, *--help*, *-?*::
+  Print help and exit.
 
 [[examples]]
 == EXAMPLES

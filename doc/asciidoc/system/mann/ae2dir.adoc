@@ -8,17 +8,25 @@ ae2dir - Returns the direction vector using the provided azimuth and elevation (
 
 == SYNOPSIS
 
-[source]
-----
-ae2dir [-i] {azimuth} {elevation}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*ae2dir* [*-i*] _angles_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
 
 Returns the direction vector using the provided azimuth and elevation as input. If the _-i_ option is used the commmand will return the inverse directional vector.
 
+
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-i*::
+  Return the inverse direction.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

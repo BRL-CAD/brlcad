@@ -8,10 +8,10 @@ pmodel2view - get the perspective-corrected model-to-view matrix
 
 == SYNOPSIS
 
-[source]
-----
-pmodel2view
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pmodel2view*
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

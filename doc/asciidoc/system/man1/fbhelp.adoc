@@ -8,11 +8,10 @@ fbhelp - describe how to select a frame buffer and list available devices
 
 == SYNOPSIS
 
-[source]
-----
-fbhelp [-F framebuffer]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*fbhelp* [*-F* _device_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -21,7 +20,7 @@ fbhelp [-F framebuffer]
 every frame buffer interface compiled into the *libdm*(3) library, then
 opens the selected device and prints its device-specific help.
 
-The device is chosen first from the *-F* _framebuffer_ option if given,
+The device is chosen first from the *-F*, *--framebuffer* _device_ option if given,
 otherwise from the *FB_FILE* environment variable, and finally from the
 built-in default for the system. Most BRL-CAD frame buffer tools, such
 as *fb-pix*(1) and *pix-fb*(1), accept the same *-F* convention.
@@ -30,12 +29,12 @@ as *fb-pix*(1) and *pix-fb*(1), accept the same *-F* convention.
 [[options]]
 == OPTIONS
 
-*-F* _framebuffer_::
+*-F*, *--framebuffer* _device_::
   Specify the frame buffer device to describe rather than using
   *FB_FILE* or the system default.
 
-*-h*::
-  Print a usage message. *-?* is accepted as a synonym.
+*-h*, *--help*::
+  Print help and exit.
 
 
 [[examples]]

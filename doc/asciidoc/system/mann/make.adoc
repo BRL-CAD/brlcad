@@ -8,20 +8,55 @@ make - Creates a __new_shape__ of the indicated type.
 
 == SYNOPSIS
 
-[source]
-----
-make [-h] [-t] [-o "x y z"] [-s scale] new_shape type
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*make* [*-o* _x/y/z_] [*-s* _scale_] *-h* [_raw_arguments_ ...]
+*make* [*-o* _x/y/z_] [*-s* _scale_] *-t*
+*make* [*-o* _x/y/z_] [*-s* _scale_] _name_ _primitive_type_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
 
-Creates a __new_shape__ of the indicated type. The __new_shape__ is sized according to the current view size and is dependent on the _type_. The possible values for _type_ are:
+Creates a __new_shape__ of the indicated type. The __new_shape__ is sized according to the current view size and is dependent on the _type_.
 
-The *-h* option prints usage help. The *-o* option specifies the origin for the
-new primitive and the *-s* option sets the initial size scale used when
-building the primitive.
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*, *-H*, *-?*::
+  Print command usage.
+
+*-t*, *--types*, *-T*::
+  List supported primitive types.
+
+*-o* _x/y/z_, *--origin*=_x/y/z_, *-O*::
+  Primitive origin.
+
+*-s* _scale_, *--scale*=_scale_, *-S*::
+  Initial size scale.
+
+// END GENERATED BU_ARG OPTIONS
+
+[[option_details]]
+== OPTION DETAILS
+
+=== *-o* _x/y/z_
+Set the primitive origin.  A finite three-component value may be written as
+`x/y/z`, `x,y,z`, `x;y;z`, a quoted `"x y z"` argument, or three separate
+numeric arguments.  The default origin is `0 0 0`.
+
+=== *-s* _scale_
+Set the initial size scale.  The default is `1`.
+
+=== *-t*
+List the primitive types supported by *make*.  This mode does not accept a
+new-shape name or primitive type.
+
+=== *-h*, *-H*, *-?*
+Print usage help.
+
+The possible values for _type_ are:
 
 
 * arb8 -- ARB (eight vertices)
@@ -51,7 +86,6 @@ building the primitive.
 * grip -- Support for joints.
 * extrude -- Experimental.
 * sketch -- Experimental.
-
 
 [[examples]]
 == EXAMPLES

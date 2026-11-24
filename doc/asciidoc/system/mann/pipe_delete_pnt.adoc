@@ -8,11 +8,10 @@ pipe_delete_pnt - libged command
 
 == SYNOPSIS
 
-[source]
-----
-pipe_delete_pnt pipe seg_i
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pipe_delete_pnt* _pipe_ _segment_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

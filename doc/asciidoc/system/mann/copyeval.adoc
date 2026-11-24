@@ -8,11 +8,10 @@ copyeval - Creates a new primitive object called __new_ primitive__ by applying 
 
 == SYNOPSIS
 
-[source]
-----
-copyeval {path_to_old_primitive new_primitive}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*copyeval* _input_path_ _output_object_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

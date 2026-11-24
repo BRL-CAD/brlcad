@@ -8,17 +8,28 @@ pathlist - Lists all existing paths that start from the specified combinations a
 
 == SYNOPSIS
 
-[source]
-----
-pathlist {combinations}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pathlist* [*-n*] _object_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
 
-Lists all existing paths that start from the specified combinations and end at a primitive shape.
+Lists all existing paths that start from the specified combination and end at a
+primitive shape.  The *-n* or *--noleaf* option omits the leaf object from
+each reported path.  The historical *-noleaf* spelling remains accepted for
+compatibility.
 
+
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-n*, *--noleaf*::
+  Omit leaf names from reported paths.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES
@@ -29,10 +40,10 @@ The example shows the use of the *pathlist* command to list all paths that start
 ====
 [source,console]
 ----
-mged> pathlist group1 region2
+mged> pathlist group1
 ----
 
-Lists all existing paths that start from the _combinations group1_ and _region2_ and end at primitive shapes.
+Lists all existing paths that start from _group1_ and end at primitive shapes.
 
 ====
 

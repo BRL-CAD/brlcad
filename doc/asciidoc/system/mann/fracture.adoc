@@ -8,11 +8,10 @@ fracture - Creates a new NMG shape for every "face" in the specified __NMG_shape
 
 == SYNOPSIS
 
-[source]
-----
-fracture {NMG_shape} [prefix]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*fracture* _nmg_solid_ [_prefix_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

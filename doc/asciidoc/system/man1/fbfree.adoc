@@ -8,11 +8,10 @@ fbfree - free resources associated with a frame buffer
 
 == SYNOPSIS
 
-[source]
-----
-fbfree [-F _framebuffer_]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*fbfree* [*-F* _device_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -23,18 +22,18 @@ resources associated with it. Its most common use is to shut down an
 holds. Internally the command simply calls the *fb_free*() routine after
 opening the frame buffer.
 
-If no frame buffer is given with *-F*, the default is used, normally
+If no frame buffer is given with *--framebuffer*, the default is used, normally
 taken from the *FB_FILE* environment variable.
 
 [[options]]
 == OPTIONS
 
-*-F* _framebuffer_::
+*-F*, *--framebuffer* _device_::
   Specify the frame buffer to free. If omitted, the default frame buffer
   (typically the value of the *FB_FILE* environment variable) is used.
 
-*-h*, *-?*::
-  Print a usage message and exit.
+*-h*, *--help*::
+  Print help and exit.
 
 [[examples]]
 == EXAMPLES

@@ -8,10 +8,11 @@ fbcmap - load a built-in color map onto a framebuffer
 
 == SYNOPSIS
 
-[source]
-----
-fbcmap [-h] [-F framebuffer] [-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height] [map_number]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*fbcmap* [*-F* _device_] [*-s* _pixels_] [*-w* _pixels_] [*-n* _scanlines_]
+       [(*0* | *1* | *2* | *3* | *4* | *5* | *6* | *8* | *9* | *10* | *11* | *12*)]
+// END GENERATED BU_ARG SYNOPSIS
 
 
 [[description]]
@@ -29,32 +30,23 @@ gamma correction use *fbgamma*(1) instead.
 [[options]]
 == OPTIONS
 
-*-h*::
-  Print a usage summary listing the available maps, then exit.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-F* _framebuffer_::
-  Specify the framebuffer device.  If not given, the *FB_FILE*
-  environment variable is used (see *brlcad*(1)); if that is unset the
-  default device for the system is used.
+*-F* _device_, *--framebuffer*=_device_::
+  Select the framebuffer instead of the FB_FILE environment default.
 
-*-s* _squarescrsize_::
-  Set both the width and height of the framebuffer to _squarescrsize_
-  pixels.
+*-s* _pixels_, *--size*=_pixels_::
+  Set both dimensions; zero selects the device default.
 
-*-S* _squarescrsize_::
-  Same as *-s*.
+*-w* _pixels_, *--width*=_pixels_::
+  Set the width; zero selects the device default.
 
-*-w* _scr_width_::
-  Set the framebuffer display width to _scr_width_ pixels.
+*-n* _scanlines_, *--height*=_scanlines_::
+  Set the height; zero selects the device default.
 
-*-W* _scr_width_::
-  Same as *-w*.
-
-*-n* _scr_height_::
-  Set the framebuffer display height to _scr_height_ pixels.
-
-*-N* _scr_height_::
-  Same as *-n*.
+// END GENERATED BU_ARG OPTIONS
 
 If no size options are given, the requested framebuffer size is the
 default for the selected device (typically 512x512 pixels).

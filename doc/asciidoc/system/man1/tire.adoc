@@ -8,13 +8,13 @@ tire - generate a parametric tire model from standard tire dimensions
 
 == SYNOPSIS
 
-[source]
-----
-tire [options] [obj_name]
-tire --list-tread-patterns
-tire --demo-file _file.g_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*tire* [*-h*] [*-n* _name_] [*-w* _bool_] [*-d* _<width-mm>/<aspect-percent>R<rim-diameter-in>_]
+     [*-W* _mm_] [*-R* _percent_] [*-D* _in_] [*-g* _1/32 in_] [*-j* _in_] [*-s* _mm_] [*-u* _mm_]
+     [*-p* _name_] [*-c* _#_] [*-t* _0|1|2_] [*--tread-pattern-file* _file.json_]
+     [*--list-tread-patterns*] [*--demo-file* _file.g_] [_obj-name_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -44,70 +44,63 @@ _tire-215-55R17_ is derived from the resolved dimensions.
 [[options]]
 == OPTIONS
 
-*-h*, *-?*::
-  Print a help message and exit. Use *--list-tread-patterns* to see the
-  available tread presets.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-n* _name_::
-  Set the name of the top-level database object. The same value is used as the
-  suffix for generated child objects.
+*-n* _name_, *--obj-name*=_name_::
+  Set the top-level object name and generated child-object suffix.
 
-*-w* _bool_::
-  Enable (1) or disable (0) the wheel. The wheel is included by default.
+*-w* _bool_, *--wheel*=_bool_::
+  Enable or disable the wheel; enabled by default.
 
-*-d* _width/aspectRdiameter_::
-  Specify tire dimensions using ISO-style notation, for example 235/75R15.
-  Width is in mm, aspect ratio in percent, and rim diameter in inches.
+*-d* _<width-mm>/<aspect-percent>R<rim-diameter-in>_, *--dimensions*=_<width-mm>/<aspect-percent>R<rim-diameter-in>_::
+  Set the tire width in millimeters, aspect ratio in percent, and rim diameter in inches using ISO notation.
 
-*-W* _#_::
-  Tire width in mm, allowing fractional values. Overrides the width from *-d*.
+*-W* _mm_, *--width*=_mm_::
+  Override the tire width from --dimensions; fractional values are accepted.
 
-*-R* _#_::
-  Sidewall aspect ratio (percent), allowing fractional values. Overrides the
-  ratio from *-d*.
+*-R* _percent_, *--aspect-ratio*=_percent_::
+  Override the aspect ratio from --dimensions; fractional values are accepted.
 
-*-D* _#_::
-  Rim diameter in inches, allowing fractional values. Overrides the diameter
-  from *-d*.
+*-D* _in_, *--rim-diameter*=_in_::
+  Override the rim diameter from --dimensions; fractional values are accepted.
 
-*-g* _#_::
-  Tread depth in 32nds of an inch (for example, 11 means 11/32 in). The default
-  is 11.
+*-g* _1/32 in_, *--tread-depth*=_1/32 in_::
+  Set tread depth in 32nds of an inch; the default is 11.
 
-*-j* _#_::
-  Rim (hub) width in inches.
+*-j* _in_, *--hub-width*=_in_::
+  Set rim (hub) width in inches.
 
-*-s* _#_::
-  Maximum sidewall radius in mm, measured from the tire center to the widest
-  point of the sidewall. Must lie between the rim radius and the tire radius.
+*-s* _mm_, *--max-sidewall-radius*=_mm_::
+  Set the widest sidewall radius in millimeters; it must lie between the rim and tire radii.
 
-*-u* _#_::
-  Tire (wall) thickness in mm.
+*-u* _mm_, *--tire-thickness*=_mm_::
+  Set tire wall thickness in millimeters.
 
-*-p* _name_::
-  Select a named tread pattern preset (see *--list-tread-patterns*). The legacy
-  aliases 1 and 2 map to the _legacy-rib_ and _legacy-block_ presets. Mutually
-  exclusive with *--tread-pattern-file*.
+*-p* _name_, *--tread-pattern*=_name_::
+  Select a named tread preset; legacy values 1 and 2 select legacy-rib and legacy-block.
 
-*-c* _#_::
-  Number of tread patterns repeated around the tire. Each preset has its own
-  valid range (overall 3 to 512); values outside that range are rejected.
+*-c* _#_, *--tread-pattern-cnt*=_#_::
+  Override the number of repeats around the tire; each preset defines its valid range.
 
-*-t* _#_::
-  Legacy tread shape profile (1 or 2). Normally supplied by the selected preset.
+*-t* _0|1|2_, *--tread-shape*=_0|1|2_::
+  Select no explicit profile (0), legacy rib (1), or legacy block (2).
 
-*--tread-pattern-file* _file_::
-  Read a custom JSON tread pattern definition (see CUSTOM TREAD JSON below).
-  Mutually exclusive with *-p*.
+*--tread-pattern-file*=_file.json_::
+  Read a custom JSON tread definition; mutually exclusive with --tread-pattern.
 
 *--list-tread-patterns*::
-  List the available named tread presets and exit.
+  List available tread pattern presets and exit.
 
-*--demo-file* _file.g_::
-  Write a sampler database to _file.g_ and exit. The sampler builds an _all_
-  combination arranging varied tire examples (compact car, sedan, performance,
-  SUV, van, pickup, commercial truck, bus, tractor, wheel loader, and mining
-  haul truck) in rows by vehicle class and increasing scale.
+*--demo-file*=_file.g_::
+  Write a database containing a grid of varied sample tires and exit.
+
+// END GENERATED BU_ARG OPTIONS
+
+The demo database contains an _all_ combination arranging compact-car, sedan,
+performance, SUV, van, pickup, commercial-truck, bus, tractor, wheel-loader,
+and mining-haul-truck examples in rows by vehicle class and increasing scale.
 
 [[custom_tread_json]]
 == CUSTOM TREAD JSON

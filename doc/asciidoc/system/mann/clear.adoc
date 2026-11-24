@@ -8,11 +8,10 @@ clear - Clears the _mged_ command window.
 
 == SYNOPSIS
 
-[source]
-----
-clear
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*clear*
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

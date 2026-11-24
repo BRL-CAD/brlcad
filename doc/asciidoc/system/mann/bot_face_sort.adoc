@@ -8,12 +8,19 @@ bot_face_sort - deprecated compatibility command for *bot sort*
 
 == SYNOPSIS
 
-[source]
-----
-bot sort triangles_per_piece bot [bot ...]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bot_face_sort* _triangles_per_piece_ _bot_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
-Compatibility form: `bot_face_sort triangles_per_piece bot [bot ...]`.
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print command help.
+
+// END GENERATED BU_ARG OPTIONS
 
 == DESCRIPTION
 

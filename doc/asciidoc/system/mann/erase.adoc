@@ -8,14 +8,15 @@ erase - Deletes the specified list of objects from the MGED display.
 
 == SYNOPSIS
 
-[source]
-----
-erase object [object ...]
-erase -r object [object ...]
-erase -A attr value [attr value ...]
-erase -o -A attr value [attr value ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*erase* [*-r*] [*-o*] *-A* _attribute_ _value_ [(_attribute_ _value_) ...]
+*erase* [*-r*] [*-o*] _objects_ ...
+*erase* [*-V* _name_] [*-m* _number_] _objects_ ...
+*erase* [*-r*] [*-o*] *-A* _attribute_ _value_ [(_attribute_ _value_) ...]
+*erase* [*-r*] [*-o*] _objects_ ...
+*erase* [*-V* _name_] [*-m* _number_] _objects_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -33,6 +34,40 @@ objects are erased from the display. By default all specified pairs must match;
 the *-o* option changes attribute mode so that matching any one of the supplied
 pairs is sufficient.
 
+In the new command form used by QGED and other view-aware clients, *--view*
+selects an independent view and *--mode* limits erasure to a drawing mode.
+Those options are not available in the legacy command form; conversely, the
+legacy *-r*, *-A*, and *-o* modes are not available in the new command form.
+
+
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+=== Shared options
+
+Applies to *erase* and *erase*.
+
+*-r*::
+  Erase all displayed paths associated with each object.
+
+*-A*::
+  Select objects by attribute name/value pairs.
+
+*-o*::
+  In attribute mode, match any supplied pair.
+
+=== Shared options
+
+Applies to *erase* and *erase*.
+
+*-V* _name_, *--view*=_name_::
+  Specify the independent view to modify.
+
+*-m* _number_, *--mode*=_number_::
+  Erase objects drawn in the specified drawing mode.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

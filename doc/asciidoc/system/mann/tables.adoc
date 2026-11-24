@@ -8,13 +8,10 @@ tables - region/solid summary table commands (see idents, regions, solids)
 
 == SYNOPSIS
 
-[source]
-----
-idents file object(s)
-regions file object(s)
-solids file object(s)
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*tables* _output_file_ _objects_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

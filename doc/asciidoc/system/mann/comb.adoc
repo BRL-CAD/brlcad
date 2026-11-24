@@ -8,13 +8,20 @@ comb - Create and manipulate BRL-CAD combination with the name __combination_nam
 
 == SYNOPSIS
 
-[source]
-----
-comb [options] {combination_name} [<operator> <member_name> ...]
-comb {combination_name} {command} [arguments ...]
-comb {command} {-C | --comb} {combination_name} [arguments ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*comb* [*-c* | *-r*] [*-d*] [*-w* | *-f* | *-l*] [*-S*] _combination_
+     [((*u* | *-* | *+*) _member_) ...]
+*comb* [*-h*] _combination_
+*comb rm* _member_ ...
+*comb wrap*
+*comb flatten*
+*comb lift*
+*comb region*
+*comb unregion*
+*comb decimate*
+*comb* _SUBCOMMAND_ [_ARGUMENT_]...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -110,6 +117,12 @@ Conflicts with *-w* and *-f*.
 Use *comb combination lift* for the command form.
 
 
+*-d*::
+Decimates the BoT members below an existing combination. This action accepts
+only the combination name and cannot be combined with the other *comb* action
+or region-setting options.
+
+
 *-S*::
 Stop if the combination object already exists.
 
@@ -121,6 +134,40 @@ equivalent.
 
 
 
+
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+=== comb options
+
+*-c*::
+  Clear the region flag.
+
+*-d*::
+  Decimate the combination's BoT members.
+
+*-f*::
+  Flatten a union-only combination.
+
+*-l*::
+  Lift a region flag to the combination.
+
+*-r*::
+  Set the region flag.
+
+*-w*::
+  Wrap the combination contents.
+
+*-S*::
+  Require a new combination name.
+
+=== comb options
+
+*-h*, *--help*::
+  Print command help.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

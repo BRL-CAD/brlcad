@@ -8,11 +8,10 @@ plot3-dm - interactively view 3-D UNIX plot files in a display manager window
 
 == SYNOPSIS
 
-[source]
-----
-plot3-dm [-t o|X] [plot_file ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*plot3-dm* [*-t* _X|o_] [_plot_file_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -41,12 +40,12 @@ the left, middle, and right drag modes rotate, translate, and zoom the scene.
 [[options]]
 == OPTIONS
 
-*-t* _o|X_::
+*-t* _X|o_, *--display-manager*=_X|o_::
   Select the display-manager backend. _X_ (the default) uses the X11 display
-  manager; _o_ (or _O_) requests the OpenGL (*ogl*) display manager. Any other
-  value falls back to the X backend.
+  manager; _o_ requests the OpenGL (*ogl*) display manager. The lowercase
+  spelling _x_ and uppercase spelling _O_ are accepted as aliases.
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a short usage message and exit.
 
 [[examples]]

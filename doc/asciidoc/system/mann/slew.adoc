@@ -8,13 +8,10 @@ slew - shift the view center by a vector in view space
 
 == SYNOPSIS
 
-[source]
-----
-slew x y [z]
-slew "x y [z]"
-sv x y [z]
-vslew x y [z]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*slew* _coordinates_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

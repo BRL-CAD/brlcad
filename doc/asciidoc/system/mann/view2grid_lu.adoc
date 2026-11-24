@@ -8,10 +8,10 @@ view2grid_lu - convert view xyz to grid coordinates (local units)
 
 == SYNOPSIS
 
-[source]
-----
-view2grid_lu x y z
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*view2grid_lu* _point_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

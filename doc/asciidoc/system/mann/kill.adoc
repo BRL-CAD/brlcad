@@ -8,11 +8,11 @@ kill - Deletes specified _objects_ from the current database.
 
 == SYNOPSIS
 
-[source]
-----
-kill [-f] [-n] [-q] {objects}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*kill* [*-n*] [*-q*] *-f* _objects_ ...
+*kill* [*-n*] [*-q*] _objects_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -21,6 +21,21 @@ Deletes the specified _objects_ from the current database. This command affects 
 
 The *-q* option may be added to suppress database object lookup messages reporting failure, which will otherwise let the user know an invalid object was specified.
 
+
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-f*::
+  Permit deletion of protected global data.
+
+*-n*::
+  Report objects without deleting them.
+
+*-q*::
+  Suppress lookup messages.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

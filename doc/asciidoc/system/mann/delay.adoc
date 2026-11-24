@@ -8,11 +8,10 @@ delay - Provides a delay of the specified time before the next command will be p
 
 == SYNOPSIS
 
-[source]
-----
-delay {seconds microseconds}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*delay* _sec_ _usec_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

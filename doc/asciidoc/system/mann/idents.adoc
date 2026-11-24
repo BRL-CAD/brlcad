@@ -8,11 +8,10 @@ idents - write a region identity summary table to a file
 
 == SYNOPSIS
 
-[source]
-----
-idents file object(s)
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*idents* _output_file_ _objects_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

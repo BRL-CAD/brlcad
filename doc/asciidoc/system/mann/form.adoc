@@ -8,10 +8,10 @@ form - returns form of objtype
 
 == SYNOPSIS
 
-[source]
-----
-form type
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*form* _primitive_type_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

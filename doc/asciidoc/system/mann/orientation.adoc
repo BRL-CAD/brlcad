@@ -8,11 +8,10 @@ orientation - Sets the view direction for MGED from the quaternion specified on 
 
 == SYNOPSIS
 
-[source]
-----
-orientation {v1 v2 v3 v4}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*orientation* _quaternion_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

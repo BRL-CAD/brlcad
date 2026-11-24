@@ -8,10 +8,10 @@ nmg_fix_normals - fix surface normals of an NMG solid
 
 == SYNOPSIS
 
-[source]
-----
-nmg_fix_normals nmg_prim
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*nmg_fix_normals* _object_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

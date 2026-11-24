@@ -8,16 +8,21 @@ ls - The command with no _object_ argument lists the name of every object in the
 
 == SYNOPSIS
 
-[source]
-----
-ls [-A -o -a -c -r -s -p -l -q -H -S] [objects]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*ls* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] *-h* [_raw_arguments_ ...]
+*ls* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] *-A* _attribute_ _value_ [(_attribute_ _value_) ...]
+*ls* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] *-r* [_objects_ ...]
+*ls* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] *-p* [_objects_ ...]
+*ls* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] *-c* [_objects_ ...]
+*ls* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] *-a* [_objects_ ...]
+*ls* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] [_objects_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
 
-The command with no _object_ argument lists the name of every object in the database (in alphabetical order) except for those marked as hidden with the *hide* command. If the _object_ argument is supplied, only those _objects_ are listed. The _object_ argument may include regular expressions. If the _-A_ option is used, then the arguments are expected to be a list of attribute name/value pairs, and objects having attributes that match the provided list are listed. By default, an object must match all the specified attributes in order to be listed; however, the _-o_ flag indicates that an object matching at least one attribute name/value pair should be listed. See the *attr* command for information on how to set or get attributes. Regular expressions are not supported for attributes. The following options are also allowed:
+The command with no _object_ argument lists the name of every object in the database (in alphabetical order) except for those marked as hidden with the *hide* command. If the _object_ argument is supplied, only those _objects_ are listed. The _object_ argument may include regular expressions. If the _-A_ option is used, the operands are attribute name/value pairs (one or more complete pairs are required), and objects having attributes that match the provided list are listed. By default, an object must match all the specified attributes in order to be listed; however, the _-o_ flag indicates that an object matching at least one attribute name/value pair should be listed. See the *attr* command for information on how to set or get attributes. Regular expressions are not supported for attributes. The following options are also allowed:
 
 
 * `-h`, `--help` -- Print help and exit.
@@ -35,6 +40,45 @@ The command with no _object_ argument lists the name of every object in the data
 The same listing behavior is also exposed by the separate *t* entry. Note that
 when any of the above options are used, the output is not formatted.
 
+
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
+
+*-a*, *--all*::
+  Do not ignore hidden objects.
+
+*-c*, *--combs*::
+  List combinations.
+
+*-r*, *--regions*::
+  List regions.
+
+*-p*, *--primitives*, *-s*::
+  List primitives.
+
+*-q*, *--quiet*::
+  Suppress informational output messages during database lookup.
+
+*-l*::
+  Use long reporting format.
+
+*-H*, *--human-readable*::
+  When printing in long format, use human-readable object sizes.
+
+*-S*, *--sort*::
+  Sort by object size.
+
+*-A*, *--attributes*::
+  Treat operands as attribute name/value pairs.
+
+*-o*, *--or*::
+  In attribute mode, match any attribute pair.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES
@@ -102,7 +146,7 @@ Lists all combinations with names beginning with "suspension."
 ====
 [source,console]
 ----
-mged> ls -A -o -r Comment{First comment} Comment{Second comment}
+mged> ls -A -o -r Comment {First comment} Comment {Second comment}
 ----
 
 Lists all regions that have a "Comment" attribute that is set to either "First comment" or "Second comment."

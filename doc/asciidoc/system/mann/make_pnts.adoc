@@ -8,11 +8,10 @@ make_pnts - Creates a "pnts" (i.e. point cloud) primitive by importing coordinat
 
 == SYNOPSIS
 
-[source]
-----
-make_pnts {ObjectName} {FileName} {FileDataFormat} {[Units | ConversionFactor]} {DefaultPointSize}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*make_pnts* _point_cloud_name_ _input_file_ _format_ _units_ _default_size_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

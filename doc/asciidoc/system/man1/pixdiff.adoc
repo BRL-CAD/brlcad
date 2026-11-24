@@ -8,12 +8,10 @@ pixdiff - highlight differences between two pix or bw images
 
 == SYNOPSIS
 
-[source]
-----
-pixdiff _file1.pix_ _file2.pix_ > _out.pix_
-pixdiff -b _file1.bw_ _file2.bw_ > _out.bw_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixdiff* [*-b*] _file1_ _file2_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -46,12 +44,12 @@ shows signed differences around a neutral gray.
 [[options]]
 == OPTIONS
 
-*-b*::
+*-b*, *--bw*::
 Treat both inputs and the output as one-byte-per-pixel BW images. Without
 this option, use three-byte-per-pixel PIX images.
 
-*-h*::
-Show usage information.
+*-h*, *-?*, *--help*::
+Print command help and exit.
 
 
 [[examples]]

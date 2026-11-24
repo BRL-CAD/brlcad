@@ -8,14 +8,11 @@ coil - generate a coil as a BRL-CAD pipe primitive
 
 == SYNOPSIS
 
-[source]
-----
-coil [-d mean_outer_diameter] [-w wire_diameter] [-H helix_angle] [-p pitch]
-     [-n number_of_turns] [-s start_cap_type] [-e end_cap_type]
-     [-S number_of_turns,mean_outer_diameter,wire_diameter,helix_angle,pitch,winding_direction]
-     [-l overall_length] [-L] [name]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*coil* [*-d* _diameter_] [*-w* _diameter_] [*-H* _angle_] [*-p* _pitch_] [*-n* _turns_]
+     [*-s* _type_] [*-e* _type_] [*-S* _section_] [*-l* _length_] [*-L*] [_output_object_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -37,51 +34,51 @@ pipe (and, for ground caps, subtracting the capping solids).
 [[options]]
 == OPTIONS
 
-*-d* _mean_outer_diameter_::
+*-d* _mean_outer_diameter_, *--mean-diameter*=_mean_outer_diameter_::
   Mean outer diameter of the coil in millimeters.
 
-*-w* _wire_diameter_::
+*-w* _wire_diameter_, *--wire-diameter*=_wire_diameter_::
   Diameter of the wire wound into the coil in millimeters.
 
-*-H* _helix_angle_::
+*-H* _helix_angle_, *--helix-angle*=_helix_angle_::
   Helix angle of the coil in degrees.
 
-*-p* _pitch_::
+*-p* _pitch_, *--pitch*=_pitch_::
   Distance, in millimeters, between the center of the wire at the beginning and
   end of a single turn.  The minimum (and default) value is the wire diameter;
   a smaller pitch is clamped up to the wire diameter.
 
-*-n* _number_of_turns_::
+*-n* _number_of_turns_, *--turns*=_number_of_turns_::
   Number of turns in the coil.  Must be a positive integer; fractional turns
   are not supported.
 
-*-s* _start_cap_type_::
+*-s* _start_cap_type_, *--start-cap*=_start_cap_type_::
   Capping style for the start of the coil.  0 (default) applies no special
   styling, 1 is a squared-off cap, 2 grinds the cap flat in the plane normal to
   the coiling direction, and 3 both squares off and grinds the cap.  Any
   non-default cap adds extra turns beyond those requested with *-n*.
 
-*-e* _end_cap_type_::
+*-e* _end_cap_type_, *--end-cap*=_end_cap_type_::
   Capping style for the end of the coil.  Values are the same as for *-s*.
 
-*-S* _number_of_turns,mean_outer_diameter,wire_diameter,helix_angle,pitch,winding_direction_::
+*-S* _section_, *--section*=_section_::
   Define one coil section as a comma-delimited list of all six values
   (_winding_direction_ is 1 for right-handed, anything else for left-handed).
   Repeat *-S* to build a multi-section coil; sections are stacked from the
   origin in the order given.  Specifying any *-S* section causes all other
   dimensional options to be ignored (capping with *-s*/*-e* still applies).
 
-*-l* _overall_length_::
+*-l* _overall_length_, *--overall-length*=_overall_length_::
   Clamp the overall length of the coil to the given value in millimeters.
   Only effective for uncapped coils with a zero helix angle.  To fit the
   length, pitch is adjusted first, then turns are removed, and finally wire
   diameter is reduced.  Length clamping does not apply to *-S* sections.
 
-*-L*::
+*-L*, *--left-handed*::
   Create a left-handed coil.  The default is right-handed (winding proceeds in
   +x from the start); *-L* winds in -x.
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print usage information and exit.
 
 

@@ -8,11 +8,10 @@ quat - get or set the view orientation as a quaternion
 
 == SYNOPSIS
 
-[source]
-----
-quat
-quat a b c d
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*quat* _quaternion_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

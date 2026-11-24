@@ -8,11 +8,11 @@ pix-ps - convert a color pix file to PostScript
 
 == SYNOPSIS
 
-[source]
-----
-pix-ps [-e] [-c|-l] [-L] [-s _input_squaresize_] [-w _input_width_] [-n _input_height_] [-S _inches_square_] [-W _inches_width_] [-N _inches_height_] [_input.pix_] > _output.ps_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pix-ps* [*-e*] [*-c*] [*-l*] [*-L*] [*-s* _pixels_] [*-w* _pixels_] [*-n* _scanlines_]
+       [*-S* _inches_] [*-W* _inches_] [*-N* _inches_] [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -26,35 +26,38 @@ By default the output is a 6.75 inch square centered on an 8.5 x 11 inch page. T
 [[options]]
 == OPTIONS
 
-*-e*::
+*-e*, *--encapsulated*::
   Produce an Encapsulated PostScript (EPS) file. The bounding box is sized in pixels and the page placement options (*-c*, *-l*, *-L*) are ignored.
 
-*-c*::
+*-c*, *--center*::
   Center the image on an 8.5 x 11 inch page. This is the default.
 
-*-l*::
+*-l*, *--lower-left*::
   Place the image in the lower-left corner of the page rather than centering it.
 
-*-L*::
+*-L*, *--landscape*::
   Landscape orientation; rotate the output image ninety degrees.
 
-*-s* _input_squaresize_::
+*-s* _input_squaresize_, *--input-size* _input_squaresize_::
   Set both the input width and height to _input_squaresize_ pixels.
 
-*-w* _input_width_::
+*-w* _input_width_, *--input-width* _input_width_::
   Set the input width to _input_width_ pixels (default 512).
 
-*-n* _input_height_::
+*-n* _input_height_, *--input-height* _input_height_::
   Set the number of input scan lines to _input_height_ pixels (default 512).
 
-*-S* _inches_square_::
+*-S* _inches_square_, *--output-size* _inches_square_::
   Set both the output width and height to _inches_square_ inches.
 
-*-W* _inches_width_::
+*-W* _inches_width_, *--output-width* _inches_width_::
   Set the output width to _inches_width_ inches (default 6.75).
 
-*-N* _inches_height_::
+*-N* _inches_height_, *--output-height* _inches_height_::
   Set the output height to _inches_height_ inches (default 6.75).
+
+*-h*, *-?*, *--help*::
+  Print help and exit.
 
 [[examples]]
 == EXAMPLES

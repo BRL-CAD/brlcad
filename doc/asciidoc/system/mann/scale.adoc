@@ -8,11 +8,10 @@ scale - scale the current view by a uniform factor
 
 == SYNOPSIS
 
-[source]
-----
-scale sf
-sca sf
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*scale* _scale_factor_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

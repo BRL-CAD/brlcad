@@ -8,11 +8,10 @@ debugdir - Displays a dump of the in-memory directory for the current database f
 
 == SYNOPSIS
 
-[source]
-----
-debugdir
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*debugdir*
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

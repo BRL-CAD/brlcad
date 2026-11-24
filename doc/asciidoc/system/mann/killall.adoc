@@ -8,11 +8,10 @@ killall - Deletes the specified _objects_ from the current database and removes 
 
 == SYNOPSIS
 
-[source]
-----
-killall [-n] {objects}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*killall* [*-n*] _objects_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -21,6 +20,15 @@ Deletes the specified _objects_ from the current database and removes all refere
 
 *Use this command with caution.* Killed objects cannot be recovered so *keep* a backup.
 
+
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-n*::
+  Report affected objects without changing the database.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

@@ -8,15 +8,13 @@ tree - procedurally generate a volumetric tree model as a BRL-CAD database
 
 == SYNOPSIS
 
-[source]
-----
-tree [-f] [-j] [-o output.g] [-n name] [--preset name] [--mode name]
-     [--leaf-mode name] [--detail name] [--seed uint] [--height length]
-     [--trunk-radius length] [--age ratio] [--settings file.json]
-     [--x-offset dist] [--y-offset dist] [--z-offset dist]
-     [--demo-file file.g]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*tree* [*-o* _file.g_] [*-n* _name_] [*--settings* _file.json_] [*--preset* _preset_]
+     [*--mode* _mode_] [*--leaf-mode* _mode_] [*--detail* _level_] [*--seed* _uint_]
+     [*--height* _length_] [*--trunk-radius* _length_] [*--age* _ratio_] [*--demo-file* _file.g_]
+     [*--x-offset* _distance_] [*--y-offset* _distance_] [*--z-offset* _distance_] [*-f* | *-j*]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

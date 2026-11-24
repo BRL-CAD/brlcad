@@ -9,10 +9,10 @@ g-var - convert BRL-CAD BOT geometry to an OpenGL vertex array mesh
 
 == SYNOPSIS
 
-[source]
-----
-g-var [-v] [-y] [-f] [-s _scale_] [-o _out_file_] _database.g_ _object_
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*g-var* [*-v*] [*-y*] [*-f*] [*-s* _factor_] [*-o* _file_] _database_ _object_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -29,30 +29,35 @@ present and otherwise computed by averaging adjacent face normals. Output is
 written to _out_file_, or to standard output when no output file is given; on
 standard output the stream is set to binary mode.
 
+The default scale factor is 0.001, converting BRL-CAD's millimeter
+coordinates to meters. Y-up conversion rotates output -90 degrees
+about the X axis. Flipping normals reverses both face winding and the
+corresponding computed normal directions. Verbose progress is written
+to standard error.
+
 [[options]]
 == OPTIONS
 
-*-v*::
-  Verbose mode. Report progress, mesh counts, and whether normals were found or
-  computed on standard error.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-y*::
-  Rotate output -90 degrees about the X axis, converting from BRL-CAD's Z-up
-  (XYZ) coordinate system to a Y-up (XZY) system as used by many OpenGL scenes.
+*-v*, *--verbose*::
+  Report mesh conversion progress.
 
-*-f*::
-  Flip face normals. Reverses the vertex winding order of each face and the
-  direction of the corresponding computed normals.
+*-y*, *--y-up*::
+  Convert BRL-CAD Z-up coordinates to Y-up.
 
-*-s* _scale_::
-  Scale all output vertices by the given factor. The default is 0.001, which
-  converts BRL-CAD's millimeter units to meters.
+*-f*, *--flip-normals*::
+  Reverse face winding and computed normals.
 
-*-o* _out_file_::
-  Write the binary mesh to _out_file_ instead of standard output.
+*-s* _factor_, *--scale*=_factor_::
+  Scale output vertices (default 0.001).
 
-*-h*, *-?*::
-  Print a usage message and exit.
+*-o* _file_, *--output*=_file_::
+  Write binary mesh output to a file instead of standard output.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

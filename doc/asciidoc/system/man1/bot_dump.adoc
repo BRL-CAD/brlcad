@@ -8,11 +8,11 @@ bot_dump - export Bag of Triangles (BoT) primitives to mesh file formats
 
 == SYNOPSIS
 
-[source]
-----
-bot_dump [-b] [-n] [-m _directory_] [-o _file_] [-t dxf|glb|gltf|obj|sat|stl] [-u _units_] geom.g [bot1 bot2 ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bot_dump* [*-b*] [*-n*] [*-m* _directory_ | *-o* _file_] [*-t* _format_] [*-u* _units_]
+         _database.g_ [_bot_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -33,32 +33,29 @@ binary formats require an output file or directory.
 [[options]]
 == OPTIONS
 
-*-b*::
-  Write a binary version of the output format, for formats that support both
-  ASCII and binary variants (such as STL). glTF output is always binary (GLB).
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-n*::
-  Include surface normals in the output where the format supports them (e.g.
-  OBJ). Normals are intrinsic to STL and unsupported by DXF and SAT.
+*-b*, *--binary*::
+  Write binary output when supported; glTF binary output uses GLB.
 
-*-m* _directory_::
-  Write each dumped BoT into its own file within _directory_. Mutually
-  exclusive with *-o*.
+*-n*, *--normals*::
+  Write normals when supported (OBJ; intrinsic in STL).
 
-*-o* _file_::
-  Write all exported geometry to a single _file_. Mutually exclusive with *-m*.
+*-m* _directory_, *--output-directory*=_directory_::
+  Write one file per BoT into this directory.
 
-*-t* _type_::
-  Select the output format: *dxf*, *glb*, *gltf*, *obj*, *sat*, or *stl*. If
-  omitted, the format is inferred from the output file extension, defaulting to
-  *stl* when it cannot be determined.
+*-o* _file_, *--output-file*=_file_::
+  Write all exported geometry to this file.
 
-*-u* _units_::
-  Convert coordinates from the internal millimeters to _units_ on output (e.g.
-  "in", "cm", "m").
+*-t* _format_, *--format*=_format_::
+  Select the mesh format; otherwise infer it from the output name or default to STL. Accepted values: *dxf*, *glb*, *gltf*, *obj*, *sat*, *stl*.
 
-*-h*, *-?*::
-  Print a usage summary and exit.
+*-u* _units_, *--units*=_units_::
+  Convert internal millimeters to these output units.
+
+// END GENERATED BU_ARG OPTIONS
 
 
 [[examples]]

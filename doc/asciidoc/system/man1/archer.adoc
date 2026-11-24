@@ -8,11 +8,10 @@ archer - graphical user interface for BRL-CAD solid modeling
 
 == SYNOPSIS
 
-[source]
-----
-archer [_geometry_]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*archer* [_geometry_] [_argument_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -30,8 +29,18 @@ database. When invoked with no argument, *archer* changes to the user's
 home directory and starts with an empty workspace; a database can then be
 created or opened from the File menu.
 
+Additional arguments are passed unchanged to the Tcl/Tk launcher.
+
 [[options]]
 == OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*[_all_], *--help*[=_all_]::
+  Print help and exit.
+
+// END GENERATED BU_ARG OPTIONS
+
+=== Additional Details
 
 _geometry_::
   Optional geometry file to open on startup. A BRL-CAD _.g_ database is

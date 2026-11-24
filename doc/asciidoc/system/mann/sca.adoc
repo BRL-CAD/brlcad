@@ -8,11 +8,10 @@ sca - Used to apply a scaling factor.
 
 == SYNOPSIS
 
-[source]
-----
-sca {[sfactor] | [x-sfactor y-sfactor z-sfactor]}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*sca* _scale_factor_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

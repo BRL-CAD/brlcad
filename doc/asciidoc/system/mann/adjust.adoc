@@ -8,11 +8,10 @@ adjust - Adjusts parameters of a solid.
 
 == SYNOPSIS
 
-[source]
-----
-adjust {solid_name} {param_name} {value} [param_name] [value]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*adjust* _object_ _attribute_ _value_ [(_attribute_ _value_) ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

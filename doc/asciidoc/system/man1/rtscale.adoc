@@ -8,11 +8,10 @@ rtscale - plot a measuring scale for an rt/rthide UNIX-Plot image
 
 == SYNOPSIS
 
-[source]
-----
-rtscale _width_ _units_ _intervals_ _file.log_ [_string_] > scale.plot3
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rtscale* _width_ _units_ _intervals_ _file.log_ [_description_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -42,8 +41,17 @@ _intervals_::
   number of tick-mark intervals along the scale.
 _file.log_::
   RT log file from which the view2model matrix is computed.
-_string_::
+_description_::
   optional descriptive label drawn under the scale.
+
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

@@ -8,11 +8,11 @@ pixfilter - apply a 3x3 kernel filter to a color pix file
 
 == SYNOPSIS
 
-[source]
-----
-pixfilter [-v] [-f type] [-d div] [-o offset] [-w width] [-n height] [-s squaresize] [file.pix] > newfile.pix
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixfilter* [*-v*]... [*-f* _type_] [*-d* _integer_] [*-o* _integer_] [*-s* _pixels_]
+          [*-w* _pixels_] [*-n* _pixels_] [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -21,46 +21,46 @@ pixfilter [-v] [-f type] [-d div] [-o offset] [-w width] [-n height] [-s squares
 image, reading from the named _file.pix_ or from standard input and
 writing the result to standard output.  The outermost rows and columns
 are copied through untouched.  The input is assumed to be 512x512
-pixels unless *-w*, *-n*, or *-s* are given.  A low-pass filter is used
-by default; other kernels are selected with *-f*.
+pixels unless *--width*, *--height*, or *--size* are given. A low-pass filter
+is used by default; other kernels are selected with *--filter*.
 
 Each kernel divides the convolved result by a divisor to keep values in
 the 0-255 range (the boxcar average, for instance, divides by nine), and
 some kernels add an offset.  The Laplacian is centered about zero, so it
-adds 128 to express a difference from neutral grey.  The *-d* and *-o*
-options override a kernel's built-in divisor and offset.
+adds 128 to express a difference from neutral grey. The *--divisor* and
+*--offset* options override a kernel's built-in divisor and offset.
 
 
 [[options]]
 == OPTIONS
 
-*-v*::
+*-v*, *--verbose*::
   Verbose; print the kernel values and the resulting minimum and maximum
   pixel values on standard error.
 
-*-f* _type_::
+*-f*, *--filter* _type_::
   Select the filter kernel.  Recognized _type_ values are *lo* (low pass,
   the default), *hi* (high pass), *la* (Laplacian), *hg* (horizontal
   gradient), *vg* (vertical gradient), and *b* (boxcar average).
 
-*-d* _div_::
-  Divide the convolved result by _div_ instead of the kernel's default
+*-d*, *--divisor* _integer_::
+  Divide the convolved result by _integer_ instead of the kernel's default
   divisor.  Must be non-zero.
 
-*-o* _offset_::
-  Add _offset_ to the result instead of the kernel's default offset.
+*-o*, *--offset* _integer_::
+  Add _integer_ to the result instead of the kernel's default offset.
 
-*-w* _width_::
-  Set the input scanline width in pixels (default 512).
+*-w*, *--width* _pixels_::
+  Set the input scanline width (default 512 pixels).
 
-*-n* _height_::
-  Set the number of scanlines in the input (default 512).
+*-n*, *--height* _pixels_::
+  Set the number of input scanlines (default 512 pixels).
 
-*-s* _squaresize_::
-  Set both width and height to _squaresize_ pixels.
+*-s*, *--size* _pixels_::
+  Set both width and height to _pixels_.
 
-*-h*, *-?*::
-  Print a usage message, including the list of filter types, and exit.
+*-h*, *--help*::
+  Print help and exit.
 
 
 [[examples]]

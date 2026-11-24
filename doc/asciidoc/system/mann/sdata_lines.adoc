@@ -8,20 +8,15 @@ sdata_lines - Manage the secondary arbitrary line set attached to the current vi
 
 == SYNOPSIS
 
-[source]
-----
-sdata_lines draw [0|1]
-sdata_lines color [r g b]
-sdata_lines line_width [width]
-sdata_lines points [{{x y z} {x y z} ...}]
-sdata_lines snap [0|1]
-view sdata_lines draw [0|1]
-view sdata_lines color [r g b]
-view sdata_lines line_width [width]
-view sdata_lines points [{{x y z} {x y z} ...}]
-view sdata_lines snap [0|1]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*sdata_lines*
+*sdata_lines draw* [_arguments_ ...]
+*sdata_lines color* [_arguments_ ...]
+*sdata_lines line_width* [_arguments_ ...]
+*sdata_lines points* [_arguments_ ...]
+*sdata_lines snap* [_arguments_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

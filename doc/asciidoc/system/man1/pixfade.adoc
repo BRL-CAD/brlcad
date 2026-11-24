@@ -8,11 +8,11 @@ pixfade - darken a pix file
 
 == SYNOPSIS
 
-[source]
-----
-pixfade [-f fraction] [-p percentage] [-m max] [-s squaresize] [-w width] [-n height] [-o out_file.pix] [infile.pix] [> outfile.pix]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixfade* [*-p* _percentage_] [*-f* _fraction_] [*-m* _level_] [*-s* _pixels_] [*-w* _pixels_]
+        [*-n* _pixels_] [*-o* _file.pix_] [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -20,47 +20,51 @@ pixfade [-f fraction] [-p percentage] [-m max] [-s squaresize] [-w width] [-n he
 *pixfade* darkens a color *pix*(5) image, either by scaling every pixel by a
 fractional amount or by clamping each color channel to a maximum level.
 
-By default *pixfade* operates in scaling mode: the *-f* option gives a
-fractional multiplier from 0 to 1 applied to the red, green, and blue values
-of each pixel, and the *-p* option specifies the same multiplier as a
-percentage from 0 to 100. The default is *-f* 0.5 (*-p* 50.0).
+By default *pixfade* operates in scaling mode: the *-f*, *--fraction* option
+gives a multiplier from 0 to 1 applied to the red, green, and blue values of
+each pixel, and the *-p*, *--percentage* option specifies the same multiplier
+as a percentage from 0 to 100. The default is *-f* 0.5 (*-p* 50.0).
 
-The *-m* option selects truncation mode instead, supplying a ceiling pixel
-level (0 - 255). Each channel is replaced by the minimum of the ceiling and
-its original value. When *-m* is given, the *-f* and *-p* options are ignored.
+The *-m*, *--maximum* option selects truncation mode instead, supplying a
+ceiling pixel level (0 - 255). Each channel is replaced by the minimum of the
+ceiling and its original value. When *-m* is given, the *-f* and *-p* options
+are ignored.
 
 Input is read from _infile.pix_ if given, otherwise from standard input. The
-faded image is written to standard output, and additionally to the *-o* file
-when one is named; if both an output file and a redirected standard output are
+faded image is written to standard output, and additionally to the file named
+by *-o*, *--output*. If both an output file and redirected standard output are
 present, the same image is written to each.
 
 
 [[options]]
 == OPTIONS
 
-*-f* _fraction_::
+*-f*, *--fraction* _fraction_::
   Scale every channel of each pixel by _fraction_, which must be between 0
   and 1. Default is 0.5.
 
-*-p* _percentage_::
+*-p*, *--percentage* _percentage_::
   Same as *-f* but expressed as a percentage from 0 to 100; _percentage_ is
   divided by 100 to form the multiplier. Default is 50.0.
 
-*-m* _max_::
-  Truncation mode: clamp each channel to the ceiling _max_ (0 - 255). Values
+*-m*, *--maximum* _level_::
+  Truncation mode: clamp each channel to the ceiling _level_ (0 - 255). Values
   outside this range are clamped to the nearest bound. Overrides *-f* and *-p*.
 
-*-s* _squaresize_::
-  Set both input width and height to _squaresize_ pixels.
+*-s*, *--size* _pixels_::
+  Set both input width and height to _pixels_.
 
-*-w* _width_::
-  Set the input scanline width in pixels. Default is 512.
+*-w*, *--width* _pixels_::
+  Set the input scanline width. Default is 512 pixels.
 
-*-n* _height_::
-  Set the number of input scanlines in pixels. Default is 512.
+*-n*, *--height* _pixels_::
+  Set the number of input scanlines. Default is 512 pixels.
 
-*-o* _out_file.pix_::
-  Write the faded image to _out_file.pix_ in addition to standard output.
+*-o*, *--output* _file.pix_::
+  Write the faded image to _file.pix_ in addition to redirected standard output.
+
+*-h*, *--help*::
+  Print help and exit.
 
 
 [[examples]]

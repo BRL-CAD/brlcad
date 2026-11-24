@@ -8,12 +8,10 @@ eye - set eye point to given model coordinates
 
 == SYNOPSIS
 
-[source]
-----
-eye
-eye mx my mz
-eye "mx my mz"
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*eye* _point_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

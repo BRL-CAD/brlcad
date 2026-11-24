@@ -8,10 +8,10 @@ find_arb_edge - find and identify an ARB (Arbitrary Polyhedron) edge
 
 == SYNOPSIS
 
-[source]
-----
-find_arb_edge arb "view_x view_y view_z" ptol
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*find_arb_edge* _arb_ _view_point_ _tolerance_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,10 @@ vdeck - generate COMGEOM card decks from a BRL-CAD geometry database
 
 == SYNOPSIS
 
-[source]
-----
-vdeck [-d] file.g [object ...]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*vdeck* [*-d*] _file.g_ [_object_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -64,9 +63,12 @@ equivalent are written as a placeholder record and skipped with a warning.
 [[options]]
 == OPTIONS
 
-*-d*::
+*-d*, *--debug*::
   Enable debug output.  Region and solid processing is reported on
   standard output as the deck is built.
+
+*-h*, *-?*, *--help*::
+  Print a usage message and exit.
 
 
 [[examples]]

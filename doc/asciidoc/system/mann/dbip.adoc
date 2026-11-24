@@ -8,11 +8,10 @@ dbip - Print the current database handle pointer.
 
 == SYNOPSIS
 
-[source]
-----
-dbip
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*dbip*
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

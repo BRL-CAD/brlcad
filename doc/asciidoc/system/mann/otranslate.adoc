@@ -8,10 +8,10 @@ otranslate - translate a database object by a displacement vector
 
 == SYNOPSIS
 
-[source]
-----
-otranslate obj dx dy dz
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*otranslate* _object_ _translation_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

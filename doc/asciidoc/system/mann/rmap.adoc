@@ -8,10 +8,10 @@ rmap - return a mapping of region IDs and air codes to region names
 
 == SYNOPSIS
 
-[source]
-----
-rmap
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*rmap*
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

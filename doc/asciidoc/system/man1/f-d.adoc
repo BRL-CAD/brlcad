@@ -9,11 +9,10 @@ f-d - convert single-precision floats to double-precision floats
 
 == SYNOPSIS
 
-[source]
-----
-f-d [-n | scale] < floats > doubles
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*f-d* [*-n*] [_scale_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -39,7 +38,10 @@ deprecation warning on startup.
 [[options]]
 == OPTIONS
 
-*-n*::
+*-h*, *--help*::
+  Print command help and exit.
+
+*-n*, *--normalize*::
   Normalize the data.  The unit scale factor of 1.0 is retained so that
   data already in the range -1.0 to +1.0 is preserved.
 

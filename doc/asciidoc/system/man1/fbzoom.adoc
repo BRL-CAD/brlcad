@@ -8,11 +8,11 @@ fbzoom - zoom and pan the view of a frame buffer
 
 == SYNOPSIS
 
-[source]
-----
-fbzoom [-T] [-F framebuffer] [-s|-S squarescrsize] [-w|-W scr_width] [-n|-N scr_height] [xPan yPan xZoom yZoom]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*fbzoom* [*-T*] [*-F* _device_] [*-s* _pixels_] [*-w* _pixels_] [*-n* _scanlines_]
+       [_x-pan_ _y-pan_ _x-zoom_ _y-zoom_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -35,24 +35,29 @@ arguments must be given; the two zoom values must be positive.
 [[options]]
 == OPTIONS
 
-*-T*::
-  Reverse the sense of the pan commands, so that the panning keys move the
-  image rather than the window.  This may also be toggled interactively
-  with the *T* command.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-F* _framebuffer_::
-  Explicitly specify the frame buffer to open.  Otherwise the environment
-  variable _FB_FILE_ selects the frame buffer; see *brlcad*(1).
+*-T*, *--reverse-pan*::
+  Make panning keys move the image instead of the window.
 
-*-s* (or *-S*) _squarescrsize_::
-  Open the frame buffer as a square _squarescrsize_ pixels on a side
-  (default is 512).
+*-F* _device_, *--framebuffer*=_device_::
+  Select the framebuffer instead of the FB_FILE environment default.
 
-*-w* (or *-W*) _scr_width_::
-  Open the frame buffer _scr_width_ pixels wide (default is 512).
+*-s* _pixels_, *--size*=_pixels_::
+  Set both framebuffer dimensions (default 512).
 
-*-n* (or *-N*) _scr_height_::
-  Open the frame buffer _scr_height_ pixels high (default is 512).
+*-w* _pixels_, *--width*=_pixels_::
+  Set the framebuffer width (default 512).
+
+*-n* _scanlines_, *--height*=_scanlines_::
+  Set the framebuffer height (default 512).
+
+// END GENERATED BU_ARG OPTIONS
+
+The uppercase *-S*, *-W*, and *-N* spellings remain accepted as hidden
+compatibility aliases.
 
 Once running, *fbzoom* responds to the following single-character
 commands (type *?* at any time for this list):

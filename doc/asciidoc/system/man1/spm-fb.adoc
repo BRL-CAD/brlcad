@@ -8,11 +8,10 @@ spm-fb - display a sphere map on a framebuffer
 
 == SYNOPSIS
 
-[source]
-----
-spm-fb [-s] [-F framebuffer] [-S squarescrsize] [-W scr_width] [-N scr_height] vsize [filename]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*spm-fb* [*-s*] [*-F* _device_] [*-S* _pixels_] [*-W* _pixels_] [*-N* _pixels_] _vsize_ [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -33,22 +32,26 @@ coordinates back onto the sphere.
 [[options]]
 == OPTIONS
 
-*-s*::
-  Display the map as a square (rectangular) image that fills the framebuffer,
-  resampling the sphere map with *bn_spm_read* instead of writing each bin as
-  a raw scanline.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-F* _framebuffer_::
-  Use the specified framebuffer device instead of the default.
+*-s*, *--square*::
+  Resample the sphere map to a rectangular framebuffer image.
 
-*-S* _squarescrsize_::
-  Set both the framebuffer width and height to _squarescrsize_ pixels.
+*-F* _device_, *--framebuffer*=_device_::
+  Select the framebuffer device instead of the configured default.
 
-*-W* _scr_width_::
-  Set the framebuffer width to _scr_width_ pixels.
+*-S* _pixels_, *--size*=_pixels_::
+  Set both framebuffer dimensions.
 
-*-N* _scr_height_::
-  Set the framebuffer height to _scr_height_ pixels.
+*-W* _pixels_, *--width*=_pixels_::
+  Set the framebuffer width.
+
+*-N* _pixels_, *--height*=_pixels_::
+  Set the framebuffer height.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

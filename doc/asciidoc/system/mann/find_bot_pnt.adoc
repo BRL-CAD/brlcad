@@ -8,15 +8,20 @@ find_bot_pnt - find and identify a BOT point
 
 == SYNOPSIS
 
-[source]
-----
-find_bot_pnt bot "view_x view_y view_z"
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*find_bot_pnt* _bot_ _view_xyz_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
 
 The *find_bot_pnt* command searches a BOT (Bag of Triangles) primitive and identifies the vertex that is closest to a given view coordinate. 
+
+=== Options
+
+*-h*, *--help*::
+Print command help without requiring an open database or active view.
 
 If successful, the command returns a single integer representing the numeric ID of the closest vertex.
 

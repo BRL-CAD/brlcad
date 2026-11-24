@@ -8,11 +8,11 @@ gastank - create a BRL-CAD .g file containing gas tanks
 
 == SYNOPSIS
 
-[source]
-----
-gastank [-h] [-fname.g] [-n#] [-H#] [-w#] [-d#] [-r#]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*gastank* [*-f* _file.g_] [*-n* _count_] [*-H* _millimeters_] [*-w* _millimeters_]
+        [*-d* _millimeters_] [*-r* _millimeters_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -36,27 +36,27 @@ can be inspected or rendered with tools such as *mged*(1) and *rt*(1).
 [[options]]
 == OPTIONS
 
-*-h*::
+*-h*, *-?*, *--help*::
   Print a usage message and exit.  *-?* behaves the same way.
 
-*-f* _name.g_::
+*-f* _name.g_, *--output*=_name.g_::
   Name of the output BRL-CAD database to create.  The value must be appended
-  directly to the flag (for example *-fgastank.g*).  Defaults to *gastank.g*
-  in interactive mode.
+  directly to the short flag (for example *-fgastank.g*) or supplied as the
+  next argument. Defaults to *gastank.g* in interactive mode.
 
-*-n* _#_::
+*-n* _count_, *--count*=_count_::
   Number of gas tanks to create.  Clamped to the range 1 to 256.
 
-*-H* _#_::
+*-H* _millimeters_, *--height*=_millimeters_::
   Height of the gas tank in millimeters.
 
-*-w* _#_::
+*-w* _millimeters_, *--width*=_millimeters_::
   Width of the gas tank in millimeters.
 
-*-d* _#_::
+*-d* _millimeters_, *--depth*=_millimeters_::
   Depth of the gas tank in millimeters.
 
-*-r* _#_::
+*-r* _millimeters_, *--radius*=_millimeters_::
   Radius of the rounded corners in millimeters.
 
 [[examples]]

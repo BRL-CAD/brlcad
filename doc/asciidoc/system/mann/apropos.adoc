@@ -8,11 +8,10 @@ apropos - Searches _mged_ command help and manual pages for keywords.
 
 == SYNOPSIS
 
-[source]
-----
-apropos [-k|-K] {keyword}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*apropos* [_topic_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

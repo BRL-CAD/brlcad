@@ -8,11 +8,16 @@ t - Alternate command name for *ls*.
 
 == SYNOPSIS
 
-[source]
-----
-t [-A -o -a -c -r -s -p -l -q -H -S] [objects]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*t* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] *-h* [_raw_arguments_ ...]
+*t* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] *-A* _attribute_ _value_ [(_attribute_ _value_) ...]
+*t* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] *-r* [_objects_ ...]
+*t* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] *-p* [_objects_ ...]
+*t* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] *-c* [_objects_ ...]
+*t* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] *-a* [_objects_ ...]
+*t* [*-q*] [*-l*] [*-H*] [*-S*] [*-o*] [_objects_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -22,6 +27,45 @@ arguments and options.
 
 See *ls* for the detailed option descriptions and examples.
 
+
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
+
+*-a*, *--all*::
+  Do not ignore hidden objects.
+
+*-c*, *--combs*::
+  List combinations.
+
+*-r*, *--regions*::
+  List regions.
+
+*-p*, *--primitives*, *-s*::
+  List primitives.
+
+*-q*, *--quiet*::
+  Suppress informational output messages during database lookup.
+
+*-l*::
+  Use long reporting format.
+
+*-H*, *--human-readable*::
+  When printing in long format, use human-readable object sizes.
+
+*-S*, *--sort*::
+  Sort by object size.
+
+*-A*, *--attributes*::
+  Treat operands as attribute name/value pairs.
+
+*-o*, *--or*::
+  In attribute mode, match any attribute pair.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

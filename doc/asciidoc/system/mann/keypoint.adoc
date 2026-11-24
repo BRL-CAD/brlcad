@@ -8,11 +8,10 @@ keypoint - Without any options, *keypoint* displays the current keypoint setting
 
 == SYNOPSIS
 
-[source]
-----
-keypoint [xyz] [reset]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*keypoint* [_point_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

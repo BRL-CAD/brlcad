@@ -8,10 +8,10 @@ fb2pix - write a framebuffer image to a .pix file
 
 == SYNOPSIS
 
-[source]
-----
-fb2pix [-h -i -c] [-s squaresize] [-w width] [-n height] [file.pix]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*fb2pix* [*-c*] [*-i*] [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_] [*-h*] [_output_file_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -22,12 +22,36 @@ The available options are:
 
 * *-c* : Crunch the colormap (apply colormap to pixel values).
 * *-i* : Inverse mapping (draws the image upside down).
-* *-s squaresize* : Sets both the output width and height to the specified `squaresize`.
-* *-w width* : Sets the output width.
-* *-n height* : Sets the output height.
+* *-s squaresize* : Sets both the output width and height to the specified positive `squaresize`.
+* *-w width* : Sets the output width to a positive value.
+* *-n height* : Sets the output height to a positive value.
 * *-h* or *-?* : Prints the command usage and exits.
 
 If size parameters are omitted, it defaults to capturing a 512x512 region.
+
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-c*::
+  Crunch the color map.
+
+*-i*::
+  Write upside-down.
+
+*-s* _pixels_::
+  Set both image dimensions.
+
+*-w* _pixels_::
+  Set image width.
+
+*-n* _pixels_::
+  Set image height.
+
+*-h*, *--help*::
+  Print command help.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

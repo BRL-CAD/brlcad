@@ -8,13 +8,10 @@ eye_pos - alias for eye; get or set the camera eye point position
 
 == SYNOPSIS
 
-[source]
-----
-eye_pos
-eye_pos x y z
-eye_pos "x y z"
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*eye_pos* _coordinates_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,23 +8,86 @@ pix2fb - display a raw pixel file on the framebuffer
 
 == SYNOPSIS
 
-[source]
-----
-pix2fb [options] [file.pix]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pix2fb* [*-1*] [*-m* _lines_] [*-a*] [*-i*] [*-c*] [*-z*] [*-s* _pixels_] [*-w* _pixels_]
+       [*-n* _pixels_] [*-x* _pixels_] [*-y* _pixels_] [*-X* _pixels_] [*-Y* _pixels_]
+       [*-S* _pixels_] [*-W* _pixels_] [*-N* _pixels_] [*-p* _seconds_] [*-h*] [_input_file_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
 
 The *pix2fb* command reads a raw RGB pixel file (bottom-up row order) and sends it to the display manager's framebuffer. If no filename is given and standard input is not a terminal, pixels are read from standard input. The command requires an active display manager with a framebuffer; it will return an error if no framebuffer is available.
 
-=== Options
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-1*::
+  Use one-line writes.
+
+*-m* _lines_::
+  Set multiple-line write count.
+
+*-a*::
+  Autosize the input.
+
+*-i*::
+  Draw upside-down.
+
+*-c*::
+  Clear the framebuffer.
+
+*-z*::
+  Zoom to fill the screen.
+
+*-s* _pixels_::
+  Set both input dimensions.
+
+*-w* _pixels_::
+  Set input width.
+
+*-n* _pixels_::
+  Set input height.
+
+*-x* _pixels_::
+  Set input X offset.
+
+*-y* _pixels_::
+  Set input Y offset.
+
+*-X* _pixels_::
+  Set framebuffer X offset.
+
+*-Y* _pixels_::
+  Set framebuffer Y offset.
+
+*-S* _pixels_::
+  Set both framebuffer dimensions.
+
+*-W* _pixels_::
+  Set framebuffer width.
+
+*-N* _pixels_::
+  Set framebuffer height.
+
+*-p* _seconds_::
+  Pause before returning.
+
+*-h*, *--help*::
+  Print command help.
+
+// END GENERATED BU_ARG OPTIONS
+
+[[option_details]]
+== OPTION DETAILS
 
 *Input size*
 
-* *-w width* : Width of the input pixel file in pixels (default 512).
-* *-n height* : Height of the input pixel file in pixels (default 512).
-* *-s size* : Set both input width and height to `size` (square input).
+* *-w width* : Positive width of the input pixel file in pixels (default 512).
+* *-n height* : Positive height of the input pixel file in pixels (default 512).
+* *-s size* : Set both input width and height to positive `size` (square input).
 * *-a* : Autosize the input — attempt to determine dimensions from the file.
 
 *Input region (crop)*
@@ -34,9 +97,9 @@ The *pix2fb* command reads a raw RGB pixel file (bottom-up row order) and sends 
 
 *Output (framebuffer) size*
 
-* *-W scr_width* : Width of the framebuffer display area in pixels.
-* *-N scr_height* : Height of the framebuffer display area in pixels.
-* *-S scr_size* : Set both framebuffer width and height to `scr_size` (square output).
+* *-W scr_width* : Positive width of the framebuffer display area in pixels.
+* *-N scr_height* : Positive height of the framebuffer display area in pixels.
+* *-S scr_size* : Set both framebuffer width and height to positive `scr_size` (square output).
 
 *Output position*
 
@@ -50,7 +113,7 @@ The *pix2fb* command reads a raw RGB pixel file (bottom-up row order) and sends 
 * *-i* : Inverse (upside-down) — draw the image with inverted row order.
 * *-1* : Force single-line writes (one row at a time).
 * *-m lines* : Streamlined multi-line writes; write `lines` rows per call.
-* *-p seconds* : Pause for `seconds` before closing the framebuffer and exiting.
+* *-p seconds* : Pause for nonnegative `seconds` before closing the framebuffer and exiting.
 
 [[examples]]
 == EXAMPLES

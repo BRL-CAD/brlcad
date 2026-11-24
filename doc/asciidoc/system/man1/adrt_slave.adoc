@@ -8,11 +8,10 @@ adrt_slave - ADRT distributed ray-tracing rendering worker
 
 == SYNOPSIS
 
-[source]
-----
-adrt_slave [-v] [-h] [-p port] [-t threads] [host]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*adrt_slave* [*-p* _port_] [*-t* _count_] [*-v*] [_host_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -35,19 +34,19 @@ driven by *isst*(1).
 [[options]]
 == OPTIONS
 
-*-p* _port_::
+*-p* _port_, *--port*=_port_::
   Use the given TCP _port_ instead of the protocol default (1980 when
-  connecting to a _host_, 1981 when running as a daemon).
+  connecting to a _host_, 1981 when running as a daemon).  The port must
+  be in the range 1-65535.
 
-*-t* _threads_::
-  Launch _threads_ rendering threads per slave.  The value is clamped
-  to the range 0-32; 0 lets the engine choose based on the available
-  cores.
+*-t* _count_, *--threads*=_count_::
+  Launch _count_ rendering threads per slave.  The value must be in the
+  range 0-32; 0 lets the engine choose based on the available cores.
 
-*-v*::
+*-v*, *--version*::
   Print the ADRT version and exit.
 
-*-h*::
+*-h*, *-?*, *--help*::
   Print a usage summary and exit.
 
 [[examples]]

@@ -8,11 +8,10 @@ dump - Copies the entire database to the __keep_file__.
 
 == SYNOPSIS
 
-[source]
-----
-dump {keep_file}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*dump* _output_file_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

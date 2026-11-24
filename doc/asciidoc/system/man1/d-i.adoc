@@ -8,11 +8,10 @@ d-i - convert doubles to 16-bit short integers
 
 == SYNOPSIS
 
-[source]
-----
-d-i [-n | scale] < doubles > shorts
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*d-i* [*-n*] [_scale_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -41,7 +40,10 @@ such as *dmod*(1) and *dconv*(1).
 [[options]]
 == OPTIONS
 
-*-n*::
+*-h*, *--help*::
+  Print command help and exit.
+
+*-n*, *--normalize*::
   Normalize: use a scale of 32767.0 so that input in the range -1.0 to
   +1.0 fills the full 16-bit signed range.  Mutually exclusive with a
   numeric _scale_ argument.

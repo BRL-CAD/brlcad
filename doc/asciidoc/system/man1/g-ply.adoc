@@ -9,11 +9,11 @@ g-ply - convert BRL-CAD geometry to a Stanford PLY file
 
 == SYNOPSIS
 
-[source]
-----
-g-ply [-v] [-s] [-t _type_] [-a _abs_tol_] [-r _rel_tol_] [-n _norm_tol_] [-D _dist_tol_] [-x _rt_debug_] [-X _nmg_debug_] -o _output.ply_ _database.g_ _object_ [_object ..._]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*g-ply* [*-v*] [*-s*] [*-t* _encoding_] [*-a* _distance_] [*-r* _fraction_] [*-n* _degrees_]
+      [*-D* _distance_] [*-x* _mask_] [*-X* _mask_] (*-o* _output.ply_) _database.g_ _object_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -28,47 +28,48 @@ default all requested objects are merged into a single file.
 [[options]]
 == OPTIONS
 
-*-o* _output.ply_::
+*-o* _output.ply_, *--output* _output.ply_::
   Name of the PLY file to write.  This option is required.  When *-s* is given,
   this name is appended as a suffix to each per-object file, which is named
   _object_*_*_output.ply_.
 
-*-s*::
+*-s*, *--separate*::
   Write a separate PLY file for each object instead of merging all objects into
   a single file.
 
-*-t* _type_::
-  Select the PLY encoding.  Valid values are *asc* for ASCII, *le* for binary
-  little-endian, and *be* for binary big-endian.
+*-t* _encoding_, *--type* _encoding_::
+  Select the PLY encoding. Valid values are *de* for the platform's default
+  binary encoding, *asc* for ASCII, *le* for binary little-endian, and *be*
+  for binary big-endian. Default is *de*.
 
-*-a* _abs_tol_::
+*-a* _distance_, *--absolute-tolerance* _distance_::
   Absolute tessellation tolerance in millimeters (the maximum chord distance
   between the true surface and a facet edge).  Setting this clears the relative
   tolerance.  Default is 0.0 (disabled).
 
-*-r* _rel_tol_::
+*-r* _fraction_, *--relative-tolerance* _fraction_::
   Relative tessellation tolerance, expressed as a fraction of the bounding-box
   size of the object.  Default is 0.01.
 
-*-n* _norm_tol_::
+*-n* _degrees_, *--normal-tolerance* _degrees_::
   Surface normal tessellation tolerance, the maximum angle in degrees between
   facet normals.  Setting this clears the relative tolerance.  Default is 0.0
   (disabled).
 
-*-D* _dist_tol_::
+*-D* _distance_, *--distance-tolerance* _distance_::
   Calculational distance tolerance in millimeters used when deciding whether
   two vertices are coincident.  Default is 0.0005.
 
-*-x* _rt_debug_::
+*-x* _mask_, *--rt-debug* _mask_::
   Set the librt debug flag to the given hexadecimal value.
 
-*-X* _nmg_debug_::
+*-X* _mask_, *--nmg-debug* _mask_::
   Set the libnmg debug flag to the given hexadecimal value.
 
-*-v*::
+*-v*, *--verbose*::
   Enable verbose output during conversion.
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print the usage message and exit.
 
 [[examples]]

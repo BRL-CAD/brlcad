@@ -9,11 +9,10 @@ d2-c - merge two double files into one complex file
 
 == SYNOPSIS
 
-[source]
-----
-d2-c _real_file_ _imag_file_ > _complex_
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*d2-c* _real-file_ _imaginary-file_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -36,6 +35,20 @@ signal.
 
 This command is deprecated and scheduled for removal; contact the
 developers if you depend on it.
+
+[[options]]
+== OPTIONS
+
+*-h*, *--help*::
+  Print command help and exit.
+
+_real-file_::
+  Binary double stream supplying the real components. Use *-* for standard
+  input or *.* for an all-zero stream.
+
+_imaginary-file_::
+  Binary double stream supplying the imaginary components. Use *-* for
+  standard input or *.* for an all-zero stream.
 
 [[examples]]
 == EXAMPLES

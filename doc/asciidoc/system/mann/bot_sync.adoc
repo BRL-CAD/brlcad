@@ -8,11 +8,19 @@ bot sync - Synchronize connected facet orientations within a BoT.
 
 == SYNOPSIS
 
-[source]
-----
-bot sync {bot} [bot2 bot3]...
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*bot_sync* _bot_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print command help.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[description]]
 == DESCRIPTION

@@ -8,11 +8,10 @@ arced - Provides a means for directly editing transformation matrices of Boolean
 
 == SYNOPSIS
 
-[source]
-----
-arced {comb/memb} {anim_command}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*arced* _arc_path_ _animation_command_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

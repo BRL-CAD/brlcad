@@ -8,10 +8,10 @@ dplot - draws plotfiles from the given logfile
 
 == SYNOPSIS
 
-[source]
-----
-dplot logfile cmd [args]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*dplot* _logfile_ (*ssx* | *isocsx* | *fcurves* | *lcurves* | *faces*) [_indices_ ...]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

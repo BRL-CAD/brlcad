@@ -8,10 +8,10 @@ ptranslate - translate a vector attribute of a primitive
 
 == SYNOPSIS
 
-[source]
-----
-ptranslate [-r] obj attribute "tx ty tz"
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*ptranslate* [*-r*] _object_ _attribute_ _translation_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -50,6 +50,15 @@ The arguments are:
 |===
 
 Only TGC and EXTRUDE are currently supported. Other primitive types return an error.
+
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-r*::
+  Apply a relative edit.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

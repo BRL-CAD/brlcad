@@ -9,11 +9,10 @@ gif2fb - display a GIF image on a frame buffer
 
 == SYNOPSIS
 
-[source]
-----
-gif2fb [-H] [-v] [-F _frame_buffer_] [_gif_file_]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*gif2fb* [*-H*] [*-v*] [*-F* _device_] [_input_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -31,22 +30,24 @@ shell '<' redirection construct).
 [[options]]
 == OPTIONS
 
-*-F* _frame_buffer_::
-  Display on the specified frame buffer rather than the one named by the
-  *FB_FILE* environment variable (or the default system frame buffer).
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-H*::
-  Print the GIF screen dimensions to standard error in the form
-  "-w_width_ -n_height_" and exit without displaying the image.  The
-  output is suitable for passing as arguments to other BRL-CAD frame
-  buffer tools.
+*-H*, *--header-only*::
+  Print the GIF screen dimensions and exit.
 
-*-v*::
-  Verbose.  Print details of the GIF header, image header, and code
-  sizes to standard error.
+*-v*, *--verbose*::
+  Report GIF header and image details.
 
-*-h* | *-?*::
-  Print a usage message and exit.
+*-F* _device_, *--framebuffer*=_device_::
+  Select the framebuffer instead of the FB_FILE environment default.
+
+// END GENERATED BU_ARG OPTIONS
+
+*--header-only* writes `-w_width_ -n_height_` to standard error for use by
+other framebuffer tools.  *--verbose* reports GIF and image headers, color-map
+properties, and LZW code sizes while decoding.
 
 [[examples]]
 == EXAMPLES

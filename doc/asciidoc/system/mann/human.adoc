@@ -8,10 +8,13 @@ human - generate human models based on parameters like height
 
 == SYNOPSIS
 
-[source]
-----
-human [options]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*human* [*-A*] [*-b*] [*-H* _inches_] [*-L*] [*-m*] [*-n* _name_] [*-N* _count_] [*-p* _percent_]
+      [*-s* _pose_] [*-t*] [*-T*] [*-v*] [*-V*] *-h*[_all_] [_raw_arguments_ ...]
+*human* [*-A*] [*-b*] [*-H* _inches_] [*-L*] [*-m*] [*-n* _name_] [*-N* _count_] [*-p* _percent_]
+      [*-s* _pose_] [*-t*] [*-T*] [*-v*] [*-V*] [_top-level-name_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -20,7 +23,131 @@ The *human* command generates proportional, articulated human geometric models (
 
 It calculates body proportions based on target height, percentile, and stance/pose parameters. It can generate a single human or an entire grid-based "army" of human models. By default, it generates a 50th-percentile male standing at 68 inches (5 foot 8 inches) tall named `Body.c`.
 
-=== Supported Options:
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-A*, *--automatic*::
+  Use automatic default dimensions.
+
+*-b*, *--bounding-boxes*::
+  Draw bounding boxes.
+
+*-H* _inches_, *--height*=_inches_::
+  Set total height.
+
+*-L*, *--location*, *-l*::
+  Set location interactively.
+
+*-m*, *--manual*::
+  Use interactive manual sizing.
+
+*-n* _name_, *--name*=_name_::
+  Set top-level object name.
+
+*-N* _count_, *--grid-size*=_count_::
+  Set squared troop formation size.
+
+*-p* _percent_, *--percentile*=_percent_::
+  Set percentile (1 through 99).
+
+*-s* _pose_, *--stance*=_pose_::
+  Set stance.
+
+*-t*, *--write-stats*::
+  Write bounding-box dimensions.
+
+*-T*, *--read-stats*::
+  Read bounding-box dimensions.
+
+*-v*, *--write-measurements*::
+  Write all human measurements.
+
+*-V*, *--read-measurements*::
+  Read all human measurements.
+
+*-1* _inches_::
+  Set head size.
+
+*-2* _inches_::
+  Set neck length.
+
+*-3* _inches_::
+  Set neck width.
+
+*-4* _inches_::
+  Set upper torso length.
+
+*-5* _inches_::
+  Set lower torso length.
+
+*-6* _inches_::
+  Set shoulder width.
+
+*-7* _inches_::
+  Set abdomen width.
+
+*-8* _inches_::
+  Set pelvis width.
+
+*-9* _inches_::
+  Set upper arm width.
+
+*-0* _inches_::
+  Set upper arm length.
+
+*-=* _inches_::
+  Set lower arm length.
+
+*-+* _inches_::
+  Set elbow width.
+
+*-_* _inches_::
+  Set wrist width.
+
+*-Q* _inches_::
+  Set hand length.
+
+*-~* _inches_::
+  Set hand width.
+
+`-*` _inches_::
+  Set thigh length.
+
+*-!* _inches_::
+  Set thigh width.
+
+*-^* _inches_::
+  Set calf length.
+
+*-%* _inches_::
+  Set knee width.
+
+*-$* _inches_::
+  Set foot length.
+
+*-#* _inches_::
+  Set ankle width.
+
+*-@* _inches_::
+  Set toe width.
+
+*-Z* _inches_::
+  Set shoulder depth.
+
+*-Y* _inches_::
+  Set abdomen depth.
+
+*-W* _inches_::
+  Set pelvis depth.
+
+*-h*[_all_], *--help*[=_all_]::
+  Print command help; use --help=all for measurement options.
+
+// END GENERATED BU_ARG OPTIONS
+
+[[option_details]]
+== OPTION DETAILS
 
 * *-A* : Auto mode. Automatically generates a 50th-percentile human model.
 * *-b* : Bounding boxes. In addition to the human geometry, generates a set of corresponding bounding boxes (useful for collision and clearance testing).

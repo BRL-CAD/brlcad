@@ -8,11 +8,10 @@ gex - examine, summarize, and compress a BRL-CAD geometry database
 
 == SYNOPSIS
 
-[source]
-----
-gex [-h] [-f] [-c] [-d _objectname_] input.g [output.g]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*gex* [*-f*] [*-c*] [*-d* _object_] _input.g_ [_output.g_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

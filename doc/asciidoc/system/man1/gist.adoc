@@ -9,11 +9,18 @@ gist - generate a one-page visual and textual summary of a geometry database
 
 == SYNOPSIS
 
-[source]
-----
-gist [options] (-F _model/dir_ | _model.g_)
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*gist* [*-o* _filename.png_] [*-e* _dir_name_] [*-g*] [*-f*] [*-Z*] [*-t* _component_]
+     [*-m* _image_] [*-p* _ppi_] [*-n* _name_] [*-r* _name_] [*-T* _directory_]
+     [*-c* _classification_] [*-N* _text_] [*-L*] [*-A*] [*-d* _file|0_] [*-l* _units_]
+     [*-w* _units_] [*-a* _directory_] [*-P* _count_] [*-Q*] [*-v*]
+     (*-i* _filename.g_ | *-F* _folder_)
+*gist* [*-o* _filename.png_] [*-e* _dir_name_] [*-g*] [*-f*] [*-Z*] [*-t* _component_]
+     [*-m* _image_] [*-p* _ppi_] [*-n* _name_] [*-r* _name_] [*-T* _directory_]
+     [*-c* _classification_] [*-N* _text_] [*-L*] [*-A*] [*-d* _file|0_] [*-l* _units_]
+     [*-w* _units_] [*-a* _directory_] [*-P* _count_] [*-Q*] [*-v*] _model.g_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -40,93 +47,83 @@ that directory, writing one report per model into an export folder.
 [[options]]
 == OPTIONS
 
-*-i* _filename.g_::
-  Input BRL-CAD database file. A bare *.g* path given as the final
-  argument is treated the same way.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-i* _filename.g_, *--input*=_filename.g_::
+  Read this BRL-CAD database; a bare model.g operand is equivalent.
 
-*-o* _filename.png_::
-  Output PNG file name. A *.png* extension is required (and appended if
-  omitted). When absent and not in folder mode, the report is displayed
-  in a pop-up window.
+*-o* _filename.png_, *--output*=_filename.png_::
+  Write the PNG report to this file; otherwise display it in a popup outside folder mode.
 
-*-F* _folder_::
-  Process every BRL-CAD database in the given folder, generating one
-  report per model.
+*-F* _folder_, *--folder*=_folder_::
+  Process every BRL-CAD database in this folder.
 
-*-e* _dir_name_::
-  Name of the export folder used for reports in folder mode (default
-  is a *GIST_REPORTS* directory inside the input folder).
+*-e* _dir_name_, *--output-folder*=_dir_name_::
+  Write folder-mode reports to this directory (default GIST_REPORTS inside the input folder).
 
-*-g*::
-  Display the generated report in a pop-up window.
+*-g*, *--gui*::
+  Display the generated report in a popup window.
 
-*-f*::
-  Force overwrite of an existing output report or export directory.
+*-f*, *--force*::
+  Overwrite an existing report or export directory.
 
-*-Z*::
-  Reuse renders found in an existing *.working* directory, greatly
-  reducing processing time.
+*-Z*, *--reuse-images*::
+  Reuse renders from an existing .working directory.
 
-*-t* _component_::
-  Name of the primary database object to feature in the report.
+*-t* _component_, *--top-component*=_component_::
+  Feature this primary database object in the report.
 
-*-m* _path/to/image_::
-  Path to a custom logo image to include in the report.
+*-m* _image_, *--logo*=_image_::
+  Include this custom logo image in the report.
 
-*-p* _ppi_::
-  Output resolution in pixels per inch (default 300).
+*-p* _ppi_, *--ppi*=_ppi_::
+  Set positive output resolution (default 300 PPI).
 
-*-n* _preparer_::
-  Name of the person preparing the report.
+*-n* _name_, *--preparer*=_name_::
+  Record the report preparer's name.
 
-*-r* _owner_::
-  Name of the model's owner.
+*-r* _name_, *--owner*=_name_::
+  Record the model owner's name.
 
-*-T* _path/to/rt_::
-  Directory containing the BRL-CAD *rt*(1) and *rtwizard*(1)
-  executables. Located automatically if not given.
+*-T* _directory_, *--executables*=_directory_::
+  Use rt and rtwizard from this directory instead of locating them automatically.
 
-*-c* _classification_::
-  Classification text (e.g. UNCLASSIFIED) shown in the top and bottom
-  banners of the report.
+*-c* _classification_, *--classification*=_classification_::
+  Show this classification in the report banners.
 
-*-N* _notes_::
-  Additional textual notes to include in the report.
+*-N* _text_, *--notes*=_text_::
+  Include these additional notes in the report.
 
-*-L*::
-  Use a left-handed coordinate system (default is right-handed).
+*-L*, *--left-handed*::
+  Use a left-handed coordinate system (default right-handed).
 
-*-A*::
-  Orient geometry with +Y up (default is +Z up).
+*-A*, *--y-up*::
+  Use +Y as the up axis (default +Z).
 
-*-d* _density_file_::
-  Density file to use for material mass calculations, or *0* to skip
-  density and mass calculations.
+*-d* _file|0_, *--density-file*=_file|0_::
+  Use this material density file, or 0 to skip density and mass calculations.
 
-*-l* _len_units_::
-  Length units to use in the report.
+*-l* _units_, *--length-units*=_units_::
+  Report dimensions in these length units.
 
-*-w* _wt_units_::
-  Weight (mass) units to use in the report.
+*-w* _units_, *--mass-units*=_units_::
+  Report mass in these units.
 
-*-a* _path/to/dir_::
-  Directory in which to write cached rendering work (defaults to a
-  *.working* directory derived from the input name).
+*-a* _directory_, *--working-directory*=_directory_::
+  Write cached rendering work to this directory (default derived .working directory).
 
-*-P* _ncpu_::
-  Number of CPUs to use. A non-positive value is added to the number of
-  available cores; the default uses all available cores.
+*-P* _count_, *--cpu-count*=_count_::
+  Number of CPUs to use; 0 selects all available and negative values subtract from the available count.
 
 *-Q*, *--preview*::
-  Generate a fast, low-resolution preview. The report retains the standard
-  page layout, using reduced-quality renderings and marking the omitted
-  surface-area, volume, and mass verification values as unavailable.
+  Generate a low-resolution preview and mark omitted verification values unavailable.
 
-*-v*::
-  Enable verbose output.
+*-v*, *--verbose*::
+  Print detailed progress status.
 
-*-h*, *--help*, *-?*::
-  Print a usage summary and exit.
+*-h*, *--help*::
+  Print help and exit.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

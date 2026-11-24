@@ -8,11 +8,10 @@ pixclump - quantize the colors in a pix(5) stream to a specified set
 
 == SYNOPSIS
 
-[source]
-----
-pixclump [-c _R/G/B_] [-f _color_file_] [-x _debug_flags_] [infile.pix [outfile.pix]]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pixclump* [*-c* _R/G/B_]... [*-f* _file_] [*-x* _hex-mask_] [_input_] [_output_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -36,22 +35,22 @@ onto the original palette.
 [[options]]
 == OPTIONS
 
-*-c* _R/G/B_::
+*-c* _R/G/B_, *--color* _R/G/B_::
   Add a single color to the set, specified as a slash-separated red/green/blue
   triple. May be given multiple times to build up the set. Using *-c* discards
   any color file previously named with *-f*.
 
-*-f* _color_file_::
+*-f* _color_file_, *--color-file* _color_file_::
   Read the color set from _color_file_, one _R/G/B_ color per line. Blank lines
   and lines beginning with '#' are ignored. Using *-f* discards any colors
   previously given with *-c*.
 
-*-x* _debug_flags_::
-  Enable diagnostic output. _debug_flags_ is a hexadecimal bit mask: 0x01 prints
-  the color table, 0x02 traces best-match selection, and 0x04 traces pixel
-  output.
+*-x* _debug_flags_, *--debug* _debug_flags_::
+  Enable diagnostic output. _debug_flags_ is a hexadecimal bit mask: 0x01
+  prints the color table and 0x02 traces best-match selection. Other bits have
+  no effect.
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a usage message and exit.
 
 [[examples]]

@@ -8,11 +8,10 @@ fbframe - draw a colored border around a framebuffer
 
 == SYNOPSIS
 
-[source]
-----
-fbframe [-F framebuffer] [-s|-S squareframesize] [-w|-W frame_width] [-n|-N frame_height]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*fbframe* [*-F* _device_] [*-s* _pixels_] [*-w* _pixels_] [*-n* _pixels_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -23,36 +22,33 @@ bottom: red along the bottom, green up the right side, blue across the
 top, and white down the left side. It is useful for verifying the
 displayable area and alignment of a framebuffer.
 
-The *-w*/*-W* and *-n*/*-N* options set the width and height of the
+The *--width* and *--height* options set the width and height of the
 region that *fbframe* opens and frames (not the thickness of the
 border, which is always one pixel). If no size is given, the
 dimensions are taken from the opened framebuffer.
 
-The *-F* option selects the framebuffer; if omitted, the *FB_FILE*
+The *--framebuffer* option selects the framebuffer; if omitted, the *FB_FILE*
 environment variable is consulted (see *brlcad*(1)).
 
 [[options]]
 == OPTIONS
 
-*-F* _framebuffer_::
+*-F*, *--framebuffer* _device_::
   Specify the framebuffer device to use. If omitted, the *FB_FILE*
   environment variable or the default framebuffer is used.
 
-*-s* _squareframesize_::
-*-S* _squareframesize_::
+*-s*, *--size* _pixels_::
   Set both the width and height of the framed region to the given
   number of pixels.
 
-*-w* _frame_width_::
-*-W* _frame_width_::
+*-w*, *--width* _pixels_::
   Set the width (in pixels) of the framed region.
 
-*-n* _frame_height_::
-*-N* _frame_height_::
+*-n*, *--height* _pixels_::
   Set the height (in scanlines) of the framed region.
 
-*-h*, *-?*::
-  Print a usage message and exit.
+*-h*, *--help*::
+  Print help and exit.
 
 [[examples]]
 == EXAMPLES

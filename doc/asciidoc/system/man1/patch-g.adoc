@@ -8,11 +8,12 @@ patch-g - convert a preprocessed FASTGEN target description into a BRL-CAD datab
 
 == SYNOPSIS
 
-[source]
-----
-patch-g [options] model.g
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*patch-g* [*-f* _fastgen.rp_] [*-n*] [*-u* _count_] [*-c* _x/y/z_] [*-t* _text_] [*-o* _name_]
+        [*-p*] [*-6*] [*-i* _groups.txt_] [*-m* _materials.txt_] [*-j* _jtype.txt_] [*-r*]...
+        [*-d* _level_] [*-x* _mask_] [*-X* _mask_] [*-T* _inches_] [*-A* _cosine_] _output.g_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -39,62 +40,62 @@ the verbosity, with higher levels producing more output.
 [[options]]
 == OPTIONS
 
-*-f* _fastgen.rp_::
-  Read the pre-processed (through *rpatch*(1)) FASTGEN file instead of standard input.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-n*::
-  Process volume mode components as plate mode.
+*-f* _fastgen.rp_, *--input*=_fastgen.rp_::
+  Read rpatch-preprocessed FASTGEN data from this file instead of standard input.
 
-*-u* _number_::
-  Number of union operations per region (default 5).
+*-n*, *--volume-as-plate*::
+  Process volume-mode components as plate mode.
 
-*-c* _"x y z"_::
-  Center of the object, in inches, used for some plate-mode surface normal
-  calculations. The quotation marks are required to group the three values.
+*-u* _count_, *--unions-per-region*=_count_::
+  Set the positive number of union operations per region (default 5).
 
-*-t* _title_::
-  Title for the output database (default "patch-g conversion").
+*-c* _x/y/z_, *--center*=_x/y/z_::
+  Set the object center in inches for plate-mode normal calculations.
 
-*-o* _object_name_::
-  Name of the top-level object, containing no spaces (default "all").
+*-t* _text_, *--title*=_text_::
+  Set the output database title (default: patch-g conversion).
 
-*-p*::
-  Write volume- and plate-mode components as BoT (polysolid) primitives rather than NMG solids.
+*-o* _name_, *--top-level*=_name_::
+  Set the whitespace-free top-level object name (default: all).
 
-*-6*::
-  Process plate-mode triangles as ARB6 solids (overrides *-p* for triangles).
+*-p*, *--polysolids*::
+  Write volume- and plate-mode components as BoT polysolids instead of NMG solids.
 
-*-i* _group.file_::
-  Read group label (region naming) information from the named file.
+*-6*, *--arb6*::
+  Write plate-mode triangles as ARB6 solids, overriding --polysolids.
 
-*-m* _mat.file_::
-  Read material property information from the named file.
+*-i* _groups.txt_, *--label-file*=_groups.txt_::
+  Read component group labels from this file.
 
-*-j* _jtype.file_::
-  Read component JTYPE thickness from the named text file (units: in) for components that have no/zero thickness.
+*-m* _materials.txt_, *--material-file*=_materials.txt_::
+  Read component material properties from this file.
 
-*-r*::
-  Reverse the surface normals for plate-mode triangles.
+*-j* _jtype.txt_, *--jtype-file*=_jtype.txt_::
+  Read thickness overrides in inches for components with no or zero thickness.
 
-*-d* _level_::
-  Set the debug (diagnostic verbosity) level. Higher numbers produce more
-  diagnostic output (levels above 3 also write intermediate NMG solids to the
-  database).
+*-r*, *--reverse-normals*::
+  Reverse plate-mode triangle surface normals. May be repeated.
 
-*-x* _flag_::
-  Set the _librt_ debugging flags (hexadecimal).
+*-d* _level_, *--debug*=_level_::
+  Set a nonnegative diagnostic level; levels above 3 also write intermediate NMG solids.
 
-*-X* _flag_::
-  Set the NMG (_librt_) debugging flags (hexadecimal).
+*-x* _mask_, *--rt-debug*=_mask_::
+  Set librt hexadecimal debug flags.
 
-*-T* _distance_::
-  Vertex tolerance distance, in inches. Two vertices closer together than this
-  are treated as the same vertex.
+*-X* _mask_, *--nmg-debug*=_mask_::
+  Set libnmg hexadecimal debug flags.
 
-*-A* _tolerance_::
-  Perpendicularity tolerance, given as the cosine of an angle (0.0 through 1.0).
-  Two unit vectors whose dot product is less than this value are considered
-  perpendicular.
+*-T* _inches_, *--distance-tolerance*=_inches_::
+  Set nonnegative vertex-coincidence distance in inches.
+
+*-A* _cosine_, *--perpendicular-tolerance*=_cosine_::
+  Set the perpendicularity cosine tolerance from 0 through 1.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

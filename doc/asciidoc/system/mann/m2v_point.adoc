@@ -8,11 +8,10 @@ m2v_point - convert xyz in model space to xyz in view space
 
 == SYNOPSIS
 
-[source]
-----
-m2v_point x y z
-m2v_point "x y z"
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*m2v_point* _point_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

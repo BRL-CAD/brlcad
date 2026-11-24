@@ -8,11 +8,10 @@ paths - Lists all existing paths that start from the specified __path_start__ an
 
 == SYNOPSIS
 
-[source]
-----
-paths {path_start}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*paths* _path_ ...
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -8,12 +8,10 @@ pipe_move_pnt - Move a control point of a PIPE primitive.
 
 == SYNOPSIS
 
-[source]
-----
-pipe_move_pnt pipe seg_i {x y z}
-pipe_move_pnt -r pipe seg_i {dx dy dz}
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*pipe_move_pnt* [*-r*] _pipe_ _segment_ _point_
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION
@@ -27,6 +25,15 @@ offset from the current control-point location.
 
 The alternate command name *mouse_move_pipe_pnt* is also available.
 
+
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-r*::
+  Interpret the point relative to the pipe point.
+
+// END GENERATED BU_ARG OPTIONS
 
 [[examples]]
 == EXAMPLES

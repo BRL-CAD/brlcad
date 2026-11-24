@@ -8,11 +8,10 @@ gltf-g - convert a glTF model to a BRL-CAD database
 
 == SYNOPSIS
 
-[source]
-----
-gltf-g [-h] [-v] [-E] [-o _output_file.g_] _input_file_ [_output_file.g_]
-----
-
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*gltf-g* [*-v*]... [*-o* _file_] [*-E*] _input_file_ [_output_file.g_]
+// END GENERATED BU_ARG SYNOPSIS
 
 [[description]]
 == DESCRIPTION

@@ -9,10 +9,10 @@ brlcad-launcher - discover and start BRL-CAD applications
 
 == SYNOPSIS
 
-[source]
-----
-brlcad-launcher [options]
-----
+// BEGIN GENERATED BU_ARG SYNOPSIS
+[verse]
+*brlcad-launcher* [*-t* | *-g*] [*-l*]
+// END GENERATED BU_ARG SYNOPSIS
 
 
 [[description]]
@@ -38,18 +38,20 @@ sessions.
 [[options]]
 == OPTIONS
 
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
+
 *-t*, *--text*::
   Force the console menu.
 
 *-g*, *--gui*::
-  Request the graphical menu. If it cannot be opened, report the problem and
-  use the console menu.
+  Request the graphical menu; report failure and use the console fallback.
 
 *-l*, *--list*::
   List discovered applications and their availability, then exit.
 
-*-h*, *--help*::
-  Print command usage and exit.
+// END GENERATED BU_ARG OPTIONS
 
 
 [[examples]]
