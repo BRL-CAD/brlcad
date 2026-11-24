@@ -25,21 +25,22 @@
 
 package provide cadwidgets::GeometryIO 1.0
 
-namespace eval cadwidgets {
-set ::exe_ext ""
+namespace eval ::cadwidgets {
+variable executable_extension ""
 if {$::tcl_platform(platform) == "windows"} {
-    set ::exe_ext ".exe"
+    set executable_extension ".exe"
 }
 
-proc ::run_conversion_config {input_file log_file} {
-    set gui_cmd [list [file join [bu_dir bin] bwish$::exe_ext] \
+proc run_conversion_config {input_file log_file} {
+    variable executable_extension
+
+    set gui_cmd [list [file join [bu_dir bin] bwish$executable_extension] \
     [file join [bu_dir data] tclscripts lib gui_conversion.tcl] "$input_file" "$log_file"]
-    catch {eval exec $gui_cmd} _conv_log
+    catch {exec {*}$gui_cmd} _conv_log
 }
 
 proc geom_load {input_file gui_feedback} {
-
-    set binpath [bu_dir bin]
+    variable executable_extension
 
     set input_ext [file extension $input_file]
     set input_root [file rootname [file tail $input_file]]
@@ -58,107 +59,107 @@ proc geom_load {input_file gui_feedback} {
     switch -nocase -- $input_ext {
 	".3dm" {
             if {[string compare $gui_feedback "1"] == 0} {
-		::run_conversion_config $input_file $log_file
+		run_conversion_config $input_file $log_file
             } else {
-	        set cmd [list [file join [bu_dir bin] 3dm-g$::exe_ext] \
+	        set cmd [list [file join [bu_dir bin] 3dm-g$executable_extension] \
 	            -r \
 	            -c \
 		    -o $output_file \
 	    	    $input_file]
- 		#catch {eval exec $cmd} _conv_log
- 		eval exec $cmd
+		#catch {exec {*}$cmd} _conv_log
+		exec {*}$cmd
             }
 	}
 	".asc" {
             if {[string compare $gui_feedback "1"] == 0} {
-		::run_conversion_config $input_file $log_file
+		run_conversion_config $input_file $log_file
             } else {
-	        set cmd [list [file join [bu_dir bin] asc2g$::exe_ext] \
+	        set cmd [list [file join [bu_dir bin] asc2g$executable_extension] \
 	    	    $input_file \
 		    $output_file]
- 		catch {eval exec $cmd} _conv_log
+		catch {exec {*}$cmd} _conv_log
             }
 	}
 	".bdf" {
             if {[string compare $gui_feedback "1"] == 0} {
-		::run_conversion_config $input_file $log_file
+		run_conversion_config $input_file $log_file
             } else {
-	        set cmd [list [file join [bu_dir bin] fast4-g$::exe_ext] \
+	        set cmd [list [file join [bu_dir bin] fast4-g$executable_extension] \
 	            -d \
 	    	    $input_file \
 		    $output_file]
- 		catch {eval exec $cmd} _conv_log
+		catch {exec {*}$cmd} _conv_log
             }
 	}
 	".fas" {
             if {[string compare $gui_feedback "1"] == 0} {
-		::run_conversion_config $input_file $log_file
+		run_conversion_config $input_file $log_file
             } else {
-	        set cmd [list [file join [bu_dir bin] fast4-g$::exe_ext] \
+	        set cmd [list [file join [bu_dir bin] fast4-g$executable_extension] \
 	            -d \
 	    	    $input_file \
 		    $output_file]
- 		catch {eval exec $cmd} _conv_log
+		catch {exec {*}$cmd} _conv_log
             }
 	}
 	".fg" {
             if {[string compare $gui_feedback "1"] == 0} {
-		::run_conversion_config $input_file $log_file
+		run_conversion_config $input_file $log_file
             } else {
-	        set cmd [list [file join [bu_dir bin] fast4-g$::exe_ext] \
+	        set cmd [list [file join [bu_dir bin] fast4-g$executable_extension] \
 	            -d \
 	    	    $input_file \
 		    $output_file]
- 		catch {eval exec $cmd} _conv_log
+		catch {exec {*}$cmd} _conv_log
             }
 	}
 	".fg4" {
             if {[string compare $gui_feedback "1"] == 0} {
-		::run_conversion_config $input_file $log_file
+		run_conversion_config $input_file $log_file
             } else {
-	        set cmd [list [file join [bu_dir bin] fast4-g$::exe_ext] \
+	        set cmd [list [file join [bu_dir bin] fast4-g$executable_extension] \
 	            -d \
 	    	    $input_file \
 		    $output_file]
- 		catch {eval exec $cmd} _conv_log
+		catch {exec {*}$cmd} _conv_log
             }
 	}
 
 	".stl" {
             if {[string compare $gui_feedback "1"] == 0} {
-		::run_conversion_config $input_file $log_file
+		run_conversion_config $input_file $log_file
             } else {
-	        set cmd [list [file join [bu_dir bin] stl-g$::exe_ext] \
+	        set cmd [list [file join [bu_dir bin] stl-g$executable_extension] \
 	    	    $input_file \
 		    $output_file]
- 		catch {eval exec $cmd} _conv_log
+		catch {exec {*}$cmd} _conv_log
             }
 	}
 	".stp" {
             if {[string compare $gui_feedback "1"] == 0} {
-		::run_conversion_config $input_file $log_file
+		run_conversion_config $input_file $log_file
             } else {
-	        set cmd [list [file join [bu_dir bin] step-g$::exe_ext] \
+	        set cmd [list [file join [bu_dir bin] step-g$executable_extension] \
 	    	    -v -o $output_file \
 		    $input_file]
 
- 		catch {eval exec $cmd} _conv_log
+		catch {exec {*}$cmd} _conv_log
             }
 	}
 	".step" {
             if {[string compare $gui_feedback "1"] == 0} {
-		::run_conversion_config $input_file $log_file
+		run_conversion_config $input_file $log_file
             } else {
-	       set cmd [list [file join [bu_dir bin] step-g$::exe_ext] \
+	       set cmd [list [file join [bu_dir bin] step-g$executable_extension] \
 	    	    -v -o $output_file \
 		    $input_file]
 
- 		catch {eval exec $cmd} _conv_log
+		catch {exec {*}$cmd} _conv_log
             }
 	}
 	default {
             if {[string compare $gui_feedback "1"] == 0} {
-		::run_conversion_config $input_file $log_file
+		run_conversion_config $input_file $log_file
             } else {
 	       return -code error "File format $input_ext is not supported."
 	    }
@@ -175,8 +176,7 @@ proc geom_load {input_file gui_feedback} {
 # TODO - pass in list of object names, not ged object - caller can assemble tops list
 # and may only want a subset.
 proc geom_save {input_file output_file db_component} {
-
-    set binpath [bu_dir bin]
+    variable executable_extension
 
     set output_filename [file tail $output_file]
     set output_dir [file dirname $output_file]
@@ -200,25 +200,23 @@ proc geom_save {input_file output_file db_component} {
     switch -- $output_ext {
 	".obj" {
 	    set tops_list [lsort -dictionary [$db_component tops]]
-	    set cmd [list [file join [bu_dir bin] g-obj$::exe_ext] \
+	    set cmd [list [file join [bu_dir bin] g-obj$executable_extension] \
 		    -o $output_file \
 	    	    $input_file]
-            append cmd " " { }
-	    for {set i 0} {$i < [llength $tops_list]} {incr i} {
-		append cmd [lindex $tops_list $i] { }
+	    foreach obj $tops_list {
+		lappend cmd $obj
 	    }
-            catch {eval exec $cmd} _conv_log
+            catch {exec {*}$cmd} _conv_log
 	}
 	".stl" {
 	    set tops_list [lsort -dictionary [$db_component tops]]
-	    set cmd [list [file join [bu_dir bin] g-stl$::exe_ext] \
+	    set cmd [list [file join [bu_dir bin] g-stl$executable_extension] \
 	            -o $output_file \
 	    	    $input_file]
-            append cmd " " { }
-	    for {set i 0} {$i < [llength $tops_list]} {incr i} {
-		append cmd [lindex $tops_list $i] { }
+	    foreach obj $tops_list {
+		lappend cmd $obj
 	    }
-            catch {eval exec $cmd} _conv_log
+            catch {exec {*}$cmd} _conv_log
 	}
 	default {
 	    return -code error "File format $output_ext is not supported."
@@ -233,6 +231,11 @@ proc geom_save {input_file output_file db_component} {
 }
 
 
+}
+
+# Compatibility interface.  New callers should use the owning namespace.
+proc ::run_conversion_config {args} {
+    tailcall ::cadwidgets::run_conversion_config {*}$args
 }
 
 

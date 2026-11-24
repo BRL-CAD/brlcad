@@ -32,7 +32,7 @@ package require OverlapFileTool
 package require GeometryChecker
 
 # replace existing class
-catch {delete class OverlapMenu} error
+catch {::itcl::delete class OverlapMenu} error
 
 ::itcl::class OverlapMenu {
     inherit ::itk::Widget
@@ -63,22 +63,22 @@ catch {delete class OverlapMenu} error
     } {}
     itk_component add buttonRunOvFileGen {
 	ttk::button $itk_component(newFileFrame).buttonRunOvFileGen \
-	-text "Create New Overlaps File" -padding 8 -command [ code $this runOvFileTool ]
+	-text "Create New Overlaps File" -padding 8 -command [::itcl::code $this runOvFileTool ]
     } {}
     itk_component add existingFileFrame {
 	ttk::labelframe $itk_component(buttonsFrame).existingFileFrame -padding 8 -text " Existing File "
     } {}
     itk_component add buttonBrowse {
 	ttk::button $itk_component(existingFileFrame).buttonBrowse \
-	-text "Browse Overlaps File" -padding 8 -command [ code $this browseOverlapFile ]
+	-text "Browse Overlaps File" -padding 8 -command [::itcl::code $this browseOverlapFile ]
     } {}
     itk_component add buttonLastFile {
 	ttk::button $itk_component(existingFileFrame).buttonLastFile \
-	-text "Use Last File" -padding 8 -state disabled -command [ code $this runCheckerTool ]
+	-text "Use Last File" -padding 8 -state disabled -command [::itcl::code $this runCheckerTool ]
     } {}
     itk_component add hintLabel {
 	ttk::label $itk_interior.hintLabel \
-	-textvariable [scope _hintText] -justify center -wraplength 500 \
+	-textvariable [::itcl::scope _hintText] -justify center -wraplength 500 \
 	-padding 10
     } {}
 
@@ -94,11 +94,11 @@ catch {delete class OverlapMenu} error
 
     grid $itk_component(buttonLastFile) $itk_component(buttonBrowse) -padx 2
 
-    bind $itk_component(buttonRunOvFileGen) <Enter> [code $this handleHintText "Creates a new overlaps file with specified objects and runs checker tool on the created overlaps file"]
-    bind $itk_component(buttonRunOvFileGen) <Leave> [code $this handleHintText ""]
+    bind $itk_component(buttonRunOvFileGen) <Enter> [::itcl::code $this handleHintText "Creates a new overlaps file with specified objects and runs checker tool on the created overlaps file"]
+    bind $itk_component(buttonRunOvFileGen) <Leave> [::itcl::code $this handleHintText ""]
 
-    bind $itk_component(buttonBrowse) <Enter> [code $this handleHintText "Select an overlaps file and run checker tool\n"]
-    bind $itk_component(buttonBrowse) <Leave> [code $this handleHintText ""]
+    bind $itk_component(buttonBrowse) <Enter> [::itcl::code $this handleHintText "Select an overlaps file and run checker tool\n"]
+    bind $itk_component(buttonBrowse) <Leave> [::itcl::code $this handleHintText ""]
 
     #load default hint text
     $this handleHintText ""
@@ -113,8 +113,8 @@ catch {delete class OverlapMenu} error
     }
     $this loadOverlapFile $ovfile
 
-    bind $itk_component(buttonLastFile) <Enter> [code $this handleHintText "Run checker tool on previously created overlaps file\n$ovfile"]
-    bind $itk_component(buttonLastFile) <Leave> [code $this handleHintText ""]
+    bind $itk_component(buttonLastFile) <Enter> [::itcl::code $this handleHintText "Run checker tool on previously created overlaps file\n$ovfile"]
+    bind $itk_component(buttonLastFile) <Leave> [::itcl::code $this handleHintText ""]
 }
 
 ###########
@@ -125,7 +125,7 @@ catch {delete class OverlapMenu} error
 #
 # runs the checker tool
 #
-body OverlapMenu::runCheckerTool {{filename ""}} {
+::itcl::body OverlapMenu::runCheckerTool {{filename ""}} {
     if {$filename ne ""} {
 	set ovfile $filename
     }
@@ -139,10 +139,10 @@ body OverlapMenu::runCheckerTool {{filename ""}} {
     set checker [GeometryChecker $checkerWindow.ck]
 
     $checker setMode $firstFlag
-    $checker registerWhoCallback [code who]
-    $checker registerDrawCallbacks [code drawLeft] [code drawRight]
-    $checker registerEraseCallback [code erase]
-    $checker registerOverlapCallback [code subtractRightFromLeft]
+    $checker registerWhoCallback [::itcl::code who]
+    $checker registerDrawCallbacks [::itcl::code drawLeft] [::itcl::code drawRight]
+    $checker registerEraseCallback [::itcl::code erase]
+    $checker registerOverlapCallback [::itcl::code subtractRightFromLeft]
 
     if {[catch {$checker loadOverlaps $ovfile} result]} {
 	wm withdraw $checkerWindow
@@ -182,7 +182,7 @@ body OverlapMenu::runCheckerTool {{filename ""}} {
 #
 # runs the overlaps file tool
 #
-body OverlapMenu::runOvFileTool { } {
+::itcl::body OverlapMenu::runOvFileTool { } {
     set parent ".overlapmenu"
     if {[winfo exists $parent.overlapfiletool]} {
 	destroy $parent.overlapfiletool
@@ -193,7 +193,7 @@ body OverlapMenu::runOvFileTool { } {
     wm title $overlapfilegenWindow "Overlap File Tool"
     pack $overlapfiletool -expand true -fill both
     $overlapfiletool configure -firstFlag $firstFlag
-    $overlapfiletool configure -runCheckCallback [code $this runCheckerTool]
+    $overlapfiletool configure -runCheckCallback [::itcl::code $this runCheckerTool]
     grab set $overlapfilegenWindow
 }
 
@@ -201,7 +201,7 @@ body OverlapMenu::runOvFileTool { } {
 #
 # opens the openfile window to select the overlaps file
 #
-body OverlapMenu::browseOverlapFile { } {
+::itcl::body OverlapMenu::browseOverlapFile { } {
     set filename [tk_getOpenFile -filetypes { { {Overlaps File} {.overlaps} TEXT } }]
 
     if {$filename eq ""} {
@@ -218,7 +218,7 @@ body OverlapMenu::browseOverlapFile { } {
 #
 # looks for overlaps file
 #
-body OverlapMenu::loadOverlapFile { filename } {
+::itcl::body OverlapMenu::loadOverlapFile { filename } {
     if {$filename eq ""} {
 	return
     }
@@ -233,7 +233,7 @@ body OverlapMenu::loadOverlapFile { filename } {
 #
 # updates the hint text
 #
-body OverlapMenu::handleHintText { text } {
+::itcl::body OverlapMenu::handleHintText { text } {
     if { $text eq "" } {
 	#load default text
 	set _hintText "'Create new overlaps' or 'Use existing overlaps file'\n"

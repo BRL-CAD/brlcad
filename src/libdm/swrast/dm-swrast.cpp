@@ -184,7 +184,8 @@ swrast_close(struct dm *dmp)
     if (dmp->i->fbp) {
 	if (pv->owns_framebuffer) {
 	    (void)swrast_makeCurrent(dmp);
-	    (void)fb_close_existing(dmp->i->fbp);
+	    if (dm_close_fb(dmp) != BRLCAD_OK)
+		return BRLCAD_ERROR;
 	} else {
 	    dmp->i->fbp->i->dmp = NULL;
 	}

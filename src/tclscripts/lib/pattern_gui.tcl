@@ -28,7 +28,7 @@
 # These were pattern.tcl's only public consumers.
 # ---------------------------------------------------------------------------
 
-namespace eval cadwidgets {
+namespace eval ::cadwidgets {
     if {![info exists ged]} {
 	set ged db
     }
@@ -36,18 +36,13 @@ namespace eval cadwidgets {
     if {![info exists mgedFlag]} {
 	set mgedFlag 1
     }
-}
-
-if {![info exists local2base]} {
-    set local2base 1.0
-}
 
 # _clone_invoke: dispatch 'clone' to the right command based on context
 proc _clone_invoke { args } {
     if {$::cadwidgets::mgedFlag} {
-	return [eval clone $args]
+	return [::brlcad::mged clone {*}$args]
     } else {
-	return [eval $::cadwidgets::ged clone $args]
+	return [{*}$::cadwidgets::ged clone {*}$args]
     }
 }
 
@@ -69,17 +64,17 @@ proc _clone_progress_update { widget current total } {
 
 proc exists_wrapper {args} {
     if {$::cadwidgets::mgedFlag} {
-	eval exists $args
+	return [::brlcad::mged exists {*}$args]
     } else {
-	eval $::cadwidgets::ged exists $args
+	return [{*}$::cadwidgets::ged exists {*}$args]
     }
 }
 
 proc regdef_wrapper {args} {
     if {$::cadwidgets::mgedFlag} {
-	eval regdef $args
+	return [::brlcad::mged regdef {*}$args]
     } else {
-	eval $::cadwidgets::ged regdef $args
+	return [{*}$::cadwidgets::ged regdef {*}$args]
     }
 }
 
@@ -178,7 +173,7 @@ proc pattern_rect { args } {
     }
     foreach obj $objs { lappend clone_cmd $obj }
 
-    set result [eval _clone_invoke $clone_cmd]
+    set result [_clone_invoke {*}$clone_cmd]
 
     if { $group_name ne "" } {
 	if { $::cadwidgets::mgedFlag } {
@@ -301,7 +296,7 @@ proc pattern_sph { args } {
     }
     foreach obj $objs { lappend clone_cmd $obj }
 
-    set result [eval _clone_invoke $clone_cmd]
+    set result [_clone_invoke {*}$clone_cmd]
 
     if { $group_name ne "" } {
 	if { $::cadwidgets::mgedFlag } {
@@ -422,7 +417,7 @@ proc pattern_cyl { args } {
     }
     foreach obj $objs { lappend clone_cmd $obj }
 
-    set result [eval _clone_invoke $clone_cmd]
+    set result [_clone_invoke {*}$clone_cmd]
 
     if { $group_name ne "" } {
 	if { $::cadwidgets::mgedFlag } {
@@ -437,12 +432,43 @@ proc pattern_cyl { args } {
     return $result
 }
 
+}
+
 # ---------------------------------------------------------------------------
 # End of migrated procs
 # ---------------------------------------------------------------------------
 
-class pattern_control {
-    inherit itk::Toplevel
+# Compatibility interfaces.  New callers should use the owning namespace.
+proc ::_clone_invoke {args} {
+    tailcall ::cadwidgets::_clone_invoke {*}$args
+}
+
+proc ::_clone_progress_update {args} {
+    tailcall ::cadwidgets::_clone_progress_update {*}$args
+}
+
+proc ::exists_wrapper {args} {
+    tailcall ::cadwidgets::exists_wrapper {*}$args
+}
+
+proc ::regdef_wrapper {args} {
+    tailcall ::cadwidgets::regdef_wrapper {*}$args
+}
+
+proc ::pattern_rect {args} {
+    tailcall ::cadwidgets::pattern_rect {*}$args
+}
+
+proc ::pattern_sph {args} {
+    tailcall ::cadwidgets::pattern_sph {*}$args
+}
+
+proc ::pattern_cyl {args} {
+    tailcall ::cadwidgets::pattern_cyl {*}$args
+}
+
+::itcl::class ::cadwidgets::pattern_control {
+    inherit ::itk::Toplevel
 
     itk_option define -ged ged Ged "db"
 
@@ -547,7 +573,11 @@ class pattern_control {
     }
 }
 
-body pattern_control::constructor {} {
+proc ::pattern_control {args} {
+    tailcall ::cadwidgets::pattern_control {*}$args
+}
+
+::itcl::body ::cadwidgets::pattern_control::constructor {} {
     $this configure -title "Pattern Control"
 
     set pad(x) 2
@@ -557,7 +587,7 @@ body pattern_control::constructor {} {
     #Tabnotebook
 
     itk_component add tn {
-	tabnotebook $itk_interior.tn -tabpos n -gap 3 -raiseselect true -bevelamount 3 -borderwidth 3  -width 890 -height 532 ;#-width 490 -height 1000
+	::iwidgets::tabnotebook $itk_interior.tn -tabpos n -gap 3 -raiseselect true -bevelamount 3 -borderwidth 3  -width 890 -height 532 ;#-width 490 -height 1000
     }
     $itk_component(tn) add -label "Rectangular"
     $itk_component(tn) add -label "Spherical"
@@ -581,7 +611,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_combo_r {
-	entry $itk_interior.e_combo_r -relief flat -width 20 -textvariable [scope combovar_r]
+	entry $itk_interior.e_combo_r -relief flat -width 20 -textvariable [::itcl::scope combovar_r]
     }
 
     itk_component add b_combo_r {
@@ -592,7 +622,7 @@ body pattern_control::constructor {} {
 	menu $itk_component(b_combo_r).m_combo_r -tearoff 0
     }
 
-    set windowtag [code $this]
+    set windowtag [::itcl::code $this]
 
     $itk_component(m_combo_r) add command -label Top -command "set combovar_r Top ; $windowtag update_depth r top"
     $itk_component(m_combo_r) add command -label Regions -command "set combovar_r Regions ; $windowtag update_depth r regions"
@@ -611,7 +641,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_group_r {
-	entry $itk_interior.e_group_r -relief sunken -textvariable [scope group_r]
+	entry $itk_interior.e_group_r -relief sunken -textvariable [::itcl::scope group_r]
     }
 
 
@@ -629,15 +659,15 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_xdir_r {
-	entry $itk_interior.e_xdir_r -relief sunken -textvariable [scope xdir_r]
+	entry $itk_interior.e_xdir_r -relief sunken -textvariable [::itcl::scope xdir_r]
     }
 
     itk_component add e_ydir_r {
-	entry $itk_interior.e_ydir_r -relief sunken -textvariable [scope ydir_r]
+	entry $itk_interior.e_ydir_r -relief sunken -textvariable [::itcl::scope ydir_r]
     }
 
     itk_component add e_zdir_r {
-	entry $itk_interior.e_zdir_r -relief sunken -textvariable [scope zdir_r]
+	entry $itk_interior.e_zdir_r -relief sunken -textvariable [::itcl::scope zdir_r]
     }
 
 
@@ -647,7 +677,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add rb_dir_r {
-	radiobutton $itk_interior.rb_dir_r -text "Use Directions" -variable [scope dirtype_r] -value 1 -font $rb_font -command [code $this switch_states f_dir_r f_list_r]
+	radiobutton $itk_interior.rb_dir_r -text "Use Directions" -variable [::itcl::scope dirtype_r] -value 1 -font $rb_font -command [::itcl::code $this switch_states f_dir_r f_list_r]
     }
 
     itk_component add l_nxdir_r {
@@ -663,15 +693,15 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_nxdir_r {
-	entry $itk_interior.e_nxdir_r -relief sunken -bd 2 -textvariable [scope nxdir_r]
+	entry $itk_interior.e_nxdir_r -relief sunken -bd 2 -textvariable [::itcl::scope nxdir_r]
     }
 
     itk_component add e_nydir_r {
-	entry $itk_interior.e_nydir_r -relief sunken -bd 2 -textvariable [scope nydir_r]
+	entry $itk_interior.e_nydir_r -relief sunken -bd 2 -textvariable [::itcl::scope nydir_r]
     }
 
     itk_component add e_nzdir_r {
-	entry $itk_interior.e_nzdir_r -relief sunken -bd 2 -textvariable [scope nzdir_r]
+	entry $itk_interior.e_nzdir_r -relief sunken -bd 2 -textvariable [::itcl::scope nzdir_r]
     }
 
     itk_component add l_dxdir_r {
@@ -687,15 +717,15 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_dxdir_r {
-	entry $itk_interior.e_dxdir_r -relief sunken -bd 2 -textvariable [scope dxdir_r]
+	entry $itk_interior.e_dxdir_r -relief sunken -bd 2 -textvariable [::itcl::scope dxdir_r]
     }
 
     itk_component add e_dydir_r {
-	entry $itk_interior.e_dydir_r -relief sunken -bd 2 -textvariable [scope dydir_r]
+	entry $itk_interior.e_dydir_r -relief sunken -bd 2 -textvariable [::itcl::scope dydir_r]
     }
 
     itk_component add e_dzdir_r {
-	entry $itk_interior.e_dzdir_r -relief sunken -bd 2 -textvariable [scope dzdir_r]
+	entry $itk_interior.e_dzdir_r -relief sunken -bd 2 -textvariable [::itcl::scope dzdir_r]
     }
 
     grid $itk_component(rb_dir_r)  -in $itk_component(f_dir_r) -row 0 -column 0 -sticky nsw
@@ -719,7 +749,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add rb_list_r {
-	radiobutton $itk_interior.rb_list_r -text "Use Lists" -variable [scope dirtype_r] -value 0 -font $rb_font -command [code $this switch_states f_list_r f_dir_r]
+	radiobutton $itk_interior.rb_list_r -text "Use Lists" -variable [::itcl::scope dirtype_r] -value 0 -font $rb_font -command [::itcl::code $this switch_states f_list_r f_dir_r]
     }
 
     itk_component add l_xlist_r {
@@ -735,15 +765,15 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_xlist_r {
-	entry $itk_interior.e_xlist_r -relief sunken -textvariable [scope xlist_r]
+	entry $itk_interior.e_xlist_r -relief sunken -textvariable [::itcl::scope xlist_r]
     }
 
     itk_component add e_ylist_r {
-	entry $itk_interior.e_ylist_r -relief sunken -textvariable [scope ylist_r]
+	entry $itk_interior.e_ylist_r -relief sunken -textvariable [::itcl::scope ylist_r]
     }
 
     itk_component add e_zlist_r {
-	entry $itk_interior.e_zlist_r -relief sunken -textvariable [scope zlist_r]
+	entry $itk_interior.e_zlist_r -relief sunken -textvariable [::itcl::scope zlist_r]
     }
 
     grid $itk_component(rb_list_r) -in $itk_component(f_list_r) -row 0  -column 0 -sticky nsw
@@ -765,11 +795,11 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_sstring_r {
-	entry $itk_interior.e_sstring_r -relief sunken -textvariable [scope source_string_r]
+	entry $itk_interior.e_sstring_r -relief sunken -textvariable [::itcl::scope source_string_r]
     }
 
     itk_component add e_rstring_r {
-	entry $itk_interior.e_rstring_r -relief sunken -textvariable [scope rep_string_r]
+	entry $itk_interior.e_rstring_r -relief sunken -textvariable [::itcl::scope rep_string_r]
     }
 
 
@@ -779,7 +809,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_incr_r {
-	entry $itk_interior.e_incr_r -relief sunken -textvariable [scope increment_r]
+	entry $itk_interior.e_incr_r -relief sunken -textvariable [::itcl::scope increment_r]
     }
 
 
@@ -789,13 +819,13 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_obj_r {
-	entry $itk_interior.e_obj_r -relief sunken -textvariable [scope obj_r]
+	entry $itk_interior.e_obj_r -relief sunken -textvariable [::itcl::scope obj_r]
     }
 
 
     #Buttons
     itk_component add b_ok_r {
-	button $itk_interior.b_ok_r -text "OK" -command [code $this apply_rect]
+	button $itk_interior.b_ok_r -text "OK" -command [::itcl::code $this apply_rect]
     }
 
     itk_component add b_dismiss_r {
@@ -875,27 +905,27 @@ body pattern_control::constructor {} {
     grid columnconfigure $itk_component(f_list_r) 1 -weight 1
 
 
-    #bind $itk_component() <Enter> " set [list [scope helpvar]] {}"
-    bind $itk_component(l_combo_r) <Enter> " set [list [scope helpvar]]   {Depth of duplication of objects. ``top'' - only build top level objects.\n\t\t``regions'' - duplicate down to and including regions.\n\t\t``primitives'' - duplicate down to and including primitives} "
-    bind $itk_component(l_group_r) <Enter> " set [list [scope helpvar]]   {Enter the name for the created group} "
-    bind $itk_component(l_xdir_r) <Enter>  " set [list [scope helpvar]]   {Enter the X Direction Vector for the pattern}"
-    bind $itk_component(l_ydir_r) <Enter>  " set [list [scope helpvar]]   {Enter the Y Direction Vector for the pattern}"
-    bind $itk_component(l_zdir_r) <Enter>  " set [list [scope helpvar]]   {Enter the Z Direction Vector for the pattern}"
-    bind $itk_component(rb_dir_r) <Enter> " set [list [scope helpvar]]    {Select to generate creation points based on number of points and distances between them}"
-    bind $itk_component(l_nxdir_r) <Enter> " set [list [scope helpvar]]   {Enter the number of objects to create in X direction}"
-    bind $itk_component(l_nydir_r) <Enter> " set [list [scope helpvar]]   {Enter the number of objects to create in Y direction}"
-    bind $itk_component(l_nzdir_r) <Enter> " set [list [scope helpvar]]   {Enter the number of objects to create in Z direction}"
-    bind $itk_component(l_dxdir_r) <Enter> " set [list [scope helpvar]]   {Enter the distance between objects in X direction}"
-    bind $itk_component(l_dydir_r) <Enter> " set [list [scope helpvar]]   {Enter the distance between objects in Y direction}"
-    bind $itk_component(l_dzdir_r) <Enter> " set [list [scope helpvar]]   {Enter the distance between objects in Z direction}"
-    bind $itk_component(l_incr_r) <Enter> " set [list [scope helpvar]]    {Enter the amount to increment tag numbers (0 is OK)}"
-    bind $itk_component(l_sstring_r) <Enter> " set [list [scope helpvar]] {Enter a string appearing in the objects to duplicate that you want to change (empty is OK)}"
-    bind $itk_component(l_rstring_r) <Enter> " set [list [scope helpvar]] {Enter the string you want to replace the above string with (empty is OK)}"
-    bind $itk_component(l_obj_r) <Enter> " set [list [scope helpvar]]     {Enter the list of objects to duplicate}"
-    bind $itk_component(rb_list_r) <Enter> " set [list [scope helpvar]]   {Select to generate creation points using lists of coordinate values}"
-    bind $itk_component(l_xlist_r) <Enter> " set [list [scope helpvar]]   {Enter a list of X values for creation points}"
-    bind $itk_component(l_ylist_r) <Enter> " set [list [scope helpvar]]   {Enter a list of Y values for creation points}"
-    bind $itk_component(l_zlist_r) <Enter> " set [list [scope helpvar]]   {Enter a list of Z values for creation points}"
+    #bind $itk_component() <Enter> " set [list [::itcl::scope helpvar]] {}"
+    bind $itk_component(l_combo_r) <Enter> " set [list [::itcl::scope helpvar]]   {Depth of duplication of objects. ``top'' - only build top level objects.\n\t\t``regions'' - duplicate down to and including regions.\n\t\t``primitives'' - duplicate down to and including primitives} "
+    bind $itk_component(l_group_r) <Enter> " set [list [::itcl::scope helpvar]]   {Enter the name for the created group} "
+    bind $itk_component(l_xdir_r) <Enter>  " set [list [::itcl::scope helpvar]]   {Enter the X Direction Vector for the pattern}"
+    bind $itk_component(l_ydir_r) <Enter>  " set [list [::itcl::scope helpvar]]   {Enter the Y Direction Vector for the pattern}"
+    bind $itk_component(l_zdir_r) <Enter>  " set [list [::itcl::scope helpvar]]   {Enter the Z Direction Vector for the pattern}"
+    bind $itk_component(rb_dir_r) <Enter> " set [list [::itcl::scope helpvar]]    {Select to generate creation points based on number of points and distances between them}"
+    bind $itk_component(l_nxdir_r) <Enter> " set [list [::itcl::scope helpvar]]   {Enter the number of objects to create in X direction}"
+    bind $itk_component(l_nydir_r) <Enter> " set [list [::itcl::scope helpvar]]   {Enter the number of objects to create in Y direction}"
+    bind $itk_component(l_nzdir_r) <Enter> " set [list [::itcl::scope helpvar]]   {Enter the number of objects to create in Z direction}"
+    bind $itk_component(l_dxdir_r) <Enter> " set [list [::itcl::scope helpvar]]   {Enter the distance between objects in X direction}"
+    bind $itk_component(l_dydir_r) <Enter> " set [list [::itcl::scope helpvar]]   {Enter the distance between objects in Y direction}"
+    bind $itk_component(l_dzdir_r) <Enter> " set [list [::itcl::scope helpvar]]   {Enter the distance between objects in Z direction}"
+    bind $itk_component(l_incr_r) <Enter> " set [list [::itcl::scope helpvar]]    {Enter the amount to increment tag numbers (0 is OK)}"
+    bind $itk_component(l_sstring_r) <Enter> " set [list [::itcl::scope helpvar]] {Enter a string appearing in the objects to duplicate that you want to change (empty is OK)}"
+    bind $itk_component(l_rstring_r) <Enter> " set [list [::itcl::scope helpvar]] {Enter the string you want to replace the above string with (empty is OK)}"
+    bind $itk_component(l_obj_r) <Enter> " set [list [::itcl::scope helpvar]]     {Enter the list of objects to duplicate}"
+    bind $itk_component(rb_list_r) <Enter> " set [list [::itcl::scope helpvar]]   {Select to generate creation points using lists of coordinate values}"
+    bind $itk_component(l_xlist_r) <Enter> " set [list [::itcl::scope helpvar]]   {Enter a list of X values for creation points}"
+    bind $itk_component(l_ylist_r) <Enter> " set [list [::itcl::scope helpvar]]   {Enter a list of Y values for creation points}"
+    bind $itk_component(l_zlist_r) <Enter> " set [list [::itcl::scope helpvar]]   {Enter a list of Z values for creation points}"
 
 
     foreach obj { l_combo_r \
@@ -919,11 +949,11 @@ body pattern_control::constructor {} {
 		      l_ylist_r \
 		      l_zlist_r} {
 
-	bind $itk_component($obj) <Leave> " set [list [scope helpvar]] {} "
+	bind $itk_component($obj) <Leave> " set [list [::itcl::scope helpvar]] {} "
     }
 
 
-    code $this update_depth top
+    ::itcl::code $this update_depth top
     update
 
 
@@ -938,7 +968,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_combo_s {
-	entry $itk_interior.e_combo_s -relief flat -width 20 -textvariable [scope combovar_s]
+	entry $itk_interior.e_combo_s -relief flat -width 20 -textvariable [::itcl::scope combovar_s]
     }
 
     itk_component add b_combo_s {
@@ -949,7 +979,7 @@ body pattern_control::constructor {} {
 	menu $itk_component(b_combo_s).m_combo_s -tearoff 0
     }
 
-    set windowtag [code $this]
+    set windowtag [::itcl::code $this]
 
     $itk_component(m_combo_s) add command -label Top -command "set combovar_s Top ; $windowtag update_depth s top"
     $itk_component(m_combo_s) add command -label Regions -command "set combovar_s Regions ; $windowtag update_depth s regions"
@@ -968,7 +998,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_group_s {
-	entry $itk_interior.e_group_s -relief sunken -textvariable [scope group_s]
+	entry $itk_interior.e_group_s -relief sunken -textvariable [::itcl::scope group_s]
     }
 
     #Center pattern
@@ -977,7 +1007,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_cpatt_s {
-	entry $itk_interior.e_cpatt_s -textvariable [scope cpatt_s]
+	entry $itk_interior.e_cpatt_s -textvariable [::itcl::scope cpatt_s]
     }
 
     #Center object
@@ -986,15 +1016,15 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_cobj_s {
-	entry $itk_interior.e_cobj_s -textvariable [scope cobj_s]
+	entry $itk_interior.e_cobj_s -textvariable [::itcl::scope cobj_s]
     }
 
     itk_component add cb_rotaz_s {
-	checkbutton $itk_interior.cb_rotaz_s -text "Rotate Azimuth" -font $rb_font -variable [scope rotaz_s]
+	checkbutton $itk_interior.cb_rotaz_s -text "Rotate Azimuth" -font $rb_font -variable [::itcl::scope rotaz_s]
     }
 
     itk_component add cb_rotel_s {
-	checkbutton $itk_interior.cb_rotel_s -text "Rotate Elevation" -font $rb_font -variable [scope rotel_s]
+	checkbutton $itk_interior.cb_rotel_s -text "Rotate Elevation" -font $rb_font -variable [::itcl::scope rotel_s]
     }
 
     itk_component add f_num_s {
@@ -1002,7 +1032,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add rb_num_s {
-	radiobutton $itk_interior.rb_num_s -text "Create Az/El" -font $rb_font -variable [scope azel_s] -value 1 -command [code $this switch_states f_num_s f_list_s]
+	radiobutton $itk_interior.rb_num_s -text "Create Az/El" -font $rb_font -variable [::itcl::scope azel_s] -value 1 -command [::itcl::code $this switch_states f_num_s f_list_s]
     }
 
     itk_component add l_numaz_s {
@@ -1014,11 +1044,11 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_numaz_s {
-	entry $itk_interior.e_numaz_s -relief sunken -textvariable [scope numaz_s]
+	entry $itk_interior.e_numaz_s -relief sunken -textvariable [::itcl::scope numaz_s]
     }
 
     itk_component add e_numel_s {
-	entry $itk_interior.e_numel_s -relief sunken -textvariable [scope numel_s]
+	entry $itk_interior.e_numel_s -relief sunken -textvariable [::itcl::scope numel_s]
     }
 
     itk_component add l_delaz_s {
@@ -1030,11 +1060,11 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_delaz_s {
-	entry $itk_interior.e_delaz_s -relief sunken -textvariable [scope delaz_s]
+	entry $itk_interior.e_delaz_s -relief sunken -textvariable [::itcl::scope delaz_s]
     }
 
     itk_component add e_delel_s {
-	entry $itk_interior.e_delel_s -relief sunken -textvariable [scope delel_s]
+	entry $itk_interior.e_delel_s -relief sunken -textvariable [::itcl::scope delel_s]
     }
 
     grid $itk_component(rb_num_s)  -in $itk_component(f_num_s) -row 0 -column 0 -sticky nsw
@@ -1053,7 +1083,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add cb_list_s {
-	radiobutton $itk_interior.cb_list_s -text "Use Lists" -font $rb_font -variable [scope azel_s] -value 0 -command [code $this switch_states f_list_s f_num_s]
+	radiobutton $itk_interior.cb_list_s -text "Use Lists" -font $rb_font -variable [::itcl::scope azel_s] -value 0 -command [::itcl::code $this switch_states f_list_s f_num_s]
     }
 
     itk_component add l_listaz_s {
@@ -1061,7 +1091,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_listaz_s {
-	entry $itk_interior.e_listaz_s -relief sunken -textvariable [scope lsaz_s]
+	entry $itk_interior.e_listaz_s -relief sunken -textvariable [::itcl::scope lsaz_s]
     }
 
     itk_component add l_listel_s {
@@ -1069,7 +1099,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_listel_s {
-	entry $itk_interior.e_listel_s -relief sunken -textvariable [scope lsel_s]
+	entry $itk_interior.e_listel_s -relief sunken -textvariable [::itcl::scope lsel_s]
     }
 
     itk_component add f_radius_s {
@@ -1077,7 +1107,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add rb_radius_s {
-	radiobutton $itk_interior.rb_radius_s -text "Create Radii" -font $rb_font -variable [scope radii_s] -value 1 -command [code $this switch_states f_radius_s f_radlist_s]
+	radiobutton $itk_interior.rb_radius_s -text "Create Radii" -font $rb_font -variable [::itcl::scope radii_s] -value 1 -command [::itcl::code $this switch_states f_radius_s f_radlist_s]
     }
 
     itk_component add l_radius_s {
@@ -1085,7 +1115,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_radius_s {
-	entry $itk_interior.e_radius_s -relief sunken -textvariable [scope radnum_s]
+	entry $itk_interior.e_radius_s -relief sunken -textvariable [::itcl::scope radnum_s]
     }
 
     itk_component add l_delta_s {
@@ -1093,7 +1123,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_delta_s {
-	entry $itk_interior.e_delta_s -relief sunken -textvariable [scope raddel_s]
+	entry $itk_interior.e_delta_s -relief sunken -textvariable [::itcl::scope raddel_s]
     }
 
     itk_component add f_radlist_s {
@@ -1101,7 +1131,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add rb_radlist_s {
-	radiobutton $itk_interior.rb_radlist_s -text "Use Radii List" -font $rb_font -variable [scope radii_s] -value 0 -command [code $this switch_states f_radlist_s f_radius_s]
+	radiobutton $itk_interior.rb_radlist_s -text "Use Radii List" -font $rb_font -variable [::itcl::scope radii_s] -value 0 -command [::itcl::code $this switch_states f_radlist_s f_radius_s]
     }
 
     itk_component add l_radlist_s {
@@ -1109,7 +1139,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_radlist_s {
-	entry $itk_interior.e_radlist_s -relief sunken -textvariable [scope radlist_s]
+	entry $itk_interior.e_radlist_s -relief sunken -textvariable [::itcl::scope radlist_s]
     }
 
     itk_component add l_startaz_s {
@@ -1117,7 +1147,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_startaz_s {
-	entry $itk_interior.e_startaz_s -relief sunken -textvariable [scope startaz_s]
+	entry $itk_interior.e_startaz_s -relief sunken -textvariable [::itcl::scope startaz_s]
     }
 
     itk_component add l_startel_s {
@@ -1125,7 +1155,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_startel_s {
-	entry $itk_interior.e_startel_s -relief sunken -textvariable [scope startel_s]
+	entry $itk_interior.e_startel_s -relief sunken -textvariable [::itcl::scope startel_s]
     }
 
     itk_component add l_startr_s {
@@ -1133,7 +1163,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_startr_s {
-	entry $itk_interior.e_startr_s -relief sunken -textvariable [scope startr_s]
+	entry $itk_interior.e_startr_s -relief sunken -textvariable [::itcl::scope startr_s]
     }
 
     itk_component add l_obj_s {
@@ -1141,7 +1171,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_obj_s {
-	entry $itk_interior.e_obj_s -relief sunken -textvariable [scope obj_s]
+	entry $itk_interior.e_obj_s -relief sunken -textvariable [::itcl::scope obj_s]
     }
 
     #String Replacement
@@ -1154,11 +1184,11 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_sstring_s {
-	entry $itk_interior.e_sstring_s -relief sunken -textvariable [scope source_string_s]
+	entry $itk_interior.e_sstring_s -relief sunken -textvariable [::itcl::scope source_string_s]
     }
 
     itk_component add e_rstring_s {
-	entry $itk_interior.e_rstring_s -relief sunken -textvariable [scope rep_string_s]
+	entry $itk_interior.e_rstring_s -relief sunken -textvariable [::itcl::scope rep_string_s]
     }
 
 
@@ -1168,12 +1198,12 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_incr_s {
-	entry $itk_interior.e_incr_s -relief sunken -textvariable [scope increment_s]
+	entry $itk_interior.e_incr_s -relief sunken -textvariable [::itcl::scope increment_s]
     }
 
 
     itk_component add b_ok_s {
-	button $itk_interior.b_ok_s -text "OK" -command [code $this apply_sph]
+	button $itk_interior.b_ok_s -text "OK" -command [::itcl::code $this apply_sph]
     }
 
     itk_component add b_dismiss_s {
@@ -1234,7 +1264,7 @@ body pattern_control::constructor {} {
 
     grid $itk_component(b_ok_s)      -in $tab1 -row 13 -column 0 -columnspan 2
     grid $itk_component(b_dismiss_s) -in $tab1 -row 13 -column 2 -columnspan 2
-    code $this update_depth top
+    ::itcl::code $this update_depth top
     update
 
     #Row Configures
@@ -1284,37 +1314,37 @@ body pattern_control::constructor {} {
     grid columnconfigure $itk_component(f_radlist_s) 1 -weight 1
 
 
-    #bind $itk_component() <Enter> " set [list [scope helpvar]] {}"
-    bind $itk_component(l_combo_s) <Enter> " set [list [scope helpvar]] {Depth of duplication of objects. ``top'' - only build top level objects.\n\t\t``regions'' - duplicate down to and including regions.\n\t\t``primitives'' - duplicate down to and including primitives} "
-    bind $itk_component(l_group_s) <Enter> " set [list [scope helpvar]] {Enter the name for the created group} "
-    bind $itk_component(l_cpatt_s) <Enter> " set [list [scope helpvar]] {Enter the coordinates of center of pattern}"
-    bind $itk_component(l_cobj_s) <Enter> " set [list [scope helpvar]] {Enter the coordinates of center of object to be duplicated}"
-    bind $itk_component(cb_rotaz_s) <Enter> " set [list [scope helpvar]] {Select to rotate the duplicates in Azimuth}"
-    bind $itk_component(cb_rotel_s) <Enter> " set [list [scope helpvar]] {Select to rotate the duplicates in Elevation}"
-    bind $itk_component(rb_num_s) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on number of azimuth and elevation angles and delta angles}"
-    bind $itk_component(l_numaz_s) <Enter> " set [list [scope helpvar]] {Enter the number of azimuth angles to be used}"
-    bind $itk_component(l_numel_s) <Enter> " set [list [scope helpvar]] {Enter the number of elevation angles to be used}"
-    bind $itk_component(l_delaz_s) <Enter> " set [list [scope helpvar]] {Enter the azimuth delta angle (degrees)}"
-    bind $itk_component(l_delel_s) <Enter> " set [list [scope helpvar]] {Enter the elevation angle delta (degrees)}"
-    bind $itk_component(cb_list_s) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on lists of azimuth and elevation angles}"
-    bind $itk_component(l_listaz_s) <Enter> " set [list [scope helpvar]] {Enter a list of azimuth angles in degrees (0-360)}"
-    bind $itk_component(l_listel_s) <Enter> " set [list [scope helpvar]] {Enter a list of elevation angles in degrees (-90 - 90)}"
-    bind $itk_component(rb_radius_s) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on number of radii and radius delta}"
-    bind $itk_component(l_radius_s) <Enter> " set [list [scope helpvar]] {Enter the number of radii to be used}"
-    bind $itk_component(l_delta_s) <Enter> " set [list [scope helpvar]] {Enter the radius delta to be used}"
-    bind $itk_component(rb_radlist_s) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on a list of radii}"
-    bind $itk_component(l_radlist_s) <Enter> " set [list [scope helpvar]] {Enter a list of radii to be used}"
-    bind $itk_component(l_startaz_s) <Enter> " set [list [scope helpvar]] {Enter starting azimuth angle in degrees (0-360)}"
-    bind $itk_component(l_startel_s) <Enter> " set [list [scope helpvar]] {Enter starting elevation angle in degrees (-90 - 90)}"
-    bind $itk_component(l_startr_s) <Enter> " set [list [scope helpvar]] {Enter starting radius}"
-    bind $itk_component(l_obj_s) <Enter> " set [list [scope helpvar]] {Enter the list of objects to duplicate}"
-    bind $itk_component(l_sstring_s) <Enter> " set [list [scope helpvar]] {Enter a string appearing in the objects to duplicate that you want to change (empty is OK)}"
-    bind $itk_component(l_rstring_s) <Enter> " set [list [scope helpvar]] {Enter the string you want to replace the above string with (empty is OK)}"
-    bind $itk_component(l_incr_s) <Enter> " set [list [scope helpvar]] {Enter value to use in incrementing primitive/region numbers (0 is OK)}"
+    #bind $itk_component() <Enter> " set [list [::itcl::scope helpvar]] {}"
+    bind $itk_component(l_combo_s) <Enter> " set [list [::itcl::scope helpvar]] {Depth of duplication of objects. ``top'' - only build top level objects.\n\t\t``regions'' - duplicate down to and including regions.\n\t\t``primitives'' - duplicate down to and including primitives} "
+    bind $itk_component(l_group_s) <Enter> " set [list [::itcl::scope helpvar]] {Enter the name for the created group} "
+    bind $itk_component(l_cpatt_s) <Enter> " set [list [::itcl::scope helpvar]] {Enter the coordinates of center of pattern}"
+    bind $itk_component(l_cobj_s) <Enter> " set [list [::itcl::scope helpvar]] {Enter the coordinates of center of object to be duplicated}"
+    bind $itk_component(cb_rotaz_s) <Enter> " set [list [::itcl::scope helpvar]] {Select to rotate the duplicates in Azimuth}"
+    bind $itk_component(cb_rotel_s) <Enter> " set [list [::itcl::scope helpvar]] {Select to rotate the duplicates in Elevation}"
+    bind $itk_component(rb_num_s) <Enter> " set [list [::itcl::scope helpvar]] {Select to generate creation points based on number of azimuth and elevation angles and delta angles}"
+    bind $itk_component(l_numaz_s) <Enter> " set [list [::itcl::scope helpvar]] {Enter the number of azimuth angles to be used}"
+    bind $itk_component(l_numel_s) <Enter> " set [list [::itcl::scope helpvar]] {Enter the number of elevation angles to be used}"
+    bind $itk_component(l_delaz_s) <Enter> " set [list [::itcl::scope helpvar]] {Enter the azimuth delta angle (degrees)}"
+    bind $itk_component(l_delel_s) <Enter> " set [list [::itcl::scope helpvar]] {Enter the elevation angle delta (degrees)}"
+    bind $itk_component(cb_list_s) <Enter> " set [list [::itcl::scope helpvar]] {Select to generate creation points based on lists of azimuth and elevation angles}"
+    bind $itk_component(l_listaz_s) <Enter> " set [list [::itcl::scope helpvar]] {Enter a list of azimuth angles in degrees (0-360)}"
+    bind $itk_component(l_listel_s) <Enter> " set [list [::itcl::scope helpvar]] {Enter a list of elevation angles in degrees (-90 - 90)}"
+    bind $itk_component(rb_radius_s) <Enter> " set [list [::itcl::scope helpvar]] {Select to generate creation points based on number of radii and radius delta}"
+    bind $itk_component(l_radius_s) <Enter> " set [list [::itcl::scope helpvar]] {Enter the number of radii to be used}"
+    bind $itk_component(l_delta_s) <Enter> " set [list [::itcl::scope helpvar]] {Enter the radius delta to be used}"
+    bind $itk_component(rb_radlist_s) <Enter> " set [list [::itcl::scope helpvar]] {Select to generate creation points based on a list of radii}"
+    bind $itk_component(l_radlist_s) <Enter> " set [list [::itcl::scope helpvar]] {Enter a list of radii to be used}"
+    bind $itk_component(l_startaz_s) <Enter> " set [list [::itcl::scope helpvar]] {Enter starting azimuth angle in degrees (0-360)}"
+    bind $itk_component(l_startel_s) <Enter> " set [list [::itcl::scope helpvar]] {Enter starting elevation angle in degrees (-90 - 90)}"
+    bind $itk_component(l_startr_s) <Enter> " set [list [::itcl::scope helpvar]] {Enter starting radius}"
+    bind $itk_component(l_obj_s) <Enter> " set [list [::itcl::scope helpvar]] {Enter the list of objects to duplicate}"
+    bind $itk_component(l_sstring_s) <Enter> " set [list [::itcl::scope helpvar]] {Enter a string appearing in the objects to duplicate that you want to change (empty is OK)}"
+    bind $itk_component(l_rstring_s) <Enter> " set [list [::itcl::scope helpvar]] {Enter the string you want to replace the above string with (empty is OK)}"
+    bind $itk_component(l_incr_s) <Enter> " set [list [::itcl::scope helpvar]] {Enter value to use in incrementing primitive/region numbers (0 is OK)}"
 
     foreach obj {l_combo_s l_group_s l_cpatt_s l_cobj_s cb_rotaz_s cb_rotel_s rb_num_s l_numaz_s l_numel_s l_delaz_s l_delel_s cb_list_s l_listaz_s l_listel_s rb_radius_s l_radius_s l_delta_s rb_radlist_s l_radlist_s l_startaz_s l_startel_s l_obj_s l_sstring_s l_rstring_s l_incr_s } {
 
-	bind $itk_component($obj) <Leave> " set [list [scope helpvar]] {} "
+	bind $itk_component($obj) <Leave> " set [list [::itcl::scope helpvar]] {} "
     }
 
     #CYL TAB
@@ -1329,7 +1359,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_combo_c {
-	entry $itk_interior.e_combo_c -relief flat -width 20 -textvariable [scope combovar_c]
+	entry $itk_interior.e_combo_c -relief flat -width 20 -textvariable [::itcl::scope combovar_c]
     }
 
     itk_component add b_combo_c {
@@ -1340,7 +1370,7 @@ body pattern_control::constructor {} {
 	menu $itk_component(b_combo_c).m_combo_c -tearoff 0
     }
 
-    set windowtag [code $this]
+    set windowtag [::itcl::code $this]
 
     $itk_component(m_combo_c) add command -label Top -command "set combovar_c Top ; $windowtag update_depth c top"
     $itk_component(m_combo_c) add command -label Regions -command "set combovar_c Regions ; $windowtag update_depth c regions"
@@ -1359,7 +1389,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_group_c {
-	entry $itk_interior.e_group_c -relief sunken -textvariable [scope group_c]
+	entry $itk_interior.e_group_c -relief sunken -textvariable [::itcl::scope group_c]
     }
 
     #Center base
@@ -1368,7 +1398,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_cbase_c {
-	entry $itk_interior.e_cbase_c -textvariable [scope cbase_c]
+	entry $itk_interior.e_cbase_c -textvariable [::itcl::scope cbase_c]
     }
 
     #Center object
@@ -1377,11 +1407,11 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_cobj_c {
-	entry $itk_interior.e_cobj_c -textvariable [scope cobj_c]
+	entry $itk_interior.e_cobj_c -textvariable [::itcl::scope cobj_c]
     }
 
     itk_component add cb_rot_c {
-	checkbutton $itk_interior.cb_rot_c -text "Rotate" -font $rb_font -variable [scope rot_c]
+	checkbutton $itk_interior.cb_rot_c -text "Rotate" -font $rb_font -variable [::itcl::scope rot_c]
     }
 
 
@@ -1390,7 +1420,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add rb_num_c {
-	radiobutton $itk_interior.rb_num_c -text "Create Az" -font $rb_font -variable [scope azel_c] -value 1 -command [code $this switch_states f_num_c f_list_c]
+	radiobutton $itk_interior.rb_num_c -text "Create Az" -font $rb_font -variable [::itcl::scope azel_c] -value 1 -command [::itcl::code $this switch_states f_num_c f_list_c]
     }
 
     # Number of azimuths??
@@ -1400,7 +1430,7 @@ body pattern_control::constructor {} {
 
 
     itk_component add e_numaz_c {
-	entry $itk_interior.e_numaz_c -relief sunken -textvariable [scope numaz_c]
+	entry $itk_interior.e_numaz_c -relief sunken -textvariable [::itcl::scope numaz_c]
     }
 
 
@@ -1410,7 +1440,7 @@ body pattern_control::constructor {} {
 
 
     itk_component add e_delaz_c {
-	entry $itk_interior.e_delaz_c -relief sunken -textvariable [scope delaz_c]
+	entry $itk_interior.e_delaz_c -relief sunken -textvariable [::itcl::scope delaz_c]
     }
 
 
@@ -1427,7 +1457,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add cb_list_c {
-	radiobutton $itk_interior.cb_list_c -text "Use Lists" -font $rb_font -variable [scope azel_c] -value 0 -command [code $this switch_states f_list_c f_num_c]
+	radiobutton $itk_interior.cb_list_c -text "Use Lists" -font $rb_font -variable [::itcl::scope azel_c] -value 0 -command [::itcl::code $this switch_states f_list_c f_num_c]
     }
 
     itk_component add l_listaz_c {
@@ -1435,7 +1465,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_listaz_c {
-	entry $itk_interior.e_listaz_c -relief sunken -textvariable [scope lsaz_c]
+	entry $itk_interior.e_listaz_c -relief sunken -textvariable [::itcl::scope lsaz_c]
     }
 
 
@@ -1444,7 +1474,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_startr_c {
-	entry $itk_interior.e_startr_c -relief sunken -textvariable [scope e_startr_c]
+	entry $itk_interior.e_startr_c -relief sunken -textvariable [::itcl::scope e_startr_c]
     }
 
 
@@ -1453,7 +1483,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add rb_radius_c {
-	radiobutton $itk_interior.rb_radius_c -text "Create Radii" -font $rb_font -variable [scope radii_c] -value 1 -command [code $this switch_states f_radius_c f_radlist_c]
+	radiobutton $itk_interior.rb_radius_c -text "Create Radii" -font $rb_font -variable [::itcl::scope radii_c] -value 1 -command [::itcl::code $this switch_states f_radius_c f_radlist_c]
     }
 
     itk_component add l_radius_c {
@@ -1461,7 +1491,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_radius_c {
-	entry $itk_interior.e_radius_c -relief sunken -textvariable [scope radnum_c]
+	entry $itk_interior.e_radius_c -relief sunken -textvariable [::itcl::scope radnum_c]
     }
 
     itk_component add l_delta_c {
@@ -1469,7 +1499,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_delta_c {
-	entry $itk_interior.e_delta_c -relief sunken -textvariable [scope raddel_c]
+	entry $itk_interior.e_delta_c -relief sunken -textvariable [::itcl::scope raddel_c]
     }
 
 
@@ -1478,7 +1508,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add rb_radlist_c {
-	radiobutton $itk_interior.rb_radlist_c -text "Use Radii List" -font $rb_font -variable [scope radii_c] -value 0 -command [code $this switch_states f_radlist_c f_radius_c]
+	radiobutton $itk_interior.rb_radlist_c -text "Use Radii List" -font $rb_font -variable [::itcl::scope radii_c] -value 0 -command [::itcl::code $this switch_states f_radlist_c f_radius_c]
     }
 
     itk_component add l_radlist_c {
@@ -1486,7 +1516,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_radlist_c {
-	entry $itk_interior.e_radlist_c -relief sunken -textvariable [scope radlist_c]
+	entry $itk_interior.e_radlist_c -relief sunken -textvariable [::itcl::scope radlist_c]
     }
 
     itk_component add l_startaz_c {
@@ -1494,7 +1524,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_startaz_c {
-	entry $itk_interior.e_startaz_c -relief sunken -textvariable [scope startaz_c]
+	entry $itk_interior.e_startaz_c -relief sunken -textvariable [::itcl::scope startaz_c]
     }
 
     itk_component add l_heightdir_c {
@@ -1502,7 +1532,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_heightdir_c {
-	entry $itk_interior.e_heightdir_c -relief sunken -textvariable [scope heightdir_c]
+	entry $itk_interior.e_heightdir_c -relief sunken -textvariable [::itcl::scope heightdir_c]
     }
 
 
@@ -1511,7 +1541,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_starth_c {
-	entry $itk_interior.e_starth_c -relief sunken -textvariable [scope starth_c]
+	entry $itk_interior.e_starth_c -relief sunken -textvariable [::itcl::scope starth_c]
     }
 
 
@@ -1520,7 +1550,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_obj_c {
-	entry $itk_interior.e_obj_c -relief sunken -textvariable [scope obj_c]
+	entry $itk_interior.e_obj_c -relief sunken -textvariable [::itcl::scope obj_c]
     }
 
 
@@ -1529,7 +1559,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add rb_height_c {
-	radiobutton $itk_interior.rb_height_c -text "Create Heights" -variable [scope height_c] -font $rb_font -value 1 -command [code $this switch_states f_height_c f_lnum_c]
+	radiobutton $itk_interior.rb_height_c -text "Create Heights" -variable [::itcl::scope height_c] -font $rb_font -value 1 -command [::itcl::code $this switch_states f_height_c f_lnum_c]
     }
 
     itk_component add l_hnum_c {
@@ -1537,7 +1567,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_hnum_c {
-	entry $itk_interior.e_hnum_c -relief sunken -textvariable [scope hnum_c]
+	entry $itk_interior.e_hnum_c -relief sunken -textvariable [::itcl::scope hnum_c]
     }
 
     itk_component add l_dnum_c {
@@ -1545,7 +1575,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_dnum_c {
-	entry $itk_interior.e_dnum_c -relief sunken -textvariable [scope dnum_c]
+	entry $itk_interior.e_dnum_c -relief sunken -textvariable [::itcl::scope dnum_c]
     }
 
     itk_component add f_lnum_c {
@@ -1553,7 +1583,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add rb_lnum_c {
-	radiobutton $itk_interior.rb_lnum_c -text "Use Lists" -variable [scope height_c] -font $rb_font -value 0 -command [code $this switch_states f_lnum_c f_height_c]
+	radiobutton $itk_interior.rb_lnum_c -text "Use Lists" -variable [::itcl::scope height_c] -font $rb_font -value 0 -command [::itcl::code $this switch_states f_lnum_c f_height_c]
     }
 
     itk_component add l_lnum_c {
@@ -1561,7 +1591,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_lnum_c {
-	entry $itk_interior.e_lnum_c -relief sunken -textvariable [scope lnum_c]
+	entry $itk_interior.e_lnum_c -relief sunken -textvariable [::itcl::scope lnum_c]
     }
 
     grid $itk_component(rb_height_c) -in $itk_component(f_height_c) -row 0 -column 0 -sticky nsw -padx $pad(x) -pady $pad(y)
@@ -1586,11 +1616,11 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_sstring_c {
-	entry $itk_interior.e_sstring_c -relief sunken -textvariable [scope source_string_c]
+	entry $itk_interior.e_sstring_c -relief sunken -textvariable [::itcl::scope source_string_c]
     }
 
     itk_component add e_rstring_c {
-	entry $itk_interior.e_rstring_c -relief sunken -textvariable [scope rep_string_c]
+	entry $itk_interior.e_rstring_c -relief sunken -textvariable [::itcl::scope rep_string_c]
     }
 
 
@@ -1600,12 +1630,12 @@ body pattern_control::constructor {} {
     }
 
     itk_component add e_incr_c {
-	entry $itk_interior.e_incr_c -relief sunken -textvariable [scope increment_c]
+	entry $itk_interior.e_incr_c -relief sunken -textvariable [::itcl::scope increment_c]
     }
 
 
     itk_component add b_ok_c {
-	button $itk_interior.b_ok_c -text "OK" -command [code $this apply_cyl]
+	button $itk_interior.b_ok_c -text "OK" -command [::itcl::code $this apply_cyl]
     }
 
     itk_component add b_dismiss_c {
@@ -1673,7 +1703,7 @@ body pattern_control::constructor {} {
 
     grid $itk_component(b_ok_c)        -in $tab2 -row 16 -column 0 -columnspan 2
     grid $itk_component(b_dismiss_c)   -in $tab2 -row 16 -column 2 -columnspan 2
-    code $this update_depth top
+    ::itcl::code $this update_depth top
     update
 
     #Row Configures
@@ -1748,42 +1778,42 @@ body pattern_control::constructor {} {
     }
 
     itk_component add l_help {
-	label $itk_interior.l_help -relief flat -textvariable [scope helpvar] -justify left -height 3 -width 99
+	label $itk_interior.l_help -relief flat -textvariable [::itcl::scope helpvar] -justify left -height 3 -width 99
     }
 
     itk_component add fb_progress {
-	feedback $itk_interior.fb_progress
+	::iwidgets::feedback $itk_interior.fb_progress
     }
 
-    #bind $itk_component() <Enter> " set [list [scope helpvar]] {}"
-    bind $itk_component(rb_num_c) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on number and delta of azimuths}"
-    bind $itk_component(l_combo_c) <Enter> " set [list [scope helpvar]] {Depth of duplication of objects. ``top'' - only build top level objects.\n\t\t``regions'' - duplicate down to and including regions.\n\t\t``primitives'' - duplicate down to and including primitives}"
-    bind $itk_component(l_group_c) <Enter> " set [list [scope helpvar]] {Enter the name for the created group}"
-    bind $itk_component(l_cbase_c) <Enter> " set [list [scope helpvar]] {Enter the base of the created cylindrical pattern}"
-    bind $itk_component(l_cobj_c) <Enter> " set [list [scope helpvar]] {Enter the coordinates of center of object to be duplicated}"
-    bind $itk_component(cb_rot_c) <Enter> " set [list [scope helpvar]] {Select to rotate the duplicates}"
-    bind $itk_component(l_numaz_c) <Enter> " set [list [scope helpvar]] {Enter the number of azimuth angles to be used}"
-    bind $itk_component(l_delaz_c) <Enter> " set [list [scope helpvar]] {Enter the azimuth delta angle (degrees)}"
-    bind $itk_component(cb_list_c) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on a list of azimuths}"
-    bind $itk_component(l_listaz_c) <Enter> " set [list [scope helpvar]] {Enter a list of azimuths to be used}"
-    bind $itk_component(l_startr_c) <Enter> " set [list [scope helpvar]] {Enter starting radius}"
-    bind $itk_component(rb_radius_c) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on number and delta of radii}"
-    bind $itk_component(l_radius_c) <Enter> " set [list [scope helpvar]] {Enter the number of radii to be used}"
-    bind $itk_component(l_delta_c) <Enter> " set [list [scope helpvar]] {Enter the delta angle (degrees)}"
-    bind $itk_component(rb_radlist_c) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on a list of radii}"
-    bind $itk_component(l_radlist_c) <Enter> " set [list [scope helpvar]] {Enter a list of radii to be used}"
-    bind $itk_component(l_startaz_c) <Enter> " set [list [scope helpvar]] {Enter starting azimuth direction vector}"
-    bind $itk_component(l_heightdir_c) <Enter> " set [list [scope helpvar]] {Enter direction vector for cylinder height}"
-    bind $itk_component(l_starth_c) <Enter> " set [list [scope helpvar]] {Enter starting height of the cylinder}"
-    bind $itk_component(l_obj_c) <Enter> " set [list [scope helpvar]] {Enter the list of objects to duplicate}"
-    bind $itk_component(rb_height_c) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on number and delta of heights}"
-    bind $itk_component(l_hnum_c) <Enter> " set [list [scope helpvar]] {Enter the number of heights to be used}"
-    bind $itk_component(l_dnum_c) <Enter> " set [list [scope helpvar]] {Enter the delta of heights to be used}"
-    bind $itk_component(rb_lnum_c) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on a list of heights}"
-    bind $itk_component(l_lnum_c) <Enter> " set [list [scope helpvar]] {Enter a list of heights}"
-    bind $itk_component(l_sstring_c) <Enter> " set [list [scope helpvar]] {Enter a string appearing in the objects to duplicate that you want to change (empty is OK)}"
-    bind $itk_component(l_rstring_c) <Enter> " set [list [scope helpvar]] {Enter the string you want to replace the above string with (empty is OK)}"
-    bind $itk_component(l_incr_c) <Enter> " set [list [scope helpvar]] {Enter value to use in incrementing primitive/region numbers (0 is OK)}"
+    #bind $itk_component() <Enter> " set [list [::itcl::scope helpvar]] {}"
+    bind $itk_component(rb_num_c) <Enter> " set [list [::itcl::scope helpvar]] {Select to generate creation points based on number and delta of azimuths}"
+    bind $itk_component(l_combo_c) <Enter> " set [list [::itcl::scope helpvar]] {Depth of duplication of objects. ``top'' - only build top level objects.\n\t\t``regions'' - duplicate down to and including regions.\n\t\t``primitives'' - duplicate down to and including primitives}"
+    bind $itk_component(l_group_c) <Enter> " set [list [::itcl::scope helpvar]] {Enter the name for the created group}"
+    bind $itk_component(l_cbase_c) <Enter> " set [list [::itcl::scope helpvar]] {Enter the base of the created cylindrical pattern}"
+    bind $itk_component(l_cobj_c) <Enter> " set [list [::itcl::scope helpvar]] {Enter the coordinates of center of object to be duplicated}"
+    bind $itk_component(cb_rot_c) <Enter> " set [list [::itcl::scope helpvar]] {Select to rotate the duplicates}"
+    bind $itk_component(l_numaz_c) <Enter> " set [list [::itcl::scope helpvar]] {Enter the number of azimuth angles to be used}"
+    bind $itk_component(l_delaz_c) <Enter> " set [list [::itcl::scope helpvar]] {Enter the azimuth delta angle (degrees)}"
+    bind $itk_component(cb_list_c) <Enter> " set [list [::itcl::scope helpvar]] {Select to generate creation points based on a list of azimuths}"
+    bind $itk_component(l_listaz_c) <Enter> " set [list [::itcl::scope helpvar]] {Enter a list of azimuths to be used}"
+    bind $itk_component(l_startr_c) <Enter> " set [list [::itcl::scope helpvar]] {Enter starting radius}"
+    bind $itk_component(rb_radius_c) <Enter> " set [list [::itcl::scope helpvar]] {Select to generate creation points based on number and delta of radii}"
+    bind $itk_component(l_radius_c) <Enter> " set [list [::itcl::scope helpvar]] {Enter the number of radii to be used}"
+    bind $itk_component(l_delta_c) <Enter> " set [list [::itcl::scope helpvar]] {Enter the delta angle (degrees)}"
+    bind $itk_component(rb_radlist_c) <Enter> " set [list [::itcl::scope helpvar]] {Select to generate creation points based on a list of radii}"
+    bind $itk_component(l_radlist_c) <Enter> " set [list [::itcl::scope helpvar]] {Enter a list of radii to be used}"
+    bind $itk_component(l_startaz_c) <Enter> " set [list [::itcl::scope helpvar]] {Enter starting azimuth direction vector}"
+    bind $itk_component(l_heightdir_c) <Enter> " set [list [::itcl::scope helpvar]] {Enter direction vector for cylinder height}"
+    bind $itk_component(l_starth_c) <Enter> " set [list [::itcl::scope helpvar]] {Enter starting height of the cylinder}"
+    bind $itk_component(l_obj_c) <Enter> " set [list [::itcl::scope helpvar]] {Enter the list of objects to duplicate}"
+    bind $itk_component(rb_height_c) <Enter> " set [list [::itcl::scope helpvar]] {Select to generate creation points based on number and delta of heights}"
+    bind $itk_component(l_hnum_c) <Enter> " set [list [::itcl::scope helpvar]] {Enter the number of heights to be used}"
+    bind $itk_component(l_dnum_c) <Enter> " set [list [::itcl::scope helpvar]] {Enter the delta of heights to be used}"
+    bind $itk_component(rb_lnum_c) <Enter> " set [list [::itcl::scope helpvar]] {Select to generate creation points based on a list of heights}"
+    bind $itk_component(l_lnum_c) <Enter> " set [list [::itcl::scope helpvar]] {Enter a list of heights}"
+    bind $itk_component(l_sstring_c) <Enter> " set [list [::itcl::scope helpvar]] {Enter a string appearing in the objects to duplicate that you want to change (empty is OK)}"
+    bind $itk_component(l_rstring_c) <Enter> " set [list [::itcl::scope helpvar]] {Enter the string you want to replace the above string with (empty is OK)}"
+    bind $itk_component(l_incr_c) <Enter> " set [list [::itcl::scope helpvar]] {Enter value to use in incrementing primitive/region numbers (0 is OK)}"
 
     foreach obj { l_combo_c \
 		      l_group_c \
@@ -1814,7 +1844,7 @@ body pattern_control::constructor {} {
 		      l_incr_c \
 		      rb_num_c} {
 
-	bind $itk_component($obj) <Leave> " set [list [scope helpvar]] {} "
+	bind $itk_component($obj) <Leave> " set [list [::itcl::scope helpvar]] {} "
     }
 
 
@@ -1835,15 +1865,15 @@ body pattern_control::constructor {} {
 }
 
 
-body pattern_control::destructor {} {
+::itcl::body ::cadwidgets::pattern_control::destructor {} {
     unset combovar_r
 }
 
-::itcl::configbody pattern_control::ged {
+::itcl::configbody ::cadwidgets::pattern_control::ged {
     set ::cadwidgets::ged $itk_option(-ged)
 }
 
-body pattern_control::update_depth { box level } {
+::itcl::body ::cadwidgets::pattern_control::update_depth { box level } {
     switch -- $box {
 	"r" {
 	    set combovar_r $level
@@ -1857,14 +1887,14 @@ body pattern_control::update_depth { box level } {
     }
 }
 
-body pattern_control::apply_rect {} {
+::itcl::body ::cadwidgets::pattern_control::apply_rect {} {
     # The C clone implementation supplies current count and total to the
     # callback, so no Tcl-side total calculation is needed.
     $itk_component(fb_progress) reset
     set ::clone_progress_callback \
-	[list _clone_progress_update $itk_component(fb_progress)]
+	[list ::cadwidgets::_clone_progress_update $itk_component(fb_progress)]
 
-    set cmd [list pattern_rect -$combovar_r]
+    set cmd [list ::cadwidgets::pattern_rect -$combovar_r]
 
     lappend cmd -g [string trim $group_r]
 
@@ -1888,18 +1918,21 @@ body pattern_control::apply_rect {} {
 	lappend cmd $obj
     }
 
-    eval $cmd
-    unset -nocomplain ::clone_progress_callback
+    try {
+	{*}$cmd
+    } finally {
+	unset -nocomplain ::clone_progress_callback
+    }
 }
 
-body pattern_control::apply_sph {} {
+::itcl::body ::cadwidgets::pattern_control::apply_sph {} {
     # The C clone implementation supplies current count and total to the
     # callback, so no Tcl-side total calculation is needed.
     $itk_component(fb_progress) reset
     set ::clone_progress_callback \
-	[list _clone_progress_update $itk_component(fb_progress)]
+	[list ::cadwidgets::_clone_progress_update $itk_component(fb_progress)]
 
-    set cmd [list pattern_sph -$combovar_s]
+    set cmd [list ::cadwidgets::pattern_sph -$combovar_s]
     lappend cmd -g [string trim $group_s]
 
     if { [string length [string trim $source_string_s]] != 0 } {
@@ -1938,18 +1971,21 @@ body pattern_control::apply_sph {} {
 	lappend cmd $obj
     }
 
-    eval $cmd
-    unset -nocomplain ::clone_progress_callback
+    try {
+	{*}$cmd
+    } finally {
+	unset -nocomplain ::clone_progress_callback
+    }
 }
 
-body pattern_control::apply_cyl {} {
+::itcl::body ::cadwidgets::pattern_control::apply_cyl {} {
     # The C clone implementation supplies current count and total to the
     # callback, so no Tcl-side total calculation is needed.
     $itk_component(fb_progress) reset
     set ::clone_progress_callback \
-	[list _clone_progress_update $itk_component(fb_progress)]
+	[list ::cadwidgets::_clone_progress_update $itk_component(fb_progress)]
 
-    set cmd [list pattern_cyl -$combovar_c]
+    set cmd [list ::cadwidgets::pattern_cyl -$combovar_c]
     lappend cmd -g [string trim $group_c]
 
     if { [string length [string trim $source_string_c]] != 0 } {
@@ -1995,11 +2031,14 @@ body pattern_control::apply_cyl {} {
 	lappend cmd $obj
     }
 
-    eval $cmd
-    unset -nocomplain ::clone_progress_callback
+    try {
+	{*}$cmd
+    } finally {
+	unset -nocomplain ::clone_progress_callback
+    }
 }
 
-body pattern_control::frame_disable { frame_name } {
+::itcl::body ::cadwidgets::pattern_control::frame_disable { frame_name } {
     switch -- $frame_name {
 	"f_list_r" {
 	    foreach obj { l_xlist_r \
@@ -2123,7 +2162,7 @@ body pattern_control::frame_disable { frame_name } {
 }
 
 
-body pattern_control::frame_enable { frame_name } {
+::itcl::body ::cadwidgets::pattern_control::frame_enable { frame_name } {
     switch -- $frame_name {
 	"f_list_r" {
 	    foreach obj { l_xlist_r \
@@ -2247,7 +2286,7 @@ body pattern_control::frame_enable { frame_name } {
 
 }
 
-body pattern_control::switch_states { frame_on frame_off } {
+::itcl::body ::cadwidgets::pattern_control::switch_states { frame_on frame_off } {
     frame_enable $frame_on
     frame_disable $frame_off
 }

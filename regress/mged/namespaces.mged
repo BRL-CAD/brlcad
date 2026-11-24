@@ -1,0 +1,316 @@
+puts "*** Testing Tcl command namespaces ***"
+
+foreach package {brlcad::help brlcad::vmath} {
+    if {[package require $package 1.0] ne "1.0"} {
+	error "FAIL could not load canonical package $package"
+    }
+}
+
+foreach command {
+    ::brlcad::mged::adc::init
+    ::brlcad::mged::extract::init
+    ::brlcad::mged::font::font_init
+    ::brlcad::mged::grid::init_grid_control
+    ::brlcad::mged::plot::init
+    ::brlcad::mged::postscript::init
+    ::brlcad::mged::rt_script::init
+    ::brlcad::mged::shader::is_good_shader
+} {
+    if {![auto_load $command]} {
+	error "FAIL canonical Tcl module command is not autoloadable: $command"
+    }
+}
+
+foreach namespace {
+    ::brlcad ::brlcad::ged ::brlcad::help ::brlcad::mged
+    ::brlcad::mged::adc ::brlcad::mged::extract ::brlcad::mged::font
+    ::brlcad::mged::grid ::brlcad::mged::plot ::brlcad::mged::postscript
+    ::brlcad::mged::rt_script ::brlcad::mged::shader ::brlcad::vmath
+} {
+    if {![namespace exists $namespace]} {
+	error "FAIL missing namespace $namespace"
+    }
+}
+
+foreach command {::brlcad::ged ::brlcad::mged exists _mged_exists} {
+    if {![llength [info commands $command]]} {
+	error "FAIL missing command $command"
+    }
+}
+
+foreach command {
+    ::brlcad::mged::font::font_init
+    ::brlcad::mged::font::font_scheme_init
+    ::brlcad::mged::font::font_gui_init
+    font_init font_scheme_init font_gui_init
+} {
+    if {![llength [info commands $command]]} {
+	error "FAIL missing font command $command"
+    }
+}
+set font_exports [lsort [namespace eval ::brlcad::mged::font {
+    namespace export
+}]]
+set expected_font_exports [lsort {
+    font_gui_init font_init font_scheme_init
+}]
+if {$font_exports ne $expected_font_exports} {
+    error "FAIL font exports are: $font_exports"
+}
+foreach command {font_apply font_bindCB font_scheme_apply font_update} {
+    if {[llength [info commands ::$command]] || [auto_load ::$command]} {
+	error "FAIL private font command is global: ::$command"
+    }
+}
+foreach variable {font_gui font_scheme_data} {
+    if {[info exists ::$variable]} {
+	error "FAIL font state remains global: ::$variable"
+    }
+}
+
+foreach command {
+    ::brlcad::mged::shader::do_shader
+    ::brlcad::mged::shader::do_shader_apply
+    ::brlcad::mged::shader::set_shader_params
+    ::brlcad::mged::shader::is_good_shader
+    do_shader do_shader_apply set_shader_params is_good_shader
+} {
+    if {![llength [info commands $command]]} {
+	error "FAIL missing shader command $command"
+    }
+}
+set shader_exports [lsort [namespace eval ::brlcad::mged::shader {
+    namespace export
+}]]
+set expected_shader_exports [lsort {
+    do_shader do_shader_apply is_good_shader set_shader_params
+}]
+if {$shader_exports ne $expected_shader_exports} {
+    error "FAIL shader exports are: $shader_exports"
+}
+foreach command {color_trigger do_air set_air_defaults stack_add} {
+    if {[llength [info commands ::$command]]} {
+	error "FAIL private shader command is global: ::$command"
+    }
+}
+foreach variable {light_data shader_params} {
+    if {[info exists ::$variable]} {
+	error "FAIL shader state remains global: ::$variable"
+    }
+}
+
+set shader_id namespace_air
+set shader_result ""
+::brlcad::mged::shader::set_air_defaults $shader_id
+::brlcad::mged::shader::set_air_values \
+    {air {dpm 0.2 d 0.3 s 0.4}} $shader_id
+::brlcad::mged::shader::do_air_apply shader_result $shader_id
+if {$shader_result ne {air {dpm 0.2 d 0.3 s 0.4}}} {
+    error "FAIL namespaced shader state produced: $shader_result"
+}
+if {![::brlcad::mged::shader::is_good_shader air] || ![is_good_shader air]} {
+    error "FAIL canonical and compatibility shader checks differ"
+}
+array unset ::brlcad::mged::shader::shader_params $shader_id,*
+unset shader_id shader_result
+unset expected_font_exports expected_shader_exports font_exports shader_exports
+
+foreach command {
+    ::brlcad::mged::grid::do_grid_anchor
+    ::brlcad::mged::grid::do_grid_spacing
+    ::brlcad::mged::grid::grid_control_reset
+    ::brlcad::mged::grid::grid_control_update
+    ::brlcad::mged::grid::grid_spacing_autosize_apply
+    ::brlcad::mged::grid::init_grid_control
+    ::brlcad::mged::grid::set_grid_spacing
+    do_grid_anchor do_grid_spacing grid_control_update init_grid_control
+} {
+    if {![llength [info commands $command]]} {
+	error "FAIL missing grid command $command"
+    }
+}
+set grid_exports [lsort [namespace eval ::brlcad::mged::grid {
+    namespace export
+}]]
+set expected_grid_exports [lsort {
+    do_grid_anchor do_grid_spacing grid_control_reset grid_control_update
+    grid_spacing_autosize_apply init_grid_control set_grid_spacing
+}]
+if {$grid_exports ne $expected_grid_exports} {
+    error "FAIL grid exports are: $grid_exports"
+}
+foreach command {
+    grid_autosize grid_control_apply grid_spacing_apply set_grid_res
+    set_grid_square
+} {
+    if {[llength [info commands ::$command]] || [auto_load ::$command]} {
+	error "FAIL private grid command is global: ::$command"
+    }
+}
+foreach variable {
+    grid_control grid_control_anchor grid_control_spacing
+} {
+    if {[info exists ::$variable]} {
+	error "FAIL grid state remains global: ::$variable"
+    }
+}
+unset expected_grid_exports grid_exports
+
+foreach command {
+    ::brlcad::mged::adc::init ::brlcad::mged::adc::load
+    ::brlcad::mged::adc::toggle_draw init_adc_control
+} {
+    if {![llength [info commands $command]]} {
+	error "FAIL missing ADC control command $command"
+    }
+}
+set adc_exports [namespace eval ::brlcad::mged::adc {namespace export}]
+if {$adc_exports ne {init}} {
+    error "FAIL ADC control exports are: $adc_exports"
+}
+if {[info exists ::mged_adc_control]} {
+    error "FAIL ADC control state remains global: ::mged_adc_control"
+}
+foreach command {
+    adc_CBHandler adc_adjust_coords adc_apply adc_apply_abs adc_apply_rel
+    adc_clear adc_interpval adc_load adc_ok convert_coords
+} {
+    if {[llength [info commands ::$command]] || [auto_load ::$command]} {
+	error "FAIL private ADC control command is global: ::$command"
+    }
+}
+unset adc_exports
+
+set output_modules {
+    {extract init_extractTool ex_control {do_extract}}
+    {plot init_plotTool pl_control {
+	do_plot pl_set_file_state pl_set_filter_state
+    }}
+    {postscript init_psTool ps_control {do_ps}}
+    {rt_script init_rtScriptTool rts_control {do_rtScript}}
+}
+foreach module $output_modules {
+    lassign $module component legacy_command legacy_state legacy_helpers
+    set module_namespace ::brlcad::mged::$component
+    set canonical_command [format "%s::init" $module_namespace]
+
+    foreach command [list $canonical_command $legacy_command] {
+	if {![llength [info commands $command]]} {
+	    error "FAIL missing $component output command $command"
+	}
+    }
+
+    set exports [namespace eval $module_namespace {namespace export}]
+    if {$exports ne {init}} {
+	error "FAIL $component output exports are: $exports"
+    }
+    if {[info exists ::$legacy_state]} {
+	error "FAIL $component output state remains global: ::$legacy_state"
+    }
+    foreach command $legacy_helpers {
+	if {[llength [info commands ::$command]] || [auto_load ::$command]} {
+	    error "FAIL private $component output command is global: ::$command"
+	}
+    }
+}
+unset canonical_command component exports legacy_command legacy_helpers
+unset legacy_state module module_namespace output_modules
+
+foreach command {
+    ::brlcad::mged::bot_face::init
+    ::brlcad::mged::bot_face::apply
+    ::brlcad::mged::bot_face::abort
+    bot_face_select bot_face_sel_apply bot_face_sel_abort
+} {
+    if {![llength [info commands $command]] && ![auto_load $command]} {
+	error "FAIL missing BoT face selection command $command"
+    }
+}
+foreach command {::brlcad::mged::bot_face::apply bot_face_sel_apply} {
+    if {![catch {$command {1 2}} message] ||
+	$message ne "BOT face does not have 3 vertices"} {
+	error "FAIL $command did not validate the face: $message"
+    }
+}
+
+set object namespaces_sphere.s
+::brlcad::mged in $object sph 0 0 0 1
+
+foreach command {{::brlcad::mged exists} exists _mged_exists} {
+    if {![{*}$command $object]} {
+	error "FAIL $command did not find $object"
+    }
+}
+
+::brlcad::ged attr set $object namespace_test canonical
+if {[::brlcad::ged attr get $object namespace_test] ne "canonical"} {
+    error "FAIL raw GED namespace did not preserve command results"
+}
+
+set matches [::brlcad::ged glob {list namespaces_*}]
+if {[lsearch -exact $matches $object] < 0} {
+    error "FAIL raw GED glob did not find $object: $matches"
+}
+if {[catch {::brlcad::ged list $object} message]} {
+    error "FAIL raw GED list was not reachable: $message"
+}
+
+if {[list alpha beta] ne {alpha beta}} {
+    error "FAIL Tcl list command was shadowed"
+}
+if {![catch {::brlcad::mged glob namespaces_*} message] ||
+    ![string match {unknown subcommand "glob":*} $message]} {
+    error "FAIL MGED and raw GED namespaces were not kept distinct: $message"
+}
+
+foreach constant {M_PI DEG2RAD RAD2DEG} {
+    if {[set ::brlcad::vmath::$constant] ne [set ::$constant]} {
+	error "FAIL canonical and compatibility constants differ for $constant"
+    }
+}
+
+foreach test {
+    {vadd2 {{1 2 3} {4 5 6}}}
+    {vadd {{1 2 3} {4 5 6} {-1 -2 -3}}}
+    {mat4x3pnt {{1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1} {2 3 4}}}
+    {qmul {{0 0 0 1} {1 2 3 4}}}
+    {vaddn {{1 2 3 4} {4 3 2 1} 4}}
+} {
+    lassign $test command arguments
+    set canonical [::brlcad::vmath $command {*}$arguments]
+    set compatibility [::$command {*}$arguments]
+    if {$canonical ne $compatibility} {
+	error "FAIL vmath $command differs: $canonical != $compatibility"
+    }
+}
+if {![catch {::brlcad::vmath mat_i} message] ||
+    ![string match {unknown subcommand "mat_i":*} $message]} {
+    error "FAIL vmath accepted an abbreviated subcommand: $message"
+}
+
+set search_query {Vector-Math search}
+set canonical [::brlcad::help::manpage_search_terms $search_query]
+set compatibility [manpage_search_terms $search_query]
+if {$canonical ne {vector math search} || $canonical ne $compatibility} {
+    error "FAIL help search term parsing differs: $canonical != $compatibility"
+}
+
+set namespace_help_data(example) [list argument description]
+set canonical [::brlcad::help::help_comm namespace_help_data example]
+set compatibility [help_comm namespace_help_data example]
+unset namespace_help_data
+if {$canonical ne $compatibility} {
+    error "FAIL help formatting differs: $canonical != $compatibility"
+}
+
+puts "PASS Tcl command namespaces"
+puts "*** Tcl command namespace testing completed ***"
+
+# Local Variables:
+# tab-width: 8
+# mode: Tcl
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8 cino=N-s

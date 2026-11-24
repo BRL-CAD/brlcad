@@ -197,7 +197,7 @@ proc ::mged::gui::test::finish {status message} {
     if {$status != 0} {
 	puts stderr $message
     }
-    _mged_quit
+    ::brlcad::mged quit
 }
 
 proc ::mged::gui::test::run_checked {body pass_message failure_prefix} {

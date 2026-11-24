@@ -52,13 +52,13 @@ proc init_qray_control { id } {
     }
 
     set qray_control($id,use_air) $use_air
-    set qray_control($id,cmd_echo) [_mged_qray echo]
-    set qray_control($id,effects) [_mged_qray effects]
-    set qray_control($id,basename) [_mged_qray basename]
-    set qray_control($id,oddcolor) [_mged_qray oddcolor]
-    set qray_control($id,evencolor) [_mged_qray evencolor]
-    set qray_control($id,voidcolor) [_mged_qray voidcolor]
-    set qray_control($id,overlapcolor) [_mged_qray overlapcolor]
+    set qray_control($id,cmd_echo) [::brlcad::mged qray echo]
+    set qray_control($id,effects) [::brlcad::mged qray effects]
+    set qray_control($id,basename) [::brlcad::mged qray basename]
+    set qray_control($id,oddcolor) [::brlcad::mged qray oddcolor]
+    set qray_control($id,evencolor) [::brlcad::mged qray evencolor]
+    set qray_control($id,voidcolor) [::brlcad::mged qray voidcolor]
+    set qray_control($id,overlapcolor) [::brlcad::mged qray overlapcolor]
 
     set qray_control($id,padx) 4
     set qray_control($id,pady) 4
@@ -274,7 +274,7 @@ to MGED's internal state." } }
     grid rowconfigure $top 1 -weight 1
 
     qray_reset $id
-    set qray_control($id,effects) [_mged_qray effects]
+    set qray_control($id,effects) [::brlcad::mged qray effects]
     qray_effects $id
 
     place_near_mouse $top
@@ -333,26 +333,26 @@ proc qray_reset { id } {
     }
 
     set qray_control($id,use_air) $use_air
-    set qray_control($id,cmd_echo) [_mged_qray echo]
-    set qray_control($id,effects) [_mged_qray effects]
-    set qray_control($id,basename) [_mged_qray basename]
+    set qray_control($id,cmd_echo) [::brlcad::mged qray echo]
+    set qray_control($id,effects) [::brlcad::mged qray effects]
+    set qray_control($id,basename) [::brlcad::mged qray basename]
 
     # update qray_control($id,text_effects)
     qray_effects $id
 
-    set qray_control($id,oddcolor) [_mged_qray oddcolor]
+    set qray_control($id,oddcolor) [::brlcad::mged qray oddcolor]
     setWidgetRGBColor $top.oddColorMB qray_control($id,oddcolor) \
 	$qray_control($id,oddcolor)
 
-    set qray_control($id,evencolor) [_mged_qray evencolor]
+    set qray_control($id,evencolor) [::brlcad::mged qray evencolor]
     setWidgetRGBColor $top.evenColorMB qray_control($id,evencolor) \
 	$qray_control($id,evencolor)
 
-    set qray_control($id,voidcolor) [_mged_qray voidcolor]
+    set qray_control($id,voidcolor) [::brlcad::mged qray voidcolor]
     setWidgetRGBColor $top.voidColorMB qray_control($id,voidcolor) \
 	$qray_control($id,voidcolor)
 
-    set qray_control($id,overlapcolor) [_mged_qray overlapcolor]
+    set qray_control($id,overlapcolor) [::brlcad::mged qray overlapcolor]
     setWidgetRGBColor $top.overlapColorMB qray_control($id,overlapcolor) \
 	$qray_control($id,overlapcolor)
 }
@@ -590,14 +590,14 @@ proc qray_reset_fmt { id } {
     global qray_control
 
     winset $mged_gui($id,active_dm)
-    set qray_control($id,fmt_ray) [_mged_qray fmt r]
-    set qray_control($id,fmt_head) [_mged_qray fmt h]
-    set qray_control($id,fmt_partition) [_mged_qray fmt p]
-    set qray_control($id,fmt_foot) [_mged_qray fmt f]
-    set qray_control($id,fmt_miss) [_mged_qray fmt m]
-    set qray_control($id,fmt_overlap) [_mged_qray fmt o]
-    set qray_control($id,fmt_gap) [_mged_qray fmt g]
-    set qray_control($id,script) [_mged_qray script]
+    set qray_control($id,fmt_ray) [::brlcad::mged qray fmt r]
+    set qray_control($id,fmt_head) [::brlcad::mged qray fmt h]
+    set qray_control($id,fmt_partition) [::brlcad::mged qray fmt p]
+    set qray_control($id,fmt_foot) [::brlcad::mged qray fmt f]
+    set qray_control($id,fmt_miss) [::brlcad::mged qray fmt m]
+    set qray_control($id,fmt_overlap) [::brlcad::mged qray fmt o]
+    set qray_control($id,fmt_gap) [::brlcad::mged qray fmt g]
+    set qray_control($id,script) [::brlcad::mged qray script]
 }
 
 ## - qray_nirt
@@ -606,9 +606,9 @@ proc qray_reset_fmt { id } {
 #
 proc qray_nirt { args } {
     # delete phony solids
-    catch {eval _mged_d [_mged_who phony]}
+    catch {::brlcad::mged d {*}[::brlcad::mged who phony]}
 
-    eval _mged_nirt $args
+    ::brlcad::mged nirt {*}$args
 }
 
 # Local Variables:

@@ -250,6 +250,13 @@ DM_EXPORT extern int dm_set_debug(struct dm *dmp, int lvl);
 DM_EXPORT extern int dm_get_debug(struct dm *dmp);
 DM_EXPORT extern int dm_logfile(struct dm *dmp, const char *filename);
 DM_EXPORT extern struct fb *dm_get_fb(struct dm *dmp);
+/**
+ * Close the display manager's framebuffer and clear its owning reference.
+ * Callers borrowing dm_get_fb()'s result must use this function rather than
+ * closing that framebuffer directly.  An absent framebuffer is a no-op.
+ * Returns BRLCAD_OK on success or BRLCAD_ERROR if the framebuffer cannot close.
+ */
+DM_EXPORT extern int dm_close_fb(struct dm *dmp);
 DM_EXPORT extern int dm_get_fb_visible(struct dm *dmp);
 DM_EXPORT extern int dm_set_fb_visible(struct dm *dmp, int is_fb_visible);
 

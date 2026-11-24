@@ -216,6 +216,17 @@ dm_get_fb(struct dm *dmp)
     return dmp->i->fbp;
 }
 
+int
+dm_close_fb(struct dm *dmp)
+{
+    if (!dmp || !dmp->i->fbp)
+	return BRLCAD_OK;
+    if (fb_close_existing(dmp->i->fbp) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    dmp->i->fbp = FB_NULL;
+    return BRLCAD_OK;
+}
+
 const char *
 dm_get_dm_name(const struct dm *dmp)
 {

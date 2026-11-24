@@ -35,13 +35,13 @@ proc ::mged::xmin::help::exercise_command_manual {top} {
     set toc [$browser component manpagelistbox]
     ::gui::test::require {
 	[winfo exists $toc] && [$toc size] > 100 &&
-	[lsearch -exact [$toc get 0 end] rt] >= 0
-    } "manual browser did not populate the program-page table of contents"
+	[lsearch -exact [$toc get 0 end] {rt (n)}] >= 0
+    } "manual browser did not populate the command-page table of contents"
 
     man rt
     set selection [$toc curselection]
     ::gui::test::require {
-	[llength $selection] == 1 && [$toc get $selection] eq "rt"
+	[llength $selection] == 1 && [$toc get $selection] eq "rt (n)"
     } "man rt did not select and load the rt manual page"
 
     event generate $toc <<ListboxSelect>>
@@ -84,9 +84,9 @@ proc ::mged::xmin::help::exercise_command_manual {top} {
     ::mged::gui::test::settle
     ::gui::test::require {[$toc size] > 0} \
 	"manual browser search widget did not refresh results"
-    [$browser component search_frame].clear invoke
+    [$browser component search_frame].controls.clear invoke
     ::gui::test::require {
-	[$toc size] > 100 && [lsearch -exact [$toc get 0 end] rt] >= 0
+	[$toc size] > 100 && [lsearch -exact [$toc get 0 end] {rt (n)}] >= 0
     } "manual browser Clear did not restore the table of contents"
     $browser deactivate
 }
@@ -149,6 +149,9 @@ proc ::mged::xmin::help::exercise_html_manual {top} {
     } \
 	"built MGED HTML manual is unavailable"
 
+    ::gui::test::require {
+	[llength [info commands ::brlcad::mged::manual::init]] == 1
+    } "MGED did not register its namespaced Manual command"
     ::mged::gui::test::invoke $top {Help Manual}
     set help_window $top.man
     set help_viewer $help_window.help

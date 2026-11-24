@@ -9,12 +9,13 @@ if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN" AND
   set(_gui_test_db "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/m35.g")
   set(_gui_test_library "${CMAKE_SOURCE_DIR}/regress/gui/gui_test.tcl")
   set(_gui_tcl_runner "${CMAKE_SOURCE_DIR}/regress/gui/gui_tcl_test.sh")
+  set(_mged_gui_edit_timeout 600)
 
   if(TARGET mged AND TARGET dm-tkswrast AND TARGET dm-X AND TARGET dm-ogl
      AND TARGET icv AND TARGET pixcrop AND TARGET rt)
     brlcad_add_gui_test(
       NAME regress-mged-xmin-gui-edit
-      TIMEOUT 600
+      TIMEOUT ${_mged_gui_edit_timeout}
       ENVIRONMENT
         "CMAKE_COMMAND=${CMAKE_COMMAND}"
         "ICV_BIN=$<TARGET_FILE:icv>"
@@ -33,7 +34,7 @@ if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN" AND
     )
     brlcad_regression_test(regress-mged-xmin-gui-edit
       "mged;dm-tkswrast;dm-X;dm-ogl;icv;pixcrop;rt"
-      STAND_ALONE TEST_DEFINED)
+      STAND_ALONE TEST_DEFINED TIMEOUT ${_mged_gui_edit_timeout})
   endif()
 
   if(TARGET mged AND TARGET dm-tkswrast)

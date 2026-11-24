@@ -161,19 +161,8 @@ tclcad_init_gui(Tcl_Interp *interp, struct bu_vls *tlog)
 	return TCL_ERROR;
     }
 
-    if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
-		"::itk::*", /* allowOverwrite */ 1) != TCL_OK ||
-	Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
-		"::iwidgets::*", /* allowOverwrite */ 1) != TCL_OK) {
-	if (tlog)
-	    bu_vls_printf(tlog, "Tcl_Import ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	return TCL_ERROR;
-    }
-
     if (Tcl_Eval(interp,
-	    "auto_mkindex_parser::slavehook { _%@namespace import -force ::tk::* }") != TCL_OK ||
-	Tcl_Eval(interp,
-	    "auto_mkindex_parser::slavehook { _%@namespace import -force ::itk::* }") != TCL_OK) {
+	    "auto_mkindex_parser::slavehook { _%@namespace import -force ::tk::* }") != TCL_OK) {
 	if (tlog)
 	    bu_vls_printf(tlog, "Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
@@ -314,31 +303,13 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
 
     Tcl_PkgProvide(interp, "Tclcad", brlcad_version());
 
-    /* Import Itcl into the global namespace
-     *
-     * TODO - this is probably a bad idea - figure out why we're doing it and
-     * whether we really need to... */
-
-    if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
-		"::itcl::*", /* allowOverwrite */ 1) != TCL_OK) {
-	if (tlog)
-	    bu_vls_printf(tlog, "Tcl_Import ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	return TCL_ERROR;
-    }
-
-    if (Tcl_Eval(interp,
-	    "auto_mkindex_parser::slavehook { _%@namespace import -force ::itcl::* }") != TCL_OK) {
-	if (tlog)
-	    bu_vls_printf(tlog, "Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	return TCL_ERROR;
-    }
-
 #ifdef HAVE_TK
     /* btclsh can load Tk after core initialization, so register the embedded
      * widget for lazy loading as well as initializing it with the GUI. */
     Tcl_StaticPackage(NULL, "Tklitehtml", Tklitehtml_Init, NULL);
     if (Tcl_Eval(interp,
-	    "package ifneeded tklitehtml 0.1.0 {load {} Tklitehtml}") != TCL_OK) {
+	    "package ifneeded tklitehtml 0.1.0 {"
+	    "package require Tk 8.6; load {} Tklitehtml}") != TCL_OK) {
 	if (tlog)
 	    bu_vls_printf(tlog, "TkLiteHtml registration ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;

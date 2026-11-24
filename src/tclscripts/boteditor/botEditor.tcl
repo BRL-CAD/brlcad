@@ -85,7 +85,7 @@ package require Itk
     cp $original $copy
 
     # handle window close
-    wm protocol $itk_interior WM_DELETE_WINDOW "kill $copy; delete object $this"
+    wm protocol $itk_interior WM_DELETE_WINDOW "kill $copy; ::itcl::delete object $this"
 
     # create layout frames
     itk_component add histFrame {
@@ -293,7 +293,7 @@ package require Itk
     set cmd "kill $original; \
 	mv $copy $original; \
 	bind all <ButtonPress> {}; \
-	delete object $this"
+	::itcl::delete object $this"
 
     # get confirmation
     itk_component add confirm {
@@ -310,7 +310,7 @@ package require Itk
 
     set cmd "kill $copy; \
 	bind all <ButtonPress> {}; \
-	delete object $this"
+	::itcl::delete object $this"
 
     # get confirmation
     itk_component add confirm {
@@ -401,12 +401,12 @@ package require Itk
 	itk_component add yes {
 	    ttk::button $itk_component(act).confirm \
 		-text Yes \
-		-command "grab release $itk_interior; $itk_option(-yescommand); catch {delete object $this}"
+		-command "grab release $itk_interior; $itk_option(-yescommand); catch {::itcl::delete object $this}"
 	} {}
 	itk_component add no {
 	    ttk::button $itk_component(act).deny \
 		-text No \
-		-command "grab release $itk_interior; delete object $this"
+		-command "grab release $itk_interior; ::itcl::delete object $this"
 	} {}
 
 	# display frames

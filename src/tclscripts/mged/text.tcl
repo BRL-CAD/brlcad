@@ -370,7 +370,8 @@ proc execute_cmd {w} {
 proc interrupt_cmd { w } {
     global mged_gui
 
-    if {[llength [info commands _mged_interrupt]] && [_mged_interrupt]} {
+    if {[llength [info commands ::brlcad::mged]] &&
+	[::brlcad::mged interrupt]} {
 	$w insert insert "\nInterrupt requested.\n"
 	$w see insert
 	return

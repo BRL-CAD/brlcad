@@ -57,6 +57,7 @@ __declspec(dllimport) int __stdcall SetHandleInformation(void *, unsigned long, 
 #include "raytrace.h"
 #if RTWIZARD_HAVE_TCL
 #  include "tclcad.h"
+#  define RTWIZARD_COMMAND_NAMESPACE "::brlcad::rtwizard"
 #endif
 
 #include "render.h"
@@ -1536,6 +1537,11 @@ main(int argc, char **argv)
 	const char *result = NULL;
 	Tcl_DString temp;
 	Tcl_Interp *interp = Tcl_CreateInterp();
+	static const struct tclcad_objcmdtab commands[] = {
+	    {"render", "rtwizard_render", rtwizard_render_cmd, NULL},
+	    {"fbserv_start", "rtwizard_fbserv_start", rtwizard_fbserv_start_cmd, NULL},
+	    {NULL, NULL, NULL, NULL}
+	};
 
 
 	/* The subsequent Tcl scripts will take of Tk, so at this
@@ -1545,10 +1551,12 @@ main(int argc, char **argv)
 	    bu_log("tclcad init failure:\n%s\n", bu_vls_addr(&tlog));
 	}
 	bu_vls_free(&tlog);
-	(void)Tcl_CreateObjCommand(interp, "rtwizard_render",
-		rtwizard_render_cmd, NULL, NULL);
-	(void)Tcl_CreateObjCommand(interp, "rtwizard_fbserv_start",
-		rtwizard_fbserv_start_cmd, NULL, NULL);
+	if (tclcad_register_objcmd_namespace(interp,
+		RTWIZARD_COMMAND_NAMESPACE, commands) != TCL_OK) {
+	    bu_exit(EXIT_FAILURE,
+		    "ERROR: RtWizard Tcl command registration failed: %s\n",
+		    Tcl_GetStringResult(interp));
+	}
 	Tcl_CreateExitHandler(rtwizard_fbserv_exit, NULL);
 
 	/* Normalize .g and output image file paths, since they're to be used

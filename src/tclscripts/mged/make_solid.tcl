@@ -40,17 +40,17 @@ proc make_dsp { id top } {
 	return
     }
 
-    set command {_mged_in $mged_gui($id,solid_name) dsp f \
+    set command [list ::brlcad::mged in $mged_gui($id,solid_name) dsp f \
 		     $mged_gui($id,dsp_file_name) $mged_gui($id,dsp_file_width) \
 		     $mged_gui($id,dsp_file_length) $mged_gui($id,dsp_smooth) ad \
-		     $mged_gui($id,dsp_cell_size) $mged_gui($id,dsp_elev_size)}
+		     $mged_gui($id,dsp_cell_size) $mged_gui($id,dsp_elev_size)]
 
-    set ret [catch $command result]
+    set ret [catch {{*}$command} result]
     if { $ret != 0 } {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "ERROR creating DSP" $result "" 0 OK
     }
 
-    catch {_mged_sed $mged_gui($id,solid_name)}
+    catch {::brlcad::mged sed $mged_gui($id,solid_name)}
     catch "destroy $top"
 }
 
@@ -339,7 +339,7 @@ proc solid_auto_name { id } {
     global mged_default
     global ::tk::Priv
 
-    set result [catch {_mged_make_name $mged_default(solid_name_fmt)} name]
+    set result [catch {::brlcad::mged make_name $mged_default(solid_name_fmt)} name]
 
     if {$result == 0} {
 	set mged_gui($id,solid_name) $name
@@ -356,10 +356,10 @@ proc make_solid { id w type } {
     global mged_gui
     global ::tk::Priv
 
-    set result [catch {_mged_make $mged_gui($id,solid_name) $type} msg]
+    set result [catch {::brlcad::mged make $mged_gui($id,solid_name) $type} msg]
 
     if {$result == 0} {
-	catch {_mged_sed $mged_gui($id,solid_name)}
+	catch {::brlcad::mged sed $mged_gui($id,solid_name)}
 	catch {destroy $w}
     } else {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\

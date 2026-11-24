@@ -394,16 +394,16 @@ proc help {args} {
     global mged_help_data
 
     if {[llength $args] > 0} {
-	return [help_comm mged_help_data $args]
+	return [::brlcad::help::help_comm mged_help_data $args]
     } else {
-	return [help_comm mged_help_data]
+	return [::brlcad::help::help_comm mged_help_data]
     }
 }
 
 proc ? {} {
     global mged_help_data
 
-    return [?_comm mged_help_data 20 4]
+    return [::brlcad::help::?_comm mged_help_data 20 4]
 }
 
 proc apropos {args} {
@@ -434,12 +434,12 @@ proc apropos {args} {
     }
 
     set key [join $query " "]
-    set results [manpage_search $key -mode $mode -sections {mann} -format names]
+    set results [::brlcad::help::manpage_search $key -mode $mode -sections {mann} -format names]
     if {$results != "" || $mode == "full"} {
 	return $results
     }
 
-    return [apropos_comm mged_help_data $key]
+    return [::brlcad::help::apropos_comm mged_help_data $key]
 }
 
 # Local Variables:

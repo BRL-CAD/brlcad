@@ -441,7 +441,9 @@ update_grids(struct mged_state *s, fastf_t sf)
 
     bu_vls_strcpy(&save_result, Tcl_GetStringResult(s->interp));
 
-    bu_vls_printf(&cmd, "grid_control_update %lf\n", sf);
+    bu_vls_printf(&cmd,
+		  "::brlcad::mged::grid::grid_control_update %lf\n",
+		  sf);
     (void)Tcl_Eval(s->interp, bu_vls_addr(&cmd));
 
     Tcl_SetResult(s->interp, bu_vls_addr(&save_result), TCL_VOLATILE);

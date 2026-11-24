@@ -376,7 +376,7 @@ proc do_LoadScript { id } {
 		return
 	    }
 
-	    _mged_units $mged_display(units)
+	    ::brlcad::mged units $mged_display(units)
 	}
 
 	proc do_rt_script { id } {
@@ -512,7 +512,11 @@ proc echo args {
     return $args
 }
 
-proc ia_man {parent screen} {
+namespace eval ::brlcad::mged::manual {
+    namespace export init
+}
+
+proc ::brlcad::mged::manual::init {parent screen} {
     global mged_html_dir
 
     package require tklitehtml 0.1.0
@@ -539,6 +543,10 @@ proc ia_man {parent screen} {
     set height [expr {min($defaultHeight, $maximumHeight)}]
     wm geometry $w ${width}x${height}
     update idletasks
+}
+
+proc ia_man {parent screen} {
+    tailcall ::brlcad::mged::manual::init $parent $screen
 }
 
 #==============================================================================

@@ -258,23 +258,23 @@ proc helplib {args} {
     global helplib_data
 
     if {[llength $args] > 0} {
-	return [help_comm helplib_data $args]
+	return [::brlcad::help::help_comm helplib_data $args]
     } else {
-	return [help_comm helplib_data]
+	return [::brlcad::help::help_comm helplib_data]
     }
 }
 
 proc ?lib {} {
     global helplib_data
 
-    return [?_comm helplib_data 25 4]
+    return [::brlcad::help::?_comm helplib_data 25 4]
 }
 
 
 proc aproposlib {key} {
     global helplib_data
 
-    return [apropos_comm helplib_data $key]
+    return [::brlcad::help::apropos_comm helplib_data $key]
 }
 
 ## - helplib_alias

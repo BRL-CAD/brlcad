@@ -40,7 +40,7 @@ proc ::mged::xmin::editors::exercise_combination {id top} {
     } "Combination Editor did not open"
 
     ::mged::gui::test::set_entry $editor.nameE xmin_group.c
-    focus $editor.nameE
+    focus -force $editor.nameE
     event generate $editor.nameE <KeyPress> -keysym Return
     ::mged::gui::test::settle
     set original_expression [string trim [$editor.combT get 1.0 end]]
@@ -98,7 +98,7 @@ proc ::mged::xmin::editors::exercise_combination {id top} {
 proc ::mged::xmin::editors::load_attribute_object {editor object_name} {
     set object_entry $editor.fr_obj.obj_e
     ::mged::gui::test::set_entry $object_entry $object_name
-    focus $object_entry
+    focus -force $object_entry
     event generate $object_entry <KeyPress> -keysym Return
     ::mged::gui::test::settle
 }
@@ -115,7 +115,7 @@ proc ::mged::xmin::editors::select_attribute {listbox name} {
 }
 
 proc ::mged::xmin::editors::set_attribute_value {text value} {
-    focus $text
+    focus -force $text
     $text delete 1.0 end
     $text insert end $value
     event generate $text <KeyRelease> -keysym a
@@ -152,7 +152,7 @@ proc ::mged::xmin::editors::exercise_attributes {id top} {
     $editor.fr_attr.fr_new.new invoke
     set name_entry $editor.fr_attr.fr_new.attr_e
     ::mged::gui::test::set_entry $name_entry added
-    focus $name_entry
+    focus -force $name_entry
     event generate $name_entry <KeyPress> -keysym Return
     ::mged::gui::test::settle
     set_attribute_value $value_text {new value}

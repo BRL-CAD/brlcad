@@ -31,7 +31,7 @@ package require Itk
 
 
 # go ahead and blow away the class if we are reloading
-catch {delete class GeometryChecker} error
+catch {::itcl::delete class GeometryChecker} error
 
 package provide GeometryChecker 1.0
 
@@ -141,13 +141,13 @@ package provide GeometryChecker 1.0
 
     while {$_commandText != "Stopped."} {
 	set _commandText "Stopped."
-	lappend _afterCommands [after 500 "[code set [scope _commandText] "Stopped."]"]
+	lappend _afterCommands [after 500 "[::itcl::code set [::itcl::scope _commandText] "Stopped."]"]
     }
 
-    lappend _afterCommands [after 1500 "[code set [scope _commandText] ""]"]
+    lappend _afterCommands [after 1500 "[::itcl::code set [::itcl::scope _commandText] ""]"]
 }
 
-body GeometryChecker::handleCheckListSelect {} {
+::itcl::body GeometryChecker::handleCheckListSelect {} {
     set found_marked false
 
     set sset [$_ck selection]
@@ -232,8 +232,8 @@ body GeometryChecker::handleCheckListSelect {} {
     itk_component add fullPathButton {
 	ttk::checkbutton $itk_component(headerFrame).fullPathDisplayCheckButton \
 	-text "Hide Full Path" \
-	-variable [scope _fullPathHidden] \
-	-command [code $this togglePathDisplay]
+	-variable [::itcl::scope _fullPathHidden] \
+	-command [::itcl::code $this togglePathDisplay]
     } {}
     set _fullPathHidden 1
 
@@ -244,13 +244,13 @@ body GeometryChecker::handleCheckListSelect {} {
     	ttk::treeview $itk_component(checkFrame).checkList \
 	    -columns "ID Left Right Size" \
 	    -show headings \
-	    -yscroll [ code $itk_component(checkFrame).checkScroll set]
+	    -yscroll [::itcl::code $itk_component(checkFrame).checkScroll set]
     } {}
     itk_component add checkMenu {
 	menu $itk_component(checkList).checkMenu -tearoff false
     } {}
     itk_component add checkScroll {
-	ttk::scrollbar $itk_component(checkFrame).checkScroll -orient vertical -command [ code $itk_component(checkFrame).checkList yview ]
+	ttk::scrollbar $itk_component(checkFrame).checkScroll -orient vertical -command [::itcl::code $itk_component(checkFrame).checkList yview ]
     } {}
 
     itk_component add checkFooterFrame {
@@ -261,7 +261,7 @@ body GeometryChecker::handleCheckListSelect {} {
 	ttk::labelframe $itk_component(checkFooterFrame).optionFrame -text "Draw" -padding {2 0}
     } {}
     itk_component add firstCheck {
-	ttk::checkbutton $itk_component(optionFrame).firstCheck -text "Only First Union" -variable [scope _drawFirstUnion] -command [code $this display]
+	ttk::checkbutton $itk_component(optionFrame).firstCheck -text "Only First Union" -variable [::itcl::scope _drawFirstUnion] -command [::itcl::code $this display]
     } {}
 
     itk_component add progressFrame {
@@ -269,17 +269,17 @@ body GeometryChecker::handleCheckListSelect {} {
     } {}
     itk_component add commandLabel {
 	ttk::label $itk_component(progressFrame).commandLabel \
-	    -textvariable [scope _commandText] \
+	    -textvariable [::itcl::scope _commandText] \
     } {}
     itk_component add progressBar {
-	ttk::progressbar $itk_component(progressFrame).progressBar -variable [scope _progressValue]
+	ttk::progressbar $itk_component(progressFrame).progressBar -variable [::itcl::scope _progressValue]
     } {}
     itk_component add progressButton {
 	ttk::button $itk_component(progressFrame).progressButton \
 	-text "X" \
 	-width 1 \
 	-padding {2 0} \
-	-command [code $this handleProgressButton]
+	-command [::itcl::code $this handleProgressButton]
     } {}
 
     itk_component add checkGrip {
@@ -325,9 +325,9 @@ body GeometryChecker::handleCheckListSelect {} {
 
     set font [::ttk::style lookup [$_ck cget -style] -font]
     $itk_component(checkMenu) configure -font $font
-    $itk_component(checkMenu) add command -label "Mark Selected" -command [code $this markSelection]
-    $itk_component(checkMenu) add command -label "Unmark Selected" -command [code $this unmarkSelection]
-    $itk_component(checkMenu) add command -label "Copy Fullpaths" -command [code $this copySelection]
+    $itk_component(checkMenu) add command -label "Mark Selected" -command [::itcl::code $this markSelection]
+    $itk_component(checkMenu) add command -label "Unmark Selected" -command [::itcl::code $this unmarkSelection]
+    $itk_component(checkMenu) add command -label "Copy Fullpaths" -command [::itcl::code $this copySelection]
 
     pack $itk_component(headerFrame) -side top -fill both
     grid $itk_component(headerLabelStatus) $itk_component(fullPathButton) -sticky nw
@@ -359,8 +359,8 @@ body GeometryChecker::handleCheckListSelect {} {
     bind $itk_component(checkButtonFrame).buttonNext <Up> [list $this goPrev]
     bind $itk_component(checkButtonFrame).buttonNext <Down> [list $this goNext]
 
-    bind $_ck <<TreeviewSelect>> [code $this handleCheckListSelect]
-    bind $_ck <ButtonRelease-3> [code tk_popup $itk_component(checkMenu) %X %Y]
+    bind $_ck <<TreeviewSelect>> [::itcl::code $this handleCheckListSelect]
+    bind $_ck <ButtonRelease-3> [::itcl::code tk_popup $itk_component(checkMenu) %X %Y]
 }
 
 ::itcl::body GeometryChecker::abortCommands {} {
@@ -388,7 +388,7 @@ body GeometryChecker::handleCheckListSelect {} {
 # begin public methods
 ###########
 
-body GeometryChecker::loadOverlaps {{filename ""}} {
+::itcl::body GeometryChecker::loadOverlaps {{filename ""}} {
 
     if {[catch {opendb} db_path]} {
 	return -code error "no database seems to be open"
@@ -545,8 +545,8 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
     }
 
     # add key bindings
-    bind $_ck <Home> [code $this handleHomeKey]
-    bind $_ck <End> [code $this handleEndKey]
+    bind $_ck <Home> [::itcl::code $this handleHomeKey]
+    bind $_ck <End> [::itcl::code $this handleEndKey]
 }
 
 
@@ -554,7 +554,7 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
 #
 # toggles sorting of a particular table column
 #
-body GeometryChecker::sortBy {column direction} {
+::itcl::body GeometryChecker::sortBy {column direction} {
     # find marked and unmarked items
     set marked {}
     set unmarked {}
@@ -618,7 +618,7 @@ body GeometryChecker::sortBy {column direction} {
     set _lastSort "$column $direction"
 }
 
-body GeometryChecker::togglePathDisplay {} {
+::itcl::body GeometryChecker::togglePathDisplay {} {
     if {$_fullPathHidden} {
 	foreach id [$_ck children {}] {
 	    set fullpaths $_fullPath([$_ck set $id "ID"])
@@ -645,7 +645,7 @@ body GeometryChecker::togglePathDisplay {} {
 #
 # select the previous node
 #
-body GeometryChecker::goPrev {} {
+::itcl::body GeometryChecker::goPrev {} {
     set sset [$_ck selection]
     set slen [llength $sset]
     set alln [$_ck children {}]
@@ -675,7 +675,7 @@ body GeometryChecker::goPrev {} {
 #
 # select the next node
 #
-body GeometryChecker::goNext {} {
+::itcl::body GeometryChecker::goNext {} {
     set sset [$_ck selection]
     set slen [llength $sset]
     set alln [$_ck children {}]
@@ -700,7 +700,7 @@ body GeometryChecker::goNext {} {
     }
 }
 
-body GeometryChecker::writeMarks {} {
+::itcl::body GeometryChecker::writeMarks {} {
     set mark_file [file join $_ol_dir "${_ol_prefix}.marked"]
     set tmp_mark_file "${mark_file}.tmp"
 
@@ -745,7 +745,7 @@ body GeometryChecker::writeMarks {} {
     file delete $tmp_mark_file
 }
 
-body GeometryChecker::changeMarkOnOverlap {id tag_cmd} {
+::itcl::body GeometryChecker::changeMarkOnOverlap {id tag_cmd} {
     $_ck tag $tag_cmd "marked" $id
     $this writeMarks
 
@@ -770,15 +770,15 @@ body GeometryChecker::changeMarkOnOverlap {id tag_cmd} {
     }
 }
 
-body GeometryChecker::markOverlap {id} {
+::itcl::body GeometryChecker::markOverlap {id} {
     $this changeMarkOnOverlap $id "add"
 }
 
-body GeometryChecker::unmarkOverlap {id} {
+::itcl::body GeometryChecker::unmarkOverlap {id} {
     $this changeMarkOnOverlap $id "remove"
 }
 
-body GeometryChecker::changeMarkOnSelection {tag_cmd} {
+::itcl::body GeometryChecker::changeMarkOnSelection {tag_cmd} {
     # Multi-select will have initiated a draw.
     # Abort because we're about to change the selection.
     $this abortCommands
@@ -807,15 +807,15 @@ body GeometryChecker::changeMarkOnSelection {tag_cmd} {
     }
 }
 
-body GeometryChecker::markSelection {} {
+::itcl::body GeometryChecker::markSelection {} {
     $this changeMarkOnSelection "add"
 }
 
-body GeometryChecker::unmarkSelection {} {
+::itcl::body GeometryChecker::unmarkSelection {} {
     $this changeMarkOnSelection "remove"
 }
 
-body GeometryChecker::copySelection {} {
+::itcl::body GeometryChecker::copySelection {} {
     set paths {}
     set sset [$_ck selection]
     foreach item $sset {
@@ -827,17 +827,17 @@ body GeometryChecker::copySelection {} {
     clipboard append $paths
 }
 
-body GeometryChecker::subtractItemRightFromLeft {left right} {
+::itcl::body GeometryChecker::subtractItemRightFromLeft {left right} {
     set _commandText "Subtracting ($right) from ($left)"
     {*}$_overlapCallback $left $right $subtractFirst
 }
 
-body GeometryChecker::subtractItemLeftFromRight {left right} {
+::itcl::body GeometryChecker::subtractItemLeftFromRight {left right} {
     set _commandText "Subtracting ($left) from ($right)"
     {*}$_overlapCallback $right $left $subtractFirst
 }
 
-body GeometryChecker::subtractSelectionRightFromLeft {{swap "false"}} {
+::itcl::body GeometryChecker::subtractSelectionRightFromLeft {{swap "false"}} {
     # disable drawing in response to selection change (which happens
     # as completed items are marked)
     set _doingSubtraction true
@@ -888,7 +888,7 @@ body GeometryChecker::subtractSelectionRightFromLeft {{swap "false"}} {
 #
 # subtract the currently selected left nodes from the right ones
 #
-body GeometryChecker::subLeft {} {
+::itcl::body GeometryChecker::subLeft {} {
     set swap true
     $this subtractSelectionRightFromLeft $swap
 }
@@ -897,14 +897,14 @@ body GeometryChecker::subLeft {} {
 #
 # subtract the currently selected right nodes from the left ones
 #
-body GeometryChecker::subRight {} {
+::itcl::body GeometryChecker::subRight {} {
     $this subtractSelectionRightFromLeft
 }
 
 # updateDisplayFinished
 #
 # try to run a newer display call to invalidate the current one
-body GeometryChecker::updateDisplayFinished {} {
+::itcl::body GeometryChecker::updateDisplayFinished {} {
     # try to run newer display call
     update
 
@@ -913,7 +913,7 @@ body GeometryChecker::updateDisplayFinished {} {
     return $_displayFinished
 }
 
-body GeometryChecker::firstUnionedSolid {tree} {
+::itcl::body GeometryChecker::firstUnionedSolid {tree} {
     return [string trim [file tail [lindex [search $tree -type shape -bool u] 0]]]
 }
 
@@ -921,7 +921,7 @@ body GeometryChecker::firstUnionedSolid {tree} {
 #
 # draw the currently selected geometry
 #
-body GeometryChecker::display {} {
+::itcl::body GeometryChecker::display {} {
     set _displayFinished false
     set sset [$_ck selection]
 
@@ -969,9 +969,9 @@ body GeometryChecker::display {} {
 		# chance to abort before the first draw.
 		set _abort false
 		lappend _afterCommands [after 3000 \
-		    "if {! \[set \"[scope _progressButtonInvoked]\"\]} { \
+		    "if {! \[set \"[::itcl::scope _progressButtonInvoked]\"\]} { \
 		        [list {*}$_leftDrawCallback $leftPath]; \
-			[code set [scope _commandText] ""] \
+			[::itcl::code set [::itcl::scope _commandText] ""] \
 		    }"]
 
 		# wait for left draw to finish before starting right
@@ -981,7 +981,7 @@ body GeometryChecker::display {} {
 		#  - handleProgressButton
 		#  - handleCheckListSelect and destructor
 		#    - via abortCommands (also sets _abort)
-		vwait [scope _commandText]
+		vwait [::itcl::scope _commandText]
 		if {$_abort || $_displayFinished} {
 		    set endDraw true
 		    break
@@ -1050,39 +1050,39 @@ body GeometryChecker::display {} {
 
 # registerWhoCallback
 #
-body GeometryChecker::registerWhoCallback {callback} {
+::itcl::body GeometryChecker::registerWhoCallback {callback} {
     set _whoCallback $callback
     set _who [{*}$_whoCallback]
 }
 
 # registerDrawCallback
 #
-body GeometryChecker::registerDrawCallbacks {left_callback right_callback} {
+::itcl::body GeometryChecker::registerDrawCallbacks {left_callback right_callback} {
     set _leftDrawCallback $left_callback
     set _rightDrawCallback $right_callback
 }
 
 # registerEraseCallback
 #
-body GeometryChecker::registerEraseCallback {callback} {
+::itcl::body GeometryChecker::registerEraseCallback {callback} {
     set _eraseCallback $callback
 }
 
 # registerOverlapCallback
 #
-body GeometryChecker::registerOverlapCallback {callback} {
+::itcl::body GeometryChecker::registerOverlapCallback {callback} {
     set _overlapCallback $callback
 }
 
-body GeometryChecker::handleHomeKey {} {
+::itcl::body GeometryChecker::handleHomeKey {} {
     $_ck see [lindex [$_ck children {}] 0]
 }
 
-body GeometryChecker::handleEndKey {} {
+::itcl::body GeometryChecker::handleEndKey {} {
     $_ck see [lindex [$_ck children {}] end]
 }
 
-body GeometryChecker::setMode {subFirst} {
+::itcl::body GeometryChecker::setMode {subFirst} {
     set subtractFirst $subFirst
     if {$subFirst} {
 	set _drawFirstUnion 1

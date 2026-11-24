@@ -27,7 +27,10 @@ package require Itk
 package require Iwidgets
 
 namespace eval ::sdialogs {
-    namespace export *
+    namespace export \
+	Entrydialog entrydialog \
+	Listdialog listdialog \
+	Stddlgs
 
     variable library [file dirname [info script]]
     variable version 1.0

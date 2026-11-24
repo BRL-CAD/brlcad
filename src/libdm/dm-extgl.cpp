@@ -279,10 +279,8 @@ extgl_close(struct dm *dmp)
 	(void)gl_hud_end(dmp);
 	glMatrixMode(matrix_mode);
     }
-    if (dmp->i->fbp) {
-	(void)fb_close_existing(dmp->i->fbp);
-	dmp->i->fbp = FB_NULL;
-    }
+    if (dm_close_fb(dmp) != BRLCAD_OK)
+	return BRLCAD_ERROR;
     (void)gl_put_internal(dmp);
     bu_vls_free(&dmp->i->dm_pathName);
     bu_vls_free(&dmp->i->dm_tkName);

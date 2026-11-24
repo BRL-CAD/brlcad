@@ -499,13 +499,11 @@ namespace eval RtWizard {
 	} else {
 	    set fb_type "/dev/oglsp"
 	}
-	if {[info exists ::RtWizard::wizard_state(fbserv_local)]} {
-	    set target [rtwizard_fbserv_start $width $height $fb_type]
-	} else {
-	    set port $::RtWizard::wizard_state(fbserv_port)
-	    set target [rtwizard_fbserv_start $width $height $fb_type $port]
+	set args [list $width $height $fb_type]
+	if {![info exists ::RtWizard::wizard_state(fbserv_local)]} {
+	    lappend args $::RtWizard::wizard_state(fbserv_port)
 	}
-	return $target
+	return [::brlcad::rtwizard fbserv_start {*}$args]
     }
     #--------------------#
     #  Private Methods   #

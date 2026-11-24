@@ -28,11 +28,11 @@
 #	Ensure that all commands that this script uses without defining
 #	are provided by the calling application
 #
-check_externs "_mged_solid_report _mged_press _mged_aip _mged_M"
+check_externs "::brlcad::mged"
 
 proc eobjmenu {} {
 
-    if {![llength [_mged_solid_report -1]]} {
+    if {![llength [::brlcad::mged solid_report -1]]} {
 	puts "No objects are currently being displayed"
 	return
     }
@@ -52,12 +52,12 @@ proc eobjmenu {} {
 	.om.meat.objects selection clear 0 end
 	.om.meat.objects selection set $index
 
-	_mged_press oill
+	::brlcad::mged press oill
 	for {set i 0} {$i < $index} {incr i} {
-	    _mged_aip f
+	    ::brlcad::mged aip f
 	}
 	if {$flag != 0} {
-	    _mged_M 1 0 0
+	    ::brlcad::mged M 1 0 0
 	}
     }
 
@@ -67,7 +67,7 @@ proc eobjmenu {} {
     frame .om.meat
     listbox .om.meat.objects -yscrollcommand {.om.meat.slider set}
     set i 0
-    foreach word [_mged_solid_report -1] {
+    foreach word [::brlcad::mged solid_report -1] {
 	.om.meat.objects insert end $word
 	incr i
     }
@@ -85,7 +85,7 @@ proc eobjmenu {} {
     bind .om.meat.objects <ButtonPress-2> {illum 0; break}
     bind .om.meat.objects <ButtonRelease-2> {
 	.om.meat.objects selection clear 0 end
-	_mged_press reject
+	::brlcad::mged press reject
 	break
     }
     .om.meat.objects configure -width 0

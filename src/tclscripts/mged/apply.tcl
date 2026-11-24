@@ -22,6 +22,22 @@
 #	Procedures to apply commands to one or more display managers.
 #
 
+set mged_apply_retry_interval_ms 25
+
+proc mged_apply_when_available {retry_command script} {
+    global mged_apply_retry_interval_ms
+
+    set status [catch {uplevel 1 $script} message options]
+    if {$status && [mged_command_busy $options]} {
+	# Long-running GED commands pump Tk events.  A display-manager menu
+	# callback serviced during that window must wait for the shared state
+	# instead of dropping the requested change.
+	after $mged_apply_retry_interval_ms $retry_command
+    }
+
+    return $message
+}
+
 proc mged_apply { id cmd } {
     global mged_gui
 
@@ -43,56 +59,54 @@ proc mged_apply { id cmd } {
 proc mged_apply_active { id cmd } {
     global mged_gui
 
-    catch {winset $mged_gui($id,active_dm)} msg
-    catch {uplevel \#0 $cmd} msg
-
-    return $msg
+    return [mged_apply_when_available [list mged_apply_active $id $cmd] {
+	winset $mged_gui($id,active_dm)
+	uplevel \#0 $cmd
+    }]
 }
 
 proc mged_apply_local { id cmd } {
     global mged_gui
 
-    winset $mged_gui($id,top).ul
-    catch { uplevel \#0 $cmd } msg
+    return [mged_apply_when_available [list mged_apply_local $id $cmd] {
+	winset $mged_gui($id,top).ul
+	uplevel \#0 $cmd
 
-    winset $mged_gui($id,top).ur
-    catch { uplevel \#0 $cmd } msg
+	winset $mged_gui($id,top).ur
+	uplevel \#0 $cmd
 
-    winset $mged_gui($id,top).ll
-    catch { uplevel \#0 $cmd } msg
+	winset $mged_gui($id,top).ll
+	uplevel \#0 $cmd
 
-    winset $mged_gui($id,top).lr
-    catch { uplevel \#0 $cmd } msg
+	winset $mged_gui($id,top).lr
+	uplevel \#0 $cmd
 
-    winset $mged_gui($id,active_dm)
-
-    return $msg
+	winset $mged_gui($id,active_dm)
+    }]
 }
 
 proc mged_apply_using_list { id cmd } {
     global mged_gui
 
-    set msg ""
-    foreach dm $mged_gui($id,apply_list) {
-	winset $dm
-	catch { uplevel \#0 $cmd } msg
-    }
+    return [mged_apply_when_available [list mged_apply_using_list $id $cmd] {
+	foreach dm $mged_gui($id,apply_list) {
+	    winset $dm
+	    uplevel \#0 $cmd
+	}
 
-    winset $mged_gui($id,active_dm)
-
-    return $msg
+	winset $mged_gui($id,active_dm)
+    }]
 }
 
 proc mged_apply_all { win cmd } {
-    set msg ""
-    foreach dm [get_dm_list] {
-	winset $dm
-	catch { uplevel \#0 $cmd } msg
-    }
+    return [mged_apply_when_available [list mged_apply_all $win $cmd] {
+	foreach dm [get_dm_list] {
+	    winset $dm
+	    uplevel \#0 $cmd
+	}
 
-    winset $win
-
-    return $msg
+	winset $win
+    }]
 }
 
 ## - mged_shaded_mode_helper

@@ -22,6 +22,7 @@ changes made.  See document footer for additional details.
 * added renderer-neutral libged database change events - Cliff Yapp
 * generalized librt and libged editing APIs and sessions - Cliff Yapp
 * switched MGED to using a built-in HTML manual viewer - Cliff Yapp
+* added namespaced Tcl interfaces for MGED and core components - Cliff Yapp
 
 ----------------------------------------------------------------------
 --- 2026-11-03  Release 7.46.0                                     ---

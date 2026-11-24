@@ -171,16 +171,19 @@ proc ::rtwizard::xmin::exercise_framebuffer_controls {} {
 }
 
 proc ::rtwizard::xmin::check_process_timeout {} {
-    rename ::rtwizard_render ::rtwizard::xmin::native_render
-    proc ::rtwizard_render {type settings} {
+    rename ::brlcad::rtwizard ::rtwizard::xmin::native_dispatch
+    proc ::brlcad::rtwizard {subcommand type settings} {
+	if {$subcommand ne "render"} {
+	    error "expected render, got $subcommand"
+	}
 	return [dict get $settings _process_timeout]
     }
     try {
 	set timeout [::RtWizard::render A {}]
 	::gui::test::require {$timeout == 7} "render did not receive the CLI process timeout"
     } finally {
-	rename ::rtwizard_render {}
-	rename ::rtwizard::xmin::native_render ::rtwizard_render
+	rename ::brlcad::rtwizard {}
+	rename ::rtwizard::xmin::native_dispatch ::brlcad::rtwizard
     }
 }
 
@@ -281,8 +284,10 @@ proc ::rtwizard::xmin::run {} {
 	[info exists ::RtWizard::wizard_state(verbose)]
     } "RaytraceWizard did not initialize its optional verbose state"
     ::gui::test::require {
-	[llength [info commands rtwizard_render]] == 1
-    } "rtwizard did not register its native renderer"
+	[llength [info commands ::brlcad::rtwizard]] == 1 &&
+	[llength [info commands ::rtwizard_render]] == 1 &&
+	[llength [info commands ::rtwizard_fbserv_start]] == 1
+    } "rtwizard did not register its canonical and compatibility commands"
     foreach {title basename} {
 	{Simple Full-Color Image} full-color
 	{Simple Line Drawing} line
@@ -344,10 +349,6 @@ set argv {}
 set argc 0
 ::gui::test::capture_background_errors
 after $::rtwizard::xmin::startup_delay_ms ::rtwizard::xmin::run_checked
-if {[llength [info commands rtwizard_render]] != 1} {
-    puts stderr "rtwizard did not register its native renderer"
-    exit 1
-}
 
 # Local Variables:
 # mode: Tcl

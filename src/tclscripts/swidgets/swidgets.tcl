@@ -27,7 +27,13 @@ package require Itk
 package require Iwidgets
 
 namespace eval ::swidgets {
-    namespace export *
+    namespace export \
+	Selectlists selectlists \
+	tkgetdir \
+	Togglearrow togglearrow \
+	Tooltip tooltip \
+	Tree tree \
+	Treenode treenode
 
     variable library [file dirname [info script]]
     variable version 1.0

@@ -60,10 +60,9 @@ proc ::mged::xmin::render::wait_for_file_size {path minimum_size timeout_ms} {
 }
 
 proc ::mged::xmin::render::exercise_rt_script {id top} {
-    global rts_control
-
     set output [file join $::env(GUI_TEST_DIR) saved-view.sh]
     ::mged::gui::test::invoke $top {File {Render View} {RT Script...}}
+    upvar #0 ::brlcad::mged::rt_script::control rts_control
     set dialog .$id.do_rtScript
     ::gui::test::require {
 	[winfo exists $dialog] && [winfo ismapped $dialog] &&
@@ -94,10 +93,9 @@ proc ::mged::xmin::render::exercise_rt_script {id top} {
 }
 
 proc ::mged::xmin::render::exercise_plot {id top} {
-    global pl_control
-
     set output [file join $::env(GUI_TEST_DIR) rendered.plot3]
     ::mged::gui::test::invoke $top {File {Render View} {Plot...}}
+    upvar #0 ::brlcad::mged::plot::control pl_control
     set dialog .$id.do_plot
     ::gui::test::require {
 	[winfo exists $dialog] && [winfo ismapped $dialog]
@@ -133,10 +131,9 @@ proc ::mged::xmin::render::exercise_plot {id top} {
 }
 
 proc ::mged::xmin::render::exercise_postscript {id top} {
-    global ps_control
-
     set output [file join $::env(GUI_TEST_DIR) rendered.ps]
     ::mged::gui::test::invoke $top {File {Render View} {PostScript...}}
+    upvar #0 ::brlcad::mged::postscript::control ps_control
     set dialog .$id.do_ps
     ::gui::test::require {
 	[winfo exists $dialog] && [winfo ismapped $dialog]

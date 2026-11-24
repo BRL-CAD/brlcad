@@ -26,10 +26,9 @@
 ##############################################################
 
 
-namespace eval cadwidgets {
-    set cursorWaitcount 0
+namespace eval ::cadwidgets {
+    set cursorWaitCount 0
     set ignoreCursorWait 0
-}
 
 # PROCEDURE: SetWaitCursor
 #
@@ -42,13 +41,16 @@ namespace eval cadwidgets {
 #       None
 #
 proc SetWaitCursor {_w} {
-    if {$::cadwidgets::ignoreCursorWait} {
+    variable cursorWaitCount
+    variable ignoreCursorWait
+
+    if {$ignoreCursorWait} {
 	return
     }
 
-    incr ::cadwidgets::cursorWaitCount
+    incr cursorWaitCount
 
-    if {1 < $::cadwidgets::cursorWaitCount} {
+    if {1 < $cursorWaitCount} {
 	# Already in cursor wait mode
 	return
     }
@@ -71,18 +73,32 @@ proc SetWaitCursor {_w} {
 #       None
 #
 proc SetNormalCursor {_w} {
-    if {$::cadwidgets::ignoreCursorWait} {
+    variable cursorWaitCount
+    variable ignoreCursorWait
+
+    if {$ignoreCursorWait} {
 	return
     }
 
-    incr ::cadwidgets::cursorWaitCount -1
+    incr cursorWaitCount -1
 
-    if {$::cadwidgets::cursorWaitCount != 0} {
+    if {$cursorWaitCount != 0} {
 	return
     }
 
     $_w configure -cursor {}
     ::update idletasks
+}
+
+}
+
+# Compatibility interfaces.  New callers should use the owning namespace.
+proc ::SetWaitCursor {args} {
+    tailcall ::cadwidgets::SetWaitCursor {*}$args
+}
+
+proc ::SetNormalCursor {args} {
+    tailcall ::cadwidgets::SetNormalCursor {*}$args
 }
 
 

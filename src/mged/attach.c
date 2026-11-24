@@ -217,7 +217,13 @@ release(struct mged_state *s, char *name, int need_close)
 	}
 
 	/* release framebuffer resources */
-	fb_close_existing(fbp);
+	if (dm_close_fb(DMP) != BRLCAD_OK) {
+	    Tcl_AppendResult(s->interp, "release: could not close framebuffer\n",
+		    (char *)NULL);
+	    if (save_dm_list != MGED_DM_NULL)
+		set_curr_dm(s, save_dm_list);
+	    return TCL_ERROR;
+	}
 	fbp = (struct fb *)NULL;
     }
 
@@ -455,12 +461,6 @@ gui_setup(struct mged_state *s, const char *dstr)
 
     /* Initialize [incr Tk] */
     if (Tcl_Eval(s->interp, "package require Itk") != TCL_OK) {
-      return TCL_ERROR;
-    }
-
-    /* Import [incr Tk] commands into the global namespace */
-    if (Tcl_Import(s->interp, Tcl_GetGlobalNamespace(s->interp),
-		   "::itk::*", /* allowOverwrite */ 1) != TCL_OK) {
 	return TCL_ERROR;
     }
 #endif
@@ -471,12 +471,6 @@ gui_setup(struct mged_state *s, const char *dstr)
 
     /* Initialize the Iwidgets package */
     if (Tcl_Eval(s->interp, "package require Iwidgets") != TCL_OK) {
-	return TCL_ERROR;
-    }
-
-    /* Import iwidgets into the global namespace */
-    if (Tcl_Import(s->interp, Tcl_GetGlobalNamespace(s->interp),
-		   "::iwidgets::*", /* allowOverwrite */ 1) != TCL_OK) {
 	return TCL_ERROR;
     }
 

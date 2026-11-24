@@ -77,7 +77,7 @@ namespace eval RtWizard {
 	    }
 	}
 
-	return [rtwizard_render $type $render_settings]
+	return [::brlcad::rtwizard render $type $render_settings]
     }
 }
 

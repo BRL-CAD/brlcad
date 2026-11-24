@@ -126,6 +126,12 @@ proc ::archer::xmin::exercise_html_help {application} {
 	} "Archer help did not create its tklitehtml browser panes"
     }
 
+    set link_command [$toc cget -linkcommand]
+    ::gui::test::require {
+	[llength $link_command] &&
+	![info exists ::htmlviewer]
+    } "Archer help did not bind navigation to its own viewer"
+
     set toc_path [file join [bu_dir doc] html main_menu.html]
     set help_path [file join [bu_dir doc] html books \
 	BRL-CAD_Tutorial_Series-VolumeI.html]
@@ -144,7 +150,6 @@ proc ::archer::xmin::exercise_html_help {application} {
     } "Archer help did not load its table of contents and tutorial"
 
     set initial_location [$help location]
-    set link_command [$toc cget -linkcommand]
     {*}$link_command $toc [$toc location] {}
     ::gui::test::require {
 	[$help location] eq [$toc location]
@@ -155,7 +160,7 @@ proc ::archer::xmin::exercise_html_help {application} {
     } "Archer help back navigation did not restore the tutorial"
 
     set missing_path [file join $::env(GUI_TEST_DIR) missing-help.html]
-    catch {$help goto $missing_path}
+    {*}$link_command $toc $missing_path {}
     ::gui::test::require {
 	[$help location] eq $initial_location && [$help error] ne ""
     } "Archer help did not preserve a failed navigation"

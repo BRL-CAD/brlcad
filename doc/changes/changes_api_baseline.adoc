@@ -130,6 +130,7 @@ include/analyze/polygonize.h: #define ANALYZE_POLYGONIZE_DEFAULT_MAX_CYCLE_TIME 
 include/analyze/polygonize.h: #define ANALYZE_POLYGONIZE_DEFAULT_MINIMUM_FREE_MEM 150000000
 include/analyze/polygonize.h: #define ANALYZE_POLYGONIZE_PARAMS_DEFAULT { 0, 0, \
 include/analyze/polygonize.h: ANALYZE_EXPORT extern int analyze_polygonize(int **faces, int *num_faces, point_t **vertices, int *num_vertices, fastf_t size, point_t p_s, const char *obj, struct db_i *dbip, struct analyze_polygonize_params *p);
+include/analyze/voxelize.h: #define ANALYZE_VOXELIZE_MAX_LEVEL_DETAIL 1024
 include/analyze/voxelize.h: ANALYZE_EXPORT extern void voxelize(struct rt_i *rtip, fastf_t voxelSize[3], int levelOfDetail, void (*create_boxes)(void *callBackData, int x, int y, int z, const char *regionName, fastf_t percentageFill), void *callBackData);
 include/bg/aabb_ray.h: BG_EXPORT extern void bg_ray_invdir(vect_t *invdir, const vect_t dir);
 include/bg/aabb_ray.h: BG_EXPORT extern int bg_isect_aabb_ray( fastf_t *r_min, fastf_t *r_max, const point_t opt, const fastf_t *invdir, const fastf_t *aabb_min, const fastf_t *aabb_max );
@@ -2480,6 +2481,7 @@ include/dm.h: DM_EXPORT extern int dm_set_debug(struct dm *dmp, int lvl);
 include/dm.h: DM_EXPORT extern int dm_get_debug(struct dm *dmp);
 include/dm.h: DM_EXPORT extern int dm_logfile(struct dm *dmp, const char *filename);
 include/dm.h: DM_EXPORT extern struct fb *dm_get_fb(struct dm *dmp);
+include/dm.h: DM_EXPORT extern int dm_close_fb(struct dm *dmp);
 include/dm.h: DM_EXPORT extern int dm_get_fb_visible(struct dm *dmp);
 include/dm.h: DM_EXPORT extern int dm_set_fb_visible(struct dm *dmp, int is_fb_visible);
 include/dm.h: DM_EXPORT extern int dm_get_light(struct dm *dmp);
@@ -5939,6 +5941,9 @@ include/tclcad/misc.h: TCLCAD_EXPORT struct tclcad_io_data * tclcad_create_io_da
 include/tclcad/misc.h: TCLCAD_EXPORT void tclcad_destroy_io_data(struct tclcad_io_data *d);
 include/tclcad/misc.h: TCLCAD_EXPORT void tclcad_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_func_t callback, void *data);
 include/tclcad/misc.h: TCLCAD_EXPORT void tclcad_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d);
+include/tclcad/setup.h: TCLCAD_EXPORT extern int tclcad_create_namespace(Tcl_Interp *interp, const char *namespace_name);
+include/tclcad/setup.h: TCLCAD_EXPORT extern int tclcad_register_cmd_namespace(Tcl_Interp *interp, const char *namespace_name, const struct tclcad_cmdtab *cmds);
+include/tclcad/setup.h: TCLCAD_EXPORT extern int tclcad_register_objcmd_namespace(Tcl_Interp *interp, const char *namespace_name, const struct tclcad_objcmdtab *cmds);
 include/tclcad/setup.h: TCLCAD_EXPORT extern int tclcad_tk_setup(Tcl_Interp *interp);
 include/tclcad/setup.h: TCLCAD_EXPORT extern void tclcad_auto_path(Tcl_Interp *interp);
 include/tclcad/setup.h: TCLCAD_EXPORT extern void tclcad_tcl_library(Tcl_Interp *interp);
