@@ -21,7 +21,7 @@ if(TARGET libtclcad)
   set(RTWIZARD_HAVE_TCL 1)
 endif(TARGET libtclcad)
 
-brlcad_addexec(rtwizard "${RTWIZARD_SRCS}" "${RTWIZARD_LIBS}")
+brlcad_addexec(rtwizard "${RTWIZARD_SRCS}" "${RTWIZARD_LIBS}" ARG_SCHEMA)
 target_include_directories(rtwizard BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(rtwizard PRIVATE RTWIZARD_HAVE_TCL=${RTWIZARD_HAVE_TCL})
 add_target_deps(rtwizard ${RTWIZARD_TARGET_DEPS})
