@@ -208,7 +208,8 @@ rtsrv_parse_hex_mask(const char *arg, unsigned int *mask)
     unsigned long value;
     char *end = NULL;
 
-    if (!arg || !arg[0] || !mask)
+    if (!arg || !arg[0] || !mask || isspace((unsigned char)arg[0]) ||
+	arg[0] == '+' || arg[0] == '-')
 	return 0;
 
     errno = 0;

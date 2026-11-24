@@ -31,6 +31,7 @@
 #include "common.h"
 
 /* system headers */
+#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -238,7 +239,8 @@ parse_nmg_debug(const char *arg, unsigned int *value)
     unsigned long parsed;
     char *end = NULL;
 
-    if (!arg || !arg[0] || !value)
+    if (!arg || !arg[0] || !value || isspace((unsigned char)arg[0]) ||
+	arg[0] == '+' || arg[0] == '-')
 	return 0;
 
     errno = 0;

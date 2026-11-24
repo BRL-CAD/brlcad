@@ -115,7 +115,8 @@ patch_g_parse_hex(unsigned int *value, const char *arg)
     char *end;
     unsigned long parsed;
 
-    if (!value || !arg || !*arg)
+    if (!value || !arg || !*arg || isspace((unsigned char)arg[0]) ||
+	arg[0] == '+' || arg[0] == '-')
 	return 0;
     errno = 0;
     parsed = strtoul(arg, &end, 16);
