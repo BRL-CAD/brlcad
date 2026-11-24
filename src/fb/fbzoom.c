@@ -27,16 +27,15 @@
 
 #include "common.h"
 
-#include <errno.h>
 #include <limits.h>
-#include <stdlib.h>
 
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "bu/opt.h"
+#include "bu/exit.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "vmath.h"
 
 #include "dm.h"
@@ -47,7 +46,6 @@
 #define COMMA ','
 
 
-int pars_Argv(int argc, char **argv);
 int doKeyPad(void);
 
 /* Zoom rate and limits */
@@ -67,41 +65,149 @@ static int new_xZoom, new_yZoom;
 static int scr_width = 512;		/* screen size */
 static int scr_height = 512;
 static int toggle_pan = 0;		/* Reverse sense of pan commands? */
-static char *framebuffer = NULL;
+static const char *framebuffer = NULL;
 static struct fb *fbp;
 
-static char usage[] = "\
-Usage: fbzoom [-T] [-F framebuffer]\n\
-	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n\
-	[xPan yPan xZoom yZoom]\n";
+struct fbzoom_dimensions {
+    int width;
+    int height;
+};
+
+struct fbzoom_args {
+    int help;
+    int reverse_pan;
+    const char *framebuffer;
+    struct fbzoom_dimensions dimensions;
+};
+
+static int
+fbzoom_dimension(struct bu_vls *msg, const char *arg, void *storage,
+	int set_width, int set_height)
+{
+    struct fbzoom_dimensions *dimensions =
+	(struct fbzoom_dimensions *)storage;
+    int value;
+
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 1, INT_MAX))
+	return -1;
+    if (dimensions) {
+	if (set_width)
+	    dimensions->width = value;
+	if (set_height)
+	    dimensions->height = value;
+    }
+    return 0;
+}
+
+#define FBZOOM_DIMENSION_CALLBACK(_name, _width, _height) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return fbzoom_dimension(msg, arg, storage, _width, _height); \
+    }
+
+FBZOOM_DIMENSION_CALLBACK(fbzoom_size, 1, 1)
+FBZOOM_DIMENSION_CALLBACK(fbzoom_width, 1, 0)
+FBZOOM_DIMENSION_CALLBACK(fbzoom_height, 0, 1)
+
+static const struct bu_arg_option fbzoom_options[] = {
+    BU_ARG_FLAG("h", "help", struct fbzoom_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("T", "reverse-pan", struct fbzoom_args, reverse_pan,
+	"Make panning keys move the image instead of the window"),
+    BU_ARG_VALUE("F", "framebuffer", struct fbzoom_args, framebuffer,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Select the framebuffer instead of the FB_FILE environment default"),
+    BU_ARG_CUSTOM("s", "size", struct fbzoom_args, dimensions, fbzoom_size,
+	"pixels", "Set both framebuffer dimensions (default 512)"),
+    BU_ARG_ALIAS("S", NULL, "size", 1),
+    BU_ARG_CUSTOM("w", "width", struct fbzoom_args, dimensions,
+	fbzoom_width, "pixels", "Set the framebuffer width (default 512)"),
+    BU_ARG_ALIAS("W", NULL, "width", 1),
+    BU_ARG_CUSTOM("n", "height", struct fbzoom_args, dimensions,
+	fbzoom_height, "scanlines", "Set the framebuffer height (default 512)"),
+    BU_ARG_ALIAS("N", NULL, "height", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand fbzoom_view_roles[] = {
+    BU_ARG_OPERAND("x-pan", BU_ARG_VALUE_INTEGER, 1, 1,
+	"Initial horizontal center coordinate", NULL),
+    BU_ARG_OPERAND("y-pan", BU_ARG_VALUE_INTEGER, 1, 1,
+	"Initial vertical center coordinate", NULL),
+    BU_ARG_OPERAND_INTEGER_RANGE("x-zoom", 1, 1, 1, 1, 0, 0,
+	"Initial positive horizontal zoom factor", NULL),
+    BU_ARG_OPERAND_INTEGER_RANGE("y-zoom", 1, 1, 1, 1, 0, 0,
+	"Initial positive vertical zoom factor", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_operand_group fbzoom_operand_groups[] = {
+    BU_ARG_OPERAND_GROUP("initial-view", fbzoom_view_roles, 0, 1,
+	"Optional initial center and zoom values"),
+    BU_ARG_OPERAND_GROUP_NULL
+};
+
+static const struct bu_arg_schema fbzoom_schema = BU_ARG_SCHEMA(
+    "fbzoom", "Interactively zoom and pan a framebuffer", fbzoom_options,
+    NULL, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(fbzoom_operand_groups, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar fbzoom_grammar = {
+    &fbzoom_schema, NULL, NULL
+};
+
+static int
+fbzoom_help(FILE *stream, int status)
+{
+    char *schema_help = bu_arg_schema_help(&fbzoom_schema, "fbzoom");
+    bu_flog(stream, "%s", schema_help ? schema_help : "");
+    bu_free(schema_help, "fbzoom help");
+    return status;
+}
 
 int
 main(int argc, char **argv)
 {
-    int remaining = 0;
+    struct fbzoom_args args = {0, 0, NULL, {512, 512}};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int operand_index;
+    int remaining;
 
     bu_setprogname(argv[0]);
-    if (! pars_Argv(argc, argv)) {
-	(void)fputs(usage, stderr);
-	bu_exit(1, NULL);
+    int introspection = bu_arg_introspect(&msg, &fbzoom_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
-
-    remaining = argc - bu_optind;
-    if (remaining != 0 && remaining != 4) {
-	bu_log("%s: expected either 0 or 4 positional arguments, got %d\n", bu_getprogname(), remaining);
-	(void)fputs(usage, stderr);
-	bu_exit(1, NULL);
+    operand_index = bu_arg_schema_parse_complete(&fbzoom_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
     }
+    bu_vls_free(&msg);
+    if (args.help)
+	return fbzoom_help(stdout, 0);
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
+	return fbzoom_help(stderr, 1);
 
+    remaining = argc - 1 - operand_index;
     if (remaining == 4) {
-	if (!bu_opt_scan_int(argv[bu_optind+0], &xPan, "x pan")
-	    || !bu_opt_scan_int(argv[bu_optind+1], &yPan, "y pan")
-	    || !bu_opt_scan_int_range(argv[bu_optind+2], &xZoom, 1, INT_MAX, "x zoom")
-	    || !bu_opt_scan_int_range(argv[bu_optind+3], &yZoom, 1, INT_MAX, "y zoom")) {
-	    (void)fputs(usage, stderr);
-	    bu_exit(1, NULL);
-	}
+	if (!bu_arg_integer_from_str(NULL, &xPan, argv[operand_index + 1], 10) ||
+	    !bu_arg_integer_from_str(NULL, &yPan, argv[operand_index + 2], 10) ||
+	    !bu_arg_integer_from_str(NULL, &xZoom, argv[operand_index + 3], 10) ||
+	    !bu_arg_integer_from_str(NULL, &yZoom, argv[operand_index + 4], 10))
+	    bu_exit(1, "fbzoom: internal initial-view validation mismatch\n");
     }
+
+    toggle_pan = args.reverse_pan;
+    framebuffer = args.framebuffer;
+    scr_width = args.dimensions.width;
+    scr_height = args.dimensions.height;
 
     if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == NULL)
 	bu_exit(1, NULL);
@@ -316,49 +422,6 @@ doKeyPad(void)
 	    break;
     }
     return 1;		/* keep going */
-}
-
-
-int
-pars_Argv(int argc, char **argv)
-{
-    int c;
-
-    while ((c = bu_getopt(argc, argv, "TF:s:S:w:W:n:N:h?")) != -1) {
-	switch (c) {
-	    case 'T':
-		/* reverse the sense of pan commands */
-		toggle_pan = 1;
-		break;
-	    case 'F':
-		framebuffer = bu_optarg;
-		break;
-	    case 's':
-	    case 'S':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen size"))
-		    return 0;
-		scr_height = scr_width;
-		break;
-	    case 'w':
-	    case 'W':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen width"))
-		    return 0;
-		break;
-	    case 'n':
-	    case 'N':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 1, INT_MAX, "screen height"))
-		    return 0;
-		break;
-
-	    default:		/* '?' 'h' */
-		return 0;
-	}
-    }
-
-    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
-	return 0;
-
-    return 1;
 }
 
 

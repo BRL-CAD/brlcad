@@ -28,34 +28,85 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <ctype.h>
 #include <string.h>
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/file.h"
-#include "bu/str.h"
 #include "bu/exit.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 
 
-#define DIFF	0
-#define MAG	1
-#define GREATER	2
-#define LESS	3
-#define EQUAL	4
-#define NEQ	5
+enum bwdiff_mode {
+    BWDIFF_MODE_DIFFERENCE = 0,
+    BWDIFF_MODE_MAGNITUDE,
+    BWDIFF_MODE_GREATER,
+    BWDIFF_MODE_LESS,
+    BWDIFF_MODE_EQUAL,
+    BWDIFF_MODE_NOT_EQUAL
+};
 
 
-FILE *fp1, *fp2;
+struct bwdiff_args {
+    int help;
+    int background;
+    int magnitude;
+    int greater;
+    int less;
+    int equal;
+    int not_equal;
+};
 
-int mode = DIFF;
-int backgnd = 0;
-unsigned char ibuf1[512], ibuf2[512], obuf[512];
+static const struct bu_arg_option bwdiff_options[] = {
+    BU_ARG_FLAG("h", "help", struct bwdiff_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("b", "background", struct bwdiff_args, background,
+	"Show dimmed first-input values where relations are false"),
+    BU_ARG_FLAG("m", "magnitude", struct bwdiff_args, magnitude,
+	"Write absolute differences"),
+    BU_ARG_FLAG("g", "greater", struct bwdiff_args, greater,
+	"Mark samples where the first input is greater"),
+    BU_ARG_FLAG("l", "less", struct bwdiff_args, less,
+	"Mark samples where the first input is less"),
+    BU_ARG_FLAG("e", "equal", struct bwdiff_args, equal,
+	"Mark samples that are equal"),
+    BU_ARG_FLAG("n", "not-equal", struct bwdiff_args, not_equal,
+	"Mark samples that are not equal"),
+    BU_ARG_OPTION_NULL
+};
 
-static const char usage[] =
-    "Usage: bwdiff [-b -m -g -l -e -n] file1.bw file2.bw > diff.bw\n\t(use - for stdin, . for the null device)\n";
+static const struct bu_arg_operand bwdiff_operands[] = {
+    BU_ARG_OPERAND("file1", BU_ARG_VALUE_FILE, 1, 1,
+	"First BW or PIX input, - for standard input, or . for null", NULL),
+    BU_ARG_OPERAND("file2", BU_ARG_VALUE_FILE, 1, 1,
+	"Second BW or PIX input, - for standard input, or . for null", NULL),
+    BU_ARG_OPERAND_NULL
+};
 
-void
+static const char * const bwdiff_modes[] = {
+    "magnitude", "greater", "less", "equal", "not-equal", NULL
+};
+
+static const struct bu_arg_constraint bwdiff_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS,
+	bwdiff_modes, 0, 1, "select at most one comparison mode"),
+    BU_ARG_CONSTRAINT_NULL
+};
+
+static const struct bu_arg_schema bwdiff_schema = BU_ARG_SCHEMA(
+    "bwdiff", "Compare two BW or PIX streams",
+    bwdiff_options, bwdiff_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, bwdiff_constraints, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar bwdiff_grammar = {
+    &bwdiff_schema, NULL, NULL
+};
+
+static void
 open_file(FILE **fp, const char *name)
 {
     /* check for special names */
@@ -74,38 +125,50 @@ open_file(FILE **fp, const char *name)
 int
 main(int argc, char **argv)
 {
+    FILE *fp1, *fp2;
+    unsigned char ibuf1[512], ibuf2[512], obuf[512];
     unsigned char *p1, *p2, *op;
     size_t i, n, m;
+    enum bwdiff_mode mode = BWDIFF_MODE_DIFFERENCE;
+    struct bwdiff_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
+
+    int introspection = bu_arg_introspect(&msg, &bwdiff_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&bwdiff_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&bwdiff_schema, "bwdiff");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "bwdiff help");
+	return 0;
+    }
+
+    if (args.magnitude) mode = BWDIFF_MODE_MAGNITUDE;
+    if (args.greater) mode = BWDIFF_MODE_GREATER;
+    if (args.less) mode = BWDIFF_MODE_LESS;
+    if (args.equal) mode = BWDIFF_MODE_EQUAL;
+    if (args.not_equal) mode = BWDIFF_MODE_NOT_EQUAL;
+
+    if (isatty(fileno(stdout)))
+	bu_exit(1, "bwdiff: will not write binary output to a terminal\n");
+
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    while (argc > 3) {
-	if (BU_STR_EQUAL(argv[1], "-m")) {
-	    mode = MAG;
-	} else if (BU_STR_EQUAL(argv[1], "-g")) {
-	    mode = GREATER;
-	} else if (BU_STR_EQUAL(argv[1], "-l")) {
-	    mode = LESS;
-	} else if (BU_STR_EQUAL(argv[1], "-e")) {
-	    mode = EQUAL;
-	} else if (BU_STR_EQUAL(argv[1], "-n")) {
-	    mode = NEQ;
-	} else if (BU_STR_EQUAL(argv[1], "-b")) {
-	    backgnd++;
-	} else
-	    break;
-	argv++;
-	argc--;
-    }
-
-    if (argc != 3 || isatty(fileno(stdout))) {
-	bu_exit(1, "%s", usage);
-    }
-
-    open_file(&fp1, argv[1]);
-    open_file(&fp2, argv[2]);
+    const char **operands = (const char **)(argv + operand_index + 1);
+    open_file(&fp1, operands[0]);
+    open_file(&fp2, operands[1]);
 
     while (1) {
 	n = fread(ibuf1, 1, 512, fp1);
@@ -126,24 +189,24 @@ main(int argc, char **argv)
 	}
 	/* unrolled for speed */
 	switch (mode) {
-	    case DIFF:
+	    case BWDIFF_MODE_DIFFERENCE:
 		for (i = 0; i < n; i++) {
 		    *op++ = (((int)*p1 - (int)*p2)>>1) + 128;
 		    p1++;
 		    p2++;
 		}
 		break;
-	    case MAG:
+	    case BWDIFF_MODE_MAGNITUDE:
 		for (i = 0; i < n; i++) {
 		    *op++ = abs((int)*p1++ - (int)*p2++);
 		}
 		break;
-	    case GREATER:
+	    case BWDIFF_MODE_GREATER:
 		for (i = 0; i < n; i++) {
 		    if (*p1 > *p2++)
 			*op++ = 255;
 		    else {
-			if (backgnd)
+			if (args.background)
 			    *op++ = *p1 >> 2;
 			else
 			    *op++ = 0;
@@ -151,12 +214,12 @@ main(int argc, char **argv)
 		    p1++;
 		}
 		break;
-	    case LESS:
+	    case BWDIFF_MODE_LESS:
 		for (i = 0; i < n; i++) {
 		    if (*p1 < *p2++)
 			*op++ = 255;
 		    else {
-			if (backgnd)
+			if (args.background)
 			    *op++ = *p1 >> 2;
 			else
 			    *op++ = 0;
@@ -164,12 +227,12 @@ main(int argc, char **argv)
 		    p1++;
 		}
 		break;
-	    case EQUAL:
+	    case BWDIFF_MODE_EQUAL:
 		for (i = 0; i < n; i++) {
 		    if (*p1 == *p2++)
 			*op++ = 255;
 		    else {
-			if (backgnd)
+			if (args.background)
 			    *op++ = *p1 >> 2;
 			else
 			    *op++ = 0;
@@ -177,12 +240,12 @@ main(int argc, char **argv)
 		    p1++;
 		}
 		break;
-	    case NEQ:
+	    case BWDIFF_MODE_NOT_EQUAL:
 		for (i = 0; i < n; i++) {
 		    if (*p1 != *p2++)
 			*op++ = 255;
 		    else {
-			if (backgnd)
+			if (args.background)
 			    *op++ = (*p1) >> 1;
 			else
 			    *op++ = 0;

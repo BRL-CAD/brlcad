@@ -44,9 +44,11 @@
 
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
 #include "bu/exit.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "vmath.h"
 #include "dm.h"
 
@@ -99,13 +101,51 @@ struct acolor LocalColors[256];
 struct GIF_head Header;
 struct GIF_Image Im;
 
-char *framebuffer=NULL;
+const char *framebuffer=NULL;
 
-void
-usage(char **argv)
+struct gif2fb_args {
+    int help;
+    int headers;
+    int verbose;
+    const char *framebuffer;
+};
+
+static const struct bu_arg_option gif2fb_options[] = {
+    BU_ARG_FLAG("h", "help", struct gif2fb_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("H", "header-only", struct gif2fb_args, headers,
+	"Print the GIF screen dimensions and exit"),
+    BU_ARG_FLAG("v", "verbose", struct gif2fb_args, verbose,
+	"Report GIF header and image details"),
+    BU_ARG_VALUE("F", "framebuffer", struct gif2fb_args, framebuffer,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Select the framebuffer instead of the FB_FILE environment default"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand gif2fb_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"GIF input file (default: standard input)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema gif2fb_schema = BU_ARG_SCHEMA(
+    "gif2fb", "Display the first image in a GIF file on a framebuffer",
+    gif2fb_options, gif2fb_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar gif2fb_grammar = {
+    &gif2fb_schema, NULL, NULL
+};
+
+static int
+gif2fb_help(FILE *stream, int status)
 {
-    fprintf(stderr,"Usage: %s [-H] [-v] [-F frame_buffer] [gif_file]\n", argv[0]);
-    fprintf(stderr,"       (stdin used with '<' construct if gif_file not supplied)\n");
+    char *schema_help = bu_arg_schema_help(&gif2fb_schema, "gif2fb");
+    bu_flog(stream, "%s", schema_help ? schema_help : "");
+    bu_free(schema_help, "gif2fb help");
+    return status;
 }
 
 int getByte(FILE *inp);
@@ -113,14 +153,15 @@ int getByte(FILE *inp);
 int
 main(int argc, char **argv)
 {
+    struct gif2fb_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     int i, idx;
     size_t n;
     int maxcolors;
-    int code;
     int verbose=0;
     int headers=0;
     int interlaced;
-    char *file_name;
+    int operand_index;
 
     unsigned char line[3*2048];
     unsigned char *lp;
@@ -133,38 +174,40 @@ main(int argc, char **argv)
     FILE *fp;
 
     bu_setprogname(argv[0]);
-
-    while ((code = bu_getopt(argc, argv, "HvFh?")) != -1) {
-	switch (code) {
-	    case 'H':
-		headers=1;
-		break;
-	    case 'v':
-		verbose=1;
-		break;
-	    case 'F':
-		framebuffer = bu_optarg;
-		break;
-	    default:	/* '?' */
-		usage(argv);
-		return 1;
-	}
+    int introspection = bu_arg_introspect(&msg, &gif2fb_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+    operand_index = bu_arg_schema_parse_complete(&gif2fb_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return gif2fb_help(stdout, 0);
 
-    if (bu_optind >= argc) {
+    headers = args.headers;
+    verbose = args.verbose;
+    framebuffer = args.framebuffer;
+
+    if (argc - 1 - operand_index == 0) {
 	if (isatty(fileno(stdin))) {
-	    usage(argv);
-	    return 1;
+	    bu_flog(stderr, "gif2fb requires an input file or redirected input\n");
+	    return gif2fb_help(stderr, 1);
 	}
 	fp = stdin;
 	setmode(fileno(stdin), O_BINARY);
     } else {
-	file_name = argv[bu_optind];
-	if ((fp = fopen(file_name, "rb")) == NULL) {
-	    fprintf(stderr,
-		    "%s: cannot open \"%s\" for reading\n", argv[0],
-		    file_name);
-	    usage(argv);
+	const char *input_name = argv[operand_index + 1];
+	if ((fp = fopen(input_name, "rb")) == NULL) {
+	    bu_flog(stderr, "%s: cannot open \"%s\" for reading\n",
+		argv[0], input_name);
 	    return 1;
 	}
     }

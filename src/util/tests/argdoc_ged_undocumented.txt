@@ -1,0 +1,24 @@
+# Published GED schemas without dedicated manual pages.  Every entry needs a
+# reason; argdoc rejects missing, stale, and unmatched exemptions.
+?	Compatibility spelling for interactive help, not a standalone command page.
+E	Compatibility spelling for the documented draw command family.
+close	Internal database lifecycle operation used by application frontends.
+version	Programmatic database version query used by application frontends.
+get_autoview	Programmatic view-state query used by application frontends.
+get_comb	Programmatic combination query used by application frontends.
+get_dbip	Internal database-pointer query with no user-facing command contract.
+get_eyemodel	Programmatic view-state query used by application frontends.
+get_type	Programmatic database object-type query used by application frontends.
+info	Programmatic application-state query used by application frontends.
+mouse_add_metaball_pnt	Interactive mouse binding helper, not a typed command.
+mouse_append_pipe_pnt	Interactive mouse binding helper, not a typed command.
+mouse_move_metaball_pnt	Interactive mouse binding helper, not a typed command.
+mouse_move_pipe_pnt	Interactive mouse binding helper, not a typed command.
+mouse_prepend_pipe_pnt	Interactive mouse binding helper, not a typed command.
+open	Internal database lifecycle operation used by application frontends.
+pngwf	Internal framebuffer workflow helper rather than a public command.
+set_output_script	Internal application output-state setter.
+set_transparency	Internal display-state setter used by application frontends.
+set_uplotOutputMode	Internal plot-output state setter used by application frontends.
+view2	Alternative internal view command family used by application frontends.
+vslew	Interactive view manipulation helper with no standalone command contract.

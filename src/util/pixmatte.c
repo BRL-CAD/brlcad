@@ -43,14 +43,14 @@
 #include "common.h"
 
 #include <errno.h>
-#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/str.h"
 
 #define NFILES 4 /* Two in, two out */
@@ -59,7 +59,7 @@
 
 static int width = 3;
 
-static char *file_name[NFILES];
+static const char *file_name[NFILES];
 static FILE *fp[NFILES];	/* NULL => use f_const */
 static unsigned char f_const[NFILES][EL_WIDTH];
 static char *buf[NFILES];	/* I/O buffers, size width*CHUNK */
@@ -77,24 +77,6 @@ static long false_cnt = 0;
 
 static int twoconstants;
 static int limit = 2;
-
-static const char usage_msg[] = "\
-Usage: pixmatte [-w width_in_bytes] {-g -l -e -n -a}\n\
-	in1 in2 true_out false_out > output\n\
-\n\
-where each of the 4 streams is either a file name, a constant of the\n\
-form =r/g/b with each byte specified in decimal, or '-' for stdin.\n\
-The default width_in_bytes is 3 bytes, suitable for processing .pix files.\n\
-";
-
-
-void
-usage(const char *s, int n)
-{
-    if (s && *s) (void)fputs(s, stderr);
-
-    bu_exit(n, "%s", usage_msg);
-}
 
 static int
 parse_constant_bytes(const char *arg, unsigned char *out_values, int component_count)
@@ -125,8 +107,8 @@ parse_constant_bytes(const char *arg, unsigned char *out_values, int component_c
 }
 
 
-int
-open_file(int i, char *name)
+static int
+open_file(int i, const char *name)
 {
     if (name[0] == '=') {
 	/* Parse constant */
@@ -162,93 +144,112 @@ open_file(int i, char *name)
 }
 
 
-void
-get_args(int argc, char **argv)
-{
-    int c;
-    int seen_formula = 0;
-    int i;
-    char *end = NULL;
-    long parsed_width = 0;
+struct pixmatte_args {
+    int help;
+    int greater_than;
+    int less_than;
+    int equal;
+    int not_equal;
+    int approximate;
+    int element_width;
+};
 
-    while ((c = bu_getopt(argc, argv, "glenaw:h?")) != -1) {
-	switch (c) {
-	    case 'g':
-		wanted |= GT;
-		seen_formula = 1;
-		break;
-	    case 'l':
-		wanted |= LT;
-		seen_formula = 1;
-		break;
-	    case 'e':
-		wanted |= EQ;
-		seen_formula = 1;
-		break;
-	    case 'n':
-		wanted |= NE;
-		seen_formula = 1;
-		break;
-	    case 'a':
-		wanted |= APPROX;
-		/* This does NOT count as a formula, so seen_formula
-                 * is left unchanged.
-                 */
-		break;
-	    case 'w':
-		errno = 0;
-		end = NULL;
-		parsed_width = strtol(bu_optarg, &end, 10);
-		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' ||
-		    errno != 0 || parsed_width > INT_MAX)
-		    usage("pixmatte: illegal width specified\n", 1);
-		width = (int)parsed_width;
-		if (width < 1 || width >= EL_WIDTH)
-		    usage("pixmatte: illegal width specified\n", 1);
-		break;
-	    default:		/* '?' 'h' */
-		usage("", 1);
-		break;
-	}
-    }
+static const struct bu_arg_option pixmatte_options[] = {
+    BU_ARG_FLAG("h", "help", struct pixmatte_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("g", "greater-than", struct pixmatte_args, greater_than,
+	"Select true output when input 1 is greater than input 2"),
+    BU_ARG_FLAG("l", "less-than", struct pixmatte_args, less_than,
+	"Select true output when input 1 is less than input 2"),
+    BU_ARG_FLAG("e", "equal", struct pixmatte_args, equal,
+	"Select true output when input 1 equals input 2"),
+    BU_ARG_FLAG("n", "not-equal", struct pixmatte_args, not_equal,
+	"Select true output when input 1 does not equal input 2"),
+    BU_ARG_FLAG("a", "approximate", struct pixmatte_args, approximate,
+	"Allow a per-byte difference of one in comparisons"),
+    BU_ARG_INTEGER_RANGE("w", "element-width", struct pixmatte_args,
+	element_width, 1, 1, 1, EL_WIDTH - 1, "bytes",
+	"Set the number of bytes in each stream element"),
+    BU_ARG_OPTION_NULL
+};
 
-    if (!seen_formula){
-    	if (argc == 1) usage("", 1);
-	usage("No formula specified\n", 1);
-    }
+static const struct bu_arg_operand pixmatte_operands[] = {
+    BU_ARG_OPERAND("input-1", BU_ARG_VALUE_RAW, 1, 1,
+	"First input file, constant, or standard input", NULL),
+    BU_ARG_OPERAND("input-2", BU_ARG_VALUE_RAW, 1, 1,
+	"Second input file, constant, or standard input", NULL),
+    BU_ARG_OPERAND("true-output", BU_ARG_VALUE_RAW, 1, 1,
+	"Stream selected when the comparison is true", NULL),
+    BU_ARG_OPERAND("false-output", BU_ARG_VALUE_RAW, 1, 1,
+	"Stream selected when the comparison is false", NULL),
+    BU_ARG_OPERAND_NULL
+};
 
-    if (bu_optind+NFILES > argc)
-	usage("insufficient number of input/output channels\n", 1);
-    if (bu_optind+NFILES < argc)
-	usage("pixmatte: excess argument(s) not supported\n", 1);
+static const struct bu_arg_schema pixmatte_schema = BU_ARG_SCHEMA(
+    "pixmatte", "Merge streams using per-element comparisons",
+    pixmatte_options, pixmatte_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
 
-
-    for (i=0; i < NFILES; i++) {
-	if (open_file(i, argv[bu_optind++]) < 0)
-	    usage((char *)NULL, 1);
-    }
-
-/* If both of the 1st 2 input streams were "=...", this is accounted
- * for in true value of "twoconstants", and the program will later
- * stop when it has created 512x512 file (otherwise, we get stuck
- * in loop).
- */
-    twoconstants = (fp[0] == NULL && fp[1] == NULL);
-}
+static const struct bu_arg_grammar pixmatte_grammar = {
+    &pixmatte_schema, NULL, NULL
+};
 
 
 int
 main(int argc, char **argv)
 {
-
     int chunkcount = 0;
+    int i;
+    struct pixmatte_args args = {0, 0, 0, 0, 0, 0, 3};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
 
-    get_args(argc, argv);
+    int introspection = bu_arg_introspect(&msg, &pixmatte_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&pixmatte_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&pixmatte_schema, "pixmatte");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "pixmatte help");
+	return 0;
+    }
+
+    if (!args.greater_than && !args.less_than && !args.equal && !args.not_equal)
+	bu_exit(1, "pixmatte: specify at least one comparison option\n");
+
+    width = args.element_width;
+    if (args.greater_than)
+	wanted |= GT;
+    if (args.less_than)
+	wanted |= LT;
+    if (args.equal)
+	wanted |= EQ;
+    if (args.not_equal)
+	wanted |= NE;
+    if (args.approximate)
+	wanted |= APPROX;
+
+    for (i = 0; i < NFILES; i++) {
+	if (open_file(i, argv[operand_index + i + 1]) < 0)
+	    bu_exit(1, "pixmatte: unable to open input stream\n");
+    }
+
+    /* Avoid an unbounded stream when neither comparison input has EOF. */
+    twoconstants = (fp[0] == NULL && fp[1] == NULL);
 
     if (isatty(fileno(stdout)))
-	usage("Cannot write image to tty\n", 1);
+	bu_exit(1, "pixmatte: cannot write image data to a terminal\n");
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
@@ -256,11 +257,11 @@ main(int argc, char **argv)
 
     bu_log("pixmatte:\tif (%s ", file_name[0]);
 
-    if (wanted & APPROX) fputs("~~", stderr);
-    if (wanted & LT) fputs("<", stderr);
-    if (wanted & EQ) fputs("=", stderr);
-    if (wanted & GT) fputs(">", stderr);
-    if (wanted & NE) fputs("!=", stderr);
+    if (wanted & APPROX) bu_log("~~");
+    if (wanted & LT) bu_log("<");
+    if (wanted & EQ) bu_log("=");
+    if (wanted & GT) bu_log(">");
+    if (wanted & NE) bu_log("!=");
 
     bu_log(" %s)\n", file_name[1]);
     bu_log("pixmatte:\t\tthen output %s\n", file_name[2]);

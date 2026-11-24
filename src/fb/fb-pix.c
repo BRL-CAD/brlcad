@@ -28,15 +28,14 @@
 
 #include <errno.h>
 #include <limits.h>
-#include <stdlib.h>
 #include <sys/stat.h>
 
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "bu/opt.h"
 #include "bu/exit.h"
+#include "bu/log.h"
 #include "bu/malloc.h"
 #include "vmath.h"
 #include "dm.h"
@@ -44,134 +43,151 @@
 #include "pkg.h"
 
 
-char *framebuffer = NULL;
-const char *file_name;
-FILE *outfp;
-
-static int crunch = 0;		/* Color map crunch? */
-static int inverse = 0;		/* Draw upside-down */
-int screen_height;			/* input height */
-int screen_width;			/* input width */
-
 /* in cmap-crunch.c */
 extern void cmap_crunch(RGBpixel (*scan_buf), int pixel_ct, ColorMap *colormap);
 
-int
-get_args(int argc, char **argv)
+struct fb_pix_args {
+    struct fb_pix_args *self;
+    int help;
+    int crunch;
+    int inverse;
+    const char *framebuffer;
+    int width;
+    int height;
+};
+
+static int
+fb_pix_size(struct bu_vls *msg, const char *arg, void *storage)
 {
-    int c;
+    int size;
+    struct fb_pix_args *args = storage ? *(struct fb_pix_args **)storage : NULL;
 
-    while ((c = bu_getopt(argc, argv, "ciF:s:w:n:h?")) != -1) {
-	switch (c) {
-	    case 'c':
-		crunch = 1;
-		break;
-	    case 'i':
-		inverse = 1;
-		break;
-	    case 'F':
-		framebuffer = bu_optarg;
-		break;
-	    case 's':
-		/* square size */
-		if (!bu_opt_scan_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen size"))
-		    return 0;
-		screen_height = screen_width;
-		break;
-	    case 'w':
-		if (!bu_opt_scan_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen width"))
-		    return 0;
-		break;
-	    case 'n':
-		if (!bu_opt_scan_int_range(bu_optarg, &screen_height, 1, INT_MAX, "screen height"))
-		    return 0;
-		break;
-
-	    default:		/* '?' */
-		return 0;
-	}
+    if (!bu_arg_integer_range_from_str(msg, &size, arg, 10, 1, INT_MAX))
+	return -1;
+    if (args) {
+	args->width = size;
+	args->height = size;
     }
-
-    if (bu_optind >= argc) {
-	if (isatty(fileno(stdout)))
-	    return 0;
-	file_name = "-";
-	outfp = stdout;
-	setmode(fileno(stdout), O_BINARY);
-    } else {
-	file_name = argv[bu_optind];
-	if ((outfp = fopen(file_name, "wb")) == NULL) {
-	    fprintf(stderr,
-		    "fb-pix: cannot open \"%s\" for writing\n",
-		    file_name);
-	    return 0;
-	}
-	(void)bu_fchmod(fileno(outfp), 0444);
-    }
-
-    if (argc > ++bu_optind) {
-	fprintf(stderr, "fb-pix: excess argument(s) not supported\n");
-	return 0;
-    }
-
-    return 1;		/* OK */
+    return 0;
 }
+
+static const struct bu_arg_option fb_pix_options[] = {
+    BU_ARG_FLAG("h", "help", struct fb_pix_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("c", "color-map", struct fb_pix_args, crunch,
+	"Apply a non-linear framebuffer color map"),
+    BU_ARG_FLAG("i", "inverse", struct fb_pix_args, inverse,
+	"Read framebuffer scanlines from top to bottom"),
+    BU_ARG_VALUE("F", "framebuffer", struct fb_pix_args, framebuffer,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Select the framebuffer device instead of the configured default"),
+    BU_ARG_CUSTOM("s", "size", struct fb_pix_args, self, fb_pix_size,
+	"pixels", "Set both output dimensions (default: 512)"),
+    BU_ARG_INTEGER_RANGE("w", "width", struct fb_pix_args, width,
+	1, 1, 1, INT_MAX, "pixels", "Set the output width (default: 512)"),
+    BU_ARG_INTEGER_RANGE("n", "height", struct fb_pix_args, height,
+	1, 1, 1, INT_MAX, "pixels", "Set the output height (default: 512)"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand fb_pix_operands[] = {
+    BU_ARG_OPERAND("output", BU_ARG_VALUE_FILE, 0, 1,
+	"PIX output file (default: standard output)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema fb_pix_schema = BU_ARG_SCHEMA(
+    "fb-pix", "Save a framebuffer image as a BRL-CAD PIX image",
+    fb_pix_options, fb_pix_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar fb_pix_grammar = {
+    &fb_pix_schema, NULL, NULL
+};
 
 
 int
 main(int argc, char **argv)
 {
+    struct fb_pix_args args = {NULL, 0, 0, 0, NULL, 512, 512};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct fb *fbp;
+    FILE *outfp = stdout;
     int y;
 
     unsigned char *scanline = NULL;	/* 1 scanline pixel buffer */
-    int scanbytes;		/* # of bytes of scanline */
+    size_t scanbytes;		/* # of bytes of scanline */
     int scanpix;		/* # of pixels of scanline */
     ColorMap cmap;		/* libfb color map */
-
-    char usage[] = "\
-Usage: fb-pix [-i -c] [-F framebuffer]\n\
-	[-s squaresize] [-w width] [-n height] [file.pix]\n";
-
-    screen_height = screen_width = 512;		/* Defaults */
+    args.self = &args;
 
     bu_setprogname(argv[0]);
-
-    if (!get_args(argc, argv)) {
-	(void)fputs(usage, stderr);
-	bu_exit(1, NULL);
+    int introspection = bu_arg_introspect(&msg, &fb_pix_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&fb_pix_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&fb_pix_schema, "fb-pix");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "fb-pix help");
+	return 0;
     }
 
-    setmode(fileno(stdout), O_BINARY);
+    if (operand_index < argc - 1) {
+	const char *file_name = argv[operand_index + 1];
+	outfp = fopen(file_name, "wb");
+	if (!outfp) {
+	    bu_flog(stderr, "fb-pix: cannot open \"%s\" for writing: %s\n",
+		file_name, strerror(errno));
+	    return 1;
+	}
+	(void)bu_fchmod(fileno(outfp), 0444);
+    } else {
+	if (isatty(fileno(stdout))) {
+	    char *help = bu_arg_schema_help(&fb_pix_schema, "fb-pix");
+	    bu_flog(stderr, "%s", help ? help : "");
+	    bu_free(help, "fb-pix help");
+	    return 1;
+	}
+	setmode(fileno(stdout), O_BINARY);
+    }
 
-    if ((fbp = fb_open(framebuffer, screen_width, screen_height)) == NULL) {
+    if ((fbp = fb_open(args.framebuffer, args.width, args.height)) == NULL) {
 	bu_exit(12, NULL);
     }
 
-    V_MIN(screen_height, fb_getheight(fbp));
-    V_MIN(screen_width, fb_getwidth(fbp));
+    V_MIN(args.height, fb_getheight(fbp));
+    V_MIN(args.width, fb_getwidth(fbp));
 
-    scanpix = screen_width;
+    scanpix = args.width;
     scanbytes = scanpix * sizeof(RGBpixel);
-    if ((scanline = (unsigned char *)malloc(scanbytes)) == RGBPIXEL_NULL) {
-	fprintf(stderr,
-		"fb-pix:  malloc(%d) failure\n", scanbytes);
-	bu_exit(2, NULL);
-    }
+    scanline = (unsigned char *)bu_malloc(scanbytes, "scanline");
 
-    if (crunch) {
+    if (args.crunch) {
 	if (fb_rmap(fbp, &cmap) == -1) {
-	    crunch = 0;
+	    args.crunch = 0;
 	} else if (fb_is_linear_cmap(&cmap)) {
-	    crunch = 0;
+	    args.crunch = 0;
 	}
     }
 
-    if (!inverse) {
+    if (!args.inverse) {
 	/* Regular -- read bottom to top */
-	for (y=0; y < screen_height; y++) {
-	    fb_read(fbp, 0, y, scanline, screen_width);
-	    if (crunch)
+	for (y=0; y < args.height; y++) {
+	    fb_read(fbp, 0, y, scanline, args.width);
+	    if (args.crunch)
 		cmap_crunch((RGBpixel *)scanline, scanpix, &cmap);
 	    if (fwrite((char *)scanline, scanbytes, 1, outfp) != 1) {
 		perror("fwrite");
@@ -180,9 +196,9 @@ Usage: fb-pix [-i -c] [-F framebuffer]\n\
 	}
     } else {
 	/* Inverse -- read top to bottom */
-	for (y = screen_height-1; y >= 0; y--) {
-	    fb_read(fbp, 0, y, scanline, screen_width);
-	    if (crunch)
+	for (y = args.height-1; y >= 0; y--) {
+	    fb_read(fbp, 0, y, scanline, args.width);
+	    if (args.crunch)
 		cmap_crunch((RGBpixel *)scanline, scanpix, &cmap);
 	    if (fwrite((char *)scanline, scanbytes, 1, outfp) != 1) {
 		perror("fwrite");
@@ -191,8 +207,7 @@ Usage: fb-pix [-i -c] [-F framebuffer]\n\
 	}
     }
     fb_close(fbp);
-    if (scanline)
-	bu_free(scanline, "scanline");
+    bu_free(scanline, "scanline");
     return 0;
 }
 

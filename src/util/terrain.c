@@ -38,110 +38,175 @@
 
 #include "common.h"
 
-#include <errno.h>
+#include <limits.h>
 #include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 #include <math.h>
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/cv.h"
-#include "bu/getopt.h"
-#include "bu/malloc.h"
+#include "bu/exit.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 #include "bn.h"
 
 
-/* declarations to support use of bu_getopt() system call */
-const char *options = "w:n:s:L:H:O:S:V:D:f:co:vh?";
-
 int do_convert = 1;
-const char *progname = "(noname)";
 size_t xdim = 512;
 size_t ydim = 512;
 
 double fbm_lacunarity = 2.1753974;		/* noise_lacunarity */
 double fbm_h = 1.0;
 double fbm_octaves = 7.0;
-double fbm_size = 1.0;
 double fbm_offset = 1.0;
 
 /* intentionally double for scan */
 double fbm_vscale[3] = {0.0125, 0.0125, 0.0125};
 double fbm_delta[3] = {1000.0, 1000.0, 1000.0};
 
-int quiet = 0;
 int debug;
 
-static int
-parse_positive_size_arg(const char *arg, size_t *out_value, const char *label)
+struct terrain_args {
+    struct terrain_args *self;
+    int help;
+    int host_order;
+    int verbose;
+    int width;
+    int height;
+    fastf_t lacunarity;
+    fastf_t h_value;
+    fastf_t octaves;
+    fastf_t offset;
+    vect_t scale;
+    vect_t delta;
+    const char *function;
+};
+
+static struct terrain_args *
+terrain_args_from_storage(void *storage)
 {
-    char *end = NULL;
-    unsigned long long int value;
-
-    errno = 0;
-    value = strtoull(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value == 0 ||
-	value > (unsigned long long int)SIZE_MAX) {
-	fprintf(stderr, "%s: invalid %s '%s'\n", progname, label, arg);
-	return 0;
-    }
-
-    *out_value = (size_t)value;
-    return 1;
+    return storage ? *(struct terrain_args **)storage : NULL;
 }
 
 static int
-parse_double_arg(const char *arg, double *out_value, const char *label, int require_positive)
+terrain_positive_number(struct bu_vls *msg, const char *arg)
 {
-    char *end = NULL;
+    fastf_t value;
 
-    errno = 0;
-    *out_value = strtod(arg, &end);
-    if (errno != 0 || end == arg || *end != '\0' || !isfinite(*out_value) ||
-	(require_positive && *out_value <= 0.0)) {
-	fprintf(stderr, "%s: invalid %s '%s'\n", progname, label, arg);
-	return 0;
+    if (!bu_arg_number_from_str(msg, &value, arg))
+	return -1;
+    if (value <= 0.0) {
+	if (msg)
+	    bu_vls_printf(msg, "value must be greater than zero: %s\n", arg);
+	return -1;
     }
-
-    return 1;
+    return 0;
 }
 
 static int
-parse_vec3_arg(const char *arg, double *out_values, const char *label)
+terrain_square_size(struct bu_vls *msg, size_t argc, const char **argv,
+	void *storage)
 {
-    int i = 0;
-    const char *component = arg;
-    char *end = NULL;
+    struct terrain_args *args = terrain_args_from_storage(storage);
+    int value;
 
-    for (i = 0; i < 3; i++) {
-	errno = 0;
-	out_values[i] = strtod(component, &end);
-	if (errno != 0 || end == component || !isfinite(out_values[i])) {
-	    fprintf(stderr, "%s: invalid %s '%s'\n", progname, label, arg);
-	    return 0;
-	}
-	if (i == 2) {
-	    if (*end != '\0') {
-		fprintf(stderr, "%s: invalid %s '%s'\n", progname, label, arg);
-		return 0;
-	    }
-	} else {
-	    while (*end == ' ' || *end == '\t')
-		end++;
-	    if (*end != ',') {
-		fprintf(stderr, "%s: invalid %s '%s'\n", progname, label, arg);
-		return 0;
-	    }
-	    component = end + 1;
-	    while (*component == ' ' || *component == '\t')
-		component++;
-	}
+    if (argc != 1 ||
+	!bu_arg_integer_range_from_str(msg, &value, argv[0], 10, 1, INT_MAX))
+	return -1;
+    if (args)
+	args->width = args->height = value;
+    return 0;
+}
+
+static int
+terrain_uniform_scale(struct bu_vls *msg, size_t argc, const char **argv,
+	void *storage)
+{
+    struct terrain_args *args = terrain_args_from_storage(storage);
+    fastf_t value;
+
+    if (argc != 1 || !bu_arg_number_from_str(msg, &value, argv[0]))
+	return -1;
+    if (value <= 0.0) {
+	if (msg)
+	    bu_vls_printf(msg, "scale must be greater than zero: %s\n", argv[0]);
+	return -1;
     }
+    if (args)
+	VSETALL(args->scale, value);
+    return 0;
+}
 
-    return 1;
+static const struct bu_arg_value_keyword terrain_function_values[] = {
+    {"fbm", BU_ARG_ALIASES("f"), "Fractional Brownian motion"},
+    {"turbulence", BU_ARG_ALIASES("t"), "Turbulence"},
+    {"inverted-turbulence", BU_ARG_ALIASES("T"), "One minus turbulence"},
+    {"multifractal", BU_ARG_ALIASES("m"), "Multifractal noise"},
+    {"ridged-multifractal", BU_ARG_ALIASES("r"), "Ridged multifractal noise"},
+    {"lunar", BU_ARG_ALIASES("L"), "Lunar-like terrain"},
+    {"lee", BU_ARG_ALIASES("l"), "Detail concentrated on peaks and valleys"},
+    {NULL, NULL, NULL}
+};
+
+static const struct bu_arg_option terrain_options[] = {
+    BU_ARG_FLAG("h", "help", struct terrain_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_INTEGER_RANGE("w", "width", struct terrain_args, width,
+	1, 1, 1, INT_MAX, "postings", "Set X postings (default: 512)"),
+    BU_ARG_INTEGER_RANGE("n", "height", struct terrain_args, height,
+	1, 1, 1, INT_MAX, "postings", "Set Y postings (default: 512)"),
+    BU_ARG_OPTION_SHAPED("s", "size", "size", struct terrain_args, self,
+	BU_ARG_VALUE_INTEGER, "postings", "Set equal X and Y postings",
+	BU_ARG_REQUIRED, NULL, terrain_square_size),
+    BU_ARG_VALUE_VALIDATE("L", "lacunarity", struct terrain_args, lacunarity,
+	BU_ARG_VALUE_NUMBER, terrain_positive_number, "factor",
+	"Set positive scale between successive noise octaves (default: 2.1753974)"),
+    BU_ARG_VALUE_VALIDATE("H", "fractal-increment", struct terrain_args, h_value,
+	BU_ARG_VALUE_NUMBER, terrain_positive_number, "value",
+	"Set positive fractal increment controlling detail across octaves (default: 1)"),
+    BU_ARG_VALUE_VALIDATE("O", "octaves", struct terrain_args, octaves,
+	BU_ARG_VALUE_NUMBER, terrain_positive_number, "count",
+	"Set positive number of noise octaves (default: 7)"),
+    BU_ARG_OPTION_SHAPED("S", "scale", "scale", struct terrain_args, self,
+	BU_ARG_VALUE_NUMBER, "factor", "Set all XYZ noise scales to a positive factor",
+	BU_ARG_REQUIRED, NULL, terrain_uniform_scale),
+    BU_ARG_VECTOR3("V", "vector-scale", struct terrain_args, scale,
+	"x,y,z", "Set independent finite XYZ noise scales (default: 0.0125,0.0125,0.0125)"),
+    BU_ARG_VECTOR3("D", "delta", struct terrain_args, delta,
+	"x,y,z", "Set finite XYZ noise-space translation (default: 1000,1000,1000)"),
+    BU_ARG_VALUE("o", "offset", struct terrain_args, offset,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "value",
+	"Set multifractal and ridged offset (default: 1)"),
+    BU_ARG_KEYWORD_VALUES("f", "function", struct terrain_args, function,
+	"name", "Select the noise function (default: fbm)",
+	terrain_function_values),
+    BU_ARG_FLAG("c", "host-order", struct terrain_args, host_order,
+	"Write host byte order instead of portable network byte order"),
+    BU_ARG_FLAG("v", "verbose", struct terrain_args, verbose,
+	"Print noise-function and clamping diagnostics"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema terrain_schema = BU_ARG_SCHEMA(
+    "terrain", "Generate a procedural terrain height field",
+    terrain_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar terrain_grammar = {
+    &terrain_schema, NULL, NULL
+};
+
+static int
+terrain_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&terrain_schema, "terrain");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "terrain help");
+    return status;
 }
 
 /* transform a point in integer X, Y, Z space to appropriate noise space */
@@ -151,33 +216,6 @@ xform(point_t t, point_t pt)
     t[X] = fbm_delta[X] + pt[X] * fbm_vscale[X];
     t[Y] = fbm_delta[Y] + pt[Y] * fbm_vscale[Y];
     t[Z] = fbm_delta[Z] + pt[Z] * fbm_vscale[Z];
-}
-
-
-/*
- * Tell user how to invoke this program, then exit
- */
-void
-usage(const char *s)
-{
-    if (s)
-	bu_log("%s", s);
-
-    bu_log("Usage: %s [ flags ] > outfile]\nFlags:\n%s\n",
-	   progname,
-	   "\t-w #\t\tnumber of postings in X direction\n\
-\t-n #\t\tnumber of postings in Y direction\n\
-\t-s #\t\tnumber of postings in X, Y direction\n\
-\t-L #\t\tNoise Lacunarity\n\
-\t-H #\t\tNoise H value\n\
-\t-O #\t\tNoise Octaves\n\
-\t-S #\t\tNoise Scale\n\
-\t-V #, #, #\tNoise Vector scale (affine scale)\n\
-\t-D #, #, #\tNoise Delta\n\
-\t-f func\t\tNoise function:\n\
-\t\t\t\tf:fbm t:turb T:1.0-turb m:multi r:ridged");
-
-    bu_exit (-1, NULL);
 }
 
 
@@ -623,163 +661,99 @@ func_lunar(unsigned short *buf)
 }
 
 
-int
-parse_args(int ac, char **av, void (**terrain_func)(unsigned short *))
+typedef void (*terrain_func_t)(unsigned short *);
+
+static terrain_func_t
+terrain_function(const char *name)
 {
-    int c;
-
-    if (! (progname = strrchr(*av, '/')))
-	progname = *av;
-    else
-	++progname;
-
-    /* Turn off bu_getopt's error messages */
-    bu_opterr = 0;
-
-    /* get all the option flags from the command line */
-    while ((c = bu_getopt(ac, av, options)) != -1) {
-	if (bu_optopt == '?') c='h';
-	switch (c) {
-	    case 'v':
-		debug = !debug;
-		break;
-	    case 'c':
-		do_convert = !do_convert;
-		break;
-	    case 'w':
-		if (!parse_positive_size_arg(bu_optarg, &xdim, "X postings"))
-		    usage("");
-		break;
-	    case 'n':
-		if (!parse_positive_size_arg(bu_optarg, &ydim, "Y postings"))
-		    usage("");
-		break;
-	    case 'q' :
-		quiet = !quiet;
-		break;
-	    case 's':
-		if (!parse_positive_size_arg(bu_optarg, &xdim, "posting count"))
-		    usage("");
-		ydim = xdim;
-		break;
-	    case 'L':
-		if (!parse_double_arg(bu_optarg, &fbm_lacunarity, "noise lacunarity", 1))
-		    usage("");
-		break;
-	    case 'H':
-		if (!parse_double_arg(bu_optarg, &fbm_h, "noise H value", 1))
-		    usage("");
-		break;
-	    case 'O':
-		if (!parse_double_arg(bu_optarg, &fbm_octaves, "noise octaves", 1))
-		    usage("");
-		break;
-
-	    case 'S':
-		if (!parse_double_arg(bu_optarg, &fbm_size, "noise scale", 1))
-		    usage("");
-		VSETALL(fbm_vscale, fbm_size);
-		break;
-
-	    case 'V':
-		if (!parse_vec3_arg(bu_optarg, fbm_vscale, "noise vector scale"))
-		    usage("");
-		break;
-	    case 'D':
-		if (!parse_vec3_arg(bu_optarg, fbm_delta, "noise delta"))
-		    usage("");
-		break;
-	    case 'o':
-		if (!parse_double_arg(bu_optarg, &fbm_offset, "offset", 0))
-		    usage("");
-		break;
-	    case 'f':
-		switch (bu_optarg[0] != '\0' && bu_optarg[1] == '\0' ?
-			bu_optarg[0] : '\0') {
-		    case 'L':
-			*terrain_func = &func_lunar;
-			break;
-		    case 'l':
-			*terrain_func = &func_lee;
-			break;
-		    case 'f':
-			*terrain_func = &func_fbm;
-			break;
-		    case 't':
-			*terrain_func = &func_turb;
-			break;
-		    case 'T':
-			*terrain_func = &func_turb_up;
-			break;
-		    case 'm':
-			*terrain_func = &func_multi;
-			break;
-		    case 'r':
-			*terrain_func = &func_ridged;
-			break;
-		    default:
-			fprintf(stderr,
-				"Unknown terrain noise function: \"%s\"\n",
-				bu_optarg);
-			bu_exit (-1, NULL);
-			break;
-		}
-		break;
-	    case 'h':
-		usage("");
-		break;
-	    default:
-		usage("Bad flag specified\n");
-		break;
-	}
-    }
-
-    return bu_optind;
+    if (BU_STR_EQUAL(name, "fbm"))
+	return &func_fbm;
+    if (BU_STR_EQUAL(name, "turbulence"))
+	return &func_turb;
+    if (BU_STR_EQUAL(name, "inverted-turbulence"))
+	return &func_turb_up;
+    if (BU_STR_EQUAL(name, "multifractal"))
+	return &func_multi;
+    if (BU_STR_EQUAL(name, "ridged-multifractal"))
+	return &func_ridged;
+    if (BU_STR_EQUAL(name, "lunar"))
+	return &func_lunar;
+    if (BU_STR_EQUAL(name, "lee"))
+	return &func_lee;
+    return NULL;
 }
 
 
-/*
- * Call parse_args to handle command line arguments, then produce the
- * noise field selected.  Write out binary in network order.
- */
 int
-main(int ac, char *av[])
+main(int argc, char *argv[])
 {
-    int arg_count;
+    struct terrain_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     unsigned short *buf;
     int in_cookie, out_cookie;
+    int introspection;
     size_t count;
     size_t ret;
+    terrain_func_t terrain_func;
 
-    /* function to call to generate the terrain.  Default noise pattern is fbm */
-    void (*terrain_func)(unsigned short *);
+    bu_setprogname(argv[0]);
+    args.self = &args;
+    args.width = 512;
+    args.height = 512;
+    args.lacunarity = 2.1753974;
+    args.h_value = 1.0;
+    args.octaves = 7.0;
+    args.offset = 1.0;
+    VSETALL(args.scale, 0.0125);
+    VSETALL(args.delta, 1000.0);
+    args.function = "fbm";
 
-    bu_setprogname(av[0]);
+    introspection = bu_arg_introspect(&msg, &terrain_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+
+    if (bu_arg_schema_parse_complete(&terrain_schema, &args, &msg, argc - 1,
+	    (const char **)(argv + 1)) < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return terrain_help(stdout, 0);
+
+    xdim = (size_t)args.width;
+    ydim = (size_t)args.height;
+    fbm_lacunarity = args.lacunarity;
+    fbm_h = args.h_value;
+    fbm_octaves = args.octaves;
+    fbm_offset = args.offset;
+    VMOVE(fbm_vscale, args.scale);
+    VMOVE(fbm_delta, args.delta);
+    do_convert = !args.host_order;
+    debug = args.verbose;
+    terrain_func = terrain_function(args.function);
+    if (!terrain_func) {
+	bu_flog(stderr, "terrain: unsupported noise function '%s'\n",
+		args.function);
+	return 1;
+    }
+
     setmode(fileno(stdout), O_BINARY);
-
-    terrain_func = NULL;
-    arg_count = parse_args(ac, av, &terrain_func);
-
-    if (!terrain_func)
-	terrain_func = &func_fbm;
-
-    if (arg_count < ac)
-	usage("Excess arguments on command line\n");
-
-    if (isatty(fileno(stdout)))
-	usage("Redirect standard output\n");
+    if (isatty(fileno(stdout))) {
+	bu_flog(stderr, "terrain: standard output must be redirected\n");
+	return terrain_help(stderr, 1);
+    }
 
     if (xdim > SIZE_MAX / ydim || xdim * ydim > SIZE_MAX / sizeof(*buf))
 	bu_exit(1, "%s: dimensions %zu x %zu exceed the addressable output size\n",
 		bu_getprogname(), xdim, ydim);
     count = xdim * ydim;
     buf = (unsigned short *)bu_malloc(sizeof(*buf) * count, "buf");
-
-    if (!terrain_func) {
-	if (debug)
-	    bu_log("terrain function not specified\n");
-	return 10;
-    }
 
     terrain_func(buf);
 

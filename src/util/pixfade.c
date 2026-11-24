@@ -47,105 +47,167 @@
  */
 #include "common.h"
 
-#include <errno.h>
-#include <stdlib.h>
 #include <limits.h>
 
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "bu/opt.h"
+#include "bu/exit.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/mime.h"
 
 #include "icv.h"
 
 #define PIXFADE_PERCENT_MAX 100.0
+#define PIXFADE_FRACTION_MAX 1.0
 #define PIXFADE_CHANNEL_MAX 255
+#define PIXFADE_DEFAULT_SIZE 512
 
-int inx=512, iny=512;
-char *out_file = NULL;
-char *in_file = NULL;
+struct pixfade_args {
+    struct pixfade_args *self;
+    int help;
+    double multiplier;
+    int maximum;
+    int width;
+    int height;
+    const char *output;
+};
 
-
-char usage[] = "\
-Usage: pixfade [-p percentage] [-f fraction] [-m max] [-s squaresize] [-w width] [-n height] \n\
-                [-o out_file.pix] [file.pix] [> out_file.pix]\n";
-
-double multiplier = 0.5;
-int max = -1;
-
-int
-get_args(int argc, char **argv)
+static struct pixfade_args *
+pixfade_args_from_storage(void *storage)
 {
-    int c;
-
-    while ((c = bu_getopt(argc, argv, "p:f:s:w:n:o:m:h?")) != -1) {
-	switch (c) {
-            case 'p':
-		if (!bu_opt_scan_double_range(bu_optarg, &multiplier, 0.0,
-			PIXFADE_PERCENT_MAX, "percentage")) {
-		    bu_exit(1, NULL);
-		}
-		multiplier /= 100.0;
-		break;
-	    case 'f':
-		if (!bu_opt_scan_double_range(bu_optarg, &multiplier, 0.0, 1.0, "fraction")) {
-		    bu_exit(1, NULL);
-		}
-		break;
-    	    case 's':
-		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "input size")) {
-		    bu_exit(1, NULL);
-		}
-		iny = inx;
-		break;
-	    case 'w':
-		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "input width")) {
-		    bu_exit(1, NULL);
-		}
-		break;
-	    case 'n':
-		if (!bu_opt_scan_int_range(bu_optarg, &iny, 1, INT_MAX, "input height")) {
-		    bu_exit(1, NULL);
-		}
-		break;
-	    case 'o':
-		out_file = bu_optarg;
-		break;
-	    case 'm':
-		if (!bu_opt_scan_int(bu_optarg, &max, "max value")) {
-		    bu_exit(1, NULL);
-		}
-		if (max < 0 )
-		    max = 0;
-		else if (max > PIXFADE_CHANNEL_MAX)
-		    max = PIXFADE_CHANNEL_MAX;
-		break;
-	    default:		/* 'h' '?' */
-		return 0;
-	}
-    }
-
-    if (bu_optind >= argc) {
-	if (isatty(fileno(stdin))) {
-	    return 0;
-	}
-    }
-
-    in_file = argv[bu_optind];
-    bu_optind++;
-    if (bu_optind < argc) {
-	bu_log("pixfade: excess argument(s) not supported\n");
-	return 0;
-    }
-    return 1;		/* OK */
-
+    return storage ? *(struct pixfade_args **)storage : NULL;
 }
 
-int
-icv_ceiling(icv_image_t *img, int ceiling)
+static int
+pixfade_multiplier(struct bu_vls *msg, const char *arg, void *storage,
+	int percentage)
+{
+    struct pixfade_args *args = pixfade_args_from_storage(storage);
+    double maximum = percentage ? PIXFADE_PERCENT_MAX : PIXFADE_FRACTION_MAX;
+    double value;
+
+    if (!bu_arg_double_range_from_str(msg, &value, arg, 0.0, maximum))
+	return -1;
+    if (args)
+	args->multiplier = percentage ? value / PIXFADE_PERCENT_MAX : value;
+    return 0;
+}
+
+static int
+pixfade_percentage(struct bu_vls *msg, const char *arg, void *storage)
+{
+    return pixfade_multiplier(msg, arg, storage, 1);
+}
+
+static int
+pixfade_fraction(struct bu_vls *msg, const char *arg, void *storage)
+{
+    return pixfade_multiplier(msg, arg, storage, 0);
+}
+
+static int
+pixfade_maximum(struct bu_vls *msg, const char *arg, void *storage)
+{
+    struct pixfade_args *args = pixfade_args_from_storage(storage);
+    int value;
+
+    if (!bu_arg_integer_from_str(msg, &value, arg, 10))
+	return -1;
+    if (args) {
+	if (value < 0)
+	    value = 0;
+	else if (value > PIXFADE_CHANNEL_MAX)
+	    value = PIXFADE_CHANNEL_MAX;
+	args->maximum = value;
+    }
+    return 0;
+}
+
+static int
+pixfade_size(struct bu_vls *msg, const char *arg, void *storage)
+{
+    struct pixfade_args *args = pixfade_args_from_storage(storage);
+    int value;
+
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 1, INT_MAX))
+	return -1;
+    if (args)
+	args->width = args->height = value;
+    return 0;
+}
+
+static int
+pixfade_dimension(struct bu_vls *msg, const char *arg, void *storage,
+	int set_width)
+{
+    struct pixfade_args *args = pixfade_args_from_storage(storage);
+    int value;
+
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 1, INT_MAX))
+	return -1;
+    if (args) {
+	if (set_width)
+	    args->width = value;
+	else
+	    args->height = value;
+    }
+    return 0;
+}
+
+static int
+pixfade_width(struct bu_vls *msg, const char *arg, void *storage)
+{
+    return pixfade_dimension(msg, arg, storage, 1);
+}
+
+static int
+pixfade_height(struct bu_vls *msg, const char *arg, void *storage)
+{
+    return pixfade_dimension(msg, arg, storage, 0);
+}
+
+static const struct bu_arg_option pixfade_options[] = {
+    BU_ARG_FLAG("h", "help", struct pixfade_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_CUSTOM("p", "percentage", struct pixfade_args, self,
+	pixfade_percentage, "percentage", "Scale channels by a percentage"),
+    BU_ARG_CUSTOM("f", "fraction", struct pixfade_args, self,
+	pixfade_fraction, "fraction", "Scale channels by a fraction"),
+    BU_ARG_CUSTOM("m", "maximum", struct pixfade_args, self,
+	pixfade_maximum, "level", "Clamp channels to a maximum level"),
+    BU_ARG_CUSTOM("s", "size", struct pixfade_args, self, pixfade_size,
+	"pixels", "Set both input dimensions"),
+    BU_ARG_CUSTOM("w", "width", struct pixfade_args, self, pixfade_width,
+	"pixels", "Set the input image width"),
+    BU_ARG_CUSTOM("n", "height", struct pixfade_args, self, pixfade_height,
+	"pixels", "Set the input image height"),
+    BU_ARG_VALUE("o", "output", struct pixfade_args, output,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file.pix",
+	"Write PIX output to a file"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand pixfade_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"Input PIX file; omit to read standard input", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema pixfade_schema = BU_ARG_SCHEMA(
+    "pixfade", "Fade or clamp a PIX image", pixfade_options,
+    pixfade_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar pixfade_grammar = {
+    &pixfade_schema, NULL, NULL
+};
+
+static int
+pixfade_ceiling(icv_image_t *img, int ceiling)
 {
     double normalized_ceiling = (double)ceiling / PIXFADE_CHANNEL_MAX;
     size_t size;
@@ -153,9 +215,9 @@ icv_ceiling(icv_image_t *img, int ceiling)
 
     ICV_IMAGE_VAL_INT(img);
 
-    size= img->height*img->width*img->channels;
+    size = img->height * img->width * img->channels;
 
-   if (size == 0)
+    if (size == 0)
 	return -1;
 
     data = img->data;
@@ -171,26 +233,53 @@ icv_ceiling(icv_image_t *img, int ceiling)
 int
 main(int argc, char **argv)
 {
-    icv_image_t *img;
+    struct pixfade_args args = {NULL, 0, 0.5, -1, PIXFADE_DEFAULT_SIZE,
+	PIXFADE_DEFAULT_SIZE, NULL};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    const char *input = NULL;
+    icv_image_t *img = NULL;
+    args.self = &args;
 
     bu_setprogname(argv[0]);
 
-    if (!get_args(argc, argv)) {
-        bu_log("%s", usage);
-        return 1;
+    int introspection = bu_arg_introspect(&msg, &pixfade_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&pixfade_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&pixfade_schema, "pixfade");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "pixfade help");
+	return 0;
     }
 
+    if (operand_index < argc - 1)
+	input = argv[operand_index + 1];
+    if (!input && isatty(fileno(stdin)))
+	bu_exit(1, "pixfade: no input file and standard input is a terminal\n");
+    if (!args.output && isatty(fileno(stdout)))
+	bu_exit(1, "pixfade cannot send binary output to a terminal\n");
+
+    setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    img = icv_read(in_file, BU_MIME_IMAGE_PIX, inx, iny);
+    img = icv_read(input, BU_MIME_IMAGE_PIX, args.width, args.height);
     if (img == NULL)
-        return 1;
-    if (max < 0 )
-	icv_fade(img, multiplier);
+	return 1;
+    if (args.maximum < 0)
+	icv_fade(img, args.multiplier);
     else
-	icv_ceiling(img, max);
-    icv_write(img, out_file, BU_MIME_IMAGE_PIX);
-    if (!isatty(fileno(stdout)) && out_file != NULL) {
+	pixfade_ceiling(img, args.maximum);
+    icv_write(img, args.output, BU_MIME_IMAGE_PIX);
+    if (!isatty(fileno(stdout)) && args.output) {
 	icv_write(img, NULL, BU_MIME_IMAGE_PIX);
     }
 

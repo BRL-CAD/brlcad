@@ -36,10 +36,13 @@
 
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/color.h"
-#include "bu/str.h"
 #include "bu/exit.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 #include "dm.h"
 
 
@@ -61,31 +64,73 @@ unsigned char ibuf[8*1024*3];
 
 void disp_array(long int (*v)[256], int xoff, int yoff);
 
-static const char *Usage = "Usage: pixhist3d [file.pix]\n";
+struct pixhist3d_args {
+    int help;
+};
+
+static const struct bu_arg_option pixhist3d_options[] = {
+    BU_ARG_FLAG("h", "help", struct pixhist3d_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand pixhist3d_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"PIX input file (default: standard input)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema pixhist3d_schema = BU_ARG_SCHEMA(
+    "pixhist3d", "Display RGB color-space utilization",
+    pixhist3d_options, pixhist3d_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar pixhist3d_grammar = {
+    &pixhist3d_schema, NULL, NULL
+};
 
 int
 main(int argc, char **argv)
 {
     int n;
+    struct pixhist3d_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    if (argc > 1) {
-	if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?"))
-	    bu_exit(2, "%s", Usage);
-	if ((fp = fopen(argv[1], "rb")) == NULL) {
-	    fprintf(stderr, "%s", Usage);
-	    bu_exit(1, "pixhist3d: can't open \"%s\"\n", argv[1]);
+    int introspection = bu_arg_introspect(&msg, &pixhist3d_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&pixhist3d_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&pixhist3d_schema, "pixhist3d");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "pixhist3d help");
+	return 0;
+    }
+
+    if (argc - operand_index - 1 == 1) {
+	const char *input = argv[operand_index + 1];
+	if ((fp = fopen(input, "rb")) == NULL) {
+	    bu_exit(1, "pixhist3d: can't open \"%s\"\n", input);
 	}
     } else
 	fp = stdin;
 
-    if (isatty(fileno(fp))) {
-	bu_exit(2, "%s", Usage);
-    }
+    if (isatty(fileno(fp)))
+	bu_exit(1, "pixhist3d requires an input file or redirected input\n");
 
     if ((fbp = fb_open(NULL, 512, 512)) == NULL) {
 	bu_exit(12, "fb_open failed\n");

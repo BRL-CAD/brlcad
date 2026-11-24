@@ -64,17 +64,16 @@
 
 #include "common.h"
 
-#include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <math.h>
 
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/exit.h"
-#include "bu/getopt.h"
+#include "bu/log.h"
 #include "bu/malloc.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -97,47 +96,6 @@ int Surpent=0;		/* use serpentine scan lines */
 int Levels=1;		/* Number of levels */
 int Debug=0;
 struct bn_unif *RandomFlag=0;	/* Use random numbers ? */
-
-static int
-parse_long_arg(const char *arg, long int *out_value, const char *label)
-{
-    char *end = NULL;
-
-    errno = 0;
-    *out_value = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0') {
-	fprintf(stderr, "halftone: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    return 1;
-}
-
-static int
-parse_positive_long_arg(const char *arg, long int *out_value, const char *label)
-{
-    if (!parse_long_arg(arg, out_value, label) || *out_value <= 0) {
-	fprintf(stderr, "halftone: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    return 1;
-}
-
-static int
-parse_double_arg(const char *arg, double *out_value, const char *label)
-{
-    char *end = NULL;
-
-    errno = 0;
-    *out_value = strtod(arg, &end);
-    if (errno != 0 || end == arg || *end != '\0' || !isfinite(*out_value)) {
-	fprintf(stderr, "halftone: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    return 1;
-}
 
 /**
  * return a sharpened tone mapped buffer.
@@ -793,215 +751,190 @@ tone_simple(int pix, int UNUSED(x), int UNUSED(y), int UNUSED(nx), int UNUSED(ny
 }
 
 
-static const char usage[] = "\
-Usage: halftone [-R -S -a] [-D Debug_Level]\n\
-	[-s squarefilesize] [-w file_width] [-n file_height]\n\
-	[-B contrast] [-I #_of_intensity_levels] [-T x y ... (tone curve)]\n\
-	[-M Method] [file.bw]\n\
-	where Method is chosen from:\n\
-	    0  Floyd-Steinberg\n\
-	    1  45-Degree Classic Screen\n\
-	    2  Thresholding\n\
-	    3  0-Degree Dispersed Screen\n\
-       (stdin used with '<' construct if file.bw not supplied)\n";
+struct halftone_args {
+    struct halftone_args *self;
+    int help;
+    int autosize;
+    int randomize;
+    int serpentine;
+    int width;
+    int height;
+    fastf_t beta;
+    int method;
+    int level_count;
+    int debug;
+    int *tone_x;
+    int *tone_y;
+    size_t tone_count;
+};
 
-/*
- * process parameters and setup working environment
- *
- * Entry:
- *	argc	- number of arguments.
- *	argv	- the arguments.
- *
- * Exit:
- *	parameters have been set.
- *	if there is a fatal error, exit non-zero
- *
- * Uses:
- *	width	- width of picture
- *	height	- height of picture
- *	Beta	- sharpening value
- *	surpent	- to surpenten rasters?
- *	Levels	- number of intensity levels
- *	Debug	- debug level
- *	RandomFlag - Add noise to processes.
- *
- * Calls:
- *	cubic_init - setup for tonescale.
- *
- * Method:
- *	straight-forward.
- */
-void
-setup(int argc, char **argv)
+static struct halftone_args *
+halftone_args_from_storage(void *storage)
 {
-    int c;
-    int i, j;
-    int *Xlist, *Ylist;
-    int	autosize = 0;
+    return storage ? *(struct halftone_args **)storage : NULL;
+}
 
-    while ((c = bu_getopt(argc, argv, "D:s:an:w:B:M:RSI:T:h?")) != -1) {
-	switch (c) {
-	    case 's':
-		if (!parse_positive_long_arg(bu_optarg, &width, "size"))
-		    bu_exit(1, usage);
-		height = width;
-		break;
-	    case 'n':
-		if (!parse_positive_long_arg(bu_optarg, &height, "height"))
-		    bu_exit(1, usage);
-		break;
-	    case 'w':
-		if (!parse_positive_long_arg(bu_optarg, &width, "width"))
-		    bu_exit(1, usage);
-		break;
-	    case 'a':
-		autosize = 1;
-		break;
-	    case 'B':
-		if (!parse_double_arg(bu_optarg, &Beta, "beta"))
-		    bu_exit(1, usage);
-		break;
-	    case 'M':
-		{
-		    long int method = 0;
-		    if (!parse_long_arg(bu_optarg, &method, "method"))
-			bu_exit(1, usage);
-		    Method = (int)method;
-		}
-		if (Method <0 || Method >3) {
-			fprintf(stderr,"halftone: Method must be 0,1,2,3; set to default (0)\n");
-			Method = 0;
-		}
-		break;
-	    case 'R':
-		RandomFlag = bn_unif_init(1, 0);
-		break;
-	    case 'S':
-		Surpent = 1;
-		break;
-	    case 'I':
-		{
-		    long int levels = 0;
-		    if (!parse_positive_long_arg(bu_optarg, &levels, "level count"))
-			bu_exit(1, usage);
-		    if (levels < 2 || levels > 256)
-			bu_exit(1, "halftone: level count must be from 2 through 256.\n");
-		    Levels = (int)levels - 1;
-		}
-		break;
-/*
- * Tone scale processing is a little strange.  The -T option is followed
- * by a list of points.  The points are collected and one point is added
- * at 1024, 1024 to let tonescale be stupid.  Cubic_init takes the list
- * of points and generates "cubics" for tonescale to use in generating
- * curve to use for the tone map.  If tonescale is called with no cubics
- * defined tonescale will generate a straight-line (generally from 0, 0 to
- * 255, 255).
- */
-	    case 'T':
-		--bu_optind;
-		for (i=bu_optind; i < argc && (isdigit((int)*argv[i]) ||
-					       (*argv[i] == '-' && isdigit((int)(*(argv[i]+1))))); i++);
-		c = i - bu_optind;
-		if (c < 2) {
-		    fprintf(stderr, "At least one tone-map coordinate pair is required.\n");
-		    bu_exit(1, NULL);
-		}
-		if (c % 2) {
-		    fprintf(stderr, "Missing Y coordinate for tone map.\n");
-		    bu_exit(1, NULL);
-		}
-		Xlist = (int *) bu_malloc((c+2)*sizeof(int), "Xlist");
-		Ylist = (int *) bu_malloc((c+2)*sizeof(int), "Ylist");
+static int
+halftone_size(struct bu_vls *msg, const char *arg, void *storage)
+{
+    struct halftone_args *args = halftone_args_from_storage(storage);
+    int value;
 
-		for (j=0;bu_optind < i; ) {
-		    long int xval = 0;
-		    long int yval = 0;
-		    if (!parse_long_arg(argv[bu_optind++], &xval, "tone-map X coordinate") ||
-			!parse_long_arg(argv[bu_optind++], &yval, "tone-map Y coordinate")) {
-			bu_free(Xlist, "Xlist");
-			bu_free(Ylist, "Ylist");
-			bu_exit(1, NULL);
-		    }
-		    if (xval < 0 || xval > 255 || yval < 0 || yval > 255 ||
-			(j > 0 && xval <= Xlist[j-1])) {
-			bu_free(Xlist, "Xlist");
-			bu_free(Ylist, "Ylist");
-			bu_exit(1, "Tone-map coordinates must be 0 through 255 with increasing X values.\n");
-		    }
-		    Xlist[j] = (int)xval;
-		    Ylist[j] = (int)yval;
-		    j++;
-		}
-		Xlist[j] = 1024;
-		Ylist[j] = 1024;
-		if (Debug>6) fprintf(stderr, "Number points=%d\n", j+1);
-		(void) cubic_init(j+1, Xlist, Ylist);
-		bu_free(Xlist, "Xlist");
-		bu_free(Ylist, "Ylist");
-		break;
-/*
- * Debug is not well used at this point a value of 9 will get all
- * debug statements.  Debug is a level indicator NOT a bit flag.
- */
-	    case 'D':
-		{
-		    long int debug = 0;
-		    if (!parse_long_arg(bu_optarg, &debug, "debug level"))
-			bu_exit(1, usage);
-		    Debug = (int)debug;
-		}
-		break;
-	    default:
-		bu_exit(1, usage);
-	}
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 1, INT_MAX))
+	return -1;
+    if (args) {
+	args->width = value;
+	args->height = value;
     }
-/*
- *	if there are no extra arguments and stdin is a tty then
- *	the user has given us no input file.  Spit a usage message
- * 	at them and exit.
- */
-    if (bu_optind >= argc) {
-	if ( isatty(fileno(stdin)) ) {
-	    bu_exit(1, usage);
-	}
-	if (autosize) {
-	    (void) fprintf(stderr, "%s", usage);
-	    bu_exit(1, "Automatic sizing can not be used with pipes.\n");
-	}
-    } else {
-	char *ifname = bu_file_realpath(argv[bu_optind], NULL);
-	if (freopen(ifname, "rb", stdin) == NULL ) {
-	    bu_free(ifname,"ifname alloc from bu_file_realpath");
-	    bu_exit(1, "halftone: cannot open \"%s\" for reading.\n", argv[bu_optind]);
-	}
-	bu_free(ifname,"ifname alloc from bu_file_realpath");
-	if (autosize) {
-	    size_t autosize_width;
-	    size_t autosize_height;
+    return 0;
+}
 
-	    if (!fb_common_file_size(&autosize_width, &autosize_height,
-		    argv[bu_optind], 1)) {
-		(void) fprintf(stderr, "halftone: unable to autosize.\n");
-	    } else if (autosize_width > LONG_MAX || autosize_height > LONG_MAX) {
-		bu_exit(1, "halftone: autosized dimensions exceed supported range.\n");
-	    } else {
-		width = (long int)autosize_width;
-		height = (long int)autosize_height;
-	    }
-	}
+static size_t
+halftone_tone_token_count(size_t available, const char **argv)
+{
+    size_t count = 0;
+
+    while (count < available) {
+	int value;
+	if (!bu_arg_integer_from_str(NULL, &value, argv[count], 10))
+	    break;
+	count++;
+    }
+    return count;
+}
+
+static int
+halftone_tone_points(struct bu_vls *msg, size_t argc, const char **argv,
+	void *storage)
+{
+    struct halftone_args *args = halftone_args_from_storage(storage);
+    int previous_x = -1;
+
+    if (argc < 2 || argc % 2) {
+	if (msg)
+	    bu_vls_strcat(msg, "tone map requires one or more X Y coordinate pairs\n");
+	return -1;
     }
 
-    if ( argc > ++bu_optind) {
-	(void) fprintf(stderr, "halftone: excess argument(s) not supported.\n");
-	bu_exit(1, usage);
+    for (size_t i = 0; i < argc; i += 2) {
+	int x;
+	int y;
+	if (!bu_arg_integer_range_from_str(msg, &x, argv[i], 10, 0, 255) ||
+	    !bu_arg_integer_range_from_str(msg, &y, argv[i + 1], 10, 0, 255))
+	    return -1;
+	if (x <= previous_x) {
+	    if (msg)
+		bu_vls_strcat(msg, "tone-map X values must be strictly increasing\n");
+	    return -1;
+	}
+	previous_x = x;
     }
+
+    if (args) {
+	size_t point_count = argc / 2;
+	int *tone_x = (int *)bu_malloc(point_count * sizeof(int), "tone X values");
+	int *tone_y = (int *)bu_malloc(point_count * sizeof(int), "tone Y values");
+	for (size_t i = 0; i < point_count; i++) {
+	    (void)bu_arg_integer_from_str(NULL, &tone_x[i], argv[2 * i], 10);
+	    (void)bu_arg_integer_from_str(NULL, &tone_y[i], argv[2 * i + 1], 10);
+	}
+	if (args->tone_x)
+	    bu_free(args->tone_x, "tone X values");
+	if (args->tone_y)
+	    bu_free(args->tone_y, "tone Y values");
+	args->tone_x = tone_x;
+	args->tone_y = tone_y;
+	args->tone_count = point_count;
+    }
+    return 0;
+}
+
+static const struct bu_arg_shape halftone_tone_shape = BU_ARG_SHAPE(
+    BU_ARG_SHAPE_TOKEN_SEQUENCE, 2, BU_ARG_COUNT_UNLIMITED,
+    "one or more increasing X Y control-point pairs",
+    halftone_tone_token_count, NULL);
+
+static const struct bu_arg_option halftone_options[] = {
+    BU_ARG_FLAG("h", "help", struct halftone_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("a", "autosize", struct halftone_args, autosize,
+	"Infer dimensions from a named input file"),
+    BU_ARG_CUSTOM("s", "size", struct halftone_args, self,
+	halftone_size, "pixels", "Set both image dimensions"),
+    BU_ARG_INTEGER_RANGE("w", "width", struct halftone_args, width,
+	1, 1, 1, INT_MAX, "pixels", "Set image width (default: 512)"),
+    BU_ARG_INTEGER_RANGE("n", "height", struct halftone_args, height,
+	1, 1, 1, INT_MAX, "scanlines", "Set image height (default: 512)"),
+    BU_ARG_VALUE("B", "sharpen", struct halftone_args, beta,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "beta",
+	"Set the finite Laplacian sharpening coefficient (default: 0)"),
+    BU_ARG_INTEGER_RANGE("I", "levels", struct halftone_args, level_count,
+	1, 2, 1, 256, "count", "Set output intensity levels from 2 through 256"),
+    BU_ARG_INTEGER_RANGE("M", "method", struct halftone_args, method,
+	1, 0, 1, 3, "number",
+	"Select 0 Floyd-Steinberg, 1 45-degree classic, 2 threshold, or 3 0-degree dispersed"),
+    BU_ARG_FLAG("R", "randomize", struct halftone_args, randomize,
+	"Add random noise to dither thresholds"),
+    BU_ARG_FLAG("S", "serpentine", struct halftone_args, serpentine,
+	"Reverse alternate Floyd-Steinberg scanlines (ignored by other methods)"),
+    BU_ARG_OPTION_SHAPED("T", "tone-map", "tone-map", struct halftone_args,
+	self, BU_ARG_VALUE_INTEGER, "x y ...",
+	"Fit a cubic tone map through increasing 0..255 X Y control points",
+	BU_ARG_REQUIRED, &halftone_tone_shape, halftone_tone_points),
+    BU_ARG_VALUE("D", "debug", struct halftone_args, debug,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "level",
+	"Set diagnostic level (9 enables all messages)"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand halftone_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"BW input file (default: standard input)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static int
+halftone_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
+{
+    if (!result || cursor_arg < argc || result->state == BU_ARG_VALIDATE_INVALID)
+	return 0;
+    if (bu_arg_schema_option_present(schema, argc, argv, "autosize") &&
+	bu_arg_schema_operand_count(schema, argc, argv) == 0) {
+	bu_arg_validate_result_set(result, BU_ARG_VALIDATE_INCOMPLETE, argc,
+	    BU_ARG_EXPECT_OPERAND, BU_ARG_VALUE_FILE,
+	    "autosizing requires a named input file", NULL);
+    }
+    return 0;
+}
+
+static const struct bu_arg_schema halftone_schema = BU_ARG_SCHEMA(
+    "halftone", "Reduce a BW image to dithered intensity levels",
+    halftone_options, halftone_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, halftone_validate, NULL, NULL));
+
+static const struct bu_arg_grammar halftone_grammar = {
+    &halftone_schema, NULL, NULL
+};
+
+static int
+halftone_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&halftone_schema, "halftone");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "halftone help");
+    return status;
 }
 
 int
 main(int argc, char **argv)
 {
+    struct halftone_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     int pixel, x, y, i;
+    int introspection;
+    int operand_index;
     unsigned char *Line, *Out;
     int NewFlag = 1;
     int Scale;
@@ -1009,14 +942,83 @@ main(int argc, char **argv)
     size_t ret;
 
     bu_setprogname(argv[0]);
+    args.self = &args;
+    args.width = 512;
+    args.height = 512;
+    args.level_count = 2;
+
+    introspection = bu_arg_introspect(&msg, &halftone_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    /*
-     *	parameter processing.
-     */
-    setup(argc, argv);
+    operand_index = bu_arg_schema_parse_complete(&halftone_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return halftone_help(stdout, 0);
+    if (operand_index >= argc - 1) {
+	if (isatty(fileno(stdin)))
+	    return halftone_help(stderr, 1);
+    } else {
+	const char *input_name = argv[operand_index + 1];
+	char *input_path = bu_file_realpath(input_name, NULL);
+	if (!freopen(input_path, "rb", stdin)) {
+	    bu_free(input_path, "halftone input path");
+	    bu_flog(stderr, "halftone: cannot open \"%s\" for reading\n",
+		input_name);
+	    return 1;
+	}
+	bu_free(input_path, "halftone input path");
+	if (args.autosize) {
+	    size_t autosize_width;
+	    size_t autosize_height;
+	    if (!fb_common_file_size(&autosize_width, &autosize_height,
+		    input_name, 1)) {
+		bu_flog(stderr, "halftone: unable to autosize\n");
+	    } else if (autosize_width > INT_MAX || autosize_height > INT_MAX) {
+		bu_flog(stderr, "halftone: autosized dimensions exceed supported range\n");
+		return 1;
+	    } else {
+		args.width = (int)autosize_width;
+		args.height = (int)autosize_height;
+	    }
+	}
+    }
+
+    width = args.width;
+    height = args.height;
+    Beta = args.beta;
+    Method = args.method;
+    Levels = args.level_count - 1;
+    Debug = args.debug;
+    Surpent = args.serpentine;
+    if (args.randomize)
+	RandomFlag = bn_unif_init(1, 0);
+    if (args.tone_count) {
+	args.tone_x = (int *)bu_realloc(args.tone_x,
+	    (args.tone_count + 1) * sizeof(int), "tone X values");
+	args.tone_y = (int *)bu_realloc(args.tone_y,
+	    (args.tone_count + 1) * sizeof(int), "tone Y values");
+	args.tone_x[args.tone_count] = 1024;
+	args.tone_y[args.tone_count] = 1024;
+	if (Debug > 6)
+	    bu_flog(stderr, "Number points=%zu\n", args.tone_count + 1);
+	cubic_init((int)args.tone_count + 1, args.tone_x, args.tone_y);
+	bu_free(args.tone_x, "tone X values");
+	bu_free(args.tone_y, "tone Y values");
+    }
     /*
      *	Get a tone map.  Map is the result.  1.0 is slope, 0.0 is
      *	the Y intercept (y=mx+b). 0 is the address of a function to

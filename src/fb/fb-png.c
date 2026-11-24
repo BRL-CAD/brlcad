@@ -35,9 +35,9 @@
 
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "bu/opt.h"
+#include "bu/exit.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "vmath.h"
@@ -50,123 +50,145 @@
 extern void cmap_crunch(RGBpixel (*scan_buf), int pixel_ct, ColorMap *colormap);
 
 
-static int crunch = 0;		/* Color map crunch? */
-static int inverse = 0;		/* Draw upside-down */
-static int pixbytes = 3;	/* Default is 3 bytes/pixel */
-int screen_height;		/* input height */
-int screen_width;		/* input width */
+#define DEFAULT_IMAGE_DIMENSION 512
 
-double out_gamma = -1.0;	/* Gamma the image was created at */
-char *framebuffer = NULL;
-FILE *outfp;
+struct fb_png_args {
+    struct fb_png_args *self;
+    int help;
+    int crunch;
+    int inverse;
+    const char *framebuffer;
+    int width;
+    int height;
+    fastf_t gamma;
+    const char *pixel_bytes;
+};
+
 
 static int
-parse_pixbytes_arg(const char *arg, int *value)
+fb_png_size(struct bu_vls *msg, const char *arg, void *storage)
 {
-    if (!bu_opt_scan_int_range(arg, value, 1, INT_MAX, "bytes per pixel"))
-	return 0;
-    if (*value != 1 && *value != 3) {
-	bu_log("fb-png: only able to handle 1 and 3 byte pixels, got '%s'\n", arg);
-	return 0;
-    }
+    int size;
+    struct fb_png_args *args = storage ? *(struct fb_png_args **)storage : NULL;
 
-    return 1;
+    if (!bu_arg_integer_range_from_str(msg, &size, arg, 10, 1, INT_MAX))
+	return -1;
+    if (args) {
+	args->width = size;
+	args->height = size;
+    }
+    return 0;
 }
 
+static const struct bu_arg_value_keyword fb_png_pixel_bytes[] = {
+    {"1", NULL, "Write an 8-bit grayscale PNG"},
+    {"3", NULL, "Write a 24-bit RGB PNG"},
+    {NULL, NULL, NULL}
+};
 
-int
-get_args(int argc, char **argv)
-{
-    int c;
-    char *file_name = NULL;
+static const struct bu_arg_option fb_png_options[] = {
+    BU_ARG_FLAG("h", "help", struct fb_png_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("c", "color-map", struct fb_png_args, crunch,
+	"Apply a non-linear framebuffer color map; ignored when no map is present or the map is linear"),
+    BU_ARG_FLAG("i", "inverse", struct fb_png_args, inverse,
+	"Read bottom-to-top, producing fourth-quadrant output with an upper-left origin"),
+    BU_ARG_VALUE("F", "framebuffer", struct fb_png_args, framebuffer,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Select the framebuffer device instead of the FB_FILE environment default"),
+    BU_ARG_CUSTOM("s", "size", struct fb_png_args, self, fb_png_size,
+	"pixels", "Set both output dimensions (default: 512)"),
+    BU_ARG_INTEGER_RANGE("w", "width", struct fb_png_args, width,
+	1, 1, 1, INT_MAX, "pixels", "Set the output width (default: 512)"),
+    BU_ARG_INTEGER_RANGE("n", "height", struct fb_png_args, height,
+	1, 1, 1, INT_MAX, "pixels", "Set the output height (default: 512)"),
+    BU_ARG_VALUE("g", "gamma", struct fb_png_args, gamma,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "value",
+	"Set the PNG source gamma (0.6 approximates PC monitors); non-positive values omit the gAMA chunk (default: -1.0)"),
+    BU_ARG_KEYWORD_VALUES("#", "pixel-bytes", struct fb_png_args,
+	pixel_bytes, "1|3", "Select grayscale (1) or RGB (3) output (default: 3)",
+	fb_png_pixel_bytes),
+    BU_ARG_OPTION_NULL
+};
 
-    while ((c = bu_getopt(argc, argv, "ciF:s:w:n:g:#:h?")) != -1) {
-	switch (c) {
-	    case 'c':
-		crunch = 1;
-		break;
-	    case 'i':
-		inverse = 1;
-		break;
-	    case 'F':
-		framebuffer = bu_optarg;
-		break;
-	    case 's':
-		/* square size */
-		if (!bu_opt_scan_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen size"))
-		    return 0;
-		screen_height = screen_width;
-		break;
-	    case 'w':
-		if (!bu_opt_scan_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen width"))
-		    return 0;
-		break;
-	    case 'n':
-		if (!bu_opt_scan_int_range(bu_optarg, &screen_height, 1, INT_MAX, "screen height"))
-		    return 0;
-		break;
-	    case 'g':
-		out_gamma = atof(bu_optarg);
-		break;
-	    case '#':
-		if (!parse_pixbytes_arg(bu_optarg, &pixbytes))
-		    return 0;
-		break;
+static const struct bu_arg_operand fb_png_operands[] = {
+    BU_ARG_OPERAND("output", BU_ARG_VALUE_FILE, 0, 1,
+	"PNG output file (default: standard output)", NULL),
+    BU_ARG_OPERAND_NULL
+};
 
-	    default:		/* '?' 'h' */
-		return 0;
-	}
-    }
+static const struct bu_arg_schema fb_png_schema = BU_ARG_SCHEMA(
+    "fb-png", "Save a framebuffer image as a PNG image", fb_png_options,
+    fb_png_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
 
-    if (bu_optind >= argc) {
-	if (isatty(fileno(stdout)))
-	    return 0;
-	outfp = stdout;
-	setmode(fileno(stdout), O_BINARY);
-    } else {
-	file_name = argv[bu_optind];
-	if ((outfp = fopen(file_name, "wb")) == NULL) {
-	    bu_log("fb-png: cannot open \"%s\" for writing\n", file_name);
-	    return 0;
-	}
-	(void)bu_fchmod(fileno(outfp), 0444);
-    }
-
-    if (argc > ++bu_optind) {
-	bu_log("fb-png: excess argument(s) not supported\n");
-	return 0;
-    }
-
-    return 1;		/* OK */
-}
+static const struct bu_arg_grammar fb_png_grammar = {
+    &fb_png_schema, NULL, NULL
+};
 
 
 int
 main(int argc, char **argv)
 {
-    static unsigned char *scanline;	/* scanline pixel buffers */
-    static int scanbytes;		/* # of bytes of scanline */
-    static int scanpix;			/* # of pixels of scanline */
-    static ColorMap cmap;		/* libfb color map */
-
+    struct fb_png_args args = {NULL, 0, 0, 0, NULL,
+	DEFAULT_IMAGE_DIMENSION, DEFAULT_IMAGE_DIMENSION, -1.0, "3"};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    unsigned char *scanline;	/* scanline pixel buffer */
+    size_t scanbytes;		/* bytes in scanline */
+    int scanpix;			/* pixels in scanline */
+    ColorMap cmap;		/* libfb color map */
     struct fb *fbp;
+    FILE *outfp = stdout;
     int y;
     int got;
+    int pixbytes;
     png_structp png_p;
     png_infop info_p;
-
-    char usage[] = "\
-Usage: fb-png [-i -c] [-# nbytes/pixel] [-F framebuffer] [-g gamma]\n\
-	[-s squaresize] [-w width] [-n height] [file.png]\n";
-
-    screen_height = screen_width = 512;		/* Defaults */
+    args.self = &args;
 
     bu_setprogname(argv[0]);
-
-    if (!get_args(argc, argv)) {
-	(void)fputs(usage, stderr);
-	bu_exit(1, NULL);
+    int introspection = bu_arg_introspect(&msg, &fb_png_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+    int operand_index = bu_arg_schema_parse_complete(&fb_png_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&fb_png_schema, "fb-png");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "fb-png help");
+	return 0;
+    }
+
+    if (operand_index < argc - 1) {
+	const char *file_name = argv[operand_index + 1];
+	outfp = fopen(file_name, "wb");
+	if (!outfp) {
+	    bu_flog(stderr, "fb-png: cannot open \"%s\" for writing: %s\n",
+		file_name, strerror(errno));
+	    return 1;
+	}
+	(void)bu_fchmod(fileno(outfp), 0444);
+    } else {
+	if (isatty(fileno(stdout))) {
+	    char *help = bu_arg_schema_help(&fb_png_schema, "fb-png");
+	    bu_flog(stderr, "%s", help ? help : "");
+	    bu_free(help, "fb-png help");
+	    return 1;
+	}
+	setmode(fileno(stdout), O_BINARY);
+    }
+    pixbytes = args.pixel_bytes[0] - '0';
 
     png_p = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if (!png_p) {
@@ -178,23 +200,23 @@ Usage: fb-png [-i -c] [-# nbytes/pixel] [-F framebuffer] [-g gamma]\n\
 	bu_exit(EXIT_FAILURE, "Could not create PNG info structure\n");
     }
 
-    if ((fbp = fb_open(framebuffer, screen_width, screen_height)) == NULL) {
+    if ((fbp = fb_open(args.framebuffer, args.width, args.height)) == NULL) {
 	bu_exit(12, NULL);
     }
 
     /* If actual screen is smaller than requested size, trim down */
-    V_MIN(screen_height, fb_getheight(fbp));
-    V_MIN(screen_width, fb_getwidth(fbp));
+    V_MIN(args.height, fb_getheight(fbp));
+    V_MIN(args.width, fb_getwidth(fbp));
 
-    scanpix = screen_width;
-    scanbytes = scanpix * sizeof(RGBpixel);
+    scanpix = args.width;
+    scanbytes = (size_t)scanpix * sizeof(RGBpixel);
     scanline = (unsigned char *)bu_malloc(scanbytes, "scanline");
 
-    if (crunch) {
+    if (args.crunch) {
 	if (fb_rmap(fbp, &cmap) == -1) {
-	    crunch = 0;
+	    args.crunch = 0;
 	} else if (fb_is_linear_cmap(&cmap)) {
-	    crunch = 0;
+	    args.crunch = 0;
 	}
     }
 
@@ -202,55 +224,59 @@ Usage: fb-png [-i -c] [-# nbytes/pixel] [-F framebuffer] [-g gamma]\n\
     png_set_filter(png_p, 0, PNG_FILTER_NONE);
     png_set_compression_level(png_p, 9);
     png_set_IHDR(png_p, info_p,
-		 screen_width, screen_height, 8,
+		 args.width, args.height, 8,
 		 pixbytes == 3 ? PNG_COLOR_TYPE_RGB : PNG_COLOR_TYPE_GRAY,
 		 PNG_INTERLACE_NONE,
 		 PNG_COMPRESSION_TYPE_DEFAULT,
 		 PNG_FILTER_TYPE_DEFAULT);
 
     /* default to no gamma correction */
-    if (out_gamma > 0.0)
-	png_set_gAMA(png_p, info_p, out_gamma);
+    if (args.gamma > 0.0)
+	png_set_gAMA(png_p, info_p, args.gamma);
 
     png_write_info(png_p, info_p);
 
-    if (inverse) {
+    if (args.inverse) {
 	/* Read bottom to top */
-	for (y=0; y < screen_height; y++) {
+	for (y=0; y < args.height; y++) {
 	    if (pixbytes == 3)
-		got = fb_read(fbp, 0, y, scanline, screen_width);
+		got = fb_read(fbp, 0, y, scanline, args.width);
 	    else
-		got = fb_bwreadrect(fbp, 0, y, screen_width, 1, scanline);
+		got = fb_bwreadrect(fbp, 0, y, args.width, 1, scanline);
 
-	    if (got != screen_width) {
+	    if (got != args.width) {
 		bu_log("fb-png: Read of scanline %d returned %d, expected %d, aborting.\n",
-		       y, got, screen_width);
+		       y, got, args.width);
 		break;
 	    }
-	    if (crunch)
+	    if (args.crunch)
 		cmap_crunch((RGBpixel *)scanline, scanpix, &cmap);
 	    png_write_row(png_p, scanline);
 	}
     } else {
 	/* Read top to bottom */
-	for (y = screen_height-1; y >= 0; y--) {
+	for (y = args.height-1; y >= 0; y--) {
 	    if (pixbytes == 3)
-		got = fb_read(fbp, 0, y, scanline, screen_width);
+		got = fb_read(fbp, 0, y, scanline, args.width);
 	    else
-		got = fb_bwreadrect(fbp, 0, y, screen_width, 1, scanline);
+		got = fb_bwreadrect(fbp, 0, y, args.width, 1, scanline);
 
-	    if (got != screen_width) {
+	    if (got != args.width) {
 		bu_log("fb-png: Read of scanline %d returned %d, expected %d, aborting.\n",
-		       y, got, screen_width);
+		       y, got, args.width);
 		break;
 	    }
-	    if (crunch)
+	    if (args.crunch)
 		cmap_crunch((RGBpixel *)scanline, scanpix, &cmap);
 	    png_write_row(png_p, scanline);
 	}
     }
     fb_close(fbp);
     png_write_end(png_p, NULL);
+    png_destroy_write_struct(&png_p, &info_p);
+    bu_free(scanline, "scanline");
+    if (outfp != stdout)
+	fclose(outfp);
     return 0;
 }
 

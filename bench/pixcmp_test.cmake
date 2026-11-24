@@ -39,6 +39,22 @@ function(check_pixcmp name input1 input2 expected_status expected_summary)
   endif()
 endfunction()
 
+function(check_pixcmp_args_rejected name)
+  execute_process(
+    COMMAND "${PIXCMP}" ${ARGN}
+    OUTPUT_VARIABLE output
+    ERROR_VARIABLE errors
+    RESULT_VARIABLE status
+  )
+
+  if(NOT "${status}" STREQUAL "127")
+    message(
+      FATAL_ERROR
+      "${name}: pixcmp returned ${status}, expected 127\nstdout: ${output}\nstderr: ${errors}"
+    )
+  endif()
+endfunction()
+
 set(exact_pixel "pixcmp pixels: 1 matching, 0 off by 1, 0 off by many")
 set(tolerated_pixel "pixcmp pixels: 0 matching, 1 off by 1, 0 off by many")
 set(rejected_pixel "pixcmp pixels: 0 matching, 0 off by 1, 1 off by many")
@@ -78,3 +94,34 @@ check_pixcmp(
   "pixcmp bytes: 0 matching, 0 off by 1, 1 off by many"
   -b
 )
+
+check_pixcmp(
+  skip_both_inputs
+  "ABCDEF"
+  "ABCDEF"
+  0
+  "pixcmp pixels: 1 matching, 0 off by 1, 0 off by many"
+  -i 1
+)
+check_pixcmp(
+  skip_inputs_separately
+  "XAB"
+  "YYAB"
+  0
+  "pixcmp bytes: 2 matching, 0 off by 1, 0 off by many"
+  -b -i 1:2
+)
+check_pixcmp(
+  limit_byte_count
+  "ABC"
+  "ABC"
+  0
+  "pixcmp bytes: 2 matching, 0 off by 1, 0 off by many"
+  -b -n 2
+)
+
+check_pixcmp_args_rejected(negative_skip -i -1 first.pix second.pix)
+check_pixcmp_args_rejected(incomplete_skip_range -i 1: first.pix second.pix)
+check_pixcmp_args_rejected(extra_skip_separator -i 1:2:3 first.pix second.pix)
+check_pixcmp_args_rejected(invalid_count -n nope first.pix second.pix)
+check_pixcmp_args_rejected(invalid_positional_skip first.pix second.pix nope)

@@ -24,80 +24,136 @@
 
 #include "common.h"
 
-#include <limits.h>
+#include <stdint.h>
 
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/exit.h"
-#include "bu/getopt.h"
-#include "bu/opt.h"
+#include "bu/malloc.h"
 #include "icv.h"
 
 #define DEFAULT_IMAGE_DIMENSION 512
 
-static char options[] = "s:w:n:dh?";
-static char *progname;
-static int dither = 0;
-static size_t width = DEFAULT_IMAGE_DIMENSION;
-static size_t height = DEFAULT_IMAGE_DIMENSION;
+struct pix_sun_args {
+    struct pix_sun_args *self;
+    int help;
+    int dither;
+    size_t width;
+    size_t height;
+};
 
-static void
-usage(void)
+enum pix_sun_dimension {
+    PIX_SUN_SIZE,
+    PIX_SUN_WIDTH,
+    PIX_SUN_HEIGHT
+};
+
+static struct pix_sun_args *
+pix_sun_args_from_storage(void *storage)
 {
-    fprintf(stderr, "Usage: %s [-s squaresize] [-w width] [-n height] [-d]", progname);
-    fprintf(stderr, " < BRLpixfile > rasterfile\n");
-    bu_exit(1, NULL);
+    return storage ? *(struct pix_sun_args **)storage : NULL;
 }
+
+static int
+pix_sun_dimension(struct bu_vls *msg, const char *arg, void *storage,
+	enum pix_sun_dimension dimension)
+{
+    struct pix_sun_args *args = pix_sun_args_from_storage(storage);
+    size_t value;
+
+    if (!bu_arg_size_t_range_from_str(msg, &value, arg, 10, 1, UINT32_MAX))
+	return -1;
+    if (args) {
+	if (dimension == PIX_SUN_SIZE)
+	    args->width = args->height = value;
+	else if (dimension == PIX_SUN_WIDTH)
+	    args->width = value;
+	else
+	    args->height = value;
+    }
+    return 0;
+}
+
+#define PIX_SUN_DIMENSION_CALLBACK(_name, _dimension) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return pix_sun_dimension(msg, arg, storage, _dimension); \
+    }
+
+PIX_SUN_DIMENSION_CALLBACK(pix_sun_size, PIX_SUN_SIZE)
+PIX_SUN_DIMENSION_CALLBACK(pix_sun_width, PIX_SUN_WIDTH)
+PIX_SUN_DIMENSION_CALLBACK(pix_sun_height, PIX_SUN_HEIGHT)
+
+static const struct bu_arg_option pix_sun_options[] = {
+    BU_ARG_FLAG("h", "help", struct pix_sun_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("d", "dither", struct pix_sun_args, dither,
+	"Dither colors while quantizing"),
+    BU_ARG_CUSTOM("s", "size", struct pix_sun_args, self, pix_sun_size,
+	"pixels", "Set both input dimensions"),
+    BU_ARG_CUSTOM("w", "width", struct pix_sun_args, self, pix_sun_width,
+	"pixels", "Set the input image width"),
+    BU_ARG_CUSTOM("n", "height", struct pix_sun_args, self, pix_sun_height,
+	"pixels", "Set the input image height"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema pix_sun_schema = BU_ARG_SCHEMA(
+    "pix-sun", "Convert a BRL-CAD PIX image to a Sun rasterfile",
+    pix_sun_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar pix_sun_grammar = {
+    &pix_sun_schema, NULL, NULL
+};
 
 int
 main(int argc, char **argv)
 {
+    struct pix_sun_args args = {NULL, 0, 0, DEFAULT_IMAGE_DIMENSION,
+	DEFAULT_IMAGE_DIMENSION};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     icv_image_t *image;
-    int option;
 
+    args.self = &args;
     bu_setprogname(argv[0]);
-    progname = argv[0];
+
+    int introspection = bu_arg_introspect(&msg, &pix_sun_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&pix_sun_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+
+    if (args.help) {
+	char *help = bu_arg_schema_help(&pix_sun_schema, "pix-sun");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "pix-sun help");
+	return 0;
+    }
     if (isatty(fileno(stdin)))
-	usage();
+	bu_exit(1, "pix-sun requires redirected PIX input\n");
+    if (isatty(fileno(stdout)))
+	bu_exit(1, "pix-sun cannot send raster output to a terminal\n");
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
-    bu_opterr = 0;
-
-    while ((option = bu_getopt(argc, argv, options)) != -1) {
-	switch (option) {
-	    case 'd':
-		dither = !dither;
-		break;
-	    case 'w':
-		if (!bu_opt_scan_size_t_range(bu_optarg, &width, 1, SIZE_MAX, "input width"))
-		    usage();
-		break;
-	    case 'n':
-		if (!bu_opt_scan_size_t_range(bu_optarg, &height, 1, SIZE_MAX, "input height"))
-		    usage();
-		break;
-	    case 's':
-		if (!bu_opt_scan_size_t_range(bu_optarg, &width, 1, SIZE_MAX, "input size"))
-		    usage();
-		height = width;
-		break;
-	    default:
-		usage();
-		break;
-	}
-    }
-
-    if (bu_optind < argc)
-	usage();
-
-    image = icv_read(NULL, BU_MIME_IMAGE_PIX, width, height);
+    image = icv_read(NULL, BU_MIME_IMAGE_PIX, args.width, args.height);
     if (!image)
-	bu_exit(1, "%s: unable to read %zu x %zu PIX input\n", progname, width, height);
-    if (icv_write_sun(image, NULL, dither) != BRLCAD_OK) {
+	bu_exit(1, "pix-sun: unable to read %zu x %zu PIX input\n",
+	    args.width, args.height);
+    if (icv_write_sun(image, NULL, args.dither) != BRLCAD_OK) {
 	icv_destroy(image);
-	bu_exit(1, "%s: unable to write Sun rasterfile output\n", progname);
+	bu_exit(1, "pix-sun: unable to write Sun rasterfile output\n");
     }
     icv_destroy(image);
     return 0;

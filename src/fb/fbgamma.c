@@ -26,50 +26,113 @@
 
 #include "common.h"
 
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
 #include <math.h>
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/malloc.h"
-#include "bu/getopt.h"
-#include "bu/opt.h"
 #include "bu/exit.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "dm.h"
-#include "pkg.h"
 
-const char *options = "iHoF:h?";
+static const unsigned char rampval[10] = {255, 128, 64, 32, 16, 8, 4, 2, 1, 0};
+static int x, y, scr_width, scr_height, patch_width, patch_height;
+static unsigned char *altline;
+static unsigned char *line;
 
-unsigned char rampval[10] = { 255, 128, 64, 32, 16, 8, 4, 2, 1, 0 };
-int x, y, scr_width, scr_height, patch_width, patch_height;
-unsigned char *altline;
-unsigned char *line;
-char *framebuffer = (char *)NULL;
-int image = 0;
+#define FBGAMMA_MIN_ABS_GAMMA 1.0e-10
 
-static char usage[] = "\
-Usage: fbgamma [-H -o -i] [-F framebuffer] val [gval bval]\n";
+struct fbgamma_args {
+    int help;
+    int high_resolution;
+    int overlay;
+    int image;
+    const char *framebuffer;
+};
 
-
-static void
-checkgamma(double g)
+static int
+fbgamma_toggle(struct bu_vls *UNUSED(msg), const char *UNUSED(arg), void *storage)
 {
-    if (fabs(g) < 1.0e-10) {
-	fprintf(stderr, "fbgamma: gamma too close to zero\n");
-	bu_exit(3, "%s", usage);
-    }
+    if (storage)
+	*(int *)storage = !*(int *)storage;
+    return 0;
 }
 
 static int
-parse_gamma(const char *arg, double *g, const char *label)
+fbgamma_value_validate(struct bu_vls *msg, const char *arg)
 {
-    if (!bu_opt_scan_double(arg, g, label))
+    double gamma;
+
+    if (!bu_arg_double_from_str(msg, &gamma, arg))
+	return -1;
+    if (fabs(gamma) < FBGAMMA_MIN_ABS_GAMMA) {
+	if (msg)
+	    bu_vls_printf(msg, "gamma magnitude must be at least %g\n",
+		FBGAMMA_MIN_ABS_GAMMA);
+	return -1;
+    }
+    return 0;
+}
+
+static const struct bu_arg_variant fbgamma_variants[] = {
+    BU_ARG_VARIANT("uniform", "gamma", 1, "One gamma for all color channels"),
+    BU_ARG_VARIANT("rgb", "red-gamma green-gamma blue-gamma", 3,
+	"Independent red, green, and blue gamma values"),
+    BU_ARG_VARIANT_NULL
+};
+
+static const struct bu_arg_shape fbgamma_shape = BU_ARG_SHAPE(
+    BU_ARG_SHAPE_CUSTOM, 1, 3, "one uniform or three channel gamma values",
+    NULL, fbgamma_variants);
+
+static const struct bu_arg_option fbgamma_options[] = {
+    BU_ARG_FLAG("h", "help", struct fbgamma_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("H", "high-resolution", struct fbgamma_args, high_resolution,
+	"Request a 1024 by 1024 framebuffer"),
+    BU_ARG_FLAG("o", "overlay", struct fbgamma_args, overlay,
+	"Apply correction to the current colormap"),
+    BU_ARG_CUSTOM_FLAG("i", "image", "image", struct fbgamma_args, image,
+	fbgamma_toggle, "Toggle the calibration image"),
+    BU_ARG_VALUE("F", "framebuffer", struct fbgamma_args, framebuffer,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Select the framebuffer device"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand fbgamma_operands[] = {
+    BU_ARG_OPERAND_SHAPED("gamma", BU_ARG_VALUE_NUMBER, 1, 3,
+	fbgamma_value_validate, "Display gamma value", NULL, &fbgamma_shape),
+    BU_ARG_OPERAND_NULL
+};
+
+static int
+fbgamma_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
+{
+    if (!result || cursor_arg < argc || result->state == BU_ARG_VALIDATE_INVALID)
 	return 0;
 
-    checkgamma(*g);
-    return 1;
+    size_t gamma_count = bu_arg_schema_operand_count(schema, argc, argv);
+    if (gamma_count == 2) {
+	result->state = BU_ARG_VALIDATE_INCOMPLETE;
+	result->token_start = argc;
+	result->token_end = argc;
+	result->expected = BU_ARG_EXPECT_OPERAND;
+	result->hint = "supply one gamma or all three channel gamma values";
+    }
+    return 0;
 }
+
+static const struct bu_arg_schema fbgamma_schema = BU_ARG_SCHEMA(
+    "fbgamma", "Load a gamma-correcting framebuffer colormap",
+    fbgamma_options, fbgamma_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, fbgamma_validate, NULL, NULL));
+
+static const struct bu_arg_grammar fbgamma_grammar = {
+    &fbgamma_schema, NULL, NULL
+};
 
 
 static void
@@ -133,63 +196,69 @@ disp_image(struct fb *fb_i)
 int
 main(int argc, char **argv)
 {
+    struct fbgamma_args args = {0, 0, 0, 0, NULL};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     int i;
     int onegamma = 0;
-    int fbsize = 512;
-    int overlay = 0;
-    int remaining = 0;
+    int fbsize;
     double gamr = 0, gamg = 0, gamb = 0;	/* gamma's */
     double f;
     ColorMap cm;
     struct fb *fbp;
 
     bu_setprogname(argv[0]);
-
-    onegamma = 0;
-
-    /* check for flags */
-    bu_opterr = 0;
-    while ((i=bu_getopt(argc, argv, options)) != -1) {
-	switch (i) {
-	    case 'H'	: fbsize = 1024; break;
-	    case 'o'	: overlay++; break;
-	    case 'i'	: image = !image; break;
-	    case 'F'	: framebuffer = bu_optarg; break;
-	    default	: bu_exit(1, "%s", usage);
-	}
+    int introspection = bu_arg_introspect(&msg, &fbgamma_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&fbgamma_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&fbgamma_schema, "fbgamma");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "fbgamma help");
+	return 0;
     }
 
-    remaining = argc - bu_optind;
-    if (remaining == 1) {
+    int gamma_count = argc - operand_index - 1;
+    if (gamma_count == 1) {
 	/* single value for all channels */
-	if (!parse_gamma(argv[bu_optind], &f, "gamma"))
-	    bu_exit(1, "%s", usage);
+	if (!bu_arg_double_from_str(NULL, &f, argv[operand_index + 1]))
+	    bu_exit(1, "fbgamma: internal gamma validation mismatch\n");
 	gamr = gamg = gamb = 1.0 / f;
-	onegamma++;
-    } else if (remaining == 3) {
-	/* different RGB values */
-	if (!parse_gamma(argv[bu_optind], &f, "red gamma"))
-	    bu_exit(1, "%s", usage);
-	gamr = 1.0 / f;
-	if (!parse_gamma(argv[bu_optind+1], &f, "green gamma"))
-	    bu_exit(1, "%s", usage);
-	gamg = 1.0 / f;
-	if (!parse_gamma(argv[bu_optind+2], &f, "blue gamma"))
-	    bu_exit(1, "%s", usage);
-	gamb = 1.0 / f;
+	onegamma = 1;
     } else {
-	bu_exit(1, "%s", usage);
+	/* different RGB values */
+	if (!bu_arg_double_from_str(NULL, &f, argv[operand_index + 1]))
+	    bu_exit(1, "fbgamma: internal red gamma validation mismatch\n");
+	gamr = 1.0 / f;
+	if (!bu_arg_double_from_str(NULL, &f, argv[operand_index + 2]))
+	    bu_exit(1, "fbgamma: internal green gamma validation mismatch\n");
+	gamg = 1.0 / f;
+	if (!bu_arg_double_from_str(NULL, &f, argv[operand_index + 3]))
+	    bu_exit(1, "fbgamma: internal blue gamma validation mismatch\n");
+	gamb = 1.0 / f;
     }
 
-    if ((fbp = fb_open(framebuffer, fbsize, fbsize)) == FB_NULL) {
+    fbsize = args.high_resolution ? 1024 : 512;
+    if ((fbp = fb_open(args.framebuffer, fbsize, fbsize)) == FB_NULL) {
 	bu_exit(2, "Unable to open framebuffer\n");
     }
 
     /* draw the gamma image if requested */
-    if (image) disp_image(fbp);
+    if (args.image) disp_image(fbp);
 
     /* get the starting map */
-    if (overlay) {
+    if (args.overlay) {
 	fb_rmap(fbp, &cm);
     } else {
 	/* start with a linear map */
@@ -205,7 +274,7 @@ main(int argc, char **argv)
 	    cm.cm_red[i] = 65535 * pow((double)cm.cm_red[i] / 65535.0, -1.0/gamr);
 	else
 	    cm.cm_red[i] = 65535 * pow((double)cm.cm_red[i] / 65535.0, gamr);
-	if (onegamma && (overlay == 0)) {
+	if (onegamma && !args.overlay) {
 	    cm.cm_green[i] = cm.cm_red[i];
 	    cm.cm_blue[i]  = cm.cm_red[i];
 	} else {

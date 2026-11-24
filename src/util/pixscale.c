@@ -42,11 +42,11 @@
 #include "bio.h"
 
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "bu/file.h"
+#include "bu/str.h"
 
 
 #define MAXBUFBYTES 3*1024*1024	/* max bytes to malloc in buffer space */
@@ -65,8 +65,7 @@ static b_off_t next_scanline;	/* Next unread input scanline */
 
 ssize_t bufy;				/* y coordinate in buffer */
 FILE *buffp;
-static char *file_name;
-static char hyphen[] = "-";
+static const char *file_name;
 
 int rflag = 0;
 int inx = 512;
@@ -75,9 +74,133 @@ int outx = 512;
 int outy = 512;
 
 
-static char usage[] = "\
-Usage: pixscale [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
-	[-S squareoutsize] [-W outwidth] [-N outheight] [in.pix] > out.pix\n";
+struct pixscale_args {
+    struct pixscale_args *self;
+    int help;
+    int replicate;
+    int input_width;
+    int input_height;
+    int output_width;
+    int output_height;
+};
+
+static struct pixscale_args *
+pixscale_args_from_storage(void *storage)
+{
+    return storage ? *(struct pixscale_args **)storage : NULL;
+}
+
+static int
+pixscale_square(struct bu_vls *msg, const char *arg, void *storage, int output)
+{
+    struct pixscale_args *args = pixscale_args_from_storage(storage);
+    int value;
+
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 1, INT_MAX))
+	return -1;
+    if (args) {
+	if (output)
+	    args->output_width = args->output_height = value;
+	else
+	    args->input_width = args->input_height = value;
+    }
+    return 0;
+}
+
+static int
+pixscale_input_square(struct bu_vls *msg, const char *arg, void *storage)
+{
+    return pixscale_square(msg, arg, storage, 0);
+}
+
+static int
+pixscale_output_square(struct bu_vls *msg, const char *arg, void *storage)
+{
+    return pixscale_square(msg, arg, storage, 1);
+}
+
+static const struct bu_arg_option pixscale_options[] = {
+    BU_ARG_FLAG("h", "help", struct pixscale_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("r", "replicate", struct pixscale_args, replicate,
+	"Use nearest-neighbor replication when enlarging"),
+    BU_ARG_CUSTOM("s", "input-size", struct pixscale_args, self,
+	pixscale_input_square, "pixels", "Set both input dimensions"),
+    BU_ARG_INTEGER_RANGE("w", "input-width", struct pixscale_args, input_width,
+	1, 1, 1, INT_MAX, "pixels", "Set the input width"),
+    BU_ARG_INTEGER_RANGE("n", "input-height", struct pixscale_args, input_height,
+	1, 1, 1, INT_MAX, "scanlines", "Set the input height"),
+    BU_ARG_CUSTOM("S", "output-size", struct pixscale_args, self,
+	pixscale_output_square, "pixels", "Set both output dimensions"),
+    BU_ARG_INTEGER_RANGE("W", "output-width", struct pixscale_args, output_width,
+	1, 1, 1, INT_MAX, "pixels", "Set the output width"),
+    BU_ARG_INTEGER_RANGE("N", "output-height", struct pixscale_args, output_height,
+	1, 1, 1, INT_MAX, "scanlines", "Set the output height"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand pixscale_file_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"PIX input file (default: standard input)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_operand pixscale_legacy_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 1, 1, "PIX input file", NULL),
+    BU_ARG_OPERAND_INTEGER_RANGE("input-width", 1, 1,
+	1, 1, 1, INT_MAX, "Input width", NULL),
+    BU_ARG_OPERAND_INTEGER_RANGE("input-height", 1, 1,
+	1, 1, 1, INT_MAX, "Input height", NULL),
+    BU_ARG_OPERAND_INTEGER_RANGE("output-width", 1, 1,
+	1, 1, 1, INT_MAX, "Output width", NULL),
+    BU_ARG_OPERAND_INTEGER_RANGE("output-height", 1, 1,
+	1, 1, 1, INT_MAX, "Output height", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema pixscale_file_schema = BU_ARG_SCHEMA(
+    "pixscale", "Scale a PIX image", pixscale_options, pixscale_file_operands,
+    BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_schema pixscale_legacy_schema = BU_ARG_SCHEMA(
+    "pixscale", "Scale a PIX image using positional dimensions",
+    pixscale_options, pixscale_legacy_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_form pixscale_form_rows[] = {
+    BU_ARG_FORM("options", "Specify dimensions with options",
+	&pixscale_file_schema, NULL),
+    BU_ARG_FORM("legacy", "Specify all dimensions positionally",
+	&pixscale_legacy_schema, NULL),
+    BU_ARG_FORM_NULL
+};
+
+static const struct bu_arg_form *
+pixscale_form_select(const struct bu_arg_forms *forms, size_t argc,
+	const char * const *argv, void *UNUSED(context))
+{
+    int value;
+    size_t i;
+
+    if (!forms || !forms->forms || !argv)
+	return NULL;
+    if (argc < 6)
+	return &forms->forms[0];
+    for (i = argc - 4; i < argc; i++) {
+	if (!bu_arg_integer_range_from_str(NULL, &value, argv[i], 10, 1, INT_MAX))
+	    return &forms->forms[0];
+    }
+    return &forms->forms[1];
+}
+
+static const struct bu_arg_forms pixscale_forms = BU_ARG_FORMS(
+    "pixscale", "Scale a PIX image", pixscale_form_rows, pixscale_form_select);
+
+static const struct bu_arg_grammar pixscale_grammar = {
+    NULL, NULL, &pixscale_forms
+};
 
 /****** THIS PROBABLY SHOULD BE ELSEWHERE *******/
 
@@ -381,109 +504,95 @@ init_buffer(void)
 }
 
 
-int
-get_args(int argc, char **argv)
+static int
+get_args(int argc, char **argv, struct pixscale_args *args)
 {
-    int c;
+    const struct bu_arg_form *selected = NULL;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int operand_index = bu_arg_forms_parse(&pixscale_forms, args, &msg,
+	argc, (const char **)argv, NULL, &selected);
 
-    while ((c = bu_getopt(argc, argv, "rs:w:n:S:W:N:h?")) != -1) {
-	switch (c) {
-	    case 'r':
-		/* pixel replication */
-		rflag = 1;
-		break;
-	    case 'S':
-		/* square size */
-		if (!bu_opt_scan_int_range(bu_optarg, &outx, 1, INT_MAX, "output size"))
-		    return 0;
-		outy = outx;
-		break;
-	    case 's':
-		/* square size */
-		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "input size"))
-		    return 0;
-		iny = inx;
-		break;
-	    case 'W':
-		if (!bu_opt_scan_int_range(bu_optarg, &outx, 1, INT_MAX, "output width"))
-		    return 0;
-		break;
-	    case 'w':
-		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "input width"))
-		    return 0;
-		break;
-	    case 'N':
-		if (!bu_opt_scan_int_range(bu_optarg, &outy, 1, INT_MAX, "output height"))
-		    return 0;
-		break;
-	    case 'n':
-		if (!bu_opt_scan_int_range(bu_optarg, &iny, 1, INT_MAX, "input height"))
-		    return 0;
-		break;
-
-	    default:		/* 'h' , '?' */
-		return 0;
-	}
+    if (operand_index < 0) {
+	bu_log("%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 0;
     }
-
-    /* XXX - backward compatibility hack */
-    if (bu_optind+5 == argc) {
-	file_name = argv[bu_optind++];
-	if ((buffp = fopen(file_name, "rb")) == NULL) {
-	    bu_log("pixscale: cannot open \"%s\" for reading\n", file_name);
-	    return 0;
-	}
-	if (!bu_opt_scan_int_range(argv[bu_optind++], &inx, 1, INT_MAX, "input width"))
-	    return 0;
-	if (!bu_opt_scan_int_range(argv[bu_optind++], &iny, 1, INT_MAX, "input height"))
-	    return 0;
-	if (!bu_opt_scan_int_range(argv[bu_optind++], &outx, 1, INT_MAX, "output width"))
-	    return 0;
-	if (!bu_opt_scan_int_range(argv[bu_optind++], &outy, 1, INT_MAX, "output height"))
-	    return 0;
+    bu_vls_free(&msg);
+    if (args->help)
 	return 1;
+
+    if (selected == &pixscale_form_rows[1]) {
+	file_name = argv[operand_index + 1];
+	if (!bu_arg_integer_range_from_str(NULL, &args->input_width,
+		argv[operand_index + 2], 10, 1, INT_MAX) ||
+	    !bu_arg_integer_range_from_str(NULL, &args->input_height,
+		argv[operand_index + 3], 10, 1, INT_MAX) ||
+	    !bu_arg_integer_range_from_str(NULL, &args->output_width,
+		argv[operand_index + 4], 10, 1, INT_MAX) ||
+	    !bu_arg_integer_range_from_str(NULL, &args->output_height,
+		argv[operand_index + 5], 10, 1, INT_MAX))
+	    return 0;
+    } else if (argc - operand_index - 1 == 1) {
+	file_name = argv[operand_index + 1];
+    } else {
+	file_name = "-";
     }
-    if (bu_optind >= argc) {
+
+    rflag = args->replicate;
+    inx = args->input_width;
+    iny = args->input_height;
+    outx = args->output_width;
+    outy = args->output_height;
+
+    if (BU_STR_EQUAL(file_name, "-")) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = hyphen;
 	buffp = stdin;
-    } else {
-	file_name = argv[bu_optind];
-	bu_optind++;
-	if (argc > bu_optind) {
-	    bu_log("pixscale: excess argument(s) not supported\n");
-	    return 0;
-	}
-	if ((buffp = fopen(file_name, "rb")) == NULL) {
-	    bu_log("pixscale: cannot open \"%s\" for reading\n", file_name);
-	    return 0;
-	}
-    }
-
-    if (argc > bu_optind) {
-	bu_log("pixscale: excess argument(s) not supported\n");
+    } else if ((buffp = fopen(file_name, "rb")) == NULL) {
+	bu_log("pixscale: cannot open \"%s\" for reading\n", file_name);
 	return 0;
     }
 
-    return 1;		/* OK */
+    return 1;
 }
 
 
 int
 main(int argc, char **argv)
 {
+    struct pixscale_args args = {NULL, 0, 0, 512, 512, 512, 512};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     int i;
+    int introspection;
+
+    args.self = &args;
 
     bu_setprogname(argv[0]);
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
-	bu_exit(1, "%s", usage);
-    if (!get_args(argc, argv) || isatty(fileno(stdout)))
-	bu_exit(1, "%s", usage);
+    introspection = bu_arg_introspect(&msg, &pixscale_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    bu_vls_free(&msg);
+
+    if (!get_args(argc, argv, &args) || isatty(fileno(stdout))) {
+	char *help = bu_arg_forms_help(&pixscale_forms, "pixscale");
+	bu_flog(stderr, "%s", help ? help : "");
+	bu_free(help, "pixscale help");
+	return 1;
+    }
+    if (args.help) {
+	char *help = bu_arg_forms_help(&pixscale_forms, "pixscale");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "pixscale help");
+	return 0;
+    }
 
     if (inx <= 0 || iny <= 0 || outx <= 0 || outy <= 0) {
 	bu_exit(2, "pixscale: bad size\n");

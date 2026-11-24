@@ -26,20 +26,19 @@
 
 #include "common.h"
 
-#include <ctype.h>
-#include <errno.h>
-#include <limits.h>
-#include <stdlib.h>
 #include <math.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/color.h"
-#include "bu/getopt.h"
-#include "bu/malloc.h"
 #include "bu/exit.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "bn.h"
 #include "dm.h"
 
@@ -75,92 +74,10 @@ static unsigned char exterior_rgb[3];
 static unsigned char interior_rgb[3];
 static unsigned char rgb_tol[3];
 
-fastf_t border_hsv[3];
-fastf_t exterior_hsv[3];
-fastf_t interior_hsv[3];
-fastf_t hsv_tol[3];
-
-#define OPT_STRING "ab:e:i:n:s:t:w:x:y:B:E:I:T:X:Y:h?"
-
-static char usage[] = "\
-Usage: pixborder [-b 'R G B'] [-e 'R G B'] [-i 'R G B'] [-t 'R G B']\n\
-		 [-B 'H S V'] [-E 'H S V'] [-I 'H S V'] [-T 'H S V']\n\
-		 [-x left_edge]  [-y bottom_edge]\n\
-		 [-X right_edge] [-Y top_edge]\n\
-		 [-a] [-s squaresize] [-w file_width] [-n file_height]\n\
-		 [file.pix]\n";
-
-/*
- * Read in an HSV triple.
- */
-static int read_hsv (fastf_t *hsvp, char *buf)
-{
-    double tmp[3];
-    int i = 0;
-    const char *cp = buf;
-    char *end = NULL;
-
-    for (i = 0; i < 3; i++) {
-	while (isspace((unsigned char)*cp))
-	    cp++;
-	if (*cp == '\0')
-	    return 0;
-
-	errno = 0;
-	tmp[i] = strtod(cp, &end);
-	if (errno != 0 || end == cp || !isfinite(tmp[i]))
-	    return 0;
-	cp = end;
-    }
-
-    while (isspace((unsigned char)*cp))
-	cp++;
-    if (*cp != '\0')
-	return 0;
-
-    if ((tmp[HUE] < 0.0) || (tmp[HUE] > 360.0)
-	|| (tmp[SAT] < 0.0) || (tmp[SAT] > 1.0)
-	|| (tmp[VAL] < 0.0) || (tmp[VAL] > 1.0))
-	return 0;
-    if (ZERO(tmp[SAT]))
-	tmp[HUE] = ACHROMATIC;
-    VMOVE(hsvp, tmp);
-    return 1;
-}
-
-static int
-parse_positive_size_arg(const char *arg, size_t *out_value, const char *label)
-{
-    char *end = NULL;
-    unsigned long long int value;
-
-    errno = 0;
-    value = strtoull(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value == 0) {
-	(void) fprintf(stderr, "pixborder: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = (size_t)value;
-    return 1;
-}
-
-static int
-parse_nonnegative_ssize_arg(const char *arg, ssize_t *out_value, const char *label)
-{
-    char *end = NULL;
-    long long int value;
-
-    errno = 0;
-    value = strtoll(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value < 0) {
-	(void) fprintf(stderr, "pixborder: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = (ssize_t)value;
-    return 1;
-}
+static fastf_t border_hsv[3];
+static fastf_t exterior_hsv[3];
+static fastf_t interior_hsv[3];
+static fastf_t hsv_tol[3];
 
 
 static int
@@ -258,7 +175,7 @@ static void rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
 }
 
 
-int hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
+static int hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 {
     fastf_t float_rgb[3] = VINIT_ZERO;
     fastf_t hue, sat, val;
@@ -404,142 +321,339 @@ static int is_border (unsigned char *prp, unsigned char *trp, unsigned char *nrp
 }
 
 
-static int
-get_args (int argc, char **argv)
+struct pixborder_args {
+    struct pixborder_args *self;
+    int help;
+    int autosize;
+    size_t file_width;
+    size_t file_height;
+    ssize_t left_edge;
+    ssize_t right_edge;
+    ssize_t bottom_edge;
+    ssize_t top_edge;
+    int colors_specified;
+    int tol_using_rgb;
+    unsigned char border_rgb[3];
+    unsigned char exterior_rgb[3];
+    unsigned char interior_rgb[3];
+    unsigned char rgb_tol[3];
+    fastf_t border_hsv[3];
+    fastf_t exterior_hsv[3];
+    fastf_t interior_hsv[3];
+    fastf_t hsv_tol[3];
+};
+
+enum pixborder_color_role {
+    PIXBORDER_BORDER,
+    PIXBORDER_EXTERIOR,
+    PIXBORDER_INTERIOR,
+    PIXBORDER_TOLERANCE
+};
+
+enum pixborder_size_role {
+    PIXBORDER_WIDTH,
+    PIXBORDER_HEIGHT,
+    PIXBORDER_SQUARE,
+    PIXBORDER_LEFT,
+    PIXBORDER_RIGHT,
+    PIXBORDER_BOTTOM,
+    PIXBORDER_TOP
+};
+
+static struct pixborder_args *
+pixborder_args_from_storage(void *storage)
 {
-    int c;
+    return storage ? *(struct pixborder_args **)storage : NULL;
+}
 
-    while ((c = bu_getopt(argc, argv, OPT_STRING)) != -1) {
-	switch (c) {
-	    case 'a':
-		autosize = 1;
-		break;
-	    case 'b':
-		if (! bu_str_to_rgb(bu_optarg, border_rgb)) {
-		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
-		    return 0;
-		}
-		break;
-	    case 'e':
-		if (! bu_str_to_rgb(bu_optarg, exterior_rgb)) {
-		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
-		    return 0;
-		}
-		rgb_to_hsv(exterior_rgb, exterior_hsv);
-		colors_specified |= COLORS_EXTERIOR;
-		break;
-	    case 'i':
-		if (! bu_str_to_rgb(bu_optarg, interior_rgb)) {
-		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
-		    return 0;
-		}
-		rgb_to_hsv(interior_rgb, interior_hsv);
-		colors_specified |= COLORS_INTERIOR;
-		break;
-	    case 'n':
-		if (!parse_positive_size_arg(bu_optarg, &file_height, "file height"))
-		    return 0;
-		autosize = 0;
-		break;
-	    case 's':
-		if (!parse_positive_size_arg(bu_optarg, &file_width, "square size"))
-		    return 0;
-		file_height = file_width;
-		autosize = 0;
-		break;
-	    case 't':
-		if (! bu_str_to_rgb(bu_optarg, rgb_tol)) {
-		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
-		    return 0;
-		}
-		tol_using_rgb = 1;
-		break;
-	    case 'w':
-		if (!parse_positive_size_arg(bu_optarg, &file_width, "file width"))
-		    return 0;
-		autosize = 0;
-		break;
-	    case 'x':
-		if (!parse_nonnegative_ssize_arg(bu_optarg, &left_edge, "left edge"))
-		    return 0;
-		break;
-	    case 'y':
-		if (!parse_nonnegative_ssize_arg(bu_optarg, &bottom_edge, "bottom edge"))
-		    return 0;
-		break;
-	    case 'B':
-		if (! read_hsv(border_hsv, bu_optarg)) {
-		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
-		    return 0;
-		}
-		hsv_to_rgb(border_hsv, border_rgb);
-		break;
-	    case 'E':
-		if (! read_hsv(exterior_hsv, bu_optarg)) {
-		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
-		    return 0;
-		}
-		hsv_to_rgb(exterior_hsv, exterior_rgb);
-		colors_specified |= COLORS_EXTERIOR;
-		break;
-	    case 'I':
-		if (! read_hsv(interior_hsv, bu_optarg)) {
-		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
-		    return 0;
-		}
-		hsv_to_rgb(interior_hsv, interior_rgb);
-		colors_specified |= COLORS_INTERIOR;
-		break;
-	    case 'T':
-		if (! read_hsv(hsv_tol, bu_optarg)) {
-		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
-		    return 0;
-		}
-		tol_using_rgb = 0;
-		break;
-	    case 'X':
-		if (!parse_nonnegative_ssize_arg(bu_optarg, &right_edge, "right edge"))
-		    return 0;
-		break;
-	    case 'Y':
-		if (!parse_nonnegative_ssize_arg(bu_optarg, &top_edge, "top edge"))
-		    return 0;
-		break;
-	    default:  /* 'h' '?' */
-		return 0;
-	}
-    }
+static void
+pixborder_args_init(struct pixborder_args *args)
+{
+    memset(args, 0, sizeof(*args));
+    args->self = args;
+    args->file_width = 512;
+    args->file_height = 512;
+    args->left_edge = -1;
+    args->right_edge = -1;
+    args->bottom_edge = -1;
+    args->top_edge = -1;
+    args->tol_using_rgb = 1;
+    VSETALL(args->border_rgb, 1);
+    VSETALL(args->exterior_rgb, 1);
+    VSETALL(args->interior_rgb, 255);
+    rgb_to_hsv(args->border_rgb, args->border_hsv);
+    rgb_to_hsv(args->exterior_rgb, args->exterior_hsv);
+    rgb_to_hsv(args->interior_rgb, args->interior_hsv);
+}
 
-    if (bu_optind >= argc) {
-	if (isatty(fileno(stdin)))
-	    return 0;
-	file_name = "stdin";
-	infp = stdin;
-    } else {
-	file_name = argv[bu_optind];
-	infp = fopen(file_name, "rb");
-	if (infp == NULL) {
-	    perror(file_name);
-	    (void) fprintf(stderr, "Cannot open file '%s'\n", file_name);
-	    return 0;
-	}
-	++fileinput;
-    }
+static int
+pixborder_rgb_consume(struct bu_vls *msg, size_t argc, const char **argv,
+	void *storage, enum pixborder_color_role role)
+{
+    struct bu_color color = BU_COLOR_INIT_ZERO;
+    struct pixborder_args *args = pixborder_args_from_storage(storage);
+    unsigned char rgb[3];
 
-    if (argc > ++bu_optind) {
-	(void) fprintf(stderr, "pixborder: excess argument(s) not supported\n");
+    if (bu_arg_rgb_consume(msg, argc, argv, storage ? &color : NULL) < 0)
+	return -1;
+    if (!args)
 	return 0;
+    if (!bu_color_to_rgb_chars(&color, rgb))
+	return -1;
+
+    switch (role) {
+	case PIXBORDER_BORDER:
+	    VMOVE(args->border_rgb, rgb);
+	    rgb_to_hsv(args->border_rgb, args->border_hsv);
+	    break;
+	case PIXBORDER_EXTERIOR:
+	    VMOVE(args->exterior_rgb, rgb);
+	    rgb_to_hsv(args->exterior_rgb, args->exterior_hsv);
+	    args->colors_specified |= COLORS_EXTERIOR;
+	    break;
+	case PIXBORDER_INTERIOR:
+	    VMOVE(args->interior_rgb, rgb);
+	    rgb_to_hsv(args->interior_rgb, args->interior_hsv);
+	    args->colors_specified |= COLORS_INTERIOR;
+	    break;
+	case PIXBORDER_TOLERANCE:
+	    VMOVE(args->rgb_tol, rgb);
+	    args->tol_using_rgb = 1;
+	    break;
+    }
+    return 0;
+}
+
+static int
+pixborder_hsv_consume(struct bu_vls *msg, size_t argc, const char **argv,
+	void *storage, enum pixborder_color_role role)
+{
+    struct pixborder_args *args = pixborder_args_from_storage(storage);
+    fastf_t hsv[3] = VINIT_ZERO;
+
+    if (bu_arg_vector3_consume(msg, argc, argv, hsv) < 0)
+	return -1;
+    if (hsv[HUE] < 0.0 || hsv[HUE] > 360.0 ||
+	hsv[SAT] < 0.0 || hsv[SAT] > 1.0 ||
+	hsv[VAL] < 0.0 || hsv[VAL] > 1.0) {
+	if (msg)
+	    bu_vls_strcat(msg, "HSV requires hue 0..360 and saturation/value 0..1\n");
+	return -1;
+    }
+    if (ZERO(hsv[SAT]))
+	hsv[HUE] = ACHROMATIC;
+    if (!args)
+	return 0;
+
+    switch (role) {
+	case PIXBORDER_BORDER:
+	    VMOVE(args->border_hsv, hsv);
+	    (void)hsv_to_rgb(args->border_hsv, args->border_rgb);
+	    break;
+	case PIXBORDER_EXTERIOR:
+	    VMOVE(args->exterior_hsv, hsv);
+	    (void)hsv_to_rgb(args->exterior_hsv, args->exterior_rgb);
+	    args->colors_specified |= COLORS_EXTERIOR;
+	    break;
+	case PIXBORDER_INTERIOR:
+	    VMOVE(args->interior_hsv, hsv);
+	    (void)hsv_to_rgb(args->interior_hsv, args->interior_rgb);
+	    args->colors_specified |= COLORS_INTERIOR;
+	    break;
+	case PIXBORDER_TOLERANCE:
+	    VMOVE(args->hsv_tol, hsv);
+	    args->tol_using_rgb = 0;
+	    break;
+    }
+    return 0;
+}
+
+#define PIXBORDER_COLOR_CONSUMER(_name, _space, _role) \
+    static int _name(struct bu_vls *msg, size_t argc, const char **argv, void *storage) \
+    { \
+	return pixborder_ ## _space ## _consume(msg, argc, argv, storage, _role); \
     }
 
-    return 1;
+PIXBORDER_COLOR_CONSUMER(pixborder_border_rgb, rgb, PIXBORDER_BORDER)
+PIXBORDER_COLOR_CONSUMER(pixborder_exterior_rgb, rgb, PIXBORDER_EXTERIOR)
+PIXBORDER_COLOR_CONSUMER(pixborder_interior_rgb, rgb, PIXBORDER_INTERIOR)
+PIXBORDER_COLOR_CONSUMER(pixborder_tolerance_rgb, rgb, PIXBORDER_TOLERANCE)
+PIXBORDER_COLOR_CONSUMER(pixborder_border_hsv, hsv, PIXBORDER_BORDER)
+PIXBORDER_COLOR_CONSUMER(pixborder_exterior_hsv, hsv, PIXBORDER_EXTERIOR)
+PIXBORDER_COLOR_CONSUMER(pixborder_interior_hsv, hsv, PIXBORDER_INTERIOR)
+PIXBORDER_COLOR_CONSUMER(pixborder_tolerance_hsv, hsv, PIXBORDER_TOLERANCE)
+
+static int
+pixborder_size_parse(struct bu_vls *msg, const char *arg, void *storage,
+	enum pixborder_size_role role)
+{
+    struct pixborder_args *args = pixborder_args_from_storage(storage);
+    size_t minimum = role <= PIXBORDER_SQUARE ? 1 : 0;
+    size_t value;
+
+    if (!bu_arg_size_t_range_from_str(msg, &value, arg, 10, minimum,
+	(size_t)SSIZE_MAX))
+	return -1;
+    if (!args)
+	return 0;
+
+    switch (role) {
+	case PIXBORDER_WIDTH:
+	    args->file_width = value;
+	    args->autosize = 0;
+	    break;
+	case PIXBORDER_HEIGHT:
+	    args->file_height = value;
+	    args->autosize = 0;
+	    break;
+	case PIXBORDER_SQUARE:
+	    args->file_width = value;
+	    args->file_height = value;
+	    args->autosize = 0;
+	    break;
+	case PIXBORDER_LEFT:
+	    args->left_edge = (ssize_t)value;
+	    break;
+	case PIXBORDER_RIGHT:
+	    args->right_edge = (ssize_t)value;
+	    break;
+	case PIXBORDER_BOTTOM:
+	    args->bottom_edge = (ssize_t)value;
+	    break;
+	case PIXBORDER_TOP:
+	    args->top_edge = (ssize_t)value;
+	    break;
+    }
+    return 0;
+}
+
+#define PIXBORDER_SIZE_PARSER(_name, _role) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return pixborder_size_parse(msg, arg, storage, _role); \
+    }
+
+PIXBORDER_SIZE_PARSER(pixborder_width, PIXBORDER_WIDTH)
+PIXBORDER_SIZE_PARSER(pixborder_height, PIXBORDER_HEIGHT)
+PIXBORDER_SIZE_PARSER(pixborder_square, PIXBORDER_SQUARE)
+PIXBORDER_SIZE_PARSER(pixborder_left, PIXBORDER_LEFT)
+PIXBORDER_SIZE_PARSER(pixborder_right, PIXBORDER_RIGHT)
+PIXBORDER_SIZE_PARSER(pixborder_bottom, PIXBORDER_BOTTOM)
+PIXBORDER_SIZE_PARSER(pixborder_top, PIXBORDER_TOP)
+
+static const struct bu_arg_variant pixborder_rgb_variants[] = {
+    BU_ARG_VARIANT("packed", "red/green/blue", 1,
+	"One packed RGB value"),
+    BU_ARG_VARIANT("channels", "red green blue", 3,
+	"Three RGB channel values"),
+    BU_ARG_VARIANT_NULL
+};
+
+static const struct bu_arg_variant pixborder_hsv_variants[] = {
+    BU_ARG_VARIANT("packed", "hue/saturation/value", 1,
+	"One packed HSV value"),
+    BU_ARG_VARIANT("components", "hue saturation value", 3,
+	"Three HSV component values"),
+    BU_ARG_VARIANT_NULL
+};
+
+static const struct bu_arg_shape pixborder_rgb_shape = BU_ARG_SHAPE(
+    BU_ARG_SHAPE_RGB, 1, 3, "packed RGB or three channels", NULL,
+    pixborder_rgb_variants);
+
+static const struct bu_arg_shape pixborder_hsv_shape = BU_ARG_SHAPE(
+    BU_ARG_SHAPE_VECTOR3, 1, 3, "packed HSV or three components", NULL,
+    pixborder_hsv_variants);
+
+static const struct bu_arg_option pixborder_options[] = {
+    BU_ARG_FLAG("h", "help", struct pixborder_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("a", "autosize", struct pixborder_args, autosize,
+	"Infer dimensions from a named input file"),
+    BU_ARG_OPTION_SHAPED("b", "border-rgb", "border-rgb",
+	struct pixborder_args, self, BU_ARG_VALUE_COLOR, "red green blue",
+	"Set the RGB border color using channels from 0 to 255 (default: 1 1 1)", BU_ARG_REQUIRED,
+	&pixborder_rgb_shape, pixborder_border_rgb),
+    BU_ARG_OPTION_SHAPED("B", "border-hsv", "border-hsv",
+	struct pixborder_args, self, BU_ARG_VALUE_COLOR, "hue saturation value",
+	"Set the HSV border color (H 0..360; S and V 0..1)", BU_ARG_REQUIRED,
+	&pixborder_hsv_shape, pixborder_border_hsv),
+    BU_ARG_OPTION_SHAPED("e", "exterior-rgb", "exterior-rgb",
+	struct pixborder_args, self, BU_ARG_VALUE_COLOR, "red green blue",
+	"Set the RGB exterior color using channels from 0 to 255 (default: 1 1 1)", BU_ARG_REQUIRED,
+	&pixborder_rgb_shape, pixborder_exterior_rgb),
+    BU_ARG_OPTION_SHAPED("E", "exterior-hsv", "exterior-hsv",
+	struct pixborder_args, self, BU_ARG_VALUE_COLOR, "hue saturation value",
+	"Set the HSV exterior color (H 0..360; S and V 0..1)", BU_ARG_REQUIRED,
+	&pixborder_hsv_shape, pixborder_exterior_hsv),
+    BU_ARG_OPTION_SHAPED("i", "interior-rgb", "interior-rgb",
+	struct pixborder_args, self, BU_ARG_VALUE_COLOR, "red green blue",
+	"Set the RGB interior color using channels from 0 to 255 (default: 255 255 255)", BU_ARG_REQUIRED,
+	&pixborder_rgb_shape, pixborder_interior_rgb),
+    BU_ARG_OPTION_SHAPED("I", "interior-hsv", "interior-hsv",
+	struct pixborder_args, self, BU_ARG_VALUE_COLOR, "hue saturation value",
+	"Set the HSV interior color (H 0..360; S and V 0..1)", BU_ARG_REQUIRED,
+	&pixborder_hsv_shape, pixborder_interior_hsv),
+    BU_ARG_OPTION_SHAPED("t", "rgb-tolerance", "rgb-tolerance",
+	struct pixborder_args, self, BU_ARG_VALUE_COLOR, "red green blue",
+	"Set per-channel RGB matching tolerance from 0 to 255 (default: 0 0 0)",
+	BU_ARG_REQUIRED, &pixborder_rgb_shape, pixborder_tolerance_rgb),
+    BU_ARG_OPTION_SHAPED("T", "hsv-tolerance", "hsv-tolerance",
+	struct pixborder_args, self, BU_ARG_VALUE_COLOR, "hue saturation value",
+	"Set HSV matching tolerance (H 0..360; S and V 0..1)", BU_ARG_REQUIRED,
+	&pixborder_hsv_shape, pixborder_tolerance_hsv),
+    BU_ARG_CUSTOM("s", "size", struct pixborder_args, self,
+	pixborder_square, "pixels", "Set both image dimensions"),
+    BU_ARG_CUSTOM("w", "width", struct pixborder_args, self,
+	pixborder_width, "pixels", "Set image width (default: 512)"),
+    BU_ARG_CUSTOM("n", "height", struct pixborder_args, self,
+	pixborder_height, "pixels", "Set image height (default: 512)"),
+    BU_ARG_CUSTOM("x", "left", struct pixborder_args, self,
+	pixborder_left, "column", "Set the leftmost processed column (default: 0)"),
+    BU_ARG_CUSTOM("X", "right", struct pixborder_args, self,
+	pixborder_right, "column", "Set the rightmost processed column (default: image edge)"),
+    BU_ARG_CUSTOM("y", "bottom", struct pixborder_args, self,
+	pixborder_bottom, "row", "Set the lowest processed row (default: 0)"),
+    BU_ARG_CUSTOM("Y", "top", struct pixborder_args, self,
+	pixborder_top, "row", "Set the highest processed row (default: image edge)"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand pixborder_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"PIX input file (default: standard input)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema pixborder_schema = BU_ARG_SCHEMA(
+    "pixborder", "Outline selected color regions in a PIX image",
+    pixborder_options, pixborder_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar pixborder_grammar = {
+    &pixborder_schema, NULL, NULL
+};
+
+static int
+pixborder_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&pixborder_schema, "pixborder");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "pixborder help");
+    return status;
 }
 
 
 int
 main (int argc, char **argv)
 {
+    struct pixborder_args args;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     char *outbuf;
     unsigned char *inrow[3];
+    int introspection;
+    int operand_index;
     size_t i;
     ssize_t next_row;
     ssize_t prev_row;
@@ -548,21 +662,61 @@ main (int argc, char **argv)
     size_t row_nm;
 
     bu_setprogname(argv[0]);
+    pixborder_args_init(&args);
+
+    introspection = bu_arg_introspect(&msg, &pixborder_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    operand_index = bu_arg_schema_parse_complete(&pixborder_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return pixborder_help(stdout, 0);
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    VSETALL(border_rgb,     1);
-    rgb_to_hsv(border_rgb, border_hsv);
-    VSETALL(exterior_rgb,   1);
-    rgb_to_hsv(exterior_rgb, exterior_hsv);
-    VSETALL(interior_rgb, 255);
-    rgb_to_hsv(interior_rgb, interior_hsv);
-    VSETALL(rgb_tol,        0);
+    autosize = args.autosize;
+    file_width = args.file_width;
+    file_height = args.file_height;
+    left_edge = args.left_edge;
+    right_edge = args.right_edge;
+    bottom_edge = args.bottom_edge;
+    top_edge = args.top_edge;
+    colors_specified = args.colors_specified;
+    tol_using_rgb = args.tol_using_rgb;
+    VMOVE(border_rgb, args.border_rgb);
+    VMOVE(exterior_rgb, args.exterior_rgb);
+    VMOVE(interior_rgb, args.interior_rgb);
+    VMOVE(rgb_tol, args.rgb_tol);
+    VMOVE(border_hsv, args.border_hsv);
+    VMOVE(exterior_hsv, args.exterior_hsv);
+    VMOVE(interior_hsv, args.interior_hsv);
+    VMOVE(hsv_tol, args.hsv_tol);
 
-    if (!get_args(argc, argv)) {
-	(void) fputs(usage, stderr);
-	bu_exit (1, NULL);
+    if (operand_index >= argc - 1) {
+	if (isatty(fileno(stdin)))
+	    return pixborder_help(stderr, 1);
+	file_name = "stdin";
+	infp = stdin;
+    } else {
+	file_name = argv[operand_index + 1];
+	infp = fopen(file_name, "rb");
+	if (!infp) {
+	    perror(file_name);
+	    bu_flog(stderr, "Cannot open file '%s'\n", file_name);
+	    return 1;
+	}
+	fileinput = 1;
     }
 
     /*

@@ -32,22 +32,192 @@
 #include "png.h"
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
+#include "bu/exit.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/opt.h"
 #include "bu/str.h"
 #include "vmath.h"
 #include "bn.h"
 
 static png_color_16 def_backgrd={ 0, 0, 0, 0, 0 };
-static int verbose=0;
 
-static const char *usage="Usage:\n\t%s [-v] [-ntsc -crt -R[#] -G[#] -B[#]] [png_input_file] > bw_output_file\n";
+struct png_bw_args {
+    struct png_bw_args *self;
+    int help;
+    int verbose;
+    int red;
+    int green;
+    int blue;
+    double red_weight;
+    double green_weight;
+    double blue_weight;
+};
+
+enum png_bw_channel {
+    PNG_BW_RED,
+    PNG_BW_GREEN,
+    PNG_BW_BLUE
+};
+
+static struct png_bw_args *
+png_bw_args_from_storage(void *storage)
+{
+    return storage ? *(struct png_bw_args **)storage : NULL;
+}
+
+static int
+png_bw_scheme(struct bu_vls *msg, const char *arg, void *storage)
+{
+    struct png_bw_args *args = png_bw_args_from_storage(storage);
+    double red_weight;
+    double green_weight;
+    double blue_weight;
+
+    if (BU_STR_EQUAL(arg, "ntsc")) {
+	red_weight = 0.30;
+	green_weight = 0.59;
+	blue_weight = 0.11;
+    } else if (BU_STR_EQUAL(arg, "crt")) {
+	red_weight = 0.26;
+	green_weight = 0.66;
+	blue_weight = 0.08;
+    } else {
+	if (msg)
+	    bu_vls_printf(msg, "invalid luminance encoding: %s\n", arg);
+	return -1;
+    }
+    if (args) {
+	args->red_weight = red_weight;
+	args->green_weight = green_weight;
+	args->blue_weight = blue_weight;
+	args->red = args->green = args->blue = 1;
+    }
+    return 0;
+}
+
+static int
+png_bw_legacy_ntsc(struct bu_vls *msg, const char *UNUSED(arg), void *storage)
+{
+    return png_bw_scheme(msg, "ntsc", storage);
+}
+
+static int
+png_bw_legacy_crt(struct bu_vls *msg, const char *UNUSED(arg), void *storage)
+{
+    return png_bw_scheme(msg, "crt", storage);
+}
+
+static int
+png_bw_weight(struct bu_vls *msg, const char *arg, void *storage,
+	enum png_bw_channel channel)
+{
+    struct png_bw_args *args = png_bw_args_from_storage(storage);
+    double weight = 0.0;
+
+    if (arg && !bu_arg_double_from_str(msg, &weight, arg))
+	return -1;
+    if (args) {
+	if (channel == PNG_BW_RED) {
+	    args->red = 1;
+	    if (arg)
+		args->red_weight = weight;
+	} else if (channel == PNG_BW_GREEN) {
+	    args->green = 1;
+	    if (arg)
+		args->green_weight = weight;
+	} else {
+	    args->blue = 1;
+	    if (arg)
+		args->blue_weight = weight;
+	}
+    }
+    return 0;
+}
+
+#define PNG_BW_WEIGHT_CALLBACK(_name, _channel) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return png_bw_weight(msg, arg, storage, _channel); \
+    }
+
+PNG_BW_WEIGHT_CALLBACK(png_bw_red_weight, PNG_BW_RED)
+PNG_BW_WEIGHT_CALLBACK(png_bw_green_weight, PNG_BW_GREEN)
+PNG_BW_WEIGHT_CALLBACK(png_bw_blue_weight, PNG_BW_BLUE)
+
+static const struct bu_arg_value_keyword png_bw_scheme_values[] = {
+    {"ntsc", NULL, "NTSC luminance weights"},
+    {"crt", NULL, "Historic CRT luminance weights"},
+    {NULL, NULL, NULL}
+};
+
+static const struct bu_arg_option png_bw_options[] = {
+    BU_ARG_FLAG("h", "help", struct png_bw_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("v", "verbose", struct png_bw_args, verbose,
+	"Report PNG image and metadata details"),
+    {"e", "encoding", "encoding", "scheme",
+	"Select a luminance weighting scheme", BU_ARG_VALUE_CUSTOM,
+	BU_ARG_STORAGE_OFFSET(struct png_bw_args, self), png_bw_scheme,
+	NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL,
+	png_bw_scheme_values, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
+    BU_ARG_ATTACHED_OPTIONAL("R", "red-weight", "red-weight",
+	struct png_bw_args, self, png_bw_red_weight, "weight",
+	"Select red, optionally with an attached weight"),
+    BU_ARG_ATTACHED_OPTIONAL("G", "green-weight", "green-weight",
+	struct png_bw_args, self, png_bw_green_weight, "weight",
+	"Select green, optionally with an attached weight"),
+    BU_ARG_ATTACHED_OPTIONAL("B", "blue-weight", "blue-weight",
+	struct png_bw_args, self, png_bw_blue_weight, "weight",
+	"Select blue, optionally with an attached weight"),
+    BU_ARG_CUSTOM_FLAG("ntsc", NULL, "ntsc-compat", struct png_bw_args,
+	self, png_bw_legacy_ntsc, "Use legacy NTSC luminance weights"),
+    BU_ARG_CUSTOM_FLAG("crt", NULL, "crt-compat", struct png_bw_args,
+	self, png_bw_legacy_crt, "Use legacy CRT luminance weights"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand png_bw_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"PNG input file (default standard input)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_option_visibility png_bw_option_visibility[] = {
+    BU_ARG_OPTION_VISIBILITY("ntsc-compat", BU_ARG_VISIBILITY_INTERNAL),
+    BU_ARG_OPTION_VISIBILITY("crt-compat", BU_ARG_VISIBILITY_INTERNAL),
+    BU_ARG_OPTION_VISIBILITY_NULL
+};
+
+static const struct bu_arg_presentation png_bw_presentation =
+    BU_ARG_PRESENTATION(NULL, png_bw_option_visibility, NULL);
+
+static const struct bu_arg_schema png_bw_schema = BU_ARG_SCHEMA_PRESENTED(
+    "png-bw", "Convert a PNG image to BW", png_bw_options, png_bw_operands,
+    BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL),
+    &png_bw_presentation);
+
+static const struct bu_arg_grammar png_bw_grammar = {
+    &png_bw_schema, NULL, NULL
+};
+
+static int
+png_bw_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&png_bw_schema, "png-bw");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "png-bw help");
+    return status;
+}
 
 int
 main(int argc, char **argv)
 {
+    struct png_bw_args args = {NULL, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     int i;
     int convert_to_bw=0;
     FILE *fp_in;
@@ -73,74 +243,55 @@ main(int argc, char **argv)
     int clip_high, clip_low;
     int num;
     int in, out;
+    int introspection;
+    int operand_index;
+    int verbose;
     double value;
     size_t ret;
 
+    args.self = &args;
+
     bu_setprogname(argv[0]);
+
+    introspection = bu_arg_introspect(&msg, &png_bw_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    operand_index = bu_arg_schema_parse_complete(&png_bw_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return png_bw_help(stdout, 0);
+
+    verbose = args.verbose;
+    red = args.red;
+    green = args.green;
+    blue = args.blue;
+    rweight = args.red_weight;
+    gweight = args.green_weight;
+    bweight = args.blue_weight;
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    while (argc > 1 && argv[1][0] == '-') {
-	if (BU_STR_EQUAL(argv[1], "-v"))
-	    verbose = 1;
-	else if (BU_STR_EQUAL(argv[1], "-ntsc")) {
-	    /* NTSC weights */
-	    rweight = 0.30;
-	    gweight = 0.59;
-	    bweight = 0.11;
-	    red = green = blue = 1;
-	} else if (BU_STR_EQUAL(argv[1], "-crt")) {
-	    /* CRT weights */
-	    rweight = 0.26;
-	    gweight = 0.66;
-	    bweight = 0.08;
-	    red = green = blue = 1;
-	} else {
-	    switch (argv[1][1]) {
-		case 'R':
-		    red++;
-		    if (argv[1][2] != '\0')
-			if (!bu_opt_scan_double(&argv[1][2], &rweight, "red weight"))
-			    bu_exit(EXIT_FAILURE, "Invalid option\n");
-		    break;
-		case 'G':
-		    green++;
-		    if (argv[1][2] != '\0')
-			if (!bu_opt_scan_double(&argv[1][2], &gweight, "green weight"))
-			    bu_exit(EXIT_FAILURE, "Invalid option\n");
-		    break;
-		case 'B':
-		    blue++;
-		    if (argv[1][2] != '\0')
-			if (!bu_opt_scan_double(&argv[1][2], &bweight, "blue weight"))
-			    bu_exit(EXIT_FAILURE, "Invalid option\n");
-		    break;
-		default:
-		    bu_log("Illegal option (%s)\n", argv[1]);
-		    bu_log(usage, "png-bw");
-		    bu_exit(EXIT_FAILURE, "Illegal option\n");
-	    }
-	}
-	argc--;
-	argv++;
-    }
-
-    if (argc < 2) {
+    if (argc - 1 - operand_index == 0) {
 	if (isatty(fileno(stdin))) {
-	    bu_log(usage, "png-bw");
-	    bu_exit(EXIT_FAILURE, "Are you intending to type in a PNG format file??\n");
+	    return png_bw_help(stderr, 1);
 	}
 	fp_in = stdin;
     } else {
-	if (argc > 2) {
-	    bu_log("png-bw: excess argument(s) not supported\n");
-	    bu_log(usage, "png-bw");
-	    bu_exit(EXIT_FAILURE, "Excess arguments\n");
-	}
-	if ((fp_in = fopen(argv[1], "rb")) == NULL) {
-	    perror(argv[1]);
-	    bu_log ("png-bw: cannot open \"%s\" for reading\n", argv[1]);
+	const char *input = argv[operand_index + 1];
+	if ((fp_in = fopen(input, "rb")) == NULL) {
+	    perror(input);
+	    bu_log ("png-bw: cannot open \"%s\" for reading\n", input);
 	    bu_exit(EXIT_FAILURE, "Cannot open input file\n");
 	}
     }

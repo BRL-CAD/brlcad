@@ -36,7 +36,7 @@
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "bu/file.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 
 int infd;
 unsigned char *in1;
@@ -55,7 +55,7 @@ static int
 parse_nonnegative_offset_arg(const char *arg, b_off_t *out_value, const char *label)
 {
     size_t _s;
-    if (!bu_opt_scan_size_t(arg, &_s, label))
+    if (!util_arg_size_t(arg, &_s, label))
 	return 0;
     *out_value = (b_off_t)_s;
     return 1;
@@ -78,7 +78,7 @@ main(int argc, char **argv)
     }
 
     base_name = argv[1];
-    if (!bu_opt_scan_size_t_range(argv[2], &nlines, 1, SIZE_MAX, "width")) {
+    if (!util_arg_size_t_range(argv[2], &nlines, 1, SIZE_MAX, "width")) {
 	printUsage();
 	return 1;
     }
@@ -106,7 +106,7 @@ main(int argc, char **argv)
 	bu_lseek(0, image_offset*scanbytes, 0);
     }
     if (argc == 5) {
-	if (!bu_opt_scan_size_t_range(argv[4], &framenumber, 0, SIZE_MAX, "first frame number")) {
+	if (!util_arg_size_t_range(argv[4], &framenumber, 0, SIZE_MAX, "first frame number")) {
 	    printUsage();
 	    return 1;
 	}

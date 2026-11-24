@@ -39,13 +39,13 @@
 
 #include "common.h"
 
-#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
 
 #include "bu/app.h"
-#include "bu/getopt.h"
+#include "bu/arg.h"
+#include "bu/exit.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
@@ -65,7 +65,98 @@ ssize_t yin, xout, yout;
 int plus90, minus90, reverse, invert;
 size_t pixbytes = 1;
 
-char hyphen[] = "-";
+struct bwrot_args {
+    struct bwrot_args *self;
+    int help;
+    int plus90;
+    int minus90;
+    int reverse;
+    int invert;
+    int width;
+    int height;
+    size_t pixbytes;
+    fastf_t angle;
+    const char *output;
+};
+
+static struct bwrot_args *
+bwrot_args_from_storage(void *storage)
+{
+    return storage ? *(struct bwrot_args **)storage : NULL;
+}
+
+static int
+bwrot_square(struct bu_vls *msg, const char *arg, void *storage)
+{
+    struct bwrot_args *args = bwrot_args_from_storage(storage);
+    int value;
+
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 1, INT_MAX))
+	return -1;
+    if (args)
+	args->width = args->height = value;
+    return 0;
+}
+
+static int
+bwrot_pixel_bytes(struct bu_vls *msg, const char *arg, void *storage)
+{
+    struct bwrot_args *args = bwrot_args_from_storage(storage);
+    size_t value;
+
+    if (!bu_arg_size_t_range_from_str(msg, &value, arg, 10, 1, SIZE_MAX))
+	return -1;
+    if (args)
+	args->pixbytes = value;
+    return 0;
+}
+
+static const struct bu_arg_option bwrot_options[] = {
+    BU_ARG_FLAG("h", "help", struct bwrot_args, help, "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("f", "forward", struct bwrot_args, minus90,
+	"Rotate 90 degrees clockwise"),
+    BU_ARG_FLAG("b", "backward", struct bwrot_args, plus90,
+	"Rotate 90 degrees counterclockwise"),
+    BU_ARG_FLAG("r", "reverse", struct bwrot_args, reverse,
+	"Reverse each scanline horizontally"),
+    BU_ARG_FLAG("i", "invert", struct bwrot_args, invert,
+	"Invert scanline order vertically"),
+    BU_ARG_CUSTOM("#", "pixel-bytes", struct bwrot_args, self,
+	bwrot_pixel_bytes, "count", "Set the bytes per pixel"),
+    BU_ARG_VALUE("a", "angle", struct bwrot_args, angle,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "degrees",
+	"Rotate counterclockwise by an arbitrary angle"),
+    BU_ARG_CUSTOM("s", "size", struct bwrot_args, self, bwrot_square,
+	"pixels", "Set both input dimensions"),
+    BU_ARG_ALIAS("S", NULL, "size", 1),
+    BU_ARG_INTEGER_RANGE("w", "width", struct bwrot_args, width,
+	1, 1, 1, INT_MAX, "pixels", "Set the input width"),
+    BU_ARG_ALIAS("W", NULL, "width", 1),
+    BU_ARG_INTEGER_RANGE("n", "height", struct bwrot_args, height,
+	1, 1, 1, INT_MAX, "scanlines", "Set the input height"),
+    BU_ARG_ALIAS("N", NULL, "height", 1),
+    BU_ARG_VALUE("o", "output", struct bwrot_args, output,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file", "Write output to a file"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand bwrot_operands[] = {
+    BU_ARG_OPERAND("input-or-width", BU_ARG_VALUE_STRING, 0, 1,
+	"Input file, or legacy input width when followed by height", NULL),
+    BU_ARG_OPERAND_INTEGER_RANGE("legacy-height", 0, 1,
+	1, 1, 1, INT_MAX, "Legacy input height used with a positional width", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema bwrot_schema = BU_ARG_SCHEMA(
+    "bwrot", "Rotate, invert, or reverse raster pixels",
+    bwrot_options, bwrot_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar bwrot_grammar = {
+    &bwrot_schema, NULL, NULL
+};
 
 static int
 copy_output_to_stdout(FILE *fp)
@@ -96,164 +187,80 @@ copy_output_to_stdout(FILE *fp)
     return !ferror(fp);
 }
 
-int
-get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle, char **out_file_name)
+static int
+get_args(int argc, char **argv, struct bwrot_args *args, FILE **ifp,
+	FILE **ofp, const char **out_file_name)
 {
-    int c;
-    char *in_file_name = NULL;
-    char *of_name = NULL;
-    char *end = NULL;
-    long parsed_long = 0;
-    double parsed_double = 0.0;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    const char *in_file_name = "-";
+    int operand_index;
+    int operand_count;
 
-    if (!ifp || !ofp || !angle || !out_file_name)
-	bu_exit(1, "bwrot: internal error processing arguments\n");
-
-    if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1)
+    operand_index = bu_arg_schema_parse_complete(&bwrot_schema, args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_log("%s\n", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
 	return 0;
-
-    while ((c = bu_getopt(argc, argv, "fbri#:a:s:o:w:n:S:W:N:h?")) != -1) {
-	switch (c) {
-	    case 'f':
-		minus90++;
-		break;
-	    case 'b':
-		plus90++;
-		break;
-	    case 'r':
-		reverse++;
-		break;
-	    case 'i':
-		invert++;
-		break;
-	    case '#':
-		errno = 0;
-		end = NULL;
-		parsed_long = strtol(bu_optarg, &end, 10);
-		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' || errno != 0 || parsed_long <= 0) {
-		    bu_log("bwrot: invalid bytes-per-pixel '%s'\n", bu_optarg);
-		    return 0;
-		}
-		pixbytes = (size_t)parsed_long;
-		break;
-	    case 'S':
-	    case 's':
-		/* square size */
-		errno = 0;
-		end = NULL;
-		parsed_long = strtol(bu_optarg, &end, 10);
-		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' || errno != 0 || parsed_long <= 0) {
-		    bu_log("bwrot: invalid input size '%s'\n", bu_optarg);
-		    return 0;
-		}
-		nxin = nyin = (ssize_t)parsed_long;
-		break;
-	    case 'W':
-	    case 'w':
-		errno = 0;
-		end = NULL;
-		parsed_long = strtol(bu_optarg, &end, 10);
-		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' || errno != 0 || parsed_long <= 0) {
-		    bu_log("bwrot: invalid input width '%s'\n", bu_optarg);
-		    return 0;
-		}
-		nxin = (ssize_t)parsed_long;
-		break;
-	    case 'N':
-	    case 'n':
-		errno = 0;
-		end = NULL;
-		parsed_long = strtol(bu_optarg, &end, 10);
-		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' || errno != 0 || parsed_long <= 0) {
-		    bu_log("bwrot: invalid input height '%s'\n", bu_optarg);
-		    return 0;
-		}
-		nyin = (ssize_t)parsed_long;
-		break;
-	    case 'a':
-		errno = 0;
-		end = NULL;
-		parsed_double = strtod(bu_optarg, &end);
-		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' || errno != 0) {
-		    bu_log("bwrot: invalid angle '%s'\n", bu_optarg);
-		    return 0;
-		}
-		*angle = parsed_double;
-		break;
-	    case 'o':
-		of_name = bu_optarg;
-		*ofp = fopen(of_name, "wb+");
-		if (*ofp == NULL) {
-		    bu_log("ERROR: %s cannot open \"%s\" for writing\n", bu_getprogname(), of_name);
-		    return 0;
-		}
-		*out_file_name = of_name;
-		break;
-
-	    default:		/* '?' */
-/* Disabled next line; illegal-option message is already provided, and "c" variable would only show '?'. */
-/*		bu_log("ERROR: %s encountered unrecognized '-%c' option\n", bu_getprogname(), c); */
-		return 0;
-	}
     }
+    bu_vls_free(&msg);
+    if (args->help)
+	return 1;
 
-    /* XXX - backward compatibility hack */
-    if (bu_optind+2 == argc) {
-	errno = 0;
-	end = NULL;
-	parsed_long = strtol(argv[bu_optind++], &end, 10);
-	if (end == NULL || end == argv[bu_optind-1] || *end != '\0' || errno != 0 || parsed_long <= 0) {
-	    bu_log("bwrot: invalid input width '%s'\n", argv[bu_optind-1]);
+    operand_count = argc - operand_index - 1;
+    if (operand_count == 2) {
+	if (!bu_arg_integer_range_from_str(&msg, &args->width,
+		argv[operand_index + 1], 10, 1, INT_MAX) ||
+	    !bu_arg_integer_range_from_str(&msg, &args->height,
+		argv[operand_index + 2], 10, 1, INT_MAX)) {
+	    bu_log("bwrot: invalid legacy dimensions: %s\n", bu_vls_cstr(&msg));
+	    bu_vls_free(&msg);
 	    return 0;
 	}
-	nxin = (ssize_t)parsed_long;
-	errno = 0;
-	end = NULL;
-	parsed_long = strtol(argv[bu_optind++], &end, 10);
-	if (end == NULL || end == argv[bu_optind-1] || *end != '\0' || errno != 0 || parsed_long <= 0) {
-	    bu_log("bwrot: invalid input height '%s'\n", argv[bu_optind-1]);
-	    return 0;
-	}
-	nyin = (ssize_t)parsed_long;
+	bu_vls_free(&msg);
+    } else if (operand_count == 1) {
+	in_file_name = argv[operand_index + 1];
     }
 
-    if (bu_optind >= argc) {
-	in_file_name = hyphen;
-    } else {
-	in_file_name = argv[bu_optind];
-	bu_optind++;
-	if (argc > bu_optind) {
-	    bu_log("bwrot: excess argument(s) not supported\n");
-	    return 0;
-	}
-    }
+    nxin = args->width;
+    nyin = args->height;
+    pixbytes = args->pixbytes;
+    plus90 = args->plus90;
+    minus90 = args->minus90;
+    reverse = args->reverse;
+    invert = args->invert;
 
-    if (BU_STR_EQUAL(in_file_name, "-")) {
-	*ifp = stdin;
-    } else {
+    if (!BU_STR_EQUAL(in_file_name, "-")) {
 	*ifp = fopen(in_file_name, "rb");
 	if (*ifp == NULL) {
-	    bu_log("ERROR: %s cannot open \"%s\" for reading\n", bu_getprogname(), in_file_name);
+	    bu_log("ERROR: %s cannot open \"%s\" for reading\n",
+		bu_getprogname(), in_file_name);
 	    return 0;
 	}
     }
 
-    /* sanity */
+    if (args->output) {
+	*ofp = fopen(args->output, "wb+");
+	if (*ofp == NULL) {
+	    bu_log("ERROR: %s cannot open \"%s\" for writing\n",
+		bu_getprogname(), args->output);
+	    return 0;
+	}
+	*out_file_name = args->output;
+    }
+
     if (isatty(fileno(*ifp))) {
-	bu_log("ERROR: %s will not read bw data from a tty\nRedirect input or specify an input file.\n", bu_getprogname());
+	bu_log("ERROR: %s will not read bw data from a tty\n"
+	    "Redirect input or specify an input file.\n", bu_getprogname());
 	return 0;
     }
     if (isatty(fileno(*ofp))) {
-	bu_log("ERROR: %s will not write bw data to a tty\nRedirect output or use the -o output option.\n", bu_getprogname());
+	bu_log("ERROR: %s will not write bw data to a tty\n"
+	    "Redirect output or use the -o output option.\n", bu_getprogname());
 	return 0;
     }
 
-    if (argc > bu_optind) {
-	bu_log("bwrot: excess argument(s) not supported\n");
-	return 0;
-    }
-
-    return 1;		/* OK */
+    return 1;
 }
 
 
@@ -381,8 +388,8 @@ main(int argc, char **argv)
 {
     const size_t MAXBUFBYTES = 1280*1024;
 
-    char usage[] = "Usage: bwrot [-rifb | -a angle] [-s squaresize] [-w width] [-n height] [-o output.bw] input.bw [> output.bw]\n";
-
+    struct bwrot_args args = {NULL, 0, 0, 0, 0, 0, 512, 512, 1, 0.0, NULL};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     ssize_t x, y;
     size_t j;
     int ret = 0;
@@ -390,9 +397,11 @@ main(int argc, char **argv)
     FILE *ifp, *ofp;
     unsigned char *obuf;
     unsigned char *buffer;
-    double angle = 0.0;
-    char *out_file_name = NULL;
+    const char *out_file_name = NULL;
     ssize_t io;
+    int introspection;
+
+    args.self = &args;
 
     bu_setprogname(argv[0]);
 
@@ -401,8 +410,26 @@ main(int argc, char **argv)
     ifp = stdin;
     ofp = stdout;
 
-    if (!get_args(argc, argv, &ifp, &ofp, &angle, &out_file_name)) {
-	bu_exit(1, "%s", usage);
+    introspection = bu_arg_introspect(&msg, &bwrot_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    bu_vls_free(&msg);
+
+    if (!get_args(argc, argv, &args, &ifp, &ofp, &out_file_name)) {
+	char *help = bu_arg_schema_help(&bwrot_schema, "bwrot");
+	bu_flog(stderr, "%s", help ? help : "");
+	bu_free(help, "bwrot help");
+	return 1;
+    }
+    if (args.help) {
+	char *help = bu_arg_schema_help(&bwrot_schema, "bwrot");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "bwrot help");
+	return 0;
     }
 
     scanbytes = nxin * pixbytes;
@@ -417,8 +444,8 @@ main(int argc, char **argv)
     /*
      * Break out to added arbitrary angle routine
      */
-    if (angle > 0.0) {
-	arbrot(angle, ifp, ofp, buffer);
+    if (args.angle > 0.0) {
+	arbrot(args.angle, ifp, ofp, buffer);
 	goto done;
     }
 

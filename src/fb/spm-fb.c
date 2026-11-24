@@ -24,95 +24,83 @@
 
 #include "common.h"
 
-#include <errno.h>
 #include <limits.h>
-#include <stdlib.h>
-#include <math.h>
 
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/exit.h"
-#include "bu/getopt.h"
-#include "bu/opt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "dm.h"
 #include "bn/spm.h"
 
+struct spm_fb_args {
+    struct spm_fb_args *self;
+    int help;
+    int square;
+    const char *framebuffer;
+    int width;
+    int height;
+};
 
-static struct fb *fbp;
-
-static char *framebuffer = NULL;
-static int scr_width = 0;
-static int scr_height = 0;
-
-static const char *file_name;
-static int square = 0;
-static int vsize;
-
-static char usage[] = "\
-Usage: spm-fb [-s] [-F framebuffer]\n\
-	[-S squarescrsize] [-W scr_width] [-N scr_height]\n\
-	vsize [filename]\n";
-
-int
-get_args(int argc, char **argv)
+static int
+spm_fb_size(struct bu_vls *msg, const char *arg, void *storage)
 {
-    int c;
+    int size;
+    struct spm_fb_args *args = storage ? *(struct spm_fb_args **)storage : NULL;
 
-    while ((c = bu_getopt(argc, argv, "F:sS:W:N:h?")) != -1) {
-	switch (c) {
-	    case 'F':
-		framebuffer = bu_optarg;
-		break;
-	    case 's':
-		square = 1;
-		break;
-	    case 'S':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen size"))
-		    return 0;
-		scr_height = scr_width;
-		break;
-	    case 'W':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen width"))
-		    return 0;
-		break;
-	    case 'N':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 1, INT_MAX, "screen height"))
-		    return 0;
-		break;
-
-	    default:		/* '?' 'h' */
-		return 0;
-	}
+    if (!bu_arg_integer_range_from_str(msg, &size, arg, 10, 1, INT_MAX))
+	return -1;
+    if (args) {
+	args->width = size;
+	args->height = size;
     }
-
-    if (bu_optind >= argc)
-	return 0;		/* missing positional arg */
-    if (!bu_opt_scan_int_range(argv[bu_optind++], &vsize, 1, INT_MAX, "vsize"))
-	return 0;
-
-    if (bu_optind >= argc) {
-	if (isatty(fileno(stdin)))
-	    return 0;
-	file_name = "-";
-    } else {
-	file_name = argv[bu_optind];
-    }
-
-    if (argc > ++bu_optind) {
-	fprintf(stderr, "spm-fb: excess argument(s) not supported\n");
-	return 0;
-    }
-
-    return 1;		/* OK */
+    return 0;
 }
+
+static const struct bu_arg_option spm_fb_options[] = {
+    BU_ARG_FLAG("h", "help", struct spm_fb_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("s", "square", struct spm_fb_args, square,
+	"Resample the sphere map to a rectangular framebuffer image"),
+    BU_ARG_VALUE("F", "framebuffer", struct spm_fb_args, framebuffer,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Select the framebuffer device instead of the configured default"),
+    BU_ARG_CUSTOM("S", "size", struct spm_fb_args, self, spm_fb_size,
+	"pixels", "Set both framebuffer dimensions"),
+    BU_ARG_INTEGER_RANGE("W", "width", struct spm_fb_args, width,
+	1, 1, 1, INT_MAX, "pixels", "Set the framebuffer width"),
+    BU_ARG_INTEGER_RANGE("N", "height", struct spm_fb_args, height,
+	1, 1, 1, INT_MAX, "pixels", "Set the framebuffer height"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand spm_fb_operands[] = {
+    BU_ARG_OPERAND_INTEGER_RANGE("vsize", 1, 1, 1, 1, 1, INT_MAX,
+	"Number of sphere-map latitude bins", NULL),
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"Sphere-map input file (default: standard input)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema spm_fb_schema = BU_ARG_SCHEMA(
+    "spm-fb", "Display an equal-area sphere map on a framebuffer",
+    spm_fb_options, spm_fb_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar spm_fb_grammar = {
+    &spm_fb_schema, NULL, NULL
+};
 
 
 /*
  * Displays a sphere map on a framebuffer.
  */
-void
-spm_fb(bn_spm_map_t *mapp)
+static void
+spm_fb(struct fb *fbp, bn_spm_map_t *mapp)
 {
     int j;
 
@@ -133,42 +121,79 @@ spm_fb(bn_spm_map_t *mapp)
 /*
  * Display a square sphere map on a framebuffer.
  */
-void
-spm_square(bn_spm_map_t *mapp)
+static void
+spm_square(struct fb *fbp, bn_spm_map_t *mapp, int width, int height)
 {
     int x, y;
     unsigned char *scanline;
 
-    scanline = (unsigned char *)malloc(scr_width * sizeof(RGBpixel));
+    scanline = (unsigned char *)bu_malloc(width * sizeof(RGBpixel),
+	"spm framebuffer scanline");
 
-    for (y = 0; y < scr_height; y++) {
-	for (x = 0; x < scr_width; x++) {
+    for (y = 0; y < height; y++) {
+	for (x = 0; x < width; x++) {
 	    bn_spm_read(mapp, &scanline[x * sizeof(RGBpixel)],
-			(double)x/(double)scr_width,
-			(double)y/(double)scr_height);
+			(double)x/(double)width,
+			(double)y/(double)height);
 	}
-	if (fb_write(fbp, 0, y, scanline, scr_width) != scr_width) break;
+	if (fb_write(fbp, 0, y, scanline, width) != width) break;
     }
-    free(scanline);
+    bu_free(scanline, "spm framebuffer scanline");
 }
 
 
 int
 main(int argc, char **argv)
 {
+    struct spm_fb_args args = {NULL, 0, 0, NULL, 0, 0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     bn_spm_map_t *mp;
+    struct fb *fbp;
+    const char *file_name = "-";
+    int vsize;
+    args.self = &args;
 
     bu_setprogname(argv[0]);
-
-    if (!get_args(argc, argv)) {
-	(void)fputs(usage, stderr);
-	bu_exit(1, NULL);
+    int introspection = bu_arg_introspect(&msg, &spm_fb_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&spm_fb_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&spm_fb_schema, "spm-fb");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "spm-fb help");
+	return 0;
     }
 
-    if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == FB_NULL)
+    if (!bu_arg_integer_range_from_str(&msg, &vsize,
+	    argv[operand_index + 1], 10, 1, INT_MAX)) {
+	bu_exit(1, "spm-fb: vsize: %s\n", bu_vls_cstr(&msg));
+    }
+    bu_vls_free(&msg);
+    if (operand_index + 2 < argc) {
+	file_name = argv[operand_index + 2];
+    } else if (isatty(fileno(stdin))) {
+	char *help = bu_arg_schema_help(&spm_fb_schema, "spm-fb");
+	bu_flog(stderr, "%s", help ? help : "");
+	bu_free(help, "spm-fb help");
+	return 1;
+    }
+
+    if ((fbp = fb_open(args.framebuffer, args.width, args.height)) == FB_NULL)
 	bu_exit(12, NULL);
-    scr_width = fb_getwidth(fbp);
-    scr_height = fb_getheight(fbp);
+    int width = fb_getwidth(fbp);
+    int height = fb_getheight(fbp);
 
     mp = bn_spm_init(vsize, sizeof(RGBpixel));
     if (mp == BN_SPM_MAP_NULL || fbp == FB_NULL)
@@ -176,10 +201,10 @@ main(int argc, char **argv)
 
     bn_spm_load(mp, file_name);
 
-    if (square)
-	spm_square(mp);
+    if (args.square)
+	spm_square(fbp, mp, width, height);
     else
-	spm_fb(mp);
+	spm_fb(fbp, mp);
 
     bn_spm_free(mp);
     fb_close(fbp);

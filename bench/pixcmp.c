@@ -46,10 +46,11 @@
 #endif
 
 #include <errno.h>
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/file.h"
+#include "bu/malloc.h"
 #include "bu/str.h"
 
 /* exit codes for argument processing errors */
@@ -69,84 +70,130 @@ enum diff {
 };
 
 
-static void
-usage(const char *name)
-{
-    const char *unknown = "pixcmp";
-    if (!name) {
-	name = unknown;
-    }
+struct pixcmp_skip {
+    size_t first;
+    size_t second;
+};
 
-    /* split to fit within ISO C90 max static string length < 509 chars */
-    bu_log("Usage: %s [OPTIONS] FILE1 [FILE2 [SKIP1 [SKIP2]]]\n"
-	   "\n"
-	   "  Compare two PIX files pixel by pixel (or byte by byte), optionally"
-	   "  skipping initial pixels (or bytes) in one or both input files.\n"
-	   "\n", name);
-    bu_log("Options:"
-	   "  -b   Iterate and print by bytes instead of by pixels.\n"
-	   "  -s   Print all that have the same matching values.\n"
-	   "  -d   Print all that have different values.\n"
-	   "  -q   Quiet.  Suppress printing header and summary.\n"
-	   "  -i SKIP\n"
-	   "       Discard initial SKIP pixels (or bytes w/ -b) in FILE1 and FILE2 input.\n"
-	   "  -i SKIP1:SKIP2\n"
-	   "       Skip initial SKIP1 pixels (or bytes w/ -b) in FILE1 and SKIP2 in FILE2.\n"
-	   "  -n COUNT\n"
-	   "       Compare COUNT pixels (or bytes w/ -b).  Stops by default at EOF.\n"
-	   "\n");
-    bu_log("If either FILE is `-' or is missing, then input is read from standard input.\n"
-	   "If FILE1 and FILE2 are both standard input, then values must be interleaved.\n"
-	   "If the `-b' option is used, SKIP and COUNT values are bytes instead of pixels.\n"
-	   "Pixel numbers and bytes are indexed linearly from one.\n"
-	   "\n");
-    return;
+struct pixcmp_args {
+    int help;
+    int list_same;
+    int list_diff;
+    int print_bytes;
+    int quiet;
+    struct pixcmp_skip skip;
+    size_t count;
+};
+
+static int
+pixcmp_size_parse(struct bu_vls *msg, const char *arg, void *storage)
+{
+    size_t value;
+
+    if (!bu_arg_size_t_from_str(msg, &value, arg, 10))
+	return -1;
+    if (storage)
+	*((size_t *)storage) = value;
+    return 0;
 }
 
-
-static void
-handle_range_opt(const char *arg, size_t *skip1, size_t *skip2)
+static int
+pixcmp_size_validate(struct bu_vls *msg, const char *arg)
 {
-    const char *endptr = arg;
-    long val;
+    return pixcmp_size_parse(msg, arg, NULL);
+}
 
-    if ((arg == NULL) || ((skip1 == NULL) && (skip2 == NULL))) {
-	/* nothing to do */
-	return;
+static int
+pixcmp_skip_parse(struct bu_vls *msg, const char *arg, void *storage)
+{
+    struct pixcmp_skip value = {0, 0};
+    const char *separator;
+
+    if (!arg || !arg[0]) {
+	if (msg)
+	    bu_vls_printf(msg, "skip value must not be empty\n");
+	return -1;
     }
-    while ((endptr != NULL) && (endptr[0] != ':') && (endptr[0] != '\0')) {
-	endptr++;
-    }
-    if (endptr == arg) {
-	/* probably empty string */
-	if (skip2) {
-	    endptr++;
-	    val = strtol(endptr, NULL, 10);
-	    *skip2 = (val < 0) ? 0 : val;
-	}
-    } else if ((endptr == NULL) || (endptr[0] == '\0')) {
-	/* no : found */
-	if (skip2) {
-	    val = strtol(arg, NULL, 10);
-	    *skip2 = (val < 0) ? 0 : val;
-	}
-	if (skip1 && skip2) {
-	    *skip1 = *skip2;
-	}
-    } else if (endptr[0] == ':') {
-	/* found : */
-	if (skip1) {
-	    val = strtol(arg, NULL, 10);
-	    *skip1 = (val < 0) ? 0 : val;
-	}
-	if (skip2) {
-	    endptr++; /* skip over : */
-	    val = strtol(endptr, NULL, 10);
-	    *skip2 = (val < 0) ? 0 : val;
-	}
+
+    separator = strchr(arg, ':');
+    if (!separator) {
+	if (!bu_arg_size_t_from_str(msg, &value.first, arg, 10))
+	    return -1;
+	value.second = value.first;
     } else {
-	bu_exit(OPTS_ERROR, "Unexpected input processing [%s]\n", arg);
+	size_t first_length = (size_t)(separator - arg);
+	char *first;
+
+	if (first_length == 0 || !separator[1] || strchr(separator + 1, ':')) {
+	    if (msg)
+		bu_vls_printf(msg, "skip range must be SKIP or SKIP1:SKIP2\n");
+	    return -1;
+	}
+	first = (char *)bu_malloc(first_length + 1, "pixcmp first skip");
+	memcpy(first, arg, first_length);
+	first[first_length] = '\0';
+	if (!bu_arg_size_t_from_str(msg, &value.first, first, 10) ||
+	    !bu_arg_size_t_from_str(msg, &value.second, separator + 1, 10)) {
+	    bu_free(first, "pixcmp first skip");
+	    return -1;
+	}
+	bu_free(first, "pixcmp first skip");
     }
+
+    if (storage)
+	*((struct pixcmp_skip *)storage) = value;
+    return 0;
+}
+
+static const struct bu_arg_option pixcmp_options[] = {
+    BU_ARG_FLAG("h", "help", struct pixcmp_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("b", "bytes", struct pixcmp_args, print_bytes,
+	"Compare and report bytes instead of pixels; skip and count values are bytes"),
+    BU_ARG_FLAG("s", "same", struct pixcmp_args, list_same,
+	"Print every matching pixel or byte"),
+    BU_ARG_FLAG("d", "different", struct pixcmp_args, list_diff,
+	"Print every differing pixel or byte"),
+    BU_ARG_FLAG("q", "quiet", struct pixcmp_args, quiet,
+	"Suppress the header, size warning, and summary"),
+    BU_ARG_CUSTOM("i", "skip", struct pixcmp_args, skip,
+	pixcmp_skip_parse, "skip|skip1:skip2",
+	"Discard one initial count from both inputs, or skip1 and skip2 from each input"),
+    BU_ARG_CUSTOM("n", "count", struct pixcmp_args, count,
+	pixcmp_size_parse, "count",
+	"Compare at most this many pixels or bytes; otherwise continue to end of file"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand pixcmp_operands[] = {
+    BU_ARG_OPERAND("file1", BU_ARG_VALUE_FILE, 1, 1,
+	"First input file, or - for standard input", NULL),
+    BU_ARG_OPERAND("file2", BU_ARG_VALUE_FILE, 0, 1,
+	"Second input file, or - or omission for standard input", NULL),
+    BU_ARG_OPERAND_VALIDATE("skip1", BU_ARG_VALUE_STRING, 0, 1,
+	pixcmp_size_validate, "Initial pixels or bytes to discard from file1", NULL),
+    BU_ARG_OPERAND_VALIDATE("skip2", BU_ARG_VALUE_STRING, 0, 1,
+	pixcmp_size_validate, "Initial pixels or bytes to discard from file2", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema pixcmp_schema = BU_ARG_SCHEMA(
+    "pixcmp", "Compare two PIX images pixel by pixel or byte by byte",
+    pixcmp_options, pixcmp_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar pixcmp_grammar = {
+    &pixcmp_schema, NULL, NULL
+};
+
+static int
+pixcmp_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&pixcmp_schema, "pixcmp");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "pixcmp help");
+    return status;
 }
 
 
@@ -201,12 +248,14 @@ compare_rgb(int r1, int g1, int b1, int r2, int g2, int b2, size_t *matching, si
 int
 main(int argc, char *argv[])
 {
-    const char *argv0 = argv[0];
-
+    struct pixcmp_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     FILE *f1 = NULL;
     FILE *f2 = NULL;
     struct stat sf1;
     struct stat sf2;
+    int introspection;
+    int operand_index;
 
     memset(&sf1, 0, sizeof(struct stat));
     memset(&sf2, 0, sizeof(struct stat));
@@ -216,12 +265,6 @@ main(int argc, char *argv[])
     size_t offmany = 0;
     size_t missing = 0;
 
-    int c;
-    int list_diff = 0;
-    int list_same = 0;
-    int print_bytes = 0;
-    int quiet = 0;
-
     size_t bytes = 0;
     size_t f1_skip = 0;
     size_t f2_skip = 0;
@@ -229,70 +272,40 @@ main(int argc, char *argv[])
 
     bu_setprogname(argv[0]);
 
-    /* process opts */
-    while ((c = bu_getopt(argc, argv, "sdbi:n:q?")) != -1) {
-	switch (c) {
-	    case 's':
-		list_same = 1;
-		break;
-	    case 'd':
-		list_diff = 1;
-		break;
-	    case 'b':
-		print_bytes = 1;
-		break;
-	    case 'i':
-		handle_range_opt(bu_optarg, &f1_skip, &f2_skip);
-		break;
-	    case 'n':
-	    {
-		long num = strtol(bu_optarg, NULL, 10);
-		stop_after = (num < 0) ? 0 : num;
-		break;
-	    }
-	    case 'q':
-		quiet = 1;
-		break;
-	    case '?':
-	    case 'h':
-		usage(argv0);
-		return 0;
-	    default:
-		exit(OPTS_ERROR);
-	}
+    introspection = bu_arg_introspect(&msg, &pixcmp_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : OPTS_ERROR;
     }
-    argc -= bu_optind;
-    argv += bu_optind;
+    operand_index = bu_arg_schema_parse_complete(&pixcmp_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return OPTS_ERROR;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return pixcmp_help(stdout, 0);
 
-    /* validate what is left over */
-    if (argc < 1 || argc > 4) {
-	bu_log("ERROR: incorrect number of arguments provided\n\n");
-	usage(argv0);
-	exit(OPTS_ERROR);
-    }
-    if ((argc > 0 && !argv[0]) || (argc > 1 && !argv[1])) {
-	bu_log("ERROR: bad filename\n\n");
-	usage(argv0);
-	exit(OPTS_ERROR);
-    }
-    if ((argc > 2 && !argv[2]) || (argc > 3 && !argv[3])) {
-	bu_log("ERROR: bad skip value\n\n");
-	usage(argv0);
-	exit(OPTS_ERROR);
-    }
+    argc = argc - 1 - operand_index;
+    argv = argv + 1 + operand_index;
+    f1_skip = args.skip.first;
+    f2_skip = args.skip.second;
+    stop_after = args.count;
 
-    /* handle optional SKIP1 and SKIP2 following filenames */
+    /* Trailing compatibility values override -i, as they did historically. */
     if (argc > 2) {
-	char range[64] = {0};
-	if (argc > 3) {
-	    snprintf(range, 64, "%s:%s", argv[2], argv[3]);
-	} else {
-	    snprintf(range, 64, "%s", argv[2]);
-	}
-	handle_range_opt(range, &f1_skip, &f2_skip);
+	(void)bu_arg_size_t_from_str(NULL, &f1_skip, argv[2], 10);
+	if (argc > 3)
+	    (void)bu_arg_size_t_from_str(NULL, &f2_skip, argv[3], 10);
+	else
+	    f2_skip = f1_skip;
     }
 
-    if (!print_bytes) {
+    if (!args.print_bytes) {
 	if ((f1_skip > ((size_t)-1)/3)
 	    || (f2_skip > ((size_t)-1)/3))
 	{
@@ -342,9 +355,9 @@ main(int argc, char *argv[])
 
     /* bu_log("FILE1_size(%zu) FILE1_skip(%zu) FILE2_size(%zu) FILE2_skip(%zu)\n", (size_t)sf1.st_size, f1_skip, (size_t)sf2.st_size, f2_skip); */
 
-    if (!quiet && ((sf1.st_size - f1_skip) != (sf2.st_size - f2_skip))) {
+    if (!args.quiet && ((sf1.st_size - f1_skip) != (sf2.st_size - f2_skip))) {
 	bu_log("WARNING: Different image sizes detected\n");
-	if (print_bytes) {
+	if (args.print_bytes) {
 	    bu_log("\t%s: %7zu bytes (%8zu bytes, skipping %7zu)\n",
 		   argv[0], (size_t)sf1.st_size - f1_skip, (size_t)sf1.st_size, f1_skip);
 	    bu_log("\t%s: %7zu bytes (%8zu bytes, skipping %7zu)\n",
@@ -381,7 +394,7 @@ main(int argc, char *argv[])
 	} else if (fseek(f1, (long)f1_skip, SEEK_SET)) {
 	    bu_log("ERROR: Unable to seek %zd %s%s in FILE1\n",
 		   f1_skip,
-		   print_bytes?"byte":"pixel",
+		   args.print_bytes?"byte":"pixel",
 		   f1_skip==1?"":"s");
 	    perror("FILE1 fseek failure");
 	    exit(FILE_ERROR);
@@ -398,7 +411,7 @@ main(int argc, char *argv[])
 	} else if (fseek(f2, (long)f2_skip, SEEK_SET)) {
 	    bu_log("ERROR: Unable to seek %zd %s%s in FILE2\n",
 		   f2_skip,
-		   print_bytes?"byte":"pixel",
+		   args.print_bytes?"byte":"pixel",
 		   f2_skip==1?"":"s");
 	    perror("FILE2 fseek failure");
 	    exit(FILE_ERROR);
@@ -406,8 +419,8 @@ main(int argc, char *argv[])
     }
 
     /* print header to stderr, output to stdout */
-    if (!quiet && (list_same || list_diff)) {
-	if (print_bytes) {
+    if (!args.quiet && (args.list_same || args.list_diff)) {
+	if (args.print_bytes) {
 	    bu_log("#Byte FILE1 FILE2 LABEL\n");
 	} else {
 	    bu_log("#Pixel\t(FILE1 R, G, B) (FILE2 R, G, B)\n");
@@ -430,7 +443,7 @@ main(int argc, char *argv[])
 	r2 = fgetc(f2);
 	bytes++;
 
-	if (print_bytes) {
+	if (args.print_bytes) {
 	    /* replicate */
 	    b1 = g1 = 0;
 	    b2 = g2 = 0;
@@ -446,8 +459,8 @@ main(int argc, char *argv[])
 	result = compare_rgb(r1, g1, b1, r2, g2, b2, &matching, &off1, &offmany, &missing);
 
 	/* print them? */
-	if ((result==MATCHING && list_same)
-	    || (result!=MATCHING && list_diff))
+	if ((result==MATCHING && args.list_same)
+	    || (result!=MATCHING && args.list_diff))
 	{
 	    const char *label = NULL;
 	    switch (result) {
@@ -465,7 +478,7 @@ main(int argc, char *argv[])
 		    label = "MISSING";
 		    break;
 	    }
-	    if (print_bytes) {
+	    if (args.print_bytes) {
 		printf("%zu %3d %3d %s\n", bytes, r1, r2, label);
 	    } else {
 		printf("%zu\t(%3d, %3d, %3d)\t(%3d, %3d, %3d) %s\n", bytes / 3, r1, g1, b1, r2, g2, b2, label);
@@ -474,9 +487,9 @@ main(int argc, char *argv[])
     }
 
     /* print summary */
-    if (!quiet) {
+    if (!args.quiet) {
 	printf("pixcmp %s: %8zd matching, %8zd off by 1, %8zd off by many",
-	       print_bytes?"bytes":"pixels", matching, off1, offmany);
+	       args.print_bytes?"bytes":"pixels", matching, off1, offmany);
 	if (missing) {
 	    printf(", %8zd missing\n", missing);
 	} else {

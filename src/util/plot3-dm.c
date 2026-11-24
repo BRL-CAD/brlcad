@@ -39,7 +39,11 @@
 #include "tcl.h"
 
 #include "bu/app.h"
-#include "bu/getopt.h"
+#include "bu/arg.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "rt/db4.h"
 #include "raytrace.h"
@@ -90,6 +94,42 @@ struct plot_list HeadPlot;
 static const char *Xtype = "X";
 static const char *Otype = "ogl";
 const char *dm_type = "X";
+
+struct plot3_dm_args {
+    const char *display_manager;
+    int help;
+};
+
+static const struct bu_arg_value_keyword display_manager_values[] = {
+    {"X", BU_ARG_ALIASES("x"), "X11 display manager"},
+    {"o", BU_ARG_ALIASES("O"), "OpenGL display manager"},
+    {NULL, NULL, NULL}
+};
+
+static const struct bu_arg_option plot3_dm_options[] = {
+    BU_ARG_KEYWORD_VALUES("t", "display-manager", struct plot3_dm_args,
+	display_manager, "X|o", "Select the display-manager backend",
+	display_manager_values),
+    BU_ARG_FLAG("h", "help", struct plot3_dm_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand plot3_dm_operands[] = {
+    BU_ARG_OPERAND("plot_file", BU_ARG_VALUE_FILE, 0,
+	BU_ARG_COUNT_UNLIMITED, "Input BRL-CAD plot file", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema plot3_dm_schema = BU_ARG_SCHEMA(
+    "plot3-dm", "View BRL-CAD plot files in a display manager",
+    plot3_dm_options, plot3_dm_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar plot3_dm_grammar = {
+    &plot3_dm_schema, NULL, NULL
+};
 
 static int
 parse_int_arg(const char *arg, int *out_value, const char *label)
@@ -163,34 +203,42 @@ stop_catching_output(struct bu_vls *vp)
 }
 
 
-int
-get_args(int argc, char **argv)
+static int
+get_args(int argc, char **argv, int *operand_index)
 {
-    int c;
+    struct plot3_dm_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int introspection;
 
-    while ((c = bu_getopt(argc, argv, "t:h?")) != -1) {
-	switch (c) {
-	    case 't':
-		switch (*bu_optarg) {
-		    case 'o':
-		    case 'O':
-			dm_type = Otype;
-			break;
-		    case 'x':
-		    case 'X':
-		    default:
-			dm_type = Xtype;
-			break;
-		}
-		break;
-	    default:		/* 'h' '?' */
-		return 0;
-	}
+    introspection = bu_arg_introspect(&msg, &plot3_dm_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? -1 : 0;
     }
+    *operand_index = bu_arg_schema_parse_complete(&plot3_dm_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (*operand_index < 0) {
+	bu_log("%s\n", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 0;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&plot3_dm_schema, "plot3-dm");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "plot3-dm help");
+	return -1;
+    }
+    dm_type = args.display_manager && BU_STR_EQUAL(args.display_manager, "o") ?
+	Otype : Xtype;
 
-    if (bu_optind >= argc) {
-	if (isatty(fileno(stdin)))
+    if (*operand_index >= argc - 1) {
+	if (isatty(fileno(stdin))) {
+	    bu_log("plot file required when standard input is a terminal\n");
 	    return 0;
+	}
     }
 
     return 1;		/* OK */
@@ -636,7 +684,11 @@ cmd_openpl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **a
 	char *bnp;
 
 	file = argv[i];
-	if ((fp = fopen(file, "rb")) == NULL) {
+	if (BU_STR_EQUAL(file, "-"))
+	    fp = stdin;
+	else
+	    fp = fopen(file, "rb");
+	if (!fp) {
 	    bu_log("%s: can't open \"%s\"\n", argv[0], file);
 	    continue;
 	}
@@ -644,10 +696,13 @@ cmd_openpl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **a
 	++read_file;
 
 	/* skip path */
-	bnp = strrchr(argv[i], '/');
-	if (bnp == (char *)NULL)
-	    bnp = argv[i];
+	if (fp == stdin)
+	    bnp = "stdin";
 	else
+	    bnp = strrchr(argv[i], '/');
+	if (!bnp)
+	    bnp = argv[i];
+	else if (fp != stdin)
 	    ++bnp;
 
 	/* check for existing objects with same name as argv[i] */
@@ -668,7 +723,8 @@ cmd_openpl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **a
 	plp->pl_vbp = rt_vlblock_init();
 	rt_uplot_to_vlist(plp->pl_vbp, fp, 0.001, 0);
 	plp->pl_draw = 1;
-	fclose(fp);
+	if (fp != stdin)
+	    fclose(fp);
     }
 
     if (!read_file)
@@ -1208,13 +1264,18 @@ appInit(Tcl_Interp *_interp)
 int
 main(int argc, char *argv[])
 {
-    const char usage[] = "Usage: plot3-dm [-t o|X] plot_file(s)\n";
+    char *stdin_argv[3] = {argv[0], (char *)"-", NULL};
+    int operand_index;
+    int parse_status;
+    int plot_argc;
+    char **plot_argv;
 
     /* initialize prognam for run-time reousrce finding */
     bu_setprogname(argv[0]);
 
-    if (!get_args(argc, argv))
-	bu_exit (1, "%s", usage);
+    parse_status = get_args(argc, argv, &operand_index);
+    if (parse_status <= 0)
+	return parse_status < 0 ? 0 : 1;
 
     memset((void *)&HeadPlot, 0, sizeof(struct plot_list));
     BU_LIST_INIT(&HeadPlot.l);
@@ -1225,7 +1286,16 @@ main(int argc, char *argv[])
     MAT_IDN(model2view);
     MAT_IDN(view2model);
 
-    if (cmd_openpl((ClientData)NULL, (Tcl_Interp *)NULL, argc-bu_optind+1, argv+bu_optind-1) == TCL_ERROR)
+    if (operand_index >= argc - 1) {
+	plot_argc = 2;
+	plot_argv = stdin_argv;
+    } else {
+	plot_argc = argc - operand_index;
+	plot_argv = argv + operand_index;
+	plot_argv[0] = argv[0];
+    }
+    if (cmd_openpl((ClientData)NULL, (Tcl_Interp *)NULL,
+	plot_argc, plot_argv) == TCL_ERROR)
 	bu_exit (1, NULL);
 
     argv[1] = (char *)NULL;

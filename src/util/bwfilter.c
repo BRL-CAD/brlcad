@@ -27,15 +27,12 @@
 
 #include "common.h"
 
-#include <errno.h>
 #include <limits.h>
-#include <stdlib.h>
-#include <string.h>
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "bu/opt.h"
+#include "bu/exit.h"
 #include "bu/malloc.h"
 #include "bu/mime.h"
 #include "bu/log.h"
@@ -44,15 +41,20 @@
 #include "icv.h"
 #include "vmath.h"
 
+#define DEFAULT_IMAGE_DIMENSION 512
+#define KERNEL_ELEMENT_COUNT 9
+
 /* The filter kernels */
-struct kernels {
+struct bwfilter_kernel {
     const char *name;
-    const char *uname;		/* What is needed to recognize it */
-    int kern[9];
-    int kerndiv;	/* Divisor for kernel */
-    int kernoffset;	/* To be added to result */
+    const char *keyword;
+    int kern[KERNEL_ELEMENT_COUNT];
+    int divisor;
+    int offset;
     ICV_FILTER filter;
-} kernel[] = {
+};
+
+static const struct bwfilter_kernel bwfilter_kernels[] = {
     { "Low Pass", "lo", {3, 5, 3, 5, 10, 5, 3, 5, 3}, 42, 0, ICV_FILTER_LOW_PASS },
     { "Laplacian", "la", {-1, -1, -1, -1, 8, -1, -1, -1, -1}, 16, 128, ICV_FILTER_LAPLACIAN },
     { "High Pass", "hi", {-1, -2, -1, -2, 13, -2, -1, -2, -1}, 1, 0, ICV_FILTER_HIGH_PASS },
@@ -62,183 +64,244 @@ struct kernels {
     { NULL, NULL, {0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0, ICV_FILTER_NULL },
 };
 
-int *kern;
-int kerndiv;
-int kernoffset;
-ICV_FILTER filter_type;
-int kernel_index;
-int inx = 512;
-int iny = 512;   /* Default Width */
-int verbose = 0;
-int dflag = 0;	/* Different divisor specified */
-int oflag = 0;	/* Different offset specified */
+struct bwfilter_args {
+    struct bwfilter_args *self;
+    int help;
+    int verbose;
+    const char *filter;
+    int divisor;
+    int divisor_set;
+    int offset;
+    int offset_set;
+    int width;
+    int height;
+    const char *output;
+};
 
-void select_filter(const char *str), dousage(void);
+enum bwfilter_dimension {
+    BWFILTER_SIZE,
+    BWFILTER_WIDTH,
+    BWFILTER_HEIGHT
+};
 
-char usage[] = "\
-Usage: bwfilter [-f type] [-v] [-d div] [-O offset]\n\
-	[-s squaresize] [-w width] [-n height] [-o out_file.bw] [file.bw] [> out_file.bw]\n";
-
-char *in_file = NULL;
-char *out_file = NULL;
-
-/*
- * Looks at the command line string and selects a filter
- * based on it.
- */
-void
-select_filter(const char *str)
+static struct bwfilter_args *
+bwfilter_args_from_storage(void *storage)
 {
-    kernel_index = 0;
-    while (kernel[kernel_index].name != NULL) {
-	if (bu_strncmp(str, kernel[kernel_index].uname, strlen(kernel[kernel_index].uname)) == 0)
-	    break;
-	kernel_index++;
-    }
-
-    if (kernel[kernel_index].name == NULL) {
-	/* No match, output list and exit */
-	fprintf(stderr, "Unrecognized filter type \"%s\"\n", str);
-	dousage();
-	bu_exit (3, NULL);
-    }
-    kern = kernel[kernel_index].kern;
-    filter_type = kernel[kernel_index].filter;
+    return storage ? *(struct bwfilter_args **)storage : NULL;
 }
 
-void
-dousage(void)
+static int
+bwfilter_divisor(struct bu_vls *msg, const char *arg, void *storage)
 {
-    int i;
-    fputs(usage, stderr);
-    fputs("Possible arguments for -f (type):\n", stderr);
-    i = 0;
-    while (kernel[i].name != NULL) {
-	fprintf(stderr, "  %-10s%s\n", kernel[i].uname, kernel[i].name);
-	i++;
+    struct bwfilter_args *args = bwfilter_args_from_storage(storage);
+    int value;
+
+    if (!bu_arg_integer_from_str(msg, &value, arg, 10))
+	return -1;
+    if (value == 0) {
+	if (msg)
+	    bu_vls_printf(msg, "divisor must not be zero\n");
+	return -1;
     }
+    if (args) {
+	args->divisor = value;
+	args->divisor_set = 1;
+    }
+    return 0;
 }
 
-int
-get_args(int argc, char **argv)
+static int
+bwfilter_offset(struct bu_vls *msg, const char *arg, void *storage)
 {
-    int c;
+    struct bwfilter_args *args = bwfilter_args_from_storage(storage);
+    int value;
 
-    while ((c = bu_getopt(argc, argv, "vf:d:O:w:n:s:o:h?")) != -1) {
-	switch (c) {
-	    case 'v':
-		verbose++;
-		break;
-	    case 'f':
-		select_filter(bu_optarg);
-		break;
-	    case 'd':
-		dflag++;
-		if (!bu_opt_scan_int(bu_optarg, &kerndiv, "divisor") || kerndiv == 0)
-		    return 0;
-		break;
-	    case 'O':
-		oflag++;
-		if (!bu_opt_scan_int(bu_optarg, &kernoffset, "offset"))
-		    return 0;
-		break;
-	    case 'w':
-		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "width"))
-		    return 0;
-		break;
-	    case 'o':
-		out_file = bu_optarg;
-		break;
-	    case 'n':
-		if (!bu_opt_scan_int_range(bu_optarg, &iny, 1, INT_MAX, "height"))
-		    return 0;
-		break;
-	    case 's':
-		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "size"))
-		    return 0;
-		iny = inx;
-		break;
-	    default:		/* 'h' '?' */
-		return 0;
-	}
+    if (!bu_arg_integer_from_str(msg, &value, arg, 10))
+	return -1;
+    if (args) {
+	args->offset = value;
+	args->offset_set = 1;
     }
-    if (bu_optind >= argc) {
-	if (isatty(fileno(stdin))) {
-	    return 0;
-	}
-    } else {
-	in_file = argv[bu_optind];
-	bu_optind++;
+    return 0;
+}
+
+static int
+bwfilter_dimension(struct bu_vls *msg, const char *arg, void *storage,
+	enum bwfilter_dimension dimension)
+{
+    struct bwfilter_args *args = bwfilter_args_from_storage(storage);
+    int value;
+
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 1, INT_MAX))
+	return -1;
+    if (args) {
+	if (dimension == BWFILTER_SIZE)
+	    args->width = args->height = value;
+	else if (dimension == BWFILTER_WIDTH)
+	    args->width = value;
+	else
+	    args->height = value;
+    }
+    return 0;
+}
+
+#define BWFILTER_DIMENSION_CALLBACK(_name, _dimension) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return bwfilter_dimension(msg, arg, storage, _dimension); \
     }
 
-    if (argc > bu_optind) {
-	bu_log("bwfilter: excess argument(s) not supported\n");
-	return 0;
-    }
+BWFILTER_DIMENSION_CALLBACK(bwfilter_size, BWFILTER_SIZE)
+BWFILTER_DIMENSION_CALLBACK(bwfilter_width, BWFILTER_WIDTH)
+BWFILTER_DIMENSION_CALLBACK(bwfilter_height, BWFILTER_HEIGHT)
 
-    return 1;
+static const struct bu_arg_value_keyword bwfilter_filter_values[] = {
+    {"lo", NULL, "Low-pass filter"},
+    {"la", NULL, "Laplacian filter"},
+    {"hi", NULL, "High-pass filter"},
+    {"hg", NULL, "Horizontal gradient"},
+    {"vg", NULL, "Vertical gradient"},
+    {"b", NULL, "Boxcar average"},
+    {NULL, NULL, NULL}
+};
+
+static const struct bu_arg_option bwfilter_options[] = {
+    BU_ARG_FLAG("h", "help", struct bwfilter_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("v", "verbose", struct bwfilter_args, verbose,
+	"Print kernel and result-range diagnostics"),
+    BU_ARG_KEYWORD_VALUES("f", "filter", struct bwfilter_args, filter,
+	"type", "Select the filter kernel", bwfilter_filter_values),
+    BU_ARG_CUSTOM("d", "divisor", struct bwfilter_args, self,
+	bwfilter_divisor, "integer", "Override the kernel divisor"),
+    BU_ARG_CUSTOM("O", "offset", struct bwfilter_args, self,
+	bwfilter_offset, "integer", "Override the kernel offset"),
+    BU_ARG_CUSTOM("s", "size", struct bwfilter_args, self, bwfilter_size,
+	"pixels", "Set both input dimensions"),
+    BU_ARG_CUSTOM("w", "width", struct bwfilter_args, self,
+	bwfilter_width, "pixels", "Set the input image width"),
+    BU_ARG_CUSTOM("n", "height", struct bwfilter_args, self,
+	bwfilter_height, "pixels", "Set the input image height"),
+    BU_ARG_VALUE("o", "output", struct bwfilter_args, output,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file", "Write output to a BW file"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand bwfilter_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"Input BW file; omit to read standard input", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema bwfilter_schema = BU_ARG_SCHEMA(
+    "bwfilter", "Apply a 3x3 kernel to a BW image", bwfilter_options,
+    bwfilter_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar bwfilter_grammar = {
+    &bwfilter_schema, NULL, NULL
+};
+
+static const struct bwfilter_kernel *
+bwfilter_kernel(const char *keyword)
+{
+    size_t i;
+
+    for (i = 0; bwfilter_kernels[i].name; i++) {
+	if (BU_STR_EQUAL(keyword, bwfilter_kernels[i].keyword))
+	    return &bwfilter_kernels[i];
+    }
+    return NULL;
 }
 
 
 int
 main(int argc, char **argv)
 {
+    struct bwfilter_args args = {NULL, 0, 0, "lo", 0, 0, 0, 0,
+	DEFAULT_IMAGE_DIMENSION, DEFAULT_IMAGE_DIMENSION, NULL};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    const struct bwfilter_kernel *filter;
+    const char *input = NULL;
     icv_image_t *img;
-    double *max_d = NULL, *min_d = NULL; /* return values from min and max */
-    int max, min;
-    int x;
+    int status = 0;
+    args.self = &args;
 
     bu_setprogname(argv[0]);
 
-    /* Select Default Filter (low pass) */
-    select_filter("low");
-
-    if (!get_args(argc, argv)) {
-	dousage();
-	bu_exit (1, NULL);
+    int introspection = bu_arg_introspect(&msg, &bwfilter_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
-    img = icv_read(in_file, BU_MIME_IMAGE_BW, inx, iny);
+    int operand_index = bu_arg_schema_parse_complete(&bwfilter_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&bwfilter_schema, "bwfilter");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "bwfilter help");
+	return 0;
+    }
+
+    if (operand_index < argc - 1)
+	input = argv[operand_index + 1];
+    if (!input && isatty(fileno(stdin)))
+	bu_exit(1, "bwfilter requires an input file or redirected input\n");
+
+    filter = bwfilter_kernel(args.filter);
+    if (!filter)
+	bu_exit(1, "bwfilter: internal filter selection failure\n");
+
+    img = icv_read(input, BU_MIME_IMAGE_BW, args.width, args.height);
     if (img == NULL)
 	return 1;
 
-    icv_filter(img, filter_type);
+    icv_filter(img, filter->filter);
 
-    /* Correct the image as per the input offset and */
-    if (oflag | dflag) {
-        icv_add_val(img, -ICV_CONV_8BIT(kernel[kernel_index].kernoffset));
+    if (args.offset_set || args.divisor_set) {
+	icv_add_val(img, -ICV_CONV_8BIT(filter->offset));
 
-        if (dflag) {
-            if (ZERO(kerndiv))
-            icv_multiply_val(img, ICV_CONV_8BIT(kernel[kernel_index].kerndiv/kerndiv));
-        }
+	if (args.divisor_set) {
+	    icv_multiply_val(img,
+		(double)filter->divisor / (double)args.divisor);
+	}
 
-        if (oflag)
-            icv_add_val(img, ICV_CONV_8BIT(kernoffset));
-        else
-            icv_add_val(img, ICV_CONV_8BIT(kernel[kernel_index].kernoffset));
+	icv_add_val(img,
+	    ICV_CONV_8BIT(args.offset_set ? args.offset : filter->offset));
     }
 
-    if (verbose) {
-	for (x = 0; x < 11; x++)
-	    bu_log("kern[%d] = %d\n", x, kern[x]);
+    if (args.verbose) {
+	double *max_d;
+	double *min_d;
+	int x;
+
+	for (x = 0; x < KERNEL_ELEMENT_COUNT; x++)
+	    bu_flog(stderr, "kern[%d] = %d\n", x, filter->kern[x]);
 
 	max_d = icv_max(img);
 	min_d = icv_min(img);
-	max = (int) (*max_d * 255.0);
-	min = (int) (*min_d * 255.0);
-	bu_log("\n\tMax = %d, Min = %d\n",max, min);
+	bu_flog(stderr, "\n\tMax = %d, Min = %d\n",
+	    (int)(*max_d * 255.0), (int)(*min_d * 255.0));
+	bu_free(min_d, "bwfilter minimum");
+	bu_free(max_d, "bwfilter maximum");
     }
-    bu_free(min_d, "max value");
-    bu_free(max_d, "min values");
 
-    icv_write(img, out_file, BU_MIME_IMAGE_BW);
+    if (icv_write(img, args.output, BU_MIME_IMAGE_BW) != BRLCAD_OK)
+	status = 1;
 
     /* If stdout is non-interactive as well as -o being specified, emit to both. */
-    if (!isatty(fileno(stdout)) && out_file != NULL) {
-	icv_write(img, NULL, BU_MIME_IMAGE_BW);
-    }
+    if (!isatty(fileno(stdout)) && args.output != NULL &&
+	icv_write(img, NULL, BU_MIME_IMAGE_BW) != BRLCAD_OK)
+	status = 1;
 
-    return 0;
+    icv_destroy(img);
+    return status;
 }
 
 /*

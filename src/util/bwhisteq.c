@@ -26,63 +26,100 @@
 
 #include "common.h"
 
-#include <stdlib.h>
-#include <ctype.h>
-#include <string.h>
-
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/file.h"
-#include "bu/str.h"
 #include "bu/exit.h"
+#include "bu/malloc.h"
+
+
+struct bwhisteq_args {
+    int help;
+    int verbose;
+};
+
+static const struct bu_arg_option bwhisteq_options[] = {
+    BU_ARG_FLAG("h", "help", struct bwhisteq_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("v", "verbose", struct bwhisteq_args, verbose,
+	"Print the pixel-value mapping"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand bwhisteq_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 1, 1, "BW input file", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema bwhisteq_schema = BU_ARG_SCHEMA(
+    "bwhisteq", "Equalize the histogram of a BW image",
+    bwhisteq_options, bwhisteq_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar bwhisteq_grammar = {
+    &bwhisteq_schema, NULL, NULL
+};
+
+#define HISTOGRAM_BINS 256
+#define IO_BUFFER_SIZE 512
 
 
 int
 main(int argc, char **argv)
 {
-    static const char usage[] = "Usage: bwhisteq [-v] file.bw > file.equalized\n";
-
-    int verbose = 0;
     FILE *fp = NULL;
+    struct bwhisteq_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     double havg = 0.0;
     double hint = 0.0;
-    int i = 0;
-    int n = 0;
-    long r = 0;
+    size_t i = 0;
+    size_t n = 0;
+    int r = 0;
     unsigned char *bp = NULL;
 
-#define BUFSIZE 512
-    unsigned char buf[BUFSIZE] = {0};
-    unsigned char obuf[BUFSIZE] = {0};
-
-#define BINSIZE 256
-    long bin[BINSIZE] = {0};
-    unsigned char result[BINSIZE] = {0};
-    int left[BINSIZE] = {0};
-    int right[BINSIZE] = {0};
+    unsigned char buf[IO_BUFFER_SIZE] = {0};
+    unsigned char obuf[IO_BUFFER_SIZE] = {0};
+    long bin[HISTOGRAM_BINS] = {0};
+    unsigned char result[HISTOGRAM_BINS] = {0};
+    int left[HISTOGRAM_BINS] = {0};
+    int right[HISTOGRAM_BINS] = {0};
 
     bu_setprogname(argv[0]);
     setmode(fileno(stdout), O_BINARY);
 
-    if (argc > 1 && BU_STR_EQUAL(argv[1], "-v")) {
-	verbose++;
-	argc--;
-	argv++;
+    int introspection = bu_arg_introspect(&msg, &bwhisteq_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&bwhisteq_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&bwhisteq_schema, "bwhisteq");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "bwhisteq help");
+	return 0;
     }
 
-    if (argc != 2 || isatty(fileno(stdout))) {
-	bu_exit(1, "%s", usage);
-    }
+    if (isatty(fileno(stdout)))
+	bu_exit(1, "bwhisteq requires redirected binary output\n");
 
-    if ((fp = fopen(argv[1], "rb")) == NULL) {
-	bu_exit(2, "bwhisteq: Can't open \"%s\"\n", argv[1]);
-    }
+    const char *path = argv[operand_index + 1];
+    if ((fp = fopen(path, "rb")) == NULL)
+	bu_exit(2, "bwhisteq: cannot open '%s' for reading\n", path);
 
     /* Tally up the intensities */
     havg = 0.0;
-    while ((n = fread(buf, sizeof(*buf), BUFSIZE, fp)) > 0) {
+    while ((n = fread(buf, sizeof(*buf), IO_BUFFER_SIZE, fp)) > 0) {
 	bp = &buf[0];
 	for (i = 0; i < n; i++)
 	    bin[ *bp++ ]++;
@@ -90,11 +127,11 @@ main(int argc, char **argv)
     }
     if (ferror(fp))
 	bu_exit(1, "bwhisteq: error reading input\n");
-    havg /= (double)BINSIZE;
+    havg /= (double)HISTOGRAM_BINS;
 
     r = 0;
     hint = 0;
-    for (i = 0; i < BINSIZE; i++) {
+    for (i = 0; i < HISTOGRAM_BINS; i++) {
 	left[i] = r;
 	hint += bin[i];
 	while (hint > havg) {
@@ -105,21 +142,16 @@ main(int argc, char **argv)
 	result[i] = (left[i] + right[i]) / 2;
     }
 
-    if (verbose) {
-	for (i = 0; i < BINSIZE; i++)
-	    fprintf(stderr, "result[%d] = %d\n", i, result[i]);
+    if (args.verbose) {
+	for (i = 0; i < HISTOGRAM_BINS; i++)
+	    fprintf(stderr, "result[%zu] = %d\n", i, result[i]);
     }
 
     if (bu_fseek(fp, 0, SEEK_SET) != 0)
 	bu_exit(1, "bwhisteq: error rewinding input\n");
-    while ((n = fread(buf, 1, BUFSIZE, fp)) > 0) {
+    while ((n = fread(buf, 1, IO_BUFFER_SIZE, fp)) > 0) {
 	for (i = 0; i < n; i++) {
-	    long idx = buf[i];
-
-	    if (idx < 0)
-		idx = 0;
-	    if (idx > BINSIZE-1)
-		idx = BINSIZE-1;
+	    unsigned char idx = buf[i];
 
 	    if (left[idx] == right[idx])
 		obuf[i] = left[idx];

@@ -62,23 +62,39 @@
 
 #include <errno.h>
 #include <limits.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/color.h"
-#include "bu/getopt.h"
-#include "bu/opt.h"
 #include "bu/exit.h"
+#include "bu/log.h"
 #include "bu/malloc.h"
 #include "dm.h"
 
+enum fbcbars_mode {
+    FBCBARS_EIA,
+    FBCBARS_FCC,
+    FBCBARS_SMPTE
+};
 
-static char *framebuffer = NULL;
+enum fbcbars_dimension {
+    FBCBARS_SIZE,
+    FBCBARS_WIDTH,
+    FBCBARS_HEIGHT
+};
 
-static int scr_width = 0;
-static int scr_height = 0;
+struct fbcbars_args {
+    struct fbcbars_args *self;
+    int help;
+    const char *framebuffer;
+    int width;
+    int height;
+    enum fbcbars_mode mode;
+};
 
 /*
  * "Since the relationship between RGB and the amplitude of YIQ in
@@ -159,147 +175,201 @@ static RGBpixel botpart[5] = {
 };
 
 
-static char usage[] = "\
-Usage: fbcbars [-fes] [-F framebuffer]\n\
-	[-S squarescrsize] [-W scr_width] [-N scr_height]\n\
-	-f	sets mode to FCC/EBU bars\n\
-	-e	sets mode to EIA bars\n\
-	-s	sets mode to SMPTE bars\n";
-
-#define M_EIA 0
-#define M_FCC 1
-#define M_SMPTE 2
-int mode = M_SMPTE;
-
-int
-get_args(int argc, char **argv)
+static struct fbcbars_args *
+fbcbars_args_from_storage(void *storage)
 {
-    int c;
-
-    while ((c = bu_getopt(argc, argv, "efsF:S:W:N:h?")) != -1) {
-	switch (c) {
-	    case 'e':
-		mode = M_EIA;
-		break;
-	    case 's':
-		mode = M_SMPTE;
-		break;
-	    case 'f':
-		mode = M_FCC;
-		break;
-	    case 'F':
-		framebuffer = bu_optarg;
-		break;
-	    case 'S':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen size"))
-		    return 0;
-		scr_height = scr_width;
-		break;
-	    case 'W':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen width"))
-		    return 0;
-		break;
-	    case 'N':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 1, INT_MAX, "screen height"))
-		    return 0;
-		break;
-
-	    default:		/* '?' */
-		return 0;
-	}
-    }
-
-    if (argc > bu_optind) {
-	fprintf(stderr, "fbcbars: excess argument(s) not supported\n");
-	return 0;
-    }
-
-    return 1;		/* OK */
+    return storage ? *(struct fbcbars_args **)storage : NULL;
 }
 
-void
-printusage(void) {
-	(void)fputs(usage, stderr);
-	bu_exit(1, NULL);
+static int
+fbcbars_dimension_value(struct bu_vls *msg, const char *arg, void *storage,
+	enum fbcbars_dimension dimension)
+{
+    struct fbcbars_args *args = fbcbars_args_from_storage(storage);
+    int value;
+
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 1, INT_MAX))
+	return -1;
+    if (args) {
+	if (dimension == FBCBARS_SIZE)
+	    args->width = args->height = value;
+	else if (dimension == FBCBARS_WIDTH)
+	    args->width = value;
+	else
+	    args->height = value;
+    }
+    return 0;
+}
+
+#define FBCBARS_DIMENSION_CALLBACK(_name, _dimension) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return fbcbars_dimension_value(msg, arg, storage, _dimension); \
+    }
+
+FBCBARS_DIMENSION_CALLBACK(fbcbars_size, FBCBARS_SIZE)
+FBCBARS_DIMENSION_CALLBACK(fbcbars_width, FBCBARS_WIDTH)
+FBCBARS_DIMENSION_CALLBACK(fbcbars_height, FBCBARS_HEIGHT)
+
+#define FBCBARS_MODE_CALLBACK(_name, _mode) \
+    static int _name(struct bu_vls *UNUSED(msg), const char *UNUSED(arg), void *storage) \
+    { \
+	if (storage) \
+	    *(enum fbcbars_mode *)storage = _mode; \
+	return 0; \
+    }
+
+FBCBARS_MODE_CALLBACK(fbcbars_eia, FBCBARS_EIA)
+FBCBARS_MODE_CALLBACK(fbcbars_fcc, FBCBARS_FCC)
+FBCBARS_MODE_CALLBACK(fbcbars_smpte, FBCBARS_SMPTE)
+
+static const struct bu_arg_option fbcbars_options[] = {
+    BU_ARG_FLAG("h", "help", struct fbcbars_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_CUSTOM_FLAG("e", "eia", "eia", struct fbcbars_args, mode,
+	fbcbars_eia, "Display EIA bars with -I, white, Q, and black below seven 75% colors"),
+    BU_ARG_CUSTOM_FLAG("f", "fcc", "fcc", struct fbcbars_args, mode,
+	fbcbars_fcc, "Display full-screen FCC/EBU bars from white through 75% colors to black"),
+    BU_ARG_CUSTOM_FLAG("s", "smpte", "smpte", struct fbcbars_args, mode,
+	fbcbars_smpte, "Display SMPTE color-demodulator alignment bars (default)"),
+    BU_ARG_VALUE("F", "framebuffer", struct fbcbars_args, framebuffer,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Select the framebuffer instead of the FB_FILE environment default"),
+    BU_ARG_CUSTOM("S", "size", struct fbcbars_args, self, fbcbars_size,
+	"pixels", "Set both framebuffer dimensions"),
+    BU_ARG_CUSTOM("W", "width", struct fbcbars_args, self, fbcbars_width,
+	"pixels", "Set the framebuffer width"),
+    BU_ARG_CUSTOM("N", "height", struct fbcbars_args, self, fbcbars_height,
+	"scanlines", "Set the framebuffer height"),
+    BU_ARG_OPTION_NULL
+};
+
+static const char * const fbcbars_modes[] = {"eia", "fcc", "smpte", NULL};
+
+static const struct bu_arg_constraint fbcbars_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS,
+	fbcbars_modes, 0, 1, "select at most one color-bar standard"),
+    BU_ARG_CONSTRAINT_NULL
+};
+
+static const struct bu_arg_schema fbcbars_schema = BU_ARG_SCHEMA(
+    "fbcbars", "Display standard color bars on a framebuffer",
+    fbcbars_options, NULL, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, fbcbars_constraints, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar fbcbars_grammar = {
+    &fbcbars_schema, NULL, NULL
+};
+
+static int
+fbcbars_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&fbcbars_schema, "fbcbars");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "fbcbars help");
+    return status;
+}
+
+static int
+fbcbars_bar_index(int position, int count, int total)
+{
+    return (int)((int64_t)position * count / total);
 }
 
 int
 main(int argc, char **argv)
 {
+    struct fbcbars_args args = {NULL, 0, NULL, 0, 0, FBCBARS_SMPTE};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     int x, y;
     struct fb *fbp;
     unsigned char *scanline;
+    args.self = &args;
 
     bu_setprogname(argv[0]);
-
+    int introspection = bu_arg_introspect(&msg, &fbcbars_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    if (bu_arg_schema_parse_complete(&fbcbars_schema, &args, &msg, argc - 1,
+	    (const char **)(argv + 1)) < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return fbcbars_help(stdout, 0);
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
-	printusage();
-    if (!get_args(argc, argv))
-	printusage();
+	return fbcbars_help(stderr, 1);
 
-    if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == NULL)
+    if ((fbp = fb_open(args.framebuffer, args.width, args.height)) == NULL)
 	bu_exit(12, NULL);
 
     /* Get the screen size we were actually given */
-    scr_width = fb_getwidth(fbp);
-    scr_height = fb_getheight(fbp);
-    scanline = (unsigned char *)bu_calloc((size_t)scr_width,
+    args.width = fb_getwidth(fbp);
+    args.height = fb_getheight(fbp);
+    scanline = (unsigned char *)bu_calloc((size_t)args.width,
 	sizeof(RGBpixel), "scanline");
 
     /*
      * Operation is bottom-to-top.
      */
-    switch (mode) {
-	case M_FCC:
-	    for (x=0; x<scr_width; x++) {
-		COPYRGB(&scanline[3*x], fcc_all[x*8/scr_width]);
+    switch (args.mode) {
+	case FBCBARS_FCC:
+	    for (x=0; x<args.width; x++) {
+		COPYRGB(&scanline[3*x], fcc_all[fbcbars_bar_index(x, 8, args.width)]);
 	    }
-	    for (y=0; y<scr_height; y++)
-		fb_write(fbp, 0, y, scanline, scr_width);
+	    for (y=0; y<args.height; y++)
+		fb_write(fbp, 0, y, scanline, args.width);
 	    break;
 
-	case M_EIA:
+	case FBCBARS_EIA:
 	    /*
 	     * Build bottom line, and send it for 1/4th of the screen,
 	     * then build the top line, and fill the rest of the screen.
 	     */
-	    for (x=0; x<scr_width; x++) {
-		COPYRGB(&scanline[3*x], botpart[x*5/scr_width]);
+	    for (x=0; x<args.width; x++) {
+		COPYRGB(&scanline[3*x], botpart[fbcbars_bar_index(x, 5, args.width)]);
 	    }
-	    for (y=0; y<(scr_height/4); y++)
-		fb_write(fbp, 0, y, scanline, scr_width);
+	    for (y=0; y<(args.height/4); y++)
+		fb_write(fbp, 0, y, scanline, args.width);
 
-	    for (x=0; x<scr_width; x++) {
-		COPYRGB(&scanline[3*x], eia_top[x*7/scr_width]);
+	    for (x=0; x<args.width; x++) {
+		COPYRGB(&scanline[3*x], eia_top[fbcbars_bar_index(x, 7, args.width)]);
 	    }
-	    for (; y<scr_height; y++)
-		fb_write(fbp, 0, y, scanline, scr_width);
+	    for (; y<args.height; y++)
+		fb_write(fbp, 0, y, scanline, args.width);
 	    break;
 
-	case M_SMPTE:
+	case FBCBARS_SMPTE:
 	    /*
 	     * Build bottom line, and send it for 3/16th of the screen,
 	     * then send the SMPTE middle for 1/16th of the screen,
 	     * then build the top line, and fill the rest of the screen.
 	     * (Convert upper 1/4 of EIA -I white Q black to smpte)
 	     */
-	    for (x=0; x<scr_width; x++) {
-		COPYRGB(&scanline[3*x], botpart[x*5/scr_width]);
+	    for (x=0; x<args.width; x++) {
+		COPYRGB(&scanline[3*x], botpart[fbcbars_bar_index(x, 5, args.width)]);
 	    }
-	    for (y=0; y<(scr_height*3/16); y++)
-		fb_write(fbp, 0, y, scanline, scr_width);
+	    for (y=0; y<fbcbars_bar_index(args.height, 3, 16); y++)
+		fb_write(fbp, 0, y, scanline, args.width);
 
-	    for (x=0; x<scr_width; x++) {
-		COPYRGB(&scanline[3*x], smpte_middle[x*7/scr_width]);
+	    for (x=0; x<args.width; x++) {
+		COPYRGB(&scanline[3*x], smpte_middle[fbcbars_bar_index(x, 7, args.width)]);
 	    }
-	    for (; y<(scr_height*4/16); y++)
-		fb_write(fbp, 0, y, scanline, scr_width);
+	    for (; y<fbcbars_bar_index(args.height, 4, 16); y++)
+		fb_write(fbp, 0, y, scanline, args.width);
 
-	    for (x=0; x<scr_width; x++) {
-		COPYRGB(&scanline[3*x], eia_top[x*7/scr_width]);
+	    for (x=0; x<args.width; x++) {
+		COPYRGB(&scanline[3*x], eia_top[fbcbars_bar_index(x, 7, args.width)]);
 	    }
-	    for (; y<scr_height; y++)
-		fb_write(fbp, 0, y, scanline, scr_width);
+	    for (; y<args.height; y++)
+		fb_write(fbp, 0, y, scanline, args.width);
 	    break;
     }
     fb_close(fbp);

@@ -27,9 +27,7 @@
 
 #include "common.h"
 
-#include <errno.h>
 #include <limits.h>
-#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
@@ -42,11 +40,12 @@
 
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/color.h"
-#include "bu/getopt.h"
-#include "bu/opt.h"
 #include "bu/exit.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "dm.h"
 
 #define COMMA ','
@@ -61,49 +60,132 @@ unsigned char buf[3*2048];
 ColorMap old_map;
 ColorMap cm;
 
-static char *framebuffer = NULL;
-static struct fb *fbp;
-static int scr_height;
-static int scr_width;
-
 void new_rgb(void), rgbhsv(int *rgb, int *hsv), hsvrgb(int *hsv, int *rgb);
-int pars_Argv(int argc, char **argv);
 int doKeyPad(void);
 
-static char usage[] = "\
-Usage: fbcolor [-F framebuffer]\n\
-	[-s|S squarescrsize] [-w|W scr_width] [-n|N scr_height]\n";
+struct fbcolor_args {
+    struct fbcolor_args *self;
+    int help;
+    const char *framebuffer;
+    int width;
+    int height;
+};
 
-void
-printusage(void)
+enum fbcolor_dimension {
+    FBCOLOR_SIZE,
+    FBCOLOR_WIDTH,
+    FBCOLOR_HEIGHT
+};
+
+static struct fbcolor_args *
+fbcolor_args_from_storage(void *storage)
 {
-	(void)fputs(usage, stderr);
+    return storage ? *(struct fbcolor_args **)storage : NULL;
+}
+
+static int
+fbcolor_dimension_value(struct bu_vls *msg, const char *arg, void *storage,
+	enum fbcolor_dimension dimension)
+{
+    struct fbcolor_args *args = fbcolor_args_from_storage(storage);
+    int value;
+
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 0, INT_MAX))
+	return -1;
+    if (args) {
+	if (dimension == FBCOLOR_SIZE)
+	    args->width = args->height = value;
+	else if (dimension == FBCOLOR_WIDTH)
+	    args->width = value;
+	else
+	    args->height = value;
+    }
+    return 0;
+}
+
+#define FBCOLOR_DIMENSION_CALLBACK(_name, _dimension) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return fbcolor_dimension_value(msg, arg, storage, _dimension); \
+    }
+
+FBCOLOR_DIMENSION_CALLBACK(fbcolor_size, FBCOLOR_SIZE)
+FBCOLOR_DIMENSION_CALLBACK(fbcolor_width, FBCOLOR_WIDTH)
+FBCOLOR_DIMENSION_CALLBACK(fbcolor_height, FBCOLOR_HEIGHT)
+
+static const struct bu_arg_option fbcolor_options[] = {
+    BU_ARG_FLAG("h", "help", struct fbcolor_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_VALUE("F", "framebuffer", struct fbcolor_args, framebuffer,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Select the framebuffer instead of the FB_FILE environment default"),
+    BU_ARG_CUSTOM("s", "size", struct fbcolor_args, self, fbcolor_size,
+	"pixels", "Set both dimensions; zero selects the device default"),
+    BU_ARG_ALIAS("S", NULL, "size", 1),
+    BU_ARG_CUSTOM("w", "width", struct fbcolor_args, self, fbcolor_width,
+	"pixels", "Set the width; zero selects the device default"),
+    BU_ARG_ALIAS("W", NULL, "width", 1),
+    BU_ARG_CUSTOM("n", "height", struct fbcolor_args, self, fbcolor_height,
+	"scanlines", "Set the height; zero selects the device default"),
+    BU_ARG_ALIAS("N", NULL, "height", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema fbcolor_schema = BU_ARG_SCHEMA(
+    "fbcolor", "Interactively pick a color on a framebuffer",
+    fbcolor_options, NULL, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar fbcolor_grammar = {
+    &fbcolor_schema, NULL, NULL
+};
+
+static int
+fbcolor_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&fbcolor_schema, "fbcolor");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "fbcolor help");
+    return status;
 }
 
 int
 main(int argc, char **argv)
 {
+    struct fbcolor_args args = {NULL, 0, NULL, 0, 0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    struct fb *fbp;
     int i;
+    args.self = &args;
 
     bu_setprogname(argv[0]);
-
-    if (! pars_Argv(argc, argv)) {
-    	printusage();
-	bu_exit(1, NULL);
+    int introspection = bu_arg_introspect(&msg, &fbcolor_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+    if (bu_arg_schema_parse_complete(&fbcolor_schema, &args, &msg, argc - 1,
+	    (const char **)(argv + 1)) < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return fbcolor_help(stdout, 0);
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	fprintf(stderr, "Opening a window, waiting for user input:\n");
     }
 
-    if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == FB_NULL) {
-	fprintf(stderr, "fbcolor:  fb_open(%s) failure\n", framebuffer);
+    if ((fbp = fb_open(args.framebuffer, args.width, args.height)) == FB_NULL) {
+	bu_log("fbcolor: fb_open(%s) failure\n",
+	    args.framebuffer ? args.framebuffer : "default framebuffer");
 	return 1;
     }
-
-    /* Get the actual screen size we were given */
-    scr_width = fb_getwidth(fbp);
-    scr_height = fb_getheight(fbp);
 
     fb_rmap(fbp, &old_map);
     fb_clear(fbp, RGBPIXEL_NULL);
@@ -305,46 +387,6 @@ new_rgb(void) {
 	rgbhsv(col, &col[3]);
     else
 	hsvrgb(&col[3], col);
-}
-
-
-int
-pars_Argv(int argc, char **argv)
-{
-    int c;
-    int remaining = 0;
-
-    while ((c = bu_getopt(argc, argv, "F:s:S:w:W:n:N:h?")) != -1) {
-	switch (c) {
-	    case 'F':
-		framebuffer = bu_optarg;
-		break;
-	    case 's':
-	    case 'S':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen size"))
-		    return 0;
-		scr_height = scr_width;
-		break;
-	    case 'w':
-	    case 'W':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen width"))
-		    return 0;
-		break;
-	    case 'n':
-	    case 'N':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 0, INT_MAX, "screen height"))
-		    return 0;
-		break;
-	    default :
-		return 0;
-	}
-    }
-    remaining = argc - bu_optind;
-    if (remaining != 0) {
-	fprintf(stderr, "fbcolor: excess argument(s) not supported\n");
-	return 0;
-    }
-    return 1;
 }
 
 

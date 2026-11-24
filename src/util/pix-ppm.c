@@ -27,152 +27,156 @@
 
 #include "common.h"
 
-#include <errno.h>
 #include <limits.h>
-#include <stdlib.h>
 
 #include "bio.h"
 
-#include "vmath.h"
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "bu/opt.h"
+#include "bu/exit.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bn.h"
 #include "dm.h"
 
 
-static int autosize = 0;		/* !0 to autosize input */
+#define DEFAULT_IMAGE_DIMENSION 512
 
-static int fileinput = 0;		/* file of pipe on input? */
-static const char *file_name = (char *)NULL;
-static FILE *infp = (FILE *)NULL;
-static FILE *outfp = (FILE *)NULL;
+struct pix_ppm_args {
+    struct pix_ppm_args *self;
+    int help;
+    int autosize;
+    int pixel_bytes;
+    size_t width;
+    size_t height;
+    const char *output;
+};
 
-static int pixbytes = 3;
+enum pix_ppm_dimension {
+    PIX_PPM_SIZE,
+    PIX_PPM_WIDTH,
+    PIX_PPM_HEIGHT
+};
+
+static struct pix_ppm_args *
+pix_ppm_args_from_storage(void *storage)
+{
+    return storage ? *(struct pix_ppm_args **)storage : NULL;
+}
 
 static int
-parse_pixbytes_arg(const char *arg, int *value)
+pix_ppm_autosize(struct bu_vls *UNUSED(msg), const char *UNUSED(arg),
+	void *storage)
 {
-    if (!bu_opt_scan_int_range(arg, value, 1, INT_MAX, "bytes per pixel"))
-	return 0;
-
-    if (*value != 1 && *value != 3) {
-	bu_log("%s: bytes-per-pixel must be 1 or 3, got '%s'\n", bu_getprogname(), arg);
-	return 0;
-    }
-
-    return 1;
+    struct pix_ppm_args *args = pix_ppm_args_from_storage(storage);
+    if (args)
+	args->autosize = 1;
+    return 0;
 }
 
-
-int
-get_args(int argc, char *argv[], long *width, long *height)
+static int
+pix_ppm_pixel_bytes(struct bu_vls *msg, const char *arg, void *storage)
 {
-    int c;
+    struct pix_ppm_args *args = pix_ppm_args_from_storage(storage);
+    int value;
 
-    while ((c = bu_getopt(argc, argv, "a#:s:w:n:o:h?")) != -1) {
-	switch (c) {
-	    case '#':
-		if (!parse_pixbytes_arg(bu_optarg, &pixbytes))
-		    return 0;
-		break;
-	    case 'a':
-		autosize = 1;
-		break;
-	    case 's':
-		/* square file size */
-		if (!bu_opt_scan_long_range(bu_optarg, width, 1, LONG_MAX, "input size"))
-		    return 0;
-		*height = *width;
-		autosize = 0;
-		break;
-	    case 'w':
-		if (!bu_opt_scan_long_range(bu_optarg, width, 1, LONG_MAX, "input width"))
-		    return 0;
-		autosize = 0;
-		break;
-	    case 'n':
-		if (!bu_opt_scan_long_range(bu_optarg, height, 1, LONG_MAX, "input height"))
-		    return 0;
-		autosize = 0;
-		break;
-	    case 'o': {
-		outfp = fopen(bu_optarg, "wb+");
-		if (outfp == (FILE *)NULL) {
-		    bu_exit(1, "%s: cannot open \"%s\" for writing\n", bu_getprogname(), bu_optarg);
-		}
-		break;
-	    }
-
-	    default:		/* '?' 'h' */
-		return 0;
-	}
+    if (!bu_arg_integer_from_str(msg, &value, arg, 10))
+	return -1;
+    if (value != 1 && value != 3) {
+	if (msg)
+	    bu_vls_printf(msg, "bytes per pixel must be 1 or 3\n");
+	return -1;
     }
-
-    if (bu_optind >= argc) {
-	if (isatty(fileno(stdin)))
-	    return 0;
-	file_name = "-";
-    } else {
-	file_name = argv[bu_optind];
-	bu_optind++;
-	if (argc > bu_optind) {
-	    bu_log("%s: excess argument(s) not supported\n", bu_getprogname());
-	    return 0;
-	}
-	if ((infp = fopen(file_name, "rb")) == NULL) {
-	    perror(file_name);
-	    bu_exit(1, "%s: cannot open \"%s\" for reading\n", bu_getprogname(), file_name);
-	}
-	fileinput++;
-    }
-
-    if (!infp)
-	bu_exit(0, "ERROR: infp is null\n");
-
-    if (isatty(fileno(infp))) {
-	bu_log("ERROR: %s will not read pix data from a tty\n", bu_getprogname());
-	return 0; /* usage */
-    }
-
-    if (!outfp)
-	bu_exit(0, "ERROR: outfp is null\n");
-
-    if (isatty(fileno(outfp))) {
-	bu_exit(0, "ERROR: %s will not write ppm data to a tty\n", bu_getprogname());
-    }
-    if (argc > bu_optind) {
-	bu_log("%s: excess argument(s) not supported\n", bu_getprogname());
-	return 0;
-    }
-
-    return 1;		/* OK */
+    if (args)
+	args->pixel_bytes = value;
+    return 0;
 }
 
-
-void
-write_ppm(FILE *fp, char *data, long width, long height, int bytes_per_pixel)
+static int
+pix_ppm_dimension(struct bu_vls *msg, const char *arg, void *storage,
+	enum pix_ppm_dimension dimension)
 {
-    int i;
-    char *row;
-    size_t ret;
+    struct pix_ppm_args *args = pix_ppm_args_from_storage(storage);
+    size_t value;
+
+    if (!bu_arg_size_t_range_from_str(msg, &value, arg, 10, 1, SIZE_MAX))
+	return -1;
+    if (args) {
+	if (dimension == PIX_PPM_SIZE)
+	    args->width = args->height = value;
+	else if (dimension == PIX_PPM_WIDTH)
+	    args->width = value;
+	else
+	    args->height = value;
+	args->autosize = 0;
+    }
+    return 0;
+}
+
+#define PIX_PPM_DIMENSION_CALLBACK(_name, _dimension) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return pix_ppm_dimension(msg, arg, storage, _dimension); \
+    }
+
+PIX_PPM_DIMENSION_CALLBACK(pix_ppm_size, PIX_PPM_SIZE)
+PIX_PPM_DIMENSION_CALLBACK(pix_ppm_width, PIX_PPM_WIDTH)
+PIX_PPM_DIMENSION_CALLBACK(pix_ppm_height, PIX_PPM_HEIGHT)
+
+static const struct bu_arg_option pix_ppm_options[] = {
+    BU_ARG_FLAG("h", "help", struct pix_ppm_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_CUSTOM_FLAG("a", "autosize", "autosize", struct pix_ppm_args,
+	self, pix_ppm_autosize, "Derive dimensions from a named input file"),
+    BU_ARG_CUSTOM("#", "bytes-per-pixel", struct pix_ppm_args, self,
+	pix_ppm_pixel_bytes, "count", "Set input bytes per pixel to 1 or 3"),
+    BU_ARG_CUSTOM("s", "size", struct pix_ppm_args, self, pix_ppm_size,
+	"pixels", "Set both input dimensions"),
+    BU_ARG_CUSTOM("w", "width", struct pix_ppm_args, self, pix_ppm_width,
+	"pixels", "Set the input image width"),
+    BU_ARG_CUSTOM("n", "height", struct pix_ppm_args, self, pix_ppm_height,
+	"pixels", "Set the input image height"),
+    BU_ARG_VALUE("o", "output", struct pix_ppm_args, output,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file", "Write PPM or PGM output to a file"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand pix_ppm_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"Input PIX or BW file; omit to read standard input", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema pix_ppm_schema = BU_ARG_SCHEMA(
+    "pix-ppm", "Convert a BRL-CAD PIX or BW image to Netpbm format",
+    pix_ppm_options, pix_ppm_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar pix_ppm_grammar = {
+    &pix_ppm_schema, NULL, NULL
+};
+
+
+static int
+write_ppm(FILE *fp, const unsigned char *data, size_t width, size_t height,
+	int bytes_per_pixel)
+{
+    size_t i;
+    const unsigned char *row;
+    const size_t row_size = width * (size_t)bytes_per_pixel;
 
     if (bytes_per_pixel == 1) {
-	/* PGM magic number */
-	fprintf(fp, "P2\n");
+	/* Binary PGM magic number */
+	if (fprintf(fp, "P5\n") < 0)
+	    return 0;
     } else {
 	/* PPM magic number */
-	fprintf(fp, "P6\n");
+	if (fprintf(fp, "P6\n") < 0)
+	    return 0;
     }
 
-    /* width height */
-    fprintf(fp, "%lu %lu\n", (long unsigned)width, (long unsigned)height);
-
-    /* maximum color component value */
-    fprintf(fp, "255\n");
-    fflush(fp);
+    if (fprintf(fp, "%zu %zu\n255\n", width, height) < 0 || fflush(fp) != 0)
+	return 0;
 
     /*
      * now write them out in the right order, 'cause the
@@ -180,77 +184,98 @@ write_ppm(FILE *fp, char *data, long width, long height, int bytes_per_pixel)
      */
 
     for (i = 0; i < height; i++) {
-	row = data + (height-1 - i) * width * bytes_per_pixel;
-	ret = fwrite(row, 1, width * bytes_per_pixel, fp);
-	if (ret < (size_t)width * bytes_per_pixel)
-	    perror("fwrite");
+	row = data + (height - 1 - i) * row_size;
+	if (fwrite(row, 1, row_size, fp) != row_size)
+	    return 0;
     }
-
+    return !ferror(fp);
 }
 
 
 int
 main(int argc, char *argv[])
 {
-    char *scanbuf;
-
-    long int file_width = 512L; /* default input width */
-    long int file_height = 512L; /* default input height */
-
-    char usage[] = "Usage: pix-ppm [-a] [-# bytes_per_pixel] [-w file_width] [-n file_height]\n\
-               [-s square_file_size] [-o file.ppm] [file.pix] [> file.ppm]";
-
-    long size;
+    struct pix_ppm_args args = {NULL, 0, 0, 3, DEFAULT_IMAGE_DIMENSION,
+	DEFAULT_IMAGE_DIMENSION, NULL};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    const char *input = NULL;
+    FILE *infp = stdin;
+    FILE *outfp = stdout;
+    unsigned char *scanbuf;
+    size_t image_size;
+    int status = 0;
+    args.self = &args;
 
     bu_setprogname(argv[0]);
 
-    setmode(fileno(stdin), O_BINARY);
+    int introspection = bu_arg_introspect(&msg, &pix_ppm_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&pix_ppm_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&pix_ppm_schema, "pix-ppm");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "pix-ppm help");
+	return 0;
+    }
+
+    if (operand_index < argc - 1)
+	input = argv[operand_index + 1];
+    if (!input && isatty(fileno(stdin)))
+	bu_exit(1, "pix-ppm requires an input file or redirected input\n");
+    if (!args.output && isatty(fileno(stdout)))
+	bu_exit(1, "pix-ppm cannot send image output to a terminal\n");
+    if (input && (infp = fopen(input, "rb")) == NULL)
+	bu_exit(1, "pix-ppm: cannot open \"%s\" for reading\n", input);
+    if (args.output && (outfp = fopen(args.output, "wb+")) == NULL)
+	bu_exit(1, "pix-ppm: cannot open \"%s\" for writing\n", args.output);
+
+    setmode(fileno(infp), O_BINARY);
+    setmode(fileno(outfp), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    /* important to store these before calling get_args().  they're
-     * also not necessarily constants so have to set here instead of
-     * with the declaration.
-     */
-    infp = stdin;
-    outfp = stdout;
-
-    if (!get_args(argc, argv, &file_width, &file_height)) {
-	bu_exit (1, "%s\n", usage);
-    }
-
-    if (!infp)
-	bu_exit (1, "pix-ppm: null infp\n");
-
-    size = file_width * file_height * pixbytes;
-
-    /* autosize input? */
-    if (fileinput && autosize) {
+    if (args.autosize) {
 	size_t w, h;
-	if (fb_common_file_size(&w, &h, file_name, pixbytes)) {
-	    file_width = (long)w;
-	    file_height = (long)h;
-	} else {
-	    bu_log("%s: unable to autosize\n", bu_getprogname());
-	}
+	if (!input)
+	    bu_exit(1, "pix-ppm: --autosize requires a named input file\n");
+	if (!fb_common_file_size(&w, &h, input, args.pixel_bytes))
+	    bu_exit(1, "pix-ppm: unable to autosize \"%s\"\n", input);
+	args.width = w;
+	args.height = h;
     }
 
-    /*
-     * gobble up the bytes
-     */
-    scanbuf = (char *)bu_malloc(size, "scanbuf");
-    if (fread(scanbuf, 1, size, infp) == 0) {
-	bu_exit (1, "%s: Short read\n", bu_getprogname());
-    }
+    if (args.width > SIZE_MAX / (size_t)args.pixel_bytes ||
+	args.height > SIZE_MAX / (args.width * (size_t)args.pixel_bytes))
+	bu_exit(1, "pix-ppm: image dimensions are too large\n");
+    image_size = args.width * args.height * (size_t)args.pixel_bytes;
 
-    write_ppm(outfp, scanbuf, file_width, file_height, pixbytes);
+    scanbuf = (unsigned char *)bu_malloc(image_size, "scanbuf");
+    if (fread(scanbuf, 1, image_size, infp) != image_size)
+	bu_exit(1, "%s: Short read\n", bu_getprogname());
+
+    if (!write_ppm(outfp, scanbuf, args.width, args.height,
+	    args.pixel_bytes))
+	status = 1;
 
     /* user requested separate file and redirected output */
-    if (!isatty(fileno(stdout)) && outfp != stdout) {
-	write_ppm(stdout, scanbuf, file_width, file_height, pixbytes);
-    }
+    if (!isatty(fileno(stdout)) && outfp != stdout &&
+	!write_ppm(stdout, scanbuf, args.width, args.height, args.pixel_bytes))
+	status = 1;
 
     bu_free(scanbuf, "scanbuf");
-    return 0;
+    if (infp != stdin)
+	fclose(infp);
+    if (outfp != stdout)
+	fclose(outfp);
+    return status;
 }
 
 

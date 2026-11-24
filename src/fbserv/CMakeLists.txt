@@ -3,7 +3,9 @@ include_directories(${DM_INCLUDE_DIRS})
 # Optional: link against OpenSSL for TLS support and cryptographically
 # strong token generation.  Falls back to /dev/urandom (POSIX) or
 # CryptGenRandom (Windows) if OpenSSL is not found.
-brlcad_addexec(fbserv "fbserv.c;server.c" libdm)
+find_package(OpenSSL QUIET)
+
+brlcad_addexec(fbserv "fbserv.c;server.c" libdm ARG_SCHEMA)
 target_link_libraries(fbserv ${WINSOCK_LIB})
 add_target_deps(fbserv dm_plugins)
 if(OpenSSL_FOUND OR OPENSSL_FOUND)

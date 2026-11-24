@@ -26,30 +26,26 @@
 
 #include "common.h"
 
-#include <stdlib.h>
+#include <limits.h>
 #include <string.h>
-#include <ctype.h>
 
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/color.h"
-#include "bu/getopt.h"
 #include "bu/exit.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 #include "bu/vfont.h"
 #include "dm.h"
-#include "pkg.h"
 
 
 #define FONTBUFSZ 200
 
-static char *framebuffer = NULL;
+static const char *framebuffer = NULL;
 static char *font1 = NULL;
 
 struct fb *fbp;
-
-static char usage[] = "\
-Usage: fblabel [-c -a] [-F framebuffer] [-C r/g/b]\n\
-	[-S scr_squaresize] [-W scr_width] [-N scr_height]\n\
-	[-f fontstring] xpos ypos textstring\n";
 
 /* Variables controlling the font itself */
 
@@ -65,9 +61,182 @@ static int clear = 0;
 static RGBpixel pixcolor;
 static int xpos;
 static int ypos;
-static char *textstring;
+static const char *textstring;
 static int debug = 0;
 static int alias_off = 0;
+
+struct fblabel_args {
+    struct fblabel_args *self;
+    int help;
+    int alias_off;
+    int clear;
+    int debug;
+    const char *framebuffer;
+    const char *font;
+    struct bu_color color;
+    int width;
+    int height;
+};
+
+enum fblabel_dimension {
+    FBLABEL_SIZE,
+    FBLABEL_WIDTH,
+    FBLABEL_HEIGHT
+};
+
+static struct fblabel_args *
+fblabel_args_from_storage(void *storage)
+{
+    return storage ? *(struct fblabel_args **)storage : NULL;
+}
+
+static int
+fblabel_dimension_parse(struct bu_vls *msg, const char *arg, void *storage,
+	enum fblabel_dimension dimension)
+{
+    struct fblabel_args *args = fblabel_args_from_storage(storage);
+    int value;
+
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 1, INT_MAX))
+	return -1;
+    if (args) {
+	if (dimension != FBLABEL_HEIGHT)
+	    args->width = value;
+	if (dimension != FBLABEL_WIDTH)
+	    args->height = value;
+    }
+    return 0;
+}
+
+#define FBLABEL_DIMENSION_CALLBACK(_name, _dimension) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return fblabel_dimension_parse(msg, arg, storage, _dimension); \
+    }
+
+FBLABEL_DIMENSION_CALLBACK(fblabel_size, FBLABEL_SIZE)
+FBLABEL_DIMENSION_CALLBACK(fblabel_width, FBLABEL_WIDTH)
+FBLABEL_DIMENSION_CALLBACK(fblabel_height, FBLABEL_HEIGHT)
+
+static int
+fblabel_color_channel_parse(struct bu_vls *msg, const char *arg, void *storage,
+	int channel)
+{
+    struct fblabel_args *args = fblabel_args_from_storage(storage);
+    int value;
+
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 0, 255))
+	return -1;
+    if (args) {
+	unsigned char rgb[3];
+	if (!bu_color_to_rgb_chars(&args->color, rgb))
+	    return -1;
+	rgb[channel] = (unsigned char)value;
+	if (!bu_color_from_rgb_chars(&args->color, rgb))
+	    return -1;
+    }
+    return 0;
+}
+
+#define FBLABEL_CHANNEL_CALLBACK(_name, _channel) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return fblabel_color_channel_parse(msg, arg, storage, _channel); \
+    }
+
+FBLABEL_CHANNEL_CALLBACK(fblabel_red, RED)
+FBLABEL_CHANNEL_CALLBACK(fblabel_green, GRN)
+FBLABEL_CHANNEL_CALLBACK(fblabel_blue, BLU)
+
+static int
+fblabel_help_parse(struct bu_vls *msg, const char *arg, void *storage)
+{
+    if (arg && !BU_STR_EQUAL(arg, "all")) {
+	if (msg)
+	    bu_vls_strcat(msg, "--help accepts only the optional value 'all'\n");
+	return -1;
+    }
+    if (storage)
+	*((int *)storage) = arg ? 2 : 1;
+    return 0;
+}
+
+static const struct bu_arg_option fblabel_options[] = {
+    BU_ARG_ATTACHED_OPTIONAL("h", "help", "help", struct fblabel_args,
+	help, fblabel_help_parse, "all",
+	"Print help and exit; use --help=all for compatibility options"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("a", "no-antialias", struct fblabel_args, alias_off,
+	"Render text without antialiasing"),
+    BU_ARG_FLAG("c", "clear", struct fblabel_args, clear,
+	"Clear the framebuffer before drawing"),
+    BU_ARG_FLAG("d", "debug", struct fblabel_args, debug,
+	"Print character layout diagnostics"),
+    BU_ARG_VALUE("F", "framebuffer", struct fblabel_args, framebuffer,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Select the framebuffer device"),
+    BU_ARG_VALUE("f", "font", struct fblabel_args, font,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "name",
+	"Select a vfont font"),
+    BU_ARG_RGB("C", "color", struct fblabel_args, color, "r/g/b",
+	"Set the text color (default 255/255/255)"),
+    BU_ARG_CUSTOM("r", "red", struct fblabel_args, self, fblabel_red,
+	"value", "Override the red text-color channel"),
+    BU_ARG_CUSTOM("g", "green", struct fblabel_args, self, fblabel_green,
+	"value", "Override the green text-color channel"),
+    BU_ARG_CUSTOM("b", "blue", struct fblabel_args, self, fblabel_blue,
+	"value", "Override the blue text-color channel"),
+    BU_ARG_CUSTOM("s", "size", struct fblabel_args, self, fblabel_size,
+	"pixels", "Set both framebuffer dimensions"),
+    BU_ARG_ALIAS("S", NULL, "size", 1),
+    BU_ARG_CUSTOM("w", "width", struct fblabel_args, self, fblabel_width,
+	"pixels", "Set the framebuffer width"),
+    BU_ARG_ALIAS("W", NULL, "width", 1),
+    BU_ARG_CUSTOM("n", "height", struct fblabel_args, self, fblabel_height,
+	"pixels", "Set the framebuffer height"),
+    BU_ARG_ALIAS("N", NULL, "height", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand fblabel_operands[] = {
+    BU_ARG_OPERAND("x-position", BU_ARG_VALUE_INTEGER, 1, 1,
+	"Text origin x coordinate", NULL),
+    BU_ARG_OPERAND("y-position", BU_ARG_VALUE_INTEGER, 1, 1,
+	"Text origin y coordinate", NULL),
+    BU_ARG_OPERAND("text", BU_ARG_VALUE_STRING, 1, 1,
+	"Text to draw", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_option_visibility fblabel_option_visibility[] = {
+    BU_ARG_OPTION_VISIBILITY("red", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("green", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY("blue", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY_NULL
+};
+
+static const struct bu_arg_presentation fblabel_presentation =
+    BU_ARG_PRESENTATION(NULL, fblabel_option_visibility, NULL);
+
+static const struct bu_arg_schema fblabel_schema = BU_ARG_SCHEMA_PRESENTED(
+    "fblabel", "Draw text on a framebuffer", fblabel_options,
+    fblabel_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL),
+    &fblabel_presentation);
+
+static const struct bu_arg_grammar fblabel_grammar = {
+    &fblabel_schema, NULL, NULL
+};
+
+static int
+fblabel_help(FILE *stream, int extended, int status)
+{
+    char *help = bu_arg_schema_help_mode(&fblabel_schema, "fblabel",
+	extended ? BU_ARG_HELP_EXTENDED : BU_ARG_HELP_DEFAULT);
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "fblabel help");
+    return status;
+}
 
 /*
  * squash - Filter super-sampled image for one scan line
@@ -230,7 +399,7 @@ do_char(struct vfont *vfp, struct vfont_dispatch *vdp, int x, int y)
 
 
 void
-do_line(struct vfont *vfp, char *line)
+do_line(struct vfont *vfp, const char *line)
 {
     int currx;
     int char_id;
@@ -283,98 +452,50 @@ do_line(struct vfont *vfp, char *line)
 
 
 int
-get_args(int argc, char **argv)
-{
-
-    int c;
-
-    pixcolor[RED]  = 255;
-    pixcolor[GRN]  = 255;
-    pixcolor[BLU]  = 255;
-
-    while ((c = bu_getopt(argc, argv, "adcF:f:r:g:b:C:s:S:w:W:n:N:h?")) != -1) {
-	switch (c) {
-	    case 'a':
-		alias_off = 1;
-		break;
-	    case 'd':
-		debug = 1;
-		break;
-	    case 's':
-	    case 'S':
-		/* square size */
-		scr_height = scr_width = atoi(bu_optarg);
-		break;
-	    case 'w':
-	    case 'W':
-		scr_width = atoi(bu_optarg);
-		break;
-	    case 'n':
-	    case 'N':
-		scr_height = atoi(bu_optarg);
-		break;
-	    case 'c':
-		clear = 1;
-		break;
-	    case 'F':
-		framebuffer = bu_optarg;
-		break;
-	    case 'f':
-		font1 = bu_optarg;
-		break;
-	    case 'C': {
-		char *cp = bu_optarg;
-		unsigned char *conp
-		    = (unsigned char *)pixcolor;
-
-		/* premature null => atoi gives zeros */
-		for (c=0; c < 3; c++) {
-		    *conp++ = atoi(cp);
-		    while (*cp && *cp++ != '/')
-			;
-		}
-	    }
-		break;
-		/* backward compatibility */
-	    case 'r':
-		pixcolor[RED] = atoi(bu_optarg);
-		break;
-	    case 'g':
-		pixcolor[GRN] = atoi(bu_optarg);
-		break;
-	    case 'b':
-		pixcolor[BLU] = atoi(bu_optarg);
-		break;
-	    default:		/* '?' */
-		return 0;
-	}
-    }
-
-    if (bu_optind+3 > argc)
-	return 0;
-    xpos = atoi(argv[bu_optind++]);
-    ypos = atoi(argv[bu_optind++]);
-    textstring = argv[bu_optind++];
-    if (debug) fprintf(stderr, "fblabel %d %d %s\n", xpos, ypos, textstring);
-
-    if (argc > bu_optind)
-	fprintf(stderr, "fblabel: excess argument(s) ignored\n");
-
-    return 1;		/* OK */
-}
-
-
-int
 main(int argc, char **argv)
 {
+    struct fblabel_args args = {.color = BU_COLOR_WHITE};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct vfont *vfp;
+    int operand_index;
+    args.self = &args;
 
     bu_setprogname(argv[0]);
 
-    if (!get_args(argc, argv)) {
-	fputs(usage, stderr);
-	bu_exit(1, NULL);
+    int introspection = bu_arg_introspect(&msg, &fblabel_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+    operand_index = bu_arg_schema_parse_complete(&fblabel_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return fblabel_help(stdout, args.help > 1, 0);
+
+    framebuffer = args.framebuffer;
+    font1 = (char *)args.font;
+    scr_width = args.width;
+    scr_height = args.height;
+    clear = args.clear;
+    debug = args.debug;
+    alias_off = args.alias_off;
+    if (!bu_color_to_rgb_chars(&args.color, pixcolor))
+	bu_exit(1, "fblabel: invalid text color\n");
+    if (!bu_arg_integer_from_str(NULL, &xpos, argv[operand_index + 1], 10) ||
+	!bu_arg_integer_from_str(NULL, &ypos, argv[operand_index + 2], 10))
+	bu_exit(1, "fblabel: internal coordinate validation failure\n");
+    textstring = argv[operand_index + 3];
+
+    if (debug)
+	bu_flog(stderr, "fblabel %d %d %s\n", xpos, ypos, textstring);
 
     if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == NULL) {
 	fprintf(stderr, "fblabel:  Unable to open framebuffer %s\n", framebuffer);

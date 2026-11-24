@@ -26,16 +26,15 @@
 
 #include "common.h"
 
-#include <errno.h>
 #include <stdlib.h>
 #include <math.h>
 #include "bio.h"
 
 #include "vmath.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/color.h"
-#include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "bu/vls.h"
@@ -46,8 +45,6 @@
 
 #define PC_DEBUG_TABLE 0x01
 #define PC_DEBUG_MATCH 0x02
-#define PC_DEBUG_OUTPUT 0x04
-#define OPT_STRING "c:f:x:h?"
 
 
 /*
@@ -57,53 +54,6 @@ unsigned char (*color_tbl)[3];	/* Table of quantized colors */
 int color_tbl_size;		/* Capacity of table */
 int next_color;		/* Number of colors now in table */
 static int debug = 0;
-
-static char usage[] = "\
-Usage: pixclump [-c R/G/B] [-f color_file] [-x debug_flags]\n\
-		 [infile.pix [outfile.pix]]\n";
-
-
-static void print_usage (void)
-{
-    bu_exit(1, "%s", usage);
-}
-
-
-static void print_debug_usage (void)
-{
-    static const char *flag_denotation[] = {
-	"",
-	"color table",
-	"finding best pixel match",
-	"writing the pixels out",
-	0
-    };
-    int i;
-
-    bu_log("Debug bits and their meanings...\n");
-    for (i = 1; (flag_denotation[i]) != 0; ++i)
-	bu_log("0x%04x	%s\n", 1 << (i-1), flag_denotation[i]);
-
-    print_usage();
-}
-
-static int
-parse_hex_int_arg(const char *arg, int *out_value, const char *label)
-{
-    char *end = NULL;
-    unsigned long int value;
-
-    errno = 0;
-    value = strtoul(arg, &end, 16);
-    if (errno != 0 || end == arg || *end != '\0' || value > INT_MAX) {
-	bu_log("pixclump: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = (int)value;
-    return 1;
-}
-
 
 static void add_to_table (unsigned char *rgb)
 {
@@ -122,7 +72,7 @@ static void add_to_table (unsigned char *rgb)
 }
 
 
-static void fill_table (char *f_name)
+static void fill_table (const char *f_name)
 {
     char *bp;
     FILE *fp;
@@ -177,26 +127,109 @@ static int color_diff (unsigned char *pix, int i)
 }
 
 
+struct pixclump_args {
+    struct pixclump_args *self;
+    int help;
+    const char *color_file;
+    int debug_flags;
+};
+
+static int
+pixclump_color(struct bu_vls *msg, const char *arg, void *storage)
+{
+    unsigned char rgb[3];
+
+    if (!bu_str_to_rgb(arg, rgb)) {
+	bu_vls_printf(msg, "invalid color: %s\n", arg);
+	return -1;
+    }
+    if (storage) {
+	struct pixclump_args *args = *(struct pixclump_args **)storage;
+	if (args) {
+	    add_to_table(rgb);
+	    args->color_file = NULL;
+	}
+    }
+    return 0;
+}
+
+static int
+pixclump_color_file(struct bu_vls *UNUSED(msg), const char *arg, void *storage)
+{
+    if (storage) {
+	struct pixclump_args *args = *(struct pixclump_args **)storage;
+	if (args) {
+	    args->color_file = arg;
+	    next_color = 0;
+	}
+    }
+    return 0;
+}
+
+static int
+pixclump_debug(struct bu_vls *msg, const char *arg, void *storage)
+{
+    int value;
+
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 16, 0, INT_MAX))
+	return -1;
+    if (storage) {
+	struct pixclump_args *args = *(struct pixclump_args **)storage;
+	if (args)
+	    args->debug_flags = value;
+    }
+    return 0;
+}
+
+static const struct bu_arg_option pixclump_options[] = {
+    BU_ARG_FLAG("h", "help", struct pixclump_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    {"c", "color", "color", "R/G/B", "Add a quantization color",
+	BU_ARG_VALUE_CUSTOM, BU_ARG_STORAGE_OFFSET(struct pixclump_args, self),
+	pixclump_color, NULL, NULL, NULL, 1, 0, NULL, BU_ARG_REQUIRED, NULL,
+	NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
+    BU_ARG_CUSTOM("f", "color-file", struct pixclump_args, self,
+	pixclump_color_file, "file", "Read quantization colors from a file"),
+    BU_ARG_CUSTOM("x", "debug", struct pixclump_args, self,
+	pixclump_debug, "hex-mask", "Enable diagnostic output"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand pixclump_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"PIX input file; standard input when omitted", NULL),
+    BU_ARG_OPERAND("output", BU_ARG_VALUE_FILE, 0, 1,
+	"PIX output file; standard output when omitted", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema pixclump_schema = BU_ARG_SCHEMA(
+    "pixclump", "Quantize PIX colors to a specified palette",
+    pixclump_options, pixclump_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar pixclump_grammar = {
+    &pixclump_schema, NULL, NULL
+};
+
+
 int
 main (int argc, char **argv)
 {
-    char *cf_name = 0;	/* name of color file */
-    char *inf_name;		/* name of input stream */
     const char *outf_name = NULL;	/*  "   "  output  "    */
     unsigned char pixbuf[3];	/* the current input pixel */
     FILE *infp = NULL;	/* input stream */
     FILE *outfp = NULL;	/* output  "    */
-    int ch;		/* current char in command line */
     int i;		/* dummy loop indices */
-    unsigned char rgb[3];	/* Specified color */
     int best_color;	/* index of best match to pixbuf */
     int best_diff;	/* error in best match */
     int this_diff;	/* pixel-color_tbl difference */
+    struct pixclump_args args = {NULL, 0, NULL, 0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
+    args.self = &args;
     bu_setprogname(argv[0]);
-
-    setmode(fileno(stdin), O_BINARY);
-    setmode(fileno(stdout), O_BINARY);
 
     /*
      * Initialize the color table
@@ -206,78 +239,53 @@ main (int argc, char **argv)
 	bu_malloc(color_tbl_size * 3 * sizeof(unsigned char), "color table");
     next_color = 0;
 
-    /*
-     * Process the command line
-     */
-    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != -1)
-	switch (ch) {
-	    case 'c':
-		if (! bu_str_to_rgb(bu_optarg, rgb)) {
-		    bu_log("Illegal color: '%s'\n", bu_optarg);
-		    print_usage();
-		}
-		add_to_table(rgb);
-		cf_name = 0;
-		break;
-	    case 'f':
-		cf_name = bu_optarg;
-		next_color = 0;
-		break;
-	    case 'x':
-		if (!parse_hex_int_arg(bu_optarg, &debug, "debug-flag value")) {
-		    print_debug_usage();
-		}
-		break;
-	    default:
-		print_usage();
+    int introspection = bu_arg_introspect(&msg, &pixclump_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&pixclump_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&pixclump_schema, "pixclump");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "pixclump help");
+	return 0;
 	}
-    switch (argc - bu_optind) {
-	case 0:
-	    infp = stdin;
-	    /* fall through */
-	case 1:
-	    outf_name = "stdout";
-	    outfp = stdout;
-	    /* fall through */
-	case 2:
-	    break;
-	default:
-	    print_usage();
+
+    debug = args.debug_flags;
+    int operand_count = argc - operand_index - 1;
+    const char **operands = (const char **)(argv + operand_index + 1);
+    infp = stdin;
+    outfp = stdout;
+    outf_name = "stdout";
+
+    if (operand_count > 0 && (infp = fopen(operands[0], "rb")) == NULL)
+	bu_exit(1, "Cannot open input file '%s'\n", operands[0]);
+    if (operand_count > 1) {
+	outf_name = operands[1];
+	if ((outfp = fopen(outf_name, "wb")) == NULL)
+	    bu_exit(1, "Cannot open output file '%s'\n", outf_name);
     }
 
-    /*
-     * Open input and output files, as necessary
-     */
-    if (infp == NULL) {
-	inf_name = argv[bu_optind];
-	if ((infp = fopen(inf_name, "rb")) == NULL)
-	    bu_exit(1, "Cannot open input file '%s'\n", inf_name);
-	if (outfp == NULL) {
-	    outf_name = argv[++bu_optind];
-	    if ((outfp = fopen(outf_name, "wb")) == NULL)
-		bu_exit(1, "Cannot open output file '%s'\n", outf_name);
-	}
-    }
+    if (infp == stdin && isatty(fileno(stdin)))
+	bu_exit(1, "pixclump requires an input file or redirected input\n");
 
-    /*
-     * Ensure that infp is kosher
-     */
-    if (infp == stdin) {
-	if (isatty(fileno(stdin))) {
-	    bu_log("FATAL: pixclump reads only from file or pipe\n");
-	    print_usage();
-	}
-    }
+    setmode(fileno(infp), O_BINARY);
+    setmode(fileno(outfp), O_BINARY);
 
     /*
      * Ensure that the color table is nonempty
      */
-    if (cf_name != 0)
-	fill_table(cf_name);
-    if (next_color == 0) {
-	bu_log("pixclump: No colors specified\n");
-	print_usage();
-    }
+    if (args.color_file)
+	fill_table(args.color_file);
+    if (next_color == 0)
+	bu_exit(1, "pixclump: no colors specified\n");
     if (debug & PC_DEBUG_TABLE)
 	print_table();
 

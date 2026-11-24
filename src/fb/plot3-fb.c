@@ -72,19 +72,21 @@
 
 #include "common.h"
 
+#include <limits.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/color.h"
 #include "bu/cv.h"
-#include "bu/getopt.h"
-#include "bu/interrupt.h"
-#include "bu/process.h"
 #include "bu/exit.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/process.h"
 #include "dm.h"
 #include "bv/plot3.h"
 
@@ -281,7 +283,7 @@ static struct vectorchar {
 
 static int Nscanlines = 512;
 static int Npixels = 512;
-static char *framebuffer = NULL;
+static const char *framebuffer = NULL;
 static const char *filename = NULL;
 
 struct band {
@@ -542,75 +544,111 @@ sxt16(long int v)
 }
 
 
-int
-get_args(int argc, char **argv)
+struct plot3_fb_args {
+    struct plot3_fb_args *self;
+    int help;
+    int debug;
+    int overlay;
+    int immediate;
+    int thickness;
+    const char *framebuffer;
+    int width;
+    int height;
+};
+
+enum plot3_fb_dimension {
+    PLOT3_FB_SIZE,
+    PLOT3_FB_WIDTH,
+    PLOT3_FB_HEIGHT
+};
+
+static struct plot3_fb_args *
+plot3_fb_args_from_storage(void *storage)
 {
-    int c;
-
-    while ((c = bu_getopt(argc, argv, "doOit:F:s:S:w:W:n:N:h?")) != -1) {
-	switch (c) {
-	    case 't':
-		line_thickness = atoi(bu_optarg);
-		V_MAX(line_thickness, 1);
-		break;
-	    case 'i':
-		immediate = 1;
-		break;
-	    case 'd':
-		/* -d given multiple times increases debug level */
-		debug++;
-		break;
-	    case 'O':
-	    case 'o':
-		over = 1;
-		break;
-	    case 'F':
-		framebuffer = bu_optarg;
-		break;
-	    case 'S':
-	    case 's':
-		Nscanlines = Npixels = atoi(bu_optarg);
-		break;
-	    case 'W':
-	    case 'w':
-		Npixels = atoi(bu_optarg);
-		break;
-	    case 'N':
-	    case 'n':
-		Nscanlines = atoi(bu_optarg);
-		break;
-	    default:		/* 'h' '?' */
-		return 0;
-	}
-    }
-
-    if (bu_optind >= argc) {
-	/* no file name given, use stdin */
-	if (isatty(fileno(stdin)))
-	    return 0;
-	filename = "-";
-	pfin = stdin;
-	setmode(fileno(stdin), O_BINARY);
-    } else {
-	/* open file */
-	filename = argv[bu_optind];
-	if ((pfin = fopen(filename, "rb")) == NULL) {
-	    fprintf(stderr,
-		    "plot3-fb: Can't open file \"%s\"\n", filename);
-	    return 0;
-	}
-    }
-
-    if (argc > ++bu_optind)
-	fprintf(stderr, "plot3-fb: excess argument(s) ignored\n");
-
-    return 1;		/* OK */
+    return storage ? *(struct plot3_fb_args **)storage : NULL;
 }
 
+static int
+plot3_fb_dimension(struct bu_vls *msg, const char *arg, void *storage,
+	enum plot3_fb_dimension dimension)
+{
+    struct plot3_fb_args *args = plot3_fb_args_from_storage(storage);
+    int value;
 
-static char usage[] = "\
-Usage: plot3-fb [-d -O|o -i] [-t thickness] [-F framebuffer]\n\
-	[-S|s squaresize] [-W|w width] [-N|n height] [<] file.plot3\n";
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 1, INT_MAX))
+	return -1;
+    if (args) {
+	if (dimension == PLOT3_FB_SIZE)
+	    args->width = args->height = value;
+	else if (dimension == PLOT3_FB_WIDTH)
+	    args->width = value;
+	else
+	    args->height = value;
+    }
+    return 0;
+}
+
+#define PLOT3_FB_DIMENSION_CALLBACK(_name, _dimension) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return plot3_fb_dimension(msg, arg, storage, _dimension); \
+    }
+
+PLOT3_FB_DIMENSION_CALLBACK(plot3_fb_size, PLOT3_FB_SIZE)
+PLOT3_FB_DIMENSION_CALLBACK(plot3_fb_width, PLOT3_FB_WIDTH)
+PLOT3_FB_DIMENSION_CALLBACK(plot3_fb_height, PLOT3_FB_HEIGHT)
+
+static const struct bu_arg_option plot3_fb_options[] = {
+    BU_ARG_FLAG("h", "help", struct plot3_fb_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_COUNTING_FLAG("d", "debug", struct plot3_fb_args, debug,
+	BU_ARG_VALUE_INTEGER, "Increase diagnostic output"),
+    BU_ARG_FLAG("o", "overlay", struct plot3_fb_args, overlay,
+	"Preserve the existing framebuffer background"),
+    BU_ARG_ALIAS("O", NULL, "overlay", 1),
+    BU_ARG_FLAG("i", "immediate", struct plot3_fb_args, immediate,
+	"Draw pixels immediately instead of buffering scanlines"),
+    BU_ARG_INTEGER_RANGE("t", "thickness", struct plot3_fb_args, thickness,
+	1, 1, 1, SHRT_MAX, "pixels", "Set the line thickness"),
+    BU_ARG_VALUE("F", "framebuffer", struct plot3_fb_args, framebuffer,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "device",
+	"Select the framebuffer device"),
+    BU_ARG_CUSTOM("s", "size", struct plot3_fb_args, self, plot3_fb_size,
+	"pixels", "Set both framebuffer dimensions"),
+    BU_ARG_ALIAS("S", NULL, "size", 1),
+    BU_ARG_CUSTOM("w", "width", struct plot3_fb_args, self, plot3_fb_width,
+	"pixels", "Set the framebuffer width"),
+    BU_ARG_ALIAS("W", NULL, "width", 1),
+    BU_ARG_CUSTOM("n", "height", struct plot3_fb_args, self, plot3_fb_height,
+	"pixels", "Set the framebuffer height"),
+    BU_ARG_ALIAS("N", NULL, "height", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand plot3_fb_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"Plot file (default standard input)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema plot3_fb_schema = BU_ARG_SCHEMA(
+    "plot3-fb", "Display a plot file on a framebuffer", plot3_fb_options,
+    plot3_fb_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar plot3_fb_grammar = {
+    &plot3_fb_schema, NULL, NULL
+};
+
+static int
+plot3_fb_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&plot3_fb_schema, "plot3-fb");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "plot3-fb help");
+    return status;
+}
 
 
 /*
@@ -1360,13 +1398,53 @@ SetSigs(void)
 int
 main(int argc, char **argv)
 {
-    Nscanlines = Npixels = 512;
+    struct plot3_fb_args args = {NULL, 0, 0, 0, 0, 1, NULL, 512, 512};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int introspection;
+    int operand_index;
+
+    args.self = &args;
 
     bu_setprogname(argv[0]);
 
-    if (!get_args(argc, argv)) {
-	(void)fputs(usage, stderr);
-	bu_exit(1, NULL);
+    introspection = bu_arg_introspect(&msg, &plot3_fb_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    operand_index = bu_arg_schema_parse_complete(&plot3_fb_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return plot3_fb_help(stdout, 0);
+
+    debug = args.debug;
+    over = args.overlay;
+    immediate = args.immediate;
+    line_thickness = (short)args.thickness;
+    framebuffer = args.framebuffer;
+    Npixels = args.width;
+    Nscanlines = args.height;
+
+    if (argc - 1 - operand_index == 1) {
+	filename = argv[operand_index + 1];
+	if ((pfin = fopen(filename, "rb")) == NULL) {
+	    bu_flog(stderr, "plot3-fb: Can't open file \"%s\"\n", filename);
+	    return 1;
+	}
+    } else {
+	if (isatty(fileno(stdin)))
+	    return plot3_fb_help(stderr, 1);
+	filename = "-";
+	pfin = stdin;
+	setmode(fileno(stdin), O_BINARY);
     }
 
     /* Open frame buffer, adapt to slightly smaller ones */
