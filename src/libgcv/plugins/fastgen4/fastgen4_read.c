@@ -2846,25 +2846,31 @@ fastgen4_read_options
     const char *section_list_str;
 };
 
+static const struct bu_arg_option fastgen4_options[] = {
+    BU_ARG_VALUE(NULL, "colors", struct fastgen4_read_options, colors_path,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "path", "Read component colors from a file"),
+    BU_ARG_VALUE(NULL, "muves", struct fastgen4_read_options, muves_path,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "path", "Write a MUVES component file"),
+    BU_ARG_VALUE(NULL, "plot", struct fastgen4_read_options, plot_path,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "path", "Plot processed CTRI and CQUAD elements"),
+    BU_ARG_VALUE(NULL, "sections", struct fastgen4_read_options, section_list_str,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "list", "Restrict processing to SECTION IDs"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema fastgen4_schema = {
+    "fastgen4-read", "FASTGEN4 reader options", fastgen4_options, NULL,
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
 static void
-fastgen4_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
+fastgen4_create_opts(const struct bu_arg_schema **schema, void **dest_options_data)
 {
     struct fastgen4_read_options *options_data;
 
     BU_ALLOC(options_data, struct fastgen4_read_options);
     *dest_options_data = options_data;
-    *options_desc = (struct bu_opt_desc *)bu_malloc(5 * sizeof(struct bu_opt_desc), "options_desc");
-
-    BU_OPT((*options_desc)[0], NULL, "colors", "path", bu_opt_str, &options_data->colors_path,
-	    "path to file specifying component colors");
-    BU_OPT((*options_desc)[1], NULL, "muves", "path", bu_opt_str, &options_data->muves_path,
-	    "create a MUVES input file containing any CHGCOMP and CBACKING components");
-    BU_OPT((*options_desc)[2], NULL, "plot", "path", bu_opt_str, &options_data->plot_path,
-	    "create a libplot3 file of all CTRI and CQUAD elements processed");
-    BU_OPT((*options_desc)[3], NULL, "sections", "list", bu_opt_str, &options_data->section_list_str,
-	    "process only a list (3001, 4082, 5347) or a range (2315-3527) of SECTION IDs");
-    BU_OPT_NULL((*options_desc)[4]);
+    *schema = &fastgen4_schema;
 }
 
 

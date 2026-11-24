@@ -33,6 +33,7 @@
 #  include <sys/stat.h>
 #endif
 
+#include "bu/arg.h"
 #include "bu/malloc.h"
 #include "bu/path.h"
 #include "gcv/api.h"
@@ -267,18 +268,30 @@ ply_can_read(const char *filename)
     return matched;
 }
 
+static const struct bu_arg_option ply_read_arg_options[] = {
+    BU_ARG_VALUE("s", "scale_factor", struct ply_read_options, scale,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "float",
+	"Coordinate scale (default meters to millimeters)"),
+    BU_ARG_FLAG("v", "verbose", struct ply_read_options, verbose,
+	"Verbose conversion output"),
+    BU_ARG_FLAG("d", "debug", struct ply_read_options, debug,
+	"Debug conversion output"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema ply_read_schema = {
+    "ply-read", "PLY reader options", ply_read_arg_options, NULL,
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
 static void
-ply_read_create_opts(struct bu_opt_desc **descriptions, void **options_data)
+ply_read_create_opts(const struct bu_arg_schema **schema, void **options_data)
 {
     struct ply_read_options *options;
     BU_ALLOC(options, struct ply_read_options);
     options->scale = PLY_DEFAULT_SCALE;
     *options_data = options;
-    *descriptions = (struct bu_opt_desc *)bu_calloc(4, sizeof(struct bu_opt_desc), "PLY options");
-    BU_OPT((*descriptions)[0], "s", "scale_factor", "float", bu_opt_fastf_t, &options->scale, "Coordinate scale (default meters to millimeters)");
-    BU_OPT((*descriptions)[1], "v", "verbose", "", NULL, &options->verbose, "Verbose conversion output");
-    BU_OPT((*descriptions)[2], "d", "debug", "", NULL, &options->debug, "Debug conversion output");
-    BU_OPT_NULL((*descriptions)[3]);
+    *schema = &ply_read_schema;
 }
 
 static void

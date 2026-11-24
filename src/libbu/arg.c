@@ -654,15 +654,11 @@ _bu_arg_unsigned_integer_from_str(unsigned int *value, const char *arg,
 {
     char *end = NULL;
     unsigned long parsed;
-    const char *cp = arg;
-
     if (!value || !arg || !arg[0])
 	return BU_ARG_PARSE_MISSING;
     if (!cmd_schema_base_valid(base))
 	return BU_ARG_PARSE_INVALID;
-    while (isspace((unsigned char)*cp))
-	cp++;
-    if (*cp == '-')
+    if (isspace((unsigned char)arg[0]) || arg[0] == '+' || arg[0] == '-')
 	return BU_ARG_PARSE_INVALID;
     errno = 0;
     parsed = strtoul(arg, &end, base);

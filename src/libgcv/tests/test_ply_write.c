@@ -137,37 +137,41 @@ select_writer(struct gcv_context *context)
 }
 
 static const char *
-option_string(const struct bu_opt_desc *options, const char *shortopt)
+option_string(const struct bu_arg_schema *schema, const void *data,
+	const char *shortopt)
 {
-    for (const struct bu_opt_desc *option = options; option->shortopt; ++option)
+    for (const struct bu_arg_option *option = schema->options;
+	    bu_arg_option_is_valid(option); ++option)
 	if (BU_STR_EQUAL(option->shortopt, shortopt))
-	    return *(const char * const *)option->set_var;
+	    return *(const char * const *)((const char *)data +
+		option->storage_offset);
     return NULL;
 }
 
 static int
 check_options(const struct gcv_filter *writer, int long_options)
 {
-    struct bu_opt_desc *options = NULL;
+    const struct bu_arg_schema *schema = NULL;
     void *data = NULL;
     struct bu_vls messages = BU_VLS_INIT_ZERO;
     const char *arguments[] = {"-o", "mesh.ply", "-x", "1", "-X", "2"};
     const char *long_arguments[] = {"--output_file", "mesh.ply", "--rt_debug", "1", "--nmg_debug", "2"};
-    writer->create_opts_fn(&options, &data);
-    int valid = options && data;
+    writer->create_opts_fn(&schema, &data);
+    int valid = schema && data;
     if (valid) {
-	valid = bu_opt_parse(&messages, sizeof(arguments) / sizeof(arguments[0]),
-	    long_options ? long_arguments : arguments, options) == 0;
-	const char *output = option_string(options, "o");
-	const char *rt_flags = option_string(options, "x");
-	const char *nmg_flags = option_string(options, "X");
+	const int argument_count = sizeof(arguments) / sizeof(arguments[0]);
+	const char **selected = long_options ? long_arguments : arguments;
+	valid = bu_arg_schema_parse_complete(schema, data, &messages,
+	    argument_count, selected) == argument_count;
+	const char *output = option_string(schema, data, "o");
+	const char *rt_flags = option_string(schema, data, "x");
+	const char *nmg_flags = option_string(schema, data, "X");
 	valid = valid && output && BU_STR_EQUAL(output, "mesh.ply") &&
 	    rt_flags && BU_STR_EQUAL(rt_flags, "1") && nmg_flags && BU_STR_EQUAL(nmg_flags, "2");
     }
     if (!valid)
 	bu_log("PLY debug options changed the output path or lost their values: %s\n", bu_vls_cstr(&messages));
     bu_vls_free(&messages);
-    bu_free(options, "PLY option descriptions");
     writer->free_opts_fn(data);
     return valid;
 }

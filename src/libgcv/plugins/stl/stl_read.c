@@ -520,37 +520,37 @@ Convert_input(struct conversion_state *pstate)
 }
 
 
+static const struct bu_arg_option stl_read_option_defs[] = {
+    BU_ARG_FLAG(NULL, "binary", struct stl_read_options, binary,
+	"Read binary STL data"),
+    BU_ARG_VALUE(NULL, "starting-ident", struct stl_read_options, starting_id,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "number", "Set the first generated region ident"),
+    BU_ARG_FLAG(NULL, "constant-ident", struct stl_read_options, const_id,
+	"Keep the starting ident constant"),
+    BU_ARG_VALUE(NULL, "material", struct stl_read_options, mat_code,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "code", "Set the generated region material code"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema stl_read_schema = {
+    "stl-read", "STL reader options", stl_read_option_defs, NULL,
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
 static void
-stl_read_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
+stl_read_create_opts(const struct bu_arg_schema **schema, void **dest_options_data)
 {
     struct stl_read_options *options_data;
 
     BU_ALLOC(options_data, struct stl_read_options);
     *dest_options_data = options_data;
-    *options_desc = (struct bu_opt_desc *)bu_malloc(5 * sizeof(struct bu_opt_desc), "options_desc");
+    *schema = &stl_read_schema;
 
     options_data->binary = 0;
     options_data->starting_id = 1000;
     options_data->const_id = 0;
     options_data->mat_code = 0;
 
-    BU_OPT((*options_desc)[0], NULL, "binary", NULL,
-	    NULL, &options_data->binary,
-	    "specify that the input is in binary STL format");
-
-    BU_OPT((*options_desc)[1], NULL, "starting-ident", "number",
-	    bu_opt_int, options_data,
-	    "specify the starting ident for the regions created");
-
-    BU_OPT((*options_desc)[2], NULL, "constant-ident", NULL,
-	    NULL, &options_data->const_id,
-	    "specify that the starting ident should remain constant");
-
-    BU_OPT((*options_desc)[3], NULL, "material", "code",
-	    bu_opt_int, &options_data->mat_code,
-	    "specify the material code that will be assigned to created regions");
-
-    BU_OPT_NULL((*options_desc)[4]);
 }
 
 

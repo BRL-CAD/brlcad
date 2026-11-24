@@ -38,11 +38,7 @@
 #include <limits.h>
 
 #include "bu/app.h"
-#include "bu/getopt.h"
-
-/* command-line options are described in the parseArguments function
- */
-const char *options="IiDdVvO:o:N:n:U:u:K:k:L:l:R:r:J:j:A:a:T:t:B:b:C:c:F:f:P:p:M:m:W:w:S:s:E:e:G:g:XxZz?h";
+#include "bu/arg.h"
 
 /*
  * these variables control the "behavior" of this program's output if
@@ -120,6 +116,244 @@ size_t maxWireSegments=DEFAULT_MAXWIRESEGMENTS;
 /* end of variable definitions used for the fence generation
  */
 
+struct fence_args {
+    int interactive;
+    int toggle_interactive;
+    int verbose;
+    int toggle_verbose;
+    int debug;
+    int toggle_debug;
+    const char *output;
+    const char *title;
+    const char *units;
+    vect_t height_vector;
+    fastf_t height;
+    vect_t length_vector;
+    fastf_t length;
+    fastf_t wire_radius;
+    fastf_t pole_radius;
+    fastf_t wire_angle;
+    fastf_t pole_spacing;
+    const char *fence_material;
+    const char *all_material;
+    const char *fence_material_params;
+    const char *all_material_params;
+    struct bu_color fence_color;
+    struct bu_color all_color;
+    const char *fence_name;
+    const char *pole_name;
+    const char *mesh_name;
+    const char *wire_name;
+    const char *segment_name;
+    const char *edit_components;
+    const char *toggle_edit_components;
+    const char *generate_components;
+    const char *toggle_generate_components;
+    int examples;
+    int defaults;
+    int help;
+};
+
+struct fence_supplied {
+    int height_vector;
+    int height;
+    int length_vector;
+    int length;
+    int wire_radius;
+    int pole_radius;
+    int wire_angle;
+    int pole_spacing;
+    int fence_material;
+    int all_material;
+    int fence_material_params;
+    int all_material_params;
+    int fence_color;
+    int all_color;
+};
+
+static int
+fence_component_string_validate(struct bu_vls *msg, const char *arg,
+	const char *allowed, const char *label)
+{
+    if (!arg || !arg[0]) {
+	if (msg)
+	    bu_vls_printf(msg, "%s requires at least one component\n", label);
+	return -1;
+    }
+    for (const char *cp = arg; *cp; cp++) {
+	if (!strchr(allowed, *cp)) {
+	    if (msg)
+		bu_vls_printf(msg, "%s accepts only %s\n", label, allowed);
+	    return -1;
+	}
+    }
+    return 0;
+}
+
+static int
+fence_edit_components_validate(struct bu_vls *msg, const char *arg)
+{
+    return fence_component_string_validate(msg, arg, "fpmwFPMW",
+	"edit components");
+}
+
+static int
+fence_generate_components_validate(struct bu_vls *msg, const char *arg)
+{
+    return fence_component_string_validate(msg, arg, "fpmFPM",
+	"generated components");
+}
+
+static const struct bu_arg_option fence_options[] = {
+    BU_ARG_FLAG("i", "interactive", struct fence_args, interactive,
+	"Enable interactive prompting"),
+    BU_ARG_FLAG("I", "toggle-interactive", struct fence_args, toggle_interactive,
+	"Toggle interactive prompting relative to its default"),
+    BU_ARG_FLAG("v", "verbose", struct fence_args, verbose,
+	"Enable verbose status output"),
+    BU_ARG_FLAG("V", "toggle-verbose", struct fence_args, toggle_verbose,
+	"Toggle verbose output relative to its default"),
+    BU_ARG_FLAG("d", "debug", struct fence_args, debug,
+	"Enable debugging output"),
+    BU_ARG_FLAG("D", "toggle-debug", struct fence_args, toggle_debug,
+	"Toggle debugging output relative to its default"),
+    BU_ARG_VALUE("o", "output", struct fence_args, output,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file.g", "Output geometry database"),
+    BU_ARG_ALIAS("O", NULL, "output", 1),
+    BU_ARG_VALUE("k", "title", struct fence_args, title,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "string", "Database title"),
+    BU_ARG_ALIAS("K", NULL, "title", 1),
+    BU_ARG_VALUE("u", "units", struct fence_args, units,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "units", "Database units"),
+    BU_ARG_ALIAS("U", NULL, "units", 1),
+    BU_ARG_VECTOR3("n", "height-vector", struct fence_args, height_vector,
+	"x/y/z", "Fence height vector"),
+    BU_ARG_VALUE("N", "height", struct fence_args, height,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "length", "Fence height along +Z"),
+    BU_ARG_VECTOR3("l", "length-vector", struct fence_args, length_vector,
+	"x/y/z", "Fence length vector"),
+    BU_ARG_VALUE("L", "length", struct fence_args, length,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "length", "Fence length along +X"),
+    BU_ARG_VALUE("r", "wire-radius", struct fence_args, wire_radius,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "radius", "Mesh wire radius"),
+    BU_ARG_VALUE("R", "pole-radius", struct fence_args, pole_radius,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "radius", "Fence pole radius"),
+    BU_ARG_VALUE("a", "wire-angle", struct fence_args, wire_angle,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "degrees", "Wire zig-zag angle"),
+    BU_ARG_ALIAS("A", NULL, "wire-angle", 1),
+    BU_ARG_VALUE("j", "pole-spacing", struct fence_args, pole_spacing,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "distance", "Maximum pole spacing"),
+    BU_ARG_ALIAS("J", NULL, "pole-spacing", 1),
+    BU_ARG_VALUE("t", "fence-material", struct fence_args, fence_material,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "name", "Fence region material"),
+    BU_ARG_VALUE("T", "all-material", struct fence_args, all_material,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "name", "Material for all generated regions"),
+    BU_ARG_VALUE("b", "fence-material-params", struct fence_args, fence_material_params,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "parameters", "Fence material parameters"),
+    BU_ARG_VALUE("B", "all-material-params", struct fence_args, all_material_params,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "parameters", "Material parameters for all regions"),
+    BU_ARG_RGB("c", "fence-color", struct fence_args, fence_color,
+	"r/g/b", "Fence region color"),
+    BU_ARG_RGB("C", "all-color", struct fence_args, all_color,
+	"r/g/b", "Color for all generated regions"),
+    BU_ARG_VALUE("f", "fence-name", struct fence_args, fence_name,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "name", "Fence object base name"),
+    BU_ARG_ALIAS("F", NULL, "fence-name", 1),
+    BU_ARG_VALUE("p", "pole-name", struct fence_args, pole_name,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "name", "Pole object base name"),
+    BU_ARG_ALIAS("P", NULL, "pole-name", 1),
+    BU_ARG_VALUE("m", "mesh-name", struct fence_args, mesh_name,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "name", "Mesh object base name"),
+    BU_ARG_ALIAS("M", NULL, "mesh-name", 1),
+    BU_ARG_VALUE("w", "wire-name", struct fence_args, wire_name,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "name", "Wire object base name"),
+    BU_ARG_ALIAS("W", NULL, "wire-name", 1),
+    BU_ARG_VALUE("s", "segment-name", struct fence_args, segment_name,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "name", "Wire segment base name"),
+    BU_ARG_ALIAS("S", NULL, "segment-name", 1),
+    BU_ARG_VALUE_VALIDATE("e", "edit-components", struct fence_args, edit_components,
+	BU_ARG_VALUE_STRING, fence_edit_components_validate, "fpmw", "Components prompted for interactively"),
+    BU_ARG_VALUE_VALIDATE("E", "toggle-edit-components", struct fence_args, toggle_edit_components,
+	BU_ARG_VALUE_STRING, fence_edit_components_validate, "fpmw", "Toggle prompted components from their defaults"),
+    BU_ARG_VALUE_VALIDATE("g", "generate", struct fence_args, generate_components,
+	BU_ARG_VALUE_STRING, fence_generate_components_validate, "fpm", "Components to generate"),
+    BU_ARG_VALUE_VALIDATE("G", "toggle-generate", struct fence_args, toggle_generate_components,
+	BU_ARG_VALUE_STRING, fence_generate_components_validate, "fpm", "Toggle generated components from their defaults"),
+    BU_ARG_FLAG("x", "examples", struct fence_args, examples,
+	"Print command-line examples and exit"),
+    BU_ARG_ALIAS("X", NULL, "examples", 1),
+    BU_ARG_FLAG("z", "defaults", struct fence_args, defaults,
+	"Print default settings and exit"),
+    BU_ARG_ALIAS("Z", NULL, "defaults", 1),
+    BU_ARG_FLAG("h", "help", struct fence_args, help, "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const char * const fence_interactive_modes[] = {
+    "interactive", "toggle-interactive", NULL
+};
+static const char * const fence_verbose_modes[] = {
+    "verbose", "toggle-verbose", NULL
+};
+static const char * const fence_debug_modes[] = {
+    "debug", "toggle-debug", NULL
+};
+static const char * const fence_height_modes[] = {
+    "height-vector", "height", NULL
+};
+static const char * const fence_length_modes[] = {
+    "length-vector", "length", NULL
+};
+static const char * const fence_edit_modes[] = {
+    "edit-components", "toggle-edit-components", NULL
+};
+static const char * const fence_generate_modes[] = {
+    "generate", "toggle-generate", NULL
+};
+
+static const struct bu_arg_constraint fence_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS,
+	fence_interactive_modes, 0, 1, "select one interactive mode"),
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS,
+	fence_verbose_modes, 0, 1, "select one verbose mode"),
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS,
+	fence_debug_modes, 0, 1, "select one debug mode"),
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS,
+	fence_height_modes, 0, 1, "specify height as a scalar or vector"),
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS,
+	fence_length_modes, 0, 1, "specify length as a scalar or vector"),
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS,
+	fence_edit_modes, 0, 1, "select or toggle prompted components"),
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS,
+	fence_generate_modes, 0, 1, "select or toggle generated components"),
+    BU_ARG_CONSTRAINT_NULL
+};
+
+static const struct bu_arg_help_group fence_help_groups[] = {
+    BU_ARG_HELP_GROUP("Operating modes", NULL, "interactive", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Database output", NULL, "output", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Fence dimensions", NULL, "height-vector", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Materials and colors", NULL, "fence-material", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Object names", NULL, "fence-name", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Component selection", NULL, "edit-components", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Information", NULL, "examples", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP_NULL
+};
+
+static const struct bu_arg_presentation fence_presentation =
+    BU_ARG_PRESENTATION(fence_help_groups, NULL, NULL);
+
+static const struct bu_arg_schema fence_schema = BU_ARG_SCHEMA_PRESENTED(
+    "fence", "Generate a chain-link fence geometry database", fence_options,
+    NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, fence_constraints, NULL, NULL, NULL),
+    &fence_presentation);
+
+static const struct bu_arg_grammar fence_grammar = {
+    &fence_schema, NULL, NULL
+};
+
 
 /*
  * argumentHelp() is the all encompassing help message that is
@@ -128,42 +362,15 @@ size_t maxWireSegments=DEFAULT_MAXWIRESEGMENTS;
  ***************************************/
 void argumentHelp(FILE *fp, const char *progname, const char *message)
 {
+    char *help;
 
-    fflush(stdout);
     if (message)
-	fprintf(fp, "%s\n", message);
-    fflush(stdout);
-
-    fprintf(fp, "Usage: %s %s\n       (units mm)\n\n", progname, \
-	    "-[ivdIVDoOkKuUnNkKlLrRaAjJtTbBcCfFpPmMwWsSeEgGxXzZ]");
-
-    fprintf(fp, "\t-[ivd]\n\t\tspecifies interactive, verbose, and debug modes respectively\n");
-    fprintf(fp, "\t-[IVD]\n\t\ttoggles interactive, verbose, and debug modes respectively\n");
-    fprintf(fp, "\t-[oO] filename\n\t\tspecifies the name of the file to output to\n");
-    fprintf(fp, "\t-[kK] 'string'\n\t\tthe 'string' name of the csg database\n");
-    fprintf(fp, "\t-[uU] 'units'\n\t\tthe units of the data in the csg database\n");
-    fprintf(fp, "\t-[nN] ['xval yval zval' | val]\n\t\tspecifies the height as either vector or single value (z dir is up)\n");
-    fprintf(fp, "\t-[lL] ['xval yval zval' | val]\n\t\tspecifies the length as either vector or single value (x dir is long)\n");
-    fprintf(fp, "\t-r radius\n\t\tthe radius of the fence's mesh wires\n");
-    fprintf(fp, "\t-R radius\n\t\tthe radius of the fence poles\n");
-    fprintf(fp, "\t-[aA] angle\n\t\tthe primary angle of the wire 'zig-zagging'\n");
-    fprintf(fp, "\t-[jJ] distance\n\t\tthe maximum spacing between the poles\n");
-    fprintf(fp, "\t-[tT] 'material'\n\t\tthe material of the fence (t)\n\t\tor the material of all generated regions (T)\n");
-    fprintf(fp, "\t-[bB] 'parameters'\n\t\tthe parameter string for the fence material (b)\n\t\tor of all region materials (B)\n");
-    fprintf(fp, "\t-[cC] 'rval gval bval'\n\t\tthe RGB color of the fence (c)\n\t\tor of all region materials (C)\n\t\t(0 <= values <= 255)\n");
-    fprintf(fp, "\t-[fF] fencename\n\t\tthe base name of the fence objects in the database\n");
-    fprintf(fp, "\t-[pP] polename\n\t\tthe base name of the pole objects in the database\n");
-    fprintf(fp, "\t-[mM] meshname\n\t\tthe base name of the mesh objects in the database\n");
-    fprintf(fp, "\t-[wW] wirename\n\t\tthe base name of the wire objects in the database\n");
-    fprintf(fp, "\t-[sS] segmentname\n\t\tthe base name of the segment objects in the database\n");
-    fprintf(fp, "\t-[eE] [fpmw]\n\t\tthe values for the fence, poles, mesh, and wires may be edited\n\t\t'e' specifies to edit while 'E' specifies the opposite of the defaults\n\t\tuseful for interactive mode only\n");
-    fprintf(fp, "\t-[gG] [fpm]\n\t\tspecifies which parts of the fence object(s) to generate\n\t\t'g' specifies to generate the object(s)\n\t\t'G' specifies to do the opposite of the default(s)\n");
-    fprintf(fp, "\t-[xX]\n\t\tdisplays some command-line parameter examples\n");
-    fprintf(fp, "\t-[zZ]\n\t\tdisplays the default settings\n");
-
-    fflush(stdout);
-
-    return;
+	fprintf(fp, "%s\n\n", message);
+    help = bu_arg_schema_help(&fence_schema, progname);
+    if (help) {
+	fprintf(fp, "%s", help);
+	bu_free(help, "fence argument help");
+    }
 }
 
 
@@ -194,17 +401,17 @@ void argumentExamples(FILE *fp, char *progname)
     fprintf(fp, "Simple Parameter-Specified Example: \n%s %s %s %s %.1f %s %.1f\n",
 	    progname, \
 	    "-o", outputFilename, \
-	    "-H", MAGNITUDE(fenceHeight), \
+	    "-N", MAGNITUDE(fenceHeight), \
 	    "-L", MAGNITUDE(fenceWidth) \
 	);
     fprintf(fp, "\n");
 
     fprintf(fp, "Extended Parameter-Specified Example: \n%s %s %s %s %s %s %s %s '%.1f %.1f %.1f' %s '%.1f %.1f %.1f' %s %.1f %s %.1f %s %.1f %s %.1f %s '%d %d %d' %s %s\n",
 	    progname, \
-	    "-n", id, \
+	    "-k", id, \
 	    "-u", units, \
 	    "-o", outputFilename, \
-	    "-h", fenceHeight[0], fenceHeight[1], fenceHeight[2], \
+	    "-n", fenceHeight[0], fenceHeight[1], fenceHeight[2], \
 	    "-l", fenceWidth[0], fenceWidth[1], fenceWidth[2], \
 	    "-r", wireRadius, \
 	    "-R", poleRadius, \
@@ -255,6 +462,139 @@ void defaultSettings(FILE *fp)
 }
 
 
+static void
+fence_apply_dimensions(const struct fence_args *args,
+	const struct fence_supplied *supplied)
+{
+    if (supplied->height_vector)
+	VMOVE(fenceHeight, args->height_vector);
+    if (supplied->height)
+	VSET(fenceHeight, 0.0, 0.0, args->height);
+    if (supplied->height_vector || supplied->height) {
+	if (ZERO(MAGNITUDE(fenceHeight)))
+	    bu_exit(EXIT_FAILURE, "ERROR: fence height may not be zero\n");
+	poleHeight = MAGNITUDE(fenceHeight);
+	meshHeight = poleHeight;
+    }
+
+    if (supplied->length_vector)
+	VMOVE(fenceWidth, args->length_vector);
+    if (supplied->length)
+	VSET(fenceWidth, args->length, 0.0, 0.0);
+    if (supplied->length_vector || supplied->length) {
+	if (ZERO(MAGNITUDE(fenceWidth)))
+	    bu_exit(EXIT_FAILURE, "ERROR: fence length may not be zero\n");
+	meshWidth = MAGNITUDE(fenceWidth);
+    }
+
+    if (supplied->wire_radius) {
+	if (ZERO(args->wire_radius))
+	    bu_exit(EXIT_FAILURE, "ERROR: wire radius may not be zero\n");
+	wireRadius = args->wire_radius;
+    }
+    if (supplied->pole_radius) {
+	if (ZERO(args->pole_radius))
+	    bu_exit(EXIT_FAILURE, "ERROR: pole radius may not be zero\n");
+	poleRadius = args->pole_radius;
+    }
+    if (supplied->wire_angle) {
+	if (ZERO(args->wire_angle))
+	    bu_exit(EXIT_FAILURE, "ERROR: wire angle may not be zero\n");
+	wireAngle = args->wire_angle;
+    }
+    if (supplied->pole_spacing) {
+	if (ZERO(args->pole_spacing))
+	    bu_exit(EXIT_FAILURE, "ERROR: pole spacing may not be zero\n");
+	fencePoleSpacing = args->pole_spacing;
+    }
+}
+
+
+static void
+fence_apply_appearance(const struct fence_args *args,
+	const struct fence_supplied *supplied)
+{
+    if (supplied->all_material) {
+	bu_strlcpy(fenceMaterial, args->all_material, sizeof(fenceMaterial));
+	bu_strlcpy(poleMaterial, args->all_material, sizeof(poleMaterial));
+	bu_strlcpy(meshMaterial, args->all_material, sizeof(meshMaterial));
+	bu_strlcpy(wireMaterial, args->all_material, sizeof(wireMaterial));
+    }
+    if (supplied->fence_material)
+	bu_strlcpy(fenceMaterial, args->fence_material, sizeof(fenceMaterial));
+
+    if (supplied->all_material_params) {
+	bu_strlcpy(fenceMaterialParams, args->all_material_params,
+	    sizeof(fenceMaterialParams));
+	bu_strlcpy(poleMaterialParams, args->all_material_params,
+	    sizeof(poleMaterialParams));
+	bu_strlcpy(meshMaterialParams, args->all_material_params,
+	    sizeof(meshMaterialParams));
+	bu_strlcpy(wireMaterialParams, args->all_material_params,
+	    sizeof(wireMaterialParams));
+    }
+    if (supplied->fence_material_params)
+	bu_strlcpy(fenceMaterialParams, args->fence_material_params,
+	    sizeof(fenceMaterialParams));
+
+    if (supplied->all_color) {
+	(void)bu_color_to_rgb_chars(&args->all_color, fenceMaterialColor);
+	VMOVE(poleMaterialColor, fenceMaterialColor);
+	VMOVE(meshMaterialColor, fenceMaterialColor);
+	VMOVE(wireMaterialColor, fenceMaterialColor);
+    }
+    if (supplied->fence_color)
+	(void)bu_color_to_rgb_chars(&args->fence_color, fenceMaterialColor);
+}
+
+
+static int
+fence_component_selected(const char *components, char component)
+{
+    const char upper = (char)(component - 'a' + 'A');
+    return components &&
+	(strchr(components, component) || strchr(components, upper));
+}
+
+
+static void
+fence_apply_component_selection(const struct fence_args *args)
+{
+    if (args->edit_components) {
+	fenceFence = fence_component_selected(args->edit_components, 'f');
+	fencePoles = fence_component_selected(args->edit_components, 'p');
+	fenceMesh = fence_component_selected(args->edit_components, 'm');
+	fenceWire = fence_component_selected(args->edit_components, 'w');
+    } else if (args->toggle_edit_components) {
+	if (fence_component_selected(args->toggle_edit_components, 'f'))
+	    fenceFence = !DEFAULT_FENCEFENCE;
+	if (fence_component_selected(args->toggle_edit_components, 'p'))
+	    fencePoles = !DEFAULT_FENCEPOLES;
+	if (fence_component_selected(args->toggle_edit_components, 'm'))
+	    fenceMesh = !DEFAULT_FENCEMESH;
+	if (fence_component_selected(args->toggle_edit_components, 'w'))
+	    fenceWire = !DEFAULT_FENCEWIRE;
+    }
+
+    if (args->generate_components) {
+	generateFenceParam = fence_component_selected(args->generate_components, 'f');
+	generatePolesParam = fence_component_selected(args->generate_components, 'p');
+	generateMeshParam = fence_component_selected(args->generate_components, 'm');
+    } else if (args->toggle_generate_components) {
+	if (fence_component_selected(args->toggle_generate_components, 'f'))
+	    generateFenceParam = !DEFAULT_GENERATEFENCE;
+	if (fence_component_selected(args->toggle_generate_components, 'p'))
+	    generatePolesParam = !DEFAULT_GENERATEPOLES;
+	if (fence_component_selected(args->toggle_generate_components, 'm'))
+	    generateMeshParam = !DEFAULT_GENERATEMESH;
+    }
+
+    if (!generateFenceParam && !generatePolesParam && !generateMeshParam)
+	bu_exit(EXIT_FAILURE,
+	    "ERROR: at least one fence component must be generated\n");
+}
+
+
 /*
  * parseArguments() is called by main to take care of all of the
  * command-line arguments that the user specifies.  The args that are
@@ -262,319 +602,95 @@ void defaultSettings(FILE *fp)
  *****************************/
 int parseArguments(int argc, char **argv)
 {
-    int c = 0;
+    struct fence_args args = {0};
+    struct fence_supplied supplied = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    const int arg_count = argc - 1;
+    const char **arg_values = (const char **)(argv + 1);
 
-    double d=0.0;
-    char *progname;
-    unsigned int color[3];
+    args.output = outputFilename;
+    args.title = id;
+    args.units = units;
+    VMOVE(args.height_vector, fenceHeight);
+    args.height = MAGNITUDE(fenceHeight);
+    VMOVE(args.length_vector, fenceWidth);
+    args.length = MAGNITUDE(fenceWidth);
+    args.wire_radius = wireRadius;
+    args.pole_radius = poleRadius;
+    args.wire_angle = wireAngle;
+    args.pole_spacing = fencePoleSpacing;
+    args.fence_material = fenceMaterial;
+    args.fence_material_params = fenceMaterialParams;
+    args.fence_name = fenceName;
+    args.pole_name = poleName;
+    args.mesh_name = meshName;
+    args.wire_name = wireName;
+    args.segment_name = segmentName;
+    (void)bu_color_from_rgb_chars(&args.fence_color, fenceMaterialColor);
+    (void)bu_color_from_rgb_chars(&args.all_color, fenceMaterialColor);
 
-    progname = (char *) bu_calloc(DEFAULT_MAXNAMELENGTH, sizeof(char), "progname");
+#define FENCE_OPTION_PRESENT(_name) \
+    bu_arg_schema_option_present(&fence_schema, arg_count, arg_values, _name)
+    supplied.height_vector = FENCE_OPTION_PRESENT("height-vector");
+    supplied.height = FENCE_OPTION_PRESENT("height");
+    supplied.length_vector = FENCE_OPTION_PRESENT("length-vector");
+    supplied.length = FENCE_OPTION_PRESENT("length");
+    supplied.wire_radius = FENCE_OPTION_PRESENT("wire-radius");
+    supplied.pole_radius = FENCE_OPTION_PRESENT("pole-radius");
+    supplied.wire_angle = FENCE_OPTION_PRESENT("wire-angle");
+    supplied.pole_spacing = FENCE_OPTION_PRESENT("pole-spacing");
+    supplied.fence_material = FENCE_OPTION_PRESENT("fence-material");
+    supplied.all_material = FENCE_OPTION_PRESENT("all-material");
+    supplied.fence_material_params = FENCE_OPTION_PRESENT("fence-material-params");
+    supplied.all_material_params = FENCE_OPTION_PRESENT("all-material-params");
+    supplied.fence_color = FENCE_OPTION_PRESENT("fence-color");
+    supplied.all_color = FENCE_OPTION_PRESENT("all-color");
+#undef FENCE_OPTION_PRESENT
 
-    if (argc > 1) {
-	bu_strlcpy(progname, argv[0], (strlen(argv[0])+1>DEFAULT_MAXNAMELENGTH?DEFAULT_MAXNAMELENGTH:strlen(argv[0])+1));
-    } else {
-	bu_strlcpy(progname, "fence\0", 6);
+    if (bu_arg_schema_parse_complete(&fence_schema, &args, &msg,
+	arg_count, arg_values) < 0) {
+	bu_flog(stderr, "ERROR: %s\n", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	argumentHelp(stderr, argv[0], NULL);
+	return -1;
+    }
+    bu_vls_free(&msg);
+
+    if (args.help) {
+	argumentHelp(stdout, argv[0], NULL);
+	bu_exit(EXIT_SUCCESS, NULL);
     }
 
-    while ((c=bu_getopt(argc, argv, options)) != -1) {
-	double scan[3] = VINIT_ZERO;
+    interactive = args.toggle_interactive ? !DEFAULT_INTERACTIVE :
+	(args.interactive ? 1 : DEFAULT_INTERACTIVE);
+    verbose = args.toggle_verbose ? !DEFAULT_VERBOSE :
+	(args.verbose ? 1 : DEFAULT_VERBOSE);
+    debug = args.toggle_debug ? !DEFAULT_DEBUG :
+	(args.debug ? 1 : DEFAULT_DEBUG);
 
-	switch (c) {
-	    case 'I' :
-		interactive=(DEFAULT_INTERACTIVE) ? 0 : 1;
-	    break;
+    bu_strlcpy(outputFilename, args.output, sizeof(outputFilename));
+    bu_strlcpy(id, args.title, sizeof(id));
+    bu_strlcpy(units, args.units, sizeof(units));
+    fence_apply_dimensions(&args, &supplied);
+    fence_apply_appearance(&args, &supplied);
 
-	    case 'i' :
-		interactive=1;
-		break;
+    bu_strlcpy(fenceName, args.fence_name, sizeof(fenceName));
+    bu_strlcpy(poleName, args.pole_name, sizeof(poleName));
+    bu_strlcpy(meshName, args.mesh_name, sizeof(meshName));
+    bu_strlcpy(wireName, args.wire_name, sizeof(wireName));
+    bu_strlcpy(segmentName, args.segment_name, sizeof(segmentName));
+    fence_apply_component_selection(&args);
 
-	    case 'D' :
-		debug=(DEFAULT_DEBUG) ? 0 : 1;
-	    break;
-
-	    case 'd' :
-		debug=1;
-		break;
-
-	    case 'V' :
-		verbose=(DEFAULT_VERBOSE) ? 0 : 1;
-	    break;
-
-	    case 'v' :
-		verbose=1;
-		break;
-
-	    case 'o' :
-	    case 'O' :
-		memset(outputFilename, 0, DEFAULT_MAXNAMELENGTH);
-		bu_strlcpy(outputFilename, bu_optarg, DEFAULT_MAXNAMELENGTH);
-		break;
-
-	    case 'k' :
-	    case 'K' :
-		memset(id, 0, DEFAULT_MAXNAMELENGTH);
-		bu_strlcpy(id, bu_optarg, DEFAULT_MAXNAMELENGTH);
-		break;
-
-	    case 'u' :
-	    case 'U' :
-		memset(units, 0, DEFAULT_MAXNAMELENGTH);
-		bu_strlcpy(units, bu_optarg, DEFAULT_MAXNAMELENGTH);
-		break;
-
-	    case 'n' :
-		if ((sscanf(bu_optarg, "%lf %lf %lf", &scan[0], &scan[1], &scan[2]))!=3) {
-		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid number of parameters for height: need x, y, z values");
-		    bu_exit(1, NULL);
-		}
-		VMOVE(fenceHeight, scan); /* double to fastf_t */
-		if (ZERO((double)MAGNITUDE(fenceHeight))) {
-		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Fence height may not be set to zero");
-		    bu_exit(1, NULL);
-		}
-		poleHeight = (double) MAGNITUDE(fenceHeight);
-		meshHeight = (double) poleHeight;
-		break;
-	    case 'N' :
-		d=(double)atof(bu_optarg);
-		if (ZERO(d)) {
-		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Fence height may not be set to zero");
-		    bu_exit(1, NULL);
-		}
-		fenceHeight[0]=0.0;
-		fenceHeight[1]=0.0;
-		fenceHeight[2]=d;
-		poleHeight=(double)MAGNITUDE(fenceHeight);
-		meshHeight=(double)poleHeight;
-		break;
-
-	    case 'l' :
-		if ((sscanf(bu_optarg, "%lf %lf %lf", &scan[0], &scan[1], &scan[2]))!=3) {
-		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid number of parameters for width: need x, y, z values");
-		    bu_exit(1, NULL);
-		}
-		VMOVE(fenceWidth, scan); /* double to fastf_t */
-		if (ZERO((double)MAGNITUDE(fenceWidth))) {
-		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Fence width may not be set to zero");
-		    bu_exit(1, NULL);
-		}
-		meshWidth = (double) MAGNITUDE(fenceWidth);
-		break;
-	    case 'L' :
-		d=(double)atof(bu_optarg);
-		if (ZERO(d)) {
-		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Fence width may not be set to zero");
-		    bu_exit(1, NULL);
-		}
-		fenceWidth[0]=d;
-		fenceWidth[1]=0.0;
-		fenceWidth[2]=0.0;
-		meshWidth=(double)MAGNITUDE(fenceWidth);
-		break;
-
-	    case 'r' :
-		d=(double)atof(bu_optarg);
-		if (ZERO(d)) {
-		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Wire radius may not be set to zero");
-		    bu_exit(1, NULL);
-		}
-		wireRadius=d;
-		break;
-	    case 'R' :
-		d=(double)atof(bu_optarg);
-		if (ZERO(d)) {
-		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Pole radius may not be set to zero");
-		    bu_exit(1, NULL);
-		}
-		poleRadius=d;
-		break;
-
-	    case 'a' :
-	    case 'A' :
-		d=(double)atof(bu_optarg);
-		if (ZERO(d)) {
-		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Wire angle may not be set to zero");
-		    bu_exit(1, NULL);
-		}
-		wireAngle=d;
-		break;
-
-	    case 'j' :
-	    case 'J' :
-		d=(double)atof(bu_optarg);
-		if (ZERO(d)) {
-		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Pole spacing may not be set to zero");
-		    bu_exit(1, NULL);
-		}
-		fencePoleSpacing=d;
-		break;
-
-	    case 't' :
-		memset(fenceMaterial, 0, DEFAULT_MAXNAMELENGTH*3);
-		bu_strlcpy(fenceMaterial, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
-		break;
-	    case 'T' :
-		memset(fenceMaterial, 0, DEFAULT_MAXNAMELENGTH*3);
-		memset(poleMaterial, 0, DEFAULT_MAXNAMELENGTH*3);
-		memset(meshMaterial, 0, DEFAULT_MAXNAMELENGTH*3);
-		memset(wireMaterial, 0, DEFAULT_MAXNAMELENGTH*3);
-		bu_strlcpy(fenceMaterial, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
-		bu_strlcpy(poleMaterial, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
-		bu_strlcpy(meshMaterial, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
-		bu_strlcpy(wireMaterial, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
-		break;
-
-	    case 'b' :
-		memset(fenceMaterialParams, 0, DEFAULT_MAXNAMELENGTH*3);
-		bu_strlcpy(fenceMaterialParams, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
-		break;
-	    case 'B' :
-		memset(fenceMaterialParams, 0, DEFAULT_MAXNAMELENGTH*3);
-		memset(poleMaterialParams, 0, DEFAULT_MAXNAMELENGTH*3);
-		memset(meshMaterialParams, 0, DEFAULT_MAXNAMELENGTH*3);
-		memset(wireMaterialParams, 0, DEFAULT_MAXNAMELENGTH*3);
-		bu_strlcpy(fenceMaterialParams, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
-		bu_strlcpy(poleMaterialParams, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
-		bu_strlcpy(meshMaterialParams, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
-		bu_strlcpy(wireMaterialParams, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
-		break;
-
-	    case 'c' :
-	    case 'C' :
-		if ((sscanf(bu_optarg, "%u %u %u", &color[0], &color[1], &color[2]))!=3) {
-		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid number of parameters for material color: need r, g, b values");
-		    bu_exit(1, NULL);
-		}
-		if (color[0] > 255 || color[1] > 255 || color[2] > 255) {
-		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Fence material color values must be in the range of 0 to 255 inclusive");
-		    bu_exit(1, NULL);
-		}
-		fenceMaterialColor[0] = (unsigned char)color[0];
-		fenceMaterialColor[1] = (unsigned char)color[1];
-		fenceMaterialColor[2] = (unsigned char)color[2];
-		if (c == 'C' ) {
-		  poleMaterialColor[0] = fenceMaterialColor[0];
-		  poleMaterialColor[1] = fenceMaterialColor[1];
-		  poleMaterialColor[2] = fenceMaterialColor[2];
-		  meshMaterialColor[0] = fenceMaterialColor[0];
-		  meshMaterialColor[1] = fenceMaterialColor[1];
-		  meshMaterialColor[2] = fenceMaterialColor[2];
-		  wireMaterialColor[0] = fenceMaterialColor[0];
-		  wireMaterialColor[1] = fenceMaterialColor[1];
-		  wireMaterialColor[2] = fenceMaterialColor[2];
-		}
-		break;
-
-	    case 'f' :
-	    case 'F' :
-		memset(fenceName, 0, DEFAULT_MAXNAMELENGTH);
-		bu_strlcpy(fenceName, bu_optarg, DEFAULT_MAXNAMELENGTH);
-		break;
-
-	    case 'p' :
-	    case 'P' :
-		memset(poleName, 0, DEFAULT_MAXNAMELENGTH);
-		bu_strlcpy(poleName, bu_optarg, DEFAULT_MAXNAMELENGTH);
-		break;
-
-	    case 'm' :
-	    case 'M' :
-		memset(meshName, 0, DEFAULT_MAXNAMELENGTH);
-		bu_strlcpy(meshName, bu_optarg, DEFAULT_MAXNAMELENGTH);
-		break;
-
-	    case 'w' :
-	    case 'W' :
-		memset(wireName, 0, DEFAULT_MAXNAMELENGTH);
-		bu_strlcpy(wireName, bu_optarg, DEFAULT_MAXNAMELENGTH);
-		break;
-
-	    case 's' :
-	    case 'S' :
-		memset(segmentName, 0, DEFAULT_MAXNAMELENGTH);
-		bu_strlcpy(segmentName, bu_optarg, DEFAULT_MAXNAMELENGTH);
-		break;
-
-	    case 'e' :
-		fenceFence = 0;
-		fencePoles = 0;
-		fenceMesh = 0;
-		fenceWire = 0;
-		if (strchr(bu_optarg, 'f')!=NULL) fenceFence = 1;
-		if (strchr(bu_optarg, 'p')!=NULL) fencePoles = 1;
-		if (strchr(bu_optarg, 'm')!=NULL) fenceMesh = 1;
-		if (strchr(bu_optarg, 'w')!=NULL) fenceWire = 1;
-		if (strchr(bu_optarg, 'F')!=NULL) fenceFence = 1;
-		if (strchr(bu_optarg, 'P')!=NULL) fencePoles = 1;
-		if (strchr(bu_optarg, 'M')!=NULL) fenceMesh = 1;
-		if (strchr(bu_optarg, 'W')!=NULL) fenceWire = 1;
-		break;
-	    case 'E' :
-		if (strchr(bu_optarg, 'f')!=NULL) fenceFence = (DEFAULT_FENCEFENCE) ? 0 : 1;
-		if (strchr(bu_optarg, 'p')!=NULL) fencePoles = (DEFAULT_FENCEPOLES) ? 0 : 1;
-		if (strchr(bu_optarg, 'm')!=NULL) fenceMesh = (DEFAULT_FENCEMESH) ? 0 : 1;
-		if (strchr(bu_optarg, 'w')!=NULL) fenceWire = (DEFAULT_FENCEWIRE) ? 0 : 1;
-		if (strchr(bu_optarg, 'F')!=NULL) fenceFence = (DEFAULT_FENCEFENCE) ? 0 : 1;
-		if (strchr(bu_optarg, 'P')!=NULL) fencePoles = (DEFAULT_FENCEPOLES) ? 0 : 1;
-		if (strchr(bu_optarg, 'M')!=NULL) fenceMesh = (DEFAULT_FENCEMESH) ? 0 : 1;
-		if (strchr(bu_optarg, 'W')!=NULL) fenceWire = (DEFAULT_FENCEWIRE) ? 0 : 1;
-		break;
-
-	    case 'g' :
-		generateFenceParam = 0;
-		generatePolesParam = 0;
-		generateMeshParam = 0;
-		if (strchr(bu_optarg, 'f')!=NULL) generateFenceParam = 1;
-		if (strchr(bu_optarg, 'p')!=NULL) generatePolesParam = 1;
-		if (strchr(bu_optarg, 'm')!=NULL) generateMeshParam = 1;
-		if (strchr(bu_optarg, 'F')!=NULL) generateFenceParam = 1;
-		if (strchr(bu_optarg, 'P')!=NULL) generatePolesParam = 1;
-		if (strchr(bu_optarg, 'M')!=NULL) generateMeshParam = 1;
-		if (generateFenceParam == 0 && generatePolesParam == 0 && generateMeshParam == 0) {
-		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid generate parameters specified");
-		    bu_exit(1, NULL);
-		}
-		break;
-	    case 'G' :
-		if (strchr(bu_optarg, 'f')!=NULL) generateFenceParam = (DEFAULT_GENERATEFENCE) ? 0 : 1;
-		if (strchr(bu_optarg, 'p')!=NULL) generatePolesParam = (DEFAULT_GENERATEPOLES) ? 0 : 1;
-		if (strchr(bu_optarg, 'm')!=NULL) generateMeshParam = (DEFAULT_GENERATEMESH) ? 0 : 1;
-		if (strchr(bu_optarg, 'F')!=NULL) generateFenceParam = (DEFAULT_GENERATEFENCE) ? 0 : 1;
-		if (strchr(bu_optarg, 'P')!=NULL) generatePolesParam = (DEFAULT_GENERATEPOLES) ? 0 : 1;
-		if (strchr(bu_optarg, 'M')!=NULL) generateMeshParam = (DEFAULT_GENERATEMESH) ? 0 : 1;
-		if (generateFenceParam == 0 && generatePolesParam == 0 && generateMeshParam == 0) {
-		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid generate parameters specified or all specified to zero");
-		    bu_exit(1, NULL);
-		}
-		break;
-
-	    case 'X' :
-		(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Example assistance");
-		/* fall through */
-	    case 'x' :
-		(void)argumentExamples(DEFAULT_VERBOSE_OUTPUT, progname);
-		bu_exit(1, NULL);
-		break;
-
-	    case 'Z' :
-		(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Full parameter assistance");
-		/* fall through */
-	    case 'z' :
-		(void)defaultSettings(DEFAULT_VERBOSE_OUTPUT);
-		bu_exit(1, NULL);
-		break;
-
-	    default  :
-		fflush(stdout);
-		(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, NULL);
-		bu_exit(1, NULL);
-	}
+    if (args.examples) {
+	argumentExamples(stdout, argv[0]);
+	bu_exit(EXIT_SUCCESS, NULL);
     }
-    fflush(stdout);
+    if (args.defaults) {
+	defaultSettings(stdout);
+	bu_exit(EXIT_SUCCESS, NULL);
+    }
 
-    bu_free(progname, "progname");
-
-    return bu_optind;
+    return 0;
 }
 
 
@@ -1775,9 +1891,23 @@ int main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
-    verboseinput = (char *) bu_calloc(DEFAULT_MAXNAMELENGTH * 3, sizeof(char), "verboseinput");
+    {
+	struct bu_vls schema_output = BU_VLS_INIT_ZERO;
+	int schema_status = bu_arg_introspect(&schema_output, &fence_grammar,
+	    argc - 1, (const char * const *)(argv + 1));
+	if (schema_status != 0) {
+	    bu_flog(schema_status > 0 ? stdout : stderr, "%s",
+		bu_vls_cstr(&schema_output));
+	    bu_vls_free(&schema_output);
+	    return schema_status > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+	}
+	bu_vls_free(&schema_output);
+    }
 
-    (void) parseArguments(argc, argv);
+    if (parseArguments(argc, argv) < 0)
+	return EXIT_FAILURE;
+
+    verboseinput = (char *) bu_calloc(DEFAULT_MAXNAMELENGTH * 3, sizeof(char), "verboseinput");
 
     if ((fp=wdb_fopen(outputFilename))==NULL) {
 	perror(outputFilename);

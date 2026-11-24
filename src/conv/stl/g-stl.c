@@ -32,17 +32,15 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <ctype.h>
-#include <errno.h>
-#include <limits.h>
-#include <math.h>
 #include <string.h>
 #include "bnetwork.h"
 #include "bio.h"
 
 /* interface headers */
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
 #include "bu/cv.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -58,55 +56,201 @@
 }
 
 
-static char usage[] = "[-bvi8] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.stl | -m directory_name] brlcad_db.g object(s)\n";
+struct g_stl_args {
+    struct g_stl_args *self;
+    int help;
+    int binary;
+    int verbose;
+    int inches;
+    int marching_cubes;
+    fastf_t absolute_tolerance;
+    fastf_t relative_tolerance;
+    fastf_t normal_tolerance;
+    fastf_t distance_tolerance;
+    int distance_tolerance_set;
+    unsigned int rt_debug;
+    unsigned int nmg_debug;
+    const char *output_file;
+    const char *output_directory;
+};
 
-static void
-print_usage(const char *progname)
+enum g_stl_tolerance_kind {
+    G_STL_ABSOLUTE_TOLERANCE,
+    G_STL_NORMAL_TOLERANCE,
+    G_STL_DISTANCE_TOLERANCE
+};
+
+static struct g_stl_args *
+g_stl_args_from_storage(void *storage)
 {
-    bu_exit(1, "Usage: %s %s", progname, usage);
+    return storage ? *(struct g_stl_args **)storage : NULL;
 }
 
-
 static int
-parse_nonnegative_number(const char *arg, fastf_t *value)
+g_stl_tolerance_consume(struct bu_vls *msg, size_t argc, const char **argv,
+	void *storage, enum g_stl_tolerance_kind kind)
 {
-    char *end = NULL;
-    double parsed;
+    struct g_stl_args *args = g_stl_args_from_storage(storage);
+    fastf_t value;
 
-    if (!arg || !value || arg[0] == '\0' || isspace((unsigned char)arg[0]))
+    if (argc != 1 || bu_arg_nonnegative_number_validate(msg, argv[0]) < 0 ||
+	!bu_arg_number_from_str(msg, &value, argv[0]))
+	return -1;
+    if ((kind == G_STL_NORMAL_TOLERANCE && value > 180.0) ||
+	(kind != G_STL_NORMAL_TOLERANCE && value > SQRT_MAX_FASTF)) {
+	if (msg)
+	    bu_vls_printf(msg, "tolerance is outside the supported range: %s\n",
+		argv[0]);
+	return -1;
+    }
+    if (!args)
 	return 0;
-    errno = 0;
-    parsed = strtod(arg, &end);
-    if (errno != 0 || end == arg || *end != '\0' ||
-	!isfinite(parsed) || parsed < 0.0)
-	return 0;
-    *value = (fastf_t)parsed;
-    return isfinite(*value);
+
+    switch (kind) {
+	case G_STL_ABSOLUTE_TOLERANCE:
+	    args->absolute_tolerance = value;
+	    args->relative_tolerance = 0.0;
+	    break;
+	case G_STL_NORMAL_TOLERANCE:
+	    args->normal_tolerance = value * DEG2RAD;
+	    args->relative_tolerance = 0.0;
+	    break;
+	case G_STL_DISTANCE_TOLERANCE:
+	    args->distance_tolerance = value;
+	    args->distance_tolerance_set = 1;
+	    break;
+    }
+    return 0;
 }
 
+#define G_STL_TOLERANCE_CONSUMER(_name, _kind) \
+    static int _name(struct bu_vls *msg, size_t argc, const char **argv, \
+	    void *storage) \
+    { \
+	return g_stl_tolerance_consume(msg, argc, argv, storage, _kind); \
+    }
+
+G_STL_TOLERANCE_CONSUMER(g_stl_absolute_tolerance_consume,
+    G_STL_ABSOLUTE_TOLERANCE)
+G_STL_TOLERANCE_CONSUMER(g_stl_normal_tolerance_consume,
+    G_STL_NORMAL_TOLERANCE)
+G_STL_TOLERANCE_CONSUMER(g_stl_distance_tolerance_consume,
+    G_STL_DISTANCE_TOLERANCE)
+
+static const struct bu_arg_option g_stl_options[] = {
+    BU_ARG_FLAG("h", "help", struct g_stl_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("b", "binary", struct g_stl_args, binary,
+	"Write binary instead of ASCII STL; requires --output or "
+	"--output-directory"),
+    BU_ARG_FLAG("v", "verbose", struct g_stl_args, verbose,
+	"Report objects, tolerances, and conversion statistics"),
+    BU_ARG_FLAG("i", "inches", struct g_stl_args, inches,
+	"Write coordinates in inches instead of millimeters (the default)"),
+    BU_ARG_FLAG("8", "marching-cubes", struct g_stl_args, marching_cubes,
+	"Tessellate with marching cubes instead of NMG boolean evaluation"),
+    BU_ARG_OPTION_SHAPED("a", "absolute-tolerance", "absolute-tolerance",
+	struct g_stl_args, self, BU_ARG_VALUE_NUMBER, "distance",
+	"Set nonnegative maximum chord deviation in millimeters and clear "
+	"relative tolerance",
+	BU_ARG_REQUIRED, NULL, g_stl_absolute_tolerance_consume),
+    BU_ARG_NUMBER_RANGE("r", "relative-tolerance", struct g_stl_args,
+	relative_tolerance, 1, 0.0, 1, 1.0, "fraction",
+	"Set nonnegative tolerance as a fraction of the bounding box "
+	"(default 0.01)"),
+    BU_ARG_OPTION_SHAPED("n", "normal-tolerance", "normal-tolerance",
+	struct g_stl_args, self, BU_ARG_VALUE_NUMBER, "degrees",
+	"Set nonnegative surface-normal tolerance in degrees and clear "
+	"relative tolerance",
+	BU_ARG_REQUIRED, NULL, g_stl_normal_tolerance_consume),
+    BU_ARG_OPTION_SHAPED("D", "distance-tolerance", "distance-tolerance",
+	struct g_stl_args, self, BU_ARG_VALUE_NUMBER, "distance",
+	"Set nonnegative vertex-coincidence distance in millimeters "
+	"(default 0.0005)",
+	BU_ARG_REQUIRED, NULL, g_stl_distance_tolerance_consume),
+    BU_ARG_VALUE("x", "rt-debug", struct g_stl_args, rt_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set librt hexadecimal debug flags"),
+    BU_ARG_VALUE("X", "nmg-debug", struct g_stl_args, nmg_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set libnmg hexadecimal debug flags"),
+    BU_ARG_VALUE("o", "output", struct g_stl_args, output_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "output.stl",
+	"Write all geometry to this STL file (mutually exclusive with "
+	"--output-directory)"),
+    BU_ARG_VALUE("m", "output-directory", struct g_stl_args,
+	output_directory, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "directory",
+	"Write each region to a separate STL file here (mutually exclusive "
+	"with --output)"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand g_stl_operands[] = {
+    BU_ARG_OPERAND("database.g", BU_ARG_VALUE_FILE, 1, 1,
+	"Input BRL-CAD database", NULL),
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1,
+	BU_ARG_COUNT_UNLIMITED, "Database object to convert", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const char * const g_stl_output_options[] = {
+    "output", "output-directory", NULL
+};
+
+static const struct bu_arg_constraint g_stl_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT,
+	BU_ARG_CONDITION_ALWAYS, g_stl_output_options, 0, 1,
+	"--output and --output-directory are mutually exclusive"),
+    BU_ARG_CONSTRAINT_NULL
+};
 
 static int
-parse_debug_mask(const char *arg, unsigned int *mask)
+g_stl_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t UNUSED(cursor_arg),
+	struct bu_arg_validate_result *result)
 {
-    char *end = NULL;
-    unsigned long parsed;
+    int has_output;
 
-    if (!arg || !mask || arg[0] == '\0' || arg[0] == '-' ||
-	isspace((unsigned char)arg[0]))
+    if (!result || result->state == BU_ARG_VALIDATE_INVALID ||
+	!bu_arg_schema_option_present(schema, argc, argv, "binary"))
 	return 0;
-    errno = 0;
-    parsed = strtoul(arg, &end, 16);
-    if (errno != 0 || end == arg || *end != '\0' || parsed > UINT_MAX)
-	return 0;
-    *mask = (unsigned int)parsed;
-    return 1;
+
+    has_output = bu_arg_schema_option_present(schema, argc, argv, "output") ||
+	bu_arg_schema_option_present(schema, argc, argv, "output-directory");
+    if (!has_output) {
+	result->state = BU_ARG_VALIDATE_INVALID;
+	result->token_start = argc;
+	result->token_end = argc;
+	result->hint = "binary output requires --output or --output-directory";
+    }
+    return 0;
+}
+
+static const struct bu_arg_schema g_stl_schema = BU_ARG_SCHEMA(
+    "g-stl", "Convert BRL-CAD geometry to Stereolithography",
+    g_stl_options, g_stl_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, g_stl_constraints, g_stl_validate, NULL,
+	NULL));
+
+static const struct bu_arg_grammar g_stl_grammar = {
+    &g_stl_schema, NULL, NULL
+};
+
+static int
+g_stl_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&g_stl_schema, "g-stl");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "g-stl help");
+    return status;
 }
 
 
 static int verbose;
 static int binary = 0;			/* Default output is ASCII */
-static char *output_file = NULL;	/* output filename */
-static char *output_directory = NULL;	/* directory name to hold output files */
+static const char *output_file = NULL;	/* output filename */
+static const char *output_directory = NULL;	/* directory name to hold output files */
 static FILE *fp;			/* Output file pointer */
 static int bfd;				/* Output binary file descriptor */
 static struct db_i *dbip;
@@ -346,13 +490,14 @@ static struct gcv_region_end_data gcvwriter = {nmg_to_stl, NULL, NULL};
 int
 main(int argc, char *argv[])
 {
-    int c;
+    struct g_stl_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     double percent;
     int i;
+    int introspection;
+    int operand_index;
     int ret;
     int use_mc = 0;
-    int mutex;
-    int missingg;
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
@@ -382,75 +527,45 @@ main(int argc, char *argv[])
     /* make empty NMG model */
     the_model = nmg_mm();
 
-    /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:b8m:n:o:r:vx:D:X:ih?")) != -1) {
-	switch (c) {
-	    case 'a':		/* Absolute tolerance. */
-		if (!parse_nonnegative_number(bu_optarg, &ttol.abs) ||
-		    ttol.abs > SQRT_MAX_FASTF)
-		    bu_exit(1, "Invalid absolute tolerance: %s\n", bu_optarg);
-		ttol.rel = 0.0;
-		break;
-	    case 'b':		/* Binary output file */
-		binary=1;
-		break;
-	    case 'n':		/* Surface normal tolerance. */
-		if (!parse_nonnegative_number(bu_optarg, &ttol.norm) ||
-		    ttol.norm > 180.0)
-		    bu_exit(1, "Invalid normal tolerance: %s\n", bu_optarg);
-		ttol.norm *= DEG2RAD;
-		ttol.rel = 0.0;
-		break;
-	    case '8':
-		use_mc = 1;
-		break;
-	    case 'o':		/* Output file name. */
-		output_file = bu_optarg;
-		break;
-	    case 'm':
-		output_directory = bu_optarg;
-		break;
-	    case 'r':		/* Relative tolerance. */
-		if (!parse_nonnegative_number(bu_optarg, &ttol.rel) ||
-		    ttol.rel > 1.0)
-		    bu_exit(1, "Invalid relative tolerance: %s\n", bu_optarg);
-		break;
-	    case 'v':
-		verbose++;
-		break;
-	    case 'x':
-		if (!parse_debug_mask(bu_optarg, &rt_debug))
-		    bu_exit(1, "Invalid RT debug flag: %s\n", bu_optarg);
-		break;
-	    case 'D':
-		if (!parse_nonnegative_number(bu_optarg, &tol.dist) ||
-		    tol.dist > SQRT_MAX_FASTF)
-		    bu_exit(1, "Invalid distance tolerance: %s\n", bu_optarg);
-		tol.dist_sq = tol.dist * tol.dist;
-		if (!isfinite(tol.dist_sq))
-		    bu_exit(1, "Invalid distance tolerance: %s\n", bu_optarg);
-		rt_pr_tol(&tol);
-		break;
-	    case 'X':
-		if (!parse_debug_mask(bu_optarg, &nmg_debug))
-		    bu_exit(1, "Invalid NMG debug flag: %s\n", bu_optarg);
-		break;
-	    case 'i':
-		inches = 1;
-		break;
-	    default:
-		print_usage(argv[0]);
-	}
-    }
+    args.self = &args;
+    args.absolute_tolerance = ttol.abs;
+    args.relative_tolerance = ttol.rel;
+    args.normal_tolerance = ttol.norm;
+    args.distance_tolerance = tol.dist;
 
-    mutex = (output_file && output_directory);
-    missingg = (bu_optind+1 >= argc);
-    if (mutex)
-	bu_log("%s: options \"-o\" and \"-m\" are mutually exclusive\n",argv[0]);
-    if (missingg)
-	bu_log("%s: missing .g file and object(s)\n",argv[0]);
-    if (mutex || missingg)
-	print_usage(argv[0]);
+    introspection = bu_arg_introspect(&msg, &g_stl_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    operand_index = bu_arg_schema_parse_complete(&g_stl_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return g_stl_help(stdout, 0);
+
+    binary = args.binary;
+    verbose = args.verbose;
+    inches = args.inches;
+    use_mc = args.marching_cubes;
+    output_file = args.output_file;
+    output_directory = args.output_directory;
+    ttol.abs = args.absolute_tolerance;
+    ttol.rel = args.relative_tolerance;
+    ttol.norm = args.normal_tolerance;
+    tol.dist = args.distance_tolerance;
+    tol.dist_sq = tol.dist * tol.dist;
+    rt_debug = args.rt_debug;
+    nmg_debug = args.nmg_debug;
+    if (args.distance_tolerance_set)
+	rt_pr_tol(&tol);
 
     if (!output_file && !output_directory) {
 	if (binary) {
@@ -476,8 +591,8 @@ main(int argc, char *argv[])
     }
 
     /* Open brl-cad database */
-    argc -= bu_optind;
-    argv += bu_optind;
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
     if ((dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[0]);
 	bu_exit(1, "Unable to open geometry database file (%s)\n", argv[0]);

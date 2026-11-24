@@ -5,16 +5,14 @@
  */
 #include "common.h"
 
-#include <algorithm>
 #include <filesystem>
 #include <memory>
 #include <set>
 #include <stdexcept>
 
 #include "brep.h"
+#include "bu/arg.h"
 #include "bu/log.h"
-#include "bu/malloc.h"
-#include "bu/opt.h"
 
 #include "iges_export.h"
 #include "iges_plugin.h"
@@ -29,19 +27,28 @@ struct IgesWriteOptions {
     int flatten = 0;
 };
 
+const struct bu_arg_option iges_write_options[] = {
+    BU_ARG_FLAG(NULL, "faceted", IgesWriteOptions, faceted,
+	"Tessellate regions to faceted B-Reps"),
+    BU_ARG_FLAG(NULL, "trimmed-surfaces", IgesWriteOptions, trimmed,
+	"Tessellate regions to trimmed surfaces"),
+    BU_ARG_FLAG(NULL, "nurbs", IgesWriteOptions, nurbs,
+	"Write NMG facets using NURBS geometry"),
+    BU_ARG_FLAG(NULL, "flatten-brep", IgesWriteOptions, flatten,
+	"Write exact B-Reps as grouped trimmed surfaces"),
+    BU_ARG_OPTION_NULL
+};
+
+const struct bu_arg_schema iges_write_schema = {
+    "iges-write", "IGES writer options", iges_write_options, NULL,
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
 void
-iges_create_options(struct bu_opt_desc **descriptions, void **options_data)
+iges_create_options(const struct bu_arg_schema **schema, void **options_data)
 {
     auto options = std::make_unique<IgesWriteOptions>();
-    struct bu_opt_desc descriptors[] = {
-	{"", "faceted", "", nullptr, &options->faceted, "tessellate regions to faceted B-Reps"},
-	{"", "trimmed-surfaces", "", nullptr, &options->trimmed, "tessellate regions to trimmed surfaces"},
-	{"", "nurbs", "", nullptr, &options->nurbs, "write NMG facets using NURBS geometry"},
-	{"", "flatten-brep", "", nullptr, &options->flatten, "write exact B-Reps as grouped trimmed surfaces"},
-	BU_OPT_DESC_NULL
-    };
-    *descriptions = static_cast<struct bu_opt_desc *>(bu_malloc(sizeof(descriptors), "IGES writer options"));
-    std::copy_n(descriptors, sizeof(descriptors) / sizeof(descriptors[0]), *descriptions);
+    *schema = &iges_write_schema;
     *options_data = options.release();
 }
 

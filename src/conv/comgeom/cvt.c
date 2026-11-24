@@ -35,7 +35,10 @@
 
 #include "vmath.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
+#include "bu/arg.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/vls.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -73,107 +76,132 @@ extern void getid(void);
 
 void col_pr(char *str);
 
-static char usage[] = "\
-Usage: comgeom-g [options] input_file output_file\n\
-Options:\n\
-	-v input_vers#	(default is 5 (cg5); versions 1, 4 also available)\n\
-	-d debug_lvl\n\
-	-s name_suffix\n\
-";
+struct comgeom_args {
+    int help;
+    int debug_level;
+    const char *input_version;
+    char name_suffix[sizeof(name_it)];
+};
 
-int
-get_args(int argc, char **argv)
+static int
+comgeom_suffix_parse(struct bu_vls *msg, const char *arg, void *storage)
 {
-    int c;
-    char *file_name;
-
-    if (argv == NULL) {
-	return 0;
+    if (!arg || strlen(arg) >= sizeof(name_it)) {
+	if (msg)
+	    bu_vls_printf(msg, "name suffix must be at most %zu characters\n",
+		sizeof(name_it) - 1);
+	return -1;
     }
+    if (storage)
+	bu_strlcpy((char *)storage, arg, sizeof(name_it));
+    return 0;
+}
 
-    while ((c = bu_getopt(argc, argv, "d:v:s:h?")) != -1) {
-	switch (c) {
-	    case 'd':
-		verbose = atoi(bu_optarg);
-		break;
-	    case 's':
-		bu_strlcpy(name_it, bu_optarg, sizeof(name_it));
-		break;
-	    case 'v':
-		version = atoi(bu_optarg);
-		break;
+static const struct bu_arg_value_keyword comgeom_versions[] = {
+    {"1", NULL, "DoE MORSE/RAFFLE format"},
+    {"4", NULL, "GIFT COMGEOM version 4"},
+    {"5", NULL, "GIFT COMGEOM version 5"},
+    {NULL, NULL, NULL}
+};
 
-	    default:		/* '?' */
-		return 0;
-	}
-    }
+static const struct bu_arg_option comgeom_options[] = {
+    BU_ARG_FLAG("h", "help", struct comgeom_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_VALUE("d", "debug-level", struct comgeom_args, debug_level,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "level",
+	"Set conversion diagnostic verbosity"),
+    BU_ARG_KEYWORD_VALUES("v", "input-version", struct comgeom_args,
+	input_version, "version", "Select the COMGEOM input format version",
+	comgeom_versions),
+    BU_ARG_CUSTOM("s", "name-suffix", struct comgeom_args, name_suffix,
+	comgeom_suffix_parse, "suffix",
+	"Append a suffix of at most 15 characters to generated names"),
+    BU_ARG_OPTION_NULL
+};
 
-    if (bu_optind+2 > argc)
-	return 0;		/* FAIL */
+static const struct bu_arg_operand comgeom_operands[] = {
+    BU_ARG_OPERAND("input-file", BU_ARG_VALUE_FILE, 1, 1,
+	"Input GIFT COMGEOM file", NULL),
+    BU_ARG_OPERAND("output.g", BU_ARG_VALUE_FILE, 1, 1,
+	"Output BRL-CAD database", NULL),
+    BU_ARG_OPERAND_NULL
+};
 
-    /* Input File */
-    if (bu_optind >= argc) {
-	return 0;		/* FAIL */
-    } else {
-	file_name = argv[bu_optind++];
+static const struct bu_arg_schema comgeom_schema = BU_ARG_SCHEMA(
+    "comgeom-g", "Convert GIFT COMGEOM geometry to BRL-CAD",
+    comgeom_options, comgeom_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
 
-	if (!file_name || !bu_file_exists(file_name, NULL)) {
-	    perror(file_name);
-	    return 0;
-	}
-	infp = fopen(file_name, "rb");
-	if (infp == NULL) {
-	    perror(file_name);
-	    return 0;
-	}
-    }
+static const struct bu_arg_grammar comgeom_grammar = {
+    &comgeom_schema, NULL, NULL
+};
 
-    /* Output File */
-    if (bu_optind >= argc) {
-	return 0;		/* FAIL */
-    } else {
-	file_name = argv[bu_optind++];
-
-	if (!file_name) {
-	    perror(file_name);
-	    return 0;
-	}
-	if (bu_file_exists(file_name, NULL)) {
-	    bu_log("Warning: appending to existing database\n");
-	}
-	outfp = wdb_fopen(file_name);
-	if (outfp == NULL) {
-	    perror(file_name);
-	    return 0;
-	}
-    }
-
-    if (argc > ++bu_optind)
-	fprintf(stderr, "comgeom-g: excess argument(s) ignored\n");
-
-    return 1;		/* OK */
+static int
+comgeom_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&comgeom_schema, "comgeom-g");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "comgeom-g help");
+    return status;
 }
 
 
 int
 main(int argc, char **argv)
 {
+    struct comgeom_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     int i;
+    int introspection;
+    int operand_index;
+    const char *input_file;
+    const char *output_file;
     char ctitle[132] = {'\0'};
     char *title = NULL;
     char units[16] = {'\0'};
 
     bu_setprogname(argv[0]);
-
-    if (!get_args(argc, argv)) {
-	(void)fputs(usage, stderr);
-	return 1;
+    args.input_version = "5";
+    introspection = bu_arg_introspect(&msg, &comgeom_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
     }
+    operand_index = bu_arg_schema_parse_complete(&comgeom_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return comgeom_help(stderr, EXIT_FAILURE);
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return comgeom_help(stdout, EXIT_SUCCESS);
 
-    if (version != 1 && version != 4 && version != 5) {
-	fprintf(stderr, "version %d not supported\n", version);
-	(void)fputs(usage, stderr);
-	return 1;
+    version = args.input_version[0] - '0';
+    verbose = args.debug_level;
+    bu_strlcpy(name_it, args.name_suffix, sizeof(name_it));
+    input_file = argv[operand_index + 1];
+    output_file = argv[operand_index + 2];
+
+    if (!bu_file_exists(input_file, NULL)) {
+	perror(input_file);
+	return EXIT_FAILURE;
+    }
+    infp = fopen(input_file, "rb");
+    if (!infp) {
+	perror(input_file);
+	return EXIT_FAILURE;
+    }
+    if (bu_file_exists(output_file, NULL))
+	bu_log("Warning: appending to existing database\n");
+    outfp = wdb_fopen(output_file);
+    if (!outfp) {
+	perror(output_file);
+	return EXIT_FAILURE;
     }
 
     printf("Reading version %d COMGEOM file\n", version);
@@ -358,7 +386,7 @@ main(int argc, char **argv)
     group_write();
     if (verbose) printf("\n");
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 

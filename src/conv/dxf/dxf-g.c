@@ -38,8 +38,8 @@
 
 /* interface headers */
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/debug.h"
-#include "bu/getopt.h"
 #include "bu/list.h"
 #include "vmath.h"
 #include "bn.h"
@@ -212,12 +212,10 @@ static point_t pts[4];
 #define MAX_LINE_SIZE 2050
 char line[MAX_LINE_SIZE];
 
-static const char *usage="Usage: dxf-g [-c] [-d] [-v] [-t tolerance] [-s scale_factor] input_file.dxf output_file.g\n";
-
 static FILE *dxf;
 static struct rt_wdb *out_fp;
-static char *output_file;
-static char *dxf_file;
+static const char *output_file;
+static const char *dxf_file;
 static int verbose = 0;
 static fastf_t tol = 0.01;
 static fastf_t tol_sq;
@@ -230,6 +228,76 @@ static fastf_t delta_angle;
 static point_t *circle_pts;
 static fastf_t scale_factor;
 static struct bu_list free_hd;
+
+struct dxf_g_args {
+    int help;
+    int ignore_colors;
+    int debug;
+    int verbose;
+    fastf_t tolerance;
+    fastf_t scale_factor;
+};
+
+static int
+dxf_g_scale_validate(struct bu_vls *msg, const char *arg)
+{
+    fastf_t value;
+
+    if (!bu_arg_number_from_str(msg, &value, arg))
+	return -1;
+    if (value < SQRT_SMALL_FASTF) {
+	if (msg)
+	    bu_vls_printf(msg, "scale factor must be at least %g: %s\n",
+		SQRT_SMALL_FASTF, arg);
+	return -1;
+    }
+    return 0;
+}
+
+static const struct bu_arg_option dxf_g_options[] = {
+    BU_ARG_FLAG("h", "help", struct dxf_g_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("c", "ignore-colors", struct dxf_g_args, ignore_colors,
+	"Create one object per layer without separating colors"),
+    BU_ARG_FLAG("d", "debug", struct dxf_g_args, debug,
+	"Enable core dumps for developer diagnostics"),
+    BU_ARG_FLAG("v", "verbose", struct dxf_g_args, verbose,
+	"Write conversion progress to standard error"),
+    BU_ARG_VALUE_VALIDATE("t", "tolerance", struct dxf_g_args, tolerance,
+	BU_ARG_VALUE_NUMBER, bu_arg_nonnegative_number_validate, "millimeters",
+	"Set the nonnegative vertex-coincidence distance"),
+    BU_ARG_VALUE_VALIDATE("s", "scale", struct dxf_g_args, scale_factor,
+	BU_ARG_VALUE_NUMBER, dxf_g_scale_validate, "factor",
+	"Multiply all input coordinates by this scale factor"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand dxf_g_operands[] = {
+    BU_ARG_OPERAND("input.dxf", BU_ARG_VALUE_FILE, 1, 1,
+	"Input AutoCAD DXF file", NULL),
+    BU_ARG_OPERAND("output.g", BU_ARG_VALUE_FILE, 1, 1,
+	"Output BRL-CAD database", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema dxf_g_schema = BU_ARG_SCHEMA(
+    "dxf-g", "Convert AutoCAD DXF geometry to a BRL-CAD database",
+    dxf_g_options, dxf_g_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar dxf_g_grammar = {
+    &dxf_g_schema, NULL, NULL
+};
+
+static int
+dxf_g_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&dxf_g_schema, "dxf-g");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "dxf-g help");
+    return status;
+}
 
 #define TRI_BLOCK 512			/* number of triangles to malloc per call */
 
@@ -3159,56 +3227,51 @@ readcodes(void)
 int
 main(int argc, char *argv[])
 {
+    struct dxf_g_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct bu_list head_all;
     size_t name_len;
-    char *ptr1, *ptr2;
+    const char *ptr1, *ptr2;
     int code;
-    int c;
     int i;
+    int introspection;
+    int operand_index;
 
     bu_setprogname(argv[0]);
-
-    tol_sq = tol * tol;
 
     delta_angle = M_2PI / (fastf_t)segs_per_circle;
     sin_delta = sin(delta_angle);
     cos_delta = cos(delta_angle);
 
-    /* get command line arguments */
-    scale_factor = 1.0;
-    while ((c = bu_getopt(argc, argv, "cdvt:s:h?")) != -1) {
-	switch (c) {
-	    case 's':	/* scale factor */
-		scale_factor = atof(bu_optarg);
-		if (scale_factor < SQRT_SMALL_FASTF) {
-		    bu_log("scale factor too small (%g < %g)\n", scale_factor, SQRT_SMALL_FASTF);
-		    bu_exit(1, "%s", usage);
-		}
-		break;
-	    case 'c':	/* ignore colors */
-		ignore_colors = 1;
-		break;
-	    case 'd':	/* debug */
-		bu_debug = BU_DEBUG_COREDUMP;
-		break;
-	    case 't':	/* tolerance */
-		tol = atof(bu_optarg);
-		tol_sq = tol * tol;
-		break;
-	    case 'v':	/* verbose */
-		verbose = 1;
-		break;
-	    default:
-		bu_exit(1, "%s", usage);
-	}
+    args.tolerance = tol;
+    args.scale_factor = 1.0;
+    introspection = bu_arg_introspect(&msg, &dxf_g_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
     }
-
-    if (argc - bu_optind != 2) {
-	bu_exit(1, "%s", usage);
+    operand_index = bu_arg_schema_parse_complete(&dxf_g_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return dxf_g_help(stderr, EXIT_FAILURE);
     }
+    bu_vls_free(&msg);
+    if (args.help)
+	return dxf_g_help(stdout, EXIT_SUCCESS);
 
-    dxf_file = argv[bu_optind++];
-    output_file = argv[bu_optind];
+    ignore_colors = args.ignore_colors;
+    if (args.debug)
+	bu_debug = BU_DEBUG_COREDUMP;
+    verbose = args.verbose;
+    tol = args.tolerance;
+    tol_sq = tol * tol;
+    scale_factor = args.scale_factor;
+    dxf_file = argv[operand_index + 1];
+    output_file = argv[operand_index + 2];
 
     if ((dxf=fopen(dxf_file, "rb")) == NULL) {
 	perror(dxf_file);

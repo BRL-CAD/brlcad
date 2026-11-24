@@ -36,15 +36,48 @@
 
 /* interface headers */
 #include "bu/app.h"
-#include "bu/getopt.h"
+#include "bu/arg.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/path.h"
 #include "bu/str.h"
+#include "bu/vls.h"
 #include "brlcad_version.h"
 #include "raytrace.h"
 #include "ged.h"
 
 
-const char *usage = "[-o output.dot] input.g [object1 ...]\n";
+struct g_dot_args {
+    int help;
+    const char *output;
+};
+
+static const struct bu_arg_option g_dot_options[] = {
+    BU_ARG_FLAG("h", "help", struct g_dot_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_VALUE("o", "output", struct g_dot_args, output,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "output.dot",
+	"Write or append DOT output to a file instead of standard output"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand g_dot_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 1, 1,
+	"Input BRL-CAD database or - for standard input", NULL),
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 0,
+	BU_ARG_COUNT_UNLIMITED, "Database object to export", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema g_dot_schema = BU_ARG_SCHEMA(
+    "g-dot", "Export a BRL-CAD hierarchy as Graphviz DOT", g_dot_options,
+    g_dot_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar g_dot_grammar = {
+    &g_dot_schema, NULL, NULL
+};
 
 struct output {
     FILE *outfp;
@@ -210,25 +243,18 @@ dot_footer(FILE *outfp)
 }
 
 
-static void
-help(const char *progname)
-{
-    bu_log("Usage: %s %s", progname, usage);
-    bu_log("\n\t-o output.dot   (optional) name of output Graphviz .dot file");
-    bu_log("\n\tinput.g         name of input BRL-CAD .g database");
-    bu_log("\n\tobject1 ...     (optional) name of object(s) to export from .g file\n");
-}
-
-
 int
 main(int ac, char *av[])
 {
+    struct g_dot_args args = {0, NULL};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     int c;
+    int introspection;
+    int operand_index;
 
     const char *argv0 = av[0];
-    const int argc0 = ac;
 
-    char *output = NULL;
+    const char *output = NULL;
     char *input = NULL;
     FILE *out = stdout;
     FILE *in = stdin;
@@ -241,31 +267,31 @@ main(int ac, char *av[])
 
     bu_setprogname(av[0]);
 
-    while ((c = bu_getopt(ac, av, "o:h?")) != -1) {
-	switch (c) {
-	    case 'o':
-		output = bu_strdup(bu_optarg);
-		break;
-	    default:
-		help(argv0);
-		bu_exit(0, NULL);
-		break;
-	}
+    introspection = bu_arg_introspect(&msg, &g_dot_grammar, ac - 1,
+	(const char * const *)(av + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
-    ac -= bu_optind;
-    av += bu_optind;
-
-    /* there should at least be a db filename remaining */
-    if (ac < 1) {
-	help(argv0);
-	if (argc0 > 1) {
-	    bu_exit(2, "ERROR: input geometry database not specified\n");
-	} else {
-	    bu_exit(1, NULL);
-	}
-    } else {
-	input = bu_strdup(av[0]);
+    operand_index = bu_arg_schema_parse_complete(&g_dot_schema, &args,
+	&msg, ac - 1, (const char **)(av + 1));
+    if (operand_index < 0) {
+	bu_log("%s\n", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
     }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&g_dot_schema, "g-dot");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "g-dot help");
+	return 0;
+    }
+    output = args.output;
+    ac -= operand_index + 1;
+    av += operand_index + 1;
+    input = bu_strdup(av[0]);
 
     /* verify input */
     if (input && !(input[0] == '-' && input[1] == '\0')) {
@@ -396,9 +422,6 @@ main(int ac, char *av[])
 
     if (input)
 	bu_free(input, "free input");
-
-    if (output)
-	bu_free(output, "free output");
 
     if (in != stdin)
 	fclose(in);

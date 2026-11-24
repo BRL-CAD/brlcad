@@ -1182,11 +1182,19 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 	gopts.verbosity = g_opts->verbosity;
 	gopts.geom_fast = g_opts->geom_fast;
 	gopts.thread_cnt = g_opts->thread_cnt;
+	gopts.path_display_mode = g_opts->path_display_mode;
 	bu_vls_sprintf(&gopts.fpattern, "%s", bu_vls_cstr(&g_opts->fpattern));
 	bu_vls_sprintf(&gopts.ofile, "%s", bu_vls_cstr(&g_opts->ofile));
 	bu_vls_sprintf(&gopts.hash_infile, "%s", bu_vls_cstr(&g_opts->hash_infile));
 	bu_vls_sprintf(&gopts.hash_outfile, "%s", bu_vls_cstr(&g_opts->hash_outfile));
     }
+
+    auto free_options = [&gopts]() {
+	bu_vls_free(&gopts.fpattern);
+	bu_vls_free(&gopts.ofile);
+	bu_vls_free(&gopts.hash_infile);
+	bu_vls_free(&gopts.hash_outfile);
+    };
 
     if (!gopts.use_names && !gopts.use_geometry) {
 	gopts.use_names = 1;
@@ -1252,6 +1260,7 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 	}
 
 	if (file_infos.empty()) {
+	    free_options();
 	    return BRLCAD_OK;
 	}
 
@@ -1440,6 +1449,7 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
     }
 
     if (fout.is_open()) fout.close();
+    free_options();
     return BRLCAD_OK;
 }
 

@@ -6,16 +6,12 @@
 #include "common.h"
 #include "iges_runtime.h"
 
-#include <cerrno>
-#include <cstdlib>
-#include <limits>
 #include <sstream>
 #include <stdexcept>
 
 #include "bu/file.h"
 #include "bu/app.h"
 #include "bu/log.h"
-#include "bu/opt.h"
 #include "brep.h"
 
 namespace brlcad {
@@ -161,23 +157,6 @@ validate_paths(const std::string &input, const std::vector<std::string> &outputs
 		throw std::runtime_error("input and output destinations must be distinct files");
 	paths.push_back(path);
     }
-}
-
-int
-parse_debug_mask(struct bu_vls *message, size_t argc, const char **argv, void *destination)
-{
-    BU_OPT_CHECK_ARGV0(message, argc, argv, "debug mask");
-    char *end = nullptr;
-    errno = 0;
-    const unsigned long value = std::strtoul(argv[0], &end, 16);
-    if (errno || argv[0][0] == '-' || end == argv[0] || *end ||
-	value > std::numeric_limits<uint32_t>::max()) {
-	if (message)
-	    bu_vls_printf(message, "invalid hexadecimal debug mask: %s", argv[0]);
-	return -1;
-    }
-    *static_cast<uint32_t *>(destination) = static_cast<uint32_t>(value);
-    return 1;
 }
 
 } // namespace iges

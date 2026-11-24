@@ -19,11 +19,8 @@
  */
 #include "common.h"
 
-#include <limits.h>
-
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "analyze.h"
 
 
@@ -35,29 +32,47 @@ struct voxelizeData
 };
 
 
-static int
-parse_voxel_size(const char *arg, fastf_t size[3])
+struct g_voxel_args
 {
-    struct bu_vls msg = BU_VLS_INIT_ZERO;
-    const char *argv[] = {arg};
-    vect_t parsed;
-    int consumed;
+    int help;
+    fastf_t voxel_size[3];
+    int detail;
+    fastf_t threshold;
+};
 
-    consumed = bu_opt_vect_t(&msg, 1, argv, parsed);
-    if (consumed != 1) {
-	if (bu_vls_strlen(&msg) > 0)
-	    bu_log("%s", bu_vls_cstr(&msg));
-	bu_vls_free(&msg);
-	return 0;
-    }
-    bu_vls_free(&msg);
-    if (parsed[0] <= 0.0 || parsed[1] <= 0.0 || parsed[2] <= 0.0) {
-	bu_log("%s: voxel dimensions must be positive\n", bu_getprogname());
-	return 0;
-    }
-    VMOVE(size, parsed);
-    return 1;
-}
+
+static const struct bu_arg_option g_voxel_options[] = {
+    BU_ARG_FLAG("h", "help", struct g_voxel_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_POSITIVE_VECTOR3("s", "size", struct g_voxel_args, voxel_size,
+	"dx/dy/dz",
+	"Set positive XYZ voxel dimensions in millimeters as a packed or quoted triple, or three separate values (default 1/1/1)"),
+    BU_ARG_INTEGER_RANGE("d", "detail", struct g_voxel_args, detail,
+	1, 1, 1, ANALYZE_VOXELIZE_MAX_LEVEL_DETAIL, "rays",
+	"Set positive rays per voxel edge for fill sampling (default 4)"),
+    BU_ARG_NUMBER_RANGE("t", "threshold", struct g_voxel_args, threshold,
+	1, 0.0, 1, 1.0, "fraction",
+	"Write voxels meeting this 0 to 1 fill fraction (default 0.5)"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand g_voxel_operands[] = {
+    BU_ARG_OPERAND("model.g", BU_ARG_VALUE_FILE, 1, 1,
+	"Input BRL-CAD database", NULL),
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1,
+	BU_ARG_COUNT_UNLIMITED, "Object to voxelize", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema g_voxel_schema = BU_ARG_SCHEMA(
+    "g-voxel", "Voxelize BRL-CAD geometry into occupied-cell samples",
+    g_voxel_options, g_voxel_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar g_voxel_grammar = {
+    &g_voxel_schema, NULL, NULL
+};
 
 
 /**
@@ -90,67 +105,42 @@ int
 main(int argc, char **argv)
 {
     static struct rt_i *rtip;
-    static const char *usage = "[-s \"dx dy dz\"] [-d n] [-t f] model.g objects...\n";
+    struct g_voxel_args args = {0, {1.0, 1.0, 1.0}, 4, 0.5};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct voxelizeData dataValues;
-    int levelOfDetail;
-    void *callBackData;
-    int c;
+    int introspection;
+    int operand_index;
     int gottree = 0;
 
     char title[1024] = {0};
 
     bu_setprogname(argv[0]);
 
-    /* Check for command-line arguments.  Make sure we have at least a
-     * geometry file and one geometry object on the command line.
-     */
-    if (argc < 3) {
-	bu_exit(1, "Usage: %s %s", argv[0], usage);
+    introspection = bu_arg_introspect(&msg, &g_voxel_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
-
-    /* default user parameters */
-
-    dataValues.voxelSize[0] = 1.0;
-    dataValues.voxelSize[1] = 1.0;
-    dataValues.voxelSize[2] = 1.0;
-
-    dataValues.threshold = 0.5;
-
-    levelOfDetail = 4;
-
-    bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, (const char *)"s:d:t:")) != -1) {
-	switch (c) {
-	    case 's':
-		if (!parse_voxel_size(bu_optarg, dataValues.voxelSize)) {
-		    bu_exit(1, "Usage: %s %s", argv[0], usage);
-		}
-		break;
-
-	    case 'd':
-		if (!bu_opt_scan_int_range(bu_optarg, &levelOfDetail, 1,
-			ANALYZE_VOXELIZE_MAX_LEVEL_DETAIL, "detail level")) {
-		    bu_exit(1, "Usage: %s %s", argv[0], usage);
-		}
-		break;
-
-	    case 't': {
-		double threshold;
-
-		if (!bu_opt_scan_double_range(bu_optarg, &threshold, 0.0, 1.0,
-			"fill threshold")) {
-		    bu_exit(1, "Usage: %s %s", argv[0], usage);
-		}
-		dataValues.threshold = (fastf_t)threshold;
-		break;
-	    }
-
-	    default:
-		bu_exit(1, "Usage: %s %s", argv[0], usage);
-	}
+    operand_index = bu_arg_schema_parse_complete(&g_voxel_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s\n", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
     }
-    argc -= bu_optind;
-    argv += bu_optind;
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&g_voxel_schema, "g-voxel");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "g-voxel help");
+	return 0;
+    }
+    VMOVE(dataValues.voxelSize, args.voxel_size);
+    dataValues.threshold = args.threshold;
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
 
     /* Load the specified geometry database (i.e., a ".g" file).
      * rt_dirbuild() returns an "instance" pointer which describes the
@@ -181,10 +171,9 @@ main(int argc, char **argv)
     if (gottree != 0) {
 	VMOVE(dataValues.bbMin, rtip->mdl_min);
 
-	callBackData = (void *)(& dataValues);
-
 	/* work horse */
-	voxelize(rtip, dataValues.voxelSize, levelOfDetail, printToFile, callBackData);
+	voxelize(rtip, dataValues.voxelSize, args.detail, printToFile,
+		(void *)&dataValues);
     }
 
     rt_i_destroy(rtip);

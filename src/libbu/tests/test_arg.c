@@ -91,6 +91,12 @@ test_scalar_readers(void)
     CHECK_READER(!bu_arg_unsigned_integer_from_str(NULL, &unsigned_integer,
 	" -1", 10) && unsigned_integer == 255,
 	"whitespace-prefixed negative unsigned integer");
+    CHECK_READER(!bu_arg_unsigned_integer_from_str(NULL, &unsigned_integer,
+	" ff", 16) && unsigned_integer == 255,
+	"whitespace-padded unsigned hexadecimal integer");
+    CHECK_READER(!bu_arg_unsigned_integer_from_str(NULL, &unsigned_integer,
+	"+ff", 16) && unsigned_integer == 255,
+	"signed unsigned hexadecimal integer");
     CHECK_READER(bu_arg_long_range_from_str(NULL, &long_integer, "12", 10,
 	10, 20) && long_integer == 12, "long integer range");
     CHECK_READER(!bu_arg_long_range_from_str(NULL, &long_integer, "21", 10,

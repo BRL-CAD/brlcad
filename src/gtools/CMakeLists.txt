@@ -1,16 +1,16 @@
 brlcad_adddata(gtransfer.c sample_applications)
 
-brlcad_addexec(brep-audit brep-audit.cpp "libbrep;libbv;librt;libbu" NO_INSTALL)
+brlcad_addexec(brep-audit brep-audit.cpp "libbrep;libbv;librt;libbu" NO_INSTALL ARG_SCHEMA)
 brlcad_addexec(ganalyze ganalyze.cpp "libanalyze;librt;libbu;libpkg;${LINENOISE_LIBRARIES}" NO_INSTALL)
 target_include_directories(ganalyze BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio)
 
-brlcad_addexec(gchecker gchecker.cpp "libged;librt;libbu")
+brlcad_addexec(gchecker gchecker.cpp "libged;librt;libbu" ARG_SCHEMA)
 if (TARGET ged-check)
   add_dependencies(gchecker ged-check)
 endif()
-brlcad_addexec(gex "gex.cpp" "libbu;librt")
-brlcad_addexec(glint glint.cpp "librt;${M_LIBRARY}")
-brlcad_addexec(gqa gqa.c "libged;librt")
+brlcad_addexec(gex "gex.cpp" "libbu;librt" ARG_SCHEMA)
+brlcad_addexec(glint glint.cpp "librt;${M_LIBRARY}" ARG_SCHEMA)
+brlcad_addexec(gqa gqa.c "libged;librt" ARG_SCHEMA)
 
 brlcad_addexec(gtransfer gtransfer.c "librt;libpkg" NO_INSTALL)
 

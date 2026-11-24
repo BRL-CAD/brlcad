@@ -31,8 +31,6 @@
 #include "common.h"
 
 /* system headers */
-#include <ctype.h>
-#include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <math.h>
@@ -40,12 +38,13 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/debug.h"
-#include "bu/getopt.h"
+#include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/opt.h"
 #include "bu/str.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -63,6 +62,21 @@ struct refine_rpp
     struct bu_list h;
     point_t min, max;
     fastf_t tolerance;
+};
+
+
+struct g_shell_rect_args {
+    int help;
+    int bot;
+    int no_refine;
+    const char *initial_direction;
+    struct bu_list *refine_boxes;
+    fastf_t edge_tolerance;
+    const char *plot_file;
+    int debug_level;
+    fastf_t cell_size;
+    const char *output_file;
+    unsigned int nmg_debug_mask;
 };
 
 
@@ -109,9 +123,6 @@ static struct xray *xz_rays;
 static struct xray *yz_rays;
 static struct rt_i *rtip;
 static struct bn_tol tol;
-static const char *usage=
-    "[-a rpp_args] [-R edge_tol] [-p plotfile] [-X lvl]\n"
-    "\t[-d debug_level] [-b] [-n] [-i initial_ray_dir] [-g cell_size] -o brlcad_output_file database.g object1 object2...\n";
 static char dir_ch[3]={ 'X', 'Y', 'Z' };
 
 static struct local_part *xy_parts=(struct local_part *)NULL;
@@ -126,8 +137,8 @@ static fastf_t cell_size_sq=2500.0;
 static fastf_t edge_tol=0.0;
 static struct rt_wdb *fd_out=NULL;
 static FILE *fd_plot=NULL;
-static char *output_file=(char *)NULL;
-static char *plotfile;
+static const char *output_file=NULL;
+static const char *plotfile;
 static short vert_ids[8]={1, 2, 4, 8, 16, 32, 64, 128};
 static int debug=0;
 static const char *token_seps=" \t, ;\n";
@@ -226,79 +237,64 @@ static int bot=0;
 #define OUTSIDE 2
 #define INSIDE 3
 
-static void
-print_usage(const char *progname, int status)
-{
-    bu_exit(status, "Usage: %s %s", progname, usage);
-}
-
-
 static int
-parse_nmg_debug(const char *arg, unsigned int *value)
-{
-    unsigned long parsed;
-    char *end = NULL;
-
-    if (!arg || !arg[0] || !value || isspace((unsigned char)arg[0]) ||
-	arg[0] == '+' || arg[0] == '-')
-	return 0;
-
-    errno = 0;
-    parsed = strtoul(arg, &end, 16);
-    if (errno != 0 || end == arg || *end != '\0' || parsed > UINT_MAX)
-	return 0;
-
-    *value = (unsigned int)parsed;
-    return 1;
-}
-
-
-static struct refine_rpp *
-parse_refine_rpp(const char *arg)
+parse_refine_rpp(struct bu_vls *msg, const char *arg, void *storage)
 {
     double values[7];
     char *copy;
     char *token;
     size_t i;
-    struct refine_rpp *rpp;
+    struct refine_rpp *rpp = NULL;
+    struct bu_list *head = storage ? *((struct bu_list **)storage) : NULL;
 
-    if (!arg)
-	return NULL;
+    if (!arg) {
+	if (msg)
+	    bu_vls_strcat(msg, "refinement box value is missing\n");
+	return -1;
+    }
 
     copy = bu_strdup(arg);
     token = strtok(copy, token_seps);
     for (i = 0; i < 7; i++) {
 	if (!token) {
-	    bu_log("%s: refinement box requires exactly seven values\n",
-		    bu_getprogname());
+	    if (msg)
+		bu_vls_strcat(msg, "refinement box requires exactly seven values\n");
 	    bu_free(copy, "refinement box option");
-	    return NULL;
+	    return -1;
 	}
-	if (!bu_opt_scan_double(token, &values[i], "refinement box value")) {
+	if (!bu_arg_double_from_str(msg, &values[i], token)) {
 	    bu_free(copy, "refinement box option");
-	    return NULL;
+	    return -1;
 	}
 	token = strtok(NULL, token_seps);
     }
     if (token) {
-	bu_log("%s: refinement box requires exactly seven values\n",
-		bu_getprogname());
+	if (msg)
+	    bu_vls_strcat(msg, "refinement box requires exactly seven values\n");
 	bu_free(copy, "refinement box option");
-	return NULL;
+	return -1;
     }
     bu_free(copy, "refinement box option");
 
     if (values[0] <= 0.0) {
-	bu_log("%s: refinement box tolerance must be positive\n",
-		bu_getprogname());
-	return NULL;
+	if (msg)
+	    bu_vls_strcat(msg, "refinement box tolerance must be positive\n");
+	return -1;
     }
     for (i = 0; i < 3; i++) {
 	if (values[i + 1] > values[i + 4]) {
-	    bu_log("%s: refinement box minimum exceeds its maximum\n",
-		    bu_getprogname());
-	    return NULL;
+	    if (msg)
+		bu_vls_strcat(msg, "refinement box minimum exceeds its maximum\n");
+	    return -1;
 	}
+    }
+
+    if (!storage)
+	return 0;
+    if (!head) {
+	if (msg)
+	    bu_vls_strcat(msg, "refinement box storage is unavailable\n");
+	return -1;
     }
 
     rpp = (struct refine_rpp *)bu_malloc(sizeof(struct refine_rpp),
@@ -308,7 +304,88 @@ parse_refine_rpp(const char *arg)
 	rpp->min[i] = (fastf_t)values[i + 1];
 	rpp->max[i] = (fastf_t)values[i + 4];
     }
-    return rpp;
+    BU_LIST_APPEND(head, &rpp->h);
+    return 0;
+}
+
+
+static const char * const direction_x_aliases[] = {"X", NULL};
+static const char * const direction_y_aliases[] = {"Y", NULL};
+static const char * const direction_z_aliases[] = {"Z", NULL};
+static const struct bu_arg_value_keyword direction_values[] = {
+    {"x", direction_x_aliases, "Fire the initial ray grid along the X axis"},
+    {"y", direction_y_aliases, "Fire the initial ray grid along the Y axis"},
+    {"z", direction_z_aliases, "Fire the initial ray grid along the Z axis"},
+    {NULL, NULL, NULL}
+};
+
+static const struct bu_arg_option g_shell_rect_options[] = {
+    BU_ARG_FLAG("h", "help", struct g_shell_rect_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("b", "bot", struct g_shell_rect_args, bot,
+	"Write a Bag of Triangles instead of an NMG solid"),
+    BU_ARG_FLAG("n", "no-refine", struct g_shell_rect_args, no_refine,
+	"Skip the additional ray grids used to refine the initial shell"),
+    BU_ARG_KEYWORD_VALUES("i", "initial-direction", struct g_shell_rect_args,
+	initial_direction, "axis",
+	"Force the initial ray direction instead of selecting the largest projected area",
+	direction_values),
+    BU_ARG_CUSTOM("a", "refine-box", struct g_shell_rect_args, refine_boxes,
+	parse_refine_rpp, "specification",
+	"Add a refinement box as: tolerance min-x min-y min-z max-x max-y max-z; may be repeated"),
+    BU_ARG_VALUE_VALIDATE("R", "edge-tolerance", struct g_shell_rect_args,
+	edge_tolerance, BU_ARG_VALUE_NUMBER, bu_arg_nonnegative_number_validate,
+	"distance", "Set the nonnegative edge-breaking tolerance (default: 0)"),
+    BU_ARG_VALUE("p", "plot-file", struct g_shell_rect_args, plot_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file",
+	"Write a vdraw-style plot of edge-breaking refinement steps"),
+    BU_ARG_INTEGER_RANGE("d", "debug", struct g_shell_rect_args, debug_level,
+	1, 0, 1, INT_MAX, "level", "Set the nonnegative diagnostic level"),
+    BU_ARG_VALUE_VALIDATE("g", "cell-size", struct g_shell_rect_args,
+	cell_size, BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate,
+	"millimeters", "Set the ray-grid spacing (default: 50 mm)"),
+    BU_ARG_VALUE("o", "output", struct g_shell_rect_args, output_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "output.g",
+	"Write the generated shell to this BRL-CAD database"),
+    BU_ARG_VALUE("X", "nmg-debug", struct g_shell_rect_args, nmg_debug_mask,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set the NMG hexadecimal debug flags"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand g_shell_rect_operands[] = {
+    BU_ARG_OPERAND("database.g", BU_ARG_VALUE_FILE, 1, 1,
+	"Input BRL-CAD database", NULL),
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1, BU_ARG_COUNT_UNLIMITED,
+	"Database object to approximate", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const char * const g_shell_rect_output_options[] = {"output", NULL};
+static const struct bu_arg_constraint g_shell_rect_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS,
+	g_shell_rect_output_options, 1, 1, "--output is required"),
+    BU_ARG_CONSTRAINT_NULL
+};
+
+static const struct bu_arg_schema g_shell_rect_schema = BU_ARG_SCHEMA(
+    "g-shell-rect", "Approximate BRL-CAD geometry with a ray-traced closed shell",
+    g_shell_rect_options, g_shell_rect_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, g_shell_rect_constraints, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar g_shell_rect_grammar = {
+    &g_shell_rect_schema, NULL, NULL
+};
+
+static int
+g_shell_rect_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&g_shell_rect_schema, "g-shell-rect");
+
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "g-shell-rect help");
+    return status;
 }
 
 
@@ -1728,12 +1805,17 @@ r_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(se
 int
 main(int argc, char **argv)
 {
+    struct g_shell_rect_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    const char * const *operands;
+    size_t operand_count;
     char idbuf[132];
     struct application ap;
     size_t i, j;
     size_t loaded = 0;
-    int c;
     int shell_created;
+    int introspection;
+    int operand_index;
     fastf_t x_start, y_start, z_start;
     fastf_t bb_area[3];
     struct bu_list *vlfree = &rt_vlfree;
@@ -1754,96 +1836,49 @@ main(int argc, char **argv)
     BU_LIST_INIT(&add_rpp_head);
     BU_LIST_INIT(&subtract_rpp_head);
 
-    /* Get command line arguments. */
-    while ((c=bu_getopt(argc, argv, "bi:a:nR:g:o:d:p:X:h?")) != -1) {
-	switch (c) {
-	    case 'i':	/* set initial ray direction */
-		if (strlen(bu_optarg) != 1)
-		    bu_exit(1, "Illegal ray direction (%s), must be X, Y, or Z!\n", bu_optarg);
-		switch (*bu_optarg) {
-		    case 'x':
-		    case 'X':
-
-			initial_ray_dir = X;
-			break;
-		    case 'y':
-		    case 'Y':
-			initial_ray_dir = Y;
-			break;
-		    case 'z':
-		    case 'Z':
-			initial_ray_dir = Z;
-			break;
-		    default:
-			bu_exit(1, "Illegal ray direction (%c), must be X, Y, or Z!\n", *bu_optarg);
-		}
-		break;
-	    case 'a': {
-		/* add an rpp for refining */
-		struct refine_rpp *rpp = parse_refine_rpp(bu_optarg);
-
-		if (!rpp)
-		    return 1;
-
-		BU_LIST_APPEND(&add_rpp_head, &rpp->h);
-	    }
-		break;
-	    case 'n':	/* don't do extra raytracing to refine shape */
-		do_extra_rays = 0;
-		break;
-	    case 'R': {	/* do edge breaking */
-		double value;
-		if (!bu_opt_scan_double(bu_optarg, &value, "edge tolerance") ||
-		    value < 0.0)
-		    bu_exit(1, "Edge tolerance must be nonnegative\n");
-		edge_tol = (fastf_t)value;
-		break;
-	    }
-	    case 'p':	/* plot edge breaking */
-		plotfile = bu_optarg;
-		break;
-	    case 'd':	/* debug level */
-		if (!bu_opt_scan_int_range(bu_optarg, &debug, 0, INT_MAX,
-			"debug level"))
-		    return 1;
-		break;
-	    case 'g': {	/* cell size */
-		double value;
-		if (!bu_opt_scan_double(bu_optarg, &value, "cell size") ||
-		    value <= 0.0)
-		    bu_exit(1, "Cell size must be positive\n");
-		cell_size = (fastf_t)value;
-		cell_size_sq = cell_size * cell_size;
-		break;
-	    }
-	    case 'o':	/* BRL-CAD output file */
-		output_file = bu_optarg;
-		break;
-	    case 'b':	/* Output a BOT rather than an NMG */
-		bot = 1;
-		break;
-	    case 'X':	/* nmg debug flags */
-		if (!parse_nmg_debug(bu_optarg, &nmg_debug))
-		    bu_exit(1, "Invalid hexadecimal NMG debug flags (%s)\n", bu_optarg);
-		bu_log("%s: setting nmg_debug to x%x\n", argv[0], nmg_debug);
-		break;
-	    case 'h':
-		print_usage(argv[0], 0);
-		break;
-	    case '?':
-		print_usage(argv[0], bu_optind > 0 &&
-		    BU_STR_EQUAL(argv[bu_optind - 1], "-?") ? 0 : 1);
-		break;
-	    default:
-		print_usage(argv[0], 1);
-	}
+    introspection = bu_arg_introspect(&msg, &g_shell_rect_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
 
-    if (bu_optind+1 >= argc)
-	print_usage(argv[0], 1);
+    args.refine_boxes = &add_rpp_head;
+    args.cell_size = cell_size;
+    operand_index = bu_arg_schema_parse_complete(&g_shell_rect_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return g_shell_rect_help(stdout, 0);
 
-    if (!output_file)
-	bu_exit(1, "ERROR: Output file must be specified!\n");
+    operands = (const char * const *)(argv + operand_index + 1);
+    operand_count = (size_t)(argc - operand_index - 1);
+    bot = args.bot;
+    do_extra_rays = !args.no_refine;
+    edge_tol = args.edge_tolerance;
+    plotfile = args.plot_file;
+    debug = args.debug_level;
+    cell_size = args.cell_size;
+    cell_size_sq = cell_size * cell_size;
+    output_file = args.output_file;
+    nmg_debug = args.nmg_debug_mask;
+    if (args.initial_direction) {
+	if (BU_STR_EQUAL(args.initial_direction, "x"))
+	    initial_ray_dir = X;
+	else if (BU_STR_EQUAL(args.initial_direction, "y"))
+	    initial_ray_dir = Y;
+	else
+	    initial_ray_dir = Z;
+    }
+    if (nmg_debug)
+	bu_log("%s: setting nmg_debug to x%x\n", argv[0], nmg_debug);
+
     if ((fd_out = wdb_fopen(output_file)) == NULL) {
 	perror(argv[0]);
 	bu_exit(1, "ERROR: Cannot open output file (%s)\n", output_file);
@@ -1858,8 +1893,8 @@ main(int argc, char **argv)
     }
 
     /* Open BRL-CAD database */
-    if ((rtip = rt_dirbuild(argv[bu_optind], idbuf, sizeof(idbuf))) == RTI_NULL) {
-	bu_exit(1, "ERROR: rt_dirbuild FAILED on %s\n", argv[bu_optind]);
+    if ((rtip = rt_dirbuild(operands[0], idbuf, sizeof(idbuf))) == RTI_NULL) {
+	bu_exit(1, "ERROR: rt_dirbuild FAILED on %s\n", operands[0]);
     }
 
     rtip->rti_space_partition = RT_PART_NUBSPT;
@@ -1872,9 +1907,9 @@ main(int argc, char **argv)
     ap.a_logoverlap = rt_silent_logoverlap;
     ap.a_onehit = 0;
 
-    while (++bu_optind < argc) {
-	if (rt_gettree(rtip, argv[bu_optind]) < 0)
-	    bu_log("rt_gettree failed on %s\n", argv[bu_optind]);
+    for (i = 1; i < operand_count; i++) {
+	if (rt_gettree(rtip, operands[i]) < 0)
+	    bu_log("rt_gettree failed on %s\n", operands[i]);
 	else
 	    loaded++;
     }

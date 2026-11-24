@@ -43,44 +43,60 @@
 #include <string>
 #include <vector>
 
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/file.h"
-#include "bu/opt.h"
 #include "bu/path.h"
 #include "ged.h"
 
+struct gchecker_args {
+    int print_help;
+    int dry_run;
+    int verbose;
+    int force;
+};
+
+static const struct bu_arg_option gchecker_options[] = {
+    BU_ARG_FLAG("d", "dry-run", struct gchecker_args, dry_run,
+	"Step through the checker stages without ray tracing"),
+    BU_ARG_FLAG("v", "verbose", struct gchecker_args, verbose,
+	"Print verbose result-processing information"),
+    BU_ARG_FLAG("f", "force", struct gchecker_args, force,
+	"Overwrite an existing .ck directory"),
+    BU_ARG_FLAG("h", "help", struct gchecker_args, print_help, "Print help and exit"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand gchecker_operands[] = {
+    BU_ARG_OPERAND("file.g", BU_ARG_VALUE_FILE, 1, 1, "Geometry database to check", NULL),
+    BU_ARG_OPERAND("objects", BU_ARG_VALUE_DB_OBJECT, 0, BU_ARG_COUNT_UNLIMITED,
+	"Objects to check (default: all top-level objects)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema gchecker_schema = BU_ARG_SCHEMA(
+    "gchecker", "Check geometry using staged ray tracing", gchecker_options,
+    gchecker_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
 static void
-_cmd_help(const char *usage, struct bu_opt_desc *d)
+gchecker_help(void)
 {
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-    char *option_help;
-
-    bu_vls_sprintf(&str, "%s", usage);
-
-    if ((option_help = bu_opt_describe(d, NULL))) {
-        bu_vls_printf(&str, "Options:\n%s\n", option_help);
-        bu_free(option_help, "help str");
-    }
-
-    bu_log("%s", bu_vls_cstr(&str));
-    bu_vls_free(&str);
+    char *help = bu_arg_schema_help(&gchecker_schema, bu_getprogname());
+    if (help)
+	bu_log("%s", help);
+    bu_free(help, "help str");
 }
 
 
 int
 main(int argc, const char **argv)
 {
-    int print_help = 0;
-    int dry_run = 0;
-    int verbose = 0;
-    int force = 0;
-    const char *usage = "Usage: gchecker [options] file.g  [objects ...]\n\n";
-    struct bu_opt_desc d[5];
-    BU_OPT(d[0], "d", "dry-run", "",  NULL, &dry_run,     "Step through the checker stages, but don't raytrace");
-    BU_OPT(d[1], "v", "verbose", "",  NULL, &verbose,     "Print verbose information about result processing");
-    BU_OPT(d[2], "f", "force",   "",  NULL, &force,       "Overwrite existing .ck directory");
-    BU_OPT(d[3], "h", "help",    "",  NULL, &print_help,  "Print help and exit");
-    BU_OPT_NULL(d[4]);
+    const struct bu_arg_grammar grammar = {&gchecker_schema, NULL, NULL};
+    struct gchecker_args args = {};
+    int &dry_run = args.dry_run;
+    int &verbose = args.verbose;
+    int &force = args.force;
 
     std::set<std::pair<std::string, std::string>> unique_pairs;
     std::multimap<std::pair<std::string, std::string>, double> pair_sizes;
@@ -89,29 +105,41 @@ main(int argc, const char **argv)
 
     bu_setprogname(argv[0]);
 
+    struct bu_vls schema_output = BU_VLS_INIT_ZERO;
+    int schema_status = bu_arg_introspect(&schema_output, &grammar, argc - 1,
+	argv + 1);
+    if (schema_status != 0) {
+	bu_flog(schema_status > 0 ? stdout : stderr, "%s", bu_vls_cstr(&schema_output));
+	bu_vls_free(&schema_output);
+	return schema_status > 0 ? 0 : 1;
+    }
+    bu_vls_free(&schema_output);
+
     argc-=(argc>0); argv+=(argc>0);
 
-       /* must be wanting help */
+    /* must be wanting help */
     if (argc < 1) {
-        _cmd_help(usage, d);
+        gchecker_help();
         return 0;
     }
 
-    /* parse standard options */
-    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
-
-    if (print_help) {
-        _cmd_help(usage, d);
-        return 0;
-    }
-
-    /* adjust argc to match the leftovers of the options parsing */
-    argc = opt_ret;
-
-    if (argc < 1) {
-	_cmd_help(usage, d);
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int operand_index = bu_arg_schema_parse_complete(&gchecker_schema, &args,
+	&msg, argc, argv);
+    if (operand_index < 0) {
+	bu_log("%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
 	return 1;
     }
+    bu_vls_free(&msg);
+
+    if (args.print_help) {
+        gchecker_help();
+        return 0;
+    }
+
+    argc -= operand_index;
+    argv += operand_index;
 
     // Have programs - see if we have the .g file
     struct bu_vls gfile = BU_VLS_INIT_ZERO;

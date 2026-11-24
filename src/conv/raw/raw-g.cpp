@@ -42,6 +42,37 @@ extern "C" b_off_t ftello(FILE *);
 #include "RegionList.h"
 
 #include "bu/app.h"
+#include "bu/arg.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+
+struct raw_g_args {
+    int help;
+};
+
+static const struct bu_arg_option raw_g_options[] = {
+    BU_ARG_FLAG("h", "help", struct raw_g_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand raw_g_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 1, 1,
+	"Input RAW triangle file", NULL),
+    BU_ARG_OPERAND("output", BU_ARG_VALUE_FILE, 1, 1,
+	"Output BRL-CAD database", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema raw_g_schema = BU_ARG_SCHEMA(
+    "raw-g", "Convert RAW triangle geometry to a BRL-CAD database",
+    raw_g_options, raw_g_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar raw_g_grammar = {
+    &raw_g_schema, NULL, NULL
+};
 
 static std::vector<std::string> readLine(std::istream& is)
 {
@@ -88,27 +119,48 @@ getPoint(const std::string &x, const std::string &y, const std::string &z, point
 int main(int   argc,
 	 char* argv[])
 {
-    int        ret = 0;
+    struct raw_g_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int ret = 0;
 
     bu_setprogname(argv[0]);
 
+    int introspection = bu_arg_introspect(&msg, &raw_g_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&raw_g_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_log("%s\n", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&raw_g_schema, "raw-g");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "raw-g help");
+	return 0;
+    }
+    const char *raw_file = argv[operand_index + 1];
+    const char *database = argv[operand_index + 2];
+
     RegionList regions;
 
-    if (argc < 3) {
-	std::cout << "Usage: " << argv[0] << " <RAW file> <BRL-CAD file>" << std::endl;
-	ret = 1;
-    }
-    else {
-	std::ifstream is(argv[1]);
+    std::ifstream is(raw_file);
 
-	if (!is.is_open()) {
-	    std::cout << "Error reading RAW file" << std::endl;
-	    ret = 1;
-	}
-	else {
-	    struct rt_wdb* wdbp = wdb_fopen(argv[2]);
+    if (!is.is_open()) {
+	std::cout << "Error reading RAW file" << std::endl;
+	ret = 1;
+
+    } else {
+	    struct rt_wdb* wdbp = wdb_fopen(database);
 	    std::string title = "Converted from ";
-	    title += argv[1];
+	    title += raw_file;
 
 	    mk_id(wdbp, title.c_str());
 
@@ -164,7 +216,6 @@ int main(int   argc,
 
 	    regions.create(wdbp);
 	    db_close(wdbp->dbip);
-	}
     }
 
     regions.printStat();

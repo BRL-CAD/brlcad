@@ -34,9 +34,9 @@
 #include "bio.h"
 
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/debug.h"
 #include "bu/file.h"
-#include "bu/opt.h"
 #include "bu/units.h"
 #include "vmath.h"
 #include "rt/db4.h"
@@ -64,17 +64,33 @@ void	strsol_dump(void);
 
 union record	record;		/* GED database record */
 
-static const char usage[] = "\
-Usage: g2asc file.g file.asc\n\
- Convert a binary BRL-CAD database to machine-independent ASCII form\n\
-";
-
 FILE	*ifp;
 FILE	*ofp;
 const char	*iname = "-";
 
 static char *tclified_name=NULL;
 static size_t tclified_name_buffer_len=0;
+
+struct g2asc_args {
+    int help;
+};
+
+static const struct bu_arg_option g2asc_options[] = {
+    BU_ARG_FLAG("h", "help", struct g2asc_args, help, "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand g2asc_operands[] = {
+    BU_ARG_OPERAND("file.g", BU_ARG_VALUE_FILE, 1, 1, "Input BRL-CAD database", NULL),
+    BU_ARG_OPERAND("file.asc", BU_ARG_VALUE_FILE, 1, 1, "Output ASCII database", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema g2asc_schema = BU_ARG_SCHEMA(
+    "g2asc", "Convert a binary BRL-CAD database to machine-independent ASCII form",
+    g2asc_options, g2asc_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
 
 
 /*	This routine escapes the '{' and '}' characters in any string and returns a static buffer containing the
@@ -115,35 +131,41 @@ tclify_name(const char *name)
 int
 main(int argc, char **argv)
 {
+    const struct bu_arg_grammar grammar = {&g2asc_schema, NULL, NULL};
     unsigned i;
-    int need_help = 0;
+    struct g2asc_args args = {0};
 
     bu_setprogname(argv[0]);
-    Tcl_FindExecutable(argv[0]);
 
-    struct bu_opt_desc d[3];
-    BU_OPT(d[0], "h", "help",        "",         NULL,        &need_help, "Print help   and exit");
-    BU_OPT(d[1], "?", "",            "",         NULL,        &need_help, "");
-    BU_OPT_NULL(d[2]);
+    struct bu_vls schema_output = BU_VLS_INIT_ZERO;
+    int schema_status = bu_arg_introspect(&schema_output, &grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (schema_status != 0) {
+	bu_flog(schema_status > 0 ? stdout : stderr, "%s", bu_vls_cstr(&schema_output));
+	bu_vls_free(&schema_output);
+	return schema_status > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+    bu_vls_free(&schema_output);
+
+    Tcl_FindExecutable(argv[0]);
 
     /* Skip first arg */
     argv++; argc--;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
-    int uac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d);
+    int operand_index = bu_arg_schema_parse_complete(&g2asc_schema, &args,
+	&optparse_msg, argc, (const char **)argv);
 
-    if (uac == -1) {
+    if (operand_index < 0) {
 	bu_exit(EXIT_FAILURE, "%s", bu_vls_addr(&optparse_msg));
     }
     bu_vls_free(&optparse_msg);
 
-    argc = uac;
+    argc -= operand_index;
+    argv += operand_index;
 
-    if (need_help) {
-	bu_exit(EXIT_SUCCESS, "%s", usage);
-    }
-
-    if (argc != 2) {
-	bu_exit(1, "%s", usage);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&g2asc_schema, "g2asc");
+	bu_exit(EXIT_SUCCESS, "%s", help ? help : "");
     }
 
     setmode(fileno(stdin), O_BINARY);
@@ -188,7 +210,7 @@ main(int argc, char **argv)
     }
 
     if (isatty(fileno(ifp))) {
-	bu_exit(1, "%s", usage);
+	bu_exit(1, "Usage: g2asc [options] file.g file.asc\n");
     }
 
     /* First, determine what version database this is */

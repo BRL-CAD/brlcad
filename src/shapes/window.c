@@ -37,11 +37,57 @@
 #include "rt/db4.h"
 #include "vmath.h"
 #include "bu/app.h"
+#include "bu/arg.h"
+#include "bu/malloc.h"
+#include "bu/vls.h"
 #include "raytrace.h"
 #include "wdb.h"
 
 static const char explain[]   = "This program constructs a window with all\n\
 edges and corners rounded.\n";
+
+struct window_args {
+    int help;
+    const char *output_file;
+    int count;
+    double height;
+    double width;
+    double depth;
+    double radius;
+};
+
+static const struct bu_arg_option window_options[] = {
+    BU_ARG_FLAG("h", "help", struct window_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_VALUE("f", "output", struct window_args, output_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "database.g",
+	"Write the generated geometry to this database"),
+    BU_ARG_INTEGER_RANGE("n", "count", struct window_args, count,
+	1, 1, 1, 256, "count", "Create this many windows"),
+    BU_ARG_VALUE_VALIDATE("H", "height", struct window_args, height,
+	BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate, "height",
+	"Set the positive window height in millimeters"),
+    BU_ARG_VALUE_VALIDATE("w", "width", struct window_args, width,
+	BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate, "width",
+	"Set the positive window width in millimeters"),
+    BU_ARG_VALUE_VALIDATE("d", "depth", struct window_args, depth,
+	BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate, "depth",
+	"Set the positive window depth in millimeters"),
+    BU_ARG_VALUE_VALIDATE("r", "radius", struct window_args, radius,
+	BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate, "radius",
+	"Set the positive rounded-corner radius in millimeters"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema window_schema = BU_ARG_SCHEMA(
+    "window", "Create a BRL-CAD database of rounded windows",
+    window_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar window_grammar = {
+    &window_schema, NULL, NULL
+};
 
 int
 main(int argc, char **argv)
@@ -58,9 +104,6 @@ main(int argc, char **argv)
     point_t bs;			/* Base of rcc. */
     vect_t ht;			/* Height of rcc. */
     fastf_t rad;		/* Radius of rcc. */
-    char *temp;			/* Temporary character string. */
-    char temp1[NAME_LEN+1];	/* Temporary character string. */
-
     char solnam[8];		/* Solid name. */
     char regnam[8];		/* Region name. */
     char grpnam[5];		/* Group name. */
@@ -73,6 +116,15 @@ main(int argc, char **argv)
     int ret;
 
     bu_setprogname(argv[0]);
+
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int introspection = bu_arg_introspect(&msg, &window_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
 
     /* Set up solid, region, and group names. */
     solnam[0] = 's';
@@ -162,71 +214,28 @@ main(int argc, char **argv)
 
     /* If there are arguments get answers from arguments. */
     else {
-	/* START # 4 */
-	/* List options. */
-	/* -h or -? help page */
-	/* -fname - name = mged file name. */
-	/* -n# - # = number of windows. */
-	/* -H# - # = height of window in mm. */
-	/* -w# - # = width of window in mm. */
-	/* -d# - # = depth of window in mm. */
-	/* -r# - # = radius of window corner in mm. */
-
-	for (i=1; i<argc; i++) {
-	    /* START # 5 */
-	    /* Put argument in temporary character string. */
-	    temp = argv[i];
-
-	    if (temp[1] == 'h' || temp[1] == '?') {
-	    	fprintf(stderr,"%s",explain);
-		fprintf(stderr,"Usage: window -fname [-f mged_file_name] [-n #_of_windows] [-H window_height]\n");
-		fprintf(stderr,"       [-w window_width] [-d window_depth] [-r radius_of_corners]");
-		bu_exit(2,     "       (units of mm)\n");
-	    }
-
-	    /* -f - mged file. */
-	    if (temp[1] == 'f') {
-		/* START # 6 */
-		j = 2;
-		k = 0;
-		while ((temp[j] != '\0') && (k < NAME_LEN)) {
-		    /* START # 7 */
-		    filemged[k] = temp[j];
-		    j++;
-		    k++;
-		}					/* END # 7 */
-		filemged[k] = '\0';
-	    }						/* END # 6 */
-
-	    /* All other options. */
-	    else {
-		/* START # 8 */
-		/* Set up temporary character string. */
-		j = 2;
-		k = 0;
-		while ((temp[j] != '\0') && (k < NAME_LEN)) {
-		    /* START # 9 */
-		    temp1[k] = temp[j];
-		    j++;
-		    k++;
-		}					/* END # 9 */
-		temp1[k] = '\0';
-		if (temp[1] == 'n') {
-		    sscanf(temp1, "%d", &numwin);
-		    if (numwin > NAME_LEN)
-			numwin = NAME_LEN;
-		} else if (temp[1] == 'H') {
-		    sscanf(temp1, "%lf", &hgt);
-		} else if (temp[1] == 'w') {
-		    sscanf(temp1, "%lf", &wid);
-		} else if (temp[1] == 'd') {
-		    sscanf(temp1, "%lf", &dpt);
-		} else if (temp[1] == 'r') {
-		    sscanf(temp1, "%lf", &rds);
-		}
-	    }						/* END # 8 */
-	}						/* END # 5 */
-    }							/* END # 4 */
+	struct window_args args = {0};
+	if (bu_arg_schema_parse_complete(&window_schema, &args, &msg, argc - 1,
+		(const char **)(argv + 1)) < 0)
+	    bu_exit(1, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	if (args.help) {
+	    char *help = bu_arg_schema_help(&window_schema, "window");
+	    bu_flog(stdout, "%s", help ? help : "");
+	    bu_free(help, "window help");
+	    return 0;
+	}
+	if (args.output_file) {
+	    if (strlen(args.output_file) > NAME_LEN)
+		bu_exit(1, "Output filename exceeds %d characters\n", NAME_LEN);
+	    bu_strlcpy(filemged, args.output_file, sizeof(filemged));
+	}
+	numwin = args.count;
+	hgt = args.height;
+	wid = args.width;
+	dpt = args.depth;
+	rds = args.radius;
+    }
 
     /* Print out all info. */
     printf("\nmged file:  %s\n", filemged);

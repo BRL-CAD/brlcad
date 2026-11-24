@@ -34,7 +34,9 @@
 #include <string.h>
 
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"
@@ -43,6 +45,34 @@
 #include "wdb.h"
 
 static struct bn_tol tol;
+
+struct off_g_args {
+    int help;
+};
+
+static const struct bu_arg_option off_g_options[] = {
+    BU_ARG_FLAG("h", "help", struct off_g_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand off_g_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 1, 1,
+	"Input OFF descriptor file", NULL),
+    BU_ARG_OPERAND("output", BU_ARG_VALUE_FILE, 1, 1,
+	"Output BRL-CAD database", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema off_g_schema = BU_ARG_SCHEMA(
+    "off-g", "Convert a DEC Object File Format model to BRL-CAD",
+    off_g_options, off_g_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar off_g_grammar = {
+    &off_g_schema, NULL, NULL
+};
 
 /*
  * Reads the geometry from the geometry file and creates the appropriate
@@ -221,10 +251,40 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout, struct bu_list *vlfree)
 
 int main(int argc, char **argv)
 {
+    struct off_g_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    const char *input;
+    const char *output;
     FILE *fpin;
     struct rt_wdb *fpout;
+    int introspection;
+    int operand_index;
 
     bu_setprogname(argv[0]);
+
+    introspection = bu_arg_introspect(&msg, &off_g_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    operand_index = bu_arg_schema_parse_complete(&off_g_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_log("%s\n", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 2;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&off_g_schema, "off-g");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "off-g help");
+	return 0;
+    }
+    input = argv[operand_index + 1];
+    output = argv[operand_index + 2];
 
     struct bu_list *vlfree = &rt_vlfree;
 
@@ -234,17 +294,13 @@ int main(int argc, char **argv)
     tol.perp = 0.001;
     tol.para = 0.999;
 
-    /* Get filenames and open the files. */
-    if (argc != 3)  {
-	bu_exit(2, "Usage: off-g file.off file.g\n");
-    }
-    if ((fpin = fopen(argv[1], "r")) == NULL) {
+    if ((fpin = fopen(input, "r")) == NULL) {
 	bu_exit(1, "%s: cannot open %s for reading\n",
-		argv[0], argv[1]);
+		argv[0], input);
     }
-    if ((fpout = wdb_fopen(argv[2])) == NULL) {
+    if ((fpout = wdb_fopen(output)) == NULL) {
 	bu_exit(1, "%s: cannot create %s\n",
-		argv[0], argv[2]);
+		argv[0], output);
     }
 
 

@@ -1,4 +1,4 @@
-brlcad_addexec(vdeck "cgarbs.c;match.c;parsarg.c;vdeck.c" "librt;${M_LIBRARY}" FOLDER Conv)
+brlcad_addexec(vdeck "cgarbs.c;match.c;parsarg.c;vdeck.c" "librt;${M_LIBRARY}" FOLDER Conv ARG_SCHEMA)
 target_include_directories(vdeck BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 cmakefiles(vextern.h)
 cmakefiles(CMakeLists.txt)

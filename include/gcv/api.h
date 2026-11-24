@@ -29,8 +29,8 @@
 #include "common.h"
 #include "vmath.h"
 
+#include "bu/arg.h"
 #include "bu/avs.h"
-#include "bu/opt.h"
 #include "bu/mime.h"
 #include "bn/tol.h"
 #include "rt/defines.h"
@@ -163,14 +163,14 @@ struct gcv_filter {
     /**
      * PRIVATE
      *
-     * Allocate and initialize a bu_opt_desc block and associated memory for
-     * storing the option data.
+     * Return the filter's command-line schema and allocate its associated
+     * option data.
      *
-     * Must set *options_desc and *options_data.
+     * Must set *options_schema and *options_data to non-NULL values.
      *
      * May be NULL.
      */
-    void (* const create_opts_fn)(struct bu_opt_desc **options_desc, void **options_data);
+    void (* const create_opts_fn)(const struct bu_arg_schema **options_schema, void **options_data);
 
     /**
      * PRIVATE

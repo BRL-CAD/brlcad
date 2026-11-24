@@ -28,7 +28,6 @@
 
 #include "common.h"
 #include "vmath.h"
-#include "bu/opt.h"
 #include "bu/vls.h"
 #include "raytrace.h"
 

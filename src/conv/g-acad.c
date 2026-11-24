@@ -39,9 +39,9 @@
 
 /* interface headers */
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/file.h"
 #include "bu/parallel.h"
-#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -53,10 +53,157 @@
 #define ACAD_REGION_COUNT_WIDTH 14
 
 
+struct g_acad_args {
+    struct g_acad_args *self;
+    int help;
+    int verbose;
+    int inches;
+    fastf_t absolute_tolerance;
+    fastf_t relative_tolerance;
+    fastf_t normal_tolerance;
+    fastf_t distance_tolerance;
+    int distance_tolerance_set;
+    int processors_compat;
+    unsigned int rt_debug;
+    unsigned int nmg_debug;
+    const char *error_file;
+    const char *output_file;
+};
+
+enum g_acad_tolerance_kind {
+    G_ACAD_ABSOLUTE_TOLERANCE,
+    G_ACAD_NORMAL_TOLERANCE,
+    G_ACAD_DISTANCE_TOLERANCE
+};
+
+static struct g_acad_args *
+g_acad_args_from_storage(void *storage)
+{
+    return storage ? *(struct g_acad_args **)storage : NULL;
+}
+
+
+static int
+g_acad_tolerance_consume(struct bu_vls *msg, size_t argc, const char **argv,
+	void *storage, enum g_acad_tolerance_kind kind)
+{
+    struct g_acad_args *args = g_acad_args_from_storage(storage);
+    fastf_t value;
+
+    if (argc != 1 || bu_arg_nonnegative_number_validate(msg, argv[0]) < 0 ||
+	!bu_arg_number_from_str(msg, &value, argv[0]))
+	return -1;
+    if (!args)
+	return 0;
+
+    switch (kind) {
+	case G_ACAD_ABSOLUTE_TOLERANCE:
+	    args->absolute_tolerance = value;
+	    args->relative_tolerance = 0.0;
+	    break;
+	case G_ACAD_NORMAL_TOLERANCE:
+	    args->normal_tolerance = value;
+	    args->relative_tolerance = 0.0;
+	    break;
+	case G_ACAD_DISTANCE_TOLERANCE:
+	    args->distance_tolerance = value;
+	    args->distance_tolerance_set = 1;
+	    break;
+    }
+    return 0;
+}
+
+#define G_ACAD_TOLERANCE_CONSUMER(_name, _kind) \
+    static int _name(struct bu_vls *msg, size_t argc, const char **argv, \
+	    void *storage) \
+    { \
+	return g_acad_tolerance_consume(msg, argc, argv, storage, _kind); \
+    }
+
+G_ACAD_TOLERANCE_CONSUMER(g_acad_absolute_tolerance_consume,
+    G_ACAD_ABSOLUTE_TOLERANCE)
+G_ACAD_TOLERANCE_CONSUMER(g_acad_normal_tolerance_consume,
+    G_ACAD_NORMAL_TOLERANCE)
+G_ACAD_TOLERANCE_CONSUMER(g_acad_distance_tolerance_consume,
+    G_ACAD_DISTANCE_TOLERANCE)
+
+static const struct bu_arg_option g_acad_options[] = {
+    BU_ARG_FLAG("h", "help", struct g_acad_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_COUNTING_FLAG("v", "verbose", struct g_acad_args, verbose,
+	BU_ARG_VALUE_FLAG, "Increase conversion progress reporting"),
+    BU_ARG_FLAG("i", "inches", struct g_acad_args, inches,
+	"Write vertex coordinates in inches instead of millimeters"),
+    BU_ARG_OPTION_SHAPED("a", "absolute-tolerance", "absolute-tolerance",
+	struct g_acad_args, self, BU_ARG_VALUE_NUMBER, "distance",
+	"Set nonnegative maximum chord deviation in millimeters and clear "
+	"relative tolerance",
+	BU_ARG_REQUIRED, NULL, g_acad_absolute_tolerance_consume),
+    BU_ARG_VALUE_VALIDATE("r", "relative-tolerance", struct g_acad_args,
+	relative_tolerance, BU_ARG_VALUE_NUMBER,
+	bu_arg_nonnegative_number_validate, "fraction",
+	"Set nonnegative tolerance as a fraction of the bounding box "
+	"(default 0.01)"),
+    BU_ARG_OPTION_SHAPED("n", "normal-tolerance", "normal-tolerance",
+	struct g_acad_args, self, BU_ARG_VALUE_NUMBER, "radians",
+	"Set nonnegative surface-normal tolerance in radians and clear "
+	"relative tolerance",
+	BU_ARG_REQUIRED, NULL, g_acad_normal_tolerance_consume),
+    BU_ARG_OPTION_SHAPED("D", "distance-tolerance", "distance-tolerance",
+	struct g_acad_args, self, BU_ARG_VALUE_NUMBER, "distance",
+	"Set nonnegative vertex-coincidence distance in millimeters",
+	BU_ARG_REQUIRED, NULL, g_acad_distance_tolerance_consume),
+    BU_ARG_INTEGER_RANGE("P", "processors", struct g_acad_args,
+	processors_compat, 1, 1, 0, 0, "count",
+	"Accept a positive worker count for compatibility; conversion remains "
+	"serial"),
+    BU_ARG_VALUE("e", "error-file", struct g_acad_args, error_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "diagnostics.log",
+	"Write diagnostics to this file instead of standard error"),
+    BU_ARG_VALUE("x", "rt-debug", struct g_acad_args, rt_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set librt hexadecimal debug flags"),
+    BU_ARG_VALUE("X", "nmg-debug", struct g_acad_args, nmg_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set libnmg hexadecimal debug flags"),
+    BU_ARG_VALUE("o", "output", struct g_acad_args, output_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "output.acad",
+	"Write ACAD facet data to this file instead of standard output"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand g_acad_operands[] = {
+    BU_ARG_OPERAND("database.g", BU_ARG_VALUE_FILE, 1, 1,
+	"Input BRL-CAD database", NULL),
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1,
+	BU_ARG_COUNT_UNLIMITED, "Database object to convert", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema g_acad_schema = BU_ARG_SCHEMA(
+    "g-acad", "Convert BRL-CAD geometry to Lockheed Martin ACAD facets",
+    g_acad_options, g_acad_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar g_acad_grammar = {
+    &g_acad_schema, NULL, NULL
+};
+
+static int
+g_acad_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&g_acad_schema, "g-acad");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "g-acad help");
+    return status;
+}
+
+
 static int NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int verbose;
-static char *output_file = NULL;	/* output filename */
-static char *error_file = NULL;	/* error filename */
+static const char *output_file = NULL;	/* output filename */
+static const char *error_file = NULL;	/* error filename */
 static FILE *fp;		/* Output file pointer */
 static FILE *fpe;		/* Error file pointer */
 static struct db_i *dbip;
@@ -71,15 +218,6 @@ static size_t regions_converted = 0;
 static size_t regions_written = 0;
 static int inches = 0;
 static size_t tot_polygons = 0;
-
-
-static void
-usage(const char *argv0)
-{
-    bu_log("Usage: %s [-v][-i][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol]\n", argv0);
-    bu_log("[-e error_file ][-D dist_calc_tol][-P #_of_CPUs] -o output_file_name brlcad_db.g object(s)\n");
-    bu_exit(1, NULL);
-}
 
 
 static void
@@ -488,12 +626,16 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 int
 main(int argc, char **argv)
 {
+    struct g_acad_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    struct bu_list *vlfree = &rt_vlfree;
     FILE *final_output = NULL;
     b_off_t region_count_offset;
     char copy_buffer[ACAD_COPY_BUFFER_SIZE];
-    int c;
     double percent;
     int i;
+    int introspection;
+    int operand_index;
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
@@ -518,57 +660,46 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    the_model = nmg_mm();
-    struct bu_list *vlfree = &rt_vlfree;
+    args.self = &args;
+    args.absolute_tolerance = ttol.abs;
+    args.relative_tolerance = ttol.rel;
+    args.normal_tolerance = ttol.norm;
+    args.distance_tolerance = tol.dist;
 
-    /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:n:o:r:vx:D:P:X:e:ih?")) != -1) {
-	switch (c) {
-	    case 'a':		/* Absolute tolerance. */
-		ttol.abs = atof(bu_optarg);
-		ttol.rel = 0.0;
-		break;
-	    case 'n':		/* Surface normal tolerance. */
-		ttol.norm = atof(bu_optarg);
-		ttol.rel = 0.0;
-		break;
-	    case 'o':		/* Output file name. */
-		output_file = bu_optarg;
-		break;
-	    case 'r':		/* Relative tolerance. */
-		ttol.rel = atof(bu_optarg);
-		break;
-	    case 'v':
-		verbose++;
-		break;
-	    case 'P':
-		/* Accept the legacy option; output callbacks run serially. */
-		break;
-	    case 'x':
-		bu_sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
-		break;
-	    case 'D':
-		tol.dist = atof(bu_optarg);
-		tol.dist_sq = tol.dist * tol.dist;
-		rt_pr_tol(&tol);
-		break;
-	    case 'X':
-		bu_sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
-		NMG_debug = nmg_debug;
-		break;
-	    case 'e':		/* Error file name. */
-		error_file = bu_optarg;
-		break;
-	    case 'i':
-		inches = 1;
-		break;
-	    default:
-		usage(argv[0]);
-	}
+    introspection = bu_arg_introspect(&msg, &g_acad_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+    operand_index = bu_arg_schema_parse_complete(&g_acad_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return g_acad_help(stdout, 0);
 
-    if (bu_optind+1 >= argc)
-	usage(argv[0]);
+    verbose = args.verbose;
+    inches = args.inches;
+    output_file = args.output_file;
+    error_file = args.error_file;
+    ttol.abs = args.absolute_tolerance;
+    ttol.rel = args.relative_tolerance;
+    ttol.norm = args.normal_tolerance;
+    tol.dist = args.distance_tolerance;
+    tol.dist_sq = tol.dist * tol.dist;
+    rt_debug = args.rt_debug;
+    nmg_debug = args.nmg_debug;
+    NMG_debug = nmg_debug;
+    if (args.distance_tolerance_set)
+	rt_pr_tol(&tol);
+
+    the_model = nmg_mm();
 
     if (!output_file) {
 	final_output = stdout;
@@ -594,8 +725,8 @@ main(int argc, char **argv)
 
 
     /* Open BRL-CAD database */
-    argc -= bu_optind;
-    argv += bu_optind;
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
     if ((dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[0]);
 	bu_exit(1, "Cannot open geometry database file (%s)\n", argv[0]);
@@ -692,6 +823,8 @@ main(int argc, char **argv)
     nmg_km(the_model);
     rt_vlist_cleanup();
     db_close(dbip);
+    if (fpe != stderr)
+	fclose(fpe);
 
     return 0;
 }

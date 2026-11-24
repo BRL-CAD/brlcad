@@ -35,9 +35,13 @@
 
 #include "vmath.h"
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/cv.h"
 #include "bu/debug.h"
 #include "bu/file.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 #include "bu/vls.h"
 #include "bu/units.h"
 #include "bn.h"
@@ -75,10 +79,33 @@ static fastf_t **ars_curves = NULL;
 static const char *slave_name = "safe_interp";
 static const char *db_name = "_db";
 
-static char usage[] = "\
-Usage: asc2g file.asc file.g\n\
- Convert an ASCII BRL-CAD database to binary form\n\
-";
+struct asc2g_args {
+    int help;
+};
+
+static const struct bu_arg_option asc2g_options[] = {
+    BU_ARG_FLAG("h", "help", struct asc2g_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand asc2g_operands[] = {
+    BU_ARG_OPERAND("input.asc", BU_ARG_VALUE_FILE, 1, 1,
+	"Input ASCII BRL-CAD database", NULL),
+    BU_ARG_OPERAND("output.g", BU_ARG_VALUE_FILE, 1, 1,
+	"Output binary BRL-CAD database", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema asc2g_schema = BU_ARG_SCHEMA(
+    "asc2g", "Convert an ASCII BRL-CAD database to binary form",
+    asc2g_options, asc2g_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar asc2g_grammar = {
+    &asc2g_schema, NULL, NULL
+};
 
 const char *aliases[] = {
     "attr",
@@ -1438,33 +1465,61 @@ arbnbld(void)
 int
 main(int argc, char *argv[])
 {
+    struct asc2g_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct bu_vls str_title = BU_VLS_INIT_ZERO;
     struct bu_vls str_put = BU_VLS_INIT_ZERO;
     struct bu_vls line = BU_VLS_INIT_ZERO;
+    const char *input_file;
+    const char *output_file;
     int isComment=1;
+    int introspection;
+    int operand_index;
 
     bu_setprogname(argv[0]);
 
-    if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?"))
-	bu_exit(1, "%s", usage);
-
-    if (argc != 3)
-	bu_exit(1, "%s", usage);
+    introspection = bu_arg_introspect(&msg, &asc2g_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    operand_index = bu_arg_schema_parse_complete(&asc2g_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_log("%s\n", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&asc2g_schema, "asc2g");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "asc2g help");
+	return 0;
+    }
+    input_file = argv[operand_index + 1];
+    output_file = argv[operand_index + 2];
 
     bu_debug = BU_DEBUG_COREDUMP;
 
     Tcl_FindExecutable(argv[0]);
 
-    if (bu_file_same(argv[1], argv[2]))
+    if (bu_file_same(input_file, output_file))
 	bu_exit(1, "asc2g: input and output are the same file.");
 
-    ifp = fopen(argv[1], "rb");
-    if (!ifp) perror(argv[1]);
+    ifp = fopen(input_file, "rb");
+    if (!ifp) {
+	perror(input_file);
+	return 1;
+    }
 
-    ofp = wdb_fopen(argv[2]);
-    if (!ofp) perror(argv[2]);
-    if (ifp == NULL || ofp == NULL) {
-	bu_exit(1, "asc2g: can't open files.");
+    ofp = wdb_fopen(output_file);
+    if (!ofp) {
+	perror(output_file);
+	fclose(ifp);
+	return 1;
     }
 
     bu_vls_extend(&line, SIZE);
@@ -1524,7 +1579,7 @@ main(int argc, char *argv[])
 	    av[0] = "to_open";
 	    av[1] = db_name;
 	    av[2] = "db";
-	    av[3] = argv[2];
+	    av[3] = output_file;
 	    av[4] = (char *)0;
 
 	    if (to_open_tcl((ClientData)0, interp, ac, av) != TCL_OK) {
@@ -1575,7 +1630,7 @@ main(int argc, char *argv[])
 
 	if (Tcl_Eval(safe_interp, (const char *)bu_vls_addr(&line)) != TCL_OK) {
 	    fclose(ifp);
-	    bu_log("Failed to process input file (%s)!\n", argv[1]);
+	    bu_log("Failed to process input file (%s)!\n", input_file);
 	    bu_log("%s\n", Tcl_GetStringResult(safe_interp));
 	    Tcl_Exit(1);
 	}

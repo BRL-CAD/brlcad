@@ -39,8 +39,10 @@
 
 /* interface headers */
 #include "bu/app.h"
+#include "bu/arg.h"
+#include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/getopt.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -56,17 +58,164 @@
 }
 
 
-static char usage[] = "[-vi8] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.raw | -m directory_name] brlcad_db.g object(s)\n";
+struct g_raw_args {
+    struct g_raw_args *self;
+    int help;
+    int verbose;
+    int inches;
+    int marching_cubes;
+    const char *output_file;
+    const char *output_directory;
+    fastf_t absolute_tolerance;
+    fastf_t relative_tolerance;
+    fastf_t normal_tolerance;
+    fastf_t distance_tolerance;
+    int distance_tolerance_set;
+    unsigned int rt_debug;
+    unsigned int nmg_debug;
+};
 
-static void
-print_usage(const char *progname)
+enum g_raw_tolerance_kind {
+    G_RAW_ABSOLUTE_TOLERANCE,
+    G_RAW_NORMAL_TOLERANCE,
+    G_RAW_DISTANCE_TOLERANCE
+};
+
+static struct g_raw_args *
+g_raw_args_from_storage(void *storage)
 {
-    bu_exit(1, "Usage: %s %s", progname, usage);
+    return storage ? *(struct g_raw_args **)storage : NULL;
+}
+
+static int
+g_raw_tolerance_consume(struct bu_vls *msg, size_t argc, const char **argv,
+	void *storage, enum g_raw_tolerance_kind kind)
+{
+    struct g_raw_args *args = g_raw_args_from_storage(storage);
+    fastf_t value;
+
+    if (argc != 1 || bu_arg_nonnegative_number_validate(msg, argv[0]) < 0 ||
+	!bu_arg_number_from_str(msg, &value, argv[0]))
+	return -1;
+    if (!args)
+	return 0;
+
+    switch (kind) {
+	case G_RAW_ABSOLUTE_TOLERANCE:
+	    args->absolute_tolerance = value;
+	    args->relative_tolerance = 0.0;
+	    break;
+	case G_RAW_NORMAL_TOLERANCE:
+	    args->normal_tolerance = value * DEG2RAD;
+	    args->relative_tolerance = 0.0;
+	    break;
+	case G_RAW_DISTANCE_TOLERANCE:
+	    args->distance_tolerance = value;
+	    args->distance_tolerance_set = 1;
+	    break;
+    }
+    return 0;
+}
+
+#define G_RAW_TOLERANCE_CONSUMER(_name, _kind) \
+    static int _name(struct bu_vls *msg, size_t argc, const char **argv, \
+	    void *storage) \
+    { \
+	return g_raw_tolerance_consume(msg, argc, argv, storage, _kind); \
+    }
+
+G_RAW_TOLERANCE_CONSUMER(g_raw_absolute_tolerance_consume,
+    G_RAW_ABSOLUTE_TOLERANCE)
+G_RAW_TOLERANCE_CONSUMER(g_raw_normal_tolerance_consume,
+    G_RAW_NORMAL_TOLERANCE)
+G_RAW_TOLERANCE_CONSUMER(g_raw_distance_tolerance_consume,
+    G_RAW_DISTANCE_TOLERANCE)
+
+static const struct bu_arg_option g_raw_options[] = {
+    BU_ARG_FLAG("h", "help", struct g_raw_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_COUNTING_FLAG("v", "verbose", struct g_raw_args, verbose,
+	BU_ARG_VALUE_INTEGER, "Increase conversion reporting"),
+    BU_ARG_FLAG("i", "inches", struct g_raw_args, inches,
+	"Write coordinates in inches instead of millimeters"),
+    BU_ARG_FLAG("8", "marching-cubes", struct g_raw_args, marching_cubes,
+	"Tessellate with marching cubes instead of NMG Boolean evaluation"),
+    BU_ARG_VALUE("o", "output", struct g_raw_args, output_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "output.raw",
+	"Write all converted geometry to this file"),
+    BU_ARG_VALUE("m", "output-directory", struct g_raw_args,
+	output_directory, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "directory",
+	"Write each converted region to a separate file in this directory"),
+    BU_ARG_OPTION_SHAPED("a", "absolute-tolerance", "absolute-tolerance",
+	struct g_raw_args, self, BU_ARG_VALUE_NUMBER, "distance",
+	"Set nonnegative maximum chord deviation in millimeters and clear "
+	"relative tolerance", BU_ARG_REQUIRED, NULL,
+	g_raw_absolute_tolerance_consume),
+    BU_ARG_VALUE_VALIDATE("r", "relative-tolerance", struct g_raw_args,
+	relative_tolerance, BU_ARG_VALUE_NUMBER,
+	bu_arg_nonnegative_number_validate, "fraction",
+	"Set nonnegative tolerance as a fraction of the bounding box "
+	"(default 0.01)"),
+    BU_ARG_OPTION_SHAPED("n", "normal-tolerance", "normal-tolerance",
+	struct g_raw_args, self, BU_ARG_VALUE_NUMBER, "degrees",
+	"Set nonnegative surface-normal tolerance in degrees and clear "
+	"relative tolerance", BU_ARG_REQUIRED, NULL,
+	g_raw_normal_tolerance_consume),
+    BU_ARG_OPTION_SHAPED("D", "distance-tolerance", "distance-tolerance",
+	struct g_raw_args, self, BU_ARG_VALUE_NUMBER, "distance",
+	"Set nonnegative vertex-coincidence distance in millimeters "
+	"(default 0.0005)", BU_ARG_REQUIRED, NULL,
+	g_raw_distance_tolerance_consume),
+    BU_ARG_VALUE("x", "rt-debug", struct g_raw_args, rt_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set librt hexadecimal debug flags"),
+    BU_ARG_VALUE("X", "nmg-debug", struct g_raw_args, nmg_debug,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set libnmg hexadecimal debug flags"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand g_raw_operands[] = {
+    BU_ARG_OPERAND("database.g", BU_ARG_VALUE_FILE, 1, 1,
+	"Input BRL-CAD database", NULL),
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1,
+	BU_ARG_COUNT_UNLIMITED, "Database object to convert", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const char * const g_raw_output_options[] = {
+    "output", "output-directory", NULL
+};
+
+static const struct bu_arg_constraint g_raw_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT,
+	BU_ARG_CONDITION_ALWAYS, g_raw_output_options, 0, 1,
+	"--output and --output-directory are mutually exclusive"),
+    BU_ARG_CONSTRAINT_NULL
+};
+
+static const struct bu_arg_schema g_raw_schema = BU_ARG_SCHEMA(
+    "g-raw", "Convert BRL-CAD geometry to RAW triangle facets",
+    g_raw_options, g_raw_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, g_raw_constraints, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar g_raw_grammar = {
+    &g_raw_schema, NULL, NULL
+};
+
+static int
+g_raw_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&g_raw_schema, "g-raw");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "g-raw help");
+    return status;
 }
 
 static int verbose;
-static char *output_file = NULL;	/* output filename */
-static char *output_directory = NULL;	/* directory name to hold output files */
+static const char *output_file = NULL;	/* output filename */
+static const char *output_directory = NULL;	/* directory name to hold output files */
 static FILE *fp;			/* Output file pointer */
 static struct db_i *dbip;
 static struct model *the_model;
@@ -206,12 +355,12 @@ static struct gcv_region_end_data gcvwriter = {nmg_to_raw, NULL, NULL};
 int
 main(int argc, char *argv[])
 {
-    int c;
+    struct g_raw_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     double percent;
     int i;
-    int use_mc = 0;
-    int mutex;
-    int missingg;
+    int introspection;
+    int operand_index;
 
     bu_setprogname(argv[0]);
 
@@ -239,63 +388,46 @@ main(int argc, char *argv[])
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
+    args.self = &args;
+    args.absolute_tolerance = ttol.abs;
+    args.relative_tolerance = ttol.rel;
+    args.normal_tolerance = ttol.norm;
+    args.distance_tolerance = tol.dist;
+
+    introspection = bu_arg_introspect(&msg, &g_raw_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+    operand_index = bu_arg_schema_parse_complete(&g_raw_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return g_raw_help(stderr, EXIT_FAILURE);
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return g_raw_help(stdout, EXIT_SUCCESS);
+
+    verbose = args.verbose;
+    inches = args.inches;
+    output_file = args.output_file;
+    output_directory = args.output_directory;
+    ttol.abs = args.absolute_tolerance;
+    ttol.rel = args.relative_tolerance;
+    ttol.norm = args.normal_tolerance;
+    tol.dist = args.distance_tolerance;
+    tol.dist_sq = tol.dist * tol.dist;
+    rt_debug = args.rt_debug;
+    nmg_debug = args.nmg_debug;
+    if (args.distance_tolerance_set)
+	rt_pr_tol(&tol);
+
     /* make empty NMG model */
     the_model = nmg_mm();
-
-    /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:b8m:n:o:r:vx:D:X:i")) != -1) {
-	switch (c) {
-	    case 'a':		/* Absolute tolerance. */
-		ttol.abs = atof(bu_optarg);
-		ttol.rel = 0.0;
-		break;
-	    case 'n':		/* Surface normal tolerance. */
-		ttol.norm = atof(bu_optarg);
-		ttol.rel = 0.0;
-		break;
-	    case '8':
-		use_mc = 1;
-		break;
-	    case 'o':		/* Output file name. */
-		output_file = bu_optarg;
-		break;
-	    case 'm':
-		output_directory = bu_optarg;
-		break;
-	    case 'r':		/* Relative tolerance. */
-		ttol.rel = atof(bu_optarg);
-		break;
-	    case 'v':
-		verbose++;
-		break;
-	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
-		break;
-	    case 'D':
-		tol.dist = atof(bu_optarg);
-		tol.dist_sq = tol.dist * tol.dist;
-		rt_pr_tol(&tol);
-		break;
-	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
-		break;
-	    case 'i':
-		inches = 1;
-		break;
-	    default:
-		print_usage(argv[0]);
-		break;
-	}
-    }
-
-    mutex = (output_file && output_directory);
-    missingg = (bu_optind+1 >= argc);
-    if (mutex)
-	bu_log("%s: options \"-o\" and \"-m\" are mutually exclusive\n",argv[0]);
-    if (missingg)
-	bu_log("%s: missing .g file and object(s)\n",argv[0]);
-    if (mutex || missingg)
-	print_usage(argv[0]);
 
     if (!output_file && !output_directory) {
 	fp = stdout;
@@ -309,11 +441,10 @@ main(int argc, char *argv[])
     }
 
     /* Open brl-cad database */
-    argc -= bu_optind;
-    argv += bu_optind;
-    if ((dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
-	perror(argv[0]);
-	bu_exit(1, "Unable to open geometry database file (%s)\n", argv[0]);
+    if ((dbip = db_open(argv[operand_index + 1], DB_OPEN_READONLY)) == DBI_NULL) {
+	perror(argv[operand_index + 1]);
+	bu_exit(1, "Unable to open geometry database file (%s)\n",
+	    argv[operand_index + 1]);
     }
     if (db_dirbuild(dbip)) {
 	bu_exit(1, "ERROR: db_dirbuild failed\n");
@@ -323,9 +454,9 @@ main(int argc, char *argv[])
     BG_CK_TESS_TOL(tree_state.ts_ttol);
 
     if (verbose) {
-	bu_log("Model: %s\n", argv[0]);
+	bu_log("Model: %s\n", argv[operand_index + 1]);
 	bu_log("Objects:");
-	for (i=1; i<argc; i++)
+	for (i = operand_index + 2; i < argc; i++)
 	    bu_log(" %s", argv[i]);
 	bu_log("\nTessellation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
 		tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
@@ -335,12 +466,13 @@ main(int argc, char *argv[])
 
 
     /* Walk indicated tree(s).  Each region will be output separately */
-    (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
+    (void) db_walk_tree(dbip, argc - operand_index - 2,
+	    (const char **)(argv + operand_index + 2),
 	    1,
 	    &tree_state,
 	    0,			/* take all regions */
-	    use_mc?gcv_region_end_mc:gcv_region_end,
-	    use_mc?NULL:rt_booltree_leaf_tess,
+	    args.marching_cubes ? gcv_region_end_mc : gcv_region_end,
+	    args.marching_cubes ? NULL : rt_booltree_leaf_tess,
 	    (void *)&gcvwriter);
 
     if (regions_tried>0) {
@@ -366,7 +498,7 @@ main(int argc, char *argv[])
     rt_vlist_cleanup();
     db_close(dbip);
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 

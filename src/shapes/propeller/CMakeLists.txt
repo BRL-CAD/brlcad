@@ -2,7 +2,7 @@ set(propeller_srcs
   propeller.cpp
   )
 
-brlcad_addexec(propeller "${propeller_srcs}" "libwdb;libbrep;OPENNURBS::OPENNURBS;${M_LIBRARY}" FOLDER Shapes)
+brlcad_addexec(propeller "${propeller_srcs}" "libwdb;libbrep;OPENNURBS::OPENNURBS;${M_LIBRARY}" FOLDER Shapes ARG_SCHEMA)
 
 cmakefiles(
   CMakeLists.txt

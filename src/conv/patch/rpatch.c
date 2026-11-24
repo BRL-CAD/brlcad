@@ -35,18 +35,44 @@
 #include "bio.h"
 
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/exit.h"
-#include "bu/getopt.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/vls.h"
 
 
 #define MAXLINELEN 256
 
-static const char *usage="Usage:\n\trpatch [-D] [-3] < fastgen_input_file > file.rp\n\
-	where -D means that type 3 components are donuts (rather than triangles)\n\
-	and -3 indicates that the input is in FASTGEN3 format\n";
+struct rpatch_args {
+    int type3_is_donut;
+    int fast3;
+    int help;
+};
 
-static int fast3;
+static const struct bu_arg_option rpatch_options[] = {
+    BU_ARG_FLAG("D", "type-3-donuts", struct rpatch_args, type3_is_donut,
+	"Treat type 3 components as donuts rather than triangles"),
+    BU_ARG_FLAG("3", "fastgen3", struct rpatch_args, fast3,
+	"Interpret input as FASTGEN3 format"),
+    BU_ARG_FLAG("h", "help", struct rpatch_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand rpatch_operands[] = {
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema rpatch_schema = BU_ARG_SCHEMA(
+    "rpatch", "Reformat FASTGEN input for patch-g", rpatch_options,
+    rpatch_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar rpatch_grammar = {
+    &rpatch_schema, NULL, NULL
+};
 
 double
 get_ftn_float(char *str, unsigned int start_col, const char *format)
@@ -187,31 +213,33 @@ main(int argc, char **argv)
     char minus;
     int ity, ity1, ico, isq[8], m, n, cc, tmp;
     int i;
-    int type3_is_donut=0;
-    int c;
+    struct rpatch_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int introspection;
+    int operand_index;
 
     bu_setprogname(argv[0]);
 
-    fast3 = 0;
-    if (argc > 2) {
-	bu_exit(1, "%s", usage);
+    introspection = bu_arg_introspect(&msg, &rpatch_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
-
-    /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "D3")) != -1) {
-	switch (c) {
-	    case 'D':  /* donuts */
-		type3_is_donut = 1;
-		break;
-	    case '3':	/* FASTGEN3 format?? */
-		fast3 = 1;
-		break;
-	    case '?':
-		bu_exit(1, "%s", usage);
-		break;
-	    default:
-		bu_exit(1, "Illegal option (%c)\n%s", c, usage);
-	}
+    operand_index = bu_arg_schema_parse_complete(&rpatch_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_log("%s\n", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&rpatch_schema, "rpatch");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "rpatch help");
+	return 0;
     }
 
     while (bu_fgets(line, sizeof(line), stdin)) {
@@ -219,7 +247,7 @@ main(int argc, char **argv)
 	    continue;
 	line[strlen(line)-1] = '\0';	/* eliminate \n */
 
-	if (fast3) {
+	if (args.fast3) {
 	    x = get_ftn_float(line, 0, "f10.3");
 	    y = get_ftn_float(line, 10, "f10.3");
 	    z = get_ftn_float(line, 20, "f10.3");
@@ -261,7 +289,7 @@ main(int argc, char **argv)
 	hold = work - ity;
 	if (ity == 4)
 	    ity = 8;
-	else if (ity == 3 && type3_is_donut)
+	else if (ity == 3 && args.type3_is_donut)
 	    ity = 4;
 
 	/* get thickness */
