@@ -21,8 +21,8 @@
  *
  * Comprehensive white-box regression test for get_args() in opt.c.
  *
- * Tests every option (short and long forms) defined in the bu_opt
- * descriptor table, verifying that each one correctly mutates the
+ * Tests every option (short and long forms) defined in the BU_ARG
+ * schema, verifying that each one correctly mutates the
  * corresponding global variable(s).  Special-form edge cases are
  * also covered: -vvvv, -v 0xNN, -T dist/perp, -l 7,..., -+t,
  * negative -P, -Q x,y, and the bu_optind model/object boundary.
@@ -951,6 +951,10 @@ test_opt_command(void)
     reset_globals();
     MAKE_ARGV(av2, "rt", "--command", "set background=0/0/0");
     CALL_GET_ARGS(av2, 1);
+
+    reset_globals();
+    MAKE_ARGV(av3, "rt", "-cset background=0/0/0");
+    CALL_GET_ARGS(av3, 1);
 }
 
 
@@ -1388,9 +1392,19 @@ test_opt_bgcolor(void)
 static void
 test_opt_help(void)
 {
+    char *help;
+
     reset_globals();
     MAKE_ARGV(av, "rt", "-h");
     CALL_GET_ARGS(av, 0);   /* expect 0 = help */
+
+    help = rt_arg_help("rt");
+    CHECK(help && strstr(help, "Output:\n") &&
+	!strstr(help, "Grid and cells:\n") &&
+	!strstr(help, "Diagnostics and performance:\n"),
+	"ordinary help visibility");
+    if (help)
+	bu_free(help, "rt help test");
 
     reset_globals();
     MAKE_ARGV(av2, "rt", "-?");
@@ -1399,6 +1413,20 @@ test_opt_help(void)
     reset_globals();
     MAKE_ARGV(av3, "rt", "--help");
     CALL_GET_ARGS(av3, 0);
+
+    reset_globals();
+    MAKE_ARGV(av4, "rt", "--help=all");
+    CALL_GET_ARGS(av4, 0);
+    help = rt_arg_help("rt");
+    CHECK(help && strstr(help, "Grid and cells:\n") &&
+	strstr(help, "Diagnostics and performance:\n") &&
+	!strstr(help, "space-partition"), "extended help visibility");
+    if (help)
+	bu_free(help, "extended rt help test");
+
+    reset_globals();
+    MAKE_ARGV(av5, "rt", "--help=unknown");
+    CALL_GET_ARGS(av5, -1);
 }
 
 
@@ -1409,6 +1437,84 @@ test_opt_unknown(void)
     reset_globals();
     MAKE_ARGV(av, "rt", "--this-option-does-not-exist");
     CALL_GET_ARGS(av, -1);
+}
+
+
+static int
+schema_option_contains(const char *json, const char *canonical,
+	const char *expected)
+{
+    struct bu_vls needle = BU_VLS_INIT_ZERO;
+    const char *end;
+    const char *option;
+    const char *value;
+    int found = 0;
+
+    bu_vls_sprintf(&needle, "\"canonical\":\"%s\"", canonical);
+    option = strstr(json, bu_vls_cstr(&needle));
+    if (!option)
+	goto done;
+    end = strstr(option, "},{\"short\"");
+    value = strstr(option, expected);
+    found = value && (!end || value < end);
+
+done:
+    bu_vls_free(&needle);
+    return found;
+}
+
+
+static void
+test_arg_profiles(void)
+{
+    static const struct {
+	const char *program;
+	const char *canonical;
+	const char *expected;
+	int background_absent;
+	const char *absent_option;
+    } profiles[] = {
+	{"rt", "ambient", "Ambient light intensity", 0, "units"},
+	{"rtarea", "area-control", "rtarea auxiliary controls", 1, "output-double"},
+	{"rtcheck", "unique-overlaps", "Report only unique overlaps", 1, "output-double"},
+	{"rtedge", "edge-control", "edge-detection controls", 0, "output-double"},
+	{"rtg3", "g3-control", "GIFT-3 shotline controls", 1, "output-double"},
+	{"rthide", "angle", "surface-normal angle threshold", 0, "output-double"},
+	{"rtsil", "silhouette-control", "foreground and background", 0, "output-double"},
+	{"rtweight", "region-mass", "mass of each region", 1, "output-double"},
+	{"rtxray", "contrast", "contrast boost", 1, "output-double"},
+	{"rtxray", "output-mode", "double path lengths", 1, "output-double"},
+	{"rtdepth", "output", "grayscale depth image", 1, "output-double"},
+	{"remrt", "ambient", "Ambient light intensity", 0, "density-file"},
+	{NULL, NULL, NULL, 0, NULL}
+    };
+    const char *schema_argv[] = {"--command-schema", NULL};
+    char *saved_program = bu_strdup(bu_getprogname());
+    size_t i;
+
+    for (i = 0; profiles[i].program; i++) {
+	struct bu_vls output = BU_VLS_INIT_ZERO;
+	int ret;
+
+	bu_setprogname(profiles[i].program);
+	ret = rt_arg_introspect(&output, 1, schema_argv);
+	CHECK(profiles[i].program, ret == 1);
+	CHECK(profiles[i].canonical,
+	    schema_option_contains(bu_vls_cstr(&output),
+		profiles[i].canonical, profiles[i].expected));
+	if (profiles[i].background_absent) {
+	    CHECK("disabled background omitted",
+		!schema_option_contains(bu_vls_cstr(&output), "background",
+		    "\"canonical\":"));
+	}
+	CHECK("inactive profile option omitted",
+	    !schema_option_contains(bu_vls_cstr(&output),
+		profiles[i].absent_option, "\"canonical\":"));
+	bu_vls_free(&output);
+    }
+
+    bu_setprogname(saved_program);
+    bu_free(saved_program, "saved test program name");
 }
 
 
@@ -1581,6 +1687,7 @@ static struct rt_opt_test_entry all_tests[] = {
     { "bgcolor",         test_opt_bgcolor         },
     { "help",            test_opt_help            },
     { "unknown_opt",     test_opt_unknown         },
+    { "arg_profiles",    test_arg_profiles        },
     { "optind_boundary", test_optind_boundary     },
     { "multiple_opts",   test_multiple_opts       },
     { NULL, NULL }

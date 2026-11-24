@@ -4174,8 +4174,40 @@ main(int argc, char *argv[])
 {
     struct servers *sp;
     int i, done;
+    struct bu_vls schema_output = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
+
+    i = rt_arg_introspect(&schema_output, argc - 1,
+	(const char * const *)(argv + 1));
+    if (i != 0) {
+	bu_flog(i > 0 ? stdout : stderr, "%s", bu_vls_cstr(&schema_output));
+	bu_vls_free(&schema_output);
+	return i > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+    bu_vls_free(&schema_output);
+
+    width = height = 512;
+    finalframe = -1;
+    if (argc > 1) {
+	i = get_args(argc, (const char **)argv);
+	if (i < 0) {
+	    fprintf(stderr, "remrt:  bad arg list\n");
+	    bu_exit(1, NULL);
+	} else if (i == 0) {
+	    char *help = rt_arg_help(argv[0]);
+	    if (help) {
+		bu_flog(stdout, "%s", help);
+		bu_free(help, "remrt argument help");
+	    }
+	    return EXIT_SUCCESS;
+	}
+
+	if (bu_optind + 2 > argc) {
+	    fprintf(stderr, "remrt:  insufficient args\n");
+	    bu_exit(2, NULL);
+	}
+    }
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
     {
@@ -4195,8 +4227,6 @@ main(int argc, char *argv[])
     our_hostname = get_our_hostname();
     fprintf(stderr, "%s %s %s\n", stamp(), our_hostname, brlcad_ident("Network-Distributed RT (REMRT)"));
     fflush(stderr);
-
-    width = height = 512;			/* same size as RT */
 
     /* Generate a session authentication token so that auto-launched
      * rtsrv workers can prove they belong to this session.
@@ -4287,18 +4317,7 @@ main(int argc, char *argv[])
 	bu_log("%s Reading script on stdin\n", stamp());
 	FD_ZERO(&clients);
 
-	/* parse command line args for sizes, etc. */
-	finalframe = -1;
-	if (!get_args(argc, (const char **)argv)) {
-	    fprintf(stderr, "remrt:  bad arg list\n");
-	    bu_exit(1, NULL);
-	}
-
 	/* take note of database name and treetops */
-	if (bu_optind+2 > argc) {
-	    fprintf(stderr, "remrt:  insufficient args\n");
-	    bu_exit(2, NULL);
-	}
 	build_start_cmd(argc, (const char **)argv, bu_optind);
 
 	/* Read .remrtrc file to acquire servers */

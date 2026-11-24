@@ -37,7 +37,12 @@
 #include <math.h>
 
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/debug.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "bv/plot3.h"
@@ -77,45 +82,225 @@ inv_mat_clbk(struct rt_i *rtip, struct db_tree_state *tsp, struct region *rp)
     bu_semaphore_release(RT_SEM_RESULTS);
 }
 
-void
-usage(const char *argv0)
-{
-    bu_log("Usage:  %s {-p|-d|-a} # # # {-p|-d|-a} # # # [options] model.g [objects...]\n\n", argv0);
-    bu_log(" Shot options, must set two:\n");
-    bu_log(" -p # # #		Set starting point\n");
-    bu_log(" -d # # #		Set direction vector\n");
-    bu_log(" -a # # #		Set shoot-at point\n\n");
-    bu_log(" Other options:\n");
-    bu_log(" -U #		Set reporting of air regions (default=1)\n");
-    bu_log(" -u #		Set libbu debug flag\n");
-    bu_log(" -x #		Set librt debug flags\n");
-    bu_log(" -X #		Set rt program debug flags\n");
-    bu_log(" -N #		Set NMG debug flags\n");
-    bu_log(" -O #		Set overlap-claimant handling\n");
-    bu_log(" -o #		Set onehit flag\n");
-    bu_log(" -r #		Set ray length\n");
-    bu_log(" -n #		Set number of rings for ray bundle\n");
-    bu_log(" -c #		Set number of rays per ring for ray bundle\n");
-    bu_log(" -R #		Set radius for ray bundle in mm\n");
-    bu_log(" -g #		Set ray bundle grid size in mm(default 1mm)\n");
-    bu_log(" -v \"attribute_name1 attribute_name2 ...\" Show attribute values\n");
-}
-
-
 static FILE *plotfp;		/* For plotting into */
 
-int set_dir = 0;
-int set_pt = 0;
-int set_at = 0;
-int set_onehit = 0;
-int set_air = 1;
-fastf_t set_ray_length = 0.0;
-vect_t at_vect;
-int overlap_claimant_handling = 0;
-fastf_t grid_size = -1.0; /* gridsize in mm */
-int rays_per_ring = 0;
-int num_rings = 0;
-fastf_t bundle_radius = 0.0;
+static int overlap_claimant_handling = 0;
+
+struct rtshot_args {
+    int help;
+    point_t point;
+    vect_t direction;
+    point_t at;
+    int use_air;
+    int onehit;
+    fastf_t ray_length;
+    const char *overlap;
+    const char *attributes;
+    const char *inverse_attribute;
+    int rings;
+    int rays_per_ring;
+    fastf_t bundle_radius;
+    fastf_t grid_spacing;
+    unsigned int bu_debug_mask;
+    unsigned int rt_debug_mask;
+    unsigned int optical_debug_mask;
+    unsigned int nmg_debug_mask;
+    const char *deprecated_t;
+    const char *deprecated_b;
+};
+
+static int
+rtshot_help_parse(struct bu_vls *msg, const char *arg, void *storage)
+{
+    if (arg && !BU_STR_EQUAL(arg, "all")) {
+	if (msg)
+	    bu_vls_strcat(msg, "--help accepts only the optional value 'all'\n");
+	return -1;
+    }
+    if (storage)
+	*((int *)storage) = arg ? 2 : 1;
+    return 0;
+}
+
+static int
+rtshot_attributes_validate(struct bu_vls *msg, const char *arg)
+{
+    const unsigned char *cp = (const unsigned char *)arg;
+
+    while (cp && *cp && isspace(*cp))
+	cp++;
+    if (cp && *cp)
+	return 0;
+    if (msg)
+	bu_vls_strcat(msg, "attribute list must contain at least one name\n");
+    return -1;
+}
+
+static const struct bu_arg_value_keyword rtshot_overlap_values[] = {
+    {"resolve", BU_ARG_ALIASES("0"), "Resolve overlaps before reporting"},
+    {"rebuild_fastgen", BU_ARG_ALIASES("1"),
+	"Rebuild overlaps using FASTGEN plate-mode rules"},
+    {"rebuild_all", BU_ARG_ALIASES("2"), "Rebuild and report all overlaps"},
+    {"retain", BU_ARG_ALIASES("3"), "Retain overlaps without resolving them"},
+    {NULL, NULL, NULL}
+};
+
+static const struct bu_arg_option rtshot_options[] = {
+    BU_ARG_ATTACHED_OPTIONAL("h", "help", "help", struct rtshot_args,
+	help, rtshot_help_parse, "all", "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_VECTOR3("p", "point", struct rtshot_args, point, "x y z",
+	"Set the ray starting point"),
+    BU_ARG_VECTOR3("d", "direction", struct rtshot_args, direction, "x y z",
+	"Set the ray direction vector (normalized before use)"),
+    BU_ARG_VECTOR3("a", "at", struct rtshot_args, at, "x y z",
+	"Set the point toward which the ray is fired"),
+    BU_ARG_VALUE("U", "use-air", struct rtshot_args, use_air,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "value",
+	"Set air-region reporting (default 1)"),
+    BU_ARG_VALUE("o", "one-hit", struct rtshot_args, onehit,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "count",
+	"Stop after the requested number of hits (0 means unlimited)"),
+    BU_ARG_VALUE_VALIDATE("r", "ray-length", struct rtshot_args, ray_length,
+	BU_ARG_VALUE_NUMBER, bu_arg_nonnegative_number_validate, "millimeters",
+	"Set the maximum ray length in millimeters (0 means unlimited)"),
+    BU_ARG_KEYWORD_VALUES("O", "overlap", struct rtshot_args, overlap,
+	"mode", "Select overlap-claimant handling", rtshot_overlap_values),
+    BU_ARG_VALUE_VALIDATE("v", "attributes", struct rtshot_args, attributes,
+	BU_ARG_VALUE_STRING, rtshot_attributes_validate, "names",
+	"Report a whitespace-separated list of region attributes"),
+    BU_ARG_VALUE("A", "inverse-placement-attribute", struct rtshot_args,
+	inverse_attribute, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "name",
+	"Transform hits into local coordinates for regions carrying this attribute"),
+    BU_ARG_INTEGER_RANGE("n", "rings", struct rtshot_args, rings,
+	1, 1, 1, INT_MAX, "count",
+	"Set ray-bundle rings in addition to the central ray"),
+    BU_ARG_INTEGER_RANGE("c", "rays-per-ring", struct rtshot_args,
+	rays_per_ring, 1, 1, 1, INT_MAX, "count",
+	"Set the number of rays in each spiral bundle ring"),
+    BU_ARG_VALUE_VALIDATE("R", "bundle-radius", struct rtshot_args,
+	bundle_radius, BU_ARG_VALUE_NUMBER, bu_arg_nonnegative_number_validate,
+	"millimeters", "Set the outer ray-bundle radius in millimeters"),
+    BU_ARG_VALUE_VALIDATE("g", "grid-spacing", struct rtshot_args,
+	grid_spacing, BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate,
+	"millimeters", "Set circular-grid ray spacing (default 1 mm)"),
+    BU_ARG_VALUE("u", "bu-debug", struct rtshot_args, bu_debug_mask,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set libbu hexadecimal debug flags"),
+    BU_ARG_VALUE("x", "rt-debug", struct rtshot_args, rt_debug_mask,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set librt hexadecimal debug flags"),
+    BU_ARG_VALUE("X", "optical-debug", struct rtshot_args,
+	optical_debug_mask, BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set optical hexadecimal debug flags; ray plotting writes rtshot.plot3"),
+    BU_ARG_VALUE("N", "nmg-debug", struct rtshot_args, nmg_debug_mask,
+	BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "mask",
+	"Set NMG hexadecimal debug flags"),
+    BU_ARG_VALUE("t", NULL, struct rtshot_args, deprecated_t,
+	BU_ARG_VALUE_RAW, BU_ARG_REQUIRED, "value", "Deprecated and ignored"),
+    BU_ARG_VALUE("b", NULL, struct rtshot_args, deprecated_b,
+	BU_ARG_VALUE_RAW, BU_ARG_REQUIRED, "value", "Deprecated and ignored"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand rtshot_operands[] = {
+    BU_ARG_OPERAND("model.g", BU_ARG_VALUE_FILE, 1, 1,
+	"BRL-CAD geometry database", NULL),
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 0,
+	BU_ARG_COUNT_UNLIMITED, "Object to ray trace", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const char * const rtshot_ray_options[] = {
+    "point", "direction", "at", NULL
+};
+static const char * const rtshot_rings_require[] = {
+    "rings", "rays-per-ring", NULL
+};
+static const char * const rtshot_rays_require[] = {
+    "rays-per-ring", "rings", NULL
+};
+static const char * const rtshot_grid_requires[] = {
+    "grid-spacing", "bundle-radius", NULL
+};
+static const char * const rtshot_grid_conflicts[] = {
+    "grid-spacing", "rings", "rays-per-ring", NULL
+};
+
+static const struct bu_arg_constraint rtshot_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS,
+	rtshot_ray_options, 2, 2,
+	"select exactly two of --point, --direction, and --at"),
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_REQUIRES,
+	BU_ARG_CONDITION_ALWAYS, rtshot_rings_require, 0, 0,
+	"--rings requires --rays-per-ring"),
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_REQUIRES,
+	BU_ARG_CONDITION_ALWAYS, rtshot_rays_require, 0, 0,
+	"--rays-per-ring requires --rings"),
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_REQUIRES,
+	BU_ARG_CONDITION_ALWAYS, rtshot_grid_requires, 0, 0,
+	"--grid-spacing requires --bundle-radius"),
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_CONFLICTS,
+	BU_ARG_CONDITION_ALWAYS, rtshot_grid_conflicts, 0, 0,
+	"--grid-spacing selects a circular grid, not a ring bundle"),
+    BU_ARG_CONSTRAINT_NULL
+};
+
+static const struct bu_arg_help_group rtshot_help_groups[] = {
+    BU_ARG_HELP_GROUP("General", NULL, "help", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Ray definition", "Select exactly two forms", "point",
+	BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Ray behavior", NULL, "use-air",
+	BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Reported attributes", NULL, "attributes",
+	BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Ray bundles", NULL, "rings", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Diagnostics", NULL, "bu-debug",
+	BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Compatibility", NULL, "t", BU_ARG_VISIBILITY_INTERNAL),
+    BU_ARG_HELP_GROUP_NULL
+};
+
+static const struct bu_arg_option_visibility rtshot_visibility[] = {
+    BU_ARG_OPTION_VISIBILITY("t", BU_ARG_VISIBILITY_INTERNAL),
+    BU_ARG_OPTION_VISIBILITY("b", BU_ARG_VISIBILITY_INTERNAL),
+    BU_ARG_OPTION_VISIBILITY_NULL
+};
+
+static const struct bu_arg_presentation rtshot_presentation =
+    BU_ARG_PRESENTATION(rtshot_help_groups, rtshot_visibility, NULL);
+
+static const struct bu_arg_schema rtshot_schema = BU_ARG_SCHEMA_PRESENTED(
+    "rtshot", "Fire a ray at a BRL-CAD model and report its intersections",
+    rtshot_options, rtshot_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, rtshot_constraints, NULL, NULL, NULL),
+    &rtshot_presentation);
+
+static const struct bu_arg_grammar rtshot_grammar = {
+    &rtshot_schema, NULL, NULL
+};
+
+static int
+rtshot_attributes_split(const char *input, char ***attributes, char **working)
+{
+    size_t limit;
+    size_t count;
+
+    if (!input || !attributes || !working)
+	return -1;
+    limit = strlen(input) + 1;
+    *working = bu_strdup(input);
+    *attributes = (char **)bu_calloc(limit + 1, sizeof(char *),
+	"rtshot attributes");
+    count = bu_argv_from_string(*attributes, limit, *working);
+    if (count > 0)
+	return 0;
+    bu_free(*attributes, "rtshot attributes");
+    bu_free(*working, "rtshot attribute working string");
+    *attributes = NULL;
+    *working = NULL;
+    return -1;
+}
 
 extern int r_hit(struct application *ap, struct partition *PartHeadp, struct seg *segp);
 extern int r_miss(register struct application *ap);
@@ -128,248 +313,110 @@ main(int argc, char **argv)
 {
     struct application ap;
     static struct rt_i *rtip;
-    char *title_file;
+    const char *title_file;
     char idbuf[2048] = {0};		/* First ID record info */
-    char *ptr;
-    int attr_count=0, i;
-    char **attrs = (char **)NULL;
-    const char *argv0 = argv[0];
-    int atoival;
+    char **attrs = NULL;
+    char *attr_working = NULL;
+    int operand_index;
+    int introspection;
+    int set_at;
+    int set_dir;
+    const char **tree_argv;
+    int tree_argc;
     struct resource res = RT_RESOURCE_INIT_ZERO;
     struct bu_vls attr_key = BU_VLS_INIT_ZERO;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    struct rtshot_args args = {0};
+
+    args.use_air = 1;
+    args.grid_spacing = 1.0;
+    args.overlap = "resolve";
 
     bu_setprogname(argv[0]);
 
-    if (argc < 3) {
-	usage(argv0);
+    introspection = bu_arg_introspect(&msg, &rtshot_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    operand_index = bu_arg_schema_parse_complete(&rtshot_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help_mode(&rtshot_schema, bu_getprogname(),
+	    args.help > 1 ? BU_ARG_HELP_EXTENDED : BU_ARG_HELP_DEFAULT);
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "rtshot help");
+	return 0;
+    }
+
+    set_dir = bu_arg_schema_option_present(&rtshot_schema, argc - 1,
+	(const char **)(argv + 1), "direction");
+    set_at = bu_arg_schema_option_present(&rtshot_schema, argc - 1,
+	(const char **)(argv + 1), "at");
+    if (args.rings && args.rays_per_ring > (INT_MAX - 1) / args.rings) {
+	bu_flog(stderr, "ray bundle exceeds the supported ray count\n");
 	return 1;
     }
 
+    if (bu_arg_schema_option_present(&rtshot_schema, argc - 1,
+	    (const char **)(argv + 1), "bu-debug")) {
+	bu_debug = args.bu_debug_mask;
+	bu_flog(stderr, "librt bu_debug=x%x\n", bu_debug);
+    }
+    if (bu_arg_schema_option_present(&rtshot_schema, argc - 1,
+	    (const char **)(argv + 1), "rt-debug")) {
+	rt_debug = args.rt_debug_mask;
+	bu_flog(stderr, "librt rt_debug=x%x\n", rt_debug);
+    }
+    if (bu_arg_schema_option_present(&rtshot_schema, argc - 1,
+	    (const char **)(argv + 1), "optical-debug")) {
+	optical_debug = args.optical_debug_mask;
+	bu_flog(stderr, "optical_debug=x%x\n", optical_debug);
+    }
+    if (bu_arg_schema_option_present(&rtshot_schema, argc - 1,
+	    (const char **)(argv + 1), "nmg-debug")) {
+	nmg_debug = (uint32_t)args.nmg_debug_mask;
+	bu_flog(stderr, "librt nmg_debug=x%x\n", nmg_debug);
+    }
+    if (args.deprecated_t)
+	bu_log("DEPRECATION WARNING: remove -t option.\n"
+	    "No longer used since 7.42 BoT ray tracing.\n");
+    if (args.deprecated_b)
+	bu_log("DEPRECATION WARNING: remove -b option.\n"
+	    "No longer used since 7.42 BoT ray tracing.\n");
+
+    if (BU_STR_EQUAL(args.overlap, "rebuild_fastgen"))
+	overlap_claimant_handling = 1;
+    else if (BU_STR_EQUAL(args.overlap, "rebuild_all"))
+	overlap_claimant_handling = 2;
+    else if (BU_STR_EQUAL(args.overlap, "retain"))
+	overlap_claimant_handling = 3;
+
+    if (args.attributes &&
+	rtshot_attributes_split(args.attributes, &attrs, &attr_working) < 0) {
+	bu_flog(stderr, "unable to parse the attribute list\n");
+	return 1;
+    }
+    if (args.inverse_attribute)
+	bu_vls_strcpy(&attr_key, args.inverse_attribute);
+
     RT_APPLICATION_INIT(&ap);
+    VMOVE(ap.a_ray.r_pt, args.point);
+    VMOVE(ap.a_ray.r_dir, args.direction);
 
-    argc--;
-    argv++;
-    while (argv[0][0] == '-') {
-
-	/* sanity */
-	if (!argv[1])
-	    return 1;
-
-	switch (argv[0][1]) {
-	    case 'A':
-		bu_vls_sprintf(&attr_key, "%s", argv[1]);
-		argc -= 2;
-		argv += 2;
-		break;
-	    case 'R':
-		bundle_radius = atof(argv[1]);
-		argc -= 2;
-		argv += 2;
-		break;
-	    case 'n':
-		atoival = atoi(argv[1]);
-		if (atoival > 0 && atoival < INT_MAX-1)
-		    num_rings = atoival;
-		else
-		    return 1;
-
-		argc -= 2;
-		argv += 2;
-		break;
-	    case 'g':
-		grid_size = atof(argv[1]);
-		argc -= 2;
-		argv += 2;
-		break;
-	    case 'c':
-		atoival = atoi(argv[1]);
-		if (atoival > 0 && atoival < INT_MAX-1)
-		    rays_per_ring = atoival;
-		else
-		    return 1;
-
-		argc -= 2;
-		argv += 2;
-		break;
-	    case 'v':
-		/* count the number of attribute names provided */
-		ptr = argv[1];
-		if (!ptr)
-		    return 1;
-
-		while (*ptr) {
-		    while (*ptr && *ptr > 0 && *ptr < CHAR_MAX && isspace((int)*ptr))
-			ptr++;
-		    if (*ptr)
-			attr_count++;
-		    while (*ptr && *ptr > 0 && *ptr < CHAR_MAX && !isspace((int)*ptr))
-			ptr++;
-		}
-
-		if (attr_count == 0) {
-		    bu_log("missing list of attribute names!\n");
-		    usage(argv0);
-		    return 1;
-		}
-
-		/* allocate enough for a null terminated list */
-		attrs = (char **)bu_calloc(attr_count + 1, sizeof(char *), "attrs");
-
-		/* use strtok to actually grab the names */
-		i = 0;
-		ptr = strtok(argv[1], "\t ");
-		while (ptr && i < attr_count) {
-		    attrs[i] = bu_strdup(ptr);
-		    ptr = strtok((char *)NULL, "\t ");
-		    i++;
-		}
-		argc -= 2;
-		argv += 2;
-		break;
-	    case 'o':
-		sscanf(argv[1], "%d", &set_onehit);
-		argc -= 2;
-		argv += 2;
-		break;
-	    case 'r':
-		{
-		    float ray_len;
-
-		    sscanf(argv[1], "%f", &ray_len);
-		    set_ray_length = ray_len;
-		}
-		argc -= 2;
-		argv += 2;
-		break;
-	    case 'U':
-		sscanf(argv[1], "%d", &set_air);
-		argc -= 2;
-		argv += 2;
-		break;
-	    case 'u':
-		sscanf(argv[1], "%x", (unsigned int *)&bu_debug);
-		fprintf(stderr, "librt bu_debug=x%x\n", bu_debug);
-		argc -= 2;
-		argv += 2;
-		break;
-	    case 'x':
-		sscanf(argv[1], "%x", (unsigned int *)&rt_debug);
-		fprintf(stderr, "librt rt_debug=x%x\n", rt_debug);
-		argc -= 2;
-		argv += 2;
-		break;
-	    case 'X':
-		sscanf(argv[1], "%x", (unsigned int *)&optical_debug);
-		fprintf(stderr, "optical_debug=x%x\n", optical_debug);
-		argc -= 2;
-		argv += 2;
-		break;
-	    case 'N':
-		sscanf(argv[1], "%x", (unsigned int *)&nmg_debug);
-		fprintf(stderr, "librt nmg_debug=x%x\n", nmg_debug);
-		argc -= 2;
-		argv += 2;
-		break;
-	    case 'd':
-		if (argc < 4) goto err;
-		ap.a_ray.r_dir[X] = atof(argv[1]);
-		ap.a_ray.r_dir[Y] = atof(argv[2]);
-		ap.a_ray.r_dir[Z] = atof(argv[3]);
-		set_dir = 1;
-		argc -= 4;
-		argv += 4;
-		continue;
-
-	    case 'p':
-		if (argc < 4) goto err;
-		ap.a_ray.r_pt[X] = atof(argv[1]);
-		ap.a_ray.r_pt[Y] = atof(argv[2]);
-		ap.a_ray.r_pt[Z] = atof(argv[3]);
-		set_pt = 1;
-		argc -= 4;
-		argv += 4;
-		continue;
-
-	    case 'a':
-		if (argc < 4) goto err;
-		at_vect[X] = atof(argv[1]);
-		at_vect[Y] = atof(argv[2]);
-		at_vect[Z] = atof(argv[3]);
-		set_at = 1;
-		argc -= 4;
-		argv += 4;
-		continue;
-
-	    case 't':
-		bu_log("DEPRECATION WARNING: remove -t option.\nNo longer used since 7.42 BoT ray tracing.\n");
-		argc -= 2;
-		argv += 2;
-		break;
-
-	    case 'b':
-		bu_log("DEPRECATION WARNING: remove -b option.\nNo longer used since 7.42 BoT ray tracing.\n");
-		argc -= 2;
-		argv += 2;
-		break;
-
-	    case 'O':
-		{
-		    if (BU_STR_EQUAL(argv[1], "resolve") || BU_STR_EQUAL(argv[1], "0"))
-			overlap_claimant_handling = 0;
-		    else if (BU_STR_EQUAL(argv[1], "rebuild_fastgen") || BU_STR_EQUAL(argv[1], "1"))
-			overlap_claimant_handling = 1;
-		    else if (BU_STR_EQUAL(argv[1], "rebuild_all") || BU_STR_EQUAL(argv[1], "2"))
-			overlap_claimant_handling = 2;
-		    else if (BU_STR_EQUAL(argv[1], "retain") || BU_STR_EQUAL(argv[1], "3"))
-			overlap_claimant_handling = 3;
-		    else {
-			bu_log("Illegal argument (%s) to '-O' option.  Must be:\n", argv[1]);
-			bu_log("\t'resolve' or '0'\n");
-			bu_log("\t'rebuild_fastgen' or '1'\n");
-			bu_log("\t'rebuild_all' or '2'\n");
-			bu_log("\t'retain' or '3'\n");
-			bu_exit(1, NULL);
-		    }
-		    argc -= 2;
-		    argv += 2;
-		}
-		continue;
-
-	    default:
-	    err:
-		usage(argv0);
-		bu_vls_free(&attr_key);
-		return 1;
-	}
-    }
-    if (argc < 1) {
-	usage(argv0);
-	bu_exit(1, "%s: BRL-CAD geometry database not specified\n", argv0);
-    }
-
-    if (set_dir + set_pt + set_at != 2) {
-	fprintf(stderr, "ERROR: Must set exactly two: starting point, direction vector, or shoot-at point.\n\n");
-	goto err;
-    }
-
-    /* explicit input sanitization */
-    if (num_rings < 0)
-	num_rings = 0;
-    else if (num_rings > INT_MAX)
-	num_rings = INT_MAX;
-    if (rays_per_ring < 0)
-	rays_per_ring = 0;
-    else if (rays_per_ring > INT_MAX)
-	rays_per_ring = INT_MAX;
-    if (bundle_radius < 0.0)
-	bundle_radius = 0.0;
-    else if (bundle_radius > INFINITY-1.0)
-	bundle_radius = INFINITY-1.0;
+    title_file = argv[operand_index + 1];
+    tree_argv = (const char **)(argv + operand_index + 2);
+    tree_argc = argc - operand_index - 2;
 
     /* Load database */
-    title_file = argv[0];
-    argv++;
-    argc--;
     if ((rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL) {
 	bu_exit(2, "rtshot:  rt_dirbuild failure\n");
     }
@@ -378,12 +425,10 @@ main(int argc, char **argv)
 	rtip->rti_save_overlaps = 1;
 
     ap.a_rt_i = rtip;
-    fprintf(stderr, "db title:  %s\n", idbuf);
-    rtip->useair = set_air;
+    bu_flog(stderr, "db title:  %s\n", idbuf);
+    rtip->useair = args.use_air;
 
     const char *default_objv[2] = {NULL, NULL};
-    const char **tree_argv = (const char **)argv;
-    int tree_argc = argc;
     if (tree_argc <= 0) {
 	struct bu_vls msg = BU_VLS_INIT_ZERO;
 	struct directory *dp = RT_DIR_NULL;
@@ -442,53 +487,48 @@ main(int argc, char **argv)
 	    fastf_t viewsize;
 	    VSUB2(diag, rtip->mdl_max, rtip->mdl_min);
 	    viewsize = MAGNITUDE(diag);
-	    VJOIN1(ap.a_ray.r_pt, at_vect,
+	    VJOIN1(ap.a_ray.r_pt, args.at,
 		   -viewsize/2.0, ap.a_ray.r_dir);
 	} else {
 	    /* set_pt */
-	    VSUB2(ap.a_ray.r_dir, at_vect, ap.a_ray.r_pt);
+	    VSUB2(ap.a_ray.r_dir, args.at, ap.a_ray.r_pt);
 	}
     }
     VUNITIZE(ap.a_ray.r_dir);
 
-    if (rays_per_ring) {
+    if (args.rays_per_ring) {
 	bu_log("Central Ray:\n");
     }
     VPRINT("Pnt", ap.a_ray.r_pt);
     VPRINT("Dir", ap.a_ray.r_dir);
 
-    if (set_onehit)
-	ap.a_onehit = set_onehit;
-    else
-	ap.a_onehit = 0;
-
-    if (set_ray_length > 0.0)
-	ap.a_ray_length = set_ray_length;
-    else
-	ap.a_ray_length = 0.0;
+    ap.a_onehit = args.onehit;
+    ap.a_ray_length = args.ray_length;
 
     /* Shoot Ray */
     ap.a_purpose = "main ray";
     ap.a_hit = r_hit;
     ap.a_miss = r_miss;
 
-    if (rays_per_ring) {
+    if (args.rays_per_ring) {
 	vect_t avec, bvec;
 	struct xray *rp;
+	int ray_count = args.rays_per_ring * args.rings + 1;
 
 	/* create orthogonal rays for basis of bundle */
 	bn_vec_ortho(avec, ap.a_ray.r_dir);
 	VCROSS(bvec, ap.a_ray.r_dir, avec);
 	VUNITIZE(bvec);
 
-	rp = (struct xray *)bu_calloc(sizeof(struct xray),
-				      (rays_per_ring * num_rings) + 1,
-				      "ray bundle");
+	rp = (struct xray *)bu_calloc(ray_count, sizeof(struct xray),
+	    "ray bundle");
 	rp[0] = ap.a_ray;	/* struct copy */
 	rp[0].magic = RT_RAY_MAGIC;
-	rt_raybundle_maker(rp, bundle_radius, avec, bvec, rays_per_ring, num_rings);
-	(void)rt_shootray_bundle(&ap, rp, (rays_per_ring * num_rings) + 1);
-    } else if (bundle_radius > 0.0) {
+	rt_raybundle_maker(rp, args.bundle_radius, avec, bvec,
+	    args.rays_per_ring, args.rings);
+	(void)rt_shootray_bundle(&ap, rp, ray_count);
+	bu_free(rp, "ray bundle");
+    } else if (args.bundle_radius > 0.0) {
 	vect_t avec, bvec;
 	struct xray center_ray;
 	struct application_bundle b;
@@ -505,16 +545,14 @@ main(int argc, char **argv)
 	b.b_hit = bundle_hit;
 	b.b_miss = bundle_miss;
 
-	if (grid_size <= 0.0)
-	    grid_size = 1.0;
-
 	/* create orthogonal rays for basis of bundle */
 	bn_vec_ortho(avec, ap.a_ray.r_dir);
 	VCROSS(bvec, ap.a_ray.r_dir, avec);
 	VUNITIZE(bvec);
 
 	center_ray = ap.a_ray;	/* struct copy */
-	(void)rt_gen_circular_grid(&b.b_rays, &center_ray, bundle_radius, avec, grid_size);
+	(void)rt_gen_circular_grid(&b.b_rays, &center_ray,
+	    args.bundle_radius, avec, args.grid_spacing);
 
 	(void) rt_shootrays(&b);
 
@@ -529,6 +567,10 @@ main(int argc, char **argv)
     }
 
     bu_vls_free(&attr_key);
+    if (attrs)
+	bu_free(attrs, "rtshot attributes");
+    if (attr_working)
+	bu_free(attr_working, "rtshot attribute working string");
     bu_hash_destroy(imd->tbl);
     BU_PUT(imd, struct inv_mat_data);
 

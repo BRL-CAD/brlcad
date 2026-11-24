@@ -32,16 +32,16 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
-#ifdef HAVE_GETOPT_H
-#  include <getopt.h>
-#endif
 #include "bio.h"
 
 /* public api headers */
 #include "bu/app.h"
-#include "bu/getopt.h"
+#include "bu/arg.h"
 #include "bu/interrupt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/str.h"
+#include "bu/vls.h"
 #include "rt/tie.h"
 
 /* adrt headers */
@@ -61,6 +61,41 @@ typedef struct adrt_slave_project_s {
 
 uint32_t adrt_slave_threads;
 adrt_slave_project_t adrt_workspace_list[ADRT_MAX_WORKSPACE_NUM];
+
+struct adrt_slave_args {
+    int help;
+    int version;
+    int port;
+    int threads;
+};
+
+static const struct bu_arg_option adrt_slave_options[] = {
+    BU_ARG_INTEGER_RANGE("p", "port", struct adrt_slave_args, port,
+	1, 1, 1, 65535, "port", "Set the TCP port"),
+    BU_ARG_INTEGER_RANGE("t", "threads", struct adrt_slave_args, threads,
+	1, 0, 1, 32, "count", "Set the rendering thread count"),
+    BU_ARG_FLAG("v", "version", struct adrt_slave_args, version,
+	"Print version information and exit"),
+    BU_ARG_FLAG("h", "help", struct adrt_slave_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand adrt_slave_operands[] = {
+    BU_ARG_OPERAND("host", BU_ARG_VALUE_STRING, 0, 1,
+	"ADRT dispatcher host", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema adrt_slave_schema = BU_ARG_SCHEMA(
+    "adrt_slave", "Run an ADRT distributed rendering worker",
+    adrt_slave_options, adrt_slave_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar adrt_slave_grammar = {
+    &adrt_slave_schema, NULL, NULL
+};
 
 void
 adrt_slave_free(void)
@@ -441,18 +476,6 @@ adrt_slave(int port, char *host, int threads)
 }
 
 
-#ifdef HAVE_GETOPT_LONG
-static struct option longopts[] =
-{
-    { "help",	no_argument,		NULL, 'h' },
-    { "port",	required_argument,	NULL, 'p' },
-    { "threads",	required_argument,	NULL, 't' },
-    { "version",	no_argument,		NULL, 'v' },
-};
-#endif
-static char shortopts[] = "Xdhp:t:vh?";
-
-
 static void finish(int sig)
 {
     bu_exit(EXIT_FAILURE, "Collected signal %d, aborting!\n", sig);
@@ -466,22 +489,16 @@ static void info(int UNUSED(sig))
 }
 #endif
 
-static void help(void)
-{
-    fprintf(stderr,"%s\n", ADRT_VER_DETAIL);
-    fprintf(stderr,"%s", "Usage: adrt_slave [options] [host]\n\
-  -v\t\tdisplay version\n\
-  -h\t\tdisplay help\n\
-  -p\t\tport number\n\
-  -t ...\tnumber of threads to launch for processing\n");
-}
-
-
 int
 main(int argc, char **argv)
 {
-    int		port = 0, c = 0, threads = 0;
-    char		host[64], temp[64];
+    struct adrt_slave_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int port = 0;
+    int threads = 0;
+    char host[64] = {0};
+    int introspection;
+    int operand_index;
 
     bu_setprogname(argv[0]);
 
@@ -494,56 +511,35 @@ main(int argc, char **argv)
     signal(SIGINFO, info);
 #endif
 
-    /* Initialize strings */
-    host[0] = 0;
-    port = 0;
-
-
-    /* Parse command line options */
-
-    while ((c =
-#ifdef HAVE_GETOPT_LONG
-	    getopt_long(argc, argv, shortopts, longopts, NULL)
-#else
-	    bu_getopt(argc, argv, shortopts)
-#endif
-	       )!= -1) {
-#ifdef HAVE_GETOPT_LONG
-	bu_optarg = optarg;
-	bu_optind = optind;
-	bu_optopt = optopt;
-#endif
-	if (bu_optopt == '?') c='h';
-	switch (c) {
-	    case 'h':
-		help();
-		return EXIT_SUCCESS;
-
-	    case 'p':
-		port = atoi(bu_optarg);
-		break;
-
-	    case 't':
-		bu_strlcpy(temp, bu_optarg, 5);
-		threads = atoi(temp);
-		CLAMP(threads, 0, 32);
-		break;
-
-	    case 'v':
-		printf("%s\n", ADRT_VER_DETAIL);
-		return EXIT_SUCCESS;
-
-	    default:
-		help();
-		return EXIT_FAILURE;
-	}
+    introspection = bu_arg_introspect(&msg, &adrt_slave_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
     }
-
-    argc -= bu_optind;
-    argv += bu_optind;
-
-    if (argc)
-	bu_strlcpy(host, argv[0], 64);
+    operand_index = bu_arg_schema_parse_complete(&adrt_slave_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_log("%s\n", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return EXIT_FAILURE;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&adrt_slave_schema, "adrt_slave");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "adrt_slave help");
+	return EXIT_SUCCESS;
+    }
+    if (args.version) {
+	bu_flog(stdout, "%s\n", ADRT_VER_DETAIL);
+	return EXIT_SUCCESS;
+    }
+    port = args.port;
+    threads = args.threads;
+    if (operand_index < argc - 1)
+	bu_strlcpy(host, argv[operand_index + 1], sizeof(host));
 
     if (!host[0]) {
 	if (!port)

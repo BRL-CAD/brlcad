@@ -26,15 +26,13 @@
 
 #include "common.h"
 
-#include <math.h>
-#include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "bu/opt.h"
+#include "bu/malloc.h"
 #include "bu/process.h"
 #include "bu/str.h"
 #include "bu/exit.h"
@@ -44,13 +42,54 @@
 
 
 #define BUF_LEN 128
-#define OPT_STRING "n:r:?"
 #define RAY_COLOR "255 255 0"
-#define print_usage() bu_exit(1, "Usage: 'showshot [-n name] [-r radius]'\n")
+
+struct showshot_args {
+    int help;
+    const char *name;
+    fastf_t radius;
+};
+
+static int
+showshot_name_validate(struct bu_vls *msg, const char *name)
+{
+    if (!name || strlen(name) + strlen(".s") >= NAMESIZE) {
+	if (msg)
+	    bu_vls_printf(msg,
+		"generated solid name may not exceed %d characters\n",
+		NAMESIZE - 1);
+	return -1;
+    }
+    return 0;
+}
+
+static const struct bu_arg_option showshot_options[] = {
+    BU_ARG_FLAG("h", "help", struct showshot_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_VALUE_VALIDATE("n", "name", struct showshot_args, name,
+	BU_ARG_VALUE_STRING, showshot_name_validate, "root",
+	"Set the generated object-name root"),
+    BU_ARG_VALUE_VALIDATE("r", "radius", struct showshot_args, radius,
+	BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate, "distance",
+	"Set the positive ray-cylinder radius (default: 1)"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema showshot_schema = BU_ARG_SCHEMA(
+    "showshot", "Generate MGED commands representing a NIRT ray",
+    showshot_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar showshot_grammar = {
+    &showshot_schema, NULL, NULL
+};
 
 int
 main (int argc, char **argv)
 {
+    struct showshot_args args = {0, NULL, 1.0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     char buf[BUF_LEN];		/* Contents of current input line */
     char *bp;			/* Pointer into buf */
     char *nlp;			/* Location of newline in buf */
@@ -58,61 +97,45 @@ main (int argc, char **argv)
     char rayname[BUF_LEN];	/* Name of ray */
     int i;			/* Index into rname */
     int line_nm = 0;		/* Number of current line of input */
-    int opt;			/* Command-line option returned by bu_getopt */
     int pid;			/* Process ID for unique group name */
     point_t first_entryp = VINIT_ZERO;	/* Ray's entry into the entire geometry */
 
-    fastf_t ray_radius = 1.0;	/* Thickness of the RCC */
     double entryp[3] = VINIT_ZERO;	/* Ray's entry into current region */
     double exitp[3] = VINIT_ZERO;		/* Ray's exit from current region */
 
     bu_setprogname(argv[0]);
     pid = bu_pid();
-
-    *rayname = '\0';
-    /* Handle command-line options */
-    while ((opt = bu_getopt(argc, argv, OPT_STRING)) != -1)
-	switch (opt) {
-	    case 'n':
-		bu_strlcpy(rayname, bu_optarg, BUF_LEN);
-		break;
-	    case 'r':
-		{
-		    struct bu_vls msg = BU_VLS_INIT_ZERO;
-		    const char *value = bu_optarg;
-		    if (bu_opt_fastf_t(&msg, 1, &value, &ray_radius) != 1)
-			bu_exit(1, "Illegal radius '%s': %s\n", bu_optarg,
-			    bu_vls_cstr(&msg));
-		    if (!isfinite(ray_radius) || ray_radius <= 0.0)
-			bu_exit(1, "Illegal radius '%s': must be finite and positive\n",
-			    bu_optarg);
-		    bu_vls_free(&msg);
-		}
-		break;
-	    case '?':
-		print_usage();
-	}
-
-    /* Ensure proper command-line syntax */
-    if (bu_optind != argc) {
-	print_usage();
+    int introspection = bu_arg_introspect(&msg, &showshot_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    if (bu_arg_schema_parse_complete(&showshot_schema, &args, &msg, argc - 1,
+	    (const char **)(argv + 1)) < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&showshot_schema, "showshot");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "showshot help");
+	return 0;
     }
 
     /* Construct the names of the objects to add to the database */
-    if (*rayname == '\0')	/* Was one given on command line? */
-	sprintf(rayname, "ray.%d", pid);
+    if (args.name)
+	bu_strlcpy(rayname, args.name, BUF_LEN);
+    else
+	snprintf(rayname, BUF_LEN, "ray.%d", pid);
 
-    if (strlen(rayname) + strlen(".s") >= NAMESIZE) {
-	fprintf(stderr,
-		"Name '%s.s' for ray solid may not exceed %d characters\n",
-		rayname, NAMESIZE - 1);
-	bu_exit(1, "Use the '-n name' option to specify a different name\n");
-    }
-
-    printf("in %s.s sph 0 0 0 1\n", rayname);
-    printf("r %s.r u %s.s\n", rayname, rayname);
-    printf("mater %s.r\n\n\n%s\n\n", rayname, RAY_COLOR);
-    printf("g %s", rayname);
+    bu_flog(stdout, "in %s.s sph 0 0 0 1\n", rayname);
+    bu_flog(stdout, "r %s.r u %s.s\n", rayname, rayname);
+    bu_flog(stdout, "mater %s.r\n\n\n%s\n\n", rayname, RAY_COLOR);
+    bu_flog(stdout, "g %s", rayname);
 
     /* Read the input */
     while (bu_fgets(buf, BUF_LEN, stdin) != NULL) {
@@ -137,7 +160,7 @@ main (int argc, char **argv)
 	    bu_exit(1, "Illegal data on line %d: '%s'\n", line_nm, bp);
 	}
 
-	printf(" %s", rname);
+	bu_flog(stdout, " %s", rname);
 
 	if (line_nm == 1) {
 	    VMOVE(first_entryp, entryp);
@@ -147,15 +170,15 @@ main (int argc, char **argv)
 	bu_exit(1, "Error from bu_fgets().  This shouldn't happen");
     }
 
-    printf("\nkill %s.s\nin %s.s rcc\n\t%f %f %f\n\t%f %f %f\n\t%f\n",
+    bu_flog(stdout, "\nkill %s.s\nin %s.s rcc\n\t%f %f %f\n\t%f %f %f\n\t%f\n",
 	   rayname, rayname,
 	   first_entryp[X], first_entryp[Y], first_entryp[Z],
 	   exitp[X] - first_entryp[X],
 	   exitp[Y] - first_entryp[Y],
 	   exitp[Z] - first_entryp[Z],
-	   ray_radius);
-    printf("g %s %s.r\n", rayname, rayname);
-    fprintf(stderr, "Group is '%s'\n", rayname);
+	   args.radius);
+    bu_flog(stdout, "g %s %s.r\n", rayname, rayname);
+    bu_flog(stderr, "Group is '%s'\n", rayname);
 
     return 0;
 }

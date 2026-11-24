@@ -38,9 +38,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <limits.h>
 
 #include "bu/app.h"
-#include "bu/getopt.h"
+#include "bu/arg.h"
+#include "bu/color.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/mime.h"
@@ -59,31 +61,136 @@
 #include "camera.h"
 
 
-static void
-usage(const char *name)
+struct adrt_vector_arg {
+    point_t value;
+    int set;
+};
+
+struct adrt_args {
+    int help;
+    const char *output;
+    int size;
+    int width;
+    int height;
+    const char *mode;
+    int samples;
+    const char *shader_arg;
+    double spall_angle;
+    double azimuth;
+    double elevation;
+    struct adrt_vector_arg eye;
+    struct adrt_vector_arg look;
+    double fov;
+    struct bu_color sky;
+    int threads;
+};
+
+static int
+adrt_vector_consume(struct bu_vls *msg, size_t argc, const char **argv,
+	void *storage)
 {
-    bu_log("Usage: %s [options] model.g object [object ...]\n", name);
-    bu_log("  -o file     output image (extension picks format; default adrt.png)\n");
-    bu_log("  -s N        square image size in pixels (default 512)\n");
-    bu_log("  -w N        image width  (overrides -s)\n");
-    bu_log("  -n N        image height (overrides -s)\n");
-    bu_log("  -m mode     shader: path, phong, normal, depth, flat, spall, cut (default path)\n");
-    bu_log("  -H N        path-tracer samples per pixel (default 32)\n");
-    bu_log("  -b buf      raw init string for shaders that take one (cut, spall, ...)\n");
-    bu_log("  -A angle    spall cone full angle in degrees (default 30)\n");
-    bu_log("  -a az       view azimuth in degrees (default 35)\n");
-    bu_log("  -e el       view elevation in degrees (default 25)\n");
-    bu_log("  -E x,y,z    explicit eye point in model units (overrides -a/-e)\n");
-    bu_log("  -L x,y,z    explicit look-at point in model units (default: center)\n");
-    bu_log("  -p fov      perspective half-angle in degrees (default 25)\n");
-    bu_log("  -C r/g/b    environment/sky color, 0-255 (default 230/237/255)\n");
-    bu_log("  -P N        number of render threads (default: all cpus)\n");
+    struct adrt_vector_arg *vector_arg = (struct adrt_vector_arg *)storage;
+
+    if (bu_arg_vector3_consume(msg, argc, argv,
+	    vector_arg ? vector_arg->value : NULL) < 0)
+	return -1;
+    if (vector_arg)
+	vector_arg->set = 1;
+    return 0;
 }
+
+static const struct bu_arg_value_keyword adrt_modes[] = {
+    {"component", NULL, "Component-color visualization"},
+    {"cut", NULL, "Cutaway visualization"},
+    {"depth", NULL, "Depth visualization"},
+    {"flat", NULL, "Flat shading"},
+    {"flos", NULL, "Flow-line-of-sight visualization"},
+    {"grid", NULL, "Grid visualization"},
+    {"normal", NULL, "Surface-normal visualization"},
+    {"path", NULL, "Monte Carlo path tracing"},
+    {"phong", NULL, "Phong shading"},
+    {"spall", NULL, "Spall-cone visualization"},
+    {"surfel", NULL, "Surface-element visualization"},
+    {NULL, NULL, NULL}
+};
+
+static const struct bu_arg_variant adrt_vector_variants[] = {
+    BU_ARG_VARIANT("packed", "x/y/z", 1, "One packed XYZ vector"),
+    BU_ARG_VARIANT("components", "x y z", 3, "Three XYZ components"),
+    BU_ARG_VARIANT_NULL
+};
+
+static const struct bu_arg_shape adrt_vector_shape = BU_ARG_SHAPE(
+    BU_ARG_SHAPE_VECTOR3, 1, 3, "packed XYZ or three components", NULL,
+    adrt_vector_variants);
+
+static const struct bu_arg_option adrt_options[] = {
+    BU_ARG_FLAG("h", "help", struct adrt_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_VALUE("o", "output", struct adrt_args, output,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file",
+	"Write the rendered image to this file"),
+    BU_ARG_INTEGER_RANGE("s", "size", struct adrt_args, size,
+	1, 1, 1, UINT16_MAX, "pixels", "Set both image dimensions"),
+    BU_ARG_INTEGER_RANGE("w", "width", struct adrt_args, width,
+	1, 1, 1, UINT16_MAX, "pixels",
+	"Set the image width, overriding --size"),
+    BU_ARG_INTEGER_RANGE("n", "height", struct adrt_args, height,
+	1, 1, 1, UINT16_MAX, "pixels",
+	"Set the image height, overriding --size"),
+    BU_ARG_KEYWORD_VALUES("m", "mode", struct adrt_args, mode, "mode",
+	"Select the rendering shader", adrt_modes),
+    BU_ARG_INTEGER_RANGE("H", "samples", struct adrt_args, samples,
+	1, 1, 1, INT_MAX, "count", "Set path-tracer samples per pixel"),
+    BU_ARG_VALUE("b", "shader-argument", struct adrt_args, shader_arg,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "string",
+	"Pass an initialization string to the selected shader"),
+    BU_ARG_VALUE_VALIDATE("A", "spall-angle", struct adrt_args,
+	spall_angle, BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate,
+	"degrees", "Set the full spall-cone angle"),
+    BU_ARG_VALUE("a", "azimuth", struct adrt_args, azimuth,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "degrees", "Set the view azimuth"),
+    BU_ARG_VALUE("e", "elevation", struct adrt_args, elevation,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "degrees", "Set the view elevation"),
+    BU_ARG_OPTION_SHAPED("E", "eye", "eye", struct adrt_args, eye,
+	BU_ARG_VALUE_VECTOR, "x/y/z", "Set the eye point in model units",
+	BU_ARG_REQUIRED, &adrt_vector_shape, adrt_vector_consume),
+    BU_ARG_OPTION_SHAPED("L", "look-at", "look-at", struct adrt_args,
+	look, BU_ARG_VALUE_VECTOR, "x/y/z", "Set the look-at point in model units",
+	BU_ARG_REQUIRED, &adrt_vector_shape, adrt_vector_consume),
+    BU_ARG_VALUE_VALIDATE("p", "field-of-view", struct adrt_args, fov,
+	BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate, "degrees",
+	"Set the perspective half-angle"),
+    BU_ARG_RGB("C", "sky-color", struct adrt_args, sky, "r/g/b",
+	"Set the environment color"),
+    BU_ARG_INTEGER_RANGE("P", "threads", struct adrt_args, threads,
+	1, 1, 1, UINT8_MAX, "count", "Set the rendering thread count"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand adrt_operands[] = {
+    BU_ARG_OPERAND("model.g", BU_ARG_VALUE_FILE, 1, 1,
+	"Input BRL-CAD database", NULL),
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1,
+	BU_ARG_COUNT_UNLIMITED, "Object to render", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema adrt_schema = BU_ARG_SCHEMA(
+    "adrt", "Render BRL-CAD geometry with the ADRT triangle ray tracer",
+    adrt_options, adrt_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar adrt_grammar = {
+    &adrt_schema, NULL, NULL
+};
 
 
 int
 main(int argc, char **argv)
 {
+    static const unsigned char default_sky[] = {230, 237, 255};
     struct tie_s tie;
     struct adrt_mesh_s *meshes = NULL;
     render_camera_t camera;
@@ -92,16 +199,11 @@ main(int argc, char **argv)
     struct bu_vls shaderbuf = BU_VLS_INIT_ZERO;
     icv_image_t *img;
 
-    const char *output = "adrt.png";
-    const char *mode = "path";
-    const char *shaderarg = NULL;
-    int size = 512, width = 0, height = 0, samples = 32, threads = 0;
-    double az = 35.0, el = 25.0, fov = 25.0;
-    double spall_angle = 30.0;
-    double sky[3] = { 230.0/255.0, 237.0/255.0, 255.0/255.0 };
-    double eye[3], look[3];
-    int have_eye = 0, have_look = 0;
-    int c;
+    struct adrt_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    fastf_t sky[3];
+    int introspection;
+    int operand_index;
 
     vect_t dir;
     fastf_t dist;
@@ -111,64 +213,57 @@ main(int argc, char **argv)
     bu_mime_image_t fmt;
 
     bu_setprogname(argv[0]);
+    args.output = "adrt.png";
+    args.size = 512;
+    args.mode = "path";
+    args.samples = 32;
+    args.spall_angle = 30.0;
+    args.azimuth = 35.0;
+    args.elevation = 25.0;
+    args.fov = 25.0;
+    (void)bu_color_from_rgb_chars(&args.sky, default_sky);
 
-    while ((c = bu_getopt(argc, argv, "o:s:w:n:m:H:a:e:E:L:p:C:P:b:A:h?")) != -1) {
-	switch (c) {
-	    case 'o': output = bu_optarg; break;
-	    case 's': size = atoi(bu_optarg); break;
-	    case 'w': width = atoi(bu_optarg); break;
-	    case 'n': height = atoi(bu_optarg); break;
-	    case 'm': mode = bu_optarg; break;
-	    case 'b': shaderarg = bu_optarg; break;
-	    case 'A': spall_angle = atof(bu_optarg); break;
-	    case 'H': samples = atoi(bu_optarg); break;
-	    case 'a': az = atof(bu_optarg); break;
-	    case 'e': el = atof(bu_optarg); break;
-	    case 'E':
-		if (sscanf(bu_optarg, "%lf,%lf,%lf", &eye[0], &eye[1], &eye[2]) == 3)
-		    have_eye = 1;
-		break;
-	    case 'L':
-		if (sscanf(bu_optarg, "%lf,%lf,%lf", &look[0], &look[1], &look[2]) == 3)
-		    have_look = 1;
-		break;
-	    case 'p': fov = atof(bu_optarg); break;
-	    case 'P': threads = atoi(bu_optarg); break;
-	    case 'C': {
-		int r = 0, g = 0, b = 0;
-		if (sscanf(bu_optarg, "%d/%d/%d", &r, &g, &b) == 3) {
-		    sky[0] = r / 255.0;
-		    sky[1] = g / 255.0;
-		    sky[2] = b / 255.0;
-		}
-		break;
-	    }
-	    default:
-		usage(bu_getprogname());
-		return (c == 'h' || c == '?') ? EXIT_SUCCESS : EXIT_FAILURE;
-	}
+    introspection = bu_arg_introspect(&msg, &adrt_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
     }
-    argc -= bu_optind;
-    argv += bu_optind;
-
-    if (argc < 2) {
-	usage(bu_getprogname());
+    operand_index = bu_arg_schema_parse_complete(&adrt_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return EXIT_FAILURE;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&adrt_schema, "adrt");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "adrt help");
+	return EXIT_SUCCESS;
+    }
+    if (args.fov >= 90.0) {
+	bu_flog(stderr, "field-of-view must be less than 90 degrees\n");
+	return EXIT_FAILURE;
+    }
+    if (!args.width)
+	args.width = args.size;
+    if (!args.height)
+	args.height = args.size;
+    if (!bu_color_to_rgb_floats(&args.sky, sky)) {
+	bu_flog(stderr, "failed to convert sky color\n");
 	return EXIT_FAILURE;
     }
 
-    if (width <= 0)
-	width = size;
-    if (height <= 0)
-	height = size;
-    if (samples < 1)
-	samples = 1;
-
     /* Load the requested objects into a freshly prepared TIE engine. */
     memset(&tie, 0, sizeof(tie));
-    bu_log("Loading %s ...\n", argv[0]);
+    bu_log("Loading %s ...\n", argv[operand_index + 1]);
     t_start = bu_gettime();
-    if (load_g(&tie, argv[0], argc - 1, (const char **)(argv + 1), &meshes) != 0) {
-	bu_log("ERROR: failed to load geometry from %s\n", argv[0]);
+    if (load_g(&tie, argv[operand_index + 1], argc - operand_index - 2,
+	    (const char **)(argv + operand_index + 2), &meshes) != 0) {
+	bu_log("ERROR: failed to load geometry from %s\n", argv[operand_index + 1]);
 	return EXIT_FAILURE;
     }
     t_end = bu_gettime();
@@ -182,62 +277,63 @@ main(int argc, char **argv)
     }
 
     /* Configure the camera. */
-    render_camera_init(&camera, (size_t)(threads > 0 ? (size_t)threads : bu_avail_cpus()));
+    render_camera_init(&camera, (size_t)(args.threads > 0 ?
+	    (size_t)args.threads : bu_avail_cpus()));
     camera.type = RENDER_CAMERA_PERSPECTIVE;
-    camera.fov = fov;
-    camera.w = (uint16_t)width;
-    camera.h = (uint16_t)height;
+    camera.fov = args.fov;
+    camera.w = (uint16_t)args.width;
+    camera.h = (uint16_t)args.height;
 
     /*
      * Position the camera.  load_g scales geometry from millimeters to
      * meters, so tie.mid/tie.radius (and hence explicit eye/look points,
      * which are given in model millimeters) are handled in that space.
      */
-    if (have_look) {
-	VSCALE(camera.focus, look, 0.001);
+    if (args.look.set) {
+	VSCALE(camera.focus, args.look.value, 0.001);
     } else {
 	VMOVE(camera.focus, tie.mid);
     }
-    if (have_eye) {
-	VSCALE(camera.pos, eye, 0.001);
+    if (args.eye.set) {
+	VSCALE(camera.pos, args.eye.value, 0.001);
     } else {
 	/* Frame the model's bounding sphere from the requested az/el. */
-	bn_vec_ae(dir, az * DEG2RAD, el * DEG2RAD);
-	dist = tie.radius / tan(fov * DEG2RAD) * 1.15;
+	bn_vec_ae(dir, args.azimuth * DEG2RAD, args.elevation * DEG2RAD);
+	dist = tie.radius / tan(args.fov * DEG2RAD) * 1.15;
 	VJOIN1(camera.pos, camera.focus, dist, dir);
     }
 
     /* Select the shader. */
-    if (BU_STR_EQUAL(mode, "path")) {
+    if (BU_STR_EQUAL(args.mode, "path")) {
 	bu_vls_sprintf(&shaderbuf, "%d,%.4f,%.4f,%.4f",
-		       samples, sky[0], sky[1], sky[2]);
+		       args.samples, sky[0], sky[1], sky[2]);
 	if (render_shader_init(&camera.render, "path", bu_vls_cstr(&shaderbuf)) != 0)
 	    return EXIT_FAILURE;
-    } else if (BU_STR_EQUAL(mode, "spall")) {
+    } else if (BU_STR_EQUAL(args.mode, "spall")) {
 	/*
 	 * The spall shader wants "(pos) (dir) angle".  Use an explicit -b
 	 * string if given; otherwise synthesize a shot from the current view
 	 * through the model center so the cutaway cone is visible.  Coordinates
 	 * are in the tie's (meter) space.
 	 */
-	if (shaderarg) {
-	    if (render_shader_init(&camera.render, "spall", shaderarg) != 0)
+	if (args.shader_arg) {
+	    if (render_shader_init(&camera.render, "spall", args.shader_arg) != 0)
 		return EXIT_FAILURE;
 	} else {
 	    /* Fire the shot horizontally across the model (90 degrees off the
 	     * view azimuth) so the cone is seen from the side rather than down
 	     * its axis. */
 	    vect_t sdir;
-	    bn_vec_ae(sdir, (az + 90.0) * DEG2RAD, 0.0);
+	    bn_vec_ae(sdir, (args.azimuth + 90.0) * DEG2RAD, 0.0);
 	    bu_vls_sprintf(&shaderbuf, "(%.6f %.6f %.6f) (%.6f %.6f %.6f) %f",
-			   V3ARGS(camera.focus), V3ARGS(sdir), spall_angle);
+			   V3ARGS(camera.focus), V3ARGS(sdir), args.spall_angle);
 	    if (render_shader_init(&camera.render, "spall", bu_vls_cstr(&shaderbuf)) != 0)
 		return EXIT_FAILURE;
 	}
     } else {
-	/* shaderarg may be NULL; shaders that need an argument (cut, flos)
+	/* shader_arg may be NULL; shaders that need an argument (cut, flos)
 	 * accept one via -b. */
-	if (render_shader_init(&camera.render, mode, shaderarg) != 0)
+	if (render_shader_init(&camera.render, args.mode, args.shader_arg) != 0)
 	    return EXIT_FAILURE;
     }
 
@@ -246,14 +342,14 @@ main(int argc, char **argv)
     /* One tile covering the whole image, 24-bit RGB. */
     tile.orig_x = 0;
     tile.orig_y = 0;
-    tile.size_x = (uint16_t)width;
-    tile.size_y = (uint16_t)height;
+    tile.size_x = (uint16_t)args.width;
+    tile.size_y = (uint16_t)args.height;
     tile.format = RENDER_CAMERA_BIT_DEPTH_24;
     tile.frame = 0;
 
     TIENET_BUFFER_INIT(buffer);
 
-    bu_log("Rendering %dx%d, mode=%s ...\n", width, height, mode);
+    bu_log("Rendering %dx%d, mode=%s ...\n", args.width, args.height, args.mode);
     t_start = bu_gettime();
     render_camera_render(&camera, &tie, &tile, &buffer);
     t_end = bu_gettime();
@@ -263,18 +359,18 @@ main(int argc, char **argv)
      * renderer produces scanlines top-to-bottom; icv's origin is the lower
      * left, so flip vertically as we copy. */
     px = buffer.data + sizeof(camera_tile_t);
-    img = icv_create((size_t)width, (size_t)height, ICV_COLOR_SPACE_RGB);
-    for (j = 0; j < (size_t)height; j++) {
-	size_t src = j * (size_t)width * 3;
-	size_t dst = ((size_t)height - 1 - j) * (size_t)width * 3;
-	for (i = 0; i < (size_t)width * 3; i++)
+    img = icv_create((size_t)args.width, (size_t)args.height, ICV_COLOR_SPACE_RGB);
+    for (j = 0; j < (size_t)args.height; j++) {
+	size_t src = j * (size_t)args.width * 3;
+	size_t dst = ((size_t)args.height - 1 - j) * (size_t)args.width * 3;
+	for (i = 0; i < (size_t)args.width * 3; i++)
 	    img->data[dst + i] = px[src + i] / 255.0;
     }
 
     fmt = BU_MIME_IMAGE_PNG;
     {
 	struct bu_vls ext = BU_VLS_INIT_ZERO;
-	if (bu_path_component(&ext, output, BU_PATH_EXT)) {
+	if (bu_path_component(&ext, args.output, BU_PATH_EXT)) {
 	    int t = bu_file_mime(bu_vls_cstr(&ext), BU_MIME_IMAGE);
 	    if (t >= 0)
 		fmt = (bu_mime_image_t)t;
@@ -282,12 +378,12 @@ main(int argc, char **argv)
 	bu_vls_free(&ext);
     }
 
-    if (icv_write(img, output, fmt) != 0) {
-	bu_log("ERROR: failed to write %s\n", output);
+    if (icv_write(img, args.output, fmt) != 0) {
+	bu_log("ERROR: failed to write %s\n", args.output);
 	icv_destroy(img);
 	return EXIT_FAILURE;
     }
-    bu_log("Wrote %s\n", output);
+    bu_log("Wrote %s\n", args.output);
 
     icv_destroy(img);
     TIENET_BUFFER_FREE(buffer);

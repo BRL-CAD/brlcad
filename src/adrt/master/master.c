@@ -35,22 +35,20 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
-#ifdef HAVE_GETOPT_H
-#  include <getopt.h>
-#endif
 #include "zlib.h"
 #include "bnetwork.h"
 #include "bio.h"
 
 /* public api headers */
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/interrupt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/debug.h"
-#include "bu/getopt.h"
 #include "bu/str.h"
 #include "bu/snooze.h"
+#include "bu/vls.h"
 
 /* adrt headers */
 #include "adrt.h"		/* adrt Defines */
@@ -104,6 +102,61 @@ int master_networking(void *ptr);
 void master_result(tienet_buffer_t *result);
 
 master_t master;
+
+struct adrt_master_args {
+    const char *component_host;
+    const char *slave_exec;
+    const char *slave_list;
+    int daemon_mode;
+    int build;
+    int verbose;
+    int observer_port;
+    int master_port;
+    int help;
+};
+
+static const struct bu_arg_option adrt_master_options[] = {
+    BU_ARG_VALUE("c", "component-host", struct adrt_master_args,
+	component_host, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "host",
+	"Connect to the component-name server"),
+    BU_ARG_ALIAS(NULL, "comp_host", "component-host", 1),
+    BU_ARG_FLAG("d", "daemon", struct adrt_master_args, daemon_mode,
+	"Run in daemon mode"),
+    BU_ARG_VALUE("e", "slave-exec", struct adrt_master_args, slave_exec,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "script",
+	"Execute a script to start slave nodes"),
+    BU_ARG_ALIAS(NULL, "exec", "slave-exec", 1),
+    BU_ARG_VALUE("l", "slave-list", struct adrt_master_args, slave_list,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file",
+	"Read slave hosts from a file"),
+    BU_ARG_ALIAS(NULL, "list", "slave-list", 1),
+    BU_ARG_INTEGER_RANGE("o", "observer-port", struct adrt_master_args,
+	observer_port, 1, 1, 1, 65535, "port", "Set the observer TCP port"),
+    BU_ARG_ALIAS(NULL, "obs_port", "observer-port", 1),
+    BU_ARG_INTEGER_RANGE("p", "port", struct adrt_master_args, master_port,
+	1, 1, 1, 65535, "port", "Set the slave TCP port"),
+    BU_ARG_FLAG("b", "build", struct adrt_master_args, build,
+	"Print build information and exit"),
+    BU_ARG_FLAG("v", "verbose", struct adrt_master_args, verbose,
+	"Enable verbose output"),
+    BU_ARG_FLAG("h", "help", struct adrt_master_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand adrt_master_operands[] = {
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema adrt_master_schema = BU_ARG_SCHEMA(
+    "adrt_master", "Coordinate distributed ADRT rendering workers",
+    adrt_master_options, adrt_master_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar adrt_master_grammar = {
+    &adrt_master_schema, NULL, NULL
+};
 
 
 static size_t
@@ -650,23 +703,6 @@ master_networking(void *ptr)
 }
 
 
-#ifdef HAVE_GETOPT_LONG
-static struct option longopts[] =
-{
-    { "exec",	required_argument,	NULL, 'e' },
-    { "help",	no_argument,		NULL, 'h' },
-    { "comp_host",	required_argument,	NULL, 'c' },
-    { "daemon",	no_argument,		NULL, 'd' },
-    { "obs_port",	required_argument,	NULL, 'o' },
-    { "port",	required_argument,	NULL, 'p' },
-    { "build",	no_argument,		NULL, 'b' },
-    { "verbose",	no_argument,		NULL, 'v' },
-    { "list",	required_argument,	NULL, 'l' },
-};
-#endif
-
-static char shortopts[] = "bc:de:i:ho:p:vl:h?";
-
 unsigned char go_daemon_mode = 0;
 unsigned int master_listener_result = 1;
 unsigned int observer_listener_result = 1;
@@ -677,24 +713,14 @@ static void finish(int sig) {
 }
 
 
-static void help(void) {
-    fprintf(stderr,"%s\n", "Usage: adrt_master [options]\n\
-  -h\t\tdisplay help.\n\
-  -c\t\tconnect to component server.\n\
-  -d\t\tdaemon mode.\n\
-  -e\t\tscript to execute that starts slaves.\n\
-  -l\t\tfile containing list of slaves to use as compute nodes.\n\
-  -o\t\tset observer port number.\n\
-  -p\t\tset master port number.\n\
-  -v\t\tverbose.\n\
-  -b\t\tdisplay build.\n");
-}
-
-
 int main(int argc, char **argv) {
-    int port = 0, obs_port = 0, c = 0;
+    struct adrt_master_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int port = 0, obs_port = 0;
     char exec[64], list[64], comp_host[64];
     int verbose = 0;
+    int introspection;
+    int operand_index;
 
     bu_setprogname(argv[0]);
 
@@ -704,68 +730,43 @@ int main(int argc, char **argv) {
     list[0] = 0;
     exec[0] = 0;
     comp_host[0] = 0;
-    port = TN_MASTER_PORT;
-    obs_port = ADRT_PORT;
-
-    /* Parse command line options */
-
-    while ((c =
-#ifdef HAVE_GETOPT_LONG
-	    getopt_long(argc, argv, shortopts, longopts, NULL)
-#else
-	    bu_getopt(argc, argv, shortopts)
-#endif
-	       )!= -1)
-    {
-#ifdef HAVE_GETOPT_LONG
-	bu_optarg = optarg;
-	bu_optind = optind;
-	bu_optopt = optopt;
-#endif
-	if (bu_optopt == '?') c='h';
-	switch (c) {
-	    case 'c':
-		bu_strlcpy(comp_host, bu_optarg, 64);
-		break;
-
-	    case 'd':
-		go_daemon_mode = 1;
-		break;
-
-	    case 'h':
-		help();
-		return EXIT_SUCCESS;
-
-	    case 'o':
-		obs_port = atoi(bu_optarg);
-		break;
-
-	    case 'p':
-		port = atoi(bu_optarg);
-		break;
-
-	    case 'l':
-		bu_strlcpy(list, bu_optarg, 64);
-		break;
-
-	    case 'e':
-		bu_strlcpy(exec, bu_optarg, 64);
-		break;
-
-	    case 'b':
-		printf("adrt_master build: %s %s\n", __DATE__, __TIME__);
-		return EXIT_SUCCESS;
-		break;
-
-	    case 'v':
-		verbose = 1;
-		break;
-
-	    default:
-		help();
-		return EXIT_FAILURE;
-	}
+    args.master_port = TN_MASTER_PORT;
+    args.observer_port = ADRT_PORT;
+    introspection = bu_arg_introspect(&msg, &adrt_master_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
     }
+    operand_index = bu_arg_schema_parse_complete(&adrt_master_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_log("%s\n", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return EXIT_FAILURE;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&adrt_master_schema, "adrt_master");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "adrt_master help");
+	return EXIT_SUCCESS;
+    }
+    if (args.build) {
+	bu_flog(stdout, "adrt_master build: %s %s\n", __DATE__, __TIME__);
+	return EXIT_SUCCESS;
+    }
+    if (args.component_host)
+	bu_strlcpy(comp_host, args.component_host, sizeof(comp_host));
+    if (args.slave_exec)
+	bu_strlcpy(exec, args.slave_exec, sizeof(exec));
+    if (args.slave_list)
+	bu_strlcpy(list, args.slave_list, sizeof(list));
+    go_daemon_mode = args.daemon_mode;
+    port = args.master_port;
+    obs_port = args.observer_port;
+    verbose = args.verbose;
 
     master_init(port, obs_port, list, exec, comp_host, verbose);
 

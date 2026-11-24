@@ -93,7 +93,7 @@
 
 #include "common.h"
 
-#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -101,11 +101,14 @@
 #include <time.h>
 
 #include "vmath.h"
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/vls.h"
-#include "bu/getopt.h"
 #include "bu/assert.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/parallel.h"
+#include "bu/vls.h"
 #include "raytrace.h"
 #include "analyze.h"
 
@@ -117,11 +120,74 @@ struct options
     double radius;    /** calculated bounding radius */
     long samples;     /** segment count, -1 to iterate to convergence */
     double threshold; /** percentage change to stop at, 0 to do 1-shot */
-    char *materials;  /** print out areas per region, path to file */
+    const char *materials; /** print out areas per region, path to file */
     int makeGeometry; /** whether to write out geometry script to stdout */
     int printRegions; /** whether to print the full list of regions */
     int printGroups;  /** whether to print the full list of regions */
+    int help;
 };
+
+
+static int
+rtsurf_samples_validate(struct bu_vls *msg, const char *arg)
+{
+    long value;
+
+    return bu_arg_long_range_from_str(msg, &value, arg, 10, 1, LONG_MAX) ? 0 : -1;
+}
+
+
+static const struct bu_arg_option rtsurf_options[] = {
+    BU_ARG_VALUE_VALIDATE("n", "samples", struct options, samples,
+	BU_ARG_VALUE_LONG, rtsurf_samples_validate, "samples",
+	"Use this positive ray count per iteration; the default is 1000"),
+    BU_ARG_VALUE_VALIDATE("t", "threshold", struct options, threshold,
+	BU_ARG_VALUE_NUMBER, bu_arg_nonnegative_number_validate, "percent",
+	"Iterate in sample-count batches until trailing estimates converge within this percentage; zero runs once"),
+    BU_ARG_FLAG("r", "regions", struct options, printRegions,
+	"Report area estimates by region"),
+    BU_ARG_FLAG("g", "groups", struct options, printGroups,
+	"Report area estimates by combination"),
+    BU_ARG_VALUE("m", "materials", struct options, materials,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "density-file",
+	"Report area estimates by material, using a GQA-format density file for names"),
+    BU_ARG_FLAG("o", "geometry-script", struct options, makeGeometry,
+	"Write an MGED script of sample points, ray directions, and hits to standard output"),
+    BU_ARG_FLAG("h", "help", struct options, help, "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
+
+
+static const struct bu_arg_operand rtsurf_operands[] = {
+    BU_ARG_OPERAND("model.g", BU_ARG_VALUE_FILE, 1, 1,
+	"Geometry database to analyze", NULL),
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 0, BU_ARG_COUNT_UNLIMITED,
+	"Object to analyze; omit for automatic default-object selection", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+
+static const struct bu_arg_schema rtsurf_schema = BU_ARG_SCHEMA(
+    "rtsurf", "Estimate exterior surface area using Monte Carlo ray sampling",
+    rtsurf_options, rtsurf_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+
+static const struct bu_arg_grammar rtsurf_grammar = {
+    &rtsurf_schema, NULL, NULL
+};
+
+
+static int
+rtsurf_help(FILE *stream, int status)
+{
+    char *help = bu_arg_schema_help(&rtsurf_schema, "rtsurf");
+
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "rtsurf help");
+    return status;
+}
 
 
 struct ray {
@@ -756,113 +822,53 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 }
 
 
-static void
-get_options(int argc, char *argv[], struct options *opts)
-{
-    static const char *usage = "Usage: %s [-g] [-r] [-n #samples] [-t %%threshold] [-m density.txt] [-o] model.g [objects...]\n";
-
-    const char *argv0 = argv[0];
-    const char *db = NULL;
-
-    bu_optind = 1;
-
-    int c;
-    while ((c = bu_getopt(argc, (char * const *)argv, "grn:t:m:oh?")) != -1) {
-
-	switch (c) {
-	    case 'o':
-		if (opts)
-		    opts->makeGeometry = 1;
-		break;
-	    case 'g':
-		if (opts)
-		    opts->printGroups = 1;
-		break;
-	    case 'r':
-		if (opts)
-		    opts->printRegions = 1;
-		break;
-	    case 't':
-		if (opts) {
-		    char *end = NULL;
-
-		    errno = 0;
-		    opts->threshold = strtod(bu_optarg, &end);
-		    if (errno != 0 || end == bu_optarg || *end != '\0' ||
-			!isfinite(opts->threshold) || opts->threshold < 0.0)
-			bu_exit(EXIT_FAILURE, "ERROR: invalid threshold [%s]\n", bu_optarg);
-		}
-		break;
-	    case 'm':
-		if (opts)
-		    opts->materials = bu_optarg;
-		break;
-	    case 'n':
-		if (opts) {
-		    char *end = NULL;
-
-		    errno = 0;
-		    opts->samples = strtol(bu_optarg, &end, 10);
-		    if (errno != 0 || end == bu_optarg || *end != '\0' ||
-			opts->samples < 1)
-			bu_exit(EXIT_FAILURE, "ERROR: invalid sample count [%s]\n", bu_optarg);
-		}
-		break;
-	    case '?':
-		if (bu_optopt != '?')
-		    bu_exit(EXIT_FAILURE, "ERROR: unknown option -%c\n", bu_optopt);
-		/* fall through */
-	    case 'h':
-		/* asking for help */
-		bu_exit(EXIT_SUCCESS, usage, argv0);
-	    default:
-		bu_exit(EXIT_FAILURE, "ERROR: unexpected option code %d\n", c);
-	}
-    }
-
-    if (opts->materials && !bu_file_exists(opts->materials, NULL)) {
-	bu_exit(EXIT_FAILURE, "ERROR: material file [%s] not found\n", opts->materials);
-    }
-
-    bu_log("Samples: %ld %s\n", opts->samples, opts->samples>0?"rays":"(until converges)");
-    bu_log("Threshold: %g %s\n", opts->threshold, opts->threshold>0.0?"%":"(one iteration)");
-
-    argv += bu_optind;
-
-    db = argv[0];
-
-    /* final sanity checks */
-    if (!db || !bu_file_exists(db, NULL)) {
-	bu_exit(EXIT_FAILURE, "ERROR: database %s not found\n", (db)?db:"[]");
-    }
-}
-
-
 int
 main(int argc, char *argv[])
 {
-    struct options opts;
-    opts.samples = -1;
-    opts.threshold = 0.0;
-    opts.materials = NULL;
-    opts.makeGeometry = 0;
-    opts.printRegions = 0;
-    opts.printGroups = 0;
-    opts.radius = 0.0;
-
-    char *db = NULL;
-    char **obj = NULL;
+    struct options opts = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    const char *db;
+    const char **obj;
+    int introspection;
+    int operand_index;
 
     bu_setprogname(argv[0]);
 
-    get_options(argc, argv, &opts);
-    db = argv[bu_optind];
-    obj = argv + bu_optind + 1;
+    opts.samples = -1;
+    introspection = bu_arg_introspect(&msg, &rtsurf_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+
+    operand_index = bu_arg_schema_parse_complete(&rtsurf_schema, &opts, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (opts.help)
+	return rtsurf_help(stdout, 0);
+
+    db = argv[operand_index + 1];
+    obj = (const char **)(argv + operand_index + 2);
+
+    if (opts.materials && !bu_file_exists(opts.materials, NULL))
+	bu_exit(EXIT_FAILURE, "ERROR: material file [%s] not found\n", opts.materials);
+    bu_log("Samples: %ld %s\n", opts.samples, opts.samples > 0 ? "rays" : "(until converges)");
+    bu_log("Threshold: %g %s\n", opts.threshold, opts.threshold > 0.0 ? "%" : "(one iteration)");
+
+    if (!bu_file_exists(db, NULL))
+	bu_exit(EXIT_FAILURE, "ERROR: database %s not found\n", db);
 
     bu_log(" db is %s\n", db);
     bu_log(" obj[0] is %s\n", (obj && obj[0]) ? obj[0] : "(automatic default)");
 
-    double estimate = estimate_surface_area(db, (const char **)obj, &opts);
+    double estimate = estimate_surface_area(db, obj, &opts);
 
     bu_log("Estimated exterior surface area: %.1lf\n", estimate);
 

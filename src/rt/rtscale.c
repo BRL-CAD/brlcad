@@ -48,16 +48,19 @@
 
 #include "common.h"
 
-#include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
 
+#include "bu/arg.h"
 #include "bu/app.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/units.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -68,14 +71,6 @@
 #define FALSE 0
 #define TRUE 1
 
-
-char usage[] = "\
-Usage:  rtscale (width) (units) (interval) filename [string] >  file.plot3\n\
-	(width)		length of scale in model measurements\n\
-	(units)		string denoting the unit type,\n\
-	(interval)	number of intervals on the scale\n\
-	filename	name of log file to be read\n\
-	[string]	optional, descriptive string\n";
 
 int	layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int intervals, fastf_t m_len, char *descript);
 int	read_rt_file(FILE *infp, char *name, fastf_t *model2view);
@@ -89,38 +84,62 @@ int		border;			/* flag for debugging; to be used later */
 int		verbose;		/* flag for debugging; to be used later */
 int		SEEN_DESCRIPT=0;	/* flag for descriptive string */
 
+struct rtscale_args {
+    int help;
+};
+
 static int
-parse_positive_number(const char *arg, const char *name, fastf_t *value)
+rtscale_units_validate(struct bu_vls *msg, const char *arg)
 {
-    char *end = NULL;
-    double parsed;
+    double unit_scale = bu_units_conversion(arg);
 
-    errno = 0;
-    parsed = strtod(arg, &end);
-    if (errno != 0 || end == arg || *end != '\0' || !isfinite(parsed) || parsed <= 0.0) {
-	fprintf(stderr, "Invalid %s: %s\n", name, arg);
-	return 0;
+    if (!isfinite(unit_scale) || unit_scale <= 0.0) {
+	if (msg)
+	    bu_vls_printf(msg, "unknown length unit '%s'\n", arg);
+	return -1;
     }
-
-    *value = (fastf_t)parsed;
-    return 1;
+    return 0;
 }
 
+static const struct bu_arg_option rtscale_options[] = {
+    BU_ARG_FLAG("h", "help", struct rtscale_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand rtscale_operands[] = {
+    BU_ARG_OPERAND_VALIDATE("width", BU_ARG_VALUE_NUMBER, 1, 1,
+	bu_arg_positive_number_validate,
+	"Positive scale length expressed in the selected units", NULL),
+    BU_ARG_OPERAND_VALIDATE("units", BU_ARG_VALUE_STRING, 1, 1,
+	rtscale_units_validate, "Length unit such as mm, cm, m, in, or ft", NULL),
+    BU_ARG_OPERAND_INTEGER_RANGE("intervals", 1, 1, 1, 1, 1, INT_MAX,
+	"Positive number of tick-mark intervals", NULL),
+    BU_ARG_OPERAND("file.log", BU_ARG_VALUE_FILE, 1, 1,
+	"RT log containing the rendered view", NULL),
+    BU_ARG_OPERAND("description", BU_ARG_VALUE_STRING, 0, 1,
+	"Optional label drawn beneath the scale", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema rtscale_schema = BU_ARG_SCHEMA(
+    "rtscale", "Plot a measuring scale for an RT-family UNIX-Plot image",
+    rtscale_options, rtscale_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar rtscale_grammar = {
+    &rtscale_schema, NULL, NULL
+};
+
 static int
-parse_positive_integer(const char *arg, const char *name, int *value)
+rtscale_help(FILE *stream, int status)
 {
-    char *end = NULL;
-    long parsed;
+    char *help = bu_arg_schema_help(&rtscale_schema, "rtscale");
 
-    errno = 0;
-    parsed = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || parsed < 1 || parsed > INT_MAX) {
-	fprintf(stderr, "Invalid %s: %s\n", name, arg);
-	return 0;
-    }
-
-    *value = (int)parsed;
-    return 1;
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "rtscale help");
+    return status;
 }
 
 /*
@@ -143,60 +162,72 @@ main(int argc, char **argv)
     fastf_t		width;			/* scale width in user units */
     double		unit_scale;		/* user units to millimeters */
     fastf_t		m_len;			/* scale length in model size */
+    struct rtscale_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    const char * const *values;
+    int introspection;
+    int operand_index;
 
     bu_setprogname(argv[0]);
+
+    introspection = bu_arg_introspect(&msg, &rtscale_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+
+    operand_index = bu_arg_schema_parse_complete(&rtscale_schema, &args, &msg,
+	argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    if (args.help) {
+	bu_vls_free(&msg);
+	return rtscale_help(stdout, 0);
+    }
+    values = (const char * const *)(argv + operand_index + 1);
+
+    if (!bu_arg_number_from_str(&msg, &width, values[0]) ||
+	!bu_arg_integer_range_from_str(&msg, &intervals, values[2], 10, 1, INT_MAX)) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+
+    unit_scale = bu_units_conversion(values[1]);
+    m_len = width * unit_scale;
+    if (!isfinite(m_len) || m_len <= 0.0) {
+	bu_flog(stderr, "converted length is outside the supported range\n");
+	return 1;
+    }
 
     MAT_IDN(view2model);			/* makes an identity matrix */
     MAT_IDN(model2view);
 
-    /* Check to see that the correct format is given, else print
-     * usage message.
-     */
-
-    if (argc != 5 && argc != 6)  {
-	fputs(usage, stderr);
-	bu_exit(-1, NULL);
-    }
-
-    if (!parse_positive_number(argv[1], "width", &width) ||
-	!parse_positive_integer(argv[3], "interval count", &intervals)) {
-	fputs(usage, stderr);
-	bu_exit(-1, NULL);
-    }
-
-    unit_scale = bu_units_conversion(argv[2]);
-    if (!isfinite(unit_scale) || unit_scale <= 0.0) {
-	fprintf(stderr, "Invalid units: %s\n", argv[2]);
-	fputs(usage, stderr);
-	bu_exit(-1, NULL);
-    }
-
-    m_len = width * unit_scale;
-    if (!isfinite(m_len) || m_len <= 0.0) {
-	fprintf(stderr, "Invalid converted length: %.17g %s\n", width, argv[2]);
-	fputs(usage, stderr);
-	bu_exit(-1, NULL);
-    }
-
     /* Open an incoming file for reading */
 
-    fp = fopen( argv[4], "r");
+    fp = fopen(values[3], "r");
     if ( fp == NULL )  {
-	perror(argv[4]);
+	perror(values[3]);
 	bu_exit(-1, NULL);
     }
 
     /* Now process the arguments from main */
 
-    bu_strlcpy(label, argv[1], sizeof(label));
-    bu_strlcpy(units, argv[2], sizeof(units));
+    bu_strlcpy(label, values[0], sizeof(label));
+    bu_strlcpy(units, values[1], sizeof(units));
 
     bu_strlcat(label, units, sizeof(label));
 
-    bu_strlcpy(name, argv[4], sizeof(name));
+    bu_strlcpy(name, values[3], sizeof(name));
 
-    if ( argc == 6 )  {
-	bu_strlcpy( descript, argv[5], sizeof(descript) );
+    if (values[4])  {
+	bu_strlcpy(descript, values[4], sizeof(descript));
 	SEEN_DESCRIPT = 1;
     }
 

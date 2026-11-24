@@ -59,7 +59,7 @@ brlcad_manage_files(tie_HDRS ${INCLUDE_DIR}/tie)
 
 # Standalone, headless renderer -- a single-process front end to librender
 # (the ADRT path tracer and friends) that writes an image file.
-brlcad_addexec(adrt adrt.c "librender;librt;libicv;libbu;libbn;${M_LIBRARY}")
+brlcad_addexec(adrt adrt.c "librender;librt;libicv;libbu;libbn;${M_LIBRARY}" ARG_SCHEMA)
 target_include_directories(adrt BEFORE PRIVATE ${ADRT_LOCAL_INCLUDE_DIRS})
 
 # Tcl/Tk based ISST

@@ -81,6 +81,7 @@
 #include <stddef.h>
 
 #include "vmath.h"		/* vector math macros */
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/list.h"
 #include "bu/parse.h"
@@ -90,8 +91,6 @@
 
 #include "./rtuif.h"
 
-
-const char *progname = "(noname)";
 
 /**
  * @struct shot
@@ -137,11 +136,41 @@ static const struct bu_structparse reg_sp[] = {
 };
 
 
-void
-usage(const char *s)
+struct reshoot_args {
+    int help;
+};
+
+static const struct bu_arg_option reshoot_options[] = {
+    BU_ARG_FLAG("h", "help", struct reshoot_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 0),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand reshoot_operands[] = {
+    BU_ARG_OPERAND("geom.g", BU_ARG_VALUE_FILE, 1, 1,
+	"Input BRL-CAD database", NULL),
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 0,
+	BU_ARG_COUNT_UNLIMITED, "Object or path to test", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema reshoot_schema = BU_ARG_SCHEMA(
+    "reshoot", "Re-shoot recorded rays and compare their results",
+    reshoot_options, reshoot_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar reshoot_grammar = {
+    &reshoot_schema, NULL, NULL
+};
+
+static int
+reshoot_help(FILE *stream, int status)
 {
-    if (s) (void)fputs(s, stderr);
-    bu_exit(1, "Usage: %s geom.g [obj...] < rayfile \n", progname);
+    char *help = bu_arg_schema_help(&reshoot_schema, "reshoot");
+    bu_flog(stream, "%s", help ? help : "");
+    bu_free(help, "reshoot help");
+    return status;
 }
 
 
@@ -318,16 +347,36 @@ main(int argc, char **argv)
     struct bu_vls buf = BU_VLS_INIT_ZERO;
     struct shot sh;
     const char *default_objv[2] = {NULL, NULL};
-    const char **tree_argv = (const char **)argv + 2;
-    int tree_argc = argc - 2;
+    const char **tree_argv;
+    int tree_argc;
     int i;
+    int operand_index;
+    int introspection;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    struct reshoot_args args = {0};
 
     bu_setprogname(argv[0]);
-    progname = argv[0];
 
-    if (argc < 2) {
-	usage("insufficient args\n");
+    introspection = bu_arg_introspect(&msg, &reshoot_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+    operand_index = bu_arg_schema_parse_complete(&reshoot_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.help)
+	return reshoot_help(stdout, 0);
+
+    tree_argv = (const char **)argv + operand_index + 2;
+    tree_argc = argc - operand_index - 2;
 
 
     /*
@@ -336,7 +385,8 @@ main(int argc, char **argv)
      *  the database to be ray traced.  It also gives you back the
      *  title string in the header (ID) record.
      */
-    if ( (rtip=rt_dirbuild(argv[1], idbuf, sizeof(idbuf))) == RTI_NULL ) {
+    if ((rtip = rt_dirbuild(argv[operand_index + 1], idbuf,
+	    sizeof(idbuf))) == RTI_NULL) {
 	bu_exit(2, "rtexample: rt_dirbuild failure\n");
     }
 
