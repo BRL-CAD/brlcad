@@ -20,6 +20,7 @@
 
 #include "common.h"
 
+#include <limits.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -175,6 +176,29 @@ voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*crea
     /* get bounding box values etc. */
     if (rtip->needprep)
 	rt_prep_parallel(rtip, 1);
+
+    if (levelOfDetail < 1 ||
+	levelOfDetail > ANALYZE_VOXELIZE_MAX_LEVEL_DETAIL) {
+	bu_log("voxelize: detail level must be from 1 through %d\n",
+		ANALYZE_VOXELIZE_MAX_LEVEL_DETAIL);
+	return;
+    }
+
+    for (i = 0; i < 3; i++) {
+	fastf_t span = rtip->mdl_max[i] - rtip->mdl_min[i];
+	fastf_t cells;
+
+	if (!isfinite(sizeVoxel[i]) || sizeVoxel[i] <= 0.0 ||
+	    !isfinite(span) || span < 0.0) {
+	    bu_log("voxelize: invalid voxel size or model bounds\n");
+	    return;
+	}
+	cells = span / sizeVoxel[i];
+	if (!isfinite(cells) || cells > INT_MAX - 1) {
+	    bu_log("voxelize: voxel count exceeds the supported integer range\n");
+	    return;
+	}
+    }
 
     /* calculate number of voxels in each dimension */
     numVoxel[0] = (int)(((rtip->mdl_max)[0] - (rtip->mdl_min)[0])/sizeVoxel[0]) + 1;

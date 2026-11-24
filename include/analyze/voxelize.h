@@ -56,6 +56,9 @@ struct rayInfo {
     struct voxelRegion *regionList;
 };
 
+/* Sampling work grows with the square of this value. */
+#define ANALYZE_VOXELIZE_MAX_LEVEL_DETAIL 1024
+
 /**
  * voxelize function takes raytrace instance and user parameters as inputs
  */

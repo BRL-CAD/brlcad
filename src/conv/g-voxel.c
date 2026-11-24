@@ -129,7 +129,7 @@ main(int argc, char **argv)
 
 	    case 'd':
 		if (!bu_opt_scan_int_range(bu_optarg, &levelOfDetail, 1,
-			INT_MAX, "detail level")) {
+			ANALYZE_VOXELIZE_MAX_LEVEL_DETAIL, "detail level")) {
 		    bu_exit(1, "Usage: %s %s", argv[0], usage);
 		}
 		break;
