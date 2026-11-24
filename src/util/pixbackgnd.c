@@ -256,20 +256,19 @@ get_args(int argc, char **argv)
 
 
 static void
-flood(unsigned char *horiz_buf, unsigned char *vert_buf, unsigned char *vp, int line)
+flood(unsigned char *horiz_buf, unsigned char *vert_buf, size_t scanline_size, int line)
 {
     unsigned char *op;
-    ssize_t ret = 0;
-    vp = &vert_buf[line*3];
-    op = &horiz_buf[(file_width*3)-1];
+    unsigned char *vp = &vert_buf[(size_t)line * 3];
+
+    op = horiz_buf + scanline_size;
     while (op > horiz_buf) {
-	*op-- = vp[2];
-	*op-- = vp[1];
-	*op-- = *vp;
+	*--op = vp[2];
+	*--op = vp[1];
+	*--op = *vp;
     }
-    ret = write(1, horiz_buf, file_width*3);
-    if (ret < 0)
-	perror("write");
+    if (fwrite(horiz_buf, 1, scanline_size, stdout) != scanline_size)
+	bu_exit(1, "pixbackgnd: failed to write scanline\n");
 }
 
 
@@ -278,6 +277,8 @@ main(int argc, char **argv)
 {
     int i = 0;
     int line = 0;
+    size_t scanline_size;
+    size_t column_size;
     unsigned char *horiz_buf = NULL;
     unsigned char *vert_buf = NULL;
     unsigned char *vp = NULL;
@@ -289,11 +290,18 @@ main(int argc, char **argv)
 	bu_exit(1, NULL);
     }
 
+    if ((size_t)file_width > SIZE_MAX / 3 ||
+	(size_t)file_height > SIZE_MAX / 3) {
+	bu_exit(1, "pixbackgnd: image dimensions are too large\n");
+    }
+    scanline_size = (size_t)file_width * 3;
+    column_size = (size_t)file_height * 3;
+
     setmode(fileno(stdout), O_BINARY);
 
-    horiz_buf = (unsigned char *)bu_calloc(file_width * 3,
+    horiz_buf = (unsigned char *)bu_calloc(scanline_size,
 	sizeof(unsigned char), "horiz_buf");
-    vert_buf = (unsigned char *)bu_calloc(file_height * 3,
+    vert_buf = (unsigned char *)bu_calloc(column_size,
 	sizeof(unsigned char), "vert_buf");
 
     /*
@@ -351,11 +359,11 @@ main(int argc, char **argv)
      */
     if (!invert) {
 	for (line = file_height-1; line >= 0; line--)
-	    flood(horiz_buf, vert_buf, vp, line);
+	    flood(horiz_buf, vert_buf, scanline_size, line);
     } else {
 	/* Inverted: top-to-bottom */
 	for (line=0; line < file_height; line++)
-	    flood(horiz_buf, vert_buf, vp, line);
+	    flood(horiz_buf, vert_buf, scanline_size, line);
     }
 
     bu_free(horiz_buf, "horiz_buf alloc from malloc");
