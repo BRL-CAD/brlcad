@@ -29,6 +29,7 @@
 
 #include <errno.h>
 #include <limits.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <math.h>
 #include "bio.h"
@@ -136,11 +137,19 @@ main(int argc, char *argv[])
 	return 0;
     }
     if (uniform) {
-	double tmp;
+	double unit;
+	uint64_t offset;
+	uint64_t span;
+	int64_t result;
+
 	up = bn_unif_init(seed, 0);
-	tmp = (double)high - (double)low + 1.0;
-	tmp*=BN_UNIF_DOUBLE(up)+0.5;
-	fprintf(stdout, "%d\n", low +(int)tmp);
+	span = (uint64_t)((int64_t)high - (int64_t)low) + 1;
+	unit = BN_UNIF_DOUBLE(up) + 0.5;
+	offset = (uint64_t)(unit * (double)span);
+	result = (int64_t)low + (int64_t)offset;
+	if (result < low || result > high)
+	    bu_exit(1, "random: generated value is outside the requested range\n");
+	fprintf(stdout, "%d\n", (int)result);
 	return 0;
     }
 
