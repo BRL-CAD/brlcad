@@ -107,7 +107,7 @@ static const struct rt_edit_param_desc hyp_b_params[] = {
       "length", 0, NULL, NULL, NULL }
 };
 static const struct rt_edit_param_desc hyp_c_params[] = {
-    { "c", "Neck Ratio c (0..1)", RT_EDIT_PARAM_SCALAR, 0, 1e-10, 1.0,
+    { "c", "Neck Ratio c (0 < c < 1)", RT_EDIT_PARAM_SCALAR, 0, 1e-10, 1.0,
       "fraction", 0, NULL, NULL, NULL }
 };
 static const struct rt_edit_param_desc hyp_rot_deg_params[] = {
@@ -304,9 +304,9 @@ hyp_set_neck_ratio(struct rt_edit *s, fastf_t *ratio)
 	    return BRLCAD_ERROR;
 	}
 	const fastf_t value = s->e_para[0];
-	if (!isfinite(value) || value <= 0.0 || value > 1.0) {
+	if (!isfinite(value) || value <= 0.0 || value >= 1.0) {
 	    bu_vls_printf(s->log_str,
-		    "Neck ratio must be finite, positive, and no greater than 1\n");
+		    "Neck ratio must be finite and strictly between 0 and 1\n");
 	    return BRLCAD_ERROR;
 	}
 	*ratio = value;
@@ -323,7 +323,7 @@ hyp_set_neck_ratio(struct rt_edit *s, fastf_t *ratio)
 
     /* A mouse drag beyond the upper bound leaves the ratio unchanged. */
     const fastf_t scaled_ratio = *ratio * scale;
-    if (scaled_ratio <= 1.0)
+    if (scaled_ratio < 1.0)
 	*ratio = scaled_ratio;
     return BRLCAD_OK;
 }

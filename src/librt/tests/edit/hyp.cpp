@@ -256,8 +256,8 @@ rt_edit_test_hyp(void)
     bu_log("ECMD_HYP_SCALE_B SUCCESS: b restored to %g\n", edit_hyp->hyp_b);
 
     /* ================================================================
-     * ECMD_HYP_C  (set bnr; absolute numeric value must be <= 1.0)
-     * Initial bnr=0.5; es_scale=1.5: bnr'=0.5*1.5=0.75 <= 1.0 ✓
+     * ECMD_HYP_C  (set bnr; absolute numeric value must be < 1.0)
+     * Initial bnr=0.5; es_scale=1.5: bnr'=0.5*1.5=0.75 < 1.0 ✓
      * Restore: e_para[0]=0.5 sets the ratio directly.
      * ================================================================*/
     hyp_reset(s, edit_hyp, orig_hyp, cmp_hyp);
@@ -328,17 +328,17 @@ rt_edit_test_hyp(void)
     s->e_invmat[15] = 1.0 / path_scale;
     EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_HYP_C);
     s->e_inpara = 1;
-    s->e_para[0] = 1.0;
-    cmp_hyp->hyp_bnr = 1.0;
+    s->e_para[0] = 0.9;
+    cmp_hyp->hyp_bnr = 0.9;
     rt_edit_process(s);
     if (hyp_diff("dimensionless neck ratio", cmp_hyp, edit_hyp))
 	bu_exit(1, "ERROR: HYP neck ratio changed with units or path scale\n");
 
     s->e_inpara = 1;
-    s->e_para[0] = 1.25;
+    s->e_para[0] = 1.0;
     if (rt_edit_process(s) != BRLCAD_ERROR ||
 	hyp_diff("out-of-range neck ratio", cmp_hyp, edit_hyp))
-	bu_exit(1, "ERROR: HYP accepted an out-of-range neck ratio\n");
+	bu_exit(1, "ERROR: HYP accepted a degenerate neck ratio\n");
 
     s->es_scale = 1.25;
     if (rt_edit_process(s) != BRLCAD_OK ||
