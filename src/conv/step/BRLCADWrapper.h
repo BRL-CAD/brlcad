@@ -98,6 +98,7 @@ class BRLCADWrapper
 private:
     struct CombinationProperties {
 	bool is_region = false;
+	bool inherit_style = false;
 	int64_t step_id = 0;
 	std::string original_name;
 	bool has_style = false;
@@ -200,7 +201,7 @@ public:
 	int operation = WMOP_UNION);
     bool SetCombinationProperties(const std::string &combname, bool is_region,
 	int64_t step_id = 0, const std::string &original_name = std::string(),
-	const brlcad::step::Style *style = NULL);
+	const brlcad::step::Style *style = NULL, bool inherit_style = false);
     bool SetCombinationAttribute(const std::string &combname,
 	const std::string &key, const std::string &value);
     std::string GetBRLCADName(std::string &name);

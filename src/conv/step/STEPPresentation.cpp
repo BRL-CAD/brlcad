@@ -290,7 +290,49 @@ extract_style_graph(STEPWrapper &wrapper, const std::vector<uint64_t> &roots,
 }
 
 void
-extract_styled_item(STEPWrapper &wrapper, uint64_t id)
+bind_context(std::map<uint64_t, uint64_t> &contexts, uint64_t context, uint64_t usage)
+{
+    const auto entry = contexts.emplace(context, usage);
+    if (!entry.second && entry.first->second != usage)
+	entry.first->second = 0;
+}
+
+std::map<uint64_t, uint64_t>
+occurrence_contexts(STEPWrapper &wrapper)
+{
+    std::map<uint64_t, uint64_t> contexts;
+    if (wrapper.LazyInstancesByType("PRESENTATION_STYLE_BY_CONTEXT").empty() &&
+	    wrapper.LazyInstancesByType("CONTEXT_DEPENDENT_OVER_RIDING_STYLED_ITEM").empty())
+	return contexts;
+
+    // OCCT binds a presentation representation to a usage through a
+    // SHAPE_DEFINITION_REPRESENTATION. AP242 also permits the CDSR itself.
+    const std::string types[] = {"SHAPE_DEFINITION_REPRESENTATION",
+	"CONTEXT_DEPENDENT_SHAPE_REPRESENTATION"};
+    for (const std::string &type : types) {
+	const bool definition_rep = type == types[0];
+	for (uint64_t id : wrapper.LazyInstancesByType(type)) {
+	    if (wrapper.CancellationRequested()) return contexts;
+	    const auto refs = wrapper.LazyForwardReferences(id);
+	    if (refs.size() != 2) continue;
+	    const uint64_t shape = refs[definition_rep ? 0 : 1];
+	    const uint64_t context = refs[definition_rep ? 1 : 0];
+	    if (wrapper.LazyTypeName(shape) != "PRODUCT_DEFINITION_SHAPE") continue;
+	    const auto usages = wrapper.LazyForwardReferences(shape);
+	    if (usages.size() != 1 ||
+		    wrapper.LazyTypeName(usages.front()) != "NEXT_ASSEMBLY_USAGE_OCCURRENCE")
+		continue;
+	    bind_context(contexts, context, usages.front());
+	    if (!definition_rep)
+		bind_context(contexts, id, usages.front());
+	}
+    }
+    return contexts;
+}
+
+void
+extract_styled_item(STEPWrapper &wrapper, uint64_t id,
+    const std::map<uint64_t, uint64_t> &contexts)
 {
     const std::vector<std::string> arguments =
 	source_arguments(wrapper.LazySourceRecord(id));
@@ -298,22 +340,53 @@ extract_styled_item(STEPWrapper &wrapper, uint64_t id)
     const std::vector<uint64_t> targets = source_references(arguments[2]);
     if (targets.empty() || targets.front() == 0) return;
 
-    Style &style = wrapper.Document().styles[static_cast<int64_t>(targets.front())];
-    style.item_entity_id = static_cast<int64_t>(targets.front());
-    append_id(style, static_cast<int64_t>(id));
+    const int64_t target = static_cast<int64_t>(targets.front());
     const std::string name = brlcad::step::decode_string(arguments.front());
-    if (!name.empty()) style.name = name;
-
     std::vector<uint64_t> assignments = source_references(arguments[1]);
     if (assignments.empty()) {
 	const std::vector<uint64_t> references = wrapper.LazyForwardReferences(id);
 	for (std::vector<uint64_t>::const_iterator reference = references.begin();
 	     reference != references.end(); ++reference) {
-	    if (wrapper.LazyTypeName(*reference) == "PRESENTATION_STYLE_ASSIGNMENT")
+	    const auto type = wrapper.LazyTypeName(*reference);
+	    if (type == "PRESENTATION_STYLE_ASSIGNMENT" || type == "PRESENTATION_STYLE_BY_CONTEXT")
 		assignments.push_back(*reference);
 	}
     }
-    extract_style_graph(wrapper, assignments, style);
+
+    std::map<int64_t, std::vector<uint64_t>> scoped_assignments;
+    const bool contextual_override =
+	wrapper.LazyTypeName(id) == "CONTEXT_DEPENDENT_OVER_RIDING_STYLED_ITEM";
+    for (uint64_t assignment : assignments) {
+	std::vector<uint64_t> context;
+	if (contextual_override && arguments.size() >= 5) {
+	    context = source_references(arguments[4]);
+	} else if (wrapper.LazyTypeName(assignment) == "PRESENTATION_STYLE_BY_CONTEXT") {
+	    const auto args = source_arguments(wrapper.LazySourceRecord(assignment));
+	    if (args.size() >= 2) context = source_references(args[1]);
+	}
+	int64_t usage = 0;
+	if (context.size() == 1) {
+	    const auto found = contexts.find(context.front());
+	    if (found != contexts.end()) {
+		if (!found->second) continue;
+		usage = static_cast<int64_t>(found->second);
+	    } else if (wrapper.LazyTypeName(context.front()) == "MAPPED_ITEM") {
+		usage = static_cast<int64_t>(context.front());
+	    }
+	}
+	if (!usage && contextual_override) continue;
+	scoped_assignments[usage].push_back(assignment);
+    }
+    if (assignments.empty() && !contextual_override)
+	scoped_assignments[0];
+    for (const auto &entry : scoped_assignments) {
+	Style &style = entry.first ? wrapper.Document().occurrence_styles[entry.first] :
+	    wrapper.Document().styles[target];
+	style.item_entity_id = target;
+	append_id(style, static_cast<int64_t>(id));
+	if (!name.empty()) style.name = name;
+	extract_style_graph(wrapper, entry.second, style);
+    }
 }
 
 void
@@ -371,6 +444,7 @@ selected_presentation_ids(STEPWrapper &wrapper)
 
     std::set<uint64_t> presentation;
     const char *types[] = {"STYLED_ITEM", "OVER_RIDING_STYLED_ITEM",
+	"CONTEXT_DEPENDENT_OVER_RIDING_STYLED_ITEM",
 	"PRESENTATION_LAYER_ASSIGNMENT"};
     for (size_t t = 0; t < sizeof(types) / sizeof(types[0]); ++t) {
 	const std::vector<uint64_t> ids = wrapper.LazyInstancesByType(types[t]);
@@ -396,10 +470,13 @@ ExtractSTEPPresentation(STEPWrapper &wrapper)
     if (!wrapper.HasLazyIndex()) return false;
 
     wrapper.Document().styles.clear();
+    wrapper.Document().occurrence_styles.clear();
     wrapper.Document().layers.clear();
+    const auto contexts = occurrence_contexts(wrapper);
     std::vector<uint64_t> ids = selected_presentation_ids(wrapper);
     if (ids.empty() && wrapper.ImportOptions().selected_entity_ids.empty()) {
 	const char *types[] = {"STYLED_ITEM", "OVER_RIDING_STYLED_ITEM",
+	    "CONTEXT_DEPENDENT_OVER_RIDING_STYLED_ITEM",
 	    "PRESENTATION_LAYER_ASSIGNMENT"};
 	std::set<uint64_t> all;
 	for (size_t type = 0; type < sizeof(types) / sizeof(types[0]); ++type) {
@@ -415,14 +492,15 @@ ExtractSTEPPresentation(STEPWrapper &wrapper)
 	if ((i % 32) == 0)
 	    wrapper.SetProgress("extracting STEP presentation metadata", i, ids.size());
 	const std::string type = wrapper.LazyTypeName(ids[i]);
-	if (type == "STYLED_ITEM" || type == "OVER_RIDING_STYLED_ITEM")
-	    extract_styled_item(wrapper, ids[i]);
-	else if (type == "PRESENTATION_LAYER_ASSIGNMENT")
+	if (type == "PRESENTATION_LAYER_ASSIGNMENT")
 	    extract_layer(wrapper, ids[i]);
+	else
+	    extract_styled_item(wrapper, ids[i], contexts);
     }
     wrapper.SetProgress("STEP presentation metadata extracted", ids.size(), ids.size());
     update_predefined_colour_coverage(wrapper);
-    wrapper.Statistics().styles_extracted = wrapper.Document().styles.size();
+    wrapper.Statistics().styles_extracted = wrapper.Document().styles.size() +
+	wrapper.Document().occurrence_styles.size();
     wrapper.Statistics().layers_extracted = wrapper.Document().layers.size();
     return true;
 }

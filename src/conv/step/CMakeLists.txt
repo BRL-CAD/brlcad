@@ -747,6 +747,22 @@ if(BRLCAD_ENABLE_STEP)
 	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/step_enum_schemas.cmake
       )
     endif()
+    if(STEPCODE_LAZY_FOUND)
+      foreach(_schema ap214 ap242e1 ap242e2 ap242e3 ap242e4)
+        if(TARGET step-schema-${_schema})
+          brlcad_add_test(
+            NAME step_occurrence_appearance_${_schema}
+            COMMAND ${CMAKE_COMMAND}
+            -DSTEP_G=$<TARGET_FILE:step-g>
+            -DMGED=$<TARGET_FILE:mged>
+            -DSCHEMA=${_schema}
+            -DINPUT_TEMPLATE=${CMAKE_CURRENT_SOURCE_DIR}/tests/step_occurrence_appearance.stp.in
+            -DWORK=${CMAKE_CURRENT_BINARY_DIR}
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/step_occurrence_appearance.cmake
+          )
+        endif()
+      endforeach()
+    endif()
   endif()
 endif()
 
@@ -837,6 +853,8 @@ cmakefiles(
   tests/step_invalid_surface_brep.stp.in
   tests/step_malformed_product_representation.stp.in
   tests/step_mapped_assembly_baseline.cmake
+  tests/step_occurrence_appearance.cmake
+  tests/step_occurrence_appearance.stp.in
   tests/step_non_geometric_product.stp.in
   tests/step_partial_policy_outcome.cmake
   tests/step_schema_policy_outcomes.cmake

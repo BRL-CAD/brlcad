@@ -402,6 +402,8 @@ struct Document {
     std::map<int64_t, UsageSubstitute> usage_substitutes;
     std::map<int64_t, ConfigurationRecord> configuration_records;
     std::map<int64_t, Style> styles;
+    // Instance styles are keyed by the assembly usage or mapped item.
+    std::map<int64_t, Style> occurrence_styles;
     std::map<int64_t, Layer> layers;
     /** Semantic, presentation, association, and supporting AP242 PMI nodes.
      * Semantic-only and graphical-only records remain distinct categories. */

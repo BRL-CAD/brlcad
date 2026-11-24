@@ -732,12 +732,13 @@ BRLCADWrapper::AddMember(const std::string &combname, const std::string &member,
 bool
 BRLCADWrapper::SetCombinationProperties(const std::string &combname, bool is_region,
 	int64_t step_id, const std::string &original_name,
-	const brlcad::step::Style *style)
+    const brlcad::step::Style *style, bool inherit_style)
 {
     if (combname.empty())
 	return false;
     CombinationProperties &properties = combination_properties[combname];
     properties.is_region = is_region;
+    properties.inherit_style = inherit_style;
     properties.step_id = step_id;
     properties.original_name = original_name;
     properties.has_style = style != NULL;
@@ -786,12 +787,14 @@ BRLCADWrapper::WriteCombs()
 	std::string shader_args;
 	const char *shader = NULL;
 	unsigned char *colour = NULL;
-	if (properties && properties->is_region) {
-	    shader = "plastic";
+	const bool is_region = properties && properties->is_region;
+	const brlcad::step::Style *style = properties && properties->has_style ?
+	    &properties->style : NULL;
+	if (is_region || (style && style->has_rgb)) {
 	    colour = rgb;
-	    if (properties->has_style && properties->style.has_rgb) {
+	    if (style && style->has_rgb) {
 		for (size_t component = 0; component < 3; ++component) {
-		    double value = properties->style.rgb[component];
+		    double value = style->rgb[component];
 		    if (value < 0.0) value = 0.0;
 		    if (value > 1.0) value = 1.0;
 		    rgb[component] = static_cast<unsigned char>(value * 255.0 + 0.5);
@@ -799,19 +802,22 @@ BRLCADWrapper::WriteCombs()
 	    } else {
 		getRandomColor(rgb);
 	    }
-	    if (properties->has_style && properties->style.has_transparency) {
-		std::ostringstream args;
-		args << "tr " << properties->style.transparency;
-		shader_args = args.str();
-	    }
 	}
+	if (is_region || (style && style->has_transparency))
+	    shader = "plastic";
+	if (style && style->has_transparency) {
+	    std::ostringstream args;
+	    args << "tr " << style->transparency;
+	    shader_args = args.str();
+	}
+	const int inherit = properties && properties->inherit_style ? DB_INH_HIGHER : DB_INH_LOWER;
 
 	/* Product, assembly, and intermediate Boolean combinations remain
 	 * non-regions.  Exact CSG roots explicitly opt into region semantics. */
 	if (mk_comb(outfp, combname.c_str(), head,
-	    properties && properties->is_region ? 1 : 0, shader,
+	    is_region ? 1 : 0, shader,
 	    shader_args.empty() ? NULL : shader_args.c_str(), colour,
-	    0, 0, 0, 0, 0, 0, 0) < 0) {
+	    0, 0, 0, 0, inherit, 0, 0) < 0) {
 	    success = false;
 	} else if (properties) {
 	    /* Attach occurrence metadata with one database update per
@@ -823,30 +829,29 @@ BRLCADWrapper::WriteCombs()
 	    if (!properties->original_name.empty())
 		attributes.try_emplace("step:original_name",
 		    brlcad::step::decode_string(properties->original_name));
-	    if (properties->has_style) {
-		const brlcad::step::Style &style = properties->style;
-		if (!style.name.empty()) attributes.try_emplace("step:style_name", style.name);
-		if (style.has_rgb) {
+	    if (style) {
+		if (!style->name.empty()) attributes.try_emplace("step:style_name", style->name);
+		if (style->has_rgb) {
 		    std::ostringstream value;
-		    value << style.rgb[0] << ' ' << style.rgb[1] << ' ' << style.rgb[2];
+		    value << style->rgb[0] << ' ' << style->rgb[1] << ' ' << style->rgb[2];
 		    attributes.try_emplace("step:color_rgb", value.str());
 		}
-		if (style.has_transparency)
+		if (style->has_transparency)
 		    attributes.try_emplace("step:transparency",
-			std::to_string(style.transparency));
-		if (!style.layers.empty()) {
+			std::to_string(style->transparency));
+		if (!style->layers.empty()) {
 		    std::ostringstream value;
-		    for (size_t layer = 0; layer < style.layers.size(); ++layer) {
+		    for (size_t layer = 0; layer < style->layers.size(); ++layer) {
 			if (layer) value << ';';
-			value << style.layers[layer];
+			value << style->layers[layer];
 		    }
 		    attributes.try_emplace("step:layers", value.str());
 		}
-		if (!style.source_entity_ids.empty()) {
+		if (!style->source_entity_ids.empty()) {
 		    std::ostringstream value;
-		    for (size_t source = 0; source < style.source_entity_ids.size(); ++source) {
+		    for (size_t source = 0; source < style->source_entity_ids.size(); ++source) {
 			if (source) value << ' ';
-			value << style.source_entity_ids[source];
+			value << style->source_entity_ids[source];
 		    }
 		    attributes.try_emplace("step:style_source_ids", value.str());
 		}

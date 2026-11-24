@@ -5991,22 +5991,47 @@ convert_lazy_occurrences(const LazySTEPExactGraph &graph, STEPWrapper *wrapper,
 	if (dry_run) continue;
 	const std::string &parent_name = id2name_map[parent_product];
 	const std::string &child_name = id2name_map[child_product];
-	if (!database->AddMember(parent_name, child_name, matrix)) {
+	const auto usage = wrapper->Document().assembly_usages.find(
+	    static_cast<int64_t>(source->usage_id));
+	const auto &styles = wrapper->Document().occurrence_styles;
+	auto style = styles.find(static_cast<int64_t>(source->usage_id));
+	if (style == styles.end() && source->mapped)
+	    style = styles.find(occurrence_id);
+	std::string member_name = child_name;
+	if (style != styles.end() &&
+		(style->second.has_rgb || style->second.has_transparency)) {
+	    const std::string name = usage == wrapper->Document().assembly_usages.end() ?
+		std::string() : usage->second.name;
+	    member_name = database->StableBRLCADName(name.empty() ?
+		child_name + "_occurrence" : name, occurrence_id);
+	    mat_t identity;
+	    MAT_IDN(identity);
+	    if (!database->AddMember(member_name, child_name, identity) ||
+		    !database->SetCombinationProperties(member_name, false,
+			occurrence_id, name, &style->second, true) ||
+		    !database->SetCombinationAttribute(member_name,
+			"step:object_role", "occurrence")) {
+		wrapper->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error,
+		    occurrence_id, "STYLED_ITEM", std::string(),
+		    "could not retain appearance on the occurrence combination");
+		continue;
+	    }
+	}
+	if (!database->AddMember(parent_name, member_name, matrix)) {
 	    wrapper->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error,
 		occurrence_id, "CONTEXT_DEPENDENT_SHAPE_REPRESENTATION",
 		std::string(), "could not add the occurrence to its parent product");
 	    continue;
 	}
+	if (member_name != child_name)
+	    ++wrapper->Statistics().styles_applied;
 	const std::string prefix = "step:occurrence:" +
 	    std::to_string(ordinal) + ':';
 	bool attributes_written = database->SetCombinationAttribute(parent_name,
-	    prefix + "child", child_name);
+	    prefix + "child", member_name);
 	attributes_written = database->SetCombinationAttribute(parent_name,
 	    prefix + "source_id", std::to_string(source->usage_id)) &&
 	    attributes_written;
-	std::map<int64_t, brlcad::step::AssemblyUsage>::const_iterator usage =
-	    wrapper->Document().assembly_usages.find(
-		static_cast<int64_t>(source->usage_id));
 	if (usage == wrapper->Document().assembly_usages.end() ||
 		(usage->second.identifier.empty() && usage->second.name.empty() &&
 		 usage->second.description.empty() &&
