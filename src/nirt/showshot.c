@@ -102,10 +102,10 @@ main (int argc, char **argv)
     if (*rayname == '\0')	/* Was one given on command line? */
 	sprintf(rayname, "ray.%d", pid);
 
-    if (strlen(rayname) + strlen(".s") > NAMESIZE) {
+    if (strlen(rayname) + strlen(".s") >= NAMESIZE) {
 	fprintf(stderr,
 		"Name '%s.s' for ray solid may not exceed %d characters\n",
-		rayname, NAMESIZE);
+		rayname, NAMESIZE - 1);
 	bu_exit(1, "Use the '-n name' option to specify a different name\n");
     }
 
