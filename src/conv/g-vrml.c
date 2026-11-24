@@ -1231,7 +1231,7 @@ main(int argc, char **argv)
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
 		if (!bu_opt_scan_double_range(bu_optarg, &option_value, 0.0,
-			DBL_MAX, "absolute tessellation tolerance"))
+			SQRT_MAX_FASTF, "absolute tessellation tolerance"))
 		    print_usage(argv[0]);
 		ttol.abs = option_value;
 		ttol.rel = 0.0;
@@ -1241,17 +1241,19 @@ main(int argc, char **argv)
 		break;
 	    case 'd':		/* Calculational tolerance */
 		if (!bu_opt_scan_double_range(bu_optarg, &option_value, 0.0,
-			DBL_MAX, "distance tolerance"))
+			SQRT_MAX_FASTF, "distance tolerance"))
 		    print_usage(argv[0]);
 		tol.dist = option_value;
 		tol.dist_sq = tol.dist * tol.dist;
+		if (!isfinite(tol.dist_sq))
+		    print_usage(argv[0]);
 		break;
 	    case 'e':		/* Evaluate all, CSG and BOTs */
 		eval_all = 1;
 		break;
 	    case 'n':		/* Surface normal tolerance. */
 		if (!bu_opt_scan_double_range(bu_optarg, &option_value, 0.0,
-			DBL_MAX, "normal tessellation tolerance"))
+			180.0, "normal tessellation tolerance"))
 		    print_usage(argv[0]);
 		ttol.norm = option_value * DEG2RAD;
 		ttol.rel = 0.0;
@@ -1261,7 +1263,7 @@ main(int argc, char **argv)
 		break;
 	    case 'r':		/* Relative tolerance. */
 		if (!bu_opt_scan_double_range(bu_optarg, &option_value, 0.0,
-			DBL_MAX, "relative tessellation tolerance"))
+			1.0, "relative tessellation tolerance"))
 		    print_usage(argv[0]);
 		ttol.rel = option_value;
 		break;

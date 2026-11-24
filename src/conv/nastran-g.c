@@ -1164,10 +1164,12 @@ main(int argc, char **argv)
 		break;
 	    case 't':		/* calculational tolerance */
 		if (!bu_opt_scan_double_range(bu_optarg, &distance_tolerance,
-			0.0, DBL_MAX, "distance tolerance"))
+			0.0, SQRT_MAX_FASTF, "distance tolerance"))
 		    print_usage(argv[0]);
 		tol.dist = distance_tolerance;
 		tol.dist_sq = tol.dist * tol.dist;
+		if (!isfinite(tol.dist_sq))
+		    print_usage(argv[0]);
 		break;
 	    case 'n':
 		polysolids = 0;

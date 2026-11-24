@@ -3525,7 +3525,15 @@ main(int argc, char **argv)
 		    usage(1, argv[0]);
 		}
 		TOL.dist *= mmtin;
+		if (!isfinite(TOL.dist) || TOL.dist > SQRT_MAX_FASTF) {
+		    bu_log("Tolerance distance (%s inches) is too large\n", bu_optarg);
+		    usage(1, argv[0]);
+		}
 		TOL.dist_sq = TOL.dist * TOL.dist;
+		if (!isfinite(TOL.dist_sq)) {
+		    bu_log("Tolerance distance (%s inches) is too large\n", bu_optarg);
+		    usage(1, argv[0]);
+		}
 		break;
 
 	    case 'A':  /* angular tolerance */

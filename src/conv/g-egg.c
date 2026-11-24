@@ -82,7 +82,7 @@ parse_nonnegative_number(const char *arg, fastf_t *value)
 	!isfinite(parsed) || parsed < 0.0)
 	return 0;
     *value = (fastf_t)parsed;
-    return 1;
+    return isfinite(*value);
 }
 
 
@@ -287,12 +287,14 @@ main(int argc, char *argv[])
     while ((i = bu_getopt(argc, argv, "a:89n:o:r:vx:D:P:X:h?")) != -1) {
 	switch (i) {
 	    case 'a':		/* Absolute tolerance. */
-		if (!parse_nonnegative_number(bu_optarg, &ttol.abs))
+		if (!parse_nonnegative_number(bu_optarg, &ttol.abs) ||
+		    ttol.abs > SQRT_MAX_FASTF)
 		    bu_exit(1, "Invalid absolute tolerance: %s\n", bu_optarg);
 		ttol.rel = 0.0;
 		break;
 	    case 'n':		/* Surface normal tolerance. */
-		if (!parse_nonnegative_number(bu_optarg, &ttol.norm))
+		if (!parse_nonnegative_number(bu_optarg, &ttol.norm) ||
+		    ttol.norm > 180.0)
 		    bu_exit(1, "Invalid normal tolerance: %s\n", bu_optarg);
 		ttol.norm *= DEG2RAD;
 		ttol.rel = 0.0;
@@ -301,7 +303,8 @@ main(int argc, char *argv[])
 		output_file = bu_optarg;
 		break;
 	    case 'r':		/* Relative tolerance. */
-		if (!parse_nonnegative_number(bu_optarg, &ttol.rel))
+		if (!parse_nonnegative_number(bu_optarg, &ttol.rel) ||
+		    ttol.rel > 1.0)
 		    bu_exit(1, "Invalid relative tolerance: %s\n", bu_optarg);
 		break;
 	    case 'v':
@@ -318,9 +321,12 @@ main(int argc, char *argv[])
 		    bu_exit(1, "Invalid RT debug flag: %s\n", bu_optarg);
 		break;
 	    case 'D':
-		if (!parse_nonnegative_number(bu_optarg, &conv_data.tol.dist))
+		if (!parse_nonnegative_number(bu_optarg, &conv_data.tol.dist) ||
+		    conv_data.tol.dist > SQRT_MAX_FASTF)
 		    bu_exit(1, "Invalid distance tolerance: %s\n", bu_optarg);
 		conv_data.tol.dist_sq = conv_data.tol.dist * conv_data.tol.dist;
+		if (!isfinite(conv_data.tol.dist_sq))
+		    bu_exit(1, "Invalid distance tolerance: %s\n", bu_optarg);
 		rt_pr_tol(&conv_data.tol);
 		break;
 	    case 'X':
