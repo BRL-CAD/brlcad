@@ -27,19 +27,18 @@
 #include "common.h"
 
 #include <string.h>
-#include <stdlib.h>
 #include <math.h>
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/exit.h"
 
+#include "window_args.h"
+
 
 int
 main(int argc, char *argv[])
 {
-    static const char usage[] = "Usage: damdf [window_size (512)] < doubles >outputfile\n";
-
 #define BSIZE 2048		/* Must be AT LEAST 2*Points in spectrum */
     double data[BSIZE];		/* Input buffer */
     double r[BSIZE];
@@ -51,11 +50,14 @@ main(int argc, char *argv[])
 
     bu_setprogname(argv[0]);
 
-    if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
-	bu_exit(1, "%s", usage);
-    }
+    int parse_status = sig_window_args_parse(&L, "damdf",
+	"Compute the average magnitude difference function", BSIZE, argc, argv);
+    if (parse_status <= 0)
+	return parse_status < 0 ? 1 : 0;
 
-    L = (argc > 1) ? atoi(argv[1]) : 512;
+    if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
+	bu_exit(1, "damdf requires redirected binary input and output\n");
+    }
 
     while (!feof(stdin)) {
 	n = fread(data, sizeof(*data), L, stdin);

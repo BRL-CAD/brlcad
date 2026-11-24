@@ -28,19 +28,19 @@
 
 #include "common.h"
 
-#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/malloc.h"
-#include "bu/getopt.h"
 #include "bu/exit.h"
+#include "bu/malloc.h"
 #include "vmath.h"
 #include "fft.h"
 
 #define MAXFFT BU_PAGE_SIZE
+#define DEFAULT_FFT_WIDTH 1024
 
 
 /* functions specified elsewhere (these probably belong in a header) */
@@ -56,6 +56,50 @@ static int linear_output = 0;
 static int ascii_output = 0;
 static int normalize_output = 0;
 static double cbfilter[27];
+
+struct dfft_args {
+    int help;
+    double minimum_db;
+    int log_frequency;
+    int critical_band;
+    int phase;
+    int normalize;
+    int linear;
+    int ascii;
+};
+
+static const struct bu_arg_option dfft_options[] = {
+    BU_ARG_FLAG("h", "help", struct dfft_args, help, "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_NUMBER_RANGE("d", "minimum-db", struct dfft_args, minimum_db,
+	1, 0.0, 0, 0.0, "dB", "Set the normalized output floor in decibels"),
+    BU_ARG_FLAG("l", "log-frequency", struct dfft_args, log_frequency,
+	"Interpolate magnitudes onto a logarithmic frequency scale"),
+    BU_ARG_FLAG("c", "critical-band", struct dfft_args, critical_band,
+	"Apply a third-octave critical band filter"),
+    BU_ARG_FLAG("p", "phase", struct dfft_args, phase,
+	"Output phase instead of magnitude"),
+    BU_ARG_FLAG("N", "normalize", struct dfft_args, normalize,
+	"Normalize output to its peak magnitude"),
+    BU_ARG_FLAG("L", "linear", struct dfft_args, linear,
+	"Output linear rather than decibel magnitudes"),
+    BU_ARG_FLAG("A", "ascii", struct dfft_args, ascii,
+	"Write magnitude output as ASCII frequency/value pairs"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand dfft_operands[] = {
+    BU_ARG_OPERAND_INTEGER_RANGE("width", 0, 1, 1, 8, 1, MAXFFT,
+	"Power-of-two transform width (default: 1024)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema dfft_schema = BU_ARG_SCHEMA(
+    "dfft", "Compute real fast Fourier transforms of a double stream",
+    dfft_options, dfft_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar dfft_grammar = {&dfft_schema, NULL, NULL};
 
 
 static void
@@ -188,44 +232,54 @@ fftphase(double *dat, int N)
 int
 main(int argc, char **argv)
 {
-    static const char usage[] =
-	"Usage: dfft [options] [width (1024)] < doubles > 512logmags\n"
-	"\n"
-	"Options:\n"
-	"  -d dB  minimum dB (default 120)\n"
-	"  -l     log frequency scale\n"
-	"  -c     critical band filter (3rd octave)\n"
-	"  -p     phase\n"
-	"  -N     normalized PSD to max magnitude\n"
-	"  -L     linear output (no dB mag)\n"
-	"  -A     ascii output\n"
-	;
-
-    static const char optstring[] = "d:clpLANh?";
-
-    int i, n, c;
-    int L = 1024;
+    int i, n;
+    int L = DEFAULT_FFT_WIDTH;
     double cbsum = 0.0;
-    int phase = 0;
     double data[MAXFFT];		/* Data buffer: 2*Points in spectrum */
+    struct dfft_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+
+    args.minimum_db = 120.0;
 
     bu_setprogname(argv[0]);
 
-    while ((c = bu_getopt(argc, argv, optstring)) != -1) {
-	switch (c) {
-	    case 'd': mindB = -atof(bu_optarg); break;
-	    case 'c': cflag++; break;
-	    case 'l': lflag++; break;
-	    case 'p': phase++; break;
-	    case 'L': linear_output++; break;
-	    case 'A': ascii_output++; break;
-	    case 'N': normalize_output++; break;
-	    default:  bu_exit(1, "%s", usage);
-	}
+    int introspection = bu_arg_introspect(&msg, &dfft_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+    argc--; argv++;
+    int operand_index = bu_arg_schema_parse_complete(&dfft_schema, &args,
+	&msg, argc, (const char **)argv);
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&dfft_schema, "dfft");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "dfft help");
+	return 0;
+    }
+    argc -= operand_index;
+    argv += operand_index;
+
+    if (argc && !bu_arg_integer_range_from_str(&msg, &L, argv[0], 10,
+	8, MAXFFT))
+	bu_exit(1, "dfft: width: %s", bu_vls_cstr(&msg));
+    if ((L & (L - 1)) != 0)
+	bu_exit(1, "dfft: width must be a power of two, got %d\n", L);
+
+    mindB = -args.minimum_db;
+    lflag = args.log_frequency;
+    cflag = args.critical_band;
+    linear_output = args.linear;
+    ascii_output = args.ascii;
+    normalize_output = args.normalize;
 
     if (isatty(STDIN_FILENO) || isatty(STDOUT_FILENO))
-	bu_exit(1, "%s", usage);
+	bu_exit(1, "dfft requires redirected binary input and output\n");
 
     /* Calculate Critical Band filter weights */
     if (cflag) {
@@ -246,7 +300,7 @@ main(int argc, char **argv)
 	rfft(data, L);
 
 	/* Put it on screen */
-	if (phase)
+	if (args.phase)
 	    fftphase(data, L);
 	else
 	    fftdisp(data, L, cbsum);

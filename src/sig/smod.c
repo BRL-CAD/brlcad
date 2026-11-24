@@ -29,113 +29,27 @@
 
 #include "common.h"
 
-#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
 
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "bu/malloc.h"
-#include "bu/file.h"
 #include "bu/exit.h"
-#include "vmath.h"
+
+#include "mod_args.h"
 
 
-#define ADD 1
-#define MULT 2
-#define ABS 3
-#define POW 4
 #define BUFLEN 65536
 
 
-static const char usage[] = "Usage: smod [-a add | -s sub | -m mult | -d div | -A | -e exp | -r root] [file.s]\n";
-static const char *progname = "smod";
-
-static int numop = 0;		/* number of operations */
-static int op[256];		/* operations */
-static double val[256];		/* arguments to operations */
+static const char progname[] = "smod";
 static short mapbuf[BUFLEN];		/* translation buffer/lookup table */
 static unsigned char clip_h[BUFLEN];	/* map of values which clip high */
 static unsigned char clip_l[BUFLEN];	/* map of values which clip low */
 
 
-static int
-get_args(int argc, char *argv[])
-{
-    int c;
-    double d;
-
-    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:h?")) != -1) {
-	switch (c) {
-	    case 'a':
-		op[ numop ] = ADD;
-		val[ numop++ ] = atof(bu_optarg);
-		break;
-	    case 's':
-		op[ numop ] = ADD;
-		val[ numop++ ] = - atof(bu_optarg);
-		break;
-	    case 'm':
-		op[ numop ] = MULT;
-		val[ numop++ ] = atof(bu_optarg);
-		break;
-	    case 'd':
-		op[ numop ] = MULT;
-		d = atof(bu_optarg);
-		if (ZERO(d)) {
-		    bu_exit(2, "%s: divide by zero!\n", progname);
-		}
-		val[ numop++ ] = 1.0 / d;
-		break;
-	    case 'A':
-		op[ numop ] = ABS;
-		val[ numop++ ] = 0;
-		break;
-	    case 'e':
-		op[ numop ] = POW;
-		val[ numop++ ] = atof(bu_optarg);
-		break;
-	    case 'r':
-		op[ numop ] = POW;
-		d = atof(bu_optarg);
-		if (ZERO(d)) {
-		    bu_exit(2, "%s: zero root!\n", progname);
-		}
-		val[ numop++ ] = 1.0 / d;
-		break;
-
-	    default:
-		return 0;
-	}
-    }
-
-    if (bu_optind >= argc) {
-	if (isatty((int)fileno(stdin)))
-	    return 0;
-    } else {
-	char *ifname;
-	char *file_name = argv[bu_optind];
-	ifname = bu_file_realpath(file_name, NULL);
-	if (freopen(ifname, "r", stdin) == NULL) {
-	    fprintf(stderr,
-		    "%s: cannot open \"%s(canonical %s)\" for reading\n",
-		    progname, file_name, ifname);
-	    bu_free(ifname, "ifname alloc from bu_file_realpath");
-	    return 0;
-	}
-	bu_free(ifname, "ifname alloc from bu_file_realpath");
-    }
-
-    if (argc > ++bu_optind)
-	fprintf(stderr, "%s: excess argument(s) ignored\n", progname);
-
-    return 1;		/* OK */
-}
-
-
 static void
-mk_trans_tbl(void)
+mk_trans_tbl(const struct sig_mod_operations *operations)
 {
     int i, j, k;
     double d;
@@ -147,12 +61,12 @@ mk_trans_tbl(void)
     for (j = 0; j < 65536; ++j) {
 	k = j - 32768;
 	d = k;
-	for (i=0; i < numop; i++) {
-	    switch (op[i]) {
-		case ADD : d += val[i]; break;
-		case MULT: d *= val[i]; break;
-		case POW : d = pow(d, val[i]); break;
-		case ABS : if (d < 0.0) d = - d; break;
+	for (i = 0; i < (int)operations->count; i++) {
+	    switch (operations->values[i].type) {
+		case SIG_MOD_ADD : d += operations->values[i].value; break;
+		case SIG_MOD_MULTIPLY: d *= operations->values[i].value; break;
+		case SIG_MOD_POWER: d = pow(d, operations->values[i].value); break;
+		case SIG_MOD_ABSOLUTE: if (d < 0.0) d = - d; break;
 		default  : fprintf(stderr, "%s: error in op\n",
 				   progname); break;
 	    }
@@ -177,21 +91,32 @@ main(int argc, char *argv[])
     unsigned int j, n;
     unsigned long clip_high, clip_low;
     short iobuf[BUFLEN];		/* input buffer */
+    FILE *infp = stdin;
+    const char *input_file = NULL;
+    struct sig_mod_args args = {0};
 
     bu_setprogname(argv[0]);
 
-    if (!(progname=strrchr(*argv, '/')))
-	progname = *argv;
-
-    if (!get_args(argc, argv) || isatty(fileno(stdin)) || isatty(fileno(stdout))) {
-	bu_exit(1, "%s", usage);
+    int parse_status = sig_mod_args_parse(&args, &input_file, progname,
+	"Apply ordered arithmetic operations to signed shorts", argc, argv);
+    if (parse_status <= 0)
+	return parse_status < 0 ? 1 : 0;
+    if (input_file) {
+	infp = fopen(input_file, "rb");
+	if (!infp)
+	    bu_exit(1, "%s: cannot open \"%s\" for reading\n", progname,
+		input_file);
     }
+    if (isatty(fileno(infp)) || isatty(fileno(stdout)))
+	bu_exit(1, "%s requires redirected binary input and output\n", progname);
+    setmode(fileno(infp), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
-    mk_trans_tbl();
+    mk_trans_tbl(&args.operations);
 
     clip_high = clip_low = 0;
 
-    while ((n=fread(iobuf, sizeof(*iobuf), BUFLEN, stdin)) > 0) {
+    while ((n=fread(iobuf, sizeof(*iobuf), BUFLEN, infp)) > 0) {
 	/* translate */
 	for (j=0; j < n; ++j) {
 	    long idx = j;

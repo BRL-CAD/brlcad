@@ -30,16 +30,15 @@
 
 #include "common.h"
 
-#include <stdlib.h> /* for atof() */
-#include <string.h>
 #include <math.h>
 #include "bio.h"
 
 #include "bu/app.h"
-#include "bu/str.h"
 #include "bu/exit.h"
 #include "bu/snooze.h"
 #include "vmath.h"
+
+#include "scale_args.h"
 
 
 int
@@ -48,23 +47,25 @@ main(int argc, char *argv[])
     int i, num;
     double scale = 1.0;
     size_t ret;
+    struct sig_scale_args args = {0};
 
     float ibuf[512];
     double obuf[512];
 
     bu_setprogname(argv[0]);
 
+    int parse_status = sig_scale_args_parse(&args, "f-d",
+	"Convert floating-point values to doubles", argc, argv);
+    if (parse_status <= 0)
+	return parse_status < 0 ? 1 : 0;
+    if (args.has_scale)
+	scale = args.scale;
+
     fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
     bu_snooze(BU_SEC2USEC(1));
 
-    if (argc > 1) {
-	if (!BU_STR_EQUAL(argv[1], "-n"))
-	    scale = atof(argv[1]);
-	argc--;
-    }
-
-    if (argc > 1 || ZERO(scale) || isatty(fileno(stdin)) || isatty(fileno(stdout)))
-	bu_exit(1, "Usage: f-d [-n || scale] < floats > doubles\n");
+    if (isatty(fileno(stdin)) || isatty(fileno(stdout)))
+	bu_exit(1, "f-d requires redirected binary input and output\n");
 
     while ((num = fread(&ibuf[0], sizeof(ibuf[0]), 512, stdin)) > 0) {
 	if (EQUAL(scale, 1.0)) {
