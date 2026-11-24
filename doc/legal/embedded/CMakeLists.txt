@@ -46,6 +46,7 @@ brlcad_manage_files(normalize.txt              ${DOC_DIR}/legal/embedded TRIGGER
 brlcad_manage_files(Open3d.txt                 ${DOC_DIR}/legal/embedded TRIGGER libbg)
 brlcad_manage_files(OpenMesh.txt               ${DOC_DIR}/legal/embedded TRIGGER libbg)
 brlcad_manage_files(OpenNURBS.txt              ${DOC_DIR}/legal/embedded TRIGGER librt)
+brlcad_manage_files(open2open.txt              ${DOC_DIR}/legal/embedded TRIGGER libgcv)
 brlcad_manage_files(osl.txt                    ${DOC_DIR}/legal/embedded TRIGGER liboptical)
 brlcad_manage_files(ParaView.txt               ${DOC_DIR}/legal/embedded TRIGGER libqtcad)
 brlcad_manage_files(pbrt.txt                   ${DOC_DIR}/legal/embedded TRIGGER librt)

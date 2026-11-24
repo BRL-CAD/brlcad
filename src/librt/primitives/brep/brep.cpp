@@ -3786,7 +3786,8 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
     if (brep_preserves_invalid_solid(ip))
 	return -1;
 
-    const size_t current_version = 0;
+    // Rebuild cached trees to restore adjacency on nonmanifold seams.
+    const size_t current_version = 1;
 
     RT_CK_SOLTAB(stp);
     BU_CK_EXTERNAL(external);

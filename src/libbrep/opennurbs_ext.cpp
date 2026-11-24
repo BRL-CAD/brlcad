@@ -697,29 +697,29 @@ CurveTree::CurveTree(const ON_BrepFace* face, std::size_t max_bytes,
 			//bu_log("ON_BrepTrim::boundary on Face:%d\n", face->m_face_index);
 			break;
 		    case ON_BrepTrim::mated:
+			// A nonmanifold edge has no single opposing trim.
 			if (edge.m_ti.Count() == 2) {
-			    if (face->m_face_index == face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf()) {
-				adj_face_index = face->Brep()->m_T[edge.m_ti[1]].FaceIndexOf();
-			    } else {
-				adj_face_index = face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf();
-			    }
-			} else {
-			    bu_log("Mated Edge should have 2 adjacent faces, right?  Face(%d) has %d trim indexes\n", face->m_face_index, edge.m_ti.Count());
+			    const int other = edge.m_ti[0] == trim_index ? edge.m_ti[1] : edge.m_ti[0];
+			    adj_face_index = face->Brep()->m_T[other].FaceIndexOf();
+			} else if (edge.m_ti.Count() < 2) {
+			    bu_log("Mated trim %d on face %d has no partner\n",
+				trim_index, face->m_face_index);
 			}
 			break;
 		    case ON_BrepTrim::seam:
-			if (edge.m_ti.Count() == 2) {
-			    if ((face->m_face_index == face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf()) && (face->m_face_index == face->Brep()->m_T[edge.m_ti[1]].FaceIndexOf())) {
-				adj_face_index = face->m_face_index;
-			    } else {
-				bu_log("Seamed Edge should have 1 faces sharing the trim so trim index should be one, right? Face(%d) has %d trim indexes\n", face->m_face_index, edge.m_ti.Count());
-				bu_log("Face(%d) has %d, %d trim indexes\n", face->m_face_index, face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf(), face->Brep()->m_T[edge.m_ti[1]].FaceIndexOf());
-			    }
-			} else if (edge.m_ti.Count() == 1) {
+			if (edge.m_ti.Count() == 1)
 			    adj_face_index = face->m_face_index;
-			} else {
-			    bu_log("Seamed Edge should have 1 faces sharing the trim so trim index should be one, right? Face(%d) has %d trim indexes\n", face->m_face_index, edge.m_ti.Count());
+			// A seam pairs trims in one loop even when other faces use the edge.
+			for (int use = 0; use < edge.m_ti.Count(); ++use) {
+			    const int other = edge.m_ti[use];
+			    if (other != trim_index && face->Brep()->m_T[other].m_li == trim.m_li) {
+				adj_face_index = face->m_face_index;
+				break;
+			    }
 			}
+			if (adj_face_index < 0)
+			    bu_log("Seam trim %d on face %d has no partner in its loop\n",
+				trim_index, face->m_face_index);
 			break;
 		    case ON_BrepTrim::singular:
 			bu_log("ON_BrepTrim::singular on Face:%d\n", face->m_face_index);

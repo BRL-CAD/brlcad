@@ -42,6 +42,24 @@ Per-filter options may be passed through to the read filter, the write
 filter, or both, allowing format-specific behavior to be tuned without
 *gcv* needing to know about each option.
 
+=== FreeCAD input
+
+Builds with Open CASCADE, Expat, and one of minizip-ng, minizip, or libarchive
+can import FreeCAD *.FCStd* files. With minizip-ng or minizip, the reader uses
+the ZIP central directory for member lookups. It imports saved BRep solids
+and surfaces in millimeters and retains visible groups, placements, and
+single-object links within the document as BRL-CAD combinations. Referenced definitions
+are shared by their instances, including hidden definitions. Document and
+object labels and other scalar properties are stored as *freecad:* attributes.
+The reader imports saved object colors and link material overrides from the
+GUI document.
+Validated BReps with authored nonmanifold edge uses carry the
+*freecad:topology=source_nonmanifold* attribute.
+
+External, subobject, and array links are reported and skipped. FreeCAD
+feature history and per-face display materials are outside the reader's
+supported inputs.
+
 [[options]]
 == OPTIONS
 
@@ -130,6 +148,14 @@ $ gcv -I --units mm model.obj model.g
 Converts a Wavefront OBJ mesh to a BRL-CAD database, passing the
 *--units mm* option only to the OBJ read filter so that the source
 coordinates are interpreted as millimeters.
+====
+
+.Import a native FreeCAD assembly
+====
+[source,console]
+----
+$ gcv assembly.FCStd assembly.g
+----
 ====
 
 .Override detection with explicit formats
