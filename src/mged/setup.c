@@ -131,6 +131,9 @@ static struct cmdtab mged_cmdtab[] = {
     {MGED_CMD_MAGIC, "check", cmd_ged_plain_wrapper, ged_exec_check, NULL},
     {MGED_CMD_MAGIC, "clone", cmd_ged_edit_wrapper, ged_exec_clone, NULL},
     {MGED_CMD_MAGIC, "closedb", f_closedb, GED_FUNC_PTR_NULL, NULL},
+    {MGED_CMD_MAGIC, "cmd_complete", cmd_cmd_complete, GED_FUNC_PTR_NULL, NULL},
+    {MGED_CMD_MAGIC, "cmd_complete_layout", cmd_cmd_complete_layout, GED_FUNC_PTR_NULL, NULL},
+    {MGED_CMD_MAGIC, "cmd_analyze", cmd_cmd_analyze, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "cmd_win", cmd_cmd_win, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "coil", cmd_ged_plain_wrapper, ged_exec_coil, NULL},
     {MGED_CMD_MAGIC, "color", cmd_ged_plain_wrapper, ged_exec_color, NULL},
@@ -661,6 +664,15 @@ cmd_setup(struct mged_state *s)
 		    "failed to register MGED command \"%s\"", ctp->name));
 	    goto cleanup;
 	}
+    }
+
+    /* Tcl helper for the text-widget prompt; do not expose this as an MGED
+     * command or include it in the user-visible completion set. */
+    if (!Tcl_CreateCommand(s->interp, "_mged_lineedit_colors",
+	    cmd_lineedit_colors, (ClientData)s, (Tcl_CmdDeleteProc *)NULL)) {
+	Tcl_SetObjResult(s->interp, Tcl_NewStringObj(
+		"failed to register MGED line editor helper", -1));
+	goto cleanup;
     }
 
     if (register_mged_cmd_namespace(s) != TCL_OK ||

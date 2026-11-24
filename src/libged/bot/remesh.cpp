@@ -26,6 +26,7 @@
 #include "common.h"
 
 #include "vmath.h"
+#include "bu/arg.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bg/trimesh.h"
@@ -37,7 +38,6 @@
 #include "ged/commands.h"
 #include "ged/database.h"
 #include "ged/objects.h"
-#include "../ged_private.h"
 #include "./ged_bot.h"
 #include "bot_openvdb.h"
 
@@ -115,6 +115,57 @@ bot_remesh_geogram(struct ged *gedp, struct rt_bot_internal *bot)
 }
 
 
+struct bot_remesh_args {
+    int print_help;
+    int use_vdb;
+    struct bu_vls output_bot_name;
+};
+
+static const struct bu_arg_option bot_remesh_options[] = {
+    BU_ARG_FLAG("h", "help", struct bot_remesh_args, print_help,
+	"Print command help"),
+    BU_ARG_VALUE("o", "output", struct bot_remesh_args, output_bot_name, BU_ARG_VALUE_VLS, BU_ARG_REQUIRED,
+	"name", "Name for the output BoT"),
+    BU_ARG_FLAG(NULL, "vdb", struct bot_remesh_args, use_vdb,
+	"Use OpenVDB based remeshing"),
+    BU_ARG_OPTION_NULL
+};
+static const char * const bot_remesh_output_option[] = {"output", NULL};
+static const struct bu_arg_operand bot_remesh_operands[] = {
+    BU_ARG_OPERAND("input_bot", BU_ARG_VALUE_DB_OBJECT, 1, 1,
+	"Input BoT object", "ged.db_object"),
+    BU_ARG_OPERAND("output_name", BU_ARG_VALUE_STRING, 0, 1,
+	"Optional output BoT name", NULL),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_operand bot_remesh_named_operands[] = {
+    BU_ARG_OPERAND("input_bot", BU_ARG_VALUE_DB_OBJECT, 1, 1,
+	"Input BoT object", "ged.db_object"),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema_case bot_remesh_cases[] = {
+    BU_ARG_SCHEMA_CASE("named-output", "Take the output name from --output",
+	BU_ARG_CONDITION_ALL_OPTIONS_PRESENT, bot_remesh_output_option,
+	bot_remesh_named_operands, NULL),
+    BU_ARG_SCHEMA_CASE_DEFAULT("positional-output",
+	"Take an optional output name from the positional operand",
+	bot_remesh_operands, NULL),
+    BU_ARG_SCHEMA_CASE_NULL
+};
+extern "C" const struct bu_arg_schema ged_bot_remesh_subcommand_schema = {
+    "remesh", "Create a remeshed version of a BoT", bot_remesh_options,
+    NULL, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, bot_remesh_cases)
+};
+
+static void
+bot_remesh_usage(struct bu_vls *str, const char *cmd)
+{
+    bu_vls_trunc(str, 0);
+    (void)bu_arg_schema_help_append(str, &ged_bot_remesh_subcommand_schema, cmd);
+}
+
+
 
 extern "C" int
 _bot_cmd_remesh(void *bs, int argc, const char **argv)
@@ -137,61 +188,60 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    int print_help = 0;
-    int use_vdb = 0;
-    struct bu_vls output_bot_name = BU_VLS_INIT_ZERO;
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
-    struct bu_opt_desc d[7];
-    BU_OPT(d[0], "h", "help",                  "",         NULL,  &print_help,      "Print help");
-    BU_OPT(d[1], "o", "output",           "oname",  &bu_opt_vls,  &output_bot_name, "Name to use for output BoT");
-    BU_OPT(d[2],  "", "vdb",                   "",         NULL,  &use_vdb,         "Use OpenVDB based remeshing");
-    BU_OPT_NULL(d[3]);
-
+    struct bot_remesh_args args = {0, 0, BU_VLS_INIT_ZERO};
+    int operand_count;
+    int operand_index;
+    const char **operands;
 
     argc--; argv++;
 
-    int ac = bu_opt_parse(NULL, argc, argv, d);
-    argc = ac;
-
-    if (print_help || !argc) {
-	_ged_cmd_help(gedp, usage_string, d);
-	bu_vls_free(&output_bot_name);
+    if (!argc) {
+	bot_remesh_usage(gedp->ged_result_str, "bot remesh");
+	bu_vls_free(&args.output_bot_name);
 	return GED_HELP;
     }
 
-    if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
-	bu_vls_free(&output_bot_name);
+    operand_index = bu_arg_schema_parse_complete(&ged_bot_remesh_subcommand_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
+	bu_vls_free(&args.output_bot_name);
+	return BRLCAD_ERROR;
+	}
+    operand_count = argc - operand_index;
+    operands = argv + operand_index;
+    if (args.print_help) {
+	bot_remesh_usage(gedp->ged_result_str, "bot remesh");
+	bu_vls_free(&args.output_bot_name);
+	return GED_HELP;
+	}
+
+    if (_bot_obj_setup(gb, operands[0]) & BRLCAD_ERROR) {
+	bu_vls_free(&args.output_bot_name);
 	return BRLCAD_ERROR;
     }
 
     const char *input_bot_name = gb->dp->d_namep;
     if (gb->intern->idb_major_type != DB5_MAJORTYPE_BRLCAD || gb->intern->idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not a BOT primitive\n", input_bot_name);
-	bu_vls_free(&output_bot_name);
+	bu_vls_free(&args.output_bot_name);
 	return BRLCAD_ERROR;
     }
 
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-
-    if ((bu_vls_strlen(&output_bot_name) && argc > 1) || argc > 2) {
-	bu_vls_printf(gedp->ged_result_str, "Unexpected arguments\n");
-	bu_vls_free(&output_bot_name);
-	return BRLCAD_ERROR;
-    }
-
-    if (!bu_vls_strlen(&output_bot_name) && argc == 2)
-	bu_vls_printf(&output_bot_name, "%s", argv[1]);
+    if (!bu_vls_strlen(&args.output_bot_name) && operand_count == 2)
+	bu_vls_printf(&args.output_bot_name, "%s", operands[1]);
 
     // If we've got no specified output, we're overwriting
-    if (!bu_vls_strlen(&output_bot_name))
-	bu_vls_printf(&output_bot_name, "%s", input_bot_name);
+    if (!bu_vls_strlen(&args.output_bot_name))
+	bu_vls_printf(&args.output_bot_name, "%s", input_bot_name);
 
 
-    const char *output_name = bu_vls_cstr(&output_bot_name);
+    const char *output_name = bu_vls_cstr(&args.output_bot_name);
     const bool overwrite = BU_STR_EQUAL(input_bot_name, output_name);
     if (!overwrite && db_lookup(gedp->dbip, output_name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s already exists\n", output_name);
-	bu_vls_free(&output_bot_name);
+	bu_vls_free(&args.output_bot_name);
 	return BRLCAD_ERROR;
     }
 
@@ -200,11 +250,11 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
 
     bu_log("INPUT BoT has %zu vertices and %zu faces\n", input_bot->num_vertices, input_bot->num_faces);
 
-    struct rt_bot_internal *remeshed = use_vdb ? bot_remesh_vdb(gedp, input_bot)
+    struct rt_bot_internal *remeshed = args.use_vdb ? bot_remesh_vdb(gedp, input_bot)
 					      : bot_remesh_geogram(gedp, input_bot);
 
     if (!remeshed) {
-	bu_vls_free(&output_bot_name);
+	bu_vls_free(&args.output_bot_name);
 	return BRLCAD_ERROR;
     }
 
@@ -224,11 +274,11 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
 	    db_dirdelete(gedp->dbip, dp);
 	bu_vls_printf(gedp->ged_result_str, "Failed to write out remeshed BoT %s\n", output_name);
 	rt_db_free_internal(&intern);
-	bu_vls_free(&output_bot_name);
+	bu_vls_free(&args.output_bot_name);
 	return BRLCAD_ERROR;
     }
 
-    bu_vls_free(&output_bot_name);
+    bu_vls_free(&args.output_bot_name);
     bu_vls_printf(gedp->ged_result_str, "Remesh complete\n");
     return BRLCAD_OK;
 }

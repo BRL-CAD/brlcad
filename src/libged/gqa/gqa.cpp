@@ -42,8 +42,7 @@
 
 
 #include "bu/parallel.h"
-#include "bu/getopt.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "vmath.h"
 #include "bn/mat.h"
 #include "raytrace.h"
@@ -51,13 +50,11 @@
 #include "analyze.h"
 
 #include "../ged_private.h"
+#include "gqa_schema.h"
 
 struct analyze_densities *_gd_densities;
 char *_gd_densities_source;
 
-/* bu_getopt() options */
-const char *options = "A:a:de:f:g:Gn:N:p:P:qrS:s:t:U:u:vV:W:h?";
-const char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper,lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p plotPrefix] [-P ncpus] [-q] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol]";
 
 #define ANALYSIS_VOLUMES          1
 #define ANALYSIS_WEIGHTS          2
@@ -431,7 +428,7 @@ static const struct cvt_tab *units[3] = {
  * 0 Success
  */
 int
-_gqa_read_units_double(struct ged *gedp, double *val, char *buf, const struct cvt_tab *cvt)
+_gqa_read_units_double(struct ged *gedp, double *val, const char *buf, const struct cvt_tab *cvt)
 {
     double a;
 #define UNITS_STRING_SZ 256
@@ -476,303 +473,196 @@ _gqa_read_units_double(struct ged *gedp, double *val, char *buf, const struct cv
  * Parse through command line flags
  */
 static int
-parse_args(struct ged *gedp, int ac, char *av[])
+parse_args(struct ged *gedp, int ac, const char **av)
 {
-    int c;
+    struct gqa_args args = {};
     int i;
-    int views;
-    double a;
-    char *p;
+    int object_count;
+    int operand_index;
 
-    /* Turn off getopt's error messages */
-    bu_opterr = 0;
-    bu_optind = 1;
+    args.required_hits = (int)require_num_hits;
+    args.views = INT_MIN;
+    args.cpus = ncpu;
+    args.samples = NAN;
+    args.use_air = use_air;
 
-    /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != -1) {
-	switch (c) {
-	    case 'A':
-		{
-		    analysis_flags = 0;
-		    multiple_analyses = 0;
-		    for (p = bu_optarg; *p; p++) {
-			switch (*p) {
-			    case 'A' :
-				multiple_analyses = 1;
-				analysis_flags = analysis_flags \
-				| ANALYSIS_ADJ_AIR \
-				| ANALYSIS_BBOX \
-				| ANALYSIS_CENTROIDS \
-				| ANALYSIS_EXP_AIR \
-				| ANALYSIS_GAPS \
-				| ANALYSIS_MOMENTS \
-				| ANALYSIS_OVERLAPS \
-				| ANALYSIS_VOLUMES \
-				| ANALYSIS_WEIGHTS;
-				break;
-			    case 'a' :
-				if (analysis_flags)
-				    multiple_analyses = 1;
+    operand_index = bu_arg_schema_parse_complete(&gqa_schema, &args,
+	gedp->ged_result_str, ac, av);
+    if (operand_index < 0 || args.help)
+	return -1;
+    object_count = ac - operand_index;
+    if (operand_index > 0)
+	memmove(av, av + operand_index, (size_t)object_count * sizeof(*av));
 
-				analysis_flags |= ANALYSIS_ADJ_AIR;
-
-				break;
-			    case 'b' :
-				if (analysis_flags)
-				    multiple_analyses = 1;
-
-				analysis_flags |= ANALYSIS_BBOX;
-
-				break;
-			    case 'c' :
-				if (analysis_flags)
-				    multiple_analyses = 1;
-
-				analysis_flags |= ANALYSIS_WEIGHTS;
-				analysis_flags |= ANALYSIS_CENTROIDS;
-
-				break;
-			    case 'e' :
-				if (analysis_flags)
-				    multiple_analyses = 1;
-
-				analysis_flags |= ANALYSIS_EXP_AIR;
-				break;
-			    case 'g' :
-				if (analysis_flags)
-				    multiple_analyses = 1;
-
-				analysis_flags |= ANALYSIS_GAPS;
-				break;
-			    case 'm' :
-				if (analysis_flags)
-				    multiple_analyses = 1;
-
-				analysis_flags |= ANALYSIS_WEIGHTS;
-				analysis_flags |= ANALYSIS_CENTROIDS;
-				analysis_flags |= ANALYSIS_MOMENTS;
-
-				break;
-			    case 'o' :
-				if (analysis_flags)
-				    multiple_analyses = 1;
-
-				analysis_flags |= ANALYSIS_OVERLAPS;
-				break;
-			    case 'p' :
-				if (analysis_flags)
-				    multiple_analyses = 1;
-
-				analysis_flags |= ANALYSIS_OVERLAPS;
-				analysis_flags |= ANALYSIS_PLOT_OVERLAPS;
-				break;
-			    case 'v' :
-				if (analysis_flags)
-				    multiple_analyses = 1;
-
-				analysis_flags |= ANALYSIS_VOLUMES;
-				break;
-			    case 'w' :
-				if (analysis_flags)
-				    multiple_analyses = 1;
-
-				analysis_flags |= ANALYSIS_WEIGHTS;
-				break;
-			    default:
-				bu_vls_printf(gedp->ged_result_str, "Unknown analysis type \"%c\" requested.\n", *p);
-				return -1;
-			}
-		    }
+    if (args.analyses) {
+	const char *p;
+	analysis_flags = 0;
+	multiple_analyses = 0;
+	for (p = args.analyses; *p; p++) {
+	    int new_flags = 0;
+	    switch (*p) {
+		case 'A':
+		    multiple_analyses = 1;
+		    new_flags = ANALYSIS_ADJ_AIR | ANALYSIS_BBOX |
+			ANALYSIS_CENTROIDS | ANALYSIS_EXP_AIR | ANALYSIS_GAPS |
+			ANALYSIS_MOMENTS | ANALYSIS_OVERLAPS | ANALYSIS_VOLUMES |
+			ANALYSIS_WEIGHTS;
 		    break;
-		}
-	    case 'a':
-		if (bn_decode_angle(&azimuth_deg,bu_optarg) == 0) {
-		    bu_vls_printf(gedp->ged_result_str, "error parsing azimuth \"%s\"\n", bu_optarg);
+		case 'a': new_flags = ANALYSIS_ADJ_AIR; break;
+		case 'b': new_flags = ANALYSIS_BBOX; break;
+		case 'c': new_flags = ANALYSIS_WEIGHTS | ANALYSIS_CENTROIDS; break;
+		case 'e': new_flags = ANALYSIS_EXP_AIR; break;
+		case 'g': new_flags = ANALYSIS_GAPS; break;
+		case 'm': new_flags = ANALYSIS_WEIGHTS | ANALYSIS_CENTROIDS | ANALYSIS_MOMENTS; break;
+		case 'o': new_flags = ANALYSIS_OVERLAPS; break;
+		case 'p': new_flags = ANALYSIS_OVERLAPS | ANALYSIS_PLOT_OVERLAPS; break;
+		case 'v': new_flags = ANALYSIS_VOLUMES; break;
+		case 'w': new_flags = ANALYSIS_WEIGHTS; break;
+		default:
+		    bu_vls_printf(gedp->ged_result_str,
+			"Unknown analysis type \"%c\" requested.\n", *p);
 		    return -1;
-		}
-		/* -a is honored; flag that an oblique az/el view was requested */
-		azel_requested = 1;
-		break;
-	    case 'e':
-		if (bn_decode_angle(&elevation_deg,bu_optarg) == 0) {
-		    bu_vls_printf(gedp->ged_result_str, "error parsing elevation \"%s\"\n", bu_optarg);
-		    return -1;
-		}
-		/* -e is honored; flag that an oblique az/el view was requested */
-		azel_requested = 1;
-		break;
-	    case 'd': debug = 1; break;
-
-	    case 'f': densityFileName = bu_optarg; break;
-
-	    case 'g':
-		{
-		    double value1, value2;
-
-		    /* find out if we have two or one args; user can
-		     * separate them with , or - delimiter
-		     */
-		    p = strchr(bu_optarg, COMMA);
-		    if (p)
-			*p++ = '\0';
-		    else {
-			p = strchr(bu_optarg, '-');
-			if (p)
-			    *p++ = '\0';
-		    }
-
-
-		    if (_gqa_read_units_double(gedp, &value1, bu_optarg, units_tab[0])) {
-			bu_vls_printf(gedp->ged_result_str, "error parsing grid spacing value \"%s\"\n", bu_optarg);
-			return -1;
-		    }
-
-		    if (p) {
-			/* we've got 2 values, they are upper limit
-			 * and lower limit.
-			 */
-			if (_gqa_read_units_double(gedp, &value2, p, units_tab[0])) {
-			    bu_vls_printf(gedp->ged_result_str, "error parsing grid spacing limit value \"%s\"\n", p);
-			    return -1;
-			}
-
-			gridSpacing = value1;
-			gridSpacingLimit = value2;
-		    } else {
-			gridSpacingLimit = value1;
-
-			gridSpacing = 0.0; /* flag it */
-		    }
-		    break;
-		}
-	    case 'G':
-		makeOverlapAssemblies = 1;
-		bu_vls_printf(gedp->ged_result_str, "-G option unimplemented\n");
-		return -1;
-	    case 'n':
-		if (sscanf(bu_optarg, "%d", &c) != 1 || c < 0) {
-		    bu_vls_printf(gedp->ged_result_str, "num_hits must be integer value >= 0, not \"%s\"\n", bu_optarg);
-		    return -1;
-		}
-
-		require_num_hits = (size_t)c;
-		break;
-
-	    case 'N':
-		if (!bu_opt_scan_int_range(bu_optarg, &views, 1, 3,
-			"view count"))
-		    return -1;
-		num_views = views;
-		break;
-	    case 'p':
-		plot_prefix = bu_optarg;
-		break;
-	    case 'P':
-		/* cannot ask for more cpu's than the machine has */
-		c = atoi(bu_optarg);
-		if (c > 0 && c <= max_cpus)
-		    ncpu = c;
-		break;
-	    case 'q':
-		quiet_missed_report = 1;
-		break;
-	    case 'r':
-		print_per_region_stats = 1;
-		break;
-	    case 'S':
-		if (sscanf(bu_optarg, "%lg", &a) != 1 || a <= 1.0) {
-		    bu_vls_printf(gedp->ged_result_str, "error in specifying minimum samples per model axis: \"%s\"\n", bu_optarg);
-		    break;
-		}
-		Samples_per_model_axis = a + 1;
-		break;
-	    case 't':
-		if (_gqa_read_units_double(gedp, &overlap_tolerance, bu_optarg, units_tab[0])) {
-		    bu_vls_printf(gedp->ged_result_str, "error in overlap tolerance distance \"%s\"\n", bu_optarg);
-		    return -1;
-		}
-		break;
-	    case 'v':
-		verbose = 1;
-		break;
-	    case 'V':
-		if (_gqa_read_units_double(gedp, &volume_tolerance, bu_optarg, units_tab[1])) {
-		    bu_vls_printf(gedp->ged_result_str, "error in volume tolerance \"%s\"\n", bu_optarg);
-		    return -1;
-		}
-		break;
-	    case 'W':
-		if (_gqa_read_units_double(gedp, &weight_tolerance, bu_optarg, units_tab[2])) {
-		    bu_vls_printf(gedp->ged_result_str, "error in weight tolerance \"%s\"\n", bu_optarg);
-		    return -1;
-		}
-		break;
-
-	    case 'U':
-		errno = 0;
-		use_air = strtol(bu_optarg, (char **)NULL, 10);
-		if (errno == ERANGE || errno == EINVAL) {
-		    bu_vls_printf(gedp->ged_result_str, "error in air argument %s\n", bu_optarg);
-		    return -1;
-		}
-		break;
-	    case 'u':
-		{
-		    char *ptr = bu_optarg;
-		    const struct cvt_tab *cv;
-		    static const char *dim[3] = {"length", "volume", "weight"};
-		    char *units_name[3] = {NULL, NULL, NULL};
-		    char **units_ap;
-
-		    /* fill in units_name with the names we parse out */
-		    units_ap = units_name;
-
-		    /* acquire unit names */
-		    for (i = 0; i < 3 && ptr; i++) {
-			int found_unit;
-
-			if (i == 0) {
-			    *units_ap = strtok(ptr, CPP_XSTR(COMMA));
-			} else {
-			    *units_ap = strtok(NULL, CPP_XSTR(COMMA));
-			}
-
-			/* got something? */
-			if (*units_ap == NULL)
-			    break;
-
-			/* got something valid? */
-			found_unit = 0;
-			for (cv = &units_tab[i][0]; cv->name[0] != '\0'; cv++) {
-			    if (units_name[i] && BU_STR_EQUAL(cv->name, units_name[i])) {
-				units[i] = cv;
-				found_unit = 1;
-				break;
-			    }
-			}
-
-			if (!found_unit) {
-			    bu_vls_printf(gedp->ged_result_str, "Units \"%s\" not found in conversion table\n", units_name[i]);
-			    return -1;
-			}
-
-			++units_ap;
-		    }
-
-		    bu_vls_printf(gedp->ged_result_str, "Units: ");
-		    for (i = 0; i < 3; i++) {
-			bu_vls_printf(gedp->ged_result_str, " %s: %s", dim[i], units[i]->name);
-		    }
-		    bu_vls_printf(gedp->ged_result_str, "\n");
-		}
-		break;
-
-	    default: /* '?' 'h' */
-		return -1;
+	    }
+	    if (analysis_flags)
+		multiple_analyses = 1;
+	    analysis_flags |= new_flags;
 	}
     }
 
-    return bu_optind;
+    if (args.azimuth) {
+	if (bn_decode_angle(&azimuth_deg, args.azimuth) == 0) {
+	    bu_vls_printf(gedp->ged_result_str,
+		"error parsing azimuth \"%s\"\n", args.azimuth);
+	    return -1;
+	}
+	azel_requested = 1;
+    }
+    if (args.elevation) {
+	if (bn_decode_angle(&elevation_deg, args.elevation) == 0) {
+	    bu_vls_printf(gedp->ged_result_str,
+		"error parsing elevation \"%s\"\n", args.elevation);
+	    return -1;
+	}
+	azel_requested = 1;
+    }
+    debug = args.debug;
+    if (args.density_file)
+	densityFileName = (char *)args.density_file;
+
+    if (args.grid_spacing) {
+	char *grid_arg = bu_strdup(args.grid_spacing);
+	char *limit_arg = strchr(grid_arg, COMMA);
+	double value1, value2;
+	if (limit_arg)
+	    *limit_arg++ = '\0';
+	else {
+	    limit_arg = strchr(grid_arg, '-');
+	    if (limit_arg)
+		*limit_arg++ = '\0';
+	}
+	if (_gqa_read_units_double(gedp, &value1, grid_arg, units_tab[0])) {
+	    bu_vls_printf(gedp->ged_result_str,
+		"error parsing grid spacing value \"%s\"\n", grid_arg);
+	    bu_free(grid_arg, "gqa grid argument");
+	    return -1;
+	}
+	if (limit_arg) {
+	    if (_gqa_read_units_double(gedp, &value2, limit_arg, units_tab[0])) {
+		bu_vls_printf(gedp->ged_result_str,
+		    "error parsing grid spacing limit value \"%s\"\n", limit_arg);
+		bu_free(grid_arg, "gqa grid argument");
+		return -1;
+	    }
+	    gridSpacing = value1;
+	    gridSpacingLimit = value2;
+	} else {
+	    gridSpacing = 0.0;
+	    gridSpacingLimit = value1;
+	}
+	bu_free(grid_arg, "gqa grid argument");
+    }
+
+    if (args.overlap_assemblies) {
+	makeOverlapAssemblies = 1;
+	bu_vls_printf(gedp->ged_result_str, "-G option unimplemented\n");
+	return -1;
+    }
+    if (args.required_hits < 0) {
+	bu_vls_printf(gedp->ged_result_str,
+	    "num_hits must be integer value >= 0, not \"%d\"\n", args.required_hits);
+	return -1;
+    }
+    require_num_hits = (size_t)args.required_hits;
+    if (args.views != INT_MIN)
+	num_views = args.views;
+    if (args.plot_prefix)
+	plot_prefix = args.plot_prefix;
+    if (args.cpus > 0 && args.cpus <= max_cpus)
+	ncpu = args.cpus;
+    quiet_missed_report = args.quiet;
+    print_per_region_stats = args.region_stats;
+    if (!isnan(args.samples)) {
+	if (args.samples <= 1.0) {
+	    bu_vls_printf(gedp->ged_result_str,
+		"error in specifying minimum samples per model axis: \"%g\"\n",
+		args.samples);
+	    return -1;
+	}
+	Samples_per_model_axis = args.samples + 1.0;
+    }
+    if (args.overlap_tolerance &&
+	_gqa_read_units_double(gedp, &overlap_tolerance,
+	    args.overlap_tolerance, units_tab[0])) {
+	bu_vls_printf(gedp->ged_result_str,
+	    "error in overlap tolerance distance \"%s\"\n", args.overlap_tolerance);
+	return -1;
+    }
+    verbose = args.verbose;
+    if (args.volume_tolerance &&
+	_gqa_read_units_double(gedp, &volume_tolerance,
+	    args.volume_tolerance, units_tab[1])) {
+	bu_vls_printf(gedp->ged_result_str,
+	    "error in volume tolerance \"%s\"\n", args.volume_tolerance);
+	return -1;
+    }
+    if (args.weight_tolerance &&
+	_gqa_read_units_double(gedp, &weight_tolerance,
+	    args.weight_tolerance, units_tab[2])) {
+	bu_vls_printf(gedp->ged_result_str,
+	    "error in weight tolerance \"%s\"\n", args.weight_tolerance);
+	return -1;
+    }
+    use_air = args.use_air;
+
+    if (args.report_units) {
+	char *units_arg = bu_strdup(args.report_units);
+	char *unit = strtok(units_arg, CPP_XSTR(COMMA));
+	static const char *dim[3] = {"length", "volume", "weight"};
+	for (i = 0; i < 3 && unit; i++, unit = strtok(NULL, CPP_XSTR(COMMA))) {
+	    const struct cvt_tab *cv;
+	    int found_unit = 0;
+	    for (cv = &units_tab[i][0]; cv->name[0] != '\0'; cv++) {
+		if (BU_STR_EQUAL(cv->name, unit)) {
+		    units[i] = cv;
+		    found_unit = 1;
+		    break;
+		}
+	    }
+	    if (!found_unit) {
+		bu_vls_printf(gedp->ged_result_str,
+		    "Units \"%s\" not found in conversion table\n", unit);
+		bu_free(units_arg, "gqa units argument");
+		return -1;
+	    }
+	}
+	bu_free(units_arg, "gqa units argument");
+	bu_vls_printf(gedp->ged_result_str, "Units: ");
+	for (i = 0; i < 3; i++)
+	    bu_vls_printf(gedp->ged_result_str, " %s: %s", dim[i], units[i]->name);
+	bu_vls_printf(gedp->ged_result_str, "\n");
+    }
+
+    return object_count;
 }
 
 /**
@@ -2623,9 +2513,9 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     struct cstate state;
     state.gedp = gedp;
     int start_objs; /* index in command line args where geom object list starts */
+    const char *command;
     struct region_pair *rp;
     struct region *regp;
-    static const char *usage = "object [object ...]";
     struct resource resp[MAX_PSW];	/* memory resources for multi-cpu processing */
     struct bu_list *vlfree = &rt_vlfree;
 
@@ -2638,9 +2528,10 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], options_str, usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return GED_HELP;
     }
+    command = argv[0];
 
     analysis_flags = ANALYSIS_VOLUMES | ANALYSIS_OVERLAPS | ANALYSIS_WEIGHTS |
     ANALYSIS_EXP_AIR | ANALYSIS_ADJ_AIR | ANALYSIS_GAPS | ANALYSIS_CENTROIDS | ANALYSIS_MOMENTS;
@@ -2686,11 +2577,13 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     plot_expair = (FILE *)0;
     debug = 0;
 
-    /* parse command line arguments */
-    arg_count = parse_args(gedp, argc, (char **)argv);
+    /* Parse options after the command name.  BU_ARG leaves the object
+     * operands at the beginning of this subarray. */
+    argc--; argv++;
+    arg_count = parse_args(gedp, argc, argv);
 
-    if (arg_count < 0 || (argc-arg_count) < 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], options_str, usage);
+    if (arg_count < 1) {
+	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return BRLCAD_ERROR;
     }
 
@@ -2734,8 +2627,8 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     rtip = rt_i_create(gedp->dbip);
     rtip->useair = use_air;
 
-    start_objs = arg_count;
-    num_objects = argc - arg_count;
+    start_objs = 0;
+    num_objects = arg_count;
 
     /* Initialize all the per-CPU memory resources.  The number of
      * processors can change at runtime, init them all.
@@ -2749,7 +2642,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     /* Walk trees.  Here we identify any object trees in the database
      * that the user wants included in the ray trace.
      */
-    for (; arg_count < argc; arg_count++) {
+    for (arg_count = 0; arg_count < num_objects; arg_count++) {
 	if (rt_gettree(rtip, argv[arg_count]) < 0) {
 	    fprintf(stderr, "rt_gettree(%s) FAILED\n", argv[arg_count]);
 	    return BRLCAD_ERROR;
@@ -2817,7 +2710,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     state.rtip = rtip;
     state.first = 1;
     state.have_previous_estimates = 0;
-    allocate_per_region_data(gedp, &state, start_objs, argc, argv);
+    allocate_per_region_data(gedp, &state, start_objs, num_objects, argv);
 
     /* compute */
     do {
@@ -2994,10 +2887,10 @@ aborted:
 #include "../include/plugin.h"
 
 #define GED_GQA_COMMANDS(X, XID) \
-    X(gqa, ged_gqa_core, GED_CMD_DEFAULT) \
+    X(gqa, ged_gqa_core, GED_CMD_DEFAULT, &gqa_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_GQA_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_gqa", 1, GED_GQA_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_GQA_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_gqa", 1, GED_GQA_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

@@ -38,7 +38,6 @@
 #include "vmath.h"
 #include "bu/debug.h"
 #include "bu/cv.h"
-#include "bu/opt.h"
 #include "bu/str.h"
 #include "rt/db4.h"
 #include "nmg.h"

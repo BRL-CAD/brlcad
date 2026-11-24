@@ -28,11 +28,33 @@
 
 #include "common.h"
 
+struct bu_arg_schema;
+struct bu_arg_tree;
+struct bu_arg_tree_node;
+struct bu_cmdtab;
+struct ged;
+
+struct ged_faceplate_subcommand_args {
+    int help;
+    long verbosity;
+};
+
 __BEGIN_DECLS
 extern int _fp_cmd_model_axes(void *bs, int argc, const char **argv);
 extern int _fp_cmd_view_axes(void *bs, int argc, const char **argv);
 extern int _fp_cmd_grid(void *bs, int argc, const char **argv);
 extern int _fp_cmd_irect(void *bs, int argc, const char **argv);
+extern const struct bu_arg_schema ged_faceplate_subcommand_schema;
+extern const struct bu_arg_schema ged_faceplate_native_schema;
+extern const struct bu_arg_tree_node ged_faceplate_subcommands[];
+extern const struct bu_arg_tree ged_faceplate_tree;
+extern int _fp_cmd_schema_msgs(struct ged *gedp, int argc,
+	const char **argv, const char *branch);
+extern void _fp_cmd_schema_help(struct ged *gedp, const char *branch,
+	const char *leaf);
+extern int _fp_subcmd_exec(struct ged *gedp, const struct bu_arg_schema *schema,
+	const struct bu_cmdtab *cmds, const char *cmdname, const char *cmdargs,
+	void *context, int argc, const char **argv, int help);
 __END_DECLS
 
 #endif /* GED_FACEPLATE_H */

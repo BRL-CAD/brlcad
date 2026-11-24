@@ -30,6 +30,7 @@
 #include "brlcad_version.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
+#include "bu/log.h"
 #include "ged/db_index.h"
 #include "ged/scene.h"
 #include "ged/selection.h"
@@ -272,6 +273,12 @@ QgEdApp::QgEdApp(int &argc, char *argv[], const char *g_file, int swrast_mode, i
 
     // Assign QGED specific open/close db handlers to the gedp
     ged_clbk_set(mdl->ged(), "opendb", BU_CLBK_POST, &qged_post_opendb_clbk, (void *)qApp);
+    ged_clbk_set(mdl->ged(), "search", BU_CLBK_DURING, &qg_ged_search_exec_callback, (void *)w->console);
+
+    // Keep diagnostics visible in the GUI without disturbing an in-progress
+    // command.  The hook's signal is queued automatically when a worker
+    // thread produces the log message.
+    bu_log_add_hook(&qg_console_log_hook, (void *)w->console);
 
     // Assign QGED specific I/O handlers to the gedp
     mdl->ged()->ged_create_io_handler = &qt_create_io_handler;
@@ -331,6 +338,8 @@ QgEdApp::QgEdApp(int &argc, char *argv[], const char *g_file, int swrast_mode, i
 QgEdApp::~QgEdApp() {
     if (mdl && mdl->ged())
 	ged_subprocesses_terminate(mdl->ged());
+    if (w && w->console)
+	bu_log_delete_hook(&qg_console_log_hook, (void *)w->console);
     QgEdMainWindow *window = w;
     w = NULL;
     m_plugin_context.viewWidgetAccessor = {};

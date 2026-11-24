@@ -30,11 +30,15 @@
 #include <limits.h>
 #include <math.h>
 #include <string.h>
+
+#include <string>
+#include <vector>
+
 #include "bio.h"
 
 #include "vmath.h"
 #include "bu/color.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "raytrace.h"
 #include "./librt_private.h"
 
@@ -448,7 +452,7 @@ dp_instance(int *comb_instance_index, const struct db_i *dbip, const char *cp)
     if (atp) {
 	*atp = '\0';
 	atp++;
-	if (bu_opt_int(NULL, 1, (const char **)&atp, (void *)comb_instance_index) == -1) {
+	if (!bu_arg_integer_from_str(NULL, comb_instance_index, atp, 0)) {
 	    bu_log("invalid comb instance index: %s\n", atp);
 	    bu_free(lcp, "lcp");
 	    return dp;
@@ -457,6 +461,166 @@ dp_instance(int *comb_instance_index, const struct db_i *dbip, const char *cp)
     }
     bu_free(lcp, "lcp");
     return dp;
+}
+
+
+struct db_full_path_text_component {
+    std::string name;
+    int cinst = 0;
+};
+
+
+/*
+ * Decode one textual component.  This is deliberately stricter than the
+ * general-purpose bu_str_unescape() helpers: only the escapes defined by the
+ * full-path grammar are accepted, so misspelled paths are not silently
+ * redirected to another database object.
+ */
+static int
+db_full_path_decode_component(std::vector<db_full_path_text_component> &components,
+			      const char *&cursor)
+{
+    db_full_path_text_component component;
+    bool has_instance = false;
+
+    while (*cursor && *cursor != '/') {
+	char c = *cursor++;
+	if (c == '\\') {
+	    c = *cursor++;
+	    if (c != '\\' && c != '/' && c != '@')
+		return DB_FULL_PATH_SYNTAX;
+	    component.name.push_back(c);
+	    continue;
+	}
+
+	if (c != '@') {
+	    component.name.push_back(c);
+	    continue;
+	}
+
+	if (has_instance || component.name.empty() || *cursor < '0' || *cursor > '9')
+	    return DB_FULL_PATH_SYNTAX;
+
+	has_instance = true;
+	unsigned int value = 0;
+	while (*cursor >= '0' && *cursor <= '9') {
+	    unsigned int digit = (unsigned int)(*cursor - '0');
+	    if (value > ((unsigned int)INT_MAX - digit) / 10)
+		return DB_FULL_PATH_SYNTAX;
+	    value = value * 10 + digit;
+	    cursor++;
+	}
+	if (*cursor && *cursor != '/')
+	    return DB_FULL_PATH_SYNTAX;
+	component.cinst = (int)value;
+	break;
+    }
+
+    if (component.name.empty())
+	return DB_FULL_PATH_SYNTAX;
+
+    components.push_back(component);
+    return DB_FULL_PATH_OK;
+}
+
+
+int
+db_full_path_encode(struct bu_vls *out, const struct db_full_path *path)
+{
+    if (!out || !path || path->magic != DB_FULL_PATH_MAGIC)
+	return DB_FULL_PATH_INVALID;
+    if (path->fp_len > path->fp_maxlen)
+	return DB_FULL_PATH_INVALID;
+    if (path->fp_len && (!path->fp_names || !path->fp_cinst))
+	return DB_FULL_PATH_INVALID;
+
+    struct bu_vls encoded = BU_VLS_INIT_ZERO;
+    bu_vls_putc(&encoded, '/');
+    for (size_t i = 0; i < path->fp_len; i++) {
+	const struct directory *dp = path->fp_names[i];
+	if (!dp || !dp->d_namep || !dp->d_namep[0] || path->fp_cinst[i] < 0 ||
+	    (i == 0 && path->fp_cinst[i] != 0)) {
+	    bu_vls_free(&encoded);
+	    return DB_FULL_PATH_INVALID;
+	}
+	if (i)
+	    bu_vls_putc(&encoded, '/');
+	for (const char *c = dp->d_namep; *c; c++) {
+	    if (*c == '\\' || *c == '/' || *c == '@')
+		bu_vls_putc(&encoded, '\\');
+	    bu_vls_putc(&encoded, *c);
+	}
+	if (i && path->fp_cinst[i])
+	    bu_vls_printf(&encoded, "@%d", path->fp_cinst[i]);
+    }
+
+    bu_vls_sprintf(out, "%s", bu_vls_cstr(&encoded));
+    bu_vls_free(&encoded);
+    return DB_FULL_PATH_OK;
+}
+
+
+int
+db_full_path_decode(struct db_full_path *out, const struct db_i *dbip, const char *pathstr)
+{
+    if (!out || !dbip || !pathstr || out->magic != DB_FULL_PATH_MAGIC)
+	return DB_FULL_PATH_INVALID;
+    if (!pathstr[0])
+	return DB_FULL_PATH_SYNTAX;
+
+    RT_CK_DBI(dbip);
+
+    const char *cursor = pathstr;
+    if (*cursor == '/')
+	cursor++;
+
+    std::vector<db_full_path_text_component> components;
+    if (*cursor) {
+	while (*cursor) {
+	    int ret = db_full_path_decode_component(components, cursor);
+	    if (ret != DB_FULL_PATH_OK)
+		return ret;
+	    if (!*cursor)
+		break;
+	    cursor++;
+	    if (!*cursor)
+		return DB_FULL_PATH_SYNTAX;
+	}
+    }
+
+    struct db_full_path decoded = DB_FULL_PATH_INIT_ZERO;
+    for (size_t i = 0; i < components.size(); i++) {
+	const db_full_path_text_component &component = components[i];
+	struct directory *dp = db_lookup(dbip, component.name.c_str(), LOOKUP_QUIET);
+	if (dp == RT_DIR_NULL) {
+	    db_free_full_path(&decoded);
+	    return DB_FULL_PATH_LOOKUP;
+	}
+
+	int bool_op = OP_UNION;
+	if (i) {
+	    struct directory *parent = DB_FULL_PATH_CUR_DIR(&decoded);
+	    if (component.cinst && !dbip->i->dbi_use_comb_instance_ids) {
+		db_free_full_path(&decoded);
+		return DB_FULL_PATH_INSTANCE;
+	    }
+	    if (!db_comb_has_instance(&bool_op, dbip, parent, dp, component.cinst)) {
+		db_free_full_path(&decoded);
+		return component.cinst ? DB_FULL_PATH_INSTANCE : DB_FULL_PATH_RELATION;
+	    }
+	} else if (component.cinst) {
+	    db_free_full_path(&decoded);
+	    return DB_FULL_PATH_INSTANCE;
+	}
+
+	db_add_node_to_full_path(&decoded, dp);
+	DB_FULL_PATH_SET_CUR_BOOL(&decoded, bool_op);
+	DB_FULL_PATH_SET_CUR_COMB_INST(&decoded, component.cinst);
+    }
+
+    db_free_full_path(out);
+    *out = decoded;
+    return DB_FULL_PATH_OK;
 }
 
 int
@@ -639,9 +803,11 @@ db_free_full_path(struct db_full_path *pp)
 	    bu_free((char *)pp->fp_bool, "db_full_path bool array");
 	if (pp->fp_cinst)
 	    bu_free((char *)pp->fp_cinst, "db_full_path cinst array");
-	pp->fp_maxlen = pp->fp_len = 0;
-	pp->fp_names = (struct directory **)0;
     }
+    pp->fp_maxlen = pp->fp_len = 0;
+    pp->fp_names = (struct directory **)0;
+    pp->fp_bool = (int *)0;
+    pp->fp_cinst = (int *)0;
 }
 
 
@@ -981,7 +1147,7 @@ db_full_path_color(
 	    int region_id = -1;
 	    const char *region_id_val = bu_avs_get(&c_avs, "region_id");
 	    if (region_id_val) {
-		bu_opt_int(NULL, 1, &region_id_val, (void *)&region_id);
+		bu_arg_integer_from_str(NULL, (int *)(&region_id), region_id_val, 0);
 	    } else if (pathp->fp_names[i]->d_flags & RT_DIR_REGION) {
 		// If we have a region flag but no region_id, for color table
 		// purposes treat the region_id as 0
@@ -1019,7 +1185,7 @@ db_full_path_color(
 	    color_val = bu_avs_get(&c_avs, "rgb");
 	}
 	if (color_val) {
-	    bu_opt_color(NULL, 1, &color_val, (void *)c);
+	    bu_arg_color_from_argv((struct bu_color *)(c), 1, &color_val);
 	    have_color = 1;
 	}
 

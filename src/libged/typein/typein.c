@@ -30,7 +30,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "rt/geom.h"
 #include "wdb.h"
 
@@ -1499,25 +1499,21 @@ sph_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern, 
 
     intern->idb_ptr = NULL;
 
-    struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
     for (i = 0; i < ELEMENTS_PER_POINT; i++) {
 	fastf_t optf;
-	bu_vls_trunc(&opt_msg, 0);
-	if (bu_opt_fastf_t(&opt_msg, 1, (const char **)&(cmd_argvs[3+i]), (void *)&optf) < 0) {
-	    bu_vls_printf(gedp->ged_result_str, "Value read error: %s\n", bu_vls_cstr(&opt_msg));
-	    bu_vls_free(&opt_msg);
+	if (!bu_arg_number_from_str(NULL, &optf, cmd_argvs[3 + i])) {
+	    bu_vls_printf(gedp->ged_result_str, "Value read error: invalid numeric value %s\n",
+		cmd_argvs[3 + i]);
 	    return BRLCAD_ERROR;
 	}
 	center[i] = optf * gedp->dbip->dbi_local2base;
     }
-    if (bu_opt_fastf_t(&opt_msg, 1, (const char **)&(cmd_argvs[6]), (void *)&r) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Value read error: %s\n", bu_vls_cstr(&opt_msg));
-	bu_vls_free(&opt_msg);
+	if (!bu_arg_number_from_str(NULL, &r, cmd_argvs[6])) {
+	bu_vls_printf(gedp->ged_result_str, "Value read error: invalid numeric value %s\n",
+	    cmd_argvs[6]);
 	return BRLCAD_ERROR;
     }
     r = r * gedp->dbip->dbi_local2base;
-
-    bu_vls_free(&opt_msg);
 
     if (r < RT_LEN_TOL) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR, radius must be greater than zero!\n");
@@ -3737,12 +3733,24 @@ do_new_update:
 
 
 #include "../include/plugin.h"
+static const struct bu_arg_operand typein_schema_operands[] = {
+    BU_ARG_OPERAND("name", BU_ARG_VALUE_STRING, 1, 1, "New object name", NULL),
+    BU_ARG_OPERAND("primitive_type", BU_ARG_VALUE_KEYWORD, 1, 1,
+	"Primitive type", "ged.primitive_type"),
+    BU_ARG_OPERAND("parameters", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
+	"Primitive-specific input values", NULL),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema in_cmd_schema = {
+    "in", "Create a primitive from type-specific values", NULL, typein_schema_operands,
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
 #define GED_TYPEIN_COMMANDS(X, XID) \
-    X(in, ged_in_core, GED_CMD_DEFAULT) \
+    X(in, ged_in_core, GED_CMD_DEFAULT, &in_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_TYPEIN_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_typein", 1, GED_TYPEIN_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_TYPEIN_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_typein", 1, GED_TYPEIN_COMMANDS)
 
 /*
  * Local Variables:

@@ -28,9 +28,12 @@
 #include <stdlib.h>
 
 #include "bu/cmd.h"
+#include "bu/arg.h"
 
 
 #include "../ged_private.h"
+
+static const struct bu_arg_schema *rrt_schema(void);
 
 
 int
@@ -41,6 +44,8 @@ ged_rrt_core(struct ged *gedp, int argc, const char *argv[])
     size_t args;
     char **gd_rt_cmd = NULL;
     int gd_rt_cmd_len = 0;
+    int operand_index;
+    int parse_dummy = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -49,6 +54,11 @@ ged_rrt_core(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
+
+    operand_index = bu_arg_schema_parse_complete(rrt_schema(), &parse_dummy,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0)
+	return BRLCAD_ERROR;
 
     args = argc + 2 + ged_who_argc(gedp);
     gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
@@ -71,11 +81,46 @@ ged_rrt_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_RRT_COMMANDS(X, XID) \
-    X(rrt, ged_rrt_core, GED_CMD_DEFAULT) \
+static const struct bu_arg_operand rrt_schema_operands[] = {
+    BU_ARG_OPERAND("raytrace_arguments", BU_ARG_VALUE_RAW, 0,
+	BU_ARG_COUNT_UNLIMITED, "Arguments passed through to the raytracer", NULL),
+    BU_ARG_OPERAND_NULL
+};
+static int
+rrt_schema_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
+{
+    struct bu_arg_schema flat = *schema;
+    int ret;
 
-GED_DECLARE_COMMAND_SET(GED_RRT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_rrt", 1, GED_RRT_COMMANDS)
+    ret = bu_arg_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_ARG_VALIDATE_INVALID)
+	return ret;
+    bu_arg_validate_result_clear(result);
+    result->state = BU_ARG_VALIDATE_VALID;
+    result->token_start = cursor_arg < argc ? cursor_arg : argc;
+    result->token_end = result->token_start;
+    result->expected = BU_ARG_EXPECT_OPERAND;
+    result->completion_type = BU_ARG_VALUE_RAW;
+    result->hint = "raytracer pass-through argument";
+    return 0;
+}
+static const struct bu_arg_schema rrt_cmd_schema = {
+    "rrt", "Run the raytracer on displayed objects", NULL, rrt_schema_operands,
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(rrt_schema_validate, NULL)
+};
+
+static const struct bu_arg_schema *
+rrt_schema(void)
+{
+    return &rrt_cmd_schema;
+}
+
+#define GED_RRT_COMMANDS(X, XID) \
+    X(rrt, ged_rrt_core, GED_CMD_DEFAULT, &rrt_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_RRT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_rrt", 1, GED_RRT_COMMANDS)
 
 /*
  * Local Variables:

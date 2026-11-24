@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 
@@ -66,7 +66,7 @@ ged_protate_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (bu_opt_vect_t(NULL, 1, &argv[3], &rotation) != 1 ||
+    if (bu_arg_vector3_from_argv((fastf_t *)(&rotation), 1, &argv[3]) != 1 ||
 	!isfinite(rotation[X]) || !isfinite(rotation[Y]) ||
 	!isfinite(rotation[Z])) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad rotation vector - %s", argv[0], argv[3]);

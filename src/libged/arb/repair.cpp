@@ -13,13 +13,48 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "rt/geom.h"
 #include "rt/db_internal.h"
 #include "wdb.h"
 
 #include "ged_arb.h"
 #include "../ged_private.h"
+
+
+struct arb_repair_args {
+    int print_help;
+    struct bu_vls out_name;
+    fastf_t tolerance;
+};
+
+
+static const struct bu_arg_option arb_repair_options[] = {
+    BU_ARG_FLAG("h", "help", struct arb_repair_args, print_help,
+	"Print help and exit"),
+    BU_ARG_VALUE("o", "output-name", struct arb_repair_args, out_name, BU_ARG_VALUE_VLS, BU_ARG_REQUIRED, "name",
+	"Write the repaired ARB to a new object"),
+    BU_ARG_VALUE("t", "tol", struct arb_repair_args, tolerance, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "distance",
+	"Distance tolerance for snapping vertices"),
+    BU_ARG_OPTION_NULL
+};
+static const char * const arb_repair_output_option[] = {"output-name", NULL};
+static const struct bu_arg_constraint arb_repair_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPERAND_COUNT, BU_ARG_CONDITION_ANY_OPTION_PRESENT,
+	arb_repair_output_option, 1, 1,
+	"--output-name permits only one input ARB"),
+    BU_ARG_CONSTRAINT_NULL
+};
+static const struct bu_arg_operand arb_repair_operands[] = {
+    BU_ARG_OPERAND("input_arb", BU_ARG_VALUE_DB_OBJECT, 1, BU_ARG_COUNT_UNLIMITED,
+	"ARB objects to repair", NULL),
+    BU_ARG_OPERAND_NULL
+};
+extern "C" const struct bu_arg_schema ged_arb_repair_schema = {
+    "repair", "Repair and canonicalize ARB objects", arb_repair_options,
+    arb_repair_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, arb_repair_constraints, NULL, NULL, NULL)
+};
 
 extern "C" int
 _arb_cmd_repair(void *bs, int argc, const char **argv)

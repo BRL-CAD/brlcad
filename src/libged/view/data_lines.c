@@ -55,7 +55,6 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/opt.h"
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "../ged_private.h"

@@ -28,10 +28,29 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu/cmd.h"
+#include "bu/arg.h"
 #include "bu/str.h"
 #include "dm.h"
 #include "../ged_private.h"
+
+struct how_args {
+    int both;
+};
+
+static const struct bu_arg_option how_options[] = {
+    BU_ARG_FLAG("b", NULL, struct how_args, both,
+	"Report both display mode and transparency"),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand how_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_PATH, 1, 1,
+	"Displayed object path", "ged.db_path"),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema how_cmd_schema =
+    BU_ARG_SCHEMA_BOUND("how", "Report how a database object is displayed",
+	how_options, how_operands, BU_ARG_PARSE_OPTIONS_FIRST, NULL, NULL, NULL,
+	NULL);
 
 static int
 dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int both)
@@ -96,9 +115,10 @@ int
 ged_how_core(struct ged *gedp, int argc, const char *argv[])
 {
     int good;
-    struct directory **dpp;
-    int both = 0;
-    static const char *usage = "[-b] object";
+    struct directory **dpp = NULL;
+    struct how_args args = {0};
+    int operand_index;
+    const char *command = argv[0];
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -109,28 +129,23 @@ ged_how_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return GED_HELP;
     }
 
-    if (3 < argc) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    argc--; argv++;
+    operand_index = bu_arg_schema_parse_complete(&how_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
+	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return BRLCAD_ERROR;
     }
+    argv += operand_index;
 
-    if (argc == 3 &&
-	argv[1][0] == '-' &&
-	argv[1][1] == 'b') {
-	both = 1;
+    if ((dpp = _ged_build_dpp(gedp, argv[0])) == NULL)
+	goto good_label;
 
-	if ((dpp = _ged_build_dpp(gedp, argv[2])) == NULL)
-	    goto good_label;
-    } else {
-	if ((dpp = _ged_build_dpp(gedp, argv[1])) == NULL)
-	    goto good_label;
-    }
-
-    good = dl_how(gedp->i->ged_gdp->gd_headDisplay, gedp->ged_result_str, dpp, both);
+    good = dl_how(gedp->i->ged_gdp->gd_headDisplay, gedp->ged_result_str, dpp, args.both);
 
     /* match NOT found */
     if (!good) bu_vls_printf(gedp->ged_result_str, "-1");
@@ -145,10 +160,10 @@ good_label:
 #include "../include/plugin.h"
 
 #define GED_HOW_COMMANDS(X, XID) \
-    X(how, ged_how_core, GED_CMD_DEFAULT) \
+    X(how, ged_how_core, GED_CMD_DEFAULT, &how_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_HOW_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_how", 1, GED_HOW_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_HOW_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_how", 1, GED_HOW_COMMANDS)
 
 /*
  * Local Variables:

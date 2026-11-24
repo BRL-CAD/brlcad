@@ -34,6 +34,7 @@
 #include "bresource.h"
 
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/process.h"
 
 #include "../ged_private.h"
@@ -138,15 +139,27 @@ ged_rt_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_RT_COMMANDS(X, XID) \
-    X(rt, ged_rt_core, GED_CMD_DEFAULT) \
-    X(rtarea, ged_rt_core, GED_CMD_DEFAULT) \
-    X(rtedge, ged_rt_core, GED_CMD_DEFAULT) \
-    X(rtweight, ged_rt_core, GED_CMD_DEFAULT) \
-    X(art, ged_rt_core, GED_CMD_DEFAULT) \
+static const struct bu_arg_operand rt_schema_operands[] = {
+    BU_ARG_OPERAND("arguments", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
+	"Arguments passed to the raytrace engine", NULL),
+    BU_ARG_OPERAND_NULL
+};
+#define RT_SCHEMA(_id, _name, _help) \
+    static const struct bu_arg_schema _id##_cmd_schema = { \
+	_name, _help, NULL, rt_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)}
+RT_SCHEMA(rt, "rt", "Raytrace displayed geometry"); RT_SCHEMA(rtarea, "rtarea", "Raytrace area analysis"); RT_SCHEMA(rtedge, "rtedge", "Render geometry edges");
+RT_SCHEMA(rtweight, "rtweight", "Raytrace weight analysis"); RT_SCHEMA(art, "art", "Raytrace displayed geometry asynchronously");
+#undef RT_SCHEMA
 
-GED_DECLARE_COMMAND_SET(GED_RT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_rt", 1, GED_RT_COMMANDS)
+#define GED_RT_COMMANDS(X, XID) \
+    X(rt, ged_rt_core, GED_CMD_DEFAULT, &rt_cmd_schema) \
+    X(rtarea, ged_rt_core, GED_CMD_DEFAULT, &rtarea_cmd_schema) \
+    X(rtedge, ged_rt_core, GED_CMD_DEFAULT, &rtedge_cmd_schema) \
+    X(rtweight, ged_rt_core, GED_CMD_DEFAULT, &rtweight_cmd_schema) \
+    X(art, ged_rt_core, GED_CMD_DEFAULT, &art_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_RT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_rt", 1, GED_RT_COMMANDS)
 
 /*
  * Local Variables:

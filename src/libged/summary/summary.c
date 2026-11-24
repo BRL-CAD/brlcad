@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
@@ -46,6 +47,11 @@ struct summary_specifics {
 
     /* solid specifics */
     unsigned long bot_triangles;
+};
+
+struct summary_args {
+    int print_help;
+    const char *object;
 };
 
 static void comb_counter(struct db_i* UNUSED(dbip), struct directory* dp, void* cdata)
@@ -164,17 +170,57 @@ summary_dir(struct ged *gedp, int flag, struct bu_vls* specific)
 }
 
 
+static const struct bu_arg_option summary_options[] = {
+    BU_ARG_FLAG("h", "help", struct summary_args, print_help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 0),
+    BU_ARG_VALUE("o", "obj", struct summary_args, object,
+	BU_ARG_VALUE_DB_OBJECT, BU_ARG_REQUIRED, "object",
+	"Summarize one database object"),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand summary_operands[] = {
+    BU_ARG_OPERAND("object_or_legacy_type", BU_ARG_VALUE_DB_OBJECT, 0, 1,
+	"Database object or legacy p/r/g selector",
+	"ged.summary_object_or_legacy_type"),
+    BU_ARG_OPERAND_NULL
+};
+static const char * const summary_object_option[] = {"obj", NULL};
+static const struct bu_arg_constraint summary_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPERAND_COUNT,
+	BU_ARG_CONDITION_ANY_OPTION_PRESENT, summary_object_option, 0, 0,
+	"object specified both by --obj and as an operand"),
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPERAND_COUNT,
+	BU_ARG_CONDITION_NO_OPTION_PRESENT, summary_object_option, 0, 1,
+	"at most one object may be specified"),
+    BU_ARG_CONSTRAINT_NULL
+};
+static const struct bu_arg_schema summary_cmd_schema =
+    BU_ARG_SCHEMA("summary", "Summarize database contents or one object",
+	summary_options, summary_operands, BU_ARG_PARSE_INTERSPERSED,
+	BU_ARG_SCHEMA_META_HELP(NULL, summary_constraints, NULL, NULL, NULL));
+
+
+static void
+summary_show_help(struct ged *gedp, const char *command)
+{
+    char *help = ged_cmd_help(command, command);
+
+    if (help) {
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "summary standard help");
+    }
+}
+
+
 int
 ged_summary_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int print_help = 0;
-    struct bu_opt_desc d[4];
-    struct bu_vls usage = BU_VLS_INIT_ZERO;
+    struct summary_args args = {0, NULL};
     struct bu_vls obj_name = BU_VLS_INIT_ZERO;
-    BU_OPT(d[0], "h", "help",      "",         NULL,  &print_help,  "Print help and exit");
-    BU_OPT(d[1], "?",     "",      "",         NULL,  &print_help,  "");
-    BU_OPT(d[2], "o",  "obj",  "name",  &bu_opt_vls,    &obj_name,  "Specify database object to summarize");
-    BU_OPT_NULL(d[3]);
+    int operand_count;
+    int operand_index;
+    const char *command = argv[0];
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -182,32 +228,34 @@ ged_summary_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* parse standard options */
-    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
+    argc--; argv++;
+    operand_index = bu_arg_schema_parse_complete(&summary_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
+	summary_show_help(gedp, command);
+	bu_vls_free(&obj_name);
+	return BRLCAD_ERROR;
+    }
+    operand_count = argc - operand_index;
+    argv += operand_index;
 
-    /* adjust argc to match the leftovers of the options parsing */
-    argc = opt_ret;
-
-    /* done with command name argv[0] */
-    argc-=(argc>0); argv+=(argc>0);
-
-    if (print_help) {
-	_ged_cmd_help(gedp, bu_vls_cstr(&usage), d);
-	bu_vls_free(&usage);
+    if (args.print_help) {
+	summary_show_help(gedp, command);
 	bu_vls_free(&obj_name);
 	return BRLCAD_OK;
     }
-    bu_vls_free(&usage);
+
+    argc = operand_count;
 
     /* must be wanting database summary */
-    if (!argc && !bu_vls_strlen(&obj_name)) {
+    if (!argc && !args.object) {
 	summary_dir(gedp, 0, NULL);
 	bu_vls_free(&obj_name);
 	return BRLCAD_OK;
     }
 
     /* TODO: deprecate me */
-    if (argc == 1 && strlen(argv[0]) == 1) {
+    if (argc == 1 && argv[0][0]) {
 	// NOTE:  special casing of p, r and g is deprecated, but for now
 	// handle these options as we originally would have.
 	const char *cp = (const char *)argv[0];
@@ -236,7 +284,7 @@ ged_summary_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* ensure we have one object name */
-    if (!bu_vls_strlen(&obj_name)) {
+    if (!args.object) {
 	if (argc != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "expecting a single object name.\n");
 	    bu_vls_free(&obj_name);
@@ -249,6 +297,7 @@ ged_summary_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_free(&obj_name);
 	    return BRLCAD_ERROR;
 	}
+	bu_vls_sprintf(&obj_name, "%s", args.object);
     }
 
     /* Summarize the object */
@@ -263,10 +312,10 @@ ged_summary_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_SUMMARY_COMMANDS(X, XID) \
-    X(summary, ged_summary_core, GED_CMD_DEFAULT) \
+    X(summary, ged_summary_core, GED_CMD_DEFAULT, &summary_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_SUMMARY_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_summary", 1, GED_SUMMARY_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_SUMMARY_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_summary", 1, GED_SUMMARY_COMMANDS)
 
 /*
  * Local Variables:

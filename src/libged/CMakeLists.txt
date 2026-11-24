@@ -328,6 +328,8 @@ set(
   LIBGED_SOURCES
   ${GED_CMD_SRC}
   ${GED_STATIC_REGISTRATION_CPP}
+  command_input.cpp
+  completion_index.cpp
   edit_buf.cpp
   event.cpp
   exec.cpp
@@ -351,6 +353,8 @@ set(
   polyclip.cpp
   qray.cpp
   selection_state.cpp
+  erase_syntax.c
+  search_syntax.c
   tab_complete.cpp
   trace.c
   vers.c
@@ -423,7 +427,7 @@ endif()
 # need to be terminated due to excessive runtime length or infinite looping.
 # It is NOT intended be run directly by users (although it CAN be so run
 # for debugging purposes if necessary.)
-brlcad_addexec(ged_exec ged_exec.cpp libged NO_MAN)
+brlcad_addexec(ged_exec ged_exec.cpp libged NO_MAN NO_OPTIONS)
 
 add_subdirectory(tests)
 

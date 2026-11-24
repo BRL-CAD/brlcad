@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 
@@ -77,7 +77,7 @@ ged_ptranslate_core(struct ged *gedp, int argc, const char *argv[])
     } else
 	rflag = 0;
 
-    if (bu_opt_vect_t(NULL, 1, &argv[3], &tvec) != 1 ||
+    if (bu_arg_vector3_from_argv((fastf_t *)(&tvec), 1, &argv[3]) != 1 ||
 	!isfinite(tvec[X]) || !isfinite(tvec[Y]) || !isfinite(tvec[Z])) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad translation vector - %s", cmd_name, argv[3]);
 	return BRLCAD_ERROR;

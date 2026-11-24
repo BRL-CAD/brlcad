@@ -83,7 +83,7 @@ if(BRLCAD_ENABLE_TCL)
     ${TK_INCLUDE_PATH}
     ${BRLCAD_X11_INCLUDE_DIRS}
   )
-  brlcad_addexec(mged "${MGED_SOURCES}" "${mged_libs}")
+  brlcad_addexec(mged "${MGED_SOURCES}" "${mged_libs}" ARG_SCHEMA)
   if(TK_LIBRARY)
     target_compile_definitions(mged PRIVATE HAVE_TK=1)
   endif(TK_LIBRARY)
@@ -123,13 +123,56 @@ if(BRLCAD_ENABLE_TCL)
     PROPERTY CPACK_START_MENU_SHORTCUTS "MGED ${BRLCAD_VERSION}"
   )
   set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:mged>" PROPERTY CPACK_DESKTOP_SHORTCUTS "MGED ${BRLCAD_VERSION}")
+
+  add_test(
+    NAME mged_cmd_complete_bridge
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DMGED_EXECUTABLE=$<TARGET_FILE:mged>
+      -DDB_FILE=${CMAKE_SOURCE_DIR}/src/libged/tests/draw/moss.g
+      -DINPUT_FILE=${CMAKE_CURRENT_SOURCE_DIR}/tests/cmd_complete.in
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cmd_complete_test.cmake
+  )
+  set_tests_properties(mged_cmd_complete_bridge PROPERTIES ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+
+  add_test(
+    NAME mged_cli_schema
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DMGED_EXECUTABLE=$<TARGET_FILE:mged>
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cli_schema_test.cmake
+  )
+  set_tests_properties(mged_cli_schema PROPERTIES ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+
+  add_test(
+    NAME mged_gui_bindings
+    COMMAND
+      $<TARGET_FILE:btclsh>
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/gui_bindings_test.tcl
+      ${CMAKE_SOURCE_DIR}/src/tclscripts/mged/text.tcl
+  )
+
+  if(UNIX)
+    brlcad_addexec(mged_completion_terminal_test tests/completion_terminal_test.c "libbu" TEST)
+    add_dependencies(mged_completion_terminal_test mged)
+    foreach(completion_mode filter cycle off prefix)
+      add_test(
+        NAME mged_completion_terminal_${completion_mode}
+        COMMAND mged_completion_terminal_test $<TARGET_FILE:mged> ${completion_mode}
+      )
+      set_tests_properties(
+        mged_completion_terminal_${completion_mode}
+        PROPERTIES ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR} TIMEOUT 20
+      )
+    endforeach()
+  endif()
 else(BRLCAD_ENABLE_TCL)
   cmakefiles(${MGED_SOURCES})
 endif(BRLCAD_ENABLE_TCL)
 
-brlcad_addexec(cad_boundp cad_boundp.c "libbu;${M_LIBRARY}")
+brlcad_addexec(cad_boundp cad_boundp.c "libbu;${M_LIBRARY}" ARG_SCHEMA)
 
-brlcad_addexec(cad_parea cad_parea.c libbu)
+brlcad_addexec(cad_parea cad_parea.c libbu ARG_SCHEMA)
 
 set(
   mged_ignore_files
@@ -148,6 +191,11 @@ set(
   sedit.h
   test_command_options.cmake
   test_gqa_prefix.cmake
+  tests/cmd_complete.in
+  tests/cmd_complete_test.cmake
+  tests/cli_schema_test.cmake
+  tests/completion_terminal_test.c
+  tests/gui_bindings_test.tcl
 )
 cmakefiles(${mged_ignore_files})
 

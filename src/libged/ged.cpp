@@ -62,12 +62,14 @@ namespace {
 
 constexpr char display_path_separator = '/';
 constexpr char display_path_instance = '@';
+constexpr char display_path_escape = '\\';
 
 static bool
 simple_display_path(std::string &normalized, const char *path)
 {
+    /* Escaped components need decoded path comparison, not text prefixes. */
     if (!path || !path[0] || strchr(path, display_path_instance) ||
-	strstr(path, "//"))
+	strchr(path, display_path_escape) || strstr(path, "//"))
 	return false;
 
     normalized.assign(path);
@@ -481,6 +483,8 @@ ged_close(struct ged *gedp)
     ged_edit_sessions_close_private(gedp);
     ged_dbi_state_destroy_private(gedp);
 
+    _ged_cmd_completion_cache_clear(gedp);
+
     if (gedp->dbip) {
 	ged_event_database_set_private(gedp, NULL);
 	db_close(gedp->dbip);
@@ -624,6 +628,7 @@ ged_free(struct ged *gedp)
 
     ged_edit_sessions_close_private(gedp);
     ged_dbi_state_destroy_private(gedp);
+    _ged_cmd_completion_cache_clear(gedp);
 
     bu_vls_free(&gedp->go_name);
 
@@ -934,7 +939,7 @@ ged_clbk_set(struct ged *gedp, const char *cmd_str, int mode, bu_clbk_t f, void 
 
     /* Resolve command by name via registry */
     ged_ensure_initialized();
-    bu_plugin_cmd_impl cmd = bu_plugin_cmd_get(cmd_str);
+    ged_func_ptr cmd = _ged_cmd_func(cmd_str);
     if (!cmd)
 	return (BRLCAD_ERROR | GED_UNKNOWN);
 
@@ -963,7 +968,7 @@ ged_clbk_get(bu_clbk_t *f, void **d, struct ged *gedp, const char *cmd_str, int 
 
     /* Resolve command by name via registry */
     ged_ensure_initialized();
-    bu_plugin_cmd_impl cmd = bu_plugin_cmd_get(cmd_str);
+    ged_func_ptr cmd = _ged_cmd_func(cmd_str);
     if (!cmd)
         return (BRLCAD_ERROR | GED_UNKNOWN);
 

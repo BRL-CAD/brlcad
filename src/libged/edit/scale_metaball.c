@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 
@@ -59,7 +59,7 @@ _ged_scale_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const c
 		mbp_i = 0;
 	    else {
 		const char *index = attribute + 1;
-		if (bu_opt_int(NULL, 1, &index, &mbp_i) != 1)
+		if (!bu_arg_integer_from_str(NULL, &mbp_i, index, 0))
 		    return BRLCAD_ERROR;
 	    }
 
@@ -76,7 +76,7 @@ _ged_scale_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const c
 		mbp_i = 0;
 	    else {
 		const char *index = attribute + 1;
-		if (bu_opt_int(NULL, 1, &index, &mbp_i) != 1)
+		if (!bu_arg_integer_from_str(NULL, &mbp_i, index, 0))
 		    return BRLCAD_ERROR;
 	    }
 

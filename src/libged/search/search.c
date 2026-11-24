@@ -36,7 +36,6 @@
 #endif
 
 #include "bu/cmd.h"
-#include "bu/opt.h"
 #include "bu/path.h"
 #include "bu/sort.h"
 #include "bu/defines.h"
@@ -329,36 +328,73 @@ search_print_objs_to_vls(const struct bu_ptbl *objs, struct bu_vls *out)
 static void
 _handle_verbosity(int *search_flags, int *fp_flags, size_t count)
 {
-    /* Preserve the established distinction between a grouped verbosity
-     * level and a separate -v that increases the current level. */
+    /* A grouped option sets a minimum verbosity level.  A separate -v
+     * advances the current level. */
     if (count > 1) {
+	*search_flags |= DB_SEARCH_PRINT_TOTAL;
+	*fp_flags |= DB_FP_PRINT_BOOL;
 	if (count > 2)
 	    *fp_flags |= DB_FP_PRINT_TYPE;
-	*fp_flags |= DB_FP_PRINT_BOOL;
-	*search_flags |= DB_SEARCH_PRINT_TOTAL;
 	return;
     }
 
+    /* Handle separate -v instances and compact -vv... forms identically. */
     if (!(*search_flags & DB_SEARCH_PRINT_TOTAL)) {
 	*search_flags |= DB_SEARCH_PRINT_TOTAL;
-	return;
+	return;					// first time, enable totals
     }
 
     if (!(*fp_flags & DB_FP_PRINT_BOOL)) {
 	*fp_flags |= DB_FP_PRINT_BOOL;
-	return;
+	return;					// second time, enable bools
     }
 
-    *fp_flags |= DB_FP_PRINT_TYPE;
+    *fp_flags |= DB_FP_PRINT_TYPE;		// max verbosity, enable types (everything else is already on)
+}
+
+/* Parse each leading token separately to retain its grouped verbosity level. */
+static int
+_ged_search_parse_options(struct ged *gedp, int argc, const char *argv[],
+	int *flags, int *want_help, int *print_verbose_info)
+{
+    int index = 1;
+    while (index < argc) {
+	const char *arg = argv[index];
+	if (BU_STR_EQUAL(arg, "--")) {
+	    index++;
+	    break;
+	}
+
+	struct ged_search_top_args args = {0};
+	int parsed = ged_search_top_option_parse(arg, &args);
+	if (parsed <= 0) {
+	    if (parsed == 0 && (!arg || arg[0] != '-' || strlen(arg) != 2))
+		break;
+	    bu_vls_printf(gedp->ged_result_str, "Error: option %s is unknown.\n", arg);
+	    ged_cmd_help_append(gedp->ged_result_str, "search", argv[0]);
+	    return -1;
+	}
+
+	if (args.hidden)
+	    *flags |= DB_SEARCH_HIDDEN;
+	if (args.quiet)
+	    *flags |= DB_SEARCH_QUIET;
+	if (args.help)
+	    *want_help = 1;
+	if (args.verbosity)
+	    _handle_verbosity(flags, print_verbose_info, (size_t)args.verbosity);
+	index++;
+    }
+
+    return index - 1;
 }
 
 
 int
 ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 {
+    const char *command = (argc > 0 && argv_orig) ? argv_orig[0] : "search";
     size_t i;
-    int aflag = 0; /* flag controlling whether hidden objects are examined */
-    int wflag = 0; /* flag controlling whether to fail quietly or not */
     int flags = 0;
     int want_help = 0;
     int plan_argv = 1;
@@ -372,7 +408,8 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     struct bu_vls bname = BU_VLS_INIT_ZERO;
     struct bu_vls search_string = BU_VLS_INIT_ZERO;
     struct bu_ptbl *search_set;
-    const char *usage = "[-a] [-v[v..]] [-Q] [-h] [path] [expressions...]\n";
+    /* COPY argv_orig to argv; */
+    char **argv = NULL;
 
 
     bu_clbk_t clbk = NULL;
@@ -384,50 +421,27 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 	return BRLCAD_ERROR;
     }
 
-    struct bu_opt_desc options[6];
-    BU_OPT(options[0], "a", NULL, "", NULL, &aflag, "Include hidden objects");
-    BU_OPT(options[1], "Q", NULL, "", NULL, &wflag, "Fail quietly");
-    BU_OPT(options[2], "h", NULL, "", NULL, &want_help, "Print help");
-    BU_OPT(options[3], "?", NULL, "", NULL, &want_help, "Print help");
-    BU_OPT(options[4], "v", NULL, "", NULL, NULL, "Increase verbosity");
-    BU_OPT_NULL(options[5]);
-
-    char **argv = bu_argv_dup(argc, argv_orig);
-    int remaining = bu_opt_parse_leading(NULL, argc - 1, (const char **)(argv + 1), options);
-    if (remaining < 0) {
-	bu_argv_free(argc, argv);
-	bu_vls_sprintf(gedp->ged_result_str, "Error: option %s is unknown.\nUsage: %s", argv_orig[0], usage);
+    int consumed = _ged_search_parse_options(gedp, argc, argv_orig, &flags,
+	&want_help, &print_verbose_info);
+    if (consumed < 0)
 	return BRLCAD_ERROR;
-    }
-
-    /* Consumed options are at the end of argv.  Interpret verbosity per
-     * token before freeing them so -vv -vv keeps its existing meaning. */
-    for (i = (size_t)remaining + 1; i < (size_t)argc; i++) {
-	size_t verbosity = 0;
-	for (const char *cp = argv[i]; *cp; cp++) {
-	    if (*cp == 'v')
-		verbosity++;
-	}
-	if (verbosity)
-	    _handle_verbosity(&flags, &print_verbose_info, verbosity);
-	bu_free(argv[i], "search option");
-    }
-    argc = remaining + 1;
-    argv[argc] = NULL;
-    if (aflag)
-	flags |= DB_SEARCH_HIDDEN;
-    if (wflag)
-	flags |= DB_SEARCH_QUIET;
+    int aflag = (flags & DB_SEARCH_HIDDEN) != 0;
+    int wflag = (flags & DB_SEARCH_QUIET) != 0;
+    argc -= consumed;
+    argv_orig += consumed;
 
     if (want_help || argc == 1) {
 	if (!wflag) {
-	    bu_vls_sprintf(gedp->ged_result_str, "Usage: %s", usage);
+	    bu_vls_trunc(gedp->ged_result_str, 0);
+	    ged_cmd_help_append(gedp->ged_result_str, "search", command);
 	} else {
 	    bu_vls_trunc(gedp->ged_result_str, 0);
 	}
-	bu_argv_free(argc, argv);
 	return BRLCAD_OK;
     }
+
+    /* COPY argv_orig to argv; */
+    argv = bu_argv_dup(argc, argv_orig);
 
     /* initialize search set */
     BU_ALLOC(search_set, struct bu_ptbl);
@@ -768,11 +782,13 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 
 #include "../include/plugin.h"
 
-#define GED_SEARCH_COMMANDS(X, XID) \
-    X(search, ged_search_core, GED_CMD_DEFAULT) \
+extern GED_EXPORT const struct ged_cmd_grammar ged_search_grammar;
 
-GED_DECLARE_COMMAND_SET(GED_SEARCH_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_search", 1, GED_SEARCH_COMMANDS)
+#define GED_SEARCH_COMMANDS(X, XID) \
+    X(search, ged_search_core, GED_CMD_DEFAULT, &ged_search_grammar) \
+
+GED_DECLARE_COMMAND_SET_WITH_GRAMMAR(GED_SEARCH_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_GRAMMAR("libged_search", 1, GED_SEARCH_COMMANDS)
 
 /*
  * Local Variables:

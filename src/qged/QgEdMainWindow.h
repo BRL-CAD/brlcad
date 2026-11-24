@@ -118,6 +118,7 @@ class QgEdMainWindow : public QMainWindow
 	QAction *cad_save_settings;
 	//QAction *cad_save_image;
 	QAction *cad_exit;
+	bu_cmd_completion_mode_t completion_mode = BU_CMD_COMPLETE_FILTER;
 
 	// Organizational widget
 	QWidget *cw = NULL;
@@ -162,4 +163,3 @@ class QgEdMainWindow : public QMainWindow
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

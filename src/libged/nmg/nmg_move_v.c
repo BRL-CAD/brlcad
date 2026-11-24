@@ -267,7 +267,6 @@ ged_nmg_move_v_core(struct ged* gedp, int argc, const char* argv[])
     point_t vtold;
     point_t vtnew;
 
-    static const char *usage = "move V x_old y_old z_old x_new y_new z_new";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -279,7 +278,7 @@ ged_nmg_move_v_core(struct ged* gedp, int argc, const char* argv[])
 
     /* must be wanting help */
     if (argc != 9 ) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return GED_HELP;
     }
 

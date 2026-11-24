@@ -32,9 +32,12 @@
 
 #include <map>
 #include <set>
+#include <sstream>
+#include <string>
 #include <vector>
 
 #include "vmath.h"
+#include "bu/arg.h"
 #include "bu/vls.h"
 #include "bn/tol.h"
 #include "bg/defines.h"
@@ -71,9 +74,132 @@ tess_default_methods()
     return methods;
 }
 
+inline const struct bu_arg_parameter_group *
+tess_method_parameter_groups()
+{
+    static const struct bu_arg_parameter nmg_parameters[] = {
+	BU_ARG_PARAMETER("max_time", "seconds",
+	    "Maximum overall object-conversion time", BU_ARG_VALUE_INTEGER,
+	    "30", BU_ARG_INTEGER_RANGE_INIT(1, 0, 0, 0)),
+	BU_ARG_PARAMETER("plate_max_time", "seconds",
+	    "Maximum plate-mode-to-volume conversion time", BU_ARG_VALUE_INTEGER,
+	    "1200", BU_ARG_INTEGER_RANGE_INIT(1, 0, 0, 0)),
+	BU_ARG_PARAMETER("nmg_debug", "flags", "NMG hexadecimal debug flags",
+	    BU_ARG_VALUE_HEX_LONG, "0", BU_ARG_INTEGER_RANGE_INIT(1, 0, 0, 0)),
+	BU_ARG_PARAMETER("tol_abs", "length", "Absolute distance tolerance",
+	    BU_ARG_VALUE_NUMBER, "0", BU_ARG_NUMBER_RANGE_INIT(1, 0.0, 0, 0.0)),
+	BU_ARG_PARAMETER("tol_norm", "value", "Normal tolerance",
+	    BU_ARG_VALUE_NUMBER, "0", BU_ARG_NUMBER_RANGE_INIT(1, 0.0, 0, 0.0)),
+	BU_ARG_PARAMETER("tol_rel", "fraction", "Relative distance tolerance",
+	    BU_ARG_VALUE_NUMBER, "0.01", BU_ARG_NUMBER_RANGE_INIT(1, 0.0, 0, 0.0)),
+	BU_ARG_PARAMETER_NULL
+    };
+    static const struct bu_arg_parameter mdc_parameters[] = {
+	BU_ARG_PARAMETER("feature_size", "length",
+	    "Maximum finest-cell edge length; zero selects an automatic size",
+	    BU_ARG_VALUE_NUMBER, "0",
+	    BU_ARG_NUMBER_RANGE_INIT(1, 0.0, 0, 0.0)),
+	BU_ARG_PARAMETER("max_rays", "count",
+	    "Ray-budget ceiling; zero selects automatic resource limits",
+	    BU_ARG_VALUE_LONG, "0", BU_ARG_INTEGER_RANGE_INIT(1, 0, 0, 0)),
+	BU_ARG_PARAMETER("minimum_free_mem", "bytes",
+	    "Stop before free memory falls below this amount", BU_ARG_VALUE_LONG,
+	    "system default", BU_ARG_INTEGER_RANGE_INIT(1, 0, 0, 0)),
+	BU_ARG_PARAMETER("min_depth", "depth", "Minimum power-of-two grid depth",
+	    BU_ARG_VALUE_INTEGER, "library default",
+	    BU_ARG_INTEGER_RANGE_INIT(1, 1, 1, ANALYZE_MDC_MAX_DEPTH)),
+	BU_ARG_PARAMETER("max_depth", "depth", "Maximum power-of-two grid depth",
+	    BU_ARG_VALUE_INTEGER, "library default",
+	    BU_ARG_INTEGER_RANGE_INIT(1, 1, 1, ANALYZE_MDC_MAX_DEPTH)),
+	BU_ARG_PARAMETER("max_time", "seconds",
+	    "Maximum run time; zero is unlimited", BU_ARG_VALUE_INTEGER,
+	    "library default", BU_ARG_INTEGER_RANGE_INIT(1, 0, 0, 0)),
+	BU_ARG_PARAMETER("verbosity", "level",
+	    "Emit diagnostics when non-zero", BU_ARG_VALUE_INTEGER, "0",
+	    BU_ARG_INTEGER_RANGE_INIT(1, 0, 0, 0)),
+	BU_ARG_PARAMETER_NULL
+    };
+    static const struct bu_arg_parameter spsr_parameters[] = {
+	BU_ARG_PARAMETER("feature_scale", "fraction",
+	    "Fraction of average thickness used as the target feature size",
+	    BU_ARG_VALUE_NUMBER, "0.15",
+	    BU_ARG_NUMBER_RANGE_INIT(1, 0.0, 0, 0.0)),
+	BU_ARG_PARAMETER("feature_size", "length",
+	    "Explicit sampling feature length; overrides feature_scale",
+	    BU_ARG_VALUE_NUMBER, "0",
+	    BU_ARG_NUMBER_RANGE_INIT(1, 0.0, 0, 0.0)),
+	BU_ARG_PARAMETER("d_feature_size", "length",
+	    "Initial decimation feature length", BU_ARG_VALUE_NUMBER,
+	    "1.5 times feature_size", BU_ARG_NUMBER_RANGE_INIT(1, 0.0, 0, 0.0)),
+	BU_ARG_PARAMETER("max_sample_time", "seconds",
+	    "Maximum point-sampling time", BU_ARG_VALUE_INTEGER, "30",
+	    BU_ARG_INTEGER_RANGE_INIT(1, 0, 0, 0)),
+	BU_ARG_PARAMETER("max_pnts", "count", "Maximum sampled point count",
+	    BU_ARG_VALUE_INTEGER, "200000",
+	    BU_ARG_INTEGER_RANGE_INIT(1, 0, 0, 0)),
+	BU_ARG_PARAMETER("depth", "depth", "Maximum reconstruction depth",
+	    BU_ARG_VALUE_INTEGER, "8", BU_ARG_INTEGER_RANGE_INIT(1, 1, 0, 0)),
+	BU_ARG_PARAMETER("interpolate", "weight",
+	    "Interpolation weight; lower values produce smoother meshes",
+	    BU_ARG_VALUE_NUMBER, "2.0",
+	    BU_ARG_NUMBER_RANGE_INIT(1, 0.0, 0, 0.0)),
+	BU_ARG_PARAMETER("max_time", "seconds",
+	    "Maximum overall object-conversion time", BU_ARG_VALUE_INTEGER,
+	    "600", BU_ARG_INTEGER_RANGE_INIT(1, 0, 0, 0)),
+	BU_ARG_PARAMETER("refinement_passes", "count",
+	    "Maximum adaptive source-refinement passes", BU_ARG_VALUE_INTEGER,
+	    "library default", BU_ARG_INTEGER_RANGE_INIT(1, 0, 0, 0)),
+	BU_ARG_PARAMETER("samples_per_node", "count",
+	    "Samples assigned to a cell before refinement", BU_ARG_VALUE_NUMBER,
+	    "1.5", BU_ARG_NUMBER_RANGE_INIT(1, 0.0, 0, 0.0)),
+	BU_ARG_PARAMETER_NULL
+    };
+    static const struct bu_arg_parameter_group groups[] = {
+	BU_ARG_PARAMETER_GROUP("method-opts", "NMG",
+	    "N-Manifold Geometry tessellation", nmg_parameters),
+	BU_ARG_PARAMETER_GROUP("method-opts", "MDC",
+	    "Ray-driven Manifold Dual Contouring", mdc_parameters),
+	BU_ARG_PARAMETER_GROUP("method-opts", "SPSR",
+	    "Screened Poisson Surface Reconstruction", spsr_parameters),
+	BU_ARG_PARAMETER_GROUP_NULL
+    };
 
-int _tess_active_methods(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
-int _tess_method_opts(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+    return groups;
+}
+
+inline std::string
+tess_method_parameter_help(const char *name, size_t limit, bool heading)
+{
+    const struct bu_arg_parameter_group *groups = tess_method_parameter_groups();
+
+    for (size_t gi = 0; groups[gi].option; gi++) {
+	if (!BU_STR_EQUAL(groups[gi].name, name))
+	    continue;
+	std::string help;
+	if (heading) {
+	    help.append(groups[gi].name);
+	    help.append(" method settings:\n");
+	}
+	for (size_t pi = 0; groups[gi].parameters[pi].name && pi < limit; pi++) {
+	    const struct bu_arg_parameter &parameter = groups[gi].parameters[pi];
+	    help.append(parameter.name);
+	    help.append(" - ");
+	    help.append(parameter.help ? parameter.help : "");
+	    if (!BU_STR_EMPTY(parameter.default_value)) {
+		help.append(" (default: ");
+		help.append(parameter.default_value);
+		help.append(")");
+	    }
+	    help.append("\n");
+	}
+	return help;
+    }
+    return std::string();
+}
+
+
+int tess_active_methods_from_str(struct bu_vls *msg, const char *arg, void *storage);
+int tess_method_opts_from_str(struct bu_vls *msg, const char *arg, void *storage);
 
 class method_opts {
     public:
@@ -153,7 +279,7 @@ class spsr_opts : public sample_opts {
 
 #if defined(TESS_OPTS_IMPLEMENTATION)
 
-#include "bu/opt.h"
+#include "bu/arg.h"
 
 method_options_t::method_options_t()
 {
@@ -223,86 +349,108 @@ method_options_t::method_optstr(std::string &method, struct db_i *dbip)
 }
 
 int
-_tess_active_methods(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+tess_active_methods_from_str(struct bu_vls *msg, const char *arg, void *storage)
 {
-    method_options_t *m = (method_options_t *)set_var;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "_tess_active_methods");
+    std::vector<std::string> methods;
+    std::stringstream astream(arg ? arg : "");
+    std::string method;
 
-    std::string av0 = std::string(argv[0]);
-    std::stringstream astream(av0);
-    std::string s;
-    while (std::getline(astream, s, ',')) {
-	m->methods.push_back(s);
+    if (!arg || !arg[0]) {
+	if (msg)
+	    bu_vls_strcat(msg, "--methods requires one or more comma-separated methods\n");
+	return -1;
     }
-    return 1;
+    while (std::getline(astream, method, ',')) {
+	if (method.empty()) {
+	    if (msg)
+		bu_vls_strcat(msg, "--methods does not allow an empty method name\n");
+	    return -1;
+	}
+	methods.push_back(method);
+    }
+    if (storage) {
+	method_options_t *m = *((method_options_t **)storage);
+	if (!m)
+	    return -1;
+	m->methods.insert(m->methods.end(), methods.begin(), methods.end());
+    }
+    return 0;
 }
 
 int
-_tess_method_opts(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+tess_method_opts_from_str(struct bu_vls *msg, const char *arg, void *storage)
 {
-    method_options_t *m = (method_options_t *)set_var;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "_tess_method_opts");
+    std::stringstream astream(arg ? arg : "");
+    std::vector<std::string> words;
+    std::vector<std::pair<std::string, std::string>> settings;
+    std::string word;
 
-    std::string av0 = std::string(argv[0]);
-    std::stringstream astream(av0);
-    std::string s;
-    std::vector<std::string> opts;
-    while (std::getline(astream, s, ' ')) {
-	if (s.length())
-	    opts.push_back(s);
+    while (astream >> word)
+	words.push_back(word);
+    if (words.size() < 2) {
+	if (msg)
+	    bu_vls_strcat(msg, "--method-opts requires METHOD followed by one or more key=value settings\n");
+	return -1;
     }
-
-    for (size_t i = 1; i < opts.size(); i++) {
-	std::string wopt = opts[i];
-	std::stringstream ostream(wopt);
-	std::string optstr;
-	std::vector<std::string> key_val;
-	while (std::getline(ostream, optstr, '=')) {
-	    key_val.push_back(optstr);
+    for (size_t i = 1; i < words.size(); i++) {
+	const std::string &setting = words[i];
+	std::string::size_type equal = setting.find('=');
+	if (equal == std::string::npos || equal == 0 || setting.find('=', equal + 1) != std::string::npos) {
+	    if (msg)
+		bu_vls_printf(msg, "invalid --method-opts setting: %s\n", setting.c_str());
+	    return -1;
 	}
-	if (key_val.size() != 2) {
-	    bu_log("method options error!\n");
-	    continue;
-	}
-	m->options_map[opts[0]][key_val[0]] = key_val[1];
-	if (key_val[0] == std::string("max_time")) {
-	    int max_time_val = 0;
-	    const char *cstr[2];
-	    cstr[0] = key_val[1].c_str();
-	    cstr[1] = NULL;
-	    if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_time_val) < 0)
-		continue;
-	    m->max_time[opts[0]] = max_time_val;
-	}
-	if (key_val[0] == std::string("plate_max_time")) {
-	    int max_time_val = 0;
-	    const char *cstr[2];
-	    cstr[0] = key_val[1].c_str();
-	    cstr[1] = NULL;
-	    if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_time_val) < 0)
-		continue;
-	    m->plate_max_time = max_time_val;
-	}
-
+	settings.push_back(std::make_pair(setting.substr(0, equal), setting.substr(equal + 1)));
     }
-    return 1;
+    nmg_opts nmg;
+    mdc_opts mdc;
+    spsr_opts spsr;
+    method_opts *validator = NULL;
+    if (words[0] == "NMG")
+	validator = &nmg;
+    else if (words[0] == "MDC")
+	validator = &mdc;
+    else if (words[0] == "SPSR")
+	validator = &spsr;
+    if (!validator) {
+	if (msg)
+	    bu_vls_printf(msg, "unknown facetize method: %s\n", words[0].c_str());
+	return -1;
+    }
+    for (const auto &setting : settings) {
+	if (validator->set_var(setting.first, setting.second) != BRLCAD_OK) {
+	    if (msg)
+		bu_vls_printf(msg, "invalid %s parameter: %s=%s\n",
+		    words[0].c_str(), setting.first.c_str(),
+		    setting.second.c_str());
+	    return -1;
+	}
+    }
+    if (storage) {
+	method_options_t *m = *((method_options_t **)storage);
+	if (!m)
+	    return -1;
+	for (const auto &setting : settings) {
+	    m->options_map[words[0]][setting.first] = setting.second;
+	    if (setting.first == "max_time") {
+		int max_time = 0;
+		if (bu_arg_integer_from_str(NULL, &max_time, setting.second.c_str(), 0))
+		    m->max_time[words[0]] = max_time;
+	    }
+	    if (setting.first == "plate_max_time") {
+		int max_time = 0;
+		if (bu_arg_integer_from_str(NULL, &max_time, setting.second.c_str(), 0))
+		    m->plate_max_time = max_time;
+	    }
+	}
+    }
+    return 0;
 }
 
 std::string
 sample_opts::print_options_help()
 {
-    std::string h;
-    h.append("feature_scale    -  Percentage of the average thickness observed by\n");
-    h.append("                    the raytracer to use for a targeted feature size\n");
-    h.append("                    with sampling based methods.\n");
-    h.append("feature_size     -  Explicit feature length to try for sampling\n");
-    h.append("                    based methods - overrides feature_scale.\n");
-    h.append("d_feature_size   -  Initial feature length to try for decimation\n");
-    h.append("                    in sampling based methods.  By default, this\n");
-    h.append("                    value is set to 1.5x the feature size.\n");
-    h.append("max_sample_time  -  Maximum time to allow point sampling to continue\n");
-    h.append("max_pnts         -  Maximum number of points to sample\n");
-    return h;
+    return tess_method_parameter_help("SPSR", 5, false);
 }
 
 int
@@ -311,12 +459,11 @@ sample_opts::set_var(const std::string &key, const std::string &val)
     if (key.empty())
 	return BRLCAD_ERROR;
 
-    const char *value[2] = {val.c_str(), NULL};
     if (key == "feature_scale" || key == "feature_size" ||
 	key == "d_feature_size") {
 	fastf_t parsed = 0.0;
 	if ((!val.empty() &&
-		bu_opt_fastf_t(NULL, 1, value, &parsed) < 0) ||
+		!bu_arg_number_from_str(NULL, &parsed, val.c_str())) ||
 		parsed < 0.0)
 	    return BRLCAD_ERROR;
 	if (key == "feature_scale")
@@ -330,7 +477,8 @@ sample_opts::set_var(const std::string &key, const std::string &val)
 
     if (key == "max_sample_time" || key == "max_pnts") {
 	int parsed = 0;
-	if ((!val.empty() && bu_opt_int(NULL, 1, value, &parsed) < 0) ||
+	if ((!val.empty() &&
+		!bu_arg_integer_from_str(NULL, &parsed, val.c_str(), 0)) ||
 		parsed < 0)
 	    return BRLCAD_ERROR;
 	if (key == "max_sample_time")
@@ -383,18 +531,7 @@ mdc_opts::about_method()
 std::string
 mdc_opts::print_options_help()
 {
-    std::string help;
-    help.append("Manifold Dual Contouring (MDC) options:\n");
-    help.append("feature_size      -  Maximum finest-cell edge length.  Zero selects\n");
-    help.append("                     an automatic size from the object bounds.\n");
-    help.append("max_rays          -  Optional ray-budget ceiling.  Zero uses automatic\n");
-    help.append("                     geometry and system resource limits.\n");
-    help.append("minimum_free_mem  -  Stop before free memory falls below this many bytes.\n");
-    help.append("min_depth         -  Minimum power-of-two grid depth.\n");
-    help.append("max_depth         -  Maximum power-of-two grid depth.\n");
-    help.append("max_time          -  Maximum run time in seconds.  Zero is unlimited.\n");
-    help.append("verbosity         -  Emit diagnostics when non-zero.\n");
-    return help;
+    return tess_method_parameter_help("MDC", SIZE_MAX, true);
 }
 
 int
@@ -403,11 +540,10 @@ mdc_opts::set_var(const std::string &key, const std::string &val)
     if (key.empty())
 	return BRLCAD_ERROR;
 
-    const char *value[2] = {val.c_str(), NULL};
     if (key == "feature_size") {
 	fastf_t parsed = 0.0;
 	if ((!val.empty() &&
-		bu_opt_fastf_t(NULL, 1, value, &parsed) < 0) ||
+		!bu_arg_number_from_str(NULL, &parsed, val.c_str())) ||
 		parsed < 0.0)
 	    return BRLCAD_ERROR;
 	feature_size = parsed;
@@ -416,7 +552,8 @@ mdc_opts::set_var(const std::string &key, const std::string &val)
 
     if (key == "max_rays" || key == "minimum_free_mem") {
 	long parsed = 0;
-	if ((!val.empty() && bu_opt_long(NULL, 1, value, &parsed) < 0) ||
+	if ((!val.empty() &&
+		!bu_arg_long_from_str(NULL, &parsed, val.c_str(), 0)) ||
 		parsed < 0)
 	    return BRLCAD_ERROR;
 	if (key == "max_rays")
@@ -427,7 +564,7 @@ mdc_opts::set_var(const std::string &key, const std::string &val)
     }
 
     int parsed = 0;
-    if (!val.empty() && bu_opt_int(NULL, 1, value, &parsed) < 0)
+    if (!val.empty() && !bu_arg_integer_from_str(NULL, &parsed, val.c_str(), 0))
 	return BRLCAD_ERROR;
     if (key == "min_depth") {
 	if (parsed < 1 || parsed > ANALYZE_MDC_MAX_DEPTH)
@@ -483,16 +620,7 @@ nmg_opts::about_method()
 std::string
 nmg_opts::print_options_help()
 {
-    std::string h;
-    h.append("NMG method settings:\n");
-    h.append("max_time         -  Maximum overall run time for object conversion.  Default is 30.\n");
-    h.append("plate_max_time   -  Maximum run time for plate mode to vol BoT conversion.  Default is 1200.\n");
-    h.append("nmg_debug        -  NMG debugging flag.  Default is 0x00000000.\n");
-    h.append("                    See 'debug -l NMG' in MGED for available values.\n");
-    h.append("tol_abs          -  absolute distance tolerance.  Default is 0\n");
-    h.append("tol_norm         -  normal tolerance.  Default is 0\n");
-    h.append("tol_rel          -  relative distance tolerance.  Default is 0.01\n");
-    return h;
+    return tess_method_parameter_help("NMG", SIZE_MAX, true);
 }
 
 int
@@ -501,33 +629,38 @@ nmg_opts::set_var(const std::string &key, const std::string &val)
     if (key.length() == 0)
 	return BRLCAD_ERROR;
 
-    const char *cstr[2];
-    cstr[0] = val.c_str();
-    cstr[1] = NULL;
-
     if (key == std::string("tol_rel")) {
 	if (!val.length()) {
 	    ttol.rel = 0.0;
 	    return BRLCAD_OK;
 	}
-	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&ttol.rel) < 0)
+	if (!bu_arg_number_from_str(NULL, &ttol.rel, val.c_str()))
 	    return BRLCAD_ERROR;
+	if (ttol.rel < 0.0)
+	    return BRLCAD_ERROR;
+	return BRLCAD_OK;
     }
     if (key == std::string("tol_abs")) {
 	if (!val.length()) {
 	    ttol.abs = 0.0;
 	    return BRLCAD_OK;
 	}
-	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&ttol.abs) < 0)
+	if (!bu_arg_number_from_str(NULL, &ttol.abs, val.c_str()))
 	    return BRLCAD_ERROR;
+	if (ttol.abs < 0.0)
+	    return BRLCAD_ERROR;
+	return BRLCAD_OK;
     }
     if (key == std::string("tol_norm")) {
 	if (!val.length()) {
 	    ttol.norm = 0.0;
 	    return BRLCAD_OK;
 	}
-	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&ttol.norm) < 0)
+	if (!bu_arg_number_from_str(NULL, &ttol.norm, val.c_str()))
 	    return BRLCAD_ERROR;
+	if (ttol.norm < 0.0)
+	    return BRLCAD_ERROR;
+	return BRLCAD_OK;
     }
     if (key == std::string("nmg_debug")) {
 	if (!val.length()) {
@@ -535,9 +668,12 @@ nmg_opts::set_var(const std::string &key, const std::string &val)
 	    return BRLCAD_OK;
 	}
 	long ndebug = 0;
-	if (bu_opt_long(NULL, 1, (const char **)cstr, (void *)&ndebug) < 0)
+	if (!bu_arg_long_from_str(NULL, &ndebug, val.c_str(), 0))
+	    return BRLCAD_ERROR;
+	if (ndebug < 0)
 	    return BRLCAD_ERROR;
 	nmg_debug = ndebug;
+	return BRLCAD_OK;
     }
 
     if (key == std::string("max_time")) {
@@ -545,8 +681,11 @@ nmg_opts::set_var(const std::string &key, const std::string &val)
 	    max_time = 0;
 	    return BRLCAD_OK;
 	}
-	if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_time) < 0)
+	if (!bu_arg_integer_from_str(NULL, &max_time, val.c_str(), 0))
 	    return BRLCAD_ERROR;
+	if (max_time < 0)
+	    return BRLCAD_ERROR;
+	return BRLCAD_OK;
     }
 
     if (key == std::string("plate_max_time")) {
@@ -554,11 +693,14 @@ nmg_opts::set_var(const std::string &key, const std::string &val)
 	    plate_max_time = 0;
 	    return BRLCAD_OK;
 	}
-	if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_time) < 0)
+	if (!bu_arg_integer_from_str(NULL, &plate_max_time, val.c_str(), 0))
 	    return BRLCAD_ERROR;
+	if (plate_max_time < 0)
+	    return BRLCAD_ERROR;
+	return BRLCAD_OK;
     }
 
-    return BRLCAD_OK;
+    return BRLCAD_ERROR;
 }
 
 void
@@ -585,18 +727,7 @@ spsr_opts::about_method()
 std::string
 spsr_opts::print_options_help()
 {
-    std::string h = std::string("Screened Poisson Surface Reconstruction (SPSR) Options:\n") + sample_opts::print_options_help();
-    h.append("depth            -  Maximum reconstruction depth. (Default is 8)\n");
-    h.append("interpolate      -  Lower values (down to 0.0) bias towards a smoother\n");
-    h.append("                    mesh, higher values bias towards interpolation\n");
-    h.append("                    accuracy.  (Default is 2.0)\n");
-    h.append("max_time         -  Maximum overall run time for object conversion\n");
-    h.append("refinement_passes-  Maximum adaptive source-refinement passes. (Default is ");
-    h.append(std::to_string(BG_3D_SPSR_DEFAULT_REFINEMENT_PASSES));
-    h.append(")\n");
-    h.append("samples_per_node -  How many samples should go into a cell before it is\n");
-    h.append("                    refined. (Default is 1.5)\n");
-    return h;
+    return tess_method_parameter_help("SPSR", SIZE_MAX, true);
 }
 
 int
@@ -605,10 +736,10 @@ spsr_opts::set_var(const std::string &key, const std::string &val)
     if (key.empty())
 	return BRLCAD_ERROR;
 
-    const char *value[2] = {val.c_str(), NULL};
     if (key == "depth") {
 	int parsed = BG_3D_SPSR_DEFAULT_DEPTH;
-	if ((!val.empty() && bu_opt_int(NULL, 1, value, &parsed) < 0) ||
+	if ((!val.empty() &&
+		!bu_arg_integer_from_str(NULL, &parsed, val.c_str(), 0)) ||
 		parsed < 1)
 	    return BRLCAD_ERROR;
 	s_opts.depth = parsed;
@@ -617,7 +748,7 @@ spsr_opts::set_var(const std::string &key, const std::string &val)
     if (key == "interpolate") {
 	fastf_t parsed = BG_3D_SPSR_DEFAULT_POINT_WEIGHT;
 	if ((!val.empty() &&
-		bu_opt_fastf_t(NULL, 1, value, &parsed) < 0) ||
+		!bu_arg_number_from_str(NULL, &parsed, val.c_str())) ||
 		parsed < 0.0)
 	    return BRLCAD_ERROR;
 	s_opts.point_weight = parsed;
@@ -626,7 +757,7 @@ spsr_opts::set_var(const std::string &key, const std::string &val)
     if (key == "samples_per_node") {
 	fastf_t parsed = BG_3D_SPSR_DEFAULT_SAMPLES_PER_NODE;
 	if ((!val.empty() &&
-		bu_opt_fastf_t(NULL, 1, value, &parsed) < 0) ||
+		!bu_arg_number_from_str(NULL, &parsed, val.c_str())) ||
 		parsed <= 0.0)
 	    return BRLCAD_ERROR;
 	s_opts.samples_per_node = parsed;
@@ -634,7 +765,8 @@ spsr_opts::set_var(const std::string &key, const std::string &val)
     }
     if (key == "refinement_passes") {
 	int parsed = BG_3D_SPSR_DEFAULT_REFINEMENT_PASSES;
-	if ((!val.empty() && bu_opt_int(NULL, 1, value, &parsed) < 0) ||
+	if ((!val.empty() &&
+		!bu_arg_integer_from_str(NULL, &parsed, val.c_str(), 0)) ||
 		parsed < 0)
 	    return BRLCAD_ERROR;
 	refinement_passes = parsed;
@@ -642,13 +774,15 @@ spsr_opts::set_var(const std::string &key, const std::string &val)
     }
     if (key == "max_time") {
 	int parsed = 600;
-	if ((!val.empty() && bu_opt_int(NULL, 1, value, &parsed) < 0) ||
+	if ((!val.empty() &&
+		!bu_arg_integer_from_str(NULL, &parsed, val.c_str(), 0)) ||
 		parsed < 0)
 	    return BRLCAD_ERROR;
 	max_time = parsed;
 	return BRLCAD_OK;
     }
 
+    // If it's not a SPSR setting directly, it may be for sampling
     return sample_opts::set_var(key, val);
 }
 

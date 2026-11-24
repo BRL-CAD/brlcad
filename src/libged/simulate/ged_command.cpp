@@ -26,6 +26,66 @@
 
 #include "common.h"
 
+#include "bu/arg.h"
+
+
+struct simulate_args {
+    const char *debug_mode;
+    int steps;
+    const char *plot_prefix;
+    long resume;
+    const char *output_file;
+    int width;
+    int height;
+    int fps;
+    const char *view_quat;
+    const char *view_ae;
+    const char *view_eye;
+    const char *view_center;
+    fastf_t view_size;
+};
+
+static const struct bu_arg_option simulate_options[] = {
+    BU_ARG_VALUE(NULL, "debug", simulate_args, debug_mode, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "mode",
+	"Set debug mode (for example: aabb,contact,ray)"),
+    BU_ARG_VALUE_VALIDATE(NULL, "steps", simulate_args, steps, BU_ARG_VALUE_INTEGER, bu_arg_positive_integer_validate, "count",
+	"Run this many incremental steps"),
+    BU_ARG_VALUE(NULL, "plot", simulate_args, plot_prefix, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "prefix",
+	"Write wireframe plot files with this prefix"),
+    BU_ARG_COUNTING_FLAG(NULL, "resume", simulate_args, resume, BU_ARG_VALUE_LONG,
+	"Resume from previously saved simulation state"),
+    BU_ARG_VALUE("o", "output", simulate_args, output_file, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file",
+	"Write an MJPEG AVI animation"),
+    BU_ARG_VALUE_VALIDATE(NULL, "width", simulate_args, width, BU_ARG_VALUE_INTEGER, bu_arg_positive_integer_validate, "pixels",
+	"Animation frame width"),
+    BU_ARG_VALUE_VALIDATE(NULL, "height", simulate_args, height, BU_ARG_VALUE_INTEGER, bu_arg_positive_integer_validate, "pixels",
+	"Animation frame height"),
+    BU_ARG_VALUE_VALIDATE(NULL, "fps", simulate_args, fps, BU_ARG_VALUE_INTEGER, bu_arg_positive_integer_validate, "count",
+	"Animation frames per second"),
+    BU_ARG_VALUE(NULL, "view-quat", simulate_args, view_quat, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "x,y,z,w",
+	"Fixed camera quaternion"),
+    BU_ARG_VALUE(NULL, "view-ae", simulate_args, view_ae, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "az,el",
+	"Fixed camera azimuth and elevation"),
+    BU_ARG_VALUE(NULL, "view-eye", simulate_args, view_eye, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "x,y,z",
+	"Fixed eye position in model coordinates"),
+    BU_ARG_VALUE(NULL, "view-center", simulate_args, view_center, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "x,y,z",
+	"Override view center in model coordinates"),
+    BU_ARG_VALUE_VALIDATE(NULL, "view-size", simulate_args, view_size, BU_ARG_VALUE_NUMBER, bu_arg_nonnegative_number_validate, "size",
+	"View size in mm"),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand simulate_operands[] = {
+    BU_ARG_OPERAND("path", BU_ARG_VALUE_DB_PATH, 1, 1,
+	"Root object path for the simulation", "ged.db_path"),
+    BU_ARG_OPERAND_VALIDATE("duration", BU_ARG_VALUE_NUMBER, 1, 1,
+	bu_arg_nonnegative_number_validate, "Simulation duration in seconds", NULL),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema simulate_schema = {
+    "simulate", "Run a rigid-body simulation", simulate_options, simulate_operands,
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
 
 #ifndef HAVE_BULLET
 
@@ -54,11 +114,11 @@ ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
 #include "sim_animate.hpp"
 #include "utility.hpp"
 
-#include "bu/opt.h"
 #include "ged.h"
 
 #include <iomanip>
 #include <sstream>
+#include <vector>
 
 
 namespace
@@ -124,101 +184,53 @@ ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
-    /* ---------------------------------------------------------------- */
-    /* Option variables                                                  */
-    /* ---------------------------------------------------------------- */
-
-    const char *debug_mode_string   = "";
-    const char *plot_prefix_string  = "";
-    int         num_steps           = 1;
-    long        resume_flag         = 0;
-
-    /* Animation options */
-    const char *output_file_string  = "";
-    int         anim_width          = 1280;
-    int         anim_height         = 720;
-    int         anim_fps            = 24;
-    const char *view_quat_string    = "";
-    const char *view_ae_string      = "";
-    const char *view_eye_string     = "";
-    const char *view_center_string  = "";
-    fastf_t     view_size_val       = 0.0;
-
-    const bu_opt_desc options_description[] = {
-	/* Simulation options */
-	{NULL, "debug",  "mode",   bu_opt_str,       &debug_mode_string,
-	 "set debug mode (example: --debug=aabb,contact,ray)"},
-	{NULL, "steps",  "N",      bu_opt_int,        &num_steps,
-	 "run N incremental steps, updating geometry and saving state after each"},
-	{NULL, "plot",   "prefix", bu_opt_str,        &plot_prefix_string,
-	 "write .pl wireframe plot file(s) with the given filename prefix"},
-	{NULL, "resume", "",       bu_opt_incr_long,  &resume_flag,
-	 "resume from previously saved simulation state"},
-
-	/* Animation output */
-	{"o", "output",  "FILE",   bu_opt_str,        &output_file_string,
-	 "write animation to FILE (MJPEG AVI; e.g. sim.avi)"},
-	{NULL, "width",  "W",      bu_opt_int,        &anim_width,
-	 "frame width in pixels (default 1280)"},
-	{NULL, "height", "H",      bu_opt_int,        &anim_height,
-	 "frame height in pixels (default 720)"},
-	{NULL, "fps",    "N",      bu_opt_int,        &anim_fps,
-	 "frames per second in output video (default 24)"},
-
-	/* Camera / view specification */
-	{NULL, "view-quat",   "X,Y,Z,W", bu_opt_str, &view_quat_string,
-	 "fixed camera orientation as quaternion x,y,z,w (overrides chase camera)"},
-	{NULL, "view-ae",     "AZ,EL",   bu_opt_str, &view_ae_string,
-	 "fixed camera orientation as azimuth,elevation in degrees"},
-	{NULL, "view-eye",    "X,Y,Z",   bu_opt_str, &view_eye_string,
-	 "fixed eye position in model coordinates (mm)"},
-	{NULL, "view-center", "X,Y,Z",   bu_opt_str, &view_center_string,
-	 "override view center in model coordinates (mm)"},
-	{NULL, "view-size",   "S",       bu_opt_fastf_t, &view_size_val,
-	 "view size (distance) in mm (default 15000)"},
-
-	BU_OPT_DESC_NULL
+    struct simulate_args args = {
+	"", 1, "", 0, "", 1280, 720, 24, "", "", "", "", 0.0
     };
-
-    if (2 != bu_opt_parse(gedp->ged_result_str, argc - 1, &argv[1],
-			  options_description)) {
-	const simulate::AutoPtr<char> usage(bu_opt_describe(
-						const_cast<bu_opt_desc *>(options_description), NULL));
-	bu_vls_printf(gedp->ged_result_str,
-		      "USAGE: %s [OPTIONS] path duration\nOptions:\n%s\n", argv[0], usage.ptr);
+    std::vector<const char *> av(argv + 1, argv + argc);
+    int opt_ret = bu_arg_schema_parse(&simulate_schema, &args,
+	gedp->ged_result_str, (int)av.size(), av.data());
+    if (opt_ret < 0 || av.size() - (size_t)opt_ret != 2) {
+	char *help = bu_arg_schema_help(&simulate_schema, argv[0]);
+	if (help) {
+	    bu_vls_strcat(gedp->ged_result_str, help);
+	    bu_free(help, "simulate native schema help");
+	}
 	return BRLCAD_ERROR;
     }
+    const char *path_arg = av[(size_t)opt_ret];
+    const char *duration_arg = av[(size_t)opt_ret + 1];
 
     /* ---------------------------------------------------------------- */
     /* Build animation options struct                                    */
     /* ---------------------------------------------------------------- */
     simulate::SimAnimOptions anim_opts;
 
-    if (*output_file_string)
-	anim_opts.output_file = std::string(output_file_string);
+    if (*args.output_file)
+	anim_opts.output_file = std::string(args.output_file);
 
-    if (anim_width > 0)  anim_opts.width  = anim_width;
-    if (anim_height > 0) anim_opts.height = anim_height;
-    if (anim_fps > 0)    anim_opts.fps    = anim_fps;
+    anim_opts.width = args.width;
+    anim_opts.height = args.height;
+    anim_opts.fps = args.fps;
 
-    if (*view_quat_string) {
+    if (*args.view_quat) {
 	double vals[4] = {0, 0, 0, 1};
-	if (!parse_doubles(view_quat_string, vals, 4)) {
+	if (!parse_doubles(args.view_quat, vals, 4)) {
 	    bu_vls_sprintf(gedp->ged_result_str,
 			  "simulate: invalid --view-quat value '%s'; "
-			  "expected x,y,z,w\n", view_quat_string);
+			  "expected x,y,z,w\n", args.view_quat);
 	    return BRLCAD_ERROR;
 	}
 	anim_opts.has_view_quat = true;
 	for (int i = 0; i < 4; ++i) anim_opts.view_quat[i] = vals[i];
     }
 
-    if (*view_ae_string) {
+    if (*args.view_ae) {
 	double vals[2] = {225.0, 35.0};
-	if (!parse_doubles(view_ae_string, vals, 2)) {
+	if (!parse_doubles(args.view_ae, vals, 2)) {
 	    bu_vls_sprintf(gedp->ged_result_str,
 			  "simulate: invalid --view-ae value '%s'; "
-			  "expected az,el\n", view_ae_string);
+			  "expected az,el\n", args.view_ae);
 	    return BRLCAD_ERROR;
 	}
 	anim_opts.has_view_ae = true;
@@ -226,33 +238,33 @@ ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
 	anim_opts.view_ae[1] = vals[1];
     }
 
-    if (*view_eye_string) {
+    if (*args.view_eye) {
 	double vals[3] = {0, 0, 0};
-	if (!parse_doubles(view_eye_string, vals, 3)) {
+	if (!parse_doubles(args.view_eye, vals, 3)) {
 	    bu_vls_sprintf(gedp->ged_result_str,
 			  "simulate: invalid --view-eye value '%s'; "
-			  "expected x,y,z\n", view_eye_string);
+			  "expected x,y,z\n", args.view_eye);
 	    return BRLCAD_ERROR;
 	}
 	anim_opts.has_view_eye = true;
 	for (int i = 0; i < 3; ++i) anim_opts.view_eye[i] = vals[i];
     }
 
-    if (*view_center_string) {
+    if (*args.view_center) {
 	double vals[3] = {0, 0, 0};
-	if (!parse_doubles(view_center_string, vals, 3)) {
+	if (!parse_doubles(args.view_center, vals, 3)) {
 	    bu_vls_sprintf(gedp->ged_result_str,
 			  "simulate: invalid --view-center value '%s'; "
-			  "expected x,y,z\n", view_center_string);
+			  "expected x,y,z\n", args.view_center);
 	    return BRLCAD_ERROR;
 	}
 	anim_opts.has_view_center = true;
 	for (int i = 0; i < 3; ++i) anim_opts.view_center[i] = vals[i];
     }
 
-    if (view_size_val > 0.0) {
+    if (args.view_size > 0.0) {
 	anim_opts.has_view_size = true;
-	anim_opts.view_size = view_size_val;
+	anim_opts.view_size = args.view_size;
     }
 
     /* ---------------------------------------------------------------- */
@@ -261,42 +273,37 @@ ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
 
     try {
 	const simulate::Simulation::DebugMode debug_mode =
-	get_debug_mode(debug_mode_string);
+	get_debug_mode(args.debug_mode);
 
-	if (num_steps < 1)
-	    throw simulate::InvalidSimulationError("invalid value for 'steps': must be >= 1");
-
-	const fastf_t seconds = simulate::lexical_cast<fastf_t>(argv[2],
-								"invalid value for 'seconds'");
-
-	if (seconds < 0.0)
+	fastf_t seconds = 0.0;
+	if (!bu_arg_number_from_str(NULL, &seconds, duration_arg))
 	    throw simulate::InvalidSimulationError("invalid value for 'seconds'");
 
 	db_full_path path;
 	const simulate::AutoPtr<db_full_path, db_free_full_path> autofree_path(&path);
 	db_full_path_init(&path);
 
-	if (db_string_to_path(&path, gedp->dbip, argv[1]))
+	if (db_string_to_path(&path, gedp->dbip, path_arg))
 	    throw simulate::InvalidSimulationError("invalid path");
 
 	/* Set up animation state if an output file was requested */
 	simulate::SimAnimState *anim_state = NULL;
 	if (!anim_opts.output_file.empty()) {
 	    anim_state = new simulate::SimAnimState(anim_opts, gedp,
-						   std::string(argv[1]));
+						   std::string(path_arg));
 	}
 
-	simulate::Simulation simulation(*gedp->dbip, path, resume_flag != 0);
+	simulate::Simulation simulation(*gedp->dbip, path, args.resume != 0);
 
-	const fastf_t step_seconds = seconds / num_steps;
+	const fastf_t step_seconds = seconds / args.steps;
 
-	for (int i = 0; i < num_steps; ++i) {
+	for (int i = 0; i < args.steps; ++i) {
 	    simulation.step(step_seconds, debug_mode);
 	    simulation.saveState();
 
-	    if (*plot_prefix_string) {
+	    if (*args.plot_prefix) {
 		std::ostringstream fname;
-		fname << plot_prefix_string << "_"
+		fname << args.plot_prefix << "_"
 		      << std::setfill('0') << std::setw(4) << (i + 1)
 		      << ".pl";
 		simulation.writePlotFile(fname.str());
@@ -326,11 +333,11 @@ ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
 
 #include "../include/plugin.h"
 
-#define GED_SIMULATE_COMMANDS(X, XID) \
-    X(simulate,  ged_simulate_core,   GED_CMD_DEFAULT)
+#define GED_SIMULATE_COMMANDS(N, NID) \
+    N(simulate, ged_simulate_core, GED_CMD_DEFAULT, &simulate_schema)
 
-GED_DECLARE_COMMAND_SET(GED_SIMULATE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_simulate", 1, GED_SIMULATE_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_SIMULATE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_simulate", 1, GED_SIMULATE_COMMANDS)
 
 // Local Variables:
 // tab-width: 8
@@ -340,4 +347,3 @@ GED_DECLARE_PLUGIN_MANIFEST("libged_simulate", 1, GED_SIMULATE_COMMANDS)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

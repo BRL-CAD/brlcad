@@ -38,7 +38,7 @@
 #include <vector>
 
 #include "bu/avs.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bu/units.h"
 #include "vmath.h"
 #include "bn.h"
@@ -70,43 +70,146 @@ using tire_private::tread_pattern_count_range;
 
 
 static int
-_opt_tire_iso(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+tire_iso_parse(struct bu_vls *msg, const char *arg, void *storage)
 {
     int d1, d2, d3;
     char s1, s2;
     int sret = 0;
     int consumed = 0;
-    auto *isoarray = static_cast<fastf_t *>(set_var);
+    auto *isoarray = static_cast<std::array<fastf_t, 3> *>(storage);
 
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "ISO tire dimensions");
+    if (!arg || arg[0] == '\0') {
+	if (msg) bu_vls_printf(msg, "missing ISO tire dimensions\n");
+	return -1;
+	}
 
-    sret = bu_sscanf(argv[0], "%d%c%d%c%d%n", &d1, &s1, &d2, &s2, &d3, &consumed);
+    sret = bu_sscanf(arg, "%d%c%d%c%d%n", &d1, &s1, &d2, &s2, &d3, &consumed);
 
-    if (sret != 5 || argv[0][consumed] != '\0' || s1 != '/' || (s2 != 'R' && s2 != 'r') || d1 <= 0 || d2 <= 0 || d3 <= 0) {
-	if (msg) bu_vls_printf(msg, "Invalid ISO specification string: %s\n", argv[0]);
+    if (sret != 5 || arg[consumed] != '\0' || s1 != '/' || (s2 != 'R' && s2 != 'r') || d1 <= 0 || d2 <= 0 || d3 <= 0) {
+	if (msg) bu_vls_printf(msg, "Invalid ISO specification string: %s\n", arg);
 	return -1;
     }
 
     if (isoarray) {
-	isoarray[0] = d1;
-	isoarray[1] = d2;
-	isoarray[2] = d3;
+	(*isoarray)[0] = d1;
+	(*isoarray)[1] = d2;
+	(*isoarray)[2] = d3;
     }
-    return 1;
+    return 0;
 }
 
 #define ISO_TIRE_FMT "<width-mm>/<aspect-percent>R<rim-diameter-in>"
 
+static int
+tire_tread_shape_validate(struct bu_vls *msg, const char *arg)
+{
+    char *end = NULL;
+    long value = 0;
+
+    if (!arg)
+	return -1;
+    value = strtol(arg, &end, 0);
+    if (!end || *end || value < 0 || value > 2) {
+	if (msg)
+	    bu_vls_printf(msg, "tread shape profile must be in range 0-2.\n");
+	return -1;
+    }
+    return 0;
+}
+
+/* One command-local value object keeps the parser binding reentrant. */
+struct TireArgs {
+    std::array<fastf_t, 3> isoarray = {{215.0, 55.0, 17.0}};
+    fastf_t width = 0.0;
+    fastf_t aspect = 0.0;
+    fastf_t rim_diameter = 0.0;
+    const char *name = NULL;
+    int tread_shape = 0;
+    int wheel = 1;
+    int tread_pattern_count = 0;
+    fastf_t tread_depth = 11.0;
+    fastf_t tire_thickness = 0.0;
+    fastf_t hub_width = 0.0;
+    const char *tread_pattern = NULL;
+    const char *tread_pattern_file = NULL;
+    const char *demo_file = NULL;
+    fastf_t max_sidewall_radius = 0.0;
+    int help = 0;
+    int list_patterns = 0;
+};
+
+/* This list is the command's sole authored option schema. */
+#define TIRE_OPTION_ROWS(X, A) \
+    X(FLAG,          "h", "help",                help,                "",           "Print help and exit") \
+    X(STRING,        "n", "obj-name",            name,                "name",       "Set the top-level object name and generated child-object suffix") \
+    X(BOOL,          "w", "wheel",               wheel,               "bool",       "Enable or disable the wheel; enabled by default") \
+    X(CUSTOM,        "d", "dimensions",          isoarray,            ISO_TIRE_FMT,  "Set the tire width in millimeters, aspect ratio in percent, and rim diameter in inches using ISO notation") \
+    X(NUMBER,        "W", "width",               width,               "mm",         "Override the tire width from --dimensions; fractional values are accepted") \
+    X(NUMBER,        "R", "aspect-ratio",        aspect,              "percent",    "Override the aspect ratio from --dimensions; fractional values are accepted") \
+    X(NUMBER,        "D", "rim-diameter",        rim_diameter,        "in",         "Override the rim diameter from --dimensions; fractional values are accepted") \
+    X(NUMBER,        "g", "tread-depth",         tread_depth,         "1/32 in",    "Set tread depth in 32nds of an inch; the default is 11") \
+    X(NUMBER,        "j", "hub-width",           hub_width,           "in",         "Set rim (hub) width in inches") \
+    X(NUMBER,        "s", "max-sidewall-radius", max_sidewall_radius, "mm",         "Set the widest sidewall radius in millimeters; it must lie between the rim and tire radii") \
+    X(NUMBER,        "u", "tire-thickness",      tire_thickness,      "mm",         "Set tire wall thickness in millimeters") \
+    X(STRING,        "p", "tread-pattern",       tread_pattern,       "name",       "Select a named tread preset; legacy values 1 and 2 select legacy-rib and legacy-block") \
+    X(INTEGER,       "c", "tread-pattern-cnt",   tread_pattern_count, "#",          "Override the number of repeats around the tire; each preset defines its valid range") \
+    X(INTEGER_RANGE, "t", "tread-shape",         tread_shape,         "0|1|2",      "Select no explicit profile (0), legacy rib (1), or legacy block (2)") \
+    X(FILE,          "",  "tread-pattern-file",  tread_pattern_file,  "file.json",  "Read a custom JSON tread definition; mutually exclusive with --tread-pattern") \
+    X(FLAG,          "",  "list-tread-patterns",  list_patterns,       "",           "List available tread pattern presets and exit") \
+    X(FILE,          "",  "demo-file",           demo_file,           "file.g",     "Write a database containing a grid of varied sample tires and exit") \
+    A(SHORT, "?", "help") \
+    A(LONG,  "ISO", "dimensions")
+
+#define TIRE_NATIVE_FLAG(s, l, f, a, h) BU_ARG_FLAG(s, l, TireArgs, f, h),
+#define TIRE_NATIVE_BOOL(s, l, f, a, h) BU_ARG_VALUE(s, l, TireArgs, f, BU_ARG_VALUE_BOOL, BU_ARG_REQUIRED, a, h),
+#define TIRE_NATIVE_INTEGER(s, l, f, a, h) BU_ARG_VALUE(s, l, TireArgs, f, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, a, h),
+#define TIRE_NATIVE_INTEGER_RANGE(s, l, f, a, h) BU_ARG_VALUE_VALIDATE(s, l, TireArgs, f, BU_ARG_VALUE_INTEGER, tire_tread_shape_validate, a, h),
+#define TIRE_NATIVE_NUMBER(s, l, f, a, h) BU_ARG_VALUE(s, l, TireArgs, f, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, a, h),
+#define TIRE_NATIVE_STRING(s, l, f, a, h) BU_ARG_VALUE(s, l, TireArgs, f, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, a, h),
+#define TIRE_NATIVE_FILE(s, l, f, a, h) BU_ARG_VALUE(s, l, TireArgs, f, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, a, h),
+#define TIRE_NATIVE_CUSTOM(s, l, f, a, h) BU_ARG_CUSTOM(s, l, TireArgs, f, tire_iso_parse, a, h),
+#define TIRE_NATIVE_OPTION(kind, s, l, f, a, h) TIRE_NATIVE_##kind(s, l, f, a, h)
+#define TIRE_NATIVE_ALIAS_SHORT(spelling, canonical) BU_ARG_ALIAS(spelling, NULL, canonical, 1),
+#define TIRE_NATIVE_ALIAS_LONG(spelling, canonical) BU_ARG_ALIAS( NULL,spelling, canonical, 1),
+#define TIRE_NATIVE_ALIAS(kind, spelling, canonical) TIRE_NATIVE_ALIAS_##kind(spelling, canonical)
+static const struct bu_arg_option tire_options[] = {
+    TIRE_OPTION_ROWS(TIRE_NATIVE_OPTION, TIRE_NATIVE_ALIAS)
+    BU_ARG_OPTION_NULL
+};
+#undef TIRE_NATIVE_FLAG
+#undef TIRE_NATIVE_BOOL
+#undef TIRE_NATIVE_INTEGER
+#undef TIRE_NATIVE_INTEGER_RANGE
+#undef TIRE_NATIVE_NUMBER
+#undef TIRE_NATIVE_STRING
+#undef TIRE_NATIVE_FILE
+#undef TIRE_NATIVE_CUSTOM
+#undef TIRE_NATIVE_OPTION
+#undef TIRE_NATIVE_ALIAS_SHORT
+#undef TIRE_NATIVE_ALIAS_LONG
+#undef TIRE_NATIVE_ALIAS
+
+static const struct bu_arg_operand tire_operands[] = {
+    BU_ARG_OPERAND("obj-name", BU_ARG_VALUE_STRING, 0, 1, "Optional top-level object name", NULL),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema tire_cmd_schema_native = {
+    "tire", "Generate tire and wheel geometry", tire_options, tire_operands,
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+#undef TIRE_OPTION_ROWS
+
 /* Help message printed when -h option is supplied */
 static void
-_tire_show_help(struct ged *gedp, const char *cmd, struct bu_opt_desc *d)
+_tire_show_help(struct ged *gedp, const char *cmd, const struct bu_arg_schema *schema)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    char *option_help = bu_opt_describe(d, NULL);
-    bu_vls_sprintf(&str, "Usage: %s [options] [obj_name]\n", cmd);
-    if (option_help) {
-	bu_vls_printf(&str, "Options:\n%s\n", option_help);
-	bu_free(option_help, "help str");
+    char *help = bu_arg_schema_help(schema, cmd);
+    if (help) {
+	bu_vls_sprintf(&str, "%s", help);
+	bu_free(help, "help str");
     }
     bu_vls_printf(&str, "\nStandard ISO formatting for tire dimensions is of the form %s, where <width> is in mm, <aspect> is a ratio, and <rim diameter> is in inches.\n",
     ISO_TIRE_FMT);
@@ -656,48 +759,11 @@ generate_demo(struct ged *gedp, const char *demo_file)
 int
 ged_tire_core(struct ged *gedp, int argc, const char *argv[])
 {
-    std::array<fastf_t, 3> isoarray = {{215.0, 55.0, 17.0}};
-    fastf_t width = 0.0;
-    fastf_t aspect = 0.0;
-    fastf_t rim_diam = 0.0;
-    const char *name_arg = NULL;
+    TireArgs options;
     struct bu_vls parse_msg = BU_VLS_INIT_ZERO;
-    int tread_type = 0;
-    int usewheel = 1;
-    int num_tread_ptns = 0;
-    fastf_t tread_depth = 11;
-    fastf_t tire_thickness = 0;
-    fastf_t hub_width = 0;
-    const char *pattern_name = NULL;
-    const char *pattern_file = NULL;
-    const char *demo_file = NULL;
-    fastf_t zside1 = 0;
-    int print_help = 0;
-    int list_patterns = 0;
+    int operand_index = 0;
     int ret_ac = 0;
     const char *cmd_name = argv[0];
-
-    struct bu_opt_desc d[20];
-    BU_OPT(d[0],  "h", "help",                "",           NULL,             &print_help,     "Print help and exit");
-    BU_OPT(d[1],  "?", "",                    "",           NULL,             &print_help,     "");
-    BU_OPT(d[2],  "n", "obj-name",            "name",       &bu_opt_str,      &name_arg,       "Set top-level object name");
-    BU_OPT(d[3],  "w", "wheel",               "bool",       &bu_opt_bool,     &usewheel,       "Enable/disable wheel (default is enabled).");
-    BU_OPT(d[4],  "d", "dimensions",          ISO_TIRE_FMT, &_opt_tire_iso,   isoarray.data(), "Specify tire dimensions using ISO style inputs");
-    BU_OPT(d[5],  "",  "ISO",                 ISO_TIRE_FMT, &_opt_tire_iso,   isoarray.data(), "");
-    BU_OPT(d[6],  "W", "width",               "#",          &bu_opt_fastf_t,  &width,          "Tire width (mm).  Overrides -d");
-    BU_OPT(d[7],  "R", "aspect-ratio",        "#",          &bu_opt_fastf_t,  &aspect,         "Aspect ratio (#/100). Overrides -d.");
-    BU_OPT(d[8],  "D", "rim-diameter",        "#",          &bu_opt_fastf_t,  &rim_diam,       "Rim diameter (inches). Overrides -d.");
-    BU_OPT(d[9],  "g", "tread-depth",         "#",          &bu_opt_fastf_t,  &tread_depth,    "Tread depth (1/32 inch)");
-    BU_OPT(d[10], "j", "hub-width",           "#",          &bu_opt_fastf_t,  &hub_width,      "Rim width (inches)");
-    BU_OPT(d[11], "s", "max-sidewall-radius", "#",          &bu_opt_fastf_t,  &zside1,         "Maximum sidewall radius (mm)");
-    BU_OPT(d[12], "u", "tire-thickness",      "#",          &bu_opt_fastf_t,  &tire_thickness, "Tire thickness (mm)");
-    BU_OPT(d[13], "p", "tread-pattern",       "name",       &bu_opt_str,      &pattern_name,   "Tread pattern preset name. Legacy aliases 1 and 2 are accepted.");
-    BU_OPT(d[14], "c", "tread-pattern-cnt",   "#",          &bu_opt_int,      &num_tread_ptns, "Number of tread patterns around tire");
-    BU_OPT(d[15], "t", "tread-shape",         "#",          &bu_opt_int,      &tread_type,     "Tread shape profile (integer id, range 1 - 2)");
-    BU_OPT(d[16], "",  "tread-pattern-file",  "file",       &bu_opt_str,      &pattern_file,   "Read a custom JSON tread pattern definition");
-    BU_OPT(d[17], "",  "list-tread-patterns", "",           NULL,             &list_patterns,  "List available tread pattern presets and exit");
-    BU_OPT(d[18], "",  "demo-file",            "file.g",     &bu_opt_str,      &demo_file,      "Generate a grid of varied sample tires");
-    BU_OPT_NULL(d[19]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -705,33 +771,37 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
     /* Skip first arg */
     argv++; argc--;
 
-    ret_ac = bu_opt_parse(&parse_msg, argc, argv, d);
-    if (ret_ac < 0) {
+    operand_index = bu_arg_schema_parse(&tire_cmd_schema_native, &options, &parse_msg, argc, argv);
+    if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&parse_msg));
 	bu_vls_free(&parse_msg);
 	return BRLCAD_ERROR;
     }
     bu_vls_free(&parse_msg);
-    if (print_help) {
-	_tire_show_help(gedp, cmd_name, d);
+    ret_ac = argc - operand_index;
+    argv += operand_index;
+    if (options.help) {
+	_tire_show_help(gedp, cmd_name, &tire_cmd_schema_native);
 	return GED_HELP;
     }
-    if (list_patterns) {
+    if (options.list_patterns) {
 	list_tread_patterns(gedp->ged_result_str);
 	return BRLCAD_OK;
     }
-    if (demo_file) {
+    if (options.demo_file) {
 	if (ret_ac > 0) {
 	    bu_vls_sprintf(gedp->ged_result_str, "unknown args supplied.\n");
 	    return BRLCAD_ERROR;
 	}
-	return generate_demo(gedp, demo_file);
+	return generate_demo(gedp, options.demo_file);
     }
 
     std::optional<ValidatedTireRequest> request = build_validated_request(
-	gedp, isoarray, width, aspect, rim_diam, name_arg, usewheel,
-	tread_type, num_tread_ptns, tread_depth, tire_thickness, hub_width,
-	pattern_name, pattern_file, zside1, ret_ac, argv);
+	gedp, options.isoarray, options.width, options.aspect, options.rim_diameter,
+	options.name, options.wheel, options.tread_shape, options.tread_pattern_count,
+	options.tread_depth, options.tire_thickness, options.hub_width,
+	options.tread_pattern, options.tread_pattern_file, options.max_sidewall_radius,
+	ret_ac, argv);
     if (!request)
 	return BRLCAD_ERROR;
 
@@ -754,12 +824,11 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
 
 
 #include "../include/plugin.h"
-
 #define GED_TIRE_COMMANDS(X, XID) \
-    X(tire, ged_tire_core, GED_CMD_DEFAULT) \
+    X(tire, ged_tire_core, GED_CMD_DEFAULT, &tire_cmd_schema_native) \
 
-GED_DECLARE_COMMAND_SET(GED_TIRE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_tire", 1, GED_TIRE_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_TIRE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_tire", 1, GED_TIRE_COMMANDS)
 
 /*
  * Local Variables:

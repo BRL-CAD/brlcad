@@ -23,9 +23,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 
 #include "bu/log.h"
-#include "bu/getopt.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 #include "./check_private.h"
@@ -38,49 +39,7 @@
 static void
 check_show_help(struct ged *gedp)
 {
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-
-    bu_vls_sprintf(&str, "Usage: check {subcommand} [options] [object(s)]\n\n");
-
-    bu_vls_printf(&str, "Subcommands:\n\n");
-    bu_vls_printf(&str, "  adj_air - Detects air volumes which are next to each other but have different air_code values applied to the region.\n");
-    bu_vls_printf(&str, "  centroid - Computes the centroid of the objects specified.\n");
-    bu_vls_printf(&str, "  exp_air - Check if the ray encounters air regions before (or after all) solid objects.\n");
-    bu_vls_printf(&str, "  gap - This reports when there is more than overlap tolerance distance between objects on the ray path.\n");
-    bu_vls_printf(&str, "  mass - Computes the mass of the objects specified.\n");
-    bu_vls_printf(&str, "  moments - Computes the moments and products of inertia of the objects specified.\n");
-    bu_vls_printf(&str, "  overlaps - This reports overlaps, when two regions occupy the same space.\n");
-    bu_vls_printf(&str, "  surf_area - Computes the surface area of the objects specified.\n");
-    bu_vls_printf(&str, "  unconf_air - This reports when there are unconfined air regions.\n");
-    bu_vls_printf(&str, "  volume - Computes the volume of the objects specified.\n");
-
-    bu_vls_printf(&str, "\nOptions:\n\n");
-    bu_vls_printf(&str, "  -a #[deg|rad] - Azimuth angle.\n");
-    bu_vls_printf(&str, "  -d - Set debug flag.\n");
-    bu_vls_printf(&str, "  -e #[deg|rad] - Elevation angle.\n");
-    bu_vls_printf(&str, "  -f filename - Specifies that density values should be taken from an external file instead of from the _DENSITIES object in the database.\n");
-    bu_vls_printf(&str, "  -g [initial_grid_spacing-]grid_spacing_limit or [initial_grid_spacing,]grid_spacing_limit - Specifies a limit on how far the grid can be refined and optionally the initial spacing between rays in the grids.\n");
-    bu_vls_printf(&str, "  -G [grid_width,]grid_height - sets the grid size, if only grid width is mentioned then a square grid size is set\n");
-    bu_vls_printf(&str, "  -i - gets 'view information' from the view to setup eye position.\n");
-    bu_vls_printf(&str, "  -M # - Specifies a mass tolerance value.\n");
-    bu_vls_printf(&str, "  -n # - Specifies that the grid be refined until each region has at least num_hits ray intersections.\n");
-    bu_vls_printf(&str, "  -N # - Specifies that only the first num_views should be computed.\n");
-    bu_vls_printf(&str, "  -o - Specifies to display the overlaps as overlays.\n");
-    bu_vls_printf(&str, "  -p - Specifies to produce plot files for each of the analyses it performs.\n");
-    bu_vls_printf(&str, "  -P # - Specifies that ncpu CPUs should be used for performing the calculation. By default, all local CPUs are utilized.\n");
-    bu_vls_printf(&str, "  -q - Quiets (suppresses) the 'was not hit' reporting.\n");
-    bu_vls_printf(&str, "  -r - Indicates to print per-region statistics for mass and volume as well as the values for the objects specified.\n");
-    bu_vls_printf(&str, "  -R - Disable reporting of overlaps.\n");
-    bu_vls_printf(&str, "  -s # - Specifies surface area tolerance value.\n");
-    bu_vls_printf(&str, "  -S # - Specifies that the grid spacing will be initially refined so that at least samples_per_axis_min will be shot along each axis of the bounding box of the model.\n");
-    bu_vls_printf(&str, "  -t - Sets the tolerance for computing overlaps.\n");
-    bu_vls_printf(&str, "  -u distance_units,volume_units,mass_units - Specify the units used when reporting values.\n");
-    bu_vls_printf(&str, "  -U # - Specifies the Boolean value (0 or 1) for use_air which indicates whether regions which are marked as 'air' should be retained and included in the raytrace.\n");
-    bu_vls_printf(&str, "  -v - Set verbose flag.\n");
-    bu_vls_printf(&str, "  -V # - Specifies a volumetric tolerance value.\n");
-
-    bu_vls_vlscat(gedp->ged_result_str, &str);
-    bu_vls_free(&str);
+    ged_cmd_help_append(gedp->ged_result_str, "check", "check");
 }
 
 
@@ -94,7 +53,7 @@ check_show_help(struct ged *gedp)
  * 0 Success
  */
 static int
-read_units_double(struct ged *gedp, double *val, char *buf, const struct cvt_tab *cvt)
+read_units_double(struct ged *gedp, double *val, const char *buf, const struct cvt_tab *cvt)
 {
     double a;
 #define UNITS_STRING_SZ 256
@@ -132,263 +91,333 @@ read_units_double(struct ged *gedp, double *val, char *buf, const struct cvt_tab
 }
 
 
+struct check_args {
+    struct check_args *self;
+    struct check_parameters *options;
+    struct current_state *state;
+    int debug;
+    const char *density_file;
+    const char *grid_spacing;
+    const char *grid_size;
+    const char *mass_tolerance;
+    int required_hits;
+    int views;
+    int overlaps_overlay;
+    int plot_files;
+    int cpus;
+    int quiet;
+    int region_stats;
+    int report_overlaps;
+    fastf_t surf_area_tolerance;
+    fastf_t samples;
+    const char *overlap_tolerance;
+    int use_air;
+    const char *report_units;
+    int verbose;
+    const char *volume_tolerance;
+    int help;
+};
+
 static int
-parse_check_args(struct ged *gedp, int ac, char *av[], struct check_parameters* options, struct current_state *state)
+check_opt_azimuth(struct bu_vls *msg, const char *arg, void *set_var)
 {
-    int c;
-    double a;
-    char *p;
+    struct check_args *args = set_var ? *(struct check_args **)set_var : NULL;
+    double azimuth;
 
-    char *options_str = "a:de:f:g:G:iM:n:N:opP:qrRs:S:t:U:u:vV:h?";
-
-    /* Turn off getopt's error messages */
-    bu_opterr = 0;
-    bu_optind = 1;
-
-    /* get all the options from the command line */
-    while ((c=bu_getopt(ac, av, options_str)) != -1) {
-	switch (c) {
-	    case 'a':
-		if (bn_decode_angle(&(options->azimuth_deg), bu_optarg) == 0) {
-		    bu_vls_printf(gedp->ged_result_str, "error parsing azimuth \"%s\"\n", bu_optarg);
-		    return -1;
-		}
-		analyze_set_azimuth(state, options->azimuth_deg);
-		options->getfromview = 0;
-		break;
-	    case 'd':
-		options->debug = 1;
-		options->debug_str = bu_vls_vlsinit();
-		analyze_enable_debug(state, options->debug_str);
-		break;
-	    case 'e':
-		if (bn_decode_angle(&(options->elevation_deg), bu_optarg) == 0) {
-		    bu_vls_printf(gedp->ged_result_str, "error parsing elevation \"%s\"\n", bu_optarg);
-		    return -1;
-		}
-		analyze_set_elevation(state, options->elevation_deg);
-		options->getfromview = 0;
-		break;
-
-	    case 'f':
-		options->densityFileName = bu_optarg;
-		analyze_set_densityfile(state, options->densityFileName);
-		break;
-
-	    case 'g':
-		{
-		    double value1, value2;
-
-		    /* find out if we have two or one args; user can
-		     * separate them with , or - delimiter
-		     */
-		    p = strchr(bu_optarg, COMMA);
-		    if (p)
-			*p++ = '\0';
-		    else {
-			p = strchr(bu_optarg, '-');
-			if (p)
-			    *p++ = '\0';
-		    }
-
-
-		    if (read_units_double(gedp, &value1, bu_optarg, units_tab[0])) {
-			bu_vls_printf(gedp->ged_result_str, "error parsing grid spacing value \"%s\"\n", bu_optarg);
-			return -1;
-		    }
-
-		    if (p) {
-			/* we've got 2 values, they are upper limit
-			 * and lower limit.
-			 */
-			if (read_units_double(gedp, &value2, p, units_tab[0])) {
-			    bu_vls_printf(gedp->ged_result_str, "error parsing grid spacing limit value \"%s\"\n", p);
-			    return -1;
-			}
-
-			options->gridSpacing = value1;
-			options->gridSpacingLimit = value2;
-		    } else {
-			options->gridSpacingLimit = value1;
-
-			options->gridSpacing = 0.0; /* flag it */
-		    }
-		    analyze_set_grid_spacing(state, options->gridSpacing, options->gridSpacingLimit);
-		    break;
-		}
-	    case 'G':
-		{
-		    double width, height;
-		    /* find out if we have two or one args; user can
-		     * separate them with , delimiter
-		     */
-		    p = strchr(bu_optarg, COMMA);
-		    if (p)
-			*p++ = '\0';
-		    width = atoi(bu_optarg);
-
-		    if (width < 1 || width > MAX_WIDTH) {
-			bu_vls_printf(gedp->ged_result_str,"mentioned grid size is out of range\n");
-			return -1;
-		    }
-
-		    if (p) {
-			/* width and height mentioned */
-			height = atoi(p);
-			if (height < 1 || height > MAX_WIDTH) {
-			    bu_vls_printf(gedp->ged_result_str,"mentioned grid size is out of range\n");
-			    return -1;
-			}
-			analyze_set_grid_size(state, width, height);
-		    } else {
-			/* square grid */
-			analyze_set_grid_size(state, width, width);
-		    }
-		    break;
-		}
-	    case 'i':
-		options->getfromview = 1;
-		break;
-	    case 'M':
-		if (read_units_double(gedp, &(options->mass_tolerance), bu_optarg, units_tab[2])) {
-		    bu_vls_printf(gedp->ged_result_str, "error in mass tolerance \"%s\"\n", bu_optarg);
-		    return -1;
-		}
-		analyze_set_mass_tolerance(state, options->mass_tolerance);
-		break;
-	    case 'n':
-		if (sscanf(bu_optarg, "%d", &c) != 1 || c < 0) {
-		    bu_vls_printf(gedp->ged_result_str, "num_hits must be integer value >= 0, not \"%s\"\n", bu_optarg);
-		    return -1;
-		}
-		options->require_num_hits = (size_t) c;
-		analyze_set_required_number_hits(state, options->require_num_hits);
-		break;
-	    case 'N':
-		options->num_views = atoi(bu_optarg);
-		analyze_set_num_views(state, options->num_views);
-		break;
-	    case 'o':
-		options->overlaps_overlay_flag = 1;
-		break;
-	    case 'p':
-		options->plot_files = 1;
-		break;
-	    case 'P':
-		/* cannot ask for more cpu's than the machine has */
-		c = atoi(bu_optarg);
-		if (c > 0 && c <= (int) bu_avail_cpus())
-		    options->ncpu = c;
-		analyze_set_ncpu(state, options->ncpu);
-		break;
-	    case 'q':
-		analyze_set_quiet_missed_report(state);
-		break;
-	    case 'r':
-		options->print_per_region_stats = 1;
-		break;
-	    case 'R':
-		options->rpt_overlap_flag = 0;
-		break;
-	    case 's':
-		options->surf_area_tolerance = atof(bu_optarg);
-		analyze_set_surf_area_tolerance(state, options->surf_area_tolerance);
-		break;
-	    case 'S':
-		if (sscanf(bu_optarg, "%lg", &a) != 1 || a <= 1.0) {
-		    bu_vls_printf(gedp->ged_result_str, "error in specifying minimum samples per model axis: \"%s\"\n", bu_optarg);
-		    break;
-		}
-		options->samples_per_model_axis = a + 1;
-		analyze_set_samples_per_model_axis(state, options->samples_per_model_axis);
-		break;
-	    case 't':
-		if (read_units_double(gedp, &(options->overlap_tolerance), bu_optarg, units_tab[0])) {
-		    bu_vls_printf(gedp->ged_result_str, "error in overlap tolerance distance \"%s\"\n", bu_optarg);
-		    return -1;
-		}
-		analyze_set_overlap_tolerance(state, options->overlap_tolerance);
-		break;
-	    case 'v':
-		options->verbose = 1;
-		options->verbose_str = bu_vls_vlsinit();
-		analyze_enable_verbose(state, options->verbose_str);
-		break;
-	    case 'V':
-		if (read_units_double(gedp, &(options->volume_tolerance), bu_optarg, units_tab[1])) {
-		    bu_vls_printf(gedp->ged_result_str, "error in volume tolerance \"%s\"\n", bu_optarg);
-		    return -1;
-		}
-		analyze_set_volume_tolerance(state, options->volume_tolerance);
-		break;
-	    case 'U':
-		errno = 0;
-		options->use_air = strtol(bu_optarg, (char **)NULL, 10);
-		if (errno == ERANGE || errno == EINVAL) {
-		    bu_vls_printf(gedp->ged_result_str, "error in air argument %s\n", bu_optarg);
-		    return -1;
-		}
-		analyze_set_use_air(state, options->use_air);
-		break;
-	    case 'u':
-		{
-		    int i;
-		    char *ptr = bu_optarg;
-		    const struct cvt_tab *cv;
-		    static const char *dim[3] = {"length", "volume", "mass"};
-		    char *units_name[3] = {NULL, NULL, NULL};
-		    char **units_ap;
-
-		    /* fill in units_name with the names we parse out */
-		    units_ap = units_name;
-
-		    /* acquire unit names */
-		    for (i = 0; i < 3 && ptr; i++) {
-			int found_unit;
-
-			if (i == 0) {
-			    *units_ap = strtok(ptr, CPP_XSTR(COMMA));
-			} else {
-			    *units_ap = strtok(NULL, CPP_XSTR(COMMA));
-			}
-
-			/* got something? */
-			if (*units_ap == NULL)
-			    break;
-
-			/* got something valid? */
-			found_unit = 0;
-			for (cv = &units_tab[i][0]; cv->name[0] != '\0'; cv++) {
-			    if (units_name[i] && BU_STR_EQUAL(cv->name, units_name[i])) {
-				options->units[i] = cv;
-				found_unit = 1;
-				break;
-			    }
-			}
-
-			if (!found_unit) {
-			    bu_vls_printf(gedp->ged_result_str, "Units \"%s\" not found in conversion table\n", units_name[i]);
-			    return -1;
-			}
-
-			++units_ap;
-		    }
-
-		    bu_vls_printf(gedp->ged_result_str, "Units: ");
-		    for (i = 0; i < 3; i++) {
-			bu_vls_printf(gedp->ged_result_str, " %s: %s", dim[i], options->units[i]->name);
-		    }
-		    bu_vls_printf(gedp->ged_result_str, "\n");
-		}
-		break;
-
-	    default: /* '?' 'h' */
-		return -1;
-	}
+    if (!arg || bn_decode_angle(&azimuth, arg) == 0) {
+	if (msg)
+	    bu_vls_printf(msg, "error parsing azimuth\n");
+	return -1;
     }
-    return bu_optind;
+    if (!args)
+	return 0;
+    args->options->azimuth_deg = azimuth;
+    analyze_set_azimuth(args->state, args->options->azimuth_deg);
+    args->options->getfromview = 0;
+    return 0;
 }
 
+static int
+check_opt_elevation(struct bu_vls *msg, const char *arg, void *set_var)
+{
+    struct check_args *args = set_var ? *(struct check_args **)set_var : NULL;
+    double elevation;
+
+    if (!arg || bn_decode_angle(&elevation, arg) == 0) {
+	if (msg)
+	    bu_vls_printf(msg, "error parsing elevation\n");
+	return -1;
+    }
+    if (!args)
+	return 0;
+    args->options->elevation_deg = elevation;
+    analyze_set_elevation(args->state, args->options->elevation_deg);
+    args->options->getfromview = 0;
+    return 0;
+}
+
+static int
+check_opt_view(struct bu_vls *UNUSED(msg), const char *UNUSED(arg),
+	void *set_var)
+{
+    struct check_args *args = set_var ? *(struct check_args **)set_var : NULL;
+    if (!args)
+	return 0;
+    args->options->getfromview = 1;
+    return 0;
+}
+
+static const struct bu_arg_option check_options[] = {
+    BU_ARG_CUSTOM("a", NULL, struct check_args, self, check_opt_azimuth,
+	"angle", "Set azimuth angle"),
+    BU_ARG_FLAG("d", NULL, struct check_args, debug, "Enable debug output"),
+    BU_ARG_CUSTOM("e", NULL, struct check_args, self, check_opt_elevation,
+	"angle", "Set elevation angle"),
+    BU_ARG_VALUE("f", NULL, struct check_args, density_file, BU_ARG_VALUE_FILE,
+	BU_ARG_REQUIRED, "file", "Read densities from file"),
+    BU_ARG_VALUE("g", NULL, struct check_args, grid_spacing, BU_ARG_VALUE_STRING,
+	BU_ARG_REQUIRED, "spacing", "Set grid refinement spacing"),
+    BU_ARG_VALUE("G", NULL, struct check_args, grid_size, BU_ARG_VALUE_STRING,
+	BU_ARG_REQUIRED, "size", "Set grid width and height"),
+    BU_ARG_CUSTOM_FLAG("i", NULL, "i", struct check_args, self,
+	check_opt_view, "Use the current view"),
+    BU_ARG_VALUE("M", NULL, struct check_args, mass_tolerance,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "tolerance", "Set mass tolerance"),
+    BU_ARG_INTEGER_RANGE("n", NULL, struct check_args, required_hits, 1, 0,
+	0, 0, "hits", "Set required hits per region"),
+    BU_ARG_VALUE("N", NULL, struct check_args, views, BU_ARG_VALUE_INTEGER,
+	BU_ARG_REQUIRED, "views", "Set number of views"),
+    BU_ARG_FLAG("o", NULL, struct check_args, overlaps_overlay,
+	"Display overlaps as overlays"),
+    BU_ARG_FLAG("p", NULL, struct check_args, plot_files, "Produce plot files"),
+    BU_ARG_VALUE("P", NULL, struct check_args, cpus, BU_ARG_VALUE_INTEGER,
+	BU_ARG_REQUIRED, "cpus", "Set processor count"),
+    BU_ARG_FLAG("q", NULL, struct check_args, quiet, "Suppress not-hit reporting"),
+    BU_ARG_FLAG("r", NULL, struct check_args, region_stats,
+	"Print per-region statistics"),
+    BU_ARG_FLAG("R", NULL, struct check_args, report_overlaps,
+	"Disable overlap reporting"),
+    BU_ARG_VALUE("s", NULL, struct check_args, surf_area_tolerance,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "tolerance", "Set surface-area tolerance"),
+    BU_ARG_VALUE("S", NULL, struct check_args, samples, BU_ARG_VALUE_NUMBER,
+	BU_ARG_REQUIRED, "samples", "Set minimum samples per model axis"),
+    BU_ARG_VALUE("t", NULL, struct check_args, overlap_tolerance,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "tolerance", "Set overlap tolerance"),
+    BU_ARG_VALUE("U", NULL, struct check_args, use_air, BU_ARG_VALUE_BOOL,
+	BU_ARG_REQUIRED, "use_air", "Include air regions"),
+    BU_ARG_VALUE("u", NULL, struct check_args, report_units, BU_ARG_VALUE_STRING,
+	BU_ARG_REQUIRED, "units", "Set reporting units"),
+    BU_ARG_FLAG("v", NULL, struct check_args, verbose, "Enable verbose output"),
+    BU_ARG_VALUE("V", NULL, struct check_args, volume_tolerance,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "tolerance", "Set volume tolerance"),
+    BU_ARG_FLAG("h", NULL, struct check_args, help, "Print command help"),
+    BU_ARG_ALIAS("?", NULL, "h", 1),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand check_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_PATH, 0, BU_ARG_COUNT_UNLIMITED,
+	"Objects to analyze (defaults to displayed objects)", "ged.db_path"),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema check_parse_schema =
+    BU_ARG_SCHEMA("check", "Analyze geometric and physical properties",
+	check_options, check_operands, BU_ARG_PARSE_OPTIONS_FIRST, NULL);
+
+static int
+parse_check_args(struct ged *gedp, int ac, const char **av,
+	struct check_parameters *options, struct current_state *state)
+{
+    struct check_args args = {0};
+    int object_count;
+    int operand_index;
+
+    args.self = &args;
+    args.options = options;
+    args.state = state;
+    args.required_hits = INT_MIN;
+    args.views = INT_MIN;
+    args.cpus = INT_MIN;
+    args.surf_area_tolerance = NAN;
+    args.samples = NAN;
+    args.use_air = INT_MIN;
+
+    if (ac < 1)
+	return -1;
+    ac--; av++;
+    operand_index = bu_arg_schema_parse_complete(&check_parse_schema, &args,
+	gedp->ged_result_str, ac, av);
+    if (operand_index < 0 || args.help)
+	return -1;
+    object_count = ac - operand_index;
+
+    if (args.debug) {
+	options->debug = 1;
+	options->debug_str = bu_vls_vlsinit();
+	analyze_enable_debug(state, options->debug_str);
+    }
+    if (args.density_file) {
+	options->densityFileName = (char *)args.density_file;
+	analyze_set_densityfile(state, options->densityFileName);
+    }
+    if (args.grid_spacing) {
+	char *grid_arg = bu_strdup(args.grid_spacing);
+	char *limit_arg = strchr(grid_arg, COMMA);
+	double value1, value2;
+	if (limit_arg)
+	    *limit_arg++ = '\0';
+	else {
+	    limit_arg = strchr(grid_arg, '-');
+	    if (limit_arg)
+		*limit_arg++ = '\0';
+	}
+	if (read_units_double(gedp, &value1, grid_arg, units_tab[0])) {
+	    bu_vls_printf(gedp->ged_result_str,
+		"error parsing grid spacing value \"%s\"\n", grid_arg);
+	    bu_free(grid_arg, "check grid argument");
+	    return -1;
+	}
+	if (limit_arg) {
+	    if (read_units_double(gedp, &value2, limit_arg, units_tab[0])) {
+		bu_vls_printf(gedp->ged_result_str,
+		    "error parsing grid spacing limit value \"%s\"\n", limit_arg);
+		bu_free(grid_arg, "check grid argument");
+		return -1;
+	    }
+	    options->gridSpacing = value1;
+	    options->gridSpacingLimit = value2;
+	} else {
+	    options->gridSpacing = 0.0;
+	    options->gridSpacingLimit = value1;
+	}
+	analyze_set_grid_spacing(state, options->gridSpacing,
+	    options->gridSpacingLimit);
+	bu_free(grid_arg, "check grid argument");
+    }
+    if (args.grid_size) {
+	char *grid_arg = bu_strdup(args.grid_size);
+	char *height_arg = strchr(grid_arg, COMMA);
+	char *end = NULL;
+	long width, height;
+	if (height_arg)
+	    *height_arg++ = '\0';
+	errno = 0;
+	width = strtol(grid_arg, &end, 10);
+	if (errno || !end || *end != '\0' || width < 1 || width > MAX_WIDTH) {
+	    bu_vls_printf(gedp->ged_result_str, "mentioned grid size is out of range\n");
+	    bu_free(grid_arg, "check grid size argument");
+	    return -1;
+	}
+	height = width;
+	if (height_arg) {
+	    errno = 0;
+	    height = strtol(height_arg, &end, 10);
+	    if (errno || !end || *end != '\0' || height < 1 || height > MAX_WIDTH) {
+		bu_vls_printf(gedp->ged_result_str, "mentioned grid size is out of range\n");
+		bu_free(grid_arg, "check grid size argument");
+		return -1;
+	    }
+	}
+	analyze_set_grid_size(state, (double)width, (double)height);
+	bu_free(grid_arg, "check grid size argument");
+    }
+    if (args.mass_tolerance && read_units_double(gedp,
+	&options->mass_tolerance, args.mass_tolerance, units_tab[2])) {
+	bu_vls_printf(gedp->ged_result_str,
+	    "error in mass tolerance \"%s\"\n", args.mass_tolerance);
+	return -1;
+    }
+    if (args.mass_tolerance)
+	analyze_set_mass_tolerance(state, options->mass_tolerance);
+    if (args.required_hits != INT_MIN) {
+	options->require_num_hits = (size_t)args.required_hits;
+	analyze_set_required_number_hits(state, options->require_num_hits);
+    }
+    if (args.views != INT_MIN) {
+	options->num_views = args.views;
+	analyze_set_num_views(state, options->num_views);
+    }
+    options->overlaps_overlay_flag = args.overlaps_overlay;
+    options->plot_files = args.plot_files;
+    if (args.cpus > 0 && args.cpus <= (int)bu_avail_cpus())
+	options->ncpu = args.cpus;
+    analyze_set_ncpu(state, options->ncpu);
+    if (args.quiet)
+	analyze_set_quiet_missed_report(state);
+    options->print_per_region_stats = args.region_stats;
+    if (args.report_overlaps)
+	options->rpt_overlap_flag = 0;
+    if (!isnan(args.surf_area_tolerance)) {
+	options->surf_area_tolerance = args.surf_area_tolerance;
+	analyze_set_surf_area_tolerance(state, options->surf_area_tolerance);
+    }
+    if (!isnan(args.samples)) {
+	if (args.samples <= 1.0) {
+	    bu_vls_printf(gedp->ged_result_str,
+		"error in specifying minimum samples per model axis: \"%g\"\n",
+		args.samples);
+	} else {
+	    options->samples_per_model_axis = args.samples + 1.0;
+	    analyze_set_samples_per_model_axis(state,
+		options->samples_per_model_axis);
+	}
+    }
+    if (args.overlap_tolerance && read_units_double(gedp,
+	&options->overlap_tolerance, args.overlap_tolerance, units_tab[0])) {
+	bu_vls_printf(gedp->ged_result_str,
+	    "error in overlap tolerance distance \"%s\"\n",
+	    args.overlap_tolerance);
+	return -1;
+    }
+    if (args.overlap_tolerance)
+	analyze_set_overlap_tolerance(state, options->overlap_tolerance);
+    if (args.use_air != INT_MIN) {
+	options->use_air = args.use_air;
+	analyze_set_use_air(state, options->use_air);
+    }
+    if (args.report_units) {
+	char *units_arg = bu_strdup(args.report_units);
+	char *unit = strtok(units_arg, CPP_XSTR(COMMA));
+	static const char *dim[3] = {"length", "volume", "mass"};
+	int i;
+	for (i = 0; i < 3 && unit; i++, unit = strtok(NULL, CPP_XSTR(COMMA))) {
+	    const struct cvt_tab *cv;
+	    int found_unit = 0;
+	    for (cv = &units_tab[i][0]; cv->name[0] != '\0'; cv++) {
+		if (BU_STR_EQUAL(cv->name, unit)) {
+		    options->units[i] = cv;
+		    found_unit = 1;
+		    break;
+		}
+	    }
+	    if (!found_unit) {
+		bu_vls_printf(gedp->ged_result_str,
+		    "Units \"%s\" not found in conversion table\n", unit);
+		bu_free(units_arg, "check units argument");
+		return -1;
+	    }
+	}
+	bu_free(units_arg, "check units argument");
+	bu_vls_printf(gedp->ged_result_str, "Units: ");
+	for (i = 0; i < 3; i++)
+	    bu_vls_printf(gedp->ged_result_str, " %s: %s", dim[i], options->units[i]->name);
+	bu_vls_printf(gedp->ged_result_str, "\n");
+    }
+    if (args.verbose) {
+	options->verbose = 1;
+	options->verbose_str = bu_vls_vlsinit();
+	analyze_enable_verbose(state, options->verbose_str);
+    }
+    if (args.volume_tolerance && read_units_double(gedp,
+	&options->volume_tolerance, args.volume_tolerance, units_tab[1])) {
+	bu_vls_printf(gedp->ged_result_str,
+	    "error in volume tolerance \"%s\"\n", args.volume_tolerance);
+	return -1;
+    }
+    if (args.volume_tolerance)
+	analyze_set_volume_tolerance(state, options->volume_tolerance);
+
+    return object_count;
+}
 
 /*
  * add unique pairs of regions to list
@@ -564,15 +593,15 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
     argc -= opt_argc;
     argv = &argv[opt_argc];
 
-    arg_count = parse_check_args(gedp, argc, (char **)argv, &options, state);
+    arg_count = parse_check_args(gedp, argc, argv, &options, state);
 
     if (arg_count < 0 ) {
 	check_show_help(gedp);
 	return GED_HELP;
     }
 
-    nobjs = argc - arg_count;
-    objtab = argv + (arg_count);
+    nobjs = arg_count;
+    objtab = argv + 1;
 
     if (nobjs <= 0){
 	nvobjs = (int)ged_who_argc(gedp);
@@ -684,11 +713,83 @@ freemem:
 
 #include "../include/plugin.h"
 
-#define GED_CHECK_COMMANDS(X, XID) \
-    X(check, ged_check_core, GED_CMD_DEFAULT) \
+#define CHECK_SCHEMA(_id, _name, _help) \
+    static const struct bu_arg_schema _id##_schema = \
+	BU_ARG_SCHEMA(_name, _help, check_options, check_operands, \
+	    BU_ARG_PARSE_OPTIONS_FIRST, NULL)
+CHECK_SCHEMA(check_adj_air, "adj_air", "Find adjacent air regions with differing codes");
+CHECK_SCHEMA(check_centroid, "centroid", "Compute centroids");
+CHECK_SCHEMA(check_exp_air, "exp_air", "Find exposed air regions");
+CHECK_SCHEMA(check_gap, "gap", "Report gaps along ray paths");
+CHECK_SCHEMA(check_mass, "mass", "Compute mass");
+CHECK_SCHEMA(check_moments, "moments", "Compute moments and products of inertia");
+CHECK_SCHEMA(check_overlaps, "overlaps", "Report overlapping regions");
+CHECK_SCHEMA(check_surf_area, "surf_area", "Compute surface area");
+CHECK_SCHEMA(check_unconf_air, "unconf_air", "Report unconfined air regions");
+CHECK_SCHEMA(check_volume, "volume", "Compute volume");
+#undef CHECK_SCHEMA
+GED_DEFINE_NO_ARG_SCHEMA_NAMED(check_root_schema, "check",
+    "Analyze geometric and physical properties", BU_ARG_PARSE_OPTIONS_FIRST);
+static const struct bu_arg_tree_node check_subcommands[] = {
+    BU_ARG_TREE_NODE(&check_adj_air_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&check_centroid_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&check_exp_air_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&check_gap_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&check_mass_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&check_moments_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&check_overlaps_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&check_surf_area_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&check_unconf_air_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&check_volume_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE_NULL
+};
+static const struct bu_arg_tree check_tree = {
+    &check_root_schema, check_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS
+};
 
-GED_DECLARE_COMMAND_SET(GED_CHECK_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_check", 1, GED_CHECK_COMMANDS)
+static int
+check_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
+	struct ged_cmd_validate_result *result)
+{
+    return ged_cmd_tree_validate(gedp, &check_tree, input, cursor_pos, result);
+}
+
+static int
+check_grammar_analyze(struct ged *gedp, const char *input,
+	struct ged_cmd_analysis *analysis)
+{
+    return ged_cmd_tree_analyze(gedp, &check_tree, input, analysis);
+}
+
+static char *
+check_grammar_json(void)
+{
+    return bu_arg_tree_describe_json(&check_tree);
+}
+
+static char *
+check_grammar_help(const char *invocation)
+{
+    return bu_arg_tree_help(&check_tree, invocation);
+}
+
+static int
+check_grammar_lint(struct bu_vls *msgs)
+{
+    return bu_arg_tree_lint(&check_tree, msgs);
+}
+
+static const struct ged_cmd_grammar check_grammar = {
+    "check", "Analyze geometric and physical properties", check_grammar_validate,
+    check_grammar_analyze, check_grammar_json, check_grammar_lint, NULL,
+    check_grammar_help
+};
+
+#define GED_CHECK_COMMANDS(NX, NXID, GX, GXID) \
+    GX(check, ged_check_core, GED_CMD_DEFAULT, &check_grammar) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA_AND_GRAMMAR(GED_CHECK_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA_AND_GRAMMAR("libged_check", 1, GED_CHECK_COMMANDS)
 
 /*
  * Local Variables:

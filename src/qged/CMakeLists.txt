@@ -47,6 +47,9 @@ if(BRLCAD_ENABLE_QT)
   endif(Qt6Widgets_FOUND)
 
   add_executable(qged WIN32 main.cpp ${qged_srcs} ${moc_srcs} ${theme_qrc})
+  set_target_properties(qged PROPERTIES BRLCAD_ARG_SCHEMA TRUE)
+  set_property(GLOBAL APPEND PROPERTY BRLCAD_ARG_SCHEMA_TARGETS qged)
+  set_property(GLOBAL APPEND PROPERTY BRLCAD_EXEC_ARG_SCHEMA_TARGETS qged)
   # Note - Network is needed for async embedded raytracing display
   set_property(TARGET qged PROPERTY POSITION_INDEPENDENT_CODE TRUE)
   if(QGED_LINK_PIE_SUPPORTED)

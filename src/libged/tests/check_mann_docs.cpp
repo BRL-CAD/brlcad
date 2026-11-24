@@ -341,35 +341,6 @@ extract_usage_options(const std::string &body)
 }
 
 static std::set<std::string>
-extract_buopt_options(const std::string &body)
-{
-    std::set<std::string> opts;
-    std::regex buopt_re(R"re(BU_OPT\s*\([^, ]+, \s*"((?:\\.|[^"\\])*)"\s*, \s*"((?:\\.|[^"\\])*)")re");
-
-    for (auto it = std::sregex_iterator(body.begin(), body.end(), buopt_re); it != std::sregex_iterator(); ++it) {
-	std::string shorts = decode_c_string((*it)[1].str());
-	std::string longs = decode_c_string((*it)[2].str());
-
-	std::stringstream ss(shorts);
-	std::string s;
-	while (std::getline(ss, s, '|')) {
-	    s = trim(s);
-	    if (!s.empty())
-		opts.insert("-" + s);
-	}
-
-	std::stringstream ls(longs);
-	while (std::getline(ls, s, '|')) {
-	    s = trim(s);
-	    if (!s.empty())
-		opts.insert("--" + s);
-	}
-    }
-
-    return opts;
-}
-
-static std::set<std::string>
 extract_getopt_options(const std::string &body)
 {
     std::set<std::string> opts;
@@ -435,7 +406,6 @@ extract_command_options(const fs::path &src_path, const std::string &fn)
     std::string txt = slurp(src_path);
     std::string body = find_function_body(txt, fn);
     std::set<std::string> usage_opts = extract_usage_options(body);
-    std::set<std::string> buopt_opts = extract_buopt_options(body);
     std::set<std::string> getopt_opts = extract_getopt_options(body);
 
     collapse_case_pairs(getopt_opts, usage_opts);
@@ -446,13 +416,6 @@ extract_command_options(const fs::path &src_path, const std::string &fn)
 	std::string low = o;
 	std::transform(low.begin(), low.end(), low.begin(), [](unsigned char c){ return (char)std::tolower(c); });
 	usage_lower.insert(low);
-    }
-
-    for (const auto &o : buopt_opts) {
-	std::string low = o;
-	std::transform(low.begin(), low.end(), low.begin(), [](unsigned char c){ return (char)std::tolower(c); });
-	if (o.rfind("--", 0) == 0 || usage_opts.find(o) != usage_opts.end() || usage_lower.find(low) == usage_lower.end())
-	    opts.insert(o);
     }
 
     if (usage_opts.empty()) {

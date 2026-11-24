@@ -31,7 +31,7 @@
 #include <math.h>
 
 
-#include "bu/getopt.h"
+#include "bu/arg.h"
 
 #include "raytrace.h"
 
@@ -54,6 +54,8 @@ static unsigned int J_DEBUG = 0;
 #define MAX_OBJ_NAME 255
 
 extern struct funtab joint_tab[];
+static int joint_tree_help_append(struct ged *gedp, size_t path_argc,
+	const char * const *path_argv);
 
 
 struct artic_grips {
@@ -349,7 +351,10 @@ helpcomm(struct ged *gedp, int argc, const char *argv[], struct funtab *function
 	    if (!BU_STR_EQUAL(ftp->ft_name, argv[i]))
 		continue;
 
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s%s %s\n\t(%s)\n", functions->ft_name, ftp->ft_name, ftp->ft_parms, ftp->ft_comment);
+	    {
+		const char *path[] = {ftp->ft_name};
+		joint_tree_help_append(gedp, 1, path);
+	    }
 	    break;
 	}
 	if (!ftp->ft_name) {
@@ -369,13 +374,8 @@ helpcomm(struct ged *gedp, int argc, const char *argv[], struct funtab *function
 static int
 joint_usage(struct ged *gedp, int argc, const char *argv[], struct funtab *functions)
 {
-    struct funtab *ftp;
-
     if (argc <= 1) {
-	bu_vls_printf(gedp->ged_result_str, "The following commands are available:\n");
-	for (ftp = functions+1; ftp->ft_name; ftp++) {
-	    bu_vls_printf(gedp->ged_result_str, "%s%s %s\n\t (%s)\n", functions->ft_name, ftp->ft_name, ftp->ft_parms, ftp->ft_comment);
-	}
+	joint_tree_help_append(gedp, 0, NULL);
 	return BRLCAD_OK;
     }
     return helpcomm(gedp, argc, argv, functions);
@@ -2291,6 +2291,56 @@ joint_adjust(struct ged *gedp, struct joint *jp)
 }
 
 
+struct joint_load_args {
+    int no_unload;
+    int no_apply;
+    int no_mesh;
+};
+static const struct bu_arg_option joint_load_options[] = {
+    BU_ARG_FLAG("u", NULL, struct joint_load_args, no_unload,
+	"Keep currently loaded joints"),
+    BU_ARG_FLAG("a", NULL, struct joint_load_args, no_apply,
+	"Do not apply loaded joints"),
+    BU_ARG_FLAG("m", NULL, struct joint_load_args, no_mesh,
+	"Do not rebuild the grip mesh"),
+    BU_ARG_OPTION_NULL
+};
+
+struct joint_mesh_args {
+    int no_mesh;
+};
+static const struct bu_arg_option joint_mesh_options[] = {
+    BU_ARG_FLAG("m", NULL, struct joint_mesh_args, no_mesh,
+	"Do not rebuild the grip mesh"),
+    BU_ARG_OPTION_NULL
+};
+
+struct joint_solve_args {
+    int loops;
+    fastf_t epsilon;
+    fastf_t delta;
+    long mesh_toggles;
+};
+static const struct bu_arg_option joint_solve_options[] = {
+    BU_ARG_VALUE("l", NULL, struct joint_solve_args, loops,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "count",
+	"Set maximum iteration count"),
+    BU_ARG_VALUE("e", NULL, struct joint_solve_args, epsilon,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "distance",
+	"Set convergence epsilon"),
+    BU_ARG_VALUE("d", NULL, struct joint_solve_args, delta,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "distance",
+	"Set initial solve delta"),
+    BU_ARG_COUNTING_FLAG("m", NULL, struct joint_solve_args, mesh_toggles,
+	BU_ARG_VALUE_LONG, "Toggle mesh rebuilding"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema joint_accept_schema;
+static const struct bu_arg_schema joint_load_schema;
+static const struct bu_arg_schema joint_reject_schema;
+static const struct bu_arg_schema joint_solve_schema;
+
 static int
 joint_load(struct ged *gedp, int argc, const char *argv[])
 {
@@ -2299,8 +2349,8 @@ joint_load(struct ged *gedp, int argc, const char *argv[])
     FILE *fip;
     struct bu_vls instring = BU_VLS_INIT_ZERO;
     union bu_lex_token token;
-    int no_unload = 0, no_apply=0, no_mesh=0;
-    int c;
+    struct joint_load_args args = {0};
+    int file_count;
     struct joint *jp;
     struct hold *hp;
 
@@ -2309,20 +2359,17 @@ joint_load(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    bu_optind = 1;
-    while ((c=bu_getopt(argc, (char * const *)argv, "uam")) != -1) {
-	switch (c) {
-	    case 'u': no_unload = 1;break;
-	    case 'a': no_apply = 1; break;
-	    case 'm': no_mesh = 1; break;
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "Usage: joint load [-uam] file_name [files]\n");
-		break;
-	}
+    argc--; argv++;
+    file_count = bu_arg_schema_parse_complete(&joint_load_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (file_count < 0) {
+	const char *path[] = {"load"};
+	joint_tree_help_append(gedp, 1, path);
+	return BRLCAD_ERROR;
     }
-    argv += bu_optind;
-    argc -= bu_optind;
-    if (!no_unload) joint_unload(gedp, 0, NULL);
+    argc -= file_count;
+    argv += file_count;
+    if (!args.no_unload) joint_unload(gedp, 0, NULL);
 
     base2mm = gedp->dbip->dbi_base2local;
     mm2base = gedp->dbip->dbi_local2base;
@@ -2346,7 +2393,7 @@ joint_load(struct ged *gedp, int argc, const char *argv[])
 		if (token.t_key.value == KEY_JOINT) {
 		    if (parse_joint(gedp, fip, &instring)) {
 			jp = BU_LIST_LAST(joint, &joint_head);
-			if (!no_apply) joint_adjust(gedp, jp);
+			if (!args.no_apply) joint_adjust(gedp, jp);
 		    }
 		} else if (token.t_key.value == KEY_CON) {
 		    (void)parse_hold(gedp, fip, &instring);
@@ -2423,7 +2470,7 @@ joint_load(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
     }
-    if (!no_mesh) (void) joint_mesh(gedp, 0, 0);
+    if (!args.no_mesh) (void) joint_mesh(gedp, 0, 0);
     return BRLCAD_OK;
 }
 
@@ -2517,21 +2564,19 @@ static int
 joint_accept(struct ged *gedp, int argc, const char *argv[])
 {
     struct joint *jp;
+    struct joint_mesh_args args = {0};
     int i;
-    int c;
-    int no_mesh = 0;
 
-    bu_optind=1;
-    while ((c=bu_getopt(argc, (char * const *)argv, "m")) != -1) {
-	switch (c) {
-	    case 'm': no_mesh=1;break;
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "Usage: joint accept [-m] [joint_names]\n");
-		break;
-	}
+    argc--; argv++;
+    i = bu_arg_schema_parse_complete(&joint_accept_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (i < 0) {
+	const char *path[] = {"accept"};
+	joint_tree_help_append(gedp, 1, path);
+	return BRLCAD_ERROR;
     }
-    argc -= bu_optind;
-    argv += bu_optind;
+    argc -= i;
+    argv += i;
 
     for (BU_LIST_FOR(jp, joint, &joint_head)) {
 	if (argc) {
@@ -2547,7 +2592,7 @@ joint_accept(struct ged *gedp, int argc, const char *argv[])
 	    jp->rots[i].accepted = jp->rots[i].current;
 	}
     }
-    if (!no_mesh) joint_mesh(gedp, 0, 0);
+    if (!args.no_mesh) joint_mesh(gedp, 0, 0);
     return BRLCAD_OK;
 }
 
@@ -2556,21 +2601,19 @@ static int
 joint_reject(struct ged *gedp, int argc, const char *argv[])
 {
     struct joint *jp;
+    struct joint_mesh_args args = {0};
     int i;
-    int c;
-    int no_mesh = 0;
 
-    bu_optind=1;
-    while ((c=bu_getopt(argc, (char * const *)argv, "m")) != -1) {
-	switch (c) {
-	    case 'm': no_mesh=1;break;
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "Usage: joint accept [-m] [joint_names]\n");
-		break;
-	}
+    argc--; argv++;
+    i = bu_arg_schema_parse_complete(&joint_reject_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (i < 0) {
+	const char *path[] = {"reject"};
+	joint_tree_help_append(gedp, 1, path);
+	return BRLCAD_ERROR;
     }
-    argc -= bu_optind;
-    argv += bu_optind;
+    argc -= i;
+    argv += i;
 
     for (BU_LIST_FOR(jp, joint, &joint_head)) {
 	if (argc) {
@@ -2588,7 +2631,7 @@ joint_reject(struct ged *gedp, int argc, const char *argv[])
 	}
 	joint_adjust(gedp, jp);
     }
-    if (!no_mesh) joint_mesh(gedp, 0, 0);
+    if (!args.no_mesh) joint_mesh(gedp, 0, 0);
     return BRLCAD_OK;
 }
 
@@ -3177,6 +3220,7 @@ static int
 joint_solve(struct ged *gedp, int argc, const char *argv[])
 {
     struct hold *hp;
+    struct joint_solve_args args = {1000, 0.1, 16.0, 0};
     int loops, count;
     double delta, epsilon;
     int domesh;
@@ -3197,31 +3241,27 @@ joint_solve(struct ged *gedp, int argc, const char *argv[])
 	bu_strlcpy(myargv[count], argv[count], strlen(argv[count])+1);
     }
 
-    /* argv = myargv; */
-    /* argc = myargc; */
+    argv = (const char **)myargv;
+    argc = myargc;
 
     /* these are the defaults.  Domesh will change to not at a later
      * time.
      */
-    loops = 1000;
-    delta = 16.0;
-    epsilon = 0.1;
-    domesh = 1;
-
-    /* reset bu_getopt. */
-    bu_optind=1;
-    while ((count=bu_getopt(argc, (char * const *)argv, "l:e:d:m")) != -1) {
-	switch (count) {
-	    case 'l': loops = atoi(bu_optarg);break;
-	    case 'e': epsilon = atof(bu_optarg);break;
-	    case 'd': delta =  atof(bu_optarg);break;
-	    case 'm': domesh = 1-domesh;
-	}
+    argc--; argv++;
+    result = bu_arg_schema_parse_complete(&joint_solve_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (result < 0) {
+	for (count = 0; count < myargc; count++)
+	    bu_free(myargv[count], "params");
+	bu_free((void *)myargv, "param pointers");
+	return BRLCAD_ERROR;
     }
-
-    /* skip the command and any options that bu_getopt ate. */
-    argc -= bu_optind;
-    argv += bu_optind;
+    argc -= result;
+    argv += result;
+    loops = args.loops;
+    epsilon = args.epsilon;
+    delta = args.delta;
+    domesh = !(args.mesh_toggles & 1L);
 
     for (BU_LIST_FOR(hp, hold, &hold_head))
 	hold_clear_flags(hp);
@@ -3486,8 +3526,7 @@ joint_cmd(struct ged *gedp,
     struct funtab *ftp;
 
     if (argc == 0) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: joint {command} [command_options]\n\n");
-	(void)joint_usage(gedp, argc, argv, functions);
+	joint_tree_help_append(gedp, 0, NULL);
 	return GED_HELP;	/* No command entered */
     }
 
@@ -3511,7 +3550,10 @@ joint_cmd(struct ged *gedp,
 	    }
 	}
 
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s%s %s\n\t(%s)\n", functions[0].ft_name, ftp->ft_name, ftp->ft_parms, ftp->ft_comment);
+	{
+	    const char *path[] = {ftp->ft_name};
+	    joint_tree_help_append(gedp, 1, path);
+	}
 	return BRLCAD_ERROR;
     }
 
@@ -3578,12 +3620,130 @@ struct funtab joint_tab[] = {
 };
 
 #include "../include/plugin.h"
+static const struct bu_arg_operand joint_args[] = {
+    BU_ARG_OPERAND("arguments", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
+	"Joint-specific arguments", NULL),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_operand joint_debug_args[] = {
+    BU_ARG_OPERAND("flags", BU_ARG_VALUE_HEX_INTEGER, 0, 1,
+	"Debugging bit vector", NULL),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_operand joint_move_args[] = {
+    BU_ARG_OPERAND("joint", BU_ARG_VALUE_STRING, 1, 1,
+	"Joint name", NULL),
+    BU_ARG_OPERAND("parameter", BU_ARG_VALUE_NUMBER, 1, 6,
+	"One through six joint parameter values", NULL),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_operand joint_constraint_args[] = {
+    BU_ARG_OPERAND("constraint", BU_ARG_VALUE_STRING, 0,
+	BU_ARG_COUNT_UNLIMITED, "Constraint names; omit to select all", NULL),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_operand joint_file[] = {
+    BU_ARG_OPERAND("file", BU_ARG_VALUE_FILE, 1, 1,
+	"Joint definition file", "ged.file_path"),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_operand joint_files[] = {
+    BU_ARG_OPERAND("files", BU_ARG_VALUE_FILE, 1, BU_ARG_COUNT_UNLIMITED,
+	"Joint definition files", "ged.file_path"),
+    BU_ARG_OPERAND_NULL
+};
+#define JOINT_SCHEMA(_id, _name, _help, _opts, _ops) \
+    static const struct bu_arg_schema _id##_schema = \
+	BU_ARG_SCHEMA(_name, _help, _opts, _ops, BU_ARG_PARSE_OPTIONS_FIRST, \
+	    BU_ARG_SCHEMA_META(NULL, NULL, NULL, NULL))
+JOINT_SCHEMA(joint_root, "joint", "Load, inspect, solve, and move articulated joints", NULL, NULL);
+JOINT_SCHEMA(joint_help, "?", "List joint commands", NULL, joint_args);
+JOINT_SCHEMA(joint_accept, "accept", "Accept joint moves", joint_mesh_options, joint_args);
+JOINT_SCHEMA(joint_debug, "debug", "Query or set joint debugging", NULL, joint_debug_args);
+JOINT_SCHEMA(joint_usage, "help", "Print joint command help", NULL, joint_args);
+JOINT_SCHEMA(joint_holds, "holds", "List constraints", NULL, joint_args);
+JOINT_SCHEMA(joint_list, "list", "List joints", NULL, joint_args);
+JOINT_SCHEMA(joint_load, "load", "Load joint definitions", joint_load_options, joint_files);
+JOINT_SCHEMA(joint_mesh, "mesh", "Build the grip mesh", NULL, NULL);
+JOINT_SCHEMA(joint_move, "move", "Adjust a joint", NULL, joint_move_args);
+JOINT_SCHEMA(joint_reject, "reject", "Reject joint motions", joint_mesh_options, joint_args);
+JOINT_SCHEMA(joint_save, "save", "Save joint definitions", NULL, joint_file);
+JOINT_SCHEMA(joint_solve, "solve", "Solve constraints", joint_solve_options, joint_constraint_args);
+JOINT_SCHEMA(joint_unload, "unload", "Unload joint definitions", NULL, NULL);
+#undef JOINT_SCHEMA
 
-#define GED_JOINT_COMMANDS(X, XID) \
-    X(joint, ged_joint_core, GED_CMD_DEFAULT) \
+static const struct bu_arg_tree_node joint_subcommands[] = {
+    BU_ARG_TREE_NODE(&joint_help_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&joint_accept_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&joint_debug_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&joint_usage_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&joint_holds_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&joint_list_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&joint_load_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&joint_mesh_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&joint_move_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&joint_reject_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&joint_save_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&joint_solve_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&joint_unload_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE_NULL
+};
+static const struct bu_arg_tree joint_tree = {
+    &joint_root_schema, joint_subcommands, BU_ARG_TREE_CHILD_FIRST
+};
 
-GED_DECLARE_COMMAND_SET(GED_JOINT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_joint", 1, GED_JOINT_COMMANDS)
+static int
+joint_tree_help_append(struct ged *gedp, size_t path_argc,
+	const char * const *path_argv)
+{
+    char *help = bu_arg_tree_help_path(&joint_tree, "joint", path_argc,
+	path_argv);
+
+    if (!help)
+	return BRLCAD_ERROR;
+    bu_vls_strcat(gedp->ged_result_str, help);
+    bu_free(help, "joint native tree path help");
+    return BRLCAD_OK;
+}
+
+static int
+joint_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
+	struct ged_cmd_validate_result *result)
+{
+    return ged_cmd_tree_validate(gedp, &joint_tree, input, cursor_pos, result);
+}
+
+static int
+joint_grammar_analyze(struct ged *gedp, const char *input,
+	struct ged_cmd_analysis *analysis)
+{
+    return ged_cmd_tree_analyze(gedp, &joint_tree, input, analysis);
+}
+
+static char *
+joint_grammar_json(void)
+{
+    return bu_arg_tree_describe_json(&joint_tree);
+}
+
+static int
+joint_grammar_lint(struct bu_vls *msgs)
+{
+    return bu_arg_tree_lint(&joint_tree, msgs);
+}
+GED_CMD_TREE_HELP(joint_grammar_help, joint_tree)
+
+static const struct ged_cmd_grammar joint_grammar = {
+    "joint", "Load, inspect, solve, and move articulated joints",
+    joint_grammar_validate, joint_grammar_analyze, joint_grammar_json,
+    joint_grammar_lint, NULL, joint_grammar_help
+};
+
+#define GED_JOINT_COMMANDS(NX, NXID, GX, GXID) \
+    GX(joint, ged_joint_core, GED_CMD_DEFAULT, &joint_grammar) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA_AND_GRAMMAR(GED_JOINT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA_AND_GRAMMAR("libged_joint", 1, GED_JOINT_COMMANDS)
 
 /*
  * Local Variables:

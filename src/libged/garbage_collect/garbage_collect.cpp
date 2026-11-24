@@ -33,17 +33,17 @@
 
 #include "bu/app.h"
 #include "bu/cmd.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bu/path.h"
 #include "raytrace.h"
 #include "ged.h"
 
 #include "../dbi.h"
 
-void print_help_msg(struct bu_vls *str)
+static void
+print_help_msg(struct bu_vls *str, const char *command)
 {
-    bu_vls_printf(str, "Usage: garbage_collect [-c|--confirm] [-h|--help]\n");
-    bu_vls_printf(str, "\n");
+    ged_cmd_help_append(str, command, command);
     bu_vls_printf(str, "garbage_collect reclaims any available free space in the currently\n");
     bu_vls_printf(str, "open geometry database file.  As objects are deleted and created,\n");
     bu_vls_printf(str, "BRL-CAD geometry files can become fragmented and require cleanup.\n");
@@ -57,16 +57,42 @@ void print_help_msg(struct bu_vls *str)
     bu_vls_printf(str, "YOUR GEOMETRY FILE BEFORE RUNNING 'garbage_collect'.\n");
 }
 
+
+struct garbage_collect_args {
+    int help;
+    int confirm;
+};
+
+
+static const struct bu_arg_option garbage_collect_options[] = {
+    BU_ARG_FLAG("h", "help", struct garbage_collect_args, help,
+	"Print help and exit"),
+    BU_ARG_FLAG("c", "confirm", struct garbage_collect_args, confirm,
+	"Execute the garbage-collection operation"),
+    BU_ARG_OPTION_NULL
+};
+static const char * const garbage_collect_modes[] = {"help", "confirm", NULL};
+static const struct bu_arg_constraint garbage_collect_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS,
+	garbage_collect_modes, 1, 2,
+	"--confirm is required to execute (or use --help)"),
+    BU_ARG_CONSTRAINT_NULL
+};
+static const struct bu_arg_schema garbage_collect_cmd_schema =
+    BU_ARG_SCHEMA("garbage_collect",
+	"Rewrite the database without unreachable records",
+	garbage_collect_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+	BU_ARG_SCHEMA_META_HELP(NULL, garbage_collect_constraints, NULL, NULL, NULL));
+
 extern "C" int
 ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
 {
     const char *av[10] = {NULL};
     fastf_t fs_percent = 0.0;
-    int confirmed = 0;
+    struct garbage_collect_args args = {0, 0};
     int new_file_size = 0;
     int old_file_size = 0;
     int path_cnt = 0;
-    int print_help = 0;
     int ret = BRLCAD_OK;
     int verify_failure = 0;
     std::set<std::string> missing_new_top_objs;
@@ -90,11 +116,6 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     std::ifstream cfile;
     std::ofstream ofile;
 
-    struct bu_opt_desc d[3];
-    BU_OPT(d[0], "h", "help",      "",             NULL,        &print_help,   "Print help and exit");
-    BU_OPT(d[1], "c", "confirm",   "",             NULL,        &confirmed,    "Execute garbage collect operation");
-    BU_OPT_NULL(d[2]);
-
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     if (db_version(gedp->dbip) < 5) {
@@ -109,20 +130,23 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     argc-=(argc>0); argv+=(argc>0);
 
     if (!argc) {
-	print_help_msg(gedp->ged_result_str);
+	print_help_msg(gedp->ged_result_str, "garbage_collect");
 	return GED_HELP;
     }
 
-    /* parse standard options */
-    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
+    if (bu_arg_schema_parse_complete(&garbage_collect_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv) < 0)
+	return BRLCAD_ERROR;
 
-    if (print_help) {
-	print_help_msg(gedp->ged_result_str);
+
+    if (args.help) {
+	print_help_msg(gedp->ged_result_str, "garbage_collect");
 	return BRLCAD_OK;
     }
 
-    if (!confirmed || opt_ret) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: garbage_collect [-c|--confirm] [-h|--help]");
+    if (!args.confirm) {
+	ged_cmd_help_append(gedp->ged_result_str, "garbage_collect",
+	    "garbage_collect");
 	return BRLCAD_ERROR;
     }
 
@@ -374,10 +398,10 @@ gc_cleanup:
 #include "../include/plugin.h"
 
 #define GED_GARBAGE_COLLECT_COMMANDS(X, XID) \
-    X(garbage_collect, ged_garbage_collect_core, GED_CMD_DEFAULT) \
+    X(garbage_collect, ged_garbage_collect_core, GED_CMD_DEFAULT, &garbage_collect_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_GARBAGE_COLLECT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_garbage_collect", 1, GED_GARBAGE_COLLECT_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_GARBAGE_COLLECT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_garbage_collect", 1, GED_GARBAGE_COLLECT_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

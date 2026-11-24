@@ -33,7 +33,7 @@
 #include "bg.h"
 #include "rt/geom.h"
 #include "rt/primitives/arb8.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "rt/db4.h"
 #include "rt/edit.h"
 #include "../edit_private.h"
@@ -2375,7 +2375,7 @@ rt_arb_f_eqn(struct rt_edit *s, int argc, const char **argv)
     RT_ARB_CK_MAGIC(arb);
 
     for (int i = 0; i < 3; i++) {
-	if (bu_opt_fastf_t(NULL, 1, &argv[i + 1], &normal[i]) != 1 ||
+	if (bu_arg_number_from_str(NULL, (fastf_t *)(&normal[i]), argv[i + 1]) != 1 ||
 	    !isfinite(normal[i])) {
 	    bu_vls_printf(s->log_str, "Eqn: invalid plane normal\n");
 	    return BRLCAD_ERROR;
@@ -2429,8 +2429,8 @@ rt_arb_edgedir(struct rt_edit *s, int argc, const char **argv)
      * else assume delta_x, delta_y, delta_z
      */
     if (argc == 3) {
-	if (bu_opt_fastf_t(NULL, 1, &argv[1], &rot) != 1 ||
-	    bu_opt_fastf_t(NULL, 1, &argv[2], &fb_a) != 1 ||
+	if (bu_arg_number_from_str(NULL, (fastf_t *)(&rot), argv[1]) != 1 ||
+	    bu_arg_number_from_str(NULL, (fastf_t *)(&fb_a), argv[2]) != 1 ||
 	    !isfinite(rot) || !isfinite(fb_a)) {
 	    bu_vls_printf(s->log_str, "Edgedir: invalid angle\n");
 	    return BRLCAD_ERROR;
@@ -2442,7 +2442,7 @@ rt_arb_edgedir(struct rt_edit *s, int argc, const char **argv)
 	slope[2] = sin(fb_a);
     } else {
 	for (int i = 0; i < 3; i++) {
-	    if (bu_opt_fastf_t(NULL, 1, &argv[i + 1], &slope[i]) != 1 ||
+	    if (bu_arg_number_from_str(NULL, (fastf_t *)(&slope[i]), argv[i + 1]) != 1 ||
 		!isfinite(slope[i])) {
 		bu_vls_printf(s->log_str, "Edgedir: invalid slope\n");
 		return BRLCAD_ERROR;
@@ -2997,20 +2997,28 @@ rt_edit_arb_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const stru
     struct rt_arb_internal *arb;
     struct rt_arb_internal repaired_arb;
     int ret;
-    int options_json = 0;
-    int print_help = 0;
-    fastf_t ftol = -1.0;
+    struct arb_repair_args {
+	int print_help;
+	int options_json;
+	fastf_t tolerance;
+    } args = {0, 0, -1.0};
+    static const struct bu_arg_option options[] = {
+	BU_ARG_FLAG("h", "help", struct arb_repair_args, print_help, "Print help"),
+	BU_ARG_VALUE("t", "tol", struct arb_repair_args, tolerance, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "distance",
+	    "Distance tolerance for snapping vertices"),
+	BU_ARG_FLAG(NULL, "options-json", struct arb_repair_args, options_json,
+	    "Return JSON of supported options"),
+	BU_ARG_OPTION_NULL
+    };
+    static const struct bu_arg_schema schema = {
+	"arb repair", "Repair and canonicalize ARB objects", options, NULL,
+	BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
+    };
 
-    struct bu_opt_desc d[4];
-    BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help");
-    BU_OPT(d[1], "t", "tol", "<#>", bu_opt_fastf_t, &ftol, "Distance tolerance for snapping vertices");
-    BU_OPT(d[2], "", "options-json", "", NULL, &options_json, "Return JSON of supported options");
-    BU_OPT_NULL(d[3]);
+    if (edit_repair_parse_options(log_str, argc, argv, &schema, &args) != BRLCAD_OK)
+	return -1;
 
-    if (edit_repair_parse_options(log_str, argc, argv, d) != BRLCAD_OK)
-        return -1;
-
-    if (options_json) {
+    if (args.options_json) {
         if (log_str) {
             bu_vls_printf(log_str, "{\"options\":[");
             bu_vls_printf(log_str, "{\"name\":\"tol\",\"type\":\"float\",\"description\":\"Distance tolerance for snapping vertices\"}");
@@ -3019,20 +3027,22 @@ rt_edit_arb_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const stru
         return 1;
     }
 
-    if (print_help) {
+    if (args.print_help) {
         if (log_str) {
-            char *option_help = bu_opt_describe(d, NULL);
-            bu_vls_printf(log_str, "{\"status\":\"help\",\"message\":\"Options:\\n%s\"}", option_help ? option_help : "");
-            if (option_help) bu_free(option_help, "help str");
+	    char *help = bu_arg_schema_help(&schema, NULL);
+	    bu_vls_strcat(log_str, "{\"status\":\"help\",\"message\":");
+	    bu_arg_json_string(log_str, help);
+	    bu_vls_putc(log_str, '}');
+	    if (help) bu_free(help, "ARB repair help");
         }
         return -1;
     }
 
     struct bn_tol default_tol = BN_TOL_INIT_TOL;
     struct bn_tol user_tol = tol ? *tol : default_tol;
-    if (ftol > 0.0) {
-        user_tol.dist = ftol;
-        user_tol.dist_sq = ftol * ftol;
+    if (args.tolerance > 0.0) {
+        user_tol.dist = args.tolerance;
+        user_tol.dist_sq = args.tolerance * args.tolerance;
     }
 
     RT_CK_DB_INTERNAL(ip);

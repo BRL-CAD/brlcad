@@ -91,7 +91,7 @@ check_command ( ) {
 	log "Output: $output"
 	return 1
     fi
-    if test "x`echo \"$output\" | grep -i error | grep -i -v _error | grep -i -v error_`" != "x" ; then
+    if test "x`echo \"$output\" | sed '/^[[:space:]]*[Uu]sage:/,$d' | grep -i error | grep -i -v _error | grep -i -v error_`" != "x" ; then
 	log "ERROR: $cmd reported an error on default use"
 	log "Output: $output"
 	return 1

@@ -39,7 +39,7 @@
 
 #include "bio.h"
 
-#include "bu/getopt.h"
+#include "bu/arg.h"
 #include "bu/snooze.h"
 #include "dm.h"
 
@@ -70,109 +70,77 @@ struct pix2fb_state {
 
 #define PIX2FB_STATE_INIT_ZERO {512, 512, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
-static char pix2fb_usage[] = "\
-Usage: pix-fb [-a -h -i -c -z -1] [-m #lines] [-F framebuffer]\n\
-	[-s squarefilesize] [-w file_width] [-n file_height]\n\
-	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
-	[-S squarescrsize] [-W scr_width] [-N scr_height] [-p seconds]\n\
-	[file.pix]\n";
+struct pix2fb_args {
+    int multiple_lines;
+    int autosize;
+    int file_square_size;
+    int file_width;
+    int file_height;
+    int file_xoff;
+    int file_yoff;
+    int screen_square_size;
+    int screen_width;
+    int screen_height;
+    int screen_xoff;
+    int screen_yoff;
+    int clear;
+    int zoom;
+    int inverse;
+    int one_line_only;
+    int pause_sec;
+    int help;
+    const char *file_name;
+};
 
-static int
-pix2fb_get_args(struct pix2fb_state *s, int argc, char **argv)
+static const struct bu_arg_option pix2fb_schema_options[] = {
+    BU_ARG_FLAG("1", NULL, struct pix2fb_args, one_line_only, "Use one-line writes"),
+    BU_ARG_VALUE("m", NULL, struct pix2fb_args, multiple_lines, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "lines",
+	"Set multiple-line write count"),
+    BU_ARG_FLAG("a", NULL, struct pix2fb_args, autosize, "Autosize the input"),
+    BU_ARG_FLAG("i", NULL, struct pix2fb_args, inverse, "Draw upside-down"),
+    BU_ARG_FLAG("c", NULL, struct pix2fb_args, clear, "Clear the framebuffer"),
+    BU_ARG_FLAG("z", NULL, struct pix2fb_args, zoom, "Zoom to fill the screen"),
+    BU_ARG_VALUE_VALIDATE("s", NULL, struct pix2fb_args, file_square_size, BU_ARG_VALUE_INTEGER, bu_arg_positive_integer_validate, "pixels",
+	"Set both input dimensions"),
+    BU_ARG_VALUE_VALIDATE("w", NULL, struct pix2fb_args, file_width, BU_ARG_VALUE_INTEGER, bu_arg_positive_integer_validate, "pixels",
+	"Set input width"),
+    BU_ARG_VALUE_VALIDATE("n", NULL, struct pix2fb_args, file_height, BU_ARG_VALUE_INTEGER, bu_arg_positive_integer_validate, "pixels",
+	"Set input height"),
+    BU_ARG_VALUE("x", NULL, struct pix2fb_args, file_xoff, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "pixels", "Set input X offset"),
+    BU_ARG_VALUE("y", NULL, struct pix2fb_args, file_yoff, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "pixels", "Set input Y offset"),
+    BU_ARG_VALUE("X", NULL, struct pix2fb_args, screen_xoff, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "pixels", "Set framebuffer X offset"),
+    BU_ARG_VALUE("Y", NULL, struct pix2fb_args, screen_yoff, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "pixels", "Set framebuffer Y offset"),
+    BU_ARG_VALUE_VALIDATE("S", NULL, struct pix2fb_args, screen_square_size, BU_ARG_VALUE_INTEGER, bu_arg_positive_integer_validate, "pixels",
+	"Set both framebuffer dimensions"),
+    BU_ARG_VALUE_VALIDATE("W", NULL, struct pix2fb_args, screen_width, BU_ARG_VALUE_INTEGER, bu_arg_positive_integer_validate, "pixels",
+	"Set framebuffer width"),
+    BU_ARG_VALUE_VALIDATE("N", NULL, struct pix2fb_args, screen_height, BU_ARG_VALUE_INTEGER, bu_arg_positive_integer_validate, "pixels",
+	"Set framebuffer height"),
+    BU_ARG_VALUE_VALIDATE("p", NULL, struct pix2fb_args, pause_sec, BU_ARG_VALUE_INTEGER, bu_arg_nonnegative_integer_validate, "seconds",
+	"Pause before returning"),
+    BU_ARG_FLAG("h", "help", struct pix2fb_args, help, "Print command help"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand pix2fb_schema_operands[] = {
+    BU_ARG_OPERAND("input_file", BU_ARG_VALUE_FILE, 0, 1,
+	"Optional PIX input file", NULL),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema pix2fb_cmd_schema = {
+    "pix2fb", "Display a PIX image in the framebuffer", pix2fb_schema_options,
+    pix2fb_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+static void
+pix2fb_show_help(struct ged *gedp, const char *command)
 {
-    int c;
+    char *help = bu_arg_schema_help(&pix2fb_cmd_schema, command);
 
-    if (!s)
-	return 0;
-
-    bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "1m:aiczF:p:s:w:n:x:y:X:Y:S:W:N:h?")) != -1) {
-	switch (c) {
-	    case '1':
-		s->one_line_only = 1;
-		break;
-	    case 'm':
-		s->multiple_lines = atoi(bu_optarg);
-		break;
-	    case 'a':
-		s->autosize = 1;
-		break;
-	    case 'i':
-		s->inverse = 1;
-		break;
-	    case 'c':
-		s->clear = 1;
-		break;
-	    case 'z':
-		s->zoom = 1;
-		break;
-	    case 's':
-		/* square file size */
-		s->file_height = s->file_width = atoi(bu_optarg);
-		s->autosize = 0;
-		break;
-	    case 'w':
-		s->file_width = atoi(bu_optarg);
-		s->autosize = 0;
-		break;
-	    case 'n':
-		s->file_height = atoi(bu_optarg);
-		s->autosize = 0;
-		break;
-	    case 'x':
-		s->file_xoff = atoi(bu_optarg);
-		break;
-	    case 'y':
-		s->file_yoff = atoi(bu_optarg);
-		break;
-	    case 'X':
-		s->scr_xoff = atoi(bu_optarg);
-		break;
-	    case 'Y':
-		s->scr_yoff = atoi(bu_optarg);
-		break;
-	    case 'S':
-		s->scr_height = s->scr_width = atoi(bu_optarg);
-		break;
-	    case 'W':
-		s->scr_width = atoi(bu_optarg);
-		break;
-	    case 'N':
-		s->scr_height = atoi(bu_optarg);
-		break;
-	    case 'p':
-		s->pause_sec = atoi(bu_optarg);
-		break;
-
-	    default:		/* 'h' '?' */
-		return 0;
-	}
+    if (help) {
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "pix2fb native help");
     }
-
-    if (bu_optind >= argc) {
-	if (isatty(fileno(stdin)))
-	    return 0;
-	s->file_name = "-";
-	s->infd = 0;
-	setmode(s->infd, O_BINARY);
-    } else {
-	s->file_name = argv[bu_optind];
-	s->infd = open(s->file_name, 0);
-	if (s->infd < 0) {
-	    perror(s->file_name);
-	    fprintf(stderr,
-			  "pix-fb: cannot open \"%s\" for reading\n",
-			  s->file_name);
-	    bu_exit(1, NULL);
-	}
-	setmode(s->infd, O_BINARY);
-	s->fileinput++;
-    }
-
-    if (argc > ++bu_optind)
-	fprintf(stderr, "pix-fb: excess argument(s) ignored\n");
-
-    return 1;		/* OK */
 }
 
 
@@ -180,10 +148,59 @@ int
 ged_pix2fb_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
+    int operand_index;
+    struct pix2fb_args args = {0};
 
     struct pix2fb_state p2fbs = PIX2FB_STATE_INIT_ZERO;
 
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if (argc == 1) {
+	pix2fb_show_help(gedp, argv[0]);
+	return GED_HELP;
+    }
+
+    operand_index = bu_arg_schema_parse_complete(&pix2fb_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	pix2fb_show_help(gedp, argv[0]);
+	return BRLCAD_ERROR;
+    }
+    if (args.help) {
+	pix2fb_show_help(gedp, argv[0]);
+	return GED_HELP;
+    }
+    if (operand_index < argc - 1)
+	args.file_name = argv[operand_index + 1];
+
+    p2fbs.multiple_lines = args.multiple_lines;
+    p2fbs.autosize = args.autosize;
+    p2fbs.file_xoff = args.file_xoff;
+    p2fbs.file_yoff = args.file_yoff;
+    p2fbs.scr_xoff = args.screen_xoff;
+    p2fbs.scr_yoff = args.screen_yoff;
+    p2fbs.clear = args.clear;
+    p2fbs.zoom = args.zoom;
+    p2fbs.inverse = args.inverse;
+    p2fbs.one_line_only = args.one_line_only;
+    p2fbs.pause_sec = args.pause_sec;
+    if (args.file_square_size > 0)
+	p2fbs.file_width = p2fbs.file_height = (size_t)args.file_square_size;
+    if (args.file_width > 0)
+	p2fbs.file_width = (size_t)args.file_width;
+    if (args.file_height > 0)
+	p2fbs.file_height = (size_t)args.file_height;
+    if (args.file_square_size > 0 || args.file_width > 0 || args.file_height > 0)
+	p2fbs.autosize = 0;
+    if (args.screen_square_size > 0)
+	p2fbs.scr_width = p2fbs.scr_height = args.screen_square_size;
+    if (args.screen_width > 0)
+	p2fbs.scr_width = args.screen_width;
+    if (args.screen_height > 0)
+	p2fbs.scr_height = args.screen_height;
 
     if (!gedp->ged_gvp) {
 	bu_vls_printf(gedp->ged_result_str, ": no current view set\n");
@@ -202,20 +219,24 @@ ged_pix2fb_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "display manager does not have a framebuffer");
 	return BRLCAD_ERROR;
     }
-
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], pix2fb_usage);
-	return GED_HELP;
-    }
-
-    if (!pix2fb_get_args(&p2fbs, argc, (char **)argv)) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], pix2fb_usage);
-	return GED_HELP;
+    if (!args.file_name) {
+	if (isatty(fileno(stdin))) {
+	pix2fb_show_help(gedp, argv[0]);
+	return BRLCAD_ERROR;
+	}
+	p2fbs.file_name = (char *)"-";
+	p2fbs.infd = 0;
+	setmode(p2fbs.infd, O_BINARY);
+    } else {
+	p2fbs.file_name = (char *)args.file_name;
+	p2fbs.infd = open(p2fbs.file_name, 0);
+	if (p2fbs.infd < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "cannot open \"%s\" for reading\n",
+		p2fbs.file_name);
+	    return BRLCAD_ERROR;
+	}
+	setmode(p2fbs.infd, O_BINARY);
+	p2fbs.fileinput = 1;
     }
 
     ret = fb_read_fd(fbp, p2fbs.infd,
@@ -247,10 +268,10 @@ ged_pix2fb_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_PIX2FB_COMMANDS(X, XID) \
-    X(pix2fb, ged_pix2fb_core, GED_CMD_DEFAULT) \
+    X(pix2fb, ged_pix2fb_core, GED_CMD_DEFAULT, &pix2fb_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_PIX2FB_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_pix2fb", 1, GED_PIX2FB_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_PIX2FB_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_pix2fb", 1, GED_PIX2FB_COMMANDS)
 
 /*
  * Local Variables:

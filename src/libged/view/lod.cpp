@@ -31,7 +31,10 @@
 #include <ctype.h>
 #include <string.h>
 
+#include <vector>
+
 #include "bu/cmd.h"
+#include "bu/arg.h"
 #include "bu/hash.h"
 #include "bu/str.h"
 #include "bu/datetime.h"
@@ -41,53 +44,450 @@
 #include "../ged_private.h"
 #include "./ged_view.h"
 
-int
-_view_cmd_lod(void *bs, int argc, const char **argv)
+struct ged_view_lod_args {
+    int print_help;
+};
+
+static const char * const ged_view_lod_actions[] = {
+    "0", "1", "csg", "mesh", "cache", "scale", "point_scale",
+    "curve_scale", "texture_error", "bot_threshold", NULL
+};
+static const char * const ged_view_lod_binary_values[] = {"0", "1", NULL};
+static const char * const ged_view_lod_cache_actions[] = {"clear", "exists", NULL};
+static const char * const ged_view_lod_cache_clear_actions[] = {"all_files", NULL};
+static const char * const ged_view_lod_toggle_actions[] = {"0", "1", NULL};
+static const char * const ged_view_lod_mode_actions[] = {"csg", "mesh", NULL};
+static const char * const ged_view_lod_cache[] = {"cache", NULL};
+static const char * const ged_view_lod_cache_clear[] = {"clear", NULL};
+static const char * const ged_view_lod_cache_exists[] = {"exists", NULL};
+static const char * const ged_view_lod_scale_actions[] = {
+    "scale", "point_scale", "curve_scale", "texture_error", NULL
+};
+static const char * const ged_view_lod_threshold_actions[] = {"bot_threshold", NULL};
+
+
+static int
+ged_view_lod_keyword(const char * const *values, const char *value)
 {
-    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
-    const char *usage_string = "view [options] lod [subcommand] [vals]";
-    const char *purpose_string = "manage Level of Detail drawing settings";
-    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return BRLCAD_OK;
+    if (!value)
+	return 0;
+    for (size_t i = 0; values[i]; i++)
+	if (BU_STR_EQUAL(values[i], value))
+	    return 1;
+    return 0;
+}
+
+
+static void
+ged_view_lod_validation_result(struct bu_arg_validate_result *result,
+	bu_arg_validate_state_t state, size_t token, bu_arg_value_t value_type,
+	const char *hint)
+{
+    bu_arg_validate_result_clear(result);
+    result->state = state;
+    result->token_start = token;
+    result->token_end = token;
+    result->expected = BU_ARG_EXPECT_OPERAND;
+    result->completion_type = value_type;
+    result->hint = hint;
+}
+
+
+static void
+ged_view_lod_keyword_result(struct bu_arg_validate_result *result,
+	const char * const *values, const char *value, size_t token,
+	const char *hint)
+{
+    int exact = ged_view_lod_keyword(values, value);
+
+    ged_view_lod_validation_result(result,
+	exact ? BU_ARG_VALIDATE_VALID : BU_ARG_VALIDATE_INVALID,
+	token, BU_ARG_VALUE_KEYWORD, hint);
+    bu_arg_keyword_candidates(result, values, value ? value : "");
+    if (!exact && result->completion_count)
+	result->state = BU_ARG_VALIDATE_INCOMPLETE;
+}
+
+
+static int
+ged_view_lod_prefix_state(const char * const *operands, size_t count,
+	struct bu_arg_validate_result *result, size_t token, int at_end)
+{
+    const char *action = count ? operands[0] : NULL;
+
+    if (!count) {
+	ged_view_lod_validation_result(result, BU_ARG_VALIDATE_VALID, token,
+	    BU_ARG_VALUE_KEYWORD, "LoD action may follow");
+	bu_arg_keyword_candidates(result, ged_view_lod_actions, "");
+	return 0;
+    }
+    if (!ged_view_lod_keyword(ged_view_lod_actions, action)) {
+	ged_view_lod_keyword_result(result, ged_view_lod_actions, action, token,
+	    "known LoD action required");
+	return 0;
+    }
+    if (BU_STR_EQUAL(action, "0") || BU_STR_EQUAL(action, "1")) {
+	if (count > 1)
+	    ged_view_lod_validation_result(result, BU_ARG_VALIDATE_INVALID, token,
+		BU_ARG_VALUE_STRING, "LoD enable/disable action takes no operands");
+	else
+	    ged_view_lod_validation_result(result, BU_ARG_VALIDATE_VALID, token,
+		BU_ARG_VALUE_KEYWORD, "LoD enable/disable action");
+	return 0;
+    }
+    if (BU_STR_EQUAL(action, "csg") || BU_STR_EQUAL(action, "mesh")) {
+	if (count == 1) {
+	    ged_view_lod_validation_result(result, BU_ARG_VALIDATE_VALID, token,
+		BU_ARG_VALUE_KEYWORD, "optional LoD enable value");
+	    if (at_end)
+		bu_arg_keyword_candidates(result, ged_view_lod_binary_values, "");
+	    return 0;
+	}
+	if (count == 2 && ged_view_lod_keyword(ged_view_lod_binary_values, operands[1])) {
+	    ged_view_lod_validation_result(result, BU_ARG_VALIDATE_VALID, token,
+		BU_ARG_VALUE_KEYWORD, "LoD enable value");
+	    return 0;
+	}
+	ged_view_lod_keyword_result(result, ged_view_lod_binary_values,
+	    count == 2 ? operands[1] : "", token,
+	    "LoD enable value must be 0 or 1");
+	return 0;
+    }
+    if (BU_STR_EQUAL(action, "cache")) {
+	if (count == 1) {
+	    ged_view_lod_validation_result(result, BU_ARG_VALIDATE_VALID, token,
+		BU_ARG_VALUE_KEYWORD, "optional cache action");
+	    if (at_end)
+		bu_arg_keyword_candidates(result, ged_view_lod_cache_actions, "");
+	    return 0;
+	}
+	if (!ged_view_lod_keyword(ged_view_lod_cache_actions, operands[1])) {
+	    ged_view_lod_keyword_result(result, ged_view_lod_cache_actions,
+		operands[1], token, "cache action must be clear or exists");
+	    return 0;
+	}
+	if (BU_STR_EQUAL(operands[1], "exists")) {
+	    ged_view_lod_validation_result(result,
+		count == 2 ? BU_ARG_VALIDATE_VALID : BU_ARG_VALIDATE_INVALID, token,
+		BU_ARG_VALUE_KEYWORD, "cache exists takes no operand");
+	    return 0;
+	}
+	if (count == 2) {
+	    ged_view_lod_validation_result(result, BU_ARG_VALIDATE_VALID, token,
+		BU_ARG_VALUE_KEYWORD, "optional cache clear scope");
+	    if (at_end)
+		bu_arg_keyword_candidates(result, ged_view_lod_cache_clear_actions, "");
+	    return 0;
+	}
+	if (count == 3 && BU_STR_EQUAL(operands[2], "all_files")) {
+	    ged_view_lod_validation_result(result, BU_ARG_VALIDATE_VALID, token,
+		BU_ARG_VALUE_KEYWORD, "cache clear scope");
+	    return 0;
+	}
+	ged_view_lod_keyword_result(result, ged_view_lod_cache_clear_actions,
+	    count == 3 ? operands[2] : "", token,
+	    "cache clear scope must be all_files");
+	return 0;
     }
 
-    struct ged *gedp = gd->gedp;
-    struct bview *gvp;
-    int print_help = 0;
-    static const char *usage = "view lod [csg|mesh] [0|1]\n"
-	"view lod cache [clear [all_files] | exists] \n"
-	"view lod scale [factor]\n"
-	"view lod texture_error [pixels]\n"
-	"view lod point_scale [factor]\n"
-	"view lod curve_scale [factor]\n"
-	"view lod bot_threshold [face_cnt]\n";
+    if (count == 1) {
+	ged_view_lod_validation_result(result, BU_ARG_VALIDATE_VALID, token,
+	    BU_ARG_VALUE_NUMBER, "optional LoD scale value");
+	return 0;
+    }
+    if (BU_STR_EQUAL(action, "bot_threshold")) {
+	int threshold = 0;
+	if (count == 2 && bu_arg_integer_from_str(NULL, &threshold, operands[1], 0) && threshold >= 0) {
+	    ged_view_lod_validation_result(result, BU_ARG_VALIDATE_VALID, token,
+		BU_ARG_VALUE_INTEGER, "nonnegative BoT face threshold");
+	    return 0;
+	}
+	ged_view_lod_validation_result(result, BU_ARG_VALIDATE_INVALID, token,
+	    BU_ARG_VALUE_INTEGER, "nonnegative BoT face threshold required");
+	return 0;
+    }
+    fastf_t factor = 0.0;
+    if (count == 2 && bu_arg_number_from_str(NULL, &factor, operands[1]) &&
+	    (!BU_STR_EQUAL(action, "texture_error") || factor >= 0.0)) {
+	ged_view_lod_validation_result(result, BU_ARG_VALIDATE_VALID, token,
+	    BU_ARG_VALUE_NUMBER, BU_STR_EQUAL(action, "texture_error") ?
+	    "nonnegative texture error" : "finite LoD scale value");
+	return 0;
+    }
+    ged_view_lod_validation_result(result, BU_ARG_VALIDATE_INVALID, token,
+	BU_ARG_VALUE_NUMBER, BU_STR_EQUAL(action, "texture_error") ?
+	"nonnegative texture error required" : "finite LoD scale value required");
+    return 0;
+}
 
+
+static int
+ged_view_lod_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
+{
+    const char *operands[3] = {NULL, NULL, NULL};
+    size_t count = 0;
+    size_t i = 0;
+    int option_phase = 1;
+
+    if ((result->expected & BU_ARG_EXPECT_OPTION_ARG) ||
+	(cursor_arg < argc && (result->expected & BU_ARG_EXPECT_OPTION)))
+	return 0;
+
+    while (i < cursor_arg) {
+	int span = 0;
+	if (option_phase && BU_STR_EQUAL(argv[i], "--")) {
+	    option_phase = 0;
+	    i++;
+	    continue;
+	}
+	if (option_phase)
+	    span = bu_arg_schema_option_span(schema, argc - i, argv + i);
+	if (span > 0) {
+	    i += (size_t)span;
+	    continue;
+	}
+	if (count < 3)
+	    operands[count++] = argv[i];
+	i++;
+    }
+
+    if (cursor_arg < argc) {
+	const char *current = argv[cursor_arg];
+	if (count < 3)
+	    operands[count] = current;
+	if (!count) {
+	    ged_view_lod_keyword_result(result, ged_view_lod_actions, current,
+		cursor_arg, "LoD action required");
+	    return 0;
+	}
+	const char *action = operands[0];
+	if (count == 1 && (BU_STR_EQUAL(action, "csg") || BU_STR_EQUAL(action, "mesh"))) {
+	    ged_view_lod_keyword_result(result, ged_view_lod_binary_values, current,
+		cursor_arg, "LoD enable value must be 0 or 1");
+	    return 0;
+	}
+	if (count == 1 && BU_STR_EQUAL(action, "cache")) {
+	    ged_view_lod_keyword_result(result, ged_view_lod_cache_actions, current,
+		cursor_arg, "cache action must be clear or exists");
+	    return 0;
+	}
+	if (count == 2 && BU_STR_EQUAL(action, "cache") &&
+	    BU_STR_EQUAL(operands[1], "clear")) {
+	    ged_view_lod_keyword_result(result, ged_view_lod_cache_clear_actions,
+		current, cursor_arg, "cache clear scope must be all_files");
+	    return 0;
+	}
+	if (count == 1 && (BU_STR_EQUAL(action, "scale") ||
+	    BU_STR_EQUAL(action, "point_scale") || BU_STR_EQUAL(action, "curve_scale") ||
+	    BU_STR_EQUAL(action, "texture_error"))) {
+	    fastf_t factor = 0.0;
+	    ged_view_lod_validation_result(result,
+		bu_arg_number_from_str(NULL, &factor, current) &&
+		(!BU_STR_EQUAL(action, "texture_error") || factor >= 0.0) ?
+		BU_ARG_VALIDATE_VALID : BU_ARG_VALIDATE_INVALID,
+		cursor_arg, BU_ARG_VALUE_NUMBER, BU_STR_EQUAL(action, "texture_error") ?
+		"nonnegative texture error required" : "finite LoD scale value required");
+	    return 0;
+	}
+	if (count == 1 && BU_STR_EQUAL(action, "bot_threshold")) {
+	    int threshold = 0;
+	    ged_view_lod_validation_result(result,
+		bu_arg_integer_from_str(NULL, &threshold, current, 0) && threshold >= 0 ?
+		BU_ARG_VALIDATE_VALID : BU_ARG_VALIDATE_INVALID, cursor_arg,
+		BU_ARG_VALUE_INTEGER, "nonnegative BoT face threshold required");
+	    return 0;
+	}
+	ged_view_lod_validation_result(result, BU_ARG_VALIDATE_INVALID, cursor_arg,
+	    BU_ARG_VALUE_STRING, "too many LoD operands");
+	return 0;
+    }
+
+    return ged_view_lod_prefix_state(operands, count, result, cursor_arg, 1);
+}
+
+
+static const struct bu_arg_option ged_view_lod_options[] = {
+    BU_ARG_FLAG("h", "help", struct ged_view_lod_args, print_help, "Print help and exit"),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand ged_view_lod_operands[] = {
+    BU_ARG_OPERAND("lod_action", BU_ARG_VALUE_RAW, 0, 3,
+	"LoD action and optional values", NULL),
+    BU_ARG_OPERAND_NULL
+};
+extern "C" GED_EXPORT const struct bu_arg_schema ged_view_lod_schema = {
+    "lod", "Manage level-of-detail drawing settings", ged_view_lod_options,
+    ged_view_lod_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, ged_view_lod_validate, NULL, NULL)
+};
+
+static const struct bu_arg_schema ged_view_lod_query_schema =
+    BU_ARG_SCHEMA("lod", "Report level-of-detail settings", ged_view_lod_options,
+	NULL, BU_ARG_PARSE_INTERSPERSED, NULL);
+static const struct bu_arg_operand ged_view_lod_toggle_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("enabled", BU_ARG_VALUE_KEYWORD, 1, 1,
+	"Enable or disable adaptive drawing", NULL, ged_view_lod_toggle_actions),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema ged_view_lod_toggle_schema =
+    BU_ARG_SCHEMA("lod", "Enable or disable adaptive drawing", ged_view_lod_options,
+	ged_view_lod_toggle_operands, BU_ARG_PARSE_INTERSPERSED, NULL);
+static const struct bu_arg_operand ged_view_lod_mode_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("mode", BU_ARG_VALUE_KEYWORD, 1, 1,
+	"Drawing mode", NULL, ged_view_lod_mode_actions),
+    BU_ARG_OPERAND_KEYWORDS("enabled", BU_ARG_VALUE_KEYWORD, 0, 1,
+	"New mode state", NULL, ged_view_lod_binary_values),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema ged_view_lod_mode_schema =
+    BU_ARG_SCHEMA("lod", "Query or set an adaptive drawing mode",
+	ged_view_lod_options, ged_view_lod_mode_operands,
+	BU_ARG_PARSE_INTERSPERSED, NULL);
+static const struct bu_arg_operand ged_view_lod_cache_query_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("cache", BU_ARG_VALUE_KEYWORD, 1, 1,
+	"Select cache operations", NULL, ged_view_lod_cache),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema ged_view_lod_cache_query_schema =
+    BU_ARG_SCHEMA("lod", "Build the current database cache", ged_view_lod_options,
+	ged_view_lod_cache_query_operands, BU_ARG_PARSE_INTERSPERSED, NULL);
+static const struct bu_arg_operand ged_view_lod_cache_clear_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("cache", BU_ARG_VALUE_KEYWORD, 1, 1,
+	"Select cache operations", NULL, ged_view_lod_cache),
+    BU_ARG_OPERAND_KEYWORDS("clear", BU_ARG_VALUE_KEYWORD, 1, 1,
+	"Clear cached data", NULL, ged_view_lod_cache_clear),
+    BU_ARG_OPERAND_KEYWORDS("scope", BU_ARG_VALUE_KEYWORD, 0, 1,
+	"Cache clear scope", NULL, ged_view_lod_cache_clear_actions),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema ged_view_lod_cache_clear_schema =
+    BU_ARG_SCHEMA("lod", "Clear cached level-of-detail data",
+	ged_view_lod_options, ged_view_lod_cache_clear_operands,
+	BU_ARG_PARSE_INTERSPERSED, NULL);
+static const struct bu_arg_operand ged_view_lod_cache_exists_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("cache", BU_ARG_VALUE_KEYWORD, 1, 1,
+	"Select cache operations", NULL, ged_view_lod_cache),
+    BU_ARG_OPERAND_KEYWORDS("exists", BU_ARG_VALUE_KEYWORD, 1, 1,
+	"Test cache completeness", NULL, ged_view_lod_cache_exists),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema ged_view_lod_cache_exists_schema =
+    BU_ARG_SCHEMA("lod", "Test level-of-detail cache completeness",
+	ged_view_lod_options, ged_view_lod_cache_exists_operands,
+	BU_ARG_PARSE_INTERSPERSED, NULL);
+static const struct bu_arg_operand ged_view_lod_scale_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("setting", BU_ARG_VALUE_KEYWORD, 1, 1,
+	"Scale setting", NULL, ged_view_lod_scale_actions),
+    BU_ARG_OPERAND("factor", BU_ARG_VALUE_NUMBER, 0, 1,
+	"New scale factor", NULL),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema ged_view_lod_scale_schema =
+    BU_ARG_SCHEMA("lod", "Query or set a level-of-detail scale",
+	ged_view_lod_options, ged_view_lod_scale_operands,
+	BU_ARG_PARSE_INTERSPERSED, NULL);
+static const struct bu_arg_operand ged_view_lod_threshold_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("setting", BU_ARG_VALUE_KEYWORD, 1, 1,
+	"BoT threshold setting", NULL, ged_view_lod_threshold_actions),
+    BU_ARG_OPERAND_INTEGER_RANGE("face_count", 0, 1, 1, 0, 0, 0,
+	"New nonnegative face threshold", NULL),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema ged_view_lod_threshold_schema =
+    BU_ARG_SCHEMA("lod", "Query or set the BoT face threshold",
+	ged_view_lod_options, ged_view_lod_threshold_operands,
+	BU_ARG_PARSE_INTERSPERSED, NULL);
+static const struct bu_arg_form ged_view_lod_native_forms[] = {
+    BU_ARG_FORM("query", "Report all settings", &ged_view_lod_query_schema, NULL),
+    BU_ARG_FORM("toggle", "Enable or disable adaptive drawing", &ged_view_lod_toggle_schema, NULL),
+    BU_ARG_FORM("mode", "Query or set mesh or CSG drawing", &ged_view_lod_mode_schema, NULL),
+    BU_ARG_FORM("cache", "Build the current cache", &ged_view_lod_cache_query_schema, NULL),
+    BU_ARG_FORM("cache_clear", "Clear cached data", &ged_view_lod_cache_clear_schema, NULL),
+    BU_ARG_FORM("cache_exists", "Test cache completeness", &ged_view_lod_cache_exists_schema, NULL),
+    BU_ARG_FORM("scale", "Query or set a scale or texture-error value", &ged_view_lod_scale_schema, NULL),
+    BU_ARG_FORM("threshold", "Query or set the BoT threshold",
+	&ged_view_lod_threshold_schema, NULL),
+    BU_ARG_FORM_NULL
+};
+extern "C" GED_EXPORT const struct bu_arg_forms ged_view_lod_forms =
+    BU_ARG_FORMS("lod", "Manage level-of-detail drawing settings",
+	ged_view_lod_native_forms, NULL);
+
+
+extern "C" GED_EXPORT char *
+ged_view_lod_grammar_json(void)
+{
+    return bu_arg_forms_describe_json(&ged_view_lod_forms);
+}
+
+
+extern "C" GED_EXPORT char *
+ged_view_lod_help(const char *invocation)
+{
+    struct bu_vls out = BU_VLS_INIT_ZERO;
+    char *result = NULL;
+    if (BU_STR_EMPTY(invocation))
+	invocation = "lod";
+    char *help = bu_arg_schema_help(&ged_view_lod_schema, invocation);
+
+    if (help) {
+	bu_vls_strcat(&out, help);
+	bu_free(help, "view lod native help");
+    }
+    bu_vls_printf(&out,
+	"\nForms:\n"
+	"  %s [0|1]\n"
+	"  %s csg|mesh [0|1]\n"
+	"  %s cache [clear [all_files]|exists]\n"
+	"  %s scale|point_scale|curve_scale [factor]\n"
+	"  %s texture_error [pixels]\n"
+	"  %s bot_threshold [face_count]\n",
+	invocation, invocation, invocation, invocation, invocation, invocation);
+    result = bu_vls_strdup(&out);
+    bu_vls_free(&out);
+    return result;
+}
+
+static void
+ged_view_lod_usage(struct ged *gedp)
+{
+    char *help = ged_view_lod_help("view lod");
+    if (help) {
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "view lod help");
+    }
+}
+
+extern "C" GED_EXPORT int
+ged_view_lod_core(struct ged *gedp, struct bview *view, int argc, const char **argv)
+{
+    struct ged_view_lod_args args = {0};
+    std::vector<const char *> pargv;
+    int operand_index;
+    int action_argc;
+    struct bview *gvp;
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bu_opt_desc d[2];
-    BU_OPT(d[0], "h", "help",        "",  NULL,  &print_help,      "Print help");
-    BU_OPT_NULL(d[1]);
-
-    // We know we're the lod command - start processing args
-    argc--; argv++;
-
-    int ac = bu_opt_parse(NULL, argc, argv, d);
-    argc = ac;
-
-    if (print_help) {
-	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage);
-	return GED_HELP;
-    }
-
-    if (argc > 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage);
+    pargv.assign(argv, argv + argc);
+    operand_index = bu_arg_schema_parse_complete(&ged_view_lod_schema, &args,
+	gedp->ged_result_str, argc - 1, pargv.data() + 1);
+    if (operand_index < 0) {
+	ged_view_lod_usage(gedp);
 	return BRLCAD_ERROR;
     }
+    if (args.print_help) {
+	ged_view_lod_usage(gedp);
+	return GED_HELP;
+    }
+    action_argc = argc - 1 - operand_index;
+    argc = action_argc;
+    argv = pargv.data() + 1 + operand_index;
 
-    gvp = gd->cv;
+    gvp = view;
     if (gvp == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "no current view defined\n");
 	return BRLCAD_ERROR;
@@ -343,7 +743,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    return BRLCAD_OK;
 	}
 	fastf_t scale = 1.0;
-	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&scale) != 1) {
+	if (!bu_arg_number_from_str(NULL, &scale, argv[1])) {
 	    bu_vls_printf(gedp->ged_result_str, "unknown argument to point_scale: %s\n", argv[1]);
 	    return BRLCAD_ERROR;
 	}
@@ -357,8 +757,8 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    return BRLCAD_OK;
 	}
 	fastf_t pixels = 0.0;
-	if (argc != 2 || bu_opt_fastf_t(NULL, 1, &argv[1], &pixels) != 1 ||
-	    !std::isfinite(pixels) || pixels < 0.0) {
+	if (argc != 2 || !bu_arg_number_from_str(NULL, &pixels, argv[1]) ||
+	    pixels < 0.0) {
 	    bu_vls_printf(gedp->ged_result_str, "texture_error requires a non-negative pixel limit\n");
 	    return BRLCAD_ERROR;
 	}
@@ -372,7 +772,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    return BRLCAD_OK;
 	}
 	fastf_t scale = 1.0;
-	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&scale) != 1) {
+	if (!bu_arg_number_from_str(NULL, &scale, argv[1])) {
 	    bu_vls_printf(gedp->ged_result_str, "unknown argument to point_scale: %s\n", argv[1]);
 	    return BRLCAD_ERROR;
 	}
@@ -386,7 +786,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    return BRLCAD_OK;
 	}
 	fastf_t scale = 1.0;
-	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&scale) != 1) {
+	if (!bu_arg_number_from_str(NULL, &scale, argv[1])) {
 	    bu_vls_printf(gedp->ged_result_str, "unknown argument to curve_scale: %s\n", argv[1]);
 	    return BRLCAD_ERROR;
 	}
@@ -400,7 +800,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    return BRLCAD_OK;
 	}
 	int bcnt = 0;
-	if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&bcnt) != 1 || bcnt < 0) {
+	if (!bu_arg_integer_from_str(NULL, &bcnt, argv[1], 0) || bcnt < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "unknown argument to bot_threshold: %s\n", argv[1]);
 	    return BRLCAD_ERROR;
 	}
@@ -411,6 +811,19 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 
     bu_vls_printf(gedp->ged_result_str, "unknown subcommand: %s\n", argv[0]);
     return BRLCAD_ERROR;
+}
+
+
+int
+_view_cmd_lod(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    const char *usage_string = "view [options] lod [subcommand] [vals]";
+    const char *purpose_string = "manage Level of Detail drawing settings";
+
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return BRLCAD_OK;
+    return ged_view_lod_core(gd->gedp, gd->cv, argc, argv);
 }
 
 

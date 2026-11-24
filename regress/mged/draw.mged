@@ -27,8 +27,9 @@ output_hook
 if {$draw_attr_status || [string first "failed" $draw_attr_output] >= 0} {
     error "FAIL: attribute-selected drawing: $draw_attr_result $draw_attr_output"
 }
-foreach name $draw_attr_names {
-    if {[string first $name [who]] < 0} {
+# Display-list paths use absolute paths with escaped component separators.
+foreach name $draw_attr_names path [list {/draw space.s} {/draw"quote.s} {/draw\\slash.s}] {
+    if {[string first $path [who]] < 0} {
 	error "FAIL: attribute-selected drawing omitted '$name'"
     }
 }

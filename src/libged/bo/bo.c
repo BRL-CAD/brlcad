@@ -29,8 +29,80 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu/getopt.h"
+#include "bu/arg.h"
 #include "ged.h"
+#include "ged/commands.h"
+
+
+struct bo_args {
+    int input_mode;
+    int output_mode;
+};
+
+static const char * const bo_major_types[] = {"u", NULL};
+static const char * const bo_minor_types[] = {
+    "f", "d", "c", "s", "i", "l", "C", "S", "I", "L",
+    "hf", "hd", "hc", "hs", "hi", "hl", "hC", "hS", "hI", "hL",
+    "nf", "nd", "nc", "ns", "ni", "nl", "nC", "nS", "nI", "nL",
+    NULL
+};
+
+static int bo_decode_input_type(unsigned int *input_type, const char *type_string);
+
+static int
+bo_input_type_validate(struct bu_vls *msg, const char *value)
+{
+    unsigned int type = 0;
+    if (value && bo_decode_input_type(&type, value) == 0)
+        return 0;
+    if (msg)
+        bu_vls_printf(msg, "unrecognized uniform binary type: %s\n", value ? value : "");
+    return -1;
+}
+
+static const struct bu_arg_option bo_schema_options[] = {
+    BU_ARG_FLAG("i", NULL, struct bo_args, input_mode, "Import a file as a binary object"),
+    BU_ARG_FLAG("o", NULL, struct bo_args, output_mode, "Export a binary object to a file"),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand bo_input_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("major_type", BU_ARG_VALUE_KEYWORD, 1, 1,
+	"Uniform binary major type", NULL, bo_major_types),
+    BU_ARG_OPERAND_KEYWORDS_VALIDATE("minor_type", BU_ARG_VALUE_KEYWORD, 1, 1,
+        bo_input_type_validate, "Uniform binary element type", NULL, bo_minor_types),
+    BU_ARG_OPERAND("output_object", BU_ARG_VALUE_STRING, 1, 1,
+	"Destination object name", NULL),
+    GED_CMD_OPERAND_FILE("input_file", 1, 1, "Source binary file"),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_operand bo_output_operands[] = {
+    GED_CMD_OPERAND_FILE("output_file", 1, 1, "Destination binary file"),
+    BU_ARG_OPERAND("input_object", BU_ARG_VALUE_DB_OBJECT, 1, 1,
+	"Source uniform binary object", GED_CMD_PROVIDER_DB_OBJECT_BINARY),
+    BU_ARG_OPERAND_NULL
+};
+static const char * const bo_input_case[] = {"i", NULL};
+static const char * const bo_output_case[] = {"o", NULL};
+static const char * const bo_mode_options[] = {"i", "o", NULL};
+static const struct bu_arg_schema_case bo_schema_cases[] = {
+    BU_ARG_SCHEMA_CASE("input", "Import a file as a binary object",
+	BU_ARG_CONDITION_ALL_OPTIONS_PRESENT, bo_input_case, bo_input_operands, NULL),
+    BU_ARG_SCHEMA_CASE("output", "Export a binary object to a file",
+	BU_ARG_CONDITION_ALL_OPTIONS_PRESENT, bo_output_case, bo_output_operands, NULL),
+    BU_ARG_SCHEMA_CASE_DEFAULT("mode", "Select -i or -o", NULL, NULL),
+    BU_ARG_SCHEMA_CASE_NULL
+};
+static const struct bu_arg_constraint bo_schema_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, bo_mode_options, 1, 1,
+	"exactly one of -i or -o is required"),
+    BU_ARG_CONSTRAINT_NULL
+};
+static const struct bu_arg_schema bo_cmd_schema = {
+    "bo", "Import or export uniform binary objects", bo_schema_options,
+	NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+	BU_ARG_SCHEMA_META_CASES(NULL, bo_schema_constraints, NULL, NULL,
+	    bo_schema_cases)
+};
 
 
 static int
@@ -95,17 +167,15 @@ bo_decode_input_type(unsigned int *input_type, const char *type_string)
 int
 ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int c;
     unsigned int input_type = 0;
+    int operand_index;
     char *obj_name;
     char *file_name;
-    int input_mode=0;
-    int output_mode=0;
+    struct bo_args args = {0, 0};
     struct rt_binunif_internal *bip;
     struct rt_db_internal intern;
     struct directory *dp;
     const char *argv0;
-    static const char *usage = "{-i u [h|n]type | -o} dest source";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -118,7 +188,7 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv0, usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv0, argv0);
 	return GED_HELP;
     }
 
@@ -128,38 +198,16 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    bu_optind = 1;		/* re-init bu_getopt() */
-    bu_opterr = 0;          /* suppress bu_getopt()'s error message */
-    while ((c=bu_getopt(argc, (char * const *)argv, "iou:")) != -1) {
-	switch (c) {
-	    case 'i':
-		input_mode = 1;
-		break;
-	    case 'o':
-		output_mode = 1;
-		break;
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", c);
-		return BRLCAD_ERROR;
-
-	}
-    }
-
-    if (input_mode + output_mode != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv0, usage);
+    operand_index = bu_arg_schema_parse_complete(&bo_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	ged_cmd_help_append(gedp->ged_result_str, argv0, argv0);
 	return BRLCAD_ERROR;
     }
-
-    argc -= bu_optind;
-    argv += bu_optind;
-
-    if ((input_mode && argc != 4) || (output_mode && argc != 2)) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv0, usage);
-	return BRLCAD_ERROR;
-    }
+    argv += operand_index + 1;
 
 
-    if (input_mode) {
+    if (args.input_mode) {
 	if (BU_STR_EQUAL(argv[0], "u")) {
 	    if (bo_decode_input_type(&input_type, argv[1]) != 0) {
 		bu_vls_printf(gedp->ged_result_str, "Unrecognized minor type: %s", argv[1]);
@@ -171,16 +219,11 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	/* skip past major_type and minor_type */
-	argc -= 2;
 	argv += 2;
 
 	obj_name = (char *)*argv;
 	GED_CHECK_EXISTS(gedp, obj_name, LOOKUP_QUIET, BRLCAD_ERROR);
-
-	argc--;
-	argv++;
-
-	file_name = (char *)*argv;
+	file_name = (char *)argv[1];
 
 	/* make a binunif of the entire file */
 	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -189,15 +232,11 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 
-    } else if (output_mode) {
+    } else if (args.output_mode) {
 	FILE *fp;
 
-	file_name = (char *)*argv;
-
-	argc--;
-	argv++;
-
-	obj_name = (char *)*argv;
+	file_name = (char *)argv[0];
+	obj_name = (char *)argv[1];
 
 	dp = db_lookup(gedp->dbip, obj_name, LOOKUP_NOISY);
 	if (dp == RT_DIR_NULL) {
@@ -247,7 +286,7 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 	rt_db_free_internal(&intern);
 
     } else {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv0, usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv0, argv0);
 	return BRLCAD_ERROR;
     }
 
@@ -257,10 +296,10 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_BO_COMMANDS(X, XID) \
-    X(bo, ged_bo_core, GED_CMD_DEFAULT) \
+    X(bo, ged_bo_core, GED_CMD_DEFAULT, &bo_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_BO_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_bo", 1, GED_BO_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_BO_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_bo", 1, GED_BO_COMMANDS)
 
 /*
  * Local Variables:

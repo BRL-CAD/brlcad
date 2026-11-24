@@ -44,7 +44,7 @@
 #include "bnetwork.h"
 
 #include "bu/cv.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/db4.h"
@@ -1387,7 +1387,7 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 
 	if (BU_STR_EQUAL(argv[0], "N")) {
 	    int surface_count = 0;
-	    if (bu_opt_int(NULL, 1, &argv[1], &surface_count) != 1 ||
+	    if (bu_arg_integer_from_str(NULL, (int *)(&surface_count), argv[1], 0) != 1 ||
 		surface_count < 0) {
 		bu_vls_printf(logstr, "ERROR: invalid surface count\n");
 		bu_free((char *)srf_array, "srf_array");
@@ -1442,7 +1442,7 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 			    return BRLCAD_ERROR;
 			}
 		    } else if (BU_STR_EQUAL(key, "T")) {
-			if (bu_opt_int(NULL, 1, &srf_param_array[i+1], &pt_type) != 1) {
+			if (bu_arg_integer_from_str(NULL, (int *)(&pt_type), srf_param_array[i+1], 0) != 1) {
 			    bu_vls_printf(logstr, "ERROR: invalid point type\n");
 			    bu_free((char *)srf_array, "srf_array");
 			    bu_free((char *)srf_param_array, "srf_param_array");

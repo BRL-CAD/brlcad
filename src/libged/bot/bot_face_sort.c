@@ -29,8 +29,42 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/arg.h"
 #include "rt/geom.h"
 #include "ged.h"
+
+struct bot_face_sort_args {
+    int print_help;
+};
+
+static const struct bu_arg_option bot_face_sort_options[] = {
+    BU_ARG_FLAG("h", "help", struct bot_face_sort_args, print_help,
+	"Print command help"),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand bot_face_sort_operands[] = {
+    BU_ARG_OPERAND_VALIDATE("triangles_per_piece", BU_ARG_VALUE_INTEGER, 1, 1,
+	bu_arg_positive_integer_validate, "Positive triangle count per piece", NULL),
+    BU_ARG_OPERAND("bot", BU_ARG_VALUE_DB_OBJECT, 1, BU_ARG_COUNT_UNLIMITED,
+	"BoT object to sort", "ged.db_object"),
+    BU_ARG_OPERAND_NULL
+};
+const struct bu_arg_schema ged_bot_face_sort_schema = {
+    "bot_face_sort", "Sort BoT faces into pieces", bot_face_sort_options,
+    bot_face_sort_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+};
+
+static void
+bot_face_sort_usage(struct bu_vls *result, const char *cmd)
+{
+    char *help = bu_arg_schema_help(&ged_bot_face_sort_schema, cmd);
+
+    if (help) {
+	bu_vls_sprintf(result, "%s", help);
+	bu_free(help, "command schema help");
+    }
+}
 
 
 int
@@ -38,36 +72,41 @@ ged_bot_face_sort_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     int tris_per_piece=0;
-    static const char *usage = "triangles_per_piece bot_solid1 [bot_solid2 bot_solid3 ...]";
+    struct bot_face_sort_args args = {0};
+    const char *cmd;
+    int operand_index;
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    cmd = argv[0];
+    argc--; argv++;
+    if (!argc) {
+	bot_face_sort_usage(gedp->ged_result_str, cmd);
 	return GED_HELP;
     }
 
-    if (argc < 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    operand_index = bu_arg_schema_parse_complete(&ged_bot_face_sort_schema,
+	&args, gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
+	bot_face_sort_usage(gedp->ged_result_str, cmd);
 	return BRLCAD_ERROR;
     }
-
-    tris_per_piece = atoi(argv[1]);
-    if (tris_per_piece < 1) {
-	bu_vls_printf(gedp->ged_result_str,
-		      "Illegal value for triangle per piece (%s)\n",
-		      argv[1]);
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+    if (args.print_help) {
+	bot_face_sort_usage(gedp->ged_result_str, cmd);
+	return GED_HELP;
     }
+    argc -= operand_index;
+    argv += operand_index;
 
-    for (i = 2; i < argc; i++) {
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+
+    bu_arg_integer_from_str(NULL, &tris_per_piece, argv[0], 0);
+
+    for (i = 1; i < argc; i++) {
 	struct directory *dp;
 	struct rt_db_internal intern;
 	struct rt_bot_internal *bot;

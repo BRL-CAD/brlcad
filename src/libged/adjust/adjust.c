@@ -29,7 +29,31 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/arg.h"
 #include "ged.h"
+#include "ged/commands.h"
+
+static const struct bu_arg_operand adjust_schema_operands[] = {
+    GED_CMD_OPERAND_DB_OBJECT("object", 1, 1, "Primitive object"),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_operand adjust_attribute_roles[] = {
+    BU_ARG_OPERAND("attribute", BU_ARG_VALUE_STRING, 1, 1,
+	"Primitive attribute", NULL),
+    BU_ARG_OPERAND("value", BU_ARG_VALUE_STRING, 1, 1,
+	"Attribute value", NULL),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_operand_group adjust_schema_groups[] = {
+    BU_ARG_OPERAND_GROUP("attribute_value", adjust_attribute_roles, 1,
+	BU_ARG_COUNT_UNLIMITED, "Repeated attribute/value pairs"),
+    BU_ARG_OPERAND_GROUP_NULL
+};
+static const struct bu_arg_schema adjust_cmd_schema = {
+    "adjust", "Adjust primitive attributes", NULL, adjust_schema_operands,
+	BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+	BU_ARG_SCHEMA_GROUPS(NULL, NULL, adjust_schema_groups)
+};
 
 
 int
@@ -39,7 +63,8 @@ ged_adjust_core(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     char *name;
     struct rt_db_internal intern;
-    static const char *usage = "object attr value ?attr value?";
+    int operand_index;
+    int parse_dummy = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -50,16 +75,21 @@ ged_adjust_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return GED_HELP;
     }
 
-    if (argc < 4) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+
+    operand_index = bu_arg_schema_parse_complete(&adjust_cmd_schema,
+	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return BRLCAD_ERROR;
     }
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
 
-    name = (char *)argv[1];
+    name = (char *)argv[0];
 
     GED_DB_LOOKUP(gedp, dp, name, LOOKUP_QUIET, BRLCAD_ERROR);
 
@@ -75,7 +105,7 @@ ged_adjust_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    status = intern.idb_meth->ft_adjust(gedp->ged_result_str, &intern, argc-2, argv+2);
+    status = intern.idb_meth->ft_adjust(gedp->ged_result_str, &intern, argc - 1, argv + 1);
     if (status == BRLCAD_OK && wdb_put_internal(wdbp, name, &intern, 1.0) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "wdb_export(%s) failure", name);
 	rt_db_free_internal(&intern);
@@ -88,10 +118,10 @@ ged_adjust_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_ADJUST_COMMANDS(X, XID) \
-    X(adjust, ged_adjust_core, GED_CMD_DEFAULT) \
+    X(adjust, ged_adjust_core, GED_CMD_DEFAULT, &adjust_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_ADJUST_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_adjust", 1, GED_ADJUST_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_ADJUST_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_adjust", 1, GED_ADJUST_COMMANDS)
 
 /*
  * Local Variables:

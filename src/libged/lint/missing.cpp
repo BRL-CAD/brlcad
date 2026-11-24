@@ -30,7 +30,6 @@
 #include "../libbu/json.hpp"
 
 extern "C" {
-#include "bu/opt.h"
 #include "bg/trimesh.h"
 }
 #include "./ged_lint.h"

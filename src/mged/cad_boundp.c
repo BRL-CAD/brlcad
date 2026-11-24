@@ -42,8 +42,8 @@
 #include <stdarg.h>
 
 #include "vmath.h"
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 #include "bu/log.h"
@@ -79,7 +79,7 @@ typedef struct queue
 } queue;			/* entry in list of endpoints */
 
 static int Build(void), Chop(void), EndPoint(coords *p, segment *segp), GetArgs(int argc, const char *argv[]), Input(segment *inp),
-    Near(coords *ap, coords *bp), Search(void), Split(coords *p, segment *oldp, segment *listh), Usage(void);
+    Near(coords *ap, coords *bp), Search(void), Split(coords *p, segment *oldp, segment *listh);
 static coords *Intersect(segment *a, segment *b);
 static point *LookUp(coords *coop), *NewPoint(coords *coop), *PutList(coords *coop);
 static void * Alloc(unsigned int size);
@@ -97,13 +97,52 @@ static segment seghead = {
     {0.0f, 0.0f}
 };	/* segment list head */
 
+struct cad_boundp_args {
+    int help;
+    int verbose;
+    const char *input;
+    const char *output;
+    double tolerance;
+};
 
-static int
-Usage(void) 				/* print usage message */
-{
-	fprintf(stderr, "Usage: cad_boundp [-i input] [-o output] [-t tolerance] [-v]\n");
-	return 0;
-}
+static const struct bu_arg_option cad_boundp_options[] = {
+    BU_ARG_FLAG("h", "help", struct cad_boundp_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_VALUE("i", "input", struct cad_boundp_args, input,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file", "Read segments from a file"),
+    BU_ARG_VALUE("o", "output", struct cad_boundp_args, output,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file", "Write polygon data to a file"),
+    BU_ARG_NUMBER_RANGE("t", "tolerance", struct cad_boundp_args, tolerance,
+	1, 0.0, 0, 0.0, "distance", "Point matching tolerance"),
+    BU_ARG_FLAG("v", "segments", struct cad_boundp_args, verbose,
+	"Write closed polygon segments instead of vertices"),
+    BU_ARG_OPTION_NULL
+};
+static const char * const cad_boundp_input_option[] = {"input", NULL};
+static const char * const cad_boundp_output_option[] = {"output", NULL};
+static const char * const cad_boundp_tolerance_option[] = {"tolerance", NULL};
+static const struct bu_arg_constraint cad_boundp_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_OCCURRENCE_COUNT,
+	BU_ARG_CONDITION_ALWAYS, cad_boundp_input_option, 0, 1,
+	"--input may be specified only once"),
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_OCCURRENCE_COUNT,
+	BU_ARG_CONDITION_ALWAYS, cad_boundp_output_option, 0, 1,
+	"--output may be specified only once"),
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_OCCURRENCE_COUNT,
+	BU_ARG_CONDITION_ALWAYS, cad_boundp_tolerance_option, 0, 1,
+	"--tolerance may be specified only once"),
+    BU_ARG_CONSTRAINT_NULL
+};
+
+static const struct bu_arg_schema cad_boundp_schema = BU_ARG_SCHEMA(
+    "cad_boundp", "Find the bounding polygon of two-dimensional segments",
+    cad_boundp_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, cad_boundp_constraints, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar cad_boundp_grammar = {
+    &cad_boundp_schema, NULL, NULL
+};
 
 
 int
@@ -111,10 +150,13 @@ main(int argc, const char *argv[])			/* "cad_boundp" entry point */
     /* argument count */
     /* argument strings */
 {
+    int arg_status;
+
     bu_setprogname(argv[0]);
 
-    if (!GetArgs(argc, argv))	/* process command arguments */
-	return 1;
+    arg_status = GetArgs(argc, argv);
+    if (arg_status <= 0)
+	return arg_status < 0 ? 1 : 0;
 
     if (!Chop())		/* input; chop into segments */
 	return 2;
@@ -134,65 +176,50 @@ GetArgs(int argc, const char *argv[])	/* process command arguments */
     /* argument count */
     /* argument strings */
 {
-    static int iflag = 0;	/* set if "-i" option found */
-    static int oflag = 0;	/* set if "-o" option found */
-    static int tflag = 0;	/* set if "-t" option found */
-    int c;		/* option letter */
+    struct cad_boundp_args args = {0, 0, NULL, NULL, 0.0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int introspection;
+    int operand_index;
 
-#ifdef DEBUG
+#ifdef CAD_BOUNDP_DEBUG
     fprintf(stderr, "\n\t\tGetArgs\n");
 #endif
-    bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "i:o:t:vh?")) != -1)
-	switch (c) {
-	    case 'i':
-		if (iflag) {
-		    fprintf(stderr, "too many -i options");
-		    return 1;
-		}
-		iflag = 1;
-
-		if (!BU_STR_EQUAL(bu_optarg, "-") && freopen(bu_optarg, "r", stdin) == NULL) {
-		    fprintf(stderr, "can't open \"%s\"", bu_optarg);
-		    return 1;
-		}
-		break;
-
-	    case 'o':
-		if (oflag) {
-		    fprintf(stderr, "too many -o options");
-		    return 1;
-		}
-		oflag = 1;
-
-		if (!BU_STR_EQUAL(bu_optarg, "-") && freopen(bu_optarg, "w", stdout) == NULL) {
-		    fprintf(stderr, "can't create \"%s\"", bu_optarg);
-		    return 1;
-		}
-		break;
-
-	    case 't':
-		if (tflag) {
-		    fprintf(stderr, "too many -t options");
-		    return 1;
-		}
-		tflag = 1;
-
-		if (sscanf(bu_optarg, "%le", &tolerance) != 1) {
-		    fprintf(stderr, "bad tolerance: %s", bu_optarg);
-		    return 1;
-		}
-		tolsq = tolerance * tolerance;
-		break;
-
-	    case 'v':
-		vflag = 1;
-		break;
-
-	    default:
-		Usage(); /* print usage message */
-		bu_exit(0, NULL);
+    introspection = bu_arg_introspect(&msg, &cad_boundp_grammar, argc - 1,
+	argv + 1);
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : -1;
+    }
+    operand_index = bu_arg_schema_parse_complete(&cad_boundp_schema, &args,
+	&msg, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	bu_log("%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return -1;
+    }
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&cad_boundp_schema, "cad_boundp");
+	if (help) {
+	    bu_flog(stdout, "%s", help);
+	    bu_free(help, "cad_boundp help");
 	}
+	return 0;
+    }
+    if (args.input && !BU_STR_EQUAL(args.input, "-") &&
+	freopen(args.input, "r", stdin) == NULL) {
+	bu_log("cad_boundp: cannot open \"%s\" for reading\n", args.input);
+	return -1;
+    }
+    if (args.output && !BU_STR_EQUAL(args.output, "-") &&
+	freopen(args.output, "w", stdout) == NULL) {
+	bu_log("cad_boundp: cannot open \"%s\" for writing\n", args.output);
+	return -1;
+	}
+    tolerance = args.tolerance;
+    tolsq = tolerance * tolerance;
+    vflag = args.verbose;
 
     return 1;
 }
@@ -210,7 +237,7 @@ Chop(void)					/* chop vectors into segments */
 {
     segment *inp;			/* -> input whole segment */
 
-#ifdef DEBUG
+#ifdef CAD_BOUNDP_DEBUG
     fprintf(stderr, "\n\t\tChop\n");
 #endif
     /* Although we try to Alloc() when no input remains, it is more
@@ -229,7 +256,7 @@ Chop(void)					/* chop vectors into segments */
 	if (inp->sxy.x > inp->exy.x) {
 	    coords temp;		/* store for swapping */
 
-#ifdef DEBUG
+#ifdef CAD_BOUNDP_DEBUG
 	    fprintf(stderr, "  endpoints swapped\n");
 #endif
 	    temp = inp->sxy;
@@ -269,7 +296,7 @@ Chop(void)					/* chop vectors into segments */
 		    break;	/* next `segp' */
 		}
 	    }
-#ifdef DEBUG
+#ifdef CAD_BOUNDP_DEBUG
 	fprintf(stderr, "  new input pieces:");
 	for (pp = piecehead.links; pp != &piecehead;
 	     pp = pp->links
@@ -318,7 +345,7 @@ Split(coords *p, segment *oldp, segment *listh) 		/* split segment in two */
 {
     segment *newp;	/* -> new list entry */
 
-#ifdef DEBUG
+#ifdef CAD_BOUNDP_DEBUG
     fprintf(stderr, "  split (%g, %g) -> (%g, %g) at (%g, %g)\n",
 	    (double)oldp->sxy.x, (double)oldp->sxy.y,
 	    (double)oldp->exy.x, (double)oldp->exy.y,
@@ -343,7 +370,7 @@ Build(void) 				/* build linked lists */
     segment *listp; /* -> segment list entry */
     segment *deadp; /* -> list entry to be freed */
 
-#ifdef DEBUG
+#ifdef CAD_BOUNDP_DEBUG
     fprintf(stderr, "\n\t\tBuild\n");
 #endif
     /* When we are finished, `seghead' will become invalid. */
@@ -371,7 +398,7 @@ Search(void)				/* output bounding polygon */
     point *currentp;	/* -> current (start) point */
     point *previousp;	/* -> previous vertex point */
 
-#ifdef DEBUG
+#ifdef CAD_BOUNDP_DEBUG
     fprintf(stderr, "\n\t\tSearch\n");
 #endif
     if (headp == NULL)
@@ -401,7 +428,7 @@ Search(void)				/* output bounding polygon */
 	point *nextp = (point *)NULL; /* -> next perimeter point */
 	queue *endq = NULL; /* -> endpoint queue entry */
 
-#ifdef DEBUG
+#ifdef CAD_BOUNDP_DEBUG
 	fprintf(stderr, "from %g", from);
 #endif
 
@@ -448,7 +475,7 @@ Search(void)				/* output bounding polygon */
 			   (double)(endp->xy.x - currentp->xy.x)
 		    ) * DEG2RAD;
 	    }
-#ifdef DEBUG
+#ifdef CAD_BOUNDP_DEBUG
 	    fprintf(stderr, "to %g", to);
 #endif
 	    diff = to - from;
@@ -458,7 +485,7 @@ Search(void)				/* output bounding polygon */
 		diff += 360.0;
 
 	    if (diff < mindir) {
-#ifdef DEBUG
+#ifdef CAD_BOUNDP_DEBUG
 		fprintf(stderr, "new min %g", diff);
 #endif
 		mindir = diff;
@@ -491,7 +518,7 @@ PutList(coords *coop) 			/* return -> point in list */
     if (p == NULL) {
 	/* not yet in list */
 	/* start new point group */
-#ifdef DEBUG
+#ifdef CAD_BOUNDP_DEBUG
 	fprintf(stderr, "new point group (%g, %g)",
 		(double)coop->x, (double)coop->y
 	    );
@@ -511,7 +538,7 @@ LookUp(coords *coop)				/* find point group in list */
 
     for (p = headp; p != NULL; p = p->linkp)
 	if (Near(coop, &p->xy)) {
-#ifdef DEBUG
+#ifdef CAD_BOUNDP_DEBUG
 	    fprintf(stderr, "found (%g, %g) in list",
 		    (double)coop->x, (double)coop->y
 		);
@@ -533,7 +560,7 @@ NewPoint(coords *coop)			/* add point to list */
     if (newp == NULL)
 	return NULL;
 
-#ifdef DEBUG
+#ifdef CAD_BOUNDP_DEBUG
     fprintf(stderr, "add point (%g, %g)",
 	    (double)coop->x, (double)coop->y
 	);
@@ -556,7 +583,7 @@ Enqueue(point *addp, point *startp) 		/* add to endpoint queue */
     if (newq == NULL)
 	return NULL;
 
-#ifdef DEBUG
+#ifdef CAD_BOUNDP_DEBUG
     fprintf(stderr, "enqueue (%g, %g) on (%g, %g)",
 	    (double)addp->xy.x, (double)addp->xy.y,
 	    (double)startp->xy.x, (double)startp->xy.y
@@ -588,7 +615,7 @@ Intersect(segment *a, segment *b)			/* determine intersection */
 	|| FMAX(a->sxy.y, a->exy.y) <		/* a top */
 	FMIN(b->sxy.y, b->exy.y) - tolerance	/* b bottom */
 	) {
-#ifdef DEBUG
+#ifdef CAD_BOUNDP_DEBUG
 	fprintf(stderr, "  ranges don't intersect\n");
 #endif
 	return NULL;		/* can't intersect */
@@ -619,7 +646,7 @@ Intersect(segment *a, segment *b)			/* determine intersection */
 
 #define EPSILON 1.0e-06 		/* relative `det' size thresh */
 	if (fabs(det) <= EPSILON * norm * norm) {
-#ifdef DEBUG
+#ifdef CAD_BOUNDP_DEBUG
 	    fprintf(stderr, "  parallel: det=%g, norm=%g\n", det, norm);
 #endif
 	    return NULL;		/* parallels don't intersect */
@@ -641,7 +668,7 @@ Intersect(segment *a, segment *b)			/* determine intersection */
 	p.x = onemmu * a->sxy.x + mu * a->exy.x;
 	p.y = onemmu * a->sxy.y + mu * a->exy.y;
 	if ((onemmu < 0.0 || mu < 0.0) && !EndPoint(&p, a)) {
-#ifdef DEBUG
+#ifdef CAD_BOUNDP_DEBUG
 	    fprintf(stderr, "  intersect off (%g, %g)->(%g, %g): mu=%g\n",
 		    (double)a->sxy.x, (double)a->sxy.y,
 		    (double)a->exy.x, (double)a->exy.y,
@@ -653,7 +680,7 @@ Intersect(segment *a, segment *b)			/* determine intersection */
 
 	lambda = (xaeas * ybsas - xbsas * yaeas) / det;
 	if ((lambda > 1.0 || lambda < 0.0) && !EndPoint(&p, b)) {
-#ifdef DEBUG
+#ifdef CAD_BOUNDP_DEBUG
 	    fprintf(stderr, "intersect off (%g, %g)->(%g, %g): lambda=%g",
 		    (double)b->sxy.x, (double)b->sxy.y,
 		    (double)b->exy.x, (double)b->exy.y,
@@ -663,7 +690,7 @@ Intersect(segment *a, segment *b)			/* determine intersection */
 	    return NULL;		/* not in segment *b */
 	}
 
-#ifdef DEBUG
+#ifdef CAD_BOUNDP_DEBUG
 	fprintf(stderr, "  intersection is (%g, %g): mu=%g lambda=%g\n",
 		(double)p.x, (double)p.y, mu, lambda
 	    );
@@ -678,7 +705,7 @@ EndPoint(coords *p, segment *segp)			/* check for segment endpoint */
     /* -> point being tested */
     /* -> segment */
 {
-#ifdef DEBUG
+#ifdef CAD_BOUNDP_DEBUG
     if (Near(p, &segp->sxy) || Near(p, &segp->exy))
 	fprintf(stderr, "  (%g, %g) is endpt of (%g, %g)->(%g, %g)\n",
 		(double)p->x, (double)p->y,
@@ -703,7 +730,7 @@ Near(coords *ap, coords *bp)				/* check if within tolerance */
     ysq = ap->y - bp->y;
     ysq *= ysq;
 
-#ifdef DEBUG
+#ifdef CAD_BOUNDP_DEBUG
     if (xsq + ysq <= tolsq)
 	fprintf(stderr, "  (%g, %g) is near (%g, %g)\n",
 		(double)ap->x, (double)ap->y,
@@ -746,7 +773,7 @@ Input(segment *inp)				/* input stroke record */
 	/* scan input record */
 	int cvt;	/* # fields converted */
 
-#ifdef DEBUG
+#ifdef CAD_BOUNDP_DEBUG
 	fprintf(stderr, "input: %s", inbuf);
 #endif
 	cvt = sscanf(inbuf, " %e %e %e %e",
@@ -786,7 +813,7 @@ Output(coords *coop)				/* dump polygon vertex coords */
 	printf("%g %g\n",
 	       (double)coop->x, (double)coop->y
 	    );
-#ifdef DEBUG
+#ifdef CAD_BOUNDP_DEBUG
     fprintf(stderr, "output: %g %g", (double)coop->x, (double)coop->y);
 #endif
 }

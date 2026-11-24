@@ -56,8 +56,8 @@ main(int argc, char **argv)
 	{{"view", "faceplate", "grid", "draw", "1", NULL}, ""},
 	{{"view", "faceplate", "grid", "-v", "draw", "1", NULL}, ""},
 	{{"view", "faceplate", "grid", "-h", "draw", NULL}, "view faceplate grid draw"},
-	{{"view", "faceplate", "model_axes", "-h", "size", NULL}, "axes size [#]"},
-	{{"view", "faceplate", "view_axes", "-h", "size", NULL}, "axes size [#]"},
+	{{"view", "faceplate", "model_axes", "-h", "size", NULL}, "view faceplate model_axes size"},
+	{{"view", "faceplate", "view_axes", "-h", "size", NULL}, "view faceplate view_axes size"},
 	{{"view", "faceplate", "irect", "-h", "draw", NULL}, "view faceplate irect draw"},
 	{{"view", "obj", "axes_marker", "axes", "-s", "create", "1", "2", "3", NULL}, ""},
 	{{"view", "obj", "axes_marker", "axes", "pos", NULL}, "1.000000 2.000000 3.000000"},
@@ -115,7 +115,7 @@ main(int argc, char **argv)
     {
 	const char *polygon_help[] = {"view", "obj", "polygon_marker", "polygon", "-s", "-h", "create"};
 	if (ged_exec(gedp, 7, polygon_help) != GED_HELP ||
-	    !strstr(bu_vls_cstr(gedp->ged_result_str), "view obj <objname> polygon [options] [args]")) {
+	    !strstr(bu_vls_cstr(gedp->ged_result_str), "Usage: view obj <object> polygon")) {
 	    bu_log("FAIL: polygon help convention changed\n");
 	    failures++;
 	}

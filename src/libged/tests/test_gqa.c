@@ -26,6 +26,7 @@
 #include "common.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <bu.h>
 #include <bv.h>
 #include <ged.h>
@@ -37,7 +38,10 @@ find_overlap_plot(struct ged *gedp)
     struct display_list *gdlp;
 
     for (BU_LIST_FOR(gdlp, display_list, (struct bu_list *)ged_dl(gedp))) {
-	if (BU_STR_EQUAL(bu_vls_cstr(&gdlp->dl_path), overlap_plot))
+        const char *path = bu_vls_cstr(&gdlp->dl_path);
+        /* Display paths may use the unambiguous leading-slash encoding. */
+	if (BU_STR_EQUAL(path, overlap_plot) ||
+            (path[0] == '/' && BU_STR_EQUAL(path + 1, overlap_plot)))
 	    return BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);
     }
 
@@ -50,6 +54,7 @@ main(int ac, char *av[]) {
     const char *gqa_plot_fname = "gqa_ovlps.plot3";
     const char *gqa[6] = {"gqa", "-Aop", "-g", "800", "ovlp", NULL};
     const char *gqa_clear[6] = {"gqa", "-Aop", "-g", "800", "r1", NULL};
+    const char *gqa_oblique[10] = {"gqa", "-Av", "-g", "800", "-a", "30", "-e", "20", "r1", NULL};
 
     bu_setprogname(av[0]);
 
@@ -93,6 +98,11 @@ main(int ac, char *av[]) {
 	bu_exit(EXIT_FAILURE, "GQA no-overlap analysis failed: %s\n", bu_vls_cstr(gedp->ged_result_str));
     if (find_overlap_plot(gedp))
 	bu_exit(EXIT_FAILURE, "GQA left stale overlap plotting data in the display list.\n");
+
+    if (ged_exec_gqa(gedp, 9, gqa_oblique) != BRLCAD_OK)
+        bu_exit(EXIT_FAILURE, "GQA oblique analysis failed: %s\n", bu_vls_cstr(gedp->ged_result_str));
+    if (strstr(bu_vls_cstr(gedp->ged_result_str), "not implemented"))
+        bu_exit(EXIT_FAILURE, "GQA did not enable the requested oblique view.\n");
 
     ged_close(gedp);
 

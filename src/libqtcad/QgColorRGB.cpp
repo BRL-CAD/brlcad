@@ -86,7 +86,7 @@ QgColorRGB::set_color_from_button()
 	// Sync bu_color
 	QString colstr = rgbtext->text();
 	char *ccstr = bu_strdup(colstr.toLocal8Bit().data());
-	bu_opt_color(NULL, 1, (const char **)&ccstr, (void *)&bc);
+	bu_arg_color_from_argv((struct bu_color *)(&bc), 1, (const char **)&ccstr);
 	bu_free(ccstr, "ccstr");
 
 	emit color_changed(&bc);
@@ -107,7 +107,7 @@ QgColorRGB::set_color_from_text()
     char *ccstr = bu_strdup(colstr.toLocal8Bit().data());
     char **av = (char **)bu_calloc(strlen(ccstr) + 1, sizeof(char *), "argv array");
     int nargs = bu_argv_from_string(av, strlen(ccstr), ccstr);
-    int acnt = bu_opt_color(NULL, nargs, (const char **)av, (void *)&bc);
+    int acnt = bu_arg_color_from_argv((struct bu_color *)(&bc), nargs, (const char **)av);
     bu_free(av, "av");
     bu_free(ccstr, "ccstr");
 

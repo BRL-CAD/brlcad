@@ -58,7 +58,7 @@
 
 #include "bu/app.h"
 #include "bu/color.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bu/debug.h"
 #include "bu/units.h"
 #include "bu/version.h"
@@ -195,6 +195,18 @@ mged_quiesce_tcl(struct mged_state *s)
     }
 
     mged_stop_log_drain_timer(s);
+    if (s->completion_escape_timer) {
+	Tcl_DeleteTimerHandler(s->completion_escape_timer);
+	s->completion_escape_timer = NULL;
+    }
+    if (s->completion_resize_timer) {
+	Tcl_DeleteTimerHandler(s->completion_resize_timer);
+	s->completion_resize_timer = NULL;
+    }
+    if (s->completion_display_candidates) {
+	Tcl_DecrRefCount(s->completion_display_candidates);
+	s->completion_display_candidates = NULL;
+    }
 
 #ifdef HAVE_TK
     /* This handler is process-global in Tk and retains s as ClientData.  It
@@ -591,12 +603,13 @@ mged_dm_during_clbk(int ac, const char **av, void *UNUSED(u1), void *u2)
 
 
 /*
- * Helper struct for colour options that use bu_opt_color.  The .set flag
+ * Helper struct for colour options that use the native shared color parser.
+ * The .set flag
  * distinguishes "not supplied on command line" from an explicit black (0 0 0).
  * Defined here so it can be embedded in struct mged_cli_overrides below.
  */
 struct mged_color_opt {
-    struct bu_color color;  /* populated by bu_opt_color */
+    struct bu_color color;  /* populated by the native color consumer */
     int set;                /* 1 once the option has been parsed */
 };
 
@@ -607,14 +620,14 @@ struct mged_color_opt {
  * apply_cli_overrides() can distinguish "not set" from an explicit zero.
  *
  * Two usage phases:
- *   (a) Early options that select startup behavior are resolved immediately
- *       after bu_opt_parse returns, before Tcl/DM initialisation.
+ *   (a) Early options (attach, classic_mged, etc.) are applied immediately
+ *       after the command-schema parser returns, before Tcl/DM initialisation.
  *   (b) Deferred options (mged_variables, grid, colours, …) are applied by
  *       apply_cli_overrides() after do_rc() so that CLI flags always win
  *       over any .mgedrc settings.
  */
 struct mged_cli_overrides {
-    /* --- Phase (a): applied immediately after bu_opt_parse() --- */
+    /* --- Phase (a): applied immediately after native option parsing --- */
     const char *attach;         /* -a / --attach */
     const char *dpy_string;     /* -d / --display */
     int classic_mode;           /* -c / --classic  (set to 1 when given) */
@@ -697,89 +710,57 @@ struct mged_cli_overrides {
 };
 
 
-/* ---------------------------------------------------------------------------
- * bu_opt helper: set the pointed-to int to 0 (used by --no-X boolean flags).
- * Returns 0 (no argv element consumed).
- * -------------------------------------------------------------------------- */
+/* Native no-argument state transition used by --no-X boolean flags. */
 static int
-flag_set_zero(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
-	      const char **UNUSED(argv), void *set_var)
+mged_flag_set_zero(struct bu_vls *UNUSED(msg), const char *UNUSED(arg), void *storage)
 {
-    *(int *)set_var = 0;
+    if (storage)
+	*((int *)storage) = 0;
     return 0;
 }
 
 
-/* ---------------------------------------------------------------------------
- * bu_opt helper: parse a hex unsigned int (for -x / -X debug flags).
- * Consumes one argv element.
- * -------------------------------------------------------------------------- */
+/* The standard color consumer writes the first member, then mark the option
+ * present so an explicit black color remains distinguishable from omission. */
 static int
-parse_debug_uint(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+mged_color_consume(struct bu_vls *msg, size_t argc, const char **argv, void *storage)
 {
-    unsigned int *val = (unsigned int *)set_var;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "hex value");
-    if (sscanf(argv[0], "%x", val) != 1) {
-	if (msg)
-	    bu_vls_printf(msg, "ERROR: expected hex integer, got \"%s\"\n", argv[0]);
-	return -1;
-    }
-    return 1;
-}
+    struct mged_color_opt *color_opt = (struct mged_color_opt *)storage;
+    int ret = bu_arg_color_consume(msg, argc, argv,
+	storage ? (void *)&color_opt->color : NULL);
 
-
-/* ---------------------------------------------------------------------------
- * bu_opt_color wrapper: stores the parsed colour in a struct that also holds
- * a "was this option given?" flag.  Used for --bg and --geo-color so that
- * apply_cli_overrides() can reliably distinguish "not supplied" from an
- * explicit black (0 0 0).
- * struct mged_color_opt is defined above (before mged_cli_overrides).
- * -------------------------------------------------------------------------- */
-static int
-parse_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
-{
-    struct mged_color_opt *co = (struct mged_color_opt *)set_var;
-    int ret = bu_opt_color(msg, argc, argv, &co->color);
-    if (ret > 0)
-	co->set = 1;
+    if (!ret && color_opt)
+	color_opt->set = 1;
     return ret;
 }
 
 
-/* ---------------------------------------------------------------------------
- * bu_opt helper: collect a --set VAR=VALUE string into a bu_ptbl.
- * Validates the '=' separator; stores the original argv pointer (valid for
- * the duration of main()).  Consumes one argv element.
- * -------------------------------------------------------------------------- */
+/* Collect a --set VAR=VALUE string.  Validation is side-effect free when
+ * storage is NULL, as required by command-schema completion/validation. */
 static int
-parse_mged_set(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+mged_set_parse(struct bu_vls *msg, const char *arg, void *storage)
 {
-    struct bu_ptbl *t = (struct bu_ptbl *)set_var;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "VAR=VALUE");
-    if (!strchr(argv[0], '=')) {
+    if (!arg || !strchr(arg, '=')) {
 	if (msg)
 	    bu_vls_printf(msg, "ERROR: --set requires VAR=VALUE format (no '=' in \"%s\")\n",
-			  argv[0]);
+			  arg ? arg : "");
 	return -1;
     }
-    bu_ptbl_ins(t, (long *)argv[0]);
-    return 1;
+    if (storage)
+	bu_ptbl_ins((struct bu_ptbl *)storage, (long *)arg);
+    return 0;
 }
 
 
-/* ---------------------------------------------------------------------------
- * bu_opt helper: collect a --rset ARGS string into a bu_ptbl.
- * The ARGS string should contain everything that would follow "rset " on the
- * MGED command line, e.g. "g snap 1" or "ax model_draw 1".
- * Consumes one argv element.
- * -------------------------------------------------------------------------- */
+/* Collect one quoted --rset argument string for later Tcl evaluation. */
 static int
-parse_rset(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+mged_rset_parse(struct bu_vls *UNUSED(msg), const char *arg, void *storage)
 {
-    struct bu_ptbl *t = (struct bu_ptbl *)set_var;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "ARGS");
-    bu_ptbl_ins(t, (long *)argv[0]);
-    return 1;
+    if (!arg)
+	return -1;
+    if (storage)
+	bu_ptbl_ins((struct bu_ptbl *)storage, (long *)arg);
+    return 0;
 }
 
 
@@ -807,6 +788,72 @@ mgedrc_has_legacy_set(const char *line)
     }
     return 0;
 }
+/* Keep this local: an imported-data address is not a constant initializer on MSVC. */
+static const struct bu_arg_shape mged_color_arg_shape = {
+    BU_ARG_SHAPE_COLOR, 1, 3, "packed color or three RGB components", NULL, NULL
+};
+static const struct bu_arg_option mged_cli_options[] = {
+    BU_ARG_VALUE("a", "attach", struct mged_cli_overrides, attach, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "type", "display manager attach target"),
+    BU_ARG_VALUE("d", "display", struct mged_cli_overrides, dpy_string, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "screen", "Tk display and screen name"),
+    BU_ARG_FLAG("r", "read-only", struct mged_cli_overrides, read_only, "open database read-only"),
+    BU_ARG_FLAG("p", "pipe", struct mged_cli_overrides, pipe_mode, "read commands from stdin and emit CMD_DONE sentinels"),
+    BU_ARG_FLAG("c", "classic", struct mged_cli_overrides, classic_mode, "classic text-only mode"),
+    BU_ARG_FLAG("C", "gui", struct mged_cli_overrides, gui_mode, "GUI (non-classic) mode"),
+    BU_ARG_FLAG("b", "background", struct mged_cli_overrides, background, "run in background (fork)"),
+    BU_ARG_VALUE("x", "rt-debug", struct mged_cli_overrides, rt_debug_val, BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "hex", "set librt debug flags (hex)"),
+    BU_ARG_VALUE("X", "bu-debug", struct mged_cli_overrides, bu_debug_val, BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "hex", "set libbu debug flags (hex)"),
+    BU_ARG_FLAG("v", "version", struct mged_cli_overrides, print_version, "print version info and exit"),
+    BU_ARG_FLAG("h", "help", struct mged_cli_overrides, print_help, "print help and exit"),
+    BU_ARG_FLAG("?", NULL, struct mged_cli_overrides, print_help, "print help and exit"),
+    BU_ARG_FLAG("o", NULL, struct mged_cli_overrides, old_gui_flag, "[developer] use old GUI"),
+    BU_ARG_VALUE(NULL, "rcfile", struct mged_cli_overrides, rcfile, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "file", "use FILE instead of .mgedrc"),
+    BU_ARG_FLAG(NULL, "no-rc", struct mged_cli_overrides, skip_rc, "skip loading any .mgedrc file"),
+    BU_ARG_CUSTOM(NULL, "set", struct mged_cli_overrides, set_pairs, mged_set_parse, "VAR=VALUE", "set an mged variable (e.g. --set use_air=1); applied after .mgedrc"),
+    BU_ARG_CUSTOM(NULL, "rset", struct mged_cli_overrides, rset_pairs, mged_rset_parse, "ARGS", "set an rset resource (e.g. --rset \"g snap 1\"); applied after .mgedrc"),
+    BU_ARG_FLAG(NULL, "use-air", struct mged_cli_overrides, use_air, "enable use_air"),
+    BU_ARG_CUSTOM_FLAG(NULL, "no-use-air", "no-use-air", struct mged_cli_overrides, use_air, mged_flag_set_zero, "disable use_air"),
+    BU_ARG_FLAG(NULL, "dlist", struct mged_cli_overrides, dlist, "enable display lists"),
+    BU_ARG_CUSTOM_FLAG(NULL, "no-dlist", "no-dlist", struct mged_cli_overrides, dlist, mged_flag_set_zero, "disable display lists"),
+    BU_ARG_FLAG(NULL, "faceplate", struct mged_cli_overrides, faceplate, "show faceplate overlay"),
+    BU_ARG_CUSTOM_FLAG(NULL, "no-faceplate", "no-faceplate", struct mged_cli_overrides, faceplate, mged_flag_set_zero, "hide faceplate overlay"),
+    BU_ARG_FLAG(NULL, "predictor", struct mged_cli_overrides, predictor, "enable view predictor"),
+    BU_ARG_CUSTOM_FLAG(NULL, "no-predictor", "no-predictor", struct mged_cli_overrides, predictor, mged_flag_set_zero, "disable view predictor"),
+    BU_ARG_VALUE(NULL, "linewidth", struct mged_cli_overrides, linewidth, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "#", "wireframe line width (pixels, >=1)"),
+    BU_ARG_VALUE(NULL, "linestyle", struct mged_cli_overrides, linestyle, BU_ARG_VALUE_CHAR, BU_ARG_REQUIRED, "s|d", "line style: s=solid, d=dashed"),
+    BU_ARG_VALUE(NULL, "perspective", struct mged_cli_overrides, perspective, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "#", "perspective angle in degrees (-1=off)"),
+    BU_ARG_VALUE(NULL, "eye-sep-dist", struct mged_cli_overrides, eye_sep_dist, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "#", "stereo eye separation (mm, 0=mono)"),
+    BU_ARG_VALUE(NULL, "port", struct mged_cli_overrides, port, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "#", "framebuffer server listen port (0-65535)"),
+    BU_ARG_VALUE(NULL, "coords", struct mged_cli_overrides, coords, BU_ARG_VALUE_CHAR, BU_ARG_REQUIRED, "m|v", "constraint coords: m=model v=view"),
+    BU_ARG_VALUE(NULL, "rotate-about", struct mged_cli_overrides, rotate_about, BU_ARG_VALUE_CHAR, BU_ARG_REQUIRED, "m|v|e", "rotate center: m=model v=view e=eye"),
+    BU_ARG_VALUE(NULL, "transform", struct mged_cli_overrides, transform, BU_ARG_VALUE_CHAR, BU_ARG_REQUIRED, "v|a|e", "mouse transform: v=view a=adc e=edit"),
+    BU_ARG_VALUE(NULL, "nmg-eu-dist", struct mged_cli_overrides, nmg_eu_dist, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "#", "NMG edge-use distance tolerance"),
+    BU_ARG_VALUE(NULL, "mouse-behavior", struct mged_cli_overrides, mouse_behavior, BU_ARG_VALUE_CHAR, BU_ARG_REQUIRED, "v|a|e", "mouse behavior mode"),
+    BU_ARG_VALUE(NULL, "predictor-advance", struct mged_cli_overrides, predictor_advance, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "#", "predictor advance time (s)"),
+    BU_ARG_VALUE(NULL, "predictor-length", struct mged_cli_overrides, predictor_length, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "#", "predictor trail length (s)"),
+    BU_ARG_VALUE(NULL, "perspective-mode", struct mged_cli_overrides, perspective_mode, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "0|1", "enable/disable perspective mode"),
+    BU_ARG_VALUE(NULL, "context", struct mged_cli_overrides, context, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "0|1", "context mode (0=off)"),
+    BU_ARG_VALUE(NULL, "sliders", struct mged_cli_overrides, sliders, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "0|1", "show sliders"),
+    BU_ARG_VALUE(NULL, "hot-key", struct mged_cli_overrides, hot_key, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "#", "hot key character code"),
+    BU_ARG_VALUE(NULL, "fb-overlay", struct mged_cli_overrides, fb_overlay, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "0|1|2", "framebuffer overlay: 0=under 1=inter 2=over"),
+    BU_ARG_VALUE(NULL, "dm-type", struct mged_cli_overrides, dm_type, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "type", "display manager type (e.g. ogl, swrast)"),
+    BU_ARG_VALUE(NULL, "geom", struct mged_cli_overrides, geom, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "WxH+X+Y", "command window geometry"),
+    BU_ARG_VALUE(NULL, "ggeom", struct mged_cli_overrides, ggeom, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "WxH+X+Y", "graphics window geometry"),
+    BU_ARG_VALUE(NULL, "grid-draw", struct mged_cli_overrides, grid_draw, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "0|1", "show/hide grid"),
+    BU_ARG_VALUE(NULL, "grid-snap", struct mged_cli_overrides, grid_snap, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "0|1", "enable/disable grid snap"),
+    BU_ARG_VALUE(NULL, "grid-rh", struct mged_cli_overrides, grid_rh, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "#", "horizontal grid resolution"),
+    BU_ARG_VALUE(NULL, "grid-rv", struct mged_cli_overrides, grid_rv, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "#", "vertical grid resolution"),
+    BU_ARG_VALUE(NULL, "grid-mrh", struct mged_cli_overrides, grid_mrh, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "#", "horizontal major grid interval"),
+    BU_ARG_VALUE(NULL, "grid-mrv", struct mged_cli_overrides, grid_mrv, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "#", "vertical major grid interval"),
+    BU_ARG_OPTION_SHAPED(NULL, "bg", "bg", struct mged_cli_overrides, bg_color, BU_ARG_VALUE_COLOR, "R G B", "background colour (0-255 per component, or #RRGGBB)", BU_ARG_REQUIRED, &mged_color_arg_shape, mged_color_consume),
+    BU_ARG_OPTION_SHAPED(NULL, "geo-color", "geo-color", struct mged_cli_overrides, geo_def_color, BU_ARG_VALUE_COLOR, "R G B", "default geometry wireframe colour", BU_ARG_REQUIRED, &mged_color_arg_shape, mged_color_consume),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema mged_cli_schema = {
+    "mged", "Multi-display interactive combinatorial solid geometry editor",
+    mged_cli_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
 
 /**
@@ -926,46 +973,541 @@ mged_insert_char(struct mged_state *s, char ch)
 }
 
 
+static int
+mged_completion_terminal_capable(void)
+{
+    const char *term = getenv("TERM");
+
+    if (!isatty(fileno(stdout)) || !term || !term[0])
+	return 0;
+    return !BU_STR_EQUAL(term, "dumb");
+}
+
+
+struct mged_completion_line_metrics {
+    size_t cursor_row;
+    size_t cursor_column;
+    size_t end_row;
+    size_t end_column;
+    size_t input_rows;
+};
+
+
+static struct mged_completion_line_metrics
+mged_completion_metrics(const struct mged_state *s, int columns)
+{
+    struct mged_completion_line_metrics metrics = {0, 0, 0, 0, 1};
+    const char *input = bu_vls_addr(&s->input_str);
+    size_t input_length = bu_vls_strlen(&s->input_str);
+    size_t cursor = s->input_str_index > input_length ? input_length : s->input_str_index;
+    size_t prompt_width = bu_lineedit_text_width(bu_vls_addr(&s->mged_prompt),
+	    bu_vls_strlen(&s->mged_prompt));
+    size_t cursor_width = prompt_width + bu_lineedit_text_width(input, cursor);
+    size_t end_width = prompt_width + bu_lineedit_text_width(input, input_length);
+
+    if (columns < 1)
+	columns = 80;
+    metrics.cursor_row = cursor_width / (size_t)columns;
+    metrics.cursor_column = cursor_width % (size_t)columns;
+    metrics.end_row = end_width / (size_t)columns;
+    metrics.end_column = end_width % (size_t)columns;
+    metrics.input_rows = metrics.end_row + 1;
+    return metrics;
+}
+
+
 static void
-do_tab_expansion(struct mged_state *s)
+mged_completion_append_line(struct bu_vls *output, const struct mged_state *s,
+	int columns, const struct mged_completion_line_metrics *metrics)
+{
+    bu_vls_vlscat(output, &s->mged_prompt);
+    bu_vls_vlscat(output, &s->input_str);
+    /* Normalize a pending autowrap at the right margin into an actual row so
+     * subsequent relative cursor movement has deterministic semantics. */
+    if (columns > 0 && metrics->end_row > 0 && metrics->end_column == 0)
+	bu_vls_strcat(output, "\n\r");
+}
+
+
+static void
+mged_completion_append_cursor_from_end(struct bu_vls *output,
+	const struct mged_completion_line_metrics *metrics)
+{
+    if (metrics->end_row > metrics->cursor_row)
+	bu_vls_printf(output, "\033[%zuA", metrics->end_row - metrics->cursor_row);
+    bu_vls_putc(output, '\r');
+    if (metrics->cursor_column)
+	bu_vls_printf(output, "\033[%zuC", metrics->cursor_column);
+}
+
+
+static void
+mged_completion_redraw_line(struct mged_state *s)
+{
+    int columns = 80;
+    int rows = 24;
+    struct bu_vls output = BU_VLS_INIT_ZERO;
+
+    if (mged_completion_terminal_capable()) {
+	(void)termio_get_winsize(fileno(stdout), &rows, &columns);
+	struct mged_completion_line_metrics metrics = mged_completion_metrics(s, columns);
+	bu_vls_putc(&output, '\r');
+	if (metrics.cursor_row)
+	    bu_vls_printf(&output, "\033[%zuA", metrics.cursor_row);
+	bu_vls_strcat(&output, "\033[J");
+	mged_completion_append_line(&output, s, columns, &metrics);
+	mged_completion_append_cursor_from_end(&output, &metrics);
+    } else {
+	bu_vls_vlscat(&output, &s->mged_prompt);
+	bu_vls_vlscat(&output, &s->input_str);
+    }
+    bu_log("%s", bu_vls_cstr(&output));
+    bu_vls_free(&output);
+}
+
+
+static size_t
+mged_completion_max_rows(int terminal_rows, size_t input_rows)
+{
+    if (terminal_rows < 1)
+	terminal_rows = 24;
+    int prior_rows = (terminal_rows + 2) / 3;
+    int completion_rows = terminal_rows - prior_rows - (int)input_rows;
+    return (size_t)((completion_rows > 0) ? completion_rows : 1);
+}
+
+
+/* Redraw the input and erase everything below it.  This remains reliable when
+ * a narrower terminal has reflowed old candidate rows, unlike walking the old
+ * row count with cursor-up/down sequences. */
+static void
+mged_completion_display_erase(struct mged_state *s, int current_columns)
+{
+    if (!s->completion_display_rows)
+	return;
+
+    if (mged_completion_terminal_capable()) {
+	struct bu_vls output = BU_VLS_INIT_ZERO;
+	int columns = current_columns > 0 ? current_columns :
+	    (s->completion_display_columns > 0 ? s->completion_display_columns : 80);
+	struct mged_completion_line_metrics metrics = mged_completion_metrics(s, columns);
+	bu_vls_putc(&output, '\r');
+	if (metrics.cursor_row)
+	    bu_vls_printf(&output, "\033[%zuA", metrics.cursor_row);
+	bu_vls_strcat(&output, "\033[J");
+	mged_completion_append_line(&output, s, columns, &metrics);
+	mged_completion_append_cursor_from_end(&output, &metrics);
+	bu_log("%s", bu_vls_cstr(&output));
+	bu_vls_free(&output);
+    }
+    s->completion_display_rows = 0;
+}
+
+
+static void
+mged_completion_display_clear(struct mged_state *s)
+{
+    mged_completion_display_erase(s, 0);
+    if (s->completion_resize_timer) {
+	Tcl_DeleteTimerHandler(s->completion_resize_timer);
+	s->completion_resize_timer = NULL;
+    }
+    if (s->completion_display_candidates) {
+	Tcl_DecrRefCount(s->completion_display_candidates);
+	s->completion_display_candidates = NULL;
+    }
+    s->completion_display_columns = 0;
+    s->completion_display_terminal_rows = 0;
+    s->completion_display_candidate_limit = 0;
+    s->completion_display_total = 0;
+}
+
+
+static void
+mged_completion_display_render(struct mged_state *s, Tcl_Obj *matches)
+{
+    Tcl_Obj **matchv = NULL;
+    int matchc = 0;
+    int columns = 80;
+    int terminal_rows = 24;
+    struct bu_cmd_completion_layout layout = BU_CMD_COMPLETION_LAYOUT_INIT_ZERO;
+    const char **candidates = NULL;
+
+    if (s->completion_display_rows || !mged_completion_terminal_capable() ||
+	!matches || Tcl_ListObjGetElements(s->interp, matches, &matchc, &matchv) != TCL_OK ||
+	matchc < 2)
+	return;
+    (void)termio_get_winsize(fileno(stdout), &terminal_rows, &columns);
+    if (columns < 1)
+	columns = 80;
+    if (terminal_rows < 1)
+	terminal_rows = 24;
+    candidates = (const char **)bu_calloc((size_t)matchc, sizeof(char *),
+	"MGED terminal completion candidates");
+    for (int i = 0; i < matchc; i++)
+	candidates[i] = Tcl_GetString(matchv[i]);
+
+    struct mged_completion_line_metrics metrics = mged_completion_metrics(s, columns);
+    int layout_status = bu_cmd_completion_layout_create(&layout, candidates,
+	(size_t)matchc, (size_t)columns,
+	mged_completion_max_rows(terminal_rows, metrics.input_rows));
+    bu_free(candidates, "MGED terminal completion candidates");
+    if (layout_status != BRLCAD_OK || !layout.line_count) {
+	bu_cmd_completion_layout_clear(&layout);
+	return;
+    }
+
+    struct bu_vls output = BU_VLS_INIT_ZERO;
+    if (metrics.end_row > metrics.cursor_row)
+	bu_vls_printf(&output, "\033[%zuB", metrics.end_row - metrics.cursor_row);
+    bu_vls_putc(&output, '\r');
+    if (metrics.end_column)
+	bu_vls_printf(&output, "\033[%zuC", metrics.end_column);
+    for (size_t i = 0; i < layout.line_count; i++)
+	bu_vls_printf(&output, "\r\n\033[2K%s", layout.lines[i]);
+    bu_vls_printf(&output, "\033[%zuA\r",
+	    layout.line_count + metrics.end_row - metrics.cursor_row);
+    if (metrics.cursor_column)
+	bu_vls_printf(&output, "\033[%zuC", metrics.cursor_column);
+    bu_log("%s", bu_vls_cstr(&output));
+    bu_vls_free(&output);
+    s->completion_display_rows = layout.line_count;
+    s->completion_display_columns = columns;
+    s->completion_display_terminal_rows = terminal_rows;
+    bu_cmd_completion_layout_clear(&layout);
+}
+
+
+static void mged_completion_resize_check(ClientData client_data);
+
+
+static void
+mged_completion_display(struct mged_state *s, Tcl_Obj *matches)
+{
+    if (!matches || !mged_completion_terminal_capable())
+	return;
+
+    if (!s->completion_display_candidates) {
+	s->completion_display_candidates = matches;
+	Tcl_IncrRefCount(s->completion_display_candidates);
+    }
+    mged_completion_display_render(s, s->completion_display_candidates);
+    if (s->completion_display_rows && !s->completion_resize_timer)
+	s->completion_resize_timer = Tcl_CreateTimerHandler(100,
+	    mged_completion_resize_check, (ClientData)s);
+}
+
+
+static void
+mged_completion_resize_check(ClientData client_data)
+{
+    struct mged_state *s = (struct mged_state *)client_data;
+    int columns = 80;
+    int terminal_rows = 24;
+    s->completion_resize_timer = NULL;
+
+    if (!s->completion_display_candidates || !s->completion_display_rows ||
+	mged_shutting_down(s))
+	return;
+
+    (void)termio_get_winsize(fileno(stdout), &terminal_rows, &columns);
+    if (columns < 1)
+	columns = 80;
+    if (terminal_rows < 1)
+	terminal_rows = 24;
+    {
+	struct mged_completion_line_metrics metrics =
+	    mged_completion_metrics(s, columns);
+	size_t candidate_limit = bu_cmd_completion_candidate_budget(
+	    (size_t)columns, mged_completion_max_rows(terminal_rows,
+		metrics.input_rows));
+	if (s->completion_display_total > (size_t)s->completion_last_count &&
+	    candidate_limit != s->completion_display_candidate_limit &&
+	    bu_vls_strlen(&s->completion_base_line)) {
+	    Tcl_Obj *objv[5];
+	    Tcl_Obj *matches = NULL;
+	    Tcl_Obj *count_obj = NULL;
+	    Tcl_Obj *total_obj = NULL;
+	    int completion_count = 0;
+	    Tcl_WideInt completion_total = 0;
+	    const char *base = bu_vls_cstr(&s->completion_base_line);
+
+	    objv[0] = Tcl_NewStringObj("tab_expansion", -1);
+	    objv[1] = Tcl_NewStringObj(base, -1);
+	    objv[2] = Tcl_NewWideIntObj((Tcl_WideInt)Tcl_NumUtfChars(base,
+		    (int)s->completion_base_cursor));
+	    objv[3] = Tcl_NewIntObj(s->completion_last_index >= 0 ?
+		s->completion_last_index : 0);
+	    objv[4] = Tcl_NewWideIntObj((Tcl_WideInt)candidate_limit);
+	    for (int i = 0; i < 5; i++)
+		Tcl_IncrRefCount(objv[i]);
+	    int status = Tcl_EvalObjv(s->interp, 5, objv, 0);
+	    for (int i = 0; i < 5; i++)
+		Tcl_DecrRefCount(objv[i]);
+	    if (status == TCL_OK) {
+		Tcl_Obj *result = Tcl_GetObjResult(s->interp);
+		Tcl_ListObjIndex(s->interp, result, 1, &matches);
+		Tcl_ListObjIndex(s->interp, result, 2, &count_obj);
+		Tcl_ListObjIndex(s->interp, result, 4, &total_obj);
+		if (count_obj)
+		    (void)Tcl_GetIntFromObj(s->interp, count_obj,
+			&completion_count);
+		if (!total_obj || Tcl_GetWideIntFromObj(s->interp, total_obj,
+			&completion_total) != TCL_OK ||
+		    completion_total < completion_count)
+		    completion_total = completion_count;
+		if (matches && completion_count > 0) {
+		    Tcl_IncrRefCount(matches);
+		    Tcl_DecrRefCount(s->completion_display_candidates);
+		    s->completion_display_candidates = matches;
+		    s->completion_last_count = completion_count;
+		    s->completion_display_total = (size_t)completion_total;
+		}
+	    }
+	    s->completion_display_candidate_limit = candidate_limit;
+	}
+    }
+    if (columns != s->completion_display_columns ||
+	terminal_rows != s->completion_display_terminal_rows) {
+	mged_completion_display_erase(s, columns);
+	mged_completion_display_render(s, s->completion_display_candidates);
+    }
+
+    if (s->completion_display_rows)
+	s->completion_resize_timer = Tcl_CreateTimerHandler(100,
+	    mged_completion_resize_check, (ClientData)s);
+}
+
+
+static void
+mged_completion_state_reset(struct mged_state *s)
+{
+    mged_completion_display_clear(s);
+    bu_vls_trunc(&s->completion_base_line, 0);
+    bu_vls_trunc(&s->completion_last_line, 0);
+    s->completion_base_cursor = 0;
+    s->completion_last_cursor = 0;
+    s->completion_last_index = -1;
+    s->completion_last_count = 0;
+}
+
+
+static bu_cmd_completion_mode_t
+mged_completion_mode(struct mged_state *s)
+{
+    bu_cmd_completion_mode_t mode =
+	bu_cmd_completion_mode_from_env("BRLCAD_MGED_COMPLETION_MODE", BU_CMD_COMPLETE_FILTER);
+
+    if (Tcl_EvalEx(s->interp, "mged_completion_mode", -1, TCL_EVAL_GLOBAL) == TCL_OK)
+	(void)bu_cmd_completion_mode_parse(Tcl_GetStringResult(s->interp), &mode);
+    Tcl_ResetResult(s->interp);
+    return mode;
+}
+
+
+static void
+do_tab_expansion(struct mged_state *s, int direction)
 {
     int ret;
     Tcl_Obj *result;
     Tcl_Obj *newCommand;
     Tcl_Obj *matches;
+    Tcl_Obj *completionCountObj = NULL;
+    Tcl_Obj *completionTotalObj = NULL;
+    Tcl_Obj *cursorObj = NULL;
+    Tcl_Obj *objv[5];
+    const char *request_line = bu_vls_addr(&s->input_str);
+    size_t request_cursor = s->input_str_index;
+    size_t result_cursor = 0;
+    int cycle_index = -1;
+    int completion_count = 0;
+    Tcl_WideInt completion_total = 0;
     int numExpansions=0;
-    struct bu_vls tab_expansion = BU_VLS_INIT_ZERO;
+    size_t candidate_limit = 512;
+    bu_cmd_completion_mode_t mode = mged_completion_mode(s);
 
-    bu_vls_printf(&tab_expansion, "tab_expansion {%s}", bu_vls_addr(&s->input_str));
-    ret = Tcl_Eval(s->interp, bu_vls_addr(&tab_expansion));
-    bu_vls_free(&tab_expansion);
+    if (mode == BU_CMD_COMPLETE_OFF) {
+	mged_completion_state_reset(s);
+	return;
+    }
+
+    if (s->completion_last_count > 0 &&
+	    s->input_str_index == s->completion_last_cursor &&
+	    BU_STR_EQUAL(bu_vls_addr(&s->input_str), bu_vls_cstr(&s->completion_last_line))) {
+	request_line = bu_vls_cstr(&s->completion_base_line);
+	request_cursor = s->completion_base_cursor;
+	cycle_index = s->completion_last_index + direction;
+	if (cycle_index < 0)
+	    cycle_index = s->completion_last_count - 1;
+	else if (cycle_index >= s->completion_last_count)
+	    cycle_index = 0;
+    } else if (direction < 0 && s->completion_last_count > 0 &&
+	    s->input_str_index == s->completion_base_cursor &&
+	    BU_STR_EQUAL(bu_vls_addr(&s->input_str), bu_vls_cstr(&s->completion_base_line))) {
+	request_line = bu_vls_cstr(&s->completion_base_line);
+	request_cursor = s->completion_base_cursor;
+	cycle_index = s->completion_last_index - 1;
+	if (cycle_index < 0)
+	    cycle_index = s->completion_last_count - 1;
+    } else {
+	mged_completion_state_reset(s);
+	bu_vls_strcpy(&s->completion_base_line, bu_vls_addr(&s->input_str));
+	s->completion_base_cursor = s->input_str_index;
+	s->completion_last_index = -1;
+	if (mode == BU_CMD_COMPLETE_FILTER || mode == BU_CMD_COMPLETE_CYCLE)
+	    cycle_index = 0;
+    }
+
+    objv[0] = Tcl_NewStringObj("tab_expansion", -1);
+    objv[1] = Tcl_NewStringObj(request_line, -1);
+    objv[2] = Tcl_NewWideIntObj((Tcl_WideInt)Tcl_NumUtfChars(request_line,
+	    (int)request_cursor));
+    objv[3] = Tcl_NewIntObj(cycle_index);
+    {
+	int columns = 80;
+	int terminal_rows = 24;
+	(void)termio_get_winsize(fileno(stdout), &terminal_rows, &columns);
+	if (columns < 1)
+	    columns = 80;
+	if (terminal_rows < 1)
+	    terminal_rows = 24;
+	struct mged_completion_line_metrics metrics =
+	    mged_completion_metrics(s, columns);
+	size_t display_rows = mged_completion_max_rows(terminal_rows,
+	    metrics.input_rows);
+	candidate_limit = bu_cmd_completion_candidate_budget((size_t)columns,
+	    display_rows);
+	objv[4] = Tcl_NewWideIntObj((Tcl_WideInt)candidate_limit);
+    }
+    int objc = 5;
+    for (int i = 0; i < objc; i++)
+	Tcl_IncrRefCount(objv[i]);
+    ret = Tcl_EvalObjv(s->interp, objc, objv, 0);
+    for (int i = 0; i < objc; i++)
+	Tcl_DecrRefCount(objv[i]);
 
     if (ret == TCL_OK) {
 	result = Tcl_GetObjResult(s->interp);
 	Tcl_ListObjIndex(s->interp, result, 0, &newCommand);
 	Tcl_ListObjIndex(s->interp, result, 1, &matches);
+	Tcl_ListObjIndex(s->interp, result, 2, &completionCountObj);
+	Tcl_ListObjIndex(s->interp, result, 3, &cursorObj);
+	Tcl_ListObjIndex(s->interp, result, 4, &completionTotalObj);
 	Tcl_ListObjLength(s->interp, matches, &numExpansions);
-	if (numExpansions > 1) {
-	    /* show the possible matches */
-	    bu_log("\n%s\n", Tcl_GetString(matches));
+	if (completionCountObj)
+	    Tcl_GetIntFromObj(s->interp, completionCountObj, &completion_count);
+	else
+	    completion_count = numExpansions;
+	if (!completionTotalObj ||
+	    Tcl_GetWideIntFromObj(s->interp, completionTotalObj,
+		&completion_total) != TCL_OK || completion_total < completion_count)
+	    completion_total = completion_count;
+	if (cursorObj) {
+	    Tcl_WideInt cursor_wide = 0;
+	    if (Tcl_GetWideIntFromObj(s->interp, cursorObj, &cursor_wide) == TCL_OK && cursor_wide > 0)
+		result_cursor = (size_t)cursor_wide;
 	}
 
-	/* display the expanded line */
-	pr_prompt(s);
+	/* Display the candidate inline.  The editing seed remains in
+	 * completion_base_line until the preview is accepted or cancelled. */
 	s->input_str_index = 0;
 	bu_vls_trunc(&s->input_str, 0);
 	bu_vls_strcat(&s->input_str, Tcl_GetString(newCommand));
+	const char *result_line = bu_vls_addr(&s->input_str);
+	int result_chars = Tcl_NumUtfChars(result_line, -1);
+	if (result_cursor > (size_t)result_chars)
+	    result_cursor = (size_t)result_chars;
+	result_cursor = (size_t)(Tcl_UtfAtIndex(result_line, (int)result_cursor) - result_line);
+	s->input_str_index = result_cursor;
+	mged_completion_redraw_line(s);
 
-	/* only one match remaining, pad space so we can keep going */
-	if (numExpansions == 1)
-	    bu_vls_strcat(&s->input_str, " ");
-
-	s->input_str_index = bu_vls_strlen(&s->input_str);
-	bu_log("%s", bu_vls_addr(&s->input_str));
+	if ((mode != BU_CMD_COMPLETE_PREFIX && completion_count > 1) ||
+		((mode == BU_CMD_COMPLETE_FILTER || mode == BU_CMD_COMPLETE_CYCLE) && completion_count > 0)) {
+	    s->completion_last_count = completion_count;
+	    s->completion_last_index = cycle_index;
+	    s->completion_last_cursor = result_cursor;
+	    s->completion_active_mode = mode;
+	    bu_vls_strcpy(&s->completion_last_line, bu_vls_addr(&s->input_str));
+	} else {
+	    s->completion_last_count = 0;
+	    s->completion_last_index = -1;
+	    s->completion_last_cursor = 0;
+	    bu_vls_trunc(&s->completion_last_line, 0);
+	    bu_vls_trunc(&s->completion_base_line, 0);
+	}
+	if (mode != BU_CMD_COMPLETE_PREFIX)
+	{
+	    s->completion_display_candidate_limit = candidate_limit;
+	    s->completion_display_total = (size_t)completion_total;
+	    mged_completion_display(s, matches);
+	}
     } else {
+	mged_completion_state_reset(s);
 	bu_log("ERROR\n");
 	bu_log("%s\n", Tcl_GetStringResult(s->interp));
     }
+}
+
+
+static int
+mged_completion_count(struct mged_state *s, const char *line, size_t cursor)
+{
+    Tcl_Obj *objv[4];
+    Tcl_Obj *count_obj = NULL;
+    int count = 0;
+
+    objv[0] = Tcl_NewStringObj("tab_expansion", -1);
+    objv[1] = Tcl_NewStringObj(line, -1);
+    objv[2] = Tcl_NewWideIntObj((Tcl_WideInt)Tcl_NumUtfChars(line, (int)cursor));
+    objv[3] = Tcl_NewIntObj(0);
+    for (int i = 0; i < 4; i++)
+	Tcl_IncrRefCount(objv[i]);
+    int status = Tcl_EvalObjv(s->interp, 4, objv, 0);
+    for (int i = 0; i < 4; i++)
+	Tcl_DecrRefCount(objv[i]);
+    if (status != TCL_OK)
+	return 0;
+
+    Tcl_ListObjIndex(s->interp, Tcl_GetObjResult(s->interp), 2, &count_obj);
+    if (count_obj)
+	(void)Tcl_GetIntFromObj(s->interp, count_obj, &count);
+    return count;
+}
+
+
+static void
+mged_completion_insert_char(struct bu_vls *result, const char *line, size_t cursor, char ch)
+{
+    size_t length = strlen(line);
+    if (cursor > length)
+	cursor = length;
+    bu_vls_strncpy(result, line, cursor);
+    bu_vls_putc(result, ch);
+    bu_vls_strcat(result, line + cursor);
+}
+
+
+static int mged_input_escaped = 0;
+static int mged_input_bracketed = 0;
+static int mged_input_tilded = 0;
+static int mged_input_freshline = 1;
+
+
+static void
+mged_completion_escape_timeout(ClientData client_data)
+{
+    struct mged_state *s = (struct mged_state *)client_data;
+    s->completion_escape_timer = NULL;
+
+    if (!mged_input_escaped || mged_input_bracketed || s->completion_last_count <= 0)
+	return;
+
+    mged_completion_display_clear(s);
+    bu_vls_strcpy(&s->input_str, bu_vls_cstr(&s->completion_base_line));
+    s->input_str_index = s->completion_base_cursor;
+    mged_completion_state_reset(s);
+    mged_completion_redraw_line(s);
+    mged_input_escaped = 0;
 }
 
 
@@ -975,10 +1517,8 @@ mged_process_char(struct mged_state *s, char ch)
 {
     struct bu_vls *vp = (struct bu_vls *)NULL;
     struct bu_vls temp = BU_VLS_INIT_ZERO;
-    static int escaped = 0;
-    static int bracketed = 0;
-    static int tilded = 0;
-    static int freshline = 1;
+    int ansi_key = 0;
+    int reverse_tab = 0;
 
 #define CTRL_A      1
 #define CTRL_B      2
@@ -1000,29 +1540,81 @@ mged_process_char(struct mged_state *s, char ch)
 #define DELETE      127
 
 
-    /* bu_log("KEY: %d (esc=%d, brk=%d)\n", ch, escaped, bracketed); */
+    /* bu_log("KEY: %d (esc=%d, brk=%d)\n", ch, mged_input_escaped, mged_input_bracketed); */
+
+    if (ch != ESC && s->completion_escape_timer) {
+	Tcl_DeleteTimerHandler(s->completion_escape_timer);
+	s->completion_escape_timer = NULL;
+    }
 
     /* ANSI sequence */
-    if (escaped && bracketed) {
+    if (mged_input_escaped && mged_input_bracketed) {
+	ansi_key = 1;
 
 	/* arrow keys */
 	if (ch == 'A') ch = CTRL_P;
 	if (ch == 'B') ch = CTRL_N;
 	if (ch == 'C') ch = CTRL_F;
 	if (ch == 'D') ch = CTRL_B;
+	if (ch == 'Z') reverse_tab = 1;
 
 	/* Mac forward delete key */
 	if (ch == '3') {
-	    tilded = 1;
+	    mged_input_tilded = 1;
 	    ch = CTRL_D;
 	}
 
-	escaped = bracketed = 0;
+	mged_input_escaped = mged_input_bracketed = 0;
+    }
+
+    if (reverse_tab) {
+	do_tab_expansion(s, -1);
+	return;
+    }
+
+    /* Completion rows are presentation, not scrollback.  Remove them before
+     * any ordinary editing key.  Filtering applies printable refinements and
+     * cursor navigation to the original seed; cycling accepts the preview. */
+    if (ch != '\t' && ch != ESC && !(ch == '[' && mged_input_escaped)) {
+	int restore_filter_seed = s->completion_last_count > 0 &&
+	    s->completion_active_mode == BU_CMD_COMPLETE_FILTER &&
+	    ((isprint((unsigned char)ch) && ch != ' ' && ch != '/') || ansi_key);
+	if (restore_filter_seed && !ansi_key) {
+	    struct bu_vls original_edit = BU_VLS_INIT_ZERO;
+	    struct bu_vls preview_edit = BU_VLS_INIT_ZERO;
+	    mged_completion_insert_char(&original_edit,
+		bu_vls_cstr(&s->completion_base_line), s->completion_base_cursor, ch);
+	    mged_completion_insert_char(&preview_edit,
+		bu_vls_cstr(&s->completion_last_line), s->completion_last_cursor, ch);
+	    int original_count = mged_completion_count(s, bu_vls_cstr(&original_edit),
+		s->completion_base_cursor + 1);
+	    int preview_count = original_count ? 0 :
+		mged_completion_count(s, bu_vls_cstr(&preview_edit), s->completion_last_cursor + 1);
+	    if (!original_count && preview_count)
+		restore_filter_seed = 0;
+	    bu_vls_free(&original_edit);
+	    bu_vls_free(&preview_edit);
+	}
+	if (restore_filter_seed) {
+	    mged_completion_display_clear(s);
+	    bu_vls_strcpy(&s->input_str, bu_vls_cstr(&s->completion_base_line));
+	    s->input_str_index = s->completion_base_cursor;
+	    mged_completion_state_reset(s);
+	    mged_completion_redraw_line(s);
+	} else if (s->completion_last_count > 0 || s->completion_display_rows) {
+	    mged_completion_state_reset(s);
+	}
     }
 
     switch (ch) {
 	case ESC:           /* Used for building up ANSI arrow keys */
-	    escaped = 1;
+	    if (s->completion_escape_timer)
+		Tcl_DeleteTimerHandler(s->completion_escape_timer);
+	    s->completion_escape_timer = NULL;
+	    if (s->completion_last_count > 0)
+		s->completion_escape_timer = Tcl_CreateTimerHandler(40,
+		    mged_completion_escape_timeout, (ClientData)s);
+	    mged_input_escaped = 1;
 	    break;
 	case '\n':          /* Carriage return or line feed */
 	case '\r':
@@ -1090,8 +1682,8 @@ mged_process_char(struct mged_state *s, char ch)
 	    }
 	    pr_prompt(s); /* Print prompt for more input */
 	    s->input_str_index = 0;
-	    freshline = 1;
-	    escaped = bracketed = 0;
+	    mged_input_freshline = 1;
+	    mged_input_escaped = mged_input_bracketed = 0;
 	    break;
 	case DELETE:
 	case BACKSPACE:
@@ -1113,22 +1705,22 @@ mged_process_char(struct mged_state *s, char ch)
 		bu_vls_free(&temp);
 	    }
 	    --s->input_str_index;
-	    escaped = bracketed = 0;
+	    mged_input_escaped = mged_input_bracketed = 0;
 	    break;
 	case '\t':                      /* do TAB expansion */
-	    do_tab_expansion(s);
+	    do_tab_expansion(s, 1);
 	    break;
 	case CTRL_A:                    /* Go to beginning of line */
 	    pr_prompt(s);
 	    s->input_str_index = 0;
-	    escaped = bracketed = 0;
+	    mged_input_escaped = mged_input_bracketed = 0;
 	    break;
 	case CTRL_E:                    /* Go to end of line */
 	    if (s->input_str_index < bu_vls_strlen(&s->input_str)) {
 		bu_log("%s", bu_vls_addr(&s->input_str)+s->input_str_index);
 		s->input_str_index = bu_vls_strlen(&s->input_str);
 	    }
-	    escaped = bracketed = 0;
+	    mged_input_escaped = mged_input_bracketed = 0;
 	    break;
 	case CTRL_D:                    /* Delete character at cursor */
 	    if (s->input_str_index == bu_vls_strlen(&s->input_str) && s->input_str_index != 0) {
@@ -1148,7 +1740,7 @@ mged_process_char(struct mged_state *s, char ch)
 	    bu_log("%s", bu_vls_addr(&s->input_str));
 	    bu_vls_vlscat(&s->input_str, &temp);
 	    bu_vls_free(&temp);
-	    escaped = bracketed = 0;
+	    mged_input_escaped = mged_input_bracketed = 0;
 	    break;
 	case CTRL_U:                   /* Delete whole line */
 	    pr_prompt(s);
@@ -1158,7 +1750,7 @@ mged_process_char(struct mged_state *s, char ch)
 	    pr_prompt(s);
 	    bu_vls_trunc(&s->input_str, 0);
 	    s->input_str_index = 0;
-	    escaped = bracketed = 0;
+	    mged_input_escaped = mged_input_bracketed = 0;
 	    break;
 	case CTRL_K:                    /* Delete to end of line */
 	    bu_vls_strncpy(&temp, SPACES, bu_vls_strlen(&s->input_str)-s->input_str_index);
@@ -1167,7 +1759,7 @@ mged_process_char(struct mged_state *s, char ch)
 	    bu_vls_trunc(&s->input_str, s->input_str_index);
 	    pr_prompt(s);
 	    bu_log("%s", bu_vls_addr(&s->input_str));
-	    escaped = bracketed = 0;
+	    mged_input_escaped = mged_input_bracketed = 0;
 	    break;
 	case CTRL_L:                   /* Redraw line */
 	    bu_log("\n");
@@ -1177,7 +1769,7 @@ mged_process_char(struct mged_state *s, char ch)
 		break;
 	    pr_prompt(s);
 	    bu_log("%*s", (int)s->input_str_index, bu_vls_addr(&s->input_str));
-	    escaped = bracketed = 0;
+	    mged_input_escaped = mged_input_bracketed = 0;
 	    break;
 	case CTRL_B:                   /* Back one character */
 	    if (s->input_str_index == 0) {
@@ -1186,7 +1778,7 @@ mged_process_char(struct mged_state *s, char ch)
 	    }
 	    --s->input_str_index;
 	    bu_log("\b"); /* hopefully non-destructive! */
-	    escaped = bracketed = 0;
+	    mged_input_escaped = mged_input_bracketed = 0;
 	    break;
 	case CTRL_F:                   /* Forward one character */
 	    if (s->input_str_index == bu_vls_strlen(&s->input_str)) {
@@ -1196,7 +1788,7 @@ mged_process_char(struct mged_state *s, char ch)
 
 	    bu_log("%c", bu_vls_addr(&s->input_str)[s->input_str_index]);
 	    ++s->input_str_index;
-	    escaped = bracketed = 0;
+	    mged_input_escaped = mged_input_bracketed = 0;
 	    break;
 	case CTRL_T:                  /* Transpose characters */
 	    if (s->input_str_index == 0) {
@@ -1214,13 +1806,13 @@ mged_process_char(struct mged_state *s, char ch)
 	    bu_log("\b");
 	    bu_log("%c%c", bu_vls_addr(&s->input_str)[s->input_str_index-1], bu_vls_addr(&s->input_str)[s->input_str_index]);
 	    ++s->input_str_index;
-	    escaped = bracketed = 0;
+	    mged_input_escaped = mged_input_bracketed = 0;
 	    break;
 	case CTRL_N:                  /* Next history command */
 	case CTRL_P:                  /* Last history command */
 	    /* Work the history routines to get the right string */
 	    curr_cmd_list = &head_cmd_list;
-	    if (freshline) {
+	    if (mged_input_freshline) {
 		if (ch == CTRL_P) {
 		    vp = history_prev((const char *)NULL);
 		    if (vp == NULL) {
@@ -1229,7 +1821,7 @@ mged_process_char(struct mged_state *s, char ch)
 		    }
 		    bu_vls_trunc(&s->scratchline, 0);
 		    bu_vls_vlscat(&s->scratchline, &s->input_str);
-		    freshline = 0;
+		    mged_input_freshline = 0;
 		} else {
 		    pr_beep();
 		    break;
@@ -1245,7 +1837,7 @@ mged_process_char(struct mged_state *s, char ch)
 		    vp = history_next((const char *)NULL);
 		    if (vp == NULL) {
 			vp = &s->scratchline;
-			freshline = 1;
+			mged_input_freshline = 1;
 		    }
 		}
 	    }
@@ -1264,7 +1856,7 @@ mged_process_char(struct mged_state *s, char ch)
 		bu_log("%s", bu_vls_addr(&s->input_str));
 		s->input_str_index = bu_vls_strlen(&s->input_str);
 	    }
-	    escaped = bracketed = 0;
+	    mged_input_escaped = mged_input_bracketed = 0;
 	    break;
 	case CTRL_W:                   /* backward-delete-word */
 	    {
@@ -1306,10 +1898,10 @@ mged_process_char(struct mged_state *s, char ch)
 		bu_vls_free(&temp);
 	    }
 
-	    escaped = bracketed = 0;
+	    mged_input_escaped = mged_input_bracketed = 0;
 	    break;
 	case 'd':
-	    if (escaped) {
+	    if (mged_input_escaped) {
 		/* delete-word */
 		char *start;
 		char *curr;
@@ -1344,10 +1936,10 @@ mged_process_char(struct mged_state *s, char ch)
 	    } else
 		mged_insert_char(s, ch);
 
-	    escaped = bracketed = 0;
+	    mged_input_escaped = mged_input_bracketed = 0;
 	    break;
 	case 'f':
-	    if (escaped) {
+	    if (mged_input_escaped) {
 		/* forward-word */
 		char *start;
 		char *curr;
@@ -1373,10 +1965,10 @@ mged_process_char(struct mged_state *s, char ch)
 	    } else
 		mged_insert_char(s, ch);
 
-	    escaped = bracketed = 0;
+	    mged_input_escaped = mged_input_bracketed = 0;
 	    break;
 	case 'b':
-	    if (escaped) {
+	    if (mged_input_escaped) {
 		/* backward-word */
 		char *start;
 		char *curr;
@@ -1406,21 +1998,21 @@ mged_process_char(struct mged_state *s, char ch)
 	    } else
 		mged_insert_char(s, ch);
 
-	    escaped = bracketed = 0;
+	    mged_input_escaped = mged_input_bracketed = 0;
 	    break;
 	case '[':
-	    if (escaped) {
-		bracketed = 1;
+	    if (mged_input_escaped) {
+		mged_input_bracketed = 1;
 		break;
 	    }
 
 	    /* fall through */
 	case '~':
-	    if (tilded) {
+	    if (mged_input_tilded) {
 		/* we were in an escape sequence (Mac delete key),
 		 * just ignore the trailing tilde.
 		 */
-		tilded = 0;
+		mged_input_tilded = 0;
 		break;
 	    }
 	    /* Fall through if not escaped! */
@@ -1430,7 +2022,7 @@ mged_process_char(struct mged_state *s, char ch)
 		break;
 
 	    mged_insert_char(s, ch);
-	    escaped = bracketed = 0;
+	    mged_input_escaped = mged_input_bracketed = 0;
 	    break;
     }
 }
@@ -1975,8 +2567,8 @@ std_out_or_err(ClientData clientData, int UNUSED(mask))
      * channel buffer and must be consumed with Tcl_Read, not read(). */
     Tcl_Channel chan = (Tcl_Channel)clientData;
     int count;
-    char line[RT_MAXLINE+1] = {0};
     Tcl_DString tclcommand;
+    char line[RT_MAXLINE+1] = {0};
     Tcl_Obj *save_result;
 
     count = Tcl_Read(chan, line, RT_MAXLINE);
@@ -2347,6 +2939,8 @@ mged_finish(struct mged_state *s, int exitcode)
     bu_vls_free(&s->input_str_prefix);
     bu_vls_free(&s->scratchline);
     bu_vls_free(&s-> mged_prompt);
+    bu_vls_free(&s->completion_base_line);
+    bu_vls_free(&s->completion_last_line);
     rt_edit_destroy(s->s_edit->e);
     BU_PUT(s->s_edit, struct mged_edit_state);
     mged_state_destroy_internals(s);
@@ -2575,6 +3169,18 @@ apply_cli_overrides(struct mged_state *s, struct mged_cli_overrides *cl)
 int
 main(int argc, char *argv[])
 {
+    bu_setprogname(argv[0]);
+    const struct bu_arg_grammar grammar = {&mged_cli_schema, NULL, NULL};
+    struct bu_vls schema_output = BU_VLS_INIT_ZERO;
+    int schema_status = bu_arg_introspect(&schema_output, &grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (schema_status != 0) {
+	bu_flog(schema_status > 0 ? stdout : stderr, "%s", bu_vls_cstr(&schema_output));
+	bu_vls_free(&schema_output);
+	return schema_status > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+    bu_vls_free(&schema_output);
+
     /* pipes used for setting up read/write channels during graphical
      * initialization.
      */
@@ -2614,6 +3220,21 @@ main(int argc, char *argv[])
     bu_vls_init(&s->input_str_prefix);
     bu_vls_init(&s->scratchline);
     bu_vls_init(&s->mged_prompt);
+    bu_vls_init(&s->completion_base_line);
+    bu_vls_init(&s->completion_last_line);
+    s->completion_base_cursor = 0;
+    s->completion_last_cursor = 0;
+    s->completion_display_rows = 0;
+    s->completion_last_index = -1;
+    s->completion_last_count = 0;
+    s->completion_active_mode = BU_CMD_COMPLETE_FILTER;
+    s->completion_escape_timer = NULL;
+    s->completion_display_candidates = NULL;
+    s->completion_display_columns = 0;
+    s->completion_display_terminal_rows = 0;
+    s->completion_display_candidate_limit = 0;
+    s->completion_display_total = 0;
+    s->completion_resize_timer = NULL;
     s->dpy_string = NULL;
     s->cmd_running = 0;
     s->command_state = NULL;
@@ -2656,10 +3277,8 @@ main(int argc, char *argv[])
     (void)_set_invalid_parameter_handler(mgedInvalidParameterHandler);
 #endif
 
-    bu_setprogname(argv[0]);
-
     /*
-     * Parse command-line options using bu_opt.  All values are collected into
+     * Parse command-line options with the native schema.  All values are collected into
      * the mged_cli_overrides struct; "early" options (that affect behaviour
      * before Tcl/DM initialisation) are applied immediately below, while
      * "deferred" options (mged_variables, grid, colour) are applied after
@@ -2711,83 +3330,19 @@ main(int argc, char *argv[])
     bu_ptbl_init(&cl.rset_pairs, 8, "mged_cli_rset_pairs");
 
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
-
-    /* Option table: the BU_OPT macro takes (slot, shortopt, longopt, arghelp,
-     * argprocess, set_var, help) — 7 arguments.  Long-only options use NULL for
-     * shortopt.  No-argument options use "" for arghelp and NULL for argprocess. */
-    struct bu_opt_desc opt_defs[54];
-    /* ---- Existing short options, now with long aliases ---- */
-    BU_OPT(opt_defs[0],  "a", "attach",           "type",    bu_opt_str,      &cl.attach,           "display manager attach target");
-    BU_OPT(opt_defs[1],  "d", "display",           "screen",  bu_opt_str,      &cl.dpy_string,       "Tk display and screen name");
-    BU_OPT(opt_defs[2],  "r", "read-only",         "",        NULL,            &cl.read_only,        "open database read-only");
-    BU_OPT(opt_defs[3],  "p", "pipe",              "",        NULL,            &cl.pipe_mode,        "read commands from stdin and emit CMD_DONE sentinels");
-    BU_OPT(opt_defs[4],  "c", "classic",           "",        NULL,            &cl.classic_mode,     "classic text-only mode");
-    BU_OPT(opt_defs[5],  "C", "gui",               "",        NULL,            &cl.gui_mode,         "GUI (non-classic) mode");
-    BU_OPT(opt_defs[6],  "b", "background",        "",        NULL,            &cl.background,       "run in background (fork)");
-    BU_OPT(opt_defs[7],  "x", "rt-debug",          "hex",     parse_debug_uint,&cl.rt_debug_val,     "set librt debug flags (hex)");
-    BU_OPT(opt_defs[8],  "X", "bu-debug",          "hex",     parse_debug_uint,&cl.bu_debug_val,     "set libbu debug flags (hex)");
-    BU_OPT(opt_defs[9],  "v", "version",           "",        NULL,            &cl.print_version,    "print version info and exit");
-    BU_OPT(opt_defs[10], "h", "help",              "",        NULL,            &cl.print_help,       "print help and exit");
-    BU_OPT(opt_defs[11], "?", NULL,                "",        NULL,            &cl.print_help,       "print help and exit");
-    /* -o is a developer option: preserved but not promoted with a long alias */
-    BU_OPT(opt_defs[12], "o", NULL,                "",        NULL,            &cl.old_gui_flag,     "[developer] use old GUI");
-    /* ---- rc file control ---- */
-    BU_OPT(opt_defs[13], NULL, "rcfile",           "file",    bu_opt_str,      &cl.rcfile,           "use FILE instead of .mgedrc");
-    BU_OPT(opt_defs[14], NULL, "no-rc",            "",        NULL,            &cl.skip_rc,          "skip loading any .mgedrc file");
-    /* ---- general escape hatches ---- */
-    BU_OPT(opt_defs[15], NULL, "set",              "VAR=VALUE",parse_mged_set, &cl.set_pairs,
-	   "set an mged variable (e.g. --set use_air=1); applied after .mgedrc");
-    BU_OPT(opt_defs[16], NULL, "rset",             "ARGS",    parse_rset,      &cl.rset_pairs,
-	   "set an rset resource (e.g. --rset \"g snap 1\"); applied after .mgedrc");
-    /* ---- mged_variables: boolean on/off pairs ---- */
-    BU_OPT(opt_defs[17], NULL, "use-air",          "",        NULL,            &cl.use_air,          "enable use_air");
-    BU_OPT(opt_defs[18], NULL, "no-use-air",       "",        flag_set_zero,   &cl.use_air,          "disable use_air");
-    BU_OPT(opt_defs[19], NULL, "dlist",            "",        NULL,            &cl.dlist,            "enable display lists");
-    BU_OPT(opt_defs[20], NULL, "no-dlist",         "",        flag_set_zero,   &cl.dlist,            "disable display lists");
-    BU_OPT(opt_defs[21], NULL, "faceplate",        "",        NULL,            &cl.faceplate,        "show faceplate overlay");
-    BU_OPT(opt_defs[22], NULL, "no-faceplate",     "",        flag_set_zero,   &cl.faceplate,        "hide faceplate overlay");
-    BU_OPT(opt_defs[23], NULL, "predictor",        "",        NULL,            &cl.predictor,        "enable view predictor");
-    BU_OPT(opt_defs[24], NULL, "no-predictor",     "",        flag_set_zero,   &cl.predictor,        "disable view predictor");
-    /* ---- mged_variables: valued options ---- */
-    BU_OPT(opt_defs[25], NULL, "linewidth",        "#",       bu_opt_int,      &cl.linewidth,        "wireframe line width (pixels, >=1)");
-    BU_OPT(opt_defs[26], NULL, "linestyle",        "s|d",     bu_opt_char,     &cl.linestyle,        "line style: s=solid, d=dashed");
-    BU_OPT(opt_defs[27], NULL, "perspective",      "#",       bu_opt_fastf_t,  &cl.perspective,      "perspective angle in degrees (-1=off)");
-    BU_OPT(opt_defs[28], NULL, "eye-sep-dist",     "#",       bu_opt_fastf_t,  &cl.eye_sep_dist,     "stereo eye separation (mm, 0=mono)");
-    BU_OPT(opt_defs[29], NULL, "port",             "#",       bu_opt_int,      &cl.port,             "framebuffer server listen port (0-65535)");
-    BU_OPT(opt_defs[30], NULL, "coords",           "m|v",     bu_opt_char,     &cl.coords,           "constraint coords: m=model v=view");
-    BU_OPT(opt_defs[31], NULL, "rotate-about",     "m|v|e",   bu_opt_char,     &cl.rotate_about,     "rotate center: m=model v=view e=eye");
-    BU_OPT(opt_defs[32], NULL, "transform",        "v|a|e",   bu_opt_char,     &cl.transform,        "mouse transform: v=view a=adc e=edit");
-    BU_OPT(opt_defs[33], NULL, "nmg-eu-dist",      "#",       bu_opt_fastf_t,  &cl.nmg_eu_dist,      "NMG edge-use distance tolerance");
-    BU_OPT(opt_defs[34], NULL, "mouse-behavior",   "v|a|e",   bu_opt_char,     &cl.mouse_behavior,   "mouse behavior mode");
-    BU_OPT(opt_defs[35], NULL, "predictor-advance","#",       bu_opt_fastf_t,  &cl.predictor_advance,"predictor advance time (s)");
-    BU_OPT(opt_defs[36], NULL, "predictor-length", "#",       bu_opt_fastf_t,  &cl.predictor_length, "predictor trail length (s)");
-    BU_OPT(opt_defs[37], NULL, "perspective-mode", "0|1",     bu_opt_int,      &cl.perspective_mode, "enable/disable perspective mode");
-    BU_OPT(opt_defs[38], NULL, "context",          "0|1",     bu_opt_int,      &cl.context,          "context mode (0=off)");
-    BU_OPT(opt_defs[39], NULL, "sliders",          "0|1",     bu_opt_int,      &cl.sliders,          "show sliders");
-    BU_OPT(opt_defs[40], NULL, "hot-key",          "#",       bu_opt_int,      &cl.hot_key,          "hot key character code");
-    BU_OPT(opt_defs[41], NULL, "fb-overlay",       "0|1|2",   bu_opt_int,      &cl.fb_overlay,       "framebuffer overlay: 0=under 1=inter 2=over");
-    /* ---- window/display (Tcl mged_default array) ---- */
-    BU_OPT(opt_defs[42], NULL, "dm-type",          "type",    bu_opt_str,      &cl.dm_type,          "display manager type (e.g. ogl, swrast)");
-    BU_OPT(opt_defs[43], NULL, "geom",             "WxH+X+Y", bu_opt_str,      &cl.geom,             "command window geometry");
-    BU_OPT(opt_defs[44], NULL, "ggeom",            "WxH+X+Y", bu_opt_str,      &cl.ggeom,            "graphics window geometry");
-    /* ---- grid (rset g …) ---- */
-    BU_OPT(opt_defs[45], NULL, "grid-draw",        "0|1",     bu_opt_int,      &cl.grid_draw,        "show/hide grid");
-    BU_OPT(opt_defs[46], NULL, "grid-snap",        "0|1",     bu_opt_int,      &cl.grid_snap,        "enable/disable grid snap");
-    BU_OPT(opt_defs[47], NULL, "grid-rh",          "#",       bu_opt_fastf_t,  &cl.grid_rh,          "horizontal grid resolution");
-    BU_OPT(opt_defs[48], NULL, "grid-rv",          "#",       bu_opt_fastf_t,  &cl.grid_rv,          "vertical grid resolution");
-    BU_OPT(opt_defs[49], NULL, "grid-mrh",         "#",       bu_opt_int,      &cl.grid_mrh,         "horizontal major grid interval");
-    BU_OPT(opt_defs[50], NULL, "grid-mrv",         "#",       bu_opt_int,      &cl.grid_mrv,         "vertical major grid interval");
-    /* ---- colour scheme subset (rset cs …) ---- */
-    BU_OPT(opt_defs[51], NULL, "bg",               "R G B",   parse_opt_color, &cl.bg_color,         "background colour (0-255 per component, or #RRGGBB)");
-    BU_OPT(opt_defs[52], NULL, "geo-color",        "R G B",   parse_opt_color, &cl.geo_def_color,    "default geometry wireframe colour");
-    BU_OPT_NULL(opt_defs[53]);
-
-    /* The database ends MGED's options.  Subsequent arguments belong to the
-     * command and may use the same option names as MGED itself. */
     int orig_argc = argc;
     argc--;
     argv++;
-    argc = bu_opt_parse_leading(&parse_msgs, (size_t)argc, (const char **)argv, opt_defs);
+
+    /* Options after the database name belong to the command it runs. */
+    int first_operand = bu_arg_schema_parse_known(&mged_cli_schema, &cl, &parse_msgs,
+	    argc, (const char **)argv);
+    if (first_operand >= 0) {
+	argc -= first_operand;
+	argv += first_operand;
+    } else {
+	argc = -1;
+    }
 
     if (bu_vls_strlen(&parse_msgs) > 0) {
 	/* Print any warnings/errors from the parser */
@@ -2817,14 +3372,8 @@ main(int argc, char *argv[])
 
     /* -h / --help / -? */
     if (cl.print_help) {
-	struct bu_vls usage = BU_VLS_INIT_ZERO;
-	bu_vls_printf(&usage, "Usage:  mged [options] [database [command]]\n\n");
-	char *help_str = bu_opt_describe(opt_defs, NULL);
-	if (help_str) {
-	    bu_vls_printf(&usage, "Options:\n%s", help_str);
-	    bu_free(help_str, "bu_opt_describe");
-	}
-	bu_exit(1, "%s\n", bu_vls_cstr(&usage));
+	char *help_str = bu_arg_schema_help(&mged_cli_schema, "mged");
+	bu_exit(0, "%s", help_str ? help_str : "");
     }
 
     /* -o (developer option: use old GUI) */
@@ -2833,8 +3382,8 @@ main(int argc, char *argv[])
 	old_mged_gui = 0;
     }
 
-    /* -x / --rt-debug  and  -X / --bu-debug: parse_debug_uint() stores the
-     * parsed hex value in cl.rt_debug_val / cl.bu_debug_val.  Both fields
+    /* -x / --rt-debug and -X / --bu-debug store native hexadecimal values in
+     * cl.rt_debug_val / cl.bu_debug_val.  Both fields
      * were initialised to the current values of rt_debug / bu_debug (see
      * below) so an unconditional copy here is safe: if the user did not
      * supply -x/-X the value is unchanged. */

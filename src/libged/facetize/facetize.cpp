@@ -33,9 +33,9 @@
 #include <vector>
 
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/file.h"
 #include "bu/path.h"
-#include "bu/opt.h"
 #include "wdb.h"
 
 #include "../ged_private.h"
@@ -71,36 +71,47 @@ facetize_process_output(struct bu_vls *output, const char **command)
 	BRLCAD_OK : BRLCAD_ERROR;
 }
 
-void
-_facetize_methods_help(struct ged *gedp)
+struct facetize_parse_args {
+    int print_help = 0;
+    long verbosity = 0;
+    int quiet = 0;
+    int make_nmg = 0;
+    int regions = 0;
+    int leaves = 0;
+    const char *suffix = NULL;
+    const char *prefix = NULL;
+    int in_place = 0;
+    int max_time = 0;
+    int max_pnts = 0;
+    int resume = 0;
+    method_options_t *method_options = NULL;
+    int no_empty = 0;
+    const char *log_file = NULL;
+    int nmg_booleval = 0;
+    int no_fixup = 0;
+    int force_perturb = 0;
+    int disable_perturb = 0;
+    int nonovlp_brep = 0;
+    fastf_t nonovlp_threshold = 0.0;
+    fastf_t perturb_sa_tol = 10.0;
+    fastf_t perturb_vol_tol = 10.0;
+    int tolerate_failures = 0;
+    int max_workers = 0;
+};
+
+static const struct bu_arg_schema *facetize_schema(void);
+
+
+static void
+facetize_show_schema_help(struct ged *gedp, bool extended)
 {
-    // Build up the path to the ged_exec executable
-    char tess_exec[MAXPATHLEN];
-    bu_dir(tess_exec, MAXPATHLEN, BU_DIR_BIN, "ged_exec", BU_DIR_EXT, NULL);
+    char *help = bu_arg_schema_help_mode(facetize_schema(), "facetize",
+	extended ? BU_ARG_HELP_EXTENDED : BU_ARG_HELP_DEFAULT);
 
-    const char *tess_cmd[5] = {NULL};
-    tess_cmd[0] = tess_exec;
-    tess_cmd[1] = "facetize_process";
-    tess_cmd[2] = "--list-methods";
-    tess_cmd[3] = NULL;
-
-    struct bu_vls method_output = BU_VLS_INIT_ZERO;
-    if (facetize_process_output(&method_output, tess_cmd) != BRLCAD_OK) {
-	bu_vls_free(&method_output);
-	return;
+    if (help) {
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "facetize native schema help");
     }
-    bu_vls_printf(gedp->ged_result_str,
-	    "Available BoT tessellation methods: %s\n",
-	    bu_vls_cstr(&method_output));
-
-    tess_cmd[3] = "-h";
-    tess_cmd[4] = NULL;
-
-    if (facetize_process_output(&method_output, tess_cmd) == BRLCAD_OK)
-	bu_vls_printf(gedp->ged_result_str,
-		"\nMethod specific options:\n\n%s\n",
-		bu_vls_cstr(&method_output));
-    bu_vls_free(&method_output);
 }
 
 static int
@@ -446,19 +457,7 @@ extern "C" int
 ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret = BRLCAD_OK;
-    static const char *usage = "Usage: facetize [options] [old_obj1 ...] [new_obj]\n";
-    int print_help = 0;
     int need_help = 0;
-    int quiet = 0;
-    long verbosity = 0;
-    int force_perturb = 0;
-    int disable_perturb = 0;
-    int nmg_output = 0;
-    int region_mode = 0;
-    int in_place = 0;
-    int nmg_boolean = 0;
-    int nonoverlap_brep = 0;
-    int leaf_mode = 0;
     bool use_perturbation = false;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -469,37 +468,10 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     struct _ged_facetize_state *s = session.state();
     method_options_t *method_options = session.method_options();
     FacetizePlan plan;
-
-    /* General options */
-    struct bu_opt_desc d[27];
-    BU_OPT(d[ 0], "h", "help",                                      "",                  NULL,           &print_help, "Print help and exit");
-    BU_OPT(d[ 1], "v", "verbose",                                   "",  &bu_opt_incr_long,       &verbosity, "Verbose output (multiple flags increase verbosity)");
-    BU_OPT(d[ 2], "q", "quiet",                                     "",                  NULL,                &quiet, "Suppress all output (overrides verbose flag)");
-    BU_OPT(d[ 3], "n", "nmg-output",                                "",                  NULL,           &nmg_output, "Create an N-Manifold Geometry (NMG) object (default is to create a triangular BoT mesh).  Note that this will disable most other processing options and may reduce the conversion success rate.");
-    BU_OPT(d[ 4], "r", "regions",                                   "",                  NULL,          &region_mode, "For combs, walk the trees and create new copies of the hierarchies with each region's CSG tree replaced by a facetized evaluation of that region.  By default, enables perturb methodology (can be disabled - see --no-perturb)");
-    BU_OPT(d[ 5], "s", "suffix",                               "<str>",           &bu_opt_vls,             s->suffix, "When creating new objects for facetize outputs, use this suffix to avoid conflicts");
-    BU_OPT(d[ 6], "p", "prefix",                               "<str>",           &bu_opt_vls,             s->prefix, "When creating new objects for facetize, use this prefix to avoid conflicts");
-    BU_OPT(d[ 7],  "", "in-place",                                  "",                  NULL,              &in_place, "Replace the specified object(s) with their facetizations. (Warning: this option changes pre-existing geometry!)");
-    BU_OPT(d[ 8],  "", "max-time",                                 "#",           &bu_opt_int,        &(s->max_time), "Maximum time to spend per object (in seconds).  Default is method specific.  Note that specifying shorter times may cut off conversions (particularly using sampling methods) that could succeed with longer runtimes.  Per-method time limits can also be adjusted to allow longer runtimes on slower methods.");
-    BU_OPT(d[ 9],  "", "max-pnts",                                 "#",           &bu_opt_int,        &(s->max_pnts), "Maximum number of pnts per object to use when applying ray sampling methods.");
-    BU_OPT(d[10],  "", "resume",                                    "",                  NULL,          &(s->resume), "Resume an interrupted conversion");
-    BU_OPT(d[11],  "", "methods",                          "m1,m2,...", &_tess_active_methods,        method_options, "Specify methods to use when tessellating primitives into BoTs.");
-    BU_OPT(d[12],  "", "method-opts",    "METHOD opt1=val opt2=val...",    &_tess_method_opts,        method_options, "For the specified method, set the specified options.");
-    BU_OPT(d[13],  "", "no-empty",                                  "",                  NULL,        &(s->no_empty), "Do not output empty BoT objects if the boolean evaluation results in an empty solid.");
-    BU_OPT(d[14],  "", "log-file",                        "<filename>",           &bu_opt_vls,           s->log_file, "Specify a location to use for the log file.");
-    BU_OPT(d[15],  "", "nmg-booleval",                               "",                  NULL,           &nmg_boolean, "Use libnmg Boolean evaluation algorithm, even if we're producing a BoT.  Less robust, but if it succeeds it may produce cleaner output for coplanar inputs.");
-    BU_OPT(d[16],  "", "disable-fixup",                             "",                  NULL,          &s->no_fixup, "Disable post-processing steps intended to improve generated meshes.");
-    BU_OPT(d[17],  "", "perturb",                                   "",                  NULL,        &force_perturb, "Enable the coplanarity-avoidance perturbation step (overrides non -r option default, conflicts with --no-perturb).");
-    BU_OPT(d[18],  "", "no-perturb",                                "",                  NULL,      &disable_perturb, "Disable the coplanarity-avoidance perturbation step (overrides -r option default, conflicts with --perturb).");
-    BU_OPT(d[19], "B", "",                                          "",                  NULL,       &nonoverlap_brep, "EXPERIMENTAL: non-overlapping facetization to BoT objects of union-only brep comb tree.");
-    BU_OPT(d[20], "t", "threshold",                                "#",       &bu_opt_fastf_t, &s->nonovlp_threshold, "EXPERIMENTAL: max ovlp threshold length for -B mode.");
-    BU_OPT(d[21],  "", "perturb-sa-tol",                           "#",       &bu_opt_fastf_t,   &s->perturb_sa_tol,  "Surface-area percentage threshold (0-100) that triggers the coplanarity-avoidance perturb retry when the CSG Crofton SA differs from the BoT SA by more than this amount. Default is 10.");
-    BU_OPT(d[22],  "", "perturb-vol-tol",                          "#",       &bu_opt_fastf_t,   &s->perturb_vol_tol, "Volume percentage threshold (0-100) that triggers the coplanarity-avoidance perturb retry when the CSG Crofton volume differs from the BoT volume by more than this amount. Default is 10.");
-    BU_OPT(d[23],  "", "tolerate-failures",                         "",                  NULL, &s->tolerate_failures, "Continue after failed primitive or subtree evaluations and generate a partial result.  The output will not be a complete representation of the input if any failures are tolerated.");
-    BU_OPT(d[24], "j", "jobs",                                     "#",           &bu_opt_int,     &s->max_workers, "Maximum number of facetize worker processes.  The default is selected conservatively from CPU and memory availability.");
-    BU_OPT(d[25], "", "leaves", "", NULL, &leaf_mode,
-	"Facetize the primitive leaves and preserve the parent combinations, either in a new group or in place.");
-    BU_OPT_NULL(d[26]);
+    struct facetize_parse_args args;
+    args.method_options = method_options;
+    args.perturb_sa_tol = s->perturb_sa_tol;
+    args.perturb_vol_tol = s->perturb_vol_tol;
 
     /* skip command name argv[0] */
     argc-=(argc>0); argv+=(argc>0);
@@ -507,19 +479,38 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* parse standard options */
+    /* Parse the canonical native option schema. */
     struct bu_vls omsg = BU_VLS_INIT_ZERO;
-    argc = bu_opt_parse(&omsg, argc, argv, d);
-    if (argc < 0) {
+    int operand_start = bu_arg_schema_parse(facetize_schema(), &args, &omsg, argc, argv);
+    if (operand_start < 0) {
 	bu_vls_printf(gedp->ged_result_str, "option parsing failed: %s\n", bu_vls_cstr(&omsg));
 	ret = BRLCAD_ERROR;
 	bu_vls_free(&omsg);
 	goto ged_facetize_done;
     }
     bu_vls_free(&omsg);
+    argc -= operand_start;
+    argv += operand_start;
+
+    s->max_time = args.max_time;
+    s->max_pnts = args.max_pnts;
+    s->max_workers = args.max_workers;
+    s->resume = args.resume;
+    s->no_empty = args.no_empty;
+    s->no_fixup = args.no_fixup;
+    s->nonovlp_threshold = args.nonovlp_threshold;
+    s->perturb_sa_tol = args.perturb_sa_tol;
+    s->perturb_vol_tol = args.perturb_vol_tol;
+    s->tolerate_failures = args.tolerate_failures;
+    if (args.suffix)
+	bu_vls_strcpy(s->suffix, args.suffix);
+    if (args.prefix)
+	bu_vls_strcpy(s->prefix, args.prefix);
+    if (args.log_file)
+	bu_vls_strcpy(s->log_file, args.log_file);
 
     // Sanity
-    if (force_perturb && disable_perturb) {
+    if (args.force_perturb && args.disable_perturb) {
     	bu_vls_printf(gedp->ged_result_str, "Can only specify one of --perturb or --no-perturb\n");
 	ret = BRLCAD_ERROR;
 	goto ged_facetize_done;
@@ -543,42 +534,39 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 	goto ged_facetize_done;
     }
 
-    if (region_mode && nonoverlap_brep) {
+    if (args.regions && args.nonovlp_brep) {
 	bu_vls_printf(gedp->ged_result_str,
 		"--regions and -B select different processing scopes and cannot be combined\n");
 	ret = BRLCAD_ERROR;
 	goto ged_facetize_done;
     }
 
-    if (leaf_mode && (region_mode || nonoverlap_brep || nmg_output ||
-	    nmg_boolean || force_perturb || db_version(gedp->dbip) < 5)) {
+    if (args.leaves && (args.regions || args.nonovlp_brep || args.make_nmg ||
+	    args.nmg_booleval || args.force_perturb || db_version(gedp->dbip) < 5)) {
 	bu_vls_printf(gedp->ged_result_str,
 		"--leaves uses primitive BoT tessellation in a version 5 database.\n");
 	ret = BRLCAD_ERROR;
 	goto ged_facetize_done;
     }
 
-    s->execution.output_format = nmg_output ?
+    s->execution.output_format = args.make_nmg ?
 	FacetizeOutputFormat::Nmg : FacetizeOutputFormat::Bot;
-    s->execution.boolean_engine = (nmg_output || nmg_boolean) ?
+    s->execution.boolean_engine = (args.make_nmg || args.nmg_booleval) ?
 	FacetizeBooleanEngine::Nmg : FacetizeBooleanEngine::Manifold;
-    if (nonoverlap_brep)
-	s->execution.scope = FacetizeScope::NonOverlappingBrep;
-    else if (region_mode)
-	s->execution.scope = FacetizeScope::Regions;
-    else if (leaf_mode)
-	s->execution.scope = FacetizeScope::Leaves;
-    s->execution.commit_mode = in_place ?
+    s->execution.scope = args.nonovlp_brep ? FacetizeScope::NonOverlappingBrep :
+	(args.regions ? FacetizeScope::Regions :
+	(args.leaves ? FacetizeScope::Leaves : FacetizeScope::Objects));
+    s->execution.commit_mode = args.in_place ?
 	FacetizeCommitMode::InPlace : FacetizeCommitMode::NewObject;
-    use_perturbation = region_mode;
-    if (disable_perturb)
+    use_perturbation = args.regions;
+    if (args.disable_perturb)
 	use_perturbation = false;
-    if (force_perturb)
+    if (args.force_perturb)
 	use_perturbation = true;
     s->execution.perturb_mode = use_perturbation ?
 	FacetizePerturbMode::Enabled : FacetizePerturbMode::Disabled;
 
-    s->verbosity = (int)verbosity;
+    s->verbosity = (int)args.verbosity;
 
     // If we got a max-time top level arg, override any times that aren't specifically set
     // by method options
@@ -597,7 +585,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Sync -q and -v options */
-    if (quiet)
+    if (args.quiet)
 	s->verbosity = -1;
 
     /* Don't allow incorrect type suffixes */
@@ -610,10 +598,9 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Check if we want/need help */
     need_help = argc < (s->execution.writes_in_place() ? 1 : 2);
-    if (print_help || need_help) {
-	_ged_cmd_help(gedp, usage, d);
-	_facetize_methods_help(gedp);
-	ret = (need_help) ? BRLCAD_ERROR : BRLCAD_OK;
+    if (args.print_help || need_help) {
+	facetize_show_schema_help(gedp, args.print_help > 1);
+	ret = args.print_help ? BRLCAD_OK : BRLCAD_ERROR;
 	goto ged_facetize_done;
     }
 
@@ -638,11 +625,117 @@ ged_facetize_done:
 
 #include "../include/plugin.h"
 
-#define GED_FACETIZE_COMMANDS(X, XID) \
-    X(facetize, ged_facetize_core, GED_CMD_DEFAULT) \
+static const char * const facetize_perturb_options[] = {
+    "perturb", "no-perturb", NULL
+};
+static const char * const facetize_method_names[] = {
+    "NMG", "MDC", "SPSR", NULL
+};
+static const struct bu_arg_shape facetize_methods_shape = {
+    BU_ARG_SHAPE_COMMA_LIST, 1, 1, "comma-separated tessellation methods", NULL, NULL
+};
 
-GED_DECLARE_COMMAND_SET(GED_FACETIZE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_facetize", 1, GED_FACETIZE_COMMANDS)
+static int
+facetize_help_from_str(struct bu_vls *msg, const char *arg, void *storage)
+{
+    int mode = 1;
+
+    if (arg && !BU_STR_EQUAL(arg, "all")) {
+	if (msg)
+	    bu_vls_strcat(msg, "--help accepts only the optional value 'all'\n");
+	return -1;
+    }
+    if (arg)
+	mode = 2;
+    if (storage)
+	*((int *)storage) = mode;
+    return 0;
+}
+
+static const struct bu_arg_constraint facetize_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, facetize_perturb_options, 0, 1,
+	"--perturb and --no-perturb cannot be used together"),
+    BU_ARG_CONSTRAINT_NULL
+};
+
+static const struct bu_arg_option facetize_options[] = {
+    BU_ARG_ATTACHED_OPTIONAL("h", "help", "help", facetize_parse_args,
+	print_help, facetize_help_from_str, "all",
+	"Print help and exit; use --help=all for method and advanced options"),
+    BU_ARG_COUNTING_FLAG("v", "verbose", facetize_parse_args, verbosity, BU_ARG_VALUE_LONG, "Verbose output; repeat to increase detail"),
+    BU_ARG_FLAG("q", "quiet", facetize_parse_args, quiet, "Suppress all output"),
+    BU_ARG_FLAG("n", "nmg-output", facetize_parse_args, make_nmg, "Create N-Manifold Geometry output"),
+    BU_ARG_FLAG("r", "regions", facetize_parse_args, regions, "Facetize region trees"),
+    BU_ARG_FLAG(NULL, "leaves", facetize_parse_args, leaves,
+	"Facetize primitive leaves while preserving parent combinations"),
+    BU_ARG_INTEGER_RANGE("j", "jobs", facetize_parse_args, max_workers, 1, 0, 1, MAX_PSW,
+	"count", "Maximum facetize worker processes; zero selects an automatic limit"),
+    BU_ARG_VALUE("s", "suffix", facetize_parse_args, suffix, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "suffix", "Output suffix"),
+    BU_ARG_VALUE("p", "prefix", facetize_parse_args, prefix, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "prefix", "Output prefix"),
+    BU_ARG_FLAG(NULL, "in-place", facetize_parse_args, in_place, "Replace input objects"),
+    BU_ARG_VALUE(NULL, "max-time", facetize_parse_args, max_time, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "seconds", "Maximum seconds per object"),
+    BU_ARG_VALUE(NULL, "max-pnts", facetize_parse_args, max_pnts, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "count", "Maximum sample points"),
+    BU_ARG_FLAG(NULL, "resume", facetize_parse_args, resume, "Resume conversion"),
+    {NULL, "methods", "methods", "method[,method...]", "Comma-separated tessellation methods",
+	BU_ARG_VALUE_CUSTOM, offsetof(facetize_parse_args, method_options), tess_active_methods_from_str,
+	NULL, NULL, NULL, 0, 0, facetize_method_names, BU_ARG_REQUIRED,
+	&facetize_methods_shape, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
+    BU_ARG_CUSTOM(NULL, "method-opts", facetize_parse_args, method_options, tess_method_opts_from_str,
+	"\"METHOD option=value ...\"", "Method-specific options"),
+    BU_ARG_FLAG(NULL, "no-empty", facetize_parse_args, no_empty, "Suppress empty outputs"),
+    BU_ARG_VALUE(NULL, "log-file", facetize_parse_args, log_file, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file", "Log file"),
+    BU_ARG_FLAG(NULL, "nmg-booleval", facetize_parse_args, nmg_booleval, "Use NMG Boolean evaluation"),
+    BU_ARG_FLAG(NULL, "disable-fixup", facetize_parse_args, no_fixup, "Disable mesh fixups"),
+    BU_ARG_FLAG(NULL, "perturb", facetize_parse_args, force_perturb, "Enable perturbation"),
+    BU_ARG_FLAG(NULL, "no-perturb", facetize_parse_args, disable_perturb, "Disable perturbation"),
+    BU_ARG_FLAG("B", NULL, facetize_parse_args, nonovlp_brep, "Use experimental non-overlapping BREP mode"),
+    BU_ARG_VALUE("t", "threshold", facetize_parse_args, nonovlp_threshold, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "length", "Non-overlap threshold"),
+    BU_ARG_VALUE(NULL, "perturb-sa-tol", facetize_parse_args, perturb_sa_tol, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "percent", "Perturbation surface-area tolerance"),
+    BU_ARG_VALUE(NULL, "perturb-vol-tol", facetize_parse_args, perturb_vol_tol, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "percent", "Perturbation volume tolerance"),
+    BU_ARG_FLAG(NULL, "tolerate-failures", facetize_parse_args, tolerate_failures, "Generate partial output after failures"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand facetize_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
+	"Source database objects; in single-output mode the final name is the output object",
+	NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_help_group facetize_help_groups[] = {
+    BU_ARG_HELP_GROUP("General", NULL, "help", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Output organization", NULL, "nmg-output", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Execution and naming", NULL, "jobs", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Tessellation methods", NULL, "methods", BU_ARG_VISIBILITY_DEFAULT),
+    BU_ARG_HELP_GROUP("Validation and recovery", NULL, "no-empty", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_HELP_GROUP("Experimental BREP processing", NULL, "B", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_HELP_GROUP_NULL
+};
+static const struct bu_arg_option_visibility facetize_option_visibility[] = {
+    BU_ARG_OPTION_VISIBILITY("method-opts", BU_ARG_VISIBILITY_ADVANCED),
+    BU_ARG_OPTION_VISIBILITY_NULL
+};
+static const struct bu_arg_presentation facetize_presentation =
+    BU_ARG_PRESENTATION(facetize_help_groups, facetize_option_visibility,
+	tess_method_parameter_groups());
+
+static const struct bu_arg_schema facetize_cmd_schema = BU_ARG_SCHEMA_PRESENTED(
+    "facetize", "Convert geometry to BOT or NMG form", facetize_options, facetize_operands,
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, facetize_constraints),
+    &facetize_presentation);
+
+static const struct bu_arg_schema *
+facetize_schema(void)
+{
+    return &facetize_cmd_schema;
+}
+
+#define GED_FACETIZE_COMMANDS(X, XID) \
+    X(facetize, ged_facetize_core, GED_CMD_DEFAULT, &facetize_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_FACETIZE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_facetize", 1, GED_FACETIZE_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

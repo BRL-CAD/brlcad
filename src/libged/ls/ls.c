@@ -29,8 +29,6 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/getopt.h"
-#include "bu/opt.h"
 #include "bu/sort.h"
 #include "bu/units.h"
 
@@ -229,26 +227,6 @@ vls_line_dpp(struct ged *gedp,
     }
 }
 
-static void
-_ged_ls_show_help(struct ged *gedp, struct bu_opt_desc *d)
-{
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-    char *option_help;
-
-    bu_vls_sprintf(&str, "Usage:\n");
-    bu_vls_printf(&str,  "ls [-achlpqrs] [object_pattern_1] [object_pattern_2]...\n");
-    bu_vls_printf(&str,  "ls -A [-o] [-achlpqrs] [Key1{value1}] [Key2{value2}]...\n");
-    bu_vls_printf(&str,  "\n");
-
-    if ((option_help = bu_opt_describe(d, NULL))) {
-	bu_vls_printf(&str, "Options:\n%s", option_help);
-	bu_free(option_help, "help str");
-    }
-
-    bu_vls_vlscat(gedp->ged_result_str, &str);
-    bu_vls_free(&str);
-}
-
 struct _ged_ls_data {
     int aflag;	   /* print all objects without formatting */
     int cflag;	   /* print combinations */
@@ -259,6 +237,8 @@ struct _ged_ls_data {
     int hflag;	   /* use human readable units for size in long format */
     int ssflag;	   /* sort by size in long format */
     int or_flag;   /* flag for "one attribute match is sufficient" mode */
+    int attr_flag; /* operands are attribute name/value pairs */
+    int print_help;
     struct bu_ptbl *results_obj;
     struct bu_ptbl *results_fullpath;
     int dir_flags;
@@ -343,9 +323,105 @@ _ged_ls_data_init(struct _ged_ls_data *d)
     d->hflag = 0;
     d->ssflag = 0;
     d->or_flag = 0;
+    d->attr_flag = 0;
+    d->print_help = 0;
     d->results_obj = NULL;
     d->results_fullpath = NULL;
     d->dir_flags = 0;
+}
+
+
+static const struct bu_arg_option ls_options[] = {
+    BU_ARG_FLAG("h", "help", struct _ged_ls_data, print_help,
+	"Print help and exit"),
+    BU_ARG_FLAG("a", "all", struct _ged_ls_data, aflag,
+	"Do not ignore hidden objects"),
+    BU_ARG_FLAG("c", "combs", struct _ged_ls_data, cflag,
+	"List combinations"),
+    BU_ARG_FLAG("r", "regions", struct _ged_ls_data, rflag, "List regions"),
+    BU_ARG_FLAG("p", "primitives", struct _ged_ls_data, sflag,
+	"List primitives"),
+    BU_ARG_ALIAS("s", NULL, "primitives", 0),
+    BU_ARG_FLAG("q", "quiet", struct _ged_ls_data, qflag,
+	"Suppress informational output messages during database lookup"),
+    BU_ARG_FLAG("l", NULL, struct _ged_ls_data, lflag,
+	"Use long reporting format"),
+    BU_ARG_FLAG("H", "human-readable", struct _ged_ls_data, hflag,
+	"When printing in long format, use human-readable object sizes"),
+    BU_ARG_FLAG("S", "sort", struct _ged_ls_data, ssflag,
+	"Sort by object size"),
+    BU_ARG_FLAG("A", "attributes", struct _ged_ls_data, attr_flag,
+	"Treat operands as attribute name/value pairs"),
+    BU_ARG_FLAG("o", "or", struct _ged_ls_data, or_flag,
+	"In attribute mode, match any attribute pair"),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand ls_help_operands[] = {
+    BU_ARG_OPERAND("raw_arguments", BU_ARG_VALUE_RAW, 0,
+	BU_ARG_COUNT_UNLIMITED, "Arguments ignored when requesting help", NULL),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_operand ls_attribute_roles[] = {
+    BU_ARG_OPERAND("attribute", BU_ARG_VALUE_STRING, 1, 1,
+	"Attribute name", NULL),
+    BU_ARG_OPERAND("value", BU_ARG_VALUE_STRING, 1, 1,
+	"Attribute value", NULL),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_operand_group ls_attribute_groups[] = {
+    BU_ARG_OPERAND_GROUP("attribute_value_group", ls_attribute_roles, 1,
+	BU_ARG_COUNT_UNLIMITED, "Repeated attribute name/value pairs"),
+    BU_ARG_OPERAND_GROUP_NULL
+};
+#define LS_OBJECT_OPERANDS(_name, _provider) \
+    static const struct bu_arg_operand _name[] = { \
+	BU_ARG_OPERAND("objects", BU_ARG_VALUE_DB_PATH, 0, \
+	    BU_ARG_COUNT_UNLIMITED, "Object or path patterns", _provider), \
+	BU_ARG_OPERAND_NULL \
+    }
+LS_OBJECT_OPERANDS(ls_default_operands, "ged.db_path_or_pattern");
+LS_OBJECT_OPERANDS(ls_all_operands, "ged.db_path_any_hidden_or_pattern");
+LS_OBJECT_OPERANDS(ls_comb_operands, "ged.db_path_combinations_or_pattern");
+LS_OBJECT_OPERANDS(ls_primitive_operands, "ged.db_path_primitives_or_pattern");
+LS_OBJECT_OPERANDS(ls_region_operands, "ged.db_path_regions_or_pattern");
+#undef LS_OBJECT_OPERANDS
+static const char * const ls_help_option[] = {"help", NULL};
+static const char * const ls_attribute_option[] = {"attributes", NULL};
+static const char * const ls_region_option[] = {"regions", NULL};
+static const char * const ls_primitive_option[] = {"primitives", NULL};
+static const char * const ls_comb_option[] = {"combs", NULL};
+static const char * const ls_all_option[] = {"all", NULL};
+static const struct bu_arg_schema_case ls_cases[] = {
+    BU_ARG_SCHEMA_CASE("help", "Display command help",
+	BU_ARG_CONDITION_ANY_OPTION_PRESENT, ls_help_option, ls_help_operands, NULL),
+    BU_ARG_SCHEMA_CASE("attributes", "Match attribute name/value pairs",
+	BU_ARG_CONDITION_ANY_OPTION_PRESENT, ls_attribute_option, NULL,
+	ls_attribute_groups),
+    BU_ARG_SCHEMA_CASE("regions", "List region patterns",
+	BU_ARG_CONDITION_ANY_OPTION_PRESENT, ls_region_option, ls_region_operands, NULL),
+    BU_ARG_SCHEMA_CASE("primitives", "List primitive patterns",
+	BU_ARG_CONDITION_ANY_OPTION_PRESENT, ls_primitive_option,
+	ls_primitive_operands, NULL),
+    BU_ARG_SCHEMA_CASE("combinations", "List combination patterns",
+	BU_ARG_CONDITION_ANY_OPTION_PRESENT, ls_comb_option, ls_comb_operands, NULL),
+    BU_ARG_SCHEMA_CASE("all", "List patterns including hidden objects",
+	BU_ARG_CONDITION_ANY_OPTION_PRESENT, ls_all_option, ls_all_operands, NULL),
+    BU_ARG_SCHEMA_CASE_DEFAULT("objects", "List object or path patterns",
+	ls_default_operands, NULL),
+    BU_ARG_SCHEMA_CASE_NULL
+};
+static const struct bu_arg_schema ls_cmd_schema =
+    BU_ARG_SCHEMA_CASED("ls", "List database objects", ls_options,
+	BU_ARG_PARSE_INTERSPERSED, ls_cases);
+static const struct bu_arg_schema t_cmd_schema =
+    BU_ARG_SCHEMA_CASED("t", "List database objects", ls_options,
+	BU_ARG_PARSE_INTERSPERSED, ls_cases);
+
+
+static void
+ls_show_help(struct ged *gedp, const char *command)
+{
+    (void)ged_cmd_help_append(gedp->ged_result_str, command, command);
 }
 
 /**
@@ -354,27 +430,13 @@ _ged_ls_data_init(struct _ged_ls_data *d)
 int
 ged_ls_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int ret_ac = 0;
     struct directory *dp;
     struct directory **dirp0 = (struct directory **)NULL;
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-    int print_help = 0;
     struct _ged_ls_data ls;
-    int attr_flag = 0; /* arguments are attribute name/value pairs */
-    struct bu_opt_desc d[13];
-    BU_OPT(d[0],  "h", "help",           "",  NULL, &print_help,   "Print help and exit");
-    BU_OPT(d[1],  "a", "all",            "",  NULL, &(ls.aflag),   "Do not ignore static objects.");
-    BU_OPT(d[2],  "c", "combs",          "",  NULL, &(ls.cflag),   "List combinations");
-    BU_OPT(d[3],  "r", "regions",        "",  NULL, &(ls.rflag),   "List regions");
-    BU_OPT(d[4],  "p", "primitives",     "",  NULL, &(ls.sflag),   "List primitives");
-    BU_OPT(d[5],  "s", "",               "",  NULL, &(ls.sflag),   "");
-    BU_OPT(d[6],  "q", "quiet",          "",  NULL, &(ls.qflag),   "Suppress informational output messages during database lookup process");
-    BU_OPT(d[7],  "l", "",               "",  NULL, &(ls.lflag),   "Use long reporting format");
-    BU_OPT(d[8],  "H", "human-readable", "",  NULL, &(ls.hflag),   "When printing using long format, use human readable sizes for object size");
-    BU_OPT(d[9],  "S", "sort",           "",  NULL, &(ls.ssflag),  "Sort using object size");
-    BU_OPT(d[10], "A", "attributes",     "",  NULL, &attr_flag,    "List objects having all of the specified attribute name/value pairs");
-    BU_OPT(d[11], "o", "or",             "",  NULL, &(ls.or_flag), "In attribute mode, match if one or more attribute patterns match");
-    BU_OPT_NULL(d[12]);
+    int operand_count;
+    int operand_index;
+    const struct bu_arg_schema *schema;
+    const char *command = argv[0];
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -384,24 +446,23 @@ ged_ls_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
     ged_results_clear(gedp->ged_results);
 
-    /* Skip first arg */
-    argv++; argc--;
-
-    /* Handle options, if any */
-    ret_ac = bu_opt_parse(&str, argc, argv, d);
-    if (ret_ac < 0) {
-	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&str));
-	bu_vls_free(&str);
+    schema = BU_STR_EQUAL(command, "t") ? &t_cmd_schema : &ls_cmd_schema;
+    argc--; argv++;
+    operand_index = bu_arg_schema_parse_complete(schema, &ls,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
+	if (bu_arg_schema_option_present(schema, argc, argv, "attributes"))
+	    bu_vls_printf(gedp->ged_result_str, "attribute value required\n");
+	ls_show_help(gedp, command);
 	return BRLCAD_ERROR;
     }
-    if (print_help) {
-	_ged_ls_show_help(gedp, d);
-	bu_vls_free(&str);
+    operand_count = argc - operand_index;
+    argv += operand_index;
+    if (ls.print_help) {
+	ls_show_help(gedp, command);
 	return BRLCAD_OK;
     }
-
-    /* object patterns are whatever is left in argv (none is OK) */
-    argc = ret_ac;
+    argc = operand_count;
 
     /* Set object type filter via flags */
     ls.dir_flags = 0;
@@ -412,7 +473,7 @@ ged_ls_core(struct ged *gedp, int argc, const char *argv[])
     if (!ls.dir_flags) ls.dir_flags = -1 ^ RT_DIR_HIDDEN;
 
     /* create list of selected objects from database */
-    if (attr_flag) {
+    if (ls.attr_flag) {
 
 	/* In this scenario we're only going to get object names, and db_lookup_by_attr will provide
 	 * the table for us, so don't init either of them.  */
@@ -476,11 +537,11 @@ ged_ls_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_LS_COMMANDS(X, XID) \
-    X(ls,  ged_ls_core,   GED_CMD_DEFAULT) \
-    X(t,   ged_ls_core,   GED_CMD_DEFAULT)
+    X(ls,  ged_ls_core,   GED_CMD_DEFAULT, &ls_cmd_schema) \
+    X(t,   ged_ls_core,   GED_CMD_DEFAULT, &t_cmd_schema)
 
-GED_DECLARE_COMMAND_SET(GED_LS_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_ls", 1, GED_LS_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_LS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_ls", 1, GED_LS_COMMANDS)
 
 /*
  * Local Variables:

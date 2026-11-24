@@ -23,12 +23,26 @@
  *
  */
 
-#include "bu/getopt.h"
+#include "bu/arg.h"
 #include "dm.h"
 #include "ged.h"
 
 
 #include "../ged_private.h"
+
+struct get_autoview_args {
+    int include_pseudo_solids;
+};
+
+static const struct bu_arg_option get_autoview_options[] = {
+    BU_ARG_FLAG("p", NULL, struct get_autoview_args, include_pseudo_solids,
+	"Include pseudo-solids in the displayed bounds"),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_schema get_autoview_cmd_schema =
+    BU_ARG_SCHEMA_BOUND("get_autoview",
+	"Report a view enclosing displayed geometry", get_autoview_options,
+	NULL, BU_ARG_PARSE_OPTIONS_FIRST, NULL, NULL, NULL, NULL);
 
 /*
  * Get the view size and center such that all displayed solids would be in view
@@ -45,8 +59,8 @@ ged_get_autoview_core(struct ged *gedp, int argc, const char *argv[])
     vect_t center = VINIT_ZERO;
     vect_t radial;
     fastf_t size;
-    int pflag = 0;
-    int c;
+    struct get_autoview_args args = {0};
+    int operand_index;
     double sval = (gedp->dbip) ? gedp->dbip->dbi_base2local : 1.0;
 
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -55,27 +69,15 @@ ged_get_autoview_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* must be wanting help */
-    if (argc != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
-	return GED_HELP;
+    operand_index = bu_arg_schema_parse_complete(&get_autoview_cmd_schema,
+	&args, gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
+	return BRLCAD_ERROR;
     }
 
-    /* Parse options. */
-    bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "p")) != -1) {
-	switch (c) {
-	    case 'p':
-		pflag = 1;
-		break;
-	    default: {
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
-		return BRLCAD_ERROR;
-	    }
-	}
-    }
-
-    is_empty = dl_bounding_sph(gedp->i->ged_gdp->gd_headDisplay, &min, &max, pflag);
+    is_empty = dl_bounding_sph(gedp->i->ged_gdp->gd_headDisplay, &min, &max,
+	args.include_pseudo_solids);
 
     if (is_empty) {
 	/* Nothing is in view */
@@ -101,10 +103,10 @@ ged_get_autoview_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_GET_AUTOVIEW_COMMANDS(X, XID) \
-    X(get_autoview, ged_get_autoview_core, GED_CMD_DEFAULT) \
+    X(get_autoview, ged_get_autoview_core, GED_CMD_DEFAULT, &get_autoview_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_GET_AUTOVIEW_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_get_autoview", 1, GED_GET_AUTOVIEW_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_GET_AUTOVIEW_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_get_autoview", 1, GED_GET_AUTOVIEW_COMMANDS)
 
 /*
  * Local Variables:

@@ -29,7 +29,7 @@
 
 #include "vmath.h"
 #include "bu/interrupt.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "../ged_private.h"
@@ -71,7 +71,7 @@ parse_fastf_args(struct ged *gedp, fastf_t *values, size_t count,
 	const char *argv[])
 {
     for (size_t i = 0; i < count; ++i) {
-	if (bu_opt_fastf_t(NULL, 1, &argv[i], &values[i]) != 1 ||
+	if (bu_arg_number_from_str(NULL, (fastf_t *)(&values[i]), argv[i]) != 1 ||
 	    !isfinite(values[i])) {
 	    bu_vls_printf(gedp->ged_result_str,
 		    "facedef: bad numeric value - %s\n", argv[i]);
@@ -161,7 +161,7 @@ get_rotfb(struct ged *gedp, fastf_t *plane, const char *argv[], const struct rt_
 	int vertex;
 	const char *vertex_arg = argv[2] + 1;
 
-	if (bu_opt_int(NULL, 1, &vertex_arg, &vertex) != 1 ||
+	if (bu_arg_integer_from_str(NULL, (int *)(&vertex), vertex_arg, 0) != 1 ||
 	    vertex < 1 || vertex > 8) {
 	    bu_vls_printf(gedp->ged_result_str, "facedef: bad vertex - %s\n", argv[2]);
 	    return -1;
@@ -252,7 +252,7 @@ edarb_facedef(void *data, int argc, const char *argv[])
     bu_vls_free(&error_msg);
 
     /* get face, initialize args and argcnt */
-    if (bu_opt_int(NULL, 1, &argv[3], &face) != 1) {
+    if (bu_arg_integer_from_str(NULL, (int *)(&face), argv[3], 0) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "facedef: bad face - %s\n", argv[3]);
 	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;
