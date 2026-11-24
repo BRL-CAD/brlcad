@@ -7,6 +7,7 @@
 
 #include "common.h"
 
+#include <array>
 #include <cstdio>
 #include <random>
 #include <vector>
@@ -51,7 +52,7 @@ oracle(const Raster &allowed, const SearchState &state,
 void
 test_bit_rows()
 {
-    Raster raster({{130, 2, 2}});
+    Raster raster(std::array<int, 3>{{130, 2, 2}});
     CHECK(raster.set(0, 0, 0), "set first bit");
     CHECK(raster.set(63, 0, 0), "set end of first word");
     CHECK(raster.set(64, 0, 0), "set start of second word");
@@ -63,14 +64,14 @@ test_bit_rows()
     CHECK(!raster.get(130, 1, 1), "out-of-bounds read is empty");
     CHECK(raster.count() == 4, "unique cell count");
 
-    Raster allowed({{130, 1, 1}});
+    Raster allowed(std::array<int, 3>{{130, 1, 1}});
     for (int x = 0; x < 130; ++x)
         allowed.set(x, 0, 0);
     SearchState state;
     state.occupied = Raster(allowed.dims);
     state.occupied.set(64, 0, 0);
     OrientedRaster object;
-    object.shape = Raster({{64, 1, 1}});
+    object.shape = Raster(std::array<int, 3>{{64, 1, 1}});
     object.shape.set(63, 0, 0);
     object.collision = object.shape;
     CHECK(!placement_feasible(allowed, state, object, {1, 0, 0}),
@@ -87,7 +88,7 @@ test_orientations_and_clearance()
     CHECK(orientation_transforms(OrientationMode::UPRIGHT, Z).size() == 4,
         "four upright quarter turns");
 
-    Raster source({{2, 3, 1}});
+    Raster source(std::array<int, 3>{{2, 3, 1}});
     source.set(0, 0, 0);
     source.set(1, 2, 0);
     AxisTransform turn = orientation_transforms(OrientationMode::UPRIGHT, Z)[1];
@@ -113,7 +114,7 @@ test_direct_oracle()
     std::bernoulli_distribution object_sample(0.35);
 
     for (int trial = 0; trial < 100; ++trial) {
-        Raster allowed({{9, 7, 5}});
+        Raster allowed(std::array<int, 3>{{9, 7, 5}});
         SearchState state;
         state.occupied = Raster(allowed.dims);
         for (int z = 0; z < allowed.dims[Z]; ++z) {
@@ -128,7 +129,7 @@ test_direct_oracle()
         }
 
         OrientedRaster orientation;
-        orientation.shape = Raster({{3, 2, 2}});
+        orientation.shape = Raster(std::array<int, 3>{{3, 2, 2}});
         for (int z = 0; z < 2; ++z)
             for (int y = 0; y < 2; ++y)
                 for (int x = 0; x < 3; ++x)
@@ -152,12 +153,12 @@ test_direct_oracle()
 void
 test_deterministic_search()
 {
-    Raster allowed({{8, 6, 1}});
+    Raster allowed(std::array<int, 3>{{8, 6, 1}});
     for (int y = 0; y < 6; ++y)
         for (int x = 0; x < 8; ++x)
             allowed.set(x, y, 0);
 
-    Raster part({{3, 2, 1}});
+    Raster part(std::array<int, 3>{{3, 2, 1}});
     for (int y = 0; y < 2; ++y)
         for (int x = 0; x < 3; ++x)
             part.set(x, y, 0);
