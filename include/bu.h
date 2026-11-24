@@ -82,6 +82,7 @@
 #include "./bu/hash.h"
 #include "./bu/hist.h"
 #include "./bu/list.h"
+#include "./bu/lineedit.h"
 #include "./bu/log.h"
 #include "./bu/magic.h"
 #include "./bu/malloc.h"

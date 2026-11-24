@@ -21,22 +21,24 @@
 #include "common.h"
 
 #include <stdio.h>
+#include <ctype.h>
 #include <string.h>
 #include <stdlib.h> /* for strtol */
 #include <limits.h> /* for INT_MAX */
 #include <float.h> /* for FLT_MAX */
-#include <ctype.h> /* for isspace */
 #include <errno.h> /* for errno */
 
 #include "vmath.h"
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/color.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/opt.h"
-#include "bu/ptbl.h"
 #include "bu/str.h"
 #include "bu/vls.h"
+
+#include "arg_private.h"
 
 
 static void
@@ -94,6 +96,19 @@ opt_desc_is_null(const struct bu_opt_desc *ds)
 	non_null++;
 
     return (non_null > 0) ? 0 : 1;
+}
+
+
+static size_t
+opt_desc_count(const struct bu_opt_desc *descs)
+{
+    size_t count = 0;
+
+    if (!descs)
+	return 0;
+    while (!opt_desc_is_null(&descs[count]))
+	count++;
+    return count;
 }
 
 
@@ -283,6 +298,8 @@ opt_describe_internal_ascii(const struct bu_opt_desc *ds, struct bu_opt_desc_opt
     }
     finalized = bu_strdup(bu_vls_addr(&description));
 
+    if (filtered_argv)
+	bu_free(filtered_argv, "free filter argv");
     bu_free(input, "free filter copy");
     bu_vls_free(&description);
     return finalized;
@@ -528,6 +545,12 @@ bu_opt_describe(const struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 }
 
 
+/*
+ * bu_opt is the compact, option-only face of the command-schema parser.
+ * Its transient schema deliberately contains no operands or semantic
+ * metadata: unrecognized words are pass-through leftovers, and bindings keep
+ * main's original direct-pointer/callback behavior.
+ */
 static int
 opt_is_flag(const char *opt, const struct bu_opt_desc *ds, const char *arg)
 {
@@ -698,8 +721,8 @@ can_be_opt(const char *opt)
 }
 
 
-static int
-opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct bu_opt_desc *ds, int leading_only)
+int
+bu_opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct bu_opt_desc *ds)
 {
     size_t i = 0;
     size_t j = 0;
@@ -711,19 +734,13 @@ opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct bu_o
 	return -1;
 
     /* Now identify opt/arg pairs.*/
-    while (i < argc && (!leading_only || !BU_PTBL_LEN(&unknown_args))) {
+    while (i < (size_t)argc) {
 	int desc_found = 0;
 	int desc_ind = 0;
 	int opt_cnt = 0;
 	const char *eq_arg = NULL;
 	const struct bu_opt_desc *desc = NULL;
 	struct bu_ptbl opts = BU_PTBL_INIT_ZERO;
-
-	if (leading_only && BU_STR_EQUAL(argv[i], "--")) {
-	    bu_ptbl_ins(&known_args, (long *)argv[i]);
-	    i++;
-	    break;
-	}
 
 	/* If argv[i] isn't an option, stick the argv entry (and any
 	 * immediately following non-option entries) into the unknown
@@ -977,11 +994,6 @@ opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct bu_o
 	bu_ptbl_free(&opts);
     }
 
-    /* A positional argument ends leading-option parsing.  Its entire suffix
-     * belongs to the caller, including any option-looking arguments. */
-    for (; i < argc; i++)
-	bu_ptbl_ins(&unknown_args, (long *)argv[i]);
-
     /* Rearrange argv so the unused options are ordered at the front
      * of the array.
      */
@@ -1007,17 +1019,51 @@ opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct bu_o
 }
 
 
-int
-bu_opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct bu_opt_desc *ds)
+char *
+bu_opt_usage(const struct bu_opt_desc *descs, const char *invocation,
+	const char *operands)
 {
-    return opt_parse(msgs, argc, argv, ds, 0);
+    struct bu_vls usage = BU_VLS_INIT_ZERO;
+
+    if (!descs || BU_STR_EMPTY(invocation))
+	return NULL;
+    bu_vls_printf(&usage, "Usage: %s", invocation);
+    if (opt_desc_count(descs))
+	bu_vls_strcat(&usage, " [options]");
+    if (!BU_STR_EMPTY(operands))
+	bu_vls_printf(&usage, " %s", operands);
+    bu_vls_putc(&usage, '\n');
+    char *result = bu_vls_strdup(&usage);
+    bu_vls_free(&usage);
+    return result;
 }
 
 
-int
-bu_opt_parse_leading(struct bu_vls *msgs, size_t argc, const char **argv, const struct bu_opt_desc *ds)
+char *
+bu_opt_help(const struct bu_opt_desc *descs, const char *invocation,
+	const char *operands, const char *summary)
 {
-    return opt_parse(msgs, argc, argv, ds, 1);
+    struct bu_vls help = BU_VLS_INIT_ZERO;
+    char *usage;
+    char *options;
+
+    if (!descs || BU_STR_EMPTY(invocation))
+	return NULL;
+    usage = bu_opt_usage(descs, invocation, operands);
+    if (usage) {
+	bu_vls_strcat(&help, usage);
+	bu_free(usage, "bu_opt usage");
+    }
+    if (!BU_STR_EMPTY(summary))
+	bu_vls_printf(&help, "\n%s\n", summary);
+    options = bu_opt_describe(descs, NULL);
+    if (options && options[0])
+	bu_vls_printf(&help, "\nOptions:\n%s", options);
+    if (options)
+	bu_free(options, "bu_opt option help");
+    char *result = bu_vls_strdup(&help);
+    bu_vls_free(&help);
+    return result;
 }
 
 
@@ -1048,7 +1094,7 @@ bu_opt_int(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
     }
 
     /* If the long fits inside an int, we're OK */
-    if (l <= INT_MAX && l >= -INT_MAX) {
+    if (l <= INT_MAX && l >= INT_MIN) {
 	i = (int)l;
     } else {
 	/* Too big or too small, fail */
@@ -1154,7 +1200,8 @@ bu_opt_fastf_t(struct bu_vls *msg, size_t argc, const char **argv, void *set_var
 	return -1;
     }
 
-    if (sizeof(fastf_t) == sizeof(float) && (d > FLT_MAX)) {
+    if (!isfinite(d) ||
+	(sizeof(fastf_t) == sizeof(float) && (d > FLT_MAX || d < -FLT_MAX))) {
 	if (msg) {
 	    bu_vls_printf(msg, "Invalid input for fastf_t (range error): %s\n", argv[0]);
 	}
@@ -1175,7 +1222,7 @@ bu_opt_char(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_str");
 
-    if (c_set && strlen(argv[0]) > 0)
+    if (c_set)
 	*c_set = argv[0][0];
 
     return 1;
@@ -1238,148 +1285,52 @@ int
 bu_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_c)
 {
     struct bu_color *set_color = (struct bu_color *)set_c;
-    unsigned int rgb[3];
+    unsigned char rgb[3] = {0, 0, 0};
+    int consumed = 0;
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_color");
 
-    /* First, see if the first string converts to rgb */
-    if (!bu_str_to_rgb((char *)argv[0], (unsigned char *)&rgb)) {
-	/* nope - maybe we have 3 args? */
-	if (argc >= 3) {
-	    struct bu_vls tmp_color = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&tmp_color, "%s/%s/%s", argv[0], argv[1], argv[2]);
-	    if (!bu_str_to_rgb(bu_vls_addr(&tmp_color), (unsigned char *)&rgb)) {
-		/* Not valid with 3 */
-		bu_vls_free(&tmp_color);
-		if (msg)
-		    bu_vls_sprintf(msg, "No valid color found.\n");
-		return -1;
-	    } else {
-		/* 3 did the job */
-		bu_vls_free(&tmp_color);
-		if (set_color)
-		    (void)bu_color_from_rgb_chars(set_color, (unsigned char *)&rgb);
-		return 3;
-	    }
-	} else {
-	    /* Not valid with 1 and don't have 3 - we require at least
-	     * one, so claim one argv as belonging to this option
-	     * regardless.
-	     */
-	    if (msg)
-		bu_vls_sprintf(msg, "No valid color found: %s\n", argv[0]);
-	    return -1;
-	}
-    } else {
-	/* yep, 1 did the job */
-	if (set_color)
-	    (void)bu_color_from_rgb_chars(set_color, (unsigned char *)&rgb);
-	return 1;
+    /* Integer RGB is common enough to have one strict parser.  Preserve the
+     * older packed float and hexadecimal forms as compatibility fallbacks. */
+    consumed = bu_rgb_from_argv(rgb, argc, argv);
+    if (!consumed && bu_str_to_rgb(argv[0], rgb))
+	consumed = 1;
+    if (!consumed && argc >= 3) {
+	struct bu_vls tmp_color = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&tmp_color, "%s/%s/%s", argv[0], argv[1], argv[2]);
+	if (bu_str_to_rgb(bu_vls_addr(&tmp_color), rgb))
+	    consumed = 3;
+	bu_vls_free(&tmp_color);
     }
 
-    return -1;
+    if (!consumed) {
+	if (msg)
+	    bu_vls_sprintf(msg, "No valid color found: %s\n", argv[0]);
+	return -1;
+    }
+    if (set_color)
+	(void)bu_color_from_rgb_chars(set_color, rgb);
+    return consumed;
 }
 
 
 int
 bu_opt_vect_t(struct bu_vls *msg, size_t argc, const char **argv, void *vec)
 {
-    size_t i = 0;
-    size_t acnum = 0;
-    char *str1 = NULL;
-    char *avnum[4] = {NULL, NULL, NULL, NULL};
-    vect_t *v= (vect_t *)vec;
+    vect_t parsed = VINIT_ZERO;
+    int consumed;
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_vect_t");
-
-    /* First, see if the first string converts to a vect_t (should
-     * this be a func?)
-     */
-    str1 = bu_strdup(argv[0]);
-    while (str1[i]) {
-	/* If we have a separator, replace with a space */
-	if (str1[i] == ',' || str1[i] == '/') {
-	    str1[i] = ' ';
-	}
-	i++;
-    }
-    acnum = bu_argv_from_string(avnum, 3, str1);
-    if (acnum == 3) {
-	/* We might have three numbers - find out */
-	fastf_t v1 = 0.0;
-	fastf_t v2 = 0.0;
-	fastf_t v3 = 0.0;
-	int have_three = 1;
-	if (bu_opt_fastf_t(msg, 1, (const char **)&avnum[0], &v1) == -1) {
-	    if (msg) {
-		bu_vls_sprintf(msg, "Not a number: %s.\n", avnum[0]);
-	    }
-	    have_three = 0;
-	}
-	if (bu_opt_fastf_t(msg, 1, (const char **)&avnum[1], &v2) == -1) {
-	    if (msg) {
-		bu_vls_sprintf(msg, "Not a number: %s.\n", avnum[1]);
-	    }
-	    have_three = 0;
-	}
-	if (bu_opt_fastf_t(msg, 1, (const char **)&avnum[2], &v3) == -1) {
-	    if (msg) {
-		bu_vls_sprintf(msg, "Not a number: %s.\n", avnum[2]);
-	    }
-	    have_three = 0;
-	}
-	bu_free(str1, "free tmp str");
-	/* If we got here, we do have three numbers */
-	if (have_three) {
-	    if (v) {
-		VSET(*v, v1, v2, v3);
-	    }
-	    return 1;
-	}
-    } else {
-	/* Can't be just the first arg */
-	bu_free(str1, "free tmp str");
-    }
-    /* First string didn't have three numbers - maybe we have 3 args ? */
-    if (argc >= 3) {
-	fastf_t v1 = 0.0;
-	fastf_t v2 = 0.0;
-	fastf_t v3 = 0.0;
-	if (bu_opt_fastf_t(msg, 1, &argv[0], &v1) == -1) {
-	    if (msg) {
-		bu_vls_sprintf(msg, "Not a number: %s.\n", argv[0]);
-	    }
-	    return -1;
-	}
-	if (bu_opt_fastf_t(msg, 1, &argv[1], &v2) == -1) {
-	    if (msg) {
-		bu_vls_sprintf(msg, "Not a number: %s.\n", argv[1]);
-	    }
-	    return -1;
-	}
-	if (bu_opt_fastf_t(msg, 1, &argv[2], &v3) == -1) {
-	    if (msg) {
-		bu_vls_sprintf(msg, "Not a number: %s.\n", argv[2]);
-	    }
-	    return -1;
-	}
-	/* If we got here, 3 did the job */
-	if (v) {
-	    VSET(*v, v1, v2, v3);
-	}
-	return 3;
-    } else {
-	/* Not valid with 1 and don't have 3 - we require at least
-	 * one, so claim one argv as belonging to this option
-	 * regardless.
-	 */
-	if (msg) {
+    consumed = bu_arg_vector3_from_argv(parsed, argc,
+	(const char * const *)argv);
+    if (!consumed) {
+	if (msg)
 	    bu_vls_sprintf(msg, "No valid vector found: %s\n", argv[0]);
-	}
 	return -1;
     }
-
-    return -1;
+    if (vec)
+	VMOVE(*(vect_t *)vec, parsed);
+    return consumed;
 }
 
 int
@@ -1482,32 +1433,22 @@ bu_opt_man_section(struct bu_vls *msg, size_t argc, const char **argv, void *set
 int
 bu_opt_scan_int_range(const char *str, int *val, int vmin, int vmax, const char *label)
 {
-    long l;
-    char *endptr = NULL;
+    enum bu_arg_parse_status status;
     const char *prog = bu_getprogname();
 
-    if (!val || !str || str[0] == '\0') {
-	if (label)
-	    bu_log("%s: missing %s value\n", prog, label);
-	return 0;
-    }
-
-    errno = 0;
-    l = strtol(str, &endptr, 10);
-    if (endptr == str || *endptr != '\0' || errno != 0 || l < INT_MIN || l > INT_MAX) {
-	if (label)
-	    bu_log("%s: invalid %s '%s'\n", prog, label, str);
-	return 0;
-    }
-    if ((int)l < vmin || (int)l > vmax) {
-	if (label)
-	    bu_log("%s: %s out of range '%s' (expected %d to %d)\n", prog, label, str, vmin, vmax);
-	return 0;
-    }
-
-    *val = (int)l;
-    return 1;
+    status = _bu_arg_integer_range_from_str(val, str, 10, vmin, vmax);
+    if (status == BU_ARG_PARSE_OK)
+	return 1;
+    if (label && status == BU_ARG_PARSE_MISSING)
+	bu_log("%s: missing %s value\n", prog, label);
+    else if (label && status == BU_ARG_PARSE_OUT_OF_RANGE)
+	bu_log("%s: %s out of range '%s' (expected %d to %d)\n",
+	    prog, label, str, vmin, vmax);
+    else if (label)
+	bu_log("%s: invalid %s '%s'\n", prog, label, str ? str : "");
+    return 0;
 }
+
 
 int
 bu_opt_scan_int(const char *str, int *val, const char *label)
@@ -1515,48 +1456,44 @@ bu_opt_scan_int(const char *str, int *val, const char *label)
     return bu_opt_scan_int_range(str, val, INT_MIN, INT_MAX, label);
 }
 
+
 int
 bu_opt_scan_uchar(const char *str, unsigned char *val, const char *label)
 {
-    int i;
+    enum bu_arg_parse_status status;
+    const char *prog = bu_getprogname();
 
-    if (!val)
-	return 0;
-    if (!bu_opt_scan_int_range(str, &i, 0, UCHAR_MAX, label))
-	return 0;
-
-    *val = (unsigned char)i;
-    return 1;
+    status = _bu_arg_unsigned_char_from_str(val, str, 10);
+    if (status == BU_ARG_PARSE_OK)
+	return 1;
+    if (label && status == BU_ARG_PARSE_MISSING)
+	bu_log("%s: missing %s value\n", prog, label);
+    else if (label && status == BU_ARG_PARSE_OUT_OF_RANGE)
+	bu_log("%s: %s out of range '%s' (expected 0 to %u)\n",
+	    prog, label, str, (unsigned int)UCHAR_MAX);
+    else if (label)
+	bu_log("%s: invalid %s '%s'\n", prog, label, str ? str : "");
+    return 0;
 }
+
 
 int
 bu_opt_scan_long_range(const char *str, long *val, long vmin, long vmax, const char *label)
 {
-    long l;
-    char *endptr = NULL;
+    enum bu_arg_parse_status status;
     const char *prog = bu_getprogname();
 
-    if (!val || !str || str[0] == '\0') {
-	if (label)
-	    bu_log("%s: missing %s value\n", prog, label);
-	return 0;
-    }
-
-    errno = 0;
-    l = strtol(str, &endptr, 10);
-    if (endptr == str || *endptr != '\0' || errno != 0) {
-	if (label)
-	    bu_log("%s: invalid %s '%s'\n", prog, label, str);
-	return 0;
-    }
-    if (l < vmin || l > vmax) {
-	if (label)
-	    bu_log("%s: %s out of range '%s' (expected %ld to %ld)\n", prog, label, str, vmin, vmax);
-	return 0;
-    }
-
-    *val = l;
-    return 1;
+    status = _bu_arg_long_range_from_str(val, str, 10, vmin, vmax);
+    if (status == BU_ARG_PARSE_OK)
+	return 1;
+    if (label && status == BU_ARG_PARSE_MISSING)
+	bu_log("%s: missing %s value\n", prog, label);
+    else if (label && status == BU_ARG_PARSE_OUT_OF_RANGE)
+	bu_log("%s: %s out of range '%s' (expected %ld to %ld)\n",
+	    prog, label, str, vmin, vmax);
+    else if (label)
+	bu_log("%s: invalid %s '%s'\n", prog, label, str ? str : "");
+    return 0;
 }
 
 int
@@ -1568,41 +1505,20 @@ bu_opt_scan_long(const char *str, long *val, const char *label)
 int
 bu_opt_scan_size_t_range(const char *str, size_t *val, size_t vmin, size_t vmax, const char *label)
 {
-    unsigned long long ull;
-    char *endptr = NULL;
-    const char *cp = str;
+    enum bu_arg_parse_status status;
     const char *prog = bu_getprogname();
 
-    if (!val || !str || str[0] == '\0') {
-	if (label)
-	    bu_log("%s: missing %s value\n", prog, label);
-	return 0;
-    }
-
-    /* strtoull() silently wraps a leading '-'; reject negative input up front */
-    while (isspace((unsigned char)*cp))
-	cp++;
-    if (*cp == '-') {
-	if (label)
-	    bu_log("%s: invalid %s '%s'\n", prog, label, str);
-	return 0;
-    }
-
-    errno = 0;
-    ull = strtoull(str, &endptr, 10);
-    if (endptr == str || *endptr != '\0' || errno != 0 || ull > (unsigned long long)SIZE_MAX) {
-	if (label)
-	    bu_log("%s: invalid %s '%s'\n", prog, label, str);
-	return 0;
-    }
-    if ((size_t)ull < vmin || (size_t)ull > vmax) {
-	if (label)
-	    bu_log("%s: %s out of range '%s' (expected %zu to %zu)\n", prog, label, str, vmin, vmax);
-	return 0;
-    }
-
-    *val = (size_t)ull;
-    return 1;
+    status = _bu_arg_size_t_range_from_str(val, str, 10, vmin, vmax);
+    if (status == BU_ARG_PARSE_OK)
+	return 1;
+    if (label && status == BU_ARG_PARSE_MISSING)
+	bu_log("%s: missing %s value\n", prog, label);
+    else if (label && status == BU_ARG_PARSE_OUT_OF_RANGE)
+	bu_log("%s: %s out of range '%s' (expected %zu to %zu)\n",
+	    prog, label, str, vmin, vmax);
+    else if (label)
+	bu_log("%s: invalid %s '%s'\n", prog, label, str ? str : "");
+    return 0;
 }
 
 int
@@ -1614,31 +1530,20 @@ bu_opt_scan_size_t(const char *str, size_t *val, const char *label)
 int
 bu_opt_scan_double_range(const char *str, double *val, double vmin, double vmax, const char *label)
 {
-    double d;
-    char *endptr = NULL;
+    enum bu_arg_parse_status status;
     const char *prog = bu_getprogname();
 
-    if (!val || !str || str[0] == '\0') {
-	if (label)
-	    bu_log("%s: missing %s value\n", prog, label);
-	return 0;
-    }
-
-    errno = 0;
-    d = strtod(str, &endptr);
-    if (endptr == str || *endptr != '\0' || errno != 0) {
-	if (label)
-	    bu_log("%s: invalid %s '%s'\n", prog, label, str);
-	return 0;
-    }
-    if (!(d >= vmin && d <= vmax)) {
-	if (label)
-	    bu_log("%s: %s out of range '%s' (expected %g to %g)\n", prog, label, str, vmin, vmax);
-	return 0;
-    }
-
-    *val = d;
-    return 1;
+    status = _bu_arg_double_range_from_str(val, str, vmin, vmax);
+    if (status == BU_ARG_PARSE_OK)
+	return 1;
+    if (label && status == BU_ARG_PARSE_MISSING)
+	bu_log("%s: missing %s value\n", prog, label);
+    else if (label && status == BU_ARG_PARSE_OUT_OF_RANGE)
+	bu_log("%s: %s out of range '%s' (expected %g to %g)\n",
+	    prog, label, str, vmin, vmax);
+    else if (label)
+	bu_log("%s: invalid %s '%s'\n", prog, label, str ? str : "");
+    return 0;
 }
 
 int

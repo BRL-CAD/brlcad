@@ -453,7 +453,8 @@ desc_1(const char *cgy, int test_num)
 		 * another value, as happens with per-filter argument slices. */
 		av[1] = "outside argc";
 		EXPECT_FAILURE("string", "missing argument");
-		if (!strstr(bu_vls_cstr(&parse_msgs), "Invalid argument supplied to -s: (missing)"))
+		if (!strstr(bu_vls_cstr(&parse_msgs), "missing required argument") ||
+		    !strstr(bu_vls_cstr(&parse_msgs), "Invalid argument supplied to -s: (missing)"))
 		    val_ok = 0;
 		break;
 	    case 2:
@@ -816,6 +817,18 @@ desc_2(int test_num)
 	    av[0] = "-C0/0/50";
 	    EXPECT_SUCCESS_COLOR("color", color, 0, 0, 50);
 	    break;
+	case 17:
+	    ac = 2;
+	    av[0] = "-C";
+	    av[1] = "200;10;30";
+	    EXPECT_SUCCESS_COLOR("color", color, 200, 10, 30);
+	    break;
+	case 18:
+	    ac = 2;
+	    av[0] = "-C";
+	    av[1] = "200,10,30";
+	    EXPECT_SUCCESS_COLOR("color", color, 200, 10, 30);
+	    break;
     }
 
     if (ret > 0) {
@@ -913,98 +926,59 @@ desc_3(int test_num)
 
 
 static int
-scan_double_test(int test_num)
+desc_help(void)
 {
-    double value = 42.0;
+    int help_flag = 0;
+    int count = 0;
+    const struct bu_opt_desc descs[] = {
+	{"h", "help", "", NULL, &help_flag, "Print help and exit"},
+	{"n", "count", "count", bu_opt_int, &count, "Set the item count"},
+	BU_OPT_DESC_NULL
+    };
+    char *usage = bu_opt_usage(descs, "sample", "input [output]");
+    char *help = bu_opt_help(descs, "sample", "input [output]",
+	"Process a sample input");
+    struct bu_opt_desc_opts filter = BU_OPT_DESC_OPTS_INIT_ZERO;
+    filter.accept = "help";
+    char *filtered = bu_opt_describe(descs, &filter);
+    int ret = !usage || !help ||
+	!BU_STR_EQUAL(usage, "Usage: sample [options] input [output]\n") ||
+	!strstr(help, "Usage: sample [options] input [output]\n") ||
+	!strstr(help, "\nProcess a sample input\n") ||
+	!strstr(help, "\nOptions:\n") ||
+	!strstr(help, "-h, --help") || !strstr(help, "-n count, --count count") ||
+	!filtered || !strstr(filtered, "-h, --help") || strstr(filtered, "--count");
 
-    switch (test_num) {
-	case 0:
-	    return bu_opt_scan_double("nan", &value, NULL) != 0;
-	case 1:
-	    return bu_opt_scan_double("inf", &value, NULL) != 0;
-	case 2:
-	    return bu_opt_scan_double("-inf", &value, NULL) != 0;
-	case 3:
-	    if (!bu_opt_scan_double("1.25", &value, NULL))
-		return 1;
-	    return !NEAR_EQUAL(value, 1.25, SMALL_FASTF);
-    }
-
-    return 1;
+    if (usage)
+	bu_free(usage, "bu_opt usage test");
+    if (help)
+	bu_free(help, "bu_opt help test");
+    if (filtered)
+	bu_free(filtered, "filtered bu_opt help test");
+    return ret;
 }
 
 
 static int
-test_leading_options(void)
+scan_readers(void)
 {
-    enum { MAX_ARGS = 8 };
-    const struct {
-	const char *args[MAX_ARGS];
-	int consumed;
-	int flag;
-	const char *attach;
-	int number;
-	int vector_set;
-    } cases[] = {
-	{{"model.g", "repair", "-o", "fixed.s", NULL}, 0, 0, NULL, 0, 0},
-	{{"-c", "-a", "nu", "model.g", "repair", "-o", "fixed.s", NULL}, 3, 1, "nu", 0, 0},
-	{{"-ca", "nu", "model.g", NULL}, 0, 0, NULL, 0, 0},
-	{{"-c", "-anu", "model.g", "-a", "other", NULL}, 2, 1, "nu", 0, 0},
-	{{"-cc", "model.g", "-c", NULL}, 1, 1, NULL, 0, 0},
-	{{"--classic", "--attach=nu", "model.g", "--help", NULL}, 2, 1, "nu", 0, 0},
-	{{"--number", "-1", "model.g", "--number", "bad", NULL}, 2, 0, NULL, -1, 0},
-	{{"--vector", "1", "2", "3", "model.g", "--vector", "bad", NULL}, 4, 0, NULL, 0, 1},
-	{{"-c", "--", "-model.g", "-c", NULL}, 2, 1, NULL, 0, 0},
-	{{"--unknown", "--classic", "model.g", NULL}, 0, 0, NULL, 0, 0},
-	{{"-c", NULL}, 1, 1, NULL, 0, 0},
-	{{"--", NULL}, 1, 0, NULL, 0, 0},
-	{{NULL}, 0, 0, NULL, 0, 0},
-	{{"-a", NULL}, -1, 0, NULL, 0, 0},
-	{{"--number", "bad", "model.g", NULL}, -1, 0, NULL, 0, 0}
-    };
-    int failures = 0;
+    int integer = 41;
+    double number = 4.5;
 
-    for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
-	const char *args[MAX_ARGS];
-	const char *attach = NULL;
-	int flag = 0;
-	int number = 0;
-	vect_t vector = VINIT_ZERO;
-	const vect_t expected_vector = {1, 2, 3};
-	struct bu_vls msgs = BU_VLS_INIT_ZERO;
-	struct bu_opt_desc options[5];
-	int argc = 0;
-	int ret;
-	int failed;
-
-	BU_OPT(options[0], "c", "classic", "", NULL, &flag, "Classic mode");
-	BU_OPT(options[1], "a", "attach", "type", bu_opt_str, &attach, "Attach target");
-	BU_OPT(options[2], "n", "number", "#", bu_opt_int, &number, "Number");
-	BU_OPT(options[3], "V", "vector", "x y z", bu_opt_vect_t, &vector, "Vector");
-	BU_OPT_NULL(options[4]);
-	memcpy(args, cases[i].args, sizeof(args));
-	while (args[argc])
-	    argc++;
-	ret = bu_opt_parse_leading(&msgs, argc, args, options);
-	failed = ret != (cases[i].consumed < 0 ? -1 : argc - cases[i].consumed);
-	if (ret >= 0) {
-	    failed |= flag != cases[i].flag || number != cases[i].number;
-	    failed |= (attach == NULL) != (cases[i].attach == NULL);
-	    if (attach && cases[i].attach)
-		failed |= !BU_STR_EQUAL(attach, cases[i].attach);
-	    if (cases[i].vector_set)
-		failed |= !VNEAR_EQUAL(vector, expected_vector, SMALL_FASTF);
-	    for (int j = 0; j < ret; j++)
-		failed |= !BU_STR_EQUAL(args[j], cases[i].args[j + cases[i].consumed]);
-	}
-	if (failed) {
-	    bu_log("Leading option case %zu failed: %s\n", i, bu_vls_cstr(&msgs));
-	    failures++;
-	}
-	bu_vls_free(&msgs);
-    }
-
-    return failures ? -1 : 0;
+    if (!bu_opt_scan_int("010", &integer, NULL) || integer != 10)
+	return 1;
+    if (bu_opt_scan_int_range("11", &integer, 1, 10, NULL) || integer != 10)
+	return 1;
+    if (bu_opt_scan_double("nan", &number, NULL) ||
+	number < 4.49 || number > 4.51)
+	return 1;
+    if (bu_opt_scan_double("inf", &number, NULL) ||
+	number < 4.49 || number > 4.51)
+	return 1;
+    if (bu_opt_scan_double("-inf", &number, NULL) ||
+	number < 4.49 || number > 4.51)
+	return 1;
+    return 0;
 }
 
 
@@ -1054,11 +1028,12 @@ main(int argc, char *argv[])
 	case 3:
 	    return desc_3(test_num);
 	    break;
-	case 4:
-	    return scan_double_test(test_num);
-	    break;
 	case 5:
-	    return test_leading_options();
+	    return desc_help();
+	    break;
+	case 6:
+	    return scan_readers();
+	    break;
     }
 
     return ret;

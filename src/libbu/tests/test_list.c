@@ -76,7 +76,7 @@ main(int argc, char *argv[])
     if (argc != 1)
 	bu_exit(1, "Usage: bu_test list list_element_cnt");
 
-    if (bu_opt_long(NULL, 1, (const char **) argv, (void *) &lcnt) < 0 || lcnt < 0)
+    if (!bu_arg_long_from_str(NULL, &lcnt, argv[0], 0) || lcnt < 0)
 	bu_exit(1, "Error reading list element count\n");
 
     BU_LIST_INIT(&(tlist.l));

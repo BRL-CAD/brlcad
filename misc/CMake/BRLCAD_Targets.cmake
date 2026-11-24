@@ -50,6 +50,41 @@ define_property(
   FULL_DOCS "List of installed BRL-CAD binary programs without corresponding man pages"
 )
 
+define_property(
+  GLOBAL
+  PROPERTY BRLCAD_ARG_SCHEMA_TARGETS
+  BRIEF_DOCS "BRL-CAD executables publishing BU_ARG schemas"
+  FULL_DOCS "List of BRL-CAD executable targets publishing BU_ARG command schemas"
+)
+
+define_property(
+  GLOBAL
+  PROPERTY BRLCAD_EXEC_ARG_SCHEMA_TARGETS
+  BRIEF_DOCS "Installed BRL-CAD executables publishing BU_ARG schemas"
+  FULL_DOCS "List of installed BRL-CAD executable targets publishing BU_ARG command schemas"
+)
+
+define_property(
+  GLOBAL
+  PROPERTY BRLCAD_EXEC_NO_OPTIONS_TARGETS
+  BRIEF_DOCS "Installed BRL-CAD executables without options"
+  FULL_DOCS "List of installed BRL-CAD executable targets explicitly declared to accept no options"
+)
+
+define_property(
+  GLOBAL
+  PROPERTY BRLCAD_EXEC_SELF_CONTAINED_OPTIONS_TARGETS
+  BRIEF_DOCS "Installed BRL-CAD executables with deliberately self-contained option handling"
+  FULL_DOCS "Dependency-free installed targets that intentionally cannot use BU_ARG"
+)
+
+define_property(
+  GLOBAL
+  PROPERTY BRLCAD_EXEC_UNCLASSIFIED_TARGETS
+  BRIEF_DOCS "Installed BRL-CAD executables with unclassified option handling"
+  FULL_DOCS "List of installed BRL-CAD executable targets not yet classified as BU_ARG or optionless"
+)
+
 # Installed BRL-CAD library targets and their object-library variants.  This
 # lets aggregate targets derive their contents from BRLCAD_ADDLIB declarations
 # instead of maintaining a separate, stale-prone library list.
@@ -316,7 +351,36 @@ endfunction(BRLCAD_INCLUDE_DIRS)
 # Core routines for adding executables and libraries to the build and
 # install lists of CMake
 function(BRLCAD_ADDEXEC execname srcslist libslist)
-  cmake_parse_arguments(E "TEST;TEST_USESDATA;NO_INSTALL;NO_MAN;NO_STRICT;ALL_CXX;NO_CXX;NO_STRICT_CXX;GUI" "FOLDER;UNITY_BUILD_CODE_BEFORE_INCLUDE" "UNITY_BUILD_SKIP" ${ARGN})
+  set(
+    _brlcad_addexec_options
+    TEST
+    TEST_USESDATA
+    NO_INSTALL
+    NO_MAN
+    NO_STRICT
+    ALL_CXX
+    NO_CXX
+    NO_STRICT_CXX
+    GUI
+    ARG_SCHEMA
+    NO_OPTIONS
+    SELF_CONTAINED_OPTIONS
+  )
+  cmake_parse_arguments(
+    E
+    "${_brlcad_addexec_options}"
+    "FOLDER;UNITY_BUILD_CODE_BEFORE_INCLUDE"
+    "UNITY_BUILD_SKIP"
+    ${ARGN}
+  )
+
+  if(
+    (E_ARG_SCHEMA AND E_NO_OPTIONS)
+    OR (E_ARG_SCHEMA AND E_SELF_CONTAINED_OPTIONS)
+    OR (E_NO_OPTIONS AND E_SELF_CONTAINED_OPTIONS)
+  )
+    message(FATAL_ERROR "${execname} option handling classifications are mutually exclusive")
+  endif()
 
   # Let CMAKEFILES know what's going on
   cmakefiles(${srcslist})
@@ -346,6 +410,30 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
   else(E_GUI)
     add_executable(${execname} ${srcslist})
   endif(E_GUI)
+
+  if(E_ARG_SCHEMA)
+    set_target_properties(${execname} PROPERTIES BRLCAD_ARG_SCHEMA TRUE)
+    set_property(GLOBAL APPEND PROPERTY BRLCAD_ARG_SCHEMA_TARGETS "${execname}")
+  elseif(E_NO_OPTIONS)
+    set_target_properties(${execname} PROPERTIES BRLCAD_NO_OPTIONS TRUE)
+  elseif(E_SELF_CONTAINED_OPTIONS)
+    set_target_properties(${execname} PROPERTIES BRLCAD_SELF_CONTAINED_OPTIONS TRUE)
+  endif()
+
+  # Track option handling for installed production executables.  Keeping this
+  # classification at target declaration makes BRLCAD_ADDEXEC the sole source
+  # of truth for schema documentation coverage and migration status.
+  if(NOT E_TEST AND NOT E_TEST_USESDATA AND NOT E_NO_INSTALL)
+    if(E_ARG_SCHEMA)
+      set_property(GLOBAL APPEND PROPERTY BRLCAD_EXEC_ARG_SCHEMA_TARGETS "${execname}")
+    elseif(E_NO_OPTIONS)
+      set_property(GLOBAL APPEND PROPERTY BRLCAD_EXEC_NO_OPTIONS_TARGETS "${execname}")
+    elseif(E_SELF_CONTAINED_OPTIONS)
+      set_property(GLOBAL APPEND PROPERTY BRLCAD_EXEC_SELF_CONTAINED_OPTIONS_TARGETS "${execname}")
+    else()
+      set_property(GLOBAL APPEND PROPERTY BRLCAD_EXEC_UNCLASSIFIED_TARGETS "${execname}")
+    endif()
+  endif()
 
   # Set the standard build definitions for all BRL-CAD targets
   target_compile_definitions(${execname} PRIVATE BRLCADBUILD HAVE_CONFIG_H)

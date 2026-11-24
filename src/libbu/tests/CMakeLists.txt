@@ -14,6 +14,7 @@ set(
   test_booleanize.c
   test_cache.cpp
   test_cmd.c
+  test_arg.c
   test_color.c
   test_convert.c
   test_datetime.c
@@ -32,6 +33,7 @@ set(
   test_interrupt.c
   test_list.c
   test_log.cpp
+  test_lineedit.c
   test_mappedfile.c
   test_observer.c
   test_opt.c
@@ -127,6 +129,7 @@ validate_style("${bu_test_srcs}" bu_test)
 brlcad_addexec(bu_sscanf test_sscanf.c libbu TEST)
 brlcad_addexec(bu_gethostname test_gethostname.c libbu TEST)
 brlcad_add_test(NAME bu_argv COMMAND bu_test test_argv)
+brlcad_add_test(NAME bu_arg COMMAND bu_test test_arg)
 brlcad_add_test(NAME bu_backtrace COMMAND bu_test test_backtrace)
 brlcad_add_test(NAME bu_bomb COMMAND bu_test test_bomb "$<TARGET_FILE:bu_test>")
 brlcad_add_test(NAME bu_interrupt COMMAND bu_test test_interrupt)
@@ -475,6 +478,9 @@ brlcad_add_test(NAME bu_str_to_rgb_10 COMMAND bu_test test_color 3 "#fff" 255,25
 brlcad_add_test(NAME bu_str_to_rgb_11 COMMAND bu_test test_color 3 "#C04ED6" 192,78,214)
 brlcad_add_test(NAME bu_str_to_rgb_12 COMMAND bu_test test_color 3 "#C4D" 204,68,221)
 
+# Function #8 verifies the shared one-or-three-token RGB parser, including
+# all supported packed delimiters and rejected ambiguous or out-of-range forms.
+
 # For function #4 (bu_color_to_rgb_floats) the <args> format is as follows:
 #
 # rgb_color
@@ -488,6 +494,7 @@ brlcad_add_test(NAME bu_color_to_rgb_floats_1 COMMAND bu_test test_color 4 192,7
 brlcad_add_test(NAME bu_color_parse COMMAND bu_test test_color 8)
 brlcad_add_test(NAME bu_color_format COMMAND bu_test test_color 9)
 brlcad_add_test(NAME bu_color_convert COMMAND bu_test test_color 10)
+brlcad_add_test(NAME bu_rgb_from_argv COMMAND bu_test test_color 11)
 
 #
 # ************ test_str.c tests ************
@@ -663,7 +670,6 @@ brlcad_add_test(NAME bu_vls_simplify_11 COMMAND bu_test test_vls_simplify "^%tes
 #
 
 brlcad_add_test(NAME bu_opt_null  COMMAND bu_test test_opt 0 0 0)
-brlcad_add_test(NAME bu_opt_leading COMMAND bu_test test_opt 5 0 0)
 
 # Verbosity (custom handler) testing
 brlcad_add_test(NAME bu_opt_1_v_00  COMMAND bu_test test_opt 1 v 0)
@@ -745,6 +751,8 @@ brlcad_add_test(NAME bu_opt_2_color_13  COMMAND bu_test test_opt 2 C 13)
 brlcad_add_test(NAME bu_opt_2_color_14  COMMAND bu_test test_opt 2 C 14)
 brlcad_add_test(NAME bu_opt_2_color_15  COMMAND bu_test test_opt 2 C 15)
 brlcad_add_test(NAME bu_opt_2_color_16  COMMAND bu_test test_opt 2 C 16)
+brlcad_add_test(NAME bu_opt_2_color_17  COMMAND bu_test test_opt 2 C 17)
+brlcad_add_test(NAME bu_opt_2_color_18  COMMAND bu_test test_opt 2 C 18)
 
 # vector tests
 brlcad_add_test(NAME bu_opt_3_vect_00  COMMAND bu_test test_opt 3 V 0)
@@ -753,11 +761,10 @@ brlcad_add_test(NAME bu_opt_3_vect_02  COMMAND bu_test test_opt 3 V 2)
 brlcad_add_test(NAME bu_opt_3_vect_03  COMMAND bu_test test_opt 3 V 3)
 brlcad_add_test(NAME bu_opt_3_vect_04  COMMAND bu_test test_opt 3 V 4)
 
-# Strict floating point scanner testing
-brlcad_add_test(NAME bu_opt_4_double_nan     COMMAND bu_test test_opt 4 d 0)
-brlcad_add_test(NAME bu_opt_4_double_pos_inf COMMAND bu_test test_opt 4 d 1)
-brlcad_add_test(NAME bu_opt_4_double_neg_inf COMMAND bu_test test_opt 4 d 2)
-brlcad_add_test(NAME bu_opt_4_double_finite  COMMAND bu_test test_opt 4 d 3)
+brlcad_add_test(NAME bu_opt_standard_help COMMAND bu_test test_opt 5 h 0)
+brlcad_add_test(NAME bu_opt_scanners COMMAND bu_test test_opt 6 s 0)
+
+brlcad_add_test(NAME bu_lineedit_completion_mode COMMAND bu_test test_lineedit ${CMAKE_CURRENT_SOURCE_DIR}/lineedit-colors.json)
 
 #
 #  *********** test_datetime.c tests ************
