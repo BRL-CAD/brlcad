@@ -232,6 +232,24 @@ parse_args(int ac, char **av)
 }
 
 
+static void
+wavelet_buffer_sizes(size_t rows, size_t *sample_size, size_t *scanline_size,
+		     size_t *buffer_size)
+{
+    if (channels > SIZE_MAX / value_size)
+	bu_exit(1, "wavelet: channel data size is too large\n");
+    *sample_size = value_size * channels;
+
+    if (width > SIZE_MAX / *sample_size)
+	bu_exit(1, "wavelet: scanline size is too large\n");
+    *scanline_size = *sample_size * width;
+
+    if (rows > SIZE_MAX / *scanline_size)
+	bu_exit(1, "wavelet: image buffer size is too large\n");
+    *buffer_size = *scanline_size * rows;
+}
+
+
 void
 wlt_decompose_1d(void)
 {
@@ -241,11 +259,11 @@ wlt_decompose_1d(void)
     size_t i, n;
     size_t sample_size;	/* size of data type x #values/sample */
     size_t scanline_size;	/* # bytes in a scanline */
+    size_t buffer_size;
 
-    sample_size = value_size * channels;
-    scanline_size = sample_size * width;
+    wavelet_buffer_sizes(1, &sample_size, &scanline_size, &buffer_size);
 
-    buf = bu_malloc(scanline_size, "wavelet buf");
+    buf = bu_malloc(buffer_size, "wavelet buf");
     tbuf = bu_malloc(scanline_size >> 1, "wavelet buf");
 
     if (debug)
@@ -297,11 +315,11 @@ wlt_decompose_2d(void)
     void *tbuf;
     size_t sample_size;
     size_t scanline_size;
+    size_t buffer_size;
 
-    sample_size = value_size * channels;
-    scanline_size = sample_size * width;
+    wavelet_buffer_sizes(height, &sample_size, &scanline_size, &buffer_size);
 
-    buf = bu_malloc(scanline_size * height, "wavelet buf");
+    buf = bu_malloc(buffer_size, "wavelet buf");
     tbuf = bu_malloc(scanline_size, "wavelet buf");
 
     if (debug)
@@ -348,11 +366,11 @@ wlt_reconstruct_1d(void)
     size_t i, n;
     size_t sample_size;	/* size of data type x #values/sample */
     size_t scanline_size;	/* # bytes in a scanline */
+    size_t buffer_size;
 
-    sample_size = value_size * channels;
-    scanline_size = sample_size * width;
+    wavelet_buffer_sizes(1, &sample_size, &scanline_size, &buffer_size);
 
-    buf = bu_malloc(scanline_size, "wavelet buf");
+    buf = bu_malloc(buffer_size, "wavelet buf");
     tbuf = bu_malloc(scanline_size >> 1, "wavelet buf");
 
     if (debug)
@@ -405,11 +423,11 @@ wlt_reconstruct_2d(void)
     void *tbuf;
     size_t sample_size;
     size_t scanline_size;
+    size_t buffer_size;
 
-    sample_size = value_size * channels;
-    scanline_size = sample_size * width;
+    wavelet_buffer_sizes(height, &sample_size, &scanline_size, &buffer_size);
 
-    buf = bu_malloc(scanline_size * height, "wavelet buf");
+    buf = bu_malloc(buffer_size, "wavelet buf");
     tbuf = bu_malloc(scanline_size, "wavelet buf");
 
     if (debug)
