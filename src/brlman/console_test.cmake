@@ -39,6 +39,13 @@ execute_process(COMMAND ${viewer} --dump --width 40 brlman
 if(NOT status EQUAL 0 OR NOT errors STREQUAL "" OR NOT explicit_text MATCHES "SYNOPSIS")
   message(FATAL_ERROR "Explicit dump failed: ${status} ${errors}")
 endif()
+foreach(arguments "--dump;--width;40;--;brlman" "brlman;--dump;--width;40")
+  execute_process(COMMAND ${viewer} ${arguments}
+    RESULT_VARIABLE status OUTPUT_VARIABLE marker_text ERROR_VARIABLE errors)
+  if(NOT status EQUAL 0 OR NOT marker_text STREQUAL explicit_text)
+    message(FATAL_ERROR "Manual option ordering or end marker failed: ${status} ${errors}")
+  endif()
+endforeach()
 execute_process(COMMAND ${viewer} --width 40 brlman
   RESULT_VARIABLE status OUTPUT_VARIABLE captured_text ERROR_VARIABLE errors)
 if(NOT status EQUAL 0 OR NOT captured_text STREQUAL explicit_text)

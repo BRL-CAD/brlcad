@@ -41,6 +41,47 @@
 #  include "tk.h"
 #endif
 
+struct archer_args {
+    int help;
+};
+
+static int
+archer_help_parse(struct bu_vls *msg, const char *arg, void *storage)
+{
+    if (arg && !BU_STR_EQUAL(arg, "all")) {
+	if (msg)
+	    bu_vls_strcat(msg, "--help accepts only the optional value 'all'\n");
+	return -1;
+    }
+    if (storage)
+	*((int *)storage) = arg ? 2 : 1;
+    return 0;
+}
+
+static const struct bu_arg_option archer_options[] = {
+    BU_ARG_ATTACHED_OPTIONAL("h", "help", "help", struct archer_args,
+	help, archer_help_parse, "all", "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand archer_operands[] = {
+    BU_ARG_OPERAND("geometry", BU_ARG_VALUE_FILE, 0, 1,
+	"Geometry file to open or import", NULL),
+    BU_ARG_OPERAND("argument", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
+	"Additional argument passed to Tcl/Tk", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema archer_schema = BU_ARG_SCHEMA(
+    "archer", "BRL-CAD graphical geometry editor", archer_options,
+    archer_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar archer_grammar = {
+    &archer_schema, NULL, NULL
+};
+
 #ifdef HAVE_WINDOWS_H
 int APIENTRY
 WinMain(HINSTANCE UNUSED(hInstance),
@@ -64,14 +105,26 @@ main(int argc, const char **argv)
 
     const char *archer_tcl = NULL;
     const char *fullname = NULL;
+    struct archer_args args = {0};
+    struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
+    struct bu_vls schema_output = BU_VLS_INIT_ZERO;
     struct bu_vls tlog = BU_VLS_INIT_ZERO;
     struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
     const char *result;
     Tcl_DString temp;
-    Tcl_Interp *interp = Tcl_CreateInterp();
+    Tcl_Interp *interp = NULL;
 
-    /* initialize progname for run-tim resource finding */
+    /* initialize progname for runtime resource finding */
     bu_setprogname(argv[0]);
+
+    status = bu_arg_introspect(&schema_output, &archer_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (status != 0) {
+	bu_flog(status > 0 ? stdout : stderr, "%s", bu_vls_cstr(&schema_output));
+	bu_vls_free(&schema_output);
+	return status > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+    bu_vls_free(&schema_output);
 
     /* Archer doesn't handle empty input strings well - scrub the argv */
     const char **av = (const char **)bu_calloc(argc, sizeof(char *), "argv cpy");
@@ -83,25 +136,26 @@ main(int argc, const char **argv)
 	    ac++;
 	}
     }
-
-    /* Handle -h/--help/-? before any Tcl/Tk initialization.  Archer is a
-     * GUI launcher, so without this a help request would forward "-h" into
-     * Tk and either halt with a Tk_Init error or try to load "-h" as a .g
-     * geometry file.  Short-circuit here so help works headlessly too. */
-    for (int i = 1; i < ac; i++) {
-	if (BU_STR_EQUAL(av[i], "-h") || BU_STR_EQUAL(av[i], "--help") || BU_STR_EQUAL(av[i], "-?")) {
-	    const char *pname = bu_getprogname();
-	    if (!pname || strlen(pname) == 0)
-		pname = "archer";
-	    printf("%s - BRL-CAD geometry editor\n", pname);
-	    printf("Usage: archer [options] [file.g]\n");
-	    printf("\n");
-	    printf("Options:\n");
-	    printf("  -h, --help    print this help and exit\n");
-	    bu_free((void *)av, "argv cpy");
-	    return 0;
-	}
+    status = bu_arg_schema_parse_known(&archer_schema, &args, &parse_msgs,
+	ac - 1, av + 1);
+    if (status < 0) {
+	bu_flog(stderr, "%s", bu_vls_cstr(&parse_msgs));
+	bu_vls_free(&parse_msgs);
+	bu_free((void *)av, "argv cpy");
+	return EXIT_FAILURE;
     }
+    bu_vls_free(&parse_msgs);
+
+    if (args.help) {
+	char *help = bu_arg_schema_help_mode(&archer_schema, bu_getprogname(),
+	    args.help > 1 ? BU_ARG_HELP_EXTENDED : BU_ARG_HELP_DEFAULT);
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "archer help");
+	bu_free((void *)av, "argv cpy");
+	return EXIT_SUCCESS;
+    }
+
+    interp = Tcl_CreateInterp();
 
     /* Change the working directory to BU_DIR_HOME if we are invoking
      * without any arguments. */

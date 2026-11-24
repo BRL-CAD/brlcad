@@ -8,7 +8,7 @@ set(
   ui_text.c
 )
 
-brlcad_addexec(brlcad-launcher "${LAUNCHER_SRCS}" "libdm;libicv;libbu")
+brlcad_addexec(brlcad-launcher "${LAUNCHER_SRCS}" "libdm;libicv;libbu" ARG_SCHEMA)
 target_include_directories(brlcad-launcher BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Application manifests, discovered at run time by the launcher (nothing is
