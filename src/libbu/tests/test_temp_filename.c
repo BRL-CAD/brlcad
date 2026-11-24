@@ -35,11 +35,47 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "bio.h"
 #include "bu/app.h"
 #include "bu/file.h"
+
+/* Exercise the first resize after the eight statically tracked files. */
+#define TEMP_FILE_COUNT 9
+
+static char tracked_paths[TEMP_FILE_COUNT][MAXPATHLEN];
+
+
+static void
+check_temp_file_cleanup(void)
+{
+    for (size_t i = 0; i < TEMP_FILE_COUNT; i++) {
+	if (tracked_paths[i][0] && bu_file_exists(tracked_paths[i], NULL)) {
+	    bu_log("temp_filename failure: temporary file remains after exit: %s\n", tracked_paths[i]);
+	    _Exit(EXIT_FAILURE);
+	}
+    }
+}
+
+
+static int
+temp_file_cleanup(void)
+{
+    /* atexit runs callbacks in reverse order, after libbu's cleanup. */
+    if (atexit(check_temp_file_cleanup) != 0)
+	return 1;
+
+    for (size_t i = 0; i < TEMP_FILE_COUNT; i++) {
+	if (!bu_temp_file(tracked_paths[i], sizeof(tracked_paths[i]))) {
+	    bu_log("temp_filename failure: cannot create temporary file %zu\n", i + 1);
+	    return 1;
+	}
+    }
+
+    return 0;
+}
 
 
 static int
@@ -149,6 +185,9 @@ main(int argc, char *argv[])
 
 	} else if (!bu_strcmp(curr, "binary")) {
 	    if (temp_file_binary())
+		return EXIT_FAILURE;
+	} else if (!bu_strcmp(curr, "cleanup")) {
+	    if (temp_file_cleanup())
 		return EXIT_FAILURE;
 	} else if (!bu_strcmp(curr, "parallel")) {
 	    // test parallel / threaded -
