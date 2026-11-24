@@ -3728,19 +3728,22 @@ test_p4_hyp_rotate_h(struct ged *gedp)
 }
 
 static void
-test_p4_hyp_typed_lengths(struct ged *gedp)
+test_p4_hyp_absolute_parameters(struct ged *gedp)
 {
     const char *height[] = {"edit", "hyp.s", "h", "12.5"};
-    const char *neck[] = {"edit", "hyp.s", "c", "1"};
+    const char *neck_ratio[] = {"edit", "hyp.s", "c", "0.9"};
+    const char *degenerate_neck_ratio[] = {"edit", "hyp.s", "c", "1"};
     CHECK(ged_exec(gedp, 4, height) == BRLCAD_OK,
 	"HYP descriptor applies an absolute height");
-    CHECK(ged_exec(gedp, 4, neck) == BRLCAD_OK,
-	"HYP descriptor accepts a neck ratio of one");
+    CHECK(ged_exec(gedp, 4, neck_ratio) == BRLCAD_OK,
+	"HYP descriptor applies an absolute neck ratio");
+    CHECK(ged_exec(gedp, 4, degenerate_neck_ratio) == BRLCAD_ERROR,
+	"HYP descriptor rejects a neck ratio of one");
     struct rt_hyp_internal hyp = {};
     CHECK(read_hyp(gedp, "hyp.s", &hyp) == BRLCAD_OK &&
 	NEAR_EQUAL(MAGNITUDE(hyp.hyp_Hi), 12.5, NEAR_ENOUGH) &&
-	NEAR_EQUAL(hyp.hyp_bnr, 1.0, NEAR_ENOUGH),
-	"HYP edits commit the requested absolute values");
+	NEAR_EQUAL(hyp.hyp_bnr, 0.9, NEAR_ENOUGH),
+	"Rejected HYP edit preserves the committed height and neck ratio");
 }
 
 
@@ -6038,7 +6041,7 @@ main(int ac, char *av[])
         test_p4_cline_move_end_h(gedp);
         bu_log("--- hyp: ROT_H ---\n");
         test_p4_hyp_rotate_h(gedp);
-        test_p4_hyp_typed_lengths(gedp);
+        test_p4_hyp_absolute_parameters(gedp);
         bu_log("--- extrude: new descriptor ---\n");
         test_p4_extrude_list_ops(gedp);
         test_p4_extrude_list_ops_json(gedp);
