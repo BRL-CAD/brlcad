@@ -161,6 +161,34 @@ archive self-contained so all retained revisions remain recoverable
 when live objects change. Save archive and live model in the same DB5
 publication. A history-free export excludes the recognized archive.
 
+Workspace bootstrap and indexes
+-------------------------------
+
+The workspace stores canonical artifacts in an LMDB directory. Read
+the `workspace` key in the unnamed database before opening any named
+databases. Its fixed bootstrap value uses the following fields.
+
+    u8[8] signature           (42 52 4c 43 41 44 57 00)
+    u16 schema_major          (1)
+    u16 schema_minor          (0)
+    u64 required_features     (0)
+    u16 artifact_encoding     (1)
+
+Reject unrecognized schema versions, feature bits or artifact
+encodings before interpreting the workspace data. The `head` key in
+the unnamed database contains the selected revision ID, the selected
+model ID and a u64 generation that starts at 1.
+
+In schema 1.0, the named `artifacts` database maps a one-byte artifact
+tag and an ID to the canonical payload. The `directory` and
+`references` databases use SHA-256 of the raw name as the key. The
+value is the object or revision ID followed by the original name.
+Compare the original name on lookup. A name conflict under the same
+hash is an error. In `preferences`, a parent revision ID maps to its
+preferred child ID. In `boundaries`, the key is the boundary revision
+ID and the value is empty. Import publishes these tables and the
+bootstrap in one transaction after verifying the source archive.
+
 Independent identity vectors
 ----------------------------
 

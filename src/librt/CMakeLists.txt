@@ -4,6 +4,7 @@ brlcad_find_package(manifold REQUIRED)
 brlcad_find_package(mmesh REQUIRED)
 brlcad_find_package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
 brlcad_find_package(REGEX REQUIRED)
+brlcad_find_package(LMDB REQUIRED)
 find_package_gte(REQUIRED)
 
 if(BRLCAD_ENABLE_OPENCL)
@@ -130,6 +131,7 @@ set(
   db_fullpath.cpp
   db_history_codec.cpp
   db_history_db5.cpp
+  db_history_workspace.cpp
   db_inmem.c
   db_io.c
   db_lookup.c
@@ -327,6 +329,7 @@ set(
   cut_private.h
   db_history_codec.h
   db_history_db5.h
+  db_history_workspace.h
   librt_private.h
   material/materialX.cpp
   material/materialX.h
@@ -438,6 +441,7 @@ set(
   Threads::Threads
   ${OPENCL_LIBS}
   mmesh::mmesh
+  LMDB::LMDB
   REGEX::REGEX
   ${WINSOCK_LIB}
   ${RPCRT_LIB}
@@ -483,6 +487,7 @@ brlcad_addlib(librt "${LIBRT_SOURCES}" "${RT_INCLUDE_DIRS}" "${RT_LOCAL_INCLUDE_
   #   subdirectory unsafe to batch.
   UNITY_BUILD_SKIP
     rt_init.cpp
+    db_history_workspace.cpp
     search.cpp
     search_old.cpp
     primitives/annot/annot.c

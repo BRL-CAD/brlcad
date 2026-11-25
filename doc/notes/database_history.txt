@@ -367,6 +367,29 @@ versioned file and saved a title-only edit in 26.3 seconds wall time.
 Another process reopened the result, checked the selected archive
 revision and reported its retained Undo choice in 6.8 seconds.
 
+A recovery run on another copy detected an external title edit.
+Full verification took 16.8 seconds before the edit. Previewing the
+external change took 16.0 seconds, and adopting it in one revision
+took 32.6 seconds. A fresh reader verified the adopted revision.
+Separately, eight persistent attribute edits on the isolated 41.5 MB
+BREP grew the embedded file by 5,016 bytes. Undo and Redo restored the
+previous and latest attribute values.
+
+On Linux, terminating the writer during staging preserved the
+original DB5 model and revision. Terminating it after the destination
+inode changed preserved the new model and revision. The former run
+left a sibling staging file, which the test removed. Power-loss and
+other-platform checks remain pending.
+
+The private LMDB store imported 21,185 named records and 34,757
+artifacts from the same model. Verification and import took 7.7
+seconds after factoring the DB5 source. The resulting data file was
+1.23 GB. In the same process, opening the store and reading the
+selected directory took 21 milliseconds. Looking up and reconstructing
+the 41.5 MB BREP took 0.17 seconds and matched the DB5 record byte for
+byte. These are low-level warm-cache measurements before GED
+integration.
+
 Implementation starting points in the source tree
 -------------------------------------------------
 

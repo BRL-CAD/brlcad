@@ -85,6 +85,9 @@ endif()
 brlcad_addexec(rt_db_history_codec db_history_codec.cpp "librt;libbu" TEST)
 brlcad_add_test(NAME rt_db_history_codec COMMAND rt_db_history_codec)
 
+brlcad_addexec(rt_db_history_workspace db_history_workspace.cpp "librt;libwdb;libbu;LMDB::LMDB" TEST)
+brlcad_add_test(NAME rt_db_history_workspace COMMAND rt_db_history_workspace)
+
 brlcad_addexec(rt_binunif binunif.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_binunif COMMAND rt_binunif)
 
