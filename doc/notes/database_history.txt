@@ -237,6 +237,32 @@ and recovered the original body byte for byte in 0.28 seconds. The
 modest storage savings and encode latency support whole-body storage
 for this edit trace.
 
+Two synthetic object-backed grids were serialized to DB5 and reopened
+as DSP and VOL primitives before extracting their binary object
+bodies. A 2,048 by 2,048 unsigned 16-bit elevation map occupied
+8.39 MB. Its older body compressed to 6.24 MB with zlib. Grading a
+192 by 256 patch needed 546 KB of new data with compressed 64 KiB
+chunks and a SHA-256 chunk list. The compressed reverse delta
+needed 59 KB and encoded in 0.12 seconds. Shifting the grid by one
+row needed 6.38 MB of chunks and a 3.5 KB reverse delta, which
+encoded in 0.02 seconds.
+
+A 256 by 256 by 192 unsigned-byte voxel grid occupied 12.58 MB.
+Its older body compressed to 5.11 MB. Changing a 32-cubed patch
+needed 1.06 MB of chunks and a 24 KB reverse delta, which encoded
+in 0.04 seconds. Replacing the small random component throughout
+the grid needed 5.14 MB of chunks. Its compressed delta took
+19.65 seconds to encode before compression and grew to 6.42 MB.
+Every reconstruction matched the older DB5 body byte for byte.
+Timings are medians of three runs. The figures count storage added
+for the old body given the newer body.
+
+These grids support offering reverse deltas for localized edits and
+offset shifts when encoding fits a predictable time budget. A noisy
+replacement benefits from a full-body fallback. Keep version 1's
+whole-body encoding as the default until production traces justify
+the codec and its replay limits.
+
 Encode the portable archive as a hidden unsigned-byte binunif. Reserve
 _BRLCAD_HISTORY only after checking both name and format signature.
 Report a collision on enable and preserve the user's object. Exclude
