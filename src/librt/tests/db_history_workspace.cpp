@@ -280,6 +280,14 @@ test_writes(const char *path, const char *program, struct db_i *source, const Em
 	CHECK(plain && db_dirbuild(plain.get()) == 0 && inspect_db5_history(plain.get()) == EmbeddedStatus::Missing &&
 	    read_record(plain.get(), DB5_GLOBAL_OBJECT_NAME) == original_global &&
 	    read_record(plain.get(), region_name) == read_record(pinned.get(), region_name));
+	const auto archive_path = std::string(path) + "-pinned-history.g";
+	CHECK(reader->export_snapshot(pinned.get(), archive_path.c_str(), true, message) == DB5_SAVE_OK);
+	Database portable(db_open(archive_path.c_str(), DB_OPEN_READONLY), db_close);
+	EmbeddedPack backup;
+	CHECK(portable && db_dirbuild(portable.get()) == 0 && read_db5_history(portable.get(), backup) == EmbeddedStatus::Current &&
+	    backup.pack.selected_revision == base.revision && backup.model == initial.model &&
+	    backup.pack.artifacts.count({Kind::Revision, selected.revision}) && verify_pack(backup.pack, message) &&
+	    read_record(portable.get(), DB5_GLOBAL_OBJECT_NAME) == original_global);
     } else {
 	CHECK(BU_STR_EQUAL(bu_vls_addr(message), "Atomic DB5 export is unavailable on this platform"));
     }

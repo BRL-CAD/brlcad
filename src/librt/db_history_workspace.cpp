@@ -1435,47 +1435,32 @@ Workspace::export_snapshot(const struct db_i *snapshot, const char *destination,
     if (!with_history)
 	return export_db5_snapshot(snapshot, destination, nullptr, message);
 
-    auto result = DB5_SAVE_ERROR;
-    const bool read = store->read([&](MDB_txn *txn, const Tables &tables) {
-	WorkspaceArchive archive;
-	if (!load_archive(txn, tables, state->head, store->sparse_manifests(), archive))
-	    return report(message, "The workspace archive is invalid");
-	if (!verify_pack(archive.pack, message))
-	    return false;
-	const auto reader = [&](const struct directory *dp, struct bu_external *record) {
-	    const auto object = state->model.find(dp->d_namep);
-	    if (object == state->model.end() || !dp->d_len)
-		return false;
-	    record->ext_nbytes = dp->d_len;
-	    record->ext_buf = static_cast<uint8_t *>(bu_malloc(dp->d_len, "workspace export record"));
-	    if (copy_record(txn, tables, object->second, record->ext_buf, record->ext_nbytes))
-		return true;
-	    bu_free_external(record);
-	    return false;
-	};
-	result = export_db5_snapshot(snapshot, destination, &archive.pack, message, reader);
-	return true;
-    }, message);
-    return read ? result : DB5_SAVE_ERROR;
+    return export_db5_archive(destination, message, [&](const ArchiveConsumer &consume) {
+	return store->read([&](MDB_txn *txn, const Tables &tables) {
+	    WorkspaceArchive archive;
+	    if (!load_archive(txn, tables, state->head, store->sparse_manifests(), archive))
+		return report(message, "The workspace archive is invalid");
+	    return consume(archive.pack);
+	}, message);
+    }, snapshot, &state->model);
 }
 
 enum db5_save_result
 Workspace::export_staged(const WorkspaceHead &base, const Pack &staged, const char *destination,
 			 struct bu_vls *message) const
 {
-    auto result = DB5_SAVE_ERROR;
-    const bool read = store->read([&](MDB_txn *txn, const Tables &tables) {
-	Pack archive;
-	// The staged pack supplies the selected manifest for the export.
-	if (!load_pack(txn, tables, base, false, archive))
-	    return report(message, "The base workspace archive is invalid");
-	archive.artifacts.insert(staged.artifacts.begin(), staged.artifacts.end());
-	archive.selected_model = staged.selected_model;
-	archive.selected_revision = staged.selected_revision;
-	result = export_db5_archive(archive, destination, message);
-	return true;
-    }, message);
-    return read ? result : DB5_SAVE_ERROR;
+    return export_db5_archive(destination, message, [&](const ArchiveConsumer &consume) {
+	return store->read([&](MDB_txn *txn, const Tables &tables) {
+	    Pack archive;
+	    // The staged pack supplies the selected manifest for the export.
+	    if (!load_pack(txn, tables, base, false, archive))
+		return report(message, "The base workspace archive is invalid");
+	    archive.artifacts.insert(staged.artifacts.begin(), staged.artifacts.end());
+	    archive.selected_model = staged.selected_model;
+	    archive.selected_revision = staged.selected_revision;
+	    return consume(archive);
+	}, message);
+    });
 }
 
 bool

@@ -404,7 +404,7 @@ unchanged(const struct db5_save *save, int descriptor)
 
 bool
 write_snapshot(FILE *file, const struct db_i *snapshot, const db_history::Pack *pack,
-	      bool omit_archive, struct bu_vls *message, const db_history::SnapshotRecordReader &reader = {})
+	      bool omit_archive, struct bu_vls *message)
 {
     db_history::Manifest expected;
     if (pack && !db_history::selected_manifest(*pack, expected)) {
@@ -422,7 +422,7 @@ write_snapshot(FILE *file, const struct db_i *snapshot, const db_history::Pack *
 	    continue;
 
 	struct bu_external record = BU_EXTERNAL_INIT_ZERO;
-	if (reader ? !reader(dp, &record) : db_get_external(&record, dp, snapshot) < 0)
+	if (db_get_external(&record, dp, snapshot) < 0)
 	    return false;
 
 	struct db5_raw_internal raw;
@@ -831,13 +831,6 @@ enum db5_save_result
 db_history::export_db5_snapshot(const struct db_i *snapshot, const char *destination,
 			      const Pack *pack, struct bu_vls *message)
 {
-    return export_db5_snapshot(snapshot, destination, pack, message, {});
-}
-
-enum db5_save_result
-db_history::export_db5_snapshot(const struct db_i *snapshot, const char *destination,
-			       const Pack *pack, struct bu_vls *message, const SnapshotRecordReader &reader)
-{
     db5_save_message(message, "");
 #ifdef DB5_ATOMIC_EXPORT
     if (!snapshot || db_version(snapshot) != 5) {
@@ -845,13 +838,12 @@ db_history::export_db5_snapshot(const struct db_i *snapshot, const char *destina
 	return DB5_SAVE_ERROR;
     }
     return publish_export(snapshot, destination, message, [&](FILE *file) {
-	return write_snapshot(file, snapshot, pack, true, message, reader);
+	return write_snapshot(file, snapshot, pack, true, message);
     });
 #else
     (void)snapshot;
     (void)destination;
     (void)pack;
-    (void)reader;
     db5_save_message(message, "Atomic DB5 export is unavailable on this platform");
     return DB5_SAVE_ERROR;
 #endif
@@ -860,17 +852,34 @@ db_history::export_db5_snapshot(const struct db_i *snapshot, const char *destina
 enum db5_save_result
 db_history::export_db5_archive(const Pack &pack, const char *destination, struct bu_vls *message)
 {
+    return export_db5_archive(destination, message, [&](const ArchiveConsumer &consume) {
+	return consume(pack);
+    });
+}
+
+enum db5_save_result
+db_history::export_db5_archive(const char *destination, struct bu_vls *message,
+			      const ArchiveReader &reader, const struct db_i *snapshot, const Manifest *expected)
+{
     db5_save_message(message, "");
 #ifdef DB5_ATOMIC_EXPORT
-    return publish_export(nullptr, destination, message, [&](FILE *file) {
-	Manifest model;
-	if (!selected_manifest(pack, model) || !verify_pack(pack, message))
-	    return false;
-	return write_archived_snapshot(file, pack, model);
+    return publish_export(snapshot, destination, message, [&](FILE *file) {
+	return reader([&](const Pack &pack) {
+	    Manifest model;
+	    if (!selected_manifest(pack, model) || !verify_pack(pack, message))
+		return false;
+	    if (expected && model != *expected) {
+		db5_save_message(message, "The selected archive model differs from the DB5 snapshot");
+		return false;
+	    }
+	    return write_archived_snapshot(file, pack, model);
+	});
     });
 #else
-    (void)pack;
     (void)destination;
+    (void)reader;
+    (void)snapshot;
+    (void)expected;
     db5_save_message(message, "Atomic DB5 export is unavailable on this platform");
     return DB5_SAVE_ERROR;
 #endif

@@ -20,6 +20,7 @@
 #ifndef LIBRT_DB_HISTORY_DB5_H
 #define LIBRT_DB_HISTORY_DB5_H
 
+#include <functional>
 #include <memory>
 
 #include "rt/db_io.h"
@@ -124,11 +125,12 @@ RT_EXPORT enum db5_save_result export_db5_archive(const Pack &pack,
 RT_EXPORT enum db5_save_result export_db5_conflict(const struct db5_save *save,
 	const struct db_i *snapshot, const char *destination, struct bu_vls *message);
 
-// A workspace supplies records from the same read transaction as its pack.
-// The reader returns an owned external record, as db_get_external does.
-using SnapshotRecordReader = std::function<bool(const struct directory *, struct bu_external *)>;
-enum db5_save_result export_db5_snapshot(const struct db_i *snapshot, const char *destination,
-	const Pack *pack, struct bu_vls *message, const SnapshotRecordReader &reader);
+// A workspace keeps borrowed payloads alive for the consumer, then
+// closes its read transaction before the publisher synchronizes the file.
+using ArchiveConsumer = std::function<bool(const Pack &)>;
+using ArchiveReader = std::function<bool(const ArchiveConsumer &)>;
+enum db5_save_result export_db5_archive(const char *destination, struct bu_vls *message,
+	const ArchiveReader &reader, const struct db_i *snapshot = nullptr, const Manifest *expected = nullptr);
 
 } // namespace db_history
 

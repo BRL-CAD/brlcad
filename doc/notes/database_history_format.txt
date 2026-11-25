@@ -266,7 +266,9 @@ A plain DB5 export reads each record by immutable object ID from the
 pinned model, then closes the read transaction before writing the
 record. The destination is synchronized with no workspace read
 transaction held. A history-preserving export holds a consistent read
-transaction while streaming the retained archive.
+transaction while streaming the model and retained archive, then
+releases it before synchronizing or reopening the staged DB5. Recovery
+exports for stale workspace edits follow the same transaction lifetime.
 
 Independent identity vectors
 ----------------------------

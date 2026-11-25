@@ -824,6 +824,19 @@ The workspace retained the new title and recorded the exported
 revision. A trace found no LMDB read transaction held during the
 paused record write or the file flush.
 
+History-preserving exports release the source read transaction before
+synchronizing the portable file. With synchronization paused, an
+editor in the same process grew the LMDB map and committed a 24 MiB
+body. The backup and workspace reopened at the expected revisions.
+Stale-edit recovery also released its reader before synchronization
+and retained both the staged branch and the competing revision.
+
+On an M1917 workspace copy, a second editor committed a title change
+and pruned an older revision while the history-preserving backup was
+paused at synchronization. The 2.42 GB backup retained the checkpoint,
+its original selection and the revision pruned from the workspace.
+Both stores passed full verification and the supplied DB5 was unchanged.
+
 A separate gsh build predating database history opened the embedded
 model, compared its primitive and attributes, and wrote a geometry
 subset with no archive. The older build also changed the title. The
