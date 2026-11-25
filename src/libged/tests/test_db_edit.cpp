@@ -19,7 +19,9 @@
  */
 #include "common.h"
 
+#include <cstring>
 #include <filesystem>
+#include <fstream>
 #include <map>
 #include <memory>
 #include <string>
@@ -577,7 +579,8 @@ test_reference_removal(struct ged *gedp)
     const auto root = selected_id(gedp);
 
     int commits = 0;
-    CHECK(ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE, count_commit, &commits));
+    const auto observer = ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE, count_commit, &commits);
+    CHECK(observer);
     const char *refs_preview[] = {"killrefs", "-n", "node.s", nullptr};
     const char *all_preview[] = {"killall", "-n", "node.s", nullptr};
     const char *tree_preview[] = {"killtree", "-an", "trunk.c", nullptr};
@@ -669,6 +672,7 @@ test_reference_removal(struct ged *gedp)
     const char *show_cycle_b[] = {"lt", "cycle-b.c", nullptr};
     CHECK(run(gedp, show_cycle_a) == BRLCAD_OK && contains_result(gedp, "cycle-b.c"));
     CHECK(run(gedp, show_cycle_b) == BRLCAD_OK && contains_result(gedp, "cycle-a.c"));
+    CHECK(ged_event_observer_remove(gedp, observer) == 1);
     return 0;
 }
 
@@ -761,6 +765,80 @@ test_versioned_region_defaults(struct ged *gedp)
 }
 
 static int
+test_binary_asset_history(struct ged *gedp, const std::filesystem::path &directory)
+{
+    const auto original_file = directory / "original grid.bin";
+    const auto replacement_file = directory / "replacement grid.bin";
+    const auto external_file = directory / "unexpected export.bin";
+    // A 2 by 2 height field in network byte order.
+    const uint8_t original[] = {1, 2, 0, 4, 0, 6, 0, 8};
+    const uint8_t replacement[] = {2, 1, 0, 4, 0, 6, 0, 8};
+    const auto write_samples = [](const auto &path, const auto &samples) {
+	std::ofstream file(path, std::ios::binary);
+	file.write(reinterpret_cast<const char *>(samples), sizeof(samples));
+	file.close();
+	return file.good();
+    };
+    CHECK(write_samples(original_file, original) && write_samples(replacement_file, replacement));
+
+    const auto root = selected_id(gedp);
+    const auto import = "{bo -i u nS terrain.bin {" + original_file.string() +
+	"}} {put terrain.s dsp src o name terrain.bin w 2 n 2}";
+    const char *first[] = {"db", "history", "batch", "Import terrain", import.c_str(), nullptr};
+    CHECK(run(gedp, first) == BRLCAD_OK);
+    const auto before = selected_id(gedp);
+    CHECK(before != root);
+    const auto terrain_matches = [gedp](const auto &samples) {
+	auto *grid = db_lookup(gedp->dbip, "terrain.bin", LOOKUP_QUIET);
+	struct bu_external raw = BU_EXTERNAL_INIT_ZERO;
+	struct db5_raw_internal record;
+	const bool matches = grid && db_get_external(&raw, grid, gedp->dbip) == 0 &&
+	    db5_get_raw_internal_bounded(&record, raw.ext_buf, raw.ext_nbytes) &&
+	    record.major_type == DB5_MAJORTYPE_BINARY_UNIF &&
+	    record.minor_type == DB5_MINORTYPE_BINU_16BITINT_U &&
+	    record.body.ext_nbytes == sizeof(samples) &&
+	    std::memcmp(record.body.ext_buf, samples, sizeof(samples)) == 0;
+	bu_free_external(&raw);
+	if (!matches)
+	    return false;
+
+	auto *surface = db_lookup(gedp->dbip, "terrain.s", LOOKUP_QUIET);
+	struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
+	if (!surface || rt_db_get_internal(&intern, surface, gedp->dbip, nullptr) < 0)
+	    return false;
+	bool loaded = false;
+	if (intern.idb_type == ID_DSP) {
+	    const auto *dsp = static_cast<const struct rt_dsp_internal *>(intern.idb_ptr);
+	    const auto first_sample = (static_cast<unsigned int>(samples[0]) << 8) | samples[1];
+	    loaded = dsp->dsp_datasrc == RT_DSP_SRC_OBJ && dsp->dsp_buf &&
+		dsp->dsp_buf[0] == first_sample;
+	}
+	rt_db_free_internal(&intern);
+	return loaded;
+    };
+    CHECK(terrain_matches(original));
+
+    const auto replace = "{kill terrain.bin} {bo -i u nS terrain.bin {" + replacement_file.string() + "}}";
+    const auto with_output = replace + " {bo -o {" + external_file.string() + "} terrain.bin}";
+    const char *unsupported[] = {"db", "history", "batch", "Attempt external write", with_output.c_str(), nullptr};
+    CHECK(run(gedp, unsupported) == BRLCAD_ERROR && contains_result(gedp, "Batch command 3 failed"));
+    CHECK(!std::filesystem::exists(external_file) && selected_id(gedp) == before && terrain_matches(original));
+
+    const char *second[] = {"db", "history", "batch", "Replace terrain samples", replace.c_str(), nullptr};
+    CHECK(run(gedp, second) == BRLCAD_OK && terrain_matches(replacement));
+    const auto after = selected_id(gedp);
+    CHECK(after != before);
+    const char *show[] = {"db", "history", "show", after.c_str(), nullptr};
+    CHECK(run(gedp, show) == BRLCAD_OK && contains_result(gedp, "terrain.bin") &&
+	!contains_result(gedp, "terrain.s"));
+    const char *undo[] = {"db", "undo", nullptr};
+    const char *redo[] = {"db", "redo", nullptr};
+    CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == before && terrain_matches(original));
+    CHECK(run(gedp, redo) == BRLCAD_OK && selected_id(gedp) == after && terrain_matches(replacement));
+    return 0;
+}
+
+static int
 test_backend_parity(const std::filesystem::path &directory)
 {
     using Records = std::map<std::string, std::vector<uint8_t>>;
@@ -842,6 +920,9 @@ test_backend_parity(const std::filesystem::path &directory)
 	    CHECK(records == plain_records);
 	    CHECK(test_versioned_region_defaults(gedp) == 0);
 	    CHECK(test_reference_removal(gedp) == 0);
+	    const auto assets = directory / (std::string(mode) + "-assets");
+	    CHECK(std::filesystem::create_directory(assets));
+	    CHECK(test_binary_asset_history(gedp, assets) == 0);
 	}
     }
     return 0;

@@ -97,8 +97,8 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 {
     int c;
     unsigned int input_type = 0;
-    char *obj_name;
-    char *file_name;
+    const char *obj_name;
+    const char *file_name;
     int input_mode=0;
     int output_mode=0;
     struct rt_binunif_internal *bip;
@@ -108,7 +108,6 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "{-i u [h|n]type | -o} dest source";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
@@ -122,6 +121,8 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+
     /* check that we are using a version 5 database */
     if (db_version(gedp->dbip) < 5) {
 	bu_vls_printf(gedp->ged_result_str, "This is an older database version.\nIt does not support binary objects.Use \"dbupgrade\" to upgrade this database to the current version.\n");
@@ -129,8 +130,9 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_optind = 1;		/* re-init bu_getopt() */
+    const int show_option_errors = bu_opterr;
     bu_opterr = 0;          /* suppress bu_getopt()'s error message */
-    while ((c=bu_getopt(argc, (char * const *)argv, "iou:")) != -1) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "io")) != -1) {
 	switch (c) {
 	    case 'i':
 		input_mode = 1;
@@ -139,11 +141,12 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 		output_mode = 1;
 		break;
 	    default:
-		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", c);
+		bu_opterr = show_option_errors;
+		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", bu_optopt);
 		return BRLCAD_ERROR;
-
 	}
     }
+    bu_opterr = show_option_errors;
 
     if (input_mode + output_mode != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv0, usage);
@@ -174,13 +177,13 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 	argc -= 2;
 	argv += 2;
 
-	obj_name = (char *)*argv;
+	obj_name = *argv;
 	GED_CHECK_EXISTS(gedp, obj_name, LOOKUP_QUIET, BRLCAD_ERROR);
 
 	argc--;
 	argv++;
 
-	file_name = (char *)*argv;
+	file_name = *argv;
 
 	/* make a binunif of the entire file */
 	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -192,12 +195,12 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
     } else if (output_mode) {
 	FILE *fp;
 
-	file_name = (char *)*argv;
+	file_name = *argv;
 
 	argc--;
 	argv++;
 
-	obj_name = (char *)*argv;
+	obj_name = *argv;
 
 	dp = db_lookup(gedp->dbip, obj_name, LOOKUP_NOISY);
 	if (dp == RT_DIR_NULL) {

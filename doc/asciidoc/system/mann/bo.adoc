@@ -23,6 +23,8 @@ specified to input or output data respectively. The _-i_ option creates a
 binary object, and the _-o_ option writes out a binary object's data. Currently,
 only uniform binary objects (arrays of values) are supported on input.
 
+With database history enabled, *bo -i* records the imported object in the current edit. To replace an existing binary object in one revision, run *kill* and *bo -i* for the same name in a *db history batch*.
+
 On input, _destination_ is the name of the object to create and _source_ is the
 path to a file to read. Input data defaults to host byte order. Prefix _type_
 with `h` to specify host byte order explicitly or `n` to specify network byte

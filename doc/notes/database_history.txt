@@ -258,6 +258,15 @@ Every reconstruction matched the older DB5 body byte for byte.
 Timings are medians of three runs. The figures count storage added
 for the old body given the newer body.
 
+The same synthetic grids ran through GED and an LMDB workspace.
+A batch replaced each referenced binary object with bo -i. The
+8.39 MB DSP update took 0.214 seconds and the 12.58 MB VOL update
+took 0.331 seconds. Fresh readers opened each primitive after
+Undo and Redo. Plain DB5 exports recovered the corresponding
+samples byte for byte and both workspace verifiers passed. A GED
+regression covered binary import, aborted replacement and exact
+replay in session DB5, embedded DB5 and LMDB.
+
 These grids support offering reverse deltas for localized edits and
 offset shifts when encoding fits a predictable time budget. A noisy
 replacement benefits from a full-body fallback. Keep version 1's
