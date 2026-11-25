@@ -10,7 +10,7 @@ regdef - Sets the default region attributes used by the *r* and *c* commands whe
 
 [source]
 ----
-regdef {regionID} [airID [los% [materialID]]]
+regdef [regionID [airID [los% [materialID]]]]
 ----
 
 
@@ -18,6 +18,8 @@ regdef {regionID} [airID [los% [materialID]]]
 == DESCRIPTION
 
 Sets the default region attributes used by the *r* and *c* commands when building a BRL-CAD region. The default _ident_ number is incremented each time a new region is created with the *r* or *c* commands.
+
+Run *regdef* without arguments to inspect the current defaults, including on a read-only database. With database history enabled, the defaults belong to the open editor and editing them alone creates no model revision. Undo and Redo restore the attributes stored on regions. The default ident continues from the last successful edit. A failed history batch discards its changes to the defaults.
 
 
 [[examples]]

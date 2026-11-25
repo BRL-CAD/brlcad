@@ -25,7 +25,7 @@
 
 #include "common.h"
 
-#include <string.h>
+#include <limits.h>
 
 #include "bu/cmd.h"
 #include "wdb.h"
@@ -36,14 +36,9 @@
 int
 ged_region_core(struct ged *gedp, int argc, const char *argv[])
 {
-    struct directory *dp;
-    int i;
-    int ident, air;
-    db_op_t oper;
     static const char *usage = "reg_name <op obj ...>";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
@@ -55,14 +50,12 @@ ged_region_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+
     if (argc < 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
-
-    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    ident = wdbp->wdb_item_default;
-    air = wdbp->wdb_air_default;
 
     /* Check for even number of arguments */
     if (argc & 01) {
@@ -70,23 +63,24 @@ ged_region_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET) == RT_DIR_NULL) {
-	/* will attempt to create the region */
-	if (wdbp->wdb_item_default) {
-	    wdbp->wdb_item_default++;
-	    bu_vls_printf(gedp->ged_result_str, "Defaulting item number to %d\n",
-			  wdbp->wdb_item_default);
-	}
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    const int ident = wdbp->wdb_item_default;
+    const int air = wdbp->wdb_air_default;
+    const int new_region = db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET) == RT_DIR_NULL;
+    if (new_region && ident == INT_MAX) {
+	bu_vls_strcat(gedp->ged_result_str, "Default region ident cannot be advanced. Set a new ident with regdef.");
+	return BRLCAD_ERROR;
     }
 
     /* Get operation and solid name for each solid */
-    for (i = 2; i < argc; i += 2) {
-	if ((dp = db_lookup(gedp->dbip,  argv[i+1], LOOKUP_NOISY)) == RT_DIR_NULL) {
+    for (int i = 2; i < argc; i += 2) {
+	struct directory *dp = db_lookup(gedp->dbip, argv[i+1], LOOKUP_NOISY);
+	if (dp == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "skipping %s\n", argv[i+1]);
 	    continue;
 	}
 
-	oper = db_str2op(argv[i]);
+	const db_op_t oper = db_str2op(argv[i]);
 	if (oper == DB_OP_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "bad operation: %c (0x%x) skip member: %s\n", argv[i][0], argv[i][0], dp->d_namep);
 	    continue;
@@ -103,11 +97,11 @@ ged_region_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if (db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET) == RT_DIR_NULL) {
-	/* failed to create region */
-	if (wdbp->wdb_item_default > 1)
-	    wdbp->wdb_item_default--;
+    if (db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET) == RT_DIR_NULL)
 	return BRLCAD_ERROR;
+    if (new_region && ident) {
+	wdbp->wdb_item_default = ident + 1;
+	bu_vls_printf(gedp->ged_result_str, "Defaulting item number to %d\n", wdbp->wdb_item_default);
     }
 
     return BRLCAD_OK;

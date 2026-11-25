@@ -167,7 +167,7 @@ permitted_edit(std::string_view command, int argc, const char **argv)
 	return argc > 1 && one_of(argv[1], {"append", "copy", "rm", "set"});
     return one_of(command, {"adjust", "comb", "concat", "cp", "dbconcat", "g", "group",
 	"hide", "in", "kill", "killall", "killrefs", "killtree", "make", "mv", "mvall",
-	"put", "rm", "unhide"});
+	"put", "r", "regdef", "region", "rm", "unhide"});
 }
 
 bool
@@ -175,7 +175,7 @@ permitted_query(std::string_view command, int argc, const char **argv)
 {
     if (command == "attr")
 	return argc <= 1 || one_of(argv[1], {"get", "list", "show", "sort"});
-    if (command == "title" || command == "units")
+    if (one_of(command, {"r", "regdef", "region", "title", "units"}))
 	return argc == 1;
     if (command == "killall" || command == "killrefs")
 	return argc == 1 || std::string_view(argv[1]) == "-n";
@@ -449,9 +449,31 @@ attach_history(ged_db_history &history, struct db_i *db)
 }
 
 void
+copy_region_defaults(struct db_i *destination, struct db_i *source)
+{
+    auto *target = wdb_dbopen(destination, RT_WDB_TYPE_DB_DEFAULT);
+    const auto *defaults = wdb_dbopen(source, RT_WDB_TYPE_DB_DEFAULT);
+    target->wdb_item_default = defaults->wdb_item_default;
+    target->wdb_air_default = defaults->wdb_air_default;
+    target->wdb_los_default = defaults->wdb_los_default;
+    target->wdb_mat_default = defaults->wdb_mat_default;
+}
+
+struct db_edit *
+begin_editor_edit(struct db_i *base, const char *label)
+{
+    auto *edit = db_edit_begin(base, label);
+    if (edit)
+	copy_region_defaults(db_edit_view(edit), base);
+    return edit;
+}
+
+void
 switch_database(struct ged *gedp, struct db_i *replacement)
 {
     auto *retired = gedp->dbip;
+    // Region defaults are editor settings. Carry them across history travel.
+    copy_region_defaults(replacement, retired);
     ged_edit_sessions_database_close_private(gedp);
     gedp->dbip = replacement;
     ged_event_database_set_private(gedp, replacement);
@@ -895,8 +917,10 @@ publish_workspace_edit(struct ged *gedp, ged_db_history &history, Edit &edit)
     base.pack.selected_model = history.workspace_head.model;
     db_history::Db5HistoryDraft draft;
     const auto status = db_history::append_db5_history(base, edit.get(), revision_time(), draft);
-    if (status == db_history::AppendStatus::Unchanged)
+    if (status == db_history::AppendStatus::Unchanged) {
+	copy_region_defaults(history.live, db_edit_view(edit.get()));
 	return BRLCAD_OK;
+    }
     db_history::Revision revision;
     if (status != db_history::AppendStatus::Ready ||
 	!db_history::read_revision(draft.pack, draft.pack.selected_revision, revision)) {
@@ -914,6 +938,7 @@ publish_workspace_edit(struct ged *gedp, ged_db_history &history, Edit &edit)
 	retain_conflict(gedp, history, std::move(draft));
     if (write != WorkspaceWriteStatus::Ok)
 	return BRLCAD_ERROR;
+    copy_region_defaults(history.live, db_edit_view(edit.get()));
     edit.reset();
     reload_workspace(gedp, history, committed);
     return BRLCAD_OK;
@@ -933,6 +958,7 @@ publish_embedded_edit(struct ged *gedp, ged_db_history &history, Edit &edit, db_
 	    retain_conflict(gedp, history, std::move(draft));
 	return BRLCAD_ERROR;
     }
+    copy_region_defaults(history.live, snapshot.get());
     snapshot.reset();
     install_snapshot(gedp, history, replacement, &pack.selected_revision);
     return BRLCAD_OK;
@@ -943,7 +969,7 @@ checkout_embedded(struct ged *gedp, ged_db_history &history, const db_history::I
 {
     if (target == history.embedded.pack.selected_revision)
 	return BRLCAD_OK;
-    Edit edit(db_edit_begin(history.live, "Checkout revision"), db_edit_abort);
+    Edit edit(begin_editor_edit(history.live, "Checkout revision"), db_edit_abort);
     db_history::Db5HistoryDraft draft;
     if (!edit || !db_history::stage_db5_checkout(history.embedded, target, edit.get(), draft)) {
 	bu_vls_printf(gedp->ged_result_str, "Could not replay the selected revision against the current model");
@@ -2303,7 +2329,7 @@ begin_history_edit(struct ged *gedp, ged_db_history &history, const char *label,
     if (!can_write_history(gedp, history))
 	return BRLCAD_ERROR;
 
-    auto *stage = db_edit_begin(history.live, label);
+    auto *stage = begin_editor_edit(history.live, label);
     if (!stage) {
 	bu_vls_printf(gedp->ged_result_str, "Could not stage database edit");
 	return BRLCAD_ERROR;
@@ -2382,6 +2408,7 @@ ged_db_history_leave(struct ged *gedp, struct db_edit *stage, int result)
 	db_history::Db5HistoryDraft draft;
 	switch (db_history::append_db5_history(history->embedded, stage, revision_time(), draft)) {
 	    case db_history::AppendStatus::Unchanged:
+		copy_region_defaults(history->live, db_edit_view(stage));
 		return BRLCAD_OK;
 	    case db_history::AppendStatus::Ready:
 		return publish_embedded_edit(gedp, *history, edit, draft);
@@ -2401,8 +2428,10 @@ ged_db_history_leave(struct ged *gedp, struct db_edit *stage, int result)
 	bu_vls_printf(gedp->ged_result_str, "\nDatabase edit failed or exceeds the session history budget");
 	return BRLCAD_ERROR;
     }
-    if (revision.changes.empty())
+    if (revision.changes.empty()) {
+	copy_region_defaults(history->live, db_edit_view(stage));
 	return BRLCAD_OK;
+    }
 
     // Allocate the journal entry before installing the file. After the
     // replacement succeeds, advancing the head requires no allocation.
@@ -2418,6 +2447,7 @@ ged_db_history_leave(struct ged *gedp, struct db_edit *stage, int result)
 	    retain_conflict(gedp, *history, ged_db_history::SessionConflict{std::move(snapshot), std::move(pending.begin()->second)});
 	return BRLCAD_ERROR;
     }
+    copy_region_defaults(history->live, snapshot.get());
     snapshot.reset();
     history->revisions.at(history->head).children++;
     history->head = history->next++;

@@ -673,6 +673,74 @@ test_reference_removal(struct ged *gedp)
 }
 
 static int
+test_versioned_region_defaults(struct ged *gedp)
+{
+    const auto root = selected_id(gedp);
+    const char *show_defaults[] = {"regdef", nullptr};
+    const char *set_defaults[] = {"regdef", "4800", "0", "75", "9", nullptr};
+    CHECK(run(gedp, set_defaults) == BRLCAD_OK && selected_id(gedp) == root);
+    const auto defaults_are = [gedp, &show_defaults](const char *expected) {
+	return run(gedp, show_defaults) == BRLCAD_OK &&
+	    BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), expected);
+    };
+    const char *defaults = "ident 4800 air 0 los 75 material 9";
+    CHECK(defaults_are(defaults));
+    const char *invalid_defaults[] = {"regdef", "19", "0", "75", "invalid", nullptr};
+    CHECK(run(gedp, invalid_defaults) == BRLCAD_ERROR && defaults_are(defaults));
+
+    const char *failed_region[] = {"r", "incomplete.r", "u", "renamed.s", "u", "renamed.s", nullptr};
+    int staged_writes = 0;
+    CHECK(ged_clbk_set(gedp, "r", BU_CLBK_PRE, fail_staged_edit, &staged_writes) == BRLCAD_OK);
+    CHECK(run(gedp, failed_region) == BRLCAD_ERROR && staged_writes == 1);
+    CHECK(ged_clbk_set(gedp, "r", BU_CLBK_PRE, nullptr, nullptr) == GED_OVERRIDE);
+    CHECK(!db_lookup(gedp->dbip, "incomplete.r", LOOKUP_QUIET) && selected_id(gedp) == root &&
+	defaults_are(defaults));
+
+    const char *failed_batch[] = {"db", "history", "batch", "Discard construction",
+	"{regdef 6350 0 89 27} {r transient.r u renamed.s} {mv transient.r assembly.c}", nullptr};
+    CHECK(run(gedp, failed_batch) == BRLCAD_ERROR && contains_result(gedp, "Batch command 3 failed"));
+    CHECK(!db_lookup(gedp->dbip, "transient.r", LOOKUP_QUIET) && selected_id(gedp) == root &&
+	defaults_are(defaults));
+
+    const char *batch[] = {"db", "history", "batch", "Build two regions",
+	"{regdef 6350 0 89 27} {r first.r u renamed.s} {region second.r u renamed.s}", nullptr};
+    CHECK(run(gedp, batch) == BRLCAD_OK);
+    const auto tip = selected_id(gedp);
+    CHECK(tip != root);
+    const char *advanced = "ident 6352 air 0 los 89 material 27";
+    CHECK(defaults_are(advanced));
+    const auto region_matches = [gedp](const char *name, int ident) {
+	auto *dp = db_lookup(gedp->dbip, name, LOOKUP_QUIET);
+	struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
+	if (!dp || rt_db_get_internal(&intern, dp, gedp->dbip, nullptr) < 0)
+	    return false;
+	bool valid = false;
+	if (intern.idb_type == ID_COMBINATION) {
+	    const auto *comb = static_cast<const struct rt_comb_internal *>(intern.idb_ptr);
+	    valid = comb->region_flag && comb->region_id == ident && comb->aircode == 0 &&
+		comb->los == 89 && comb->GIFTmater == 27;
+	}
+	rt_db_free_internal(&intern);
+	return valid;
+    };
+    CHECK(region_matches("first.r", 6350) && region_matches("second.r", 6351));
+
+    const char *undo[] = {"db", "undo", nullptr};
+    const char *redo[] = {"db", "redo", nullptr};
+    CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == root && defaults_are(advanced) &&
+	!db_lookup(gedp->dbip, "first.r", LOOKUP_QUIET) && !db_lookup(gedp->dbip, "second.r", LOOKUP_QUIET));
+    CHECK(run(gedp, redo) == BRLCAD_OK && selected_id(gedp) == tip && defaults_are(advanced) &&
+	region_matches("first.r", 6350) && region_matches("second.r", 6351));
+
+    const std::unique_ptr<struct ged, decltype(&ged_close)> inspector(ged_create(), ged_close);
+    const char *open[] = {"db", "open", "-r", gedp->dbip->dbi_filename, nullptr};
+    CHECK(inspector && run(inspector.get(), open) == BRLCAD_OK);
+    CHECK(run(inspector.get(), show_defaults) == BRLCAD_OK && contains_result(inspector.get(), "ident 1000"));
+    CHECK(run(inspector.get(), set_defaults) == BRLCAD_ERROR);
+    return 0;
+}
+
+static int
 test_backend_parity(const std::filesystem::path &directory)
 {
     using Records = std::map<std::string, std::vector<uint8_t>>;
@@ -685,6 +753,8 @@ test_backend_parity(const std::filesystem::path &directory)
 	const std::unique_ptr<struct ged, decltype(&ged_close)> owner(ged_open("db", path.c_str(), 1), ged_close);
 	auto *gedp = owner.get();
 	CHECK(gedp);
+	const char *set_defaults[] = {"regdef", "3100", "0", "68", "17", nullptr};
+	CHECK(run(gedp, set_defaults) == BRLCAD_OK);
 	if (BU_STR_EQUAL(mode, "workspace")) {
 	    const auto workspace = (directory / "parity-workspace").string();
 	    const char *create[] = {"db", "history", "workspace", workspace.c_str(), nullptr};
@@ -706,12 +776,15 @@ test_backend_parity(const std::filesystem::path &directory)
 	const char *rename[] = {"mvall", "body.s", "renamed.s", nullptr};
 	const char *attribute[] = {"attr", "set", "renamed.s", "rgb", "15/45/95", nullptr};
 	const char *region[] = {"comb", "assembly.c", "region", nullptr};
+	const char *make_region[] = {"r", "part.r", "u", "renamed.s", nullptr};
 	const char *title[] = {"title", "An equivalent model", nullptr};
+	const char *show_defaults[] = {"regdef", nullptr};
 	CHECK(run(gedp, make_body) == BRLCAD_OK && run(gedp, make_filler) == BRLCAD_OK);
 	CHECK(run(gedp, combine) == BRLCAD_OK && run(gedp, group) == BRLCAD_OK);
 	CHECK(run(gedp, member_remove) == BRLCAD_OK && run(gedp, object_remove) == BRLCAD_OK);
 	CHECK(run(gedp, rename) == BRLCAD_OK && run(gedp, attribute) == BRLCAD_OK &&
-	    run(gedp, region) == BRLCAD_OK && run(gedp, title) == BRLCAD_OK);
+	    run(gedp, region) == BRLCAD_OK && run(gedp, make_region) == BRLCAD_OK && run(gedp, title) == BRLCAD_OK);
+	CHECK(run(gedp, show_defaults) == BRLCAD_OK && contains_result(gedp, "ident 3101 air 0 los 68 material 17"));
 	if (!BU_STR_EQUAL(mode, "plain")) {
 	    const auto selected = selected_id(gedp);
 	    const char *invalid[] = {"comb", "partial.c", "u", "renamed.s", "u", "missing.s", nullptr};
@@ -747,6 +820,7 @@ test_backend_parity(const std::filesystem::path &directory)
 	    plain_records = std::move(records);
 	else {
 	    CHECK(records == plain_records);
+	    CHECK(test_versioned_region_defaults(gedp) == 0);
 	    CHECK(test_reference_removal(gedp) == 0);
 	}
     }

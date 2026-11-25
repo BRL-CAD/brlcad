@@ -541,6 +541,19 @@ database title in one revision. A late rename conflict and an
 incomplete interactive command each discarded the staged objects
 and left the selected revision fixed.
 
+Region creation with r and region used the same identifiers, line-of-
+sight estimates and materials on ordinary DB5, session DB5, embedded
+DB5 and LMDB. Region defaults carried across history activation and
+travel within the editor. A settings-only change created no revision.
+A failed second region write and a late batch failure both left the
+model and defaults intact.
+
+On an M1917 workspace copy, one batch set region defaults and created
+two regions referencing existing geometry in 2.06 seconds. The failed
+batch left the original revision selected. Fresh processes verified
+the stored identifiers and materials, restored both entries with
+Redo and verified the resulting archive in 5.10 seconds.
+
 A direct librt test handed a private edit to a worker and back to
 its original owner. A worker without ownership could neither borrow
 the view nor change its directory or metadata. The joined worker

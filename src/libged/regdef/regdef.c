@@ -24,17 +24,19 @@
  */
 
 #include "common.h"
+
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
+
 #include "ged.h"
 
 int
 ged_regdef_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int item, air, los, mat;
     static const char *usage = "item air los mat";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
@@ -51,51 +53,33 @@ ged_regdef_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    if (argc < 2 || 5 < argc) {
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+
+    int *fields[] = {&wdbp->wdb_item_default, &wdbp->wdb_air_default,
+	&wdbp->wdb_los_default, &wdbp->wdb_mat_default};
+    int values[sizeof(fields) / sizeof(fields[0])];
+    const int count = argc - 1;
+    if ((size_t)count > sizeof(values) / sizeof(values[0])) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[1], "%d", &item) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+    /* A bad late argument must leave all the defaults as they were. */
+    for (int i = 0; i < count; ++i) {
+	const char *arg = argv[i + 1];
+	char *end = NULL;
+	errno = 0;
+	const long value = strtol(arg, &end, 10);
+	if (arg == end || errno == ERANGE || value < INT_MIN || value > INT_MAX) {
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    return BRLCAD_ERROR;
+	}
+	values[i] = (int)value;
     }
-    wdbp->wdb_item_default = item;
-
-    if (argc == 2) {
-	return BRLCAD_OK;
-    }
-
-    if (sscanf(argv[2], "%d", &air) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
-    }
-    wdbp->wdb_air_default = air;
-    if (air) {
-	item = 0;
+    for (int i = 0; i < count; ++i)
+	*fields[i] = values[i];
+    if (count > 1 && wdbp->wdb_air_default)
 	wdbp->wdb_item_default = 0;
-    }
-
-    if (argc == 3) {
-	return BRLCAD_OK;
-    }
-
-    if (sscanf(argv[3], "%d", &los) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
-    }
-    wdbp->wdb_los_default = los;
-
-    if (argc == 4) {
-	return BRLCAD_OK;
-    }
-
-    if (sscanf(argv[4], "%d", &mat) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
-    }
-
-    wdbp->wdb_mat_default = mat;
 
     return BRLCAD_OK;
 }

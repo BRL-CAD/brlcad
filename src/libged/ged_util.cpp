@@ -2266,9 +2266,6 @@ _ged_combadd(struct ged *gedp,
     if (_ged_combadd2(gedp, combname, ac, av, region_flag, relation, ident, air, NULL, 1) & BRLCAD_ERROR)
 	return RT_DIR_NULL;
 
-    /* Done changing stuff - update nref. */
-    db_update_nref(gedp->dbip);
-
     return db_lookup(gedp->dbip, combname, LOOKUP_QUIET);
 }
 
@@ -2322,7 +2319,7 @@ _ged_combadd2(struct ged *gedp,
 	intern.idb_type = ID_COMBINATION;
 	intern.idb_meth = &OBJ[ID_COMBINATION];
 
-	GED_DB_DIRADD(gedp, dp, combname, -1, 0, flags, (void *)&intern.idb_type, 0);
+	GED_DB_DIRADD(gedp, dp, combname, -1, 0, flags, (void *)&intern.idb_type, BRLCAD_ERROR);
 
 	BU_ALLOC(comb, struct rt_comb_internal);
 	RT_COMB_INTERNAL_INIT(comb);
@@ -2353,13 +2350,14 @@ _ged_combadd2(struct ged *gedp,
     }
 
     /* combination exists, add a new member */
-    GED_DB_GET_INTERN(gedp, &intern, dp, (fastf_t *)NULL, 0);
+    GED_DB_GET_INTERN(gedp, &intern, dp, (fastf_t *)NULL, BRLCAD_ERROR);
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
 
     if (region_flag && !comb->region_flag) {
 	bu_vls_printf(gedp->ged_result_str, "%s: not a region\n", dp->d_namep);
+	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;
     }
 
@@ -2427,12 +2425,11 @@ addmembers:
     }
 
     /* rebuild the tree */
-    comb->tree = (union tree *)db_mkgift_tree(tree_list, node_count);
+    comb->tree = db_mkgift_tree(tree_list, curr_count);
+    bu_free(tree_list, "combadd: tree_list");
 
     /* and finally, write it out */
-    GED_DB_PUT_INTERN(gedp, dp, &intern, 0);
-
-    bu_free((char *)tree_list, "combadd: tree_list");
+    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
 
     /* Done changing stuff - update nref. */
     db_update_nref(gedp->dbip);
