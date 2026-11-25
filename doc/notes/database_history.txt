@@ -530,6 +530,17 @@ processes gave title edits a median of 0.615 seconds and a 95th
 percentile of 0.640 seconds. Undo measured 0.605 and 0.627 seconds,
 respectively.
 
+A separate disk-backed M1917 run made the same title edit and Undo
+under both durable modes. Linux process accounting attributed 2.42 GB
+of filesystem output to each embedded DB5 operation, with peak resident
+memory of 2.51 GB for the edit and 2.50 GB for Undo. LMDB used 1.21 MB
+of filesystem output and 107 MB of peak resident memory for the edit.
+Its Undo used 28.7 KB of output and 100 MB of peak resident memory.
+The embedded edit and Undo each took 24.3 seconds. The LMDB operations
+took 0.71 and 0.52 seconds. Fresh readers confirmed both title changes
+and verified both archives. The supplied file's identity, size and
+modification time matched before and after the run.
+
 On disk-backed M1917 copies, fresh GED processes drew the largest
 BREP in a median of 3.61 seconds from DB5 and 2.12 seconds from LMDB
 after evicting the data file's cached pages. Warm medians were 2.15
