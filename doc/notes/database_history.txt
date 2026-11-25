@@ -829,6 +829,13 @@ damaged archive index digest. It reported the appropriate status,
 refused modification, and exported readable geometry without history.
 Each input file kept its exact SHA-256 digest.
 
+The garbage_collect command compacts a history-enabled DB5 through
+atomic replacement. It retains a session journal or the complete
+embedded archive without adding a revision. In an embedded DB5 test,
+terminating before replacement preserved the input bytes. Terminating
+after replacement left a file 64 KiB smaller. Both reopened with the
+same selected revision and checkpoints and passed archive verification.
+
 The Linux suite passed 1,440 tests across the initial run and reruns
 with access to local sockets and X11. Its CTest notice returned the
 expected failure. The 5 GiB DB5 stress test skipped because it requires

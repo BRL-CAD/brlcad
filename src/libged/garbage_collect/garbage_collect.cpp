@@ -39,6 +39,7 @@
 #include "ged.h"
 
 #include "../dbi.h"
+#include "../ged_private.h"
 
 void print_help_msg(struct bu_vls *str)
 {
@@ -96,7 +97,10 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT_NULL(d[2]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    const bool with_history = gedp->i->db_history;
+    if (!with_history) {
+	GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    }
     if (db_version(gedp->dbip) < 5) {
 	bu_vls_printf(gedp->ged_result_str, "garbage_collect requires a v5 database\n");
 	return BRLCAD_ERROR;
@@ -125,6 +129,8 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Usage: garbage_collect [-c|--confirm] [-h|--help]");
 	return BRLCAD_ERROR;
     }
+    if (with_history)
+	return ged_db_history_compact(gedp);
 
     /* See if we have a stale backup file */
     bu_path_component(&fdir, gedp->dbip->dbi_filename, BU_PATH_DIRNAME);

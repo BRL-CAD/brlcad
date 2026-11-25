@@ -268,6 +268,10 @@ test_disk_history()
     }
     CHECK(run(bounded.get(), status) == BRLCAD_OK && contains_result(bounded.get(), "revision 6"));
     CHECK(!contains_result(bounded.get(), "oldest 0"));
+    const std::string before_compaction = bu_vls_cstr(bounded->ged_result_str);
+    const char *compact[] = {"garbage_collect", "-c", nullptr};
+    CHECK(run(bounded.get(), compact) == BRLCAD_OK && contains_result(bounded.get(), "Compacted DB5"));
+    CHECK(run(bounded.get(), status) == BRLCAD_OK && before_compaction == bu_vls_cstr(bounded->ged_result_str));
     CHECK(run(bounded.get(), verify_session) == BRLCAD_OK && contains_result(bounded.get(), "verified"));
     const char *expired[] = {"db", "history", "checkout", "0", nullptr};
     CHECK(run(bounded.get(), expired) != BRLCAD_OK && contains_result(bounded.get(), "expired"));
@@ -398,6 +402,8 @@ test_embedded_history()
     const char *verify[] = {"db", "history", "verify", nullptr};
     CHECK(run(inspector.get(), verify) == BRLCAD_OK && contains_result(inspector.get(), "Archive verified"));
     CHECK(run(inspector.get(), undo) != BRLCAD_OK && contains_result(inspector.get(), "writable"));
+    const char *compact[] = {"garbage_collect", "-c", nullptr};
+    CHECK(run(inspector.get(), compact) != BRLCAD_OK && contains_result(inspector.get(), "writable"));
     const char *missing_path[] = {"db", "history", "export", "--with-history", nullptr};
     CHECK(run(inspector.get(), missing_path) == GED_HELP);
     char archive_copy[MAXPATHLEN] = {};
@@ -409,6 +415,26 @@ test_embedded_history()
     CHECK(run(inspector.get(), export_archive) == BRLCAD_OK);
     Ged archived(ged_open("db", archive_copy, 1), ged_close);
     CHECK(archived && selected_id(archived.get()) == fork && run(archived.get(), show) == BRLCAD_OK);
+    const char *full_log[] = {"db", "history", "log", "--json", nullptr};
+    CHECK(run(archived.get(), full_log) == BRLCAD_OK);
+    const std::string compacted_log = bu_vls_cstr(archived->ged_result_str);
+    archived.reset();
+
+    // Insert physical free space without changing the portable model.
+    const auto packed_size = std::filesystem::file_size(archive_copy);
+    constexpr size_t free_bytes = 4 * 1024;
+    struct bu_external free_record = BU_EXTERNAL_INIT_ZERO;
+    db5_make_free_object(&free_record, free_bytes);
+    file = fopen(archive_copy, "ab");
+    CHECK(file && bu_fwrite_external(file, &free_record) == 0 && fclose(file) == 0);
+    bu_free_external(&free_record);
+    CHECK(std::filesystem::file_size(archive_copy) == packed_size + free_bytes);
+    archived.reset(ged_open("db", archive_copy, 1));
+    CHECK(archived && run(archived.get(), compact) == BRLCAD_OK && contains_result(archived.get(), "Compacted DB5"));
+    CHECK(std::filesystem::file_size(archive_copy) == packed_size && selected_id(archived.get()) == fork &&
+	run(archived.get(), full_log) == BRLCAD_OK && compacted_log == bu_vls_cstr(archived->ged_result_str));
+    CHECK(run(archived.get(), verify) == BRLCAD_OK && run(archived.get(), undo) == BRLCAD_OK &&
+	selected_id(archived.get()) == root && run(archived.get(), redo) == BRLCAD_OK && selected_id(archived.get()) == fork);
     inspector.reset();
 
     // The legacy writer changes only the live model. Reopening protects
@@ -1371,6 +1397,9 @@ test_workspace_history()
     CHECK(run(writer.get(), create) == BRLCAD_OK && contains_result(writer.get(), "mode workspace"));
     const auto root = selected_id(writer.get());
     CHECK(!root.empty());
+    const char *compact[] = {"garbage_collect", "-c", nullptr};
+    CHECK(run(writer.get(), compact) != BRLCAD_OK && contains_result(writer.get(), "db history workspace") &&
+	selected_id(writer.get()) == root);
     using HistoryStatus = std::unique_ptr<const struct ged_history_status, decltype(&ged_history_status_destroy)>;
     HistoryStatus initial_status(ged_history_status_create(writer.get(), nullptr), ged_history_status_destroy);
     CHECK(initial_status && initial_status->mode == GED_HISTORY_WORKSPACE && initial_status->writable &&

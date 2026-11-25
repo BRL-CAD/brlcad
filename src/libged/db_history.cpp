@@ -211,7 +211,7 @@ permitted_query(std::string_view command, int argc, const char **argv)
 bool
 permitted_standalone(std::string_view command)
 {
-    return one_of(command, {"draw", "e", "edit", "erase", "ev", "keep", "redraw", "setview",
+    return one_of(command, {"draw", "e", "edit", "erase", "ev", "garbage_collect", "keep", "redraw", "setview",
 	"view", "view2", "view_func", "who", "zap"});
 }
 
@@ -2563,6 +2563,36 @@ ged_db_history_leave(struct ged *gedp, struct db_edit *stage, int result)
     return BRLCAD_OK;
 }
 
+
+int
+ged_db_history_compact(struct ged *gedp)
+{
+    auto &history = *gedp->i->db_history;
+    auto *out = gedp->ged_result_str;
+    if (history.workspace) {
+	bu_vls_strcat(out, "Use db history workspace <new-directory> to compact a workspace");
+	return BRLCAD_ERROR;
+    }
+    if (!can_write_history(gedp, history))
+	return BRLCAD_ERROR;
+
+    const auto *pack = is_embedded(history) ? &history.embedded.pack : nullptr;
+    if (pack && !db_history::verify_pack(*pack, out))
+	return BRLCAD_ERROR;
+
+    const auto original_bytes = history.live->i->dbi_eof;
+    struct db_i *replacement = nullptr;
+    const auto result = save_snapshot(gedp, history, history.live, &replacement, pack);
+    if (!saved_database(result))
+	return BRLCAD_ERROR;
+
+    const auto compacted_bytes = replacement->i->dbi_eof;
+    const auto selected = pack ? pack->selected_revision : db_history::absent;
+    install_snapshot(gedp, history, replacement, pack ? &selected : nullptr);
+    if (result == DB5_SAVE_OK)
+	bu_vls_printf(out, "Compacted DB5 from %jd to %jd bytes", (intmax_t)original_bytes, (intmax_t)compacted_bytes);
+    return BRLCAD_OK;
+}
 
 int
 ged_db_history_command(struct ged *gedp, int argc, const char **argv)
