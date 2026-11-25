@@ -926,8 +926,9 @@ create_workspace(struct ged *gedp, const char *path)
     if (!can_replace_database(gedp))
 	return BRLCAD_ERROR;
 
+    WorkspaceHead committed;
     if (history && history->workspace) {
-	if (!history->workspace->copy_to(history->workspace_head, path, out))
+	if (!history->workspace->copy_to(history->workspace_head, path, out, &committed))
 	    return BRLCAD_ERROR;
     } else {
 	db_history::Db5HistoryDraft draft;
@@ -942,12 +943,17 @@ create_workspace(struct ged *gedp, const char *path)
 	} else if (!prepare_archive(gedp, history, draft)) {
 	    return BRLCAD_ERROR;
 	}
-	if (!Workspace::create(path, *pack, out))
+	if (!Workspace::create(path, *pack, out, &committed))
 	    return BRLCAD_ERROR;
     }
 
     WorkspaceHead selected;
     Snapshot replacement(Workspace::open_snapshot(path, selected, out), db_close);
+    if (replacement && !(selected == committed)) {
+	bu_vls_printf(out, "Workspace created at %s. Another writer changed it before the editor could switch. "
+	    "Use db open to switch to the updated workspace.", path);
+	return BRLCAD_ERROR;
+    }
     auto next = workspace_history(replacement.get(), false, out);
     if (!next) {
 	bu_vls_printf(out, "\nWorkspace created at %s. Reopen it to switch databases.", path);
@@ -1463,8 +1469,7 @@ load_history_status(const ged_db_history *history, struct ged_history_status &st
 		return false;
 	    pack = &graph.pack;
 	    status.mode = GED_HISTORY_WORKSPACE;
-	    const bool current_view = current.generation == history->workspace_head.generation &&
-		current.revision == history->workspace_head.revision && current.model == history->workspace_head.model;
+	    const bool current_view = current == history->workspace_head;
 	    status.state = current_view ? GED_HISTORY_CURRENT : GED_HISTORY_STALE;
 	    status.writable = history->workspace_writable;
 	    status.generation = history->workspace_head.generation;

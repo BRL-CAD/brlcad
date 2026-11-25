@@ -568,6 +568,15 @@ immediately before commit left an incomplete workspace that readers
 rejected. Stopping it immediately after the durable commit recovered
 a workspace that passed verification and matched the source title.
 
+Pausing GED between the durable import and reopening the destination
+let a second editor change the destination title, change it and undo
+it, or add a checkpoint. GED reported the committed destination and
+kept the source open in each case. Temporarily moving the destination
+at that point also kept the source open. Restoring the path allowed a
+fresh reader to verify the imported history. On an M1917 workspace
+copy, the original and competing checkpoints both survived. The new
+workspace passed verification and the source data digest matched.
+
 With QGED's software display, Undo and Redo from the modeling viewport
 selected the expected embedded revisions. Plain DB5 snapshots exported
 after each shortcut independently confirmed that the new primitive was

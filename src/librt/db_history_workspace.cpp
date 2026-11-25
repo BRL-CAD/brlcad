@@ -154,13 +154,6 @@ remove_workspace_path(const fs::path &path)
 }
 
 bool
-same_head(const WorkspaceHead &current, const WorkspaceHead &expected)
-{
-    return current.generation == expected.generation && current.revision == expected.revision &&
-	current.model == expected.model;
-}
-
-bool
 report_stale(struct bu_vls *message, const WorkspaceHead &expected, const WorkspaceHead &current)
 {
     if (message) {
@@ -924,7 +917,8 @@ import_map_size(const Pack &pack)
 }
 
 bool
-import_pack(MDB_env *env, const Pack &pack, const Manifest &manifest, struct bu_vls *message)
+import_pack(MDB_env *env, const Pack &pack, const Manifest &manifest, const WorkspaceHead &head,
+	    struct bu_vls *message)
 {
     auto txn = begin(env, 0);
     Tables tables;
@@ -949,7 +943,6 @@ import_pack(MDB_env *env, const Pack &pack, const Manifest &manifest, struct bu_
     for (const auto &boundary : pack.boundaries)
 	put(txn.get(), tables.boundaries, bytes(boundary), {});
 
-    const WorkspaceHead head{pack.selected_revision, pack.selected_model, initial_generation};
     store_head(txn.get(), tables, head, MDB_NOOVERWRITE);
 
     // Verify the copied bytes. A source DB5 mapping can change while
@@ -1026,7 +1019,7 @@ struct Workspace::Store {
 		    report(message, "The workspace head is invalid");
 		    return WorkspaceWriteStatus::Error;
 		}
-		if (!same_head(current, expected)) {
+		if (!(current == expected)) {
 		    report_stale(message, expected, current);
 		    actual = current;
 		    return WorkspaceWriteStatus::Stale;
@@ -1116,7 +1109,7 @@ Workspace::~Workspace()
 }
 
 bool
-Workspace::create(const char *path, const Pack &pack, struct bu_vls *message)
+Workspace::create(const char *path, const Pack &pack, struct bu_vls *message, WorkspaceHead *published)
 {
     if (!path || !*path)
 	return report(message, "A workspace directory is required");
@@ -1145,10 +1138,14 @@ Workspace::create(const char *path, const Pack &pack, struct bu_vls *message)
 	const auto env = open_environment(location.c_str(), 0, import_map_size(pack));
 	// Make the environment reachable on disk before committing its bootstrap.
 	if (sync_import_directories(canonical, message)) {
+	    const WorkspaceHead head{pack.selected_revision, pack.selected_model, initial_generation};
 	    for (;;) {
 		try {
-		    if (import_pack(env.get(), pack, manifest, message))
+		    if (import_pack(env.get(), pack, manifest, head, message)) {
+			if (published)
+			    *published = head;
 			return true;
+		    }
 		    break;
 		} catch (const LmdbError &failure) {
 		    if (failure.code != MDB_MAP_FULL)
@@ -1469,13 +1466,14 @@ Workspace::read_model_at(const Id &revision, Manifest &model, struct bu_vls *mes
 }
 
 bool
-Workspace::copy_to(const WorkspaceHead &selected, const char *destination, struct bu_vls *message) const
+Workspace::copy_to(const WorkspaceHead &selected, const char *destination, struct bu_vls *message,
+		   WorkspaceHead *published) const
 {
     return store->read([&](MDB_txn *txn, const Tables &tables) {
 	WorkspaceArchive archive;
 	if (!load_archive(txn, tables, selected, store->sparse_manifests(), archive))
 	    return report(message, "The workspace archive is invalid");
-	return create(destination, archive.pack, message);
+	return create(destination, archive.pack, message, published);
     }, message);
 }
 
@@ -1576,7 +1574,7 @@ Workspace::preview_prune(const WorkspaceHead &expected, const WorkspaceRetention
 	WorkspaceHead head;
 	if (!read_head(txn, tables, head))
 	    return report(message, "The workspace head is invalid");
-	if (!same_head(head, expected))
+	if (!(head == expected))
 	    return report_stale(message, expected, head);
 	WorkspaceArchive source;
 	RetainedWorkspace planned;

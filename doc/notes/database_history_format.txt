@@ -204,6 +204,11 @@ publishes the bootstrap after both synchronizations succeed. A reported
 synchronization failure aborts creation and attempts to remove the
 incomplete workspace.
 
+Before switching the open document, GED compares the reopened snapshot's
+revision ID, model ID and generation with the committed import. If
+reopening fails or the head differs, GED keeps the source document open
+and reports that the import was committed.
+
 Each artifact occupies one LMDB value and must fit the linked LMDB
 library's per-value limit, at most 4 GiB minus one byte. A workspace
 can exceed that size in total across its values.

@@ -525,9 +525,12 @@ test_workspace(const std::string &path, const Pack &pack, const Manifest &expect
 	[](const auto &item) { return item.first.first == Kind::Body; });
     CHECK(body != incomplete.artifacts.end());
     incomplete.artifacts.erase(body);
-    CHECK(!Workspace::create(path.c_str(), incomplete, message) && !std::filesystem::exists(path));
-    CHECK(Workspace::create(path.c_str(), pack, message));
-    CHECK(!Workspace::create(path.c_str(), pack, message));
+    WorkspaceHead published;
+    CHECK(!Workspace::create(path.c_str(), incomplete, message, &published) && !std::filesystem::exists(path));
+    CHECK(published == WorkspaceHead{});
+    CHECK(Workspace::create(path.c_str(), pack, message, &published));
+    const auto initial = published;
+    CHECK(!Workspace::create(path.c_str(), pack, message, &published) && published == initial);
     auto workspace = Workspace::open(path.c_str(), message);
     auto another = Workspace::open(path.c_str(), message);
     CHECK(workspace && another);
@@ -536,7 +539,7 @@ test_workspace(const std::string &path, const Pack &pack, const Manifest &expect
     WorkspaceHead head;
     Manifest model;
     CHECK(another->read_directory(head, model, message));
-    CHECK(head.revision == pack.selected_revision && head.model == pack.selected_model &&
+    CHECK(head == published && head.revision == pack.selected_revision && head.model == pack.selected_model &&
 	head.generation == 1 && model == expected);
     Id id;
     CHECK(another->lookup(name, id, message) && id == model.at(name));

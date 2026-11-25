@@ -35,6 +35,11 @@ struct WorkspaceHead {
     Id revision = absent;
     Id model = absent;
     uint64_t generation = 0;
+
+    bool operator==(const WorkspaceHead &other) const
+    {
+	return generation == other.generation && revision == other.revision && model == other.model;
+    }
 };
 
 struct WorkspaceExport {
@@ -75,7 +80,9 @@ class Workspace {
 public:
     // The destination must be a new directory. Publish the bootstrap,
     // history and selected directory together in a durable transaction.
-    static RT_EXPORT bool create(const char *path, const Pack &pack, struct bu_vls *message);
+    // On success, published receives the head as committed at the destination.
+    static RT_EXPORT bool create(const char *path, const Pack &pack, struct bu_vls *message,
+	WorkspaceHead *published = nullptr);
     static RT_EXPORT std::unique_ptr<Workspace> open(const char *path, struct bu_vls *message, bool writable = false);
     // Open an ordinary librt database view pinned to one workspace head.
     // The view owns its workspace reader until db_close.
@@ -110,7 +117,8 @@ public:
     // An unknown or ambiguous selector is marked on its request.
     RT_EXPORT bool read_revisions(RevisionLookup *requests, size_t count, struct bu_vls *message) const;
     RT_EXPORT bool read_model_at(const Id &revision, Manifest &model, struct bu_vls *message) const;
-    RT_EXPORT bool copy_to(const WorkspaceHead &view, const char *destination, struct bu_vls *message) const;
+    RT_EXPORT bool copy_to(const WorkspaceHead &view, const char *destination, struct bu_vls *message,
+	WorkspaceHead *published = nullptr) const;
     RT_EXPORT enum db5_save_result export_snapshot(const struct db_i *view, const char *destination,
 	bool with_history, struct bu_vls *message) const;
     RT_EXPORT enum db5_save_result export_staged(const WorkspaceHead &base, const Pack &staged,
