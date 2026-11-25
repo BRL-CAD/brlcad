@@ -192,6 +192,11 @@ ID and the value is empty. Import verifies the copied archive and
 directory in the transaction that publishes these tables and the
 bootstrap.
 
+The importing process reserves the canonical destination path until
+its LMDB environment closes. It can open other workspaces during the
+import. Readers in other processes require the committed bootstrap
+before accepting the destination as a workspace.
+
 Each artifact occupies one LMDB value and must fit the linked LMDB
 library's per-value limit, at most 4 GiB minus one byte. A workspace
 can exceed that size in total across its values.

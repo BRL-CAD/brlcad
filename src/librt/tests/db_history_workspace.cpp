@@ -525,8 +525,7 @@ test_workspace(const std::string &path, const Pack &pack, const Manifest &expect
 	[](const auto &item) { return item.first.first == Kind::Body; });
     CHECK(body != incomplete.artifacts.end());
     incomplete.artifacts.erase(body);
-    const auto invalid = path + "-incomplete";
-    CHECK(!Workspace::create(invalid.c_str(), incomplete, message) && !std::filesystem::exists(invalid));
+    CHECK(!Workspace::create(path.c_str(), incomplete, message) && !std::filesystem::exists(path));
     CHECK(Workspace::create(path.c_str(), pack, message));
     CHECK(!Workspace::create(path.c_str(), pack, message));
     auto workspace = Workspace::open(path.c_str(), message);

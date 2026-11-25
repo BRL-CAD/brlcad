@@ -549,6 +549,15 @@ Repeating the interruption during a 1.1 to 1.2 copy preserved the
 source bytes and left a destination that readers rejected. Retrying
 produced a verified 1.2 store with the original selected revision.
 
+With an M1917 workspace copy paused before commit, the importing
+process opened an unrelated workspace and rejected an attempt to open
+the destination through a symlink. A separate process also rejected
+the incomplete destination. The committed 1.23 GB copy retained the
+selected revision and checkpoint and passed verification. An injected
+disk-full failure left the same path available for a successful retry.
+The source workspace data digest and supplied DB5 identity matched
+before and after the test.
+
 With QGED's software display, Undo and Redo from the modeling viewport
 selected the expected embedded revisions. Plain DB5 snapshots exported
 after each shortcut independently confirmed that the new primitive was

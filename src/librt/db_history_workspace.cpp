@@ -1050,7 +1050,32 @@ struct Workspace::Store {
 
 struct Workspace::Registry {
     std::mutex mutex;
+    // A null entry reserves the path until its import environment closes.
     std::map<fs::path, std::unique_ptr<Store>> stores;
+
+    class ImportReservation {
+    public:
+	ImportReservation(Registry &owner, const fs::path &location) : registry(owner), path(location)
+	{
+	    const std::lock_guard<std::mutex> lock(registry.mutex);
+	    reserved = registry.stores.try_emplace(path).second;
+	}
+	~ImportReservation()
+	{
+	    if (!reserved)
+		return;
+	    const std::lock_guard<std::mutex> lock(registry.mutex);
+	    registry.stores.erase(path);
+	}
+	ImportReservation(const ImportReservation &) = delete;
+	ImportReservation &operator=(const ImportReservation &) = delete;
+	explicit operator bool() const { return reserved; }
+
+    private:
+	Registry &registry;
+	const fs::path &path;
+	bool reserved = false;
+    };
 };
 
 Workspace::Registry &
@@ -1087,11 +1112,20 @@ Workspace::create(const char *path, const Pack &pack, struct bu_vls *message)
     if (!fs::create_directory(directory, error))
 	return report(message, error ? error.message().c_str() : "The workspace directory already exists");
 
-    // Do not let another local handle open the new environment while
-    // it is being initialized.
-    const std::lock_guard<std::mutex> lock(registry().mutex);
+    const auto canonical = fs::canonical(directory, error);
+    if (error) {
+	remove_workspace_path(directory);
+	return report(message, error.message().c_str());
+    }
+    const Registry::ImportReservation reservation(registry(), canonical);
+    if (!reservation) {
+	remove_workspace_path(canonical);
+	return report(message, "The workspace directory is already in use");
+    }
+
     try {
-	const auto env = open_environment(path, 0, import_map_size(pack));
+	const auto location = canonical.u8string();
+	const auto env = open_environment(location.c_str(), 0, import_map_size(pack));
 	for (;;) {
 	    try {
 		if (import_pack(env.get(), pack, manifest, message))
@@ -1108,9 +1142,9 @@ Workspace::create(const char *path, const Pack &pack, struct bu_vls *message)
     }
     // An interrupted import leaves no committed bootstrap. On a
     // reported failure remove only the files this new store used.
-    remove_workspace_path(directory / "lock.mdb");
-    remove_workspace_path(directory / data_file_name);
-    if (!remove_workspace_path(directory) && message)
+    remove_workspace_path(canonical / "lock.mdb");
+    remove_workspace_path(canonical / data_file_name);
+    if (!remove_workspace_path(canonical) && message)
 	bu_vls_strcat(message, "\nCould not remove the incomplete workspace directory");
     return false;
 }
@@ -1132,15 +1166,19 @@ Workspace::open(const char *path, struct bu_vls *message, bool writable)
 	return nullptr;
     }
     const auto file_size = fs::file_size(canonical / data_file_name, error);
-    if (error || !file_size) {
-	report(message, "The workspace directory has no LMDB data file");
-	return nullptr;
-    }
     // LMDB requires one environment per path in a process. Keep the
     // same handle for readers in all documents using this workspace.
     auto &open = registry();
     const std::lock_guard<std::mutex> lock(open.mutex);
     const auto existing = open.stores.find(canonical);
+    if (existing != open.stores.end() && !existing->second) {
+	report(message, "The workspace is still being initialized");
+	return nullptr;
+    }
+    if (error || !file_size) {
+	report(message, "The workspace directory has no LMDB data file");
+	return nullptr;
+    }
     if (existing != open.stores.end()) {
 	if (writable && !existing->second->writable) {
 	    report(message, "The workspace is open read-only");
@@ -1154,11 +1192,11 @@ Workspace::open(const char *path, struct bu_vls *message, bool writable)
 	// it. Each document handle still enforces its own requested access.
 	Environment env(nullptr, mdb_env_close);
 	bool can_write = true;
-    const auto location = canonical.u8string();
+	const auto location = canonical.u8string();
 	try {
 	    env = open_environment(location.c_str(), 0);
 	} catch (const LmdbError &failure) {
-	if (writable || !can_retry_read_only(failure.code))
+	    if (writable || !can_retry_read_only(failure.code))
 		throw;
 	    env = open_environment(location.c_str(), MDB_RDONLY);
 	    can_write = false;
