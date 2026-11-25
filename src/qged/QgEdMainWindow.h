@@ -109,6 +109,7 @@ class QgEdMainWindow : public QMainWindow
 	void SetupMenu();
 	void UpdateHistoryControls();
 	void RedoHistory();
+	void ShowHistory();
 
 	// Menu actions
 	QAction *cad_open;
@@ -117,6 +118,7 @@ class QgEdMainWindow : public QMainWindow
 	QAction *cad_exit;
 	QAction *history_undo = nullptr;
 	QAction *history_redo = nullptr;
+	QAction *history_view = nullptr;
 	QLabel *history_mode = nullptr;
 
 	// Organizational widget

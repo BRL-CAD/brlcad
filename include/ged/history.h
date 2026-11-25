@@ -76,6 +76,28 @@ struct ged_history_status {
     const struct ged_history_choice *redo;
 };
 
+struct ged_history_revision {
+    const char *id;
+    const char *parent; /**< NULL at a root or retention boundary. */
+    const char *label;
+    int64_t authored;   /**< Seconds since the Unix epoch. */
+    int selected;
+    int retention_boundary;
+};
+
+enum ged_history_change_type {
+    GED_HISTORY_CREATE = 0,
+    GED_HISTORY_DELETE,
+    GED_HISTORY_UPDATE,
+    GED_HISTORY_RENAME
+};
+
+struct ged_history_change {
+    enum ged_history_change_type type;
+    const char *name;
+    const char *new_name; /**< Rename destination, or NULL. */
+};
+
 __BEGIN_DECLS
 
 typedef int (*ged_history_prepare_func_t)(struct ged *, void *);
@@ -105,6 +127,33 @@ ged_history_status_create(struct ged *gedp, struct bu_vls *message);
 
 /** Release an owned status. Accepts NULL. */
 GED_EXPORT extern void ged_history_status_destroy(const struct ged_history_status *status);
+
+typedef int (*ged_history_revision_func_t)(const struct ged_history_revision *, void *);
+typedef int (*ged_history_checkpoint_func_t)(const char *, const char *, void *);
+typedef int (*ged_history_change_func_t)(const struct ged_history_change *, void *);
+
+/**
+ * Visit newest revisions first, optionally filtering on the exact changed
+ * object name. When unfiltered, the optional checkpoint visitor receives
+ * the checkpoint name followed by the revision ID.
+ */
+GED_EXPORT extern int ged_history_visit(struct ged *gedp, const char *object,
+    ged_history_revision_func_t revision, ged_history_checkpoint_func_t checkpoint,
+    void *data, struct bu_vls *message);
+
+/**
+ * Resolve a revision ID or checkpoint name and visit its summary and
+ * changes. Either visitor may be NULL. Rename hints are followed by the
+ * underlying creates, deletes and updates.
+ *
+ * Both visit APIs run on the GED owner's thread. Callback values are valid
+ * for the duration of the callback. Visitors may inspect their values and
+ * must leave GED state alone. Return BRLCAD_OK to continue or BRLCAD_ERROR
+ * to stop. A failed lookup can populate @p message.
+ */
+GED_EXPORT extern int ged_history_visit_revision(struct ged *gedp, const char *id,
+    ged_history_revision_func_t revision, ged_history_change_func_t change,
+    void *data, struct bu_vls *message);
 
 __END_DECLS
 

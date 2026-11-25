@@ -1077,7 +1077,6 @@ DbiState::update_dp(struct directory *dp, int reset)
 	if (color_val){
 	    bu_opt_color(NULL, 1, &color_val, (void *)&c);
 	    cval = color_int(&c);
-	    bu_log("have color: %u\n", cval);
 	}
 
 	std::stringstream s;

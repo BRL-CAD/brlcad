@@ -335,6 +335,9 @@ QgEdMainWindow::SetupMenu()
     cad_open = new QAction("Open", this);
     QObject::connect(cad_open, &QAction::triggered, ((QgEdApp *)qApp), &QgEdApp::open_file);
     file_menu->addAction(cad_open);
+    auto *app = static_cast<QgEdApp *>(qApp);
+    auto *open_workspace = file_menu->addAction(tr("Open Workspace…"));
+    connect(open_workspace, &QAction::triggered, app, &QgEdApp::open_workspace);
 
     cad_save_settings = new QAction("Save Settings", this);
     connect(cad_save_settings, &QAction::triggered, ((QgEdApp *)qApp), &QgEdApp::write_settings);
@@ -358,18 +361,21 @@ QgEdMainWindow::SetupMenu()
     QObject::connect(cad_exit, &QAction::triggered, this, &QgEdMainWindow::close);
     file_menu->addAction(cad_exit);
 
-    auto *app = static_cast<QgEdApp *>(qApp);
     QMenu *edit_menu = menuBar()->addMenu(tr("Edit"));
     history_undo = edit_menu->addAction(tr("Undo"));
     history_redo = edit_menu->addAction(tr("Redo"));
+    edit_menu->addSeparator();
+    history_view = edit_menu->addAction(tr("History…"));
     history_undo->setShortcuts(QKeySequence::Undo);
     history_redo->setShortcuts(QKeySequence::Redo);
     history_undo->setShortcutContext(Qt::WidgetWithChildrenShortcut);
     history_redo->setShortcutContext(Qt::WidgetWithChildrenShortcut);
     history_undo->setEnabled(false);
     history_redo->setEnabled(false);
+    history_view->setEnabled(false);
     connect(history_undo, &QAction::triggered, app, [app]() { app->run_qcmd("db undo"); });
     connect(history_redo, &QAction::triggered, this, &QgEdMainWindow::RedoHistory);
+    connect(history_view, &QAction::triggered, this, &QgEdMainWindow::ShowHistory);
     connect(edit_menu, &QMenu::aboutToShow, this, &QgEdMainWindow::UpdateHistoryControls);
     connect(app, &QgEdApp::history_update, this, &QgEdMainWindow::UpdateHistoryControls);
     connect(app, &QgEdApp::dbi_update, this, &QgEdMainWindow::UpdateHistoryControls);
@@ -394,7 +400,7 @@ QgEdMainWindow::UpdateHistoryControls()
     const std::unique_ptr<const struct ged_history_status, decltype(&ged_history_status_destroy)>
 	status(app->mdl ? ged_history_status_create(app->mdl->gedp, nullptr) : nullptr,
 	    ged_history_status_destroy);
-    const bool writable = status && status->state == GED_HISTORY_CURRENT &&
+    const bool writable = !app->command_pending() && status && status->state == GED_HISTORY_CURRENT &&
 	status->writable && !status->edit_active && !status->staged_conflict;
     const char *undo_label = status ? status->undo.label : nullptr;
     const char *redo_label = nullptr;
@@ -410,6 +416,7 @@ QgEdMainWindow::UpdateHistoryControls()
     history_redo->setText(redo_label ? tr("Redo %1").arg(QString::fromUtf8(redo_label)) : tr("Redo"));
     history_undo->setEnabled(writable && status->undo.revision);
     history_redo->setEnabled(writable && status->redo_count);
+    history_view->setEnabled(status && status->mode != GED_HISTORY_DISABLED);
 
     QString mode;
     if (status) {

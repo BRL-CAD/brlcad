@@ -432,6 +432,15 @@ after each shortcut independently confirmed that the new primitive was
 absent after Undo and present after Redo. A separate GED scene test
 checked that a primitive stays drawn across an attribute edit and Undo,
 and disappears when Undo reaches a model where it does not exist.
+The same QGED shortcuts worked in a workspace imported from all
+21,185 M1917 records. An independent GED process read the restored
+primitive. The supplied DB5 file's size, modification time and file
+identity matched before and after.
+
+QGED's history view listed the selected revision's new primitive.
+Creating a checkpoint and checking out both revisions from that view
+persisted the expected selection and checkpoint. Ctrl+Z in the
+console left the model revision selected.
 
 Classic MGED opened a workspace, made an object, and loaded that object
 through its Tcl database alias after Redo. Opening both an embedded

@@ -61,6 +61,7 @@ class QgEdApp : public QApplication
 
 	int run_cmd(struct bu_vls *msg, int argc, const char **argv);
 	int load_g_file(const char *gfile = NULL, bool do_conversion = true);
+	bool command_pending() const { return !tmp_av.empty(); }
 
 	QgModel *mdl = NULL;
 
@@ -72,6 +73,7 @@ class QgEdApp : public QApplication
         /* Menu slots */
     public slots:
 	void open_file();
+	void open_workspace();
         void write_settings();
 
 	/* GUI/View connection slots */
@@ -101,6 +103,7 @@ class QgEdApp : public QApplication
 	QgEdMainWindow *w = NULL;
 
     private:
+	int open_database(const QString &path);
 	std::vector<char *> tmp_av;
 	unsigned long long select_hash = 0;
 	long history_mark_start = -1;

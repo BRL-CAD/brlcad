@@ -27,6 +27,7 @@
 #include <unordered_set>
 #include <QFileInfo>
 #include <QFile>
+#include <QFileDialog>
 #include <QPlainTextEdit>
 #include <QTextStream>
 #include "bu/malloc.h"
@@ -372,10 +373,21 @@ QgEdApp::open_file()
     load_g_file();
 }
 
+void
+QgEdApp::open_workspace()
+{
+    const QString path = QFileDialog::getExistingDirectory(w, tr("Open Workspace"));
+    if (!path.isEmpty())
+	open_database(path);
+}
+
 int
 QgEdApp::load_g_file(const char *gfile, bool do_conversion)
 {
     QTCAD_SLOT("QgEdApp::load_g_file", 1);
+
+    if (gfile && QFileInfo(QString::fromLocal8Bit(gfile)).isDir())
+	return open_database(QString::fromLocal8Bit(gfile));
 
     QgGeomImport importer((QWidget *)this->w);
     importer.enable_conversion = do_conversion;
@@ -386,13 +398,17 @@ QgEdApp::load_g_file(const char *gfile, bool do_conversion)
 	return BRLCAD_ERROR;
     }
 
-    int ac = 2;
-    const char *av[3];
-    av[0] = "opendb";
-    av[1] = bu_strdup(fileName.toLocal8Bit().data());
-    av[2] = NULL;
-    int ret = mdl->run_cmd(mdl->gedp->ged_result_str, ac, (const char **)av);
-    bu_free((void *)av[1], "filename cpy");
+    return open_database(fileName);
+}
+
+int
+QgEdApp::open_database(const QString &path)
+{
+    const QByteArray filename = path.toLocal8Bit();
+    const char *argv[] = {"opendb", filename.constData()};
+    const int ret = mdl->run_cmd(nullptr, sizeof(argv) / sizeof(argv[0]), argv);
+    if (ret != BRLCAD_OK)
+	w->statusBar()->showMessage(QString::fromUtf8(bu_vls_cstr(mdl->gedp->ged_result_str)));
     return ret;
 }
 
@@ -513,7 +529,6 @@ QgEdApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    if (selection && selection->draw_sync())
 		view_flags |= QG_VIEW_DRAWN;
 	}
-	emit history_update();
     }
 
     if (ret & GED_MORE) {
@@ -543,6 +558,7 @@ QgEdApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	}
     }
 
+    emit history_update();
     // TODO - should be able to emit this regardless - if execution methods
     // are well behaved, they'll just ignore a zero flags value...
     if (view_flags)
