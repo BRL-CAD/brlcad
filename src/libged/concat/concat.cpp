@@ -25,9 +25,12 @@
 
 #include "common.h"
 
+#include <algorithm>
+#include <memory>
 #include <string>
 #include <unordered_set>
 #include <unordered_map>
+#include <vector>
 
 #include <string.h>
 
@@ -35,7 +38,7 @@
 #include "bu/opt.h"
 #include "bu/getopt.h"
 #include "rt/geom.h"
-#include "../../librt/librt_private.h"
+#include "../../librt/db_history_db5.h"
 
 #include "../ged_private.h"
 
@@ -55,6 +58,7 @@ struct ged_concat_data {
     int use_ctbl = 0;
     int use_title = 0;
     int use_units = 0;
+    bool remap_references = false;
     std::unordered_map<std::string, std::string> name_map;
     std::unordered_set<std::string> used_names;
 };
@@ -120,8 +124,7 @@ uniq_name(const char *name, struct ged_concat_data *cc_data)
     // Check the currently proposed name against the target database - if there
     // is no conflict, we're done.
     nname = std::string(bu_vls_cstr(&iname));
-    struct directory *ndp = db_lookup(cc_data->target_dbip, bu_vls_cstr(&iname), LOOKUP_QUIET);
-    if (!ndp) {
+    if (_cc_uniq_test(&iname, cc_data)) {
 	(*name_map)[(name) ? std::string(name) : std::string("UNKNOWN")] = nname;
 	used_names->insert(nname);
 	bu_vls_free(&iname);
@@ -139,8 +142,7 @@ uniq_name(const char *name, struct ged_concat_data *cc_data)
 	} else {
 	    bu_vls_printf(&iname, "%s", cc_data->affix.c_str());
 	}
-	ndp = db_lookup(cc_data->target_dbip, bu_vls_cstr(&iname), LOOKUP_QUIET);
-	if (!ndp) {
+	if (_cc_uniq_test(&iname, cc_data)) {
 	    nname = std::string(bu_vls_cstr(&iname));
 	    (*name_map)[(name) ? std::string(name) : std::string("UNKNOWN")] = nname;
 	    used_names->insert(nname);
@@ -183,26 +185,18 @@ static void
 adjust_names(union tree *trp,
 	struct ged_concat_data *cc_data)
 {
-    /* If we are overwriting conflicts, there's nothing to adjust */
-    if (cc_data->overwrite)
-	return;
-
-    std::string old_name;
-    std::string new_name;
-    std::unordered_map<std::string, std::string> &name_map = cc_data->name_map;
-
     if (trp == NULL)
 	return;
 
     switch (trp->tr_op) {
-	case OP_DB_LEAF:
-	    old_name = std::string(trp->tr_l.tl_name);
-	    new_name = name_map[old_name];
-	    if (old_name != new_name) {
+	case OP_DB_LEAF: {
+	    const auto replacement = cc_data->name_map.find(trp->tr_l.tl_name);
+	    if (replacement != cc_data->name_map.end() && replacement->second != trp->tr_l.tl_name) {
 		bu_free(trp->tr_l.tl_name, "leaf name");
-		trp->tr_l.tl_name = bu_strdup(new_name.c_str());
+		trp->tr_l.tl_name = bu_strdup(replacement->second.c_str());
 	    }
 	    break;
+	}
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
@@ -224,7 +218,10 @@ copy_object(struct ged *gedp,
 	struct directory *input_dp,
 	struct ged_concat_data *cc_data)
 {
-    struct rt_db_internal ip;
+    struct rt_db_internal ip = RT_DB_INTERNAL_INIT_ZERO;
+    const std::unique_ptr<struct rt_db_internal, decltype(&rt_db_free_internal)> internal(&ip, rt_db_free_internal);
+    struct bu_external record = BU_EXTERNAL_INIT_ZERO;
+    const std::unique_ptr<struct bu_external, decltype(&bu_free_external)> external(&record, bu_free_external);
     struct rt_extrude_internal *extr;
     struct rt_dsp_internal *dsp;
     struct rt_comb_internal *comb;
@@ -233,15 +230,23 @@ copy_object(struct ged *gedp,
     struct directory* oride_dp = NULL;
     std::string owrite_backup;
 
-    if (rt_db_get_internal(&ip, input_dp, cc_data->incoming_dbip, NULL) < 0) {
+
+    // Keep the original bytes unless a reference inside the body may change.
+    const auto type = input_dp->d_minor_type;
+    const bool rewrite = cc_data->remap_references && input_dp->d_major_type == DB5_MAJORTYPE_BRLCAD &&
+	(type == DB5_MINORTYPE_BRLCAD_COMBINATION || type == DB5_MINORTYPE_BRLCAD_EXTRUDE ||
+	 type == DB5_MINORTYPE_BRLCAD_REVOLVE || type == DB5_MINORTYPE_BRLCAD_DSP);
+    const int read = rewrite ? rt_db_get_internal(&ip, input_dp, cc_data->incoming_dbip, nullptr) :
+	db_get_external(&record, input_dp, cc_data->incoming_dbip);
+    if (read < 0) {
 	bu_vls_printf(gedp->ged_result_str,
-		"Failed to get internal form of object (%s) - aborting!!!\n",
+		"Failed to read object %s from the incoming database\n",
 		input_dp->d_namep);
 	return BRLCAD_ERROR;
     }
 
     std::string old_name;
-    if (ip.idb_major_type == DB5_MAJORTYPE_BRLCAD) {
+    if (rewrite) {
 	/* adjust names of referenced object in any object that reference other objects */
 	switch (ip.idb_minor_type) {
 	    case DB5_MINORTYPE_BRLCAD_COMBINATION:
@@ -254,11 +259,19 @@ copy_object(struct ged *gedp,
 		RT_EXTRUDE_CK_MAGIC(extr);
 		old_name = std::string(extr->sketch_name);
 		new_name = cc_data->name_map[old_name];
-		if (new_name != old_name) {
+		if (!new_name.empty() && new_name != old_name) {
 		    bu_free(extr->sketch_name, "sketch name");
 		    extr->sketch_name = bu_strdup(new_name.c_str());
 		}
 		break;
+	    case DB5_MINORTYPE_BRLCAD_REVOLVE: {
+		auto *revolve = static_cast<struct rt_revolve_internal *>(ip.idb_ptr);
+		RT_REVOLVE_CK_MAGIC(revolve);
+		const auto replacement = cc_data->name_map.find(bu_vls_cstr(&revolve->sketch_name));
+		if (replacement != cc_data->name_map.end())
+		    bu_vls_strcpy(&revolve->sketch_name, replacement->second.c_str());
+		break;
+	    }
 	    case DB5_MINORTYPE_BRLCAD_DSP:
 		dsp = (struct rt_dsp_internal *)ip.idb_ptr;
 		RT_DSP_CK_MAGIC(dsp);
@@ -289,7 +302,7 @@ copy_object(struct ged *gedp,
     /* if overwriting -
      * move current to temp name before copying to avoid name collisions and data loss */
     if (cc_data->overwrite) {
-	oride_dp = db_lookup(gedp->dbip, input_dp->d_namep, 0);
+	oride_dp = db_lookup(gedp->dbip, input_dp->d_namep, LOOKUP_QUIET);
 	if (oride_dp) { /* obj exists and needs to be moved out of the way */
 	    struct bu_vls bname = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&bname, "%s.bak", input_dp->d_namep);
@@ -299,7 +312,10 @@ copy_object(struct ged *gedp,
 		owrite_backup = std::string(bu_vls_cstr(&bname));
 	    }
 	    bu_vls_free(&bname);
-	    db_rename(cc_data->target_dbip, oride_dp, owrite_backup.c_str());
+	    if (db_rename(cc_data->target_dbip, oride_dp, owrite_backup.c_str()) < 0) {
+		bu_vls_printf(gedp->ged_result_str, "Failed to prepare %s for overwrite\n", input_dp->d_namep);
+		return BRLCAD_ERROR;
+	    }
 	}
     }
 
@@ -315,7 +331,9 @@ copy_object(struct ged *gedp,
      * make sure they match. */
     new_dp->d_major_type = input_dp->d_major_type;
 
-    if (rt_db_put_internal(new_dp, cc_data->target_dbip, &ip) < 0) {
+    const int written = rewrite ? rt_db_put_internal(new_dp, cc_data->target_dbip, &ip) :
+	db_put_external5(&record, new_dp, cc_data->target_dbip);
+    if (written < 0) {
 	bu_vls_printf(gedp->ged_result_str,
 		"Failed to write new object (%s) to database - aborting!!\n",
 		new_name.c_str());
@@ -325,13 +343,13 @@ copy_object(struct ged *gedp,
     /* if overwriting -
      * we've added the new object, its safe to delete the original */
     if (oride_dp) {
-	_dl_eraseAllNamesFromDisplay(gedp, owrite_backup.c_str(), 0);
+	if (!ged_db_history_staged(gedp))
+	    _dl_eraseAllNamesFromDisplay(gedp, owrite_backup.c_str(), 0);
 	if (db_delete(gedp->dbip, oride_dp) != 0 || db_dirdelete(gedp->dbip, oride_dp) != 0) {
 	    /* Abort processing on first error */
 	    bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s\n", owrite_backup.c_str());
 	    return BRLCAD_ERROR;
 	}
-	db_update_nref(gedp->dbip);
 	cc_data->overwritten++;
     }
 
@@ -363,8 +381,11 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
-    /* skip command name argv[0] */
-    argc-=(argc>0); argv+=(argc>0);
+    // Option parsing reorders arguments. Leave the caller's batch list intact.
+    std::vector<const char *> options(argv + 1, argv + argc);
+    options.push_back(nullptr);
+    argc--;
+    argv = options.data();
 
     /* Make sure we're v5 */
     if (db_version(gedp->dbip) < 5) {
@@ -395,16 +416,26 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Open the incoming .g file */
     const char *incoming_file = argv[0];
-    if ((cc_data.incoming_dbip = db_open(incoming_file, DB_OPEN_READONLY)) == DBI_NULL) {
+    const std::unique_ptr<struct db_i, decltype(&db_close)> incoming(db_open(incoming_file, DB_OPEN_READONLY), db_close);
+    if (!incoming) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Can't open geometry database file %s", commandName, incoming_file);
 	return BRLCAD_ERROR;
     }
+    cc_data.incoming_dbip = incoming.get();
     if (db_version(cc_data.incoming_dbip) != db_version(gedp->dbip)) {
 	bu_vls_printf(gedp->ged_result_str, "%s: databases are incompatible, use dbupgrade on %s first", commandName, incoming_file);
 	return BRLCAD_ERROR;
     }
 
-    db_dirbuild(cc_data.incoming_dbip);
+    if (db_dirbuild(cc_data.incoming_dbip) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "%s: Can't read the directory from %s", commandName, incoming_file);
+	return BRLCAD_ERROR;
+    }
+
+    const auto archive_status = db_history::inspect_db5_history(cc_data.incoming_dbip);
+    const auto *archive = archive_status == db_history::EmbeddedStatus::Missing ||
+	archive_status == db_history::EmbeddedStatus::Collision ? nullptr :
+	db_lookup(cc_data.incoming_dbip, db_history::archive_name, LOOKUP_QUIET);
 
     // If we have an affix, set it
     if (argc > 1)
@@ -419,14 +450,18 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
     // database.  In case of any collisions, generate a new unique name based
     // on the options.  If we can't do this successfully, we can't concat the
     // databases - do it before making any data changes.
-    FOR_ALL_DIRECTORY_START(dp, cc_data.incoming_dbip) {
-	if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY)
-	    continue;
-	if (uniq_name(dp->d_namep, &cc_data) != BRLCAD_OK) {
-	    bu_vls_printf(gedp->ged_result_str, "Name mapping failed for %s, aborting", dp->d_namep);
-	    return BRLCAD_ERROR;
-	}
-    } FOR_ALL_DIRECTORY_END;
+    if (!cc_data.overwrite) {
+	FOR_ALL_DIRECTORY_START(dp, cc_data.incoming_dbip) {
+	    if (dp == archive || dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY)
+		continue;
+	    if (uniq_name(dp->d_namep, &cc_data) != BRLCAD_OK) {
+		bu_vls_printf(gedp->ged_result_str, "Name mapping failed for %s, aborting", dp->d_namep);
+		return BRLCAD_ERROR;
+	    }
+	} FOR_ALL_DIRECTORY_END;
+	cc_data.remap_references = std::any_of(cc_data.name_map.begin(), cc_data.name_map.end(),
+	    [](const auto &entry) { return entry.first != entry.second; });
+    }
 
 
     /* Handle the metadata options first */
@@ -456,8 +491,8 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	if (cc_data.use_ctbl) {
 	    struct bu_attribute_value_set g_avs = BU_AVS_INIT_ZERO;
-	    db5_get_attributes(i_dbip, &g_avs, iglobal_dp);
-	    const char *cp = bu_avs_get(&g_avs, "regionid_colortable");
+	    const char *cp = db5_get_attributes(i_dbip, &g_avs, iglobal_dp) == 0 ?
+		bu_avs_get(&g_avs, "regionid_colortable") : nullptr;
 	    if (!cp) {
 		bu_vls_printf(gedp->ged_result_str, "%s: Can't get regionid_colortable from %s", commandName, i_fname);
 		bu_avs_free(&g_avs);
@@ -465,27 +500,28 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    char *colorTab = bu_strdup(cp);
 	    struct bu_attribute_value_set t_avs = BU_AVS_INIT_ZERO;
-	    db5_get_attributes(t_dbip, &t_avs, tglobal_dp);
+	    bu_avs_init_empty(&t_avs);
 	    bu_avs_add(&t_avs, "regionid_colortable", colorTab);
-	    db5_import_color_table(gedp->dbip, colorTab);
-	    db5_update_attributes(tglobal_dp, &t_avs, gedp->dbip);
+	    const int updated = db5_update_attributes(tglobal_dp, &t_avs, gedp->dbip);
+	    if (updated == 0)
+		db5_import_color_table(gedp->dbip, colorTab);
 	    bu_free(colorTab, "colorTab");
 	    bu_avs_free(&g_avs);
 	    bu_avs_free(&t_avs);
+	    if (updated < 0) {
+		bu_vls_printf(gedp->ged_result_str, "%s: Can't update regionid_colortable in %s", commandName, t_fname);
+		return BRLCAD_ERROR;
+	    }
 	}
     }
 
     /* copy each directory pointer in the input database */
     FOR_ALL_DIRECTORY_START(dp, cc_data.incoming_dbip) {
-	if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY)
+	if (dp == archive || dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY)
 	    continue;
-	copy_object(gedp, dp, &cc_data);
+	if (copy_object(gedp, dp, &cc_data) != BRLCAD_OK)
+	    return BRLCAD_ERROR;
     } FOR_ALL_DIRECTORY_END;
-
-    rt_mempurge(&(cc_data.incoming_dbip->i->dbi_freep));
-
-    /* Free all the directory entries, and close the incoming database */
-    db_close(cc_data.incoming_dbip);
 
     if (cc_data.overwrite) {
 	bu_vls_printf(gedp->ged_result_str, "    [%ld] objects overwritten", cc_data.overwritten);

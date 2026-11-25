@@ -483,7 +483,17 @@ the resulting sketch created one revision. A separate DB5 reader
 confirmed that Undo removed the sketch and Redo restored it. The GED
 scene regression renamed a sketch with its combination reference,
 preserved unrelated attributes, and restored the original reference in
-one Undo.
+one Undo. The same mouse-release, Undo and Redo sequence passed in the
+M1917 workspace.
+
+The concat regression imported geometry from an embedded DB5 file,
+skipped its history archive, and checked that an injected second write
+failure left the destination unchanged. On the M1917 copy, importing
+21,184 non-global objects with a name prefix into an LMDB workspace
+took 32.7 seconds with direct DB5 record copies, compared with 84.4
+seconds when all objects were reserialized. Workspace verification
+passed. One Undo removed the import in 0.4 seconds, and Redo restored
+the object counts in 0.6 seconds.
 
 Implementation starting points in the source tree
 -------------------------------------------------

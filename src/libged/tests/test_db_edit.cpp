@@ -730,6 +730,67 @@ test_atomic_batch()
     return 0;
 }
 
+static int
+test_history_concat()
+{
+    char source_path[MAXPATHLEN] = {};
+    FILE *source_file = bu_temp_file(source_path, sizeof(source_path));
+    CHECK(source_file && fclose(source_file) == 0);
+    auto *source_db = db_create(source_path, 5);
+    CHECK(source_db);
+    db_close(source_db);
+    const char *enable[] = {"db", "history", "enable", "embedded", nullptr};
+    {
+	const std::unique_ptr<struct ged, decltype(&ged_close)> source(ged_open("db", source_path, 1), ged_close);
+	CHECK(source);
+	const char *make[] = {"make", "body.s", "sph", nullptr};
+	const char *group[] = {"g", "assembly.c", "body.s", nullptr};
+	CHECK(run(source.get(), make) == BRLCAD_OK && run(source.get(), group) == BRLCAD_OK);
+	const int enabled = run(source.get(), enable);
+	if (enabled != BRLCAD_OK && contains_result(source.get(), "Atomic DB5 replacement is unavailable"))
+	    return 0;
+	CHECK(enabled == BRLCAD_OK);
+    }
+
+    char target_path[MAXPATHLEN] = {};
+    FILE *target_file = bu_temp_file(target_path, sizeof(target_path));
+    CHECK(target_file && fclose(target_file) == 0);
+    auto *target_db = db_create(target_path, 5);
+    CHECK(target_db);
+    db_close(target_db);
+    const std::unique_ptr<struct ged, decltype(&ged_close)> owner(ged_open("db", target_path, 1), ged_close);
+    auto *gedp = owner.get();
+    CHECK(gedp && run(gedp, enable) == BRLCAD_OK);
+    const auto root = selected_id(gedp);
+    CHECK(!root.empty());
+
+    const char *concat[] = {"concat", source_path, "imported_", nullptr};
+    int staged_writes = 0;
+    CHECK(ged_clbk_set(gedp, "concat", BU_CLBK_PRE, fail_staged_edit, &staged_writes) == BRLCAD_OK);
+    CHECK(run(gedp, concat) != BRLCAD_OK && staged_writes == 1 && selected_id(gedp) == root);
+    CHECK(!db_lookup(gedp->dbip, "imported_body.s", LOOKUP_QUIET) &&
+	!db_lookup(gedp->dbip, "imported_assembly.c", LOOKUP_QUIET));
+    CHECK(ged_clbk_set(gedp, "concat", BU_CLBK_PRE, nullptr, nullptr) == GED_OVERRIDE);
+
+    int commits = 0;
+    CHECK(ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE, count_commit, &commits));
+    CHECK(run(gedp, concat) == BRLCAD_OK && commits == 1);
+    const auto tip = selected_id(gedp);
+    auto *body = db_lookup(gedp->dbip, "imported_body.s", LOOKUP_QUIET);
+    auto *assembly = db_lookup(gedp->dbip, "imported_assembly.c", LOOKUP_QUIET);
+    CHECK(!tip.empty() && tip != root && body && assembly &&
+	db_comb_has_instance(nullptr, gedp->dbip, assembly, body, 0));
+    CHECK(!db_lookup(gedp->dbip, "imported__BRLCAD_HISTORY", LOOKUP_QUIET));
+
+    const char *undo[] = {"db", "undo", nullptr};
+    const char *redo[] = {"db", "redo", nullptr};
+    CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == root &&
+	!db_lookup(gedp->dbip, "imported_body.s", LOOKUP_QUIET));
+    CHECK(run(gedp, redo) == BRLCAD_OK && selected_id(gedp) == tip &&
+	db_lookup(gedp->dbip, "imported_body.s", LOOKUP_QUIET));
+    return 0;
+}
+
 
 int
 main(int argc, const char *argv[])
@@ -815,7 +876,10 @@ main(int argc, const char *argv[])
     if (promotion_status)
 	return promotion_status;
     const int batch_status = test_atomic_batch();
-    return batch_status ? batch_status : test_workspace_history();
+    if (batch_status)
+	return batch_status;
+    const int concat_status = test_history_concat();
+    return concat_status ? concat_status : test_workspace_history();
 }
 
 // Local Variables:

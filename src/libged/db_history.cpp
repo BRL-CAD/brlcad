@@ -157,8 +157,8 @@ permitted_edit(std::string_view command, int argc, const char **argv)
 	return argc > 1;
     if (command == "attr")
 	return argc > 1 && one_of(argv[1], {"append", "copy", "rm", "set"});
-    return one_of(command, {"adjust", "cp", "g", "hide", "in", "kill", "make",
-	"mv", "mvall", "put", "unhide"});
+    return one_of(command, {"adjust", "concat", "cp", "dbconcat", "g", "hide", "in",
+	"kill", "make", "mv", "mvall", "put", "unhide"});
 }
 
 bool

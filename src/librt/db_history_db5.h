@@ -101,7 +101,7 @@ RT_EXPORT bool read_published_db5_history(const struct db_i *db, const Id &expec
 // compare exactly the same model representations.
 bool selected_manifest(const Pack &pack, Manifest &manifest);
 bool add_model_record(Manifest &manifest, std::string_view name, ByteView record);
-EmbeddedStatus inspect_db5_history(const struct db_i *db);
+RT_EXPORT EmbeddedStatus inspect_db5_history(const struct db_i *db);
 
 // Atomically stream a complete DB5 snapshot and replace or append its
 // recognized history archive. Both the pack and its borrowed payloads

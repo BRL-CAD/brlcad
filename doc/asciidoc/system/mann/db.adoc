@@ -29,7 +29,7 @@ Closes the previously opened database and deletes the associated command.
 
 
 _concat_ [-h] [-t] [-u] [-c] [-s|-p] [-L] [-O] {database_file} [affix]::
-Concatenates an existing BRL-CAD database to the database currently being edited.
+Import the objects in the source database's selected model, with optional naming adjustments. The destination keeps its own history. When history is enabled, the import and any requested metadata changes publish as one undoable operation.
 
 
 _find_ [-a] <objects>::
@@ -45,11 +45,11 @@ Returns information about the primitive shape at the end of the __shape_or_path_
 
 
 __history enable session [bytes]__::
-Start history for the open writable DB5 file. This mode currently requires a headless GED context such as `gsh` on a platform that supports atomic replacement. It supports a limited set of editing commands, including `make`, `adjust`, `mvall`, and `title`. Edits save to the file as they complete, and closing the database discards the undo journal. The default journal limit is 64 MiB. When older revisions reach the limit, history may prune them. An individual edit beyond the limit fails before saving.
+Start history for the open writable DB5 file on a platform that supports atomic replacement. Supported editing commands include `make`, `adjust`, `mvall`, `concat`, and `title`. Edits save to the file as they complete, and closing the database discards the undo journal. The default journal limit is 64 MiB. When older revisions reach the limit, history may prune them. An individual edit beyond the limit fails before saving.
 
 
 __history enable [embedded]__::
-Persist history in the open writable DB5 file. The file stores its selected model and history together, and reopening loads the saved history automatically. A session journal, if present, is promoted with its retained branches and redo choices. Embedded editing currently uses the same headless GED context and commands as session history.
+Persist history in the open writable DB5 file. The file stores its selected model and history together, and reopening loads the saved history automatically. A session journal, if present, is promoted with its retained branches and redo choices. MGED records accepted edits, and QGED provides Undo, Redo, and revision inspection in the Edit menu.
 
 
 __history status [--json]__::
@@ -59,7 +59,7 @@ Use `--json` for a structured status object with schema version 1. Revision IDs 
 
 
 __history workspace directory__::
-Create a durable workspace in a new directory and switch to it. The workspace imports the open DB5 model and any retained session or embedded history. Subsequent edits save to the workspace. Reopen it with `db open directory`. The source file remains available. Run this command with the open workspace's path to report its status, or specify a new directory to copy it. Workspace editing currently uses the same headless GED context and commands as embedded history.
+Create a durable workspace in a new directory and switch to it. The workspace imports the open DB5 model and any retained session or embedded history. Subsequent edits save to the workspace. Reopen it with `db open directory`. The source file remains available. Run this command with the open workspace's path to report its status, or specify a new directory to copy it.
 
 
 __history log [--object name]__::
@@ -104,8 +104,16 @@ __history adopt [--apply]__::
 Preview live DB5 records changed by an external writer. `--apply` records those changes as one revision whose parent is the archived selection. Adoption requires a writable database and an intact archive. Undo restores the archived model that preceded the external edits.
 
 
+__history batch label commands__::
+Run a Tcl list of GED argument lists as one edit. A command failure or a request for interactive input aborts the batch. For example, `db history batch {Create assembly} {{make body.s sph} {g assembly.c body.s}}` creates a primitive and its group in one revision.
+
+
 __match [regular_exp]__::
 Returns a list of all objects in that database that match the list of regular expressions.
+
+
+__open [-r] path__::
+Open a DB5 file or a workspace directory. Use `-r` to inspect, compare, or export revisions with read-only access.
 
 
 __put shape_name shape_type attributes__::
