@@ -186,8 +186,9 @@ value is the object or revision ID followed by the original name.
 Compare the original name on lookup. A name conflict under the same
 hash is an error. In `preferences`, a parent revision ID maps to its
 preferred child ID. In `boundaries`, the key is the boundary revision
-ID and the value is empty. Import publishes these tables and the
-bootstrap in one transaction after verifying the source archive.
+ID and the value is empty. Import verifies the copied archive and
+directory in the transaction that publishes these tables and the
+bootstrap.
 
 An edit compares its expected revision, model and generation with the
 current head in the write transaction. It records the new artifacts,
@@ -196,6 +197,13 @@ advances the generation together with the selected head. Checkout
 reconstructs the target from the nearest stored manifest when needed,
 advances the generation on a selection change, and records the redo
 preference when moving between a parent and child.
+Creating or moving a mark compares the same generation and publishes
+the new name or target with an advanced generation.
+
+An optional `last_export` key in the unnamed database holds the ID of
+the last successfully exported revision recorded by a writable
+workspace handle. This observation leaves the modeling generation
+unchanged.
 
 Independent identity vectors
 ----------------------------

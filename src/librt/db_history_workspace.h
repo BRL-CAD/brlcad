@@ -22,11 +22,14 @@
 
 #include <memory>
 
+#include "rt/db_io.h"
 #include "db_history_codec.h"
 
 struct db_i;
 
 namespace db_history {
+
+struct Db5HistoryDraft;
 
 struct WorkspaceHead {
     Id revision = absent;
@@ -49,6 +52,8 @@ public:
     // Open an ordinary librt database view pinned to one workspace head.
     // The view owns its workspace reader until db_close.
     static RT_EXPORT struct db_i *open_snapshot(const char *path, WorkspaceHead &head, struct bu_vls *message);
+    // The manifest belongs to the pinned database view.
+    static RT_EXPORT const Manifest *snapshot_model(const struct db_i *db, WorkspaceHead *head = nullptr);
     RT_EXPORT ~Workspace();
     Workspace(const Workspace &) = delete;
     Workspace &operator=(const Workspace &) = delete;
@@ -61,6 +66,16 @@ public:
     RT_EXPORT bool fetch_artifact(const ArtifactKey &key, Bytes &payload, struct bu_vls *message) const;
     RT_EXPORT bool fetch_record(const Id &id, Bytes &record, struct bu_vls *message) const;
     bool read_record(const Id &id, void *record, size_t size) const;
+    // Read graph metadata and owned revision payloads for inspection.
+    // The result omits model snapshots, descriptors and bodies.
+    RT_EXPORT bool read_graph(const WorkspaceHead &view, WorkspaceHead &current,
+	Db5HistoryDraft &result, struct bu_vls *message, Id *last_export = nullptr) const;
+    RT_EXPORT bool read_model_at(const Id &revision, Manifest &model, struct bu_vls *message) const;
+    RT_EXPORT bool copy_to(const WorkspaceHead &view, const char *destination, struct bu_vls *message) const;
+    RT_EXPORT enum db5_save_result export_snapshot(const struct db_i *view, const char *destination,
+	bool with_history, struct bu_vls *message) const;
+    RT_EXPORT bool verify(struct bu_vls *message) const;
+    RT_EXPORT bool record_export(const Id &revision, struct bu_vls *message);
 
     // The caller keeps its staged edit on failure. On success or a stale
     // base, actual receives the authoritative head from the transaction.
@@ -68,6 +83,8 @@ public:
     RT_EXPORT WorkspaceWriteStatus commit(const WorkspaceHead &expected, const Revision &revision,
 	const ArtifactIndex &artifacts, WorkspaceHead &actual, struct bu_vls *message);
     RT_EXPORT WorkspaceWriteStatus checkout(const WorkspaceHead &expected, const Id &revision,
+	WorkspaceHead &actual, struct bu_vls *message);
+    RT_EXPORT WorkspaceWriteStatus mark(const WorkspaceHead &expected, std::string_view name, bool move,
 	WorkspaceHead &actual, struct bu_vls *message);
 
 private:

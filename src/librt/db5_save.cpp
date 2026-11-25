@@ -157,7 +157,7 @@ unchanged(const struct db5_save *save, int descriptor)
 
 bool
 write_snapshot(FILE *file, const struct db_i *snapshot, const db_history::Pack *pack,
-	      bool omit_archive, struct bu_vls *message)
+	      bool omit_archive, struct bu_vls *message, const db_history::SnapshotRecordReader &reader = {})
 {
     db_history::Manifest expected;
     if (pack && !db_history::selected_manifest(*pack, expected)) {
@@ -175,7 +175,7 @@ write_snapshot(FILE *file, const struct db_i *snapshot, const db_history::Pack *
 	    continue;
 
 	struct bu_external record = BU_EXTERNAL_INIT_ZERO;
-	if (db_get_external(&record, dp, snapshot) < 0)
+	if (reader ? !reader(dp, &record) : db_get_external(&record, dp, snapshot) < 0)
 	    return false;
 
 	struct db5_raw_internal raw;
@@ -391,6 +391,13 @@ enum db5_save_result
 db_history::export_db5_snapshot(const struct db_i *snapshot, const char *destination,
 			      const Pack *pack, struct bu_vls *message)
 {
+    return export_db5_snapshot(snapshot, destination, pack, message, {});
+}
+
+enum db5_save_result
+db_history::export_db5_snapshot(const struct db_i *snapshot, const char *destination,
+			       const Pack *pack, struct bu_vls *message, const SnapshotRecordReader &reader)
+{
     db5_save_message(message, "");
 #ifdef DB5_ATOMIC_REPLACEMENT
     if (!snapshot || db_version(snapshot) != 5 || !destination || !*destination) {
@@ -426,7 +433,7 @@ db_history::export_db5_snapshot(const struct db_i *snapshot, const char *destina
 	}
     }
     TemporarySnapshot temporary(directory);
-    if (!temporary.file || !write_snapshot(temporary.file, snapshot, pack, true, message) || !temporary.finish()) {
+    if (!temporary.file || !write_snapshot(temporary.file, snapshot, pack, true, message, reader) || !temporary.finish()) {
 	if (message && !bu_vls_strlen(message))
 	    db5_save_message(message, "Could not write and synchronize the DB5 export");
 	return DB5_SAVE_ERROR;
@@ -469,6 +476,7 @@ db_history::export_db5_snapshot(const struct db_i *snapshot, const char *destina
     (void)snapshot;
     (void)destination;
     (void)pack;
+    (void)reader;
     db5_save_message(message, "Atomic DB5 export is unavailable on this platform");
     return DB5_SAVE_ERROR;
 #endif

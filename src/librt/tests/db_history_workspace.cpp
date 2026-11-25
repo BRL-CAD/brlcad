@@ -19,6 +19,7 @@
  */
 #include "common.h"
 
+#include <algorithm>
 #include <filesystem>
 #include <memory>
 #include <string>
@@ -321,6 +322,13 @@ static int
 test_workspace(const std::string &path, const Pack &pack, const Manifest &expected,
 	       const std::string &name, const Bytes &expected_record, struct bu_vls *message)
 {
+    Pack incomplete = pack;
+    const auto body = std::find_if(incomplete.artifacts.begin(), incomplete.artifacts.end(),
+	[](const auto &item) { return item.first.first == Kind::Body; });
+    CHECK(body != incomplete.artifacts.end());
+    incomplete.artifacts.erase(body);
+    const auto invalid = path + "-incomplete";
+    CHECK(!Workspace::create(invalid.c_str(), incomplete, message) && !std::filesystem::exists(invalid));
     CHECK(Workspace::create(path.c_str(), pack, message));
     CHECK(!Workspace::create(path.c_str(), pack, message));
     auto workspace = Workspace::open(path.c_str(), message);

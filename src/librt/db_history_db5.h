@@ -110,6 +110,12 @@ RT_EXPORT bool db5_history_save_is_current(const struct db5_save *save);
 RT_EXPORT enum db5_save_result export_db5_snapshot(const struct db_i *snapshot,
 	const char *destination, const Pack *pack, struct bu_vls *message);
 
+// A workspace supplies records from the same read transaction as its pack.
+// The reader returns an owned external record, as db_get_external does.
+using SnapshotRecordReader = std::function<bool(const struct directory *, struct bu_external *)>;
+enum db5_save_result export_db5_snapshot(const struct db_i *snapshot, const char *destination,
+	const Pack *pack, struct bu_vls *message, const SnapshotRecordReader &reader);
+
 } // namespace db_history
 
 #endif /* LIBRT_DB_HISTORY_DB5_H */
