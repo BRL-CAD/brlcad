@@ -130,7 +130,7 @@ wdb_export_external_impl(
     RT_CK_WDB(wdbp);
     BU_CK_EXTERNAL(ep);
 
-    if (wdbp->dbip->i->dbi_edit && wdbp->dbip->dbi_read_only)
+    if (wdbp->dbip->i->dbi_edit_guard || (wdbp->dbip->i->dbi_edit && wdbp->dbip->dbi_read_only))
 	return -5;
 
     /* Stash name into external representation */

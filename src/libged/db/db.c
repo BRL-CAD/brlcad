@@ -353,6 +353,22 @@ _db_cmd_forward(void *bs, const char *target, int argc, const char **argv)
 
 DB_FORWARD_COMMANDS(DB_DECLARE_FORWARD)
 
+#define DB_HISTORY_COMMANDS(X) \
+    X(history, "status | enable session [bytes] | checkout <revision>", "Manage database history.") \
+    X(undo, "", "Restore the parent revision.") \
+    X(redo, "[revision]", "Restore a child revision.")
+
+#define DB_DECLARE_HISTORY(_name, _usage, _purpose) \
+    static int _db_cmd_ ## _name(void *bs, int argc, const char **argv) \
+    { \
+	struct _ged_db_info *gd = (struct _ged_db_info *)bs; \
+	if (_db_cmd_msgs(bs, argc, argv, "db " #_name " " _usage, _purpose)) \
+	    return GED_HELP; \
+	return ged_db_history_command(gd->gedp, argc, argv); \
+    }
+
+DB_HISTORY_COMMANDS(DB_DECLARE_HISTORY)
+#undef DB_DECLARE_HISTORY
 
 static const struct bu_cmdtab _db_cmds[] = {
 #define DB_TABLE_FORWARD(_name, _target) {#_name, _db_cmd_ ## _name},
@@ -360,6 +376,9 @@ static const struct bu_cmdtab _db_cmds[] = {
 #undef DB_TABLE_FORWARD
     {"find", _db_cmd_find},
     {"version", _db_cmd_version},
+#define DB_TABLE_HISTORY(_name, _usage, _purpose) {#_name, _db_cmd_ ## _name},
+    DB_HISTORY_COMMANDS(DB_TABLE_HISTORY)
+#undef DB_TABLE_HISTORY
     {NULL, NULL}
 };
 

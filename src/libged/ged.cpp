@@ -478,6 +478,7 @@ ged_close(struct ged *gedp)
     /* Children and their callbacks must quiesce before either displayed
      * resources or the database they reference are dismantled. */
     ged_subprocesses_terminate(gedp);
+    ged_db_history_reset(gedp);
     ged_edit_sessions_close_private(gedp);
     ged_dbi_state_destroy_private(gedp);
 
@@ -522,6 +523,7 @@ ged_init(struct ged *gedp)
     gedp->i->ged_event_servicep = ged_event_service_create(gedp);
     gedp->i->ged_db_indexp = ged_db_index_create(gedp);
     gedp->i->ged_selection_statep = ged_selection_state_create(gedp);
+    gedp->i->db_history = NULL;
 
     gedp->dbip = NULL;
     gedp->u_data = NULL;
@@ -622,6 +624,7 @@ ged_free(struct ged *gedp)
     if (!gedp)
 	return;
 
+    ged_db_history_reset(gedp);
     ged_edit_sessions_close_private(gedp);
     ged_dbi_state_destroy_private(gedp);
 

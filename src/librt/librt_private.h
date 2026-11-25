@@ -102,6 +102,7 @@ struct db_i_internal {
     struct bu_ptbl dbi_update_nref_clbks; /**< @brief dbi_update_nref_t callbacks */
     int dbi_use_comb_instance_ids;        /**< @brief flag for comb instance tracking */
     struct db_edit *dbi_edit;             /**< @brief staged DB5 view and retained base */
+    int dbi_edit_guard;                  /**< @brief refuse direct writes to a live session database */
 
     struct directory *dbi_directory_hd;         /**< @brief directory entry freelist */
     struct bu_ptbl   dbi_directory_blocks;      /**< @brief Table of malloc'ed blocks */

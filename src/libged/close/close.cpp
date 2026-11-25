@@ -40,6 +40,8 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
     if (!gedp || !gedp->dbip)
 	return BRLCAD_OK;
 
+    ged_db_history_reset(gedp);
+
     /* set result while we still have the info */
     bu_vls_sprintf(gedp->ged_result_str, "closed %s", gedp->dbip->dbi_filename);
 

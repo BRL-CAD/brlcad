@@ -139,7 +139,7 @@ db_delete(struct db_i *dbip, struct directory *dp)
     if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db_delete(%s) %p, %p\n",
 				    dp->d_namep, (void *)dbip, (void *)dp);
 
-    if (dbip->i->dbi_edit && dbip->dbi_read_only)
+    if (dbip->i->dbi_edit_guard || (dbip->i->dbi_edit && dbip->dbi_read_only))
 	return -1;
     if (db_edit_detach_record(dbip, dp)) {
 	db_edit_record_change(dbip, dp->d_namep);

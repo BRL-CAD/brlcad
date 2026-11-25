@@ -44,6 +44,18 @@ __get shape_or_path [attribute]__::
 Returns information about the primitive shape at the end of the __shape_or_path__. If a path is specified, the transformation matrices encountered along that path will be accumulated and applied to the leaf shape before displaying the information. If no _attribute_ is specified, all the details about the shape are returned. If a specific _attribute_ is listed, then only that information is returned.
 
 
+__history enable session [bytes]__::
+Start history for the open writable DB5 file. This mode currently requires a headless GED context such as `gsh` on a platform that supports atomic replacement. It supports a limited set of editing commands, including `make`, `adjust`, `mvall`, and `title`. Edits save to the file as they complete, and closing the database discards the undo journal. The default journal limit is 64 MiB. When older revisions reach the limit, history may prune them. An individual edit beyond the limit fails before saving.
+
+
+__history status__::
+Report whether history is enabled. For session history, report the selected and oldest retained revisions, journal usage, and available undo and redo operations.
+
+
+__history checkout revision__::
+Restore the database to any retained session revision. Use `db history status` to see the selected revision and its immediate redo choices.
+
+
 __match [regular_exp]__::
 Returns a list of all objects in that database that match the list of regular expressions.
 
@@ -52,8 +64,16 @@ __put shape_name shape_type attributes__::
 Creates shape named __shape_name__ of type __shape_type__ with attributes as listed in _attributes_. The arguments to the _put_ command are the same as those returned by the _get_ command.
 
 
+__redo [revision]__::
+Restore a retained child of the selected revision. After Undo, Redo defaults to the child just left. Supply a revision when choosing among several branches.
+
+
 _tops_::
 Returns all top-level objects.
+
+
+_undo_::
+Restore the parent of the selected revision, including every object changed by that modeling operation.
 
 
 _version_::

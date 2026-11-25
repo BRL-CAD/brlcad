@@ -205,6 +205,7 @@ struct ged_impl {
     struct ged_db_index *ged_db_indexp;
     struct ged_event_service *ged_event_servicep;
     struct ged_selection_state *ged_selection_statep;
+    struct ged_db_history *db_history;
 };
 
 __BEGIN_DECLS
@@ -225,6 +226,14 @@ void ged_selection_presenter_set_private(struct ged *gedp,
 void ged_selection_presenter_clear_private(struct ged *gedp,
 	ged_selection_present_func_t present, void *client_data);
 void ged_event_database_set_private(struct ged *gedp, struct db_i *dbip);
+void ged_event_stage_private(struct ged *gedp, int staged);
+void ged_db_history_reset(struct ged *gedp);
+int ged_db_history_enter(struct ged *gedp, const char *command, int argc,
+			 const char **argv, struct db_edit **edit);
+int ged_db_history_leave(struct ged *gedp, struct db_edit *edit, int result);
+
+/* Called by the db command plugin. */
+GED_EXPORT int ged_db_history_command(struct ged *gedp, int argc, const char **argv);
 
 #ifndef FALSE
 #  define FALSE 0

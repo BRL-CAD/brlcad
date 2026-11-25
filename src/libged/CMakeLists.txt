@@ -335,6 +335,7 @@ set(
   columns.c
   db_change.cpp
   db_index.cpp
+  db_history.cpp
   dbi_state.cpp
   display_list.c
   draw.cpp

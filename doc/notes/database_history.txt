@@ -193,9 +193,12 @@ There is no dependency on its checkout, SQLite schema or merge engine.
 
 For a linear run of body edits, a reverse delta can reconstruct an
 older body from a newer body. Keep a verified full base in the archive
-so a legacy edit of the live geometry cannot break replay. Limit the
-number of deltas required to reconstruct any body. A branch can share
-any reachable base if the encoding preserves a bounded, acyclic graph.
+so a legacy edit of the live geometry cannot break replay. The live
+model may be an older revision after Undo or Checkout. Changing the
+selected revision changes what the .g exposes and leaves the archive's
+delta bases intact. Limit the number of deltas needed to reconstruct
+any body. A branch can share any reachable base if the encoding
+preserves a bounded, acyclic graph.
 Compare full compressed bodies, chunk sharing and Fossil copy/literal
 deltas on localized vertex edits, remeshing and repeated BREP exports.
 For DSP and VOL, measure the referenced database binary object. The

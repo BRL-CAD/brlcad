@@ -179,7 +179,7 @@ db_diradd5(
 
     RT_CK_DBI(dbip);
 
-    if (dbip->i->dbi_edit && dbip->dbi_read_only)
+    if (dbip->i->dbi_edit_guard || (dbip->i->dbi_edit && dbip->dbi_read_only))
 	return RT_DIR_NULL;
 
     bu_vls_strcpy(&local, name);
@@ -255,6 +255,9 @@ db5_diradd(struct db_i *dbip,
     struct bu_vls local = BU_VLS_INIT_ZERO;
 
     RT_CK_DBI(dbip);
+
+    if (dbip->i->dbi_edit_guard || (dbip->i->dbi_edit && dbip->dbi_read_only))
+	return RT_DIR_NULL;
 
     bu_vls_strcpy(&local, (const char *)rip->name.ext_buf);
     if (db_dircheck(dbip, &local, 0, &headp) < 0) {

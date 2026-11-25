@@ -253,7 +253,6 @@ class GshState {
 	DisplayHash prev_hash;
 
 	struct ged *gedp;
-	std::string gfile;  // Mostly used to test the post_opendb callback
 	bool new_cmd_forms = false;  // Set if we're testing QGED style commands
     private:
 	// Active listeners
@@ -261,36 +260,6 @@ class GshState {
 	std::mutex listeners_lock;
 
 };
-
-/* For gsh these are mostly no-op, but define placeholder functions in case we
- * need pre or post actions for database ops in the future. */
-extern "C" int
-gsh_pre_opendb_clbk(int UNUSED(argc), const char **UNUSED(argv), void *UNUSED(gedp), void *UNUSED(ctx))
-{
-    return BRLCAD_OK;
-}
-
-extern "C" int
-gsh_post_opendb_clbk(int UNUSED(argc), const char **UNUSED(argv), void *UNUSED(gedp), void *ctx)
-{
-    GshState *s = (GshState *)ctx;
-    if (!s->gedp->dbip)
-	return BRLCAD_OK;
-    s->gfile = std::string(s->gedp->dbip->dbi_filename);
-    return BRLCAD_OK;
-}
-
-extern "C" int
-gsh_pre_closedb_clbk(int UNUSED(argc), const char **UNUSED(argv), void *UNUSED(gedp), void *UNUSED(ctx))
-{
-    return BRLCAD_OK;
-}
-
-extern "C" int
-gsh_post_closedb_clbk(int UNUSED(argc), const char **UNUSED(argv), void *UNUSED(gedp), void *UNUSED(ctx))
-{
-    return BRLCAD_OK;
-}
 
 extern "C" int
 gsh_db_search_callback(int argc, const char *argv[], void *UNUSED(u1), void *u2)
@@ -383,12 +352,6 @@ GshState::GshState()
     ged_init(gedp);
 
     view_checkpoint();
-
-    // Assign gsh specific open/close db handlers to the gedp
-    ged_clbk_set(gedp, "opendb", BU_CLBK_PRE, &gsh_pre_opendb_clbk, (void *)this);
-    ged_clbk_set(gedp, "opendb", BU_CLBK_POST, &gsh_post_opendb_clbk, (void *)this);
-    ged_clbk_set(gedp, "closedb", BU_CLBK_PRE, &gsh_pre_closedb_clbk, (void *)this);
-    ged_clbk_set(gedp, "closedb", BU_CLBK_POST, &gsh_post_closedb_clbk, (void *)this);
 
     // Register search exec callback
     ged_clbk_set(gedp, "search", BU_CLBK_DURING, &gsh_db_search_callback, (void *)this);

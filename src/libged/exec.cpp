@@ -82,6 +82,11 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
 
     GED_CK_MAGIC(gedp);
     Ged_Internal *gedip = gedp->i->i;
+    struct db_edit *edit = nullptr;
+    if (ged_db_history_enter(gedp, cmdname.c_str(), argc, argv, &edit) != BRLCAD_OK) {
+	ged_db_history_leave(gedp, nullptr, BRLCAD_ERROR);
+	return gedp->ged_results->ret;
+    }
     gedip->exec_stack.push(cmdname);
     gedip->cmd_recursion_depth_cnt[cmdname]++;
 
@@ -93,6 +98,9 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
 	    lexec_stack.pop();
 	}
 	gedp->ged_results->ret = BRLCAD_ERROR;
+	gedip->cmd_recursion_depth_cnt[cmdname]--;
+	gedip->exec_stack.pop();
+	ged_db_history_leave(gedp, edit, BRLCAD_ERROR);
 	return gedp->ged_results->ret;
     }
 
@@ -135,6 +143,7 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
 
     gedip->cmd_recursion_depth_cnt[cmdname]--;
     gedip->exec_stack.pop();
+    gedp->ged_results->ret = ged_db_history_leave(gedp, edit, gedp->ged_results->ret);
     return gedp->ged_results->ret;
 }
 

@@ -53,6 +53,7 @@ struct ged_event_service {
     struct db_i *callback_dbip = nullptr;
     std::mutex state_mutex;
     bool processing = false;
+    bool staged = false;
     ged_event_observer_token next_token = 1;
     int batch_depth = 0;
     int dispatch_depth = 0;
@@ -399,6 +400,16 @@ ged_event_database_set_private(struct ged *gedp, struct db_i *dbip)
 }
 
 void
+ged_event_stage_private(struct ged *gedp, int staged)
+{
+    auto *service = ged_event_service_get(gedp);
+    if (!service)
+	return;
+    std::lock_guard<std::mutex> guard(service->state_mutex);
+    service->staged = staged != 0;
+}
+
+void
 ged_event_init(struct ged_event *event)
 {
     if (event)
@@ -557,6 +568,10 @@ ged_event_publish(struct ged *gedp, const struct ged_event *events,
     std::vector<ged_event_owned> owned;
     {
 	std::lock_guard<std::mutex> guard(service->state_mutex);
+	if (service->staged) {
+	    ged_event_result_clear(result);
+	    return GED_EVENT_OK;
+	}
 	if (service->batch_depth) {
 	    service->queued_count +=
 		ged_event_queue(service->queued_events, events, event_count);

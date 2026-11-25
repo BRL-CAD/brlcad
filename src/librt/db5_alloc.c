@@ -102,6 +102,8 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
     BU_CK_EXTERNAL(ep);
+    if (dbip->i->dbi_edit_guard)
+	return -1;
     if (RT_G_DEBUG & RT_DEBUG_DB)
 	bu_log("db5_realloc(%s) dbip=%p, dp=%p, ext_nbytes=%zu\n",
 	       dp->d_namep, (void *)dbip, (void *)dp, ep->ext_nbytes);
