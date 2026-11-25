@@ -61,6 +61,7 @@ constexpr std::string_view head_key = "head";
 constexpr std::string_view export_key = "last_export";
 constexpr std::string_view export_observation_key = "last_export_observation";
 constexpr char data_file_name[] = "data.mdb";
+constexpr char lock_file_name[] = "lock.mdb";
 constexpr std::array<uint8_t, 8> signature{'B', 'R', 'L', 'C', 'A', 'D', 'W', 0};
 constexpr uint16_t schema_major = 1;
 constexpr uint16_t unpinned_minor = 0;
@@ -88,6 +89,30 @@ constexpr unsigned int database_count = 6;
 using Environment = std::unique_ptr<MDB_env, decltype(&mdb_env_close)>;
 using Transaction = std::unique_ptr<MDB_txn, decltype(&mdb_txn_abort)>;
 using Cursor = std::unique_ptr<MDB_cursor, decltype(&mdb_cursor_close)>;
+
+struct WorkspaceFiles {
+    FileIdentity data;
+    std::optional<FileIdentity> lock;
+
+    static std::optional<WorkspaceFiles> at(const fs::path &directory)
+    {
+	std::optional<FileIdentity> data, lock;
+	if (!file_identity(directory / data_file_name, data) || !data ||
+	    !file_identity(directory / lock_file_name, lock))
+	    return {};
+	return WorkspaceFiles{*data, lock};
+    }
+
+    bool operator==(const WorkspaceFiles &other) const
+    {
+	return data == other.data && lock == other.lock;
+    }
+
+    bool overlaps(const WorkspaceFiles &other) const
+    {
+	return data == other.data || data == other.lock || lock == other.data || (lock && lock == other.lock);
+    }
+};
 
 struct Tables {
     MDB_dbi metadata = 0;
@@ -124,6 +149,12 @@ bool
 report(struct bu_vls *message, const LmdbError &error)
 {
     return report(message, mdb_strerror(error.code));
+}
+
+bool
+report_moved(struct bu_vls *message)
+{
+    return report(message, "Workspace files moved or were replaced. Close all open views of the workspace and reopen it.");
 }
 
 bool
@@ -966,8 +997,34 @@ import_pack(MDB_env *env, const Pack &pack, const Manifest &manifest, const Work
 } // namespace
 
 struct Workspace::Store {
-    Store(fs::path location, Environment &&handle, bool can_write) :
-	path(std::move(location)), env(std::move(handle)), writable(can_write) {}
+    Store(fs::path location, Environment &&handle, const WorkspaceFiles &identity, bool can_write) :
+	path(std::move(location)), env(std::move(handle)), files(identity), writable(can_write) {}
+
+    bool check_location(struct bu_vls *message) const
+    {
+	return WorkspaceFiles::at(path) == files || report_moved(message);
+    }
+
+    bool publish(Transaction &txn, struct bu_vls *message) const
+    {
+	if (!check_location(message))
+	    return false;
+	check(mdb_txn_commit(txn.release()));
+	return true;
+    }
+
+#ifdef DB_HISTORY_FILE_LOCKS
+    bool lock_retention(FileLock &guard, FileLockMode mode, struct bu_vls *message) const
+    {
+	if (!check_location(message))
+	    return false;
+	if (!guard.refers_to(files.data))
+	    return report(message, "Could not open the workspace data file for a retention lock");
+	if (!guard.acquire(mode))
+	    return report(message, "The workspace is busy registering readers or has an unregistered reader");
+	return true;
+    }
+#endif
 
     template <typename Run>
     auto transact(unsigned int flags, Run run) const
@@ -1011,6 +1068,8 @@ struct Workspace::Store {
     {
 	if (message)
 	    bu_vls_trunc(message, 0);
+	if (!check_location(message))
+	    return WorkspaceWriteStatus::Error;
 	try {
 	    return transact(0, [&](Transaction &txn, const Tables &tables) {
 		WorkspaceHead current;
@@ -1035,7 +1094,8 @@ struct Workspace::Store {
 		    }
 		    ++next.generation;
 		    store_head(txn.get(), tables, next, 0);
-		    check(mdb_txn_commit(txn.release()));
+		    if (!publish(txn, message))
+			return WorkspaceWriteStatus::Error;
 		}
 		actual = next;
 		return WorkspaceWriteStatus::Ok;
@@ -1048,6 +1108,7 @@ struct Workspace::Store {
 
     fs::path path;
     Environment env;
+    WorkspaceFiles files;
     Tables handles;
     bool writable;
     uint64_t features = 0;
@@ -1062,6 +1123,13 @@ struct Workspace::Registry {
     std::mutex mutex;
     // A null entry reserves the path until its import environment closes.
     std::map<fs::path, std::unique_ptr<Store>> stores;
+
+    bool has_files(const WorkspaceFiles &files) const
+    {
+	return std::any_of(stores.begin(), stores.end(), [&](const auto &entry) {
+	    return entry.second && entry.second->files.overlaps(files);
+	});
+    }
 
     class ImportReservation {
     public:
@@ -1159,7 +1227,7 @@ Workspace::create(const char *path, const Pack &pack, struct bu_vls *message, Wo
     }
     // An interrupted import leaves no committed bootstrap. On a
     // reported failure remove only the files this new store used.
-    remove_workspace_path(canonical / "lock.mdb");
+    remove_workspace_path(canonical / lock_file_name);
     remove_workspace_path(canonical / data_file_name);
     if (!remove_workspace_path(canonical) && message)
 	bu_vls_strcat(message, "\nCould not remove the incomplete workspace directory");
@@ -1182,7 +1250,6 @@ Workspace::open(const char *path, struct bu_vls *message, bool writable)
 	report(message, error.message().c_str());
 	return nullptr;
     }
-    const auto file_size = fs::file_size(canonical / data_file_name, error);
     // LMDB requires one environment per path in a process. Keep the
     // same handle for readers in all documents using this workspace.
     auto &open = registry();
@@ -1192,16 +1259,27 @@ Workspace::open(const char *path, struct bu_vls *message, bool writable)
 	report(message, "The workspace is still being initialized");
 	return nullptr;
     }
-    if (error || !file_size) {
-	report(message, "The workspace directory has no LMDB data file");
-	return nullptr;
-    }
     if (existing != open.stores.end()) {
+	if (!existing->second->check_location(message))
+	    return nullptr;
 	if (writable && !existing->second->writable) {
 	    report(message, "The workspace is open read-only");
 	    return nullptr;
 	}
 	return std::unique_ptr<Workspace>(new Workspace(existing->second.get(), writable));
+    }
+    if (!fs::file_size(canonical / data_file_name, error) || error) {
+	report(message, "The workspace directory has no LMDB data file");
+	return nullptr;
+    }
+    const auto visible = WorkspaceFiles::at(canonical);
+    if (!visible) {
+	report(message, "The workspace needs identifiable regular LMDB files without additional hard links");
+	return nullptr;
+    }
+    if (open.has_files(*visible)) {
+	report(message, "Workspace files are already open at another path. Close all open views before reopening.");
+	return nullptr;
     }
 
     try {
@@ -1218,7 +1296,16 @@ Workspace::open(const char *path, struct bu_vls *message, bool writable)
 	    env = open_environment(location.c_str(), MDB_RDONLY);
 	    can_write = false;
 	}
-	auto store = std::make_unique<Store>(canonical, std::move(env), can_write);
+	const auto opened = WorkspaceFiles::at(canonical);
+	mdb_filehandle_t descriptor;
+	check(mdb_env_get_fd(env.get(), &descriptor));
+	if (!opened || opened->data != visible->data || file_identity(descriptor) != opened->data ||
+	    (visible->lock && visible->lock != opened->lock) || (can_write && !opened->lock) ||
+	    open.has_files(*opened)) {
+	    report_moved(message);
+	    return nullptr;
+	}
+	auto store = std::make_unique<Store>(canonical, std::move(env), *opened, can_write);
 	auto txn = begin(store->env.get(), MDB_RDONLY);
 	check(mdb_dbi_open(txn.get(), nullptr, 0, &store->handles.metadata));
 	if (!check_bootstrap(txn.get(), store->handles.metadata, store->features, message))
@@ -1230,6 +1317,8 @@ Workspace::open(const char *path, struct bu_vls *message, bool writable)
 	    return nullptr;
 	}
 	check(mdb_txn_commit(txn.release()));
+	if (!store->check_location(message))
+	    return nullptr;
 	const auto inserted = open.stores.emplace(canonical, std::move(store)).first;
 	return std::unique_ptr<Workspace>(new Workspace(inserted->second.get(), writable));
     } catch (const LmdbError &failure) {
@@ -1255,10 +1344,8 @@ Workspace::open_revision(const char *path, const Id &revision, WorkspaceHead &he
     std::unique_ptr<FileLock> guard;
     if (workspace->store->reader_pins()) {
 	guard = std::make_unique<FileLock>(workspace->store->path / data_file_name);
-	if (!guard->acquire(FileLockMode::Shared)) {
-	    report(message, "The workspace reader could not acquire a retention lock");
+	if (!workspace->store->lock_retention(*guard, FileLockMode::Shared, message))
 	    return nullptr;
-	}
     }
 #else
     if (workspace->store->reader_pins()) {
@@ -1296,7 +1383,7 @@ Workspace::open_revision(const char *path, const Id &revision, WorkspaceHead &he
 	}
 	return true;
     }, message);
-    if (!built)
+    if (!built || !workspace->location_current(message))
 	return nullptr;
 
 #ifdef DB_HISTORY_FILE_LOCKS
@@ -1335,6 +1422,12 @@ Workspace::snapshot_model(const struct db_i *db, WorkspaceHead *head)
     if (head)
 	*head = state->head;
     return &state->model;
+}
+
+bool
+Workspace::location_current(struct bu_vls *message) const
+{
+    return store->check_location(message);
 }
 
 bool
@@ -1538,6 +1631,8 @@ Workspace::record_export(const WorkspaceExport &exported, struct bu_vls *message
 {
     if (!writable)
 	return report(message, "The workspace is open read-only");
+    if (!location_current(message))
+	return false;
     try {
 	return store->transact(0, [&](Transaction &txn, const Tables &tables) {
 	    Revision revision;
@@ -1548,8 +1643,7 @@ Workspace::record_export(const WorkspaceExport &exported, struct bu_vls *message
 	    write_integer(observation.data() + exported.revision.size(), static_cast<uint64_t>(exported.timestamp));
 	    put(txn.get(), tables.metadata, bytes(export_key), bytes(exported.revision), 0);
 	    put(txn.get(), tables.metadata, bytes(export_observation_key), bytes(observation), 0);
-	    check(mdb_txn_commit(txn.release()));
-	    return true;
+	    return store->publish(txn, message);
 	});
     } catch (const LmdbError &failure) {
 	return report(message, failure);
@@ -1564,8 +1658,8 @@ Workspace::preview_prune(const WorkspaceHead &expected, const WorkspaceRetention
     if (!store->reader_pins())
 	return report(message, "Copy this workspace to a new directory with db history workspace to enable pruning");
     FileLock guard(store->path / data_file_name);
-    if (!guard.acquire(FileLockMode::TryExclusive))
-	return report(message, "The workspace is busy registering readers or has an unregistered reader");
+    if (!store->lock_retention(guard, FileLockMode::TryExclusive, message))
+	return false;
     std::set<Id> pins;
     if (!read_pins(store->path, pins, message))
 	return false;
@@ -1605,10 +1699,8 @@ Workspace::prune(const WorkspaceHead &expected, const WorkspaceRetention &policy
 	return WorkspaceWriteStatus::Error;
     }
     FileLock guard(store->path / data_file_name);
-    if (!guard.acquire(FileLockMode::TryExclusive)) {
-	report(message, "The workspace is busy registering readers or has an unregistered reader");
+    if (!store->lock_retention(guard, FileLockMode::TryExclusive, message))
 	return WorkspaceWriteStatus::Error;
-    }
     std::set<Id> pins;
     if (!read_pins(store->path, pins, message))
 	return WorkspaceWriteStatus::Error;

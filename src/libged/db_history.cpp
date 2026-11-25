@@ -404,7 +404,7 @@ can_write_history(struct ged *gedp, const ged_db_history &history, bool adopt_ex
 	    bu_vls_strcat(gedp->ged_result_str, "The workspace is open read-only");
 	    return false;
 	}
-	return can_replace_database(gedp);
+	return history.workspace->location_current(gedp->ged_result_str) && can_replace_database(gedp);
     }
 
     if (is_embedded(history) && history.embedded_status != EmbeddedStatus::Current &&
@@ -1469,9 +1469,10 @@ load_history_status(const ged_db_history *history, struct ged_history_status &st
 		return false;
 	    pack = &graph.pack;
 	    status.mode = GED_HISTORY_WORKSPACE;
-	    const bool current_view = current == history->workspace_head;
-	    status.state = current_view ? GED_HISTORY_CURRENT : GED_HISTORY_STALE;
-	    status.writable = history->workspace_writable;
+	    const bool available = history->workspace->location_current(nullptr);
+	    status.state = !available ? GED_HISTORY_UNAVAILABLE :
+		current == history->workspace_head ? GED_HISTORY_CURRENT : GED_HISTORY_STALE;
+	    status.writable = history->workspace_writable && available;
 	    status.generation = history->workspace_head.generation;
 	    status.workspace_generation = current.generation;
 	    status.workspace_head = bu_strdup(id_string(current.revision).c_str());

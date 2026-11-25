@@ -64,6 +64,8 @@ __history workspace directory__::
 Create a durable workspace in a new directory and switch to it. The workspace imports the open DB5 model and any retained session or embedded history. Subsequent edits save to the workspace. Reopen it with `db open directory`. The source file remains available. Run this command with the open workspace's path to report its status, or specify a new directory to copy it using the current workspace schema.
 +
 If the editor cannot reopen the created workspace or another writer changes it before the switch, the source stays open. The command reports the created path so you can inspect it or switch to it explicitly.
++
+Close all open views before moving or replacing a workspace or its LMDB files. If the editor detects that those files changed identity, it reports the workspace as unavailable and refuses further edits. A pinned view can still read the model it opened.
 
 
 __history log [--object name] [--json]__::

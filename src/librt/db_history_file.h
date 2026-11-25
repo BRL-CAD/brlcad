@@ -27,6 +27,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <limits>
+#include <optional>
 
 #include "bio.h"
 
@@ -40,11 +41,82 @@
 #  endif
 #endif
 
+#ifndef DB_HISTORY_WIN32_FILE_LOCKS
+#  include <sys/stat.h>
+#endif
+
 #if defined(DB_HISTORY_WIN32_FILE_LOCKS) || (defined(HAVE_FSYNC) && defined(HAVE_UNISTD_H))
 #  define DB_HISTORY_DIRECTORY_SYNC 1
 #endif
 
 namespace db_history {
+
+struct FileIdentity {
+    uint64_t device;
+    uint64_t index;
+
+    bool operator==(const FileIdentity &other) const
+    {
+	return device == other.device && index == other.index;
+    }
+
+    bool operator!=(const FileIdentity &other) const { return !(*this == other); }
+};
+
+#ifdef DB_HISTORY_WIN32_FILE_LOCKS
+inline std::optional<FileIdentity>
+file_identity(HANDLE handle)
+{
+    BY_HANDLE_FILE_INFORMATION info;
+    if (GetFileType(handle) != FILE_TYPE_DISK || !GetFileInformationByHandle(handle, &info) ||
+	(info.dwFileAttributes & (FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_DIRECTORY)) ||
+	info.nNumberOfLinks != 1)
+	return {};
+    const auto index = (static_cast<uint64_t>(info.nFileIndexHigh) << std::numeric_limits<DWORD>::digits) |
+	info.nFileIndexLow;
+    return FileIdentity{info.dwVolumeSerialNumber, index};
+}
+#else
+inline std::optional<FileIdentity>
+file_identity(const struct stat &info)
+{
+    if (!S_ISREG(info.st_mode) || info.st_nlink != 1)
+	return {};
+    return FileIdentity{static_cast<uint64_t>(info.st_dev), static_cast<uint64_t>(info.st_ino)};
+}
+
+inline std::optional<FileIdentity>
+file_identity(int fd)
+{
+    struct stat info;
+    return fstat(fd, &info) == 0 ? file_identity(info) : std::nullopt;
+}
+#endif
+
+// A missing file is distinct from one we cannot safely identify. On
+// POSIX, never open and close an extra descriptor to LMDB's lock file.
+inline bool
+file_identity(const std::filesystem::path &path, std::optional<FileIdentity> &id)
+{
+    id.reset();
+#ifdef DB_HISTORY_WIN32_FILE_LOCKS
+    const HANDLE handle = CreateFileW(path.c_str(), FILE_READ_ATTRIBUTES,
+	FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+	FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+    if (handle == INVALID_HANDLE_VALUE) {
+	const auto error = GetLastError();
+	return error == ERROR_FILE_NOT_FOUND || error == ERROR_PATH_NOT_FOUND;
+    }
+    id = file_identity(handle);
+    CloseHandle(handle);
+#else
+    struct stat info;
+    if (lstat(path.c_str(), &info) != 0)
+	return errno == ENOENT;
+    id = file_identity(info);
+#endif
+    return id.has_value();
+}
 
 #ifdef DB_HISTORY_FILE_LOCKS
 enum class FileLockMode { Shared, TryExclusive };
@@ -116,6 +188,15 @@ public:
     }
 
     bool busy() const { return contended; }
+
+    bool refers_to(const FileIdentity &id) const
+    {
+#ifdef DB_HISTORY_WIN32_FILE_LOCKS
+	return file_identity(handle) == id;
+#else
+	return file_identity(fd) == id;
+#endif
+    }
 
 private:
 #ifdef DB_HISTORY_WIN32_FILE_LOCKS

@@ -96,6 +96,8 @@ public:
     Workspace(const Workspace &) = delete;
     Workspace &operator=(const Workspace &) = delete;
 
+    // Pinned readers can still use their open store after its path changes.
+    RT_EXPORT bool location_current(struct bu_vls *message) const;
     // Read the head and selected directory from one committed version.
     RT_EXPORT bool read_directory(WorkspaceHead &head, Manifest &model, struct bu_vls *message) const;
     // Absence is returned as a zero object ID. Records and artifacts are

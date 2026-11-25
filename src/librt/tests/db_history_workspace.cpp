@@ -638,6 +638,63 @@ test_workspace(const std::string &path, const Pack &pack, const Manifest &expect
     return 0;
 }
 
+static int
+test_moved_workspace(const std::filesystem::path &directory, const Pack &pack, struct bu_vls *message)
+{
+    namespace fs = std::filesystem;
+    const auto original = directory / "open-workspace";
+    const auto replacement = directory / "replacement-workspace";
+    const auto moved = directory / "moved-workspace";
+    const auto original_name = original.u8string();
+    const auto moved_name = moved.u8string();
+    const auto replacement_name = replacement.u8string();
+    WorkspaceHead head;
+    CHECK(Workspace::create(original_name.c_str(), pack, message, &head));
+    CHECK(Workspace::create(replacement_name.c_str(), pack, message));
+    auto writer = Workspace::open(original_name.c_str(), message, true);
+    CHECK(writer && writer->location_current(message));
+    WorkspaceHead selected;
+    Database view(Workspace::open_snapshot(original_name.c_str(), selected, message), db_close);
+    CHECK(view && selected == head);
+
+    std::error_code error;
+#if !defined(_WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+    const auto lock = original / "lock.mdb";
+    const auto saved_lock = original / "saved-lock";
+    fs::rename(lock, saved_lock);
+    CHECK(fs::copy_file(replacement / lock.filename(), lock));
+    CHECK(!writer->location_current(message));
+    CHECK(!Workspace::open(original_name.c_str(), message));
+    CHECK(writer->mark(head, "wrong-lock", false, selected, message) == WorkspaceWriteStatus::Error);
+    fs::rename(saved_lock, lock);
+    CHECK(writer->location_current(message));
+#endif
+    fs::rename(original, moved, error);
+#if defined(_WIN32) && !defined(__CYGWIN__) && !defined(__MSYS__)
+    // Native LMDB handles can prevent moving a workspace while open.
+    if (error == std::errc::permission_denied)
+	return 0;
+#endif
+    CHECK(!error);
+    fs::rename(replacement, original);
+    CHECK(!writer->location_current(message));
+    CHECK(!Workspace::open(original_name.c_str(), message));
+    CHECK(!Workspace::open(moved_name.c_str(), message));
+    CHECK(writer->mark(head, "wrong-location", false, selected, message) == WorkspaceWriteStatus::Error);
+    CHECK(!writer->record_export({head.revision, 1}, message));
+    CHECK(db_lookup(view.get(), region_name, LOOKUP_QUIET) && writer->verify(message));
+
+    view.reset();
+    writer.reset();
+    auto new_workspace = Workspace::open(original_name.c_str(), message);
+    auto previous_workspace = Workspace::open(moved_name.c_str(), message);
+    CHECK(new_workspace && new_workspace->verify(message));
+    CHECK(previous_workspace && previous_workspace->verify(message));
+    Manifest model;
+    CHECK(previous_workspace->read_directory(selected, model, message) && selected == head);
+    return 0;
+}
+
 int
 main(int argc, const char **argv)
 {
@@ -698,6 +755,8 @@ main(int argc, const char **argv)
 	result = test_compact_checkout((fixture.path / "compact").string().c_str(), std::move(edit), edited, &message);
     if (!result)
 	result = test_sparse_manifests((fixture.path / "sparse").string(), initial, &message);
+    if (!result)
+	result = test_moved_workspace(fixture.path, edited.pack, &message);
     if (result)
 	bu_log("%s\n", bu_vls_addr(&message));
     bu_vls_free(&message);
