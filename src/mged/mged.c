@@ -2584,7 +2584,6 @@ main(int argc, char *argv[])
 #endif
 
     int rateflag = 0;
-    int read_only_flag=0;
 
     int parent_pipe[2] = {0, 0};
     int use_pipe = 0;
@@ -2855,8 +2854,7 @@ main(int argc, char *argv[])
 	s->dpy_string = (char *)cl.dpy_string;
 
     /* -r / --read-only */
-    if (cl.read_only)
-	read_only_flag = 1;
+    s->read_only_startup = cl.read_only;
 
     {
 	struct mged_startup_request request;
@@ -3133,8 +3131,7 @@ main(int argc, char *argv[])
 	}
     }
 
-    if (s->dbip != DBI_NULL && (read_only_flag || s->dbip->dbi_read_only)) {
-	s->dbip->dbi_read_only = 1;
+    if (s->dbip != DBI_NULL && !mged_database_writable(s)) {
 	bu_log("Opened in READ ONLY mode\n");
     }
 

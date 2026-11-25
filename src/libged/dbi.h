@@ -301,6 +301,7 @@ class GED_EXPORT DbiState {
     public:
 	DbiState(struct ged *);
 	~DbiState();
+	void rebind_database(struct db_i *);
 
 	/** Reconcile and consume pending events. */
 	unsigned long long update();

@@ -443,7 +443,8 @@ DbiState::DbiState(struct ged *ged_p)
 	this);
 
     // Set up cache
-    dcache = dbi_cache_open(dbip->dbi_filename);
+    if (!gedp->i->db_history)
+	dcache = dbi_cache_open(dbip->dbi_filename);
 
     struct directory *dp;
     FOR_ALL_DIRECTORY_START(dp, dbip)
@@ -471,6 +472,32 @@ DbiState::~DbiState()
 
     if (dcache)
 	dbi_cache_close(dcache);
+}
+
+
+void
+ged_dbi_state_rebind_private(struct ged *gedp)
+{
+    if (gedp->dbi_state)
+	static_cast<DbiState *>(gedp->dbi_state)->rebind_database(gedp->dbip);
+}
+
+
+void
+DbiState::rebind_database(struct db_i *replacement)
+{
+    if (dbip == replacement)
+	return;
+    dbip = replacement;
+    // The drawing cache is keyed by filename, which is shared by revisions.
+    dbi_cache_close(dcache);
+    dcache = nullptr;
+
+    struct ged_event rebuild;
+    ged_event_init(&rebuild);
+    rebuild.kind = GED_EVENT_BATCH_REBUILD;
+    record_changes(&rebuild, 1);
+    reconcile_changes();
 }
 
 
@@ -884,7 +911,7 @@ DbiState::int_color(struct bu_color *c, unsigned int cval)
 void
 DbiState::clear_cache(unsigned long long hash)
 {
-    if (!hash || !dcache)
+    if (!hash)
 	return;
 
     cache_del(dcache, hash, CACHE_OBJ_BOUNDS);
@@ -1076,7 +1103,6 @@ DbiState::update_dp(struct directory *dp, int reset)
 
     // Done with attributes
     if (loaded_avs) {
-	bu_log("Had to load avs\n");
 	bu_avs_free(&c_avs);
     }
     return hash;
@@ -1655,6 +1681,12 @@ DbiState::reconcile(const DbiStateChange &change)
     }
     std::set<std::string> rebuild_names;
     if (change.rebuild) {
+	// Recreate both directions of the hierarchy, including objects
+	// that changed type or stopped referring to an existing child.
+	p_c.clear();
+	p_v.clear();
+	matrices.clear();
+	i_bool.clear();
 	std::unordered_set<unsigned long long> live;
 	struct directory *dp;
 	FOR_ALL_DIRECTORY_START(dp, dbip)
@@ -1679,7 +1711,7 @@ DbiState::reconcile(const DbiStateChange &change)
 
     // Update the primary data structures
     for(s_it = removed.begin(); s_it != removed.end(); s_it++) {
-	bu_log("removed: %llu\n", *s_it);
+	bv_log(2, "removed: %llu", *s_it);
 
 	// Only references to this object become invalid.  Numbered
 	// occurrences refer back to the same canonical directory hash.
@@ -1734,7 +1766,7 @@ DbiState::reconcile(const DbiStateChange &change)
 	struct directory *dp = db_lookup(dbip, name.c_str(), LOOKUP_QUIET);
 	if (dp == RT_DIR_NULL)
 	    continue;
-	bu_log("changed: %s\n", dp->d_namep);
+	bv_log(2, "changed: %s", dp->d_namep);
 	// Properties need to be updated - comb children, colors, matrices,
 	// bounding box for solids, etc.
 	update_dp(dp, 1);
@@ -1788,6 +1820,10 @@ DbiState::event_callback(struct ged *UNUSED(gedp),
 	const struct ged_event_result *UNUSED(result), void *client_data)
 {
     DbiState *state = static_cast<DbiState *>(client_data);
+    if (state->dbip != state->gedp->dbip) {
+	state->rebind_database(state->gedp->dbip);
+	return;
+    }
     state->record_changes(events, event_count);
 }
 
@@ -2624,14 +2660,14 @@ BViewState::scene_obj(
 
     // If we're drawing a subtraction and we're not overridden, set the
     // appropriate flag for dashed line drawing
-    if (vs && !vs->draw_solid_lines_only) {
+    if (!vs || !vs->draw_solid_lines_only) {
 	bool is_subtract = dbis->path_is_subtraction(path_hashes);
 	sp->s_soldash = (is_subtract) ? 1 : 0;
     }
 
     // Align with vs draw_non_subtract_only settings
-    if (vs->s_dmode == curr_mode) {
-        if (sp->s_soldash && vs->draw_non_subtract_only) {
+    if (!vs || vs->s_dmode == curr_mode) {
+        if (vs && sp->s_soldash && vs->draw_non_subtract_only) {
             if (sp->s_flag != DOWN)
                 sp->s_flag = DOWN;
         } else {

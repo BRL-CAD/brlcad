@@ -35,6 +35,7 @@
 #include <QHeaderView>
 #include <QMainWindow>
 #include <QMenu>
+#include <QLabel>
 #include <QMenuBar>
 #include <QObject>
 #include <QSettings>
@@ -106,12 +107,17 @@ class QgEdMainWindow : public QMainWindow
 	void LocateWidgets();
 	void ConnectWidgets();
 	void SetupMenu();
+	void UpdateHistoryControls();
+	void RedoHistory();
 
 	// Menu actions
 	QAction *cad_open;
 	QAction *cad_save_settings;
 	//QAction *cad_save_image;
 	QAction *cad_exit;
+	QAction *history_undo = nullptr;
+	QAction *history_redo = nullptr;
+	QLabel *history_mode = nullptr;
 
 	// Organizational widget
 	QWidget *cw = NULL;

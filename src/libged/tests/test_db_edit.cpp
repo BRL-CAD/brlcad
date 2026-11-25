@@ -348,11 +348,9 @@ test_embedded_history()
     CHECK(run(gedp, checkout) == BRLCAD_OK && selected_id(gedp) == fork);
     CHECK(run(gedp, reference) == BRLCAD_OK && contains_result(gedp, old_name.c_str()));
 
-    Db readonly(db_open(path, DB_OPEN_READONLY), db_close);
-    CHECK(readonly && db_dirbuild(readonly.get()) == 0);
-    Ged inspector(open_handle("disk", readonly.get()), ged_close);
-    CHECK(inspector);
-    readonly.release();
+    Ged inspector(ged_create(), ged_close);
+    const char *open_readonly[] = {"db", "open", "-r", path, nullptr};
+    CHECK(inspector && run(inspector.get(), open_readonly) == BRLCAD_OK);
     CHECK(run(inspector.get(), status) == BRLCAD_OK && contains_result(inspector.get(), "access read-only"));
     CHECK(run(inspector.get(), show) == BRLCAD_OK);
     const char *verify[] = {"db", "history", "verify", nullptr};
@@ -577,6 +575,12 @@ test_workspace_history()
 
     const char *undo[] = {"db", "undo", nullptr};
     const char *redo[] = {"db", "redo", nullptr};
+    Ged inspector(ged_create(), ged_close);
+    const char *open_readonly[] = {"db", "open", "-r", workspace.c_str(), nullptr};
+    CHECK(inspector && run(inspector.get(), open_readonly) == BRLCAD_OK &&
+	run(inspector.get(), status) == BRLCAD_OK && contains_result(inspector.get(), "access read-only"));
+    CHECK(run(inspector.get(), show) == BRLCAD_OK && run(inspector.get(), undo) != BRLCAD_OK &&
+	contains_result(inspector.get(), "read-only") && selected_id(inspector.get()) == renamed);
     CHECK(run(writer.get(), undo) == BRLCAD_OK && selected_id(writer.get()) == root);
     writer.reset(ged_open("db", workspace.c_str(), 1));
     CHECK(writer && run(writer.get(), status) == BRLCAD_OK && contains_result(writer.get(), "(preferred)"));

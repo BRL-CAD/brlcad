@@ -31,6 +31,7 @@
 #include <QTextStream>
 #include "bu/malloc.h"
 #include "bu/file.h"
+#include "ged/history.h"
 #include "qtcad/QgGeomImport.h"
 #include "qtcad/QgTreeSelectionModel.h"
 #include "QgEdApp.h"
@@ -80,6 +81,14 @@ qged_post_closedb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(ged
     if (a)
 	emit a->dbi_update(DBI_NULL);
     return BRLCAD_OK;
+}
+
+static void
+qged_history_replaced(struct ged *gedp, struct db_i *UNUSED(retired), void *ctx)
+{
+    auto *app = static_cast<QgEdApp *>(ctx);
+    if (app->w)
+	app->w->statusBar()->showMessage(QString::fromLocal8Bit(gedp->dbip->dbi_filename));
 }
 
 extern "C" void
@@ -252,6 +261,7 @@ QgEdApp::QgEdApp(int &argc, char *argv[], const char *g_file, int swrast_mode, i
     ged_clbk_set(mdl->gedp, "opendb", BU_CLBK_POST, &qged_post_opendb_clbk, (void *)qApp);
     ged_clbk_set(mdl->gedp, "closedb", BU_CLBK_PRE, &qged_pre_closedb_clbk, (void *)qApp);
     ged_clbk_set(mdl->gedp, "closedb", BU_CLBK_POST, &qged_post_closedb_clbk, (void *)qApp);
+    ged_history_set_replacement_handlers(mdl->gedp, nullptr, qged_history_replaced, this);
 
     // Assign QGED specific I/O handlers to the gedp
     mdl->gedp->ged_create_io_handler = &qt_create_io_handler;
@@ -431,9 +441,11 @@ QgEdApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	return BRLCAD_ERROR;
 
     struct ged *gedp = mdl->gedp;
+    const struct db_i *previous_db = gedp->dbip;
 
-    BSelectState *ss = (gedp->dbi_state) ? ((DbiState *)gedp->dbi_state)->find_selected_state(NULL) : NULL;
-    select_hash = (ss) ? ss->state_hash() : 0;
+    auto *state = static_cast<DbiState *>(gedp->dbi_state);
+    auto *selection = state ? state->find_selected_state(nullptr) : nullptr;
+    select_hash = selection ? selection->state_hash() : 0;
 
     /* Set the local unit conversions */
     if (gedp->dbip) {
@@ -488,17 +500,20 @@ QgEdApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	// TODO - there may be some utility in checking only the camera or only
 	// the who list, since we can set different update flags for each case...
 	// that's a complexity vs. performance trade-off determination
-	if (w->DisplayDiff())
+	if (gedp->dbip != previous_db || w->DisplayDiff())
 	    view_flags |= QG_VIEW_DRAWN;
 
-	unsigned long long cs_hash = (ss) ? ss->state_hash() : 0;
+	state = static_cast<DbiState *>(gedp->dbi_state);
+	selection = state ? state->find_selected_state(nullptr) : nullptr;
+	unsigned long long cs_hash = selection ? selection->state_hash() : 0;
 	if (cs_hash != select_hash) {
 	    view_flags |= QG_VIEW_SELECT;
 	    // This is what notifies currently drawn solids to update
 	    // in response to a command line selection change
-	    if (ss && ss->draw_sync())
+	    if (selection && selection->draw_sync())
 		view_flags |= QG_VIEW_DRAWN;
 	}
+	emit history_update();
     }
 
     if (ret & GED_MORE) {

@@ -233,6 +233,7 @@ struct mged_state {
     Tcl_Interp *interp;
 
     struct mged_startup_plan startup;
+    int read_only_startup;
 
     /* Prompt and input lines */
     size_t input_str_index;
@@ -334,6 +335,7 @@ extern jmp_buf jmp_env;
  */
 
 extern void mged_setup(struct mged_state *s);
+extern int mged_database_writable(struct mged_state *s);
 extern void mged_global_variable_teardown(struct mged_state *s); /* cmd.c */
 extern void mged_variable_teardown(struct mged_state *s); /* set.c */
 extern void dozoom(struct mged_state *s, int which_eye);

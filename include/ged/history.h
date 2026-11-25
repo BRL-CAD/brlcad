@@ -30,6 +30,7 @@
 #include "ged/defines.h"
 
 struct bu_vls;
+struct db_i;
 struct ged;
 
 enum ged_history_mode {
@@ -76,6 +77,21 @@ struct ged_history_status {
 };
 
 __BEGIN_DECLS
+
+typedef int (*ged_history_prepare_func_t)(struct ged *, void *);
+typedef void (*ged_history_replaced_func_t)(struct ged *, struct db_i *, void *);
+
+/**
+ * Register the host's database replacement handlers. An optional prepare
+ * handler returns BRLCAD_OK when replacement can proceed, or writes a
+ * diagnostic to ged_result_str and returns BRLCAD_ERROR. The replaced
+ * handler runs after publication and view reconciliation, while the
+ * retired database is still valid. Release or rebind host aliases there.
+ * Both handlers run on the GED owner's thread.
+ */
+GED_EXPORT extern void ged_history_set_replacement_handlers(struct ged *gedp,
+    ged_history_prepare_func_t prepare, ged_history_replaced_func_t replaced,
+    void *data);
 
 /**
  * Read history state on the GED owner's thread. The returned status owns

@@ -38,6 +38,7 @@
 #include "bv/util.h"
 #include "tclcad.h"
 #include "ged.h"
+#include "ged/history.h"
 
 /* local headers */
 #include "./mged.h"
@@ -54,6 +55,8 @@ extern int mged_pre_opendb_clbk(int ac, const char **av, void *gedp, void *ctx);
 extern int mged_post_opendb_clbk(int ac, const char **av, void *gedp, void *ctx);
 extern int mged_pre_closedb_clbk(int ac, const char **av, void *gedp, void *ctx);
 extern int mged_post_closedb_clbk(int ac, const char **av, void *gedp, void *ctx);
+extern int mged_history_prepare(struct ged *gedp, void *ctx);
+extern void mged_history_replaced(struct ged *gedp, struct db_i *retired, void *ctx);
 extern int mged_db_during_clbk(int ac, const char **av, void *gedp, void *ctx);
 
 /* Defined in cmd.cpp */
@@ -778,6 +781,7 @@ mged_setup(struct mged_state *s)
     ged_clbk_set(s->gedp, "closedb", BU_CLBK_PRE, &mged_pre_closedb_clbk, (void *)&mged_global_db_ctx);
     ged_clbk_set(s->gedp, "closedb", BU_CLBK_POST, &mged_post_closedb_clbk, (void *)&mged_global_db_ctx);
     ged_clbk_set(s->gedp, "db", BU_CLBK_DURING, &mged_db_during_clbk, (void *)s);
+    ged_history_set_replacement_handlers(s->gedp, mged_history_prepare, mged_history_replaced, s);
 
     // Register during-execution callback function for search command
     ged_clbk_set(s->gedp, "search", BU_CLBK_PRE,    &mged_search_pre_clbk,      (void *)s);

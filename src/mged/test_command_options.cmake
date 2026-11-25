@@ -32,7 +32,22 @@ check_mged("--help -o" --classic --attach=nu --no-rc --bg 10 20 30 --perspective
 
 configure_file("${database}" "${dash_database}" COPYONLY)
 check_mged("arb8 V1" -c -anu --no-rc -- -mged-command-options.g get arbfixed.s)
-file(REMOVE "${database}" "${dash_database}")
+
+set(workspace "${TEST_DIR}/mged-command-options-workspace")
+set(history_script "${TEST_DIR}/mged-command-options-history.tcl")
+file(REMOVE_RECURSE "${workspace}")
+check_mged("mode workspace" -c -a nu --no-rc "${database}" db history workspace "${workspace}")
+file(WRITE "${history_script}" "db make history.s sph\n.inmem get history.s\n")
+check_mged("ell V" -c -a nu --no-rc "${workspace}" source "${history_script}")
+file(WRITE "${history_script}" "db undo\n.inmem get history.s\n")
+check_mged("history.s: not found" -c -a nu --no-rc "${workspace}" source "${history_script}")
+file(WRITE "${history_script}" "db redo\n.inmem get history.s\n")
+check_mged("ell V" -c -a nu --no-rc "${workspace}" source "${history_script}")
+check_mged("access read-only" -c -a nu -r --no-rc "${workspace}" db history status)
+check_mged("open read-only" -c -a nu -r --no-rc "${workspace}" db undo)
+file(REMOVE_RECURSE "${workspace}")
+
+file(REMOVE "${database}" "${dash_database}" "${history_script}")
 
 # Local Variables:
 # tab-width: 8

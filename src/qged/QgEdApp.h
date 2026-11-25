@@ -67,6 +67,7 @@ class QgEdApp : public QApplication
     signals:
 	void view_update(unsigned long long);
 	void dbi_update(struct db_i *dbip);
+	void history_update();
 
         /* Menu slots */
     public slots:

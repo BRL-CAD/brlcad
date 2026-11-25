@@ -43,6 +43,7 @@ Generate terminal text, menus and history views from those results.
   db history workspace <dir>      Create and switch to a durable LMDB
                                   workspace from the current model/history.
   db open <dir>                   Reopen a recognized workspace.
+  db open -r <path>               Inspect a DB5 file or workspace read-only.
   db history verify               Check the graph, blobs and current model.
   db history adopt                Preview external DB5 edits. With --apply,
                                   record those edits against the saved head.
@@ -424,6 +425,18 @@ A separate Linux test terminated a migration from workspace schema
 retained its exact bytes. Opening the incomplete destination was
 rejected. A fresh migration created a verified 1.1 workspace with the
 same selected revision.
+
+With QGED's software display, Undo and Redo from the modeling viewport
+selected the expected embedded revisions. Plain DB5 snapshots exported
+after each shortcut independently confirmed that the new primitive was
+absent after Undo and present after Redo. A separate GED scene test
+checked that a primitive stays drawn across an attribute edit and Undo,
+and disappears when Undo reaches a model where it does not exist.
+
+Classic MGED opened a workspace, made an object, and loaded that object
+through its Tcl database alias after Redo. Opening both an embedded
+archive and a workspace with read-only access allowed inspection and
+rejected Undo.
 
 Implementation starting points in the source tree
 -------------------------------------------------

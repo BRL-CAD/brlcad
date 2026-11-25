@@ -40,6 +40,7 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
     int flip_endian = 0;
     int force_create = 1;
     int open_only = 0;
+    int read_only = 0;
     int print_help = 0;
     const char *cmdname = argv[0];
     static const char *usage = "[options] [filename]\n";
@@ -60,12 +61,13 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (!BU_STR_EQUAL(cmdname, "reopen")) {
-	struct bu_opt_desc d[5];
+	struct bu_opt_desc d[6];
 	BU_OPT(d[0], "c", "create",  "",  NULL,  &force_create,  "Creates a new database if not already extant (default).");
 	BU_OPT(d[1], "f", "flip-endian",  "",  NULL,  &flip_endian,  "Opens file as a binary-incompatible v4 geometry database.");
 	BU_OPT(d[2], "h", "help",  "",  NULL,  &print_help,  "Print help.");
 	BU_OPT(d[3], "o", "open",  "",  NULL,  &open_only,  "Do not force creation of non-extant database.  Overridden by -c.");
-	BU_OPT_NULL(d[4]);
+	BU_OPT(d[4], "r", "read-only", "", NULL, &read_only, "Open without write access.");
+	BU_OPT_NULL(d[5]);
 
 	// We know we're the opendb command - start processing args
 	argc--; argv++;
@@ -88,7 +90,7 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
      * we can actually open what the caller provided */
     struct db_i *new_dbip = NULL;
     int existing_only = (!force_create && open_only);
-    if ((new_dbip = _ged_open_dbip(argv[0], existing_only, gedp->ged_result_str)) == DBI_NULL) {
+    if ((new_dbip = _ged_open_dbip(argv[0], existing_only, read_only, gedp->ged_result_str)) == DBI_NULL) {
 
 	if (bu_vls_strlen(gedp->ged_result_str))
 	    bu_vls_putc(gedp->ged_result_str, '\n');
@@ -135,7 +137,7 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Set up the new database info in gedp */
     gedp->dbip = new_dbip;
-    ged_db_history_open(gedp);
+    ged_db_history_open(gedp, read_only);
     ged_event_database_set_private(gedp, gedp->dbip);
 
     // LoD context creation (DbiState initialization can use info

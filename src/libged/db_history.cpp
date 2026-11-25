@@ -167,9 +167,15 @@ permitted_query(std::string_view command, int argc, const char **argv)
 	return argc <= 1 || one_of(argv[1], {"get", "list", "show", "sort"});
     if (command == "title" || command == "units")
 	return argc == 1;
-    return one_of(command, {"db", "dbfind", "dbversion", "expand", "find", "form",
-	"get", "get_type", "help", "l", "ls", "lt", "make_name", "match",
+    return one_of(command, {"db", "db_glob", "dbfind", "dbversion", "expand", "find", "form",
+	"get", "get_type", "glob", "help", "l", "ls", "lt", "make_name", "match",
 	"pathlist", "paths", "search", "summary", "tops", "version", "?"});
+}
+
+bool
+permitted_display(std::string_view command)
+{
+    return one_of(command, {"draw", "e", "erase", "redraw", "setview", "who", "zap"});
 }
 
 bool
@@ -181,6 +187,12 @@ session_lifecycle(std::string_view command)
 void
 refresh_view_units(struct ged *gedp)
 {
+    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+    for (size_t i = 0; i < BU_PTBL_LEN(views); ++i) {
+	auto *view = reinterpret_cast<struct bview *>(BU_PTBL_GET(views, i));
+	view->gv_base2local = gedp->dbip->dbi_base2local;
+	view->gv_local2base = gedp->dbip->dbi_local2base;
+    }
     if (gedp->ged_gvp) {
 	gedp->ged_gvp->gv_base2local = gedp->dbip->dbi_base2local;
 	gedp->ged_gvp->gv_local2base = gedp->dbip->dbi_local2base;
@@ -192,8 +204,8 @@ can_replace_database(struct ged *gedp)
 {
     bu_clbk_t callback = nullptr;
     void *data = nullptr;
-    if (gedp->new_cmd_forms || gedp->dbi_state ||
-	(ged_clbk_get(&callback, &data, gedp, "opendb", BU_CLBK_POST) == BRLCAD_OK && callback)) {
+    if (!gedp->i->history_replaced &&
+	ged_clbk_get(&callback, &data, gedp, "opendb", BU_CLBK_POST) == BRLCAD_OK && callback) {
 	bu_vls_printf(gedp->ged_result_str, "This editor needs database replacement support to write history");
 	return false;
     }
@@ -203,7 +215,8 @@ can_replace_database(struct ged *gedp)
 	bu_vls_printf(gedp->ged_result_str, "Clear displayed geometry and finish active edits and subprocesses before replacing the database");
 	return false;
     }
-    return true;
+    return !gedp->i->history_prepare ||
+	gedp->i->history_prepare(gedp, gedp->i->history_handler_data) == BRLCAD_OK;
 }
 
 std::string
@@ -381,7 +394,6 @@ switch_database(struct ged *gedp, struct db_i *replacement)
     gedp->dbip = replacement;
     ged_event_database_set_private(gedp, replacement);
     refresh_view_units(gedp);
-    db_close(retired);
 
     struct ged_event event;
     ged_event_init(&event);
@@ -389,6 +401,10 @@ switch_database(struct ged *gedp, struct db_i *replacement)
     event.redraw = 1;
     if (ged_event_publish(gedp, &event, 1, nullptr) != GED_EVENT_OK)
 	bu_vls_printf(gedp->ged_result_str, "\nDatabase saved. Refresh the view to see the change.");
+    ged_dbi_state_rebind_private(gedp);
+    if (gedp->i->history_replaced)
+	gedp->i->history_replaced(gedp, retired, gedp->i->history_handler_data);
+    db_close(retired);
 }
 
 void
@@ -413,15 +429,17 @@ install_snapshot(struct ged *gedp, ged_db_history &history, struct db_i *replace
 }
 
 std::unique_ptr<ged_db_history>
-workspace_history(struct db_i *db, struct bu_vls *message)
+workspace_history(struct db_i *db, bool read_only, struct bu_vls *message)
 {
     WorkspaceHead selected;
     if (!Workspace::snapshot_model(db, &selected))
 	return nullptr;
 
     auto history = std::make_unique<ged_db_history>();
-    history->workspace = Workspace::open(db->dbi_filename, nullptr, true);
-    history->workspace_writable = static_cast<bool>(history->workspace);
+    if (!read_only) {
+	history->workspace = Workspace::open(db->dbi_filename, nullptr, true);
+	history->workspace_writable = static_cast<bool>(history->workspace);
+    }
     if (!history->workspace)
 	history->workspace = Workspace::open(db->dbi_filename, message);
     if (!history->workspace)
@@ -743,7 +761,7 @@ create_workspace(struct ged *gedp, const char *path)
 
     WorkspaceHead selected;
     Snapshot replacement(Workspace::open_snapshot(path, selected, out), db_close);
-    auto next = workspace_history(replacement.get(), out);
+    auto next = workspace_history(replacement.get(), false, out);
     if (!next) {
 	bu_vls_printf(out, "\nWorkspace created at %s. Reopen it to switch databases.", path);
 	return BRLCAD_ERROR;
@@ -1647,6 +1665,17 @@ ged_history_status_destroy(const struct ged_history_status *status)
 }
 
 void
+ged_history_set_replacement_handlers(struct ged *gedp,
+    ged_history_prepare_func_t prepare, ged_history_replaced_func_t replaced, void *data)
+{
+    if (!gedp || !gedp->i)
+	return;
+    gedp->i->history_prepare = prepare;
+    gedp->i->history_replaced = replaced;
+    gedp->i->history_handler_data = data;
+}
+
+void
 ged_db_history_reset(struct ged *gedp)
 {
     if (!gedp->i)
@@ -1663,11 +1692,11 @@ ged_db_history_reset(struct ged *gedp)
 }
 
 void
-ged_db_history_open(struct ged *gedp)
+ged_db_history_open(struct ged *gedp, int read_only)
 {
     if (!gedp->dbip || gedp->i->db_history || db_version(gedp->dbip) != 5)
 	return;
-    if (auto workspace = workspace_history(gedp->dbip, gedp->ged_result_str)) {
+    if (auto workspace = workspace_history(gedp->dbip, read_only, gedp->ged_result_str)) {
 	attach_history(*workspace, gedp->dbip);
 	gedp->i->db_history = workspace.release();
 	return;
@@ -1694,7 +1723,8 @@ ged_db_history_enter(struct ged *gedp, const char *command, int argc, const char
 	return BRLCAD_OK;
 
     const bool edits = permitted_edit(command, argc, argv);
-    if (permitted_query(command, argc, argv) || (!history->stage && session_lifecycle(command)))
+    if (permitted_query(command, argc, argv) ||
+	(!history->stage && (session_lifecycle(command) || permitted_display(command))))
 	return BRLCAD_OK;
     if (!edits) {
 	bu_vls_printf(gedp->ged_result_str, "%s is unavailable while database history is enabled", command);

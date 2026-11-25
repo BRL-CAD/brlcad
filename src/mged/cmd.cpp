@@ -2099,8 +2099,8 @@ cmdline(struct mged_state *s, struct bu_vls *vp, int record)
 	/* Run ged_glob */
 	const char *av[2] = {"glob", NULL};
 	av[1] = bu_vls_cstr(vp);
-	(void)ged_exec_glob(s->gedp, 2, av);
-	if (bu_vls_strlen(s->gedp->ged_result_str) > 0) {
+	if (ged_exec_glob(s->gedp, 2, av) == BRLCAD_OK &&
+	    bu_vls_strlen(s->gedp->ged_result_str) > 0) {
 	    bu_vls_sprintf(&globbed, "%s", bu_vls_addr(s->gedp->ged_result_str));
 	} else {
 	    bu_vls_vlscat(&globbed, vp);

@@ -178,6 +178,35 @@ main(int argc, char **argv)
 	CHECK(ged_scene_path_state_get(gedp, gedp->ged_gvp, "sphere.s",
 	    GED_SCENE_DRAW_DEFAULT) == GED_SCENE_PATH_NOT_DRAWN,
 	    "reconciliation removes the deleted primitive from the view");
+
+	const char *enable[] = {"db", "history", "enable", "session"};
+	const int enabled = ged_exec(gedp, 4, enable);
+	if (enabled == BRLCAD_OK ||
+	    !strstr(bu_vls_cstr(gedp->ged_result_str), "Atomic DB5 replacement is unavailable")) {
+	    CHECK(enabled == BRLCAD_OK, "enable history with an active scene state");
+	    auto *dbis = static_cast<DbiState *>(gedp->dbi_state);
+	    const char *make[] = {"make", "sphere.s", "sph"};
+	    CHECK(ged_exec(gedp, 3, make) == BRLCAD_OK &&
+		dbis->dbip == gedp->dbip &&
+		dbis->get_hdp(ids.back()) == db_lookup(gedp->dbip, "sphere.s", LOOKUP_QUIET),
+		"publication rebinds the scene index to the new directory");
+	    CHECK(ged_scene_draw(gedp, &draw_request, result) == GED_SCENE_OK,
+		"draw newly committed geometry");
+	    const char *attr[] = {"attr", "set", "sphere.s", "rgb", "0/255/0"};
+	    CHECK(ged_exec(gedp, 5, attr) == BRLCAD_OK, "edit a drawn primitive");
+	    CHECK(ged_scene_path_state_get(gedp, gedp->ged_gvp, "sphere.s",
+		GED_SCENE_DRAW_DEFAULT) == GED_SCENE_PATH_DRAWN,
+		"replacement keeps drawn paths with surviving objects");
+	    const char *undo[] = {"db", "undo"};
+	    CHECK(ged_exec(gedp, 2, undo) == BRLCAD_OK &&
+		ged_scene_path_state_get(gedp, gedp->ged_gvp, "sphere.s",
+		    GED_SCENE_DRAW_DEFAULT) == GED_SCENE_PATH_DRAWN,
+		"undo refreshes the drawn primitive in the replacement database");
+	    CHECK(ged_exec(gedp, 2, undo) == BRLCAD_OK &&
+		ged_scene_path_state_get(gedp, gedp->ged_gvp, "sphere.s",
+		    GED_SCENE_DRAW_DEFAULT) == GED_SCENE_PATH_NOT_DRAWN,
+		"undo removes a primitive absent in the replacement database");
+	}
 	ged_scene_result_destroy(result);
 
 	delete static_cast<DbiState *>(gedp->dbi_state);

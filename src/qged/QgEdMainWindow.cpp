@@ -23,8 +23,13 @@
  *
  */
 
+#include <memory>
+
+#include <QCursor>
+#include <QKeySequence>
 #include <QTimer>
 #include <QMessageBox>
+#include "ged/history.h"
 #include "qtcad/QgViewCtrl.h"
 #include "qtcad/QgTreeSelectionModel.h"
 #include "QgEdMainWindow.h"
@@ -84,6 +89,8 @@ QgEdMainWindow::QgEdMainWindow(int canvas_type, int quad_view)
 
     // Create Widgets
     CreateWidgets(canvas_type);
+    c4->addAction(history_undo);
+    c4->addAction(history_redo);
 
     // Lay out widgets
     LocateWidgets();
@@ -351,6 +358,25 @@ QgEdMainWindow::SetupMenu()
     QObject::connect(cad_exit, &QAction::triggered, this, &QgEdMainWindow::close);
     file_menu->addAction(cad_exit);
 
+    auto *app = static_cast<QgEdApp *>(qApp);
+    QMenu *edit_menu = menuBar()->addMenu(tr("Edit"));
+    history_undo = edit_menu->addAction(tr("Undo"));
+    history_redo = edit_menu->addAction(tr("Redo"));
+    history_undo->setShortcuts(QKeySequence::Undo);
+    history_redo->setShortcuts(QKeySequence::Redo);
+    history_undo->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+    history_redo->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+    history_undo->setEnabled(false);
+    history_redo->setEnabled(false);
+    connect(history_undo, &QAction::triggered, app, [app]() { app->run_qcmd("db undo"); });
+    connect(history_redo, &QAction::triggered, this, &QgEdMainWindow::RedoHistory);
+    connect(edit_menu, &QMenu::aboutToShow, this, &QgEdMainWindow::UpdateHistoryControls);
+    connect(app, &QgEdApp::history_update, this, &QgEdMainWindow::UpdateHistoryControls);
+    connect(app, &QgEdApp::dbi_update, this, &QgEdMainWindow::UpdateHistoryControls);
+    history_mode = new QLabel(this);
+    statusBar()->addPermanentWidget(history_mode);
+    history_mode->hide();
+
     QMenu *view_menu = menuBar()->addMenu("View");
     vm_treeview_mode_toggle = new QAction("Toggle Hierarchy (ls/tops)", this);
     view_menu->addAction(vm_treeview_mode_toggle);
@@ -359,6 +385,71 @@ QgEdMainWindow::SetupMenu()
     menuBar()->addSeparator();
 
     menuBar()->addMenu("Help");
+}
+
+void
+QgEdMainWindow::UpdateHistoryControls()
+{
+    auto *app = static_cast<QgEdApp *>(qApp);
+    const std::unique_ptr<const struct ged_history_status, decltype(&ged_history_status_destroy)>
+	status(app->mdl ? ged_history_status_create(app->mdl->gedp, nullptr) : nullptr,
+	    ged_history_status_destroy);
+    const bool writable = status && status->state == GED_HISTORY_CURRENT &&
+	status->writable && !status->edit_active && !status->staged_conflict;
+    const char *undo_label = status ? status->undo.label : nullptr;
+    const char *redo_label = nullptr;
+    if (status) {
+	for (size_t i = 0; i < status->redo_count; ++i) {
+	    if (status->redo_count == 1 || status->redo[i].preferred) {
+		redo_label = status->redo[i].label;
+		break;
+	    }
+	}
+    }
+    history_undo->setText(undo_label ? tr("Undo %1").arg(QString::fromUtf8(undo_label)) : tr("Undo"));
+    history_redo->setText(redo_label ? tr("Redo %1").arg(QString::fromUtf8(redo_label)) : tr("Redo"));
+    history_undo->setEnabled(writable && status->undo.revision);
+    history_redo->setEnabled(writable && status->redo_count);
+
+    QString mode;
+    if (status) {
+	switch (status->mode) {
+	    case GED_HISTORY_DISABLED: break;
+	    case GED_HISTORY_SESSION: mode = tr("Session history"); break;
+	    case GED_HISTORY_EMBEDDED: mode = tr("Embedded history"); break;
+	    case GED_HISTORY_WORKSPACE: mode = tr("Workspace"); break;
+	}
+	if (!mode.isEmpty() && !status->writable)
+	    mode += tr(" (read-only)");
+	if (status->exported_revision)
+	    mode += tr(" · Exported %1").arg(QString::fromUtf8(status->exported_revision).left(12));
+    }
+    history_mode->setText(mode);
+    history_mode->setVisible(!mode.isEmpty());
+}
+
+void
+QgEdMainWindow::RedoHistory()
+{
+    auto *app = static_cast<QgEdApp *>(qApp);
+    const std::unique_ptr<const struct ged_history_status, decltype(&ged_history_status_destroy)>
+	status(ged_history_status_create(app->mdl->gedp, nullptr), ged_history_status_destroy);
+    if (!status || !status->redo_count)
+	return;
+
+    QMenu choices(this);
+    for (size_t i = 0; i < status->redo_count; ++i) {
+	const auto &choice = status->redo[i];
+	if (status->redo_count == 1 || choice.preferred) {
+	    app->run_qcmd("db redo");
+	    return;
+	}
+	const QString revision = QString::fromUtf8(choice.revision);
+	auto *action = choices.addAction(tr("%1 (%2)").arg(QString::fromUtf8(choice.label), revision.left(12)));
+	action->setData(revision);
+    }
+    if (auto *action = choices.exec(QCursor::pos()))
+	app->run_qcmd("db redo " + action->data().toString());
 }
 
 

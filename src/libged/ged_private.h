@@ -206,6 +206,9 @@ struct ged_impl {
     struct ged_event_service *ged_event_servicep;
     struct ged_selection_state *ged_selection_statep;
     struct ged_db_history *db_history;
+    int (*history_prepare)(struct ged *, void *);
+    void (*history_replaced)(struct ged *, struct db_i *, void *);
+    void *history_handler_data;
 };
 
 __BEGIN_DECLS
@@ -220,6 +223,7 @@ void ged_selection_state_destroy(struct ged_selection_state *state);
 void ged_selection_database_reset_private(struct ged *gedp);
 void ged_dbi_state_create_private(struct ged *gedp);
 void ged_dbi_state_destroy_private(struct ged *gedp);
+void ged_dbi_state_rebind_private(struct ged *gedp);
 typedef int (*ged_selection_present_func_t)(struct ged *, void *);
 void ged_selection_presenter_set_private(struct ged *gedp,
 	ged_selection_present_func_t present, void *client_data);
@@ -228,7 +232,7 @@ void ged_selection_presenter_clear_private(struct ged *gedp,
 void ged_event_database_set_private(struct ged *gedp, struct db_i *dbip);
 void ged_event_stage_private(struct ged *gedp, int staged);
 void ged_db_history_reset(struct ged *gedp);
-GED_EXPORT void ged_db_history_open(struct ged *gedp);
+GED_EXPORT void ged_db_history_open(struct ged *gedp, int read_only);
 int ged_db_history_enter(struct ged *gedp, const char *command, int argc,
 			 const char **argv, struct db_edit **edit);
 int ged_db_history_leave(struct ged *gedp, struct db_edit *edit, int result);
@@ -342,7 +346,7 @@ GED_EXPORT void vls_col_eol(struct bu_vls *str);
 
 /* defined in ged.c */
 GED_EXPORT extern struct db_i *_ged_open_dbip(const char *filename,
-				   int existing_only, struct bu_vls *message);
+				   int existing_only, int read_only, struct bu_vls *message);
 
 /* defined in comb.c */
 GED_EXPORT extern struct directory *_ged_combadd(struct ged *gedp,

@@ -525,6 +525,9 @@ ged_init(struct ged *gedp)
     gedp->i->ged_db_indexp = ged_db_index_create(gedp);
     gedp->i->ged_selection_statep = ged_selection_state_create(gedp);
     gedp->i->db_history = NULL;
+    gedp->i->history_prepare = NULL;
+    gedp->i->history_replaced = NULL;
+    gedp->i->history_handler_data = NULL;
 
     gedp->dbip = NULL;
     gedp->u_data = NULL;
@@ -726,7 +729,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     if (BU_STR_EQUAL(dbtype, "db")) {
 	struct db_i *dbip;
 
-	if ((dbip = _ged_open_dbip(filename, existing_only, nullptr)) == DBI_NULL) {
+	if ((dbip = _ged_open_dbip(filename, existing_only, 0, nullptr)) == DBI_NULL) {
 	    return GED_NULL;
 	}
 
@@ -768,7 +771,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 
     gedp = ged_create();
     gedp->dbip = wdbp->dbip;
-    ged_db_history_open(gedp);
+    ged_db_history_open(gedp, 0);
     ged_event_database_set_private(gedp, gedp->dbip);
 
     db_update_nref(gedp->dbip);
@@ -784,7 +787,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
  * Open/Create the database and build the in memory directory.
  */
 struct db_i *
-_ged_open_dbip(const char *filename, int existing_only, struct bu_vls *message)
+_ged_open_dbip(const char *filename, int existing_only, int read_only, struct bu_vls *message)
 {
     struct db_i *dbip = DBI_NULL;
 
@@ -799,7 +802,7 @@ _ged_open_dbip(const char *filename, int existing_only, struct bu_vls *message)
     }
 
     /* open database */
-    if (((dbip = db_open(filename, DB_OPEN_READWRITE)) == DBI_NULL) &&
+    if ((read_only || (dbip = db_open(filename, DB_OPEN_READWRITE)) == DBI_NULL) &&
 	((dbip = db_open(filename, DB_OPEN_READONLY)) == DBI_NULL)) {
 
 	/*
@@ -811,7 +814,7 @@ _ged_open_dbip(const char *filename, int existing_only, struct bu_vls *message)
 	    return DBI_NULL;
 	}
 
-	if (existing_only)
+	if (existing_only || read_only)
 	    return DBI_NULL;
 
 	/* db_create does a db_dirbuild */
