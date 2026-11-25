@@ -598,11 +598,16 @@ injected failure after a reference rewrite and another after a tree
 deletion both restored the original objects and references without
 a committed change event. Undo restored the original references
 after each successful edit. On an M1917 workspace copy, killtree -a
-removed 21,175 objects in one revision in 11.75 seconds. Fresh GED
-processes restored the top-level combination in 0.39 seconds with
-Undo and verified the full archive in 5.01 seconds. The supplied
+removed 21,175 objects in one revision in 11.43 seconds. Fresh GED
+processes restored the top-level combination in 0.40 seconds with
+Undo and verified the full archive in 4.85 seconds. The supplied
 DB5 file's identity, size and modification time matched before and
 after the run.
+
+On DB4 and ordinary DB5, a killtree preview visited each object
+in a cyclic combination graph once. Versioned DB5 and workspace
+regressions deleted the cycle and restored both references with
+one Undo.
 
 A subset keep from an embedded DB5 file exported the selected
 combination and its referenced primitive. The source revision and

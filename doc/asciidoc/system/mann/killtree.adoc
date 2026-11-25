@@ -35,7 +35,7 @@ The *-n* flag causes no objects to be actually killed. Instead, a list of object
 
 
 
-*Use this command with caution.* Killed objects cannot be recovered so *keep* a backup.
+With database history enabled, *db undo* restores the deleted objects and references in one step. Keep a backup when editing with history disabled.
 
 
 [[examples]]

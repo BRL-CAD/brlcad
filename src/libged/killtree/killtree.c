@@ -50,7 +50,7 @@ struct killtree_data {
     int pending_ac;
     char **pending;
     size_t pending_capacity;
-    struct bu_hash_tbl *queued;
+    struct bu_hash_tbl *seen;
     struct bu_hash_tbl *visited;
 };
 
@@ -95,22 +95,43 @@ append_name(char ***names, int *count, size_t *capacity, const char *name)
 }
 
 
+static void collect_tree(struct db_i *dbip, struct directory *dp, struct killtree_data *gktdp);
+
 static void
-collect_callback(struct db_i *dbip, struct directory *dp, void *ptr)
+collect_leaf(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *leaf,
+	     void *data, void *UNUSED(a), void *UNUSED(b), void *UNUSED(c))
 {
-    struct killtree_data *gktdp = (struct killtree_data *)ptr;
+    struct directory *child = db_lookup(dbip, leaf->tr_l.tl_name, LOOKUP_NOISY);
+    if (child)
+	collect_tree(dbip, child, (struct killtree_data *)data);
+}
+
+static void
+collect_tree(struct db_i *dbip, struct directory *dp, struct killtree_data *gktdp)
+{
     int ref_exists = 0;
-    const uint8_t *name;
-    size_t name_len;
+    const uint8_t *name = (const uint8_t *)dp->d_namep;
+    const size_t name_len = strlen(dp->d_namep);
 
-    if (dbip == DBI_NULL || dp == RT_DIR_NULL)
+    if (bu_hash_get(gktdp->seen, name, name_len))
 	return;
-
-    name = (const uint8_t *)dp->d_namep;
-    name_len = strlen(dp->d_namep);
-
-    if (bu_hash_get(gktdp->visited, name, name_len)
-	|| bu_hash_get(gktdp->queued, name, name_len))
+    /* Mark before descending so a combination can refer back to an ancestor. */
+    (void)bu_hash_set(gktdp->seen, name, name_len, gktdp);
+    if (dp->d_flags & RT_DIR_COMB) {
+	struct rt_db_internal intern;
+	if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0) {
+	    bu_vls_printf(gktdp->gedp->ged_result_str, "Unable to read combination %s\n", dp->d_namep);
+	    gktdp->result = BRLCAD_ERROR;
+	    return;
+	}
+	struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
+	db_tree_funcleaf(dbip, comb, comb->tree, collect_leaf, gktdp, NULL, NULL, NULL);
+	rt_db_free_internal(&intern);
+    } else if (!(dp->d_flags & RT_DIR_SOLID) && !(dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK)) {
+	bu_log("killtree: %s is neither a combination nor a solid or binary object\n", dp->d_namep);
+	return;
+    }
+    if (bu_hash_get(gktdp->visited, name, name_len))
 	return;
 
     /* don't bother checking for references if the -f or -a flags are
@@ -129,16 +150,13 @@ collect_callback(struct db_i *dbip, struct directory *dp, void *ptr)
     if (ref_exists)
 	return;
 
-    (void)bu_hash_set(gktdp->queued, name, name_len, gktdp);
     append_name(&gktdp->pending, &gktdp->pending_ac,
 		&gktdp->pending_capacity, dp->d_namep);
 }
 
 
-/* Deletion is deliberately separate from collection.  db_treewalk_basic()
- * resolves every reference as it walks, so mutating the directory from its
- * callback makes a repeated leaf look like a missing object later in the same
- * traversal.
+/* Collect every candidate before deleting any so a reference can still be
+ * resolved as the traversal walks the original subtree.
  */
 static void
 killtree_process(struct db_i *dbip, struct directory *dp, struct killtree_data *gktdp)
@@ -265,19 +283,22 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
 	/* stash the what's killed so we can find refs elsewhere */
 	gktd.top = argv[i];
 
-	gktd.queued = bu_hash_create(0);
-	db_treewalk_basic(gedp->dbip, dp,
-		    collect_callback, collect_callback, (void *)&gktd);
+	gktd.seen = bu_hash_create(0);
+	collect_tree(gedp->dbip, dp, &gktd);
 
 	for (int j = 0; j < gktd.pending_ac; j++) {
-	    dp = db_lookup(gedp->dbip, gktd.pending[j], LOOKUP_QUIET);
-	    killtree_process(gedp->dbip, dp, &gktd);
+	    if (gktd.result == BRLCAD_OK) {
+		dp = db_lookup(gedp->dbip, gktd.pending[j], LOOKUP_QUIET);
+		killtree_process(gedp->dbip, dp, &gktd);
+	    }
 	    bu_free(gktd.pending[j], "pending killtree name");
 	    gktd.pending[j] = NULL;
 	}
 	gktd.pending_ac = 0;
-	bu_hash_destroy(gktd.queued);
-	gktd.queued = NULL;
+	bu_hash_destroy(gktd.seen);
+	gktd.seen = NULL;
+	if (gktd.result != BRLCAD_OK)
+	    break;
     }
 
     /* Close the sublist of would-be killed objects. Also open the

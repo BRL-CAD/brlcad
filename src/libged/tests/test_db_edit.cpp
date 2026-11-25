@@ -652,6 +652,23 @@ test_reference_removal(struct ged *gedp)
     CHECK(run(gedp, remove_option_name) == BRLCAD_OK && !db_lookup(gedp->dbip, "-n", LOOKUP_QUIET));
     const char *show_option[] = {"lt", "option.c", nullptr};
     CHECK(run(gedp, show_option) == BRLCAD_OK && !contains_result(gedp, "-n"));
+
+    const char *cycle_a[] = {"g", "cycle-a.c", "outside.c", nullptr};
+    const char *cycle_b[] = {"g", "cycle-b.c", "cycle-a.c", nullptr};
+    const char *back_edge[] = {"g", "cycle-a.c", "cycle-b.c", nullptr};
+    CHECK(run(gedp, cycle_a) == BRLCAD_OK && run(gedp, cycle_b) == BRLCAD_OK && run(gedp, back_edge) == BRLCAD_OK);
+    const auto cycle = selected_id(gedp);
+    const char *cycle_preview[] = {"killtree", "-an", "cycle-a.c", nullptr};
+    CHECK(run(gedp, cycle_preview) == BRLCAD_OK && contains_result(gedp, "{outside.c cycle-b.c cycle-a.c } {"));
+    CHECK(selected_id(gedp) == cycle);
+    const char *erase_cycle[] = {"killtree", "-a", "cycle-a.c", nullptr};
+    CHECK(run(gedp, erase_cycle) == BRLCAD_OK && selected_id(gedp) != cycle);
+    CHECK(!db_lookup(gedp->dbip, "cycle-a.c", LOOKUP_QUIET) && !db_lookup(gedp->dbip, "cycle-b.c", LOOKUP_QUIET));
+    CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == cycle);
+    const char *show_cycle_a[] = {"lt", "cycle-a.c", nullptr};
+    const char *show_cycle_b[] = {"lt", "cycle-b.c", nullptr};
+    CHECK(run(gedp, show_cycle_a) == BRLCAD_OK && contains_result(gedp, "cycle-b.c"));
+    CHECK(run(gedp, show_cycle_b) == BRLCAD_OK && contains_result(gedp, "cycle-a.c"));
     return 0;
 }
 
