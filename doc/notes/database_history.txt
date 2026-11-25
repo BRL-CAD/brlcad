@@ -47,6 +47,15 @@ Generate terminal text, menus and history views from those results.
   db history verify               Check the graph, blobs and current model.
   db history adopt                Preview external DB5 edits. With --apply,
                                   record those edits against the saved head.
+  db history batch <label> <commands>
+                                  Publish a Tcl list of GED argument lists
+                                  as one revision.
+
+For example, the following batch creates a primitive and its owning
+group in one operation. If either command fails, the edit is discarded.
+Enable history on the open document before running a batch.
+
+  db history batch {Build assembly} {{make part.s sph} {g assembly.c part.s}}
 
 Enable on an embedded or workspace document already in the requested mode
 is idempotent. To stop carrying history, export a plain .g and open it.
@@ -463,6 +472,11 @@ translation as separate revisions in embedded DB5 and LMDB. Undo
 and Redo recovered the corresponding stored geometry and matrices.
 Rejecting the same previews left the selected revision and model
 unchanged.
+
+An atomic GED batch created two primitives, their combination and a
+database title in one revision. A late rename conflict and an
+incomplete interactive command each discarded the staged objects
+and left the selected revision fixed.
 
 Implementation starting points in the source tree
 -------------------------------------------------

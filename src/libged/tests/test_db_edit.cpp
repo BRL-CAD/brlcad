@@ -672,6 +672,65 @@ test_workspace_history()
 }
 
 
+static int
+test_atomic_batch()
+{
+    char path[MAXPATHLEN] = {};
+    FILE *file = bu_temp_file(path, sizeof(path));
+    CHECK(file && fclose(file) == 0);
+    auto *db = db_create(path, 5);
+    CHECK(db);
+    db_close(db);
+    const std::unique_ptr<struct ged, decltype(&ged_close)> owner(ged_open("db", path, 1), ged_close);
+    auto *gedp = owner.get();
+    CHECK(gedp);
+    const std::string original_title = gedp->dbip->dbi_title;
+
+    const char *batch[] = {"db", "history", "batch", "Build assembly",
+	"{make a.s sph} {make b.s sph} {g assembly.c a.s b.s} {title {An assembly with two parts}}", nullptr};
+    CHECK(run(gedp, batch) != BRLCAD_OK && contains_result(gedp, "Enable database history"));
+    CHECK(!db_lookup(gedp->dbip, "a.s", LOOKUP_QUIET));
+
+    const char *enable[] = {"db", "history", "enable", "session", nullptr};
+    const int enabled = run(gedp, enable);
+    if (enabled != BRLCAD_OK && contains_result(gedp, "Atomic DB5 replacement is unavailable"))
+	return 0;
+    CHECK(enabled == BRLCAD_OK);
+    int commits = 0;
+    CHECK(ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE, count_commit, &commits));
+    CHECK(run(gedp, batch) == BRLCAD_OK && commits == 1 && selected_id(gedp) == "1");
+    CHECK(db_lookup(gedp->dbip, "assembly.c", LOOKUP_QUIET) &&
+	BU_STR_EQUAL(gedp->dbip->dbi_title, "An assembly with two parts"));
+    const auto *status = ged_history_status_create(gedp, nullptr);
+    const bool named_undo = status && BU_STR_EQUAL(status->undo.label, "Build assembly");
+    ged_history_status_destroy(status);
+    CHECK(named_undo);
+
+    const char *failed[] = {"db", "history", "batch", "Late failure",
+	"{make transient.s sph} {mv a.s assembly.c}", nullptr};
+    CHECK(run(gedp, failed) != BRLCAD_OK && contains_result(gedp, "Batch command 2 failed"));
+    CHECK(!db_lookup(gedp->dbip, "transient.s", LOOKUP_QUIET) && selected_id(gedp) == "1" && commits == 1);
+
+    const char *prompt[] = {"db", "history", "batch", "Incomplete command",
+	"{make transient.s sph} {in incomplete.s}", nullptr};
+    CHECK(run(gedp, prompt) != BRLCAD_OK && contains_result(gedp, "Batch command 2 requires more input"));
+    CHECK(!db_lookup(gedp->dbip, "transient.s", LOOKUP_QUIET) && selected_id(gedp) == "1" && commits == 1);
+
+    const char *malformed[] = {"db", "history", "batch", "Invalid list", "{make transient.s sph", nullptr};
+    CHECK(run(gedp, malformed) != BRLCAD_OK && contains_result(gedp, "Expected a nonempty list"));
+    CHECK(!db_lookup(gedp->dbip, "transient.s", LOOKUP_QUIET) && selected_id(gedp) == "1" && commits == 1);
+
+    const char *undo[] = {"db", "undo", nullptr};
+    CHECK(run(gedp, undo) == BRLCAD_OK && commits == 2 && selected_id(gedp) == "0");
+    CHECK(!db_lookup(gedp->dbip, "a.s", LOOKUP_QUIET) && !db_lookup(gedp->dbip, "b.s", LOOKUP_QUIET) &&
+	!db_lookup(gedp->dbip, "assembly.c", LOOKUP_QUIET) && original_title == gedp->dbip->dbi_title);
+    const char *redo[] = {"db", "redo", nullptr};
+    CHECK(run(gedp, redo) == BRLCAD_OK && commits == 3 && selected_id(gedp) == "1");
+    CHECK(db_lookup(gedp->dbip, "assembly.c", LOOKUP_QUIET));
+    return 0;
+}
+
+
 int
 main(int argc, const char *argv[])
 {
@@ -753,7 +812,10 @@ main(int argc, const char *argv[])
     if (embedded_status)
 	return embedded_status;
     const int promotion_status = test_session_promotion();
-    return promotion_status ? promotion_status : test_workspace_history();
+    if (promotion_status)
+	return promotion_status;
+    const int batch_status = test_atomic_batch();
+    return batch_status ? batch_status : test_workspace_history();
 }
 
 // Local Variables:

@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <charconv>
+#include <climits>
 #include <cstring>
 #include <initializer_list>
 #include <iterator>
@@ -1336,6 +1337,69 @@ print_status(struct ged *gedp, bool json = false)
     return BRLCAD_OK;
 }
 
+struct HistoryCommandArgs {
+    HistoryCommandArgs() = default;
+    HistoryCommandArgs(const HistoryCommandArgs &) = delete;
+    HistoryCommandArgs &operator=(const HistoryCommandArgs &) = delete;
+
+    ~HistoryCommandArgs()
+    {
+	if (argv)
+	    bu_free(argv, "history command list");
+    }
+
+    bool parse(const char *list)
+    {
+	return std::strlen(list) < INT_MAX && bu_argv_from_tcl_list(list, &argc, &argv) == 0 && argc > 0;
+    }
+
+    int argc = 0;
+    const char **argv = nullptr;
+};
+
+int
+execute_history_batch(struct ged *gedp, void *data)
+{
+    const auto &commands = *static_cast<const std::vector<HistoryCommandArgs> *>(data);
+    auto *out = gedp->ged_result_str;
+    for (size_t i = 0; i < commands.size(); ++i) {
+	const auto &command = commands[i];
+	bu_vls_trunc(out, 0);
+	const int result = ged_exec(gedp, command.argc, command.argv);
+	if (result == BRLCAD_OK)
+	    continue;
+	if (bu_vls_strlen(out))
+	    bu_vls_putc(out, '\n');
+	bu_vls_printf(out, "Batch command %zu %s", i + 1,
+	    (result & GED_MORE) ? "requires more input" : "failed");
+	return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
+
+int
+history_batch(struct ged *gedp, const ged_db_history *history, const char *label, const char *command_list)
+{
+    auto *out = gedp->ged_result_str;
+    if (!history) {
+	bu_vls_strcat(out, "Enable database history before running an atomic batch");
+	return BRLCAD_ERROR;
+    }
+    HistoryCommandArgs list;
+    if (!list.parse(command_list)) {
+	bu_vls_strcat(out, "Expected a nonempty list of GED commands");
+	return BRLCAD_ERROR;
+    }
+    std::vector<HistoryCommandArgs> commands(static_cast<size_t>(list.argc));
+    for (size_t i = 0; i < commands.size(); ++i) {
+	if (!commands[i].parse(list.argv[i]) || !commands[i].argv[0][0]) {
+	    bu_vls_printf(out, "Expected a GED argument list for batch command %zu", i + 1);
+	    return BRLCAD_ERROR;
+	}
+    }
+    return ged_history_apply_edit(gedp, label, execute_history_batch, &commands);
+}
+
 const Revision *
 find_revision(struct bu_vls *out, const ged_db_history *history, const char *argument, uint64_t &id)
 {
@@ -2103,6 +2167,8 @@ ged_db_history_command(struct ged *gedp, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     if (command == "history") {
+	if (argc == 4 && BU_STR_EQUAL(argv[1], "batch"))
+	    return history_batch(gedp, history, argv[2], argv[3]);
 	if ((argc == 2 || (argc == 3 && BU_STR_EQUAL(argv[2], "--json"))) && BU_STR_EQUAL(argv[1], "status"))
 	    return print_status(gedp, argc == 3);
 	if (argc >= 2 && BU_STR_EQUAL(argv[1], "prune")) {
