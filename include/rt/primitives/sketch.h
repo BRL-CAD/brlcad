@@ -66,6 +66,10 @@ db_sketch_to_scene_obj(const char *sname, struct db_i *dbip, struct directory *d
 RT_EXPORT extern struct directory *
 db_scene_obj_to_sketch(struct db_i *dbip, const char *sname, struct bv_scene_obj *s);
 
+/* Replace a sketch's geometry and polygon attributes, preserving other attributes. */
+RT_EXPORT extern struct directory *
+db_scene_obj_update_sketch(struct db_i *dbip, const char *sname, struct bv_scene_obj *s);
+
 __END_DECLS
 
 /** @} */

@@ -176,7 +176,8 @@ permitted_query(std::string_view command, int argc, const char **argv)
 bool
 permitted_display(std::string_view command)
 {
-    return one_of(command, {"draw", "e", "erase", "ev", "redraw", "setview", "who", "zap"});
+    return one_of(command, {"draw", "e", "erase", "ev", "redraw", "setview",
+	"view", "view2", "view_func", "who", "zap"});
 }
 
 bool

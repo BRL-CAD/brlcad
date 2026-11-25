@@ -478,6 +478,13 @@ database title in one revision. A late rename conflict and an
 incomplete interactive command each discarded the staged objects
 and left the selected revision fixed.
 
+QGED kept a polygon drag in the viewport until mouse release. Saving
+the resulting sketch created one revision. A separate DB5 reader
+confirmed that Undo removed the sketch and Redo restored it. The GED
+scene regression renamed a sketch with its combination reference,
+preserved unrelated attributes, and restored the original reference in
+one Undo.
+
 Implementation starting points in the source tree
 -------------------------------------------------
 

@@ -173,6 +173,24 @@ bv_polygon_vlist(struct bv_scene_obj *s)
     }
 }
 
+void
+bv_polygon_set_sketch_name(struct bv_polygon *polygon, const char *name)
+{
+    char *copy = name && *name ? bu_strdup(name) : NULL;
+    bu_free(polygon->sketch_name, "polygon sketch name");
+    polygon->sketch_name = copy;
+}
+
+static void
+bv_polygon_release(struct bv_scene_obj *s)
+{
+    struct bv_polygon *polygon = (struct bv_polygon *)s->s_i_data;
+    bg_polygon_free(&polygon->polygon);
+    bv_polygon_set_sketch_name(polygon, NULL);
+    BU_PUT(polygon, struct bv_polygon);
+    s->s_i_data = NULL;
+}
+
 struct bv_scene_obj *
 bv_create_polygon_obj(struct bview *v, int flags, struct bv_polygon *p)
 {
@@ -188,6 +206,7 @@ bv_create_polygon_obj(struct bview *v, int flags, struct bv_polygon *p)
     s->s_color[1] = 255;
     s->s_color[2] = 0;
     s->s_i_data = (void *)p;
+    s->s_free_callback = bv_polygon_release;
     s->s_update_callback = &bv_update_polygon;
 
     /* Have new polygon, now update view object vlist */
@@ -274,6 +293,7 @@ bv_polygon_cpy(struct bv_polygon *dest, struct bv_polygon *src)
     dest->vZ = src->vZ;
     bg_polygon_free(&dest->polygon);
     bg_polygon_cpy(&dest->polygon, &src->polygon);
+    bv_polygon_set_sketch_name(dest, src->sketch_name);
     dest->u_data = src->u_data;
 }
 
@@ -830,6 +850,7 @@ bv_dup_view_polygon(const char *nname, struct bv_scene_obj *s)
     struct bv_polygon *p;
     BU_GET(p, struct bv_polygon);
     bv_polygon_cpy(p, ip);
+    bv_polygon_set_sketch_name(p, NULL);
 
     struct bv_scene_obj *np = bv_create_polygon_obj(s->s_v, s->s_type_flags, p);
 

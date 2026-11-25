@@ -67,6 +67,9 @@ struct bv_polygon {
     /* Actual polygon info */
     struct bg_polygon polygon;
 
+    /* Owned name of the sketch associated with this view polygon. */
+    char *sketch_name;
+
     /* Arbitrary data */
     void *u_data;
 };
@@ -101,6 +104,7 @@ BV_EXPORT extern struct bv_scene_obj *bv_dup_view_polygon(const char *nname, str
 // another view, they will have to update the output's
 // bview to match their target view.
 BV_EXPORT extern void bv_polygon_cpy(struct bv_polygon *dest , struct bv_polygon *src);
+BV_EXPORT extern void bv_polygon_set_sketch_name(struct bv_polygon *polygon, const char *name);
 
 // Calculate a suggested default fill delta based on the polygon structure.  The
 // idea is to try and strike a balance between line count and having enough fill

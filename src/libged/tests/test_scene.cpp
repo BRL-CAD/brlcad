@@ -18,6 +18,7 @@
 
 #include "bu/app.h"
 #include "bu/file.h"
+#include "bv/polygon.h"
 #include "ged.h"
 #include "ged/history.h"
 #include "ged/scene.h"
@@ -126,6 +127,64 @@ test_legacy_history(const char *path)
     }
     const char *zap[] = {"zap"};
     CHECK(ged_exec(gedp, 1, zap) == BRLCAD_OK, "release the legacy display fixture");
+}
+
+static void
+test_polygon_history(struct ged *gedp)
+{
+    struct bv_polygon *polygon;
+    BU_GET(polygon, struct bv_polygon);
+    polygon->type = BV_POLYGON_GENERAL;
+    polygon->polygon.num_contours = 1;
+    polygon->polygon.hole = static_cast<int *>(bu_calloc(1, sizeof(int), "polygon hole"));
+    BU_ALLOC(polygon->polygon.contour, struct bg_poly_contour);
+    auto *contour = polygon->polygon.contour;
+    const point_t triangle[] = {{0, 0, 0}, {10, 0, 0}, {0, 10, 0}};
+    contour->num_points = sizeof(triangle) / sizeof(triangle[0]);
+    contour->point = static_cast<point_t *>(bu_malloc(sizeof(triangle), "polygon points"));
+    memcpy(contour->point, triangle, sizeof(triangle));
+
+    auto *view_polygon = bv_create_polygon_obj(gedp->ged_gvp, BV_VIEW_OBJS, polygon);
+    CHECK(view_polygon, "create a view polygon");
+    if (!view_polygon)
+	return;
+    const vect_t normal = {0, 0, 1};
+    bg_plane_pt_nrml(&polygon->vp, triangle[0], normal);
+    bu_vls_strcpy(&view_polygon->s_name, "history_polygon");
+
+    const char *export_sketch[] = {"view", "obj", "history_polygon", "polygon", "export", "contour.s"};
+    CHECK(ged_exec(gedp, 6, export_sketch) == BRLCAD_OK && BU_STR_EQUAL(polygon->sketch_name, "contour.s") &&
+	db_lookup(gedp->dbip, "contour.s", LOOKUP_QUIET), "export the polygon as a recorded sketch");
+    const char *make_group[] = {"g", "outline.c", "contour.s"};
+    CHECK(ged_exec(gedp, 3, make_group) == BRLCAD_OK, "reference the sketch from a combination");
+    const char *attr[] = {"attr", "set", "contour.s", "test_note", "preserve me"};
+    CHECK(ged_exec(gedp, 5, attr) == BRLCAD_OK, "attach an unrelated sketch attribute");
+
+    CHECK(ged_view_polygon_save_sketch(gedp, view_polygon, "outline.c", polygon->sketch_name) == BRLCAD_ERROR &&
+	BU_STR_EQUAL(polygon->sketch_name, "contour.s") && db_lookup(gedp->dbip, "contour.s", LOOKUP_QUIET),
+	"reject a collision before changing the sketch or its association");
+    CHECK(ged_view_polygon_save_sketch(gedp, view_polygon, "outline.s", polygon->sketch_name) == BRLCAD_OK &&
+	BU_STR_EQUAL(polygon->sketch_name, "outline.s") && !db_lookup(gedp->dbip, "contour.s", LOOKUP_QUIET),
+	"publish the renamed polygon sketch");
+
+    const auto references_sketch = [gedp](const char *name) {
+	auto *group = db_lookup(gedp->dbip, "outline.c", LOOKUP_QUIET);
+	auto *sketch = db_lookup(gedp->dbip, name, LOOKUP_QUIET);
+	return group && sketch && db_comb_has_instance(nullptr, gedp->dbip, group, sketch, 0);
+    };
+    CHECK(references_sketch("outline.s"), "rename the combination reference with the sketch");
+    const char *get_attr[] = {"attr", "get", "outline.s", "test_note"};
+    CHECK(ged_exec(gedp, 4, get_attr) == BRLCAD_OK && strstr(bu_vls_cstr(gedp->ged_result_str), "preserve me"),
+	"preserve unrelated sketch attributes during save");
+
+    const char *undo[] = {"db", "undo"};
+    CHECK(ged_exec(gedp, 2, undo) == BRLCAD_OK && db_lookup(gedp->dbip, "contour.s", LOOKUP_QUIET) &&
+	!db_lookup(gedp->dbip, "outline.s", LOOKUP_QUIET), "undo the sketch rename in one step");
+    CHECK(references_sketch("contour.s"), "undo restores the combination's original sketch reference");
+    const char *redo[] = {"db", "redo"};
+    CHECK(ged_exec(gedp, 2, redo) == BRLCAD_OK && db_lookup(gedp->dbip, "outline.s", LOOKUP_QUIET) &&
+	!db_lookup(gedp->dbip, "contour.s", LOOKUP_QUIET), "redo republishes the renamed sketch");
+    bv_obj_put(view_polygon);
 }
 
 int
@@ -269,6 +328,7 @@ main(int argc, char **argv)
 		ged_scene_path_state_get(gedp, gedp->ged_gvp, "sphere.s",
 		    GED_SCENE_DRAW_DEFAULT) == GED_SCENE_PATH_NOT_DRAWN,
 		"undo removes a primitive absent in the replacement database");
+	    test_polygon_history(gedp);
 	}
 	ged_scene_result_destroy(result);
 

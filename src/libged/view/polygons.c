@@ -652,14 +652,7 @@ _poly_cmd_export(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    GED_CHECK_EXISTS(gedp, argv[0], LOOKUP_QUIET, BRLCAD_ERROR);
-
-    if (db_scene_obj_to_sketch(gedp->dbip, argv[0], s) != BRLCAD_OK) {
-	bu_vls_printf(gedp->ged_result_str, "Failed to create sketch.\n");
-	return BRLCAD_ERROR;
-    }
-
-    return BRLCAD_OK;
+    return ged_view_polygon_save_sketch(gedp, s, argv[0], NULL);
 }
 
 int

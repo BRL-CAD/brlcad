@@ -323,26 +323,29 @@ end:
     }
 
     /* Have new polygon, now update view object vlist */
+    bv_polygon_set_sketch_name(p, dp->d_namep);
     bv_polygon_vlist(s);
 
     rt_db_free_internal(&intern);
     return s;
 }
 
-struct directory *
-db_scene_obj_to_sketch(struct db_i *dbip, const char *sname, struct bv_scene_obj *s)
+static struct directory *
+store_polygon_sketch(struct db_i *dbip, const char *sname, struct bv_scene_obj *s, int replace)
 {
     // Make sure we have a view polygon
-    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
+    if (!dbip || dbip->dbi_read_only || !sname || !s ||
+	!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
 	return NULL;
     }
 
-    if (db_lookup(dbip, sname, LOOKUP_QUIET) != RT_DIR_NULL) {
+    struct directory *dp = db_lookup(dbip, sname, LOOKUP_QUIET);
+    if (dp && (!replace || dp->d_major_type != DB5_MAJORTYPE_BRLCAD ||
+	       dp->d_minor_type != DB5_MINORTYPE_BRLCAD_SKETCH)) {
 	bu_log("Object %s already exists\n", sname);
 	return NULL;
     }
-
-    if (!s->s_v)
+    if ((replace && !dp) || !s->s_v || !s->s_i_data)
 	return NULL;
 
     size_t num_verts = 0;
@@ -409,68 +412,85 @@ db_scene_obj_to_sketch(struct db_i *dbip, const char *sname, struct bv_scene_obj
     }
 
 
-    struct directory *dp = db_diradd(dbip, sname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type);
-    if (dp == RT_DIR_NULL)
+    struct bu_attribute_value_set *attributes = &internal.idb_avs;
+    if (dp && db5_get_attributes(dbip, attributes, dp) != 0) {
+	rt_db_free_internal(&internal);
 	return NULL;
+    }
 
+    struct bu_vls val = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&val, "%d/%d/%d", s->s_color[0], s->s_color[1], s->s_color[2]);
+    bu_avs_add(attributes, "POLYGON_EDGE_COLOR", bu_vls_cstr(&val));
+    unsigned char rgb[3];
+    bu_color_to_rgb_chars(&p->fill_color, rgb);
+    bu_vls_sprintf(&val, "%d/%d/%d", rgb[0], rgb[1], rgb[2]);
+    bu_avs_add(attributes, "POLYGON_FILL_COLOR", bu_vls_cstr(&val));
+    bu_vls_sprintf(&val, "%d", p->fill_flag);
+    bu_avs_add(attributes, "POLYGON_FILL", bu_vls_cstr(&val));
+    bu_vls_sprintf(&val, "%g", p->fill_dir[0]);
+    bu_avs_add(attributes, "POLYGON_FILL_SLOPE_X", bu_vls_cstr(&val));
+    bu_vls_sprintf(&val, "%g", p->fill_dir[1]);
+    bu_avs_add(attributes, "POLYGON_FILL_SLOPE_Y", bu_vls_cstr(&val));
+    bu_vls_sprintf(&val, "%g", p->fill_delta);
+    bu_avs_add(attributes, "POLYGON_FILL_DELTA", bu_vls_cstr(&val));
+    switch (p->type) {
+    case BV_POLYGON_CIRCLE:
+	bu_vls_sprintf(&val, "CIRCLE");
+	break;
+    case BV_POLYGON_ELLIPSE:
+	bu_vls_sprintf(&val, "ELLIPSE");
+	break;
+    case BV_POLYGON_RECTANGLE:
+	bu_vls_sprintf(&val, "RECTANGLE");
+	break;
+    case BV_POLYGON_SQUARE:
+	bu_vls_sprintf(&val, "SQUARE");
+	break;
+    default:
+	bu_vls_sprintf(&val, "GENERAL");
+	break;
+    }
+    bu_avs_add(attributes, "POLYGON_TYPE", bu_vls_cstr(&val));
+    // Save view
+    bu_vls_sprintf(&val, "%.15e", s->s_v->gv_scale);
+    bu_avs_add(attributes, "VIEWSCALE", bu_vls_cstr(&val));
+    quat_t rquat;
+    quat_mat2quat(rquat, s->s_v->gv_rotation);
+    bu_vls_sprintf(&val, "%.15e %.15e %.15e %.15e", V4ARGS(rquat));
+    bu_avs_add(attributes, "ROTATION", bu_vls_cstr(&val));
+    quat_t cquat;
+    quat_mat2quat(cquat, s->s_v->gv_center);
+    bu_vls_sprintf(&val, "%.15e %.15e %.15e %.15e", V4ARGS(cquat));
+    bu_avs_add(attributes, "CENTER", bu_vls_cstr(&val));
+    bu_vls_free(&val);
+
+    const int created = dp == RT_DIR_NULL;
+    if (created) {
+	unsigned char type = DB5_MINORTYPE_BRLCAD_SKETCH;
+	dp = db_diradd(dbip, sname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, &type);
+    }
+    if (!dp) {
+	rt_db_free_internal(&internal);
+	return NULL;
+    }
     if (rt_db_put_internal(dp, dbip, &internal) < 0) {
+	if (created && dp->d_addr == RT_DIR_PHONY_ADDR)
+	    (void)db_dirdelete(dbip, dp);
 	return NULL;
     }
-
-    // write attributes to save visual properties
-
-    struct bu_attribute_value_set lavs;
-    bu_avs_init_empty(&lavs);
-    if (!db5_get_attributes(dbip, &lavs, dp)) {
-	struct bu_vls val = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&val, "%d/%d/%d", s->s_color[0], s->s_color[1], s->s_color[2]);
-	bu_avs_add(&lavs, "POLYGON_EDGE_COLOR", bu_vls_cstr(&val));
-	unsigned char rgb[3];
-	bu_color_to_rgb_chars(&p->fill_color, rgb);
-	bu_vls_sprintf(&val, "%d/%d/%d", rgb[0], rgb[1], rgb[2]);
-	bu_avs_add(&lavs, "POLYGON_FILL_COLOR", bu_vls_cstr(&val));
-	bu_vls_sprintf(&val, "%d", p->fill_flag);
-	bu_avs_add(&lavs, "POLYGON_FILL", bu_vls_cstr(&val));
-	bu_vls_sprintf(&val, "%g", p->fill_dir[0]);
-	bu_avs_add(&lavs, "POLYGON_FILL_SLOPE_X", bu_vls_cstr(&val));
-	bu_vls_sprintf(&val, "%g", p->fill_dir[1]);
-	bu_avs_add(&lavs, "POLYGON_FILL_SLOPE_Y", bu_vls_cstr(&val));
-	bu_vls_sprintf(&val, "%g", p->fill_delta);
-	bu_avs_add(&lavs, "POLYGON_FILL_DELTA", bu_vls_cstr(&val));
-	switch (p->type) {
-	    case BV_POLYGON_CIRCLE:
-		bu_vls_sprintf(&val, "CIRCLE");
-		break;
-	    case BV_POLYGON_ELLIPSE:
-		bu_vls_sprintf(&val, "ELLIPSE");
-		break;
-	    case BV_POLYGON_RECTANGLE:
-		bu_vls_sprintf(&val, "RECTANGLE");
-		break;
-	    case BV_POLYGON_SQUARE:
-		bu_vls_sprintf(&val, "SQUARE");
-		break;
-	    default:
-		bu_vls_sprintf(&val, "GENERAL");
-		break;
-	}
-	bu_avs_add(&lavs, "POLYGON_TYPE", bu_vls_cstr(&val));
-	// Save view
-	bu_vls_sprintf(&val, "%.15e", s->s_v->gv_scale);
-	bu_avs_add(&lavs, "VIEWSCALE", bu_vls_cstr(&val));
-	quat_t rquat;
-	quat_mat2quat(rquat, s->s_v->gv_rotation);
-	bu_vls_sprintf(&val, "%.15e %.15e %.15e %.15e", V4ARGS(rquat));
-	bu_avs_add(&lavs, "ROTATION", bu_vls_cstr(&val));
-	quat_t cquat;
-	quat_mat2quat(cquat, s->s_v->gv_center);
-	bu_vls_sprintf(&val, "%.15e %.15e %.15e %.15e", V4ARGS(cquat));
-	bu_avs_add(&lavs, "CENTER", bu_vls_cstr(&val));
-    }
-    db5_update_attributes(dp, &lavs, dbip);
-    bu_avs_free(&lavs);
-
     return dp;
+}
+
+struct directory *
+db_scene_obj_to_sketch(struct db_i *dbip, const char *sname, struct bv_scene_obj *s)
+{
+    return store_polygon_sketch(dbip, sname, s, 0);
+}
+
+struct directory *
+db_scene_obj_update_sketch(struct db_i *dbip, const char *sname, struct bv_scene_obj *s)
+{
+    return store_polygon_sketch(dbip, sname, s, 1);
 }
 
 /*

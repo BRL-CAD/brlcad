@@ -27,6 +27,7 @@
 #include <QLineEdit>
 #include <QButtonGroup>
 #include <QGroupBox>
+#include <QMessageBox>
 #include <QtGlobal>
 #include "../../QgEdApp.h"
 #include "QPolyCreate.h"
@@ -388,13 +389,12 @@ QPolyMod::select(const QString &poly)
 		    poly_type_settings(ip);
 		    ps->settings_sync(p);
 		    ps->view_name->setText(pname);
-		    if (ip->u_data) {
-			struct directory *dp = (struct directory *)ip->u_data;
+		    if (ip->sketch_name) {
 			ps->sketch_sync->blockSignals(true);
 			ps->sketch_sync->setChecked(true);
 			ps->sketch_sync->blockSignals(false);
 			ps->sketch_name->blockSignals(true);
-			ps->sketch_name->setText(dp->d_namep);
+			ps->sketch_name->setText(QString::fromLocal8Bit(ip->sketch_name));
 			ps->sketch_name->setEnabled(true);
 			ps->sketch_name->blockSignals(false);
 		    }
@@ -498,16 +498,9 @@ QPolyMod::toggle_closed_poly(bool checked)
 		if (!vp->polygon.num_contours || !vp->polygon.contour)
 		    cleanup.push_back(target);
 	    }
-	    for (size_t i = 0; i < cleanup.size(); i++) {
-		struct bv_polygon *vp = (struct bv_polygon *)cleanup[i]->s_i_data;
-		bg_polygon_free(&vp->polygon);
-		BU_PUT(vp, struct bv_polygon);
-		cleanup[i]->s_i_data = NULL;
-		bv_obj_put(cleanup[i]);
-	    }
+	    for (auto *target : cleanup)
+		bv_obj_put(target);
 	    if (pcnt || op != bg_Union) {
-		bg_polygon_free(&ip->polygon);
-		BU_PUT(ip, struct bv_polygon);
 		bv_obj_put(p);
 		p = NULL;
 	    }
@@ -568,13 +561,8 @@ QPolyMod::apply_bool_op()
 	    if (!vp->polygon.num_contours || !vp->polygon.contour)
 		cleanup.push_back(target);
 	}
-	for (size_t i = 0; i < cleanup.size(); i++) {
-	    struct bv_polygon *vp = (struct bv_polygon *)cleanup[i]->s_i_data;
-	    bg_polygon_free(&vp->polygon);
-	    BU_PUT(vp, struct bv_polygon);
-	    cleanup[i]->s_i_data = NULL;
-	    bv_obj_put(cleanup[i]);
-	}
+	for (auto *target : cleanup)
+	    bv_obj_put(target);
     }
 
     emit view_updated(QG_VIEW_REFRESH);
@@ -616,9 +604,6 @@ QPolyMod::delete_poly()
     if (!gedp)
 	return;
 
-    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-    bg_polygon_free(&ip->polygon);
-    BU_PUT(ip, struct bv_polygon);
     bv_obj_put(p);
     mod_names->setCurrentIndex(0);
     if (mod_names->currentText().length()) {
@@ -657,61 +642,17 @@ QPolyMod::sketch_name_edit()
 	return;
     }
 
-    if (ps->sketch_sync->isChecked()) {
-	char *sname = NULL;
-	if (!ps->sketch_name->placeholderText().length()) {
-	    if (ps->view_name->placeholderText().length()) {
-		ps->sketch_name->setPlaceholderText(ps->view_name->placeholderText());
-		sname = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
-	    }
-	} else {
-	    sname = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
-	}
-	if (!ps->sketch_name->text().length()) {
-	    if (ps->view_name->text().length()) {
-		ps->sketch_name->setPlaceholderText(ps->view_name->text());
-		if (sname)
-		    bu_free(sname, "sname");
-		sname = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
-	    }
-	} else {
-	    if (sname)
-		bu_free(sname, "sname");
-	    sname = bu_strdup(ps->sketch_name->text().toLocal8Bit().data());
-	}
-
-	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-	if (!sname && ip->u_data) {
-	    struct directory *dp = (struct directory *)ip->u_data;
-	    ps->sketch_name->setPlaceholderText(QString(dp->d_namep));
-	    sname = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
-	}
-
-	if (sname) {
-	    // There may be a dp associated with the polygon.  If so, and the name
-	    // matches, then a save operation will replace the old copy with an
-	    // updated version.
-	    bool match_curr = false;
-	    if (ip->u_data) {
-		struct directory *dp = (struct directory *)ip->u_data;
-		if (BU_STR_EQUAL(dp->d_namep, sname)) {
-		    match_curr = true;
-		}
-	    }
-	    if (!match_curr) {
-		// Not a name match to existing dp - fall back on db check.
-		if (db_lookup(gedp->dbip, sname, LOOKUP_QUIET) != RT_DIR_NULL) {
-		    ps->sketch_name->setStyleSheet("color: rgb(255,0,0)");
-		} else {
-		    ps->sketch_name->setStyleSheet("");
-		}
-	    } else {
-		ps->sketch_name->setStyleSheet("");
-	    }
-	    bu_free(sname, "sname");
-	} else {
-	    ps->sketch_name->setStyleSheet("");
-	}
+    if (p && ps->sketch_sync->isChecked()) {
+	const auto *polygon = static_cast<const struct bv_polygon *>(p->s_i_data);
+	const QString view_name = ps->view_name->text().isEmpty() ?
+	    ps->view_name->placeholderText() : ps->view_name->text();
+	ps->sketch_name->setPlaceholderText(polygon->sketch_name ?
+	    QString::fromLocal8Bit(polygon->sketch_name) : view_name);
+	const auto name = (ps->sketch_name->text().isEmpty() ?
+	    ps->sketch_name->placeholderText() : ps->sketch_name->text()).toLocal8Bit();
+	const bool collision = !name.isEmpty() && !BU_STR_EQUAL(polygon->sketch_name, name.constData()) &&
+	    db_lookup(gedp->dbip, name.constData(), LOOKUP_QUIET);
+	ps->sketch_name->setStyleSheet(collision ? "color: rgb(255,0,0)" : "");
 	ps->sketch_name->setEnabled(true);
     } else {
 	ps->sketch_name->setPlaceholderText("Enable to save sketch");
@@ -724,68 +665,20 @@ void
 QPolyMod::sketch_name_update()
 {
     QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m)
-	return;
-    struct ged *gedp = m->gedp;
-    if (!gedp)
+    if (!m || !m->gedp || !p || !ps->sketch_sync->isChecked())
 	return;
 
-    if (!p || !ps->sketch_sync->isChecked()) {
-	return;
-    }
-
-    char *sk_name = NULL;
-    if (!ps->sketch_name->placeholderText().length()) {
-	if (ps->view_name->placeholderText().length()) {
-	    ps->sketch_name->setPlaceholderText(ps->view_name->placeholderText());
-	    sk_name = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
-	}
-    } else {
-	sk_name = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
-    }
-    if (!ps->sketch_name->text().length()) {
-	if (ps->view_name->text().length()) {
-	    ps->sketch_name->setPlaceholderText(ps->view_name->text());
-	    bu_free(sk_name, "sk_name");
-	    sk_name = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
-	}
-    } else {
-	bu_free(sk_name, "sk_name");
-	sk_name = bu_strdup(ps->sketch_name->text().toLocal8Bit().data());
-    }
-
-    if (!sk_name)
+    const auto *polygon = static_cast<const struct bv_polygon *>(p->s_i_data);
+    const auto name = (ps->sketch_name->text().isEmpty() ?
+	ps->sketch_name->placeholderText() : ps->sketch_name->text()).toLocal8Bit();
+    if (name.isEmpty() || BU_STR_EQUAL(polygon->sketch_name, name.constData()))
 	return;
 
-    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-    if (ip->u_data) {
-	// remove previous dp, if name is different.  If name
-	// matches, we're done
-	struct directory *dp = (struct directory *)ip->u_data;
-	if (BU_STR_EQUAL(sk_name, dp->d_namep)) {
-	    bu_free(sk_name, "name copy");
-	    return;
-	}
-
-	// If the proposed new name collides with an existing object,
-	// we're done.
-	if (db_lookup(gedp->dbip, sk_name, LOOKUP_QUIET) != RT_DIR_NULL) {
-	    bu_free(sk_name, "name copy");
-	    return;
-	}
-
-	// Passed the tests - remove old object.
-	int ac = 2;
-	const char *av[2] = {"kill", NULL};
-	av[0] = "kill";
-	av[1] = dp->d_namep;
-	ged_exec_kill(gedp, ac, av);
+    if (ged_view_polygon_save_sketch(m->gedp, p, name.constData(), polygon->sketch_name) != BRLCAD_OK) {
+	QMessageBox::warning(this, tr("Save Sketch"), QString::fromUtf8(bu_vls_cstr(m->gedp->ged_result_str)));
+	return;
     }
-
-    ip->u_data = (void *)db_scene_obj_to_sketch(gedp->dbip, sk_name, p);
     emit view_updated(QG_VIEW_DB);
-
-    bu_free(sk_name, "name copy");
 }
 
 

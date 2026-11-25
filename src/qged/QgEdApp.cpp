@@ -341,6 +341,12 @@ QgEdApp::do_view_changed(unsigned long long flags)
     bv_log(1, "QgEdApp::do_view_changed");
     QTCAD_SLOT("QgEdApp::do_view_changed", 1);
 
+    if ((flags & QG_VIEW_DB) && mdl && mdl->gedp && mdl->gedp->dbip) {
+	mdl->g_update(mdl->gedp->dbip);
+	emit history_update();
+	flags |= QG_VIEW_DRAWN;
+    }
+
     if (flags & QG_VIEW_DRAWN) {
 	// For all associated view states, execute any necessary changes to
 	// view objects and lists

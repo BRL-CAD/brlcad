@@ -27,6 +27,7 @@
 #include <QLineEdit>
 #include <QButtonGroup>
 #include <QGroupBox>
+#include <QMessageBox>
 #include <QtGlobal>
 #include "../../QgEdApp.h"
 #include "QPolyCreate.h"
@@ -187,20 +188,13 @@ QPolyCreate::finalize(bool)
 
     // If we're also writing this out as a sketch, take care of that.
     if (ps->sketch_sync->isChecked()) {
-	char *sk_name = NULL;
-	if (ps->sketch_name->placeholderText().length()) {
-	    sk_name = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
-	}
-	if (ps->sketch_name->text().length()) {
-	    bu_free(sk_name, "sk_name");
-	    sk_name = bu_strdup(ps->sketch_name->text().toLocal8Bit().data());
-	}
-	if (sk_name && db_lookup(gedp->dbip, sk_name, LOOKUP_QUIET) == RT_DIR_NULL) {
-	    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-	    ip->u_data = (void *)db_scene_obj_to_sketch(gedp->dbip, sk_name, p);
+	const QString name = ps->sketch_name->text().isEmpty() ?
+	    ps->sketch_name->placeholderText() : ps->sketch_name->text();
+	if (ged_view_polygon_save_sketch(gedp, p, name.toLocal8Bit().constData(), nullptr) == BRLCAD_OK) {
 	    emit view_updated(QG_VIEW_DB);
+	} else {
+	    QMessageBox::warning(this, tr("Save Sketch"), QString::fromUtf8(bu_vls_cstr(gedp->ged_result_str)));
 	}
-	bu_free(sk_name, "name cpy");
     }
 
     // Done with sketch - update name for next polygon

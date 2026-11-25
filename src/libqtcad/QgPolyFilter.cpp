@@ -84,8 +84,6 @@ QgPolyFilter::close_polygon()
 	    // If we're trying to finalize and we have less than
 	    // three points, just remove - we didn't get enough
 	    // to make a closed polygon.
-	    bg_polygon_free(&ip->polygon);
-	    BU_PUT(ip, struct bv_polygon);
 	    bv_obj_put(wp);
 	    wp = NULL;
 	    return false;

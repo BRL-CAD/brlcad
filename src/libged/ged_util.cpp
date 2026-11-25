@@ -57,8 +57,74 @@
 #include "bv.h"
 
 #include "ged.h"
+#include "ged/history.h"
+#include "rt/primitives/sketch.h"
 #include "./ged_private.h"
 #include "./dbi.h"
+
+namespace {
+
+struct PolygonSketchEdit {
+    struct bv_scene_obj *polygon;
+    std::string name;
+    std::string prior;
+};
+
+int
+save_polygon_sketch(struct ged *gedp, void *data)
+{
+    const auto &edit = *static_cast<PolygonSketchEdit *>(data);
+    const char *name = edit.name.c_str();
+    const char *prior = edit.prior.c_str();
+    auto *previous = edit.prior.empty() ? nullptr : db_lookup(gedp->dbip, prior, LOOKUP_QUIET);
+    if (previous && (previous->d_major_type != DB5_MAJORTYPE_BRLCAD ||
+		     previous->d_minor_type != DB5_MINORTYPE_BRLCAD_SKETCH)) {
+	bu_vls_printf(gedp->ged_result_str, "%s is no longer a sketch", prior);
+	return BRLCAD_ERROR;
+    }
+    if ((!previous || edit.prior != edit.name) && db_lookup(gedp->dbip, name, LOOKUP_QUIET)) {
+	bu_vls_printf(gedp->ged_result_str, "Object %s already exists", name);
+	return BRLCAD_ERROR;
+    }
+    if (previous && edit.prior != edit.name) {
+	const char *rename[] = {"mvall", prior, name};
+	const int result = ged_exec(gedp, 3, rename);
+	if (result != BRLCAD_OK)
+	    return result;
+    }
+    auto *stored = previous ? db_scene_obj_update_sketch(gedp->dbip, name, edit.polygon) :
+	db_scene_obj_to_sketch(gedp->dbip, name, edit.polygon);
+    if (!stored) {
+	bu_vls_printf(gedp->ged_result_str, "Unable to save sketch %s", name);
+	return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
+
+} // namespace
+
+int
+ged_view_polygon_save_sketch(struct ged *gedp, struct bv_scene_obj *polygon, const char *name, const char *prior_name)
+{
+    if (!gedp || !gedp->dbip)
+	return BRLCAD_ERROR;
+    bu_vls_trunc(gedp->ged_result_str, 0);
+    if (!polygon || !(polygon->s_type_flags & BV_VIEWONLY) || !(polygon->s_type_flags & BV_POLYGONS) || !polygon->s_i_data) {
+	bu_vls_strcat(gedp->ged_result_str, "Select a view polygon to save as a sketch");
+	return BRLCAD_ERROR;
+    }
+    if (!name || !*name || strchr(name, '/')) {
+	bu_vls_strcat(gedp->ged_result_str, "Enter a valid sketch name");
+	return BRLCAD_ERROR;
+    }
+    PolygonSketchEdit edit{polygon, name, prior_name ? prior_name : ""};
+    const std::string label = "Save sketch " + edit.name;
+    const bool nested = ged_db_history_staged(gedp);
+    const int result = ged_history_apply_edit(gedp, label.c_str(), save_polygon_sketch, &edit);
+    if (result == BRLCAD_OK && !nested)
+	bv_polygon_set_sketch_name(static_cast<struct bv_polygon *>(polygon->s_i_data), edit.name.c_str());
+    return result;
+}
 
 int
 _ged_subcmd_help(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cmdtab *cmds, const char *cmdname, const char *cmdargs, void *gd, int argc, const char **argv)

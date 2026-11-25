@@ -76,6 +76,8 @@ GED_EXPORT extern unsigned long long ged_dl_hash(struct display_list *dl);
 
 
 GED_EXPORT extern int ged_export_polygon(struct ged *gedp, bv_data_polygon_state *gdpsp, size_t polygon_i, const char *sname);
+/** Save a view polygon as a sketch. An existing prior sketch can be replaced or renamed. */
+GED_EXPORT extern int ged_view_polygon_save_sketch(struct ged *gedp, struct bv_scene_obj *polygon, const char *name, const char *prior_name);
 GED_EXPORT extern struct bg_polygon *ged_import_polygon(struct ged *gedp, const char *sname);
 GED_EXPORT extern int ged_polygons_overlap(struct ged *gedp, struct bg_polygon *polyA, struct bg_polygon *polyB);
 GED_EXPORT extern void ged_polygon_fill_segments(struct ged *gedp, struct bg_polygon *poly, vect2d_t vfilldir, fastf_t vfilldelta);
