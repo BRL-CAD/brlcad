@@ -31,11 +31,13 @@
 #include <vector>
 
 #include "bu/datetime.h"
+#include "bu/file.h"
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "ged.h"
 #include "ged_private.h"
 #include "../librt/db_history_db5.h"
+#include "../librt/db_history_workspace.h"
 #include "../librt/librt_private.h"
 
 namespace {
@@ -75,6 +77,12 @@ struct ged_db_history {
     int original_read_only = 0;
     db_history::EmbeddedStatus embedded_status = db_history::EmbeddedStatus::Missing;
     db_history::EmbeddedPack embedded;
+    std::unique_ptr<db_history::Workspace> workspace;
+    db_history::WorkspaceHead workspace_head;
+    bool workspace_writable = false;
+    db_history::Id local_export = db_history::absent;
+    Edit conflict{nullptr, db_edit_abort};
+    db_history::Revision conflict_revision;
     std::unique_ptr<struct db5_save, decltype(&db5_save_free)> save{nullptr, db5_save_free};
     size_t limit = session_budget;
     size_t used = 0;
@@ -89,6 +97,9 @@ namespace {
 using Change = ged_db_history::Change;
 using Revision = ged_db_history::Revision;
 using db_history::EmbeddedStatus;
+using db_history::Workspace;
+using db_history::WorkspaceHead;
+using db_history::WorkspaceWriteStatus;
 using db_history::id_string;
 
 bool
@@ -306,6 +317,17 @@ can_write_history(struct ged *gedp, const ged_db_history &history, bool adopt_ex
 	bu_vls_printf(gedp->ged_result_str, "The open database has changed since history was loaded");
 	return false;
     }
+    if (history.workspace) {
+	if (!history.workspace_writable) {
+	    bu_vls_strcat(gedp->ged_result_str, "The workspace is open read-only");
+	    return false;
+	}
+	if (history.conflict) {
+	    bu_vls_strcat(gedp->ged_result_str, "Inspect the staged edit with db history conflict, then reopen the workspace");
+	    return false;
+	}
+	return can_replace_database(gedp);
+    }
 
     if (is_embedded(history) && history.embedded_status != EmbeddedStatus::Current &&
 	!(adopt_external && history.embedded_status == EmbeddedStatus::ExternalEdits)) {
@@ -350,11 +372,28 @@ attach_history(ged_db_history &history, struct db_i *db)
 }
 
 void
+switch_database(struct ged *gedp, struct db_i *replacement)
+{
+    auto *retired = gedp->dbip;
+    gedp->dbip = replacement;
+    ged_event_database_set_private(gedp, replacement);
+    refresh_view_units(gedp);
+    db_close(retired);
+
+    struct ged_event event;
+    ged_event_init(&event);
+    event.kind = GED_EVENT_BATCH_REBUILD;
+    event.redraw = 1;
+    if (ged_event_publish(gedp, &event, 1, nullptr) != GED_EVENT_OK)
+	bu_vls_printf(gedp->ged_result_str, "\nDatabase saved. Refresh the view to see the change.");
+}
+
+void
 install_snapshot(struct ged *gedp, ged_db_history &history, struct db_i *replacement,
 		 const db_history::Id *embedded_head = nullptr)
 {
-    auto *retired = history.live;
-    history.save.reset(db5_save_begin(replacement, nullptr));
+    if (!history.workspace)
+	history.save.reset(db5_save_begin(replacement, nullptr));
     attach_history(history, replacement);
     if (embedded_head) {
 	db_history::EmbeddedPack published;
@@ -367,17 +406,43 @@ install_snapshot(struct ged *gedp, ged_db_history &history, struct db_i *replace
 	    bu_vls_printf(gedp->ged_result_str, "\nDatabase saved. Reopen it to reload embedded history.");
 	}
     }
-    gedp->dbip = replacement;
-    ged_event_database_set_private(gedp, replacement);
-    refresh_view_units(gedp);
-    db_close(retired);
+    switch_database(gedp, replacement);
+}
 
-    struct ged_event event;
-    ged_event_init(&event);
-    event.kind = GED_EVENT_BATCH_REBUILD;
-    event.redraw = 1;
-    if (ged_event_publish(gedp, &event, 1, nullptr) != GED_EVENT_OK)
-	bu_vls_printf(gedp->ged_result_str, "\nDatabase saved. Refresh the view to see the change.");
+std::unique_ptr<ged_db_history>
+workspace_history(struct db_i *db, struct bu_vls *message)
+{
+    WorkspaceHead selected;
+    if (!Workspace::snapshot_model(db, &selected))
+	return nullptr;
+
+    auto history = std::make_unique<ged_db_history>();
+    history->workspace = Workspace::open(db->dbi_filename, nullptr, true);
+    history->workspace_writable = static_cast<bool>(history->workspace);
+    if (!history->workspace)
+	history->workspace = Workspace::open(db->dbi_filename, message);
+    if (!history->workspace)
+	return nullptr;
+    history->workspace_head = selected;
+    return history;
+}
+
+void
+reload_workspace(struct ged *gedp, ged_db_history &history, const WorkspaceHead &committed)
+{
+    WorkspaceHead selected;
+    struct bu_vls message = BU_VLS_INIT_ZERO;
+    auto *replacement = Workspace::open_snapshot(history.live->dbi_filename, selected, &message);
+    if (replacement) {
+	history.workspace_head = selected;
+	--history.live->i->dbi_edit_guard;
+	install_snapshot(gedp, history, replacement);
+	if (selected.generation != committed.generation)
+	    bu_vls_strcat(gedp->ged_result_str, "\nAnother writer advanced the workspace after publication");
+    } else {
+	bu_vls_printf(gedp->ged_result_str, "\nWorkspace saved. Reopen it to refresh the view (%s).", bu_vls_addr(&message));
+    }
+    bu_vls_free(&message);
 }
 
 struct ReplayStep {
@@ -448,6 +513,10 @@ int
 enable_session(struct ged *gedp, size_t limit)
 {
     if (gedp->i->db_history) {
+	if (gedp->i->db_history->workspace) {
+	    bu_vls_strcat(gedp->ged_result_str, "This database already carries workspace history");
+	    return BRLCAD_ERROR;
+	}
 	if (!is_embedded(*gedp->i->db_history))
 	    return BRLCAD_OK;
 	bu_vls_printf(gedp->ged_result_str, "This database already carries embedded history");
@@ -573,7 +642,7 @@ prepare_archive(struct ged *gedp, const ged_db_history *journal, db_history::Db5
     Snapshot source(db_open(gedp->dbip->dbi_filename, DB_OPEN_READONLY), db_close);
     if (!source || db_dirbuild(source.get()) != 0 ||
 	!db_history::seed_db5_history(source.get(), "Initial model", revision_time(), draft)) {
-	bu_vls_printf(gedp->ged_result_str, "Could not build the initial embedded history");
+	bu_vls_printf(gedp->ged_result_str, "Could not build the initial DB5 history");
 	return false;
     }
     if (journal && !archive_session(*journal, draft)) {
@@ -587,6 +656,10 @@ int
 enable_embedded(struct ged *gedp)
 {
     auto *history = gedp->i->db_history;
+    if (history && history->workspace) {
+	bu_vls_strcat(gedp->ged_result_str, "This database already carries workspace history");
+	return BRLCAD_ERROR;
+    }
     if (history && is_embedded(*history)) {
 	if (history->embedded_status == EmbeddedStatus::Current)
 	    return BRLCAD_OK;
@@ -632,6 +705,96 @@ enable_embedded(struct ged *gedp)
 }
 
 int
+create_workspace(struct ged *gedp, const char *path)
+{
+    auto *out = gedp->ged_result_str;
+    if (!gedp->dbip || db_version(gedp->dbip) != 5) {
+	bu_vls_strcat(out, "A DB5 database is required to create a workspace");
+	return BRLCAD_ERROR;
+    }
+    auto *history = gedp->i->db_history;
+    if (history && history->workspace && bu_file_same(path, gedp->dbip->dbi_filename))
+	return BRLCAD_OK;
+    if (!can_replace_database(gedp))
+	return BRLCAD_ERROR;
+
+    if (history && history->workspace) {
+	if (!history->workspace->copy_to(history->workspace_head, path, out))
+	    return BRLCAD_ERROR;
+    } else {
+	db_history::Db5HistoryDraft draft;
+	const db_history::Pack *pack = &draft.pack;
+	if (history && is_embedded(*history)) {
+	    if (history->embedded_status != EmbeddedStatus::Current ||
+		(history->save && !db_history::db5_history_save_is_current(history->save.get()))) {
+		bu_vls_strcat(out, "This DB5 archive must match the open model before workspace creation");
+		return BRLCAD_ERROR;
+	    }
+	    pack = &history->embedded.pack;
+	} else if (!prepare_archive(gedp, history, draft)) {
+	    return BRLCAD_ERROR;
+	}
+	if (!Workspace::create(path, *pack, out))
+	    return BRLCAD_ERROR;
+    }
+
+    WorkspaceHead selected;
+    Snapshot replacement(Workspace::open_snapshot(path, selected, out), db_close);
+    auto next = workspace_history(replacement.get(), out);
+    if (!next) {
+	bu_vls_printf(out, "\nWorkspace created at %s. Reopen it to switch databases.", path);
+	return BRLCAD_ERROR;
+    }
+    ged_db_history_reset(gedp);
+    attach_history(*next, replacement.get());
+    gedp->i->db_history = next.release();
+    switch_database(gedp, replacement.release());
+    return BRLCAD_OK;
+}
+
+int
+publish_workspace_edit(struct ged *gedp, ged_db_history &history, Edit &edit)
+{
+    auto *out = gedp->ged_result_str;
+    const auto *model = Workspace::snapshot_model(history.live);
+    if (!model) {
+	bu_vls_strcat(out, "\nThe workspace database view is unavailable");
+	return BRLCAD_ERROR;
+    }
+    db_history::EmbeddedPack base;
+    base.model = *model;
+    base.pack.selected_revision = history.workspace_head.revision;
+    base.pack.selected_model = history.workspace_head.model;
+    db_history::Db5HistoryDraft draft;
+    const auto status = db_history::append_db5_history(base, edit.get(), revision_time(), draft);
+    if (status == db_history::AppendStatus::Unchanged)
+	return BRLCAD_OK;
+    db_history::Revision revision;
+    if (status != db_history::AppendStatus::Ready ||
+	!db_history::read_revision(draft.pack, draft.pack.selected_revision, revision)) {
+	bu_vls_strcat(out, "\nCould not record the staged workspace edit");
+	return BRLCAD_ERROR;
+    }
+
+    WorkspaceHead committed;
+    struct bu_vls message = BU_VLS_INIT_ZERO;
+    const auto write = history.workspace->commit(history.workspace_head, revision, draft.pack.artifacts, committed, &message);
+    if (write != WorkspaceWriteStatus::Ok)
+	bu_vls_printf(out, "\n%s", bu_vls_addr(&message));
+    bu_vls_free(&message);
+    if (write == WorkspaceWriteStatus::Stale) {
+	history.conflict = std::move(edit);
+	history.conflict_revision = std::move(revision);
+	bu_vls_strcat(out, "\nInspect the staged edit with db history conflict");
+    }
+    if (write != WorkspaceWriteStatus::Ok)
+	return BRLCAD_ERROR;
+    edit.reset();
+    reload_workspace(gedp, history, committed);
+    return BRLCAD_OK;
+}
+
+int
 publish_embedded_edit(struct ged *gedp, ged_db_history &history, Edit &edit, const db_history::Pack &pack)
 {
     Snapshot snapshot(db_edit_commit(edit.get()), db_close);
@@ -657,6 +820,22 @@ checkout_embedded(struct ged *gedp, ged_db_history &history, const db_history::I
 	return BRLCAD_ERROR;
     }
     return publish_embedded_edit(gedp, history, edit, draft.pack);
+}
+
+int
+checkout_history(struct ged *gedp, ged_db_history &history, const db_history::Id &target)
+{
+    if (!can_write_history(gedp, history))
+	return BRLCAD_ERROR;
+    if (!history.workspace)
+	return checkout_embedded(gedp, history, target);
+    WorkspaceHead selected;
+    if (history.workspace->checkout(history.workspace_head, target, selected,
+	gedp->ged_result_str) != WorkspaceWriteStatus::Ok)
+	return BRLCAD_ERROR;
+    if (selected.generation != history.workspace_head.generation)
+	reload_workspace(gedp, history, selected);
+    return BRLCAD_OK;
 }
 
 void
@@ -773,13 +952,28 @@ resolve_archive_revision(struct bu_vls *out, const db_history::Pack &pack, std::
     return matched;
 }
 
-void
-print_embedded_status(struct ged *gedp, const ged_db_history &history)
+const db_history::Pack *
+history_graph(struct ged *gedp, const ged_db_history &history, db_history::Db5HistoryDraft &draft,
+	      WorkspaceHead *current = nullptr, db_history::Id *last_export = nullptr)
 {
     auto *out = gedp->ged_result_str;
-    bu_vls_printf(out, "mode embedded\nstatus %s\naccess %s", embedded_status_text(history.embedded_status),
-	history.save && history.embedded_status == EmbeddedStatus::Current ? "read-write" : "read-only");
-    const auto &pack = history.embedded.pack;
+    if (history.workspace) {
+	WorkspaceHead observed;
+	if (!history.workspace->read_graph(history.workspace_head, observed, draft, out, last_export))
+	    return nullptr;
+	if (current)
+	    *current = observed;
+	return &draft.pack;
+    }
+    if (history.embedded.pack.selected_revision != db_history::absent)
+	return &history.embedded.pack;
+    bu_vls_printf(out, "Embedded history is unavailable (%s)", embedded_status_text(history.embedded_status));
+    return nullptr;
+}
+
+void
+print_revision_options(struct bu_vls *out, const db_history::Pack &pack)
+{
     if (pack.selected_revision == db_history::absent)
 	return;
     bu_vls_printf(out, "\nrevision %s", id_string(pack.selected_revision).c_str());
@@ -801,16 +995,40 @@ print_embedded_status(struct ged *gedp, const ged_db_history &history)
 	bu_vls_strcat(out, "\nAn archived revision could not be read");
 }
 
-void
+int
 print_status(struct ged *gedp, const ged_db_history *history)
 {
+    auto *out = gedp->ged_result_str;
     if (!history) {
-	bu_vls_printf(gedp->ged_result_str, "mode disabled");
-	return;
+	bu_vls_strcat(out, "mode disabled");
+	return BRLCAD_OK;
+    }
+    if (history->workspace) {
+	db_history::Db5HistoryDraft graph;
+	WorkspaceHead observed;
+	db_history::Id last_export;
+	const auto *pack = history_graph(gedp, *history, graph, &observed, &last_export);
+	if (!pack)
+	    return BRLCAD_ERROR;
+	const bool stale = observed.generation != history->workspace_head.generation;
+	bu_vls_printf(out, "mode workspace\nstatus %s\naccess %s\ngeneration %ju", stale ? "stale" : "current",
+	    history->workspace_writable ? "read-write" : "read-only", (uintmax_t)history->workspace_head.generation);
+	print_revision_options(out, *pack);
+	if (stale)
+	    bu_vls_printf(out, "\nworkspace head %s generation %ju",
+		id_string(observed.revision).c_str(), (uintmax_t)observed.generation);
+	if (history->conflict)
+	    bu_vls_strcat(out, "\nstaged conflict");
+	if (history->local_export != db_history::absent)
+	    last_export = history->local_export;
+	bu_vls_printf(out, "\nlast export %s", last_export == db_history::absent ? "none" : id_string(last_export).c_str());
+	return BRLCAD_OK;
     }
     if (is_embedded(*history)) {
-	print_embedded_status(gedp, *history);
-	return;
+	bu_vls_printf(out, "mode embedded\nstatus %s\naccess %s", embedded_status_text(history->embedded_status),
+	    history->save && history->embedded_status == EmbeddedStatus::Current ? "read-write" : "read-only");
+	print_revision_options(out, history->embedded.pack);
+	return BRLCAD_OK;
     }
     const auto &head = history->revisions.at(history->head);
     bu_vls_printf(gedp->ged_result_str, "mode session\nrevision %ju\noldest %ju\nbytes %zu\nlimit %zu",
@@ -826,6 +1044,7 @@ print_status(struct ged *gedp, const ged_db_history *history)
 	    append_printable(gedp->ged_result_str, entry.second.label);
 	}
     }
+    return BRLCAD_OK;
 }
 
 const Revision *
@@ -885,22 +1104,9 @@ print_changes(struct ged *gedp, const ged_db_history &history, uint64_t id, cons
 	print_change(out, !change.before.empty(), !change.after.empty(), change.name);
 }
 
-bool
-archive_readable(struct ged *gedp, const ged_db_history &history)
-{
-    if (history.embedded.pack.selected_revision != db_history::absent)
-	return true;
-    bu_vls_printf(gedp->ged_result_str, "Embedded history is unavailable (%s)", embedded_status_text(history.embedded_status));
-    return false;
-}
-
 int
-print_archive_log(struct ged *gedp, const ged_db_history &history, const char *object)
+print_archive_log(struct ged *gedp, const db_history::Pack &pack, const char *object)
 {
-    if (!archive_readable(gedp, history))
-	return BRLCAD_ERROR;
-
-    const auto &pack = history.embedded.pack;
     auto *out = gedp->ged_result_str;
     std::vector<std::pair<db_history::Id, db_history::Revision>> entries;
     if (!visit_archive_revisions(pack, [&](const db_history::Id &id, const db_history::Revision &revision) {
@@ -940,14 +1146,18 @@ show_archive_revision(struct ged *gedp, const db_history::Pack &pack, const db_h
 }
 
 int
-diff_archive_revisions(struct ged *gedp, const db_history::Pack &pack, const char *a, const char *b, const char *object)
+diff_archive_revisions(struct ged *gedp, const db_history::Pack &pack, const Workspace *workspace,
+		       const char *a, const char *b, const char *object)
 {
     auto *out = gedp->ged_result_str;
     db_history::Id first, second;
     if (!resolve_archive_revision(out, pack, a, first) || !resolve_archive_revision(out, pack, b, second))
 	return BRLCAD_ERROR;
     db_history::Manifest before, after;
-    if (!db_history::manifest_at_revision(pack, first, before) || !db_history::manifest_at_revision(pack, second, after)) {
+    const auto load = [&](const db_history::Id &id, db_history::Manifest &model) {
+	return workspace ? workspace->read_model_at(id, model, nullptr) : db_history::manifest_at_revision(pack, id, model);
+    };
+    if (!load(first, before) || !load(second, after)) {
 	bu_vls_strcat(out, "An archived model could not be reconstructed");
 	return BRLCAD_ERROR;
     }
@@ -997,7 +1207,8 @@ verify_embedded_history(struct ged *gedp, ged_db_history &history)
 int
 adopt_external_history(struct ged *gedp, ged_db_history &history, bool apply)
 {
-    if (!unchanged_history_file(gedp, history) || !archive_readable(gedp, history))
+    db_history::Db5HistoryDraft graph;
+    if (!unchanged_history_file(gedp, history) || !history_graph(gedp, history, graph))
 	return BRLCAD_ERROR;
 
     auto *out = gedp->ged_result_str;
@@ -1052,6 +1263,14 @@ mark_archive_revision(struct ged *gedp, ged_db_history &history, const char *nam
 {
     if (!can_write_history(gedp, history))
 	return BRLCAD_ERROR;
+    if (history.workspace) {
+	WorkspaceHead selected;
+	if (history.workspace->mark(history.workspace_head, name, move, selected,
+	    gedp->ged_result_str) != WorkspaceWriteStatus::Ok)
+	    return BRLCAD_ERROR;
+	history.workspace_head = selected;
+	return BRLCAD_OK;
+    }
     const auto &current = history.embedded.pack;
     const auto found = current.references.find(name);
     if (!*name || (found != current.references.end() && !move)) {
@@ -1070,12 +1289,13 @@ mark_archive_revision(struct ged *gedp, ged_db_history &history, const char *nam
 }
 
 int
-export_history(struct ged *gedp, const ged_db_history *history, const char *path, bool include_archive)
+export_history(struct ged *gedp, ged_db_history *history, const char *path, bool include_archive)
 {
     auto *out = gedp->ged_result_str;
     const db_history::Pack *pack = nullptr;
     db_history::Db5HistoryDraft draft;
-    if (include_archive) {
+    const auto *workspace = history ? history->workspace.get() : nullptr;
+    if (include_archive && !workspace) {
 	if (!history) {
 	    bu_vls_strcat(out, "The open database does not have history to export");
 	    return BRLCAD_ERROR;
@@ -1092,20 +1312,30 @@ export_history(struct ged *gedp, const ged_db_history *history, const char *path
 	    pack = &draft.pack;
 	}
     }
-    const auto status = db_history::export_db5_snapshot(gedp->dbip, path, pack, out);
+    const auto status = workspace ? workspace->export_snapshot(gedp->dbip, path, include_archive, out) :
+	db_history::export_db5_snapshot(gedp->dbip, path, pack, out);
     if (status == DB5_SAVE_OK) {
 	bu_vls_strcat(out, "Exported ");
 	append_printable(out, path);
+	if (history && history->workspace) {
+	    history->local_export = history->workspace_head.revision;
+	    if (history->workspace_writable) {
+		struct bu_vls message = BU_VLS_INIT_ZERO;
+		if (history->workspace->record_export(history->local_export, &message))
+		    history->local_export = db_history::absent;
+		else
+		    bu_vls_printf(out, "\nCould not record the export in the workspace (%s)", bu_vls_addr(&message));
+		bu_vls_free(&message);
+	    }
+	}
     }
     return status == DB5_SAVE_OK || status == DB5_SAVE_SYNC_FAILED ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 int
-step_archive_revision(struct ged *gedp, ged_db_history &history, bool undo, const char *argument)
+step_archive_revision(struct ged *gedp, ged_db_history &history, const db_history::Pack &pack,
+		      bool undo, const char *argument)
 {
-    if (!can_write_history(gedp, history))
-	return BRLCAD_ERROR;
-    const auto &pack = history.embedded.pack;
     auto *out = gedp->ged_result_str;
     db_history::Id target = db_history::absent;
     if (undo || argument) {
@@ -1136,7 +1366,7 @@ step_archive_revision(struct ged *gedp, ged_db_history &history, bool undo, cons
 	    return BRLCAD_ERROR;
 	}
 	if (children > 1 && (preferred == pack.preferences.end() || preferred->second != target)) {
-	    print_embedded_status(gedp, history);
+	    print_status(gedp, &history);
 	    bu_vls_strcat(out, "\nSelect a revision with db redo <revision>");
 	    return BRLCAD_ERROR;
 	}
@@ -1145,7 +1375,7 @@ step_archive_revision(struct ged *gedp, ged_db_history &history, bool undo, cons
 	bu_vls_printf(out, "No retained revision to %s", undo ? "undo" : "redo");
 	return BRLCAD_ERROR;
     }
-    return checkout_embedded(gedp, history, target);
+    return checkout_history(gedp, history, target);
 }
 
 } // namespace
@@ -1170,8 +1400,14 @@ ged_db_history_reset(struct ged *gedp)
 void
 ged_db_history_open(struct ged *gedp)
 {
-    if (!gedp->dbip || gedp->i->db_history || db_version(gedp->dbip) != 5 ||
-	!db_lookup(gedp->dbip, db_history::archive_name, LOOKUP_QUIET))
+    if (!gedp->dbip || gedp->i->db_history || db_version(gedp->dbip) != 5)
+	return;
+    if (auto workspace = workspace_history(gedp->dbip, gedp->ged_result_str)) {
+	attach_history(*workspace, gedp->dbip);
+	gedp->i->db_history = workspace.release();
+	return;
+    }
+    if (!db_lookup(gedp->dbip, db_history::archive_name, LOOKUP_QUIET))
 	return;
 
     auto history = std::make_unique<ged_db_history>();
@@ -1240,6 +1476,9 @@ ged_db_history_leave(struct ged *gedp, struct db_edit *stage, int result)
 	return BRLCAD_ERROR;
     }
 
+    if (history->workspace)
+	return publish_workspace_edit(gedp, *history, edit);
+
     if (is_embedded(*history)) {
 	db_history::Db5HistoryDraft draft;
 	switch (db_history::append_db5_history(history->embedded, stage, revision_time(), draft)) {
@@ -1298,13 +1537,38 @@ ged_db_history_command(struct ged *gedp, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     if (command == "history") {
-	if (argc == 2 && BU_STR_EQUAL(argv[1], "status")) {
-	    print_status(gedp, history);
+	if (argc == 2 && BU_STR_EQUAL(argv[1], "status"))
+	    return print_status(gedp, history);
+	if (argc == 3 && BU_STR_EQUAL(argv[1], "workspace")) {
+	    const int status = create_workspace(gedp, argv[2]);
+	    if (status != BRLCAD_OK)
+		return status;
+	    if (bu_vls_strlen(gedp->ged_result_str))
+		bu_vls_putc(gedp->ged_result_str, '\n');
+	    return print_status(gedp, gedp->i->db_history);
+	}
+	if (argc == 2 && BU_STR_EQUAL(argv[1], "conflict")) {
+	    auto *out = gedp->ged_result_str;
+	    if (!history || !history->conflict) {
+		bu_vls_strcat(out, "There is no staged workspace conflict");
+		return BRLCAD_ERROR;
+	    }
+	    const auto &revision = history->conflict_revision;
+	    bu_vls_printf(out, "staged edit from %s ", id_string(revision.parent).c_str());
+	    append_printable(out, revision.label);
+	    print_renames(out, revision.renames);
+	    print_archive_changes(out, revision.changes);
 	    return BRLCAD_OK;
 	}
 	const bool verify = argc == 2 && BU_STR_EQUAL(argv[1], "verify");
 	const bool adopt = (argc == 2 || (argc == 3 && BU_STR_EQUAL(argv[2], "--apply"))) && BU_STR_EQUAL(argv[1], "adopt");
 	if (verify || adopt) {
+	    if (verify && history && history->workspace) {
+		if (!history->workspace->verify(gedp->ged_result_str))
+		    return BRLCAD_ERROR;
+		bu_vls_strcat(gedp->ged_result_str, "Workspace archive and selected model verified");
+		return BRLCAD_OK;
+	    }
 	    if (!history || !is_embedded(*history)) {
 		bu_vls_strcat(gedp->ged_result_str, "This command requires embedded history");
 		return BRLCAD_ERROR;
@@ -1341,19 +1605,24 @@ ged_db_history_command(struct ged *gedp, int argc, const char **argv)
 	}
 	if ((argc == 2 || (argc == 4 && BU_STR_EQUAL(argv[2], "--object"))) && BU_STR_EQUAL(argv[1], "log")) {
 	    const auto *object = argc == 4 ? argv[3] : nullptr;
-	    return history && is_embedded(*history) ? print_archive_log(gedp, *history, object) :
-		print_log(gedp, history, object);
+	    if (history && (history->workspace || is_embedded(*history))) {
+		db_history::Db5HistoryDraft graph;
+		const auto *pack = history_graph(gedp, *history, graph);
+		return pack ? print_archive_log(gedp, *pack, object) : BRLCAD_ERROR;
+	    }
+	    return print_log(gedp, history, object);
 	}
 	if (argc == 3 && one_of(argv[1], {"show", "checkout"})) {
 	    const bool inspect = BU_STR_EQUAL(argv[1], "show");
-	    if (history && is_embedded(*history)) {
+	    if (history && (history->workspace || is_embedded(*history))) {
+		db_history::Db5HistoryDraft graph;
+		const auto *pack = history_graph(gedp, *history, graph);
 		db_history::Id id;
-		if (!archive_readable(gedp, *history) ||
-		    !resolve_archive_revision(gedp->ged_result_str, history->embedded.pack, argv[2], id))
+		if (!pack || !resolve_archive_revision(gedp->ged_result_str, *pack, argv[2], id))
 		    return BRLCAD_ERROR;
 		if (inspect)
-		    return show_archive_revision(gedp, history->embedded.pack, id);
-		return can_write_history(gedp, *history) ? checkout_embedded(gedp, *history, id) : BRLCAD_ERROR;
+		    return show_archive_revision(gedp, *pack, id);
+		return checkout_history(gedp, *history, id);
 	    }
 	    uint64_t target;
 	    const auto *revision = find_revision(gedp, history, argv[2], target);
@@ -1368,15 +1637,16 @@ ged_db_history_command(struct ged *gedp, int argc, const char **argv)
 	const bool diff = (argc == 4 || (argc == 6 && BU_STR_EQUAL(argv[4], "--object"))) && BU_STR_EQUAL(argv[1], "diff");
 	const bool mark = (argc == 3 || (argc == 4 && BU_STR_EQUAL(argv[3], "--move"))) && BU_STR_EQUAL(argv[1], "mark");
 	if (diff || mark) {
-	    if (!history || !is_embedded(*history)) {
-		bu_vls_strcat(gedp->ged_result_str, "This command requires embedded history");
+	    if (!history || (!history->workspace && !is_embedded(*history))) {
+		bu_vls_strcat(gedp->ged_result_str, "This command requires embedded or workspace history");
 		return BRLCAD_ERROR;
 	    }
 	    if (mark)
 		return mark_archive_revision(gedp, *history, argv[2], argc == 4);
-	    if (!archive_readable(gedp, *history))
-		return BRLCAD_ERROR;
-	    return diff_archive_revisions(gedp, history->embedded.pack, argv[2], argv[3], argc == 6 ? argv[5] : nullptr);
+	    db_history::Db5HistoryDraft graph;
+	    const auto *pack = history_graph(gedp, *history, graph);
+	    return pack ? diff_archive_revisions(gedp, *pack, history->workspace.get(), argv[2], argv[3],
+		argc == 6 ? argv[5] : nullptr) : BRLCAD_ERROR;
 	}
 	bu_vls_strcat(gedp->ged_result_str, "Usage: db history " GED_DB_HISTORY_USAGE);
 	return GED_HELP;
@@ -1390,8 +1660,11 @@ ged_db_history_command(struct ged *gedp, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "Session history is disabled");
 	return BRLCAD_ERROR;
     }
-    if (is_embedded(*history))
-	return step_archive_revision(gedp, *history, undo, argc == 2 ? argv[1] : nullptr);
+    if (history->workspace || is_embedded(*history)) {
+	db_history::Db5HistoryDraft graph;
+	const auto *pack = history_graph(gedp, *history, graph);
+	return pack ? step_archive_revision(gedp, *history, *pack, undo, argc == 2 ? argv[1] : nullptr) : BRLCAD_ERROR;
+    }
 
     const auto &revision = history->revisions.at(history->head);
     uint64_t target = undo ? revision.parent : revision.preferred;

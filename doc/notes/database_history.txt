@@ -403,6 +403,15 @@ the largest BREP byte for byte in 171 milliseconds. A separate
 library test traversed and ray traced geometry from a pinned
 workspace view while another handle published a new revision.
 
+In a terminal GED run on the M1917 copy, creating and switching to a
+workspace took 14.5 seconds. Reopen and status took 0.26 seconds.
+With each command launched in a fresh process, a title edit took
+0.57 seconds, Undo and Redo took 0.53 seconds each, and an attribute
+edit to the largest BREP took 1.66 seconds. Full workspace verification
+took 5.1 seconds. A history-preserving DB5 export took 23.0 seconds
+and reopened with the same selected revision and BREP attribute.
+The source file retained its initial title and file identity.
+
 Implementation starting points in the source tree
 -------------------------------------------------
 

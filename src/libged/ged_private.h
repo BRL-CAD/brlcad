@@ -237,7 +237,7 @@ int ged_db_history_leave(struct ged *gedp, struct db_edit *edit, int result);
 GED_EXPORT int ged_db_history_command(struct ged *gedp, int argc, const char **argv);
 #define GED_DB_HISTORY_USAGE "status | enable [embedded | session [bytes]] | log [--object name] | show <revision> | " \
     "checkout <revision> | diff <a> <b> [--object name] | mark <name> [--move] | export <path> [--with-history] | " \
-    "verify | adopt [--apply]"
+    "workspace <directory> | verify | adopt [--apply] | conflict"
 
 #ifndef FALSE
 #  define FALSE 0
@@ -341,7 +341,7 @@ GED_EXPORT void vls_col_eol(struct bu_vls *str);
 
 /* defined in ged.c */
 GED_EXPORT extern struct db_i *_ged_open_dbip(const char *filename,
-				   int existing_only);
+				   int existing_only, struct bu_vls *message);
 
 /* defined in comb.c */
 GED_EXPORT extern struct directory *_ged_combadd(struct ged *gedp,

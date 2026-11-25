@@ -50,6 +50,7 @@
 #include "bv/defines.h"
 
 #include "./ged_private.h"
+#include "../librt/db_history_workspace.h"
 #include "./include/plugin.h"
 
 extern "C" void libged_init(void);
@@ -725,13 +726,13 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     if (BU_STR_EQUAL(dbtype, "db")) {
 	struct db_i *dbip;
 
-	if ((dbip = _ged_open_dbip(filename, existing_only)) == DBI_NULL) {
+	if ((dbip = _ged_open_dbip(filename, existing_only, nullptr)) == DBI_NULL) {
 	    return GED_NULL;
 	}
 
 	RT_CK_DBI(dbip);
 
-	wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+	wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
     } else if (BU_STR_EQUAL(dbtype, "file")) {
 	wdbp = wdb_fopen(filename);
     } else {
@@ -783,9 +784,19 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
  * Open/Create the database and build the in memory directory.
  */
 struct db_i *
-_ged_open_dbip(const char *filename, int existing_only)
+_ged_open_dbip(const char *filename, int existing_only, struct bu_vls *message)
 {
     struct db_i *dbip = DBI_NULL;
+
+    if (bu_file_directory(filename)) {
+	db_history::WorkspaceHead selected;
+	struct bu_vls detail = BU_VLS_INIT_ZERO;
+	dbip = db_history::Workspace::open_snapshot(filename, selected, message ? message : &detail);
+	if (!dbip && !message)
+	    bu_log("%s\n", bu_vls_addr(&detail));
+	bu_vls_free(&detail);
+	return dbip;
+    }
 
     /* open database */
     if (((dbip = db_open(filename, DB_OPEN_READWRITE)) == DBI_NULL) &&

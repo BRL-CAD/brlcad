@@ -88,8 +88,10 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
      * we can actually open what the caller provided */
     struct db_i *new_dbip = NULL;
     int existing_only = (!force_create && open_only);
-    if ((new_dbip = _ged_open_dbip(argv[0], existing_only)) == DBI_NULL) {
+    if ((new_dbip = _ged_open_dbip(argv[0], existing_only, gedp->ged_result_str)) == DBI_NULL) {
 
+	if (bu_vls_strlen(gedp->ged_result_str))
+	    bu_vls_putc(gedp->ged_result_str, '\n');
 	bu_vls_printf(gedp->ged_result_str, "ged_opendb_core: failed to open %s\n", argv[0]);
 
 	// If the caller has work to do after opendb call, trigger it - even

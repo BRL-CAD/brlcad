@@ -19,6 +19,7 @@
  */
 #include "common.h"
 
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -478,6 +479,131 @@ test_session_promotion()
     return 0;
 }
 
+static int
+test_workspace_history()
+{
+    char path[MAXPATHLEN] = {};
+    FILE *temporary = bu_temp_file(path, sizeof(path));
+    CHECK(temporary && fclose(temporary) == 0 && bu_file_delete(path));
+    const struct TestDirectory {
+	std::filesystem::path path;
+	~TestDirectory()
+	{
+	    std::error_code error;
+	    std::filesystem::remove_all(path, error);
+	}
+    } fixture{path};
+    CHECK(std::filesystem::create_directory(fixture.path));
+    const auto source = (fixture.path / "source.g").string();
+    const auto workspace = (fixture.path / "workspace").string();
+    using Db = std::unique_ptr<struct db_i, decltype(&db_close)>;
+    using Ged = std::unique_ptr<struct ged, decltype(&ged_close)>;
+    Db initial(db_create(source.c_str(), 5), db_close);
+    CHECK(initial);
+    initial.reset();
+    Ged writer(ged_open("db", source.c_str(), 1), ged_close);
+    CHECK(writer);
+    const char *make[] = {"make", "extrusion.s", "extrude", nullptr};
+    const char *reference[] = {"get", "extrusion.s", "S", nullptr};
+    CHECK(run(writer.get(), make) == BRLCAD_OK && run(writer.get(), reference) == BRLCAD_OK);
+    const std::string old_name = bu_vls_addr(writer->ged_result_str);
+    const char *assembly[] = {"g", "assembly.c", old_name.c_str(), "extrusion.s", nullptr};
+    CHECK(run(writer.get(), assembly) == BRLCAD_OK);
+    const char *create[] = {"db", "history", "workspace", workspace.c_str(), nullptr};
+    const char *status[] = {"db", "history", "status", nullptr};
+    CHECK(run(writer.get(), create) == BRLCAD_OK && contains_result(writer.get(), "mode workspace"));
+    const auto root = selected_id(writer.get());
+    CHECK(!root.empty());
+    CHECK(run(writer.get(), create) == BRLCAD_OK && selected_id(writer.get()) == root);
+    const char *existing[] = {"db", "history", "workspace", path, nullptr};
+    CHECK(run(writer.get(), existing) != BRLCAD_OK && selected_id(writer.get()) == root);
+
+    const char *rename[] = {"db", "mvall", old_name.c_str(), "outline.s", nullptr};
+    int failed_writes = 0;
+    CHECK(ged_clbk_set(writer.get(), "mvall", BU_CLBK_PRE, fail_staged_edit, &failed_writes) == BRLCAD_OK);
+    CHECK(run(writer.get(), rename) != BRLCAD_OK && failed_writes == 1 && selected_id(writer.get()) == root);
+    CHECK(ged_clbk_set(writer.get(), "mvall", BU_CLBK_PRE, nullptr, nullptr) == GED_OVERRIDE);
+    Ged stale(ged_open("db", workspace.c_str(), 1), ged_close);
+    CHECK(stale && selected_id(stale.get()) == root);
+    CHECK(run(writer.get(), rename) == BRLCAD_OK && run(writer.get(), reference) == BRLCAD_OK &&
+	contains_result(writer.get(), "outline.s"));
+    const auto renamed = selected_id(writer.get());
+    CHECK(!renamed.empty() && renamed != root);
+    const char *show[] = {"db", "history", "show", renamed.c_str(), nullptr};
+    CHECK(run(writer.get(), show) == BRLCAD_OK && contains_result(writer.get(), " -> outline.s") &&
+	contains_result(writer.get(), "update extrusion.s") && contains_result(writer.get(), "update assembly.c"));
+    const char *mark[] = {"db", "history", "mark", "rename", nullptr};
+    CHECK(run(writer.get(), mark) == BRLCAD_OK && selected_id(writer.get()) == renamed);
+    CHECK(run(writer.get(), mark) != BRLCAD_OK && contains_result(writer.get(), "already exists"));
+    const char *log[] = {"db", "history", "log", nullptr};
+    CHECK(run(writer.get(), log) == BRLCAD_OK && contains_result(writer.get(), " rename"));
+    const char *diff[] = {"db", "history", "diff", root.c_str(), "rename", "--object", "extrusion.s", nullptr};
+    CHECK(run(writer.get(), diff) == BRLCAD_OK && contains_result(writer.get(), "update extrusion.s") &&
+	!contains_result(writer.get(), "outline.s"));
+
+    const char *staged_title[] = {"title", "staged conflict", nullptr};
+    CHECK(run(stale.get(), staged_title) != BRLCAD_OK && contains_result(stale.get(), "Workspace base changed") &&
+	contains_result(stale.get(), root.c_str()) && contains_result(stale.get(), renamed.c_str()));
+    CHECK(run(stale.get(), status) == BRLCAD_OK && contains_result(stale.get(), "status stale") &&
+	contains_result(stale.get(), "staged conflict"));
+    const char *conflict[] = {"db", "history", "conflict", nullptr};
+    CHECK(run(stale.get(), conflict) == BRLCAD_OK && contains_result(stale.get(), "update _GLOBAL"));
+    CHECK(run(stale.get(), reference) == BRLCAD_OK && contains_result(stale.get(), old_name.c_str()));
+    const char *open[] = {"db", "open", workspace.c_str(), nullptr};
+    CHECK(run(stale.get(), open) == BRLCAD_OK && selected_id(stale.get()) == renamed);
+    CHECK(run(stale.get(), conflict) != BRLCAD_OK);
+
+    const char *undo[] = {"db", "undo", nullptr};
+    const char *redo[] = {"db", "redo", nullptr};
+    CHECK(run(writer.get(), undo) == BRLCAD_OK && selected_id(writer.get()) == root);
+    writer.reset(ged_open("db", workspace.c_str(), 1));
+    CHECK(writer && run(writer.get(), status) == BRLCAD_OK && contains_result(writer.get(), "(preferred)"));
+    CHECK(run(writer.get(), redo) == BRLCAD_OK && selected_id(writer.get()) == renamed);
+    const char *checkout[] = {"db", "history", "checkout", root.c_str(), nullptr};
+    CHECK(run(writer.get(), checkout) == BRLCAD_OK && selected_id(writer.get()) == root);
+    CHECK(run(writer.get(), staged_title) == BRLCAD_OK);
+    const auto branch = selected_id(writer.get());
+    CHECK(!branch.empty() && branch != root && branch != renamed);
+    const char *move_mark[] = {"db", "history", "mark", "rename", "--move", nullptr};
+    CHECK(run(writer.get(), move_mark) == BRLCAD_OK && selected_id(writer.get()) == branch);
+    const char *verify[] = {"db", "history", "verify", nullptr};
+    CHECK(run(writer.get(), verify) == BRLCAD_OK && contains_result(writer.get(), "verified"));
+    const char *invalid_dir[] = {"db", "open", path, nullptr};
+    CHECK(run(writer.get(), invalid_dir) != BRLCAD_OK && contains_result(writer.get(), "no LMDB data file") &&
+	selected_id(writer.get()) == branch);
+
+    Ged legacy(ged_open("db", source.c_str(), 1), ged_close);
+    CHECK(legacy && run(legacy.get(), status) == BRLCAD_OK && contains_result(legacy.get(), "mode disabled") &&
+	run(legacy.get(), reference) == BRLCAD_OK && contains_result(legacy.get(), old_name.c_str()));
+    const auto plain = (fixture.path / "plain.g").string();
+    const char *export_plain[] = {"db", "history", "export", plain.c_str(), nullptr};
+    const int exported = run(writer.get(), export_plain);
+    if (exported != BRLCAD_OK && contains_result(writer.get(), "unavailable"))
+	return 0;
+    CHECK(exported == BRLCAD_OK);
+    CHECK(run(writer.get(), status) == BRLCAD_OK && contains_result(writer.get(), ("last export " + branch).c_str()));
+    Ged plain_db(ged_open("db", plain.c_str(), 1), ged_close);
+    const char *title[] = {"title", nullptr};
+    CHECK(plain_db && run(plain_db.get(), status) == BRLCAD_OK && contains_result(plain_db.get(), "mode disabled") &&
+	run(plain_db.get(), title) == BRLCAD_OK && contains_result(plain_db.get(), "staged conflict"));
+    const auto archive = (fixture.path / "archive.g").string();
+    const char *export_archive[] = {"db", "history", "export", "--with-history", archive.c_str(), nullptr};
+    CHECK(run(writer.get(), export_archive) == BRLCAD_OK);
+    writer.reset(ged_open("db", workspace.c_str(), 1));
+    CHECK(writer && run(writer.get(), status) == BRLCAD_OK && contains_result(writer.get(), ("last export " + branch).c_str()));
+    Ged archived(ged_open("db", archive.c_str(), 1), ged_close);
+    CHECK(archived && selected_id(archived.get()) == branch && run(archived.get(), show) == BRLCAD_OK);
+    const auto copy = (fixture.path / "copy").string();
+    const char *import_archive[] = {"db", "history", "workspace", copy.c_str(), nullptr};
+    CHECK(run(archived.get(), import_archive) == BRLCAD_OK && contains_result(archived.get(), "mode workspace") &&
+	selected_id(archived.get()) == branch && run(archived.get(), show) == BRLCAD_OK);
+    const auto cloned = (fixture.path / "cloned").string();
+    const char *copy_workspace[] = {"db", "history", "workspace", cloned.c_str(), nullptr};
+    CHECK(run(archived.get(), copy_workspace) == BRLCAD_OK && selected_id(archived.get()) == branch &&
+	run(archived.get(), verify) == BRLCAD_OK);
+    return 0;
+}
+
 
 int
 main(int argc, const char *argv[])
@@ -557,7 +683,10 @@ main(int argc, const char *argv[])
     if (session_status)
 	return session_status;
     const int embedded_status = test_embedded_history();
-    return embedded_status ? embedded_status : test_session_promotion();
+    if (embedded_status)
+	return embedded_status;
+    const int promotion_status = test_session_promotion();
+    return promotion_status ? promotion_status : test_workspace_history();
 }
 
 // Local Variables:
