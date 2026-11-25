@@ -26,6 +26,7 @@
 #include <QDialogButtonBox>
 #include <QHash>
 #include <QHeaderView>
+#include <QHBoxLayout>
 #include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
@@ -38,9 +39,11 @@
 
 #include "bu/vls.h"
 #include "ged/history.h"
+#include "qtcad/QgView.h"
 
 #include "QgEdApp.h"
 #include "QgEdMainWindow.h"
+#include "../libged/dbi.h"
 
 namespace {
 
@@ -57,6 +60,7 @@ private:
 
     void refresh();
     void updateSelection();
+    void previewRevision();
     void markRevision();
     void runCommand(int argc, const char **argv);
     QString selectedRevision() const;
@@ -67,6 +71,7 @@ private:
     QLabel *message;
     QPushButton *checkout;
     QPushButton *mark;
+    QPushButton *preview;
     QHash<QString, QTreeWidgetItem *> revisionItems;
     QSet<QString> checkpoints;
     QString currentRevision;
@@ -98,12 +103,14 @@ HistoryDialog::HistoryDialog(QgEdApp *application, QWidget *parent) :
     layout->addWidget(message);
 
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close, this);
+    preview = buttons->addButton(tr("Preview Selected Revision…"), QDialogButtonBox::ActionRole);
     checkout = buttons->addButton(tr("Check Out Selected Revision"), QDialogButtonBox::ActionRole);
     mark = buttons->addButton(tr("Mark Current Revision…"), QDialogButtonBox::ActionRole);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
     connect(revisions, &QTreeWidget::itemSelectionChanged, this, &HistoryDialog::updateSelection);
     connect(app, &QgEdApp::history_update, this, &HistoryDialog::refresh);
     connect(mark, &QPushButton::clicked, this, &HistoryDialog::markRevision);
+    connect(preview, &QPushButton::clicked, this, &HistoryDialog::previewRevision);
     connect(checkout, &QPushButton::clicked, this, [this]() {
 	const QByteArray id = selectedRevision().toLatin1();
 	const char *argv[] = {"db", "history", "checkout", id.constData()};
@@ -211,6 +218,7 @@ HistoryDialog::updateSelection()
     changes->clear();
     const QString revision = selectedRevision();
     checkout->setEnabled(writable && !revision.isEmpty() && revision != currentRevision);
+    preview->setEnabled(!revision.isEmpty());
     if (revision.isEmpty())
 	return;
     struct bu_vls diagnostic = BU_VLS_INIT_ZERO;
@@ -222,6 +230,90 @@ HistoryDialog::updateSelection()
 	message->hide();
     }
     bu_vls_free(&diagnostic);
+}
+
+void
+HistoryDialog::previewRevision()
+{
+    const QByteArray id = selectedRevision().toLatin1();
+    struct bu_vls diagnostic = BU_VLS_INIT_ZERO;
+    auto *snapshot = ged_history_open_revision(app->mdl->gedp, id.constData(), &diagnostic);
+    if (!snapshot) {
+	message->setText(QString::fromUtf8(bu_vls_cstr(&diagnostic)));
+	message->show();
+	bu_vls_free(&diagnostic);
+	return;
+    }
+    bu_vls_free(&diagnostic);
+
+    const std::unique_ptr<struct ged, decltype(&ged_close)> context(ged_create(), ged_close);
+    context->dbip = snapshot;
+    context->new_cmd_forms = 1;
+    context->dbi_state = new DbiState(context.get());
+    context->ged_gvp->gv_local2base = snapshot->dbi_local2base;
+    context->ged_gvp->gv_base2local = snapshot->dbi_base2local;
+
+    // Destroy the canvas before the separate GED context that owns its view.
+    QDialog window(this);
+    window.setWindowTitle(tr("Preview Revision %1").arg(QString::fromLatin1(id).left(12)));
+    auto *layout = new QVBoxLayout(&window);
+    auto *selector = new QHBoxLayout;
+    auto *path = new QLineEdit(&window);
+    path->setPlaceholderText(tr("Object or combination path"));
+    selector->addWidget(path);
+    auto *draw = new QPushButton(tr("Draw"), &window);
+    draw->setAutoDefault(false);
+    selector->addWidget(draw);
+    layout->addLayout(selector);
+
+    auto *change = changes->currentItem();
+    if (!change)
+	change = changes->topLevelItem(0);
+    if (change) {
+	const QString name = change->text(2).isEmpty() ? change->text(1) : change->text(2);
+	const auto *dp = db_lookup(snapshot, name.toUtf8().constData(), LOOKUP_QUIET);
+	if (dp && !(dp->d_flags & DB_LS_HIDDEN))
+	    path->setText(name);
+    }
+
+    auto *canvas = new QgView(&window, QgView_SW);
+    canvas->set_view(context->ged_gvp);
+    canvas->enableDefaultKeyBindings();
+    canvas->enableDefaultMouseBindings();
+    layout->addWidget(canvas, 1);
+
+    auto *draw_error = new QLabel(&window);
+    draw_error->setWordWrap(true);
+    draw_error->hide();
+    layout->addWidget(draw_error);
+    auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close, &window);
+    connect(buttons, &QDialogButtonBox::rejected, &window, &QDialog::reject);
+    layout->addWidget(buttons);
+
+    const auto draw_path = [gedp = context.get(), canvas, path, draw_error]() {
+	QString name = path->text();
+	if (name.isEmpty())
+	    return;
+	if (!name.startsWith('/'))
+	    name.prepend('/');
+	const QByteArray object = name.toUtf8();
+	const char *clear[] = {"zap"};
+	const char *argv[] = {"draw", object.constData()};
+	const int ret = ged_exec_zap(gedp, sizeof(clear) / sizeof(clear[0]), clear);
+	if (ret == BRLCAD_OK && ged_exec_draw(gedp, sizeof(argv) / sizeof(argv[0]), argv) == BRLCAD_OK) {
+	    draw_error->hide();
+	} else {
+	    draw_error->setText(QString::fromUtf8(bu_vls_cstr(gedp->ged_result_str)));
+	    draw_error->show();
+	}
+	canvas->need_update(QG_VIEW_DRAWN);
+    };
+    connect(canvas, &QgView::init_done, &window, draw_path);
+    connect(canvas, &QgView::changed, &window, [canvas]() { canvas->need_update(QG_VIEW_DRAWN); });
+    connect(path, &QLineEdit::returnPressed, &window, draw_path);
+    connect(draw, &QPushButton::clicked, &window, draw_path);
+    window.resize(size());
+    window.exec();
 }
 
 void

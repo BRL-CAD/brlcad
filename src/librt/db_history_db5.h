@@ -83,6 +83,11 @@ RT_EXPORT AppendStatus stage_db5_adoption(const struct db_i *db, const EmbeddedP
 RT_EXPORT bool stage_db5_checkout(const EmbeddedPack &archive, const Id &target,
 				struct db_edit *edit, Db5HistoryDraft &result);
 
+// Replay into a private view of the selected model. Supply the live
+// base when it has external edits so those can be reversed in the view.
+RT_EXPORT bool stage_db5_preview(const EmbeddedPack &archive, const Id &target,
+	struct db_edit *edit, const struct db_i *external_base);
+
 // Return an owned archive for Current and ExternalEdits. Opening never
 // modifies the database. The remaining statuses leave result untouched.
 RT_EXPORT EmbeddedStatus read_db5_history(const struct db_i *db, EmbeddedPack &result);

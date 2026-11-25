@@ -155,6 +155,15 @@ GED_EXPORT extern int ged_history_visit_revision(struct ged *gedp, const char *i
     ged_history_revision_func_t revision, ged_history_change_func_t change,
     void *data, struct bu_vls *message);
 
+/**
+ * Open an independent, read-only librt view of a retained revision.
+ * Decimal session IDs, persistent IDs and checkpoint names use the same
+ * forms as db history show. The caller releases the view with db_close.
+ * The working revision and preferred redo path remain as they were.
+ */
+GED_EXPORT extern struct db_i *ged_history_open_revision(struct ged *gedp,
+    const char *id, struct bu_vls *message);
+
 __END_DECLS
 
 #endif /* GED_HISTORY_H */

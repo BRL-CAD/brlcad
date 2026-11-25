@@ -54,6 +54,7 @@ extern "C" {
 #include "ged/selection.h"
 #include "ged/view.h"
 #include "./ged_private.h"
+#include "../librt/librt_private.h"
 
 #include "./dbi.h"
 
@@ -443,7 +444,7 @@ DbiState::DbiState(struct ged *ged_p)
 	this);
 
     // Set up cache
-    if (!gedp->i->db_history)
+    if (!gedp->i->db_history && dbip->dbi_filename && !dbip->i->dbi_edit_guard)
 	dcache = dbi_cache_open(dbip->dbi_filename);
 
     struct directory *dp;

@@ -192,20 +192,23 @@ checkout_record(const Pack &pack, const Id &id, Bytes &record)
 }
 
 bool
-checkout_change(const Pack &pack, struct db_edit *edit, const std::string &name, const Id &from, const Id &to)
+checkout_change(const Pack &pack, struct db_edit *edit, const std::string &name, const Id &from, const Id &to,
+		ByteView before_override = {})
 {
     if (from == to)
 	return true;
     Bytes before, after;
-    if (!checkout_record(pack, from, before) || !checkout_record(pack, to, after))
+    if ((!before_override.size && !checkout_record(pack, from, before)) ||
+	!checkout_record(pack, to, after))
 	return false;
     struct bu_external before_ext = BU_EXTERNAL_INIT_ZERO;
     struct bu_external after_ext = BU_EXTERNAL_INIT_ZERO;
-    before_ext.ext_buf = before.data();
-    before_ext.ext_nbytes = before.size();
+    const ByteView expected = before_override.size ? before_override : ByteView(before);
+    before_ext.ext_buf = const_cast<uint8_t *>(expected.data);
+    before_ext.ext_nbytes = expected.size;
     after_ext.ext_buf = after.data();
     after_ext.ext_nbytes = after.size();
-    return db_edit_apply(edit, name.c_str(), before.empty() ? nullptr : &before_ext,
+    return db_edit_apply(edit, name.c_str(), expected.size ? &before_ext : nullptr,
 	after.empty() ? nullptr : &after_ext) == 0;
 }
 
@@ -321,19 +324,62 @@ stage_db5_adoption(const struct db_i *db, const EmbeddedPack &archive, int64_t t
     return AppendStatus::Ready;
 }
 
+static bool
+stage_revision_model(const EmbeddedPack &archive, const Id &target, const Manifest &base,
+		     struct db_edit *edit, Manifest &model, const struct db_i *external_base = nullptr)
+{
+    if (!db_edit_view(edit) || !manifest_at_revision(archive.pack, target, model) ||
+	!model.count(DB5_GLOBAL_OBJECT_NAME) || model.count(archive_name))
+	return false;
+
+    for (const auto &entry : diff_manifests(base, model)) {
+	const auto &change = entry.second;
+	if (external_base && change.before != absent) {
+	    const auto *dp = db_lookup(external_base, entry.first.c_str(), LOOKUP_QUIET);
+	    if (!dp)
+		return false;
+	    const DatabaseRecord record(external_base, dp);
+	    if (!record.bytes.size ||
+		!checkout_change(archive.pack, edit, entry.first, change.before, change.after, record.bytes))
+		return false;
+	} else if (!checkout_change(archive.pack, edit, entry.first, change.before, change.after)) {
+	    return false;
+	}
+    }
+    return true;
+}
+
+bool
+stage_db5_preview(const EmbeddedPack &archive, const Id &target, struct db_edit *edit, const struct db_i *external_base)
+{
+    Manifest model;
+    if (!external_base)
+	return stage_revision_model(archive, target, archive.model, edit, model);
+
+    // Reuse untouched live records even if a legacy writer changed the
+    // file. Restore externally edited records from the verified archive.
+    Changes changes;
+    if (stage_db5_adoption(external_base, archive, 0, changes) == AppendStatus::Error)
+	return false;
+    Manifest base = archive.model;
+    for (const auto &entry : changes) {
+	if (entry.second.after == absent)
+	    base.erase(entry.first);
+	else
+	    base.insert_or_assign(entry.first, entry.second.after);
+    }
+    return stage_revision_model(archive, target, base, edit, model, external_base);
+}
+
 bool
 stage_db5_checkout(const EmbeddedPack &archive, const Id &target, struct db_edit *edit, Db5HistoryDraft &result)
 {
     Revision current, revision;
     Manifest model;
-    if (!db_edit_view(edit) || !read_revision(archive.pack, archive.pack.selected_revision, current) ||
-	!read_revision(archive.pack, target, revision) || !manifest_at_revision(archive.pack, target, model) ||
-	!model.count(DB5_GLOBAL_OBJECT_NAME) || model.count(archive_name))
+    if (!read_revision(archive.pack, archive.pack.selected_revision, current) ||
+	!read_revision(archive.pack, target, revision) ||
+	!stage_revision_model(archive, target, archive.model, edit, model))
 	return false;
-
-    for (const auto &entry : diff_manifests(archive.model, model))
-	if (!checkout_change(archive.pack, edit, entry.first, entry.second.before, entry.second.after))
-	    return false;
 
     Db5HistoryDraft draft;
     draft.backing = archive.backing;

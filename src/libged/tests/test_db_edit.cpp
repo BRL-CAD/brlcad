@@ -176,6 +176,12 @@ test_disk_history()
     CHECK(run(gedp, status) == BRLCAD_OK && contains_result(gedp, "revision 1"));
     CHECK(contains_result(gedp, ("undo mvall " + old_name + " outline.s").c_str()));
     CHECK(run(gedp, reference) == BRLCAD_OK && contains_result(gedp, "outline.s"));
+    const std::unique_ptr<struct db_i, decltype(&db_close)>
+	preview_initial(ged_history_open_revision(gedp, "0", nullptr), db_close);
+    CHECK(preview_initial && preview_initial->dbi_read_only &&
+	db_lookup(preview_initial.get(), old_name.c_str(), LOOKUP_QUIET) &&
+	!db_lookup(preview_initial.get(), "outline.s", LOOKUP_QUIET));
+    CHECK(db_lookup(gedp->dbip, "outline.s", LOOKUP_QUIET) && commits == 1);
     CHECK(run(gedp, undo) == BRLCAD_OK && commits == 2);
     CHECK(run(gedp, reference) == BRLCAD_OK && contains_result(gedp, old_name.c_str()));
     CHECK(run(gedp, redo) == BRLCAD_OK && commits == 3);
@@ -353,6 +359,9 @@ test_embedded_history()
     CHECK(inspector && run(inspector.get(), open_readonly) == BRLCAD_OK);
     CHECK(run(inspector.get(), status) == BRLCAD_OK && contains_result(inspector.get(), "access read-only"));
     CHECK(run(inspector.get(), show) == BRLCAD_OK);
+    Db preview_mark(ged_history_open_revision(inspector.get(), "rename-point", nullptr), db_close);
+    CHECK(preview_mark && preview_mark->dbi_read_only &&
+	db_lookup(preview_mark.get(), "outline.s", LOOKUP_QUIET) && selected_id(inspector.get()) == fork);
     const char *verify[] = {"db", "history", "verify", nullptr};
     CHECK(run(inspector.get(), verify) == BRLCAD_OK && contains_result(inspector.get(), "Archive verified"));
     CHECK(run(inspector.get(), undo) != BRLCAD_OK && contains_result(inspector.get(), "writable"));
@@ -387,6 +396,10 @@ test_embedded_history()
     CHECK(run(gedp, close) == BRLCAD_OK && run(gedp, open) == BRLCAD_OK);
     CHECK(run(gedp, status) == BRLCAD_OK && contains_result(gedp, "status external edits"));
     CHECK(run(gedp, verify) != BRLCAD_OK && contains_result(gedp, "Archive verified") && contains_result(gedp, "external edits"));
+    Db preview_archived(ged_history_open_revision(gedp, fork.c_str(), nullptr), db_close);
+    CHECK(preview_archived && BU_STR_EQUAL(preview_archived->dbi_title, "embedded branch") &&
+	db_lookup(preview_archived.get(), "assembly.c", LOOKUP_QUIET) &&
+	!db_lookup(preview_archived.get(), "imported.s", LOOKUP_QUIET));
     const char *preview[] = {"db", "history", "adopt", nullptr};
     CHECK(run(gedp, preview) == BRLCAD_OK && contains_result(gedp, "update _GLOBAL") &&
 	contains_result(gedp, "create imported.s") && contains_result(gedp, "delete assembly.c"));
@@ -540,6 +553,9 @@ test_workspace_history()
 	contains_result(writer.get(), "outline.s"));
     const auto renamed = selected_id(writer.get());
     CHECK(!renamed.empty() && renamed != root);
+    const Db initial_view(ged_history_open_revision(writer.get(), root.c_str(), nullptr), db_close);
+    CHECK(initial_view && initial_view->dbi_read_only && db_lookup(initial_view.get(), old_name.c_str(), LOOKUP_QUIET) &&
+	!db_lookup(initial_view.get(), "outline.s", LOOKUP_QUIET) && selected_id(writer.get()) == renamed);
     HistoryStatus renamed_status(ged_history_status_create(writer.get(), nullptr), ged_history_status_destroy);
     CHECK(renamed_status && renamed == renamed_status->selected_revision && root == renamed_status->undo.revision &&
 	root == initial_status->selected_revision && !initial_status->undo.revision);

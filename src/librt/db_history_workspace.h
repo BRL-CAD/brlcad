@@ -66,6 +66,9 @@ public:
     // Open an ordinary librt database view pinned to one workspace head.
     // The view owns its workspace reader until db_close.
     static RT_EXPORT struct db_i *open_snapshot(const char *path, WorkspaceHead &head, struct bu_vls *message);
+    // Open a retained revision without selecting it in the workspace.
+    static RT_EXPORT struct db_i *open_revision(const char *path, const Id &revision,
+	WorkspaceHead &head, struct bu_vls *message);
     // The manifest belongs to the pinned database view.
     static RT_EXPORT const Manifest *snapshot_model(const struct db_i *db, WorkspaceHead *head = nullptr);
     RT_EXPORT ~Workspace();

@@ -1004,6 +1004,12 @@ Workspace::open(const char *path, struct bu_vls *message, bool writable)
 struct db_i *
 Workspace::open_snapshot(const char *path, WorkspaceHead &head, struct bu_vls *message)
 {
+    return open_revision(path, absent, head, message);
+}
+
+struct db_i *
+Workspace::open_revision(const char *path, const Id &revision, WorkspaceHead &head, struct bu_vls *message)
+{
     auto workspace = open(path, message);
     if (!workspace)
 	return nullptr;
@@ -1026,8 +1032,15 @@ Workspace::open_snapshot(const char *path, WorkspaceHead &head, struct bu_vls *m
     const bool built = workspace->store->read([&](MDB_txn *txn, const Tables &tables) {
 	if (!read_head(txn, tables, selected))
 	    return report(message, "The workspace head is invalid");
-	if (!read_model(txn, tables, selected.model, state->model, message))
+	if (revision != absent && revision != selected.revision) {
+	    Revision historical;
+	    if (!load_revision(txn, tables, revision, historical) || !load_model_at(txn, tables, revision, state->model))
+		return report(message, "The target workspace revision cannot be reconstructed");
+	    selected.revision = revision;
+	    selected.model = historical.model;
+	} else if (!read_model(txn, tables, selected.model, state->model, message)) {
 	    return false;
+	}
 	// Workspace records have no DB5 file offsets. Reads use the
 	// immutable object IDs pinned by the view's directory.
 	constexpr b_off_t stored_record = 0;

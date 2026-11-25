@@ -471,17 +471,12 @@ struct ReplayStep {
     bool reverse;
 };
 
-int
-travel(struct ged *gedp, ged_db_history &history, uint64_t target)
+Snapshot
+session_snapshot(const ged_db_history &history, uint64_t target, std::vector<ReplayStep> &steps,
+		  struct bu_vls *out)
 {
-    if (target == history.head)
-	return BRLCAD_OK;
-    if (!can_write_history(gedp, history))
-	return BRLCAD_ERROR;
-
     // Parents have smaller IDs. Walk back from each head to their common
     // ancestor, then apply the target branch in parent-to-child order.
-    std::vector<ReplayStep> steps;
     std::vector<uint64_t> forward;
     uint64_t from = history.head;
     uint64_t to = target;
@@ -499,8 +494,9 @@ travel(struct ged *gedp, ged_db_history &history, uint64_t target)
 
     Edit edit(db_edit_begin(history.live, history.revisions.at(target).label.c_str()), db_edit_abort);
     if (!edit) {
-	bu_vls_printf(gedp->ged_result_str, "Could not stage database history");
-	return BRLCAD_ERROR;
+	if (out)
+	    bu_vls_strcat(out, "Could not stage database history");
+	return Snapshot(nullptr, db_close);
     }
     for (const auto &step : steps) {
 	for (const auto &change : history.revisions.at(step.revision).changes) {
@@ -508,8 +504,9 @@ travel(struct ged *gedp, ged_db_history &history, uint64_t target)
 	    auto after = record_view(step.reverse ? change.before : change.after);
 	    if (db_edit_apply(edit.get(), change.name.c_str(),
 		    before.ext_nbytes ? &before : nullptr, after.ext_nbytes ? &after : nullptr) != 0) {
-		bu_vls_printf(gedp->ged_result_str, "Current record %s differs from session history", change.name.c_str());
-		return BRLCAD_ERROR;
+		if (out)
+		    bu_vls_printf(out, "Current record %s differs from session history", change.name.c_str());
+		return Snapshot(nullptr, db_close);
 	    }
 	}
     }
@@ -517,6 +514,23 @@ travel(struct ged *gedp, ged_db_history &history, uint64_t target)
     Snapshot snapshot(db_edit_commit(edit.get()), db_close);
     if (snapshot)
 	edit.release();
+    else if (out)
+	bu_vls_strcat(out, "Could not finalize the session revision");
+    return snapshot;
+}
+
+int
+travel(struct ged *gedp, ged_db_history &history, uint64_t target)
+{
+    if (target == history.head)
+	return BRLCAD_OK;
+    if (!can_write_history(gedp, history))
+	return BRLCAD_ERROR;
+
+    std::vector<ReplayStep> steps;
+    auto snapshot = session_snapshot(history, target, steps, gedp->ged_result_str);
+    if (!snapshot)
+	return BRLCAD_ERROR;
     struct db_i *replacement = nullptr;
     if (!save_snapshot(gedp, history, snapshot.get(), &replacement))
 	return BRLCAD_ERROR;
@@ -1755,6 +1769,46 @@ ged_history_visit_revision(struct ged *gedp, const char *id, ged_history_revisio
 	    return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
+}
+
+struct db_i *
+ged_history_open_revision(struct ged *gedp, const char *id, struct bu_vls *message)
+{
+    const auto *history = gedp && gedp->i ? gedp->i->db_history : nullptr;
+    if (!history || !id) {
+	if (message)
+	    bu_vls_strcat(message, !history ? "Session history is disabled" : "A revision ID is required");
+	return nullptr;
+    }
+    if (!history->workspace && !is_embedded(*history)) {
+	uint64_t target;
+	if (!find_revision(message, history, id, target))
+	    return nullptr;
+	std::vector<ReplayStep> steps;
+	return session_snapshot(*history, target, steps, message).release();
+    }
+
+    db_history::Db5HistoryDraft graph;
+    const auto *pack = history_graph(message, *history, graph);
+    db_history::Id target;
+    if (!pack || !resolve_archive_revision(message, *pack, id, target))
+	return nullptr;
+    if (history->workspace) {
+	WorkspaceHead selected;
+	return Workspace::open_revision(history->live->dbi_filename, target, selected, message);
+    }
+
+    const auto *external_base = history->embedded_status == EmbeddedStatus::ExternalEdits ? history->live : nullptr;
+    Edit edit(db_edit_begin(history->live, "Preview revision"), db_edit_abort);
+    if (edit && db_history::stage_db5_preview(history->embedded, target, edit.get(), external_base)) {
+	if (auto *snapshot = db_edit_commit(edit.get())) {
+	    edit.release();
+	    return snapshot;
+	}
+    }
+    if (message)
+	bu_vls_strcat(message, "Could not construct the selected revision for preview");
+    return nullptr;
 }
 
 void

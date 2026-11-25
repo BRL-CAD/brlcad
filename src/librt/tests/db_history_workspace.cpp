@@ -256,6 +256,11 @@ test_writes(const char *path, const char *program, struct db_i *source, const Em
     Database newer(Workspace::open_snapshot(path, actual, message), db_close);
     CHECK(newer && actual.revision == selected.revision && BU_STR_EQUAL(newer->dbi_title, "Edited title") &&
 	original_title == pinned->dbi_title);
+    const Database historical(Workspace::open_revision(path, base.revision, actual, message), db_close);
+    CHECK(historical && actual.revision == base.revision && actual.model == base.model &&
+	historical->dbi_read_only && original_title == historical->dbi_title);
+    CHECK(read_record(historical.get(), DB5_GLOBAL_OBJECT_NAME) == original_global);
+    CHECK(reader->read_directory(actual, model, message) && actual.revision == selected.revision);
     CHECK(read_record(pinned.get(), DB5_GLOBAL_OBJECT_NAME) == original_global);
     CHECK(test_native_geometry(pinned.get()) == 0);
     CHECK(second->checkout(base, base.revision, actual, message) == WorkspaceWriteStatus::Stale);

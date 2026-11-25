@@ -442,6 +442,12 @@ Creating a checkpoint and checking out both revisions from that view
 persisted the expected selection and checkpoint. Ctrl+Z in the
 console left the model revision selected.
 
+QGED drew a primitive from an independent revision preview while
+the working file was at an earlier revision. Opening and closing the
+preview left the DB5 file byte-identical. The M1917 workspace preview
+window opened in 6.1 seconds and displayed the requested primitive.
+Its working revision, generation and Redo choice stayed fixed.
+
 Classic MGED opened a workspace, made an object, and loaded that object
 through its Tcl database alias after Redo. Opening both an embedded
 archive and a workspace with read-only access allowed inspection and
