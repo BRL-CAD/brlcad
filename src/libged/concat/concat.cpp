@@ -212,6 +212,15 @@ adjust_names(union tree *trp,
 }
 
 
+static const char *
+concat_raster_name(const char *name, void *data)
+{
+    const auto &names = static_cast<const struct ged_concat_data *>(data)->name_map;
+    const auto entry = names.find(name);
+    return entry == names.end() ? nullptr : entry->second.c_str();
+}
+
+
 static int
 copy_object(struct ged *gedp,
 	struct directory *input_dp,
@@ -222,7 +231,6 @@ copy_object(struct ged *gedp,
     struct bu_external record = BU_EXTERNAL_INIT_ZERO;
     const std::unique_ptr<struct bu_external, decltype(&bu_free_external)> external(&record, bu_free_external);
     struct rt_extrude_internal *extr;
-    struct rt_dsp_internal *dsp;
     struct rt_comb_internal *comb;
     struct directory *new_dp;
     std::string new_name;
@@ -232,9 +240,10 @@ copy_object(struct ged *gedp,
 
     // Keep the original bytes unless a reference inside the body may change.
     const auto type = input_dp->d_minor_type;
-    const bool rewrite = cc_data->remap_references && input_dp->d_major_type == DB5_MAJORTYPE_BRLCAD &&
+    const bool remap = cc_data->remap_references && input_dp->d_major_type == DB5_MAJORTYPE_BRLCAD;
+    const bool rewrite = remap &&
 	(type == DB5_MINORTYPE_BRLCAD_COMBINATION || type == DB5_MINORTYPE_BRLCAD_EXTRUDE ||
-	 type == DB5_MINORTYPE_BRLCAD_REVOLVE || type == DB5_MINORTYPE_BRLCAD_DSP);
+	 type == DB5_MINORTYPE_BRLCAD_REVOLVE);
     const int read = rewrite ? rt_db_get_internal(&ip, input_dp, cc_data->incoming_dbip, nullptr) :
 	db_get_external(&record, input_dp, cc_data->incoming_dbip);
     if (read < 0) {
@@ -271,21 +280,10 @@ copy_object(struct ged *gedp,
 		    bu_vls_strcpy(&revolve->sketch_name, replacement->second.c_str());
 		break;
 	    }
-	    case DB5_MINORTYPE_BRLCAD_DSP:
-		dsp = (struct rt_dsp_internal *)ip.idb_ptr;
-		RT_DSP_CK_MAGIC(dsp);
-
-		if (dsp->dsp_datasrc == RT_DSP_SRC_OBJ) {
-		    /* This dsp references a database object, may need to change its name */
-		    old_name = std::string(bu_vls_cstr(&dsp->dsp_name));
-		    new_name = cc_data->name_map[old_name];
-		    if (new_name.length()) {
-			bu_vls_free(&dsp->dsp_name);
-			bu_vls_strcpy(&dsp->dsp_name, new_name.c_str());
-		    }
-		}
-		break;
 	}
+    } else if (remap && db5_remap_raster_reference(&record, concat_raster_name, cc_data) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Failed to remap the raster reference in %s\n", input_dp->d_namep);
+	return BRLCAD_ERROR;
     }
 
     if (cc_data->overwrite) {

@@ -21,6 +21,8 @@ The *concat* command reads geometry objects from the external BRL-CAD database `
 
 An optional `affix` string may be provided to add a prefix or suffix to incoming object names. The `-p` and `-s` flags control whether the affix is applied to the beginning or end of each name. By default (with `-L`), the affix is only applied lazily to names that conflict; without `-L`, the affix is applied to every incoming name.
 
+References to incoming objects follow the imported names. These include combination members, sketches used by EXTRUDE and REVOLVE, and database-backed DSP, EBM, and VOL samples. References to external files keep their stored paths.
+
 === Options
 
 *-h*, *--help*::

@@ -209,6 +209,16 @@ RT_EXPORT extern int db5_update_raster_reference(struct db_i *dbip,
 						 const char *old_name,
 						 const char *new_name);
 
+/**
+ * Remap a DSP, EBM or VOL reference in an owned, named DB5 record.
+ * The callback may return NULL to keep the existing reference. Its returned
+ * string only needs to remain valid for the rest of this call.
+ * Return 1 after replacing the record, 0 when unchanged and -1 on failure.
+ */
+RT_EXPORT extern int db5_remap_raster_reference(struct bu_external *record,
+						const char *(*map_name)(const char *, void *),
+						void *data);
+
 
 /**
  * Given an external representation of a database object, convert

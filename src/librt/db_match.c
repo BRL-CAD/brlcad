@@ -57,20 +57,30 @@ struct db_raster_ops {
 };
 
 static const struct db_raster_ops *
-db_raster_reference_ops(const struct db_i *dbip, const struct directory *dp)
+db_raster_reference_type(unsigned char major_type, unsigned char minor_type)
 {
     static const struct db_raster_ops types[] = {
 	{DB5_MINORTYPE_BRLCAD_DSP, rt_dsp_database_reference, rt_dsp_rename_database_reference},
 	{DB5_MINORTYPE_BRLCAD_EBM, rt_ebm_database_reference, rt_ebm_rename_database_reference},
 	{DB5_MINORTYPE_BRLCAD_VOL, rt_vol_database_reference, rt_vol_rename_database_reference}
     };
-    if (dp->d_addr == RT_DIR_PHONY_ADDR || dp->d_major_type != DB5_MAJORTYPE_BRLCAD)
+
+    if (major_type != DB5_MAJORTYPE_BRLCAD)
 	return NULL;
     for (size_t i = 0; i < sizeof(types) / sizeof(types[0]); ++i) {
-	if (types[i].minor_type == dp->d_minor_type)
-	    return db_version(dbip) == 5 ? &types[i] : NULL;
+	if (types[i].minor_type == minor_type)
+	    return &types[i];
     }
     return NULL;
+}
+
+static const struct db_raster_ops *
+db_raster_reference_ops(const struct db_i *dbip, const struct directory *dp)
+{
+    if (dp->d_addr == RT_DIR_PHONY_ADDR)
+	return NULL;
+    const struct db_raster_ops *ops = db_raster_reference_type(dp->d_major_type, dp->d_minor_type);
+    return ops && db_version(dbip) == 5 ? ops : NULL;
 }
 
 static int
@@ -88,6 +98,61 @@ db_read_raster_reference(struct db_i *dbip, const struct directory *dp,
 	return -1;
 
     return ops->read(&raw->body, name);
+}
+
+static int
+db_replace_raster_reference(struct bu_external *record, const struct db5_raw_internal *raw,
+			    const struct db_raster_ops *ops, const char *object_name, const char *new_name)
+{
+    if (BU_STR_EMPTY(new_name))
+	return -1;
+
+    struct bu_external body = BU_EXTERNAL_INIT_ZERO;
+    struct bu_vls written_name = BU_VLS_INIT_ZERO;
+    /* Text fields may have quoting constraints beyond the buffer length. */
+    const int matches = ops->rename(&body, &raw->body, new_name) == 0 &&
+	ops->read(&body, &written_name) > 0 && BU_STR_EQUAL(bu_vls_cstr(&written_name), new_name);
+    if (matches)
+	db5_export_object3(record, raw->h_dli, object_name, raw->h_name_hidden,
+			   &raw->attributes, &body, raw->major_type, raw->minor_type, raw->a_zzz, raw->b_zzz);
+    bu_vls_free(&written_name);
+    bu_free_external(&body);
+    return matches ? 0 : -1;
+}
+
+int
+db5_remap_raster_reference(struct bu_external *record, const char *(*map_name)(const char *, void *), void *data)
+{
+    BU_CK_EXTERNAL(record);
+    struct db5_raw_internal raw;
+    if (!map_name || !db5_get_raw_internal_bounded(&raw, record->ext_buf, record->ext_nbytes) ||
+	raw.object_length != record->ext_nbytes || raw.h_dli != DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT)
+	return -1;
+
+    const struct db_raster_ops *ops = db_raster_reference_type(raw.major_type, raw.minor_type);
+    if (!ops)
+	return 0;
+    if (!raw.h_name_present || raw.b_zzz != DB5_ZZZ_UNCOMPRESSED)
+	return -1;
+
+    int result = 0;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
+    if (ops->read(&raw.body, &name) > 0) {
+	const char *old_name = bu_vls_cstr(&name);
+	const char *new_name = map_name(old_name, data);
+	if (new_name && !BU_STR_EQUAL(old_name, new_name)) {
+	    struct bu_external replacement = BU_EXTERNAL_INIT_ZERO;
+	    if (db_replace_raster_reference(&replacement, &raw, ops, (const char *)raw.name.ext_buf, new_name) == 0) {
+		bu_free_external(record);
+		*record = replacement;
+		result = 1;
+	    } else {
+		result = -1;
+	    }
+	}
+    }
+    bu_vls_free(&name);
+    return result;
 }
 
 static void
@@ -126,21 +191,11 @@ db5_update_raster_reference(struct db_i *dbip, struct directory *dp,
     if (result > 0 && !BU_STR_EQUAL(bu_vls_cstr(&name), old_name))
 	result = 0;
     if (result > 0 && new_name) {
-	struct bu_external body = BU_EXTERNAL_INIT_ZERO;
-	/* Check the stored name before writing. Text fields may have
-	 * additional quoting constraints beyond the buffer length. */
-	if (ops->rename(&body, &raw.body, new_name) == 0 &&
-	    ops->read(&body, &name) > 0 && BU_STR_EQUAL(bu_vls_cstr(&name), new_name)) {
-	    struct bu_external replacement = BU_EXTERNAL_INIT_ZERO;
-	    db5_export_object3(&replacement, raw.h_dli, dp->d_namep, raw.h_name_hidden,
-			       &raw.attributes, &body, raw.major_type, raw.minor_type, raw.a_zzz, raw.b_zzz);
-	    if (db_put_external5(&replacement, dp, dbip) < 0)
-		result = -1;
-	    bu_free_external(&replacement);
-	} else {
+	struct bu_external replacement = BU_EXTERNAL_INIT_ZERO;
+	if (db_replace_raster_reference(&replacement, &raw, ops, dp->d_namep, new_name) != 0 ||
+	    db_put_external5(&replacement, dp, dbip) < 0)
 	    result = -1;
-	}
-	bu_free_external(&body);
+	bu_free_external(&replacement);
     }
     if (result < 0 && new_name)
 	db_edit_record_failure(dbip);

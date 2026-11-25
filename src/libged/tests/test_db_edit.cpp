@@ -789,7 +789,8 @@ test_binary_asset_history(struct ged *gedp, const std::filesystem::path &directo
 	"}} {put terrain.s dsp src o name terrain.bin w 2 n 2} {bo -i u C volume.bin {" +
 	original_file.string() + "}} {put volume.s vol src o name volume.bin w 2 n 2 d 2"
 	" size {1 1 1} mat {1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1}} {bo -i u C mask.bin {" +
-	bitmap_file.string() + "}} {in mask.s ebm o mask.bin 2 2 1} {in file-mask.s ebm f mask.bin 2 2 1}";
+	bitmap_file.string() + "}} {in mask.s ebm o mask.bin 2 2 1} {in file-mask.s ebm f mask.bin 2 2 1}"
+	" {attr set mask.s sample-role mask-fixture}";
     const char *first[] = {"db", "history", "batch", "Import terrain", import.c_str(), nullptr};
     CHECK(run(gedp, first) == BRLCAD_OK);
     const auto before = selected_id(gedp);
@@ -813,11 +814,12 @@ test_binary_asset_history(struct ged *gedp, const std::filesystem::path &directo
 	bu_free_external(&raw);
 	return matches;
     };
-    const auto terrain_matches = [gedp, &grid_matches](const auto &samples, const char *name = "terrain.bin") {
+    const auto terrain_matches = [gedp, &grid_matches](const auto &samples, const char *name = "terrain.bin",
+						   const char *shape = "terrain.s") {
 	if (!grid_matches(gedp->dbip, name, DB5_MINORTYPE_BINU_16BITINT_U, samples))
 	    return false;
 
-	auto *surface = db_lookup(gedp->dbip, "terrain.s", LOOKUP_QUIET);
+	auto *surface = db_lookup(gedp->dbip, shape, LOOKUP_QUIET);
 	struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
 	if (!surface || rt_db_get_internal(&intern, surface, gedp->dbip, nullptr) < 0)
 	    return false;
@@ -870,10 +872,10 @@ test_binary_asset_history(struct ged *gedp, const std::filesystem::path &directo
     CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == before && terrain_matches(original));
     CHECK(run(gedp, redo) == BRLCAD_OK && selected_id(gedp) == after && terrain_matches(replacement));
 
-    const auto volume_matches = [gedp, &grid_matches, &original](const char *name) {
+    const auto volume_matches = [gedp, &grid_matches, &original](const char *name, const char *shape = "volume.s") {
 	if (!grid_matches(gedp->dbip, name, DB5_MINORTYPE_BINU_8BITINT_U, original))
 	    return false;
-	auto *surface = db_lookup(gedp->dbip, "volume.s", LOOKUP_QUIET);
+	auto *surface = db_lookup(gedp->dbip, shape, LOOKUP_QUIET);
 	struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
 	if (!surface || rt_db_get_internal(&intern, surface, gedp->dbip, nullptr) < 0)
 	    return false;
@@ -886,12 +888,12 @@ test_binary_asset_history(struct ged *gedp, const std::filesystem::path &directo
 	return loaded;
     };
     CHECK(volume_matches("volume.bin"));
-    const auto bitmap_matches = [gedp, &grid_matches, &bitmap](const char *name) {
+    const auto bitmap_matches = [gedp, &grid_matches, &bitmap](const char *name, const char *shape = "mask.s") {
 	if (!grid_matches(gedp->dbip, name, DB5_MINORTYPE_BINU_8BITINT_U, bitmap))
 	    return false;
-	auto *shape = db_lookup(gedp->dbip, "mask.s", LOOKUP_QUIET);
+	auto *surface = db_lookup(gedp->dbip, shape, LOOKUP_QUIET);
 	struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
-	if (!shape || rt_db_get_internal(&intern, shape, gedp->dbip, nullptr) < 0)
+	if (!surface || rt_db_get_internal(&intern, surface, gedp->dbip, nullptr) < 0)
 	    return false;
 	bool loaded = false;
 	if (intern.idb_type == ID_EBM) {
@@ -955,6 +957,26 @@ test_binary_asset_history(struct ged *gedp, const std::filesystem::path &directo
 	CHECK(shape && rt_db_get_internal(&internal, shape, subset.get(), nullptr) > 0);
 	rt_db_free_internal(&internal);
     }
+
+    const std::string long_prefix(RT_EBM_NAME_LEN, 'm');
+    const std::string long_grid = long_prefix + "graded samples.bin";
+    const char *bad_concat[] = {"concat", subset_path.c_str(), long_prefix.c_str(), nullptr};
+    CHECK(run(gedp, bad_concat) == BRLCAD_ERROR && contains_result(gedp, "remap the raster reference") &&
+	selected_id(gedp) == renamed && !db_lookup(gedp->dbip, long_grid.c_str(), LOOKUP_QUIET));
+
+    const auto imported_rasters_available = [&]() {
+	return terrain_matches(replacement, "imported_graded samples.bin", "imported_terrain.s") &&
+	    volume_matches("imported_voxel samples.bin", "imported_volume.s") &&
+	    bitmap_matches("imported_bitmap samples.bin", "imported_mask.s");
+    };
+    const char *concat[] = {"concat", subset_path.c_str(), "imported_", nullptr};
+    CHECK(run(gedp, concat) == BRLCAD_OK && imported_rasters_available());
+    const char *attribute[] = {"attr", "get", "imported_mask.s", "sample-role", nullptr};
+    CHECK(run(gedp, attribute) == BRLCAD_OK && contains_result(gedp, "mask-fixture"));
+    const auto imported = selected_id(gedp);
+    CHECK(imported != renamed && run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == renamed &&
+	!db_lookup(gedp->dbip, "imported_bitmap samples.bin", LOOKUP_QUIET));
+    CHECK(run(gedp, redo) == BRLCAD_OK && selected_id(gedp) == imported && imported_rasters_available());
     return 0;
 }
 

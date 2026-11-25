@@ -627,6 +627,13 @@ seconds when all objects were reserialized. Workspace verification
 passed. One Undo removed the import in 0.4 seconds, and Redo restored
 the object counts in 0.6 seconds.
 
+A prefixed concat remapped DSP, EBM and VOL sample references from the
+stored primitive parameters. A prefix beyond the stored name limit
+aborted the versioned import. On an M1917 workspace copy, importing
+three raster primitives and their 32 MiB of samples took 1.65 seconds.
+Undo and Redo took 0.55 and 0.56 seconds. The replayed primitives used
+the prefixed names, all sample bytes matched, and verification passed.
+
 On that M1917 workspace, 20 warm-cache terminal trials in fresh
 processes gave title edits a median of 0.615 seconds and a 95th
 percentile of 0.640 seconds. Undo measured 0.605 and 0.627 seconds,
