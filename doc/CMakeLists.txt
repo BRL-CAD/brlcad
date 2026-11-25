@@ -243,6 +243,7 @@ cmakefiles(
   notes/cmake_paths/test.cmake.in
   notes/cmake_vars.txt
   notes/csv_to_comgeom.txt
+  notes/database_history.txt
   notes/implicit_constraints.txt
   notes/lcov.txt
   notes/struct_resource_removal.txt

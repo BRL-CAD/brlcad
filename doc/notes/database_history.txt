@@ -1,0 +1,345 @@
+Database history and undo
+=========================
+
+Production implementation plan
+------------------------------
+
+Build one edit transaction in librt and use it for session undo, saved
+DB5 history, and an LMDB working repository. The unit of undo is a
+completed modeling operation. A sketch rename that changes the sketch,
+an extrude and a combination must be published and undone together.
+
+Deliver session undo first. Keep persistent history opt-in. A user
+who enables history in a .g should be able to hand that file to an
+existing DB5 reader and have it open the selected model directly.
+Offer an LMDB working directory to users who need durable history
+on every edit without rewriting a portable file. Each open document
+has one authoritative store.
+
+Proposed editor interface
+-------------------------
+
+Register the following operations in the explicit libged db command
+table. The existing "db version" reports the geometry format, "db log"
+already forwards a command, and MGED "history" displays command input.
+Give revision inspection its own "db history" namespace. Expose typed
+queries to application code and a stable structured result for scripts.
+Generate terminal text, menus and history views from those results.
+
+  db undo                         Apply one complete inverse edit.
+  db redo [child]                 Reapply the chosen child revision.
+  db history status               Report mode, selected revision, next undo,
+                                  redo choices, retention and file status.
+  db history log [--object name]  List revision IDs, parents, labels and
+                                  named checkpoints. Filter by touched name.
+  db history show <rev>           List creates, deletes, updates and renames.
+  db history diff <a> <b>         Compare revisions, optionally by object.
+  db history mark <name>          Pin the selected revision by name.
+  db history checkout <rev>       Select a complete model revision.
+  db history enable [mode]        "session" starts undo for this open DB5.
+                                  "embedded" (default) persists it in the .g.
+  db history export <path>        Write a plain DB5 snapshot by default.
+                                  --with-history includes retained history.
+  db history workspace <dir>      Create and switch to a durable LMDB
+                                  workspace from the current model/history.
+  db open <dir>                   Reopen a recognized workspace.
+  db history verify               Check the graph, blobs and current model.
+  db history adopt                Preview external DB5 edits. With --apply,
+                                  record those edits against the saved head.
+
+Enable on an embedded or workspace document already in the requested mode
+is idempotent. To stop carrying history, export a plain .g and open it.
+Keep the original versioned document available. Updating a checkpoint
+name that already exists requires an explicit move. Supply separate
+inspection errors for an unknown revision, an ambiguous short ID, a
+read-only document, an active edit and a stale base revision.
+
+Undo moves to the parent. When returning along a known path, Redo
+selects the child just undone. At an ambiguous fork it lists the
+children and accepts an explicit choice. Editing after Undo creates
+a sibling and retains the former child. Checkout and Undo move the
+selected revision and update the materialized model. Neither creates a
+new modeling edit. A checkpoint names an existing revision. A later
+"restore as new revision" operation can preserve an intervening timeline.
+Start with whole-edit undo. Selective undo of just the sketch requires
+dependency and conflict rules beyond a history filter.
+
+For example, enable history, run "db mvall sketch.s outline.s", and
+run "db history show" with the revision ID from status. The result should
+identify both names and each changed dependent. "db undo" should make
+the former assembly usable immediately. After a new edit, "db history
+checkout" with the rename revision ID should recover the other design.
+
+In MGED, support the console commands and the edit accept/reject
+lifecycle. In QGED, put Undo and Redo in Edit with the operation name,
+use the platform shortcuts when modeling has focus, and leave text
+widgets their own undo. Add a history view with revision selection,
+changed objects, checkpoints and checkout. Show when a document has
+session-only history, when edits persist in a workspace, and when a
+DB5 export was last written. On a read-only open allow inspection,
+diff and export to a new file. A historical preview gets its own read
+snapshot. Canceling a preview or gesture creates no revision.
+
+1. Define and test the edit boundary
+-----------------------------------
+
+Add an opaque C transaction API to librt, with private state owned by
+the database instance. A writer begins with a base revision and label,
+reads its own staged edits, then commits or aborts. Other readers see
+one complete revision. Unrelated handles and worker threads must
+explicitly join a transaction. Keep a short-lived reader view for a
+coherent tree walk. Preserve the owned buffer contract of
+db_get_external. A pinned read-only view can be added separately if
+profiling warrants it.
+
+Capture the first old value and final new value for each touched name.
+Represent absence explicitly. Drop net-zero changes. Retain a rename
+hint when db_rename supplies one, while recording both namespace changes
+and all affected reference-bearing objects. Include flags, attributes,
+opaque bodies, named non-geometry objects and _GLOBAL. Treat directory
+offsets, free space and prepared display or ray-tracing data as derived.
+An external file reference versions its stored path. Reproducing the
+referenced file's contents requires a separate asset policy.
+
+Start at db_put_external5 and rt_db_put_internal_v5, which currently
+have independent write paths. Route directory creation, rename, deletion,
+attribute-only writes and libwdb disk/in-memory exports through the
+same primitive operations. Audit direct db_write, streaming exporters
+and raw file-descriptor users. Flat output streams can remain export
+targets. A bypass that can mutate a versioned document must be ported
+or fail before its first write. Stage directory lookups and iteration as
+well as object bytes. Audit clients retaining directory pointers across
+deletion, rename, checkout and database replacement.
+
+Wrap the outer model-changing operation in libged. "db mvall" re-enters
+ged_exec through the db forwarder. Both calls must share the same
+transaction. Start capture lazily at the first mutation so queries are
+cheap. Direct librt/libwdb callers get explicit grouping and a single
+operation default at a complete write boundary. Provide an atomic
+script scope with abort-on-error. Route MGED accept, QGED gesture
+completion and importer batches through it. Keep preview state private
+across mouse motion and GED_MORE prompts. A background conversion may
+prepare results independently and commit against its original base.
+
+Record write failure on the transaction itself. For example, mvall
+currently logs and continues on certain failed dependent writes. An
+outer success return must never publish that partial rename. Define
+commit ordering for PRE/POST callbacks, cancel, reopen and close. Edit
+callbacks finish inside the boundary. Post-commit UI failures cause a
+refresh or diagnostic and must not retry a committed model edit.
+Queue owned change descriptions. Dispatch the existing GED event batch
+after publication, update references, material tables, tree views and
+display caches, and discard pending events on abort.
+
+To accept this milestone, verify that name-based reads, iteration and
+reference traversal agree inside the edit. A concurrent reader sees
+either endpoint. A failed
+second dependent write restores the original model and emits no
+committed change event. Run tests through GED, interactive acceptance
+and a direct library client. Use the gversion regression as an oracle.
+
+2. Ship session undo on DB5
+---------------------------
+
+Keep a bounded in-memory journal of touched object versions with a
+byte budget. Coalesce repeated writes within one operation. Define an
+observable oldest undoable revision and preserve the active model when
+pruning. For an edit too large for the budget, spill to a private
+temporary store or report the capacity failure before publishing.
+Status and the UI must explain the undo boundary. Promote the current
+state and available journal when the user enables persistent history.
+
+For the first opt-in DB5 writer, stream a sibling file from unchanged
+records and staged replacements. Flush it, use the platform's safe
+replacement primitive, and sync the
+directory where required. Handle permissions, file identity, links and
+mapped-reader lifetimes. Rebind the open db_i and its observers. Test
+POSIX and Windows replacement and reopen failures. Once replacement has
+succeeded, a later reopen error is a committed save requiring recovery.
+This path costs a whole-file write. Keep ordinary writable DB5 as the
+default until the interactive workload passes the latency gate. If
+needed, ship the opt-in mode and use LMDB for large working documents.
+A faster in-place DB5 path needs its own write-ahead recovery protocol.
+
+Verify that abort, Undo and Redo restore byte-exact named records,
+including _GLOBAL. Accepting a drag makes one entry. Rejecting it, a
+query and a net-zero edit make none. Closing a session-only file keeps
+its final geometry and discards the undo journal. Newly opened readers
+see the last published model. DB4 keeps its existing behavior and gains
+an explicit conversion-to-DB5 path for users who want history.
+
+3. Specify and implement portable history
+-----------------------------------------
+
+Write a versioned wire-format specification and independent test
+vectors before making the first stable writer. Model immutable object
+versions, a parent-linked revision graph, a selected revision and named
+references. Give an edit a short label, authored time, optional author,
+changed names and before/after object IDs. Encode IDs with a specified
+hash (proposed SHA-256), type tags and unambiguous lengths. Canonicalize
+manifest encoding and name ordering. Preserve object bytes, including
+unknown types. IDs must survive export, reimport, compaction and a
+change of backend. Use gversion's experimental ordinals and UUID-based
+encoding only through a separately tested importer if migration is wanted.
+
+Store an object's DB5 body separately from its serialized attributes
+and wrapper. Preserve enough framing and padding to reconstruct the
+original record exactly. A rename or attribute change should reuse
+the large body. Start with whole, deduplicated bodies and bounded
+manifest changes plus periodic directory snapshots. Consider chunked
+mesh data or bounded-depth binary deltas only after measuring frequent
+body edits. Adopt Fossil's immutable artifact and manifest concepts.
+There is no dependency on its checkout, SQLite schema or merge engine.
+
+For a linear run of body edits, a reverse delta can reconstruct an
+older body from a newer body. Keep a verified full base in the archive
+so a legacy edit of the live geometry cannot break replay. Limit the
+number of deltas required to reconstruct any body. A branch can share
+any reachable base if the encoding preserves a bounded, acyclic graph.
+Compare full compressed bodies, chunk sharing and Fossil copy/literal
+deltas on localized vertex edits, remeshing and repeated BREP exports.
+For DSP and VOL, measure the referenced database binary object. The
+primitive record stores parameters and a reference. File-backed grids
+would require asset capture before their bytes could be delta encoded.
+Bound delta inputs below the codec's integer limits and select the
+stored representation by compressed size and replay cost.
+
+A first BoT experiment used SQLite's Fossil-format delta extension on
+a 4.9 MB serialized body. The full body compressed to 793 KB with
+zlib. A one-vertex reverse delta took 46 bytes and a localized edit
+of 4,096 vertices took 40 KB before compression. Shuffling face order
+produced a 2.46 MB delta, or 555 KB after compression, and took much
+longer to encode. All three recovered identical bytes. These results
+cover one synthetic surface mesh. Measure BREP export stability and
+representative grid edits before specifying a required codec.
+
+Encode the portable archive as a hidden unsigned-byte binunif. Reserve
+_BRLCAD_HISTORY only after checking both name and format signature.
+Report a collision on enable and preserve the user's object. Exclude
+the recognized archive from the model manifest. Store the selected
+model digest, graph roots, references, feature/version flags and a
+bounded index. A self-contained first format includes enough content
+to reconstruct every retained revision, even after a legacy writer
+changes a live object. This can duplicate the current geometry in the
+archive. Measure that tradeoff explicitly. Stream pack I/O, enforce
+size/offset limits, verify hashes, and reject invalid references,
+cycles and unsupported required features. A range-checked DB5 decoder
+belongs in librt so history and normal readers can share it.
+
+Publish live geometry and the matching archive in the same atomic DB5
+replacement. Never update the two independently. Existing readers
+open the normal current objects. On history-aware open, verify the
+selected manifest against those objects, excluding file layout. A
+valid archive with differing geometry means external edits. Preserve
+the live geometry, expose the discrepancy, and offer an explicit
+adoption as one revision against the recorded head, or export the
+live state as plain DB5. A corrupt or newer archive permits geometry
+inspection and plain export to a new path. Preserve the source bytes.
+Missing history opens as an ordinary model. An unaware writer can
+strip the object entirely, which is indistinguishable from a plain
+file without an independent copy.
+
+Give new tools explicit copy rules. Full history-aware copy and
+compaction preserve the archive and revision identities. Plain export
+and subset keep omit history so deleted or unrelated objects do not
+travel with a geometry-only export. Concat imports selected live
+objects as one edit in the destination. Never combine histories based
+on matching object names. A portable .g has one writable editor at a
+time. Old readers may need to reopen after a save. Detect intervening
+file replacement or edits and offer Save As on conflict. Unmodified
+writers cannot participate in a new locking protocol.
+
+For release, exercise old-reader and old-writer fixtures, subset export,
+concat, compaction, case-sensitive names, hidden objects, reserved-name
+collision, bad archive and missing archive. Kill the writer before and
+after publication and verify the geometry and history together. Eight
+attribute changes on one large BoT should store the body once within
+the archive. The final archive's growth from those edits must
+be independent of the mesh body's byte count. Measure bytes rewritten
+during save separately from final file size.
+
+4. Add the LMDB working repository
+----------------------------------
+
+Put LMDB behind a private storage interface in librt. Keep DB5 codecs,
+transaction semantics, revision IDs and command handlers shared.
+Provide name lookup, directory/metadata iteration, object read and an
+atomic write batch. Keep LMDB handles and mapped pointers private.
+Load a body or historical manifest on demand. The prototype's eager
+history load, fixed map size and scratch .g per GED command are useful
+reference behaviors to replace before performance evaluation.
+
+Use one environment for immutable blobs, revisions, directory entries,
+named references and head metadata. In one durable write transaction,
+compare the writer's expected generation, insert new blobs and the
+revision, apply directory changes, then advance head and generation.
+Undo/checkout also advance the generation. This catches a second
+writer even if the head moved away and back. Return a conflict with
+both revision IDs and keep the staged edit available for inspection.
+Use short read transactions and pin logical revision IDs for longer
+operations. Plan for key-length limits, large values, map growth and
+retry, disk full, consistent backups and platform-specific locks.
+Use normal durable LMDB flags. The disposable libbu cache has different
+durability requirements. Support local filesystems for the live store.
+
+Workspace creation imports and verifies a coherent model and retained
+history, then switches the document after a successful commit.
+Subsequent edits affect the workspace. Export publishes a complete
+snapshot from one revision. A workspace and a previously exported .g
+may evolve independently. Show the selected workspace revision and
+last exported revision to the user. Expose bounded pruning with a
+preview of affected revisions. Retain named checkpoints, active branch
+tips and reader-pinned revisions according to a documented retention
+policy. Dropping an abandoned branch can free unreachable blobs.
+Truncating a linear history requires a materialized boundary snapshot
+and an explicit indication of where traversal stops. Verify that all
+retained revisions can still be reconstructed before reclaiming blobs.
+
+Verify that a persistent edit or checkout is visible all at once
+across processes. Inject termination during the transaction, a stale
+writer, map growth and disk-full errors. Reopening yields a complete
+model and graph. Export either format and compare it with the DB5
+backend for the same edit sequence, including stable revision IDs.
+
+5. Rollout and release decisions
+--------------------------------
+
+Land transaction capture and its library tests first. Ship opt-in
+session undo with db undo/redo/status and basic editor controls next.
+The portable format and LMDB implementation can proceed independently
+once the logical model is fixed. Release portable history when legacy
+interop and crash tests pass. Release workspace mode when normal GED
+operations work directly on the backend. Ship history inspection and
+checkout with each persistence mode. Add the graphical timeline after
+the command semantics and notifications are stable.
+
+Replay the same edit traces through ordinary DB5, session DB5, embedded
+DB5 and LMDB. Check exact record digests and separately evaluate
+geometry through normal tree traversal, draw and ray tracing. Include
+large BoTs/BREPs, many small primitives, long histories and read-only
+files. Measure cold and warm open to first usable draw, sparse fetch,
+bulk import, p50/p95 accepted edit and undo latency, peak memory,
+bytes written and disk growth. Compare equivalent durability settings.
+Set latency and memory budgets with maintainers on representative
+models before changing defaults. Run regress-repository and
+regress-licenses alongside the feature and interoperability tests.
+
+The prototype's sparse-read win justifies an indexed work store.
+Warm reads were comparable and the command harness still recreated
+scratch files. Whole-record retention grew a roughly 4.9 MB BoT to
+roughly 49 MB in embedded DB5 after eight attribute edits. Those
+results motivate lazy reads and body sharing. Measure editor speed
+through the integrated GED path. Distributed synchronization, automatic
+merging and object-selective undo can follow after defining conflict
+semantics for named references and combination trees.
+
+Implementation starting points in the source tree
+-------------------------------------------------
+
+  src/gtools/gversion.cpp and src/gtools/tests/gversion.cmake
+  include/rt/db_io.h and include/rt/db_instance.h
+  src/librt/db5_io.c, db_io.c, db_lookup.c, db_alloc.c, wdb.c, attributes.c
+  src/libged/exec.cpp, db/db.c, event.cpp and move_all/move_all.c
+  src/mged/buttons.c and src/qged/QgEdMainWindow.cpp
+  include/rt/db_diff.h for model-aware revision comparisons
+  doc/asciidoc/system/mann/db.adoc for the user-facing command reference
