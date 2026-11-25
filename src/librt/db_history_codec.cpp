@@ -20,6 +20,7 @@
 #include "common.h"
 
 #include <algorithm>
+#include <iterator>
 #include <limits>
 #include <set>
 #include <utility>
@@ -27,6 +28,7 @@
 #include "rt/db_io.h"
 #include "../libbu/picohash.h"
 #include "db_history_codec.h"
+#include "librt_private.h"
 
 namespace db_history {
 namespace {
@@ -323,6 +325,23 @@ write_payload(FILE *output, ByteView payload)
     return !payload.size || fwrite(payload.data, 1, payload.size, output) == payload.size;
 }
 
+struct PackStream {
+    const Pack &pack;
+    ByteView header;
+};
+
+int
+write_pack_stream(FILE *output, void *data)
+{
+    const auto &stream = *static_cast<const PackStream *>(data);
+    if (!write_payload(output, stream.header))
+	return -1;
+    for (const auto &artifact : stream.pack.artifacts)
+	if (!write_payload(output, artifact.second))
+	    return -1;
+    return 0;
+}
+
 } // namespace
 
 Id
@@ -552,6 +571,21 @@ apply_revision(const Revision &revision, const Manifest &parent, Manifest &resul
     return true;
 }
 
+bool
+archive_payload(const struct db5_raw_internal &raw, ByteView &result)
+{
+    if (raw.h_dli != DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT || !raw.h_name_present ||
+	!raw.h_name_hidden || raw.major_type != DB5_MAJORTYPE_BINARY_UNIF ||
+	raw.minor_type != DB5_MINORTYPE_BINU_8BITINT_U || !raw.b_present ||
+	raw.b_zzz != DB5_ZZZ_UNCOMPRESSED || raw.name.ext_nbytes != sizeof(archive_name) ||
+	!std::equal(std::begin(archive_name), std::end(archive_name), raw.name.ext_buf) ||
+	raw.body.ext_nbytes < pack_signature.size() ||
+	!std::equal(pack_signature.begin(), pack_signature.end(), raw.body.ext_buf))
+	return false;
+    result = {raw.body.ext_buf, raw.body.ext_nbytes};
+    return true;
+}
+
 PackStatus
 read_pack(ByteView body, Pack &result)
 {
@@ -620,7 +654,21 @@ read_artifact(const Pack &pack, const ArtifactKey &key, ByteView &result)
 }
 
 bool
-write_pack(FILE *output, const Pack &pack)
+read_manifest(const Pack &pack, const Id &id, Manifest &result)
+{
+    ByteView payload;
+    return read_artifact(pack, {Kind::Manifest, id}, payload) && decode_manifest(payload, result);
+}
+
+bool
+read_revision(const Pack &pack, const Id &id, Revision &result)
+{
+    ByteView payload;
+    return read_artifact(pack, {Kind::Revision, id}, payload) && decode_revision(payload, result);
+}
+
+static bool
+write_pack_file(FILE *output, const Pack &pack, bool embedded)
 {
     if (!output || !valid_pack_references(pack))
 	return false;
@@ -666,12 +714,23 @@ write_pack(FILE *output, const Pack &pack)
     }
     append_id(header, checksum(header));
 
-    if (!write_payload(output, header))
-	return false;
-    for (const auto &artifact : pack.artifacts)
-	if (!write_payload(output, artifact.second))
-	    return false;
-    return true;
+    PackStream stream{pack, header};
+    if (embedded)
+	return total <= SIZE_MAX && db5_fwrite_hidden_u8(output, archive_name, static_cast<size_t>(total),
+		write_pack_stream, &stream) == 0;
+    return write_pack_stream(output, &stream) == 0;
+}
+
+bool
+write_pack(FILE *output, const Pack &pack)
+{
+    return write_pack_file(output, pack, false);
+}
+
+bool
+write_embedded_pack(FILE *output, const Pack &pack)
+{
+    return write_pack_file(output, pack, true);
 }
 
 } // namespace db_history

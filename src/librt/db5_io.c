@@ -365,6 +365,75 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 }
 
 
+static void
+db5_disk_header(struct db5_ondisk_header *header, int dli, int hidden,
+	       int object_width, int name_width, int attribute_width, int body_width,
+	       int major, int minor)
+{
+    header->db5h_magic1 = DB5HDR_MAGIC1;
+    header->db5h_hflags = (object_width << DB5HDR_HFLAGS_OBJECT_WIDTH_SHIFT) |
+	(dli & DB5HDR_HFLAGS_DLI_MASK);
+    if (hidden)
+	header->db5h_hflags |= DB5HDR_HFLAGS_HIDDEN_OBJECT;
+    if (name_width >= 0)
+	header->db5h_hflags |= DB5HDR_HFLAGS_NAME_PRESENT | (name_width << DB5HDR_HFLAGS_NAME_WIDTH_SHIFT);
+    header->db5h_aflags = attribute_width < 0 ? 0 : DB5HDR_AFLAGS_PRESENT |
+	(attribute_width << DB5HDR_AFLAGS_WIDTH_SHIFT);
+    header->db5h_bflags = body_width < 0 ? 0 : DB5HDR_BFLAGS_PRESENT |
+	(body_width << DB5HDR_BFLAGS_WIDTH_SHIFT);
+    header->db5h_major_type = major;
+    header->db5h_minor_type = minor;
+}
+
+int
+db5_fwrite_hidden_u8(FILE *fp, const char *name, size_t body_size,
+		     int (*write_body)(FILE *, void *), void *data)
+{
+    if (!fp || !name || !*name || !body_size || !write_body)
+	return -1;
+
+    const size_t name_size = strlen(name) + 1;
+    const int name_width = db5_select_length_encoding(name_size);
+    const int body_width = db5_select_length_encoding(body_size);
+    const size_t header_upper_bound = sizeof(struct db5_ondisk_header) + sizeof(uint64_t) +
+	ENCODE_LEN(name_width) + ENCODE_LEN(body_width);
+    const size_t alignment = 8;
+    if (name_size > SIZE_MAX - header_upper_bound - 2 * alignment ||
+	body_size > SIZE_MAX - header_upper_bound - 2 * alignment - name_size)
+	return -1;
+
+    /* Match the contiguous exporter when choosing the object width. */
+    const size_t upper_bound = header_upper_bound + name_size + body_size + alignment;
+    const int object_width = db5_select_length_encoding((upper_bound + alignment - 1) / alignment);
+    size_t record_size = sizeof(struct db5_ondisk_header) + ENCODE_LEN(object_width) +
+	ENCODE_LEN(name_width) + name_size + ENCODE_LEN(body_width) + body_size + 1;
+    const size_t pad = (alignment - record_size % alignment) % alignment;
+    record_size += pad;
+
+    struct db5_ondisk_header header;
+    db5_disk_header(&header, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT, 1,
+	    object_width, name_width, -1, body_width, DB5_MAJORTYPE_BINARY_UNIF,
+	    DB5_MINORTYPE_BINU_8BITINT_U);
+    unsigned char lengths[2 * sizeof(uint64_t)];
+    unsigned char *end = db5_encode_length(lengths, record_size / alignment, object_width);
+    end = db5_encode_length(end, name_size, name_width);
+    const size_t prefix_size = (size_t)(end - lengths);
+    if (fwrite(&header, sizeof(header), 1, fp) != 1 ||
+	fwrite(lengths, 1, prefix_size, fp) != prefix_size ||
+	fwrite(name, 1, name_size, fp) != name_size)
+	return -1;
+
+    end = db5_encode_length(lengths, body_size, body_width);
+    const size_t length_size = (size_t)(end - lengths);
+    if (fwrite(lengths, 1, length_size, fp) != length_size || write_body(fp, data) != 0)
+	return -1;
+
+    unsigned char suffix[8] = {0};
+    suffix[pad] = DB5HDR_MAGIC2;
+    return fwrite(suffix, 1, pad + 1, fp) == pad + 1 ? 0 : -1;
+}
+
+
 void
 db5_export_object3(
     struct bu_external *out,
@@ -438,37 +507,10 @@ db5_export_object3(
     /* Determine encoding for the header length field */
     h_width = db5_select_length_encoding((need+7)>>3);
 
-    /* prepare combined external object */
-    odp = (struct db5_ondisk_header *)out->ext_buf;
-    odp->db5h_magic1 = DB5HDR_MAGIC1;
-
-    /* hflags */
-    odp->db5h_hflags = (h_width << DB5HDR_HFLAGS_OBJECT_WIDTH_SHIFT) |
-	(dli & DB5HDR_HFLAGS_DLI_MASK);
-    if (name) {
-	odp->db5h_hflags |= DB5HDR_HFLAGS_NAME_PRESENT |
-	    (n_width << DB5HDR_HFLAGS_NAME_WIDTH_SHIFT);
-
-    }
-    if (hidden) {
-	odp->db5h_hflags |= DB5HDR_HFLAGS_HIDDEN_OBJECT;
-    }
-
-    /* aflags */
-    odp->db5h_aflags = a_width << DB5HDR_AFLAGS_WIDTH_SHIFT;
-    if (attrib) odp->db5h_aflags |= DB5HDR_AFLAGS_PRESENT;
-    odp->db5h_aflags |= a_zzz & DB5HDR_AFLAGS_ZZZ_MASK;
-
-    /* bflags */
-    odp->db5h_bflags = b_width << DB5HDR_BFLAGS_WIDTH_SHIFT;
-    if (body) odp->db5h_bflags |= DB5HDR_BFLAGS_PRESENT;
-    odp->db5h_bflags |= b_zzz & DB5HDR_BFLAGS_ZZZ_MASK;
-
     if (a_zzz || b_zzz) bu_bomb("db5_export_object3: compression not supported yet\n");
-
-    /* Object_Type */
-    odp->db5h_major_type = major;
-    odp->db5h_minor_type = minor;
+    odp = (struct db5_ondisk_header *)out->ext_buf;
+    db5_disk_header(odp, dli, hidden, h_width, name ? n_width : -1,
+	    attrib ? a_width : -1, body ? b_width : -1, major, minor);
 
     /* Build up the rest of the record */
     cp = ((unsigned char *)out->ext_buf) + sizeof(struct db5_ondisk_header);

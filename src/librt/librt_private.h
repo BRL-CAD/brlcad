@@ -112,6 +112,8 @@ struct db_i_internal * db_i_internal_create(void);
 void db_i_internal_destroy(struct db_i_internal *i);
 void db_notify_changed(struct db_i *dbip, struct directory *dp, int mode);
 int db5_fwrite_header(FILE *fp);
+int db5_fwrite_hidden_u8(FILE *fp, const char *name, size_t body_size,
+			 int (*write_body)(FILE *, void *), void *data);
 int db5_load_global(struct db_i *dbip, const struct directory *dp);
 void db_edit_free_view(struct db_i_internal *i);
 void db_edit_record_failure(struct db_i *dbip);

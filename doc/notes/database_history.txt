@@ -355,8 +355,11 @@ descriptors before index and revision overhead. A standalone full
 snapshot pack for the model was 1.20 GB. With the source cached,
 factoring the model took 4.8 seconds, writing and syncing the pack took
 7.4 seconds, and reopening and hashing all 34,757 artifacts took 4.7
-seconds. These are pack measurements. The integrated DB5 save will
-also write the selected live records.
+seconds. The DB5 publisher wrote a separate copy with the selected
+model and its archive in 15.2 seconds. The result was 2.42 GB. A fresh
+mapped reader compared its live records with the selected manifest in
+5.6 seconds. A legacy title edit to that copy produced a model mismatch
+on reopen and left its archived revision ID intact.
 
 Implementation starting points in the source tree
 -------------------------------------------------

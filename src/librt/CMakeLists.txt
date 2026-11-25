@@ -129,6 +129,7 @@ set(
   db_flip.c
   db_fullpath.cpp
   db_history_codec.cpp
+  db_history_db5.cpp
   db_inmem.c
   db_io.c
   db_lookup.c
@@ -325,6 +326,7 @@ set(
   cache.h
   cut_private.h
   db_history_codec.h
+  db_history_db5.h
   librt_private.h
   material/materialX.cpp
   material/materialX.h
@@ -457,6 +459,8 @@ set(
 )
 # FIXME: needs materialX
 #  ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/source
+
+set_source_files_properties(db_history_db5.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
 
 brlcad_addlib(librt "${LIBRT_SOURCES}" "${RT_INCLUDE_DIRS}" "${RT_LOCAL_INCLUDE_DIRS}"
   PUBLIC_LIBS ${LIBRT_PUBLIC_LIBS}

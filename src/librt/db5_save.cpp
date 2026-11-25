@@ -32,6 +32,7 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "raytrace.h"
+#include "db_history_db5.h"
 #include "librt_private.h"
 
 #if defined(HAVE_FSYNC) && defined(HAVE_MKSTEMP) && defined(HAVE_SYS_FILE_H) && \
@@ -48,6 +49,7 @@ struct db5_save {
     std::string path;
     struct stat original = {};
     std::filesystem::file_time_type modified;
+    const struct db_i *base = nullptr;
     bool installed = false;
 #endif
 };
@@ -150,11 +152,17 @@ unchanged(const struct db5_save *save, int descriptor)
 }
 
 bool
-write_snapshot(FILE *file, const struct db_i *snapshot)
+write_snapshot(FILE *file, const struct db_i *snapshot, const db_history::Pack *pack, struct bu_vls *message)
 {
+    db_history::Manifest expected;
+    if (pack && !db_history::selected_manifest(*pack, expected)) {
+	db5_save_message(message, "History does not contain a usable selected model");
+	return false;
+    }
     if (db5_fwrite_header(file) < 0)
 	return false;
 
+    db_history::Manifest actual;
     bool global = false;
     struct directory *dp;
     FOR_ALL_DIRECTORY_START(dp, snapshot) {
@@ -174,12 +182,27 @@ write_snapshot(FILE *file, const struct db_i *snapshot)
 	    valid = !global && raw.major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY;
 	    global = valid;
 	}
-	const bool written = valid && bu_fwrite_external(file, &record) == 0;
+	bool written = false;
+	if (valid && pack && BU_STR_EQUAL(dp->d_namep, db_history::archive_name)) {
+	    db_history::ByteView body;
+	    written = db_history::archive_payload(raw, body);
+	    if (!written)
+		db5_save_message(message, "A user object occupies the embedded history name");
+	} else if (valid && (!pack || db_history::add_model_record(actual, dp->d_namep,
+		    {record.ext_buf, record.ext_nbytes}))) {
+	    written = bu_fwrite_external(file, &record) == 0;
+	}
 	bu_free_external(&record);
 	if (!written)
 	    return false;
     } FOR_ALL_DIRECTORY_END;
-    return global;
+    if (!global)
+	return false;
+    if (pack && expected != actual) {
+	db5_save_message(message, "The selected archive model differs from the DB5 snapshot");
+	return false;
+    }
+    return !pack || db_history::write_embedded_pack(file, *pack);
 }
 
 } // namespace
@@ -197,6 +220,7 @@ db5_save_begin(const struct db_i *base, struct bu_vls *message)
     }
 
     auto save = std::make_unique<struct db5_save>();
+    save->base = base;
     char *path = bu_file_realpath(base->dbi_filename, nullptr);
     if (path) {
 	save->path = path;
@@ -217,8 +241,8 @@ db5_save_begin(const struct db_i *base, struct bu_vls *message)
 #endif
 }
 
-enum db5_save_result
-db5_save_replace(struct db5_save *save, const struct db_i *snapshot,
+static enum db5_save_result
+replace_snapshot(struct db5_save *save, const struct db_i *snapshot, const db_history::Pack *pack,
 		 struct db_i **replacement, struct bu_vls *message)
 {
     db5_save_message(message, "");
@@ -233,6 +257,17 @@ db5_save_replace(struct db5_save *save, const struct db_i *snapshot,
 	db5_save_message(message, "DB5 file changed since staging began");
 	return DB5_SAVE_STALE;
     }
+    if (pack) {
+	const auto existing = db_history::inspect_db5_history(save->base);
+	if (existing == db_history::EmbeddedStatus::Collision) {
+	    db5_save_message(message, "A user object occupies the embedded history name");
+	    return DB5_SAVE_ERROR;
+	}
+	if (existing != db_history::EmbeddedStatus::Current && existing != db_history::EmbeddedStatus::Missing) {
+	    db5_save_message(message, "Cannot replace unreadable or unsupported embedded history");
+	    return DB5_SAVE_ERROR;
+	}
+    }
 
     char *parent = bu_path_dirname(save->path.c_str());
     const std::string directory(parent);
@@ -241,9 +276,10 @@ db5_save_replace(struct db5_save *save, const struct db_i *snapshot,
     TemporarySnapshot temporary(directory);
     // The write must be complete and the new database usable before
     // replacing the only directory entry for the original file.
-    if (!temporary.file || !write_snapshot(temporary.file, snapshot) ||
+    if (!temporary.file || !write_snapshot(temporary.file, snapshot, pack, message) ||
 	!temporary.finish(save->original)) {
-	db5_save_message(message, "Could not write and synchronize the DB5 snapshot");
+	if (message && bu_vls_strlen(message) == 0)
+	    db5_save_message(message, "Could not write and synchronize the DB5 snapshot");
 	return DB5_SAVE_ERROR;
     }
 
@@ -296,9 +332,24 @@ db5_save_replace(struct db5_save *save, const struct db_i *snapshot,
 #else
     (void)save;
     (void)snapshot;
+    (void)pack;
     db5_save_message(message, "Atomic DB5 replacement is unavailable on this platform");
     return DB5_SAVE_ERROR;
 #endif
+}
+
+enum db5_save_result
+db5_save_replace(struct db5_save *save, const struct db_i *snapshot,
+		 struct db_i **replacement, struct bu_vls *message)
+{
+    return replace_snapshot(save, snapshot, nullptr, replacement, message);
+}
+
+enum db5_save_result
+db_history::save_db5_history(struct db5_save *save, const struct db_i *snapshot, const Pack &pack,
+			    struct db_i **replacement, struct bu_vls *message)
+{
+    return replace_snapshot(save, snapshot, &pack, replacement, message);
 }
 
 void
