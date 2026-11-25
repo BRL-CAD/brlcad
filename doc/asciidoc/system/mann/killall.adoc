@@ -10,7 +10,7 @@ killall - Deletes the specified _objects_ from the current database and removes 
 
 [source]
 ----
-killall [-n] {objects}
+killall [-n] [--] {objects}
 ----
 
 
@@ -18,6 +18,8 @@ killall [-n] {objects}
 == DESCRIPTION
 
 Deletes the specified _objects_ from the current database and removes all references to them from all combinations in the database. Note that the _objects_ are killed immediately unless the *-n* flag is passed. The *-n* flag causes the command to return a string of the objects that would be killed in a scriptable list format without actually killing them. See also the *killrefs* command.
+
+Use *--* before an object name such as *-n* to treat it as a literal name.
 
 *Use this command with caution.* Killed objects cannot be recovered so *keep* a backup.
 

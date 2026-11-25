@@ -559,6 +559,103 @@ test_session_promotion()
 }
 
 static int
+reject_reference_cleanup(int UNUSED(argc), const char **UNUSED(argv), void *ged_context, void *data)
+{
+    auto *gedp = static_cast<struct ged *>(ged_context);
+    *static_cast<bool *>(data) = !db_lookup(gedp->dbip, "trunk.c", LOOKUP_QUIET) &&
+	!db_lookup(gedp->dbip, "node.s", LOOKUP_QUIET);
+    return BRLCAD_ERROR;
+}
+
+static int
+test_reference_removal(struct ged *gedp)
+{
+    const char *make[] = {"make", "node.s", "sph", nullptr};
+    const char *trunk[] = {"g", "trunk.c", "node.s", "node.s", nullptr};
+    const char *outside[] = {"g", "outside.c", "trunk.c", "node.s", nullptr};
+    CHECK(run(gedp, make) == BRLCAD_OK && run(gedp, trunk) == BRLCAD_OK && run(gedp, outside) == BRLCAD_OK);
+    const auto root = selected_id(gedp);
+
+    int commits = 0;
+    CHECK(ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE, count_commit, &commits));
+    const char *refs_preview[] = {"killrefs", "-n", "node.s", nullptr};
+    const char *all_preview[] = {"killall", "-n", "node.s", nullptr};
+    const char *tree_preview[] = {"killtree", "-an", "trunk.c", nullptr};
+    const std::unique_ptr<struct ged, decltype(&ged_close)> inspector(ged_create(), ged_close);
+    const char *open[] = {"db", "open", "-r", gedp->dbip->dbi_filename, nullptr};
+    CHECK(inspector && run(inspector.get(), open) == BRLCAD_OK);
+    for (auto *reader : {gedp, inspector.get()}) {
+	CHECK(run(reader, refs_preview) == BRLCAD_OK && contains_result(reader, "trunk.c") &&
+	    contains_result(reader, "outside.c"));
+	CHECK(run(reader, all_preview) == BRLCAD_OK && contains_result(reader, "{node.s } {") &&
+	    contains_result(reader, "trunk.c") && contains_result(reader, "outside.c"));
+	CHECK(BU_STR_EQUAL(all_preview[0], "killall"));
+	CHECK(run(reader, tree_preview) == BRLCAD_OK && contains_result(reader, "node.s") &&
+	    contains_result(reader, "trunk.c") && contains_result(reader, "outside.c"));
+    }
+    CHECK(selected_id(gedp) == root && commits == 0);
+    const auto has_original_refs = [gedp]() {
+	db_update_nref(gedp->dbip);
+	auto *node = db_lookup(gedp->dbip, "node.s", LOOKUP_QUIET);
+	auto *branch = db_lookup(gedp->dbip, "trunk.c", LOOKUP_QUIET);
+	auto *parent = db_lookup(gedp->dbip, "outside.c", LOOKUP_QUIET);
+	return node && branch && parent && node->d_nref == 3 && branch->d_nref == 1 &&
+	    db_comb_has_instance(nullptr, gedp->dbip, branch, node, 0) &&
+	    db_comb_has_instance(nullptr, gedp->dbip, parent, node, 0) &&
+	    db_comb_has_instance(nullptr, gedp->dbip, parent, branch, 0);
+    };
+    CHECK(has_original_refs());
+
+    const char *remove_all[] = {"killall", "node.s", nullptr};
+    int staged_writes = 0;
+    CHECK(ged_clbk_set(gedp, "killall", BU_CLBK_PRE, fail_staged_edit, &staged_writes) == BRLCAD_OK);
+    CHECK(run(gedp, remove_all) == BRLCAD_ERROR && staged_writes == 1);
+    CHECK(selected_id(gedp) == root && commits == 0 && has_original_refs());
+    CHECK(ged_clbk_set(gedp, "killall", BU_CLBK_PRE, nullptr, nullptr) == GED_OVERRIDE);
+
+    const char *remove_tree[] = {"killtree", "-a", "trunk.c", nullptr};
+    bool tree_staged = false;
+    CHECK(ged_clbk_set(gedp, "killrefs", BU_CLBK_PRE, reject_reference_cleanup, &tree_staged) == BRLCAD_OK);
+    CHECK(run(gedp, remove_tree) == BRLCAD_ERROR && tree_staged);
+    CHECK(selected_id(gedp) == root && commits == 0 && has_original_refs());
+    CHECK(ged_clbk_set(gedp, "killrefs", BU_CLBK_PRE, nullptr, nullptr) == GED_OVERRIDE);
+
+    const char *empty[] = {"lt", "outside.c", nullptr};
+    const char *undo[] = {"db", "undo", nullptr};
+    const char *remove_refs[] = {"killrefs", "node.s", nullptr};
+    CHECK(run(gedp, remove_refs) == BRLCAD_OK && commits == 1 && selected_id(gedp) != root);
+    db_update_nref(gedp->dbip);
+    auto *node = db_lookup(gedp->dbip, "node.s", LOOKUP_QUIET);
+    CHECK(node && node->d_nref == 0);
+    CHECK(run(gedp, remove_refs) == BRLCAD_OK && commits == 1);
+    CHECK(run(gedp, undo) == BRLCAD_OK && commits == 2 && selected_id(gedp) == root && has_original_refs());
+
+    CHECK(run(gedp, remove_all) == BRLCAD_OK && commits == 3 && selected_id(gedp) != root);
+    CHECK(!db_lookup(gedp->dbip, "node.s", LOOKUP_QUIET) && db_lookup(gedp->dbip, "trunk.c", LOOKUP_QUIET));
+    CHECK(run(gedp, empty) == BRLCAD_OK && contains_result(gedp, "trunk.c") && !contains_result(gedp, "node.s"));
+    CHECK(run(gedp, undo) == BRLCAD_OK && commits == 4 && selected_id(gedp) == root && has_original_refs());
+
+    CHECK(run(gedp, remove_tree) == BRLCAD_OK && commits == 5 && selected_id(gedp) != root);
+    const auto removed = selected_id(gedp);
+    CHECK(!db_lookup(gedp->dbip, "node.s", LOOKUP_QUIET) && !db_lookup(gedp->dbip, "trunk.c", LOOKUP_QUIET));
+    CHECK(run(gedp, empty) == BRLCAD_OK && !contains_result(gedp, "node.s") && !contains_result(gedp, "trunk.c"));
+    CHECK(run(gedp, undo) == BRLCAD_OK && commits == 6 && selected_id(gedp) == root && has_original_refs());
+    const char *redo_tree[] = {"db", "redo", removed.c_str(), nullptr};
+    CHECK(run(gedp, redo_tree) == BRLCAD_OK && commits == 7 && selected_id(gedp) == removed &&
+	!db_lookup(gedp->dbip, "node.s", LOOKUP_QUIET) && !db_lookup(gedp->dbip, "trunk.c", LOOKUP_QUIET));
+
+    const char *option_name[] = {"mv", "renamed.s", "-n", nullptr};
+    CHECK(run(gedp, option_name) == BRLCAD_OK);
+    const char *reference_option_name[] = {"g", "option.c", "-n", nullptr};
+    CHECK(run(gedp, reference_option_name) == BRLCAD_OK);
+    const char *remove_option_name[] = {"killall", "--", "-n", nullptr};
+    CHECK(run(gedp, remove_option_name) == BRLCAD_OK && !db_lookup(gedp->dbip, "-n", LOOKUP_QUIET));
+    const char *show_option[] = {"lt", "option.c", nullptr};
+    CHECK(run(gedp, show_option) == BRLCAD_OK && !contains_result(gedp, "-n"));
+    return 0;
+}
+
+static int
 test_backend_parity(const std::filesystem::path &directory)
 {
     using Records = std::map<std::string, std::vector<uint8_t>>;
@@ -605,7 +702,7 @@ test_backend_parity(const std::filesystem::path &directory)
 		!db_lookup(gedp->dbip, "partial.c", LOOKUP_QUIET));
 	}
 
-	const std::unique_ptr<struct rt_i, decltype(&rt_i_destroy)> rtip(rt_i_create(gedp->dbip), rt_i_destroy);
+	std::unique_ptr<struct rt_i, decltype(&rt_i_destroy)> rtip(rt_i_create(gedp->dbip), rt_i_destroy);
 	CHECK(rtip && rt_gettree(rtip.get(), "model.c") == 0);
 	rt_prep(rtip.get());
 	struct application ray;
@@ -616,6 +713,7 @@ test_backend_parity(const std::filesystem::path &directory)
 	VSET(ray.a_ray.r_pt, rtip->mdl_min[X] - 1.0, 0.0, 0.0);
 	VSET(ray.a_ray.r_dir, 1.0, 0.0, 0.0);
 	CHECK(rt_shootray(&ray) == 1);
+	rtip.reset();
 
 	const auto *archive = db_lookup(gedp->dbip, "_BRLCAD_HISTORY", LOOKUP_QUIET);
 	const struct directory *dp;
@@ -630,8 +728,10 @@ test_backend_parity(const std::filesystem::path &directory)
 	} FOR_ALL_DIRECTORY_END;
 	if (BU_STR_EQUAL(mode, "plain"))
 	    plain_records = std::move(records);
-	else
+	else {
 	    CHECK(records == plain_records);
+	    CHECK(test_reference_removal(gedp) == 0);
+	}
     }
     return 0;
 }

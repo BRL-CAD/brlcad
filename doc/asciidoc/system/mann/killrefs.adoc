@@ -10,7 +10,7 @@ killrefs - Removes all references to the specified _objects_ from all combinatio
 
 [source]
 ----
-killrefs [-n] {objects}
+killrefs [-n] [--] {objects}
 ----
 
 
@@ -18,6 +18,8 @@ killrefs [-n] {objects}
 == DESCRIPTION
 
 Removes all references to the specified _objects_ from all combinations in the database. Note that the references are removed immediately unless the *-n* flag is passed. The *-n* flag causes the command to return a string of the objects that would be affected in a scriptable list format without actually editing them. See also the *killall* command.
+
+Use *--* before an object name such as *-n* to treat it as a literal name.
 
 *Use this command with caution.* Killed objects cannot be recovered so *keep* a backup.
 

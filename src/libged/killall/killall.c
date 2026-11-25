@@ -35,13 +35,13 @@
 int
 ged_killall_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int nflag;
     int ret;
-    static const char *usage = "[-n] object(s)";
+    int internal_call;
+    const char **args;
+    static const char *usage = "[-n] [--] object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
@@ -54,53 +54,42 @@ ged_killall_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Process the -n option */
-    if (argc > 1 && argv[1][0] == '-' && argv[1][1] == 'n' && argv[1][2] == '\0') {
-	int i;
-	nflag = 1;
-
+    const int nflag = BU_STR_EQUAL(argv[1], "-n");
+    int first = 1 + nflag;
+    if (first < argc && BU_STR_EQUAL(argv[first], "--"))
+	++first;
+    if (nflag) {
 	/* Objects that would be killed are in the first sublist */
 	bu_vls_printf(gedp->ged_result_str, "{");
-	for (i = 2; i < argc; i++)
+	for (int i = first; i < argc; i++)
 	    bu_vls_printf(gedp->ged_result_str, "%s ", argv[i]);
 	bu_vls_printf(gedp->ged_result_str, "} {");
-    } else
-	nflag = 0;
-
-    gedp->ged_internal_call = 1;
-    argv[0] = "killrefs";
-    if ((ret = ged_exec_killrefs(gedp, argc, argv)) != BRLCAD_OK) {
-	gedp->ged_internal_call = 0;
-	bu_vls_printf(gedp->ged_result_str, "KILL skipped because of earlier errors.\n");
-	return ret;
+    } else {
+	GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     }
-    gedp->ged_internal_call = 0;
 
-    if (nflag) {
+    args = (const char **)bu_calloc(argc + 3, sizeof(*args), "killall arguments");
+    args[0] = "killrefs";
+    memcpy(args + 1, argv + 1, (argc - 1) * sizeof(*args));
+    internal_call = gedp->ged_internal_call;
+    gedp->ged_internal_call = 1;
+    ret = ged_exec_killrefs(gedp, argc, args);
+    gedp->ged_internal_call = internal_call;
+    if (ret != BRLCAD_OK) {
+	bu_vls_printf(gedp->ged_result_str, "KILL skipped because of earlier errors.\n");
+    } else if (nflag) {
 	/* Close the sublist of objects that reference the would-be killed objects. */
 	bu_vls_printf(gedp->ged_result_str, "}");
-	return BRLCAD_OK;
+    } else {
+	/* Some names may exist only as dangling references. */
+	args[0] = "kill";
+	args[1] = "-q";
+	args[2] = "--";
+	memcpy(args + 3, argv + first, (argc - first) * sizeof(*args));
+	ret = ged_exec_kill(gedp, argc - first + 3, args);
     }
 
-    /* ALL references removed...now KILL the object[s] */
-    /* Build a new argv that inserts the "-q" (quiet) flag so kill does
-     * not emit noisy db_lookup failures for objects that only exist as
-     * references.  Only the killall path is affected; standalone kill is
-     * unchanged. */
-    {
-	int i;
-	const char **kill_argv = (const char **)bu_calloc(argc + 2, sizeof(char *), "killall kill_argv");
-
-	kill_argv[0] = "kill";
-	kill_argv[1] = "-q";
-	for (i = 1; i < argc; i++)
-	    kill_argv[i + 1] = argv[i];
-	kill_argv[argc + 1] = NULL;
-
-	ret = ged_exec_kill(gedp, argc + 1, kill_argv);
-
-	bu_free((void *)kill_argv, "killall kill_argv");
-    }
-
+    bu_free(args, "killall arguments");
     return ret;
 }
 

@@ -166,7 +166,8 @@ permitted_edit(std::string_view command, int argc, const char **argv)
     if (command == "attr")
 	return argc > 1 && one_of(argv[1], {"append", "copy", "rm", "set"});
     return one_of(command, {"adjust", "comb", "concat", "cp", "dbconcat", "g", "group",
-	"hide", "in", "kill", "make", "mv", "mvall", "put", "rm", "unhide"});
+	"hide", "in", "kill", "killall", "killrefs", "killtree", "make", "mv", "mvall",
+	"put", "rm", "unhide"});
 }
 
 bool
@@ -176,6 +177,19 @@ permitted_query(std::string_view command, int argc, const char **argv)
 	return argc <= 1 || one_of(argv[1], {"get", "list", "show", "sort"});
     if (command == "title" || command == "units")
 	return argc == 1;
+    if (command == "killall" || command == "killrefs")
+	return argc == 1 || std::string_view(argv[1]) == "-n";
+    if (command == "killtree") {
+	// Like bu_getopt, inspect only short options before the first operand.
+	for (int i = 1; i < argc; ++i) {
+	    const std::string_view option(argv[i]);
+	    if (option.size() < 2 || option.front() != '-' || option[1] == '-')
+		break;
+	    if (option.find('n', 1) != std::string_view::npos)
+		return true;
+	}
+	return argc == 1;
+    }
     return one_of(command, {"db", "db_glob", "dbfind", "dbversion", "expand", "find", "form",
 	"get", "get_type", "glob", "help", "l", "ls", "lt", "make_name", "match",
 	"pathlist", "paths", "search", "summary", "tops", "version", "?"});

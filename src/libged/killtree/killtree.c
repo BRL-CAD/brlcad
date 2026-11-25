@@ -42,6 +42,7 @@ struct killtree_data {
     int killrefs;
     int print;
     int force;
+    int result;
     const char *top;
     int ac;
     char **av;
@@ -115,8 +116,11 @@ collect_callback(struct db_i *dbip, struct directory *dp, void *ptr)
     /* don't bother checking for references if the -f or -a flags are
      * presented to force a full kill and all references respectively.
      */
-    if (!gktdp->force && !gktdp->killrefs)
+    if (!gktdp->force && !gktdp->killrefs) {
 	ref_exists = find_reference(dbip, gktdp->top, dp->d_namep);
+	if (ref_exists < 0)
+	    gktdp->result = BRLCAD_ERROR;
+    }
 
     /* if a reference exists outside of the subtree we're killing, we
      * don't kill this object or it'll create invalid reference
@@ -153,35 +157,26 @@ killtree_process(struct db_i *dbip, struct directory *dp, struct killtree_data *
 
     (void)bu_hash_set(gktdp->visited, name, name_len, gktdp);
 
+    if (gktdp->killrefs)
+	append_name(&gktdp->av, &gktdp->ac, &gktdp->av_capacity, dp->d_namep);
     if (gktdp->print) {
-	if (!gktdp->killrefs)
-	    bu_vls_printf(gktdp->gedp->ged_result_str, "%s ", dp->d_namep);
-	else {
-	    append_name(&gktdp->av, &gktdp->ac, &gktdp->av_capacity, dp->d_namep);
+	bu_vls_printf(gktdp->gedp->ged_result_str, "%s ", dp->d_namep);
+	return;
+    }
 
-	    bu_vls_printf(gktdp->gedp->ged_result_str, "%s ", dp->d_namep);
-	}
-    } else {
+    if (!ged_db_history_staged(gktdp->gedp))
 	_dl_eraseAllNamesFromDisplay(gktdp->gedp, dp->d_namep, 0);
 
-	bu_vls_printf(gktdp->gedp->ged_result_str, "KILL %s:  %s\n",
-		      (dp->d_flags & RT_DIR_COMB) ? "COMB" : "Solid",
-		      dp->d_namep);
+    bu_vls_printf(gktdp->gedp->ged_result_str, "KILL %s:  %s\n",
+		  (dp->d_flags & RT_DIR_COMB) ? "COMB" : "Solid",
+		  dp->d_namep);
 
-	if (!gktdp->killrefs) {
-	    if (db_delete(dbip, dp) != 0 || db_dirdelete(dbip, dp) != 0) {
-		bu_vls_printf(gktdp->gedp->ged_result_str, "an error occurred while deleting %s\n", dp->d_namep);
-	    }
-	} else {
-	    append_name(&gktdp->av, &gktdp->ac, &gktdp->av_capacity, dp->d_namep);
-
-	    if (db_delete(dbip, dp) != 0 || db_dirdelete(dbip, dp) != 0) {
-		bu_vls_printf(gktdp->gedp->ged_result_str, "an error occurred while deleting %s\n", dp->d_namep);
-
-		/* Remove from list */
-		bu_free((void *)gktdp->av[--gktdp->ac], "killtree_callback");
-		gktdp->av[gktdp->ac] = (char *)0;
-	    }
+    if (db_delete(dbip, dp) != 0 || db_dirdelete(dbip, dp) != 0) {
+	bu_vls_printf(gktdp->gedp->ged_result_str, "an error occurred while deleting %s\n", dp->d_namep);
+	gktdp->result = BRLCAD_ERROR;
+	if (gktdp->killrefs) {
+	    bu_free(gktdp->av[--gktdp->ac], "killtree reference target");
+	    gktdp->av[gktdp->ac] = NULL;
 	}
     }
 }
@@ -193,11 +188,10 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     int i;
     int c;
-    struct killtree_data gktd;
+    struct killtree_data gktd = {0};
     static const char *usage = "[-a|-f|-n] object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
@@ -209,23 +203,6 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    gktd.gedp = gedp;
-    gktd.killrefs = 0;
-    gktd.print = 0;
-    gktd.force = 0;
-    gktd.ac = 1;
-    gktd.top = NULL;
-    gktd.pending_ac = 0;
-    gktd.queued = NULL;
-    gktd.visited = bu_hash_create(0);
-
-    gktd.av = (char **)bu_calloc(1, sizeof(char *) * AV_STEP, "alloc av");
-    gktd.av_capacity = AV_STEP;
-    gktd.pending = (char **)bu_calloc(1, sizeof(char *) * AV_STEP, "alloc pending names");
-    gktd.pending_capacity = AV_STEP;
-    gktd.av[0] = "killrefs";
-    gktd.av[1] = (char *)0;
-
     bu_optind = 1;
     while ((c = bu_getopt(argc, (char * const *)argv, "afn")) != -1) {
 	switch (c) {
@@ -234,20 +211,12 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case 'n':
 		gktd.print = 1;
-		gktd.av[gktd.ac++] = bu_strdup("-n");
-		gktd.av[gktd.ac] = (char *)0;
 		break;
 	    case 'f':
 		gktd.force = 1;
 		break;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		bu_free(gktd.av, "free av (error)");
-		gktd.av = NULL;
-		bu_free(gktd.pending, "free pending names (error)");
-		gktd.pending = NULL;
-		bu_hash_destroy(gktd.visited);
-		gktd.visited = NULL;
 		return BRLCAD_ERROR;
 	}
     }
@@ -255,10 +224,26 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
     argc -= (bu_optind - 1);
     argv += (bu_optind - 1);
 
+    if (!gktd.print) {
+	GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    }
 
-    /* Update references once before we start all of this - db_search
-     * needs nref to be current to work correctly. */
-    db_update_nref(gedp->dbip);
+    gktd.gedp = gedp;
+    gktd.result = BRLCAD_OK;
+    gktd.visited = bu_hash_create(0);
+    if (gktd.killrefs) {
+	gktd.av = (char **)bu_calloc(AV_STEP, sizeof(*gktd.av), "killtree reference targets");
+	gktd.av_capacity = AV_STEP;
+	gktd.av[gktd.ac++] = "killrefs";
+	if (gktd.print)
+	    gktd.av[gktd.ac++] = "-n";
+	gktd.av[gktd.ac++] = "--";
+    }
+    const int first_target = gktd.ac;
+
+    /* db_search uses the reference counts to identify traversal roots. */
+    if (!gktd.force && !gktd.killrefs)
+	db_update_nref(gedp->dbip);
 
     /* Objects that would be killed are in the first sublist */
     if (gktd.print)
@@ -301,12 +286,15 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
     if (gktd.print)
 	bu_vls_printf(gedp->ged_result_str, "} {");
 
-    if (gktd.killrefs && gktd.ac > 1) {
+    if (gktd.ac > first_target) {
+	const int internal_call = gedp->ged_internal_call;
 	gedp->ged_internal_call = 1;
-	(void)ged_exec_killrefs(gedp, gktd.ac, (const char **)gktd.av);
-	gedp->ged_internal_call = 0;
+	const int result = ged_exec_killrefs(gedp, gktd.ac, (const char **)gktd.av);
+	gedp->ged_internal_call = internal_call;
+	if (result != BRLCAD_OK)
+	    gktd.result = result;
 
-	for (i = 1; i < gktd.ac; i++) {
+	for (i = first_target; i < gktd.ac; i++) {
 	    if (!gktd.print)
 		bu_vls_printf(gedp->ged_result_str, "Freeing %s\n", gktd.av[i]);
 	    bu_free((void *)gktd.av[i], "killtree_data");
@@ -317,17 +305,16 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
     if (gktd.print)
 	bu_vls_printf(gedp->ged_result_str, "}");
 
-    bu_free(gktd.av, "free av");
-    gktd.av = NULL;
-    bu_free(gktd.pending, "free pending names");
-    gktd.pending = NULL;
+    if (gktd.av)
+	bu_free(gktd.av, "killtree reference targets");
+    if (gktd.pending)
+	bu_free(gktd.pending, "pending killtree names");
     bu_hash_destroy(gktd.visited);
-    gktd.visited = NULL;
 
-    /* Done removing stuff - update references. */
-    db_update_nref(gedp->dbip);
+    if (!gktd.print)
+	db_update_nref(gedp->dbip);
 
-    return BRLCAD_OK;
+    return gktd.result;
 }
 
 #include "../include/plugin.h"

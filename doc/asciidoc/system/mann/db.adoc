@@ -45,7 +45,7 @@ Returns information about the primitive shape at the end of the __shape_or_path_
 
 
 __history enable session [bytes]__::
-Start history for the open writable DB5 file on a platform that supports atomic replacement. Supported editing commands include `make`, `adjust`, `mvall`, `concat`, and `title`. Edits save to the file as they complete, and closing the database discards the undo journal. The default journal limit is 64 MiB. When older revisions reach the limit, history may prune them. An individual edit beyond the limit fails before saving.
+Start history for the open writable DB5 file on a platform that supports atomic replacement. Supported editing commands include `make`, `adjust`, `mvall`, `concat`, and `title`. Each `killrefs`, `killall`, or `killtree` edit has one Undo entry for its object and reference changes. Their `-n` previews also work on read-only databases. Edits save to the file as they complete, and closing the database discards the undo journal. The default journal limit is 64 MiB. When older revisions reach the limit, history may prune them. An individual edit beyond the limit fails before saving.
 
 
 __history enable [embedded]__::

@@ -35,17 +35,13 @@
 int
 ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int k;
     struct directory *dp;
-    struct rt_db_internal intern;
-    struct rt_comb_internal *comb;
-    int nflag;
-    int ret;
-    static const char *usage = "[-n] object(s)";
+    int wrote = 0;
+    int ret = BRLCAD_OK;
+    static const char *usage = "[-n] [--] object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     if (!gedp->ged_internal_call) {
@@ -59,22 +55,27 @@ ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    /* Process the -n option */
-    if (argc > 1 && argv[1][0] == '-' && argv[1][1] == 'n' && argv[1][2] == '\0') {
-	nflag = 1;
-	--argc;
-	++argv;
-    } else
-	nflag = 0;
+    const int nflag = BU_STR_EQUAL(argv[1], "-n");
+    if (!nflag) {
+	GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    }
 
-    if (!nflag && !gedp->ged_internal_call) {
-	for (k = 1; k < argc; k++)
+    int first = 1 + nflag;
+    if (first < argc && BU_STR_EQUAL(argv[first], "--"))
+	++first;
+    if (first == argc)
+	return BRLCAD_OK;
+
+    if (!nflag && !gedp->ged_internal_call && !ged_db_history_staged(gedp)) {
+	for (int k = first; k < argc; k++)
 	    _dl_eraseAllNamesFromDisplay(gedp, argv[k], 1);
     }
 
-    ret = BRLCAD_OK;
-
     FOR_ALL_DIRECTORY_START(dp, gedp->dbip) {
+	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
+	int changed = 0;
+
 	if (!(dp->d_flags & RT_DIR_COMB))
 	    continue;
 
@@ -86,34 +87,36 @@ ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB(comb);
 
-	for (k = 1; k < argc; k++) {
+	for (int k = first; k < argc; k++) {
 	    int code;
 
 	    code = db_tree_rm_dbleaf(&(comb->tree), argv[k], nflag);
-	    if (code == -1)
-		continue;	/* not found */
-	    if (code == -2)
-		continue;	/* empty tree */
+	    if (code == -1 || code == -2)
+		continue;
 	    if (code < 0) {
 		bu_vls_printf(gedp->ged_result_str, "ERROR: Failure deleting %s/%s\n", dp->d_namep, argv[k]);
 		ret = BRLCAD_ERROR;
+	    } else if (nflag) {
+		bu_vls_printf(gedp->ged_result_str, "%s ", dp->d_namep);
 	    } else {
-		if (nflag)
-		    bu_vls_printf(gedp->ged_result_str, "%s ", dp->d_namep);
-		else
-		    bu_vls_printf(gedp->ged_result_str, "deleted %s/%s\n", dp->d_namep, argv[k]);
+		changed = 1;
+		bu_vls_printf(gedp->ged_result_str, "deleted %s/%s\n", dp->d_namep, argv[k]);
 	    }
 	}
 
-	if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
+	if (!changed) {
+	    rt_db_free_internal(&intern);
+	} else if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: Unable to write new combination into database.\n");
 	    ret = BRLCAD_ERROR;
-	    continue;
+	} else {
+	    wrote = 1;
 	}
     } FOR_ALL_DIRECTORY_END;
 
     /* Update references. */
-    db_update_nref(gedp->dbip);
+    if (wrote)
+	db_update_nref(gedp->dbip);
 
     return ret;
 }
