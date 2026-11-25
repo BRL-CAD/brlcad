@@ -100,6 +100,8 @@ RT_EXPORT std::string id_string(const Id &id);
 RT_EXPORT bool factor_record(ByteView record, RecordArtifact &result);
 // Decoding borrows the prefix and suffix from the object payload.
 RT_EXPORT bool decode_object(ByteView payload, Object &result);
+// Read DB5 framing and directory metadata without fetching the body.
+bool record_metadata(const Object &object, struct db5_raw_internal &raw);
 // The artifact store first verifies the body payload against body_id.
 RT_EXPORT bool materialize_record(const Object &object, ByteView verified_body, Bytes &result);
 // Validate the framing, name and _GLOBAL type of a reconstructed record.

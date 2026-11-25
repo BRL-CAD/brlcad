@@ -45,6 +45,8 @@ using namespace db_history;
 using Database = std::unique_ptr<struct db_i, decltype(&db_close)>;
 using Edit = std::unique_ptr<struct db_edit, decltype(&db_edit_abort)>;
 
+constexpr char region_name[] = "workspace.r";
+
 struct TestDirectory {
     ~TestDirectory()
     {
@@ -54,6 +56,18 @@ struct TestDirectory {
 
     std::filesystem::path path;
 };
+
+static Bytes
+read_record(struct db_i *db, const char *name)
+{
+    const auto *directory = db_lookup(db, name, LOOKUP_QUIET);
+    struct bu_external raw = BU_EXTERNAL_INIT_ZERO;
+    if (!directory || db_get_external(&raw, directory, db) != 0)
+	return {};
+    Bytes record(raw.ext_buf, raw.ext_buf + raw.ext_nbytes);
+    bu_free_external(&raw);
+    return record;
+}
 
 static bool
 change_bootstrap(const std::string &path, size_t index, uint8_t replacement)
@@ -147,6 +161,39 @@ test_bad_global(Workspace &writer, const WorkspaceHead &base, Manifest model, st
 }
 
 static int
+ray_hit(struct application *UNUSED(ap), struct partition *UNUSED(parts), struct seg *UNUSED(segments))
+{
+    return 1;
+}
+
+static int
+ray_miss(struct application *UNUSED(ap))
+{
+    return 0;
+}
+
+static int
+test_native_geometry(struct db_i *db)
+{
+    CHECK(db_dirbuild(db) == 0 && db_version(db) == 5);
+    const auto *region = db_lookup(db, region_name, LOOKUP_QUIET);
+    CHECK(region && (region->d_flags & RT_DIR_REGION));
+
+    const std::unique_ptr<struct rt_i, decltype(&rt_i_destroy)> rtip(rt_i_create(db), rt_i_destroy);
+    CHECK(rtip && rt_gettree(rtip.get(), region_name) == 0);
+    rt_prep(rtip.get());
+    struct application ray;
+    RT_APPLICATION_INIT(&ray);
+    ray.a_rt_i = rtip.get();
+    ray.a_hit = ray_hit;
+    ray.a_miss = ray_miss;
+    VSET(ray.a_ray.r_pt, -5.0, 0.0, 0.0);
+    VSET(ray.a_ray.r_dir, 1.0, 0.0, 0.0);
+    CHECK(rt_shootray(&ray) == 1);
+    return 0;
+}
+
+static int
 test_writes(const char *path, const char *program, struct db_i *source, const EmbeddedPack &initial,
 	    const Pack &edited, struct bu_vls *message)
 {
@@ -161,12 +208,29 @@ test_writes(const char *path, const char *program, struct db_i *source, const Em
     CHECK(test_bad_global(*writer, base, model, message) == 0);
 
     // The portable DB5 writer and the workspace use identical artifacts.
+    Database pinned(Workspace::open_snapshot(path, actual, message), db_close);
+    CHECK(pinned && actual.revision == base.revision && test_native_geometry(pinned.get()) == 0);
+    const std::string original_title(pinned->dbi_title);
+    const Bytes original_global = read_record(pinned.get(), DB5_GLOBAL_OBJECT_NAME);
+    CHECK(!original_global.empty());
+    auto *region = db_lookup(pinned.get(), region_name, LOOKUP_QUIET);
+    CHECK(region && db_dirdelete(pinned.get(), region) < 0);
+    Edit native_edit(db_edit_begin(pinned.get(), "Change the title"), db_edit_abort);
+    CHECK(native_edit && db5_update_ident(db_edit_view(native_edit.get()), "Edited title", 1.0) == 0);
+    Db5HistoryDraft native_revision;
+    CHECK(append_db5_history(initial, native_edit.get(), 1, native_revision) == AppendStatus::Ready);
+    CHECK(native_revision.pack.selected_revision == edited.selected_revision);
     Revision edit;
     CHECK(read_revision(edited, edited.selected_revision, edit));
     CHECK(reader->commit(base, edit, edited.artifacts, actual, message) == WorkspaceWriteStatus::Error);
-    CHECK(writer->commit(base, edit, edited.artifacts, selected, message) == WorkspaceWriteStatus::Ok);
+    CHECK(writer->commit(base, edit, native_revision.pack.artifacts, selected, message) == WorkspaceWriteStatus::Ok);
     CHECK(selected.revision == edited.selected_revision && selected.model == edited.selected_model &&
 	selected.generation == base.generation + 1);
+    Database newer(Workspace::open_snapshot(path, actual, message), db_close);
+    CHECK(newer && actual.revision == selected.revision && BU_STR_EQUAL(newer->dbi_title, "Edited title") &&
+	original_title == pinned->dbi_title);
+    CHECK(read_record(pinned.get(), DB5_GLOBAL_OBJECT_NAME) == original_global);
+    CHECK(test_native_geometry(pinned.get()) == 0);
     CHECK(second->checkout(base, base.revision, actual, message) == WorkspaceWriteStatus::Stale);
     const std::string conflict = bu_vls_addr(message);
     CHECK(actual.revision == selected.revision && conflict.find(id_string(base.revision)) != std::string::npos &&
@@ -322,7 +386,9 @@ main(int argc, const char **argv)
     // Names longer than the typical LMDB key limit round-trip intact.
     const std::string name = std::string(700, 'a') + ".s";
     const point_t center = VINIT_ZERO;
-    CHECK(mk_sph(wdb_dbopen(writer.get(), RT_WDB_TYPE_DB_DEFAULT), name.c_str(), center, 2.0) == 0);
+    auto *wdb = wdb_dbopen(writer.get(), RT_WDB_TYPE_DB_DEFAULT);
+    CHECK(mk_sph(wdb, name.c_str(), center, 2.0) == 0);
+    CHECK(mk_region1(wdb, region_name, name.c_str(), nullptr, nullptr, nullptr) == 0);
     writer.reset();
 
     Database source_db(db_open(source.c_str(), DB_OPEN_READONLY), db_close);
@@ -339,11 +405,8 @@ main(int argc, const char **argv)
     edited.pack.references.emplace("before", initial.pack.selected_revision);
     Manifest expected;
     CHECK(read_manifest(edited.pack, edited.pack.selected_model, expected));
-    auto *directory = db_lookup(source_db.get(), name.c_str(), LOOKUP_QUIET);
-    struct bu_external raw = BU_EXTERNAL_INIT_ZERO;
-    CHECK(directory && db_get_external(&raw, directory, source_db.get()) == 0);
-    const Bytes record(raw.ext_buf, raw.ext_buf + raw.ext_nbytes);
-    bu_free_external(&raw);
+    const Bytes record = read_record(source_db.get(), name.c_str());
+    CHECK(!record.empty());
 
     struct bu_vls message = BU_VLS_INIT_ZERO;
     int result = test_workspace((fixture.path / "workspace").string(), edited.pack,

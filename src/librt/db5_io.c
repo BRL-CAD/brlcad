@@ -276,6 +276,29 @@ db5_take_field(struct bu_external *field, const unsigned char **cp, size_t *avai
     return 0;
 }
 
+static int
+db5_take_record_metadata(struct db5_raw_internal *rip, const unsigned char **cp, size_t *remaining)
+{
+    BU_EXTERNAL_INIT(&rip->name);
+    BU_EXTERNAL_INIT(&rip->body);
+    BU_EXTERNAL_INIT(&rip->attributes);
+    if (rip->h_name_present &&
+	(db5_take_field(&rip->name, cp, remaining, rip->h_name_width) < 0 ||
+	 !rip->name.ext_nbytes ||
+	 memchr(rip->name.ext_buf, '\0', rip->name.ext_nbytes) !=
+	 rip->name.ext_buf + rip->name.ext_nbytes - 1))
+	return -1;
+
+    if (rip->a_present) {
+	if (db5_take_field(&rip->attributes, cp, remaining, rip->a_width) < 0)
+	    return -1;
+#if defined(USE_BINARY_ATTRIBUTES)
+	rip->attributes.widcode = rip->a_width;
+#endif
+    }
+    return 0;
+}
+
 
 const unsigned char *
 db5_get_raw_internal_bounded(struct db5_raw_internal *rip, const unsigned char *ip, size_t available)
@@ -297,29 +320,41 @@ db5_get_raw_internal_bounded(struct db5_raw_internal *rip, const unsigned char *
 	return NULL;
     remaining = rip->object_length - payload_start - 1;
 
-    BU_EXTERNAL_INIT(&rip->name);
-    BU_EXTERNAL_INIT(&rip->body);
-    BU_EXTERNAL_INIT(&rip->attributes);
-    if (rip->h_name_present &&
-	(db5_take_field(&rip->name, &cp, &remaining, rip->h_name_width) < 0 ||
-	 !rip->name.ext_nbytes ||
-	 memchr(rip->name.ext_buf, '\0', rip->name.ext_nbytes) !=
-	 rip->name.ext_buf + rip->name.ext_nbytes - 1))
+    if (db5_take_record_metadata(rip, &cp, &remaining) < 0)
 	return NULL;
-
-    if (rip->a_present) {
-	if (db5_take_field(&rip->attributes, &cp, &remaining, rip->a_width) < 0)
-	    return NULL;
-#if defined(USE_BINARY_ATTRIBUTES)
-	rip->attributes.widcode = rip->a_width;
-#endif
-    }
-
     if (rip->b_present && db5_take_field(&rip->body, &cp, &remaining, rip->b_width) < 0)
 	return NULL;
 
     rip->buf = NULL;
     return ip + rip->object_length;
+}
+
+int
+db5_get_raw_internal_split(struct db5_raw_internal *rip, const unsigned char *prefix, size_t prefix_size,
+			   const unsigned char *suffix, size_t suffix_size)
+{
+    const size_t header_size = sizeof(struct db5_ondisk_header);
+    if (!prefix || prefix_size < header_size || !suffix || !suffix_size ||
+	suffix[suffix_size - 1] != DB5HDR_MAGIC2 || crack_disk_header(rip, prefix) < 0)
+	return -1;
+
+    const unsigned char *cp = prefix + header_size;
+    size_t remaining = prefix_size - header_size;
+    size_t chunks;
+    if (db5_take_length(&chunks, &cp, &remaining, rip->h_object_width) < 0 || chunks > SIZE_MAX / 8)
+	return -1;
+    rip->object_length = chunks * 8;
+    if (prefix_size >= rip->object_length || suffix_size >= rip->object_length - prefix_size)
+	return -1;
+
+    /* The body length ends the prefix. Its bytes are stored separately
+     * and can be fetched after using the directory metadata. */
+    if (db5_take_record_metadata(rip, &cp, &remaining) < 0 || !rip->b_present ||
+	db5_take_length(&rip->body.ext_nbytes, &cp, &remaining, rip->b_width) < 0 || remaining ||
+	rip->body.ext_nbytes != rip->object_length - prefix_size - suffix_size)
+	return -1;
+    rip->buf = NULL;
+    return 0;
 }
 
 

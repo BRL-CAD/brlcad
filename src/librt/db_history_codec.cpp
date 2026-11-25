@@ -176,9 +176,13 @@ struct SplitRecord {
     ByteView prefix;
     ByteView body;
     ByteView suffix;
-    struct bu_external attributes = BU_EXTERNAL_INIT_ZERO;
-    unsigned char major_type = 0;
 };
+
+std::string_view
+record_name(const struct db5_raw_internal &raw)
+{
+    return {reinterpret_cast<const char *>(raw.name.ext_buf), raw.name.ext_nbytes - 1};
+}
 
 bool
 split_record(ByteView record, SplitRecord &split)
@@ -190,9 +194,7 @@ split_record(ByteView record, SplitRecord &split)
 	!raw.h_name_present || raw.name.ext_nbytes <= 1)
 	return false;
 
-    split.name = {reinterpret_cast<const char *>(raw.name.ext_buf), raw.name.ext_nbytes - 1};
-    split.major_type = raw.major_type;
-    split.attributes = raw.attributes;
+    split.name = record_name(raw);
     split.prefix = record;
     if (raw.body.ext_nbytes) {
 	split.prefix.size = static_cast<size_t>(raw.body.ext_buf - record.data);
@@ -204,16 +206,16 @@ split_record(ByteView record, SplitRecord &split)
 }
 
 bool
-usable_global(const SplitRecord &split)
+usable_global(const struct db5_raw_internal &raw, std::string_view name)
 {
-    if (split.name != DB5_GLOBAL_OBJECT_NAME)
+    if (name != DB5_GLOBAL_OBJECT_NAME)
 	return true;
-    if (split.major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY)
+    if (raw.major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY)
 	return false;
 
     struct bu_attribute_value_set attributes;
     bu_avs_init_empty(&attributes);
-    const bool valid = db5_import_attributes(&attributes, &split.attributes) >= 0;
+    const bool valid = db5_import_attributes(&attributes, &raw.attributes) >= 0;
     bu_avs_free(&attributes);
     return valid;
 }
@@ -442,32 +444,33 @@ decode_object(ByteView payload, Object &result)
     return true;
 }
 
-static bool
-unpack_record(const Object &object, ByteView verified_body, Bytes &record, SplitRecord &split)
+bool
+record_metadata(const Object &object, struct db5_raw_internal &raw)
 {
-    const size_t limit = record.max_size();
-    const bool has_body = object.body_id != absent;
-    if (has_body != (verified_body.size > 0) || object.prefix.size > limit ||
-	verified_body.size > limit - object.prefix.size ||
-	object.suffix.size > limit - object.prefix.size - verified_body.size)
+    if (object.body_id == absent) {
+	if (object.suffix.size || !db5_get_raw_internal_bounded(&raw, object.prefix.data, object.prefix.size) ||
+	    raw.object_length != object.prefix.size || raw.body.ext_nbytes)
+	    return false;
+    } else if (db5_get_raw_internal_split(&raw, object.prefix.data, object.prefix.size,
+	object.suffix.data, object.suffix.size) < 0) {
 	return false;
-
-    record.reserve(object.prefix.size + verified_body.size + object.suffix.size);
-    append(record, object.prefix);
-    append(record, verified_body);
-    append(record, object.suffix);
-    return split_record(record, split) && split.prefix.size == object.prefix.size &&
-	split.body.size == verified_body.size && split.suffix.size == object.suffix.size;
+    }
+    return raw.h_dli == DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT && raw.h_name_present && raw.name.ext_nbytes > 1;
 }
 
 bool
 materialize_record(const Object &object, ByteView verified_body, Bytes &result)
 {
     Bytes record;
-    SplitRecord split;
-    if (!unpack_record(object, verified_body, record, split))
+    struct db5_raw_internal raw;
+    if (!record_metadata(object, raw) || verified_body.size != raw.body.ext_nbytes ||
+	raw.object_length > record.max_size())
 	return false;
 
+    record.reserve(raw.object_length);
+    append(record, object.prefix);
+    append(record, verified_body);
+    append(record, object.suffix);
     result = std::move(record);
     return true;
 }
@@ -475,9 +478,9 @@ materialize_record(const Object &object, ByteView verified_body, Bytes &result)
 bool
 valid_named_record(const Object &object, ByteView verified_body, std::string_view name)
 {
-    Bytes record;
-    SplitRecord split;
-    return unpack_record(object, verified_body, record, split) && split.name == name && usable_global(split);
+    struct db5_raw_internal raw;
+    return record_metadata(object, raw) && verified_body.size == raw.body.ext_nbytes &&
+	record_name(raw) == name && usable_global(raw, name);
 }
 
 bool
@@ -893,11 +896,10 @@ verify_pack(const Pack &pack, struct bu_vls *message)
 		    return verify_failure(message, "An archived object is missing its body");
 		body = found->second;
 	    }
-	    Bytes record;
-	    SplitRecord split;
-	    if (!unpack_record(object, body, record, split) || !usable_global(split))
+	    struct db5_raw_internal raw;
+	    if (!record_metadata(object, raw) || body.size != raw.body.ext_nbytes || !usable_global(raw, record_name(raw)))
 		return verify_failure(message, "An archived object does not reconstruct a valid DB5 record");
-	    names.emplace(key.second, split.name);
+	    names.emplace(key.second, record_name(raw));
 	}
 	if (key.first == Kind::Revision) {
 	    auto &node = revisions[key.second];

@@ -614,6 +614,7 @@ db_i_internal_destroy(struct db_i_internal *i)
 	bv_mesh_lod_context_destroy(i->mesh_c);
 
     db_edit_free_view(i);
+    db_workspace_free_view(i);
 
     /* Free any directory blocks */
     for (size_t ii = 0; ii < BU_PTBL_LEN(&i->dbi_directory_blocks); ii++)

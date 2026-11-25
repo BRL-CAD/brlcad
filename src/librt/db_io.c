@@ -265,6 +265,8 @@ db_read_external_bytes(const struct db_i *dbip, const struct directory *dp, void
     const int result = db_edit_read_base(dbip, dp, buffer, count, &inherited);
     if (inherited)
 	return result;
+    if (dbip->i->dbi_workspace)
+	return db_workspace_read(dbip, dp, buffer, count);
     if (dp->d_flags & RT_DIR_INMEM) {
 	if (!dp->d_un.ptr)
 	    return -1;

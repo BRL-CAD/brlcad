@@ -437,10 +437,6 @@ db_dirbuild(struct db_i *dbip)
 
     RT_CK_DBI(dbip);
 
-    if (!dbip->i->dbi_fp) {
-	return -1;
-    }
-
     /* If the directory has already been built on a prior call, skip rescanning.
      * Note: we use a dedicated flag rather than dbi_nrec because db_scan() can
      * be called internally by rt_db_flip_endian() during db_open() for v4
@@ -448,6 +444,8 @@ db_dirbuild(struct db_i *dbip)
      * effect even though the directory has not been populated yet. */
     if (dbip->i->dbi_dir_built)
 	return 0;
+    if (!dbip->i->dbi_fp)
+	return -1;
 
     /* First, determine what version database this is */
     version = db_version(dbip);

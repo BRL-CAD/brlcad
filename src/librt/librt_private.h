@@ -103,6 +103,7 @@ struct db_i_internal {
     int dbi_use_comb_instance_ids;        /**< @brief flag for comb instance tracking */
     struct db_edit *dbi_edit;             /**< @brief staged DB5 view and retained base */
     int dbi_edit_guard;                  /**< @brief refuse direct writes to a live session database */
+    struct db_workspace_view *dbi_workspace; /**< @brief pinned LMDB revision and directory */
 
     struct directory *dbi_directory_hd;         /**< @brief directory entry freelist */
     struct bu_ptbl   dbi_directory_blocks;      /**< @brief Table of malloc'ed blocks */
@@ -115,6 +116,10 @@ int db5_fwrite_header(FILE *fp);
 int db5_fwrite_hidden_u8(FILE *fp, const char *name, size_t body_size,
 			 int (*write_body)(FILE *, void *), void *data);
 int db5_load_global(struct db_i *dbip, const struct directory *dp);
+int db5_get_raw_internal_split(struct db5_raw_internal *raw, const unsigned char *prefix,
+			       size_t prefix_size, const unsigned char *suffix, size_t suffix_size);
+void db_workspace_free_view(struct db_i_internal *i);
+int db_workspace_read(const struct db_i *dbip, const struct directory *dp, void *buffer, size_t count);
 void db_edit_free_view(struct db_i_internal *i);
 void db_edit_record_failure(struct db_i *dbip);
 void db_edit_record_change(struct db_i *dbip, const char *name);

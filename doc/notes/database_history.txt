@@ -397,6 +397,12 @@ after the LMDB commit. Fresh processes reopened the old and new
 states, respectively. An injected ENOSPC at the commit boundary
 preserved the old state, and a later write succeeded.
 
+Building a native librt directory from the M1917 workspace took
+231 milliseconds. A standard database record read reconstructed
+the largest BREP byte for byte in 171 milliseconds. A separate
+library test traversed and ray traced geometry from a pinned
+workspace view while another handle published a new revision.
+
 Implementation starting points in the source tree
 -------------------------------------------------
 

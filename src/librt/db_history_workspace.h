@@ -24,6 +24,8 @@
 
 #include "db_history_codec.h"
 
+struct db_i;
+
 namespace db_history {
 
 struct WorkspaceHead {
@@ -44,6 +46,9 @@ public:
     // history and selected directory together in a durable transaction.
     static RT_EXPORT bool create(const char *path, const Pack &pack, struct bu_vls *message);
     static RT_EXPORT std::unique_ptr<Workspace> open(const char *path, struct bu_vls *message, bool writable = false);
+    // Open an ordinary librt database view pinned to one workspace head.
+    // The view owns its workspace reader until db_close.
+    static RT_EXPORT struct db_i *open_snapshot(const char *path, WorkspaceHead &head, struct bu_vls *message);
     RT_EXPORT ~Workspace();
     Workspace(const Workspace &) = delete;
     Workspace &operator=(const Workspace &) = delete;
@@ -55,6 +60,7 @@ public:
     RT_EXPORT bool lookup(std::string_view name, Id &id, struct bu_vls *message) const;
     RT_EXPORT bool fetch_artifact(const ArtifactKey &key, Bytes &payload, struct bu_vls *message) const;
     RT_EXPORT bool fetch_record(const Id &id, Bytes &record, struct bu_vls *message) const;
+    bool read_record(const Id &id, void *record, size_t size) const;
 
     // The caller keeps its staged edit on failure. On success or a stale
     // base, actual receives the authoritative head from the transaction.

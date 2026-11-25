@@ -31,9 +31,16 @@
 #include "lmdb.h"
 
 #include "bu/file.h"
+#include "bu/str.h"
 #include "bu/vls.h"
 #include "../libbu/picohash.h"
 #include "db_history_workspace.h"
+#include "librt_private.h"
+
+struct db_workspace_view {
+    std::unique_ptr<db_history::Workspace> workspace;
+    db_history::Manifest model;
+};
 
 namespace db_history {
 namespace {
@@ -283,6 +290,21 @@ get_artifact(MDB_txn *txn, MDB_dbi table, const ArtifactKey &key, ByteView &payl
 {
     return key.second != absent && get(txn, table, bytes(artifact_key(key)), payload) &&
 	payload.size && identify(key.first, payload) == key.second;
+}
+
+bool
+load_object(MDB_txn *txn, const Tables &tables, const Id &id, Object &object)
+{
+    ByteView payload;
+    return get_artifact(txn, tables.artifacts, {Kind::Object, id}, payload) &&
+	decode_object(payload, object);
+}
+
+bool
+load_record(MDB_txn *txn, const Tables &tables, const Id &id, Object &object, ByteView &body)
+{
+    return load_object(txn, tables, id, object) &&
+	(object.body_id == absent || get_artifact(txn, tables.artifacts, {Kind::Body, object.body_id}, body));
 }
 
 bool
@@ -715,6 +737,57 @@ Workspace::open(const char *path, struct bu_vls *message, bool writable)
     }
 }
 
+struct db_i *
+Workspace::open_snapshot(const char *path, WorkspaceHead &head, struct bu_vls *message)
+{
+    auto workspace = open(path, message);
+    if (!workspace)
+	return nullptr;
+
+    const auto location = workspace->store->path.string();
+    const auto parent = workspace->store->path.parent_path().string();
+    auto state = std::make_unique<db_workspace_view>();
+    std::unique_ptr<struct db_i, decltype(&db_close)> db(db_open_inmem(), db_close);
+    WorkspaceHead selected;
+    const bool built = workspace->store->read([&](MDB_txn *txn, const Tables &tables) {
+	if (!read_head(txn, tables, selected))
+	    return report(message, "The workspace head is invalid");
+	if (!read_model(txn, tables, selected.model, state->model, message))
+	    return false;
+	// Workspace records have no DB5 file offsets. Reads use the
+	// immutable object IDs pinned by the view's directory.
+	constexpr b_off_t stored_record = 0;
+	for (const auto &entry : state->model) {
+	    Object object;
+	    struct db5_raw_internal raw;
+	    if (!load_object(txn, tables, entry.second, object) || !record_metadata(object, raw) ||
+		entry.first != reinterpret_cast<const char *>(raw.name.ext_buf) ||
+		!db5_diradd(db.get(), &raw, stored_record, nullptr))
+		return report(message, "Could not build the workspace database directory");
+	}
+	return true;
+    }, message);
+    if (!built)
+	return nullptr;
+
+    auto *dbip = db.get();
+    dbip->dbi_filename = bu_strdup(location.c_str());
+    const char *paths[] = {".", parent.c_str()};
+    dbip->dbi_filepath = bu_argv_dup(sizeof(paths) / sizeof(paths[0]), paths);
+    dbip->dbi_read_only = 1;
+    dbip->i->dbi_edit_guard = 1;
+    dbip->i->dbi_dir_built = 1;
+    dbip->i->dbi_nrec = state->model.size();
+    state->workspace = std::move(workspace);
+    dbip->i->dbi_workspace = state.release();
+    if (db5_load_global(dbip, db_lookup(dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET)) != 0) {
+	report(message, "The workspace database attributes could not be loaded");
+	return nullptr;
+    }
+    head = selected;
+    return db.release();
+}
+
 bool
 Workspace::read_directory(WorkspaceHead &head, Manifest &model, struct bu_vls *message) const
 {
@@ -757,16 +830,34 @@ bool
 Workspace::fetch_record(const Id &id, Bytes &record, struct bu_vls *message) const
 {
     return store->read([&](MDB_txn *txn, const Tables &tables) {
-	ByteView descriptor, body;
+	ByteView body;
 	Object object;
-	const auto artifacts = tables.artifacts;
-	if (!get_artifact(txn, artifacts, {Kind::Object, id}, descriptor) ||
-	    !decode_object(descriptor, object) ||
-	    (object.body_id != absent && !get_artifact(txn, artifacts, {Kind::Body, object.body_id}, body)) ||
+	if (!load_record(txn, tables, id, object, body) ||
 	    !materialize_record(object, body, record))
 	    return report(message, "The workspace object is missing or corrupt");
 	return true;
     }, message);
+}
+
+bool
+Workspace::read_record(const Id &id, void *record, size_t size) const
+{
+    return store->read([&](MDB_txn *txn, const Tables &tables) {
+	ByteView body;
+	Object object;
+	struct db5_raw_internal raw;
+	if (!load_record(txn, tables, id, object, body) || !record_metadata(object, raw) ||
+	    body.size != raw.body.ext_nbytes || size != raw.object_length)
+	    return false;
+	auto *output = static_cast<uint8_t *>(record);
+	for (const auto &part : {object.prefix, body, object.suffix}) {
+	    if (!part.size)
+		continue;
+	    std::memcpy(output, part.data, part.size);
+	    output += part.size;
+	}
+	return true;
+    }, nullptr);
 }
 
 WorkspaceWriteStatus
@@ -849,6 +940,21 @@ Workspace::checkout(const WorkspaceHead &expected, const Id &target, WorkspaceHe
 }
 
 } // namespace db_history
+
+void
+db_workspace_free_view(struct db_i_internal *i)
+{
+    delete i->dbi_workspace;
+    i->dbi_workspace = nullptr;
+}
+
+int
+db_workspace_read(const struct db_i *dbip, const struct directory *dp, void *buffer, size_t count)
+{
+    const auto &view = *dbip->i->dbi_workspace;
+    const auto object = view.model.find(dp->d_namep);
+    return object != view.model.end() && view.workspace->read_record(object->second, buffer, count) ? 0 : -1;
+}
 
 // Local Variables:
 // tab-width: 8
