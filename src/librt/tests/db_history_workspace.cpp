@@ -273,6 +273,16 @@ test_writes(const char *path, const char *program, struct db_i *source, const Em
     CHECK(reader->read_directory(actual, model, message) && actual.revision == selected.revision);
     CHECK(read_record(pinned.get(), DB5_GLOBAL_OBJECT_NAME) == original_global);
     CHECK(test_native_geometry(pinned.get()) == 0);
+    const auto export_path = std::string(path) + "-pinned.g";
+    const auto exported = reader->export_snapshot(pinned.get(), export_path.c_str(), false, message);
+    if (exported == DB5_SAVE_OK) {
+	Database plain(db_open(export_path.c_str(), DB_OPEN_READONLY), db_close);
+	CHECK(plain && db_dirbuild(plain.get()) == 0 && inspect_db5_history(plain.get()) == EmbeddedStatus::Missing &&
+	    read_record(plain.get(), DB5_GLOBAL_OBJECT_NAME) == original_global &&
+	    read_record(plain.get(), region_name) == read_record(pinned.get(), region_name));
+    } else {
+	CHECK(BU_STR_EQUAL(bu_vls_addr(message), "Atomic DB5 export is unavailable on this platform"));
+    }
     CHECK(second->checkout(base, base.revision, actual, message) == WorkspaceWriteStatus::Stale);
     const std::string conflict = bu_vls_addr(message);
     CHECK(actual.revision == selected.revision && conflict.find(id_string(base.revision)) != std::string::npos &&

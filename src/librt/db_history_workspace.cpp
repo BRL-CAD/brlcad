@@ -1430,15 +1430,18 @@ Workspace::export_snapshot(const struct db_i *snapshot, const char *destination,
 	report(message, "The export requires a pinned view of this workspace");
 	return DB5_SAVE_ERROR;
     }
+    // A pinned view protects its objects across short record reads. Do
+    // not retain LMDB pages while writing and syncing a plain snapshot.
+    if (!with_history)
+	return export_db5_snapshot(snapshot, destination, nullptr, message);
+
     auto result = DB5_SAVE_ERROR;
     const bool read = store->read([&](MDB_txn *txn, const Tables &tables) {
 	WorkspaceArchive archive;
-	if (with_history) {
-	    if (!load_archive(txn, tables, state->head, store->sparse_manifests(), archive))
-		return report(message, "The workspace archive is invalid");
-	    if (!verify_pack(archive.pack, message))
-		return false;
-	}
+	if (!load_archive(txn, tables, state->head, store->sparse_manifests(), archive))
+	    return report(message, "The workspace archive is invalid");
+	if (!verify_pack(archive.pack, message))
+	    return false;
 	const auto reader = [&](const struct directory *dp, struct bu_external *record) {
 	    const auto object = state->model.find(dp->d_namep);
 	    if (object == state->model.end() || !dp->d_len)
@@ -1450,7 +1453,7 @@ Workspace::export_snapshot(const struct db_i *snapshot, const char *destination,
 	    bu_free_external(record);
 	    return false;
 	};
-	result = export_db5_snapshot(snapshot, destination, with_history ? &archive.pack : nullptr, message, reader);
+	result = export_db5_snapshot(snapshot, destination, &archive.pack, message, reader);
 	return true;
     }, message);
     return read ? result : DB5_SAVE_ERROR;

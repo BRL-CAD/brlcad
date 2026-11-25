@@ -810,6 +810,13 @@ On an M1917 copy with six title edits, checkpoint and prefix selection,
 diff, checkout and explicit Redo returned the expected revisions.
 The resulting workspace passed full verification.
 
+While a plain DB5 export streamed a copy of M1917, a second process
+committed a title change. The exported 1.22 GB DB5 file matched the
+earlier export byte for byte and reopened at the original title.
+The workspace retained the new title and recorded the exported
+revision. A trace found no LMDB read transaction held during the
+paused record write or the file flush.
+
 Implementation starting points in the source tree
 -------------------------------------------------
 
