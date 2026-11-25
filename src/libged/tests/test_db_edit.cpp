@@ -20,9 +20,11 @@
 #include "common.h"
 
 #include <filesystem>
+#include <map>
 #include <memory>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include "bu/app.h"
 #include "bu/file.h"
@@ -30,6 +32,7 @@
 #include "ged/edit.h"
 #include "ged/event.h"
 #include "ged/history.h"
+#include "raytrace.h"
 #include "rt/geom.h"
 #include "../../libbu/json.hpp"
 
@@ -501,6 +504,84 @@ test_session_promotion()
 }
 
 static int
+test_backend_parity(const std::filesystem::path &directory)
+{
+    using Records = std::map<std::string, std::vector<uint8_t>>;
+    Records plain_records;
+    for (const char *mode : {"plain", "session", "embedded", "workspace"}) {
+	const auto path = (directory / (std::string(mode) + "-parity.g")).string();
+	auto *initial = db_create(path.c_str(), 5);
+	CHECK(initial);
+	db_close(initial);
+	const std::unique_ptr<struct ged, decltype(&ged_close)> owner(ged_open("db", path.c_str(), 1), ged_close);
+	auto *gedp = owner.get();
+	CHECK(gedp);
+	if (BU_STR_EQUAL(mode, "workspace")) {
+	    const auto workspace = (directory / "parity-workspace").string();
+	    const char *create[] = {"db", "history", "workspace", workspace.c_str(), nullptr};
+	    CHECK(run(gedp, create) == BRLCAD_OK);
+	} else if (!BU_STR_EQUAL(mode, "plain")) {
+	    const char *enable[] = {"db", "history", "enable", mode, nullptr};
+	    const int enabled = run(gedp, enable);
+	    if (enabled != BRLCAD_OK && contains_result(gedp, "Atomic DB5 replacement is unavailable"))
+		continue;
+	    CHECK(enabled == BRLCAD_OK);
+	}
+
+	const char *make_body[] = {"make", "body.s", "sph", nullptr};
+	const char *make_filler[] = {"make", "filler.s", "sph", nullptr};
+	const char *combine[] = {"comb", "assembly.c", "u", "body.s", "u", "filler.s", nullptr};
+	const char *group[] = {"group", "model.c", "assembly.c", nullptr};
+	const char *member_remove[] = {"rm", "assembly.c/filler.s", nullptr};
+	const char *object_remove[] = {"rm", "filler.s", nullptr};
+	const char *rename[] = {"mvall", "body.s", "renamed.s", nullptr};
+	const char *attribute[] = {"attr", "set", "renamed.s", "rgb", "15/45/95", nullptr};
+	const char *region[] = {"comb", "assembly.c", "region", nullptr};
+	const char *title[] = {"title", "An equivalent model", nullptr};
+	CHECK(run(gedp, make_body) == BRLCAD_OK && run(gedp, make_filler) == BRLCAD_OK);
+	CHECK(run(gedp, combine) == BRLCAD_OK && run(gedp, group) == BRLCAD_OK);
+	CHECK(run(gedp, member_remove) == BRLCAD_OK && run(gedp, object_remove) == BRLCAD_OK);
+	CHECK(run(gedp, rename) == BRLCAD_OK && run(gedp, attribute) == BRLCAD_OK &&
+	    run(gedp, region) == BRLCAD_OK && run(gedp, title) == BRLCAD_OK);
+	if (!BU_STR_EQUAL(mode, "plain")) {
+	    const auto selected = selected_id(gedp);
+	    const char *invalid[] = {"comb", "partial.c", "u", "renamed.s", "u", "missing.s", nullptr};
+	    CHECK(run(gedp, invalid) == BRLCAD_ERROR && selected_id(gedp) == selected &&
+		!db_lookup(gedp->dbip, "partial.c", LOOKUP_QUIET));
+	}
+
+	const std::unique_ptr<struct rt_i, decltype(&rt_i_destroy)> rtip(rt_i_create(gedp->dbip), rt_i_destroy);
+	CHECK(rtip && rt_gettree(rtip.get(), "model.c") == 0);
+	rt_prep(rtip.get());
+	struct application ray;
+	RT_APPLICATION_INIT(&ray);
+	ray.a_rt_i = rtip.get();
+	ray.a_hit = [](struct application *, struct partition *, struct seg *) { return 1; };
+	ray.a_miss = [](struct application *) { return 0; };
+	VSET(ray.a_ray.r_pt, rtip->mdl_min[X] - 1.0, 0.0, 0.0);
+	VSET(ray.a_ray.r_dir, 1.0, 0.0, 0.0);
+	CHECK(rt_shootray(&ray) == 1);
+
+	const auto *archive = db_lookup(gedp->dbip, "_BRLCAD_HISTORY", LOOKUP_QUIET);
+	const struct directory *dp;
+	Records records;
+	FOR_ALL_DIRECTORY_START(dp, gedp->dbip) {
+	    if (dp == archive)
+		continue;
+	    struct bu_external raw = BU_EXTERNAL_INIT_ZERO;
+	    CHECK(db_get_external(&raw, dp, gedp->dbip) == 0);
+	    records.emplace(dp->d_namep, std::vector<uint8_t>(raw.ext_buf, raw.ext_buf + raw.ext_nbytes));
+	    bu_free_external(&raw);
+	} FOR_ALL_DIRECTORY_END;
+	if (BU_STR_EQUAL(mode, "plain"))
+	    plain_records = std::move(records);
+	else
+	    CHECK(records == plain_records);
+    }
+    return 0;
+}
+
+static int
 test_workspace_history()
 {
     char path[MAXPATHLEN] = {};
@@ -515,6 +596,7 @@ test_workspace_history()
 	}
     } fixture{path};
     CHECK(std::filesystem::create_directory(fixture.path));
+    CHECK(test_backend_parity(fixture.path) == 0);
     const auto source = (fixture.path / "source.g").string();
     const auto workspace = (fixture.path / "workspace").string();
     using Db = std::unique_ptr<struct db_i, decltype(&db_close)>;

@@ -301,10 +301,8 @@ comb_flatten(struct ged *gedp, struct directory *dp)
     for (BU_PTBL_FOR(dp_curr, (struct directory **), &combs)) {
 	if (bu_ptbl_locate(&combs_outside_of_tree, (const long *)(*dp_curr)) == -1 && ((*dp_curr) != dp)) {
 	    /* This comb is only part of the flattened tree - remove */
-	    bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s", (*dp_curr)->d_namep);
-	    if (db_delete(gedp->dbip, (*dp_curr)) != 0 || db_dirdelete(gedp->dbip, (*dp_curr)) == 0) {
-		bu_vls_trunc(gedp->ged_result_str, 0);
-	    } else {
+	    if (db_delete(gedp->dbip, (*dp_curr)) != 0 || db_dirdelete(gedp->dbip, (*dp_curr)) != 0) {
+		bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s", (*dp_curr)->d_namep);
 		db_search_free(&combs);
 		db_search_free(&combs_outside_of_tree);
 		return BRLCAD_ERROR;
@@ -633,11 +631,12 @@ comb_remove_members(struct ged *gedp, struct directory *dp, int argc, const char
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: Failure deleting %s/%s\n", dp->d_namep, argv[i]);
 	    ret = BRLCAD_ERROR;
 	} else {
-	    struct bu_vls path = BU_VLS_INIT_ZERO;
-
-	    bu_vls_printf(&path, "%s/%s", dp->d_namep, argv[i]);
-	    _dl_eraseAllPathsFromDisplay(gedp, bu_vls_addr(&path), 0);
-	    bu_vls_free(&path);
+	    if (!ged_db_history_staged(gedp)) {
+		struct bu_vls path = BU_VLS_INIT_ZERO;
+		bu_vls_printf(&path, "%s/%s", dp->d_namep, argv[i]);
+		_dl_eraseAllPathsFromDisplay(gedp, bu_vls_addr(&path), 0);
+		bu_vls_free(&path);
+	    }
 	    bu_vls_printf(gedp->ged_result_str, "deleted %s/%s\n", dp->d_namep, argv[i]);
 	}
     }
@@ -911,12 +910,16 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 	    oper = db_str2op(argv[i]);
 	    if (oper == DB_OP_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "Unknown operator '%c' (0x%x) encountered, invalid syntax.\n", argv[i][0], argv[i][0]);
+		if (ged_db_history_staged(gedp))
+		    return BRLCAD_ERROR;
 		continue;
 	    }
 
 	    /* object name comes after op */
 	    if ((dp = db_lookup(gedp->dbip,  argv[i+1], LOOKUP_NOISY)) == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "Object '%s does not exist.\n", argv[i+1]);
+		if (ged_db_history_staged(gedp))
+		    return BRLCAD_ERROR;
 		continue;
 	    }
 

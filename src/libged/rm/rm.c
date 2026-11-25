@@ -450,7 +450,8 @@ _rm_object_has_children(struct db_i *dbip, struct rm_ref_graph *graph, struct di
 static int
 _rm_delete_object(struct ged *gedp, struct directory *dp)
 {
-    _dl_eraseAllNamesFromDisplay(gedp, dp->d_namep, 0);
+    if (!ged_db_history_staged(gedp))
+	_dl_eraseAllNamesFromDisplay(gedp, dp->d_namep, 0);
 
     if (db_delete(gedp->dbip, dp) != 0 || db_dirdelete(gedp->dbip, dp) != 0) {
 	bu_vls_printf(gedp->ged_result_str,
@@ -865,7 +866,7 @@ _rm_remove_from_comb(struct ged *gedp, struct directory *parent_dp,
 	return BRLCAD_ERROR;
     }
 
-    if (path_expr)
+    if (path_expr && !ged_db_history_staged(gedp))
 	_dl_eraseAllPathsFromDisplay(gedp, path_expr, 0);
     bu_vls_free(&child_name);
 
