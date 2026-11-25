@@ -20,6 +20,7 @@
 
 #include "common.h"
 
+#include <limits.h>
 #include <math.h>
 #include <string.h>
 
@@ -40,7 +41,8 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 
     BU_CK_EXTERNAL(ap);
 
-    BU_ASSERT(ap->ext_nbytes >= 4);
+    if (!ap->ext_buf || ap->ext_nbytes < 4)
+	return -1;
 
     /* First pass -- count number of attributes */
     cp = (const char *)ap->ext_buf;
@@ -49,15 +51,19 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
     /* An empty "name" string (a pair of nul bytes) indicates end of
      * attribute list (for the original ASCII-valued attributes).
      */
-    while (*cp != '\0') {
-	if (cp >= ep) {
+    while (cp < ep && *cp != '\0') {
+	const char *name_end = (const char *)memchr(cp, '\0', ep - cp);
+	const char *value_end = name_end ?
+	    (const char *)memchr(name_end + 1, '\0', ep - (name_end + 1)) : NULL;
+	if (!value_end || count == INT_MAX) {
 	    bu_log("db5_import_attributes() ran off end of buffer, database is probably corrupted\n");
 	    return -1;
 	}
-	cp += strlen(cp)+1;	/* value */
-	cp += strlen(cp)+1;	/* next name */
+	cp = value_end + 1;
 	count++;
     }
+    if (cp >= ep)
+	return -1;
 #if defined(USE_BINARY_ATTRIBUTES)
     /* Do we have binary attributes?  If so, they are after the last
      * ASCII attribute.
@@ -66,10 +72,18 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 	/* Count binary attrs. */
 	/* format is: <ascii name> NULL <binary length [network order, must be decoded]> <bytes...> */
 	size_t abinlen;
+	if (ep - cp <= 2 || ap->widcode > DB5HDR_WIDTHCODE_64BIT)
+	    return -1;
+	const size_t width = (size_t)1 << ap->widcode;
+	if (width > sizeof(size_t))
+	    return -1;
 	cp += 2; /* We are now at the first byte of the first binary attribute... */
 	while (cp != ep) {
+	    const char *name_end = (const char *)memchr(cp, '\0', ep - cp);
+	    if (!name_end || (size_t)(ep - (name_end + 1)) < width || count == INT_MAX - bcount)
+		return -1;
 	    ++bcount;
-	    cp += strlen(cp)+1;	/* name */
+	    cp = name_end + 1;
 	    /* The next value is an unsigned integer of variable width
 	     * (a_width: DB5HDR_WIDTHCODE_x) so how do we get its
 	     * width?  We now have a new member of struct bu_external:
@@ -79,6 +93,8 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 	     */
 	    cp += db5_decode_length(&abinlen, (const unsigned char*)cp, ap->widcode);
 	    /* account for the abinlen bytes */
+	    if (abinlen > (size_t)(ep - cp))
+		return -1;
 	    cp += abinlen;
 	}
 	/* now cp should be at the end */
@@ -91,7 +107,8 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
     BU_ASSERT(cp == ep);
 #else
     /* Ensure we're exactly at the end */
-    BU_ASSERT(cp+1 == ep);
+    if (cp + 1 != ep)
+	return -1;
 #endif
 
     /* not really needed for AVS_ADD since bu_avs_add will
@@ -469,6 +486,20 @@ int db5_update_ident(struct db_i *dbip, const char *title, double local2mm)
 
 
 int
+db5_fwrite_header(FILE *fp)
+{
+    struct bu_external out;
+    db5_export_object3(&out, DB5HDR_HFLAGS_DLI_HEADER_OBJECT,
+		       NULL, 0, NULL, NULL,
+		       DB5_MAJORTYPE_RESERVED, 0,
+		       DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
+    const int result = bu_fwrite_external(fp, &out);
+    bu_free_external(&out);
+    return result;
+}
+
+
+int
 db5_fwrite_ident(FILE *fp, const char *title, double local2mm)
 {
     struct bu_attribute_value_set avs;
@@ -483,17 +514,8 @@ db5_fwrite_ident(FILE *fp, const char *title, double local2mm)
 	return -1;
     }
 
-    /* First, write the header object */
-    db5_export_object3(&out, DB5HDR_HFLAGS_DLI_HEADER_OBJECT,
-		       NULL, 0, NULL, NULL,
-		       DB5_MAJORTYPE_RESERVED, 0,
-		       DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
-
-    result = bu_fwrite_external(fp, &out);
-    bu_free_external(&out);
-    if (result < 0) {
+    if (db5_fwrite_header(fp) < 0)
 	return -1;
-    }
 
     /* Second, create the attribute-only object */
     bu_vls_printf(&units, "%.25e", local2mm);

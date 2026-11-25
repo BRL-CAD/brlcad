@@ -110,6 +110,8 @@ struct db_i_internal {
 struct db_i_internal * db_i_internal_create(void);
 void db_i_internal_destroy(struct db_i_internal *i);
 void db_notify_changed(struct db_i *dbip, struct directory *dp, int mode);
+int db5_fwrite_header(FILE *fp);
+int db5_load_global(struct db_i *dbip, const struct directory *dp);
 void db_edit_free_view(struct db_i_internal *i);
 void db_edit_record_failure(struct db_i *dbip);
 void db_edit_record_change(struct db_i *dbip, const char *name);

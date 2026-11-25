@@ -588,6 +588,15 @@ typedef int (*db_edit_visit_t)(const char *name, const struct bu_external *befor
 RT_EXPORT extern int db_edit_visit(struct db_edit *edit, db_edit_visit_t visit, void *data);
 
 /**
+ * Apply one recorded change to the private view. NULL denotes absence.
+ * The current bytes must match expected. The edit cannot be committed
+ * after a mismatch or invalid replacement record.
+ */
+RT_EXPORT extern int db_edit_apply(struct db_edit *edit, const char *name,
+				  const struct bu_external *expected,
+				  const struct bu_external *replacement);
+
+/**
  * On success consume the edit and return the new read-only database view.
  * The caller owns one reference and releases it with db_close. The original
  * base and its readers remain valid. Failure leaves the edit available for
@@ -597,6 +606,40 @@ RT_EXPORT extern struct db_i *db_edit_commit(struct db_edit *edit);
 
 /** Discard staged writes and consume the edit. Accepts NULL. */
 RT_EXPORT extern void db_edit_abort(struct db_edit *edit);
+
+struct db5_save;
+
+/** Result of attempting to replace a DB5 file with a complete snapshot. */
+enum db5_save_result {
+    DB5_SAVE_ERROR = -1,        /**< The destination was never replaced. */
+    DB5_SAVE_STALE = -2,        /**< The destination changed since begin. */
+    DB5_SAVE_OK = 0,            /**< The new file is installed and synchronized. */
+    DB5_SAVE_SYNC_FAILED = 1   /**< Installed, but directory synchronization failed. */
+};
+
+/**
+ * Capture the file identity and change timestamps for a built DB5 database
+ * opened with DB_OPEN_READWRITE. Use this before staging the edits. The base
+ * handle and the file it refers to must remain readable throughout the edit.
+ * An optional message receives the reason for failure.
+ */
+RT_EXPORT extern struct db5_save *
+db5_save_begin(const struct db_i *base, struct bu_vls *message);
+
+/**
+ * Stream a complete snapshot into a sibling temporary file, validate it,
+ * and atomically replace the captured file. A stale destination is left
+ * alone. When replacement succeeds, @p replacement receives an owned,
+ * open database handle on the new file, including when directory sync
+ * fails. Old readers retain their file handles and directory entries.
+ * Each save object supports one successful replacement.
+ */
+RT_EXPORT extern enum db5_save_result
+db5_save_replace(struct db5_save *save, const struct db_i *snapshot,
+		 struct db_i **replacement, struct bu_vls *message);
+
+/** Release a save object. Accepts NULL. */
+RT_EXPORT extern void db5_save_free(struct db5_save *save);
 
 /* db_scan.c */
 /* read db (to build directory) */

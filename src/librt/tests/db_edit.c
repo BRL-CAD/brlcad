@@ -143,6 +143,39 @@ test_commit(struct db_i *base, struct bu_external *original)
     return 0;
 }
 
+static int
+test_metadata_replay(struct db_i *base)
+{
+    struct bu_external original = BU_EXTERNAL_INIT_ZERO;
+    struct bu_external changed = BU_EXTERNAL_INIT_ZERO;
+    CHECK(read_record(&original, base, DB5_GLOBAL_OBJECT_NAME) == 0);
+
+    struct db_edit *edit = db_edit_begin(base, "change database metadata");
+    CHECK(edit);
+    struct db_i *view = db_edit_view(edit);
+    CHECK(db_update_ident(view, "New title", 25.4) == 0);
+    CHECK(read_record(&changed, view, DB5_GLOBAL_OBJECT_NAME) == 0);
+    struct db_i *updated = db_edit_commit(edit);
+    CHECK(updated && BU_STR_EQUAL(updated->dbi_title, "New title"));
+    CHECK(EQUAL(updated->dbi_local2base, 25.4));
+
+    edit = db_edit_begin(updated, "undo database metadata");
+    CHECK(edit);
+    view = db_edit_view(edit);
+    CHECK(db_edit_apply(edit, DB5_GLOBAL_OBJECT_NAME, &changed, &original) == 0);
+    CHECK(BU_STR_EQUAL(view->dbi_title, base->dbi_title));
+    CHECK(EQUAL(view->dbi_local2base, base->dbi_local2base));
+    struct db_i *restored = db_edit_commit(edit);
+    CHECK(restored && check_record(restored, DB5_GLOBAL_OBJECT_NAME, &original));
+    CHECK(check_record(updated, DB5_GLOBAL_OBJECT_NAME, &changed));
+
+    db_close(restored);
+    db_close(updated);
+    bu_free_external(&original);
+    bu_free_external(&changed);
+    return 0;
+}
+
 int
 main(int argc, const char *argv[])
 {
@@ -160,6 +193,7 @@ main(int argc, const char *argv[])
     CHECK(read_record(&original, base, "base.s") == 0);
     CHECK(test_abort(base, &original) == 0);
     CHECK(test_commit(base, &original) == 0);
+    CHECK(test_metadata_replay(base) == 0);
     bu_free_external(&original);
     db_close(base);
     return 0;

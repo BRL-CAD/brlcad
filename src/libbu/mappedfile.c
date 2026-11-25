@@ -150,6 +150,14 @@ win_munmap(void *addr, void *hv)
 /* list of currently open mapped files */
 #define NUM_INITIAL_MAPPED_FILES 8
 
+/* Keep the identity private so readers of an atomically replaced path
+ * see the new inode even when file length and mtime match. */
+struct mapped_file_entry {
+    struct bu_mapped_file file;
+    struct stat identity;
+    int invalid;
+};
+
 static struct bu_mapped_file_list {
     size_t size, capacity;
     struct bu_mapped_file **mapped_files;
@@ -166,31 +174,22 @@ mapped_file_find(const char *name, const char *appl)
     bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
 
     for (i = 0; i < all_mapped_files.size; i++) {
-
-	if (!BU_STR_EQUAL(name, all_mapped_files.mapped_files[i]->name))
+	struct mapped_file_entry *entry =
+	    (struct mapped_file_entry *)all_mapped_files.mapped_files[i];
+	if (entry->invalid || !BU_STR_EQUAL(name, entry->file.name))
 	    continue;
-	if (!BU_STR_EQUAL(appl, all_mapped_files.mapped_files[i]->appl))
+	if (!BU_STR_EQUAL(appl, entry->file.appl))
 	    continue;
 
 	/* found a match */
-	mp = all_mapped_files.mapped_files[i];
+	mp = &entry->file;
+	/* Validation opens the path outside this lock. Pin the mapping
+	 * until its identity has been checked. */
+	mp->uses++;
 	break;
     }
 
     /* done iterating over mapped file list */
-    bu_semaphore_release(BU_SEM_MAPPEDFILE);
-
-    return mp;
-}
-
-
-static struct bu_mapped_file *
-mapped_file_incr(struct bu_mapped_file *mp)
-{
-    BU_ASSERT(mp != NULL);
-
-    bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
-    mp->uses++;
     bu_semaphore_release(BU_SEM_MAPPEDFILE);
 
     return mp;
@@ -204,8 +203,7 @@ mapped_file_invalidate(struct bu_mapped_file *mp)
 	return;
 
     bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
-    bu_free(mp->appl, "appl");
-    mp->appl = NULL;
+    ((struct mapped_file_entry *)mp)->invalid = 1;
     bu_semaphore_release(BU_SEM_MAPPEDFILE);
 
     return;
@@ -244,6 +242,11 @@ mapped_file_is_valid(struct bu_mapped_file *mp)
 	return 1;
     }
 
+    const struct mapped_file_entry *entry = (const struct mapped_file_entry *)mp;
+    if (entry->identity.st_ino && sb.st_ino &&
+	(entry->identity.st_ino != sb.st_ino || entry->identity.st_dev != sb.st_dev))
+	return 0;
+
     if ((size_t)sb.st_size != mp->buflen) {
 	if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE)) {
 	    bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %zu to %jd, opening new version.\n", mp->name, mp->buflen, (intmax_t)sb.st_size);
@@ -258,16 +261,12 @@ mapped_file_is_valid(struct bu_mapped_file *mp)
 	return 0;
     }
 
-    /* To be more safe, could also check st_dev and st_inum but that's
-     * not portable.
-     */
-
     return 1;
 }
 
 
 static struct bu_mapped_file *
-mapped_file_add(struct bu_mapped_file *mp)
+mapped_file_add(struct bu_mapped_file *mp, const struct stat *identity)
 {
     bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
     {
@@ -287,17 +286,13 @@ mapped_file_add(struct bu_mapped_file *mp)
 		all_mapped_files.mapped_files[i] = NULL;
 	}
 
-	/* calling bu_free_mapped_files() will release any mapped
-	 * files no longer in use, so we may need to reallocate.
-	 * first time through will also allocate.
-	 */
-	if (all_mapped_files.mapped_files[all_mapped_files.size] == NULL) {
-	    all_mapped_files.mapped_files[all_mapped_files.size] = (struct bu_mapped_file *)bu_calloc(1, sizeof(struct bu_mapped_file), "new mapped file holder");
-	}
-
-	/* store our mapped file */
-	*all_mapped_files.mapped_files[all_mapped_files.size] = *mp; /* struct copy */
-	mp = all_mapped_files.mapped_files[all_mapped_files.size]; /* returning the dynamic allocation */
+	/* Keep the entry address stable for open readers. */
+	struct mapped_file_entry *entry;
+	BU_ALLOC(entry, struct mapped_file_entry);
+	entry->identity = *identity;
+	entry->file = *mp;
+	mp = &entry->file;
+	all_mapped_files.mapped_files[all_mapped_files.size] = mp;
 	all_mapped_files.size++;
     }
     bu_semaphore_release(BU_SEM_MAPPEDFILE);
@@ -325,10 +320,11 @@ bu_open_mapped_file(const char *name, const char *appl)
 	bu_log("bu_open_mapped_file(%s , %s)\n", name, appl?appl:"(NULL)");
 
     mp = mapped_file_find(name, appl);
-    if (mapped_file_is_valid(mp)) {
-	return mapped_file_incr(mp);
-    } else {
+    if (mapped_file_is_valid(mp))
+	return mp;
+    if (mp) {
 	mapped_file_invalidate(mp);
+	bu_close_mapped_file(mp);
     }
 
     /* MAP A NEW ONE: File is not yet mapped or has changed.  Open
@@ -425,7 +421,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 	bu_pr_mapped_file("1st_open", mp);
     }
 
-    return mapped_file_add(mp);
+    return mapped_file_add(mp, &sb);
 
 fail:
     if (fd >= 0) {

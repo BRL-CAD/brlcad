@@ -153,15 +153,24 @@ db_edit_record_change(struct db_i *dbip, const char *name)
 	edit->touched.emplace(name);
 }
 
-static const struct directory *
-db_edit_lookup_name(const struct db_i *dbip, const std::string &name)
+static struct directory *
+db_edit_lookup_name(const struct db_i *dbip, const char *name)
 {
-    const auto *dp = dbip->i->dbi_Head[db_dirhash(name.c_str())];
+    auto *dp = dbip->i->dbi_Head[db_dirhash(name)];
     for (; dp; dp = dp->d_forw) {
-	if (name == dp->d_namep)
+	if (BU_STR_EQUAL(name, dp->d_namep))
 	    return dp;
     }
     return nullptr;
+}
+
+static bool
+db_edit_equal(const struct bu_external *a, const struct bu_external *b)
+{
+    if (!a || !b)
+	return a == b;
+    return a->ext_nbytes == b->ext_nbytes &&
+	memcmp(a->ext_buf, b->ext_buf, a->ext_nbytes) == 0;
 }
 
 
@@ -172,8 +181,8 @@ db_edit_visit(struct db_edit *edit, db_edit_visit_t visit, void *data)
 	return -1;
 
     for (const auto &name : edit->touched) {
-	const auto *before = db_edit_lookup_name(edit->base, name);
-	const auto *after = db_edit_lookup_name(edit->view, name);
+	const auto *before = db_edit_lookup_name(edit->base, name.c_str());
+	const auto *after = db_edit_lookup_name(edit->view, name.c_str());
 	if (!before && !after)
 	    continue;
 
@@ -187,12 +196,11 @@ db_edit_visit(struct db_edit *edit, db_edit_visit_t visit, void *data)
 	    return -1;
 	}
 
-	const bool equal = before && after && old_record.ext_nbytes == new_record.ext_nbytes &&
-	    memcmp(old_record.ext_buf, new_record.ext_buf, old_record.ext_nbytes) == 0;
+	const auto *previous = before ? &old_record : nullptr;
+	const auto *current = after ? &new_record : nullptr;
 	int result = 0;
-	if (!equal)
-	    result = visit(name.c_str(), before ? &old_record : nullptr,
-		after ? &new_record : nullptr, data);
+	if (!db_edit_equal(previous, current))
+	    result = visit(name.c_str(), previous, current, data);
 	bu_free_external(&old_record);
 	bu_free_external(&new_record);
 	if (result)
@@ -202,22 +210,79 @@ db_edit_visit(struct db_edit *edit, db_edit_visit_t visit, void *data)
 }
 
 
-static int
-db_edit_validate_record(const char *name, const struct bu_external *before,
-			const struct bu_external *after, void *UNUSED(data))
+static bool
+db_edit_decode(struct db5_raw_internal &raw, const char *name,
+	       const struct bu_external *before, const struct bu_external *after)
 {
     if (!after)
-	return BU_STR_EQUAL(name, DB5_GLOBAL_OBJECT_NAME) ? -1 : 0;
+	return !BU_STR_EQUAL(name, DB5_GLOBAL_OBJECT_NAME);
 
-    struct db5_raw_internal raw;
     const auto *end = db5_get_raw_internal_bounded(&raw, after->ext_buf, after->ext_nbytes);
     if (!end || raw.object_length != after->ext_nbytes || !raw.h_name_present ||
 	raw.h_dli != DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT ||
 	!BU_STR_EQUAL(name, reinterpret_cast<const char *>(raw.name.ext_buf)))
-	return -1;
+	return false;
     if (BU_STR_EQUAL(name, DB5_GLOBAL_OBJECT_NAME) &&
 	(!before || raw.major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY))
+	return false;
+    return true;
+}
+
+
+static int
+db_edit_validate_record(const char *name, const struct bu_external *before,
+			const struct bu_external *after, void *UNUSED(data))
+{
+    struct db5_raw_internal raw;
+    return db_edit_decode(raw, name, before, after) ? 0 : -1;
+}
+
+
+int
+db_edit_apply(struct db_edit *edit, const char *name, const struct bu_external *expected,
+	      const struct bu_external *replacement)
+{
+    if (!edit || !edit->active || edit->failed)
 	return -1;
+
+    auto *view = edit->view;
+    struct db5_raw_internal raw;
+    if (!name || !*name || view->dbi_read_only ||
+	!db_edit_decode(raw, name, expected, replacement)) {
+	edit->failed = true;
+	return -1;
+    }
+
+    auto *dp = db_edit_lookup_name(view, name);
+    struct bu_external current = BU_EXTERNAL_INIT_ZERO;
+    const bool matches = (!dp || db_get_external(&current, dp, view) == 0) &&
+	db_edit_equal(dp ? &current : nullptr, expected);
+    bu_free_external(&current);
+    if (!matches) {
+	edit->failed = true;
+	return -1;
+    }
+    if (db_edit_equal(expected, replacement))
+	return 0;
+
+    if (dp && db_dirdelete(view, dp) != 0)
+	return -1;
+    if (replacement) {
+	auto *bytes = bu_malloc(replacement->ext_nbytes, "staged DB5 record");
+	memcpy(bytes, replacement->ext_buf, replacement->ext_nbytes);
+	int in_memory = 1;
+	auto *created = db5_diradd(view, &raw, (b_off_t)(intptr_t)bytes, &in_memory);
+	if (!created) {
+	    bu_free(bytes, "staged DB5 record");
+	    edit->failed = true;
+	    return -1;
+	}
+	if (BU_STR_EQUAL(name, DB5_GLOBAL_OBJECT_NAME) &&
+	    db5_load_global(view, created) != 0) {
+	    edit->failed = true;
+	    return -1;
+	}
+    }
     return 0;
 }
 
@@ -227,6 +292,10 @@ db_edit_commit(struct db_edit *edit)
 {
     if (!edit || !edit->active || edit->view->dbi_read_only ||
 	db_edit_visit(edit, db_edit_validate_record, nullptr) != 0)
+	return nullptr;
+
+    if (edit->touched.count(DB5_GLOBAL_OBJECT_NAME) &&
+	db5_load_global(edit->view, db_edit_lookup_name(edit->view, DB5_GLOBAL_OBJECT_NAME)) != 0)
 	return nullptr;
 
     if (!edit->touched.empty())

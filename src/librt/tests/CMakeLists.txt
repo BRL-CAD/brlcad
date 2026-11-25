@@ -76,6 +76,12 @@ brlcad_add_test(NAME rt_inmem_write COMMAND rt_inmem_write)
 brlcad_addexec(rt_db_edit db_edit.c "librt;libwdb;libbu" TEST)
 brlcad_add_test(NAME rt_db_edit COMMAND rt_db_edit)
 
+brlcad_addexec(rt_db5_save db5_save.cpp "librt;libwdb;libbu" TEST)
+brlcad_add_test(NAME rt_db5_save COMMAND rt_db5_save)
+if(TEST rt_db5_save)
+  set_tests_properties(rt_db5_save PROPERTIES SKIP_RETURN_CODE 77)
+endif()
+
 brlcad_addexec(rt_binunif binunif.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_binunif COMMAND rt_binunif)
 
