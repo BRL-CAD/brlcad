@@ -1099,6 +1099,60 @@ test_opaque_rename(struct ged *gedp)
 }
 
 static int
+test_instance_history(struct ged *gedp)
+{
+    const char *make[] = {"in", "bake-source.s", "sph", "1", "2", "3", "5", nullptr};
+    const char *inner[] = {"g", "bake-inner.c", "bake-source.s", nullptr};
+    const char *outer[] = {"g", "bake-root.c", "bake-inner.c", nullptr};
+    const char *place_outer[] = {"arced", "bake-root.c/bake-inner.c",
+	"matrix", "rarc", "xlate", "100", "200", "300", nullptr};
+    const char *set_attribute[] = {"attr", "set", "bake-source.s", "part-class", "instance-source", nullptr};
+    CHECK(run(gedp, make) == BRLCAD_OK && run(gedp, inner) == BRLCAD_OK &&
+	run(gedp, outer) == BRLCAD_OK && run(gedp, place_outer) == BRLCAD_OK && run(gedp, set_attribute) == BRLCAD_OK);
+
+    const auto selected = selected_id(gedp);
+    const auto matrix_matches = [gedp](fastf_t x, fastf_t y, fastf_t z) {
+	struct db_full_path path = DB_FULL_PATH_INIT_ZERO;
+	mat_t matrix;
+	const bool ok = db_string_to_path(&path, gedp->dbip, "bake-root.c/bake-inner.c/bake-source.s") == 0 &&
+	    db_path_to_mat(gedp->dbip, &path, matrix, 0);
+	db_free_full_path(&path);
+	return ok && EQUAL(matrix[MDX], x) && EQUAL(matrix[MDY], y) && EQUAL(matrix[MDZ], z);
+    };
+    CHECK(matrix_matches(100, 200, 300));
+
+    const char *failed[] = {"db", "history", "batch", "Failed instance copy",
+	"{arced bake-inner.c/bake-source.s matrix rarc xlate 10 20 30}"
+	" {copyeval bake-root.c/bake-source.s invalid-bake.s}", nullptr};
+    CHECK(run(gedp, failed) == BRLCAD_ERROR && contains_result(gedp, "Unable to resolve source path") &&
+	selected_id(gedp) == selected && matrix_matches(100, 200, 300) &&
+	!db_lookup(gedp->dbip, "invalid-bake.s", LOOKUP_QUIET));
+
+    const char *batch[] = {"db", "history", "batch", "Move and bake an instance",
+	"{arced bake-inner.c/bake-source.s matrix rarc xlate 10 20 30}"
+	" {db copyeval /bake-root.c//bake-inner.c/bake-source.s/ baked.s}", nullptr};
+    CHECK(run(gedp, batch) == BRLCAD_OK);
+    const auto revised = selected_id(gedp);
+    const auto baked_matches = [gedp]() {
+	const char *center[] = {"get", "baked.s", "V", nullptr};
+	const char *attribute[] = {"attr", "get", "baked.s", "part-class", nullptr};
+	return run(gedp, center) == BRLCAD_OK && BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), "111 222 333") &&
+	    run(gedp, attribute) == BRLCAD_OK && contains_result(gedp, "instance-source");
+    };
+    const char *source_center[] = {"get", "bake-source.s", "V", nullptr};
+    CHECK(revised != selected && matrix_matches(110, 220, 330) && baked_matches() &&
+	run(gedp, source_center) == BRLCAD_OK && BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), "1 2 3"));
+
+    const char *undo[] = {"db", "undo", nullptr};
+    CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == selected &&
+	matrix_matches(100, 200, 300) && !db_lookup(gedp->dbip, "baked.s", LOOKUP_QUIET));
+    const char *redo[] = {"db", "redo", nullptr};
+    CHECK(run(gedp, redo) == BRLCAD_OK && selected_id(gedp) == revised &&
+	matrix_matches(110, 220, 330) && baked_matches());
+    return 0;
+}
+
+static int
 test_backend_parity(const std::filesystem::path &directory)
 {
     using Records = std::map<std::string, std::vector<uint8_t>>;
@@ -1185,6 +1239,7 @@ test_backend_parity(const std::filesystem::path &directory)
 	    CHECK(test_binary_asset_history(gedp, assets) == 0);
 	    CHECK(test_opaque_rename(gedp) == 0);
 	    CHECK(test_sketch_rename(gedp) == 0);
+	    CHECK(test_instance_history(gedp) == 0);
 	}
     }
     return 0;

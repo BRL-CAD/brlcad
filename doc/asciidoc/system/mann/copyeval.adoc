@@ -36,6 +36,10 @@ Creates _shapeb_ from _shapea_ by applying the accumulated transformation matric
 
 ====
 
+With database history enabled, *db undo* removes the new primitive. To
+edit an instance matrix and save the resulting shape in one revision, put
+*arced* and *copyeval* in a *db history batch*.
+
 
 [[author]]
 == AUTHOR

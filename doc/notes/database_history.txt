@@ -697,6 +697,19 @@ commit. A competing session and a host replacement veto each left the
 dirty preview available. One successful commit saved the geometry
 and its existing attributes. Undo and Redo restored the two radii.
 
+GED batched an arced matrix change and copyeval through a two-level
+assembly in session DB5, embedded DB5 and LMDB. The evaluated copy
+kept its source attributes and used both instance transforms. An
+invalid path later in the batch aborted the matrix change. Undo and
+Redo restored the matrix and the copy together. Plain DB4 and DB5
+also accepted an evaluated copy through the instance path.
+
+On an M1917 workspace copy, arced and copyeval translated the 41.54 MB
+BREP by 10, 20 and 30 model units in 2.03 seconds as one revision. Undo
+and Redo each took 0.53 seconds. An independent DB5 reader confirmed
+all six translated bounds after Redo. Workspace verification took
+5.06 seconds.
+
 Two GED clients exercised stale-write recovery in session DB5,
 embedded DB5 and LMDB. Recovery opened the staged geometry in a new
 file. Embedded and workspace recovery preserved the archive and

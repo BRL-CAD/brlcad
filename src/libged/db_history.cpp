@@ -167,7 +167,7 @@ permitted_edit(std::string_view command, int argc, const char **argv)
 	return argc > 1 && one_of(argv[1], {"append", "copy", "rm", "set"});
     if (command == "bo")
 	return argc > 1 && std::string_view(argv[1]) == "-i";
-    return one_of(command, {"adjust", "c", "comb", "comb_std", "concat", "cp", "dbconcat", "g", "group",
+    return one_of(command, {"adjust", "arced", "c", "comb", "comb_std", "concat", "copyeval", "cp", "dbconcat", "g", "group",
 	"hide", "in", "kill", "killall", "killrefs", "killtree", "make", "move", "move_all", "mv", "mvall",
 	"put", "r", "regdef", "region", "rm", "unhide"});
 }
@@ -177,7 +177,7 @@ permitted_query(std::string_view command, int argc, const char **argv)
 {
     if (command == "attr")
 	return argc <= 1 || one_of(argv[1], {"get", "list", "show", "sort"});
-    if (one_of(command, {"bo", "c", "comb_std", "move", "mv", "r", "regdef", "region", "title", "units"}))
+    if (one_of(command, {"arced", "bo", "c", "comb_std", "copyeval", "move", "mv", "r", "regdef", "region", "title", "units"}))
 	return argc == 1;
     if (command == "killall" || command == "killrefs")
 	return argc == 1 || std::string_view(argv[1]) == "-n";

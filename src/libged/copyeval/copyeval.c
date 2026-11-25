@@ -25,27 +25,16 @@
 
 #include "common.h"
 
-#include <string.h>
-
 #include "bu/cmd.h"
-
-#include "../ged_private.h"
+#include "bu/path.h"
+#include "bu/str.h"
+#include "ged.h"
 
 
 int
 ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "path_to_old_prim new_prim";
-    struct _ged_trace_data gtd;
-    struct directory *dp;
-    struct rt_db_internal *ip;
-    struct rt_db_internal internal = RT_DB_INTERNAL_INIT_ZERO;
-    struct rt_db_internal new_int = RT_DB_INTERNAL_INIT_ZERO;
-
-    char *tok;
-    int endpos = 0;
-    int i;
-    mat_t start_mat;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -65,107 +54,47 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    /* initialize gtd */
-    gtd.gtd_gedp = gedp;
-    gtd.gtd_flag = _GED_CPEVAL;
-    gtd.gtd_prflag = 0;
-
-    /* check if new solid name already exists in description */
     GED_CHECK_EXISTS(gedp, argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
 
-    MAT_IDN(start_mat);
-
-    /* build directory pointer array for desired path */
-    if (strchr(argv[1], '/')) {
-	tok = strtok((char *)argv[1], "/");
-	while (tok) {
-	    GED_DB_LOOKUP(gedp, gtd.gtd_obj[endpos], tok, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
-	    endpos++;
-	    tok = strtok((char *)NULL, "/");
-	}
-    } else {
-	GED_DB_LOOKUP(gedp, gtd.gtd_obj[endpos], argv[1], LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
-	endpos++;
+    int component_count = 0;
+    char **components = bu_path_to_argv(argv[1], &component_count);
+    if (!components) {
+	bu_vls_printf(gedp->ged_result_str, "Empty source path");
+	return BRLCAD_ERROR;
     }
+    struct db_full_path path = DB_FULL_PATH_INIT_ZERO;
+    const int found = db_argv_to_path(&path, gedp->dbip, component_count, (const char *const *)components);
+    bu_argv_free(component_count, components);
 
-    if (endpos < 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    struct directory *source = DB_FULL_PATH_CUR_DIR(&path);
+    mat_t transform;
+    const int resolved = found == 0 && source && db_path_to_mat(gedp->dbip, &path, transform, 0);
+    db_free_full_path(&path);
+    if (!resolved) {
+	bu_vls_printf(gedp->ged_result_str, "Unable to resolve source path %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+    if (component_count > 1 && (source->d_flags & RT_DIR_COMB)) {
+	bu_vls_printf(gedp->ged_result_str, "Final component on path must be a primitive");
 	return BRLCAD_ERROR;
     }
 
-    gtd.gtd_objpos = endpos - 1;
-
-    GED_DB_GET_INTERN(gedp, &internal, gtd.gtd_obj[endpos - 1], bn_mat_identity, BRLCAD_ERROR);
-
-    if (endpos > 1) {
-	/* Make sure that final component in path is a solid */
-	if (internal.idb_type == ID_COMBINATION) {
-	    rt_db_free_internal(&internal);
-	    bu_vls_printf(gedp->ged_result_str, "final component on path must be a primitive!\n");
-	    return BRLCAD_ERROR;
-	}
-
-	/* Accumulate the matrices */
-	ged_trace(gtd.gtd_obj[0], 0, start_mat, &gtd, 1);
-
-	if (gtd.gtd_prflag == 0) {
-	    bu_vls_printf(gedp->ged_result_str, "PATH:  ");
-
-	    for (i = 0; i < gtd.gtd_objpos; i++)
-		bu_vls_printf(gedp->ged_result_str, "/%s", gtd.gtd_obj[i]->d_namep);
-
-	    bu_vls_printf(gedp->ged_result_str, "  NOT FOUND\n");
-	    rt_db_free_internal(&internal);
-	    return BRLCAD_ERROR;
-	}
-
-	/* Have found the desired path - wdb_xform is the transformation matrix */
-	/* wdb_xform matrix calculated in wdb_trace() */
-
-	/* create the new solid */
-	RT_DB_INTERNAL_INIT(&new_int);
-	if (rt_generic_xform(&new_int, gtd.gtd_xform, &internal, 0, gedp->dbip)) {
-	    rt_db_free_internal(&internal);
-	    bu_vls_printf(gedp->ged_result_str, "ged_copyeval: rt_generic_xform failed\n");
-	    return BRLCAD_ERROR;
-	}
-
-	ip = &new_int;
-    } else
-	ip = &internal;
-
-    /* should call GED_DB_DIRADD() but need to deal with freeing the
-     * internals on failure.
-     */
-    dp = db_diradd(gedp->dbip, argv[2], RT_DIR_PHONY_ADDR, 0, gtd.gtd_obj[endpos-1]->d_flags, (void *)&ip->idb_type);
-    if (dp == RT_DIR_NULL) {
+    /* Apply the accumulated matrix during import. This avoids exporting
+     * and importing an intermediate copy of a potentially large body. */
+    struct rt_db_internal internal = RT_DB_INTERNAL_INIT_ZERO;
+    GED_DB_GET_INTERN(gedp, &internal, source, transform, BRLCAD_ERROR);
+    struct directory *target = db_diradd(gedp->dbip, argv[2], RT_DIR_PHONY_ADDR, 0,
+					 source->d_flags, (void *)&internal.idb_type);
+    if (!target) {
 	rt_db_free_internal(&internal);
-	if (ip == &new_int)
-	    rt_db_free_internal(&new_int);
-	bu_vls_printf(gedp->ged_result_str, "An error has occurred while adding a new object to the database.");
+	bu_vls_printf(gedp->ged_result_str, "Unable to add %s to the database directory", argv[2]);
 	return BRLCAD_ERROR;
     }
 
-    /* should call GED_DB_DIRADD() but need to deal with freeing the
-     * internals on failure.
-     */
-    if (rt_db_put_internal(dp, gedp->dbip, ip) < 0) {
-	/* if (ip == &new_int) then new_int gets freed by the rt_db_put_internal above
-	 * regardless of whether it succeeds or not. At this point only internal needs
-	 * to be freed. On the other hand if (ip == &internal), the internal gets freed
-	 * freed by the rt_db_put_internal above. In this case memory for new_int has
-	 * not been allocated.
-	 */
-	if (ip == &new_int)
-	    rt_db_free_internal(&internal);
-
+    if (rt_db_put_internal(target, gedp->dbip, &internal) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	return BRLCAD_ERROR;
     }
-
-    /* see previous comment */
-    if (ip == &new_int)
-	rt_db_free_internal(&internal);
 
     return BRLCAD_OK;
 }

@@ -43,7 +43,7 @@ Right multiply the members matrix with the given matrix.
 ====
 [source,console]
 ----
-mged> arced body/head matrix rot 0 0 45
+mged> arced body/head matrix rarc rot 0 0 45
 ----
 
 Rotates member head (in combination body) about the _z_ axis through a 45° angle. By default, the *matrix* commands expect a list of 16 matrix elements to define a matrix. The _xlate_ option may be used along with three translation distances in the _x_, _y_, and _z_ directions (in mm) as a shorthand notation for a matrix that is pure translation. Similarly, the _rot_ option along with rotation angles (degrees) about the _x_, _y_, and _z_ axes may be used as shorthand for a matrix that is pure rotation.
