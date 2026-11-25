@@ -500,6 +500,11 @@ combination and its referenced primitive. The source revision and
 reference counts stayed fixed. The keep command rejected the open
 source file and a separate embedded archive as write destinations.
 
+A typed GED edit session kept a torus radius change private until
+commit. A competing session and a host replacement veto each left the
+dirty preview available. One successful commit saved the geometry
+and its existing attributes. Undo and Redo restored the two radii.
+
 Implementation starting points in the source tree
 -------------------------------------------------
 

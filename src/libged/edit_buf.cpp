@@ -36,6 +36,7 @@
 #include <atomic>
 #include <cmath>
 #include <cstring>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -46,6 +47,7 @@
 #include "rt/functab.h"
 
 #include "ged/edit.h"
+#include "ged/history.h"
 
 #include "./ged_private.h"
 #include "./dbi.h"
@@ -1210,42 +1212,65 @@ ged_edit_session_revert(struct ged *gedp, ged_edit_session_ref session)
 }
 
 
+static int
+_edit_store_historical(struct ged *gedp, void *data)
+{
+    const auto &entry = *static_cast<const Ged_Internal::ged_edit_buf_entry *>(data);
+    const char *name = entry.write_dp->d_namep;
+    auto *target = db_lookup(gedp->dbip, name, LOOKUP_QUIET);
+    struct bu_external record = BU_EXTERNAL_INIT_ZERO;
+    const auto *internal = &entry.s->es_int;
+    const bool written = target &&
+	rt_db_cvt_to_ext5(&record, name, internal, 1.0, gedp->dbip, internal->idb_major_type) == 0 &&
+	db_put_external5(&record, target, gedp->dbip) == 0;
+    bu_free_external(&record);
+    if (!written)
+	bu_vls_printf(gedp->ged_result_str, "Unable to save the edit to %s", name);
+    return written ? BRLCAD_OK : BRLCAD_ERROR;
+}
+
+
 enum ged_edit_status
 ged_edit_session_commit(struct ged *gedp, ged_edit_session_ref session)
 {
-    if (!gedp || !gedp->i || !gedp->i->i)
+    if (!gedp || !gedp->dbip || !gedp->i || !gedp->i->i)
 	return GED_EDIT_INVALID;
     Ged_Internal *internal = gedp->i->i;
     auto entry = _edit_find_ref(internal, session);
     if (entry == internal->edit_buf.end())
 	return session.owner == _edit_owner(internal) ? GED_EDIT_STALE :
 	    GED_EDIT_INVALID;
-    if (!entry->second.dirty) {
-	const std::string key = entry->first;
-	const Ged_Internal::ged_edit_buf_entry final_entry = entry->second;
-	rt_edit_destroy(entry->second.s);
-	db_free_full_path(&entry->second.dfp);
-	_edit_forget_defaults(internal, key);
-	internal->edit_buf.erase(entry);
-	_edit_notify(gedp, GED_EDIT_SESSION_COMMIT, final_entry.path,
-	    final_entry);
-	return GED_EDIT_OK;
+    const bool historical = gedp->i->db_history && entry->second.dirty;
+    if (historical && (internal->edit_buf.size() > 1 || ged_db_history_staged(gedp))) {
+	bu_vls_strcat(gedp->ged_result_str, "Finish other active edits before saving this session");
+	return GED_EDIT_CONFLICT;
     }
-    const std::string key = entry->first;
-    const Ged_Internal::ged_edit_buf_entry final_entry = entry->second;
-    entry->second.committing = true;
-    const int result = rt_db_put_internal(entry->second.write_dp, gedp->dbip,
-	&entry->second.s->es_int);
-    entry->second.committing = false;
-    rt_edit_destroy(entry->second.s);
-    db_free_full_path(&entry->second.dfp);
-    _edit_forget_defaults(internal, key);
-    internal->edit_buf.erase(entry);
-    if (result < 0)
+
+    // Publication may replace the DBI that owns this session's path pointers.
+    std::unique_ptr<struct db_i, decltype(&db_close)> base(nullptr, db_close);
+    auto pending = internal->edit_buf.extract(entry);
+    auto &completed = pending.mapped();
+    int result = BRLCAD_OK;
+    if (historical) {
+	base.reset(db_clone_dbi(gedp->dbip, nullptr));
+	const std::string label = "Edit " + completed.path;
+	result = ged_history_apply_edit(gedp, label.c_str(), _edit_store_historical, &completed);
+	if (result != BRLCAD_OK) {
+	    internal->edit_buf.insert(std::move(pending));
+	    return GED_EDIT_ERROR;
+	}
+    } else if (completed.dirty &&
+	rt_db_put_internal(completed.write_dp, gedp->dbip, &completed.s->es_int) < 0) {
+	result = BRLCAD_ERROR;
+    }
+
+    rt_edit_destroy(completed.s);
+    db_free_full_path(&completed.dfp);
+    _edit_forget_defaults(internal, pending.key());
+    if (result != BRLCAD_OK)
 	return GED_EDIT_ERROR;
-    _edit_notify(gedp, GED_EDIT_SESSION_COMMIT, final_entry.path,
-	final_entry);
-    if (gedp->dbi_state)
+    _edit_notify(gedp, GED_EDIT_SESSION_COMMIT, completed.path, completed);
+    if (completed.dirty && gedp->dbi_state)
 	((DbiState *)gedp->dbi_state)->update();
     return GED_EDIT_OK;
 }

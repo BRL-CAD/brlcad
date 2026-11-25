@@ -396,6 +396,7 @@ void
 switch_database(struct ged *gedp, struct db_i *replacement)
 {
     auto *retired = gedp->dbip;
+    ged_edit_sessions_database_close_private(gedp);
     gedp->dbip = replacement;
     ged_event_database_set_private(gedp, replacement);
     refresh_view_units(gedp);
@@ -1752,7 +1753,11 @@ ged_history_status_create(struct ged *gedp, struct bu_vls *message)
     BU_ALLOC(allocated, struct ged_history_status);
     std::unique_ptr<struct ged_history_status, decltype(&ged_history_status_destroy)>
 	status(allocated, ged_history_status_destroy);
-    return load_history_status(gedp->i->db_history, *status, message) ? status.release() : nullptr;
+    if (!load_history_status(gedp->i->db_history, *status, message))
+	return nullptr;
+    if (gedp->i->i && !gedp->i->i->edit_buf.empty())
+	status->edit_active = 1;
+    return status.release();
 }
 
 void

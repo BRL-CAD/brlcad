@@ -224,7 +224,11 @@ ged_edit_session_checkpoint(struct ged *gedp, ged_edit_session_ref session);
 GED_EXPORT extern enum ged_edit_status
 ged_edit_session_revert(struct ged *gedp, ged_edit_session_ref session);
 
-/** Commit intermediate geometry to the database and close the session. */
+/**
+ * Commit intermediate geometry to the database and close the session.
+ * With history enabled, a successful commit publishes one revision. A
+ * rejected publication leaves the intermediate session available to retry.
+ */
 GED_EXPORT extern enum ged_edit_status
 ged_edit_session_commit(struct ged *gedp, ged_edit_session_ref session);
 

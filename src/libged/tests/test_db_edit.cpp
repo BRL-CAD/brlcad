@@ -27,8 +27,10 @@
 #include "bu/app.h"
 #include "bu/file.h"
 #include "ged.h"
+#include "ged/edit.h"
 #include "ged/event.h"
 #include "ged/history.h"
+#include "rt/geom.h"
 #include "../../libbu/json.hpp"
 
 #define CHECK(expr) do { \
@@ -813,6 +815,92 @@ test_history_concat()
     return 0;
 }
 
+static fastf_t
+test_torus_radius(struct ged *gedp)
+{
+    auto *dp = db_lookup(gedp->dbip, "torus.s", LOOKUP_QUIET);
+    struct rt_db_internal internal = RT_DB_INTERNAL_INIT_ZERO;
+    if (!dp || rt_db_get_internal(&internal, dp, gedp->dbip, nullptr) < 0)
+	return -1;
+    const auto *torus = static_cast<const struct rt_tor_internal *>(internal.idb_ptr);
+    const fastf_t radius = internal.idb_type == ID_TOR ? torus->r_a : -1;
+    rt_db_free_internal(&internal);
+    return radius;
+}
+
+static int
+decline_replacement(struct ged *gedp, void *UNUSED(data))
+{
+    bu_vls_strcat(gedp->ged_result_str, "Test host declined database replacement");
+    return BRLCAD_ERROR;
+}
+
+static int
+test_history_edit_session()
+{
+    char path[MAXPATHLEN] = {};
+    FILE *file = bu_temp_file(path, sizeof(path));
+    CHECK(file && fclose(file) == 0);
+    auto *db = db_create(path, 5);
+    CHECK(db);
+    db_close(db);
+    const std::unique_ptr<struct ged, decltype(&ged_close)> owner(ged_open("db", path, 1), ged_close);
+    auto *gedp = owner.get();
+    const char *make[] = {"make", "torus.s", "tor", nullptr};
+    const char *attribute[] = {"attr", "set", "torus.s", "test_note", "preserve", nullptr};
+    const char *enable[] = {"db", "history", "enable", "embedded", nullptr};
+    CHECK(gedp && run(gedp, make) == BRLCAD_OK && run(gedp, attribute) == BRLCAD_OK);
+    const int enabled = run(gedp, enable);
+    if (enabled != BRLCAD_OK && contains_result(gedp, "Atomic DB5 replacement is unavailable"))
+	return 0;
+    CHECK(enabled == BRLCAD_OK);
+    const std::string root = selected_id(gedp);
+    const fastf_t before = test_torus_radius(gedp);
+    CHECK(!root.empty() && before > 0);
+
+    ged_edit_session_ref edit = GED_EDIT_SESSION_REF_NULL;
+    ged_edit_session_ref other = GED_EDIT_SESSION_REF_NULL;
+    CHECK(ged_edit_session_begin(gedp, "torus.s", GED_EDIT_TARGET_OBJECT, &edit) == GED_EDIT_OK);
+    constexpr int torus_major_radius = 1021;
+    const fastf_t value[] = {before * 2};
+    struct ged_edit_command_input input = {};
+    input.command_id = torus_major_radius;
+    input.values = value;
+    input.value_count = 1;
+    CHECK(ged_edit_session_apply(gedp, edit, &input) == GED_EDIT_OK);
+    const auto *editing = ged_history_status_create(gedp, nullptr);
+    const bool active = editing && editing->edit_active;
+    ged_history_status_destroy(editing);
+    CHECK(active && selected_id(gedp) == root && NEAR_EQUAL(test_torus_radius(gedp), before, SMALL_FASTF));
+    CHECK(ged_edit_session_begin(gedp, "torus.s", GED_EDIT_TARGET_OBJECT, &other) == GED_EDIT_OK);
+    CHECK(ged_edit_session_commit(gedp, edit) == GED_EDIT_CONFLICT);
+    struct ged_edit_session_info info = {};
+    CHECK(ged_edit_session_info_get(gedp, edit, &info) == GED_EDIT_OK && info.dirty && selected_id(gedp) == root);
+    CHECK(ged_edit_session_cancel(gedp, other) == GED_EDIT_OK);
+
+    ged_history_set_replacement_handlers(gedp, decline_replacement, nullptr, nullptr);
+    CHECK(ged_edit_session_commit(gedp, edit) == GED_EDIT_ERROR && contains_result(gedp, "Test host declined"));
+    CHECK(ged_edit_session_info_get(gedp, edit, &info) == GED_EDIT_OK && info.dirty && selected_id(gedp) == root);
+    ged_history_set_replacement_handlers(gedp, nullptr, nullptr, nullptr);
+    CHECK(ged_edit_session_commit(gedp, edit) == GED_EDIT_OK &&
+	ged_edit_session_info_get(gedp, edit, &info) == GED_EDIT_STALE &&
+	NEAR_EQUAL(test_torus_radius(gedp), value[0], SMALL_FASTF));
+    const auto tip = selected_id(gedp);
+    CHECK(!tip.empty() && tip != root);
+    const char *get_attribute[] = {"attr", "get", "torus.s", "test_note", nullptr};
+    CHECK(run(gedp, get_attribute) == BRLCAD_OK && contains_result(gedp, "preserve"));
+
+    const char *undo[] = {"db", "undo", nullptr};
+    const char *redo[] = {"db", "redo", nullptr};
+    CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == root &&
+	NEAR_EQUAL(test_torus_radius(gedp), before, SMALL_FASTF));
+    CHECK(run(gedp, redo) == BRLCAD_OK && selected_id(gedp) == tip &&
+	NEAR_EQUAL(test_torus_radius(gedp), value[0], SMALL_FASTF));
+    CHECK(ged_edit_session_begin(gedp, "torus.s", GED_EDIT_TARGET_OBJECT, &edit) == GED_EDIT_OK &&
+	ged_edit_session_commit(gedp, edit) == GED_EDIT_OK && selected_id(gedp) == tip);
+    return 0;
+}
+
 
 int
 main(int argc, const char *argv[])
@@ -901,7 +989,10 @@ main(int argc, const char *argv[])
     if (batch_status)
 	return batch_status;
     const int concat_status = test_history_concat();
-    return concat_status ? concat_status : test_workspace_history();
+    if (concat_status)
+	return concat_status;
+    const int edit_status = test_history_edit_session();
+    return edit_status ? edit_status : test_workspace_history();
 }
 
 // Local Variables:

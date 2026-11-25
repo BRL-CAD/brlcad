@@ -60,7 +60,7 @@ struct ged_history_status {
     enum ged_history_mode mode;
     enum ged_history_state state;
     int writable;        /**< The backing store accepts writes. */
-    int edit_active;     /**< An edit is still being staged. */
+    int edit_active;     /**< A modeling session or transaction is active. */
     int staged_conflict;
     int retention_boundary;
     const char *selected_revision;
