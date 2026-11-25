@@ -26,6 +26,7 @@
 
 #include "common.h"
 
+#include <limits.h>
 #include <string.h>
 
 #include "bu/getopt.h"
@@ -59,9 +60,9 @@ free_tokens(struct bu_list *hp)
 
     while (BU_LIST_WHILE(tok, tokens, hp)) {
 	BU_LIST_DEQUEUE(&tok->l);
-	if (tok->type == TOK_TREE) {
+	if (tok->type == TOK_TREE)
 	    db_free_tree(tok->tp);
-	}
+	bu_free(tok, "combination token");
     }
 }
 
@@ -137,7 +138,7 @@ append_rparen(struct bu_list *hp)
 
 
 static int
-add_operator(struct ged *gedp, struct bu_list *hp, char *ptr, short int *last_tok)
+add_operator(struct ged *gedp, struct bu_list *hp, const char *ptr, short int *last_tok)
 {
     db_op_t op = db_str2op(ptr);
 
@@ -158,59 +159,30 @@ add_operator(struct ged *gedp, struct bu_list *hp, char *ptr, short int *last_to
 	    break;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "Illegal operator: %c (0x%x), aborting\n", ptr[0], ptr[0]);
-	    free_tokens(hp);
 	    return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
 }
 
 
-static int
-add_operand(struct ged *gedp, struct bu_list *hp, char *name)
+static size_t
+add_operand(struct ged *gedp, struct bu_list *hp, const char *name)
 {
-    char *ptr_lparen;
-    char *ptr_rparen;
-    int name_len;
     union tree *node;
     struct tokens *tok;
 
     BU_CK_LIST_HEAD(hp);
 
-    ptr_lparen = strchr(name, '(');
-    ptr_rparen = strchr(name, ')');
+    const size_t name_len = strcspn(name, "()");
+    if (!name_len) {
+	bu_vls_printf(gedp->ged_result_str, "Missing operand before %s\n", name);
+	return 0;
+    }
 
     BU_GET(node, union tree);
     RT_TREE_INIT(node);
     node->tr_op = OP_DB_LEAF;
     node->tr_l.tl_mat = (matp_t)NULL;
-    if (ptr_lparen || ptr_rparen) {
-	int tmp1, tmp2;
-
-	if (ptr_rparen)
-	    tmp1 = ptr_rparen - name;
-	else
-	    tmp1 = (-1);
-	if (ptr_lparen)
-	    tmp2 = ptr_lparen - name;
-	else
-	    tmp2 = (-1);
-
-	if (tmp2 == (-1) && tmp1 > 0)
-	    name_len = tmp1;
-	else if (tmp1 == (-1) && tmp2 > 0)
-	    name_len = tmp2;
-	else if (tmp1 > 0 && tmp2 > 0) {
-	    if (tmp1 < tmp2)
-		name_len = tmp1;
-	    else
-		name_len = tmp2;
-	} else {
-	    bu_vls_printf(gedp->ged_result_str, "Cannot determine length of operand name: %s, aborting\n", name);
-	    return 0;
-	}
-    } else
-	name_len = (int)strlen(name);
-
     node->tr_l.tl_name = (char *)bu_malloc(name_len+1, "node name");
     bu_strlcpy(node->tr_l.tl_name, name, name_len+1);
 
@@ -352,39 +324,41 @@ eval_bool(struct bu_list *hp)
 
 
 static int
-check_syntax(struct ged *gedp, struct bu_list *hp, char *comb_name, struct directory *dp)
+check_syntax(struct ged *gedp, struct bu_list *hp, const char *comb_name)
 {
     struct tokens *tok;
     int paren_count  = 0;
     int paren_error  = 0;
     int missing_exp  = 0;
     int missing_op   = 0;
-    int op_count     = 0;
-    int arg_count    = 0;
     int circular_ref = 0;
     int errors       = 0;
-    short last_tok   = TOK_NULL;
+    int need_operand = 1;
 
     for (BU_LIST_FOR(tok, tokens, hp)) {
 	switch (tok->type) {
 	    case TOK_LPAREN:
 		paren_count++;
-		if (last_tok == TOK_RPAREN)
+		if (!need_operand)
 		    missing_op++;
 		break;
 	    case TOK_RPAREN:
 		paren_count--;
-		if (last_tok == TOK_LPAREN)
+		if (need_operand)
 		    missing_exp++;
 		break;
 	    case TOK_UNION:
 	    case TOK_SUBTR:
 	    case TOK_INTER:
-		op_count++;
+		if (need_operand)
+		    missing_exp++;
+		need_operand = 1;
 		break;
 	    case TOK_TREE:
-		arg_count++;
-		if (!dp && BU_STR_EQUAL(comb_name, tok->tp->tr_l.tl_name))
+		if (!need_operand)
+		    missing_op++;
+		need_operand = 0;
+		if (BU_STR_EQUAL(comb_name, tok->tp->tr_l.tl_name))
 		    circular_ref++;
 		else if (db_lookup(gedp->dbip, tok->tp->tr_l.tl_name, LOOKUP_QUIET) == RT_DIR_NULL)
 		    bu_vls_printf(gedp->ged_result_str, "WARNING: '%s' does not currently exist\n", tok->tp->tr_l.tl_name);
@@ -392,7 +366,6 @@ check_syntax(struct ged *gedp, struct bu_list *hp, char *comb_name, struct direc
 	}
 	if (paren_count < 0)
 	    paren_error++;
-	last_tok = tok->type;
     }
 
     if (paren_count || paren_error) {
@@ -400,18 +373,13 @@ check_syntax(struct ged *gedp, struct bu_list *hp, char *comb_name, struct direc
 	errors++;
     }
 
-    if (missing_exp) {
-	bu_vls_printf(gedp->ged_result_str, "ERROR: empty parenthesis (missing expression)\n");
+    if (missing_exp || need_operand) {
+	bu_vls_printf(gedp->ged_result_str, "ERROR: missing operand in Boolean expression\n");
 	errors++;
     }
 
     if (missing_op) {
-	bu_vls_printf(gedp->ged_result_str, "ERROR: must have operator between ')('\n");
-	errors++;
-    }
-
-    if (op_count != arg_count-1) {
-	bu_vls_printf(gedp->ged_result_str, "ERROR: mismatch of operators and operands\n");
+	bu_vls_printf(gedp->ged_result_str, "ERROR: missing operator in Boolean expression\n");
 	errors++;
     }
 
@@ -429,15 +397,41 @@ check_syntax(struct ged *gedp, struct bu_list *hp, char *comb_name, struct direc
 }
 
 
+static int
+apply_region_defaults(struct ged *gedp, struct rt_comb_internal *comb, const struct rt_wdb *defaults)
+{
+    if (defaults->wdb_item_default == INT_MAX) {
+	bu_vls_strcat(gedp->ged_result_str, "Default region ident cannot be advanced. Set a new ident with regdef.");
+	return BRLCAD_ERROR;
+    }
+    comb->region_id = defaults->wdb_item_default;
+    comb->aircode = defaults->wdb_air_default;
+    comb->los = defaults->wdb_los_default;
+    comb->GIFTmater = defaults->wdb_mat_default;
+    return BRLCAD_OK;
+}
+
+static int
+store_combination(struct ged *gedp, struct directory *dp, struct rt_db_internal *intern, struct rt_wdb *defaults)
+{
+    GED_DB_PUT_INTERN(gedp, dp, intern, BRLCAD_ERROR);
+    if (defaults)
+	++defaults->wdb_item_default;
+    db_update_nref(gedp->dbip);
+    return BRLCAD_OK;
+}
+
+
 int
 ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 {
-    char *comb_name;
+    const char *comb_name;
     int ch;
     int region_flag = -1;
     struct directory *dp = RT_DIR_NULL;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb = NULL;
+    struct rt_wdb *defaults = NULL;
     struct tokens tok_hd;
     short last_tok;
     int i;
@@ -445,7 +439,6 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "[-cr] comb_name <boolean_expr>";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
@@ -456,6 +449,8 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
+
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
@@ -474,26 +469,25 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 		region_flag = 1;
 		break;
 		/* XXX How about -p and -v for FASTGEN? */
-	    case '?':
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return BRLCAD_OK;
+		return bu_optopt == '?' ? GED_HELP : BRLCAD_ERROR;
 	}
     }
     argc -= (bu_optind + 1);
     argv += bu_optind;
 
-    comb_name = (char *)*argv++;
     if (argc == -1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_ERROR;
     }
+    comb_name = *argv++;
 
     if ((region_flag != -1) && (argc == 0)) {
 	/*
 	 * Set/Reset the REGION flag of an existing combination
 	 */
-	GED_DB_LOOKUP(gedp, dp, comb_name, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
+	GED_DB_LOOKUP(gedp, dp, comb_name, LOOKUP_NOISY, BRLCAD_ERROR);
 
 	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    bu_vls_printf(gedp->ged_result_str, "%s is not a combination\n", comb_name);
@@ -506,20 +500,17 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (region_flag) {
 	    if (!comb->region_flag) {
-		/* assign values from the defaults */
-		struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-		comb->region_id = wdbp->wdb_item_default++;
-		comb->aircode = wdbp->wdb_air_default;
-		comb->GIFTmater = wdbp->wdb_mat_default;
-		comb->los = wdbp->wdb_los_default;
+		defaults = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+		if (apply_region_defaults(gedp, comb, defaults) != BRLCAD_OK) {
+		    rt_db_free_internal(&intern);
+		    return BRLCAD_ERROR;
+		}
 	    }
 	    comb->region_flag = 1;
 	} else
 	    comb->region_flag = 0;
 
-	GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
-
-	return BRLCAD_OK;
+	return store_combination(gedp, dp, &intern, defaults);
     }
     /*
      * At this point, we know we have a Boolean expression.
@@ -539,9 +530,7 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 
     last_tok = TOK_LPAREN;
     for (i = 0; i < argc; i++) {
-	char *ptr;
-
-	ptr = (char *)argv[i];
+	const char *ptr = argv[i];
 	while (*ptr) {
 	    while (*ptr == '(' || *ptr == ')') {
 		switch (*ptr) {
@@ -569,7 +558,7 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 		ptr++;
 	    } else if (last_tok == TOK_LPAREN) {
 		/* next token MUST be an operand */
-		int name_len;
+		size_t name_len;
 
 		name_len = add_operand(gedp, &tok_hd.l, ptr);
 		if (name_len < 1) {
@@ -589,7 +578,7 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 		       last_tok == TOK_INTER ||
 		       last_tok == TOK_SUBTR) {
 		/* must be an operand */
-		int name_len;
+		size_t name_len;
 
 		name_len = add_operand(gedp, &tok_hd.l, ptr);
 		if (name_len < 1) {
@@ -602,7 +591,7 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if (check_syntax(gedp, &tok_hd.l, comb_name, dp)) {
+    if (check_syntax(gedp, &tok_hd.l, comb_name)) {
 	free_tokens(&tok_hd.l);
 	return BRLCAD_ERROR;
     }
@@ -618,6 +607,12 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 
 	comb->tree = final_tree;
 
+	RT_DB_INTERNAL_INIT(&intern);
+	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	intern.idb_type = ID_COMBINATION;
+	intern.idb_meth = &OBJ[ID_COMBINATION];
+	intern.idb_ptr = (void *)comb;
+
 	comb->region_id = -1;
 	if (region_flag == (-1))
 	    comb->region_flag = 0;
@@ -625,12 +620,11 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 	    comb->region_flag = region_flag;
 
 	if (comb->region_flag) {
-	    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-	    comb->region_flag = 1;
-	    comb->region_id = wdbp->wdb_item_default++;
-	    comb->aircode = wdbp->wdb_air_default;
-	    comb->los = wdbp->wdb_los_default;
-	    comb->GIFTmater = wdbp->wdb_mat_default;
+	    defaults = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+	    if (apply_region_defaults(gedp, comb, defaults) != BRLCAD_OK) {
+		rt_db_free_internal(&intern);
+		return BRLCAD_ERROR;
+	    }
 
 	    bu_vls_printf(gedp->ged_result_str, "Creating region with attrs: region_id=%ld, ", comb->region_id);
 	    if (comb->aircode)
@@ -642,17 +636,15 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 	    flags |= RT_DIR_REGION;
 	}
 
-	RT_DB_INTERNAL_INIT(&intern);
-	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	intern.idb_type = ID_COMBINATION;
-	intern.idb_meth = &OBJ[ID_COMBINATION];
-	intern.idb_ptr = (void *)comb;
-
-	GED_DB_DIRADD(gedp, dp, comb_name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&intern.idb_type, BRLCAD_ERROR);
-	GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
+	dp = db_diradd(gedp->dbip, comb_name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&intern.idb_type);
+	if (!dp) {
+	    bu_vls_printf(gedp->ged_result_str, "Unable to add %s to the database.", comb_name);
+	    rt_db_free_internal(&intern);
+	    return BRLCAD_ERROR;
+	}
     }
 
-    return BRLCAD_OK;
+    return store_combination(gedp, dp, &intern, defaults);
 }
 
 #include "../include/plugin.h"

@@ -732,6 +732,26 @@ test_versioned_region_defaults(struct ged *gedp)
     CHECK(run(gedp, redo) == BRLCAD_OK && selected_id(gedp) == tip && defaults_are(advanced) &&
 	region_matches("first.r", 6350) && region_matches("second.r", 6351));
 
+    const char *bad_expression[] = {"db", "history", "batch", "Discard invalid expression",
+	"{regdef 9410} {c invalid.c renamed.s ( renamed.s u renamed.s ) u}", nullptr};
+    CHECK(run(gedp, bad_expression) == BRLCAD_ERROR && contains_result(gedp, "missing operator"));
+    CHECK(selected_id(gedp) == tip && defaults_are(advanced) &&
+	!db_lookup(gedp->dbip, "invalid.c", LOOKUP_QUIET));
+    const char *missing_combination[] = {"c", "-r", "missing.c", nullptr};
+    CHECK(run(gedp, missing_combination) == BRLCAD_ERROR && selected_id(gedp) == tip);
+
+    const char *expressions[] = {"db", "history", "batch", "Build Boolean regions",
+	"{c -r third.r ( renamed.s u renamed.s )} {c -c converted.c renamed.s} {comb_std -r converted.c}", nullptr};
+    CHECK(run(gedp, expressions) == BRLCAD_OK);
+    const auto expression_tip = selected_id(gedp);
+    CHECK(expression_tip != tip && region_matches("third.r", 6352) && region_matches("converted.c", 6353));
+    const char *after_expr = "ident 6354 air 0 los 89 material 27";
+    CHECK(defaults_are(after_expr));
+    CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == tip && defaults_are(after_expr) &&
+	!db_lookup(gedp->dbip, "third.r", LOOKUP_QUIET) && !db_lookup(gedp->dbip, "converted.c", LOOKUP_QUIET));
+    CHECK(run(gedp, redo) == BRLCAD_OK && selected_id(gedp) == expression_tip &&
+	region_matches("third.r", 6352) && region_matches("converted.c", 6353));
+
     const std::unique_ptr<struct ged, decltype(&ged_close)> inspector(ged_create(), ged_close);
     const char *open[] = {"db", "open", "-r", gedp->dbip->dbi_filename, nullptr};
     CHECK(inspector && run(inspector.get(), open) == BRLCAD_OK);

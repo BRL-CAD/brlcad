@@ -548,6 +548,12 @@ travel within the editor. A settings-only change created no revision.
 A failed second region write and a late batch failure both left the
 model and defaults intact.
 
+A versioned Boolean-edit batch created a region with c and converted
+an existing combination with comb_std. Undo and Redo restored both
+endpoints and kept the defaults advanced. A malformed expression
+that previously stalled evaluation now rejects the batch before
+publishing geometry or settings.
+
 On an M1917 workspace copy, one batch set region defaults and created
 two regions referencing existing geometry in 2.06 seconds. The failed
 batch left the original revision selected. Fresh processes verified
