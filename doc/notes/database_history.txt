@@ -267,6 +267,13 @@ samples byte for byte and both workspace verifiers passed. A GED
 regression covered binary import, aborted replacement and exact
 replay in session DB5, embedded DB5 and LMDB.
 
+On an M1917 workspace copy opened read-only, bo -o exported 32 MiB of
+unsigned 16-bit samples in host byte order. The output matched the
+expected digest and the revision and generation stayed fixed. An
+injected file sync failure left no destination, and a competing
+destination kept its bytes. Using an existing embedded DB5 as the
+output path also left its bytes unchanged.
+
 Reference scans for object-backed DSP, EBM and VOL read the primitive
 parameters. They report a named dependency even while the target is
 missing in a staged edit. A warm scan of 64 DSP primitives sharing one

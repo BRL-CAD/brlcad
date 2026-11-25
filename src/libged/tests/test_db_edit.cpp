@@ -943,6 +943,19 @@ test_binary_asset_history(struct ged *gedp, const std::filesystem::path &directo
     const char *open[] = {"db", "open", "-r", gedp->dbip->dbi_filename, nullptr};
     const char *preview[] = {"mvall", "-n", "volume.bin", "voxel samples.bin", nullptr};
     CHECK(inspector && run(inspector.get(), open) == BRLCAD_OK);
+    const auto exported_path = (directory / "readonly samples.bin").string();
+    const char *export_samples[] = {"bo", "-o", exported_path.c_str(), "volume.bin", nullptr};
+    const int exported = run(inspector.get(), export_samples);
+    if (exported == BRLCAD_OK) {
+	std::ifstream samples(exported_path, std::ios::binary);
+	uint8_t restored[sizeof(original)];
+	CHECK(samples.read(reinterpret_cast<char *>(restored), sizeof(restored)) &&
+	    std::memcmp(restored, original, sizeof(original)) == 0 && samples.peek() == EOF);
+	CHECK(run(gedp, export_samples) == BRLCAD_ERROR && contains_result(gedp, "already exists") &&
+	    selected_id(gedp) == after);
+    } else {
+	CHECK(contains_result(inspector.get(), "Atomic binary export is unavailable"));
+    }
     CHECK(run(inspector.get(), preview) == BRLCAD_OK && contains_result(inspector.get(), "volume.s"));
     CHECK(db_lookup(inspector->dbip, "volume.bin", LOOKUP_QUIET) &&
 	!db_lookup(inspector->dbip, "voxel samples.bin", LOOKUP_QUIET) && selected_id(gedp) == after);

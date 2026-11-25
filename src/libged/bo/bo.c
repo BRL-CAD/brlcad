@@ -97,13 +97,8 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 {
     int c;
     unsigned int input_type = 0;
-    const char *obj_name;
-    const char *file_name;
-    int input_mode=0;
-    int output_mode=0;
-    struct rt_binunif_internal *bip;
-    struct rt_db_internal intern;
-    struct directory *dp;
+    int input_mode = 0;
+    int output_mode = 0;
     const char *argv0;
     static const char *usage = "{-i u [h|n]type | -o} dest source";
 
@@ -120,8 +115,6 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv0, usage);
 	return GED_HELP;
     }
-
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     /* check that we are using a version 5 database */
     if (db_version(gedp->dbip) < 5) {
@@ -161,96 +154,26 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    if (output_mode) {
+	const enum db5_save_result status = db5_export_binunif(gedp->dbip, argv[1], argv[0], gedp->ged_result_str);
+	return status == DB5_SAVE_OK || status == DB5_SAVE_SYNC_FAILED ? BRLCAD_OK : BRLCAD_ERROR;
+    }
 
-    if (input_mode) {
-	if (BU_STR_EQUAL(argv[0], "u")) {
-	    if (bo_decode_input_type(&input_type, argv[1]) != 0) {
-		bu_vls_printf(gedp->ged_result_str, "Unrecognized minor type: %s", argv[1]);
-		return BRLCAD_ERROR;
-	    }
-	} else {
-	    bu_vls_printf(gedp->ged_result_str, "Unrecognized major type: %s", argv[0]);
-	    return BRLCAD_ERROR;
-	}
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    if (!BU_STR_EQUAL(argv[0], "u")) {
+	bu_vls_printf(gedp->ged_result_str, "Unrecognized major type: %s", argv[0]);
+	return BRLCAD_ERROR;
+    }
+    if (bo_decode_input_type(&input_type, argv[1]) != 0) {
+	bu_vls_printf(gedp->ged_result_str, "Unrecognized minor type: %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
 
-	/* skip past major_type and minor_type */
-	argc -= 2;
-	argv += 2;
-
-	obj_name = *argv;
-	GED_CHECK_EXISTS(gedp, obj_name, LOOKUP_QUIET, BRLCAD_ERROR);
-
-	argc--;
-	argv++;
-
-	file_name = *argv;
-
-	/* make a binunif of the entire file */
-	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-	if (rt_mk_binunif(wdbp, obj_name, file_name, input_type, 0)) {
-	    bu_vls_printf(gedp->ged_result_str, "Error creating %s", obj_name);
-	    return BRLCAD_ERROR;
-	}
-
-    } else if (output_mode) {
-	FILE *fp;
-
-	file_name = *argv;
-
-	argc--;
-	argv++;
-
-	obj_name = *argv;
-
-	dp = db_lookup(gedp->dbip, obj_name, LOOKUP_NOISY);
-	if (dp == RT_DIR_NULL) {
-	    return BRLCAD_ERROR;
-	}
-	if (!(dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK)) {
-	    bu_vls_printf(gedp->ged_result_str, "%s is not a binary object", obj_name);
-	    return BRLCAD_ERROR;
-	}
-
-	if (dp->d_major_type != DB5_MAJORTYPE_BINARY_UNIF) {
-	    bu_vls_printf(gedp->ged_result_str, "source must be a uniform binary object");
-	    return BRLCAD_ERROR;
-	}
-
-	fp = fopen(file_name, "w+b");
-	if (fp == NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "Error: cannot open file %s for writing", file_name);
-	    return BRLCAD_ERROR;
-	}
-
-	if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL) < 0) {
-	    bu_vls_printf(gedp->ged_result_str, "Error reading %s from database", dp->d_namep);
-	    fclose(fp);
-	    return BRLCAD_ERROR;
-	}
-
-	RT_CK_DB_INTERNAL(&intern);
-
-	bip = (struct rt_binunif_internal *)intern.idb_ptr;
-	if (bip->count < 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%s has no contents", obj_name);
-	    fclose(fp);
-	    rt_db_free_internal(&intern);
-	    return BRLCAD_ERROR;
-	}
-
-	if (fwrite(bip->u.int8, bip->count * db5_type_sizeof_h_binu(bip->type),
-		   1, fp) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "Error writing contents to file");
-	    fclose(fp);
-	    rt_db_free_internal(&intern);
-	    return BRLCAD_ERROR;
-	}
-
-	fclose(fp);
-	rt_db_free_internal(&intern);
-
-    } else {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv0, usage);
+    const char *object = argv[2];
+    GED_CHECK_EXISTS(gedp, object, LOOKUP_QUIET, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (rt_mk_binunif(wdbp, object, argv[3], input_type, 0)) {
+	bu_vls_printf(gedp->ged_result_str, "Error creating %s", object);
 	return BRLCAD_ERROR;
     }
 

@@ -209,8 +209,10 @@ permitted_query(std::string_view command, int argc, const char **argv)
 }
 
 bool
-permitted_standalone(std::string_view command)
+permitted_standalone(std::string_view command, int argc, const char **argv)
 {
+    if (command == "bo")
+	return argc > 1 && std::string_view(argv[1]) == "-o";
     return one_of(command, {"draw", "dump", "e", "edit", "erase", "ev", "garbage_collect", "keep", "redraw", "setview",
 	"view", "view2", "view_func", "who", "zap"});
 }
@@ -2474,7 +2476,7 @@ ged_db_history_enter(struct ged *gedp, const char *command, int argc, const char
 {
     auto *history = gedp->i->db_history;
     if (!history || permitted_query(command, argc, argv) ||
-	(!history->stage && (session_lifecycle(command) || permitted_standalone(command))))
+	(!history->stage && (session_lifecycle(command) || permitted_standalone(command, argc, argv))))
 	return BRLCAD_OK;
     if (!permitted_edit(command, argc, argv)) {
 	bu_vls_printf(gedp->ged_result_str, "%s is unavailable while database history is enabled", command);

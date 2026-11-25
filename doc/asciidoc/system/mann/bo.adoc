@@ -46,8 +46,9 @@ order. The base _type_ may be one of:
 
 Note: this command was previously named "dbbinary".
 
-On output, _destination_ is the path to a host-order file containing the binary
-object specified as _source_.
+On output, _destination_ is a new path for the binary object's host-order
+data. Export is available from read-only and versioned databases and runs
+as a standalone command outside a history batch.
 
 
 [[examples]]

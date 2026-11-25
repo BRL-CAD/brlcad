@@ -690,9 +690,12 @@ db_history::db5_history_save_is_current(const struct db5_save *save)
 }
 
 #ifdef DB5_ATOMIC_EXPORT
+enum class ExportFormat { DB5, Binary };
+
 template <typename Writer>
 static enum db5_save_result
-publish_export(const struct db_i *snapshot, const char *destination, struct bu_vls *message, Writer write)
+publish_export(const struct db_i *snapshot, const char *destination, struct bu_vls *message, Writer write,
+	       ExportFormat format = ExportFormat::DB5)
 {
     if (!destination || !*destination) {
 	db5_save_message(message, "A new export path is required");
@@ -739,10 +742,10 @@ publish_export(const struct db_i *snapshot, const char *destination, struct bu_v
     TemporarySnapshot temporary(directory);
     if (!temporary.file || !write(temporary.file) || !temporary.finish()) {
 	if (message && !bu_vls_strlen(message))
-	    db5_save_message(message, "Could not write and synchronize the DB5 export");
+	    db5_save_message(message, "Could not write and synchronize the export");
 	return DB5_SAVE_ERROR;
     }
-    if (!open_staged_snapshot(temporary, snapshot, false)) {
+    if (format == ExportFormat::DB5 && !open_staged_snapshot(temporary, snapshot, false)) {
 	db5_save_message(message, "Could not reopen the staged DB5 export");
 	return DB5_SAVE_ERROR;
     }
@@ -753,7 +756,7 @@ publish_export(const struct db_i *snapshot, const char *destination, struct bu_v
     }
 #ifdef DB5_WIN32_EXPORT
     if (!temporary.publish_new(native_destination)) {
-	db5_save_message(message, "Could not publish the DB5 export to a new path");
+	db5_save_message(message, "Could not publish the export to a new path");
 	return DB5_SAVE_ERROR;
     }
 #else
@@ -769,22 +772,60 @@ publish_export(const struct db_i *snapshot, const char *destination, struct bu_v
     // destination. The sibling temporary name is removed afterwards.
     std::filesystem::create_hard_link(temporary.path, destination, error);
     if (error) {
-	db5_save_message(message, "Could not publish the DB5 export to a new path");
+	db5_save_message(message, "Could not publish the export to a new path");
 	return DB5_SAVE_ERROR;
     }
     temporary.created = false;
     if (!bu_file_remove(temporary.path.c_str())) {
-	db5_save_message(message, "DB5 export published but its temporary name could not be removed");
+	db5_save_message(message, "Export published but its temporary name could not be removed");
 	return DB5_SAVE_SYNC_FAILED;
     }
 #endif
     if (!parent.synchronize()) {
-	db5_save_message(message, "DB5 export published but directory synchronization failed");
+	db5_save_message(message, "Export published but directory synchronization failed");
 	return DB5_SAVE_SYNC_FAILED;
     }
     return DB5_SAVE_OK;
 }
 #endif
+
+enum db5_save_result
+db5_export_binunif(const struct db_i *snapshot, const char *name, const char *destination, struct bu_vls *message)
+{
+    db5_save_message(message, "");
+#ifdef DB5_ATOMIC_EXPORT
+    if (!snapshot || db_version(snapshot) != 5 || !name || !*name) {
+	db5_save_message(message, "A DB5 model and binary object name are required");
+	return DB5_SAVE_ERROR;
+    }
+    const auto *object = db_lookup(snapshot, name, LOOKUP_QUIET);
+    if (!object || object->d_major_type != DB5_MAJORTYPE_BINARY_UNIF) {
+	db5_save_message(message, "The source must name a uniform binary object");
+	return DB5_SAVE_ERROR;
+    }
+    return publish_export(snapshot, destination, message, [&](FILE *file) {
+	struct rt_db_internal internal = RT_DB_INTERNAL_INIT_ZERO;
+	const std::unique_ptr<struct rt_db_internal, decltype(&rt_db_free_internal)> data(&internal, rt_db_free_internal);
+	if (rt_db_get_internal(&internal, object, snapshot, nullptr) != ID_BINUNIF) {
+	    db5_save_message(message, "Could not read the binary object");
+	    return false;
+	}
+	const auto *binary = static_cast<const struct rt_binunif_internal *>(internal.idb_ptr);
+	const size_t width = binary ? db5_type_sizeof_h_binu(binary->type) : 0;
+	if (!width || !binary->u.uint8 || !binary->count || binary->count > SIZE_MAX / width) {
+	    db5_save_message(message, "The binary object has no usable contents");
+	    return false;
+	}
+	return fwrite(binary->u.uint8, width, binary->count, file) == binary->count;
+    }, ExportFormat::Binary);
+#else
+    (void)snapshot;
+    (void)name;
+    (void)destination;
+    db5_save_message(message, "Atomic binary export is unavailable on this platform");
+    return DB5_SAVE_ERROR;
+#endif
+}
 
 enum db5_save_result
 db_history::export_db5_snapshot(const struct db_i *snapshot, const char *destination,

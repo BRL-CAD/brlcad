@@ -152,9 +152,15 @@ main(int argc, char **argv)
     {
 	const char *av[] = {"bo", "-o", output_path, "network"};
 	uint16_t exported[sizeof(values) / sizeof(values[0])] = {0};
-	if (ged_exec(gedp, 4, av) != BRLCAD_OK) {
+	const int existing = ged_exec(gedp, 4, av);
+	if (existing != BRLCAD_ERROR || bu_file_size(output_path) != 0)
+	    record_failure("bo modified an existing destination");
+	const int supported = !BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), "Atomic binary export is unavailable on this platform");
+	if (!bu_file_delete(output_path))
+	    record_failure("could not remove the test destination");
+	if (supported && ged_exec(gedp, 4, av) != BRLCAD_OK) {
 	    record_failure("bo failed to export a BINUNIF object");
-	} else {
+	} else if (supported) {
 	    fp = fopen(output_path, "rb");
 	    if (!fp || fread(exported, sizeof(exported[0]),
 			      sizeof(exported) / sizeof(exported[0]), fp) !=

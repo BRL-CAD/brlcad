@@ -653,10 +653,10 @@ RT_EXPORT extern void db_edit_abort(struct db_edit *edit);
 
 struct db5_save;
 
-/** Result of attempting to replace a DB5 file with a complete snapshot. */
+/** Result of atomically publishing a file from a DB5 model. */
 enum db5_save_result {
-    DB5_SAVE_ERROR = -1,        /**< The destination was never replaced. */
-    DB5_SAVE_STALE = -2,        /**< The destination changed since begin. */
+    DB5_SAVE_ERROR = -1,        /**< No new file was published. */
+    DB5_SAVE_STALE = -2,        /**< The source or destination changed. */
     DB5_SAVE_OK = 0,            /**< The new file is installed and synchronized. */
     DB5_SAVE_SYNC_FAILED = 1   /**< Installed, but directory synchronization failed. */
 };
@@ -681,6 +681,11 @@ db5_save_begin(const struct db_i *base, struct bu_vls *message);
 RT_EXPORT extern enum db5_save_result
 db5_save_replace(struct db5_save *save, const struct db_i *snapshot,
 		 struct db_i **replacement, struct bu_vls *message);
+
+/** Publish a uniform binary object's host-order data to a new path. */
+RT_EXPORT extern enum db5_save_result
+db5_export_binunif(const struct db_i *snapshot, const char *name,
+		  const char *destination, struct bu_vls *message);
 
 /** Release a save object. Accepts NULL. */
 RT_EXPORT extern void db5_save_free(struct db5_save *save);
