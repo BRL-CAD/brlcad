@@ -79,7 +79,7 @@ Restore the database to any retained revision. Use `db history log` to find its 
 
 
 __history diff first second [--object name]__::
-List the records created, deleted, or changed between two embedded or workspace revisions. Use `--object` to limit the result to an exact object name.
+List the records created, deleted, or changed between two retained revisions. Use `--object` to limit the result to an exact object name.
 
 
 __history mark name [--move]__::

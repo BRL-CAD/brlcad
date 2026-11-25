@@ -479,15 +479,13 @@ struct ReplayStep {
     bool reverse;
 };
 
-Snapshot
-session_snapshot(const ged_db_history &history, uint64_t target, std::vector<ReplayStep> &steps,
-		  struct bu_vls *out)
+std::vector<ReplayStep>
+session_replay(const ged_db_history &history, uint64_t from, uint64_t to)
 {
     // Parents have smaller IDs. Walk back from each head to their common
     // ancestor, then apply the target branch in parent-to-child order.
+    std::vector<ReplayStep> steps;
     std::vector<uint64_t> forward;
-    uint64_t from = history.head;
-    uint64_t to = target;
     while (from != to) {
 	if (from > to) {
 	    steps.push_back({from, true});
@@ -499,7 +497,14 @@ session_snapshot(const ged_db_history &history, uint64_t target, std::vector<Rep
     }
     for (auto it = forward.rbegin(); it != forward.rend(); ++it)
 	steps.push_back({*it, false});
+    return steps;
+}
 
+Snapshot
+session_snapshot(const ged_db_history &history, uint64_t target, std::vector<ReplayStep> &steps,
+		  struct bu_vls *out)
+{
+    steps = session_replay(history, history.head, target);
     Edit edit(db_edit_begin(history.live, history.revisions.at(target).label.c_str()), db_edit_abort);
     if (!edit) {
 	if (out)
@@ -1577,6 +1582,41 @@ visit_rename_changes(const db_history::Renames &renames, ged_history_change_func
 }
 
 int
+diff_session_revisions(struct bu_vls *out, const ged_db_history &history,
+		       const char *a, const char *b, const char *object)
+{
+    uint64_t first, second;
+    if (!find_revision(out, &history, a, first) || !find_revision(out, &history, b, second))
+	return BRLCAD_ERROR;
+
+    struct RecordChange {
+	const std::vector<uint8_t> *before;
+	const std::vector<uint8_t> *after;
+    };
+    // Compare the first and last values along the path, including on a
+    // branch crossing. Every touched record is already in the journal.
+    std::map<std::string_view, RecordChange> changed;
+    for (const auto &step : session_replay(history, first, second)) {
+	for (const auto &change : history.revisions.at(step.revision).changes) {
+	    if (object && change.name != object)
+		continue;
+	    const auto &before = step.reverse ? change.after : change.before;
+	    const auto &after = step.reverse ? change.before : change.after;
+	    auto entry = changed.try_emplace(change.name, RecordChange{&before, &after}).first;
+	    entry->second.after = &after;
+	}
+    }
+
+    bu_vls_printf(out, "changes %ju %ju", static_cast<uintmax_t>(first), static_cast<uintmax_t>(second));
+    for (const auto &entry : changed) {
+	const auto &change = entry.second;
+	if (*change.before != *change.after)
+	    print_change(out, !change.before->empty(), !change.after->empty(), entry.first);
+    }
+    return BRLCAD_OK;
+}
+
+int
 diff_archive_revisions(struct ged *gedp, const db_history::Pack &pack, const Workspace *workspace,
 		       const char *a, const char *b, const char *object)
 {
@@ -2361,16 +2401,24 @@ ged_db_history_command(struct ged *gedp, int argc, const char **argv)
 	const bool diff = (argc == 4 || (argc == 6 && BU_STR_EQUAL(argv[4], "--object"))) && BU_STR_EQUAL(argv[1], "diff");
 	const bool mark = (argc == 3 || (argc == 4 && BU_STR_EQUAL(argv[3], "--move"))) && BU_STR_EQUAL(argv[1], "mark");
 	if (diff || mark) {
-	    if (!history || (!history->workspace && !is_embedded(*history))) {
-		bu_vls_strcat(gedp->ged_result_str, "This command requires embedded or workspace history");
+	    if (!history) {
+		bu_vls_strcat(gedp->ged_result_str, "Enable database history before using this command");
 		return BRLCAD_ERROR;
 	    }
-	    if (mark)
+	    const bool persistent = history->workspace || is_embedded(*history);
+	    if (mark) {
+		if (!persistent) {
+		    bu_vls_strcat(gedp->ged_result_str, "Checkpoints require embedded or workspace history");
+		    return BRLCAD_ERROR;
+		}
 		return mark_archive_revision(gedp, *history, argv[2], argc == 4);
+	    }
+	    const char *object = argc == 6 ? argv[5] : nullptr;
+	    if (!persistent)
+		return diff_session_revisions(gedp->ged_result_str, *history, argv[2], argv[3], object);
 	    db_history::Db5HistoryDraft graph;
 	    const auto *pack = history_graph(gedp->ged_result_str, *history, graph);
-	    return pack ? diff_archive_revisions(gedp, *pack, history->workspace.get(), argv[2], argv[3],
-		argc == 6 ? argv[5] : nullptr) : BRLCAD_ERROR;
+	    return pack ? diff_archive_revisions(gedp, *pack, history->workspace.get(), argv[2], argv[3], object) : BRLCAD_ERROR;
 	}
 	bu_vls_strcat(gedp->ged_result_str, "Usage: db history " GED_DB_HISTORY_USAGE);
 	return GED_HELP;

@@ -466,8 +466,20 @@ test_session_promotion()
     const char *status[] = {"db", "history", "status", nullptr};
     const char *title[] = {"title", nullptr};
     CHECK(run(gedp, first) == BRLCAD_OK && run(gedp, rename) == BRLCAD_OK);
+    const auto first_head = selected_id(gedp);
     CHECK(run(gedp, undo) == BRLCAD_OK && run(gedp, undo) == BRLCAD_OK);
-    CHECK(run(gedp, second) == BRLCAD_OK && run(gedp, undo) == BRLCAD_OK);
+    const auto session_root = selected_id(gedp);
+    CHECK(run(gedp, second) == BRLCAD_OK);
+    const auto second_head = selected_id(gedp);
+    CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == session_root);
+    const char *diff[] = {"db", "history", "diff", first_head.c_str(), second_head.c_str(), nullptr};
+    CHECK(run(gedp, diff) == BRLCAD_OK && contains_result(gedp, "create branch.s") &&
+	contains_result(gedp, "delete renamed.s") && contains_result(gedp, "update _GLOBAL"));
+    const char *filtered[] = {"db", "history", "diff", first_head.c_str(), second_head.c_str(),
+	"--object", "branch.s", nullptr};
+    CHECK(run(gedp, filtered) == BRLCAD_OK && contains_result(gedp, "create branch.s") &&
+	!contains_result(gedp, "delete renamed.s") && !contains_result(gedp, "update _GLOBAL") &&
+	selected_id(gedp) == session_root);
     char archive_copy[MAXPATHLEN] = {};
     file = bu_temp_file(archive_copy, sizeof(archive_copy));
     CHECK(file && fclose(file) == 0 && bu_file_delete(archive_copy));
