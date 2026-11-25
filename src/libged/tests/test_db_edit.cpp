@@ -623,7 +623,8 @@ test_workspace_history()
     if (exported != BRLCAD_OK && contains_result(writer.get(), "unavailable"))
 	return 0;
     CHECK(exported == BRLCAD_OK);
-    CHECK(run(writer.get(), status) == BRLCAD_OK && contains_result(writer.get(), ("last export " + branch).c_str()));
+    CHECK(run(writer.get(), status) == BRLCAD_OK && contains_result(writer.get(), ("last export " + branch).c_str()) &&
+	contains_result(writer.get(), "last export time "));
     Ged plain_db(ged_open("db", plain.c_str(), 1), ged_close);
     const char *title[] = {"title", nullptr};
     CHECK(plain_db && run(plain_db.get(), status) == BRLCAD_OK && contains_result(plain_db.get(), "mode disabled") &&
@@ -633,6 +634,10 @@ test_workspace_history()
     CHECK(run(writer.get(), export_archive) == BRLCAD_OK);
     writer.reset(ged_open("db", workspace.c_str(), 1));
     CHECK(writer && run(writer.get(), status) == BRLCAD_OK && contains_result(writer.get(), ("last export " + branch).c_str()));
+    CHECK(run(writer.get(), status_json) == BRLCAD_OK);
+    const auto exported_json = nlohmann::json::parse(bu_vls_addr(writer->ged_result_str), nullptr, false);
+    CHECK(!exported_json.is_discarded() && exported_json["last_export"] == branch &&
+	exported_json["last_export_time"].is_number_integer() && exported_json["last_export_time"].get<int64_t>() > 0);
     Ged archived(ged_open("db", archive.c_str(), 1), ged_close);
     CHECK(archived && selected_id(archived.get()) == branch && run(archived.get(), show) == BRLCAD_OK);
     const auto copy = (fixture.path / "copy").string();

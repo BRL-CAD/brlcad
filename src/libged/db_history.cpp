@@ -84,7 +84,7 @@ struct ged_db_history {
     std::unique_ptr<db_history::Workspace> workspace;
     db_history::WorkspaceHead workspace_head;
     bool workspace_writable = false;
-    db_history::Id local_export = db_history::absent;
+    db_history::WorkspaceExport local_export;
     Edit conflict{nullptr, db_edit_abort};
     db_history::Revision conflict_revision;
     std::unique_ptr<struct db5_save, decltype(&db5_save_free)> save{nullptr, db5_save_free};
@@ -1020,15 +1020,12 @@ resolve_archive_revision(struct bu_vls *out, const db_history::Pack &pack, std::
 }
 
 const db_history::Pack *
-history_graph(struct bu_vls *out, const ged_db_history &history, db_history::Db5HistoryDraft &draft,
-	      WorkspaceHead *current = nullptr, db_history::Id *last_export = nullptr)
+history_graph(struct bu_vls *out, const ged_db_history &history, db_history::Db5HistoryDraft &draft)
 {
     if (history.workspace) {
 	WorkspaceHead observed;
-	if (!history.workspace->read_graph(history.workspace_head, observed, draft, out, last_export))
+	if (!history.workspace->read_graph(history.workspace_head, observed, draft, out))
 	    return nullptr;
-	if (current)
-	    *current = observed;
 	return &draft.pack;
     }
     if (history.embedded.pack.selected_revision != db_history::absent)
@@ -1175,7 +1172,7 @@ load_history_status(const ged_db_history *history, struct ged_history_status &st
 	const auto *pack = &history->embedded.pack;
 	if (history->workspace) {
 	    WorkspaceHead current;
-	    db_history::Id last_export;
+	    db_history::WorkspaceExport last_export;
 	    if (!history->workspace->read_graph(history->workspace_head, current, graph, message, &last_export))
 		return false;
 	    pack = &graph.pack;
@@ -1187,10 +1184,13 @@ load_history_status(const ged_db_history *history, struct ged_history_status &st
 	    status.generation = history->workspace_head.generation;
 	    status.workspace_generation = current.generation;
 	    status.workspace_head = bu_strdup(id_string(current.revision).c_str());
-	    if (history->local_export != db_history::absent)
+	    if (history->local_export.revision != db_history::absent &&
+		history->local_export.timestamp >= last_export.timestamp)
 		last_export = history->local_export;
-	    if (last_export != db_history::absent)
-		status.exported_revision = bu_strdup(id_string(last_export).c_str());
+	    if (last_export.revision != db_history::absent) {
+		status.exported_revision = bu_strdup(id_string(last_export.revision).c_str());
+		status.exported_at = last_export.timestamp;
+	    }
 	} else {
 	    status.mode = GED_HISTORY_EMBEDDED;
 	    status.state = history_state(history->embedded_status);
@@ -1289,6 +1289,12 @@ print_status_text(struct bu_vls *out, const struct ged_history_status &status)
 	if (status.staged_conflict)
 	    bu_vls_strcat(out, "\nstaged conflict");
 	bu_vls_printf(out, "\nlast export %s", status.exported_revision ? status.exported_revision : "none");
+	if (status.exported_at) {
+	    struct bu_vls utc = BU_VLS_INIT_ZERO;
+	    bu_utctime(&utc, status.exported_at);
+	    bu_vls_printf(out, "\nlast export time %s", bu_vls_cstr(&utc));
+	    bu_vls_free(&utc);
+	}
     }
 }
 
@@ -1314,6 +1320,7 @@ print_status_json(struct bu_vls *out, const struct ged_history_status &status)
 	{"staged_conflict", status.staged_conflict != 0}, {"retention_boundary", status.retention_boundary != 0},
 	{"revision", optional_text(status.selected_revision)}, {"oldest_revision", optional_text(status.oldest_revision)},
 	{"workspace_head", optional_text(status.workspace_head)}, {"last_export", optional_text(status.exported_revision)},
+	{"last_export_time", status.exported_at ? Json(status.exported_at) : Json(nullptr)},
 	{"generation", workspace ? Json(status.generation) : Json(nullptr)},
 	{"workspace_generation", workspace ? Json(status.workspace_generation) : Json(nullptr)},
 	{"session_bytes", session ? Json(status.session_bytes) : Json(nullptr)},
@@ -1668,11 +1675,11 @@ export_history(struct ged *gedp, ged_db_history *history, const char *path, bool
 	bu_vls_strcat(out, "Exported ");
 	append_printable(out, path);
 	if (history && history->workspace) {
-	    history->local_export = history->workspace_head.revision;
+	    history->local_export = {history->workspace_head.revision, revision_time()};
 	    if (history->workspace_writable) {
 		struct bu_vls message = BU_VLS_INIT_ZERO;
 		if (history->workspace->record_export(history->local_export, &message))
-		    history->local_export = db_history::absent;
+		    history->local_export = {};
 		else
 		    bu_vls_printf(out, "\nCould not record the export in the workspace (%s)", bu_vls_addr(&message));
 		bu_vls_free(&message);

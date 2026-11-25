@@ -105,6 +105,7 @@ namespace fs = std::filesystem;
 constexpr std::string_view bootstrap_key = "workspace";
 constexpr std::string_view head_key = "head";
 constexpr std::string_view export_key = "last_export";
+constexpr std::string_view export_observation_key = "last_export_observation";
 constexpr char data_file_name[] = "data.mdb";
 constexpr std::array<uint8_t, 8> signature{'B', 'R', 'L', 'C', 'A', 'D', 'W', 0};
 constexpr uint16_t schema_major = 1;
@@ -115,6 +116,7 @@ constexpr uint64_t required_features = reader_pin_feature;
 constexpr uint16_t artifact_encoding = 1;
 constexpr size_t bootstrap_size = signature.size() + 3 * sizeof(uint16_t) + sizeof(uint64_t);
 constexpr size_t head_size = 2 * absent.size() + sizeof(uint64_t);
+constexpr size_t export_observation_size = absent.size() + sizeof(uint64_t);
 constexpr uint64_t initial_generation = 1;
 constexpr size_t initial_map_size = 16 * 1024 * 1024;
 constexpr unsigned int database_count = 5;
@@ -1156,17 +1158,27 @@ Workspace::read_record(const Id &id, void *record, size_t size) const
 
 bool
 Workspace::read_graph(const WorkspaceHead &selected, WorkspaceHead &current,
-		      Db5HistoryDraft &result, struct bu_vls *message, Id *last_export) const
+		      Db5HistoryDraft &result, struct bu_vls *message, WorkspaceExport *last_export) const
 {
     return store->read([&](MDB_txn *txn, const Tables &tables) {
 	WorkspaceHead observed;
 	Pack graph;
 	if (!read_head(txn, tables, observed) || !load_pack(txn, tables, selected, true, graph))
 	    return report(message, "The workspace revision graph is invalid");
-	Id exported = absent;
+	WorkspaceExport exported;
 	ByteView saved;
-	if (last_export && get(txn, tables.metadata, bytes(export_key), saved) && !read_id(saved, exported))
-	    return report(message, "The last exported revision is invalid");
+	if (last_export && get(txn, tables.metadata, bytes(export_key), saved)) {
+	    if (!read_id(saved, exported.revision))
+		return report(message, "The last exported revision is invalid");
+	    // A preexisting writer only updates the ID key.
+	    if (get(txn, tables.metadata, bytes(export_observation_key), saved) && saved.size == export_observation_size &&
+		std::equal(exported.revision.begin(), exported.revision.end(), saved.data)) {
+		uint64_t timestamp;
+		read_integer(saved.data + exported.revision.size(), timestamp);
+		if (timestamp <= static_cast<uint64_t>(INT64_MAX))
+		    exported.timestamp = static_cast<int64_t>(timestamp);
+	    }
+	}
 	copy_pack(std::move(graph), result);
 	current = observed;
 	if (last_export)
@@ -1244,16 +1256,20 @@ Workspace::verify(struct bu_vls *message) const
 }
 
 bool
-Workspace::record_export(const Id &revision, struct bu_vls *message)
+Workspace::record_export(const WorkspaceExport &exported, struct bu_vls *message)
 {
     if (!writable)
 	return report(message, "The workspace is open read-only");
     try {
 	return store->transact(0, [&](Transaction &txn, const Tables &tables) {
-	    Revision exported;
-	    if (!load_revision(txn.get(), tables, revision, exported))
+	    Revision revision;
+	    if (!load_revision(txn.get(), tables, exported.revision, revision))
 		return report(message, "The exported revision is unavailable");
-	    put(txn.get(), tables.metadata, bytes(export_key), bytes(revision), 0);
+	    std::array<uint8_t, export_observation_size> observation;
+	    std::copy(exported.revision.begin(), exported.revision.end(), observation.begin());
+	    write_integer(observation.data() + exported.revision.size(), static_cast<uint64_t>(exported.timestamp));
+	    put(txn.get(), tables.metadata, bytes(export_key), bytes(exported.revision), 0);
+	    put(txn.get(), tables.metadata, bytes(export_observation_key), bytes(observation), 0);
 	    check(mdb_txn_commit(txn.release()));
 	    return true;
 	});

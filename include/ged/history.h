@@ -74,6 +74,7 @@ struct ged_history_status {
     struct ged_history_choice undo;
     size_t redo_count;
     const struct ged_history_choice *redo;
+    int64_t exported_at;           /**< Unix time in seconds, or zero if unavailable. */
 };
 
 struct ged_history_revision {

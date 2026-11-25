@@ -202,8 +202,11 @@ the new name or target with an advanced generation.
 
 An optional `last_export` key in the unnamed database holds the ID of
 the last successfully exported revision recorded by a writable
-workspace handle. This observation leaves the modeling generation
-unchanged.
+workspace handle. The optional `last_export_observation` key contains
+the same 32-byte revision ID followed by the big-endian unsigned
+64-bit export time in Unix seconds. Readers use the time only when the
+IDs agree. Both keys are written in one transaction without advancing
+the modeling generation. Earlier readers can still read `last_export`.
 
 Pruning publishes retained artifacts, new boundary snapshots, updated
 redo preferences and the advanced generation together. Unchanged

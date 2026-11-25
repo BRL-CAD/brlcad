@@ -26,6 +26,7 @@
 #include <memory>
 
 #include <QCursor>
+#include <QDateTime>
 #include <QKeySequence>
 #include <QTimer>
 #include <QMessageBox>
@@ -419,6 +420,7 @@ QgEdMainWindow::UpdateHistoryControls()
     history_view->setEnabled(status && status->mode != GED_HISTORY_DISABLED);
 
     QString mode;
+    QString export_time;
     if (status) {
 	switch (status->mode) {
 	    case GED_HISTORY_DISABLED: break;
@@ -430,8 +432,11 @@ QgEdMainWindow::UpdateHistoryControls()
 	    mode += tr(" (read-only)");
 	if (status->exported_revision)
 	    mode += tr(" · Exported %1").arg(QString::fromUtf8(status->exported_revision).left(12));
+	if (status->exported_at)
+	    export_time = tr("Last DB5 export at %1").arg(QDateTime::fromSecsSinceEpoch(status->exported_at).toUTC().toString(Qt::ISODate));
     }
     history_mode->setText(mode);
+    history_mode->setToolTip(export_time);
     history_mode->setVisible(!mode.isEmpty());
 }
 

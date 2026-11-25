@@ -37,6 +37,11 @@ struct WorkspaceHead {
     uint64_t generation = 0;
 };
 
+struct WorkspaceExport {
+    Id revision = absent;
+    int64_t timestamp = 0;
+};
+
 struct WorkspaceRetention {
     size_t keep = 0;
     std::set<Id> drop;
@@ -86,13 +91,13 @@ public:
     // Read graph metadata and owned revision payloads for inspection.
     // The result omits model snapshots, descriptors and bodies.
     RT_EXPORT bool read_graph(const WorkspaceHead &view, WorkspaceHead &current,
-	Db5HistoryDraft &result, struct bu_vls *message, Id *last_export = nullptr) const;
+	Db5HistoryDraft &result, struct bu_vls *message, WorkspaceExport *last_export = nullptr) const;
     RT_EXPORT bool read_model_at(const Id &revision, Manifest &model, struct bu_vls *message) const;
     RT_EXPORT bool copy_to(const WorkspaceHead &view, const char *destination, struct bu_vls *message) const;
     RT_EXPORT enum db5_save_result export_snapshot(const struct db_i *view, const char *destination,
 	bool with_history, struct bu_vls *message) const;
     RT_EXPORT bool verify(struct bu_vls *message) const;
-    RT_EXPORT bool record_export(const Id &revision, struct bu_vls *message);
+    RT_EXPORT bool record_export(const WorkspaceExport &exported, struct bu_vls *message);
     RT_EXPORT bool preview_prune(const WorkspaceHead &expected, const WorkspaceRetention &policy,
 	WorkspacePrunePreview &preview, struct bu_vls *message) const;
     RT_EXPORT WorkspaceWriteStatus prune(const WorkspaceHead &expected, const WorkspaceRetention &policy,
