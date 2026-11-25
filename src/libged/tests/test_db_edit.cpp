@@ -783,11 +783,17 @@ test_binary_asset_history(struct ged *gedp, const std::filesystem::path &directo
 
     const auto root = selected_id(gedp);
     const auto import = "{bo -i u nS terrain.bin {" + original_file.string() +
-	"}} {put terrain.s dsp src o name terrain.bin w 2 n 2}";
+	"}} {put terrain.s dsp src o name terrain.bin w 2 n 2} {bo -i u C volume.bin {" +
+	original_file.string() + "}} {put volume.s vol src o name volume.bin w 2 n 2 d 2"
+	" size {1 1 1} mat {1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1}}";
     const char *first[] = {"db", "history", "batch", "Import terrain", import.c_str(), nullptr};
     CHECK(run(gedp, first) == BRLCAD_OK);
     const auto before = selected_id(gedp);
     CHECK(before != root);
+    db_update_nref(gedp->dbip);
+    auto *terrain_data = db_lookup(gedp->dbip, "terrain.bin", LOOKUP_QUIET);
+    auto *volume_data = db_lookup(gedp->dbip, "volume.bin", LOOKUP_QUIET);
+    CHECK(terrain_data && terrain_data->d_nref == 1 && volume_data && volume_data->d_nref == 1);
     const auto terrain_matches = [gedp](const auto &samples) {
 	auto *grid = db_lookup(gedp->dbip, "terrain.bin", LOOKUP_QUIET);
 	struct bu_external raw = BU_EXTERNAL_INIT_ZERO;
@@ -818,12 +824,30 @@ test_binary_asset_history(struct ged *gedp, const std::filesystem::path &directo
     };
     CHECK(terrain_matches(original));
 
-    const auto replace = "{kill terrain.bin} {bo -i u nS terrain.bin {" + replacement_file.string() + "}}";
-    const auto with_output = replace + " {bo -o {" + external_file.string() + "} terrain.bin}";
+    const auto import_new = "{bo -i u nS terrain.bin {" + replacement_file.string() + "}}";
+    const auto with_output = "{kill terrain.bin volume.bin} " + import_new + " {bo -o {" +
+	external_file.string() + "} terrain.bin}";
     const char *unsupported[] = {"db", "history", "batch", "Attempt external write", with_output.c_str(), nullptr};
+    const auto inspect_missing_assets = [](int, const char **, void *context, void *data) {
+	auto *view = static_cast<struct ged *>(context)->dbip;
+	const auto count_missing = [](struct db_i *, struct directory *parent, struct directory *child,
+				      const char *name, db_op_t, matp_t, void *counter) {
+	    if (parent && !child && (BU_STR_EQUAL(name, "terrain.bin") || BU_STR_EQUAL(name, "volume.bin")))
+		++*static_cast<int *>(counter);
+	};
+	if (db_add_update_nref_clbk(view, count_missing, data) < 0)
+	    return BRLCAD_ERROR;
+	db_update_nref(view);
+	return db_rm_update_nref_clbk(view, count_missing, data) < 0 ? BRLCAD_ERROR : BRLCAD_OK;
+    };
+    int missing_assets = 0;
+    CHECK(ged_clbk_set(gedp, "bo", BU_CLBK_PRE, inspect_missing_assets, &missing_assets) == BRLCAD_OK);
     CHECK(run(gedp, unsupported) == BRLCAD_ERROR && contains_result(gedp, "Batch command 3 failed"));
-    CHECK(!std::filesystem::exists(external_file) && selected_id(gedp) == before && terrain_matches(original));
+    CHECK(ged_clbk_set(gedp, "bo", BU_CLBK_PRE, nullptr, nullptr) == GED_OVERRIDE);
+    CHECK(missing_assets == 2 && !std::filesystem::exists(external_file) &&
+	selected_id(gedp) == before && terrain_matches(original) && db_lookup(gedp->dbip, "volume.bin", LOOKUP_QUIET));
 
+    const auto replace = "{kill terrain.bin} " + import_new;
     const char *second[] = {"db", "history", "batch", "Replace terrain samples", replace.c_str(), nullptr};
     CHECK(run(gedp, second) == BRLCAD_OK && terrain_matches(replacement));
     const auto after = selected_id(gedp);

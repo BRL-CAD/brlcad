@@ -267,6 +267,14 @@ samples byte for byte and both workspace verifiers passed. A GED
 regression covered binary import, aborted replacement and exact
 replay in session DB5, embedded DB5 and LMDB.
 
+Reference scans for object-backed DSP and VOL now read the primitive
+parameters. They report a named dependency even while the target is
+missing in a staged edit. A warm scan of 64 DSP primitives sharing one
+8.39 MB grid went from a median of 523 milliseconds to 38 microseconds
+over seven runs. The same fixture reported all 64 references with
+either reader. GED tests exercised resolved and missing edges for both
+primitive types.
+
 These grids support offering reverse deltas for localized edits and
 offset shifts when encoding fits a predictable time budget. A noisy
 replacement benefits from a full-body fallback. Keep version 1's

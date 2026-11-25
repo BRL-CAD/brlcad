@@ -118,6 +118,8 @@ int db5_fwrite_hidden_u8(FILE *fp, const char *name, size_t body_size,
 int db5_load_global(struct db_i *dbip, const struct directory *dp);
 int db5_get_raw_internal_split(struct db5_raw_internal *raw, const unsigned char *prefix,
 			       size_t prefix_size, const unsigned char *suffix, size_t suffix_size);
+int rt_dsp_database_reference(const struct bu_external *body, struct bu_vls *name);
+int rt_vol_database_reference(const struct bu_external *body, struct bu_vls *name);
 void db_workspace_free_view(struct db_i_internal *i);
 int db_workspace_read(const struct db_i *dbip, const struct directory *dp, void *buffer, size_t count);
 void db_edit_free_view(struct db_i_internal *i);

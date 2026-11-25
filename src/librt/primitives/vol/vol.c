@@ -812,29 +812,13 @@ rt_vol_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     return BRLCAD_OK;
 }
 
-/**
- * Read in the information from the string solid record.
- * Then, as a service to the application, read in the bitmap
- * and set up some of the associated internal variables.
- */
-C_DECL int
-rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
+static int
+vol_read_parameters(struct rt_vol_internal *vip, const struct bu_external *body)
 {
-    register struct rt_vol_internal *vip;
     struct bu_vls str = BU_VLS_INIT_ZERO;
 
-    if (dbip) RT_CK_DBI(dbip);
-
-    BU_CK_EXTERNAL(ep);
-
-    RT_CK_DB_INTERNAL(ip);
-    ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    ip->idb_type = ID_VOL;
-    ip->idb_meth = &OBJ[ID_VOL];
-    BU_ALLOC(ip->idb_ptr, struct rt_vol_internal);
-
-    vip = (struct rt_vol_internal *)ip->idb_ptr;
-    vip->magic = RT_VOL_INTERNAL_MAGIC;
+    if (!body->ext_buf || !memchr(body->ext_buf, '\0', body->ext_nbytes))
+	return -2;
 
     /* Establish defaults */
     MAT_IDN(vip->mat);
@@ -847,12 +831,45 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Default VOL cell size in ideal coordinates is one unit/cell */
     VSETALL(vip->cellsize, 1);
 
-    bu_vls_strncpy(&str, (const char *)ep->ext_buf, ep->ext_nbytes);
-    if (bu_struct_parse(&str, rt_vol_parse, (char *)vip, NULL) < 0) {
-	bu_vls_free(&str);
-	return -2;
-    }
+    bu_vls_strcpy(&str, (const char *)body->ext_buf);
+    const int result = bu_struct_parse(&str, rt_vol_parse, (char *)vip, NULL);
     bu_vls_free(&str);
+    return result < 0 ? -2 : 0;
+}
+
+int
+rt_vol_database_reference(const struct bu_external *body, struct bu_vls *name)
+{
+    struct rt_vol_internal volume = {0};
+    if (vol_read_parameters(&volume, body) != 0 ||
+	volume.datasrc != RT_VOL_SRC_OBJ || !volume.name[0])
+	return 0;
+    bu_vls_strcpy(name, volume.name);
+    return 1;
+}
+
+/**
+ * Read the parameters and load the referenced grid for geometry operations.
+ */
+C_DECL int
+rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
+{
+    if (dbip) RT_CK_DBI(dbip);
+
+    BU_CK_EXTERNAL(ep);
+    RT_CK_DB_INTERNAL(ip);
+
+    ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    ip->idb_type = ID_VOL;
+    ip->idb_meth = &OBJ[ID_VOL];
+    BU_ALLOC(ip->idb_ptr, struct rt_vol_internal);
+
+    struct rt_vol_internal *vip = (struct rt_vol_internal *)ip->idb_ptr;
+    vip->magic = RT_VOL_INTERNAL_MAGIC;
+    const int parsed = vol_read_parameters(vip, ep);
+    if (parsed != 0)
+	return parsed;
+
     /* Check for reasonable values */
     if (vip->name[0] == '\0'
 	|| vip->xdim < 1 || vip->ydim < 1 || vip->zdim < 1

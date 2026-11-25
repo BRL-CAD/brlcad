@@ -65,6 +65,31 @@
 
 #include "../../librt_private.h"
 
+enum {
+    DSP_DB5_SOURCE = 2 * SIZEOF_NETWORK_LONG + ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_SHORT,
+    DSP_DB5_CUT,
+    DSP_DB5_NAME
+};
+
+static const char *
+dsp_db5_name(const struct bu_external *body)
+{
+    if (!body->ext_buf || body->ext_nbytes <= DSP_DB5_NAME)
+	return NULL;
+    const char *name = (const char *)body->ext_buf + DSP_DB5_NAME;
+    return memchr(name, '\0', body->ext_nbytes - DSP_DB5_NAME) ? name : NULL;
+}
+
+int
+rt_dsp_database_reference(const struct bu_external *body, struct bu_vls *name)
+{
+    const char *source = dsp_db5_name(body);
+    if (!source || !*source || body->ext_buf[DSP_DB5_SOURCE] != RT_DSP_SRC_OBJ)
+	return 0;
+    bu_vls_strcpy(name, source);
+    return 1;
+}
+
 static uint32_t
 dsp_get_uint32(const unsigned char *cp)
 {
@@ -3767,7 +3792,9 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
     BU_CK_EXTERNAL(ep);
 
-    BU_ASSERT(ep->ext_nbytes > 141);
+    const char *name = dsp_db5_name(ep);
+    if (!name || !*name)
+	return -2;
 
     RT_CK_DB_INTERNAL(ip);
 
@@ -3814,10 +3841,8 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
     /* convert smooth flag */
     dsp_ip->dsp_smooth = dsp_get_uint16(cp);
-    cp += SIZEOF_NETWORK_SHORT;
 
-    dsp_ip->dsp_datasrc = *cp;
-    cp++;
+    dsp_ip->dsp_datasrc = ep->ext_buf[DSP_DB5_SOURCE];
     switch (dsp_ip->dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
 	case RT_DSP_SRC_FILE:
@@ -3830,8 +3855,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	    break;
     }
 
-    dsp_ip->dsp_cuttype = *cp;
-    cp++;
+    dsp_ip->dsp_cuttype = ep->ext_buf[DSP_DB5_CUT];
     switch (dsp_ip->dsp_cuttype) {
 	case DSP_CUT_DIR_ADAPT:
 	case DSP_CUT_DIR_llUR:
@@ -3845,9 +3869,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     }
 
     /* convert name of data location */
-    bu_vls_init(&dsp_ip->dsp_name);
-    bu_vls_strncpy(&dsp_ip->dsp_name, (char *)cp,
-		   ep->ext_nbytes - (cp - (unsigned char *)ep->ext_buf));
+    bu_vls_strcpy(&dsp_ip->dsp_name, name);
 
     /* Apply Modeling transform */
     if (mat == NULL) mat = bn_mat_identity;
@@ -3887,11 +3909,7 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
 
-    ep->ext_nbytes =
-	SIZEOF_NETWORK_LONG * 2 +
-	SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_MAT +
-	SIZEOF_NETWORK_SHORT +
-	2 + name_len;
+    ep->ext_nbytes = DSP_DB5_NAME + name_len;
 
     ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "dsp external");
     cp = (unsigned char *)ep->ext_buf;
