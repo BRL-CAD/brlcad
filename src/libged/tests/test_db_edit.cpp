@@ -651,6 +651,23 @@ test_workspace_history()
     CHECK(run(writer.get(), mark) != BRLCAD_OK && contains_result(writer.get(), "already exists"));
     const char *log[] = {"db", "history", "log", nullptr};
     CHECK(run(writer.get(), log) == BRLCAD_OK && contains_result(writer.get(), " rename"));
+    const char *log_json[] = {"db", "history", "log", "--json", nullptr};
+    CHECK(run(writer.get(), log_json) == BRLCAD_OK);
+    const auto log_data = nlohmann::json::parse(bu_vls_addr(writer->ged_result_str), nullptr, false);
+    CHECK(!log_data.is_discarded() && log_data["schema"] == 1 && log_data["revisions"].size() == 2 &&
+	log_data["checkpoints"][0]["revision"] == renamed && log_data["checkpoints"][0]["name"] == "rename");
+    const char *filter_json[] = {"db", "history", "log", "--object", "outline.s", "--json", nullptr};
+    CHECK(run(writer.get(), filter_json) == BRLCAD_OK);
+    const auto filtered = nlohmann::json::parse(bu_vls_addr(writer->ged_result_str), nullptr, false);
+    CHECK(!filtered.is_discarded() && filtered["revisions"].size() == 1 &&
+	filtered["revisions"][0]["id"] == renamed && filtered["revisions"][0]["selected"] == true &&
+	filtered["checkpoints"].empty());
+    const char *show_json[] = {"db", "history", "show", "rename", "--json", nullptr};
+    CHECK(run(writer.get(), show_json) == BRLCAD_OK);
+    const auto shown = nlohmann::json::parse(bu_vls_addr(writer->ged_result_str), nullptr, false);
+    CHECK(!shown.is_discarded() && shown["schema"] == 1 && shown["revision"]["id"] == renamed &&
+	shown["revision"]["parent"] == root && shown["changes"][0]["type"] == "rename" &&
+	shown["changes"][0]["name"] == old_name && shown["changes"][0]["new_name"] == "outline.s");
     const char *diff[] = {"db", "history", "diff", root.c_str(), "rename", "--object", "extrusion.s", nullptr};
     CHECK(run(writer.get(), diff) == BRLCAD_OK && contains_result(writer.get(), "update extrusion.s") &&
 	!contains_result(writer.get(), "outline.s"));

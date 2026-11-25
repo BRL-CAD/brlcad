@@ -62,12 +62,16 @@ __history workspace directory__::
 Create a durable workspace in a new directory and switch to it. The workspace imports the open DB5 model and any retained session or embedded history. Subsequent edits save to the workspace. Reopen it with `db open directory`. The source file remains available. Run this command with the open workspace's path to report its status, or specify a new directory to copy it.
 
 
-__history log [--object name]__::
+__history log [--object name] [--json]__::
 List retained revisions, including alternate branches. The optional name filter lists only revisions that changed that exact object name. An unfiltered embedded or workspace log also lists saved marks.
++
+The schema version 1 JSON result contains `revisions` and `checkpoints` arrays. Each revision includes `id`, `parent`, `label`, `authored` in Unix seconds, `selected`, and `retention_boundary`. Each checkpoint contains a `name` and a `revision` ID.
 
 
-__history show revision__::
+__history show revision [--json]__::
 List the records created, deleted, or updated by a single revision. A recorded rename also shows the old and new names together. Changed references appear in the same revision.
++
+The schema version 1 JSON result contains `revision` and `changes`. Change entries report `type`, `name`, and `new_name` for a rename. Rename entries are followed by the underlying record changes.
 
 
 __history checkout revision__::

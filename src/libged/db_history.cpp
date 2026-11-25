@@ -49,9 +49,11 @@ namespace {
 constexpr size_t session_budget = 64 * 1024 * 1024;
 constexpr size_t label_limit = 128;
 constexpr uint64_t no_revision = UINT64_MAX;
+constexpr int history_json_version = 1;
 
 using Edit = std::unique_ptr<struct db_edit, decltype(&db_edit_abort)>;
 using Snapshot = std::unique_ptr<struct db_i, decltype(&db_close)>;
+using Json = nlohmann::json;
 
 } // namespace
 
@@ -969,6 +971,82 @@ print_revision_change(const struct ged_history_change *change, void *data)
     return BRLCAD_OK;
 }
 
+Json
+history_json_string(const char *value)
+{
+    return value ? Json(value) : Json(nullptr);
+}
+
+void
+append_history_json(struct bu_vls *out, const Json &result)
+{
+    bu_vls_strcat(out, result.dump(-1, ' ', false, Json::error_handler_t::replace).c_str());
+}
+
+Json
+revision_json(const struct ged_history_revision &revision)
+{
+    return {{"id", revision.id}, {"parent", history_json_string(revision.parent)},
+	{"label", revision.label}, {"authored", revision.authored}, {"selected", revision.selected != 0},
+	{"retention_boundary", revision.retention_boundary != 0}};
+}
+
+int
+history_log(struct ged *gedp, int argc, const char **argv)
+{
+    auto *out = gedp->ged_result_str;
+    const char *object = nullptr;
+    bool json = false;
+    for (int i = 0; i < argc; ++i) {
+	if (BU_STR_EQUAL(argv[i], "--json") && !json) {
+	    json = true;
+	} else if (BU_STR_EQUAL(argv[i], "--object") && !object && i + 1 < argc) {
+	    object = argv[++i];
+	} else {
+	    bu_vls_strcat(out, "Usage: db history log [--object name] [--json]");
+	    return BRLCAD_ERROR;
+	}
+    }
+
+    if (!json)
+	return ged_history_visit(gedp, object, print_revision, print_checkpoint, out, out);
+
+    Json output = {{"schema", history_json_version}, {"revisions", Json::array()}, {"checkpoints", Json::array()}};
+    const int status = ged_history_visit(gedp, object,
+	[](const struct ged_history_revision *revision, void *data) {
+	    (*static_cast<Json *>(data))["revisions"].push_back(revision_json(*revision));
+	    return BRLCAD_OK;
+	}, [](const char *name, const char *revision, void *data) {
+	    (*static_cast<Json *>(data))["checkpoints"].push_back({{"name", name}, {"revision", revision}});
+	    return BRLCAD_OK;
+	}, &output, out);
+    if (status == BRLCAD_OK)
+	append_history_json(out, output);
+    return status;
+}
+
+int
+history_show(struct ged *gedp, const char *id, bool json)
+{
+    auto *out = gedp->ged_result_str;
+    if (!json)
+	return ged_history_visit_revision(gedp, id, print_revision, print_revision_change, out, out);
+
+    Json output = {{"schema", history_json_version}, {"revision", nullptr}, {"changes", Json::array()}};
+    const int status = ged_history_visit_revision(gedp, id,
+	[](const struct ged_history_revision *revision, void *data) {
+	    (*static_cast<Json *>(data))["revision"] = revision_json(*revision);
+	    return BRLCAD_OK;
+	}, [](const struct ged_history_change *change, void *data) {
+	    (*static_cast<Json *>(data))["changes"].push_back({{"type", change_action(change->type)},
+		{"name", change->name}, {"new_name", history_json_string(change->new_name)}});
+	    return BRLCAD_OK;
+	}, &output, out);
+    if (status == BRLCAD_OK)
+	append_history_json(out, output);
+    return status;
+}
+
 template <typename Visitor>
 bool
 visit_archive_revisions(const db_history::Pack &pack, Visitor visit)
@@ -1302,11 +1380,6 @@ print_status_text(struct bu_vls *out, const struct ged_history_status &status)
 void
 print_status_json(struct bu_vls *out, const struct ged_history_status &status)
 {
-    using Json = nlohmann::json;
-    constexpr int schema_version = 1;
-    const auto optional_text = [](const char *value) {
-	return value ? Json(value) : Json(nullptr);
-    };
     const auto choice = [](const struct ged_history_choice &action) {
 	return Json{{"revision", action.revision}, {"label", action.label}, {"preferred", action.preferred != 0}};
     };
@@ -1316,11 +1389,11 @@ print_status_json(struct bu_vls *out, const struct ged_history_status &status)
     const bool workspace = status.mode == GED_HISTORY_WORKSPACE;
     const bool session = status.mode == GED_HISTORY_SESSION;
     const Json result = {
-	{"schema", schema_version}, {"mode", mode_name(status.mode)}, {"state", state_name(status.state, true)},
+	{"schema", history_json_version}, {"mode", mode_name(status.mode)}, {"state", state_name(status.state, true)},
 	{"writable", status.writable != 0}, {"edit_active", status.edit_active != 0},
 	{"staged_conflict", status.staged_conflict != 0}, {"retention_boundary", status.retention_boundary != 0},
-	{"revision", optional_text(status.selected_revision)}, {"oldest_revision", optional_text(status.oldest_revision)},
-	{"workspace_head", optional_text(status.workspace_head)}, {"last_export", optional_text(status.exported_revision)},
+	{"revision", history_json_string(status.selected_revision)}, {"oldest_revision", history_json_string(status.oldest_revision)},
+	{"workspace_head", history_json_string(status.workspace_head)}, {"last_export", history_json_string(status.exported_revision)},
 	{"last_export_time", status.exported_at ? Json(status.exported_at) : Json(nullptr)},
 	{"generation", workspace ? Json(status.generation) : Json(nullptr)},
 	{"workspace_generation", workspace ? Json(status.workspace_generation) : Json(nullptr)},
@@ -1328,7 +1401,7 @@ print_status_json(struct bu_vls *out, const struct ged_history_status &status)
 	{"session_limit", session ? Json(status.session_limit) : Json(nullptr)},
 	{"undo", status.undo.revision ? choice(status.undo) : Json(nullptr)}, {"redo", std::move(redo)}
     };
-    bu_vls_strcat(out, result.dump(-1, ' ', false, Json::error_handler_t::replace).c_str());
+    append_history_json(out, result);
 }
 
 int
@@ -2267,14 +2340,10 @@ ged_db_history_command(struct ged *gedp, int argc, const char **argv)
 		print_status(gedp);
 	    return enabled;
 	}
-	if ((argc == 2 || (argc == 4 && BU_STR_EQUAL(argv[2], "--object"))) && BU_STR_EQUAL(argv[1], "log")) {
-	    auto *out = gedp->ged_result_str;
-	    return ged_history_visit(gedp, argc == 4 ? argv[3] : nullptr, print_revision, print_checkpoint, out, out);
-	}
-	if (argc == 3 && BU_STR_EQUAL(argv[1], "show")) {
-	    auto *out = gedp->ged_result_str;
-	    return ged_history_visit_revision(gedp, argv[2], print_revision, print_revision_change, out, out);
-	}
+	if (argc >= 2 && BU_STR_EQUAL(argv[1], "log"))
+	    return history_log(gedp, argc - 2, argv + 2);
+	if ((argc == 3 || (argc == 4 && BU_STR_EQUAL(argv[3], "--json"))) && BU_STR_EQUAL(argv[1], "show"))
+	    return history_show(gedp, argv[2], argc == 4);
 	if (argc == 3 && BU_STR_EQUAL(argv[1], "checkout")) {
 	    if (history && (history->workspace || is_embedded(*history))) {
 		db_history::Db5HistoryDraft graph;
