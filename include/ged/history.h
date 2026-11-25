@@ -122,6 +122,17 @@ GED_EXPORT extern void ged_history_set_replacement_handlers(struct ged *gedp,
  */
 GED_EXPORT extern void ged_history_rebuild_legacy_display(struct ged *gedp, struct db_i *retired);
 
+typedef int (*ged_history_edit_func_t)(struct ged *, void *);
+
+/**
+ * Complete a modeling edit on the GED owner's thread. The callback uses
+ * gedp->dbip as its writable database and returns BRLCAD_OK to commit.
+ * With history enabled, it joins the current edit or publishes one new
+ * revision. On a plain writable document it uses the live database.
+ */
+GED_EXPORT extern int ged_history_apply_edit(struct ged *gedp, const char *label,
+    ged_history_edit_func_t apply, void *data);
+
 /**
  * Read history state on the GED owner's thread. The returned status owns
  * its strings and choices and remains valid after the document changes.

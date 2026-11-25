@@ -1914,7 +1914,6 @@ ged_history_rebuild_legacy_display(struct ged *gedp, struct db_i *retired)
     bu_vls_strcpy(out, saved_output.c_str());
     for (const auto &path : failed)
 	bu_vls_printf(out, "\nDatabase saved. Could not redraw %s.", path.c_str());
-    ged_refresh_cb(gedp);
 }
 
 void
@@ -1963,39 +1962,62 @@ ged_db_history_staged(struct ged *gedp)
     return history && history->stage;
 }
 
-int
-ged_db_history_enter(struct ged *gedp, const char *command, int argc, const char **argv,
-		     struct db_edit **edit)
+static int
+begin_history_edit(struct ged *gedp, ged_db_history &history, const char *label, struct db_edit **edit)
 {
-    auto *history = gedp->i->db_history;
-    if (!history)
+    if (history.stage)
 	return BRLCAD_OK;
-
-    const bool edits = permitted_edit(command, argc, argv);
-    if (permitted_query(command, argc, argv) ||
-	(!history->stage && (session_lifecycle(command) || permitted_display(command))))
-	return BRLCAD_OK;
-    if (!edits) {
-	bu_vls_printf(gedp->ged_result_str, "%s is unavailable while database history is enabled", command);
-	return BRLCAD_ERROR;
-    }
-    if (history->stage)
-	return BRLCAD_OK;
-    if (!can_write_history(gedp, *history))
+    if (!can_write_history(gedp, history))
 	return BRLCAD_ERROR;
 
-    const auto label = operation_label(command, argc, argv);
-    auto *stage = db_edit_begin(history->live, label.c_str());
+    auto *stage = db_edit_begin(history.live, label);
     if (!stage) {
 	bu_vls_printf(gedp->ged_result_str, "Could not stage database edit");
 	return BRLCAD_ERROR;
     }
     *edit = stage;
-    history->stage = stage;
-    history->failed = false;
+    history.stage = stage;
+    history.failed = false;
     ged_event_stage_private(gedp, 1);
     gedp->dbip = db_edit_view(stage);
     return BRLCAD_OK;
+}
+
+int
+ged_history_apply_edit(struct ged *gedp, const char *label, ged_history_edit_func_t apply, void *data)
+{
+    if (!gedp || !gedp->i || !gedp->dbip || !apply)
+	return BRLCAD_ERROR;
+    auto *history = gedp->i->db_history;
+    if (!history) {
+	if (gedp->dbip->dbi_read_only) {
+	    bu_vls_strcat(gedp->ged_result_str, "The database is open read-only");
+	    return BRLCAD_ERROR;
+	}
+	return apply(gedp, data);
+    }
+
+    struct db_edit *edit = nullptr;
+    const std::string name(std::string_view(label ? label : "Edit model").substr(0, label_limit));
+    const int begun = begin_history_edit(gedp, *history, name.c_str(), &edit);
+    return begun == BRLCAD_OK ?
+	ged_db_history_leave(gedp, edit, apply(gedp, data)) : begun;
+}
+
+int
+ged_db_history_enter(struct ged *gedp, const char *command, int argc, const char **argv,
+		     struct db_edit **edit)
+{
+    auto *history = gedp->i->db_history;
+    if (!history || permitted_query(command, argc, argv) ||
+	(!history->stage && (session_lifecycle(command) || permitted_display(command))))
+	return BRLCAD_OK;
+    if (!permitted_edit(command, argc, argv)) {
+	bu_vls_printf(gedp->ged_result_str, "%s is unavailable while database history is enabled", command);
+	return BRLCAD_ERROR;
+    }
+    const auto label = operation_label(command, argc, argv);
+    return begin_history_edit(gedp, *history, label.c_str(), edit);
 }
 
 int

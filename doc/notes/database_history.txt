@@ -458,6 +458,12 @@ The GED scene test checked the rebound directory pointer and explicit
 wireframe color. A staged deletion that failed before publication left
 the previously drawn geometry intact.
 
+MGED accepted a primitive translation and a combination-instance
+translation as separate revisions in embedded DB5 and LMDB. Undo
+and Redo recovered the corresponding stored geometry and matrices.
+Rejecting the same previews left the selected revision and model
+unchanged.
+
 Implementation starting points in the source tree
 -------------------------------------------------
 

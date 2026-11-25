@@ -752,12 +752,15 @@ be_accept(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
     struct cmdtab *ctp = (struct cmdtab *)clientData;
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
+    int ret = TCL_OK;
+    Tcl_SavedResult result;
 
     if (s->global_editing_state == ST_S_EDIT) {
 	/* Accept a solid edit */
 	edsol = 0;
 
-	sedit_accept(s);		/* zeros "edsol" var */
+	ret = sedit_accept(s);
+	Tcl_SaveResult(s->interp, &result);
 
 	mmenu_set_all(s, MENU_L1, NULL);
 	mmenu_set_all(s, MENU_L2, NULL);
@@ -773,7 +776,8 @@ be_accept(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
 	edobj = 0;
 	movedir = 0;	/* No edit modes set */
 
-	oedit_accept(s);
+	ret = oedit_accept(s);
+	Tcl_SaveResult(s->interp, &result);
 
 	mmenu_set_all(s, MENU_L2, NULL);
 
@@ -800,7 +804,8 @@ be_accept(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
 	(void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     }
-    return TCL_OK;
+    Tcl_RestoreResult(s->interp, &result);
+    return ret;
 }
 
 

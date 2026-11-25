@@ -216,6 +216,15 @@ mged_database_writable(struct mged_state *s)
 }
 
 int
+mged_require_writable_database(struct mged_state *s)
+{
+    if (mged_database_writable(s))
+	return TCL_OK;
+    Tcl_AppendResult(s->interp, "The database is open read-only", (char *)NULL);
+    return TCL_ERROR;
+}
+
+int
 mged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *vgedp, void *ctx)
 {
     struct mged_opendb_ctx *mctx = (struct mged_opendb_ctx *)ctx;
@@ -325,7 +334,7 @@ int
 mged_history_prepare(struct ged *gedp, void *ctx)
 {
     struct mged_state *s = (struct mged_state *)ctx;
-    if (s->global_editing_state == ST_VIEW)
+    if (s->global_editing_state == ST_VIEW || s->history_accepting)
 	return BRLCAD_OK;
     bu_vls_strcat(gedp->ged_result_str, "Finish the active MGED edit before changing database history");
     return BRLCAD_ERROR;
@@ -351,6 +360,8 @@ mged_history_rebind(void *ctx)
 	    Tcl_GetStringResult(s->interp));
     Tcl_RestoreResult(s->interp, &saved);
     ged_history_rebuild_legacy_display(s->gedp, replacement->retired);
+    if (!s->history_accepting && s->gedp->ged_refresh_handler)
+	s->gedp->ged_refresh_handler(s->gedp->ged_refresh_clientdata);
 }
 
 void

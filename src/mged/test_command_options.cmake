@@ -45,6 +45,41 @@ file(WRITE "${history_script}" "db redo\n.inmem get history.s\n")
 check_mged("ell V" -c -a nu --no-rc "${workspace}" source "${history_script}")
 file(WRITE "${history_script}" "draw history.s\ndb title {Drawn history model}\ndb undo\nwho\n")
 check_mged("history.s" -c -a nu --no-rc "${workspace}" source "${history_script}")
+file(WRITE "${history_script}" [=[
+proc exercise_history_edit {choose object destination operation} {
+    set original [db get {*}$object]
+    set revision [db history status]
+    {*}$choose
+    translate {*}$destination
+    reject
+    if {[db history status] ne $revision || [db get {*}$object] ne $original} {
+        error "Reject changed the working revision or model"
+    }
+
+    {*}$choose
+    translate {*}$destination
+    accept
+    set changed [db get {*}$object]
+    if {$changed eq $original || ![string match "*$operation*" [db history status]]} {
+        error "Accept did not record $operation"
+    }
+    db undo
+    if {[db get {*}$object] ne $original} {
+        error "Undo did not recover the original model"
+    }
+    db redo
+    if {[db get {*}$object] ne $changed} {
+        error "Redo did not recover the accepted model"
+    }
+}
+draw history.s
+exercise_history_edit {sed history.s} {history.s V} {1 2 3} {Edit history.s}
+db g history.c history.s
+draw history.c
+exercise_history_edit {oed history.c/history.s} {history.c} {4 5 6} {Transform history.s}
+puts MGED_HISTORY_EDIT_OK
+]=])
+check_mged("MGED_HISTORY_EDIT_OK" -c -a nu --no-rc "${workspace}" source "${history_script}")
 check_mged("access read-only" -c -a nu -r --no-rc "${workspace}" db history status)
 check_mged("open read-only" -c -a nu -r --no-rc "${workspace}" db undo)
 file(REMOVE_RECURSE "${workspace}")

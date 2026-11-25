@@ -234,6 +234,7 @@ struct mged_state {
 
     struct mged_startup_plan startup;
     int read_only_startup;
+    int history_accepting;
 
     /* Prompt and input lines */
     size_t input_str_index;
@@ -336,6 +337,8 @@ extern jmp_buf jmp_env;
 
 extern void mged_setup(struct mged_state *s);
 extern int mged_database_writable(struct mged_state *s);
+/* For private previews and edits that go through GED's publication boundary. */
+extern int mged_require_writable_database(struct mged_state *s);
 extern void mged_global_variable_teardown(struct mged_state *s); /* cmd.c */
 extern void mged_variable_teardown(struct mged_state *s); /* set.c */
 extern void dozoom(struct mged_state *s, int which_eye);
@@ -343,8 +346,8 @@ extern void mged_finish(struct mged_state *s, int exitcode);
 extern void mged_request_shutdown(struct mged_state *s, int exitcode);
 extern int mged_shutting_down(struct mged_state *s);
 extern void slewview(struct mged_state *s, vect_t view_pos);
-extern void moveHinstance(struct mged_state *s, struct directory *cdp, struct directory *dp, matp_t xlate);
-extern void moveHobj(struct mged_state *s, struct directory *dp, matp_t xlate);
+extern int moveHinstance(struct ged *gedp, struct directory *cdp, struct directory *dp, matp_t xlate);
+extern int moveHobj(struct ged *gedp, struct directory *dp, matp_t xlate);
 extern void quit(struct mged_state *s);
 extern void refresh(struct mged_state *s);
 extern void setview(struct mged_state *s, double a1, double a2, double a3);
@@ -613,10 +616,10 @@ void transform_editing_solid(
     struct rt_db_internal *is,		/* input solid */
     int freedbi);
 int replot_editing_solid(int, const char **, void *, void *);
-void sedit_accept(struct mged_state *s);
+int sedit_accept(struct mged_state *s);
 void sedit_mouse(struct mged_state *s, const vect_t mousevec);
 void sedit_reject(struct mged_state *s);
-void oedit_accept(struct mged_state *s);
+int oedit_accept(struct mged_state *s);
 void oedit_reject(struct mged_state *s);
 void objedit_mouse(struct mged_state *s, const vect_t mousevec);
 void label_edited_solid(struct mged_state *s, int *num_lines, point_t *lines, struct rt_point_labels pl[], int max_pl, const mat_t xform, struct rt_db_internal *ip);

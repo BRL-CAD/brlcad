@@ -67,7 +67,8 @@ f_make(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     int ret;
 
     CHECK_DBI_NULL;
-    CHECK_READ_ONLY;
+    if (mged_require_writable_database(s) != TCL_OK)
+	return TCL_ERROR;
 
     if (argc == 3) {
 	const char *av[8];
@@ -195,7 +196,8 @@ f_rot_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     }
 
     CHECK_DBI_NULL;
-    CHECK_READ_ONLY;
+    if (mged_require_writable_database(s) != TCL_OK)
+	return TCL_ERROR;
 
     if (argc < 4 || 5 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -239,7 +241,8 @@ f_sc_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     vect_t point, temp;
 
     CHECK_DBI_NULL;
-    CHECK_READ_ONLY;
+    if (mged_require_writable_database(s) != TCL_OK)
+	return TCL_ERROR;
 
     if (argc < 2 || 2 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -316,7 +319,8 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     vect_t model_sol_pt, model_incr, ed_sol_pt, new_vertex;
 
     CHECK_DBI_NULL;
-    CHECK_READ_ONLY;
+    if (mged_require_writable_database(s) != TCL_OK)
+	return TCL_ERROR;
 
     if (argc < 4 || 4 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -387,7 +391,8 @@ f_qorot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     double ang;
 
     CHECK_DBI_NULL;
-    CHECK_READ_ONLY;
+    if (mged_require_writable_database(s) != TCL_OK)
+	return TCL_ERROR;
 
     if (argc < 8 || 8 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;

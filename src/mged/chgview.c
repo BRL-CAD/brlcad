@@ -1199,7 +1199,8 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     int is_empty = 1;
 
     CHECK_DBI_NULL;
-    CHECK_READ_ONLY;
+    if (mged_require_writable_database(s) != TCL_OK)
+	return TCL_ERROR;
 
     if (argc < 2 || 5 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;

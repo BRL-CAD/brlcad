@@ -42,6 +42,7 @@
 #include "rt/primitives/bot.h"
 #include "rt/primitives/nmg.h"
 #include "rt/primitives/pipe.h"
+#include "ged/history.h"
 #include "ged/view.h"
 
 #include "./mged.h"
@@ -51,6 +52,7 @@
 
 static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_state *);
 static int init_oedit_guts(struct mged_state *);
+static int mged_publish_edit(struct mged_state *, const char *, ged_history_edit_func_t, void *);
 
 static int
 mged_parse_int(const char *value, int *result)
@@ -1010,120 +1012,105 @@ init_oedit(struct mged_state *s)
 }
 
 
-void oedit_reject(struct mged_state *s);
+struct mged_object_edit {
+    const char *name;
+    const char *combination;
+    mat_t transform;
+};
 
-static void
+static int
+write_object_transform(struct ged *gedp, void *data)
+{
+    struct mged_object_edit *edit = (struct mged_object_edit *)data;
+    struct directory *dp = db_lookup(gedp->dbip, edit->name, LOOKUP_QUIET);
+    if (!dp) {
+	bu_vls_printf(gedp->ged_result_str, "Could not find the edited object %s", edit->name);
+	return BRLCAD_ERROR;
+    }
+    if (!edit->combination)
+	return moveHobj(gedp, dp, edit->transform);
+
+    struct directory *parent = db_lookup(gedp->dbip, edit->combination, LOOKUP_QUIET);
+    if (!parent) {
+	bu_vls_printf(gedp->ged_result_str, "Could not find the parent combination %s", edit->combination);
+	return BRLCAD_ERROR;
+    }
+    return moveHinstance(gedp, parent, dp, edit->transform);
+}
+
+static int
 oedit_apply(struct mged_state *s, int continue_editing)
 {
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    struct bv_scene_obj *sp;
-    /* matrices used to accept editing done from a depth
-     * >= 2 from the top of the illuminated path
-     */
-    mat_t topm;	/* accum matrix from pathpos 0 to i-2 */
-    mat_t inv_topm;	/* inverse */
-    mat_t deltam;	/* final "changes":  deltam = (inv_topm)(MEDIT(s)->model_changes)(topm) */
-    mat_t tempm;
-
     if (!illump || !illump->s_u_data)
-	return;
+	return TCL_ERROR;
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+    struct db_full_path *path = &bdata->s_fullpath;
+    if (ipathpos < 0 || (size_t)ipathpos >= path->fp_len)
+	return TCL_ERROR;
 
-    switch (ipathpos) {
-	case 0:
-	    moveHobj(s, DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos),
-		     MEDIT(s)->model_changes);
-	    break;
-	case 1:
-	    moveHinstance(s, DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos-1),
-			  DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos),
-			  MEDIT(s)->model_changes);
-	    break;
-	default:
-	    MAT_IDN(topm);
-	    MAT_IDN(inv_topm);
-	    MAT_IDN(deltam);
-	    MAT_IDN(tempm);
-
-	    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, topm, ipathpos-1);
-
-	    bn_mat_inv(inv_topm, topm);
-
-	    bn_mat_mul(tempm, MEDIT(s)->model_changes, topm);
-	    bn_mat_mul(deltam, inv_topm, tempm);
-
-	    moveHinstance(s, DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos-1),
-			  DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos),
-			  deltam);
-	    break;
+    struct mged_object_edit edit;
+    edit.name = DB_FULL_PATH_GET(path, ipathpos)->d_namep;
+    edit.combination = ipathpos ? DB_FULL_PATH_GET(path, ipathpos - 1)->d_namep : NULL;
+    if (ipathpos < 2) {
+	MAT_COPY(edit.transform, MEDIT(s)->model_changes);
+    } else {
+	/* Convert the model-space transform to the parent combination's space. */
+	mat_t parent, inverse, temporary;
+	if (!db_path_to_mat(s->dbip, path, parent, ipathpos - 1)) {
+	    Tcl_AppendResult(s->interp, "Could not resolve the edited instance path", (char *)NULL);
+	    return TCL_ERROR;
+	}
+	bn_mat_inv(inverse, parent);
+	bn_mat_mul(temporary, MEDIT(s)->model_changes, parent);
+	bn_mat_mul(edit.transform, inverse, temporary);
     }
 
-    /*
-     * Redraw all solids affected by this edit.
-     * Regenerate a new control list which does not
-     * include the solids about to be replaced,
-     * so we can safely fiddle the displaylist.
-     */
-    MEDIT(s)->model_changes[15] = 1000000000;	/* => small ratio */
+    struct db_i *previous = s->dbip;
+    int ret;
+    if (continue_editing == DOWN) {
+	struct bu_vls label = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&label, "Transform %s", edit.name);
+	ret = mged_publish_edit(s, bu_vls_cstr(&label), write_object_transform, &edit);
+	bu_vls_free(&label);
+    } else {
+	bu_vls_trunc(s->gedp->ged_result_str, 0);
+	ret = write_object_transform(s->gedp, &edit) == BRLCAD_OK ? TCL_OK : TCL_ERROR;
+	if (ret != TCL_OK)
+	    Tcl_AppendResult(s->interp, bu_vls_cstr(s->gedp->ged_result_str), (char *)NULL);
+    }
 
-    /* Now, recompute new chunks of displaylist */
-    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
-    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+    if (previous != s->dbip)
+	return ret;
 
-	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
+    /* Suppress the preview scale until the unmodified lists have been
+     * regenerated. The interactive edit state will reset it afterward. */
+    const fastf_t preview_scale_denominator = 1000000000.0;
+    MEDIT(s)->model_changes[15] = preview_scale_denominator;
+
+    struct display_list *group;
+    struct bu_list *display = (struct bu_list *)ged_dl(s->gedp);
+    for (BU_LIST_FOR(group, display_list, display)) {
+	struct bv_scene_obj *sp;
+	for (BU_LIST_FOR(sp, bv_scene_obj, &group->dl_head_scene_obj)) {
 	    if (sp->s_iflag == DOWN)
 		continue;
 	    (void)replot_original_solid(s, sp);
-
-	    if (continue_editing == DOWN) {
+	    if (continue_editing == DOWN)
 		sp->s_iflag = DOWN;
-	    }
 	}
-
-	gdlp = next_gdlp;
     }
+    return ret;
 }
 
-
-void
+int
 oedit_accept(struct mged_state *s)
 {
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    struct bv_scene_obj *sp;
-
-    if (s->dbip == DBI_NULL)
-	return;
-
-    if (s->dbip->dbi_read_only) {
-	oedit_reject(s);
-
-	gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
-	while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
-	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-		if (sp->s_iflag == DOWN)
-		    continue;
-		(void)replot_original_solid(s, sp);
-		sp->s_iflag = DOWN;
-	    }
-
-	    gdlp = next_gdlp;
-	}
-
-	bu_log("Sorry, this database is READ-ONLY\n");
-	pr_prompt(s);
-
-	return;
-    }
-
-    oedit_apply(s, DOWN); /* finished editing */
+    if (!s->dbip)
+	return TCL_ERROR;
+    const int ret = oedit_apply(s, DOWN);
     oedit_reject(s);
+    return ret;
 }
-
 
 void
 oedit_reject(struct mged_state *s)
@@ -1176,10 +1163,45 @@ f_eqn(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char *a
 
 /* Hooks from buttons.c */
 
-/*
- * Copied from sedit_accept - modified to optionally leave
- * solid edit state.
- */
+static int
+mged_publish_edit(struct mged_state *s, const char *label, ged_history_edit_func_t apply, void *data)
+{
+    struct bv_scene_obj *highlighted = illump;
+    struct display_list *group = illum_gdlp;
+    /* The replacement will free the old display path. End the preview
+     * before calling into GED, and restore it if publication fails. */
+    illump = NULL;
+    illum_gdlp = GED_DISPLAY_LIST_NULL;
+    s->history_accepting = 1;
+    bu_vls_trunc(s->gedp->ged_result_str, 0);
+    const int ret = ged_history_apply_edit(s->gedp, label, apply, data);
+    s->history_accepting = 0;
+    Tcl_AppendResult(s->interp, bu_vls_cstr(s->gedp->ged_result_str), (char *)NULL);
+    if (ret != BRLCAD_OK) {
+	illump = highlighted;
+	illum_gdlp = group;
+	return TCL_ERROR;
+    }
+    return TCL_OK;
+}
+
+struct mged_primitive_edit {
+    const char *name;
+    struct rt_db_internal *internal;
+};
+
+static int
+write_edited_primitive(struct ged *gedp, void *data)
+{
+    struct mged_primitive_edit *edit = (struct mged_primitive_edit *)data;
+    struct directory *dp = db_lookup(gedp->dbip, edit->name, LOOKUP_QUIET);
+    if (!dp || rt_db_put_internal(dp, gedp->dbip, edit->internal) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Could not write the edited primitive %s", edit->name);
+	return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
+
 static int
 sedit_apply(struct mged_state *s, int accept_flag)
 {
@@ -1239,13 +1261,22 @@ sedit_apply(struct mged_state *s, int accept_flag)
 	}
     }
 
-    /* Scale change on export is 1.0 -- no change */
-    if (rt_db_put_internal(dp, s->dbip, &MEDIT(s)->es_int) < 0) {
+    if (accept_flag) {
+	struct mged_primitive_edit edit = {dp->d_namep, &MEDIT(s)->es_int};
+	struct bu_vls label = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&label, "Edit %s", edit.name);
+	const int ret = mged_publish_edit(s, bu_vls_cstr(&label), write_edited_primitive, &edit);
+	bu_vls_free(&label);
+	if (ret != TCL_OK) {
+	    Tcl_SavedResult failure;
+	    Tcl_SaveResult(s->interp, &failure);
+	    sedit_reject(s);
+	    Tcl_RestoreResult(s->interp, &failure);
+	    return ret;
+	}
+    } else if (rt_db_put_internal(dp, s->dbip, &MEDIT(s)->es_int) < 0) {
 	Tcl_AppendResult(s->interp, "sedit_apply(", dp->d_namep,
 			 "):  solid export failure\n", (char *)NULL);
-	if (accept_flag) {
-	    rt_db_free_internal(&MEDIT(s)->es_int);
-	}
 	rt_edit_reset(MEDIT(s));
 	mmenu_set(s, MENU_L1, NULL);
 	mmenu_set(s, MENU_L2, NULL);
@@ -1283,23 +1314,12 @@ sedit_apply(struct mged_state *s, int accept_flag)
 }
 
 
-void
+int
 sedit_accept(struct mged_state *s)
 {
-    if (s->dbip == DBI_NULL)
-	return;
-
-    if (not_state(s, ST_S_EDIT, "Solid edit accept"))
-	return;
-
-    if (s->dbip->dbi_read_only) {
-	sedit_reject(s);
-	bu_log("Sorry, this database is READ-ONLY\n");
-	pr_prompt(s);
-	return;
-    }
-
-    (void)sedit_apply(s, 1);
+    if (!s->dbip || not_state(s, ST_S_EDIT, "Solid edit accept"))
+	return TCL_ERROR;
+    return sedit_apply(s, 1);
 }
 
 
@@ -1404,7 +1424,8 @@ f_param(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     vect_t argvect;
 
     CHECK_DBI_NULL;
-    CHECK_READ_ONLY;
+    if (mged_require_writable_database(s) != TCL_OK)
+	return TCL_ERROR;
 
     if (argc < 2 || 4 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -1789,6 +1810,16 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
 }
 
 
+static int
+mged_can_apply_and_continue(struct mged_state *s)
+{
+    if (!s->dbip->dbi_read_only)
+	return TCL_OK;
+    Tcl_AppendResult(s->interp, mged_database_writable(s) ?
+	"Use accept to finish this versioned edit" : "The database is open read-only", (char *)NULL);
+    return TCL_ERROR;
+}
+
 int
 f_sedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const char *UNUSED(argv[]))
 {
@@ -1804,8 +1835,11 @@ f_sedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
 	return TCL_ERROR;
     }
 
+    if (mged_can_apply_and_continue(s) != TCL_OK)
+	return TCL_ERROR;
     init_sedit_vars(s);
-    (void)sedit_apply(s, 0);
+    if (sedit_apply(s, 0) != TCL_OK)
+	return TCL_ERROR;
 
     /* active edit callback */
     bu_vls_printf(&vls, "active_edit_callback");
@@ -1868,8 +1902,11 @@ f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
     const char *strp = NULL;
 
     CHECK_DBI_NULL;
+    if (not_state(s, ST_O_EDIT, "Object edit apply") || mged_can_apply_and_continue(s) != TCL_OK)
+	return TCL_ERROR;
     int bbox_keypoint = BU_STR_EQUAL(MEDIT(s)->e_keytag, "bounding-box center");
-    oedit_apply(s, UP); /* apply changes, but continue editing */
+    if (oedit_apply(s, UP) != TCL_OK)
+	return TCL_ERROR;
 
     if (!illump->s_u_data)
 	return TCL_ERROR;
@@ -2113,7 +2150,8 @@ f_permute(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
      */
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     CHECK_DBI_NULL;
-    CHECK_READ_ONLY;
+    if (mged_require_writable_database(s) != TCL_OK)
+	return TCL_ERROR;
 
     if (argc < 2 || 2 < argc) {
 	bu_vls_printf(&vls, "help permute");
