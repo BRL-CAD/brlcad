@@ -893,6 +893,35 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 }
 
 
+static void
+vol_write_parameters(struct bu_external *out, const struct rt_vol_internal *volume)
+{
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    bu_vls_struct_print(&str, rt_vol_parse, (const char *)volume);
+    out->ext_nbytes = bu_vls_strlen(&str) + 1;
+    out->ext_buf = (uint8_t *)bu_malloc(out->ext_nbytes, "vol external");
+    memcpy(out->ext_buf, bu_vls_cstr(&str), out->ext_nbytes);
+    bu_vls_free(&str);
+}
+
+int
+rt_vol_rename_database_reference(struct bu_external *out, const struct bu_external *body, const char *name)
+{
+    struct rt_vol_internal volume = {0};
+    if (vol_read_parameters(&volume, body) != 0 ||
+	volume.datasrc != RT_VOL_SRC_OBJ ||
+	bu_strlcpy(volume.name, name, sizeof(volume.name)) >= sizeof(volume.name))
+	return -1;
+
+    vol_write_parameters(out, &volume);
+    // Confirm that the stored text represents the requested name exactly.
+    struct bu_vls written = BU_VLS_INIT_ZERO;
+    const int matches = rt_vol_database_reference(out, &written) && BU_STR_EQUAL(bu_vls_cstr(&written), name);
+    bu_vls_free(&written);
+    return matches ? 0 : -1;
+}
+
+
 /**
  * The name will be added by the caller.
  */
@@ -900,8 +929,6 @@ C_DECL int
 rt_vol_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_vol_internal *vip;
-    struct rt_vol_internal vol;	/* scaled version */
-    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -909,20 +936,14 @@ rt_vol_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (ip->idb_type != ID_VOL) return -1;
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     RT_VOL_CK_MAGIC(vip);
-    vol = *vip;			/* struct copy */
+    struct rt_vol_internal vol = *vip;
 
     /* Apply scale factor */
     vol.mat[15] /= local2mm;
 
     BU_CK_EXTERNAL(ep);
 
-    bu_vls_struct_print(&str, rt_vol_parse, (char *)&vol);
-    ep->ext_nbytes = bu_vls_strlen(&str) + 1;
-    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "vol external");
-
-    bu_strlcpy((char *)ep->ext_buf, bu_vls_addr(&str), ep->ext_nbytes);
-    bu_vls_free(&str);
-
+    vol_write_parameters(ep, &vol);
     return 0;
 }
 

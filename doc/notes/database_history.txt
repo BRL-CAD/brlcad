@@ -275,6 +275,21 @@ over seven runs. The same fixture reported all 64 references with
 either reader. GED tests exercised resolved and missing edges for both
 primitive types.
 
+GED now includes object-backed DSP and VOL references in mvall.
+Read-only preview listed the affected primitive, and an injected
+write failure left the original grid name and reference intact.
+Undo and Redo restored both names together in session DB5, embedded
+DB5 and LMDB. Plain DB5 exports matched all samples from the 8.39 MB
+and 12.58 MB fixtures after rename, Undo and Redo. A separate test
+renamed a hidden opaque DB5 record and matched the expected bytes
+with only its name changed.
+
+On a copy of the M1917 workspace, renaming an added synthetic grid
+and its DSP reference took 1.56 seconds. Undo restored both names
+in 0.55 seconds and the archive verifier passed in 5.05 seconds.
+The supplied DB5 file's size, modification time and identity
+matched before and after the test.
+
 These grids support offering reverse deltas for localized edits and
 offset shifts when encoding fits a predictable time budget. A noisy
 replacement benefits from a full-body fallback. Keep version 1's

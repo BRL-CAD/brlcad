@@ -794,18 +794,21 @@ test_binary_asset_history(struct ged *gedp, const std::filesystem::path &directo
     auto *terrain_data = db_lookup(gedp->dbip, "terrain.bin", LOOKUP_QUIET);
     auto *volume_data = db_lookup(gedp->dbip, "volume.bin", LOOKUP_QUIET);
     CHECK(terrain_data && terrain_data->d_nref == 1 && volume_data && volume_data->d_nref == 1);
-    const auto terrain_matches = [gedp](const auto &samples) {
-	auto *grid = db_lookup(gedp->dbip, "terrain.bin", LOOKUP_QUIET);
+    const auto grid_matches = [gedp](const char *name, int type, const auto &samples) {
+	auto *grid = db_lookup(gedp->dbip, name, LOOKUP_QUIET);
 	struct bu_external raw = BU_EXTERNAL_INIT_ZERO;
 	struct db5_raw_internal record;
 	const bool matches = grid && db_get_external(&raw, grid, gedp->dbip) == 0 &&
 	    db5_get_raw_internal_bounded(&record, raw.ext_buf, raw.ext_nbytes) &&
 	    record.major_type == DB5_MAJORTYPE_BINARY_UNIF &&
-	    record.minor_type == DB5_MINORTYPE_BINU_16BITINT_U &&
+	    record.minor_type == type &&
 	    record.body.ext_nbytes == sizeof(samples) &&
 	    std::memcmp(record.body.ext_buf, samples, sizeof(samples)) == 0;
 	bu_free_external(&raw);
-	if (!matches)
+	return matches;
+    };
+    const auto terrain_matches = [gedp, &grid_matches](const auto &samples, const char *name = "terrain.bin") {
+	if (!grid_matches(name, DB5_MINORTYPE_BINU_16BITINT_U, samples))
 	    return false;
 
 	auto *surface = db_lookup(gedp->dbip, "terrain.s", LOOKUP_QUIET);
@@ -816,7 +819,7 @@ test_binary_asset_history(struct ged *gedp, const std::filesystem::path &directo
 	if (intern.idb_type == ID_DSP) {
 	    const auto *dsp = static_cast<const struct rt_dsp_internal *>(intern.idb_ptr);
 	    const auto first_sample = (static_cast<unsigned int>(samples[0]) << 8) | samples[1];
-	    loaded = dsp->dsp_datasrc == RT_DSP_SRC_OBJ && dsp->dsp_buf &&
+	    loaded = dsp->dsp_datasrc == RT_DSP_SRC_OBJ && BU_STR_EQUAL(bu_vls_cstr(&dsp->dsp_name), name) && dsp->dsp_buf &&
 		dsp->dsp_buf[0] == first_sample;
 	}
 	rt_db_free_internal(&intern);
@@ -859,6 +862,111 @@ test_binary_asset_history(struct ged *gedp, const std::filesystem::path &directo
     const char *redo[] = {"db", "redo", nullptr};
     CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == before && terrain_matches(original));
     CHECK(run(gedp, redo) == BRLCAD_OK && selected_id(gedp) == after && terrain_matches(replacement));
+
+    const auto volume_matches = [gedp, &grid_matches, &original](const char *name) {
+	if (!grid_matches(name, DB5_MINORTYPE_BINU_8BITINT_U, original))
+	    return false;
+	auto *surface = db_lookup(gedp->dbip, "volume.s", LOOKUP_QUIET);
+	struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
+	if (!surface || rt_db_get_internal(&intern, surface, gedp->dbip, nullptr) < 0)
+	    return false;
+	bool loaded = false;
+	if (intern.idb_type == ID_VOL) {
+	    const auto *volume = static_cast<const struct rt_vol_internal *>(intern.idb_ptr);
+	    loaded = volume->datasrc == RT_VOL_SRC_OBJ && BU_STR_EQUAL(volume->name, name) && volume->map;
+	}
+	rt_db_free_internal(&intern);
+	return loaded;
+    };
+    CHECK(volume_matches("volume.bin"));
+
+    const std::unique_ptr<struct ged, decltype(&ged_close)> inspector(ged_create(), ged_close);
+    const char *open[] = {"db", "open", "-r", gedp->dbip->dbi_filename, nullptr};
+    const char *preview[] = {"mvall", "-n", "volume.bin", "voxel samples.bin", nullptr};
+    CHECK(inspector && run(inspector.get(), open) == BRLCAD_OK);
+    CHECK(run(inspector.get(), preview) == BRLCAD_OK && contains_result(inspector.get(), "volume.s"));
+    CHECK(db_lookup(inspector->dbip, "volume.bin", LOOKUP_QUIET) &&
+	!db_lookup(inspector->dbip, "voxel samples.bin", LOOKUP_QUIET) && selected_id(gedp) == after);
+
+    const char *rename_dsp[] = {"mvall", "terrain.bin", "graded samples.bin", nullptr};
+    int staged_writes = 0;
+    CHECK(ged_clbk_set(gedp, "mvall", BU_CLBK_PRE, fail_staged_edit, &staged_writes) == BRLCAD_OK);
+    CHECK(run(gedp, rename_dsp) == BRLCAD_ERROR && staged_writes == 1);
+    CHECK(ged_clbk_set(gedp, "mvall", BU_CLBK_PRE, nullptr, nullptr) == GED_OVERRIDE);
+    CHECK(selected_id(gedp) == after && terrain_matches(replacement));
+
+    const std::string long_name(RT_VOL_NAME_LEN, 'v');
+    CHECK(run(gedp, preview) == BRLCAD_OK && contains_result(gedp, "volume.s"));
+    const char *invalid_name[] = {"mvall", "volume.bin", long_name.c_str(), nullptr};
+    CHECK(run(gedp, invalid_name) == BRLCAD_ERROR && selected_id(gedp) == after &&
+	volume_matches("volume.bin") && !db_lookup(gedp->dbip, long_name.c_str(), LOOKUP_QUIET));
+
+    const char *rename_grids[] = {"db", "history", "batch", "Rename raster source objects",
+	"{mvall terrain.bin {graded samples.bin}} {move_all volume.bin {voxel samples.bin}}", nullptr};
+    CHECK(run(gedp, rename_grids) == BRLCAD_OK);
+    const auto renamed = selected_id(gedp);
+    CHECK(renamed != after && terrain_matches(replacement, "graded samples.bin") && volume_matches("voxel samples.bin") &&
+	!db_lookup(gedp->dbip, "terrain.bin", LOOKUP_QUIET) && !db_lookup(gedp->dbip, "volume.bin", LOOKUP_QUIET));
+    CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == after &&
+	terrain_matches(replacement) && volume_matches("volume.bin"));
+    CHECK(run(gedp, redo) == BRLCAD_OK && selected_id(gedp) == renamed &&
+	terrain_matches(replacement, "graded samples.bin") && volume_matches("voxel samples.bin"));
+    return 0;
+}
+
+static int
+test_opaque_rename(struct ged *gedp)
+{
+    const char *original = "opaque.payload";
+    const char *renamed = "archived.payload";
+    struct Fixture {
+	const char *name;
+	uint8_t body[5];
+    } fixture{original, {0x10, 0xab, 0, 0x7f, 0xff}};
+    const auto create_opaque = [](struct ged *ged, void *data) {
+	auto *value = static_cast<Fixture *>(data);
+	struct bu_external body = BU_EXTERNAL_INIT_ZERO;
+	body.ext_nbytes = sizeof(value->body);
+	body.ext_buf = value->body;
+
+	struct bu_attribute_value_set attrs;
+	bu_avs_init(&attrs, 1, "opaque rename fixture");
+	bu_avs_add(&attrs, "description", "opaque test record");
+	struct bu_external attr = BU_EXTERNAL_INIT_ZERO;
+	db5_export_attributes(&attr, &attrs);
+	bu_avs_free(&attrs);
+
+	struct bu_external external = BU_EXTERNAL_INIT_ZERO;
+	db5_export_object3(&external, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT, value->name,
+	    DB5HDR_HFLAGS_HIDDEN_OBJECT, &attr, &body, DB5_MAJORTYPE_BINARY_MIME,
+	    DB5_MINORTYPE_RESERVED, DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
+	bu_free_external(&attr);
+	auto *writer = wdb_dbopen(ged->dbip, RT_WDB_TYPE_DB_DEFAULT);
+	const int result = wdb_export_external(writer, &external, value->name,
+	    RT_DIR_NON_GEOM | RT_DIR_HIDDEN, DB5_MINORTYPE_RESERVED);
+	bu_free_external(&external);
+	return result == 0 ? BRLCAD_OK : BRLCAD_ERROR;
+    };
+    CHECK(ged_history_apply_edit(gedp, "Add opaque record", create_opaque, &fixture) == BRLCAD_OK);
+    const auto initial = selected_id(gedp);
+    const auto *entry = db_lookup(gedp->dbip, original, LOOKUP_QUIET);
+    struct bu_external expected = BU_EXTERNAL_INIT_ZERO;
+    CHECK(entry && db_get_external(&expected, entry, gedp->dbip) == 0 &&
+	db_wrap_v5_external(&expected, renamed) == 0);
+
+    const char *move[] = {"move", original, renamed, nullptr};
+    CHECK(run(gedp, move) == BRLCAD_OK && selected_id(gedp) != initial);
+    entry = db_lookup(gedp->dbip, renamed, LOOKUP_QUIET);
+    struct bu_external moved = BU_EXTERNAL_INIT_ZERO;
+    const bool matches = entry && db_get_external(&moved, entry, gedp->dbip) == 0 &&
+	moved.ext_nbytes == expected.ext_nbytes &&
+	std::memcmp(moved.ext_buf, expected.ext_buf, expected.ext_nbytes) == 0;
+    bu_free_external(&moved);
+    bu_free_external(&expected);
+    CHECK(matches && !db_lookup(gedp->dbip, original, LOOKUP_QUIET));
+    const char *undo[] = {"db", "undo", nullptr};
+    CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == initial &&
+	db_lookup(gedp->dbip, original, LOOKUP_QUIET) && !db_lookup(gedp->dbip, renamed, LOOKUP_QUIET));
     return 0;
 }
 
@@ -947,6 +1055,7 @@ test_backend_parity(const std::filesystem::path &directory)
 	    const auto assets = directory / (std::string(mode) + "-assets");
 	    CHECK(std::filesystem::create_directory(assets));
 	    CHECK(test_binary_asset_history(gedp, assets) == 0);
+	    CHECK(test_opaque_rename(gedp) == 0);
 	}
     }
     return 0;

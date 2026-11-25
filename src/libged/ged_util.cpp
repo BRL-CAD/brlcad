@@ -2248,6 +2248,49 @@ ged_get_selection_set(struct ged *gedp, const char *object_name, const char *sel
  *
  * Preserves the GIFT semantics.
  */
+int
+_ged_rename_db_object(struct ged *gedp, struct directory *dp, const char *name)
+{
+    auto *dbip = gedp->dbip;
+    const bool db5 = db_version(dbip) == 5;
+    struct bu_external record = BU_EXTERNAL_INIT_ZERO;
+    struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
+
+    if (BU_STR_EMPTY(name)) {
+	bu_vls_strcat(gedp->ged_result_str, "The destination name must be nonempty");
+	return BRLCAD_ERROR;
+    }
+
+    if (db5 && (BU_STR_EQUAL(dp->d_namep, DB5_GLOBAL_OBJECT_NAME) ||
+		BU_STR_EQUAL(name, DB5_GLOBAL_OBJECT_NAME))) {
+	bu_vls_printf(gedp->ged_result_str, "Cannot rename the DB5 global record");
+	return BRLCAD_ERROR;
+    }
+
+    // DB5 embeds the object name in its record. Keep its body and
+    // attributes intact even for objects that cannot be imported.
+    if (db5 ? (db_get_external(&record, dp, dbip) != 0 || db_wrap_v5_external(&record, name) != 0) :
+	rt_db_get_internal(&intern, dp, dbip, nullptr) < 0) {
+	bu_free_external(&record);
+	bu_vls_strcat(gedp->ged_result_str, "Could not read the object record for rename");
+	return BRLCAD_ERROR;
+    }
+    if (db_rename(dbip, dp, name) < 0) {
+	bu_free_external(&record);
+	if (!db5)
+	    rt_db_free_internal(&intern);
+	bu_vls_printf(gedp->ged_result_str, "Could not rename the directory entry to %s", name);
+	return BRLCAD_ERROR;
+    }
+    const int stored = db5 ? db_put_external5(&record, dp, dbip) : rt_db_put_internal(dp, dbip, &intern);
+    bu_free_external(&record);
+    if (stored < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Could not store the renamed record %s", name);
+	return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
+
 struct directory *
 _ged_combadd(struct ged *gedp,
 	     struct directory *objp,

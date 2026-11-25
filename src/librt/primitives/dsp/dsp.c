@@ -90,6 +90,27 @@ rt_dsp_database_reference(const struct bu_external *body, struct bu_vls *name)
     return 1;
 }
 
+int
+rt_dsp_rename_database_reference(struct bu_external *out, const struct bu_external *body, const char *name)
+{
+    const char *old = dsp_db5_name(body);
+    if (!old || body->ext_buf[DSP_DB5_SOURCE] != RT_DSP_SRC_OBJ)
+	return -1;
+
+    const size_t old_length = strlen(old) + 1;
+    const size_t new_length = strlen(name) + 1;
+    const size_t suffix_length = body->ext_nbytes - DSP_DB5_NAME - old_length;
+    if (new_length > SIZE_MAX - (body->ext_nbytes - old_length))
+	return -1;
+
+    out->ext_nbytes = DSP_DB5_NAME + new_length + suffix_length;
+    out->ext_buf = (uint8_t *)bu_malloc(out->ext_nbytes, "renamed DSP reference");
+    memcpy(out->ext_buf, body->ext_buf, DSP_DB5_NAME);
+    memcpy(out->ext_buf + DSP_DB5_NAME, name, new_length);
+    memcpy(out->ext_buf + DSP_DB5_NAME + new_length, old + old_length, suffix_length);
+    return 0;
+}
+
 static uint32_t
 dsp_get_uint32(const unsigned char *cp)
 {

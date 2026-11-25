@@ -350,6 +350,8 @@ GED_EXPORT void vls_col_eol(struct bu_vls *str);
 GED_EXPORT extern struct db_i *_ged_open_dbip(const char *filename,
 				   int existing_only, int read_only, struct bu_vls *message);
 
+GED_EXPORT extern int _ged_rename_db_object(struct ged *gedp, struct directory *dp, const char *name);
+
 /* defined in comb.c */
 GED_EXPORT extern struct directory *_ged_combadd(struct ged *gedp,
 				      struct directory *objp,

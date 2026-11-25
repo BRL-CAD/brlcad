@@ -168,7 +168,7 @@ permitted_edit(std::string_view command, int argc, const char **argv)
     if (command == "bo")
 	return argc > 1 && std::string_view(argv[1]) == "-i";
     return one_of(command, {"adjust", "c", "comb", "comb_std", "concat", "cp", "dbconcat", "g", "group",
-	"hide", "in", "kill", "killall", "killrefs", "killtree", "make", "mv", "mvall",
+	"hide", "in", "kill", "killall", "killrefs", "killtree", "make", "move", "move_all", "mv", "mvall",
 	"put", "r", "regdef", "region", "rm", "unhide"});
 }
 
@@ -177,11 +177,11 @@ permitted_query(std::string_view command, int argc, const char **argv)
 {
     if (command == "attr")
 	return argc <= 1 || one_of(argv[1], {"get", "list", "show", "sort"});
-    if (one_of(command, {"bo", "c", "comb_std", "r", "regdef", "region", "title", "units"}))
+    if (one_of(command, {"bo", "c", "comb_std", "move", "mv", "r", "regdef", "region", "title", "units"}))
 	return argc == 1;
     if (command == "killall" || command == "killrefs")
 	return argc == 1 || std::string_view(argv[1]) == "-n";
-    if (command == "killtree") {
+    if (one_of(command, {"killtree", "move_all", "mvall"})) {
 	// Like bu_getopt, inspect only short options before the first operand.
 	for (int i = 1; i < argc; ++i) {
 	    const std::string_view option(argv[i]);

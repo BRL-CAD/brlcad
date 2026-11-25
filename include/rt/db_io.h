@@ -199,6 +199,16 @@ DEPRECATED RT_EXPORT extern int rt_db_cvt_to_external5(struct bu_external *ext,
 RT_EXPORT extern int db_wrap_v5_external(struct bu_external *ep,
 					 const char *name);
 
+/**
+ * Check or replace a DB5 DSP or VOL reference to a database object.
+ * Pass NULL for new_name to inspect the reference without writing.
+ * Return 1 for a match, 0 for an unrelated object and -1 on failure.
+ */
+RT_EXPORT extern int db5_update_raster_reference(struct db_i *dbip,
+						 struct directory *dp,
+						 const char *old_name,
+						 const char *new_name);
+
 
 /**
  * Given an external representation of a database object, convert

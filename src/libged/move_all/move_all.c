@@ -58,6 +58,11 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 
     /* check the old_name source and new_name target */
 
+    if (BU_STR_EMPTY(old_name) || BU_STR_EMPTY(new_name)) {
+	bu_vls_strcat(gedp->ged_result_str, "The source and destination names must be nonempty");
+	return BRLCAD_ERROR;
+    }
+
     /* The destination is an object name, not a path - reject slashes so
      * we don't end up creating an object whose name contains the path
      * separator (which produces broken, unlistable hierarchies).
@@ -66,8 +71,14 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 	bu_vls_printf(gedp->ged_result_str, "%s: destination name may not contain slashes", new_name);
 	return BRLCAD_ERROR;
     }
+    if (db_version(gedp->dbip) < 5 && strlen(new_name) > NAMESIZE) {
+	bu_vls_printf(gedp->ged_result_str, "ERROR: name length limited to %zu characters in v4 databases\n",
+		      (size_t)NAMESIZE);
+	return BRLCAD_ERROR;
+    }
 
     dp = db_lookup(gedp->dbip, old_name, LOOKUP_NOISY);
+    const int source_exists = dp != RT_DIR_NULL;
 
     if (dp && db_lookup(gedp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: already exists", new_name);
@@ -76,6 +87,24 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 
     if (!nflag)
 	event_batch = ged_event_batch_begin(gedp) == GED_EVENT_OK;
+
+    if (db_version(gedp->dbip) == 5) {
+	struct directory *raster;
+	FOR_ALL_DIRECTORY_START(raster, gedp->dbip) {
+	    const int changed = db5_update_raster_reference(gedp->dbip, raster, old_name, nflag ? NULL : new_name);
+	    if (changed < 0) {
+		move_all_event_batch_end(gedp, &event_batch);
+		bu_vls_printf(gedp->ged_result_str, "Unable to update the grid reference in %s for %s",
+			      raster->d_namep, new_name);
+		return BRLCAD_ERROR;
+	    }
+	    if (changed > 0) {
+		if (nflag)
+		    bu_vls_printf(gedp->ged_result_str, "%s ", raster->d_namep);
+		++moved;
+	    }
+	} FOR_ALL_DIRECTORY_END;
+    }
 
     /* if this was a sketch, we need to look for all the extrude
      * objects that might use it.
@@ -113,6 +142,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 
 		if (nflag) {
 		    bu_vls_printf(gedp->ged_result_str, "%s ", dirp->d_namep);
+		    ++moved;
 		    rt_db_free_internal(&intern);
 		    continue;
 		}
@@ -130,26 +160,11 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
     }
 
     if (!nflag && dp) {
-	/* Change object name in the directory. */
-	if (db_rename(gedp->dbip, dp, new_name) < 0) {
+	if (_ged_rename_db_object(gedp, dp, new_name) != BRLCAD_OK) {
 	    move_all_event_batch_end(gedp, &event_batch);
-	    bu_vls_printf(gedp->ged_result_str, "error in rename to %s, aborting", new_name);
 	    return BRLCAD_ERROR;
 	}
 	object_renamed = 1;
-
-	/* Change object name on disk */
-	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
-	    move_all_event_batch_end(gedp, &event_batch);
-	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
-	    return BRLCAD_ERROR;
-	}
-
-	if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
-	    move_all_event_batch_end(gedp, &event_batch);
-	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
-	    return BRLCAD_ERROR;
-	}
 	moved++;
     }
 
@@ -179,6 +194,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 
 			if (BU_STR_EQUAL(comb_leaf->tr_l.tl_name, old_name)) {
 			    bu_vls_printf(gedp->ged_result_str, "%s ", dp->d_namep);
+			    ++moved;
 			}
 
 			if (BU_PTBL_LEN(&stack) < 1) {
@@ -192,6 +208,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 		    }
 		}
 		rt_db_free_internal(&intern);
+		continue;
 	    } else {
 		int comb_mvall_status = db_comb_mvall(dp, gedp->dbip, old_name, new_name, &stack);
 		if (!comb_mvall_status)
@@ -211,7 +228,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
     if (!nflag)
 	_ged_dl_rename_display(gedp, old_name, new_name, 1);
 
-    if (!moved) {
+    if (!moved && !(nflag && source_exists)) {
 	move_all_event_batch_end(gedp, &event_batch);
 	bu_log("ERROR: move %s to %s: no such object or reference\n", old_name, new_name);
 	return BRLCAD_ERROR;
@@ -281,7 +298,6 @@ ged_move_all_core(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "[-n] {-f <mapping_file>|<from> <to>}";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
@@ -295,11 +311,6 @@ ged_move_all_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 3 || 4 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
-    }
-
-    if (db_version(gedp->dbip) < 5 && (int)strlen(argv[2]) > NAMESIZE) {
-	bu_vls_printf(gedp->ged_result_str, "ERROR: name length limited to %zu characters in v4 databases\n", strlen(argv[2]));
 	return BRLCAD_ERROR;
     }
 
@@ -320,6 +331,10 @@ ged_move_all_core(struct ged *gedp, int argc, const char *argv[])
 
     argc -= bu_optind;
     argv += bu_optind;
+
+    if (!nflag) {
+	GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    }
 
     if (fflag) {
 	if (argc != 1) {
