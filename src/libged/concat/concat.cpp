@@ -38,7 +38,6 @@
 #include "bu/opt.h"
 #include "bu/getopt.h"
 #include "rt/geom.h"
-#include "../../librt/db_history_db5.h"
 
 #include "../ged_private.h"
 
@@ -432,10 +431,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    const auto archive_status = db_history::inspect_db5_history(cc_data.incoming_dbip);
-    const auto *archive = archive_status == db_history::EmbeddedStatus::Missing ||
-	archive_status == db_history::EmbeddedStatus::Collision ? nullptr :
-	db_lookup(cc_data.incoming_dbip, db_history::archive_name, LOOKUP_QUIET);
+    const auto *archive = ged_db_history_archive(cc_data.incoming_dbip);
 
     // If we have an affix, set it
     if (argc > 1)

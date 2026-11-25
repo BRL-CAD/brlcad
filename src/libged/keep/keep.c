@@ -29,6 +29,7 @@
 
 #include "bu/cmd.h"
 #include "bu/getopt.h"
+#include "bu/hash.h"
 #include "rt/geom.h"
 
 #include "../ged_private.h"
@@ -37,6 +38,9 @@
 struct keep_node_data {
     struct rt_wdb *wdbp;
     struct ged *gedp;
+    const struct directory *archive;
+    bu_hash_tbl *written;
+    int failed;
 };
 
 
@@ -52,11 +56,21 @@ node_write(struct db_i *dbip, struct directory *dp, void *ptr)
 
     RT_CK_WDB(kndp->wdbp);
 
-    if (dp->d_nref++ > 0)
-	return;		/* already written */
+    if (dp == kndp->archive || kndp->failed)
+	return;
+    const uint8_t *key = (const uint8_t *)dp->d_namep;
+    const size_t len = strlen(dp->d_namep);
+    if (bu_hash_get(kndp->written, key, len))
+	return;
+    if (bu_hash_set(kndp->written, key, len, dp) < 0) {
+	bu_vls_printf(kndp->gedp->ged_result_str, "Unable to track exported object %s\n", dp->d_namep);
+	kndp->failed = 1;
+	return;
+    }
 
     if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0) {
 	bu_vls_printf(kndp->gedp->ged_result_str, "Database read error, aborting\n");
+	kndp->failed = 1;
 	return;
     }
 
@@ -98,9 +112,11 @@ node_write(struct db_i *dbip, struct directory *dp, void *ptr)
 	}
     }
 
-    if (wdb_put_internal(kndp->wdbp, dp->d_namep, &intern, 1.0) < 0) {
+    if (kndp->failed) {
+	rt_db_free_internal(&intern);
+    } else if (wdb_put_internal(kndp->wdbp, dp->d_namep, &intern, 1.0) < 0) {
 	bu_vls_printf(kndp->gedp->ged_result_str, "Database write error, aborting\n");
-	return;
+	kndp->failed = 1;
     }
 }
 
@@ -155,33 +171,39 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    /* First, clear any existing counts */
-    FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
-	dp->d_nref = 0;
-    FOR_ALL_DIRECTORY_END;
+    if (bu_file_same(argv[0], gedp->dbip->dbi_filename)) {
+	bu_vls_printf(gedp->ged_result_str, "%s: Choose a destination other than the open database\n", cmd);
+	return BRLCAD_ERROR;
+    }
 
-    /* Alert user if named file already exists */
-
+    /* An existing plain file is an append target. */
     new_dbip = db_open(argv[0], DB_OPEN_READWRITE);
 
     if (new_dbip != DBI_NULL) {
 	if (db_version(new_dbip) != db_version(gedp->dbip)) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: File format mismatch between '%s' and '%s'\n",
 			  cmd, argv[0], gedp->dbip->dbi_filename);
+	    db_close(new_dbip);
+	    return BRLCAD_ERROR;
+	}
+	if (new_dbip->dbi_read_only || db_dirbuild(new_dbip) < 0 || ged_db_history_archive(new_dbip)) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: Choose a writable plain database or a new file\n", cmd);
+	    db_close(new_dbip);
 	    return BRLCAD_ERROR;
 	}
 
 	keepfp = wdb_dbopen(new_dbip, RT_WDB_TYPE_DB_DISK);
 	if (keepfp == NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s:  Error opening '%s'\n", cmd, argv[0]);
+	    db_close(new_dbip);
 	    return BRLCAD_ERROR;
-	} else {
-	    bu_vls_printf(gedp->ged_result_str, "%s:  Appending to '%s'\n", cmd, argv[0]);
-
-	    /* --- Scan geometry database and build in-memory directory --- */
-	    db_dirbuild(new_dbip);
 	}
+	bu_vls_printf(gedp->ged_result_str, "%s:  Appending to '%s'\n", cmd, argv[0]);
     } else {
+	if (bu_file_exists(argv[0], NULL)) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: Can't open '%s' as an existing database\n", cmd, argv[0]);
+	    return BRLCAD_ERROR;
+	}
 	/* Create a new database */
 	keepfp = wdb_fopen_v(argv[0], db_version(gedp->dbip));
 
@@ -193,6 +215,8 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
 
     knd.wdbp = keepfp;
     knd.gedp = gedp;
+    knd.archive = ged_db_history_archive(gedp->dbip);
+    knd.failed = 0;
 
     /* ident record */
     if (bu_strncmp(gedp->dbip->dbi_title, "Parts of: ", 10) != 0) {
@@ -203,18 +227,23 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
     if (db_update_ident(keepfp->dbip, bu_vls_addr(&title), gedp->dbip->dbi_local2base) < 0) {
 	perror("fwrite");
 	bu_vls_printf(gedp->ged_result_str, "db_update_ident() failed\n");
-	if (new_dbip != DBI_NULL) {
-	    db_close(new_dbip);
-	} else {
-	    db_close(keepfp->dbip);
-	}
+	db_close(keepfp->dbip);
 	bu_vls_free(&title);
 	return BRLCAD_ERROR;
     }
     bu_vls_free(&title);
 
-    for (i = 1; i < argc; i++) {
+
+    knd.written = bu_hash_create(RT_DBNHASH);
+    if (!knd.written) {
+	db_close(keepfp->dbip);
+	bu_vls_printf(gedp->ged_result_str, "%s: Unable to track exported objects\n", cmd);
+	return BRLCAD_ERROR;
+    }
+    for (i = 1; i < argc && !knd.failed; i++) {
 	if ((dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
+	    continue;
+	if (dp == knd.archive)
 	    continue;
 
 	if (!flag_R) {
@@ -226,9 +255,10 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
+    bu_hash_destroy(knd.written);
     db_close(keepfp->dbip);
 
-    return BRLCAD_OK;
+    return knd.failed ? BRLCAD_ERROR : BRLCAD_OK;
 }
 
 #include "../include/plugin.h"

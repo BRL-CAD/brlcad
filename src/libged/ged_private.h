@@ -237,6 +237,7 @@ int ged_db_history_enter(struct ged *gedp, const char *command, int argc,
 			 const char **argv, struct db_edit **edit);
 int ged_db_history_leave(struct ged *gedp, struct db_edit *edit, int result);
 GED_EXPORT int ged_db_history_staged(struct ged *gedp);
+GED_EXPORT const struct directory *ged_db_history_archive(const struct db_i *dbip);
 
 /* Called by the db command plugin. */
 GED_EXPORT int ged_db_history_command(struct ged *gedp, int argc, const char **argv);

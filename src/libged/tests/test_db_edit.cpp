@@ -793,6 +793,23 @@ test_history_concat()
 	!db_lookup(gedp->dbip, "imported_body.s", LOOKUP_QUIET));
     CHECK(run(gedp, redo) == BRLCAD_OK && selected_id(gedp) == tip &&
 	db_lookup(gedp->dbip, "imported_body.s", LOOKUP_QUIET));
+
+    const char *keep_to_source[] = {"keep", target_path, "imported_body.s", nullptr};
+    const char *keep_to_archive[] = {"keep", source_path, "imported_body.s", nullptr};
+    CHECK(run(gedp, keep_to_source) != BRLCAD_OK && contains_result(gedp, "other than the open database"));
+    CHECK(run(gedp, keep_to_archive) != BRLCAD_OK && contains_result(gedp, "writable plain database"));
+    char subset_path[MAXPATHLEN] = {};
+    FILE *subset_file = bu_temp_file(subset_path, sizeof(subset_path));
+    CHECK(subset_file && fclose(subset_file) == 0 && bu_file_delete(subset_path));
+    body = db_lookup(gedp->dbip, "imported_body.s", LOOKUP_QUIET);
+    CHECK(body);
+    const auto references = body->d_nref;
+    const char *keep[] = {"db", "keep", subset_path, "imported_assembly.c", "_BRLCAD_HISTORY", nullptr};
+    CHECK(run(gedp, keep) == BRLCAD_OK && body->d_nref == references && selected_id(gedp) == tip);
+    const std::unique_ptr<struct ged, decltype(&ged_close)> subset(ged_open("db", subset_path, 1), ged_close);
+    CHECK(subset && db_lookup(subset->dbip, "imported_assembly.c", LOOKUP_QUIET) &&
+	db_lookup(subset->dbip, "imported_body.s", LOOKUP_QUIET) &&
+	!db_lookup(subset->dbip, "_BRLCAD_HISTORY", LOOKUP_QUIET));
     return 0;
 }
 

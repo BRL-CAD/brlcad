@@ -176,7 +176,7 @@ permitted_query(std::string_view command, int argc, const char **argv)
 bool
 permitted_display(std::string_view command)
 {
-    return one_of(command, {"draw", "e", "erase", "ev", "redraw", "setview",
+    return one_of(command, {"draw", "e", "erase", "ev", "keep", "redraw", "setview",
 	"view", "view2", "view_func", "who", "zap"});
 }
 
@@ -2025,6 +2025,18 @@ ged_db_history_open(struct ged *gedp, int read_only)
 	return;
     attach_history(*history, gedp->dbip);
     gedp->i->db_history = history.release();
+}
+
+const struct directory *
+ged_db_history_archive(const struct db_i *dbip)
+{
+    if (!dbip || db_version(dbip) != 5)
+	return nullptr;
+    const auto *archive = db_lookup(dbip, db_history::archive_name, LOOKUP_QUIET);
+    if (!archive)
+	return nullptr;
+    const auto status = db_history::inspect_db5_history(dbip);
+    return status == EmbeddedStatus::Missing || status == EmbeddedStatus::Collision ? nullptr : archive;
 }
 
 int

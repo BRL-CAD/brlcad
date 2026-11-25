@@ -26,6 +26,10 @@ By default, *keep* recursively follows references below the named objects and
 writes the supporting geometry as needed. The *-R* option disables that
 recursive traversal and keeps only the named objects themselves.
 
+The output is a geometry-only database. To export a complete model with
+its retained revisions, use `db history export --with-history path.g`.
+Use a new file or an existing writable plain database as the destination.
+
 
 [[examples]]
 == EXAMPLES

@@ -495,6 +495,11 @@ seconds when all objects were reserialized. Workspace verification
 passed. One Undo removed the import in 0.4 seconds, and Redo restored
 the object counts in 0.6 seconds.
 
+A subset keep from an embedded DB5 file exported the selected
+combination and its referenced primitive. The source revision and
+reference counts stayed fixed. The keep command rejected the open
+source file and a separate embedded archive as write destinations.
+
 Implementation starting points in the source tree
 -------------------------------------------------
 
