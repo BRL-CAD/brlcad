@@ -676,6 +676,14 @@ A subset keep from an embedded DB5 file exported the selected
 combination and its referenced primitive. The source revision and
 reference counts stayed fixed. The keep command rejected the open
 source file and a separate embedded archive as write destinations.
+Subsets of DSP, EBM and VOL primitives included all three referenced
+binary objects in session DB5, embedded DB5 and LMDB. Independent
+readers opened the copies and checked the exact DB5 sample bodies.
+On an M1917 workspace copy, exporting the three added primitives
+and their binary objects took 0.79 seconds. A plain DB5 reader opened
+each primitive and recovered all 33,554,432 sample bytes in host byte
+order. The source revision stayed fixed and workspace verification
+passed in 5.06 seconds.
 
 A typed GED edit session kept a torus radius change private until
 commit. A competing session and a host replacement veto each left the

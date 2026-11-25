@@ -22,9 +22,10 @@ exist, it is created. If __keep_file__ does exist, the _objects_ are appended
 to it. The __keep_file__ is a _BRL-CAD_ database file. The _objects_ in the
 list must exist in the current database.
 
-By default, *keep* recursively follows references below the named objects and
-writes the supporting geometry as needed. The *-R* option disables that
-recursive traversal and keeps only the named objects themselves.
+By default, *keep* recursively follows the members of named combinations.
+Use *-R* to skip combination traversal. Exported primitives include their
+referenced sketches and database-backed bitmap, displacement, or volume
+samples. References to external files keep their stored paths.
 
 The output is a geometry-only database. To export a complete model with
 its retained revisions, use `db history export --with-history path.g`.

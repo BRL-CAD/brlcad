@@ -30,6 +30,7 @@
 #include "bu/cmd.h"
 #include "bu/getopt.h"
 #include "bu/hash.h"
+#include "bu/str.h"
 #include "rt/geom.h"
 
 #include "../ged_private.h"
@@ -42,6 +43,44 @@ struct keep_node_data {
     bu_hash_tbl *written;
     int failed;
 };
+
+
+static const char *
+keep_primitive_dependency(const struct rt_db_internal *intern)
+{
+    if (intern->idb_major_type != DB5_MAJORTYPE_BRLCAD)
+	return NULL;
+
+    switch (intern->idb_type) {
+	case ID_EXTRUDE: {
+	    const struct rt_extrude_internal *extrude = (const struct rt_extrude_internal *)intern->idb_ptr;
+	    RT_EXTRUDE_CK_MAGIC(extrude);
+	    return extrude->sketch_name;
+	}
+	case ID_REVOLVE: {
+	    const struct rt_revolve_internal *revolve = (const struct rt_revolve_internal *)intern->idb_ptr;
+	    RT_REVOLVE_CK_MAGIC(revolve);
+	    return bu_vls_cstr(&revolve->sketch_name);
+	}
+	case ID_DSP: {
+	    const struct rt_dsp_internal *dsp = (const struct rt_dsp_internal *)intern->idb_ptr;
+	    RT_DSP_CK_MAGIC(dsp);
+	    return dsp->dsp_datasrc == RT_DSP_SRC_OBJ ? bu_vls_cstr(&dsp->dsp_name) : NULL;
+	}
+	case ID_EBM: {
+	    const struct rt_ebm_internal *ebm = (const struct rt_ebm_internal *)intern->idb_ptr;
+	    RT_EBM_CK_MAGIC(ebm);
+	    return ebm->datasrc == RT_EBM_SRC_OBJ ? ebm->name : NULL;
+	}
+	case ID_VOL: {
+	    const struct rt_vol_internal *vol = (const struct rt_vol_internal *)intern->idb_ptr;
+	    RT_VOL_CK_MAGIC(vol);
+	    return vol->datasrc == RT_VOL_SRC_OBJ ? vol->name : NULL;
+	}
+	default:
+	    return NULL;
+    }
+}
 
 
 /*
@@ -74,43 +113,10 @@ node_write(struct db_i *dbip, struct directory *dp, void *ptr)
 	return;
     }
 
-    if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD && dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) {
-	/* if this is an extrusion, keep the referenced sketch */
-	struct rt_extrude_internal *extr;
-	struct directory *dp2;
-
-	extr = (struct rt_extrude_internal *)intern.idb_ptr;
-	RT_EXTRUDE_CK_MAGIC(extr);
-
-	if ((dp2 = db_lookup(dbip, extr->sketch_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
-	    node_write(dbip, dp2, ptr);
-	}
-    } else if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD && dp->d_minor_type == DB5_MINORTYPE_BRLCAD_REVOLVE) {
-	/* if this is a revolve, keep the referenced sketch */
-	struct rt_revolve_internal *rev;
-	struct directory *dp2;
-
-	rev = (struct rt_revolve_internal *)intern.idb_ptr;
-	RT_REVOLVE_CK_MAGIC(rev);
-
-	if ((dp2 = db_lookup(dbip, bu_vls_addr(&rev->sketch_name), LOOKUP_QUIET)) != RT_DIR_NULL) {
-	    node_write(dbip, dp2, ptr);
-	}
-    } else if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD && dp->d_minor_type == DB5_MINORTYPE_BRLCAD_DSP) {
-	/* if this is a DSP, keep the referenced binary object too */
-	struct rt_dsp_internal *dsp;
-	struct directory *dp2;
-
-	dsp = (struct rt_dsp_internal *)intern.idb_ptr;
-	RT_DSP_CK_MAGIC(dsp);
-
-	if (dsp->dsp_datasrc == RT_DSP_SRC_OBJ) {
-	    /* need to keep this object */
-	    if ((dp2 = db_lookup(dbip, bu_vls_addr(&dsp->dsp_name),  LOOKUP_QUIET)) != RT_DIR_NULL) {
-		node_write(dbip, dp2, ptr);
-	    }
-	}
-    }
+    const char *dependency = keep_primitive_dependency(&intern);
+    struct directory *referenced = BU_STR_EMPTY(dependency) ? RT_DIR_NULL : db_lookup(dbip, dependency, LOOKUP_QUIET);
+    if (referenced)
+	node_write(dbip, referenced, ptr);
 
     if (kndp->failed) {
 	rt_db_free_internal(&intern);
