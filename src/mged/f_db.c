@@ -331,10 +331,16 @@ mged_history_prepare(struct ged *gedp, void *ctx)
     return BRLCAD_ERROR;
 }
 
+struct mged_history_replacement {
+    struct mged_state *state;
+    struct db_i *retired;
+};
+
 static void
 mged_history_rebind(void *ctx)
 {
-    struct mged_state *s = (struct mged_state *)ctx;
+    struct mged_history_replacement *replacement = (struct mged_history_replacement *)ctx;
+    struct mged_state *s = replacement->state;
     Tcl_SavedResult saved;
     Tcl_SaveResult(s->interp, &saved);
     mged_unbind_database(s);
@@ -344,12 +350,14 @@ mged_history_rebind(void *ctx)
 	bu_vls_printf(s->gedp->ged_result_str, "\nDatabase saved. Reopen it to refresh MGED: %s",
 	    Tcl_GetStringResult(s->interp));
     Tcl_RestoreResult(s->interp, &saved);
+    ged_history_rebuild_legacy_display(s->gedp, replacement->retired);
 }
 
 void
-mged_history_replaced(struct ged *UNUSED(gedp), struct db_i *UNUSED(retired), void *ctx)
+mged_history_replaced(struct ged *UNUSED(gedp), struct db_i *retired, void *ctx)
 {
-    mged_run_on_gui_thread((struct mged_state *)ctx, mged_history_rebind, ctx);
+    struct mged_history_replacement replacement = {(struct mged_state *)ctx, retired};
+    mged_run_on_gui_thread(replacement.state, mged_history_rebind, &replacement);
 }
 
 

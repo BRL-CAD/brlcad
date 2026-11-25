@@ -116,6 +116,13 @@ GED_EXPORT extern void ged_history_set_replacement_handlers(struct ged *gedp,
     void *data);
 
 /**
+ * Rebuild the legacy drawable from the new database during a registered
+ * history replacement callback. The retired database is kept alive
+ * through this call. Run it on the thread that owns the display.
+ */
+GED_EXPORT extern void ged_history_rebuild_legacy_display(struct ged *gedp, struct db_i *retired);
+
+/**
  * Read history state on the GED owner's thread. The returned status owns
  * its strings and choices and remains valid after the document changes.
  * Null strings denote unavailable revisions. Decimal session IDs and

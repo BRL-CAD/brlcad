@@ -48,7 +48,6 @@ move_all_event_batch_end(struct ged *gedp, int *event_batch)
 static int
 move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new_name)
 {
-    struct display_list *gdlp;
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -209,45 +208,8 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 
     bu_ptbl_free(&stack);
 
-    if (!nflag) {
-	/* Change object name anywhere in the display list path. */
-	for (BU_LIST_FOR(gdlp, display_list, gedp->i->ged_gdp->gd_headDisplay)) {
-	    int first = 1;
-	    int found = 0;
-	    struct bu_vls new_path = BU_VLS_INIT_ZERO;
-	    char *dupstr = bu_strdup(bu_vls_addr(&gdlp->dl_path));
-	    char *tok = strtok(dupstr, "/");
-
-	    while (tok) {
-		if (BU_STR_EQUAL(tok, old_name)) {
-		    found = 1;
-
-		    if (first) {
-			first = 0;
-			bu_vls_printf(&new_path, "%s", new_name);
-		    } else
-			bu_vls_printf(&new_path, "/%s", new_name);
-		} else {
-		    if (first) {
-			first = 0;
-			bu_vls_printf(&new_path, "%s", tok);
-		    } else
-			bu_vls_printf(&new_path, "/%s", tok);
-		}
-
-		tok = strtok((char *)NULL, "/");
-	    }
-
-	    if (found) {
-		bu_vls_free(&gdlp->dl_path);
-		bu_vls_printf(&gdlp->dl_path, "%s", bu_vls_addr(&new_path));
-	    }
-
-	    free((void *)dupstr);
-	    bu_vls_free(&new_path);
-	}
-	_ged_dl_path_invalidate(gedp);
-    }
+    if (!nflag)
+	_ged_dl_rename_display(gedp, old_name, new_name, 1);
 
     if (!moved) {
 	move_all_event_batch_end(gedp, &event_batch);

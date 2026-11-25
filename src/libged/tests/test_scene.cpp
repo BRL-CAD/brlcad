@@ -12,12 +12,14 @@
 #include "common.h"
 
 #include <cstdio>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "bu/app.h"
 #include "bu/file.h"
 #include "ged.h"
+#include "ged/history.h"
 #include "ged/scene.h"
 #include "wdb.h"
 
@@ -66,6 +68,66 @@ create_fixture(const char *path)
     return ret == 0;
 }
 
+static void
+rebuild_legacy_display(struct ged *gedp, struct db_i *retired, void *UNUSED(data))
+{
+    ged_history_rebuild_legacy_display(gedp, retired);
+}
+
+static struct bv_scene_obj *
+legacy_solid(struct ged *gedp)
+{
+    struct display_list *display = ged_dl(gedp);
+    if (!display || BU_LIST_IS_EMPTY(&display->l))
+	return nullptr;
+    auto *item = BU_LIST_FIRST(display_list, &display->l);
+    return BU_LIST_NON_EMPTY(&item->dl_head_scene_obj) ?
+	BU_LIST_FIRST(bv_scene_obj, &item->dl_head_scene_obj) : nullptr;
+}
+
+static void
+test_legacy_history(const char *path)
+{
+    const std::unique_ptr<struct ged, decltype(&ged_close)> owner(ged_open("db", path, 1), ged_close);
+    auto *gedp = owner.get();
+    CHECK(gedp, "open the legacy history fixture");
+    if (!gedp)
+	return;
+    ged_history_set_replacement_handlers(gedp, nullptr, rebuild_legacy_display, nullptr);
+
+    const char *draw[] = {"draw", "-C", "15/45/95", "sphere.s"};
+    CHECK(ged_exec(gedp, 4, draw) == BRLCAD_OK, "draw the legacy primitive");
+    auto *initial = legacy_solid(gedp);
+    CHECK(initial, "initial scene contains a legacy solid");
+
+    const char *enable[] = {"db", "history", "enable", "session"};
+    const int enabled = ged_exec(gedp, 4, enable);
+    if (enabled == BRLCAD_OK) {
+	const char *kill[] = {"kill", "-f", "sphere.s", DB5_GLOBAL_OBJECT_NAME};
+	CHECK(ged_exec(gedp, 4, kill) != BRLCAD_OK && legacy_solid(gedp) == initial &&
+	    db_lookup(gedp->dbip, "sphere.s", LOOKUP_QUIET),
+	    "failed staged deletion preserves the live legacy scene");
+	const char *title[] = {"title", "History model with a legacy scene"};
+	CHECK(ged_exec(gedp, 2, title) == BRLCAD_OK, "publish with legacy geometry displayed");
+	auto *solid = legacy_solid(gedp);
+	CHECK(solid && solid->s_os->color_override && solid->s_color[0] == 15 && solid->s_color[2] == 95,
+	    "publication preserves explicit wireframe color");
+	if (solid) {
+	    auto *data = static_cast<struct ged_bv_data *>(solid->s_u_data);
+	    CHECK(data && DB_FULL_PATH_CUR_DIR(&data->s_fullpath) == db_lookup(gedp->dbip, "sphere.s", LOOKUP_QUIET),
+		"the legacy display path belongs to the new database");
+	}
+	const char *undo[] = {"db", "undo"};
+	CHECK(ged_exec(gedp, 2, undo) == BRLCAD_OK && legacy_solid(gedp),
+	    "undo retains the surviving legacy draw path");
+    } else {
+	CHECK(strstr(bu_vls_cstr(gedp->ged_result_str), "Atomic DB5 replacement is unavailable"),
+	    "enable session history while legacy geometry is displayed");
+    }
+    const char *zap[] = {"zap"};
+    CHECK(ged_exec(gedp, 1, zap) == BRLCAD_OK, "release the legacy display fixture");
+}
+
 int
 main(int argc, char **argv)
 {
@@ -83,6 +145,7 @@ main(int argc, char **argv)
 	return 1;
     }
 
+    test_legacy_history(path);
     struct ged *gedp = ged_open("db", path, 1);
     CHECK(gedp != NULL, "fixture opens in a GED context");
     if (gedp) {

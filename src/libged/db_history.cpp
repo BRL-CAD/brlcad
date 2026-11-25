@@ -175,7 +175,7 @@ permitted_query(std::string_view command, int argc, const char **argv)
 bool
 permitted_display(std::string_view command)
 {
-    return one_of(command, {"draw", "e", "erase", "redraw", "setview", "who", "zap"});
+    return one_of(command, {"draw", "e", "erase", "ev", "redraw", "setview", "who", "zap"});
 }
 
 bool
@@ -210,9 +210,12 @@ can_replace_database(struct ged *gedp)
 	return false;
     }
     const auto *display = ged_dl(gedp);
-    if ((display && BU_LIST_NON_EMPTY(&display->l)) ||
-	!gedp->i->i->edit_buf.empty() || BU_PTBL_LEN(&gedp->ged_subp)) {
-	bu_vls_printf(gedp->ged_result_str, "Clear displayed geometry and finish active edits and subprocesses before replacing the database");
+    if (display && BU_LIST_NON_EMPTY(&display->l) && !gedp->i->history_replaced) {
+	bu_vls_strcat(gedp->ged_result_str, "Clear legacy displayed geometry before replacing the database");
+	return false;
+    }
+    if (!gedp->i->i->edit_buf.empty() || BU_PTBL_LEN(&gedp->ged_subp)) {
+	bu_vls_strcat(gedp->ged_result_str, "Finish active edits and subprocesses before replacing the database");
 	return false;
     }
     return !gedp->i->history_prepare ||
@@ -1823,6 +1826,98 @@ ged_history_set_replacement_handlers(struct ged *gedp,
 }
 
 void
+ged_history_rebuild_legacy_display(struct ged *gedp, struct db_i *retired)
+{
+    struct display_list *display = ged_dl(gedp);
+    if (!retired || !display || gedp->new_cmd_forms || BU_LIST_IS_EMPTY(&display->l))
+	return;
+
+    struct DrawRequest {
+	std::string path;
+	struct bv_obj_settings settings;
+    };
+    const auto same_style = [](const struct bv_obj_settings &a, const struct bv_obj_settings &b) {
+	return a.s_dmode == b.s_dmode && EQUAL(a.transparency, b.transparency) &&
+	    a.draw_solid_lines_only == b.draw_solid_lines_only &&
+	    a.draw_non_subtract_only == b.draw_non_subtract_only &&
+	    a.color_override == b.color_override &&
+	    (!a.color_override || !std::memcmp(a.color, b.color, sizeof(a.color)));
+    };
+
+    std::vector<DrawRequest> requests;
+    struct display_list *item;
+    while (BU_LIST_WHILE(item, display_list, &display->l)) {
+	const auto *root = static_cast<const struct directory *>(item->dl_dp);
+	if (root && root->d_addr != RT_DIR_PHONY_ADDR &&
+	    BU_LIST_NON_EMPTY(&item->dl_head_scene_obj)) {
+	    const auto *first = BU_LIST_FIRST(bv_scene_obj, &item->dl_head_scene_obj);
+	    bool uniform_style = true;
+	    struct bv_scene_obj *solid;
+	    for (BU_LIST_FOR(solid, bv_scene_obj, &item->dl_head_scene_obj)) {
+		if (!same_style(*first->s_os, *solid->s_os)) {
+		    uniform_style = false;
+		    break;
+		}
+	    }
+	    if (uniform_style) {
+		requests.push_back({bu_vls_cstr(&item->dl_path), *first->s_os});
+	    } else {
+		for (BU_LIST_FOR(solid, bv_scene_obj, &item->dl_head_scene_obj)) {
+		    const auto *data = static_cast<const struct ged_bv_data *>(solid->s_u_data);
+		    if (!data || !data->s_fullpath.fp_len)
+			continue;
+		    char *path = db_path_to_string(&data->s_fullpath);
+		    requests.push_back({path, *solid->s_os});
+		    bu_free(path, "legacy draw path");
+		}
+	    }
+	}
+	_ged_dl_free_display_item(gedp, item, retired);
+    }
+
+    const int saved_result = ged_results_ret(gedp->ged_results);
+    struct bu_vls *out = gedp->ged_result_str;
+    const std::string saved_output(bu_vls_cstr(out));
+    std::vector<std::string> failed;
+    gedp->ged_skip_clbks++;
+    for (const auto &request : requests) {
+	if (!db_lookup(gedp->dbip, request.path.c_str(), LOOKUP_QUIET))
+	    continue;
+
+	const auto &style = request.settings;
+	const bool evaluated = style.s_dmode == _GED_BOOL_EVAL;
+	const int mode = style.s_dmode == _GED_SHADED_MODE_EVAL ? 3 :
+	    style.s_dmode == _GED_WIREFRAME_EVAL ? 5 : style.s_dmode;
+	const auto mode_arg = std::to_string(mode);
+	const auto opacity = std::to_string(style.transparency);
+	const std::string color = std::to_string(style.color[0]) + "/" +
+	    std::to_string(style.color[1]) + "/" + std::to_string(style.color[2]);
+	std::vector<const char *> argv{evaluated ? "ev" : "draw", "-R", "-x", opacity.c_str()};
+	if (!evaluated) {
+	    argv.push_back("-m");
+	    argv.push_back(mode_arg.c_str());
+	}
+	if (style.color_override) {
+	    argv.push_back("-C");
+	    argv.push_back(color.c_str());
+	}
+	if (style.draw_solid_lines_only)
+	    argv.push_back("-s");
+	if (style.draw_non_subtract_only)
+	    argv.push_back("-S");
+	argv.push_back(request.path.c_str());
+	if (ged_exec(gedp, static_cast<int>(argv.size()), argv.data()) != BRLCAD_OK)
+	    failed.push_back(request.path);
+    }
+    gedp->ged_skip_clbks--;
+    gedp->ged_results->ret = saved_result;
+    bu_vls_strcpy(out, saved_output.c_str());
+    for (const auto &path : failed)
+	bu_vls_printf(out, "\nDatabase saved. Could not redraw %s.", path.c_str());
+    ged_refresh_cb(gedp);
+}
+
+void
 ged_db_history_reset(struct ged *gedp)
 {
     if (!gedp->i)
@@ -1859,6 +1954,13 @@ ged_db_history_open(struct ged *gedp, int read_only)
 	return;
     attach_history(*history, gedp->dbip);
     gedp->i->db_history = history.release();
+}
+
+int
+ged_db_history_staged(struct ged *gedp)
+{
+    const auto *history = gedp && gedp->i ? gedp->i->db_history : nullptr;
+    return history && history->stage;
 }
 
 int

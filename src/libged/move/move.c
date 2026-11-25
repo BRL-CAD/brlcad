@@ -38,7 +38,6 @@
 int
 ged_move_core(struct ged *gedp, int argc, const char *argv[])
 {
-    struct display_list *gdlp;
     struct directory *dp;
     struct rt_db_internal intern;
     int event_batch = 0;
@@ -103,38 +102,7 @@ ged_move_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    /* Change object name if it matches the first element in the display list path. */
-    for (BU_LIST_FOR(gdlp, display_list, gedp->i->ged_gdp->gd_headDisplay)) {
-	int first = 1;
-	int found = 0;
-	struct bu_vls new_path = BU_VLS_INIT_ZERO;
-	char *dupstr = bu_strdup(bu_vls_addr(&gdlp->dl_path));
-	char *tok = strtok(dupstr, "/");
-
-	while (tok) {
-	    if (first) {
-		first = 0;
-
-		if (BU_STR_EQUAL(tok, argv[1])) {
-		    found = 1;
-		    bu_vls_printf(&new_path, "%s", argv[2]);
-		} else
-		    break; /* no need to go further */
-	    } else
-		bu_vls_printf(&new_path, "/%s", tok);
-
-	    tok = strtok((char *)NULL, "/");
-	}
-
-	if (found) {
-	    bu_vls_free(&gdlp->dl_path);
-	    bu_vls_printf(&gdlp->dl_path, "%s", bu_vls_addr(&new_path));
-	}
-
-	free((void *)dupstr);
-	bu_vls_free(&new_path);
-    }
-    _ged_dl_path_invalidate(gedp);
+    _ged_dl_rename_display(gedp, argv[1], argv[2], 0);
 
     struct ged_event event;
     ged_event_init(&event);

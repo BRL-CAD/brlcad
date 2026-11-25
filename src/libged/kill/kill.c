@@ -110,7 +110,8 @@ ged_kill_core(struct ged *gedp, int argc, const char *argv[])
 	    if (is_phony)
 		continue;
 
-	    _dl_eraseAllNamesFromDisplay(gedp, argv[i], 0);
+	    if (!ged_db_history_staged(gedp))
+		_dl_eraseAllNamesFromDisplay(gedp, argv[i], 0);
 
 	    if (db_delete(gedp->dbip, dp) != 0 || db_dirdelete(gedp->dbip, dp) != 0) {
 		/* Abort kill processing on first error */

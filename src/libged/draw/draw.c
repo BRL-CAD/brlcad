@@ -67,7 +67,7 @@ solid_get_color_attribute(const struct rt_db_internal *ip, unsigned char color[3
 static void
 solid_set_color_info(
     struct bv_scene_obj *sp,
-    unsigned char *wireframe_color_override,
+    const unsigned char *wireframe_color_override,
     struct db_tree_state *tsp)
 {
     unsigned char bcolor[3] = {255, 0, 0}; /* default */
@@ -97,6 +97,16 @@ solid_set_color_info(
     color_soltab(tsp ? tsp->ts_dbip : NULL, sp);
 }
 
+static void
+legacy_draw_settings(struct bv_scene_obj *sp, const struct bv_obj_settings *settings)
+{
+    sp->s_os->s_dmode = settings->s_dmode;
+    sp->s_os->transparency = settings->transparency;
+    sp->s_os->draw_solid_lines_only = settings->draw_solid_lines_only;
+    sp->s_os->draw_non_subtract_only = settings->draw_non_subtract_only;
+    sp->s_os->color_override = settings->color_override;
+    memcpy(sp->s_os->color, settings->color, sizeof(sp->s_os->color));
+}
 
 void
 dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, struct _ged_client_data *dgcdp)
@@ -132,8 +142,7 @@ dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *path
     solid_set_color_info(sp, wireframe_color_override, tsp);
 
     sp->s_dlist = 0;
-    sp->s_os->transparency = dgcdp->vs.transparency;
-    sp->s_os->s_dmode = dgcdp->vs.s_dmode;
+    legacy_draw_settings(sp, &dgcdp->vs);
 
     /* append solid to display list */
     bu_semaphore_acquire(RT_SEM_MODEL);
@@ -384,7 +393,7 @@ append_solid_to_display_list(
     sp->s_flag = DOWN;
     sp->s_iflag = DOWN;
 
-    if (bv_data->draw_solid_lines_only) {
+    if (bv_data->settings->draw_solid_lines_only) {
         sp->s_soldash = 0;
     } else {
         sp->s_soldash = (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER));
@@ -407,8 +416,8 @@ append_solid_to_display_list(
         tsp->ts_mater.ma_color[GRN] = 128;
         tsp->ts_mater.ma_color[BLU] = 128;
 
-        if (bv_data->wireframe_color_override) {
-            solid_set_color_info(sp, (unsigned char *)&(bv_data->wireframe_color), tsp);
+        if (bv_data->settings->color_override) {
+            solid_set_color_info(sp, bv_data->settings->color, tsp);
         } else {
             solid_set_color_info(sp, NULL, tsp);
         }
@@ -418,12 +427,8 @@ append_solid_to_display_list(
         tsp->ts_mater.ma_color[BLU] = mater_color[BLU];
 
     } else {
-        if (bv_data->wireframe_color_override) {
-	    unsigned char wire_color[3];
-	    wire_color[RED] = (unsigned char)bv_data->wireframe_color[RED];
-	    wire_color[GRN] = (unsigned char)bv_data->wireframe_color[GRN];
-	    wire_color[BLU] = (unsigned char)bv_data->wireframe_color[BLU];
-            solid_set_color_info(sp, wire_color, tsp);
+        if (bv_data->settings->color_override) {
+            solid_set_color_info(sp, bv_data->settings->color, tsp);
         } else {
 	    unsigned char obj_color[3];
 	    if (solid_get_color_attribute(ip, obj_color))
@@ -434,8 +439,7 @@ append_solid_to_display_list(
     }
 
     sp->s_dlist = 0;
-    sp->s_os->transparency = bv_data->transparency;
-    sp->s_os->s_dmode = bv_data->dmode;
+    legacy_draw_settings(sp, bv_data->settings);
     MAT_COPY(sp->s_mat, tsp->ts_mat);
 
     /* append solid to display list */
@@ -1286,13 +1290,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    struct ged_solid_data bv_data;
 		    bv_data.gedp = gedp;
 		    bv_data.new_scene_objs = &new_scene_objs;
-		    bv_data.draw_solid_lines_only = dgcdp.vs.draw_solid_lines_only;
-		    bv_data.wireframe_color_override = dgcdp.vs.color_override;
-		    bv_data.wireframe_color[0]= dgcdp.vs.color[0];
-		    bv_data.wireframe_color[1]= dgcdp.vs.color[1];
-		    bv_data.wireframe_color[2]= dgcdp.vs.color[2];
-		    bv_data.transparency= dgcdp.vs.transparency;
-		    bv_data.dmode = dgcdp.vs.s_dmode;
+		    bv_data.settings = &dgcdp.vs;
 		    bv_data.v = gedp->ged_gvp;
 
 		    dgcdp.gdlp = _ged_dl_addToDisplay(gedp, argv[i]);

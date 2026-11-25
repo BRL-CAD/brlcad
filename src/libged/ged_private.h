@@ -236,6 +236,7 @@ GED_EXPORT void ged_db_history_open(struct ged *gedp, int read_only);
 int ged_db_history_enter(struct ged *gedp, const char *command, int argc,
 			 const char **argv, struct db_edit **edit);
 int ged_db_history_leave(struct ged *gedp, struct db_edit *edit, int result);
+GED_EXPORT int ged_db_history_staged(struct ged *gedp);
 
 /* Called by the db command plugin. */
 GED_EXPORT int ged_db_history_command(struct ged *gedp, int argc, const char **argv);
@@ -374,6 +375,9 @@ GED_EXPORT extern void _dl_eraseAllNamesFromDisplay(struct ged *gedp, const char
 GED_EXPORT extern void _dl_eraseAllPathsFromDisplay(struct ged *gedp, const char *path, const int skip_first);
 GED_EXPORT extern void _ged_erase_legacy_overlap_plot(struct ged *gedp);
 extern void _dl_freeDisplayListItem(struct ged *gedp, struct display_list *gdlp);
+extern void _ged_dl_free_display_item(struct ged *gedp, struct display_list *gdlp, struct db_i *dbip);
+GED_EXPORT extern void _ged_dl_rename_display(struct ged *gedp, const char *old_name,
+    const char *new_name, int all_components);
 GED_EXPORT extern int dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int pflag);
 
 /* defined in ged.cpp */

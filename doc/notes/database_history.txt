@@ -453,6 +453,11 @@ through its Tcl database alias after Redo. Opening both an embedded
 archive and a workspace with read-only access allowed inspection and
 rejected Undo.
 
+MGED kept surviving legacy draw paths across publication and Undo.
+The GED scene test checked the rebound directory pointer and explicit
+wireframe color. A staged deletion that failed before publication left
+the previously drawn geometry intact.
+
 Implementation starting points in the source tree
 -------------------------------------------------
 

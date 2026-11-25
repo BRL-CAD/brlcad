@@ -636,9 +636,54 @@ _dl_eraseAllPathsFromDisplay(struct ged *gedp, const char *path, const int skip_
 
 
 void
+_ged_dl_rename_display(struct ged *gedp, const char *old_name, const char *new_name, int all_components)
+{
+    /* The live display owns its old paths until publication succeeds. */
+    if (ged_db_history_staged(gedp))
+	return;
+    struct display_list *display = ged_dl(gedp);
+    if (!display)
+	return;
+
+    struct display_list *item;
+    const size_t old_length = strlen(old_name);
+    for (BU_LIST_FOR(item, display_list, &display->l)) {
+	struct bu_vls renamed = BU_VLS_INIT_ZERO;
+	const char *part = bu_vls_cstr(&item->dl_path);
+	int first = 1;
+	int changed = 0;
+	while (*part) {
+	    part += strspn(part, "/");
+	    const size_t length = strcspn(part, "/");
+	    if (!length)
+		break;
+	    if (!first)
+		bu_vls_putc(&renamed, '/');
+	    if ((first || all_components) && length == old_length && !memcmp(part, old_name, length)) {
+		bu_vls_strcat(&renamed, new_name);
+		changed = 1;
+	    } else {
+		bu_vls_strncat(&renamed, part, length);
+	    }
+	    first = 0;
+	    part += length;
+	}
+	if (changed)
+	    bu_vls_strcpy(&item->dl_path, bu_vls_cstr(&renamed));
+	bu_vls_free(&renamed);
+    }
+    _ged_dl_path_invalidate(gedp);
+}
+
+void
 _dl_freeDisplayListItem (struct ged *gedp, struct display_list *gdlp)
 {
-    struct db_i *dbip = gedp->dbip;
+    _ged_dl_free_display_item(gedp, gdlp, gedp->dbip);
+}
+
+void
+_ged_dl_free_display_item(struct ged *gedp, struct display_list *gdlp, struct db_i *dbip)
+{
     struct bv_scene_obj *sp;
     struct directory *dp;
 
