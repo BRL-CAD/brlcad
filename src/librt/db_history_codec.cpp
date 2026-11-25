@@ -36,11 +36,19 @@ constexpr std::array<uint8_t, 2> hash_version{0, 1};
 constexpr size_t integer_size = sizeof(uint64_t);
 constexpr size_t id_size = absent.size();
 constexpr size_t min_encoded_name = integer_size + 1;
+constexpr uint64_t max_hash_bytes = std::numeric_limits<uint64_t>::max() / 8;
+constexpr std::array<uint8_t, 8> pack_signature{'B', 'R', 'L', 'C', 'A', 'D', 'H', 0};
+constexpr uint16_t pack_major = 1;
+constexpr uint16_t pack_minor = 0;
+constexpr uint64_t pack_required_features = 0;
+constexpr size_t pack_header_size = pack_signature.size() + 2 * sizeof(uint16_t) + 4 * integer_size + 2 * id_size;
+constexpr size_t pack_entry_size = sizeof(uint8_t) + id_size + 2 * integer_size;
 
-std::array<uint8_t, integer_size>
-integer_bytes(uint64_t value)
+template <typename Integer>
+std::array<uint8_t, sizeof(Integer)>
+integer_bytes(Integer value)
 {
-    std::array<uint8_t, integer_size> bytes;
+    std::array<uint8_t, sizeof(Integer)> bytes;
     for (auto byte = bytes.rbegin(); byte != bytes.rend(); ++byte) {
 	*byte = static_cast<uint8_t>(value);
 	value >>= 8;
@@ -55,10 +63,11 @@ append(Bytes &output, ByteView view)
 	output.insert(output.end(), view.data, view.data + view.size);
 }
 
+template <typename Integer = uint64_t>
 void
 append_integer(Bytes &output, uint64_t value)
 {
-    const auto bytes = integer_bytes(value);
+    const auto bytes = integer_bytes(static_cast<Integer>(value));
     append(output, {bytes.data(), bytes.size()});
 }
 
@@ -97,14 +106,15 @@ class Reader {
 public:
     explicit Reader(ByteView input) : remaining(input) {}
 
-    bool integer(uint64_t &value)
+    template <typename Integer>
+    bool integer(Integer &value)
     {
 	ByteView field;
-	if (!take(integer_size, field))
+	if (!take(sizeof(value), field))
 	    return false;
 	value = 0;
 	for (size_t i = 0; i < field.size; i++)
-	    value = (value << 8) | field.data[i];
+	    value = static_cast<Integer>((value << 8) | field.data[i]);
 	return true;
     }
 
@@ -138,8 +148,8 @@ public:
     }
 
     bool done() const { return !remaining.size; }
+    size_t size() const { return remaining.size; }
 
-private:
     bool take(uint64_t length, ByteView &value)
     {
 	if (length > remaining.size)
@@ -152,6 +162,7 @@ private:
 	return true;
     }
 
+private:
     ByteView remaining;
 };
 
@@ -209,6 +220,109 @@ valid_revision(const Revision &revision)
     return true;
 }
 
+Id
+checksum(ByteView input)
+{
+    _picohash_sha256_ctx_t hash;
+    _picohash_sha256_init(&hash);
+    _picohash_sha256_update(&hash, input.data, input.size);
+    Id id;
+    _picohash_sha256_final(&hash, id.data());
+    return id;
+}
+
+bool
+artifact_kind(Kind kind)
+{
+    return kind == Kind::Body || kind == Kind::Object || kind == Kind::Manifest || kind == Kind::Revision;
+}
+
+bool
+valid_pack_references(const Pack &pack)
+{
+    auto has_revision = [&pack](const Id &id) {
+	return id != absent && pack.artifacts.count({Kind::Revision, id});
+    };
+    if (!has_revision(pack.selected_revision) || pack.selected_model == absent ||
+	!pack.artifacts.count({Kind::Manifest, pack.selected_model}))
+	return false;
+    for (const auto &id : pack.boundaries)
+	if (!has_revision(id))
+	    return false;
+    for (const auto &entry : pack.references)
+	if (!valid_name(entry.first) || !has_revision(entry.second))
+	    return false;
+    for (const auto &entry : pack.preferences)
+	if (entry.first == entry.second || !has_revision(entry.first) || !has_revision(entry.second))
+	    return false;
+    return true;
+}
+
+bool
+decode_pack_metadata(ByteView bytes, Pack &pack)
+{
+    Reader reader(bytes);
+    uint64_t count;
+    if (!reader.count(count, id_size))
+	return false;
+    Id previous = absent;
+    for (uint64_t i = 0; i < count; i++) {
+	Id id;
+	if (!reader.id(id) || id <= previous)
+	    return false;
+	pack.boundaries.emplace_hint(pack.boundaries.end(), id);
+	previous = id;
+    }
+    if (!reader.count(count, min_encoded_name + id_size))
+	return false;
+    std::string_view previous_name;
+    for (uint64_t i = 0; i < count; i++) {
+	std::string_view name;
+	Id id;
+	if (!reader.text(name) || name <= previous_name || !reader.id(id) || id == absent)
+	    return false;
+	pack.references.emplace_hint(pack.references.end(), name, id);
+	previous_name = name;
+    }
+    if (!reader.count(count, 2 * id_size))
+	return false;
+    previous = absent;
+    for (uint64_t i = 0; i < count; i++) {
+	Id parent, child;
+	if (!reader.id(parent) || parent <= previous || !reader.id(child) || child == absent)
+	    return false;
+	pack.preferences.emplace_hint(pack.preferences.end(), parent, child);
+	previous = parent;
+    }
+    return reader.done();
+}
+
+Bytes
+encode_pack_metadata(const Pack &pack)
+{
+    Bytes bytes;
+    append_integer(bytes, pack.boundaries.size());
+    for (const auto &id : pack.boundaries)
+	append_id(bytes, id);
+    append_integer(bytes, pack.references.size());
+    for (const auto &entry : pack.references) {
+	append_text(bytes, entry.first);
+	append_id(bytes, entry.second);
+    }
+    append_integer(bytes, pack.preferences.size());
+    for (const auto &entry : pack.preferences) {
+	append_id(bytes, entry.first);
+	append_id(bytes, entry.second);
+    }
+    return bytes;
+}
+
+bool
+write_payload(FILE *output, ByteView payload)
+{
+    return !payload.size || fwrite(payload.data, 1, payload.size, output) == payload.size;
+}
+
 } // namespace
 
 Id
@@ -216,7 +330,6 @@ identify(Kind kind, ByteView payload)
 {
     constexpr size_t domain_size = sizeof(hash_domain) - 1;
     constexpr size_t framing_size = domain_size + hash_version.size() + sizeof(uint8_t) + integer_size;
-    constexpr uint64_t max_hash_bytes = std::numeric_limits<uint64_t>::max() / 8;
     if (payload.size > max_hash_bytes - framing_size)
 	return absent;
 
@@ -436,6 +549,128 @@ apply_revision(const Revision &revision, const Manifest &parent, Manifest &resul
 	return false;
 
     result = std::move(model);
+    return true;
+}
+
+PackStatus
+read_pack(ByteView body, Pack &result)
+{
+    Reader reader(body);
+    ByteView signature;
+    uint16_t major, minor;
+    uint64_t required_features;
+    if (!reader.take(pack_signature.size(), signature) ||
+	!std::equal(pack_signature.begin(), pack_signature.end(), signature.data) ||
+	!reader.integer(major) || !reader.integer(minor) || !reader.integer(required_features))
+	return PackStatus::Malformed;
+    if (major != pack_major || minor != pack_minor || required_features != pack_required_features)
+	return PackStatus::Unsupported;
+
+    Pack pack;
+    uint64_t total, metadata_length, count;
+    ByteView metadata;
+    if (!reader.integer(total) || total != body.size || !reader.id(pack.selected_revision) ||
+	!reader.id(pack.selected_model) || !reader.integer(metadata_length) || !reader.integer(count) ||
+	!reader.take(metadata_length, metadata) || reader.size() < id_size ||
+	count > (reader.size() - id_size) / pack_entry_size)
+	return PackStatus::Malformed;
+
+    // Check the index and metadata together before trusting offsets or
+    // allocating tables. Large payloads are hashed on demand.
+    const size_t index_end = body.size - reader.size() + static_cast<size_t>(count) * pack_entry_size;
+    if (index_end > max_hash_bytes)
+	return PackStatus::Malformed;
+    const Id digest = checksum({body.data, index_end});
+    if (!std::equal(digest.begin(), digest.end(), body.data + index_end) ||
+	!decode_pack_metadata(metadata, pack))
+	return PackStatus::Malformed;
+
+    size_t next_offset = index_end + id_size;
+    for (uint64_t i = 0; i < count; i++) {
+	uint8_t tag;
+	Id id;
+	uint64_t offset, length;
+	if (!reader.integer(tag) || !reader.id(id) || id == absent ||
+	    !reader.integer(offset) || !reader.integer(length) ||
+	    offset != next_offset || !length || length > body.size - next_offset)
+	    return PackStatus::Malformed;
+	const ArtifactKey key{static_cast<Kind>(tag), id};
+	if (!artifact_kind(key.first) || (!pack.artifacts.empty() && key <= pack.artifacts.rbegin()->first))
+	    return PackStatus::Malformed;
+	const auto size = static_cast<size_t>(length);
+	pack.artifacts.emplace_hint(pack.artifacts.end(), key, ByteView{body.data + next_offset, size});
+	next_offset += size;
+    }
+    if (next_offset != body.size || !valid_pack_references(pack))
+	return PackStatus::Malformed;
+
+    result = std::move(pack);
+    return PackStatus::Ok;
+}
+
+bool
+read_artifact(const Pack &pack, const ArtifactKey &key, ByteView &result)
+{
+    const auto artifact = pack.artifacts.find(key);
+    if (artifact == pack.artifacts.end() || key.second == absent || !artifact_kind(key.first) ||
+	!artifact->second.size || identify(key.first, artifact->second) != key.second)
+	return false;
+    result = artifact->second;
+    return true;
+}
+
+bool
+write_pack(FILE *output, const Pack &pack)
+{
+    if (!output || !valid_pack_references(pack))
+	return false;
+
+    const auto metadata = encode_pack_metadata(pack);
+    if (metadata.size() > max_hash_bytes - pack_header_size ||
+	pack.artifacts.size() > (max_hash_bytes - pack_header_size - metadata.size()) / pack_entry_size)
+	return false;
+    const uint64_t index_end = pack_header_size + metadata.size() +
+	static_cast<uint64_t>(pack.artifacts.size()) * pack_entry_size;
+    uint64_t total = index_end + id_size;
+    for (const auto &artifact : pack.artifacts) {
+	const auto &key = artifact.first;
+	const auto &payload = artifact.second;
+	if (!artifact_kind(key.first) || key.second == absent || !payload.size ||
+	    payload.size > UINT64_MAX - total || identify(key.first, payload) != key.second)
+	    return false;
+	total += payload.size;
+    }
+
+    Bytes header;
+    if (index_end + id_size > header.max_size())
+	return false;
+    header.reserve(static_cast<size_t>(index_end + id_size));
+    append(header, {pack_signature.data(), pack_signature.size()});
+    append_integer<uint16_t>(header, pack_major);
+    append_integer<uint16_t>(header, pack_minor);
+    append_integer(header, pack_required_features);
+    append_integer(header, total);
+    append_id(header, pack.selected_revision);
+    append_id(header, pack.selected_model);
+    append_integer(header, metadata.size());
+    append_integer(header, pack.artifacts.size());
+    append(header, metadata);
+
+    uint64_t offset = index_end + id_size;
+    for (const auto &artifact : pack.artifacts) {
+	append_integer<uint8_t>(header, static_cast<uint8_t>(artifact.first.first));
+	append_id(header, artifact.first.second);
+	append_integer(header, offset);
+	append_integer(header, artifact.second.size);
+	offset += artifact.second.size;
+    }
+    append_id(header, checksum(header));
+
+    if (!write_payload(output, header))
+	return false;
+    for (const auto &artifact : pack.artifacts)
+	if (!write_payload(output, artifact.second))
+	    return false;
     return true;
 }
 

@@ -34,9 +34,10 @@ in byte order. Reconstruct and verify artifacts without changing IDs
 across archive export, reimport, compaction and workspace storage.
 
 The archive container version, workspace schema version and artifact
-encoding version are independent. A new container or workspace can
-change indexes, compression or delta storage and keep the same artifact
-IDs. A change to canonical artifact bytes requires a new encoding
+encoding version are independent. Archive 1.0 selects artifact encoding
+1. A new container or workspace can change indexes, compression or
+delta storage and keep the same artifact IDs. A change to canonical
+artifact bytes requires a new encoding
 version. A reader interprets each retained ID under the original
 encoding. A migration verifies the closure of retained references and
 the selected model before publishing the new store.
@@ -183,3 +184,10 @@ delete `Z` and create `z`, and its one rename hint pairs those names.
 
     root ID      fc4b939be9fd903dd9a1cc036fd6091f63b3533830b3b401d1219e581d27a7cf
     edited ID    2bb83e50068fdc03cf1eddcded5edeb95b1fcd3704848d0f3dd45f7724303ee4
+
+A pack containing those seven artifacts selects the edited revision,
+references the root as `checkpoint` and prefers the edited revision
+for Redo from the root. The pack is 1,229 bytes with an index digest at
+offset 589 and the first payload at offset 621.
+
+    index SHA-256 46954645c7c20cd7142d5178d849dc4b727cdcdf1b1069f413da042c43972591

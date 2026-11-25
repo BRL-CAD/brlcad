@@ -23,9 +23,12 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <map>
+#include <set>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "rt/db5.h"
@@ -101,6 +104,30 @@ RT_EXPORT bool decode_revision(ByteView payload, Revision &result);
 // Apply a non-root revision. Require the recorded before and model IDs
 // to match. Leave the result untouched on failure.
 RT_EXPORT bool apply_revision(const Revision &revision, const Manifest &parent, Manifest &result);
+
+using ArtifactKey = std::pair<Kind, Id>;
+
+struct Pack {
+    Id selected_revision = absent;
+    Id selected_model = absent;
+    std::set<Id> boundaries;
+    std::map<std::string, Id, std::less<>> references;
+    std::map<Id, Id> preferences;
+    std::map<ArtifactKey, ByteView> artifacts;
+};
+
+enum class PackStatus {
+    Ok,
+    Malformed,
+    Unsupported
+};
+
+// The decoded index borrows from the DB5 body. Payload hashes are
+// checked by read_artifact when the indexed data is requested.
+RT_EXPORT PackStatus read_pack(ByteView body, Pack &result);
+RT_EXPORT bool read_artifact(const Pack &pack, const ArtifactKey &key, ByteView &result);
+// Stream the validated header, index and payloads to a staging file.
+RT_EXPORT bool write_pack(FILE *output, const Pack &pack);
 
 } // namespace db_history
 

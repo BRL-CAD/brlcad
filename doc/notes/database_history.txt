@@ -348,6 +348,16 @@ through the integrated GED path. Distributed synchronization, automatic
 merging and object-selective undo can follow after defining conflict
 semantics for named references and combination trees.
 
+A separate scale test reconstructed all 21,185 named records of a
+1.22 GB DB5 model byte for byte. Eight attribute edits to its largest
+41.5 MB body shared one body ID and added 896 bytes of object
+descriptors before index and revision overhead. A standalone full
+snapshot pack for the model was 1.20 GB. With the source cached,
+factoring the model took 4.8 seconds, writing and syncing the pack took
+7.4 seconds, and reopening and hashing all 34,757 artifacts took 4.7
+seconds. These are pack measurements. The integrated DB5 save will
+also write the selected live records.
+
 Implementation starting points in the source tree
 -------------------------------------------------
 

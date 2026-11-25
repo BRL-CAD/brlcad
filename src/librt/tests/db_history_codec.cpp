@@ -20,6 +20,7 @@
 #include "common.h"
 
 #include <algorithm>
+#include <memory>
 
 #include "bu/app.h"
 #include "bu/log.h"
@@ -45,6 +46,73 @@ hex_id(const Id &id)
 	hex.push_back(digits[byte & 0xf]);
     }
     return hex;
+}
+
+static int
+verify_pack(const Pack &pack, const Id &body_id)
+{
+    const auto close_file = [](FILE *output) { fclose(output); };
+    const std::unique_ptr<FILE, decltype(close_file)> file(bu_temp_file(nullptr, 0), close_file);
+    CHECK(file && write_pack(file.get(), pack));
+    constexpr size_t pack_length = 1229;
+    constexpr size_t digest_offset = 589;
+    constexpr size_t contents_offset = digest_offset + absent.size();
+    CHECK(ftell(file.get()) == static_cast<long>(pack_length));
+    rewind(file.get());
+    Bytes bytes(pack_length);
+    CHECK(fread(bytes.data(), 1, bytes.size(), file.get()) == bytes.size());
+    Id digest;
+    std::copy_n(bytes.data() + digest_offset, digest.size(), digest.begin());
+    CHECK(hex_id(digest) == "46954645c7c20cd7142d5178d849dc4b727cdcdf1b1069f413da042c43972591");
+
+    Pack decoded;
+    CHECK(read_pack(bytes, decoded) == PackStatus::Ok);
+    CHECK(decoded.selected_revision == pack.selected_revision && decoded.selected_model == pack.selected_model);
+    CHECK(decoded.references == pack.references && decoded.preferences == pack.preferences);
+    CHECK(decoded.artifacts.size() == pack.artifacts.size());
+    for (const auto &entry : pack.artifacts) {
+	ByteView payload;
+	CHECK(read_artifact(decoded, entry.first, payload) && payload.size == entry.second.size);
+	CHECK(std::equal(payload.data, payload.data + payload.size, entry.second.data));
+    }
+
+    constexpr size_t major_version_low_byte = 9;
+    constexpr size_t minor_version_low_byte = 11;
+    constexpr size_t required_features_high_byte = 12;
+    for (size_t offset : {major_version_low_byte, minor_version_low_byte, required_features_high_byte}) {
+	Bytes future = bytes;
+	future[offset]++;
+	CHECK(read_pack(future, decoded) == PackStatus::Unsupported);
+	CHECK(decoded.selected_revision == pack.selected_revision);
+    }
+    for (size_t size = 0; size < bytes.size(); size++)
+	CHECK(read_pack({bytes.data(), size}, decoded) == PackStatus::Malformed);
+
+    Bytes corrupt = bytes;
+    corrupt[digest_offset] ^= 1;
+    CHECK(read_pack(corrupt, decoded) == PackStatus::Malformed);
+    corrupt = bytes;
+    corrupt[contents_offset] ^= 1;
+    CHECK(read_pack(corrupt, decoded) == PackStatus::Ok);
+    ByteView payload;
+    CHECK(!read_artifact(decoded, {Kind::Body, body_id}, payload));
+    CHECK(read_artifact(decoded, {Kind::Revision, pack.selected_revision}, payload));
+
+    // This modified index has an independently calculated valid checksum
+    // but its first payload offset no longer points directly after it.
+    constexpr size_t first_offset_low_byte = 286;
+    const Id corrupt_digest{
+	0x76, 0x69, 0x5b, 0xe1, 0x41, 0x02, 0xf9, 0xf0,
+	0xa7, 0x7f, 0x19, 0x54, 0x0b, 0x53, 0xf8, 0x1d,
+	0x3d, 0x01, 0xc9, 0x23, 0x09, 0xca, 0x0a, 0x07,
+	0x72, 0xc1, 0x80, 0x77, 0x0a, 0x4a, 0xfc, 0xaf
+    };
+    Bytes bad_offset = bytes;
+    bad_offset[first_offset_low_byte] ^= 1;
+    std::copy(corrupt_digest.begin(), corrupt_digest.end(), bad_offset.data() + digest_offset);
+    CHECK(read_pack(bad_offset, decoded) == PackStatus::Malformed);
+    CHECK(!write_pack(file.get(), decoded));
+    return 0;
 }
 
 static int
@@ -118,7 +186,8 @@ verify_vectors()
     revision.renames = {{"Z", "z"}};
     Bytes revision_bytes;
     CHECK(encode_revision(revision, revision_bytes));
-    CHECK(hex_id(identify(Kind::Revision, revision_bytes)) == "2bb83e50068fdc03cf1eddcded5edeb95b1fcd3704848d0f3dd45f7724303ee4");
+    const Id revision_id = identify(Kind::Revision, revision_bytes);
+    CHECK(hex_id(revision_id) == "2bb83e50068fdc03cf1eddcded5edeb95b1fcd3704848d0f3dd45f7724303ee4");
     Revision decoded;
     CHECK(decode_revision(revision_bytes, decoded) && decoded.time == -2);
     CHECK(decoded.parent == root_id && decoded.author == "cad" && decoded.renames == revision.renames);
@@ -132,7 +201,22 @@ verify_vectors()
     CHECK(!encode_revision(decoded, roundtrip));
     for (size_t size = 0; size < revision_bytes.size(); size++)
 	CHECK(!decode_revision({revision_bytes.data(), size}, decoded));
-    return 0;
+
+    Pack pack;
+    pack.selected_revision = revision_id;
+    pack.selected_model = renamed_model_id;
+    pack.references.emplace("checkpoint", root_id);
+    pack.preferences.emplace(root_id, revision_id);
+    pack.artifacts = {
+	{{Kind::Body, first.body_id}, first.body},
+	{{Kind::Object, first.object_id}, first.object},
+	{{Kind::Object, second.object_id}, second.object},
+	{{Kind::Manifest, initial_model_id}, initial_bytes},
+	{{Kind::Manifest, renamed_model_id}, renamed_bytes},
+	{{Kind::Revision, root_id}, root_bytes},
+	{{Kind::Revision, revision_id}, revision_bytes}
+    };
+    return verify_pack(pack, first.body_id);
 }
 
 static int
