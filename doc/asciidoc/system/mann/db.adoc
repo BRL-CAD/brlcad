@@ -93,7 +93,7 @@ Write the open model to a new DB5 file. A plain export omits the recognized hist
 
 
 __history verify__::
-Check the stored history's bytes, revision graph, and object records, then compare the live DB5 model or workspace directory with the selected revision. A valid embedded archive with external model changes reports a mismatch.
+Check the retained history's bytes, revision graph, and object records, then compare the live DB5 model or workspace directory with the selected revision. This command also verifies the in-memory session journal and its retained branches. A valid embedded archive with external model changes reports a mismatch.
 
 
 __history conflict [export path]__::

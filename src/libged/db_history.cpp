@@ -721,8 +721,51 @@ apply_session_revision(db_history::Manifest &model, const db_history::Revision &
 }
 
 bool
+valid_session_journal(const ged_db_history &history)
+{
+    const auto &revisions = history.revisions;
+    if (revisions.empty() || !revisions.count(history.head) || revisions.rbegin()->first >= history.next)
+	return false;
+
+    std::map<uint64_t, size_t> children;
+    size_t bytes = 0;
+    for (const auto &entry : revisions) {
+	const auto id = entry.first;
+	const auto &revision = entry.second;
+	if (id == revisions.begin()->first) {
+	    if (revision.parent != no_revision || revision.bytes || !revision.changes.empty() || !revision.renames.empty())
+		return false;
+	} else {
+	    if (revision.parent >= id || !revisions.count(revision.parent) || revision.changes.empty())
+		return false;
+	    ++children[revision.parent];
+	}
+	if (revision.preferred != no_revision) {
+	    const auto preferred = revisions.find(revision.preferred);
+	    if (preferred == revisions.end() || preferred->second.parent != id)
+		return false;
+	}
+	if (revision.bytes > history.limit - bytes)
+	    return false;
+	bytes += revision.bytes;
+    }
+
+    if (bytes != history.used)
+	return false;
+    for (const auto &entry : revisions) {
+	const auto count = children.find(entry.first);
+	if (entry.second.children != (count == children.end() ? 0 : count->second))
+	    return false;
+    }
+    return true;
+}
+
+bool
 archive_session(const ged_db_history &history, db_history::Db5HistoryDraft &draft)
 {
+    if (!valid_session_journal(history))
+	return false;
+
     // The seed describes the current live model. Walk the journal
     // backwards to discover the oldest retained model, then assign
     // persistent IDs in parent-first order, including inactive branches.
@@ -1767,6 +1810,21 @@ unchanged_history_file(struct ged *gedp, const ged_db_history &history)
 }
 
 int
+verify_session_history(struct ged *gedp, const ged_db_history &history)
+{
+    if (!unchanged_history_file(gedp, history))
+	return BRLCAD_ERROR;
+
+    db_history::Db5HistoryDraft checked;
+    if (!prepare_archive(gedp, &history, checked) || !db_history::verify_pack(checked.pack, gedp->ged_result_str) ||
+	!unchanged_history_file(gedp, history))
+	return BRLCAD_ERROR;
+
+    bu_vls_strcat(gedp->ged_result_str, "Session journal and selected model verified");
+    return BRLCAD_OK;
+}
+
+int
 verify_embedded_history(struct ged *gedp, ged_db_history &history)
 {
     if (!unchanged_history_file(gedp, history))
@@ -2506,18 +2564,25 @@ ged_db_history_command(struct ged *gedp, int argc, const char **argv)
 	    return handle_conflict(gedp->ged_result_str, history, save_conflict ? argv[3] : nullptr);
 	const bool verify = argc == 2 && BU_STR_EQUAL(argv[1], "verify");
 	const bool adopt = (argc == 2 || (argc == 3 && BU_STR_EQUAL(argv[2], "--apply"))) && BU_STR_EQUAL(argv[1], "adopt");
-	if (verify || adopt) {
-	    if (verify && history && history->workspace) {
+	if (verify) {
+	    if (!history) {
+		bu_vls_strcat(gedp->ged_result_str, "Enable database history before using this command");
+		return BRLCAD_ERROR;
+	    }
+	    if (history->workspace) {
 		if (!history->workspace->verify(gedp->ged_result_str))
 		    return BRLCAD_ERROR;
 		bu_vls_strcat(gedp->ged_result_str, "Workspace archive and selected model verified");
 		return BRLCAD_OK;
 	    }
+	    return is_embedded(*history) ? verify_embedded_history(gedp, *history) : verify_session_history(gedp, *history);
+	}
+	if (adopt) {
 	    if (!history || !is_embedded(*history)) {
 		bu_vls_strcat(gedp->ged_result_str, "This command requires embedded history");
 		return BRLCAD_ERROR;
 	    }
-	    return verify ? verify_embedded_history(gedp, *history) : adopt_external_history(gedp, *history, argc == 3);
+	    return adopt_external_history(gedp, *history, argc == 3);
 	}
 	if ((argc == 3 || argc == 4) && BU_STR_EQUAL(argv[1], "export")) {
 	    if (argc == 3 && !BU_STR_EQUAL(argv[2], "--with-history"))

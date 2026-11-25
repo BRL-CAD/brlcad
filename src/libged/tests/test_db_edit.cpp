@@ -157,6 +157,8 @@ test_disk_history()
     if (enable_result != BRLCAD_OK && contains_result(gedp, "Atomic DB5 replacement is unavailable"))
 	return 0;
     CHECK(enable_result == BRLCAD_OK && contains_result(gedp, "revision 0"));
+    const char *verify_session[] = {"db", "history", "verify", nullptr};
+    CHECK(run(gedp, verify_session) == BRLCAD_OK && contains_result(gedp, "Session journal and selected model verified"));
     const char *status_json[] = {"db", "history", "status", "--json", nullptr};
     CHECK(run(gedp, status_json) == BRLCAD_OK);
     const auto session_json = nlohmann::json::parse(bu_vls_addr(gedp->ged_result_str), nullptr, false);
@@ -201,6 +203,9 @@ test_disk_history()
     CHECK(run(gedp, undo) == BRLCAD_OK && commits == 6);
     CHECK(run(gedp, status) == BRLCAD_OK && contains_result(gedp, "redo 1 mvall"));
     CHECK(contains_result(gedp, "redo 2 title fork"));
+    const std::string before_verification = bu_vls_cstr(gedp->ged_result_str);
+    CHECK(run(gedp, verify_session) == BRLCAD_OK && contains_result(gedp, "verified"));
+    CHECK(run(gedp, status) == BRLCAD_OK && before_verification == bu_vls_cstr(gedp->ged_result_str));
     const char *log[] = {"db", "history", "log", nullptr};
     CHECK(run(gedp, log) == BRLCAD_OK && contains_result(gedp, "revision 2 parent 0 title fork"));
     CHECK(contains_result(gedp, "revision 1 parent 0 mvall"));
@@ -229,6 +234,7 @@ test_disk_history()
     const std::unique_ptr<struct ged, decltype(&ged_close)> external(ged_open("db", path, 1), ged_close);
     const char *external_shape[] = {"make", "external.s", "sph", nullptr};
     CHECK(external && run(external.get(), title) == BRLCAD_OK && run(external.get(), external_shape) == BRLCAD_OK);
+    CHECK(run(gedp, verify_session) == BRLCAD_ERROR && contains_result(gedp, "changed since opening") && commits == 9);
     CHECK(run(gedp, undo) != BRLCAD_OK && contains_result(gedp, "changed since staging began"));
     char recovered_path[MAXPATHLEN] = {};
     file = bu_temp_file(recovered_path, sizeof(recovered_path));
@@ -262,6 +268,7 @@ test_disk_history()
     }
     CHECK(run(bounded.get(), status) == BRLCAD_OK && contains_result(bounded.get(), "revision 6"));
     CHECK(!contains_result(bounded.get(), "oldest 0"));
+    CHECK(run(bounded.get(), verify_session) == BRLCAD_OK && contains_result(bounded.get(), "verified"));
     const char *expired[] = {"db", "history", "checkout", "0", nullptr};
     CHECK(run(bounded.get(), expired) != BRLCAD_OK && contains_result(bounded.get(), "expired"));
     CHECK(run(bounded.get(), undo) == BRLCAD_OK);

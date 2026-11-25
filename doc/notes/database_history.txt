@@ -725,6 +725,23 @@ under 0.76 seconds. A plain DB5 subset confirmed the translated BREP
 bounds after Redo. The second assembly retained its original reference
 and the workspace verifier passed.
 
+A separate local push used a synthetic 43.20 MB BoT with 1.2 million
+triangles. Ordinary DB5, session DB5, embedded DB5 and LMDB produced
+identical SHA-256 digests for all five named DB5 records. A ray hit the
+same surface in the pushed and untouched assembly instances in every
+mode. Undo restored the original combination and removed the copy.
+Redo restored the pushed records byte for byte in all history modes.
+Measured push times were 0.15, 0.50, 1.55 and 0.96 seconds, respectively.
+In the session trial, overwriting the original BoT exceeded the 64 MiB
+journal budget because the edit needed both bodies. The command
+reported the capacity error and preserved the original records and
+selected revision. The local copy fit the budget.
+
+The session verifier checked an empty journal, branches with a
+preferred Redo, and a journal pruned to a new root. Verification did
+not change the selection or publish an event. It rejected an external
+file change before trying to rebuild the history graph.
+
 Two GED clients exercised stale-write recovery in session DB5,
 embedded DB5 and LMDB. Recovery opened the staged geometry in a new
 file. Embedded and workspace recovery preserved the archive and
