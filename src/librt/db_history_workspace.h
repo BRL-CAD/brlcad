@@ -91,6 +91,11 @@ public:
     // Read graph metadata and owned revision payloads for inspection.
     // The result omits model snapshots, descriptors and bodies.
     RT_EXPORT bool read_graph(const WorkspaceHead &view, WorkspaceHead &current,
+	Db5HistoryDraft &result, struct bu_vls *message) const;
+    // Read the selected revision and its Undo and Redo metadata together
+    // with the live head. Indexed workspaces read only the selected and
+    // child revision payloads, plus their boundary and preference data.
+    RT_EXPORT bool read_navigation(const WorkspaceHead &view, WorkspaceHead &current,
 	Db5HistoryDraft &result, struct bu_vls *message, WorkspaceExport *last_export = nullptr) const;
     RT_EXPORT bool read_model_at(const Id &revision, Manifest &model, struct bu_vls *message) const;
     RT_EXPORT bool copy_to(const WorkspaceHead &view, const char *destination, struct bu_vls *message) const;

@@ -1420,7 +1420,7 @@ load_history_status(const ged_db_history *history, struct ged_history_status &st
 	if (history->workspace) {
 	    WorkspaceHead current;
 	    db_history::WorkspaceExport last_export;
-	    if (!history->workspace->read_graph(history->workspace_head, current, graph, message, &last_export))
+	    if (!history->workspace->read_navigation(history->workspace_head, current, graph, message, &last_export))
 		return false;
 	    pack = &graph.pack;
 	    status.mode = GED_HISTORY_WORKSPACE;
@@ -2666,6 +2666,11 @@ ged_db_history_command(struct ged *gedp, int argc, const char **argv)
     }
     if (history->workspace || is_embedded(*history)) {
 	db_history::Db5HistoryDraft graph;
+	if (history->workspace && argc == 1) {
+	    WorkspaceHead observed;
+	    return history->workspace->read_navigation(history->workspace_head, observed, graph, gedp->ged_result_str) ?
+		step_archive_revision(gedp, *history, graph.pack, undo, nullptr) : BRLCAD_ERROR;
+	}
 	const auto *pack = history_graph(gedp->ged_result_str, *history, graph);
 	return pack ? step_archive_revision(gedp, *history, *pack, undo, argc == 2 ? argv[1] : nullptr) : BRLCAD_ERROR;
     }

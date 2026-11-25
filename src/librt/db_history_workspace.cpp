@@ -66,13 +66,16 @@ constexpr uint16_t schema_major = 1;
 constexpr uint16_t unpinned_minor = 0;
 constexpr uint16_t pinned_minor = 1;
 constexpr uint16_t sparse_minor = 2;
+constexpr uint16_t indexed_minor = 3;
 constexpr uint64_t reader_pin_feature = 1;
 constexpr uint64_t sparse_manifest_feature = 1 << 1;
+constexpr uint64_t revision_children_feature = 1 << 2;
 constexpr uint64_t sparse_features = reader_pin_feature | sparse_manifest_feature;
+constexpr uint64_t indexed_features = sparse_manifest_feature | revision_children_feature;
 #ifdef DB_HISTORY_FILE_LOCKS
-constexpr uint64_t new_workspace_features = sparse_features;
+constexpr uint64_t new_workspace_features = indexed_features | reader_pin_feature;
 #else
-constexpr uint64_t new_workspace_features = sparse_manifest_feature;
+constexpr uint64_t new_workspace_features = indexed_features;
 #endif
 constexpr uint16_t artifact_encoding = 1;
 constexpr size_t bootstrap_size = signature.size() + 3 * sizeof(uint16_t) + sizeof(uint64_t);
@@ -80,7 +83,7 @@ constexpr size_t head_size = 2 * absent.size() + sizeof(uint64_t);
 constexpr size_t export_observation_size = absent.size() + sizeof(uint64_t);
 constexpr uint64_t initial_generation = 1;
 constexpr size_t initial_map_size = 16 * 1024 * 1024;
-constexpr unsigned int database_count = 5;
+constexpr unsigned int database_count = 6;
 
 using Environment = std::unique_ptr<MDB_env, decltype(&mdb_env_close)>;
 using Transaction = std::unique_ptr<MDB_txn, decltype(&mdb_txn_abort)>;
@@ -93,6 +96,7 @@ struct Tables {
     MDB_dbi references = 0;
     MDB_dbi preferences = 0;
     MDB_dbi boundaries = 0;
+    MDB_dbi children = 0;
 };
 
 enum class ChangeStatus { Error, Unchanged, Changed };
@@ -304,13 +308,15 @@ begin(MDB_env *env, unsigned int flags)
 }
 
 void
-open_tables(MDB_txn *txn, Tables &tables, unsigned int flags)
+open_tables(MDB_txn *txn, Tables &tables, unsigned int flags, uint64_t features)
 {
     check(mdb_dbi_open(txn, "artifacts", flags, &tables.artifacts));
     check(mdb_dbi_open(txn, "directory", flags, &tables.directory));
     check(mdb_dbi_open(txn, "references", flags, &tables.references));
     check(mdb_dbi_open(txn, "preferences", flags, &tables.preferences));
     check(mdb_dbi_open(txn, "boundaries", flags, &tables.boundaries));
+    if (features & revision_children_feature)
+	check(mdb_dbi_open(txn, "children", flags, &tables.children));
 }
 
 Environment
@@ -380,7 +386,8 @@ check_bootstrap(MDB_txn *txn, MDB_dbi table, uint64_t &features, struct bu_vls *
 
     const bool supported = (minor == unpinned_minor && required == 0) ||
 	(minor == pinned_minor && required == reader_pin_feature) ||
-	(minor == sparse_minor && (required == sparse_manifest_feature || required == sparse_features));
+	(minor == sparse_minor && (required == sparse_manifest_feature || required == sparse_features)) ||
+	(minor == indexed_minor && (required == indexed_features || required == (indexed_features | reader_pin_feature)));
     if (!supported || encoding != artifact_encoding)
 	return report(message, "Unsupported BRL-CAD workspace schema, features or artifact encoding");
     features = required;
@@ -549,6 +556,47 @@ read_id(ByteView raw, Id &id)
     return id != absent;
 }
 
+std::array<uint8_t, 2 * absent.size()>
+child_key(const Id &parent, const Id &child)
+{
+    std::array<uint8_t, 2 * absent.size()> key;
+    const auto next = std::copy(parent.begin(), parent.end(), key.begin());
+    std::copy(child.begin(), child.end(), next);
+    return key;
+}
+
+template <typename Visit>
+bool
+visit_child_edges(const Pack &pack, Visit visit)
+{
+    for (const auto &artifact : pack.artifacts) {
+	const auto &key = artifact.first;
+	if (key.first != Kind::Revision || pack.boundaries.count(key.second))
+	    continue;
+	Revision revision;
+	if (!decode_revision(artifact.second, revision) ||
+	    (revision.parent != absent && !visit(child_key(revision.parent, key.second))))
+	    return false;
+    }
+    return true;
+}
+
+bool
+verify_children(MDB_txn *txn, const Tables &tables, const Pack &pack, struct bu_vls *message)
+{
+    if (!tables.children)
+	return true;
+    MDB_stat stats;
+    check(mdb_stat(txn, tables.children, &stats));
+    size_t count = 0;
+    const bool valid = visit_child_edges(pack, [&](const auto &key) {
+	ByteView row;
+	++count;
+	return get(txn, tables.children, bytes(key), row) && !row.size;
+    });
+    return (valid && count == stats.ms_entries) || report(message, "The workspace revision child index is invalid");
+}
+
 bool
 load_pack(MDB_txn *txn, const Tables &tables, const WorkspaceHead &head, bool graph_only, Pack &pack)
 {
@@ -573,6 +621,49 @@ load_pack(MDB_txn *txn, const Tables &tables, const WorkspaceHead &head, bool gr
 	Id boundary;
 	return !payload.size && read_id(key, boundary) && pack.boundaries.insert(boundary).second;
     }) && pack.artifacts.count({Kind::Revision, head.revision});
+}
+
+bool
+load_navigation(MDB_txn *txn, const Tables &tables, const WorkspaceHead &selected, Pack &pack)
+{
+    if (!tables.children)
+	return load_pack(txn, tables, selected, true, pack);
+
+    pack.selected_revision = selected.revision;
+    pack.selected_model = selected.model;
+    const auto add_revision = [&](const Id &id, Revision &revision) {
+	ByteView payload;
+	const ArtifactKey key{Kind::Revision, id};
+	return get_artifact(txn, tables.artifacts, key, payload) && decode_revision(payload, revision) &&
+	    pack.artifacts.emplace(key, payload).second;
+    };
+    Revision revision;
+    if (!add_revision(selected.revision, revision) || revision.model != selected.model)
+	return false;
+
+    ByteView row;
+    if (get(txn, tables.boundaries, bytes(selected.revision), row)) {
+	if (row.size)
+	    return false;
+	pack.boundaries.insert(selected.revision);
+    }
+    if (!scan_table(txn, tables.children, bytes(selected.revision), [&](ByteView key, ByteView payload) {
+	Id child;
+	Revision child_revision;
+	const size_t parent_size = selected.revision.size();
+	return !payload.size && read_id({key.data + parent_size, key.size - parent_size}, child) &&
+	    add_revision(child, child_revision) && child_revision.parent == selected.revision &&
+	    !get(txn, tables.boundaries, bytes(child), row);
+    }))
+	return false;
+
+    if (get(txn, tables.preferences, bytes(selected.revision), row)) {
+	Id child;
+	if (!read_id(row, child) || child == selected.revision || !pack.artifacts.count({Kind::Revision, child}))
+	    return false;
+	pack.preferences.emplace(selected.revision, child);
+    }
+    return true;
 }
 
 struct WorkspaceArchive {
@@ -774,11 +865,11 @@ import_pack(MDB_env *env, const Pack &pack, const Manifest &manifest, struct bu_
     auto txn = begin(env, 0);
     Tables tables;
     check(mdb_dbi_open(txn.get(), nullptr, 0, &tables.metadata));
-    open_tables(txn.get(), tables, MDB_CREATE);
+    open_tables(txn.get(), tables, MDB_CREATE, new_workspace_features);
     std::array<uint8_t, bootstrap_size> format;
     auto *rest = std::copy(signature.begin(), signature.end(), format.data());
     rest = write_integer(rest, schema_major);
-    rest = write_integer(rest, sparse_minor);
+    rest = write_integer(rest, indexed_minor);
     rest = write_integer(rest, new_workspace_features);
     write_integer(rest, artifact_encoding);
     put(txn.get(), tables.metadata, bytes(bootstrap_key), bytes(format));
@@ -806,6 +897,11 @@ import_pack(MDB_env *env, const Pack &pack, const Manifest &manifest, struct bu_
 	return report(message, "The imported workspace archive is invalid");
     if (!read_model(txn.get(), tables, selected.model, copied, message) || !verify_pack(stored, message))
 	return false;
+    if (!visit_child_edges(stored, [&](const auto &key) {
+	put(txn.get(), tables.children, bytes(key), {});
+	return true;
+    }))
+	return report(message, "Could not index the imported workspace revisions");
     check(mdb_txn_commit(txn.release()));
     return true;
 }
@@ -1025,7 +1121,7 @@ Workspace::open(const char *path, struct bu_vls *message, bool writable)
 	check(mdb_dbi_open(txn.get(), nullptr, 0, &store->handles.metadata));
 	if (!check_bootstrap(txn.get(), store->handles.metadata, store->features, message))
 	    return nullptr;
-	open_tables(txn.get(), store->handles, 0);
+	open_tables(txn.get(), store->handles, 0, store->features);
 	WorkspaceHead head;
 	if (!read_head(txn.get(), store->handles, head)) {
 	    report(message, "The workspace head is invalid");
@@ -1200,19 +1296,35 @@ Workspace::read_record(const Id &id, void *record, size_t size) const
 
 bool
 Workspace::read_graph(const WorkspaceHead &selected, WorkspaceHead &current,
-		      Db5HistoryDraft &result, struct bu_vls *message, WorkspaceExport *last_export) const
+		      Db5HistoryDraft &result, struct bu_vls *message) const
 {
     return store->read([&](MDB_txn *txn, const Tables &tables) {
 	WorkspaceHead observed;
 	Pack graph;
 	if (!read_head(txn, tables, observed) || !load_pack(txn, tables, selected, true, graph))
 	    return report(message, "The workspace revision graph is invalid");
+	copy_pack(std::move(graph), result);
+	current = observed;
+	return true;
+    }, message);
+}
+
+bool
+Workspace::read_navigation(const WorkspaceHead &selected, WorkspaceHead &current,
+			   Db5HistoryDraft &result, struct bu_vls *message, WorkspaceExport *last_export) const
+{
+    return store->read([&](MDB_txn *txn, const Tables &tables) {
+	WorkspaceHead observed;
+	Pack graph;
+	if (!read_head(txn, tables, observed) || !load_navigation(txn, tables, selected, graph))
+	    return report(message, "The workspace Undo and Redo choices could not be read");
+
 	WorkspaceExport exported;
 	ByteView saved;
 	if (last_export && get(txn, tables.metadata, bytes(export_key), saved)) {
 	    if (!read_id(saved, exported.revision))
 		return report(message, "The last exported revision is invalid");
-	    // A preexisting writer only updates the ID key.
+	    // Older workspaces can have an ID without the export timestamp.
 	    if (get(txn, tables.metadata, bytes(export_observation_key), saved) && saved.size == export_observation_size &&
 		std::equal(exported.revision.begin(), exported.revision.end(), saved.data)) {
 		uint64_t timestamp;
@@ -1312,7 +1424,8 @@ Workspace::verify(struct bu_vls *message) const
 	WorkspaceArchive archive;
 	if (!read_head(txn, tables, head) || !load_archive(txn, tables, head, store->sparse_manifests(), archive))
 	    return report(message, "The workspace archive is invalid");
-	return read_model(txn, tables, head.model, model, message) && verify_pack(archive.pack, message);
+	return read_model(txn, tables, head.model, model, message) && verify_pack(archive.pack, message) &&
+	    verify_children(txn, tables, archive.pack, message);
     }, message);
 }
 
@@ -1414,6 +1527,24 @@ Workspace::prune(const WorkspaceHead &expected, const WorkspaceRetention &policy
 	if (!source.selected_payload.empty())
 	    store_artifact(txn, tables, {Kind::Manifest, base.model}, source.selected_payload);
 	const auto &kept = planned.archive.pack;
+	if (tables.children) {
+	    const auto remove_child = [&](const Id &id) {
+		if (source.pack.boundaries.count(id))
+		    return true;
+		Revision revision;
+		if (!read_revision(source.pack, id, revision))
+		    return false;
+		if (revision.parent != absent)
+		    erase(txn, tables.children, bytes(child_key(revision.parent, id)));
+		return true;
+	    };
+	    for (const auto &id : applied.expired_revisions)
+		if (!remove_child(id))
+		    return fail_change(message, "The workspace revision child index cannot be pruned");
+	    for (const auto &boundary : kept.boundaries)
+		if (!remove_child(boundary))
+		    return fail_change(message, "The workspace revision child index cannot be pruned");
+	}
 	for (const auto &boundary : kept.boundaries)
 	    if (!source.pack.boundaries.count(boundary))
 		put(txn, tables.boundaries, bytes(boundary), {});
@@ -1482,6 +1613,8 @@ Workspace::commit(const WorkspaceHead &expected, const Revision &revision, const
 	if (id == absent)
 	    return fail_change(message, "The workspace revision cannot be identified");
 	store_artifact(txn, tables, {Kind::Revision, id}, encoded);
+	if (tables.children)
+	    put(txn, tables.children, bytes(child_key(revision.parent, id)), {}, 0);
 	if (!write_directory(txn, tables, revision.changes, message))
 	    return ChangeStatus::Error;
 	next.revision = id;

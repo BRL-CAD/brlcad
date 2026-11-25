@@ -784,6 +784,22 @@ middle and final revisions. Promoting a shorter session with two
 branches retained all 131 edits in a 580 KB DB5 file. Both promoted
 branches and the initial model were available after reopening.
 
+A workspace with 12,000 title edits was copied from schema 1.2 to 1.3.
+The copy preserved all 12,001 revision entries and the selected ID.
+Across 150 warm typed GED status queries per schema, median latency
+fell from 24.8 milliseconds to 6.6 microseconds. The 95th percentiles
+were 27.0 milliseconds and 8.5 microseconds. The schema 1.3 query
+reads the selected revision and its child edges. The full verifier
+checks the index against retained revisions, including after pruning.
+An injected termination just before migration commit preserved the
+source data digest. Opening the incomplete destination failed. A fresh
+copy passed full verification.
+
+On a new schema 1.3 copy of M1917 with 65 title edits, the median
+typed status query took 6.4 microseconds once the document was open.
+Undo reported the former selection as the preferred Redo child.
+Redo restored the revision and full workspace verification passed.
+
 Implementation starting points in the source tree
 -------------------------------------------------
 

@@ -96,33 +96,41 @@ read_record(struct db_i *db, const char *name)
     return record;
 }
 
+template <typename Mutation>
 static bool
-change_bootstrap(const std::string &path, size_t index, uint8_t replacement, uint8_t *previous = nullptr)
+change_workspace_file(const std::string &path, Mutation mutate)
 {
     MDB_env *env = nullptr;
     if (mdb_env_create(&env) != MDB_SUCCESS)
 	return false;
     const std::unique_ptr<MDB_env, decltype(&mdb_env_close)> environment(env, mdb_env_close);
-    if (mdb_env_open(env, path.c_str(), 0, 0660) != MDB_SUCCESS)
+    if (mdb_env_set_maxdbs(env, 1) != MDB_SUCCESS || mdb_env_open(env, path.c_str(), 0, 0660) != MDB_SUCCESS)
 	return false;
     MDB_txn *raw = nullptr;
     if (mdb_txn_begin(env, nullptr, 0, &raw) != MDB_SUCCESS)
 	return false;
     std::unique_ptr<MDB_txn, decltype(&mdb_txn_abort)> txn(raw, mdb_txn_abort);
-    MDB_dbi db;
-    char name[] = "workspace";
-    MDB_val key{sizeof(name) - 1, name}, found;
-    if (mdb_dbi_open(raw, nullptr, 0, &db) != MDB_SUCCESS ||
-	mdb_get(raw, db, &key, &found) != MDB_SUCCESS || index >= found.mv_size)
-	return false;
-    const auto *data = static_cast<const uint8_t *>(found.mv_data);
-    Bytes format(data, data + found.mv_size);
-    if (previous)
-	*previous = format[index];
-    format[index] = replacement;
-    MDB_val updated{format.size(), format.data()};
-    return mdb_put(raw, db, &key, &updated, 0) == MDB_SUCCESS &&
-	mdb_txn_commit(txn.release()) == MDB_SUCCESS;
+    return mutate(raw) && mdb_txn_commit(txn.release()) == MDB_SUCCESS;
+}
+
+static bool
+change_bootstrap(const std::string &path, size_t index, uint8_t replacement, uint8_t *previous = nullptr)
+{
+    return change_workspace_file(path, [&](MDB_txn *txn) {
+	MDB_dbi db;
+	char name[] = "workspace";
+	MDB_val key{sizeof(name) - 1, name}, found;
+	if (mdb_dbi_open(txn, nullptr, 0, &db) != MDB_SUCCESS ||
+	    mdb_get(txn, db, &key, &found) != MDB_SUCCESS || index >= found.mv_size)
+	    return false;
+	const auto *data = static_cast<const uint8_t *>(found.mv_data);
+	Bytes format(data, data + found.mv_size);
+	if (previous)
+	    *previous = format[index];
+	format[index] = replacement;
+	MDB_val updated{format.size(), format.data()};
+	return mdb_put(txn, db, &key, &updated, 0) == MDB_SUCCESS;
+    });
 }
 
 static int
@@ -298,12 +306,19 @@ test_writes(const char *path, const char *program, struct db_i *source, const Em
     CHECK(incomplete.erase(last_object) == 1);
     CHECK(writer->commit(back, edit, incomplete, actual, message) == WorkspaceWriteStatus::Error);
     CHECK(reader->read_directory(actual, model, message) && actual.generation == back.generation && model == initial.model);
+    Db5HistoryDraft navigation;
+    CHECK(reader->read_navigation(back, actual, navigation, message) &&
+	navigation.pack.artifacts.size() == 2 && !navigation.pack.artifacts.count({Kind::Revision, batch.pack.selected_revision}));
     Bytes payload;
     CHECK(!reader->fetch_artifact(first_object, payload, message));
     CHECK(writer->commit(back, edit, batch.pack.artifacts, selected, message) == WorkspaceWriteStatus::Ok);
     CHECK(selected.revision == batch.pack.selected_revision && selected.generation == back.generation + 1);
     CHECK(reader->read_directory(actual, model, message) && actual.revision == selected.revision &&
 	model.at(first) == first_object.second && model.at(last) == last_object.second);
+    CHECK(reader->read_navigation(back, actual, navigation, message) && actual.revision == selected.revision &&
+	navigation.pack.selected_revision == back.revision && navigation.pack.artifacts.size() == 3 &&
+	navigation.pack.artifacts.count({Kind::Revision, selected.revision}) &&
+	navigation.pack.preferences.at(back.revision) == edited.selected_revision);
     Bytes record;
     CHECK(reader->fetch_record(first_object.second, record, message));
     RecordArtifact factored;
@@ -344,6 +359,8 @@ test_writes(const char *path, const char *program, struct db_i *source, const Em
     CHECK(writer->prune(marked, policy, id_string(preview.token), preview, pruned, message) == WorkspaceWriteStatus::Ok);
     CHECK(pruned.generation == marked.generation + 1 && pruned.revision == base.revision);
     CHECK(!reader->fetch_artifact({Kind::Body, factored.body_id}, payload, message));
+    CHECK(reader->read_navigation(pruned, actual, navigation, message) && navigation.pack.artifacts.size() == 2 &&
+	!navigation.pack.artifacts.count({Kind::Revision, selected.revision}));
     CHECK(writer->verify(message) && test_native_geometry(newer.get()) == 0);
     return 0;
 }
@@ -389,6 +406,9 @@ test_compact_checkout(const char *path, Edit stage, const Db5HistoryDraft &edite
     CHECK(selected.model == reused_model.second && selected.revision == prior.pack.selected_revision &&
 	selected.generation == latest.generation + 1);
     CHECK(workspace->fetch_artifact(reused_model, payload, message) == pruned);
+    Db5HistoryDraft navigation;
+    CHECK(workspace->read_navigation(selected, latest, navigation, message) &&
+	navigation.pack.artifacts.size() == 2 && navigation.pack.boundaries.count(selected.revision) == static_cast<size_t>(pruned));
     return 0;
 }
 
@@ -490,6 +510,7 @@ test_workspace(const std::string &path, const Pack &pack, const Manifest &expect
     constexpr size_t required_low_byte = 19;
     constexpr size_t artifact_low_byte = 21;
     constexpr uint8_t reader_pin_bit = 1;
+    constexpr uint8_t child_index_bit = 4;
     constexpr uint8_t unknown_feature_bit = 0x80;
     uint8_t original_features = 0;
     CHECK(change_bootstrap(path, major_low_byte, 2));
@@ -506,6 +527,32 @@ test_workspace(const std::string &path, const Pack &pack, const Manifest &expect
     workspace = Workspace::open(path.c_str(), message);
     CHECK(workspace && workspace->read_directory(head, model, message));
     CHECK(head.revision == pack.selected_revision && model == expected);
+    workspace.reset();
+
+    // A pre-index workspace can still navigate its graph. Copying it
+    // rebuilds the child index from the verified retained revisions.
+    CHECK(change_bootstrap(path, minor_low_byte, 2) &&
+	change_bootstrap(path, required_low_byte, original_features & ~child_index_bit));
+    workspace = Workspace::open(path.c_str(), message);
+    Db5HistoryDraft navigation;
+    WorkspaceHead observed;
+    CHECK(workspace && workspace->read_navigation(head, observed, navigation, message) &&
+	navigation.pack.artifacts.count({Kind::Revision, parent}) && workspace->verify(message));
+    const auto indexed_copy_path = path + "-indexed-copy";
+    CHECK(workspace->copy_to(head, indexed_copy_path.c_str(), message));
+    auto indexed_copy = Workspace::open(indexed_copy_path.c_str(), message);
+    WorkspaceHead indexed_head;
+    CHECK(indexed_copy && indexed_copy->read_directory(indexed_head, model, message) && indexed_head.revision == head.revision &&
+	indexed_copy->read_navigation(indexed_head, observed, navigation, message) && navigation.pack.artifacts.size() == 1 &&
+	indexed_copy->verify(message));
+    indexed_copy.reset();
+    CHECK(change_workspace_file(indexed_copy_path, [](MDB_txn *txn) {
+	MDB_dbi index;
+	return mdb_dbi_open(txn, "children", 0, &index) == MDB_SUCCESS && mdb_drop(txn, index, 0) == MDB_SUCCESS;
+    }));
+    indexed_copy = Workspace::open(indexed_copy_path.c_str(), message);
+    CHECK(indexed_copy && !indexed_copy->verify(message) &&
+	BU_STR_EQUAL(bu_vls_addr(message), "The workspace revision child index is invalid"));
     workspace.reset();
 
     // Readers can open workspaces written before sparse manifests and pins.

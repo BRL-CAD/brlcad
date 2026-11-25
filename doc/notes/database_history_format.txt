@@ -172,8 +172,8 @@ databases. Its fixed bootstrap value uses the following fields.
 
     u8[8] signature           (42 52 4c 43 41 44 57 00)
     u16 schema_major          (1)
-    u16 schema_minor          (2)
-    u64 required_features     (2 or 3)
+    u16 schema_minor          (3)
+    u64 required_features     (6 or 7)
     u16 artifact_encoding     (1)
 
 Reject unrecognized schema versions, feature bits or artifact
@@ -181,7 +181,7 @@ encodings before interpreting the workspace data. The `head` key in
 the unnamed database contains the selected revision ID, the selected
 model ID and a u64 generation that starts at 1.
 
-In schemas 1.0 through 1.2, the named `artifacts` database maps a
+In schemas 1.0 through 1.3, the named `artifacts` database maps a
 one-byte artifact tag and an ID to the canonical payload. The `directory` and
 `references` databases use SHA-256 of the raw name as the key. The
 value is the object or revision ID followed by the original name.
@@ -202,7 +202,7 @@ preference when moving between a parent and child.
 Creating or moving a mark compares the same generation and publishes
 the new name or target with an advanced generation.
 
-Schema 1.2 requires sparse manifests (feature bit 1). Its `directory`
+Schema 1.2 and later require sparse manifests (feature bit 1). The `directory`
 table materializes the selected model. A stored `M` is required for
 the initial revision and each retention boundary. Other revisions may
 replay at most 64 parent links to a stored `M`. Writers materialize
@@ -210,6 +210,16 @@ periodic snapshots within that bound. Checkout updates the selected
 directory without requiring a new artifact. For a portable export or
 archive verification, reconstruct the selected `M` when it is absent
 from `artifacts` and verify its canonical ID.
+
+Schema 1.3 requires the revision-child index (feature bit 2). Its
+`children` table has one empty value per retained parent-child edge.
+The key concatenates the parent's 32-byte revision ID and the child's
+32-byte revision ID. The initial revision and retention boundaries
+have no indexed parent. Insert edges in the same transaction as a new
+revision. Remove edges to expired children and new retention boundaries
+in the prune transaction. Verify the index against all retained revision
+records. A status query reads children with a range scan on the
+selected revision ID. Earlier schemas read the revision graph.
 
 An optional `last_export` key in the unnamed database holds the ID of
 the last successfully exported revision recorded by a writable
@@ -233,10 +243,10 @@ file for its lifetime, which postpones pruning. The operating system
 releases reader locks after process exit. These files are local
 coordination state and are omitted from exports and new workspace
 copies.
-Schema 1.1 requires the reader-pin protocol (feature bit 0). Schema
-1.2 sets that bit when the store uses the same protocol. Schema 1.0
+Schema 1.1 requires the reader-pin protocol (feature bit 0). Schemas
+1.2 and 1.3 set that bit when the store uses the same protocol. Schema 1.0
 has required features zero and supports inspection and ordinary
-editing. Copying a 1.0 or 1.1 workspace creates a verified 1.2
+editing. Copying a 1.0, 1.1 or 1.2 workspace creates a verified 1.3
 workspace with the same retained revisions and selected model.
 Pruning is available on the copied workspace when reader locks
 are present. The source stays available throughout the migration.
