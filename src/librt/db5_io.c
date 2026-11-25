@@ -469,6 +469,33 @@ db5_fwrite_hidden_u8(FILE *fp, const char *name, size_t body_size,
 }
 
 
+int
+db5_parse_struct_body(const struct bu_external *body, const struct bu_structparse *fields, void *parameters)
+{
+    if (!body->ext_buf || !memchr(body->ext_buf, '\0', body->ext_nbytes))
+	return -1;
+
+    struct bu_vls text = BU_VLS_INIT_ZERO;
+    bu_vls_strcpy(&text, (const char *)body->ext_buf);
+    const int result = bu_struct_parse(&text, fields, (char *)parameters, NULL);
+    bu_vls_free(&text);
+    return result;
+}
+
+
+void
+db5_export_struct_body(struct bu_external *body, const struct bu_structparse *fields, const void *parameters)
+{
+    BU_CK_EXTERNAL(body);
+    struct bu_vls text = BU_VLS_INIT_ZERO;
+    bu_vls_struct_print(&text, fields, (const char *)parameters);
+    body->ext_nbytes = bu_vls_strlen(&text) + 1;
+    body->ext_buf = (uint8_t *)bu_malloc(body->ext_nbytes, "DB5 struct body");
+    memcpy(body->ext_buf, bu_vls_cstr(&text), body->ext_nbytes);
+    bu_vls_free(&text);
+}
+
+
 void
 db5_export_object3(
     struct bu_external *out,

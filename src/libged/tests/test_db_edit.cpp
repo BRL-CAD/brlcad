@@ -769,10 +769,12 @@ test_binary_asset_history(struct ged *gedp, const std::filesystem::path &directo
 {
     const auto original_file = directory / "original grid.bin";
     const auto replacement_file = directory / "replacement grid.bin";
+    const auto bitmap_file = directory / "mask samples.bin";
     const auto external_file = directory / "unexpected export.bin";
     // A 2 by 2 height field in network byte order.
     const uint8_t original[] = {1, 2, 0, 4, 0, 6, 0, 8};
     const uint8_t replacement[] = {2, 1, 0, 4, 0, 6, 0, 8};
+    const uint8_t bitmap[] = {1, 0, 0, 1};
     const auto write_samples = [](const auto &path, const auto &samples) {
 	std::ofstream file(path, std::ios::binary);
 	file.write(reinterpret_cast<const char *>(samples), sizeof(samples));
@@ -780,12 +782,14 @@ test_binary_asset_history(struct ged *gedp, const std::filesystem::path &directo
 	return file.good();
     };
     CHECK(write_samples(original_file, original) && write_samples(replacement_file, replacement));
+    CHECK(write_samples(bitmap_file, bitmap));
 
     const auto root = selected_id(gedp);
     const auto import = "{bo -i u nS terrain.bin {" + original_file.string() +
 	"}} {put terrain.s dsp src o name terrain.bin w 2 n 2} {bo -i u C volume.bin {" +
 	original_file.string() + "}} {put volume.s vol src o name volume.bin w 2 n 2 d 2"
-	" size {1 1 1} mat {1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1}}";
+	" size {1 1 1} mat {1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1}} {bo -i u C mask.bin {" +
+	bitmap_file.string() + "}} {in mask.s ebm o mask.bin 2 2 1} {in file-mask.s ebm f mask.bin 2 2 1}";
     const char *first[] = {"db", "history", "batch", "Import terrain", import.c_str(), nullptr};
     CHECK(run(gedp, first) == BRLCAD_OK);
     const auto before = selected_id(gedp);
@@ -793,7 +797,9 @@ test_binary_asset_history(struct ged *gedp, const std::filesystem::path &directo
     db_update_nref(gedp->dbip);
     auto *terrain_data = db_lookup(gedp->dbip, "terrain.bin", LOOKUP_QUIET);
     auto *volume_data = db_lookup(gedp->dbip, "volume.bin", LOOKUP_QUIET);
-    CHECK(terrain_data && terrain_data->d_nref == 1 && volume_data && volume_data->d_nref == 1);
+    auto *bitmap_data = db_lookup(gedp->dbip, "mask.bin", LOOKUP_QUIET);
+    CHECK(terrain_data && terrain_data->d_nref == 1 && volume_data && volume_data->d_nref == 1 &&
+	bitmap_data && bitmap_data->d_nref == 1);
     const auto grid_matches = [gedp](const char *name, int type, const auto &samples) {
 	auto *grid = db_lookup(gedp->dbip, name, LOOKUP_QUIET);
 	struct bu_external raw = BU_EXTERNAL_INIT_ZERO;
@@ -828,14 +834,15 @@ test_binary_asset_history(struct ged *gedp, const std::filesystem::path &directo
     CHECK(terrain_matches(original));
 
     const auto import_new = "{bo -i u nS terrain.bin {" + replacement_file.string() + "}}";
-    const auto with_output = "{kill terrain.bin volume.bin} " + import_new + " {bo -o {" +
+    const auto with_output = "{kill terrain.bin volume.bin mask.bin} " + import_new + " {bo -o {" +
 	external_file.string() + "} terrain.bin}";
     const char *unsupported[] = {"db", "history", "batch", "Attempt external write", with_output.c_str(), nullptr};
     const auto inspect_missing_assets = [](int, const char **, void *context, void *data) {
 	auto *view = static_cast<struct ged *>(context)->dbip;
 	const auto count_missing = [](struct db_i *, struct directory *parent, struct directory *child,
 				      const char *name, db_op_t, matp_t, void *counter) {
-	    if (parent && !child && (BU_STR_EQUAL(name, "terrain.bin") || BU_STR_EQUAL(name, "volume.bin")))
+	    if (parent && !child && (BU_STR_EQUAL(name, "terrain.bin") || BU_STR_EQUAL(name, "volume.bin") ||
+		BU_STR_EQUAL(name, "mask.bin")))
 		++*static_cast<int *>(counter);
 	};
 	if (db_add_update_nref_clbk(view, count_missing, data) < 0)
@@ -847,7 +854,7 @@ test_binary_asset_history(struct ged *gedp, const std::filesystem::path &directo
     CHECK(ged_clbk_set(gedp, "bo", BU_CLBK_PRE, inspect_missing_assets, &missing_assets) == BRLCAD_OK);
     CHECK(run(gedp, unsupported) == BRLCAD_ERROR && contains_result(gedp, "Batch command 3 failed"));
     CHECK(ged_clbk_set(gedp, "bo", BU_CLBK_PRE, nullptr, nullptr) == GED_OVERRIDE);
-    CHECK(missing_assets == 2 && !std::filesystem::exists(external_file) &&
+    CHECK(missing_assets == 3 && !std::filesystem::exists(external_file) &&
 	selected_id(gedp) == before && terrain_matches(original) && db_lookup(gedp->dbip, "volume.bin", LOOKUP_QUIET));
 
     const auto replace = "{kill terrain.bin} " + import_new;
@@ -879,6 +886,22 @@ test_binary_asset_history(struct ged *gedp, const std::filesystem::path &directo
 	return loaded;
     };
     CHECK(volume_matches("volume.bin"));
+    const auto bitmap_matches = [gedp, &grid_matches, &bitmap](const char *name) {
+	if (!grid_matches(name, DB5_MINORTYPE_BINU_8BITINT_U, bitmap))
+	    return false;
+	auto *shape = db_lookup(gedp->dbip, "mask.s", LOOKUP_QUIET);
+	struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
+	if (!shape || rt_db_get_internal(&intern, shape, gedp->dbip, nullptr) < 0)
+	    return false;
+	bool loaded = false;
+	if (intern.idb_type == ID_EBM) {
+	    const auto *ebm = static_cast<const struct rt_ebm_internal *>(intern.idb_ptr);
+	    loaded = ebm->datasrc == RT_EBM_SRC_OBJ && BU_STR_EQUAL(ebm->name, name) && ebm->buf;
+	}
+	rt_db_free_internal(&intern);
+	return loaded;
+    };
+    CHECK(bitmap_matches("mask.bin"));
 
     const std::unique_ptr<struct ged, decltype(&ged_close)> inspector(ged_create(), ged_close);
     const char *open[] = {"db", "open", "-r", gedp->dbip->dbi_filename, nullptr};
@@ -887,6 +910,9 @@ test_binary_asset_history(struct ged *gedp, const std::filesystem::path &directo
     CHECK(run(inspector.get(), preview) == BRLCAD_OK && contains_result(inspector.get(), "volume.s"));
     CHECK(db_lookup(inspector->dbip, "volume.bin", LOOKUP_QUIET) &&
 	!db_lookup(inspector->dbip, "voxel samples.bin", LOOKUP_QUIET) && selected_id(gedp) == after);
+    const char *preview_bitmap[] = {"mvall", "-n", "mask.bin", "bitmap samples.bin", nullptr};
+    CHECK(run(inspector.get(), preview_bitmap) == BRLCAD_OK && contains_result(inspector.get(), "mask.s") &&
+	!contains_result(inspector.get(), "file-mask.s"));
 
     const char *rename_dsp[] = {"mvall", "terrain.bin", "graded samples.bin", nullptr};
     int staged_writes = 0;
@@ -902,15 +928,18 @@ test_binary_asset_history(struct ged *gedp, const std::filesystem::path &directo
 	volume_matches("volume.bin") && !db_lookup(gedp->dbip, long_name.c_str(), LOOKUP_QUIET));
 
     const char *rename_grids[] = {"db", "history", "batch", "Rename raster source objects",
-	"{mvall terrain.bin {graded samples.bin}} {move_all volume.bin {voxel samples.bin}}", nullptr};
+	"{mvall terrain.bin {graded samples.bin}} {move_all volume.bin {voxel samples.bin}}"
+	" {mvall mask.bin {bitmap samples.bin}}", nullptr};
     CHECK(run(gedp, rename_grids) == BRLCAD_OK);
     const auto renamed = selected_id(gedp);
     CHECK(renamed != after && terrain_matches(replacement, "graded samples.bin") && volume_matches("voxel samples.bin") &&
-	!db_lookup(gedp->dbip, "terrain.bin", LOOKUP_QUIET) && !db_lookup(gedp->dbip, "volume.bin", LOOKUP_QUIET));
+	bitmap_matches("bitmap samples.bin") && !db_lookup(gedp->dbip, "terrain.bin", LOOKUP_QUIET) &&
+	!db_lookup(gedp->dbip, "volume.bin", LOOKUP_QUIET) && !db_lookup(gedp->dbip, "mask.bin", LOOKUP_QUIET));
     CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == after &&
-	terrain_matches(replacement) && volume_matches("volume.bin"));
+	terrain_matches(replacement) && volume_matches("volume.bin") && bitmap_matches("mask.bin"));
     CHECK(run(gedp, redo) == BRLCAD_OK && selected_id(gedp) == renamed &&
-	terrain_matches(replacement, "graded samples.bin") && volume_matches("voxel samples.bin"));
+	terrain_matches(replacement, "graded samples.bin") && volume_matches("voxel samples.bin") &&
+	bitmap_matches("bitmap samples.bin"));
     return 0;
 }
 

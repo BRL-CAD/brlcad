@@ -815,11 +815,6 @@ rt_vol_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
 static int
 vol_read_parameters(struct rt_vol_internal *vip, const struct bu_external *body)
 {
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-
-    if (!body->ext_buf || !memchr(body->ext_buf, '\0', body->ext_nbytes))
-	return -2;
-
     /* Establish defaults */
     MAT_IDN(vip->mat);
     vip->lo = 0;
@@ -831,10 +826,7 @@ vol_read_parameters(struct rt_vol_internal *vip, const struct bu_external *body)
     /* Default VOL cell size in ideal coordinates is one unit/cell */
     VSETALL(vip->cellsize, 1);
 
-    bu_vls_strcpy(&str, (const char *)body->ext_buf);
-    const int result = bu_struct_parse(&str, rt_vol_parse, (char *)vip, NULL);
-    bu_vls_free(&str);
-    return result < 0 ? -2 : 0;
+    return db5_parse_struct_body(body, rt_vol_parse, vip) < 0 ? -2 : 0;
 }
 
 int
@@ -893,17 +885,6 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 }
 
 
-static void
-vol_write_parameters(struct bu_external *out, const struct rt_vol_internal *volume)
-{
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-    bu_vls_struct_print(&str, rt_vol_parse, (const char *)volume);
-    out->ext_nbytes = bu_vls_strlen(&str) + 1;
-    out->ext_buf = (uint8_t *)bu_malloc(out->ext_nbytes, "vol external");
-    memcpy(out->ext_buf, bu_vls_cstr(&str), out->ext_nbytes);
-    bu_vls_free(&str);
-}
-
 int
 rt_vol_rename_database_reference(struct bu_external *out, const struct bu_external *body, const char *name)
 {
@@ -913,12 +894,8 @@ rt_vol_rename_database_reference(struct bu_external *out, const struct bu_extern
 	bu_strlcpy(volume.name, name, sizeof(volume.name)) >= sizeof(volume.name))
 	return -1;
 
-    vol_write_parameters(out, &volume);
-    // Confirm that the stored text represents the requested name exactly.
-    struct bu_vls written = BU_VLS_INIT_ZERO;
-    const int matches = rt_vol_database_reference(out, &written) && BU_STR_EQUAL(bu_vls_cstr(&written), name);
-    bu_vls_free(&written);
-    return matches ? 0 : -1;
+    db5_export_struct_body(out, rt_vol_parse, &volume);
+    return 0;
 }
 
 
@@ -941,9 +918,7 @@ rt_vol_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     /* Apply scale factor */
     vol.mat[15] /= local2mm;
 
-    BU_CK_EXTERNAL(ep);
-
-    vol_write_parameters(ep, &vol);
+    db5_export_struct_body(ep, rt_vol_parse, &vol);
     return 0;
 }
 

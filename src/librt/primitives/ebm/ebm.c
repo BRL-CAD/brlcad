@@ -958,17 +958,45 @@ rt_ebm_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     return BRLCAD_OK;
 }
 
+static int
+ebm_read_parameters(struct rt_ebm_internal *ebm, const struct bu_external *body)
+{
+    MAT_IDN(ebm->mat);
+    /* Older EBM records do not specify the source. */
+    ebm->datasrc = RT_EBM_SRC_FILE;
+    return db5_parse_struct_body(body, rt_ebm_parse, ebm) < 0 ? -2 : 0;
+}
+
+
+int
+rt_ebm_database_reference(const struct bu_external *body, struct bu_vls *name)
+{
+    struct rt_ebm_internal ebm = {0};
+    if (ebm_read_parameters(&ebm, body) != 0 || ebm.datasrc != RT_EBM_SRC_OBJ || !ebm.name[0])
+	return 0;
+    bu_vls_strcpy(name, ebm.name);
+    return 1;
+}
+
+
+int
+rt_ebm_rename_database_reference(struct bu_external *out, const struct bu_external *body, const char *name)
+{
+    struct rt_ebm_internal ebm = {0};
+    if (ebm_read_parameters(&ebm, body) != 0 || ebm.datasrc != RT_EBM_SRC_OBJ ||
+	bu_strlcpy(ebm.name, name, sizeof(ebm.name)) >= sizeof(ebm.name))
+	return -1;
+    db5_export_struct_body(out, rt_ebm_parse, &ebm);
+    return 0;
+}
+
+
 /**
- * Read in the information from the string solid record.  Then, as a
- * service to the application, read in the bitmap and set up some of
- * the associated internal variables.
+ * Read the parameters and load the referenced bitmap for geometry operations.
  */
 C_DECL int
 rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
-    register struct rt_ebm_internal *eip;
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-
     BU_CK_EXTERNAL(ep);
     RT_CK_DB_INTERNAL(ip);
 
@@ -977,22 +1005,16 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_meth = &OBJ[ID_EBM];
     BU_ALLOC(ip->idb_ptr, struct rt_ebm_internal);
 
-    eip = (struct rt_ebm_internal *)ip->idb_ptr;
+    struct rt_ebm_internal *eip = (struct rt_ebm_internal *)ip->idb_ptr;
     eip->magic = RT_EBM_INTERNAL_MAGIC;
-    MAT_IDN(eip->mat);
 
-    /* default source is file for compatibility with old EBM */
-    eip->datasrc = RT_EBM_SRC_FILE;
-
-    bu_vls_strcpy(&str, (const char *)ep->ext_buf);
-    if (bu_struct_parse(&str, rt_ebm_parse, (char *)eip, NULL) < 0) {
-	bu_vls_free(&str);
+    const int parsed = ebm_read_parameters(eip, ep);
+    if (parsed != 0) {
 	bu_free((char *)eip, "rt_ebm_import5: eip");
 	ip->idb_type = ID_NULL;
 	ip->idb_ptr = (void *)NULL;
-	return -2;
+	return parsed;
     }
-    bu_vls_free(&str);
 
     /* Check for reasonable values */
     if (eip->name[0] == '\0' || eip->tallness <= 0.0 ||
@@ -1028,7 +1050,6 @@ rt_ebm_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 {
     struct rt_ebm_internal *eip;
     struct rt_ebm_internal ebm;	/* scaled version */
-    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1041,15 +1062,7 @@ rt_ebm_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     /* Apply scale factor */
     ebm.mat[15] /= local2mm;
 
-    BU_CK_EXTERNAL(ep);
-
-    bu_vls_struct_print(&str, rt_ebm_parse, (char *)&ebm);
-
-    ep->ext_nbytes = bu_vls_strlen(&str) + 1;
-    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "ebm external");
-
-    bu_strlcpy((char *)ep->ext_buf, bu_vls_addr(&str), ep->ext_nbytes);
-    bu_vls_free(&str);
+    db5_export_struct_body(ep, rt_ebm_parse, &ebm);
 
     return 0;
 }

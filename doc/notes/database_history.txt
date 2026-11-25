@@ -267,15 +267,15 @@ samples byte for byte and both workspace verifiers passed. A GED
 regression covered binary import, aborted replacement and exact
 replay in session DB5, embedded DB5 and LMDB.
 
-Reference scans for object-backed DSP and VOL now read the primitive
+Reference scans for object-backed DSP, EBM and VOL read the primitive
 parameters. They report a named dependency even while the target is
 missing in a staged edit. A warm scan of 64 DSP primitives sharing one
 8.39 MB grid went from a median of 523 milliseconds to 38 microseconds
 over seven runs. The same fixture reported all 64 references with
-either reader. GED tests exercised resolved and missing edges for both
-primitive types.
+either reader. GED tests exercised resolved and missing edges for all
+three primitive types.
 
-GED now includes object-backed DSP and VOL references in mvall.
+GED includes object-backed DSP, EBM and VOL references in mvall.
 Read-only preview listed the affected primitive, and an injected
 write failure left the original grid name and reference intact.
 Undo and Redo restored both names together in session DB5, embedded
@@ -294,6 +294,13 @@ and its DSP reference took 1.56 seconds. Undo restored both names
 in 0.55 seconds and the archive verifier passed in 5.05 seconds.
 The supplied DB5 file's size, modification time and identity
 matched before and after the test.
+
+Renaming an added 12.58 MB bitmap and updating its EBM reference in a
+separate M1917 workspace copy took 1.64 seconds. Undo took 0.54
+seconds and Redo took 0.58 seconds. Plain DB5 subsets opened the
+primitive and returned all bitmap bytes intact at each revision.
+Workspace verification passed in 5.07 seconds. The supplied file's
+identity, size and modification time matched before and after the test.
 
 These grids support offering reverse deltas for localized edits and
 offset shifts when encoding fits a predictable time budget. A noisy

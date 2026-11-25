@@ -50,16 +50,34 @@ db_count_reference(struct db_i *dbip, struct directory *parent, const char *name
     }
 }
 
+struct db_raster_ops {
+    unsigned char minor_type;
+    int (*read)(const struct bu_external *, struct bu_vls *);
+    int (*rename)(struct bu_external *, const struct bu_external *, const char *);
+};
+
+static const struct db_raster_ops *
+db_raster_reference_ops(const struct db_i *dbip, const struct directory *dp)
+{
+    static const struct db_raster_ops types[] = {
+	{DB5_MINORTYPE_BRLCAD_DSP, rt_dsp_database_reference, rt_dsp_rename_database_reference},
+	{DB5_MINORTYPE_BRLCAD_EBM, rt_ebm_database_reference, rt_ebm_rename_database_reference},
+	{DB5_MINORTYPE_BRLCAD_VOL, rt_vol_database_reference, rt_vol_rename_database_reference}
+    };
+    if (dp->d_addr == RT_DIR_PHONY_ADDR || dp->d_major_type != DB5_MAJORTYPE_BRLCAD)
+	return NULL;
+    for (size_t i = 0; i < sizeof(types) / sizeof(types[0]); ++i) {
+	if (types[i].minor_type == dp->d_minor_type)
+	    return db_version(dbip) == 5 ? &types[i] : NULL;
+    }
+    return NULL;
+}
+
 static int
 db_read_raster_reference(struct db_i *dbip, const struct directory *dp,
-			 struct bu_external *record, struct db5_raw_internal *raw,
-			 struct bu_vls *name)
+			 const struct db_raster_ops *ops, struct bu_external *record,
+			 struct db5_raw_internal *raw, struct bu_vls *name)
 {
-    if (dp->d_addr == RT_DIR_PHONY_ADDR || dp->d_major_type != DB5_MAJORTYPE_BRLCAD ||
-	(dp->d_minor_type != DB5_MINORTYPE_BRLCAD_DSP && dp->d_minor_type != DB5_MINORTYPE_BRLCAD_VOL) ||
-	db_version(dbip) != 5)
-	return 0;
-
     /* Grid dependencies are present even if their sample data is missing.
      * The reference is stored in the primitive's DB5 parameters. */
     if (db_get_external(record, dp, dbip) != 0 ||
@@ -69,17 +87,20 @@ db_read_raster_reference(struct db_i *dbip, const struct directory *dp,
 	raw->h_dli != DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT)
 	return -1;
 
-    return raw->minor_type == DB5_MINORTYPE_BRLCAD_DSP ?
-	rt_dsp_database_reference(&raw->body, name) : rt_vol_database_reference(&raw->body, name);
+    return ops->read(&raw->body, name);
 }
 
 static void
 db_count_grid_reference(struct db_i *dbip, struct directory *dp)
 {
+    const struct db_raster_ops *ops = db_raster_reference_ops(dbip, dp);
+    if (!ops)
+	return;
+
     struct bu_external record = BU_EXTERNAL_INIT_ZERO;
     struct db5_raw_internal raw;
     struct bu_vls name = BU_VLS_INIT_ZERO;
-    if (db_read_raster_reference(dbip, dp, &record, &raw, &name) > 0)
+    if (db_read_raster_reference(dbip, dp, ops, &record, &raw, &name) > 0)
 	db_count_reference(dbip, dp, bu_vls_cstr(&name), DB_OP_UNION, NULL);
     bu_vls_free(&name);
     bu_free_external(&record);
@@ -94,19 +115,22 @@ db5_update_raster_reference(struct db_i *dbip, struct directory *dp,
 	    db_edit_record_failure(dbip);
 	return -1;
     }
+    const struct db_raster_ops *ops = db_raster_reference_ops(dbip, dp);
+    if (!ops)
+	return 0;
 
     struct bu_external record = BU_EXTERNAL_INIT_ZERO;
     struct db5_raw_internal raw;
     struct bu_vls name = BU_VLS_INIT_ZERO;
-    int result = db_read_raster_reference(dbip, dp, &record, &raw, &name);
+    int result = db_read_raster_reference(dbip, dp, ops, &record, &raw, &name);
     if (result > 0 && !BU_STR_EQUAL(bu_vls_cstr(&name), old_name))
 	result = 0;
     if (result > 0 && new_name) {
 	struct bu_external body = BU_EXTERNAL_INIT_ZERO;
-	const int built = raw.minor_type == DB5_MINORTYPE_BRLCAD_DSP ?
-	    rt_dsp_rename_database_reference(&body, &raw.body, new_name) :
-	    rt_vol_rename_database_reference(&body, &raw.body, new_name);
-	if (built == 0) {
+	/* Check the stored name before writing. Text fields may have
+	 * additional quoting constraints beyond the buffer length. */
+	if (ops->rename(&body, &raw.body, new_name) == 0 &&
+	    ops->read(&body, &name) > 0 && BU_STR_EQUAL(bu_vls_cstr(&name), new_name)) {
 	    struct bu_external replacement = BU_EXTERNAL_INIT_ZERO;
 	    db5_export_object3(&replacement, raw.h_dli, dp->d_namep, raw.h_name_hidden,
 			       &raw.attributes, &body, raw.major_type, raw.minor_type, raw.a_zzz, raw.b_zzz);
@@ -187,8 +211,7 @@ db_update_nref(struct db_i *dbip)
 		    if (bu_vls_strlen(&revolve->sketch_name) > 0)
 			db_count_reference(dbip, dp, bu_vls_cstr(&revolve->sketch_name), DB_OP_UNION, NULL);
 		    rt_db_free_internal(&intern);
-		} else if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_DSP ||
-			   dp->d_minor_type == DB5_MINORTYPE_BRLCAD_VOL) {
+		} else {
 		    db_count_grid_reference(dbip, dp);
 		}
 	    }
