@@ -63,6 +63,35 @@ borrow_record(const std::vector<uint8_t> &bytes)
 }
 
 static int
+verify_export(const struct db_i *base, const std::vector<uint8_t> &original_record,
+	      struct bu_vls *error)
+{
+    char path[MAXPATHLEN] = {};
+    FILE *file = bu_temp_file(path, sizeof(path));
+    CHECK(file && fclose(file) == 0 && bu_file_delete(path));
+    const auto status = db_history::export_db5_snapshot(base, path, nullptr, error);
+    if (status == DB5_SAVE_ERROR &&
+	BU_STR_EQUAL(bu_vls_addr(error), "Atomic DB5 export is unavailable on this platform"))
+	return 77;
+    CHECK(status == DB5_SAVE_OK);
+    Database exported(db_open(path, DB_OPEN_READONLY), db_close);
+    CHECK(exported && db_dirbuild(exported.get()) == 0);
+    CHECK(record_bytes(exported.get(), "shape.s") == original_record);
+    exported.reset();
+    CHECK(bu_file_delete(path));
+
+    constexpr int sentinel = 'X';
+    file = fopen(path, "wb");
+    CHECK(file && fputc(sentinel, file) == sentinel && fclose(file) == 0);
+    CHECK(db_history::export_db5_snapshot(base, path, nullptr, error) == DB5_SAVE_ERROR);
+    file = fopen(path, "rb");
+    CHECK(file);
+    CHECK(fgetc(file) == sentinel && fgetc(file) == EOF && fclose(file) == 0);
+    CHECK(bu_file_delete(path));
+    return 0;
+}
+
+static int
 verify_embedded(const char *path, struct db_i *initial, const struct db_i *different, struct bu_vls *error)
 {
     using namespace db_history;
@@ -262,6 +291,11 @@ main(int argc, char *argv[])
     CHECK(!original_record.empty() && !global.empty());
 
     struct bu_vls error = BU_VLS_INIT_ZERO;
+    if (argc == 2 && BU_STR_EQUAL(argv[1], "--export")) {
+	const int result = verify_export(base.get(), original_record, &error);
+	bu_vls_free(&error);
+	return result;
+    }
     Save first(db5_save_begin(base.get(), &error), db5_save_free);
     if (!first && BU_STR_EQUAL(bu_vls_addr(&error), "Atomic DB5 replacement is unavailable on this platform")) {
 	bu_vls_free(&error);

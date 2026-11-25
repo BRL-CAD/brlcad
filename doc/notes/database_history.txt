@@ -425,6 +425,10 @@ both cases.
 The Windows workspace lock code cross-compiled, and a Win32 test
 under Wine exercised shared locks, writes through another handle,
 second-process contention, and release on process termination.
+A separate Win32 export test passed staging, file and directory
+flushes, source change detection, and refusal to replace a competing
+destination. The library export test reopens the new DB5 and compares
+its record with the source.
 Native Windows integration and physical-device power-loss checks
 remain pending.
 
