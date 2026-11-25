@@ -189,7 +189,7 @@ db_write(struct db_i *dbip, const void *addr, size_t count, b_off_t offset)
 	       (void *)dbip, addr, count, (intmax_t)offset);
     }
 
-    if (dbip->dbi_read_only) {
+    if (db_edit_write_blocked(dbip) || dbip->dbi_read_only) {
 	bu_log("db_write(%s):  READ-ONLY file\n", dbip->dbi_filename);
 	return -1;
     }
@@ -226,6 +226,8 @@ db_put(struct db_i *dbip, const struct directory *dp, union record *where, b_off
 {
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
+    if (db_edit_write_blocked(dbip))
+	return -1;
 
     if (RT_G_DEBUG&RT_DEBUG_DB)
 	bu_log("db_put(%s) %p, %p %p off=%jd len=%zu\n",
@@ -318,7 +320,7 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 				    dp->d_namep, (void *)ep, (void *)dbip, (void *)dp);
 
 
-    if (dbip->dbi_read_only) {
+    if (db_edit_write_blocked(dbip) || dbip->dbi_read_only) {
 	bu_log("db_put_external(%s):  READ-ONLY file\n",
 	       dbip->dbi_filename);
 	return -1;

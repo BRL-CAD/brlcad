@@ -259,7 +259,7 @@ db5_replace_attributes(struct directory *dp, struct bu_attribute_value_set *avsp
 	bu_avs_print(avsp, "new attributes");
     }
 
-    if (dbip->dbi_read_only) {
+    if (db_edit_write_blocked(dbip) || dbip->dbi_read_only) {
 	bu_log("db5_replace_attributes(%s):  READ-ONLY file\n",
 	       dbip->dbi_filename);
 	return -1;
@@ -322,7 +322,7 @@ db5_update_attributes(struct directory *dp, struct bu_attribute_value_set *avsp,
 	bu_avs_print(avsp, "new attributes");
     }
 
-    if (dbip->dbi_read_only) {
+    if (db_edit_write_blocked(dbip) || dbip->dbi_read_only) {
 	bu_log("db5_update_attributes(%s):  READ-ONLY file\n",
 	       dbip->dbi_filename);
 	return -1;
@@ -411,6 +411,8 @@ db5_update_attribute(const char *obj_name, const char *name, const char *value, 
     struct bu_attribute_value_set avs;
 
     RT_CK_DBI(dbip);
+    if (db_edit_write_blocked(dbip))
+	return -1;
     if ((dp = db_lookup(dbip, obj_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return -1;
 
@@ -430,6 +432,8 @@ int db5_update_ident(struct db_i *dbip, const char *title, double local2mm)
     char *old_title = NULL;
 
     RT_CK_DBI(dbip);
+    if (db_edit_write_blocked(dbip))
+	return -1;
 
     if (!isfinite(local2mm) || local2mm <= 0.0)
 	return -1;

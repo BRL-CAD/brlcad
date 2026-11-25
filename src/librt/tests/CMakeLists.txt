@@ -73,7 +73,7 @@ brlcad_add_test(NAME rt_bound_internal COMMAND rt_bound_internal)
 brlcad_addexec(rt_inmem_write inmem_write.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_inmem_write COMMAND rt_inmem_write)
 
-brlcad_addexec(rt_db_edit db_edit.c "librt;libwdb;libbu" TEST)
+brlcad_addexec(rt_db_edit db_edit.cpp "librt;libwdb;libbu" TEST)
 brlcad_add_test(NAME rt_db_edit COMMAND rt_db_edit)
 
 brlcad_addexec(rt_db5_save db5_save.cpp "librt;libwdb;libbu" TEST)

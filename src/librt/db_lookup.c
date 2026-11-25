@@ -241,7 +241,7 @@ db_diradd(struct db_i *dbip, const char *name, b_off_t laddr, size_t len, int fl
 
     RT_CK_DBI(dbip);
 
-    if (dbip->i->dbi_edit_guard || (dbip->i->dbi_edit && dbip->dbi_read_only))
+    if (db_edit_write_blocked(dbip))
 	return RT_DIR_NULL;
 
     if (RT_G_DEBUG&RT_DEBUG_DB) {
@@ -325,7 +325,7 @@ db_dirdelete(struct db_i *dbip, struct directory *dp)
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
 
-    if (dbip->i->dbi_edit_guard || (dbip->i->dbi_edit && dbip->dbi_read_only)) {
+    if (db_edit_write_blocked(dbip)) {
 	db_edit_record_failure(dbip);
 	return -1;
     }
@@ -365,7 +365,7 @@ db_rename(struct db_i *dbip, struct directory *dp, const char *newname)
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
 
-    if (dbip->i->dbi_edit_guard || (dbip->i->dbi_edit && dbip->dbi_read_only)) {
+    if (db_edit_write_blocked(dbip)) {
 	db_edit_record_failure(dbip);
 	return -1;
     }

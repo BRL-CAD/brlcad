@@ -1,4 +1,4 @@
-/*                     D B _ E D I T . C
+/*                     D B _ E D I T . C P P
  * BRL-CAD
  *
  * Copyright (c) 2026 United States Government as represented by
@@ -19,7 +19,8 @@
  */
 #include "common.h"
 
-#include <string.h>
+#include <cstring>
+#include <thread>
 
 #include "bu/app.h"
 #include "raytrace.h"
@@ -42,7 +43,7 @@ static int
 count_change(const char *UNUSED(name), const struct bu_external *before,
 	     const struct bu_external *after, void *data)
 {
-    struct change_count *counts = (struct change_count *)data;
+    auto *counts = static_cast<struct change_count *>(data);
     if (before && after)
 	++counts->updated;
     else if (before)
@@ -66,7 +67,7 @@ check_record(struct db_i *dbip, const char *name, const struct bu_external *expe
     if (read_record(&record, dbip, name) < 0)
 	return 0;
     const int equal = record.ext_nbytes == expected->ext_nbytes &&
-	memcmp(record.ext_buf, expected->ext_buf, record.ext_nbytes) == 0;
+	std::memcmp(record.ext_buf, expected->ext_buf, record.ext_nbytes) == 0;
     bu_free_external(&record);
     return equal;
 }
@@ -144,6 +145,54 @@ test_commit(struct db_i *base, struct bu_external *original)
 }
 
 static int
+test_worker_handoff(struct db_i *base)
+{
+    auto *edit = db_edit_begin(base, "shared import");
+    CHECK(edit);
+    auto *view = db_edit_view(edit);
+    CHECK(view);
+    auto *entry = db_lookup(view, "base.s", LOOKUP_QUIET);
+    CHECK(entry);
+
+    int result = 0;
+    std::thread unjoined([&]() {
+	if (db_edit_join(edit) == 0 || db_edit_view(edit) || db_edit_label(edit) ||
+	    db_edit_release(edit) == 0 || db_rename(view, entry, "unjoined.s") == 0 ||
+	    db_update_ident(view, "Unjoined worker", 1.0) == 0)
+	    result = -1;
+    });
+    unjoined.join();
+    CHECK(result == 0 && db_edit_view(edit) == view);
+
+    CHECK(db_edit_release(edit) == 0);
+    CHECK(!db_edit_view(edit) && !db_edit_commit(edit));
+    std::thread worker([&]() {
+	if (db_edit_join(edit) != 0) {
+	    result = -1;
+	    return;
+	}
+	auto *writer_view = db_edit_view(edit);
+	auto *writer = writer_view ? wdb_dbopen(writer_view, RT_WDB_TYPE_DB_DEFAULT) : nullptr;
+	const point_t center = VINIT_ZERO;
+	result = writer ? mk_sph(writer, "worker.s", center, 2.0) : -1;
+	if (db_edit_release(edit) != 0)
+	    result = -1;
+    });
+    worker.join();
+    CHECK(result == 0 && !db_lookup(base, "worker.s", LOOKUP_QUIET));
+    CHECK(db_edit_join(edit) == 0 && db_edit_view(edit) == view);
+    CHECK(db_lookup(view, "worker.s", LOOKUP_QUIET));
+    struct change_count changes = {};
+    CHECK(db_edit_visit(edit, count_change, &changes) == 0 &&
+	changes.added == 1 && changes.removed == 0 && changes.updated == 0);
+    auto *published = db_edit_commit(edit);
+    CHECK(published && db_lookup(published, "worker.s", LOOKUP_QUIET) &&
+	!db_lookup(base, "worker.s", LOOKUP_QUIET));
+    db_close(published);
+    return 0;
+}
+
+static int
 test_metadata_replay(struct db_i *base)
 {
     struct bu_external original = BU_EXTERNAL_INIT_ZERO;
@@ -193,6 +242,7 @@ main(int argc, const char *argv[])
     CHECK(read_record(&original, base, "base.s") == 0);
     CHECK(test_abort(base, &original) == 0);
     CHECK(test_commit(base, &original) == 0);
+    CHECK(test_worker_handoff(base) == 0);
     CHECK(test_metadata_replay(base) == 0);
     bu_free_external(&original);
     db_close(base);
@@ -201,7 +251,7 @@ main(int argc, const char *argv[])
 
 /*
  * Local Variables:
- * mode: C
+ * mode: C++
  * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"

@@ -807,7 +807,8 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
     BU_ASSERT(dbip->i->dbi_version == 5);
 
     int result = -1;
-    if (!dbip->dbi_read_only && db_wrap_v5_external(ep, dp->d_namep) == 0)
+    if (!db_edit_write_blocked(dbip) && !dbip->dbi_read_only &&
+	db_wrap_v5_external(ep, dp->d_namep) == 0)
 	result = db5_store_external(ep, dp, dbip);
 
     if (result < 0)
@@ -831,7 +832,7 @@ rt_db_put_internal_v5(
     RT_CK_DB_INTERNAL(ip);
     BU_ASSERT(dbip->i->dbi_version == 5);
 
-    if (!dbip->dbi_read_only) {
+    if (!db_edit_write_blocked(dbip) && !dbip->dbi_read_only) {
 	if (rt_db_cvt_to_ext5(&ext, dp->d_namep, ip, 1.0, dbip, major) < 0)
 	    bu_log("rt_db_put_internal_v5(%s): export failure\n", dp->d_namep);
 	else if (db5_store_external(&ext, dp, dbip) == 0)

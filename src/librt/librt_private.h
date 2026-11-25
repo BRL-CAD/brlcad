@@ -121,6 +121,7 @@ int db5_get_raw_internal_split(struct db5_raw_internal *raw, const unsigned char
 void db_workspace_free_view(struct db_i_internal *i);
 int db_workspace_read(const struct db_i *dbip, const struct directory *dp, void *buffer, size_t count);
 void db_edit_free_view(struct db_i_internal *i);
+int db_edit_write_blocked(const struct db_i *dbip);
 void db_edit_record_failure(struct db_i *dbip);
 void db_edit_record_change(struct db_i *dbip, const char *name);
 void db_edit_record_removal(struct db_i *dbip, const char *name);

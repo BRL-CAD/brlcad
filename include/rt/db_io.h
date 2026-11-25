@@ -566,14 +566,30 @@ struct db_edit;
  * Begin a DB5 edit against a built, read-only database directory.
  * The edit retains a reference to base. Its backing records must stay
  * unchanged for the lifetime of the edit and any committed view.
- * Use the edit and its writable view from the creating thread.
+ * The creating thread owns the edit. Only its current owner may use
+ * the edit or its private database view. An owning thread must
+ * release, commit or abort the edit before it exits.
  */
 RT_EXPORT extern struct db_edit *db_edit_begin(struct db_i *base, const char *label);
 
-/** Borrow the writer's private database view until commit or abort. */
+/**
+ * Allow another thread to join the edit. The caller must own the edit
+ * and finish using its view and all pointers borrowed from it first.
+ * Returns zero on success or -1 if the caller does not own the edit.
+ */
+RT_EXPORT extern int db_edit_release(struct db_edit *edit);
+
+/**
+ * Take ownership of a released edit on the calling thread. Returns zero
+ * on success or -1 if the edit is owned or inactive. The caller must
+ * keep the edit alive until all threads attempting to join have finished.
+ */
+RT_EXPORT extern int db_edit_join(struct db_edit *edit);
+
+/** Borrow the owner's private database view until release, commit or abort. */
 RT_EXPORT extern struct db_i *db_edit_view(struct db_edit *edit);
 
-/** Borrow the operation label until the edit is committed or aborted. */
+/** Borrow the operation label until release, commit or abort. */
 RT_EXPORT extern const char *db_edit_label(const struct db_edit *edit);
 
 /**
@@ -612,7 +628,7 @@ RT_EXPORT extern int db_edit_apply(struct db_edit *edit, const char *name,
  */
 RT_EXPORT extern struct db_i *db_edit_commit(struct db_edit *edit);
 
-/** Discard staged writes and consume the edit. Accepts NULL. */
+/** Discard an edit owned by the calling thread. Accepts NULL. */
 RT_EXPORT extern void db_edit_abort(struct db_edit *edit);
 
 struct db5_save;

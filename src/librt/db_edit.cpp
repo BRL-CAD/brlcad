@@ -21,8 +21,10 @@
 
 #include <cstring>
 #include <map>
+#include <mutex>
 #include <set>
 #include <string>
+#include <thread>
 
 #include "bu/malloc.h"
 #include "bu/str.h"
@@ -39,15 +41,43 @@ struct db_edit {
     std::map<std::string, std::string, std::less<>> origins;
     std::string label;
     bool failed = false;
+    mutable std::mutex ownership;
+    std::thread::id owner = std::this_thread::get_id();
     bool active = true;
 };
+
+
+static bool
+db_edit_active(const struct db_edit *edit)
+{
+    if (!edit)
+	return false;
+    const std::lock_guard<std::mutex> lock(edit->ownership);
+    return edit->active;
+}
+
+static bool
+db_edit_owned(const struct db_edit *edit)
+{
+    if (!edit)
+	return false;
+    const std::lock_guard<std::mutex> lock(edit->ownership);
+    return edit->active && edit->owner == std::this_thread::get_id();
+}
+
+static void
+db_edit_finish(struct db_edit *edit)
+{
+    const std::lock_guard<std::mutex> lock(edit->ownership);
+    edit->active = false;
+}
 
 
 struct db_edit *
 db_edit_begin(struct db_i *base, const char *label)
 {
     if (!base || !base->dbi_read_only || db_version(base) != 5 ||
-	(base->i->dbi_edit && base->i->dbi_edit->active) ||
+	db_edit_active(base->i->dbi_edit) ||
 	(!base->i->dbi_dir_built && (base->i->dbi_fp || base->i->dbi_mf)))
 	return nullptr;
 
@@ -97,16 +127,50 @@ db_edit_begin(struct db_i *base, const char *label)
 }
 
 
+int
+db_edit_release(struct db_edit *edit)
+{
+    if (!edit)
+	return -1;
+    const std::lock_guard<std::mutex> lock(edit->ownership);
+    if (!edit->active || edit->owner != std::this_thread::get_id())
+	return -1;
+    edit->owner = {};
+    return 0;
+}
+
+int
+db_edit_join(struct db_edit *edit)
+{
+    if (!edit)
+	return -1;
+    const std::lock_guard<std::mutex> lock(edit->ownership);
+    if (!edit->active || edit->owner != std::thread::id{})
+	return -1;
+    edit->owner = std::this_thread::get_id();
+    return 0;
+}
+
 struct db_i *
 db_edit_view(struct db_edit *edit)
 {
-    return edit && edit->active ? edit->view : nullptr;
+    return db_edit_owned(edit) ? edit->view : nullptr;
 }
 
 const char *
 db_edit_label(const struct db_edit *edit)
 {
-    return edit && edit->active ? edit->label.c_str() : nullptr;
+    return db_edit_owned(edit) ? edit->label.c_str() : nullptr;
+}
+
+
+int
+db_edit_write_blocked(const struct db_i *dbip)
+{
+    if (dbip->i->dbi_edit_guard)
+	return 1;
+    const auto *edit = dbip->i->dbi_edit;
+    return edit && (!db_edit_owned(edit) || dbip->dbi_read_only);
 }
 
 
@@ -143,7 +207,7 @@ void
 db_edit_record_failure(struct db_i *dbip)
 {
     auto *edit = dbip->i->dbi_edit;
-    if (edit && edit->active)
+    if (db_edit_owned(edit))
 	edit->failed = true;
 }
 
@@ -152,7 +216,7 @@ void
 db_edit_record_change(struct db_i *dbip, const char *name)
 {
     auto *edit = dbip->i->dbi_edit;
-    if (edit && edit->active)
+    if (db_edit_owned(edit))
 	edit->touched.emplace(name);
 }
 
@@ -160,7 +224,7 @@ void
 db_edit_record_removal(struct db_i *dbip, const char *name)
 {
     auto *edit = dbip->i->dbi_edit;
-    if (edit && edit->active)
+    if (db_edit_owned(edit))
 	edit->origins[name].clear();
 }
 
@@ -168,7 +232,7 @@ void
 db_edit_record_rename(struct db_i *dbip, const char *before, const char *after)
 {
     auto *edit = dbip->i->dbi_edit;
-    if (!edit || !edit->active || BU_STR_EQUAL(before, after))
+    if (!db_edit_owned(edit) || BU_STR_EQUAL(before, after))
 	return;
 
     auto origin = edit->origins.try_emplace(before, before).first;
@@ -200,7 +264,7 @@ db_edit_equal(const struct bu_external *a, const struct bu_external *b)
 int
 db_edit_visit(struct db_edit *edit, db_edit_visit_t visit, void *data)
 {
-    if (!edit || !edit->active || edit->failed || !visit)
+    if (!db_edit_owned(edit) || edit->failed || !visit)
 	return -1;
 
     for (const auto &name : edit->touched) {
@@ -235,7 +299,7 @@ db_edit_visit(struct db_edit *edit, db_edit_visit_t visit, void *data)
 int
 db_edit_visit_renames(const struct db_edit *edit, db_edit_rename_visit_t visit, void *data)
 {
-    if (!edit || !edit->active || edit->failed || !visit)
+    if (!db_edit_owned(edit) || edit->failed || !visit)
 	return -1;
 
     for (const auto &entry : edit->origins) {
@@ -284,7 +348,7 @@ int
 db_edit_apply(struct db_edit *edit, const char *name, const struct bu_external *expected,
 	      const struct bu_external *replacement)
 {
-    if (!edit || !edit->active || edit->failed)
+    if (!db_edit_owned(edit) || edit->failed)
 	return -1;
 
     auto *view = edit->view;
@@ -332,7 +396,7 @@ db_edit_apply(struct db_edit *edit, const char *name, const struct bu_external *
 struct db_i *
 db_edit_commit(struct db_edit *edit)
 {
-    if (!edit || !edit->active || edit->view->dbi_read_only ||
+    if (!db_edit_owned(edit) || edit->view->dbi_read_only ||
 	db_edit_visit(edit, db_edit_validate_record, nullptr) != 0)
 	return nullptr;
 
@@ -342,9 +406,9 @@ db_edit_commit(struct db_edit *edit)
 
     if (!edit->touched.empty())
 	db_update_nref(edit->view);
-    edit->active = false;
     edit->touched.clear();
     edit->view->dbi_read_only = 1;
+    db_edit_finish(edit);
     return edit->view;
 }
 
@@ -352,9 +416,9 @@ db_edit_commit(struct db_edit *edit)
 void
 db_edit_abort(struct db_edit *edit)
 {
-    if (edit && edit->active) {
-	edit->active = false;
+    if (db_edit_owned(edit)) {
 	edit->view->dbi_read_only = 1;
+	db_edit_finish(edit);
 	db_close(edit->view);
     }
 }
