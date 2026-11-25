@@ -52,8 +52,16 @@ __history status__::
 Report whether history is enabled. For session history, report the selected and oldest retained revisions, journal usage, and available undo and redo operations.
 
 
+__history log [--object name]__::
+List retained revisions in reverse creation order, including alternate branches. The optional name filter lists only revisions that changed that exact object name.
+
+
+__history show revision__::
+List the records created, deleted, or updated by a single revision. A rename appears as the deletion of the old name and creation of the new one, along with any changed references in the same revision.
+
+
 __history checkout revision__::
-Restore the database to any retained session revision. Use `db history status` to see the selected revision and its immediate redo choices.
+Restore the database to any retained session revision. Use `db history log` to find its ID.
 
 
 __match [regular_exp]__::

@@ -162,6 +162,18 @@ test_disk_history()
     CHECK(run(gedp, undo) == BRLCAD_OK && commits == 6);
     CHECK(run(gedp, status) == BRLCAD_OK && contains_result(gedp, "redo 1 mvall"));
     CHECK(contains_result(gedp, "redo 2 title fork"));
+    const char *log[] = {"db", "history", "log", nullptr};
+    CHECK(run(gedp, log) == BRLCAD_OK && contains_result(gedp, "revision 2 parent 0 title fork"));
+    CHECK(contains_result(gedp, "revision 1 parent 0 mvall"));
+    CHECK(contains_result(gedp, "revision 0 (selected)"));
+    const char *object_log[] = {"db", "history", "log", "--object", "extrusion.s", nullptr};
+    CHECK(run(gedp, object_log) == BRLCAD_OK && contains_result(gedp, "revision 1 parent 0 mvall"));
+    CHECK(!contains_result(gedp, "revision 2"));
+    const char *show[] = {"db", "history", "show", "1", nullptr};
+    CHECK(run(gedp, show) == BRLCAD_OK && contains_result(gedp, "create outline.s"));
+    CHECK(contains_result(gedp, ("delete " + old_name).c_str()));
+    CHECK(contains_result(gedp, "update assembly.c") && contains_result(gedp, "update extrusion.s"));
+    CHECK(commits == 6);
     const char *first_branch[] = {"db", "redo", "1", nullptr};
     CHECK(run(gedp, first_branch) == BRLCAD_OK && commits == 7);
     CHECK(run(gedp, reference) == BRLCAD_OK && contains_result(gedp, "outline.s"));

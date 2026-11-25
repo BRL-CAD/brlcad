@@ -19,6 +19,7 @@
  */
 #include "common.h"
 
+#include <algorithm>
 #include <charconv>
 #include <cstring>
 #include <initializer_list>
@@ -378,6 +379,21 @@ enable_session(struct ged *gedp, size_t limit)
 }
 
 void
+append_printable(struct bu_vls *out, std::string_view text)
+{
+    constexpr unsigned char first_printable_ascii = 0x20;
+    constexpr unsigned char ascii_delete = 0x7f;
+    for (const unsigned char byte : text) {
+	if (byte < first_printable_ascii || byte == ascii_delete)
+	    bu_vls_printf(out, "\\x%02x", static_cast<unsigned>(byte));
+	else if (byte == '\\')
+	    bu_vls_strcat(out, "\\\\");
+	else
+	    bu_vls_putc(out, byte);
+    }
+}
+
+void
 print_status(struct ged *gedp, const ged_db_history *history)
 {
     if (!history) {
@@ -388,12 +404,78 @@ print_status(struct ged *gedp, const ged_db_history *history)
     bu_vls_printf(gedp->ged_result_str, "mode session\nrevision %ju\noldest %ju\nbytes %zu\nlimit %zu",
 	(uintmax_t)history->head, (uintmax_t)history->revisions.begin()->first,
 	history->used, history->limit);
-    if (head.parent != no_revision)
-	bu_vls_printf(gedp->ged_result_str, "\nundo %s", head.label.c_str());
+    if (head.parent != no_revision) {
+	bu_vls_strcat(gedp->ged_result_str, "\nundo ");
+	append_printable(gedp->ged_result_str, head.label);
+    }
     for (const auto &entry : history->revisions) {
-	if (entry.second.parent == history->head)
-	    bu_vls_printf(gedp->ged_result_str, "\nredo %ju %s",
-		(uintmax_t)entry.first, entry.second.label.c_str());
+	if (entry.second.parent == history->head) {
+	    bu_vls_printf(gedp->ged_result_str, "\nredo %ju ", (uintmax_t)entry.first);
+	    append_printable(gedp->ged_result_str, entry.second.label);
+	}
+    }
+}
+
+const Revision *
+find_revision(struct ged *gedp, const ged_db_history *history, const char *argument, uint64_t &id)
+{
+    if (history && parse_number(argument, id)) {
+	const auto entry = history->revisions.find(id);
+	if (entry != history->revisions.end())
+	    return &entry->second;
+    }
+    bu_vls_printf(gedp->ged_result_str, "Unknown or expired session revision");
+    return nullptr;
+}
+
+void
+print_revision(struct bu_vls *out, const ged_db_history &history, uint64_t id, const Revision &revision)
+{
+    if (bu_vls_strlen(out))
+	bu_vls_putc(out, '\n');
+    bu_vls_printf(out, "revision %ju", (uintmax_t)id);
+    if (id == history.head)
+	bu_vls_strcat(out, " (selected)");
+    if (revision.parent != no_revision)
+	bu_vls_printf(out, " parent %ju", (uintmax_t)revision.parent);
+    if (!revision.label.empty()) {
+	bu_vls_putc(out, ' ');
+	append_printable(out, revision.label);
+    }
+}
+
+int
+print_log(struct ged *gedp, const ged_db_history *history, const char *object)
+{
+    if (!history) {
+	bu_vls_printf(gedp->ged_result_str, "Session history is disabled");
+	return BRLCAD_ERROR;
+    }
+    for (auto entry = history->revisions.rbegin(); entry != history->revisions.rend(); ++entry) {
+	if (object) {
+	    const auto &changes = entry->second.changes;
+	    if (std::none_of(changes.begin(), changes.end(),
+		    [object](const Change &change) { return change.name == object; }))
+		continue;
+	}
+	print_revision(gedp->ged_result_str, *history, entry->first, entry->second);
+    }
+    return BRLCAD_OK;
+}
+
+void
+print_changes(struct ged *gedp, const ged_db_history &history, uint64_t id, const Revision &revision)
+{
+    auto *out = gedp->ged_result_str;
+    print_revision(out, history, id, revision);
+    for (const auto &change : revision.changes) {
+	const char *action = "update";
+	if (change.before.empty())
+	    action = "create";
+	else if (change.after.empty())
+	    action = "delete";
+	bu_vls_printf(out, "\n%s ", action);
+	append_printable(out, change.name);
     }
 }
 
@@ -535,16 +617,22 @@ ged_db_history_command(struct ged *gedp, int argc, const char **argv)
 		print_status(gedp, gedp->i->db_history);
 	    return enabled;
 	}
-	if (argc == 3 && BU_STR_EQUAL(argv[1], "checkout")) {
+	if (argc == 2 && BU_STR_EQUAL(argv[1], "log"))
+	    return print_log(gedp, history, nullptr);
+	if (argc == 4 && BU_STR_EQUAL(argv[1], "log") && BU_STR_EQUAL(argv[2], "--object"))
+	    return print_log(gedp, history, argv[3]);
+	if (argc == 3 && one_of(argv[1], {"show", "checkout"})) {
 	    uint64_t target;
-	    if (!history || !parse_number(argv[2], target) ||
-		history->revisions.find(target) == history->revisions.end()) {
-		bu_vls_printf(gedp->ged_result_str, "Unknown or expired session revision");
+	    const auto *revision = find_revision(gedp, history, argv[2], target);
+	    if (!revision)
 		return BRLCAD_ERROR;
+	    if (BU_STR_EQUAL(argv[1], "show")) {
+		print_changes(gedp, *history, target, *revision);
+		return BRLCAD_OK;
 	    }
 	    return travel(gedp, *history, target);
 	}
-	bu_vls_printf(gedp->ged_result_str, "Usage: db history status | enable session [bytes] | checkout <revision>");
+	bu_vls_printf(gedp->ged_result_str, "Usage: db history status | enable session [bytes] | log [--object name] | show <revision> | checkout <revision>");
 	return GED_HELP;
     }
     const bool undo = command == "undo";
