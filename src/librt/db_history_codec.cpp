@@ -25,8 +25,9 @@
 #include <set>
 #include <utility>
 
-#include "rt/db_io.h"
 #include "bu/vls.h"
+#include "rt/db_attr.h"
+#include "rt/db_io.h"
 #include "../libbu/picohash.h"
 #include "db_history_codec.h"
 #include "librt_private.h"
@@ -175,6 +176,7 @@ struct SplitRecord {
     ByteView prefix;
     ByteView body;
     ByteView suffix;
+    struct bu_external attributes = BU_EXTERNAL_INIT_ZERO;
     unsigned char major_type = 0;
 };
 
@@ -190,6 +192,7 @@ split_record(ByteView record, SplitRecord &split)
 
     split.name = {reinterpret_cast<const char *>(raw.name.ext_buf), raw.name.ext_nbytes - 1};
     split.major_type = raw.major_type;
+    split.attributes = raw.attributes;
     split.prefix = record;
     if (raw.body.ext_nbytes) {
 	split.prefix.size = static_cast<size_t>(raw.body.ext_buf - record.data);
@@ -198,6 +201,21 @@ split_record(ByteView record, SplitRecord &split)
 	split.suffix = {record.data + suffix_offset, record.size - suffix_offset};
     }
     return true;
+}
+
+bool
+usable_global(const SplitRecord &split)
+{
+    if (split.name != DB5_GLOBAL_OBJECT_NAME)
+	return true;
+    if (split.major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY)
+	return false;
+
+    struct bu_attribute_value_set attributes;
+    bu_avs_init_empty(&attributes);
+    const bool valid = db5_import_attributes(&attributes, &split.attributes) >= 0;
+    bu_avs_free(&attributes);
+    return valid;
 }
 
 bool
@@ -370,6 +388,19 @@ identify(Kind kind, ByteView payload)
     return id;
 }
 
+std::string
+id_string(const Id &id)
+{
+    constexpr char digits[] = "0123456789abcdef";
+    std::string hex;
+    hex.reserve(2 * id.size());
+    for (const uint8_t byte : id) {
+	hex += digits[byte >> 4];
+	hex += digits[byte & 0xf];
+    }
+    return hex;
+}
+
 bool
 factor_record(ByteView record, RecordArtifact &result)
 {
@@ -439,6 +470,14 @@ materialize_record(const Object &object, ByteView verified_body, Bytes &result)
 
     result = std::move(record);
     return true;
+}
+
+bool
+valid_named_record(const Object &object, ByteView verified_body, std::string_view name)
+{
+    Bytes record;
+    SplitRecord split;
+    return unpack_record(object, verified_body, record, split) && split.name == name && usable_global(split);
 }
 
 bool
@@ -706,21 +745,23 @@ read_revision(const Pack &pack, const Id &id, Revision &result)
 }
 
 bool
-manifest_at_revision(const Pack &pack, const Id &id, Manifest &result)
+manifest_at_revision(const ArtifactLookup &find, const BoundaryLookup &boundary, const Id &id, Manifest &result)
 {
     std::vector<Revision> steps;
     Id current = id;
     Manifest manifest;
     for (;;) {
 	Revision revision;
-	if (!read_revision(pack, current, revision))
+	ByteView payload;
+	if (current == absent || !find({Kind::Revision, current}, payload) ||
+	    identify(Kind::Revision, payload) != current || !decode_revision(payload, revision))
 	    return false;
-	if (pack.artifacts.count({Kind::Manifest, revision.model})) {
-	    if (!read_manifest(pack, revision.model, manifest))
+	if (find({Kind::Manifest, revision.model}, payload)) {
+	    if (identify(Kind::Manifest, payload) != revision.model || !decode_manifest(payload, manifest))
 		return false;
 	    break;
 	}
-	if (steps.size() == max_manifest_distance || revision.parent == absent || pack.boundaries.count(current))
+	if (steps.size() == max_manifest_distance || revision.parent == absent || boundary(current))
 	    return false;
 	current = revision.parent;
 	steps.push_back(std::move(revision));
@@ -730,6 +771,18 @@ manifest_at_revision(const Pack &pack, const Id &id, Manifest &result)
 	    return false;
     result = std::move(manifest);
     return true;
+}
+
+bool
+manifest_at_revision(const Pack &pack, const Id &id, Manifest &result)
+{
+    return manifest_at_revision([&](const ArtifactKey &key, ByteView &payload) {
+	const auto artifact = pack.artifacts.find(key);
+	if (artifact == pack.artifacts.end())
+	    return false;
+	payload = artifact->second;
+	return true;
+    }, [&](const Id &revision) { return pack.boundaries.count(revision); }, id, result);
 }
 
 namespace {
@@ -842,8 +895,7 @@ verify_pack(const Pack &pack, struct bu_vls *message)
 	    }
 	    Bytes record;
 	    SplitRecord split;
-	    if (!unpack_record(object, body, record, split) ||
-		(split.name == DB5_GLOBAL_OBJECT_NAME && split.major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY))
+	    if (!unpack_record(object, body, record, split) || !usable_global(split))
 		return verify_failure(message, "An archived object does not reconstruct a valid DB5 record");
 	    names.emplace(key.second, split.name);
 	}

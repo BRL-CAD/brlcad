@@ -27,6 +27,7 @@
 
 #include "bu/app.h"
 #include "bu/file.h"
+#include "bu/process.h"
 #include "bu/vls.h"
 #include "raytrace.h"
 #include "wdb.h"
@@ -79,6 +80,177 @@ change_bootstrap(const std::string &path, size_t index, uint8_t replacement)
     MDB_val updated{format.size(), format.data()};
     return mdb_put(raw, db, &key, &updated, 0) == MDB_SUCCESS &&
 	mdb_txn_commit(txn.release()) == MDB_SUCCESS;
+}
+
+static int
+checkout_parent(const char *path, struct bu_vls *message)
+{
+    auto workspace = Workspace::open(path, message, true);
+    WorkspaceHead head, selected;
+    Manifest model;
+    Bytes payload;
+    Revision revision;
+    CHECK(workspace && workspace->read_directory(head, model, message));
+    CHECK(workspace->fetch_artifact({Kind::Revision, head.revision}, payload, message) &&
+	decode_revision(payload, revision) && revision.parent != absent);
+    CHECK(workspace->checkout(head, revision.parent, selected, message) == WorkspaceWriteStatus::Ok);
+    CHECK(selected.generation == head.generation + 1 && selected.revision == revision.parent);
+    return 0;
+}
+
+static bool
+write_binary(struct db_i *db, const char *name, ByteView payload)
+{
+    struct bu_external body = BU_EXTERNAL_INIT_ZERO;
+    body.ext_buf = const_cast<uint8_t *>(payload.data);
+    body.ext_nbytes = payload.size;
+    struct bu_external record = BU_EXTERNAL_INIT_ZERO;
+    db5_export_object3(&record, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT, name, 0,
+	nullptr, &body, DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_8BITINT_U,
+	DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
+    const int status = wdb_export_external(wdb_dbopen(db, RT_WDB_TYPE_DB_DEFAULT), &record,
+	name, RT_DIR_NON_GEOM, DB5_MINORTYPE_BINU_8BITINT_U);
+    bu_free_external(&record);
+    return status == 0;
+}
+
+static int
+test_bad_global(Workspace &writer, const WorkspaceHead &base, Manifest model, struct bu_vls *message)
+{
+    uint8_t unterminated[] = {'t', 'i', 't', 'l', 'e'};
+    struct bu_external attributes = BU_EXTERNAL_INIT_ZERO;
+    attributes.ext_buf = unterminated;
+    attributes.ext_nbytes = sizeof(unterminated);
+    struct bu_external raw = BU_EXTERNAL_INIT_ZERO;
+    db5_export_object3(&raw, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
+	DB5_GLOBAL_OBJECT_NAME, DB5HDR_HFLAGS_HIDDEN_OBJECT, &attributes, nullptr,
+	DB5_MAJORTYPE_ATTRIBUTE_ONLY, DB5_MINORTYPE_RESERVED,
+	DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
+    RecordArtifact object;
+    const bool factored = factor_record({raw.ext_buf, raw.ext_nbytes}, object);
+    bu_free_external(&raw);
+    CHECK(factored);
+    Revision invalid;
+    invalid.parent = base.revision;
+    invalid.label = "Invalid database attributes";
+    auto &global = model.at(DB5_GLOBAL_OBJECT_NAME);
+    invalid.changes.emplace(DB5_GLOBAL_OBJECT_NAME, Change{global, object.object_id});
+    global = object.object_id;
+    Bytes manifest;
+    CHECK(encode_manifest(model, manifest));
+    invalid.model = identify(Kind::Manifest, manifest);
+    const ArtifactIndex artifacts{{{Kind::Object, object.object_id}, object.object}};
+    WorkspaceHead actual;
+    CHECK(writer.commit(base, invalid, artifacts, actual, message) == WorkspaceWriteStatus::Error);
+    CHECK(!writer.fetch_artifact({Kind::Object, object.object_id}, manifest, message));
+    return 0;
+}
+
+static int
+test_writes(const char *path, const char *program, struct db_i *source, const EmbeddedPack &initial,
+	    const Pack &edited, struct bu_vls *message)
+{
+    CHECK(Workspace::create(path, initial.pack, message));
+    auto reader = Workspace::open(path, message);
+    auto writer = Workspace::open(path, message, true);
+    auto second = Workspace::open(path, message, true);
+    CHECK(reader && writer && second);
+    WorkspaceHead base, actual, selected;
+    Manifest model;
+    CHECK(reader->read_directory(base, model, message) && model == initial.model);
+    CHECK(test_bad_global(*writer, base, model, message) == 0);
+
+    // The portable DB5 writer and the workspace use identical artifacts.
+    Revision edit;
+    CHECK(read_revision(edited, edited.selected_revision, edit));
+    CHECK(reader->commit(base, edit, edited.artifacts, actual, message) == WorkspaceWriteStatus::Error);
+    CHECK(writer->commit(base, edit, edited.artifacts, selected, message) == WorkspaceWriteStatus::Ok);
+    CHECK(selected.revision == edited.selected_revision && selected.model == edited.selected_model &&
+	selected.generation == base.generation + 1);
+    CHECK(second->checkout(base, base.revision, actual, message) == WorkspaceWriteStatus::Stale);
+    const std::string conflict = bu_vls_addr(message);
+    CHECK(actual.revision == selected.revision && conflict.find(id_string(base.revision)) != std::string::npos &&
+	conflict.find(id_string(selected.revision)) != std::string::npos);
+
+    WorkspaceHead back;
+    CHECK(second->checkout(selected, base.revision, back, message) == WorkspaceWriteStatus::Ok);
+    CHECK(back.revision == base.revision && back.model == base.model && back.generation == base.generation + 2);
+    CHECK(writer->commit(base, edit, edited.artifacts, actual, message) == WorkspaceWriteStatus::Stale);
+    CHECK(actual.revision == base.revision && actual.generation == back.generation);
+    CHECK(writer->checkout(back, back.revision, actual, message) == WorkspaceWriteStatus::Ok);
+    CHECK(actual.generation == back.generation);
+
+    // Stage two additions. The first body exceeds the initial workspace
+    // map size and forces a retry of the complete write transaction.
+    constexpr size_t body_size = 24 * 1024 * 1024;
+    constexpr uint8_t body_byte = 0x2a;
+    const Bytes large_body(body_size, body_byte);
+    const Bytes short_body{body_byte};
+    constexpr char first[] = "a-large.binary";
+    constexpr char last[] = "z-small.binary";
+    Edit additions(db_edit_begin(source, "Add binary records"), db_edit_abort);
+    CHECK(additions && write_binary(db_edit_view(additions.get()), first, large_body) &&
+	write_binary(db_edit_view(additions.get()), last, short_body));
+    Db5HistoryDraft batch;
+    CHECK(append_db5_history(initial, additions.get(), 2, batch) == AppendStatus::Ready);
+    CHECK(read_revision(batch.pack, batch.pack.selected_revision, edit));
+    const ArtifactKey first_object{Kind::Object, edit.changes.at(first).after};
+    const ArtifactKey last_object{Kind::Object, edit.changes.at(last).after};
+    auto incomplete = batch.pack.artifacts;
+    CHECK(incomplete.erase(last_object) == 1);
+    CHECK(writer->commit(back, edit, incomplete, actual, message) == WorkspaceWriteStatus::Error);
+    CHECK(reader->read_directory(actual, model, message) && actual.generation == back.generation && model == initial.model);
+    Bytes payload;
+    CHECK(!reader->fetch_artifact(first_object, payload, message));
+    CHECK(writer->commit(back, edit, batch.pack.artifacts, selected, message) == WorkspaceWriteStatus::Ok);
+    CHECK(selected.revision == batch.pack.selected_revision && selected.generation == back.generation + 1);
+    CHECK(reader->read_directory(actual, model, message) && actual.revision == selected.revision &&
+	model.at(first) == first_object.second && model.at(last) == last_object.second);
+    Bytes record;
+    CHECK(reader->fetch_record(first_object.second, record, message));
+    RecordArtifact factored;
+    CHECK(factor_record(record, factored) && factored.body_id == identify(Kind::Body, large_body));
+
+    // An independently opened process sees the entire write and
+    // publishes its checkout for these open readers to observe.
+    const char *args[] = {program, "--checkout-parent", path, nullptr};
+    struct bu_process *child = nullptr;
+    bu_process_create(&child, args, BU_PROCESS_OUT_EQ_ERR);
+    constexpr int process_timeout_ms = 10000;
+    CHECK(child && bu_process_wait_n(&child, process_timeout_ms) == 0);
+    CHECK(reader->read_directory(actual, model, message) && actual.revision == base.revision &&
+	actual.generation == selected.generation + 1 && model == initial.model);
+    return 0;
+}
+
+static int
+test_compact_checkout(const char *path, Edit stage, const Db5HistoryDraft &edited, struct bu_vls *message)
+{
+    EmbeddedPack prior;
+    prior.pack = edited.pack;
+    CHECK(read_manifest(prior.pack, prior.pack.selected_model, prior.model));
+    Database source(db_edit_commit(stage.get()), db_close);
+    CHECK(source);
+    stage.release();
+    Edit edit(db_edit_begin(source.get(), "Third title"), db_edit_abort);
+    CHECK(edit && db5_update_ident(db_edit_view(edit.get()), "Third title", 1.0) == 0);
+    Db5HistoryDraft next;
+    CHECK(append_db5_history(prior, edit.get(), 3, next) == AppendStatus::Ready);
+    const ArtifactKey reused_model{Kind::Manifest, prior.pack.selected_model};
+    CHECK(next.pack.artifacts.erase(reused_model) == 1);
+    CHECK(Workspace::create(path, next.pack, message));
+    auto workspace = Workspace::open(path, message, true);
+    WorkspaceHead latest, selected;
+    Manifest model;
+    CHECK(workspace && workspace->read_directory(latest, model, message));
+    Bytes payload;
+    CHECK(!workspace->fetch_artifact(reused_model, payload, message));
+    CHECK(workspace->checkout(latest, prior.pack.selected_revision, selected, message) == WorkspaceWriteStatus::Ok);
+    CHECK(workspace->read_directory(selected, model, message) && model == prior.model);
+    CHECK(selected.model == reused_model.second && selected.revision == prior.pack.selected_revision &&
+	selected.generation == latest.generation + 1);
+    CHECK(workspace->fetch_artifact(reused_model, payload, message));
+    return 0;
 }
 
 static int
@@ -136,6 +308,9 @@ main(int argc, const char **argv)
     if (argc > 0)
 	bu_setprogname(argv[0]);
 
+    if (argc == 3 && BU_STR_EQUAL(argv[1], "--checkout-parent"))
+	return checkout_parent(argv[2], nullptr);
+
     char path[MAXPATHLEN] = {};
     FILE *temporary = bu_temp_file(path, sizeof(path));
     CHECK(temporary && fclose(temporary) == 0 && bu_file_delete(path));
@@ -171,8 +346,13 @@ main(int argc, const char **argv)
     bu_free_external(&raw);
 
     struct bu_vls message = BU_VLS_INIT_ZERO;
-    const int result = test_workspace((fixture.path / "workspace").string(), edited.pack,
+    int result = test_workspace((fixture.path / "workspace").string(), edited.pack,
 	expected, name, record, &message);
+    if (!result)
+	result = test_writes((fixture.path / "writer").string().c_str(), argv[0], source_db.get(),
+	    initial, edited.pack, &message);
+    if (!result)
+	result = test_compact_checkout((fixture.path / "compact").string().c_str(), std::move(edit), edited, &message);
     if (result)
 	bu_log("%s\n", bu_vls_addr(&message));
     bu_vls_free(&message);

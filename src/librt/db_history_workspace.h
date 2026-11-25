@@ -32,12 +32,18 @@ struct WorkspaceHead {
     uint64_t generation = 0;
 };
 
+enum class WorkspaceWriteStatus {
+    Ok,
+    Stale,
+    Error
+};
+
 class Workspace {
 public:
     // The destination must be a new directory. Publish the bootstrap,
     // history and selected directory together in a durable transaction.
     static RT_EXPORT bool create(const char *path, const Pack &pack, struct bu_vls *message);
-    static RT_EXPORT std::unique_ptr<Workspace> open(const char *path, struct bu_vls *message);
+    static RT_EXPORT std::unique_ptr<Workspace> open(const char *path, struct bu_vls *message, bool writable = false);
     RT_EXPORT ~Workspace();
     Workspace(const Workspace &) = delete;
     Workspace &operator=(const Workspace &) = delete;
@@ -50,12 +56,21 @@ public:
     RT_EXPORT bool fetch_artifact(const ArtifactKey &key, Bytes &payload, struct bu_vls *message) const;
     RT_EXPORT bool fetch_record(const Id &id, Bytes &record, struct bu_vls *message) const;
 
+    // The caller keeps its staged edit on failure. On success or a stale
+    // base, actual receives the authoritative head from the transaction.
+    // Only new object descriptors and bodies need to be provided.
+    RT_EXPORT WorkspaceWriteStatus commit(const WorkspaceHead &expected, const Revision &revision,
+	const ArtifactIndex &artifacts, WorkspaceHead &actual, struct bu_vls *message);
+    RT_EXPORT WorkspaceWriteStatus checkout(const WorkspaceHead &expected, const Id &revision,
+	WorkspaceHead &actual, struct bu_vls *message);
+
 private:
     struct Store;
     struct Registry;
     static Registry &registry();
-    explicit Workspace(Store *store);
+    Workspace(Store *store, bool writable);
     Store *store;
+    bool writable;
 };
 
 } // namespace db_history

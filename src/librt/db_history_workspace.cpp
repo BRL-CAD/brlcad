@@ -20,6 +20,7 @@
 #include "common.h"
 
 #include <algorithm>
+#include <cerrno>
 #include <cstring>
 #include <filesystem>
 #include <limits>
@@ -129,11 +130,18 @@ get(MDB_txn *txn, MDB_dbi table, ByteView key, ByteView &result)
 }
 
 void
-put(MDB_txn *txn, MDB_dbi table, ByteView key, ByteView payload)
+put(MDB_txn *txn, MDB_dbi table, ByteView key, ByteView payload, unsigned int flags = MDB_NOOVERWRITE)
 {
     auto search = value(key);
     auto stored = value(payload);
-    check(mdb_put(txn, table, &search, &stored, MDB_NOOVERWRITE));
+    check(mdb_put(txn, table, &search, &stored, flags));
+}
+
+void
+erase(MDB_txn *txn, MDB_dbi table, ByteView key)
+{
+    auto search = value(key);
+    check(mdb_del(txn, table, &search, nullptr));
 }
 
 Transaction
@@ -172,6 +180,16 @@ open_environment(const char *path, unsigned int flags, size_t map_size = 0)
 	check(mdb_env_set_mapsize(raw, map_size));
     check(mdb_env_open(raw, path, flags, 0660));
     return env;
+}
+
+void
+grow_map(MDB_env *env)
+{
+    MDB_envinfo info;
+    check(mdb_env_info(env, &info));
+    if (info.me_mapsize > std::numeric_limits<size_t>::max() / 2)
+	throw LmdbError{MDB_MAP_FULL};
+    check(mdb_env_set_mapsize(env, info.me_mapsize * 2));
 }
 
 template <typename Integer>
@@ -243,11 +261,11 @@ artifact_key(const ArtifactKey &key)
 }
 
 void
-store_named(MDB_txn *txn, MDB_dbi table, std::string_view name, const Id &id)
+store_named(MDB_txn *txn, MDB_dbi table, std::string_view name, const Id &id, unsigned int flags = MDB_NOOVERWRITE)
 {
     Bytes row(id.begin(), id.end());
     row.insert(row.end(), name.begin(), name.end());
-    put(txn, table, bytes(name_key(name)), row);
+    put(txn, table, bytes(name_key(name)), row, flags);
 }
 
 bool
@@ -268,7 +286,27 @@ get_artifact(MDB_txn *txn, MDB_dbi table, const ArtifactKey &key, ByteView &payl
 }
 
 bool
-read_head(MDB_txn *txn, const Tables &tables, WorkspaceHead &head)
+lookup_named(MDB_txn *txn, MDB_dbi table, std::string_view name, Id &id)
+{
+    ByteView row;
+    if (!get(txn, table, bytes(name_key(name)), row)) {
+	id = absent;
+	return true;
+    }
+    std::string_view stored;
+    return read_named(row, stored, id) && name == stored;
+}
+
+bool
+load_revision(MDB_txn *txn, const Tables &tables, const Id &id, Revision &revision)
+{
+    ByteView payload;
+    return get_artifact(txn, tables.artifacts, {Kind::Revision, id}, payload) &&
+	decode_revision(payload, revision);
+}
+
+bool
+read_head(MDB_txn *txn, const Tables &tables, WorkspaceHead &head, Revision *revision = nullptr)
 {
     ByteView stored;
     if (!get(txn, tables.metadata, bytes(head_key), stored) || stored.size != head_size)
@@ -277,11 +315,129 @@ read_head(MDB_txn *txn, const Tables &tables, WorkspaceHead &head)
     const auto *model = stored.data + head.revision.size();
     std::copy_n(model, head.model.size(), head.model.begin());
     read_integer(model + head.model.size(), head.generation);
-    ByteView payload;
     Revision selected;
-    return head.model != absent && head.generation &&
-	get_artifact(txn, tables.artifacts, {Kind::Revision, head.revision}, payload) &&
-	decode_revision(payload, selected) && selected.model == head.model;
+    if (head.model == absent || !head.generation ||
+	!load_revision(txn, tables, head.revision, selected) || selected.model != head.model)
+	return false;
+    if (revision)
+	*revision = std::move(selected);
+    return true;
+}
+
+void
+store_head(MDB_txn *txn, const Tables &tables, const WorkspaceHead &head, unsigned int flags)
+{
+    std::array<uint8_t, head_size> encoded;
+    auto *next = std::copy(head.revision.begin(), head.revision.end(), encoded.data());
+    next = std::copy(head.model.begin(), head.model.end(), next);
+    write_integer(next, head.generation);
+    put(txn, tables.metadata, bytes(head_key), bytes(encoded), flags);
+}
+
+bool
+complete_model(const Manifest &model)
+{
+    return model.count(DB5_GLOBAL_OBJECT_NAME) && !model.count(archive_name);
+}
+
+bool
+read_model(MDB_txn *txn, const Tables &tables, const Id &selected, Manifest &model, struct bu_vls *message)
+{
+    MDB_cursor *raw = nullptr;
+    check(mdb_cursor_open(txn, tables.directory, &raw));
+    const Cursor cursor(raw, mdb_cursor_close);
+    Manifest result;
+    MDB_val key, row;
+    int status = mdb_cursor_get(raw, &key, &row, MDB_FIRST);
+    for (; status == MDB_SUCCESS; status = mdb_cursor_get(raw, &key, &row, MDB_NEXT)) {
+	std::string_view name;
+	Id id;
+	if (!read_named(view(row), name, id) || key.mv_size != id.size() ||
+	    std::memcmp(key.mv_data, name_key(name).data(), key.mv_size) ||
+	    !result.emplace(name, id).second)
+	    return report(message, "A workspace directory entry is invalid");
+    }
+    if (status != MDB_NOTFOUND)
+	check(status);
+    Bytes encoded;
+    if (!complete_model(result) || !encode_manifest(result, encoded) || identify(Kind::Manifest, encoded) != selected)
+	return report(message, "The workspace directory does not match the selected model");
+    model = std::move(result);
+    return true;
+}
+
+bool
+write_directory(MDB_txn *txn, const Tables &tables, const Changes &changes, struct bu_vls *message)
+{
+    for (const auto &entry : changes) {
+	const auto &name = entry.first;
+	const auto &change = entry.second;
+	Id existing;
+	if (!lookup_named(txn, tables.directory, name, existing) || existing != change.before)
+	    return report(message, "A workspace name conflicts with the recorded before state");
+	if (change.after == absent)
+	    erase(txn, tables.directory, bytes(name_key(name)));
+	else
+	    store_named(txn, tables.directory, name, change.after, existing == absent ? MDB_NOOVERWRITE : 0);
+    }
+    return true;
+}
+
+void
+store_artifact(MDB_txn *txn, const Tables &tables, const ArtifactKey &key, ByteView payload)
+{
+    ByteView existing;
+    if (!get(txn, tables.artifacts, bytes(artifact_key(key)), existing)) {
+	put(txn, tables.artifacts, bytes(artifact_key(key)), payload);
+	return;
+    }
+    if (existing.size != payload.size || std::memcmp(existing.data, payload.data, payload.size))
+	throw LmdbError{MDB_CORRUPTED};
+}
+
+bool
+store_model(MDB_txn *txn, const Tables &tables, const Id &id, const Manifest &model)
+{
+    Bytes encoded;
+    if (!complete_model(model) || !encode_manifest(model, encoded) || identify(Kind::Manifest, encoded) != id)
+	return false;
+    store_artifact(txn, tables, {Kind::Manifest, id}, encoded);
+    return true;
+}
+
+bool
+candidate_artifact(MDB_txn *txn, const Tables &tables, const ArtifactIndex &artifacts,
+		   const ArtifactKey &key, ByteView &payload, bool &stored)
+{
+    stored = get(txn, tables.artifacts, bytes(artifact_key(key)), payload);
+    if (!stored) {
+	const auto candidate = artifacts.find(key);
+	if (candidate == artifacts.end())
+	    return false;
+	payload = candidate->second;
+    }
+    return payload.size && identify(key.first, payload) == key.second;
+}
+
+bool
+store_record(MDB_txn *txn, const Tables &tables, const ArtifactIndex &artifacts, const Id &id, std::string_view name)
+{
+    const ArtifactKey object_key{Kind::Object, id};
+    ByteView descriptor, body;
+    Object object;
+    bool have_object = false, have_body = false;
+    if (!candidate_artifact(txn, tables, artifacts, object_key, descriptor, have_object) ||
+	!decode_object(descriptor, object))
+	return false;
+    const ArtifactKey body_key{Kind::Body, object.body_id};
+    if ((object.body_id != absent && !candidate_artifact(txn, tables, artifacts, body_key, body, have_body)) ||
+	!valid_named_record(object, body, name))
+	return false;
+    if (!have_object)
+	put(txn, tables.artifacts, bytes(artifact_key(object_key)), descriptor);
+    if (object.body_id != absent && !have_body)
+	put(txn, tables.artifacts, bytes(artifact_key(body_key)), body);
+    return true;
 }
 
 size_t
@@ -326,46 +482,100 @@ import_pack(MDB_env *env, const Pack &pack, const Manifest &manifest)
     for (const auto &boundary : pack.boundaries)
 	put(txn.get(), tables.boundaries, bytes(boundary), {});
 
-    std::array<uint8_t, head_size> head;
-    auto *next = std::copy(pack.selected_revision.begin(), pack.selected_revision.end(), head.data());
-    next = std::copy(pack.selected_model.begin(), pack.selected_model.end(), next);
-    write_integer(next, initial_generation);
-    put(txn.get(), tables.metadata, bytes(head_key), bytes(head));
+    store_head(txn.get(), tables, {pack.selected_revision, pack.selected_model, initial_generation}, MDB_NOOVERWRITE);
     check(mdb_txn_commit(txn.release()));
 }
 
 } // namespace
 
 struct Workspace::Store {
-    Store(fs::path location, Environment &&handle) : path(std::move(location)), env(std::move(handle)) {}
+    Store(fs::path location, Environment &&handle, bool can_write) :
+	path(std::move(location)), env(std::move(handle)), writable(can_write) {}
+
+    template <typename Run>
+    auto transact(unsigned int flags, Run run) const
+    {
+	for (;;) {
+	    try {
+		const std::shared_lock<std::shared_mutex> lock(transactions);
+		MDB_txn *raw = nullptr;
+		check(mdb_txn_begin(env.get(), nullptr, flags, &raw));
+		Transaction txn(raw, mdb_txn_abort);
+		return run(txn, handles);
+	    } catch (const LmdbError &failure) {
+		if (failure.code != MDB_MAP_RESIZED && (flags == MDB_RDONLY || failure.code != MDB_MAP_FULL))
+		    throw;
+		// The transaction has ended. Resizing requires all other
+		// local transactions to finish too.
+		const std::unique_lock<std::shared_mutex> lock(transactions);
+		if (failure.code == MDB_MAP_RESIZED)
+		    check(mdb_env_set_mapsize(env.get(), 0));
+		else
+		    grow_map(env.get());
+	    }
+	}
+    }
 
     template <typename Reader>
     bool read(Reader reader, struct bu_vls *message) const
     {
 	try {
-	    for (;;) {
-		{
-		    const std::shared_lock<std::shared_mutex> lock(transactions);
-		    MDB_txn *raw = nullptr;
-		    const int status = mdb_txn_begin(env.get(), nullptr, MDB_RDONLY, &raw);
-		    if (status != MDB_MAP_RESIZED) {
-			check(status);
-			const Transaction txn(raw, mdb_txn_abort);
-			return reader(txn.get(), tables);
-		    }
-		}
-		// Adopting a larger map requires all local readers to finish.
-		const std::unique_lock<std::shared_mutex> lock(transactions);
-		check(mdb_env_set_mapsize(env.get(), 0));
-	    }
+	    return transact(MDB_RDONLY, [&](const Transaction &txn, const Tables &tables) {
+		return reader(txn.get(), tables);
+	    });
 	} catch (const LmdbError &failure) {
 	    return report(message, failure);
 	}
     }
 
+    template <typename Writer>
+    WorkspaceWriteStatus write(const WorkspaceHead &expected, WorkspaceHead &actual,
+			       Writer writer, struct bu_vls *message)
+    {
+	if (message)
+	    bu_vls_trunc(message, 0);
+	try {
+	    return transact(0, [&](Transaction &txn, const Tables &tables) {
+		WorkspaceHead current;
+		Revision selected;
+		if (!read_head(txn.get(), tables, current, &selected)) {
+		    report(message, "The workspace head is invalid");
+		    return WorkspaceWriteStatus::Error;
+		}
+		if (current.generation != expected.generation || current.revision != expected.revision ||
+		    current.model != expected.model) {
+		    if (message)
+			bu_vls_printf(message, "Workspace base changed from %s (generation %ju) to %s (generation %ju)",
+			    id_string(expected.revision).c_str(), (uintmax_t)expected.generation,
+			    id_string(current.revision).c_str(), (uintmax_t)current.generation);
+		    actual = current;
+		    return WorkspaceWriteStatus::Stale;
+		}
+		WorkspaceHead next = current;
+		if (!writer(txn.get(), tables, current, selected, next))
+		    return WorkspaceWriteStatus::Error;
+		if (next.revision != current.revision) {
+		    if (current.generation == std::numeric_limits<uint64_t>::max()) {
+			report(message, "The workspace generation cannot advance");
+			return WorkspaceWriteStatus::Error;
+		    }
+		    ++next.generation;
+		    store_head(txn.get(), tables, next, 0);
+		    check(mdb_txn_commit(txn.release()));
+		}
+		actual = next;
+		return WorkspaceWriteStatus::Ok;
+	    });
+	} catch (const LmdbError &failure) {
+	    report(message, failure);
+	    return WorkspaceWriteStatus::Error;
+	}
+    }
+
     fs::path path;
     Environment env;
-    Tables tables;
+    Tables handles;
+    bool writable;
     size_t clients = 0;
     // LMDB needs all local transactions drained before resizing a map.
     mutable std::shared_mutex transactions;
@@ -383,7 +593,7 @@ Workspace::registry()
     return open;
 }
 
-Workspace::Workspace(Store *state) : store(state)
+Workspace::Workspace(Store *state, bool write_access) : store(state), writable(write_access)
 {
     ++store->clients;
 }
@@ -421,11 +631,7 @@ Workspace::create(const char *path, const Pack &pack, struct bu_vls *message)
 	    } catch (const LmdbError &failure) {
 		if (failure.code != MDB_MAP_FULL)
 		    throw;
-		MDB_envinfo info;
-		check(mdb_env_info(env.get(), &info));
-		if (info.me_mapsize > std::numeric_limits<size_t>::max() / 2)
-		    throw;
-		check(mdb_env_set_mapsize(env.get(), info.me_mapsize * 2));
+		grow_map(env.get());
 	    }
 	}
     } catch (const LmdbError &failure) {
@@ -442,7 +648,7 @@ Workspace::create(const char *path, const Pack &pack, struct bu_vls *message)
 }
 
 std::unique_ptr<Workspace>
-Workspace::open(const char *path, struct bu_vls *message)
+Workspace::open(const char *path, struct bu_vls *message, bool writable)
 {
     if (message)
 	bu_vls_trunc(message, 0);
@@ -457,29 +663,52 @@ Workspace::open(const char *path, struct bu_vls *message)
 	report(message, error.message().c_str());
 	return nullptr;
     }
+    const auto file_size = fs::file_size(canonical / "data.mdb", error);
+    if (error || !file_size) {
+	report(message, "The workspace directory has no LMDB data file");
+	return nullptr;
+    }
     // LMDB requires one environment per path in a process. Keep the
     // same handle for readers in all documents using this workspace.
     auto &open = registry();
     const std::lock_guard<std::mutex> lock(open.mutex);
     const auto existing = open.stores.find(canonical);
-    if (existing != open.stores.end())
-	return std::unique_ptr<Workspace>(new Workspace(existing->second.get()));
+    if (existing != open.stores.end()) {
+	if (writable && !existing->second->writable) {
+	    report(message, "The workspace is open read-only");
+	    return nullptr;
+	}
+	return std::unique_ptr<Workspace>(new Workspace(existing->second.get(), writable));
+    }
 
     try {
-	auto store = std::make_unique<Store>(canonical, open_environment(canonical.string().c_str(), MDB_RDONLY));
+	// Share one writable environment when filesystem permissions permit
+	// it. Each document handle still enforces its own requested access.
+	Environment env(nullptr, mdb_env_close);
+	bool can_write = true;
+	const auto location = canonical.string();
+	try {
+	    env = open_environment(location.c_str(), 0);
+	} catch (const LmdbError &failure) {
+	    if (writable || (failure.code != EACCES && failure.code != EPERM && failure.code != EROFS))
+		throw;
+	    env = open_environment(location.c_str(), MDB_RDONLY);
+	    can_write = false;
+	}
+	auto store = std::make_unique<Store>(canonical, std::move(env), can_write);
 	auto txn = begin(store->env.get(), MDB_RDONLY);
-	check(mdb_dbi_open(txn.get(), nullptr, 0, &store->tables.metadata));
-	if (!check_bootstrap(txn.get(), store->tables.metadata, message))
+	check(mdb_dbi_open(txn.get(), nullptr, 0, &store->handles.metadata));
+	if (!check_bootstrap(txn.get(), store->handles.metadata, message))
 	    return nullptr;
-	open_tables(txn.get(), store->tables, 0);
+	open_tables(txn.get(), store->handles, 0);
 	WorkspaceHead head;
-	if (!read_head(txn.get(), store->tables, head)) {
+	if (!read_head(txn.get(), store->handles, head)) {
 	    report(message, "The workspace head is invalid");
 	    return nullptr;
 	}
 	check(mdb_txn_commit(txn.release()));
 	const auto inserted = open.stores.emplace(canonical, std::move(store)).first;
-	return std::unique_ptr<Workspace>(new Workspace(inserted->second.get()));
+	return std::unique_ptr<Workspace>(new Workspace(inserted->second.get(), writable));
     } catch (const LmdbError &failure) {
 	report(message, failure);
 	return nullptr;
@@ -493,28 +722,9 @@ Workspace::read_directory(WorkspaceHead &head, Manifest &model, struct bu_vls *m
 	WorkspaceHead selected;
 	if (!read_head(txn, tables, selected))
 	    return report(message, "The workspace head is invalid");
-	MDB_cursor *raw = nullptr;
-	check(mdb_cursor_open(txn, tables.directory, &raw));
-	const Cursor cursor(raw, mdb_cursor_close);
-	Manifest result;
-	MDB_val key, row;
-	int status = mdb_cursor_get(raw, &key, &row, MDB_FIRST);
-	for (; status == MDB_SUCCESS; status = mdb_cursor_get(raw, &key, &row, MDB_NEXT)) {
-	    std::string_view name;
-	    Id id;
-	    if (!read_named(view(row), name, id) || key.mv_size != id.size() ||
-		std::memcmp(key.mv_data, name_key(name).data(), key.mv_size) ||
-		!result.emplace(name, id).second)
-		return report(message, "A workspace directory entry is invalid");
-	}
-	if (status != MDB_NOTFOUND)
-	    check(status);
-	Bytes encoded;
-	if (!result.count(DB5_GLOBAL_OBJECT_NAME) || result.count(archive_name) ||
-	    !encode_manifest(result, encoded) || identify(Kind::Manifest, encoded) != selected.model)
-	    return report(message, "The workspace directory does not match the selected model");
+	if (!read_model(txn, tables, selected.model, model, message))
+	    return false;
 	head = selected;
-	model = std::move(result);
 	return true;
     }, message);
 }
@@ -523,14 +733,8 @@ bool
 Workspace::lookup(std::string_view name, Id &id, struct bu_vls *message) const
 {
     return store->read([&](MDB_txn *txn, const Tables &tables) {
-	ByteView row;
-	if (!get(txn, tables.directory, bytes(name_key(name)), row)) {
-	    id = absent;
-	    return true;
-	}
-	std::string_view stored;
 	Id found;
-	if (!read_named(row, stored, found) || stored != name)
+	if (!lookup_named(txn, tables.directory, name, found))
 	    return report(message, "The workspace directory entry is invalid");
 	id = found;
 	return true;
@@ -561,6 +765,85 @@ Workspace::fetch_record(const Id &id, Bytes &record, struct bu_vls *message) con
 	    (object.body_id != absent && !get_artifact(txn, artifacts, {Kind::Body, object.body_id}, body)) ||
 	    !materialize_record(object, body, record))
 	    return report(message, "The workspace object is missing or corrupt");
+	return true;
+    }, message);
+}
+
+WorkspaceWriteStatus
+Workspace::commit(const WorkspaceHead &expected, const Revision &revision, const ArtifactIndex &artifacts,
+		  WorkspaceHead &actual, struct bu_vls *message)
+{
+    if (!writable) {
+	report(message, "The workspace is open read-only");
+	return WorkspaceWriteStatus::Error;
+    }
+    return store->write(expected, actual, [&](MDB_txn *txn, const Tables &tables,
+	const WorkspaceHead &base, const Revision &, WorkspaceHead &next) {
+	Bytes encoded;
+	if (revision.parent != base.revision || !encode_revision(revision, encoded))
+	    return report(message, "The workspace revision is invalid for the selected parent");
+	Manifest current, model;
+	if (!read_model(txn, tables, base.model, current, message))
+	    return false;
+	if (!apply_revision(revision, current, model) || !complete_model(model))
+	    return report(message, "The workspace edit does not produce its recorded model");
+
+	for (const auto &entry : revision.changes) {
+	    const auto &id = entry.second.after;
+	    if (id != absent && !store_record(txn, tables, artifacts, id, entry.first))
+		return report(message, "A changed record has missing or invalid workspace artifacts");
+	}
+	if (!store_model(txn, tables, revision.model, model))
+	    return report(message, "The workspace model cannot be stored");
+	const auto id = identify(Kind::Revision, encoded);
+	if (id == absent)
+	    return report(message, "The workspace revision cannot be identified");
+	store_artifact(txn, tables, {Kind::Revision, id}, encoded);
+	if (!write_directory(txn, tables, revision.changes, message))
+	    return false;
+	next.revision = id;
+	next.model = revision.model;
+	return true;
+    }, message);
+}
+
+WorkspaceWriteStatus
+Workspace::checkout(const WorkspaceHead &expected, const Id &target, WorkspaceHead &actual, struct bu_vls *message)
+{
+    if (!writable) {
+	report(message, "The workspace is open read-only");
+	return WorkspaceWriteStatus::Error;
+    }
+    return store->write(expected, actual, [&](MDB_txn *txn, const Tables &tables,
+	const WorkspaceHead &base, const Revision &selected, WorkspaceHead &next) {
+	if (target == base.revision)
+	    return true;
+	Revision revision;
+	Manifest model;
+	const auto find = [&](const ArtifactKey &key, ByteView &payload) {
+	    return get(txn, tables.artifacts, bytes(artifact_key(key)), payload);
+	};
+	const auto boundary = [&](const Id &id) {
+	    ByteView unused;
+	    return get(txn, tables.boundaries, bytes(id), unused);
+	};
+	if (!load_revision(txn, tables, target, revision) ||
+	    !manifest_at_revision(find, boundary, target, model) || !complete_model(model))
+	    return report(message, "The target workspace revision cannot be reconstructed");
+
+	Manifest current;
+	if (!read_model(txn, tables, base.model, current, message))
+	    return false;
+	if (!store_model(txn, tables, revision.model, model))
+	    return report(message, "The workspace model cannot be stored");
+	if (!write_directory(txn, tables, diff_manifests(current, model), message))
+	    return false;
+	if (target == selected.parent)
+	    put(txn, tables.preferences, bytes(target), bytes(base.revision), 0);
+	else if (base.revision == revision.parent)
+	    put(txn, tables.preferences, bytes(base.revision), bytes(target), 0);
+	next.revision = target;
+	next.model = revision.model;
 	return true;
     }, message);
 }

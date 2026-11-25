@@ -24,6 +24,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <functional>
 #include <map>
 #include <set>
 #include <string>
@@ -93,6 +94,7 @@ struct Revision {
 
 // Canonical encodings from doc/notes/database_history_format.txt.
 RT_EXPORT Id identify(Kind kind, ByteView payload);
+RT_EXPORT std::string id_string(const Id &id);
 
 // Factoring borrows the name and body from the supplied DB5 record.
 RT_EXPORT bool factor_record(ByteView record, RecordArtifact &result);
@@ -100,6 +102,8 @@ RT_EXPORT bool factor_record(ByteView record, RecordArtifact &result);
 RT_EXPORT bool decode_object(ByteView payload, Object &result);
 // The artifact store first verifies the body payload against body_id.
 RT_EXPORT bool materialize_record(const Object &object, ByteView verified_body, Bytes &result);
+// Validate the framing, name and _GLOBAL type of a reconstructed record.
+bool valid_named_record(const Object &object, ByteView verified_body, std::string_view name);
 
 RT_EXPORT bool encode_manifest(const Manifest &manifest, Bytes &result);
 RT_EXPORT bool decode_manifest(ByteView payload, Manifest &result);
@@ -112,6 +116,7 @@ RT_EXPORT bool apply_revision(const Revision &revision, const Manifest &parent, 
 RT_EXPORT Changes diff_manifests(const Manifest &before, const Manifest &after);
 
 using ArtifactKey = std::pair<Kind, Id>;
+using ArtifactIndex = std::map<ArtifactKey, ByteView>;
 
 struct Pack {
     Id selected_revision = absent;
@@ -119,7 +124,7 @@ struct Pack {
     std::set<Id> boundaries;
     std::map<std::string, Id, std::less<>> references;
     std::map<Id, Id> preferences;
-    std::map<ArtifactKey, ByteView> artifacts;
+    ArtifactIndex artifacts;
 };
 
 enum class PackStatus {
@@ -143,6 +148,12 @@ RT_EXPORT bool read_manifest(const Pack &pack, const Id &id, Manifest &result);
 RT_EXPORT bool read_revision(const Pack &pack, const Id &id, Revision &result);
 // Replay bounded parent changes from the nearest stored manifest.
 RT_EXPORT bool manifest_at_revision(const Pack &pack, const Id &id, Manifest &result);
+// The lookup returns raw, borrowed bytes if the key exists. The replay
+// checks their hashes and distinguishes a missing manifest from a bad one.
+using ArtifactLookup = std::function<bool(const ArtifactKey &, ByteView &)>;
+using BoundaryLookup = std::function<bool(const Id &)>;
+bool manifest_at_revision(const ArtifactLookup &find, const BoundaryLookup &boundary,
+			  const Id &id, Manifest &result);
 // Verify payloads, record structure, every retained parent edge and all
 // references. Supply an optional diagnostic for the first failure.
 RT_EXPORT bool verify_pack(const Pack &pack, struct bu_vls *message = nullptr);

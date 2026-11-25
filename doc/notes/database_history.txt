@@ -390,6 +390,13 @@ the 41.5 MB BREP took 0.17 seconds and matched the DB5 record byte for
 byte. These are low-level warm-cache measurements before GED
 integration.
 
+On the same workspace, committing a title edit took 39 milliseconds
+and checking out its parent took 42 milliseconds at the storage layer.
+A Linux fault-injection run killed the writer immediately before and
+after the LMDB commit. Fresh processes reopened the old and new
+states, respectively. An injected ENOSPC at the commit boundary
+preserved the old state, and a later write succeeded.
+
 Implementation starting points in the source tree
 -------------------------------------------------
 

@@ -89,6 +89,7 @@ namespace {
 using Change = ged_db_history::Change;
 using Revision = ged_db_history::Revision;
 using db_history::EmbeddedStatus;
+using db_history::id_string;
 
 bool
 is_embedded(const ged_db_history &history)
@@ -671,19 +672,6 @@ append_printable(struct bu_vls *out, std::string_view text)
 	else
 	    bu_vls_putc(out, byte);
     }
-}
-
-std::string
-id_string(const db_history::Id &id)
-{
-    constexpr char digits[] = "0123456789abcdef";
-    std::string hex;
-    hex.reserve(2 * id.size());
-    for (uint8_t byte : id) {
-	hex += digits[byte >> 4];
-	hex += digits[byte & 0xf];
-    }
-    return hex;
 }
 
 const char *

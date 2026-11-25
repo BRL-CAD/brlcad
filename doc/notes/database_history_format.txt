@@ -189,6 +189,14 @@ preferred child ID. In `boundaries`, the key is the boundary revision
 ID and the value is empty. Import publishes these tables and the
 bootstrap in one transaction after verifying the source archive.
 
+An edit compares its expected revision, model and generation with the
+current head in the write transaction. It records the new artifacts,
+checks the before and after model IDs, updates the directory, and
+advances the generation together with the selected head. Checkout
+reconstructs the target from the nearest stored manifest when needed,
+advances the generation on a selection change, and records the redo
+preference when moving between a parent and child.
+
 Independent identity vectors
 ----------------------------
 
