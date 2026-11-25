@@ -84,61 +84,209 @@ live_manifest(const struct db_i *db, const struct directory *archive, Manifest &
     return true;
 }
 
-} // namespace
-
-static void
-seed_artifact(Db5HistorySeed &seed, const ArtifactKey &key, Bytes &&payload)
+void
+own_artifact(Db5HistoryDraft &draft, const ArtifactKey &key, Bytes &&payload)
 {
-    const auto &stored = seed.owned.emplace(key, std::move(payload)).first->second;
-    seed.pack.artifacts.emplace(key, stored);
+    if (draft.pack.artifacts.count(key))
+	return;
+    const auto &stored = draft.owned.emplace(key, std::move(payload)).first->second;
+    draft.pack.artifacts.emplace(key, stored);
 }
 
 bool
-seed_db5_history(const struct db_i *db, std::string_view label, int64_t time, Db5HistorySeed &result)
+record_revision(Db5HistoryDraft &draft, const Manifest &manifest, Revision &revision)
+{
+    Bytes model, encoded_revision;
+    if (!manifest.count(DB5_GLOBAL_OBJECT_NAME) || !encode_manifest(manifest, model))
+	return false;
+    revision.model = identify(Kind::Manifest, model);
+    if (!encode_revision(revision, encoded_revision))
+	return false;
+    draft.pack.selected_model = revision.model;
+    draft.pack.selected_revision = identify(Kind::Revision, encoded_revision);
+    if (draft.pack.selected_revision == absent)
+	return false;
+    own_artifact(draft, {Kind::Manifest, revision.model}, std::move(model));
+    own_artifact(draft, {Kind::Revision, draft.pack.selected_revision}, std::move(encoded_revision));
+    return true;
+}
+
+struct CollectRevision {
+    Db5HistoryDraft &draft;
+    Manifest &manifest;
+    Revision &revision;
+};
+
+int
+collect_revision_change(const char *name, const struct bu_external *before,
+			const struct bu_external *after, void *data)
+{
+    auto &collect = *static_cast<CollectRevision *>(data);
+    auto &manifest = collect.manifest;
+    const auto expected = manifest.find(name);
+    if (BU_STR_EQUAL(name, archive_name) || static_cast<bool>(before) != (expected != manifest.end()))
+	return -1;
+
+    Change change;
+    if (before) {
+	RecordArtifact object;
+	if (!factor_record({before->ext_buf, before->ext_nbytes}, object) ||
+	    object.name != name || object.object_id != expected->second)
+	    return -1;
+	change.before = object.object_id;
+    }
+    if (after) {
+	RecordArtifact object;
+	if (!factor_record({after->ext_buf, after->ext_nbytes}, object) || object.name != name)
+	    return -1;
+	change.after = object.object_id;
+	auto &draft = collect.draft;
+	own_artifact(draft, {Kind::Object, object.object_id}, std::move(object.object));
+	const ArtifactKey body_key{Kind::Body, object.body_id};
+	if (object.body_id != absent && !draft.pack.artifacts.count(body_key))
+	    own_artifact(draft, body_key, Bytes(object.body.data, object.body.data + object.body.size));
+	manifest.insert_or_assign(name, change.after);
+    } else {
+	manifest.erase(expected);
+    }
+    collect.revision.changes.emplace(name, change);
+    return 0;
+}
+
+bool
+checkout_record(const Pack &pack, const Id &id, Bytes &record)
+{
+    if (id == absent)
+	return true;
+    ByteView descriptor, body;
+    Object object;
+    return read_artifact(pack, {Kind::Object, id}, descriptor) && decode_object(descriptor, object) &&
+	(object.body_id == absent || read_artifact(pack, {Kind::Body, object.body_id}, body)) &&
+	materialize_record(object, body, record);
+}
+
+bool
+checkout_change(const Pack &pack, struct db_edit *edit, const std::string &name, const Id &from, const Id &to)
+{
+    if (from == to)
+	return true;
+    Bytes before, after;
+    if (!checkout_record(pack, from, before) || !checkout_record(pack, to, after))
+	return false;
+    struct bu_external before_ext = BU_EXTERNAL_INIT_ZERO;
+    struct bu_external after_ext = BU_EXTERNAL_INIT_ZERO;
+    before_ext.ext_buf = before.data();
+    before_ext.ext_nbytes = before.size();
+    after_ext.ext_buf = after.data();
+    after_ext.ext_nbytes = after.size();
+    return db_edit_apply(edit, name.c_str(), before.empty() ? nullptr : &before_ext,
+	after.empty() ? nullptr : &after_ext) == 0;
+}
+
+} // namespace
+
+bool
+seed_db5_history(const struct db_i *db, std::string_view label, int64_t time, Db5HistoryDraft &result)
 {
     if (!db || db_version(db) != 5 || !db->i->dbi_dir_built || db_lookup(db, archive_name, LOOKUP_QUIET))
 	return false;
 
-    Db5HistorySeed seed;
+    Db5HistoryDraft seed;
     Manifest manifest;
     struct directory *dp;
     FOR_ALL_DIRECTORY_START(dp, db) {
 	if (!(dp->d_flags & RT_DIR_INMEM) && dp->d_addr == RT_DIR_PHONY_ADDR)
 	    continue;
-	const DatabaseRecord record(db, dp);
+	DatabaseRecord record(db, dp);
 	RecordArtifact artifact;
 	if (!factor_record(record.bytes, artifact) || artifact.name != dp->d_namep ||
 	    !manifest.emplace(artifact.name, artifact.object_id).second)
 	    return false;
-	seed_artifact(seed, {Kind::Object, artifact.object_id}, std::move(artifact.object));
+	own_artifact(seed, {Kind::Object, artifact.object_id}, std::move(artifact.object));
 	const ArtifactKey body_key{Kind::Body, artifact.body_id};
 	if (artifact.body_id == absent || seed.pack.artifacts.count(body_key))
 	    continue;
 	if (record.mapped()) {
 	    if (!seed.backing)
-		seed.backing = std::shared_ptr<struct db_i>(db_clone_dbi(const_cast<struct db_i *>(db), nullptr), db_close);
+		seed.backing = record.retain(db);
 	    seed.pack.artifacts.emplace(body_key, artifact.body);
 	} else {
-	    seed_artifact(seed, body_key, Bytes(artifact.body.data, artifact.body.data + artifact.body.size));
+	    own_artifact(seed, body_key, Bytes(artifact.body.data, artifact.body.data + artifact.body.size));
 	}
     } FOR_ALL_DIRECTORY_END;
 
-    Bytes model, revision;
-    if (!manifest.count(DB5_GLOBAL_OBJECT_NAME) || !encode_manifest(manifest, model))
-	return false;
     Revision root;
-    root.model = identify(Kind::Manifest, model);
     root.label = label;
     root.time = time;
-    if (!encode_revision(root, revision))
+    if (!record_revision(seed, manifest, root))
 	return false;
-    seed.pack.selected_model = root.model;
-    seed.pack.selected_revision = identify(Kind::Revision, revision);
-    if (seed.pack.selected_revision == absent)
-	return false;
-    seed_artifact(seed, {Kind::Manifest, root.model}, std::move(model));
-    seed_artifact(seed, {Kind::Revision, seed.pack.selected_revision}, std::move(revision));
     result = std::move(seed);
+    return true;
+}
+
+AppendStatus
+append_db5_history(const EmbeddedPack &archive, struct db_edit *edit, int64_t time, Db5HistoryDraft &result)
+{
+    const char *label = db_edit_label(edit);
+    if (!label || archive.pack.selected_revision == absent)
+	return AppendStatus::Error;
+
+    Db5HistoryDraft draft;
+    draft.backing = archive.backing;
+    draft.pack = archive.pack;
+    Manifest manifest = archive.model;
+    Revision revision;
+    revision.parent = archive.pack.selected_revision;
+    revision.label = label;
+    revision.time = time;
+    CollectRevision collect{draft, manifest, revision};
+    if (db_edit_visit(edit, collect_revision_change, &collect) != 0)
+	return AppendStatus::Error;
+    if (revision.changes.empty())
+	return AppendStatus::Unchanged;
+    if (!record_revision(draft, manifest, revision))
+	return AppendStatus::Error;
+    result = std::move(draft);
+    return AppendStatus::Ready;
+}
+
+bool
+stage_db5_checkout(const EmbeddedPack &archive, const Id &target, struct db_edit *edit, Db5HistoryDraft &result)
+{
+    Revision current, revision;
+    Manifest model;
+    if (!db_edit_view(edit) || !read_revision(archive.pack, archive.pack.selected_revision, current) ||
+	!read_revision(archive.pack, target, revision) || !manifest_at_revision(archive.pack, target, model) ||
+	!model.count(DB5_GLOBAL_OBJECT_NAME) || model.count(archive_name))
+	return false;
+
+    for (const auto &entry : archive.model) {
+	const auto updated = model.find(entry.first);
+	if (!checkout_change(archive.pack, edit, entry.first, entry.second,
+		updated != model.end() ? updated->second : absent))
+	    return false;
+    }
+    for (const auto &entry : model)
+	if (!archive.model.count(entry.first) && !checkout_change(archive.pack, edit, entry.first, absent, entry.second))
+	    return false;
+
+    Db5HistoryDraft draft;
+    draft.backing = archive.backing;
+    draft.pack = archive.pack;
+    draft.pack.selected_revision = target;
+    draft.pack.selected_model = revision.model;
+    const ArtifactKey model_key{Kind::Manifest, revision.model};
+    if (!draft.pack.artifacts.count(model_key)) {
+	Bytes stored;
+	if (!encode_manifest(model, stored) || identify(Kind::Manifest, stored) != revision.model)
+	    return false;
+	own_artifact(draft, model_key, std::move(stored));
+    }
+    if (target == current.parent)
+	draft.pack.preferences.insert_or_assign(target, archive.pack.selected_revision);
+    else if (archive.pack.selected_revision == revision.parent)
+	draft.pack.preferences.insert_or_assign(revision.parent, target);
+    result = std::move(draft);
     return true;
 }
 

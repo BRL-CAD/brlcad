@@ -43,12 +43,12 @@ struct EmbeddedPack {
     Manifest model;
 };
 
-struct Db5HistorySeed {
-    Db5HistorySeed() = default;
-    Db5HistorySeed(Db5HistorySeed &&) = default;
-    Db5HistorySeed &operator=(Db5HistorySeed &&) = default;
+struct Db5HistoryDraft {
+    Db5HistoryDraft() = default;
+    Db5HistoryDraft(Db5HistoryDraft &&) = default;
+    Db5HistoryDraft &operator=(Db5HistoryDraft &&) = default;
 
-    std::shared_ptr<struct db_i> backing;
+    std::shared_ptr<const uint8_t> backing;
     std::map<ArtifactKey, Bytes> owned;
     Pack pack;
 };
@@ -56,7 +56,23 @@ struct Db5HistorySeed {
 // Seed one revision from a plain DB5 model. Use a retained mapped reader
 // to borrow the large bodies. Other readers copy each unique body once.
 RT_EXPORT bool seed_db5_history(const struct db_i *db, std::string_view label,
-			      int64_t time, Db5HistorySeed &result);
+			      int64_t time, Db5HistoryDraft &result);
+
+enum class AppendStatus {
+    Error,
+    Unchanged,
+    Ready
+};
+
+// Record net DB5 changes against the selected manifest. The returned
+// archive owns any new payloads and retains the prior archive's backing.
+RT_EXPORT AppendStatus append_db5_history(const EmbeddedPack &archive, struct db_edit *edit,
+					int64_t time, Db5HistoryDraft &result);
+
+// Stage a complete model checkout, and prepare the archive to select
+// it. The caller commits the edit and publishes the two together.
+RT_EXPORT bool stage_db5_checkout(const EmbeddedPack &archive, const Id &target,
+				struct db_edit *edit, Db5HistoryDraft &result);
 
 // Return an owned archive for Current and ExternalEdits. Opening never
 // modifies the database. The remaining statuses leave result untouched.

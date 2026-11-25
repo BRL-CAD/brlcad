@@ -71,7 +71,7 @@ verify_embedded(const char *path, struct db_i *initial, const struct db_i *diffe
     CHECK(plain && db_dirbuild(plain.get()) == 0);
     EmbeddedPack archive;
     CHECK(read_db5_history(plain.get(), archive) == EmbeddedStatus::Missing);
-    Db5HistorySeed root, wrong;
+    Db5HistoryDraft root, wrong;
     CHECK(seed_db5_history(plain.get(), "Initial model", 0, root));
     CHECK(seed_db5_history(different, "Different model", 0, wrong));
     Save first(db5_save_begin(initial, error), db5_save_free);
@@ -92,37 +92,37 @@ verify_embedded(const char *path, struct db_i *initial, const struct db_i *diffe
     CHECK(before == record_bytes(plain.get(), "shape.s"));
 
     using Edit = std::unique_ptr<struct db_edit, decltype(&db_edit_abort)>;
+    {
+	Edit no_op(db_edit_begin(first_reader.get(), "No model change"), db_edit_abort);
+	Db5HistoryDraft unchanged;
+	CHECK(no_op && append_db5_history(archive, no_op.get(), 1, unchanged) == AppendStatus::Unchanged);
+
+	Edit attributes(db_edit_begin(first_reader.get(), "Update an attribute"), db_edit_abort);
+	CHECK(attributes && db5_update_attribute("shape.s", "comment", "metadata", db_edit_view(attributes.get())) == 0);
+	Db5HistoryDraft shared;
+	CHECK(append_db5_history(archive, attributes.get(), 1, shared) == AppendStatus::Ready);
+	CHECK(shared.pack.artifacts.size() == archive.pack.artifacts.size() + 3);
+	for (const auto &artifact : shared.owned)
+	    CHECK(artifact.first.first != Kind::Body);
+    }
     Edit edit(db_edit_begin(first_reader.get(), "Change radius"), db_edit_abort);
     const point_t center = VINIT_ZERO;
     CHECK(edit && mk_sph(wdb_dbopen(db_edit_view(edit.get()), RT_WDB_TYPE_DB_DEFAULT), "shape.s", center, 3.0) == 0);
     const auto after = record_bytes(db_edit_view(edit.get()), "shape.s");
     CHECK(!after.empty() && after != before);
-    RecordArtifact object;
-    CHECK(factor_record(after, object));
-    Manifest model = archive.model;
+    Db5HistoryDraft next;
     Revision revision;
-    revision.parent = archive.pack.selected_revision;
-    revision.time = 1;
-    revision.label = "Change radius";
-    revision.changes.emplace("shape.s", Change{model.at("shape.s"), object.object_id});
-    model.at("shape.s") = object.object_id;
-    Bytes model_bytes, revision_bytes;
-    CHECK(encode_manifest(model, model_bytes));
-    revision.model = identify(Kind::Manifest, model_bytes);
-    CHECK(encode_revision(revision, revision_bytes));
-    Pack next = archive.pack;
-    next.selected_model = revision.model;
-    next.selected_revision = identify(Kind::Revision, revision_bytes);
-    next.artifacts.emplace(ArtifactKey{Kind::Body, object.body_id}, object.body);
-    next.artifacts.emplace(ArtifactKey{Kind::Object, object.object_id}, object.object);
-    next.artifacts.emplace(ArtifactKey{Kind::Manifest, revision.model}, model_bytes);
-    next.artifacts.emplace(ArtifactKey{Kind::Revision, next.selected_revision}, revision_bytes);
+    CHECK(append_db5_history(archive, edit.get(), 1, next) == AppendStatus::Ready);
+    CHECK(read_revision(next.pack, next.pack.selected_revision, revision));
+    CHECK(revision.parent == archive.pack.selected_revision && revision.changes.count("shape.s") == 1);
+    Manifest model;
+    CHECK(read_manifest(next.pack, next.pack.selected_model, model));
 
     Database staged(db_edit_commit(edit.get()), db_close);
     CHECK(staged);
     edit.release();
     Save second(db5_save_begin(installed.get(), error), db5_save_free);
-    CHECK(second && save_db5_history(second.get(), staged.get(), next, &replacement, error) == DB5_SAVE_OK);
+    CHECK(second && save_db5_history(second.get(), staged.get(), next.pack, &replacement, error) == DB5_SAVE_OK);
     Database newest(replacement, db_close);
     CHECK(newest && record_bytes(newest.get(), "shape.s") == after);
     CHECK(record_bytes(first_reader.get(), "shape.s") == before);
@@ -130,15 +130,34 @@ verify_embedded(const char *path, struct db_i *initial, const struct db_i *diffe
 
     EmbeddedPack opened;
     CHECK(read_db5_history(newest.get(), opened) == EmbeddedStatus::Current);
-    CHECK(opened.pack.selected_revision == next.selected_revision && opened.model == model);
+    CHECK(opened.pack.selected_revision == next.pack.selected_revision && opened.model == model);
     Revision prior;
     CHECK(read_revision(opened.pack, revision.parent, prior) && prior.label == "Initial model");
+
+    for (const auto &target : {root.pack.selected_revision, next.pack.selected_revision}) {
+	Database reader(db_open(path, DB_OPEN_READONLY), db_close);
+	CHECK(reader && db_dirbuild(reader.get()) == 0);
+	Edit travel(db_edit_begin(reader.get(), "Move selected revision"), db_edit_abort);
+	Db5HistoryDraft checked_out;
+	CHECK(travel && stage_db5_checkout(opened, target, travel.get(), checked_out));
+	Database checkout(db_edit_commit(travel.get()), db_close);
+	CHECK(checkout);
+	travel.release();
+	Save move(db5_save_begin(newest.get(), error), db5_save_free);
+	CHECK(move && save_db5_history(move.get(), checkout.get(), checked_out.pack,
+		&replacement, error) == DB5_SAVE_OK);
+	newest.reset(replacement);
+	CHECK(read_db5_history(newest.get(), opened) == EmbeddedStatus::Current);
+	CHECK(opened.pack.selected_revision == target);
+	CHECK(record_bytes(newest.get(), "shape.s") == (target == root.pack.selected_revision ? before : after));
+    }
+    CHECK(opened.pack.preferences.at(root.pack.selected_revision) == next.pack.selected_revision);
 
     // A legacy edit changes the model independently of the hidden pack.
     CHECK(mk_sph(wdb_dbopen(newest.get(), RT_WDB_TYPE_DB_DEFAULT), "shape.s", center, 4.0) == 0);
     db_sync(newest.get());
     CHECK(read_db5_history(newest.get(), opened) == EmbeddedStatus::ExternalEdits);
-    CHECK(opened.pack.selected_revision == next.selected_revision && opened.model == model);
+    CHECK(opened.pack.selected_revision == next.pack.selected_revision && opened.model == model);
     const auto legacy_record = record_bytes(newest.get(), "shape.s");
     CHECK(legacy_record != after);
 
@@ -161,7 +180,7 @@ verify_embedded(const char *path, struct db_i *initial, const struct db_i *diffe
     db_sync(newest.get());
     CHECK(read_db5_history(newest.get(), opened) == EmbeddedStatus::Unsupported);
     Save unsupported(db5_save_begin(newest.get(), error), db5_save_free);
-    CHECK(unsupported && save_db5_history(unsupported.get(), newest.get(), next, &replacement, error) == DB5_SAVE_ERROR);
+    CHECK(unsupported && save_db5_history(unsupported.get(), newest.get(), next.pack, &replacement, error) == DB5_SAVE_ERROR);
     CHECK(!replacement && record_bytes(newest.get(), archive_name) == newer);
     CHECK(record_bytes(newest.get(), "shape.s") == legacy_record);
 
@@ -172,7 +191,7 @@ verify_embedded(const char *path, struct db_i *initial, const struct db_i *diffe
     db_sync(newest.get());
     CHECK(read_db5_history(newest.get(), opened) == EmbeddedStatus::Collision);
     Save collision(db5_save_begin(newest.get(), error), db5_save_free);
-    CHECK(collision && save_db5_history(collision.get(), newest.get(), next, &replacement, error) == DB5_SAVE_ERROR);
+    CHECK(collision && save_db5_history(collision.get(), newest.get(), next.pack, &replacement, error) == DB5_SAVE_ERROR);
     CHECK(!replacement && record_bytes(newest.get(), archive_name) == newer);
     return 0;
 }

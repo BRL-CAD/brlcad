@@ -216,6 +216,11 @@ verify_vectors()
 	{{Kind::Revision, root_id}, root_bytes},
 	{{Kind::Revision, revision_id}, revision_bytes}
     };
+    Pack sparse = pack;
+    sparse.artifacts.erase({Kind::Manifest, renamed_model_id});
+    CHECK(manifest_at_revision(sparse, revision_id, decoded_model) && decoded_model == renamed_model);
+    sparse.artifacts.erase({Kind::Revision, root_id});
+    CHECK(!manifest_at_revision(sparse, revision_id, decoded_model) && decoded_model == renamed_model);
     return verify_pack(pack, first.body_id);
 }
 

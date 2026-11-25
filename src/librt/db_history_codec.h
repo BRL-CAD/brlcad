@@ -135,6 +135,8 @@ RT_EXPORT bool write_pack(FILE *output, const Pack &pack);
 RT_EXPORT bool write_embedded_pack(FILE *output, const Pack &pack);
 RT_EXPORT bool read_manifest(const Pack &pack, const Id &id, Manifest &result);
 RT_EXPORT bool read_revision(const Pack &pack, const Id &id, Revision &result);
+// Replay bounded parent changes from the nearest stored manifest.
+RT_EXPORT bool manifest_at_revision(const Pack &pack, const Id &id, Manifest &result);
 
 } // namespace db_history
 
