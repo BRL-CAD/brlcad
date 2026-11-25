@@ -184,6 +184,16 @@ verify_embedded(const char *path, struct db_i *initial, const struct db_i *diffe
     CHECK(!replacement && record_bytes(newest.get(), archive_name) == newer);
     CHECK(record_bytes(newest.get(), "shape.s") == legacy_record);
 
+    char export_path[MAXPATHLEN] = {};
+    FILE *target = bu_temp_file(export_path, sizeof(export_path));
+    CHECK(target && fclose(target) == 0 && bu_file_delete(export_path));
+    CHECK(export_db5_snapshot(newest.get(), export_path, nullptr, error) == DB5_SAVE_OK);
+    Database plain_export(db_open(export_path, DB_OPEN_READONLY), db_close);
+    CHECK(plain_export && db_dirbuild(plain_export.get()) == 0);
+    CHECK(!db_lookup(plain_export.get(), archive_name, LOOKUP_QUIET));
+    CHECK(record_bytes(plain_export.get(), "shape.s") == legacy_record);
+    plain_export.reset();
+
     // A user object with the archive wrapper but no signature is a collision.
     newer[signature_offset] ^= 1;
     external = borrow_record(newer);
@@ -193,6 +203,10 @@ verify_embedded(const char *path, struct db_i *initial, const struct db_i *diffe
     Save collision(db5_save_begin(newest.get(), error), db5_save_free);
     CHECK(collision && save_db5_history(collision.get(), newest.get(), next.pack, &replacement, error) == DB5_SAVE_ERROR);
     CHECK(!replacement && record_bytes(newest.get(), archive_name) == newer);
+    CHECK(bu_file_delete(export_path) && export_db5_snapshot(newest.get(), export_path, nullptr, error) == DB5_SAVE_OK);
+    Database collision_export(db_open(export_path, DB_OPEN_READONLY), db_close);
+    CHECK(collision_export && db_dirbuild(collision_export.get()) == 0);
+    CHECK(record_bytes(collision_export.get(), archive_name) == newer);
     return 0;
 }
 

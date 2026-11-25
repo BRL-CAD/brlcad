@@ -24,6 +24,7 @@
 #include <string_view>
 
 #include "bu/app.h"
+#include "bu/file.h"
 #include "ged.h"
 #include "ged/event.h"
 
@@ -334,6 +335,17 @@ test_embedded_history()
     CHECK(run(inspector.get(), status) == BRLCAD_OK && contains_result(inspector.get(), "access read-only"));
     CHECK(run(inspector.get(), show) == BRLCAD_OK);
     CHECK(run(inspector.get(), undo) != BRLCAD_OK && contains_result(inspector.get(), "writable"));
+    const char *missing_path[] = {"db", "history", "export", "--with-history", nullptr};
+    CHECK(run(inspector.get(), missing_path) == GED_HELP);
+    char archive_copy[MAXPATHLEN] = {};
+    file = bu_temp_file(archive_copy, sizeof(archive_copy));
+    CHECK(file && fclose(file) == 0);
+    const char *export_archive[] = {"db", "history", "export", archive_copy, "--with-history", nullptr};
+    CHECK(run(inspector.get(), export_archive) != BRLCAD_OK && contains_result(inspector.get(), "already exists"));
+    CHECK(bu_file_delete(archive_copy));
+    CHECK(run(inspector.get(), export_archive) == BRLCAD_OK);
+    Ged archived(ged_open("db", archive_copy, 1), ged_close);
+    CHECK(archived && selected_id(archived.get()) == fork && run(archived.get(), show) == BRLCAD_OK);
     inspector.reset();
 
     // The legacy writer changes only the live model. Reopening protects
@@ -348,6 +360,15 @@ test_embedded_history()
     CHECK(run(gedp, rename) != BRLCAD_OK && contains_result(gedp, "read-only (external edits)"));
     const char *title[] = {"title", nullptr};
     CHECK(run(gedp, title) == BRLCAD_OK && contains_result(gedp, "legacy title"));
+    char plain_copy[MAXPATHLEN] = {};
+    file = bu_temp_file(plain_copy, sizeof(plain_copy));
+    CHECK(file && fclose(file) == 0 && bu_file_delete(plain_copy));
+    const char *export_plain[] = {"db", "history", "export", plain_copy, nullptr};
+    CHECK(run(gedp, export_plain) == BRLCAD_OK);
+    Ged recovered(ged_open("db", plain_copy, 1), ged_close);
+    CHECK(recovered && run(recovered.get(), status) == BRLCAD_OK && contains_result(recovered.get(), "mode disabled"));
+    CHECK(run(recovered.get(), title) == BRLCAD_OK && contains_result(recovered.get(), "legacy title"));
+    CHECK(run(gedp, status) == BRLCAD_OK && contains_result(gedp, "status external edits"));
     return 0;
 }
 
@@ -378,6 +399,15 @@ test_session_promotion()
     const char *title[] = {"title", nullptr};
     CHECK(run(gedp, first) == BRLCAD_OK && run(gedp, undo) == BRLCAD_OK);
     CHECK(run(gedp, second) == BRLCAD_OK && run(gedp, undo) == BRLCAD_OK);
+    char archive_copy[MAXPATHLEN] = {};
+    file = bu_temp_file(archive_copy, sizeof(archive_copy));
+    CHECK(file && fclose(file) == 0 && bu_file_delete(archive_copy));
+    const char *export_archive[] = {"db", "history", "export", "--with-history", archive_copy, nullptr};
+    CHECK(run(gedp, export_archive) == BRLCAD_OK);
+    CHECK(run(gedp, status) == BRLCAD_OK && contains_result(gedp, "mode session"));
+    const std::unique_ptr<struct ged, decltype(&ged_close)> copied(ged_open("db", archive_copy, 1), ged_close);
+    CHECK(copied && run(copied.get(), redo) == BRLCAD_OK);
+    CHECK(run(copied.get(), title) == BRLCAD_OK && contains_result(copied.get(), "second branch"));
     CHECK(run(gedp, embedded) == BRLCAD_OK && contains_result(gedp, "mode embedded"));
     const auto root = selected_id(gedp);
     CHECK(!root.empty());

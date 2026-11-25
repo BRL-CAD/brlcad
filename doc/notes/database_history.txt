@@ -361,6 +361,12 @@ mapped reader compared its live records with the selected manifest in
 5.6 seconds. A legacy title edit to that copy produced a model mismatch
 on reopen and left its archived revision ID intact.
 
+An end-to-end terminal GED run on a fresh copy of the same model took
+24.9 seconds to enable embedded history. A separate process opened the
+versioned file and saved a title-only edit in 26.3 seconds wall time.
+Another process reopened the result, checked the selected archive
+revision and reported its retained Undo choice in 6.8 seconds.
+
 Implementation starting points in the source tree
 -------------------------------------------------
 

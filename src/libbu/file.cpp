@@ -470,8 +470,8 @@ bu_file_symbolic(const char *path)
 }
 
 
-int
-bu_file_delete(const char *path)
+static int
+file_delete(const char *path, bool force)
 {
     int ret = 0;
     int fd = -1;
@@ -498,6 +498,9 @@ bu_file_delete(const char *path)
 	ret = 1;
     }
 #endif
+
+    if (!force)
+	return ret;
 
     if (!bu_file_exists(path, &fd) || fd == -1) {
 	if (fd > -1)
@@ -583,6 +586,18 @@ bu_file_delete(const char *path)
 #endif
 
     return 1;
+}
+
+int
+bu_file_delete(const char *path)
+{
+    return file_delete(path, true);
+}
+
+int
+bu_file_remove(const char *path)
+{
+    return file_delete(path, false);
 }
 
 int

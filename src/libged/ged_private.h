@@ -236,7 +236,7 @@ int ged_db_history_leave(struct ged *gedp, struct db_edit *edit, int result);
 /* Called by the db command plugin. */
 GED_EXPORT int ged_db_history_command(struct ged *gedp, int argc, const char **argv);
 #define GED_DB_HISTORY_USAGE "status | enable [embedded | session [bytes]] | log [--object name] | show <revision> | " \
-    "checkout <revision> | diff <a> <b> [--object name] | mark <name> [--move]"
+    "checkout <revision> | diff <a> <b> [--object name] | mark <name> [--move] | export <path> [--with-history]"
 
 #ifndef FALSE
 #  define FALSE 0

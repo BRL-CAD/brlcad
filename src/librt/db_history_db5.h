@@ -99,6 +99,11 @@ EmbeddedStatus inspect_db5_history(const struct db_i *db);
 RT_EXPORT enum db5_save_result save_db5_history(struct db5_save *save,
 	const struct db_i *snapshot, const Pack &pack, struct db_i **replacement, struct bu_vls *message);
 
+// Publish a new DB5 path, preserving any existing destination. Without
+// a supplied pack, omit recognized archives and retain user objects.
+RT_EXPORT enum db5_save_result export_db5_snapshot(const struct db_i *snapshot,
+	const char *destination, const Pack *pack, struct bu_vls *message);
+
 } // namespace db_history
 
 #endif /* LIBRT_DB_HISTORY_DB5_H */

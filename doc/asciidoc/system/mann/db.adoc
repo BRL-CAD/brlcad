@@ -76,6 +76,10 @@ __history mark name [--move]__::
 Name the selected embedded revision for later inspection or checkout. Use `--move` to update an existing mark.
 
 
+__history export path [--with-history]__::
+Write the live model to a new DB5 file. A plain export omits the recognized history archive and can recover geometry after an external edit or archive error. `--with-history` copies current embedded history or includes the retained session journal. The destination must be a new path.
+
+
 __match [regular_exp]__::
 Returns a list of all objects in that database that match the list of regular expressions.
 

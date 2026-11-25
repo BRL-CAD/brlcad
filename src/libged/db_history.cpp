@@ -541,6 +541,24 @@ archive_session(const ged_db_history &history, db_history::Db5HistoryDraft &draf
     return draft.pack.selected_model == live_model;
 }
 
+bool
+prepare_archive(struct ged *gedp, const ged_db_history *journal, db_history::Db5HistoryDraft &draft)
+{
+    // Borrow the original bodies from a mapped reader. The publisher
+    // compares the resulting model against the records it writes.
+    Snapshot source(db_open(gedp->dbip->dbi_filename, DB_OPEN_READONLY), db_close);
+    if (!source || db_dirbuild(source.get()) != 0 ||
+	!db_history::seed_db5_history(source.get(), "Initial model", revision_time(), draft)) {
+	bu_vls_printf(gedp->ged_result_str, "Could not build the initial embedded history");
+	return false;
+    }
+    if (journal && !archive_session(*journal, draft)) {
+	bu_vls_printf(gedp->ged_result_str, "Could not preserve the retained session revisions");
+	return false;
+    }
+    return true;
+}
+
 int
 enable_embedded(struct ged *gedp)
 {
@@ -575,19 +593,9 @@ enable_embedded(struct ged *gedp)
 	history = initial.get();
     }
 
-    // Borrow the original bodies from a mapped reader. The publication
-    // checks the resulting model against the writable file before replacing it.
-    Snapshot source(db_open(gedp->dbip->dbi_filename, DB_OPEN_READONLY), db_close);
     db_history::Db5HistoryDraft draft;
-    if (!source || db_dirbuild(source.get()) != 0 ||
-	!db_history::seed_db5_history(source.get(), "Initial model", revision_time(), draft)) {
-	bu_vls_printf(gedp->ged_result_str, "Could not build the initial embedded history");
+    if (!prepare_archive(gedp, initial ? nullptr : history, draft))
 	return BRLCAD_ERROR;
-    }
-    if (!initial && !archive_session(*history, draft)) {
-	bu_vls_printf(gedp->ged_result_str, "Could not preserve the retained session revisions");
-	return BRLCAD_ERROR;
-    }
 
     struct db_i *replacement = nullptr;
     if (!save_snapshot(gedp, *history, history->live, &replacement, &draft.pack))
@@ -955,6 +963,37 @@ mark_archive_revision(struct ged *gedp, ged_db_history &history, const char *nam
 }
 
 int
+export_history(struct ged *gedp, const ged_db_history *history, const char *path, bool include_archive)
+{
+    auto *out = gedp->ged_result_str;
+    const db_history::Pack *pack = nullptr;
+    db_history::Db5HistoryDraft draft;
+    if (include_archive) {
+	if (!history) {
+	    bu_vls_strcat(out, "The open database does not have history to export");
+	    return BRLCAD_ERROR;
+	}
+	if (is_embedded(*history)) {
+	    if (history->embedded_status != EmbeddedStatus::Current) {
+		bu_vls_printf(out, "The archive cannot be included (%s)", embedded_status_text(history->embedded_status));
+		return BRLCAD_ERROR;
+	    }
+	    pack = &history->embedded.pack;
+	} else {
+	    if (!prepare_archive(gedp, history, draft))
+		return BRLCAD_ERROR;
+	    pack = &draft.pack;
+	}
+    }
+    const auto status = db_history::export_db5_snapshot(gedp->dbip, path, pack, out);
+    if (status == DB5_SAVE_OK) {
+	bu_vls_strcat(out, "Exported ");
+	append_printable(out, path);
+    }
+    return status == DB5_SAVE_OK || status == DB5_SAVE_SYNC_FAILED ? BRLCAD_OK : BRLCAD_ERROR;
+}
+
+int
 step_archive_revision(struct ged *gedp, ged_db_history &history, bool undo, const char *argument)
 {
     if (!can_write_history(gedp, history))
@@ -1154,6 +1193,14 @@ ged_db_history_command(struct ged *gedp, int argc, const char **argv)
 	if (argc == 2 && BU_STR_EQUAL(argv[1], "status")) {
 	    print_status(gedp, history);
 	    return BRLCAD_OK;
+	}
+	if ((argc == 3 || argc == 4) && BU_STR_EQUAL(argv[1], "export")) {
+	    if (argc == 3 && !BU_STR_EQUAL(argv[2], "--with-history"))
+		return export_history(gedp, history, argv[2], false);
+	    if (argc == 4 && BU_STR_EQUAL(argv[2], "--with-history") && !BU_STR_EQUAL(argv[3], "--with-history"))
+		return export_history(gedp, history, argv[3], true);
+	    if (argc == 4 && BU_STR_EQUAL(argv[3], "--with-history") && !BU_STR_EQUAL(argv[2], "--with-history"))
+		return export_history(gedp, history, argv[2], true);
 	}
 	if ((argc == 2 || (argc == 3 && BU_STR_EQUAL(argv[2], "embedded"))) && BU_STR_EQUAL(argv[1], "enable")) {
 	    const int enabled = enable_embedded(gedp);

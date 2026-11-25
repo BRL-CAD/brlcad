@@ -102,19 +102,23 @@ public:
     TemporarySnapshot(const TemporarySnapshot &) = delete;
     TemporarySnapshot &operator=(const TemporarySnapshot &) = delete;
 
-    bool finish(const struct stat &original)
+    bool finish(const struct stat *original = nullptr)
     {
 	if (fflush(file) != 0)
 	    return false;
 	const int fd = fileno(file);
-	struct stat staged;
-	if (fstat(fd, &staged) != 0)
-	    return false;
-	if ((staged.st_uid != original.st_uid || staged.st_gid != original.st_gid) &&
-	    fchown(fd, original.st_uid, original.st_gid) != 0)
-	    return false;
-	constexpr mode_t permission_bits = S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID | S_ISVTX;
-	if (bu_fchmod(fd, original.st_mode & permission_bits) != 0 || fsync(fd) != 0)
+	if (original) {
+	    struct stat staged;
+	    if (fstat(fd, &staged) != 0)
+		return false;
+	    if ((staged.st_uid != original->st_uid || staged.st_gid != original->st_gid) &&
+		fchown(fd, original->st_uid, original->st_gid) != 0)
+		return false;
+	    constexpr mode_t permission_bits = S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID | S_ISVTX;
+	    if (bu_fchmod(fd, original->st_mode & permission_bits) != 0)
+		return false;
+	}
+	if (fsync(fd) != 0)
 	    return false;
 
 	FILE *finished = file;
@@ -130,7 +134,7 @@ public:
 bool
 same_state(const struct stat &original, const struct stat &current)
 {
-    return S_ISREG(current.st_mode) && current.st_nlink == 1 &&
+    return S_ISREG(current.st_mode) && current.st_nlink == original.st_nlink &&
 	current.st_dev == original.st_dev && current.st_ino == original.st_ino &&
 	current.st_size == original.st_size && current.st_mode == original.st_mode &&
 	current.st_uid == original.st_uid && current.st_gid == original.st_gid &&
@@ -152,7 +156,8 @@ unchanged(const struct db5_save *save, int descriptor)
 }
 
 bool
-write_snapshot(FILE *file, const struct db_i *snapshot, const db_history::Pack *pack, struct bu_vls *message)
+write_snapshot(FILE *file, const struct db_i *snapshot, const db_history::Pack *pack,
+	      bool omit_archive, struct bu_vls *message)
 {
     db_history::Manifest expected;
     if (pack && !db_history::selected_manifest(*pack, expected)) {
@@ -182,15 +187,20 @@ write_snapshot(FILE *file, const struct db_i *snapshot, const db_history::Pack *
 	    valid = !global && raw.major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY;
 	    global = valid;
 	}
-	bool written = false;
-	if (valid && pack && BU_STR_EQUAL(dp->d_namep, db_history::archive_name)) {
+	bool skip = false;
+	if (valid && (pack || omit_archive) && BU_STR_EQUAL(dp->d_namep, db_history::archive_name)) {
 	    db_history::ByteView body;
-	    written = db_history::archive_payload(raw, body);
-	    if (!written)
+	    skip = db_history::archive_payload(raw, body);
+	    if (!skip && pack) {
 		db5_save_message(message, "A user object occupies the embedded history name");
-	} else if (valid && (!pack || db_history::add_model_record(actual, dp->d_namep,
-		    {record.ext_buf, record.ext_nbytes}))) {
-	    written = bu_fwrite_external(file, &record) == 0;
+		valid = false;
+	    }
+	}
+	bool written = valid;
+	if (valid && !skip) {
+	    written = !pack || db_history::add_model_record(actual, dp->d_namep, {record.ext_buf, record.ext_nbytes});
+	    if (written)
+		written = bu_fwrite_external(file, &record) == 0;
 	}
 	bu_free_external(&record);
 	if (!written)
@@ -203,6 +213,29 @@ write_snapshot(FILE *file, const struct db_i *snapshot, const db_history::Pack *
 	return false;
     }
     return !pack || db_history::write_embedded_pack(file, *pack);
+}
+
+std::string
+snapshot_directory(const char *path)
+{
+    char *parent = bu_path_dirname(path);
+    std::string directory(parent);
+    bu_free(parent, "DB5 save directory");
+    return directory;
+}
+
+using OpenSnapshot = std::unique_ptr<struct db_i, decltype(&db_close)>;
+
+OpenSnapshot
+open_staged_snapshot(const TemporarySnapshot &temporary, const struct db_i *source, bool writable)
+{
+    OpenSnapshot staged(db_open(temporary.path.c_str(), writable ? DB_OPEN_READWRITE : DB_OPEN_READONLY), db_close);
+    if (!staged || (writable && staged->dbi_read_only))
+	return {nullptr, db_close};
+    staged->i->dbi_use_comb_instance_ids = db_uses_instance_specifiers(source);
+    if (db_dirbuild(staged.get()) != 0)
+	staged.reset();
+    return staged;
 }
 
 } // namespace
@@ -229,7 +262,7 @@ db5_save_begin(const struct db_i *base, struct bu_vls *message)
     const int fd = fileno(base->i->dbi_fp);
     std::error_code error;
     save->modified = std::filesystem::last_write_time(save->path, error);
-    if (error || fstat(fd, &save->original) != 0 || !unchanged(save.get(), fd)) {
+    if (error || fstat(fd, &save->original) != 0 || save->original.st_nlink != 1 || !unchanged(save.get(), fd)) {
 	db5_save_message(message, "Could not identify an unchanged single-link DB5 file");
 	return nullptr;
     }
@@ -269,28 +302,19 @@ replace_snapshot(struct db5_save *save, const struct db_i *snapshot, const db_hi
 	}
     }
 
-    char *parent = bu_path_dirname(save->path.c_str());
-    const std::string directory(parent);
-    bu_free(parent, "DB5 save directory");
-
+    const std::string directory = snapshot_directory(save->path.c_str());
     TemporarySnapshot temporary(directory);
     // The write must be complete and the new database usable before
     // replacing the only directory entry for the original file.
-    if (!temporary.file || !write_snapshot(temporary.file, snapshot, pack, message) ||
-	!temporary.finish(save->original)) {
+    if (!temporary.file || !write_snapshot(temporary.file, snapshot, pack, false, message) ||
+	!temporary.finish(&save->original)) {
 	if (message && bu_vls_strlen(message) == 0)
 	    db5_save_message(message, "Could not write and synchronize the DB5 snapshot");
 	return DB5_SAVE_ERROR;
     }
 
-    std::unique_ptr<struct db_i, decltype(&db_close)> staged(
-	db_open(temporary.path.c_str(), DB_OPEN_READWRITE), db_close);
-    if (!staged || staged->dbi_read_only) {
-	db5_save_message(message, "Could not reopen the staged DB5 snapshot");
-	return DB5_SAVE_ERROR;
-    }
-    staged->i->dbi_use_comb_instance_ids = db_uses_instance_specifiers(snapshot);
-    if (db_dirbuild(staged.get()) != 0) {
+    auto staged = open_staged_snapshot(temporary, snapshot, true);
+    if (!staged) {
 	db5_save_message(message, "Could not reopen the staged DB5 snapshot");
 	return DB5_SAVE_ERROR;
     }
@@ -350,6 +374,93 @@ db_history::save_db5_history(struct db5_save *save, const struct db_i *snapshot,
 			    struct db_i **replacement, struct bu_vls *message)
 {
     return replace_snapshot(save, snapshot, &pack, replacement, message);
+}
+
+enum db5_save_result
+db_history::export_db5_snapshot(const struct db_i *snapshot, const char *destination,
+			      const Pack *pack, struct bu_vls *message)
+{
+    db5_save_message(message, "");
+#ifdef DB5_ATOMIC_REPLACEMENT
+    if (!snapshot || db_version(snapshot) != 5 || !destination || !*destination) {
+	db5_save_message(message, "A DB5 model and a new export path are required");
+	return DB5_SAVE_ERROR;
+    }
+    struct stat existing;
+    if (lstat(destination, &existing) == 0) {
+	db5_save_message(message, "The export destination already exists");
+	return DB5_SAVE_ERROR;
+    }
+    const std::string directory = snapshot_directory(destination);
+    FileDescriptor parent_fd(open(directory.c_str(), O_RDONLY));
+    if (parent_fd.fd < 0) {
+	db5_save_message(message, "Could not open the export directory");
+	return DB5_SAVE_ERROR;
+    }
+
+    const int source_fd = snapshot->i->dbi_fp ? fileno(snapshot->i->dbi_fp) : -1;
+    struct stat original;
+    if (source_fd >= 0 && fstat(source_fd, &original) != 0) {
+	db5_save_message(message, "Could not identify the source DB5 file");
+	return DB5_SAVE_ERROR;
+    }
+    std::error_code error;
+    std::filesystem::file_time_type source_modified;
+    bool track_source_path = false;
+    if (source_fd >= 0 && snapshot->dbi_filename) {
+	struct stat visible;
+	if (stat(snapshot->dbi_filename, &visible) == 0 && same_state(original, visible)) {
+	    source_modified = std::filesystem::last_write_time(snapshot->dbi_filename, error);
+	    track_source_path = !error;
+	}
+    }
+    TemporarySnapshot temporary(directory);
+    if (!temporary.file || !write_snapshot(temporary.file, snapshot, pack, true, message) || !temporary.finish()) {
+	if (message && !bu_vls_strlen(message))
+	    db5_save_message(message, "Could not write and synchronize the DB5 export");
+	return DB5_SAVE_ERROR;
+    }
+    if (!open_staged_snapshot(temporary, snapshot, false)) {
+	db5_save_message(message, "Could not reopen the staged DB5 export");
+	return DB5_SAVE_ERROR;
+    }
+    struct stat current;
+    if (source_fd >= 0 && (fstat(source_fd, &current) != 0 || !same_state(original, current))) {
+	db5_save_message(message, "The source database changed during export");
+	return DB5_SAVE_STALE;
+    }
+    if (track_source_path) {
+	const auto modified = std::filesystem::last_write_time(snapshot->dbi_filename, error);
+	if (error || modified != source_modified) {
+	    db5_save_message(message, "The source database changed during export");
+	    return DB5_SAVE_STALE;
+	}
+    }
+
+    // Linking makes the fully written file visible and refuses a raced
+    // destination. The sibling temporary name is removed afterwards.
+    std::filesystem::create_hard_link(temporary.path, destination, error);
+    if (error) {
+	db5_save_message(message, "Could not publish the DB5 export to a new path");
+	return DB5_SAVE_ERROR;
+    }
+    temporary.created = false;
+    if (!bu_file_remove(temporary.path.c_str())) {
+	db5_save_message(message, "DB5 export published but its temporary name could not be removed");
+	return DB5_SAVE_SYNC_FAILED;
+    }
+    if (fsync(parent_fd.fd) != 0) {
+	db5_save_message(message, "DB5 export published but directory synchronization failed");
+	return DB5_SAVE_SYNC_FAILED;
+    }
+    return DB5_SAVE_OK;
+#else
+    (void)snapshot;
+    (void)destination;
+    (void)pack;
+    db5_save_message(message, "Atomic DB5 export is unavailable on this platform");
+    return DB5_SAVE_ERROR;
+#endif
 }
 
 void

@@ -130,6 +130,9 @@ BU_EXPORT extern int bu_file_symbolic(const char *path);
  */
 BU_EXPORT extern int bu_file_delete(const char *path);
 
+/** Delete a filesystem entry without changing permissions. Return true on success. */
+BU_EXPORT extern int bu_file_remove(const char *path);
+
 
 /**
  * Get a listing of files in a directory, optionally matching a pattern.
