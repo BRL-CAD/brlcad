@@ -17,7 +17,7 @@ mvall [-n] [(-f mapping_file) | (old_name new_name)]
 [[description]]
 == DESCRIPTION
 
-Changes the name of __old_name__ to __new_name__ and updates references in combinations and in DSP or VOL primitives that use the object as their sample grid. Use _-f_ to read name pairs from __mapping_file__. Use _-n_ to list the affected objects before editing, including on a read-only database. With database history enabled, *db undo* restores the object name and its references together.
+Changes the name of __old_name__ to __new_name__ and updates references in combinations, EXTRUDE and REVOLVE sketch references, and DSP or VOL sample grid references. Use _-f_ to read name pairs from __mapping_file__. Use _-n_ to list the affected objects before editing, including on a read-only database. With database history enabled, *db undo* restores the object name and its references together.
 
 
 [[examples]]

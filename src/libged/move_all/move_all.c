@@ -46,6 +46,48 @@ move_all_event_batch_end(struct ged *gedp, int *event_batch)
 }
 
 static int
+move_sketch_reference(struct db_i *dbip, struct directory *dp, const char *old_name, const char *new_name)
+{
+    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD ||
+	(dp->d_minor_type != DB5_MINORTYPE_BRLCAD_EXTRUDE && dp->d_minor_type != DB5_MINORTYPE_BRLCAD_REVOLVE))
+	return 0;
+
+    struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
+    if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0) {
+	bu_log("Cannot inspect the sketch reference in %s\n", dp->d_namep);
+	return 0;
+    }
+
+    char **extrude_name = NULL;
+    struct bu_vls *revolve_name = NULL;
+    const char *reference = NULL;
+    if (intern.idb_type == ID_EXTRUDE) {
+	struct rt_extrude_internal *extrude = (struct rt_extrude_internal *)intern.idb_ptr;
+	RT_EXTRUDE_CK_MAGIC(extrude);
+	extrude_name = &extrude->sketch_name;
+	reference = *extrude_name;
+    } else if (intern.idb_type == ID_REVOLVE) {
+	struct rt_revolve_internal *revolve = (struct rt_revolve_internal *)intern.idb_ptr;
+	RT_REVOLVE_CK_MAGIC(revolve);
+	revolve_name = &revolve->sketch_name;
+	reference = bu_vls_cstr(revolve_name);
+    }
+
+    const int matches = reference && BU_STR_EQUAL(reference, old_name);
+    if (!matches || !new_name) {
+	rt_db_free_internal(&intern);
+	return matches;
+    }
+    if (extrude_name) {
+	bu_free(*extrude_name, "old extrude sketch name");
+	*extrude_name = bu_strdup(new_name);
+    } else {
+	bu_vls_strcpy(revolve_name, new_name);
+    }
+    return rt_db_put_internal(dp, dbip, &intern) < 0 ? -1 : 1;
+}
+
+static int
 move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new_name)
 {
     struct directory *dp;
@@ -88,75 +130,30 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
     if (!nflag)
 	event_batch = ged_event_batch_begin(gedp) == GED_EVENT_OK;
 
-    if (db_version(gedp->dbip) == 5) {
-	struct directory *raster;
-	FOR_ALL_DIRECTORY_START(raster, gedp->dbip) {
-	    const int changed = db5_update_raster_reference(gedp->dbip, raster, old_name, nflag ? NULL : new_name);
+    const int sketch = dp && dp->d_major_type == DB5_MAJORTYPE_BRLCAD &&
+	dp->d_minor_type == DB5_MINORTYPE_BRLCAD_SKETCH;
+    const int db5 = db_version(gedp->dbip) == 5;
+    const char *replacement = nflag ? NULL : new_name;
+    if (db5 || sketch) {
+	/* Resolve sketch-dependent primitives while the sketch still has
+	 * its original name. Raster references only require the DB5 body. */
+	struct directory *dependent;
+	FOR_ALL_DIRECTORY_START(dependent, gedp->dbip) {
+	    int changed = db5 ? db5_update_raster_reference(gedp->dbip, dependent, old_name, replacement) : 0;
+	    if (!changed && sketch)
+		changed = move_sketch_reference(gedp->dbip, dependent, old_name, replacement);
 	    if (changed < 0) {
 		move_all_event_batch_end(gedp, &event_batch);
-		bu_vls_printf(gedp->ged_result_str, "Unable to update the grid reference in %s for %s",
-			      raster->d_namep, new_name);
+		bu_vls_printf(gedp->ged_result_str, "Unable to update the reference in %s for %s",
+			      dependent->d_namep, new_name);
 		return BRLCAD_ERROR;
 	    }
 	    if (changed > 0) {
 		if (nflag)
-		    bu_vls_printf(gedp->ged_result_str, "%s ", raster->d_namep);
+		    bu_vls_printf(gedp->ged_result_str, "%s ", dependent->d_namep);
 		++moved;
 	    }
 	} FOR_ALL_DIRECTORY_END;
-    }
-
-    /* if this was a sketch, we need to look for all the extrude
-     * objects that might use it.
-     *
-     * This has to be done here, before we rename the (possible)
-     * sketch object because the extrude will do a rt_db_get on the
-     * sketch when we call rt_db_get_internal on it.
-     */
-    if (dp
-	&& dp->d_major_type == DB5_MAJORTYPE_BRLCAD
-	&& dp->d_minor_type == DB5_MINORTYPE_BRLCAD_SKETCH)
-    {
-	struct directory *dirp;
-
-	FOR_ALL_DIRECTORY_START(dirp, gedp->dbip)
-		struct rt_extrude_internal *extrude;
-
-		if (dirp->d_major_type != DB5_MAJORTYPE_BRLCAD || \
-		    dirp->d_minor_type != DB5_MINORTYPE_BRLCAD_EXTRUDE) {
-		    continue;
-		}
-
-		if (rt_db_get_internal(&intern, dirp, gedp->dbip, (fastf_t *)NULL) < 0) {
-		    bu_log("WARNING: Can't get extrude %s?\n", dirp->d_namep);
-		    continue;
-		}
-
-		extrude = (struct rt_extrude_internal *)intern.idb_ptr;
-		RT_EXTRUDE_CK_MAGIC(extrude);
-
-		if (!BU_STR_EQUAL(extrude->sketch_name, old_name)) {
-		    rt_db_free_internal(&intern);
-		    continue;
-		}
-
-		if (nflag) {
-		    bu_vls_printf(gedp->ged_result_str, "%s ", dirp->d_namep);
-		    ++moved;
-		    rt_db_free_internal(&intern);
-		    continue;
-		}
-
-		bu_free(extrude->sketch_name, "sketch name");
-		extrude->sketch_name = bu_strdup(new_name);
-
-		if (rt_db_put_internal(dirp, gedp->dbip, &intern) < 0) {
-		    bu_log("INTERNAL ERROR: unable to write sketch [%s] during mvall\n", new_name);
-		} else {
-		    moved++;
-		}
-		rt_db_free_internal(&intern);
-	FOR_ALL_DIRECTORY_END;
     }
 
     if (!nflag && dp) {

@@ -915,6 +915,68 @@ test_binary_asset_history(struct ged *gedp, const std::filesystem::path &directo
 }
 
 static int
+test_sketch_rename(struct ged *gedp)
+{
+    const char *make[] = {"make", "sketch-extrusion.s", "extrude", nullptr};
+    const char *extrusion_ref[] = {"get", "sketch-extrusion.s", "S", nullptr};
+    CHECK(run(gedp, make) == BRLCAD_OK && run(gedp, extrusion_ref) == BRLCAD_OK);
+    std::string sketch = bu_vls_cstr(gedp->ged_result_str);
+    CHECK(!sketch.empty());
+    const auto create_revolve = [](struct ged *editor, void *data) {
+	const auto &name = *static_cast<const std::string *>(data);
+	struct rt_revolve_internal *revolve;
+	BU_ALLOC(revolve, struct rt_revolve_internal);
+	revolve->magic = RT_REVOLVE_INTERNAL_MAGIC;
+	VSET(revolve->axis3d, 0.0, 0.0, 1.0);
+	VSET(revolve->r, 1.0, 0.0, 0.0);
+	revolve->ang = M_2PI;
+	bu_vls_init(&revolve->sketch_name);
+	bu_vls_strcpy(&revolve->sketch_name, name.c_str());
+	auto *writer = wdb_dbopen(editor->dbip, RT_WDB_TYPE_DB_DEFAULT);
+	return wdb_export(writer, "sketch-revolve.s", revolve, ID_REVOLVE, 1.0) == 0 ? BRLCAD_OK : BRLCAD_ERROR;
+    };
+    CHECK(ged_history_apply_edit(gedp, "Create revolve", create_revolve, &sketch) == BRLCAD_OK);
+    const auto original = selected_id(gedp);
+    const auto reference_matches = [gedp, &extrusion_ref](const char *name) {
+	if (run(gedp, extrusion_ref) != BRLCAD_OK || !BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), name))
+	    return false;
+	auto *dp = db_lookup(gedp->dbip, "sketch-revolve.s", LOOKUP_QUIET);
+	struct rt_db_internal internal = RT_DB_INTERNAL_INIT_ZERO;
+	if (!dp || rt_db_get_internal(&internal, dp, gedp->dbip, nullptr) < 0)
+	    return false;
+	bool matches = false;
+	if (internal.idb_type == ID_REVOLVE) {
+	    const auto *revolve = static_cast<const struct rt_revolve_internal *>(internal.idb_ptr);
+	    matches = revolve->skt && BU_STR_EQUAL(bu_vls_cstr(&revolve->sketch_name), name);
+	}
+	rt_db_free_internal(&internal);
+	return matches;
+    };
+    CHECK(reference_matches(sketch.c_str()));
+
+    const char *destination = "shared profile.s";
+    const char *preview[] = {"mvall", "-n", sketch.c_str(), destination, nullptr};
+    CHECK(run(gedp, preview) == BRLCAD_OK && contains_result(gedp, "sketch-revolve.s") &&
+	contains_result(gedp, "sketch-extrusion.s") && selected_id(gedp) == original);
+    const char *rename[] = {"mvall", sketch.c_str(), destination, nullptr};
+    int staged_writes = 0;
+    const int callback_status = ged_clbk_set(gedp, "mvall", BU_CLBK_PRE, fail_staged_edit, &staged_writes);
+    CHECK(callback_status == BRLCAD_OK || callback_status == GED_OVERRIDE);
+    CHECK(run(gedp, rename) == BRLCAD_ERROR && staged_writes == 1);
+    CHECK(ged_clbk_set(gedp, "mvall", BU_CLBK_PRE, nullptr, nullptr) == GED_OVERRIDE);
+    CHECK(selected_id(gedp) == original && reference_matches(sketch.c_str()));
+
+    CHECK(run(gedp, rename) == BRLCAD_OK && reference_matches(destination));
+    const auto renamed = selected_id(gedp);
+    CHECK(renamed != original && !db_lookup(gedp->dbip, sketch.c_str(), LOOKUP_QUIET));
+    const char *undo[] = {"db", "undo", nullptr};
+    CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == original && reference_matches(sketch.c_str()));
+    const char *redo[] = {"db", "redo", nullptr};
+    CHECK(run(gedp, redo) == BRLCAD_OK && selected_id(gedp) == renamed && reference_matches(destination));
+    return 0;
+}
+
+static int
 test_opaque_rename(struct ged *gedp)
 {
     const char *original = "opaque.payload";
@@ -1056,6 +1118,7 @@ test_backend_parity(const std::filesystem::path &directory)
 	    CHECK(std::filesystem::create_directory(assets));
 	    CHECK(test_binary_asset_history(gedp, assets) == 0);
 	    CHECK(test_opaque_rename(gedp) == 0);
+	    CHECK(test_sketch_rename(gedp) == 0);
 	}
     }
     return 0;

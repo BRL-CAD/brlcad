@@ -284,6 +284,11 @@ and 12.58 MB fixtures after rename, Undo and Redo. A separate test
 renamed a hidden opaque DB5 record and matched the expected bytes
 with only its name changed.
 
+The same three backends renamed a sketch shared by EXTRUDE and
+REVOLVE. A failed second dependent write discarded the first write.
+Preview showed both dependents, and Undo and Redo restored the
+corresponding names and sketch references together.
+
 On a copy of the M1917 workspace, renaming an added synthetic grid
 and its DSP reference took 1.56 seconds. Undo restored both names
 in 0.55 seconds and the archive verifier passed in 5.05 seconds.
