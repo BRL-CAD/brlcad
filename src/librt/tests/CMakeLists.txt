@@ -82,6 +82,9 @@ if(TEST rt_db5_save)
   set_tests_properties(rt_db5_save PROPERTIES SKIP_RETURN_CODE 77)
 endif()
 
+brlcad_addexec(rt_db_history_codec db_history_codec.cpp "librt;libbu" TEST)
+brlcad_add_test(NAME rt_db_history_codec COMMAND rt_db_history_codec)
+
 brlcad_addexec(rt_binunif binunif.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_binunif COMMAND rt_binunif)
 

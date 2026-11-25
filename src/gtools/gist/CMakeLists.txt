@@ -13,7 +13,6 @@ set(
   RenderHandler.h
   TODO
   pch.h
-  picohash.h
   assets/brlLogo-nobg.png
 )
 

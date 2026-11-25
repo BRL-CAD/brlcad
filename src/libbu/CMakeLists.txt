@@ -89,6 +89,7 @@ set(
   opt.c
   parallel.c
   parallel_cpp11thread.cpp
+  picohash.h
   parse.c
   path.c
   path_normalize.c

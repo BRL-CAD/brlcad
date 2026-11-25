@@ -1,0 +1,185 @@
+BRL-CAD portable database history, format 1.0
+============================================
+
+Draft for implementation and interoperability testing. An archive is a
+self-contained store of immutable artifacts and a selected revision. A
+portable DB5 file carries the archive together with the selected model.
+The model remains a collection of ordinary DB5 application records.
+
+Byte encoding and artifact identity
+-----------------------------------
+
+All integers are unsigned and big-endian unless marked i64, a signed
+twos-complement integer. u8, u16 and u64 occupy one, two and eight
+bytes. A `bytes` field is u64 length followed by exactly that many
+bytes. Counts exclude the count field itself. Names are nonempty byte
+strings without NUL. Order names lexicographically as unsigned bytes,
+with a shorter prefix before any extension. Names are case-sensitive.
+Labels and authors are byte strings without NUL. Writers should use
+UTF-8 for display text. Empty author means unspecified. A time is i64
+seconds since 1970-01-01 00:00:00 UTC.
+
+An ID occupies 32 bytes. Its value is SHA-256 of the following bytes.
+See https://csrc.nist.gov/pubs/fips/180-4/upd1/final for SHA-256.
+
+    "BRLCAD-HISTORY"  u16(1)  u8(tag)  bytes(payload)
+
+The domain string uses ASCII without a terminator. Tags are the ASCII
+bytes `B`, `O`, `M` and `R` defined below. The all-zero ID represents
+absence where permitted and cannot name an artifact. Hash the canonical
+payload before any storage encoding. Database offsets, map or archive
+placement, checkpoint names, preferred children and checkout state do
+not contribute to artifact IDs. Hexadecimal display uses the 64 digits
+in byte order. Reconstruct and verify artifacts without changing IDs
+across archive export, reimport, compaction and workspace storage.
+
+The archive container version, workspace schema version and artifact
+encoding version are independent. A new container or workspace can
+change indexes, compression or delta storage and keep the same artifact
+IDs. A change to canonical artifact bytes requires a new encoding
+version. A reader interprets each retained ID under the original
+encoding. A migration verifies the closure of retained references and
+the selected model before publishing the new store.
+
+Artifacts
+---------
+
+`B` stores the exact serialized DB5 body field without the field's
+length prefix. Refer to a `B` only for a nonempty field. These bytes
+remain opaque regardless of the primitive type or DB5 compression tag.
+
+`O` stores one named DB5 application record split around its body.
+
+    ID body  bytes prefix  bytes suffix
+
+When a nonempty body is present, the prefix ends at the first body
+byte, including the DB5 field length. The suffix starts immediately
+after the body and includes original padding and trailing DB5 magic.
+When there are no body bytes, use a zero body ID, put the complete
+record in the prefix and make the suffix empty. This covers both an
+absent body field and a present zero-length field. Concatenate prefix,
+body and suffix to recover the exact record. Check the reconstruction
+with a bounded DB5 parser. Require that the parser locates the split at
+the encoded boundaries and consumes the entire record. Preserve unknown
+record types, attribute bytes, length widths and padding. A rename and
+an attribute-only edit produce distinct `O` artifacts and share the
+same body ID if the body bytes are identical.
+
+`M` represents a complete model manifest.
+
+    u64 count  count * (bytes name  ID object)
+
+Entries use strictly increasing names. Object IDs are nonzero and each
+reconstructed `O` must have the exact manifest name. The manifest
+contains `_GLOBAL` and all other named application records, including
+hidden records. Exclude a recognized `_BRLCAD_HISTORY` archive. Exclude
+file headers, free space and directory offsets.
+
+`R` describes a revision and its change relative to a single parent.
+
+    ID parent  ID model  i64 time  bytes label  bytes author
+    u64 change_count  change_count * (bytes name  ID before  ID after)
+    u64 rename_count  rename_count * (bytes old_name  bytes new_name)
+
+A zero parent denotes the initial revision, with a full manifest and
+no change or rename entries. Other revisions have at least one change.
+Model is its nonzero `M` ID. Changes use
+strictly increasing names. At least one of before and after is present,
+and their IDs differ. A zero before means creation and a zero after
+means deletion. Apply each before check against the parent manifest
+before applying the after change. Hash the resulting manifest and
+require it to match model. Rename hints are ordered by old name, refer
+to changed names, and pair a deletion with a creation. Each endpoint can
+occur once. Before and after records and their references remain the
+authority for replay. A hint describes an edit and cannot change it.
+
+Archive container
+-----------------
+
+The DB5 record uses the name `_BRLCAD_HISTORY`, the hidden flag, major
+type 9 (binary uniform), minor type 4 (unsigned bytes) and an
+uncompressed body. The body bytes begin with this eight-byte signature.
+
+    42 52 4c 43 41 44 48 00
+
+Recognize an archive only by its name, signature and DB5 wrapper.
+Preserve a user object with a colliding name and refuse to enable
+embedded history until the name is available. A recognized wrapper and
+signature with unreadable metadata are handled as damaged history.
+
+The pack header has the following fixed fields in order.
+
+    u8[8] signature
+    u16 major_version       (1)
+    u16 minor_version       (0)
+    u64 required_features   (0)
+    u64 pack_length         (entire DB5 body)
+    ID selected_revision
+    ID selected_model
+    u64 metadata_length
+    u64 index_count
+
+Metadata follows the header and consumes exactly metadata_length bytes.
+
+    u64 boundary_count  boundary_count * ID revision
+    u64 reference_count  reference_count * (bytes name  ID revision)
+    u64 preference_count  preference_count * (ID parent  ID child)
+
+Boundary entries name revisions with omitted parents. Such revisions
+keep their original parent IDs and have materialized `M` artifacts.
+Order those entries by revision ID, references by byte name and
+preferences by parent ID, with no duplicates. Reference names are
+checkpoint names. A preference selects a retained direct child for
+Redo. All selected, referenced and preferred revisions must be present.
+
+The index follows metadata. Each entry consists of u8 tag, ID artifact,
+u64 offset and u64 length. Sort by tag byte and then by ID bytes, with no
+duplicate keys. Offsets are relative to the signature and point into the
+DB5 body. A 32-byte SHA-256 digest of the header, metadata and index
+follows the index. Artifact payloads follow the digest in index order
+and exactly fill the remainder of the body without gaps. Version 1.0
+stores canonical payload bytes directly. A reader handles unknown
+versions or required features without changing the archive or model.
+
+Verify lengths and monotonic ranges against the enclosing DB5 field
+before allocating tables or reading payloads. Verify the header and
+index digest and hash each referenced payload before trusting it. A
+full verification also walks all retained revision chains and content
+references, rejecting missing artifacts, invalid names and cycles.
+Require a stored `M` for the initial revision, each boundary and the
+selected revision. No retained revision may be more than 64 parent
+links from a stored `M`. Materialize other manifests through the
+recorded changes. Intermediate manifests still have IDs even when
+their payloads are only computed. A pruned revision's missing parent is
+legal only at a declared boundary with a verified full manifest.
+
+The selected revision must name the selected model. Compare the live
+DB5 named records with that model by factoring the records and hashing
+the resulting manifest. A mismatch detects external edits. Keep the
+archive self-contained so all retained revisions remain recoverable
+when live objects change. Save archive and live model in the same DB5
+publication. A history-free export excludes the recognized archive.
+
+Independent identity vectors
+----------------------------
+
+The following record bytes specify a hidden record named `Z`, with
+opaque type 1/f1, body `deadbe` and the nonzero padding byte `a5`.
+The IDs were calculated with Python hashlib and struct from byte
+literals. The vector manifest illustrates framing without representing
+a complete model. A second record changes the name byte to `7a` (`z`).
+
+    record       7624002001f102025a0003deadbea535
+    body ID      0fcc049939475cc8c22d8c24ea6e10edd14efb81af36dc29341a2594af20b79f
+    object ID    94928ae61fc307cbff2da1a8e933dd070e840ebc2674984180eda38fdb97fe1f
+    renamed ID   ee70ece995638d2f78a849516b9201c8b1398050ff1d216f4091c1d0d9835a60
+    model ID     86bc6e1b69433e36bd3780d3b7c9336cc60b3a164b622de3ebb37aa98f801b46
+    renamed M ID ff12b2da19962c7811252abf45c752bc4dba70d48666e4fa445cb48e83b5e6e3
+
+The root revision has the single `Z` object model, time 0, label
+`root`, empty author and no changes. The next revision has the single
+`z` object model, time -2, label `rename` and author `cad`. Its changes
+delete `Z` and create `z`, and its one rename hint pairs those names.
+
+    root ID      fc4b939be9fd903dd9a1cc036fd6091f63b3533830b3b401d1219e581d27a7cf
+    edited ID    2bb83e50068fdc03cf1eddcded5edeb95b1fcd3704848d0f3dd45f7724303ee4

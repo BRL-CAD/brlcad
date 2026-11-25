@@ -54,7 +54,7 @@
 #include <ctime>
 #include <filesystem>
 
-#include "picohash.h"
+#include "../../libbu/picohash.h"
 
 // Necessary C++ headers to get user account name for Windows and Unix
 #ifdef HAVE_WINDOWS_H

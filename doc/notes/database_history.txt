@@ -172,8 +172,9 @@ an explicit conversion-to-DB5 path for users who want history.
 -----------------------------------------
 
 Write a versioned wire-format specification and independent test
-vectors before making the first stable writer. Model immutable object
-versions, a parent-linked revision graph, a selected revision and named
+vectors before making the first stable writer. The version 1 draft is
+in database_history_format.txt. Model immutable object versions, a
+parent-linked revision graph, a selected revision and named
 references. Give an edit a short label, authored time, optional author,
 changed names and before/after object IDs. Encode IDs with a specified
 hash (proposed SHA-256), type tags and unambiguous lengths. Canonicalize
@@ -271,6 +272,17 @@ atomic write batch. Keep LMDB handles and mapped pointers private.
 Load a body or historical manifest on demand. The prototype's eager
 history load, fixed map size and scratch .g per GED command are useful
 reference behaviors to replace before performance evaluation.
+
+Use a fixed bootstrap record in the main LMDB database with a workspace
+signature, schema version, required feature flags and artifact encoding
+version. Read it before interpreting the named databases. Keep this
+schema version separate from the portable archive format and from DB5.
+Report unsupported schemas or required features without changing the
+workspace. A migration builds and verifies a new workspace, including
+its selected model and revision IDs, before switching the document.
+Preserve the source workspace. An archive or workspace storage upgrade
+keeps existing artifact IDs when their canonical encoding is unchanged.
+Test unknown schemas, unsupported features and interrupted migrations.
 
 Use one environment for immutable blobs, revisions, directory entries,
 named references and head metadata. In one durable write transaction,

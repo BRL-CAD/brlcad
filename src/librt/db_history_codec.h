@@ -1,0 +1,116 @@
+/*                 D B _ H I S T O R Y _ C O D E C . H
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+#ifndef LIBRT_DB_HISTORY_CODEC_H
+#define LIBRT_DB_HISTORY_CODEC_H
+
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <map>
+#include <string>
+#include <string_view>
+#include <vector>
+
+#include "rt/db5.h"
+
+namespace db_history {
+
+using Bytes = std::vector<uint8_t>;
+using Id = std::array<uint8_t, 32>;
+constexpr Id absent{};
+
+struct ByteView {
+    const uint8_t *data = nullptr;
+    size_t size = 0;
+
+    ByteView() = default;
+    ByteView(const uint8_t *bytes, size_t length) : data(bytes), size(length) {}
+    ByteView(const Bytes &bytes) : data(bytes.data()), size(bytes.size()) {}
+};
+
+enum class Kind : uint8_t {
+    Body = 'B',
+    Object = 'O',
+    Manifest = 'M',
+    Revision = 'R'
+};
+
+struct RecordArtifact {
+    std::string_view name;
+    ByteView body;
+    Id body_id = absent;
+    Id object_id = absent;
+    Bytes object;
+};
+
+struct Object {
+    Id body_id = absent;
+    ByteView prefix;
+    ByteView suffix;
+};
+
+using Manifest = std::map<std::string, Id, std::less<>>;
+
+struct Change {
+    Id before = absent;
+    Id after = absent;
+};
+
+struct Revision {
+    Id parent = absent;
+    Id model = absent;
+    int64_t time = 0;
+    std::string label;
+    std::string author;
+    std::map<std::string, Change, std::less<>> changes;
+    std::map<std::string, std::string, std::less<>> renames;
+};
+
+// Canonical encodings from doc/notes/database_history_format.txt.
+RT_EXPORT Id identify(Kind kind, ByteView payload);
+
+// Factoring borrows the name and body from the supplied DB5 record.
+RT_EXPORT bool factor_record(ByteView record, RecordArtifact &result);
+// Decoding borrows the prefix and suffix from the object payload.
+RT_EXPORT bool decode_object(ByteView payload, Object &result);
+// The artifact store first verifies the body payload against body_id.
+RT_EXPORT bool materialize_record(const Object &object, ByteView verified_body, Bytes &result);
+
+RT_EXPORT bool encode_manifest(const Manifest &manifest, Bytes &result);
+RT_EXPORT bool decode_manifest(ByteView payload, Manifest &result);
+RT_EXPORT bool encode_revision(const Revision &revision, Bytes &result);
+RT_EXPORT bool decode_revision(ByteView payload, Revision &result);
+
+// Apply a non-root revision. Require the recorded before and model IDs
+// to match. Leave the result untouched on failure.
+RT_EXPORT bool apply_revision(const Revision &revision, const Manifest &parent, Manifest &result);
+
+} // namespace db_history
+
+#endif /* LIBRT_DB_HISTORY_CODEC_H */
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
