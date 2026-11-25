@@ -330,6 +330,7 @@ set(
   cut_private.h
   db_history_codec.h
   db_history_db5.h
+  db_history_file_lock.h
   db_history_retention.h
   db_history_workspace.h
   librt_private.h

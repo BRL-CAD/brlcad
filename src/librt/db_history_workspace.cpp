@@ -37,63 +37,17 @@
 #include "bu/vls.h"
 #include "../libbu/picohash.h"
 #include "db_history_db5.h"
+#include "db_history_file_lock.h"
 #include "db_history_retention.h"
 #include "db_history_workspace.h"
 #include "librt_private.h"
-
-#if defined(HAVE_SYS_FILE_H) && defined(HAVE_UNISTD_H)
-#  include <sys/file.h>
-#  if defined(LOCK_SH) && defined(LOCK_EX) && defined(LOCK_NB) && defined(O_CLOEXEC) && defined(O_NOFOLLOW)
-#    define WORKSPACE_READER_LOCKS 1
-#  endif
-#endif
-
-#ifdef WORKSPACE_READER_LOCKS
-namespace {
-
-class WorkspaceFileLock {
-public:
-    explicit WorkspaceFileLock(const std::filesystem::path &path, bool create = false)
-    {
-	const int access = O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK;
-	fd = create ? ::open(path.string().c_str(), access | O_CREAT, 0660) :
-	    ::open(path.string().c_str(), access);
-	if (fd < 0)
-	    error = errno;
-    }
-    WorkspaceFileLock(const WorkspaceFileLock &) = delete;
-    WorkspaceFileLock &operator=(const WorkspaceFileLock &) = delete;
-    ~WorkspaceFileLock()
-    {
-	if (fd >= 0)
-	    close(fd);
-    }
-    bool acquire(int mode)
-    {
-	if (fd < 0)
-	    return false;
-	int status;
-	do {
-	    status = flock(fd, mode);
-	} while (status && errno == EINTR);
-	error = status ? errno : 0;
-	return status == 0;
-    }
-    int error = 0;
-
-private:
-    int fd = -1;
-};
-
-} // namespace
-#endif
 
 struct db_workspace_view {
     std::unique_ptr<db_history::Workspace> workspace;
     db_history::Manifest model;
     db_history::WorkspaceHead head;
-#ifdef WORKSPACE_READER_LOCKS
-    std::unique_ptr<WorkspaceFileLock> reader_pin;
+#ifdef DB_HISTORY_FILE_LOCKS
+    std::unique_ptr<db_history::FileLock> reader_pin;
 #endif
 };
 
@@ -113,6 +67,13 @@ constexpr uint16_t unpinned_minor = 0;
 constexpr uint16_t schema_minor = 1;
 constexpr uint64_t reader_pin_feature = 1;
 constexpr uint64_t required_features = reader_pin_feature;
+#ifdef DB_HISTORY_FILE_LOCKS
+constexpr uint16_t new_workspace_minor = schema_minor;
+constexpr uint64_t new_workspace_features = required_features;
+#else
+constexpr uint16_t new_workspace_minor = unpinned_minor;
+constexpr uint64_t new_workspace_features = 0;
+#endif
 constexpr uint16_t artifact_encoding = 1;
 constexpr size_t bootstrap_size = signature.size() + 3 * sizeof(uint16_t) + sizeof(uint64_t);
 constexpr size_t head_size = 2 * absent.size() + sizeof(uint64_t);
@@ -162,6 +123,33 @@ report(struct bu_vls *message, const LmdbError &error)
 }
 
 bool
+can_retry_read_only(int error)
+{
+#ifdef DB_HISTORY_WIN32_FILE_LOCKS
+    return error == ERROR_ACCESS_DENIED || error == ERROR_WRITE_PROTECT || error == ERROR_SHARING_VIOLATION;
+#else
+    return error == EACCES || error == EPERM || error == EROFS;
+#endif
+}
+
+bool
+remove_workspace_path(const fs::path &path)
+{
+#ifdef DB_HISTORY_WIN32_FILE_LOCKS
+    const auto attributes = GetFileAttributesW(path.c_str());
+    if (attributes == INVALID_FILE_ATTRIBUTES) {
+	const auto error = GetLastError();
+	return error == ERROR_FILE_NOT_FOUND || error == ERROR_PATH_NOT_FOUND;
+    }
+    return (attributes & FILE_ATTRIBUTE_DIRECTORY) ? RemoveDirectoryW(path.c_str()) != 0 :
+	DeleteFileW(path.c_str()) != 0;
+#else
+    const auto name = path.u8string();
+    return !bu_file_exists(name.c_str(), nullptr) || bu_file_remove(name.c_str());
+#endif
+}
+
+bool
 same_head(const WorkspaceHead &current, const WorkspaceHead &expected)
 {
     return current.generation == expected.generation && current.revision == expected.revision &&
@@ -180,7 +168,7 @@ report_stale(struct bu_vls *message, const WorkspaceHead &expected, const Worksp
     return false;
 }
 
-#ifdef WORKSPACE_READER_LOCKS
+#ifdef DB_HISTORY_FILE_LOCKS
 constexpr char pins_directory_name[] = "history-pins";
 
 bool
@@ -200,7 +188,7 @@ decode_pin_name(std::string_view name, Id &id)
     return id != absent;
 }
 
-std::unique_ptr<WorkspaceFileLock>
+std::unique_ptr<FileLock>
 pin_revision(const fs::path &workspace, const Id &revision)
 {
     const auto directory = workspace / pins_directory_name;
@@ -210,8 +198,8 @@ pin_revision(const fs::path &workspace, const Id &revision)
     // guard on the environment file instead of registering a revision.
     if (!fs::is_directory(fs::symlink_status(directory, error)))
 	return nullptr;
-    auto file = std::make_unique<WorkspaceFileLock>(directory / id_string(revision), true);
-    return file->acquire(LOCK_SH) ? std::move(file) : nullptr;
+    auto file = std::make_unique<FileLock>(directory / id_string(revision), true);
+    return file->acquire(FileLockMode::Shared) ? std::move(file) : nullptr;
 }
 
 bool
@@ -227,12 +215,12 @@ read_pins(const fs::path &workspace, std::set<Id> &pins, struct bu_vls *message)
     fs::directory_iterator entry(directory, error), end;
     for (; !error && entry != end; entry.increment(error)) {
 	Id revision;
-	if (!decode_pin_name(entry->path().filename().string(), revision))
+	if (!decode_pin_name(entry->path().filename().u8string(), revision))
 	    continue;
-	WorkspaceFileLock file(entry->path());
-	if (file.acquire(LOCK_EX | LOCK_NB))
+	FileLock file(entry->path());
+	if (file.acquire(FileLockMode::TryExclusive))
 	    continue;
-	if (file.error != EWOULDBLOCK && file.error != EAGAIN)
+	if (!file.busy())
 	    return report(message, "A workspace reader lock could not be inspected");
 	pins.insert(revision);
     }
@@ -630,7 +618,7 @@ read_model(MDB_txn *txn, const Tables &tables, const Id &selected, Manifest &mod
     return true;
 }
 
-#ifdef WORKSPACE_READER_LOCKS
+#ifdef DB_HISTORY_FILE_LOCKS
 bool
 prepare_retention(MDB_txn *txn, const Tables &tables, const WorkspaceHead &head, const WorkspaceRetention &policy,
 		  const std::set<Id> &pins, Pack &source, RetainedWorkspace &planned, struct bu_vls *message)
@@ -743,8 +731,8 @@ import_pack(MDB_env *env, const Pack &pack, const Manifest &manifest, struct bu_
     std::array<uint8_t, bootstrap_size> format;
     auto *rest = std::copy(signature.begin(), signature.end(), format.data());
     rest = write_integer(rest, schema_major);
-    rest = write_integer(rest, schema_minor);
-    rest = write_integer(rest, required_features);
+    rest = write_integer(rest, new_workspace_minor);
+    rest = write_integer(rest, new_workspace_features);
     write_integer(rest, artifact_encoding);
     put(txn.get(), tables.metadata, bytes(bootstrap_key), bytes(format));
 
@@ -903,7 +891,8 @@ Workspace::create(const char *path, const Pack &pack, struct bu_vls *message)
 	return report(message, "The source archive is missing its selected model");
 
     std::error_code error;
-    if (!fs::create_directory(path, error))
+    const auto directory = fs::u8path(path);
+    if (!fs::create_directory(directory, error))
 	return report(message, error ? error.message().c_str() : "The workspace directory already exists");
 
     // Do not let another local handle open the new environment while
@@ -927,10 +916,9 @@ Workspace::create(const char *path, const Pack &pack, struct bu_vls *message)
     }
     // An interrupted import leaves no committed bootstrap. On a
     // reported failure remove only the files this new store used.
-    const fs::path directory(path);
-    bu_file_remove((directory / "lock.mdb").string().c_str());
-    bu_file_remove((directory / data_file_name).string().c_str());
-    if (!bu_file_remove(path) && message)
+    remove_workspace_path(directory / "lock.mdb");
+    remove_workspace_path(directory / data_file_name);
+    if (!remove_workspace_path(directory) && message)
 	bu_vls_strcat(message, "\nCould not remove the incomplete workspace directory");
     return false;
 }
@@ -946,7 +934,7 @@ Workspace::open(const char *path, struct bu_vls *message, bool writable)
     }
 
     std::error_code error;
-    const auto canonical = fs::canonical(path, error);
+    const auto canonical = fs::canonical(fs::u8path(path), error);
     if (error) {
 	report(message, error.message().c_str());
 	return nullptr;
@@ -974,11 +962,11 @@ Workspace::open(const char *path, struct bu_vls *message, bool writable)
 	// it. Each document handle still enforces its own requested access.
 	Environment env(nullptr, mdb_env_close);
 	bool can_write = true;
-	const auto location = canonical.string();
+    const auto location = canonical.u8string();
 	try {
 	    env = open_environment(location.c_str(), 0);
 	} catch (const LmdbError &failure) {
-	    if (writable || (failure.code != EACCES && failure.code != EPERM && failure.code != EROFS))
+	if (writable || !can_retry_read_only(failure.code))
 		throw;
 	    env = open_environment(location.c_str(), MDB_RDONLY);
 	    can_write = false;
@@ -1016,18 +1004,23 @@ Workspace::open_revision(const char *path, const Id &revision, WorkspaceHead &he
     if (!workspace)
 	return nullptr;
 
-#ifdef WORKSPACE_READER_LOCKS
-    std::unique_ptr<WorkspaceFileLock> guard;
+#ifdef DB_HISTORY_FILE_LOCKS
+    std::unique_ptr<FileLock> guard;
     if (workspace->store->reader_pins) {
-	guard = std::make_unique<WorkspaceFileLock>(workspace->store->path / data_file_name);
-	if (!guard->acquire(LOCK_SH)) {
+	guard = std::make_unique<FileLock>(workspace->store->path / data_file_name);
+	if (!guard->acquire(FileLockMode::Shared)) {
 	    report(message, "The workspace reader could not acquire a retention lock");
 	    return nullptr;
 	}
     }
+#else
+    if (workspace->store->reader_pins) {
+	report(message, "This workspace requires reader locks that are unavailable on this platform");
+	return nullptr;
+    }
 #endif
-    const auto location = workspace->store->path.string();
-    const auto parent = workspace->store->path.parent_path().string();
+    const auto location = workspace->store->path.u8string();
+    const auto parent = workspace->store->path.parent_path().u8string();
     auto state = std::make_unique<db_workspace_view>();
     std::unique_ptr<struct db_i, decltype(&db_close)> db(db_open_inmem(), db_close);
     WorkspaceHead selected;
@@ -1059,7 +1052,7 @@ Workspace::open_revision(const char *path, const Id &revision, WorkspaceHead &he
     if (!built)
 	return nullptr;
 
-#ifdef WORKSPACE_READER_LOCKS
+#ifdef DB_HISTORY_FILE_LOCKS
     if (guard) {
 	state->reader_pin = pin_revision(workspace->store->path, selected.revision);
 	if (!state->reader_pin)
@@ -1282,11 +1275,11 @@ bool
 Workspace::preview_prune(const WorkspaceHead &expected, const WorkspaceRetention &policy,
 			 WorkspacePrunePreview &preview, struct bu_vls *message) const
 {
-#ifdef WORKSPACE_READER_LOCKS
+#ifdef DB_HISTORY_FILE_LOCKS
     if (!store->reader_pins)
 	return report(message, "Copy this workspace to a new directory with db history workspace to enable pruning");
-    WorkspaceFileLock guard(store->path / data_file_name);
-    if (!guard.acquire(LOCK_EX | LOCK_NB))
+    FileLock guard(store->path / data_file_name);
+    if (!guard.acquire(FileLockMode::TryExclusive))
 	return report(message, "The workspace is busy registering readers or has an unregistered reader");
     std::set<Id> pins;
     if (!read_pins(store->path, pins, message))
@@ -1317,7 +1310,7 @@ WorkspaceWriteStatus
 Workspace::prune(const WorkspaceHead &expected, const WorkspaceRetention &policy, std::string_view token,
 		 WorkspacePrunePreview &preview, WorkspaceHead &actual, struct bu_vls *message)
 {
-#ifdef WORKSPACE_READER_LOCKS
+#ifdef DB_HISTORY_FILE_LOCKS
     if (!store->reader_pins) {
 	report(message, "Copy this workspace to a new directory with db history workspace to enable pruning");
 	return WorkspaceWriteStatus::Error;
@@ -1326,8 +1319,8 @@ Workspace::prune(const WorkspaceHead &expected, const WorkspaceRetention &policy
 	report(message, "The workspace is open read-only");
 	return WorkspaceWriteStatus::Error;
     }
-    WorkspaceFileLock guard(store->path / data_file_name);
-    if (!guard.acquire(LOCK_EX | LOCK_NB)) {
+    FileLock guard(store->path / data_file_name);
+    if (!guard.acquire(FileLockMode::TryExclusive)) {
 	report(message, "The workspace is busy registering readers or has an unregistered reader");
 	return WorkspaceWriteStatus::Error;
     }
@@ -1370,8 +1363,7 @@ Workspace::prune(const WorkspaceHead &expected, const WorkspaceRetention &policy
     // Inactive lock files can be removed once their revision expires.
     // The registration guard excludes a concurrent open until then.
     for (const auto &id : applied.expired_revisions) {
-	const auto path = (store->path / pins_directory_name / id_string(id)).string();
-	if (bu_file_exists(path.c_str(), nullptr) && !bu_file_remove(path.c_str()) && message)
+	if (!remove_workspace_path(store->path / pins_directory_name / id_string(id)) && message)
 	    bu_vls_printf(message, "Could not remove the unused reader lock for %s\n", id_string(id).c_str());
     }
     preview = std::move(applied);

@@ -396,8 +396,12 @@ previous and latest attribute values.
 On Linux, terminating the writer during staging preserved the
 original DB5 model and revision. Terminating it after the destination
 inode changed preserved the new model and revision. The former run
-left a sibling staging file, which the test removed. Power-loss and
-other-platform checks remain pending.
+left a sibling staging file, which the test removed. In a separate
+Linux guest with a direct-I/O virtual disk, terminating the VM before
+rename and immediately after rename both recovered the original
+model and history. Terminating it after the directory flush recovered
+the new model and history. Each restart verified the selected archive
+against the live geometry.
 
 The private LMDB store imported 21,185 named records and 34,757
 artifacts from the same model. Verification and import took 7.7
@@ -413,7 +417,16 @@ and checking out its parent took 42 milliseconds at the storage layer.
 A Linux fault-injection run killed the writer immediately before and
 after the LMDB commit. Fresh processes reopened the old and new
 states, respectively. An injected ENOSPC at the commit boundary
-preserved the old state, and a later write succeeded.
+preserved the old state, and a later write succeeded. Abrupt VM
+termination before and after the durable LMDB commit recovered the
+old and new states on restart, with archive verification passing in
+both cases.
+
+The Windows workspace lock code cross-compiled, and a Win32 test
+under Wine exercised shared locks, writes through another handle,
+second-process contention, and release on process termination.
+Native Windows integration and physical-device power-loss checks
+remain pending.
 
 Building a native librt directory from the M1917 workspace took
 231 milliseconds. A standard database record read reconstructed
