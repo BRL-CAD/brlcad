@@ -278,14 +278,15 @@ prune(ged_db_history &history)
 }
 
 bool
-can_write_history(struct ged *gedp, const ged_db_history &history)
+can_write_history(struct ged *gedp, const ged_db_history &history, bool adopt_external = false)
 {
     if (history.live != gedp->dbip) {
 	bu_vls_printf(gedp->ged_result_str, "The open database has changed since history was loaded");
 	return false;
     }
 
-    if (is_embedded(history) && history.embedded_status != EmbeddedStatus::Current) {
+    if (is_embedded(history) && history.embedded_status != EmbeddedStatus::Current &&
+	!(adopt_external && history.embedded_status == EmbeddedStatus::ExternalEdits)) {
 	bu_vls_printf(gedp->ged_result_str, "Embedded history is read-only (%s)",
 		embedded_status_text(history.embedded_status));
 	return false;
@@ -677,6 +678,14 @@ print_change(struct bu_vls *out, bool before, bool after, std::string_view name)
 }
 
 void
+print_archive_changes(struct bu_vls *out, const db_history::Changes &changes, const char *object = nullptr)
+{
+    for (const auto &change : changes)
+	if (!object || change.first == object)
+	    print_change(out, change.second.before != db_history::absent, change.second.after != db_history::absent, change.first);
+}
+
+void
 print_archive_revision(struct bu_vls *out, const db_history::Pack &pack, const db_history::Id &id,
 		       const db_history::Revision &revision)
 {
@@ -909,8 +918,7 @@ show_archive_revision(struct ged *gedp, const db_history::Pack &pack, const db_h
 	bu_vls_strcat(out, " -> ");
 	append_printable(out, rename.second);
     }
-    for (const auto &change : revision.changes)
-	print_change(out, change.second.before != db_history::absent, change.second.after != db_history::absent, change.first);
+    print_archive_changes(out, revision.changes);
     return BRLCAD_OK;
 }
 
@@ -927,16 +935,98 @@ diff_archive_revisions(struct ged *gedp, const db_history::Pack &pack, const cha
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(out, "changes %s %s", id_string(first).c_str(), id_string(second).c_str());
-    for (const auto &entry : before) {
-	if (object && entry.first != object)
-	    continue;
-	const auto updated = after.find(entry.first);
-	if (updated == after.end() || updated->second != entry.second)
-	    print_change(out, true, updated != after.end(), entry.first);
+    print_archive_changes(out, db_history::diff_manifests(before, after), object);
+    return BRLCAD_OK;
+}
+
+bool
+unchanged_history_file(struct ged *gedp, const ged_db_history &history)
+{
+    if (history.live == gedp->dbip && (!history.save || db_history::db5_history_save_is_current(history.save.get())))
+	return true;
+    bu_vls_strcat(gedp->ged_result_str, "The database file changed since opening. Reopen it to check history.");
+    return false;
+}
+
+int
+verify_embedded_history(struct ged *gedp, ged_db_history &history)
+{
+    if (!unchanged_history_file(gedp, history))
+	return BRLCAD_ERROR;
+
+    auto *out = gedp->ged_result_str;
+    db_history::EmbeddedPack checked;
+    const auto state = db_history::read_db5_history(history.live, checked);
+    if (state != EmbeddedStatus::Current && state != EmbeddedStatus::ExternalEdits) {
+	bu_vls_printf(out, "Could not read embedded history (%s)", embedded_status_text(state));
+	return BRLCAD_ERROR;
     }
-    for (const auto &entry : after)
-	if ((!object || entry.first == object) && !before.count(entry.first))
-	    print_change(out, false, true, entry.first);
+    if (!db_history::verify_pack(checked.pack, out)) {
+	history.embedded_status = EmbeddedStatus::Malformed;
+	return BRLCAD_ERROR;
+    }
+    if (!unchanged_history_file(gedp, history))
+	return BRLCAD_ERROR;
+
+    history.embedded_status = state;
+    if (state == EmbeddedStatus::ExternalEdits) {
+	bu_vls_strcat(out, "Archive verified. The live model has external edits.");
+	return BRLCAD_ERROR;
+    }
+    bu_vls_strcat(out, "Archive verified. The live model matches the selected revision.");
+    return BRLCAD_OK;
+}
+
+int
+adopt_external_history(struct ged *gedp, ged_db_history &history, bool apply)
+{
+    if (!unchanged_history_file(gedp, history) || !archive_readable(gedp, history))
+	return BRLCAD_ERROR;
+
+    auto *out = gedp->ged_result_str;
+    if (history.embedded_status == EmbeddedStatus::Current) {
+	bu_vls_strcat(out, "There are no external edits to adopt");
+	return BRLCAD_OK;
+    }
+    if (history.embedded_status != EmbeddedStatus::ExternalEdits) {
+	bu_vls_printf(out, "External edits cannot be adopted (%s)", embedded_status_text(history.embedded_status));
+	return BRLCAD_ERROR;
+    }
+    if (apply && !can_write_history(gedp, history, true))
+	return BRLCAD_ERROR;
+    if (!db_history::verify_pack(history.embedded.pack, out)) {
+	history.embedded_status = EmbeddedStatus::Malformed;
+	return BRLCAD_ERROR;
+    }
+
+    db_history::Db5HistoryDraft draft;
+    db_history::Changes changes;
+    const auto prepared = db_history::stage_db5_adoption(history.live, history.embedded,
+	    revision_time(), changes, apply ? &draft : nullptr);
+    if (prepared == db_history::AppendStatus::Error) {
+	bu_vls_strcat(out, "Could not compare the live DB5 model to the archived revision");
+	return BRLCAD_ERROR;
+    }
+    if (!unchanged_history_file(gedp, history))
+	return BRLCAD_ERROR;
+    if (prepared == db_history::AppendStatus::Unchanged) {
+	bu_vls_strcat(out, "There are no external edits to adopt");
+	return BRLCAD_OK;
+    }
+    if (!apply) {
+	bu_vls_printf(out, "External DB5 edits against %s", id_string(history.embedded.pack.selected_revision).c_str());
+	print_archive_changes(out, changes);
+	return BRLCAD_OK;
+    }
+
+    struct db_i *replacement = nullptr;
+    if (!save_snapshot(gedp, history, history.live, &replacement, &draft.pack))
+	return BRLCAD_ERROR;
+    if (bu_vls_strlen(out))
+	bu_vls_putc(out, '\n');
+    bu_vls_printf(out, "Adopted external DB5 edits in revision %s", id_string(draft.pack.selected_revision).c_str());
+    print_archive_changes(out, changes);
+    install_snapshot(gedp, history, replacement, &draft.pack.selected_revision);
     return BRLCAD_OK;
 }
 
@@ -1193,6 +1283,15 @@ ged_db_history_command(struct ged *gedp, int argc, const char **argv)
 	if (argc == 2 && BU_STR_EQUAL(argv[1], "status")) {
 	    print_status(gedp, history);
 	    return BRLCAD_OK;
+	}
+	const bool verify = argc == 2 && BU_STR_EQUAL(argv[1], "verify");
+	const bool adopt = (argc == 2 || (argc == 3 && BU_STR_EQUAL(argv[2], "--apply"))) && BU_STR_EQUAL(argv[1], "adopt");
+	if (verify || adopt) {
+	    if (!history || !is_embedded(*history)) {
+		bu_vls_strcat(gedp->ged_result_str, "This command requires embedded history");
+		return BRLCAD_ERROR;
+	    }
+	    return verify ? verify_embedded_history(gedp, *history) : adopt_external_history(gedp, *history, argc == 3);
 	}
 	if ((argc == 3 || argc == 4) && BU_STR_EQUAL(argv[1], "export")) {
 	    if (argc == 3 && !BU_STR_EQUAL(argv[2], "--with-history"))

@@ -33,6 +33,8 @@
 
 #include "rt/db5.h"
 
+struct bu_vls;
+
 namespace db_history {
 
 using Bytes = std::vector<uint8_t>;
@@ -76,13 +78,15 @@ struct Change {
     Id after = absent;
 };
 
+using Changes = std::map<std::string, Change, std::less<>>;
+
 struct Revision {
     Id parent = absent;
     Id model = absent;
     int64_t time = 0;
     std::string label;
     std::string author;
-    std::map<std::string, Change, std::less<>> changes;
+    Changes changes;
     std::map<std::string, std::string, std::less<>> renames;
 };
 
@@ -104,6 +108,7 @@ RT_EXPORT bool decode_revision(ByteView payload, Revision &result);
 // Apply a non-root revision. Require the recorded before and model IDs
 // to match. Leave the result untouched on failure.
 RT_EXPORT bool apply_revision(const Revision &revision, const Manifest &parent, Manifest &result);
+RT_EXPORT Changes diff_manifests(const Manifest &before, const Manifest &after);
 
 using ArtifactKey = std::pair<Kind, Id>;
 
@@ -137,6 +142,9 @@ RT_EXPORT bool read_manifest(const Pack &pack, const Id &id, Manifest &result);
 RT_EXPORT bool read_revision(const Pack &pack, const Id &id, Revision &result);
 // Replay bounded parent changes from the nearest stored manifest.
 RT_EXPORT bool manifest_at_revision(const Pack &pack, const Id &id, Manifest &result);
+// Verify payloads, record structure, every retained parent edge and all
+// references. Supply an optional diagnostic for the first failure.
+RT_EXPORT bool verify_pack(const Pack &pack, struct bu_vls *message = nullptr);
 
 } // namespace db_history
 

@@ -376,6 +376,17 @@ db_history::save_db5_history(struct db5_save *save, const struct db_i *snapshot,
     return replace_snapshot(save, snapshot, &pack, replacement, message);
 }
 
+bool
+db_history::db5_history_save_is_current(const struct db5_save *save)
+{
+#ifdef DB5_ATOMIC_REPLACEMENT
+    return save && !save->installed && unchanged(save, -1);
+#else
+    (void)save;
+    return false;
+#endif
+}
+
 enum db5_save_result
 db_history::export_db5_snapshot(const struct db_i *snapshot, const char *destination,
 			      const Pack *pack, struct bu_vls *message)

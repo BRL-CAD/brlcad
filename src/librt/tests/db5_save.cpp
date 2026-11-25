@@ -133,6 +133,39 @@ verify_embedded(const char *path, struct db_i *initial, const struct db_i *diffe
     CHECK(opened.pack.selected_revision == next.pack.selected_revision && opened.model == model);
     Revision prior;
     CHECK(read_revision(opened.pack, revision.parent, prior) && prior.label == "Initial model");
+    CHECK(verify_pack(opened.pack, error));
+    {
+	const auto child = next.pack.selected_revision;
+	const auto parent = root.pack.selected_revision;
+	Pack broken = opened.pack;
+	broken.preferences.emplace(child, parent);
+	CHECK(!verify_pack(broken, error) && std::string_view(bu_vls_addr(error)).find("preferred redo") != std::string_view::npos);
+	broken = opened.pack;
+	broken.artifacts.erase({Kind::Revision, parent});
+	CHECK(!verify_pack(broken, error) && std::string_view(bu_vls_addr(error)).find("missing its recorded parent") != std::string_view::npos);
+	broken.boundaries.insert(child);
+	CHECK(verify_pack(broken, error));
+
+	broken = opened.pack;
+	const auto body = broken.artifacts.lower_bound({Kind::Body, absent});
+	CHECK(body != broken.artifacts.end() && body->first.first == Kind::Body);
+	Bytes damaged(body->second.data, body->second.data + body->second.size);
+	damaged.front() ^= 1;
+	body->second = damaged;
+	CHECK(!verify_pack(broken, error) && std::string_view(bu_vls_addr(error)).find("does not match its ID") != std::string_view::npos);
+	broken.artifacts.erase(body);
+	CHECK(!verify_pack(broken, error) && std::string_view(bu_vls_addr(error)).find("missing its body") != std::string_view::npos);
+
+	Db5HistoryDraft bad_change;
+	bad_change.pack = opened.pack;
+	Manifest before_model;
+	CHECK(read_manifest(opened.pack, prior.model, before_model));
+	Revision wrong_parent = revision;
+	auto &change = wrong_parent.changes.at("shape.s");
+	std::swap(change.before, change.after);
+	CHECK(bad_change.record(before_model, wrong_parent));
+	CHECK(!verify_pack(bad_change.pack, error) && std::string_view(bu_vls_addr(error)).find("recorded parent") != std::string_view::npos);
+    }
 
     for (const auto &target : {root.pack.selected_revision, next.pack.selected_revision}) {
 	Database reader(db_open(path, DB_OPEN_READONLY), db_close);

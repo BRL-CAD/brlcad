@@ -73,6 +73,11 @@ enum class AppendStatus {
 RT_EXPORT AppendStatus append_db5_history(const EmbeddedPack &archive, struct db_edit *edit,
 					int64_t time, Db5HistoryDraft &result);
 
+// Compare the live DB5 model to the selected archived revision. Optionally
+// prepare the corresponding archive commit for explicit adoption.
+RT_EXPORT AppendStatus stage_db5_adoption(const struct db_i *db, const EmbeddedPack &archive,
+				       int64_t time, Changes &changes, Db5HistoryDraft *result = nullptr);
+
 // Stage a complete model checkout, and prepare the archive to select
 // it. The caller commits the edit and publishes the two together.
 RT_EXPORT bool stage_db5_checkout(const EmbeddedPack &archive, const Id &target,
@@ -98,6 +103,7 @@ EmbeddedStatus inspect_db5_history(const struct db_i *db);
 // must remain valid through publication.
 RT_EXPORT enum db5_save_result save_db5_history(struct db5_save *save,
 	const struct db_i *snapshot, const Pack &pack, struct db_i **replacement, struct bu_vls *message);
+RT_EXPORT bool db5_history_save_is_current(const struct db5_save *save);
 
 // Publish a new DB5 path, preserving any existing destination. Without
 // a supplied pack, omit recognized archives and retain user objects.

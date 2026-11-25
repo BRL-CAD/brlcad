@@ -80,6 +80,14 @@ __history export path [--with-history]__::
 Write the live model to a new DB5 file. A plain export omits the recognized history archive and can recover geometry after an external edit or archive error. `--with-history` copies current embedded history or includes the retained session journal. The destination must be a new path.
 
 
+__history verify__::
+Check the embedded archive's bytes, revision graph, and object records, then compare the live DB5 model with the selected revision. A valid archive with external model changes reports a mismatch.
+
+
+__history adopt [--apply]__::
+Preview live DB5 records changed by an external writer. `--apply` records those changes as one revision whose parent is the archived selection. Adoption requires a writable database and an intact archive. Undo restores the archived model that preceded the external edits.
+
+
 __match [regular_exp]__::
 Returns a list of all objects in that database that match the list of regular expressions.
 

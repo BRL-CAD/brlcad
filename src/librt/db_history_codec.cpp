@@ -26,6 +26,7 @@
 #include <utility>
 
 #include "rt/db_io.h"
+#include "bu/vls.h"
 #include "../libbu/picohash.h"
 #include "db_history_codec.h"
 #include "librt_private.h"
@@ -174,6 +175,7 @@ struct SplitRecord {
     ByteView prefix;
     ByteView body;
     ByteView suffix;
+    unsigned char major_type = 0;
 };
 
 bool
@@ -187,6 +189,7 @@ split_record(ByteView record, SplitRecord &split)
 	return false;
 
     split.name = {reinterpret_cast<const char *>(raw.name.ext_buf), raw.name.ext_nbytes - 1};
+    split.major_type = raw.major_type;
     split.prefix = record;
     if (raw.body.ext_nbytes) {
 	split.prefix.size = static_cast<size_t>(raw.body.ext_buf - record.data);
@@ -408,10 +411,9 @@ decode_object(ByteView payload, Object &result)
     return true;
 }
 
-bool
-materialize_record(const Object &object, ByteView verified_body, Bytes &result)
+static bool
+unpack_record(const Object &object, ByteView verified_body, Bytes &record, SplitRecord &split)
 {
-    Bytes record;
     const size_t limit = record.max_size();
     const bool has_body = object.body_id != absent;
     if (has_body != (verified_body.size > 0) || object.prefix.size > limit ||
@@ -423,9 +425,16 @@ materialize_record(const Object &object, ByteView verified_body, Bytes &result)
     append(record, object.prefix);
     append(record, verified_body);
     append(record, object.suffix);
+    return split_record(record, split) && split.prefix.size == object.prefix.size &&
+	split.body.size == verified_body.size && split.suffix.size == object.suffix.size;
+}
+
+bool
+materialize_record(const Object &object, ByteView verified_body, Bytes &result)
+{
+    Bytes record;
     SplitRecord split;
-    if (!split_record(record, split) || split.prefix.size != object.prefix.size ||
-	split.body.size != verified_body.size || split.suffix.size != object.suffix.size)
+    if (!unpack_record(object, verified_body, record, split))
 	return false;
 
     result = std::move(record);
@@ -546,30 +555,58 @@ decode_revision(ByteView payload, Revision &result)
     return true;
 }
 
+static bool
+apply_changes(Manifest &model, const Changes &changes, bool reverse)
+{
+    for (const auto &entry : changes) {
+	const auto current = model.find(entry.first);
+	const Id &existing = current != model.end() ? current->second : absent;
+	const Id &before = reverse ? entry.second.after : entry.second.before;
+	const Id &after = reverse ? entry.second.before : entry.second.after;
+	if (existing != before)
+	    return false;
+	if (after != absent)
+	    model.insert_or_assign(entry.first, after);
+	else if (current != model.end())
+	    model.erase(current);
+    }
+    return true;
+}
+
+static bool
+matches_model(const Manifest &model, const Id &id)
+{
+    Bytes payload;
+    return encode_manifest(model, payload) && identify(Kind::Manifest, payload) == id;
+}
+
 bool
 apply_revision(const Revision &revision, const Manifest &parent, Manifest &result)
 {
     if (revision.parent == absent || !valid_revision(revision))
 	return false;
-
     Manifest model = parent;
-    for (const auto &entry : revision.changes) {
-	const auto current = model.find(entry.first);
-	const Id &before = current != model.end() ? current->second : absent;
-	if (before != entry.second.before)
-	    return false;
-	if (entry.second.after == absent)
-	    model.erase(current);
-	else
-	    model.insert_or_assign(entry.first, entry.second.after);
-    }
-
-    Bytes payload;
-    if (!encode_manifest(model, payload) || identify(Kind::Manifest, payload) != revision.model)
+    if (!apply_changes(model, revision.changes, false) || !matches_model(model, revision.model))
 	return false;
 
     result = std::move(model);
     return true;
+}
+
+Changes
+diff_manifests(const Manifest &before, const Manifest &after)
+{
+    Changes changes;
+    for (const auto &previous : before) {
+	const auto current = after.find(previous.first);
+	const Id &id = current == after.end() ? absent : current->second;
+	if (id != previous.second)
+	    changes.emplace(previous.first, Change{previous.second, id});
+    }
+    for (const auto &current : after)
+	if (!before.count(current.first))
+	    changes.emplace(current.first, Change{absent, current.second});
+    return changes;
 }
 
 bool
@@ -693,6 +730,179 @@ manifest_at_revision(const Pack &pack, const Id &id, Manifest &result)
 	    return false;
     result = std::move(manifest);
     return true;
+}
+
+namespace {
+
+using Names = std::map<Id, std::string>;
+
+bool
+verify_failure(struct bu_vls *message, const char *reason)
+{
+    if (message)
+	bu_vls_strcat(message, reason);
+    return false;
+}
+
+bool
+has_object_name(const Names &names, const Id &id, const std::string &expected)
+{
+    const auto found = names.find(id);
+    return found != names.end() && found->second == expected;
+}
+
+bool
+complete_model(const Manifest &model, const Names &names)
+{
+    if (!model.count(DB5_GLOBAL_OBJECT_NAME) || model.count(archive_name))
+	return false;
+    for (const auto &entry : model)
+	if (!has_object_name(names, entry.second, entry.first))
+	    return false;
+    return true;
+}
+
+struct RevisionNode {
+    Revision revision;
+    std::vector<const RevisionNode *> children;
+    bool snapshot = false;
+};
+
+bool
+verify_tree(const Pack &pack, const RevisionNode &root, size_t &visited, struct bu_vls *message)
+{
+    Manifest model;
+    const auto raw = pack.artifacts.find({Kind::Manifest, root.revision.model});
+    if (raw == pack.artifacts.end() || !decode_manifest(raw->second, model))
+	return verify_failure(message, "The initial revision or retention boundary has no usable snapshot");
+    for (const auto &change : root.revision.changes) {
+	const auto object = model.find(change.first);
+	const auto &found = object == model.end() ? absent : object->second;
+	if (found != change.second.after)
+	    return verify_failure(message, "A retention boundary disagrees with its recorded changes");
+    }
+
+    // There is only one parent per node. A depth-first traversal can
+    // reuse one model and reverse each child's change on the way back.
+    struct Visit {
+	const RevisionNode *node;
+	size_t next_child;
+	size_t distance;
+    };
+    std::vector<Visit> stack{{&root, 0, 0}};
+    ++visited;
+    while (!stack.empty()) {
+	auto &visit = stack.back();
+	if (visit.next_child == visit.node->children.size()) {
+	    if (stack.size() > 1 && !apply_changes(model, visit.node->revision.changes, true))
+		return verify_failure(message, "A recorded change could not be reversed");
+	    stack.pop_back();
+	    continue;
+	}
+	const auto *child = visit.node->children[visit.next_child++];
+	const size_t distance = child->snapshot ? 0 : visit.distance + 1;
+	if (distance > max_manifest_distance)
+	    return verify_failure(message, "A revision exceeds the snapshot interval");
+	if (!apply_changes(model, child->revision.changes, false) ||
+	    !model.count(DB5_GLOBAL_OBJECT_NAME) || !matches_model(model, child->revision.model))
+	    return verify_failure(message, "A revision does not reconstruct from its recorded parent");
+	++visited;
+	stack.push_back({child, 0, distance});
+    }
+    return true;
+}
+
+} // namespace
+
+bool
+verify_pack(const Pack &pack, struct bu_vls *message)
+{
+    if (message)
+	bu_vls_trunc(message, 0);
+    if (!valid_pack_references(pack))
+	return verify_failure(message, "The selected head, a mark or a retained reference is missing");
+
+    Names names;
+    std::map<Id, RevisionNode> revisions;
+    for (const auto &entry : pack.artifacts) {
+	const auto &key = entry.first;
+	const auto &payload = entry.second;
+	if (key.second == absent || !artifact_kind(key.first) || !payload.size || identify(key.first, payload) != key.second)
+	    return verify_failure(message, "An archived artifact does not match its ID");
+	if (key.first == Kind::Object) {
+	    Object object;
+	    if (!decode_object(payload, object))
+		return verify_failure(message, "An archived object descriptor is malformed");
+	    ByteView body;
+	    if (object.body_id != absent) {
+		const auto found = pack.artifacts.find({Kind::Body, object.body_id});
+		if (found == pack.artifacts.end())
+		    return verify_failure(message, "An archived object is missing its body");
+		body = found->second;
+	    }
+	    Bytes record;
+	    SplitRecord split;
+	    if (!unpack_record(object, body, record, split) ||
+		(split.name == DB5_GLOBAL_OBJECT_NAME && split.major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY))
+		return verify_failure(message, "An archived object does not reconstruct a valid DB5 record");
+	    names.emplace(key.second, split.name);
+	}
+	if (key.first == Kind::Revision) {
+	    auto &node = revisions[key.second];
+	    if (!decode_revision(payload, node.revision))
+		return verify_failure(message, "An archived revision is malformed");
+	    node.snapshot = pack.artifacts.count({Kind::Manifest, node.revision.model});
+	}
+    }
+
+    for (const auto &entry : pack.artifacts) {
+	if (entry.first.first != Kind::Manifest)
+	    continue;
+	Manifest model;
+	if (!decode_manifest(entry.second, model) || !complete_model(model, names))
+	    return verify_failure(message, "An archived snapshot is incomplete or has invalid object references");
+    }
+
+    if (revisions.at(pack.selected_revision).revision.model != pack.selected_model)
+	return verify_failure(message, "The selected revision does not name the selected model");
+
+    size_t initial = 0;
+    std::vector<const RevisionNode *> roots;
+    for (auto &entry : revisions) {
+	auto &node = entry.second;
+	const auto &rev = node.revision;
+	for (const auto &change : rev.changes) {
+	    if (change.first == archive_name ||
+		(change.second.before != absent && !has_object_name(names, change.second.before, change.first)) ||
+		(change.second.after != absent && !has_object_name(names, change.second.after, change.first)))
+		return verify_failure(message, "A revision change refers to an invalid object");
+	}
+	const auto parent = revisions.find(rev.parent);
+	const bool boundary = pack.boundaries.count(entry.first);
+	if (boundary) {
+	    if (rev.parent == absent || parent != revisions.end())
+		return verify_failure(message, "A retention boundary has an invalid parent");
+	    roots.push_back(&node);
+	} else if (rev.parent == absent) {
+	    if (++initial > 1)
+		return verify_failure(message, "The archive has more than one initial revision");
+	    roots.push_back(&node);
+	} else {
+	    if (parent == revisions.end())
+		return verify_failure(message, "A revision is missing its recorded parent");
+	    parent->second.children.push_back(&node);
+	}
+    }
+    for (const auto &preference : pack.preferences) {
+	if (revisions.at(preference.second).revision.parent != preference.first)
+	    return verify_failure(message, "A preferred redo revision is not a child of its recorded parent");
+    }
+
+    size_t visited = 0;
+    for (const auto *root : roots)
+	if (!verify_tree(pack, *root, visited, message))
+	    return false;
+    return visited == revisions.size() || verify_failure(message, "The archive has a cycle or an unreachable revision");
 }
 
 static bool

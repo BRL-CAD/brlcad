@@ -334,6 +334,8 @@ test_embedded_history()
     readonly.release();
     CHECK(run(inspector.get(), status) == BRLCAD_OK && contains_result(inspector.get(), "access read-only"));
     CHECK(run(inspector.get(), show) == BRLCAD_OK);
+    const char *verify[] = {"db", "history", "verify", nullptr};
+    CHECK(run(inspector.get(), verify) == BRLCAD_OK && contains_result(inspector.get(), "Archive verified"));
     CHECK(run(inspector.get(), undo) != BRLCAD_OK && contains_result(inspector.get(), "writable"));
     const char *missing_path[] = {"db", "history", "export", "--with-history", nullptr};
     CHECK(run(inspector.get(), missing_path) == GED_HELP);
@@ -352,10 +354,24 @@ test_embedded_history()
     // both the archived graph and the live contents from further edits.
     Db legacy(db_open(path, DB_OPEN_READWRITE), db_close);
     CHECK(legacy && db_dirbuild(legacy.get()) == 0 && db5_update_ident(legacy.get(), "legacy title", 1.0) == 0);
+    auto *old_sketch = db_lookup(legacy.get(), old_name.c_str(), LOOKUP_QUIET);
+    struct bu_external copied = BU_EXTERNAL_INIT_ZERO;
+    CHECK(old_sketch && db_get_external(&copied, old_sketch, legacy.get()) == 0);
+    CHECK(wdb_export_external(wdb_dbopen(legacy.get(), RT_WDB_TYPE_DB_DEFAULT), &copied,
+	"imported.s", old_sketch->d_flags, old_sketch->d_minor_type) == 0);
+    bu_free_external(&copied);
+    auto *old_combination = db_lookup(legacy.get(), "assembly.c", LOOKUP_QUIET);
+    CHECK(old_combination && db_delete(legacy.get(), old_combination) == 0 && db_dirdelete(legacy.get(), old_combination) == 0);
     db_sync(legacy.get());
     legacy.reset();
+    CHECK(run(gedp, verify) != BRLCAD_OK && contains_result(gedp, "changed since opening"));
     CHECK(run(gedp, close) == BRLCAD_OK && run(gedp, open) == BRLCAD_OK);
     CHECK(run(gedp, status) == BRLCAD_OK && contains_result(gedp, "status external edits"));
+    CHECK(run(gedp, verify) != BRLCAD_OK && contains_result(gedp, "Archive verified") && contains_result(gedp, "external edits"));
+    const char *preview[] = {"db", "history", "adopt", nullptr};
+    CHECK(run(gedp, preview) == BRLCAD_OK && contains_result(gedp, "update _GLOBAL") &&
+	contains_result(gedp, "create imported.s") && contains_result(gedp, "delete assembly.c"));
+    CHECK(selected_id(gedp) == fork);
     CHECK(selected_id(gedp) == fork && run(gedp, show) == BRLCAD_OK);
     CHECK(run(gedp, rename) != BRLCAD_OK && contains_result(gedp, "read-only (external edits)"));
     const char *title[] = {"title", nullptr};
@@ -369,6 +385,18 @@ test_embedded_history()
     CHECK(recovered && run(recovered.get(), status) == BRLCAD_OK && contains_result(recovered.get(), "mode disabled"));
     CHECK(run(recovered.get(), title) == BRLCAD_OK && contains_result(recovered.get(), "legacy title"));
     CHECK(run(gedp, status) == BRLCAD_OK && contains_result(gedp, "status external edits"));
+    const char *adopt[] = {"db", "history", "adopt", "--apply", nullptr};
+    CHECK(run(gedp, adopt) == BRLCAD_OK && contains_result(gedp, "Adopted external DB5 edits"));
+    const auto adopted = selected_id(gedp);
+    CHECK(!adopted.empty() && adopted != fork);
+    CHECK(run(gedp, verify) == BRLCAD_OK && contains_result(gedp, "matches"));
+    CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == fork);
+    CHECK(run(gedp, title) == BRLCAD_OK && contains_result(gedp, "embedded branch"));
+    CHECK(db_lookup(gedp->dbip, "assembly.c", LOOKUP_QUIET) && !db_lookup(gedp->dbip, "imported.s", LOOKUP_QUIET));
+    CHECK(run(gedp, close) == BRLCAD_OK && run(gedp, open) == BRLCAD_OK);
+    CHECK(run(gedp, redo) == BRLCAD_OK && selected_id(gedp) == adopted);
+    CHECK(run(gedp, title) == BRLCAD_OK && contains_result(gedp, "legacy title"));
+    CHECK(!db_lookup(gedp->dbip, "assembly.c", LOOKUP_QUIET) && db_lookup(gedp->dbip, "imported.s", LOOKUP_QUIET));
     return 0;
 }
 

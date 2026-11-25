@@ -70,18 +70,27 @@ private:
     struct bu_external external = BU_EXTERNAL_INIT_ZERO;
 };
 
+template <typename Visitor>
 bool
-live_manifest(const struct db_i *db, const struct directory *archive, Manifest &result)
+visit_live_records(const struct db_i *db, const struct directory *archive, Visitor visit)
 {
     struct directory *entry;
     FOR_ALL_DIRECTORY_START(entry, db) {
 	if (entry == archive || (!(entry->d_flags & RT_DIR_INMEM) && entry->d_addr == RT_DIR_PHONY_ADDR))
 	    continue;
-	const DatabaseRecord record(db, entry);
-	if (!add_model_record(result, entry->d_namep, record.bytes))
+	DatabaseRecord record(db, entry);
+	if (!visit(entry->d_namep, record))
 	    return false;
     } FOR_ALL_DIRECTORY_END;
     return true;
+}
+
+bool
+live_manifest(const struct db_i *db, const struct directory *archive, Manifest &result)
+{
+    return visit_live_records(db, archive, [&result](const char *name, const DatabaseRecord &record) {
+	return add_model_record(result, name, record.bytes);
+    });
 }
 
 } // namespace
@@ -116,6 +125,15 @@ Db5HistoryDraft::record(const Manifest &manifest, Revision &revision)
 
 namespace {
 
+void
+store_record(Db5HistoryDraft &draft, RecordArtifact &object)
+{
+    draft.store({Kind::Object, object.object_id}, std::move(object.object));
+    const ArtifactKey body_key{Kind::Body, object.body_id};
+    if (object.body_id != absent && !draft.pack.artifacts.count(body_key))
+	draft.store(body_key, Bytes(object.body.data, object.body.data + object.body.size));
+}
+
 struct CollectRevision {
     Db5HistoryDraft &draft;
     Manifest &manifest;
@@ -145,11 +163,7 @@ collect_revision_change(const char *name, const struct bu_external *before,
 	if (!factor_record({after->ext_buf, after->ext_nbytes}, object) || object.name != name)
 	    return -1;
 	change.after = object.object_id;
-	auto &draft = collect.draft;
-	draft.store({Kind::Object, object.object_id}, std::move(object.object));
-	const ArtifactKey body_key{Kind::Body, object.body_id};
-	if (object.body_id != absent && !draft.pack.artifacts.count(body_key))
-	    draft.store(body_key, Bytes(object.body.data, object.body.data + object.body.size));
+	store_record(collect.draft, object);
 	manifest.insert_or_assign(name, change.after);
     } else {
 	manifest.erase(expected);
@@ -198,19 +212,15 @@ seed_db5_history(const struct db_i *db, std::string_view label, int64_t time, Db
 
     Db5HistoryDraft seed;
     Manifest manifest;
-    struct directory *dp;
-    FOR_ALL_DIRECTORY_START(dp, db) {
-	if (!(dp->d_flags & RT_DIR_INMEM) && dp->d_addr == RT_DIR_PHONY_ADDR)
-	    continue;
-	DatabaseRecord record(db, dp);
+    if (!visit_live_records(db, nullptr, [&](const char *name, DatabaseRecord &record) {
 	RecordArtifact artifact;
-	if (!factor_record(record.bytes, artifact) || artifact.name != dp->d_namep ||
+	if (!factor_record(record.bytes, artifact) || artifact.name != name ||
 	    !manifest.emplace(artifact.name, artifact.object_id).second)
 	    return false;
 	seed.store({Kind::Object, artifact.object_id}, std::move(artifact.object));
 	const ArtifactKey body_key{Kind::Body, artifact.body_id};
 	if (artifact.body_id == absent || seed.pack.artifacts.count(body_key))
-	    continue;
+	    return true;
 	if (record.mapped()) {
 	    if (!seed.backing)
 		seed.backing = record.retain(db);
@@ -218,7 +228,9 @@ seed_db5_history(const struct db_i *db, std::string_view label, int64_t time, Db
 	} else {
 	    seed.store(body_key, Bytes(artifact.body.data, artifact.body.data + artifact.body.size));
 	}
-    } FOR_ALL_DIRECTORY_END;
+	return true;
+    }))
+	return false;
 
     Revision root;
     root.label = label;
@@ -255,6 +267,52 @@ append_db5_history(const EmbeddedPack &archive, struct db_edit *edit, int64_t ti
     return AppendStatus::Ready;
 }
 
+AppendStatus
+stage_db5_adoption(const struct db_i *db, const EmbeddedPack &archive, int64_t time,
+		   Changes &changes, Db5HistoryDraft *result)
+{
+    if (!db || archive.pack.selected_revision == absent)
+	return AppendStatus::Error;
+    const auto *entry = db_lookup(db, archive_name, LOOKUP_QUIET);
+    if (!entry)
+	return AppendStatus::Error;
+
+    Db5HistoryDraft draft;
+    if (result) {
+	draft.backing = archive.backing;
+	draft.pack = archive.pack;
+    }
+    Manifest model;
+    if (!visit_live_records(db, entry, [&](const char *name, const DatabaseRecord &record) {
+	RecordArtifact object;
+	if (!factor_record(record.bytes, object) || object.name != name ||
+	    !model.emplace(name, object.object_id).second)
+	    return false;
+	const auto before = archive.model.find(name);
+	if (result && (before == archive.model.end() || before->second != object.object_id))
+	    store_record(draft, object);
+	return true;
+    }) || !model.count(DB5_GLOBAL_OBJECT_NAME))
+	return AppendStatus::Error;
+
+    Revision revision;
+    revision.changes = diff_manifests(archive.model, model);
+    if (revision.changes.empty()) {
+	changes.clear();
+	return AppendStatus::Unchanged;
+    }
+    if (result) {
+	revision.parent = archive.pack.selected_revision;
+	revision.time = time;
+	revision.label = "Adopt external DB5 edits";
+	if (!draft.record(model, revision))
+	    return AppendStatus::Error;
+	*result = std::move(draft);
+    }
+    changes = std::move(revision.changes);
+    return AppendStatus::Ready;
+}
+
 bool
 stage_db5_checkout(const EmbeddedPack &archive, const Id &target, struct db_edit *edit, Db5HistoryDraft &result)
 {
@@ -265,14 +323,8 @@ stage_db5_checkout(const EmbeddedPack &archive, const Id &target, struct db_edit
 	!model.count(DB5_GLOBAL_OBJECT_NAME) || model.count(archive_name))
 	return false;
 
-    for (const auto &entry : archive.model) {
-	const auto updated = model.find(entry.first);
-	if (!checkout_change(archive.pack, edit, entry.first, entry.second,
-		updated != model.end() ? updated->second : absent))
-	    return false;
-    }
-    for (const auto &entry : model)
-	if (!archive.model.count(entry.first) && !checkout_change(archive.pack, edit, entry.first, absent, entry.second))
+    for (const auto &entry : diff_manifests(archive.model, model))
+	if (!checkout_change(archive.pack, edit, entry.first, entry.second.before, entry.second.after))
 	    return false;
 
     Db5HistoryDraft draft;
