@@ -227,6 +227,14 @@ longer to encode. All three recovered identical bytes. These results
 cover one synthetic surface mesh. Measure BREP export stability and
 representative grid edits before specifying a required codec.
 
+A second experiment translated the largest M1917 BREP by 10, 20 and
+30 model units. Both serialized bodies were 41.54 MB. The original
+body compressed to 15.36 MB with zlib. The Fossil reverse delta took
+24.02 MB, or 13.46 MB after compression. It encoded in 12.5 seconds
+and recovered the original body byte for byte in 0.28 seconds. The
+modest storage savings and encode latency support whole-body storage
+for this edit trace.
+
 Encode the portable archive as a hidden unsigned-byte binunif. Reserve
 _BRLCAD_HISTORY only after checking both name and format signature.
 Report a collision on enable and preserve the user's object. Exclude
@@ -494,6 +502,16 @@ took 32.7 seconds with direct DB5 record copies, compared with 84.4
 seconds when all objects were reserialized. Workspace verification
 passed. One Undo removed the import in 0.4 seconds, and Redo restored
 the object counts in 0.6 seconds.
+
+On that M1917 workspace, 20 warm-cache terminal trials in fresh
+processes gave title edits a median of 0.615 seconds and a 95th
+percentile of 0.640 seconds. Undo measured 0.605 and 0.627 seconds,
+respectively.
+
+The same combination, group, removal, rename and metadata edits ran
+on ordinary DB5, session DB5, embedded DB5 and LMDB. All final named
+model records matched byte for byte, and a ray hit the geometry
+through the same top-level combination in each mode.
 
 A subset keep from an embedded DB5 file exported the selected
 combination and its referenced primitive. The source revision and
