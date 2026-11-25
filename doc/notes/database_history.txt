@@ -580,6 +580,12 @@ process committed a new primitive took 20.7 seconds and wrote a
 title was selected in the export, the competing revision was retained,
 and Undo returned to the original base revision.
 
+The DB4 conversion check used dbupgrade on the repository fixture.
+The converted DB5 kept the title, named objects and sampled ARB
+geometry. After enabling history, Undo restored the title and full
+archive verification passed. The DB4 source digest matched before
+and after conversion.
+
 Implementation starting points in the source tree
 -------------------------------------------------
 

@@ -50,6 +50,8 @@ Start history for the open writable DB5 file on a platform that supports atomic 
 
 __history enable [embedded]__::
 Persist history in the open writable DB5 file. The file stores its selected model and history together, and reopening loads the saved history automatically. A session journal, if present, is promoted with its retained branches and redo choices. MGED records accepted edits, and QGED provides Undo, Redo, and revision inspection in the Edit menu.
++
+For a DB4 file, run `dbupgrade legacy.g new.g` from a terminal. Open `new.g` and enable history there. The conversion keeps the original file available.
 
 
 __history status [--json]__::

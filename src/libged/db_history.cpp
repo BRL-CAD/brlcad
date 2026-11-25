@@ -340,6 +340,19 @@ prune(ged_db_history &history)
 }
 
 bool
+require_db5_history(struct ged *gedp)
+{
+    const int version = db_version(gedp->dbip);
+    if (version == 5)
+	return true;
+
+    bu_vls_strcat(gedp->ged_result_str, "Database history requires a DB5 model");
+    if (version == 4)
+	bu_vls_strcat(gedp->ged_result_str, "\nRun dbupgrade <input.g> <new.g> and open the new file");
+    return false;
+}
+
+bool
 has_pending_conflict(const ged_db_history &history, struct bu_vls *out)
 {
     if (!history.conflict)
@@ -602,7 +615,9 @@ enable_session(struct ged *gedp, size_t limit)
 	bu_vls_printf(gedp->ged_result_str, "This database already carries embedded history");
 	return BRLCAD_ERROR;
     }
-    if (!gedp->dbip || gedp->dbip->dbi_read_only) {
+    if (!require_db5_history(gedp))
+	return BRLCAD_ERROR;
+    if (gedp->dbip->dbi_read_only) {
 	bu_vls_printf(gedp->ged_result_str, "Session history requires a writable DB5 file");
 	return BRLCAD_ERROR;
     }
@@ -746,7 +761,9 @@ enable_embedded(struct ged *gedp)
 	bu_vls_printf(gedp->ged_result_str, "This database already carries %s", embedded_status_text(history->embedded_status));
 	return BRLCAD_ERROR;
     }
-    if (!gedp->dbip || db_version(gedp->dbip) != 5 || (!history && gedp->dbip->dbi_read_only)) {
+    if (!require_db5_history(gedp))
+	return BRLCAD_ERROR;
+    if (!history && gedp->dbip->dbi_read_only) {
 	bu_vls_printf(gedp->ged_result_str, "Embedded history requires a writable DB5 file");
 	return BRLCAD_ERROR;
     }
@@ -788,10 +805,8 @@ int
 create_workspace(struct ged *gedp, const char *path)
 {
     auto *out = gedp->ged_result_str;
-    if (!gedp->dbip || db_version(gedp->dbip) != 5) {
-	bu_vls_strcat(out, "A DB5 database is required to create a workspace");
+    if (!require_db5_history(gedp))
 	return BRLCAD_ERROR;
-    }
     auto *history = gedp->i->db_history;
     if (history && history->workspace && bu_file_same(path, gedp->dbip->dbi_filename))
 	return BRLCAD_OK;
@@ -1798,6 +1813,8 @@ mark_archive_revision(struct ged *gedp, ged_db_history &history, const char *nam
 int
 export_history(struct ged *gedp, ged_db_history *history, const char *path, bool include_archive)
 {
+    if (!require_db5_history(gedp))
+	return BRLCAD_ERROR;
     auto *out = gedp->ged_result_str;
     const db_history::Pack *pack = nullptr;
     db_history::Db5HistoryDraft draft;
