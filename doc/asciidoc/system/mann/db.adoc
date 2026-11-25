@@ -48,12 +48,16 @@ __history enable session [bytes]__::
 Start history for the open writable DB5 file. This mode currently requires a headless GED context such as `gsh` on a platform that supports atomic replacement. It supports a limited set of editing commands, including `make`, `adjust`, `mvall`, and `title`. Edits save to the file as they complete, and closing the database discards the undo journal. The default journal limit is 64 MiB. When older revisions reach the limit, history may prune them. An individual edit beyond the limit fails before saving.
 
 
+__history enable [embedded]__::
+Persist history in the open writable DB5 file. The file stores its selected model and history together, and reopening loads the saved history automatically. A session journal, if present, is promoted with its retained branches and redo choices. Embedded editing currently uses the same headless GED context and commands as session history.
+
+
 __history status__::
-Report whether history is enabled. For session history, report the selected and oldest retained revisions, journal usage, and available undo and redo operations.
+Report the active history mode and available undo and redo operations. Session history reports the oldest retained revision and journal usage. Embedded history reports the selected revision, archive status, and access state. If an external editor changes the live model independently of the archive, GED permits inspection and protects the file from further edits.
 
 
 __history log [--object name]__::
-List retained revisions in reverse creation order, including alternate branches. The optional name filter lists only revisions that changed that exact object name.
+List retained revisions, including alternate branches. The optional name filter lists only revisions that changed that exact object name. An unfiltered embedded log also lists saved marks.
 
 
 __history show revision__::
@@ -61,7 +65,15 @@ List the records created, deleted, or updated by a single revision. A rename app
 
 
 __history checkout revision__::
-Restore the database to any retained session revision. Use `db history log` to find its ID.
+Restore the database to any retained revision. Use `db history log` to find its ID. In embedded history, a unique ID prefix or a mark name can select a revision.
+
+
+__history diff first second [--object name]__::
+List the records created, deleted, or changed between two embedded revisions. Use `--object` to limit the result to an exact object name.
+
+
+__history mark name [--move]__::
+Name the selected embedded revision for later inspection or checkout. Use `--move` to update an existing mark.
 
 
 __match [regular_exp]__::

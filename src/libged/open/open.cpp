@@ -133,6 +133,7 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Set up the new database info in gedp */
     gedp->dbip = new_dbip;
+    ged_db_history_open(gedp);
     ged_event_database_set_private(gedp, gedp->dbip);
 
     // LoD context creation (DbiState initialization can use info

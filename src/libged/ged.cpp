@@ -767,6 +767,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 
     gedp = ged_create();
     gedp->dbip = wdbp->dbip;
+    ged_db_history_open(gedp);
     ged_event_database_set_private(gedp, gedp->dbip);
 
     db_update_nref(gedp->dbip);

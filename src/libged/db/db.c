@@ -354,7 +354,7 @@ _db_cmd_forward(void *bs, const char *target, int argc, const char **argv)
 DB_FORWARD_COMMANDS(DB_DECLARE_FORWARD)
 
 #define DB_HISTORY_COMMANDS(X) \
-    X(history, "status | enable session [bytes] | log [--object name] | show <revision> | checkout <revision>", "Manage database history.") \
+    X(history, GED_DB_HISTORY_USAGE, "Manage database history.") \
     X(undo, "", "Restore the parent revision.") \
     X(redo, "[revision]", "Restore a child revision.")
 

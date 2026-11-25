@@ -35,13 +35,19 @@
 } while (0)
 
 static struct ged *
-open_inmem(struct db_i *dbip)
+open_handle(const char *type, struct db_i *dbip)
 {
     struct bu_vls address = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&address, "%p", static_cast<void *>(dbip));
-    struct ged *gedp = ged_open("inmem", bu_vls_cstr(&address), 0);
+    struct ged *gedp = ged_open(type, bu_vls_cstr(&address), 0);
     bu_vls_free(&address);
     return gedp;
+}
+
+static struct ged *
+open_inmem(struct db_i *dbip)
+{
+    return open_handle("inmem", dbip);
 }
 
 template <size_t argc>
@@ -222,6 +228,178 @@ test_disk_history()
     return 0;
 }
 
+static std::string
+selected_id(struct ged *gedp)
+{
+    const char *status[] = {"db", "history", "status", nullptr};
+    if (run(gedp, status) != BRLCAD_OK)
+	return {};
+    const std::string_view output(bu_vls_addr(gedp->ged_result_str));
+    const std::string_view field("\nrevision ");
+    const auto offset = output.find(field);
+    if (offset == std::string_view::npos)
+	return {};
+    const auto id = output.substr(offset + field.size());
+    return std::string(id.substr(0, id.find('\n')));
+}
+
+static int
+test_embedded_history()
+{
+    char path[MAXPATHLEN] = {};
+    FILE *file = bu_temp_file(path, sizeof(path));
+    CHECK(file && fclose(file) == 0);
+    using Db = std::unique_ptr<struct db_i, decltype(&db_close)>;
+    using Ged = std::unique_ptr<struct ged, decltype(&ged_close)>;
+    Db initial(db_create(path, 5), db_close);
+    CHECK(initial);
+    initial.reset();
+    Ged owner(ged_open("db", path, 1), ged_close);
+    auto *gedp = owner.get();
+    CHECK(gedp);
+
+    const char *make[] = {"make", "extrusion.s", "extrude", nullptr};
+    const char *reference[] = {"get", "extrusion.s", "S", nullptr};
+    CHECK(run(gedp, make) == BRLCAD_OK && run(gedp, reference) == BRLCAD_OK);
+    const std::string old_name = bu_vls_addr(gedp->ged_result_str);
+    const char *group[] = {"g", "assembly.c", old_name.c_str(), "extrusion.s", nullptr};
+    const char *status[] = {"db", "history", "status", nullptr};
+    const char *enable[] = {"db", "history", "enable", nullptr};
+    const char *rename[] = {"db", "mvall", old_name.c_str(), "outline.s", nullptr};
+    const char *undo[] = {"db", "undo", nullptr};
+    const char *redo[] = {"db", "redo", nullptr};
+    CHECK(run(gedp, group) == BRLCAD_OK);
+    const int enabled = run(gedp, enable);
+    if (enabled != BRLCAD_OK && contains_result(gedp, "Atomic DB5 replacement is unavailable"))
+	return 0;
+    CHECK(enabled == BRLCAD_OK && contains_result(gedp, "mode embedded") && contains_result(gedp, "status current"));
+    const std::string root = selected_id(gedp);
+    CHECK(!root.empty());
+    CHECK(run(gedp, enable) == BRLCAD_OK && selected_id(gedp) == root);
+
+    int commits = 0;
+    int failed_writes = 0;
+    CHECK(ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE, count_commit, &commits));
+    CHECK(ged_clbk_set(gedp, "mvall", BU_CLBK_PRE, fail_staged_edit, &failed_writes) == BRLCAD_OK);
+    CHECK(run(gedp, rename) != BRLCAD_OK && failed_writes == 1 && commits == 0);
+    CHECK(selected_id(gedp) == root);
+    CHECK(ged_clbk_set(gedp, "mvall", BU_CLBK_PRE, nullptr, nullptr) == GED_OVERRIDE);
+    CHECK(run(gedp, rename) == BRLCAD_OK && commits == 1);
+    CHECK(run(gedp, reference) == BRLCAD_OK && contains_result(gedp, "outline.s"));
+    const std::string head = selected_id(gedp);
+    CHECK(!head.empty() && head != root);
+    const std::string prefix = head.substr(0, head.size() / 2);
+    const char *show[] = {"db", "history", "show", prefix.c_str(), nullptr};
+    CHECK(run(gedp, show) == BRLCAD_OK && contains_result(gedp, "create outline.s"));
+    CHECK(contains_result(gedp, "update assembly.c") && contains_result(gedp, "update extrusion.s"));
+    const char *mark[] = {"db", "history", "mark", "rename-point", nullptr};
+    CHECK(run(gedp, mark) == BRLCAD_OK && selected_id(gedp) == head);
+    CHECK(run(gedp, mark) != BRLCAD_OK && contains_result(gedp, "already exists"));
+
+    owner.reset(ged_open("db", path, 1));
+    gedp = owner.get();
+    CHECK(gedp && selected_id(gedp) == head);
+    const char *diff[] = {"db", "history", "diff", root.c_str(), "rename-point", "--object", "extrusion.s", nullptr};
+    CHECK(run(gedp, diff) == BRLCAD_OK && contains_result(gedp, "update extrusion.s"));
+    CHECK(!contains_result(gedp, "outline.s"));
+    const char *log[] = {"db", "history", "log", "--object", "assembly.c", nullptr};
+    CHECK(run(gedp, log) == BRLCAD_OK && contains_result(gedp, head.c_str()));
+    CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == root);
+    CHECK(run(gedp, reference) == BRLCAD_OK && contains_result(gedp, old_name.c_str()));
+
+    // Reopen through db open and exercise the archived redo choice.
+    const char *close[] = {"db", "close", nullptr};
+    const char *open[] = {"db", "open", path, nullptr};
+    CHECK(run(gedp, close) == BRLCAD_OK && run(gedp, open) == BRLCAD_OK);
+    CHECK(run(gedp, status) == BRLCAD_OK && contains_result(gedp, "(preferred)"));
+    CHECK(run(gedp, redo) == BRLCAD_OK && selected_id(gedp) == head);
+    CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == root);
+    const char *fork_title[] = {"title", "embedded branch", nullptr};
+    CHECK(run(gedp, fork_title) == BRLCAD_OK);
+    const auto fork = selected_id(gedp);
+    CHECK(!fork.empty() && fork != head && fork != root);
+    CHECK(run(gedp, fork_title) == BRLCAD_OK && selected_id(gedp) == fork);
+    CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == root);
+    const char *choose[] = {"db", "redo", "rename-point", nullptr};
+    CHECK(run(gedp, choose) == BRLCAD_OK && selected_id(gedp) == head);
+    const char *checkout[] = {"db", "history", "checkout", fork.c_str(), nullptr};
+    CHECK(run(gedp, checkout) == BRLCAD_OK && selected_id(gedp) == fork);
+    CHECK(run(gedp, reference) == BRLCAD_OK && contains_result(gedp, old_name.c_str()));
+
+    Db readonly(db_open(path, DB_OPEN_READONLY), db_close);
+    CHECK(readonly && db_dirbuild(readonly.get()) == 0);
+    Ged inspector(open_handle("disk", readonly.get()), ged_close);
+    CHECK(inspector);
+    readonly.release();
+    CHECK(run(inspector.get(), status) == BRLCAD_OK && contains_result(inspector.get(), "access read-only"));
+    CHECK(run(inspector.get(), show) == BRLCAD_OK);
+    CHECK(run(inspector.get(), undo) != BRLCAD_OK && contains_result(inspector.get(), "writable"));
+    inspector.reset();
+
+    // The legacy writer changes only the live model. Reopening protects
+    // both the archived graph and the live contents from further edits.
+    Db legacy(db_open(path, DB_OPEN_READWRITE), db_close);
+    CHECK(legacy && db_dirbuild(legacy.get()) == 0 && db5_update_ident(legacy.get(), "legacy title", 1.0) == 0);
+    db_sync(legacy.get());
+    legacy.reset();
+    CHECK(run(gedp, close) == BRLCAD_OK && run(gedp, open) == BRLCAD_OK);
+    CHECK(run(gedp, status) == BRLCAD_OK && contains_result(gedp, "status external edits"));
+    CHECK(selected_id(gedp) == fork && run(gedp, show) == BRLCAD_OK);
+    CHECK(run(gedp, rename) != BRLCAD_OK && contains_result(gedp, "read-only (external edits)"));
+    const char *title[] = {"title", nullptr};
+    CHECK(run(gedp, title) == BRLCAD_OK && contains_result(gedp, "legacy title"));
+    return 0;
+}
+
+static int
+test_session_promotion()
+{
+    char path[MAXPATHLEN] = {};
+    FILE *file = bu_temp_file(path, sizeof(path));
+    CHECK(file && fclose(file) == 0);
+    auto *initial = db_create(path, 5);
+    CHECK(initial);
+    db_close(initial);
+    std::unique_ptr<struct ged, decltype(&ged_close)> owner(ged_open("db", path, 1), ged_close);
+    auto *gedp = owner.get();
+    CHECK(gedp);
+
+    const char *session[] = {"db", "history", "enable", "session", nullptr};
+    const int enabled = run(gedp, session);
+    if (enabled != BRLCAD_OK && contains_result(gedp, "Atomic DB5 replacement is unavailable"))
+	return 0;
+    CHECK(enabled == BRLCAD_OK);
+    const char *first[] = {"title", "first branch", nullptr};
+    const char *second[] = {"title", "second branch", nullptr};
+    const char *undo[] = {"db", "undo", nullptr};
+    const char *redo[] = {"db", "redo", nullptr};
+    const char *embedded[] = {"db", "history", "enable", "embedded", nullptr};
+    const char *status[] = {"db", "history", "status", nullptr};
+    const char *title[] = {"title", nullptr};
+    CHECK(run(gedp, first) == BRLCAD_OK && run(gedp, undo) == BRLCAD_OK);
+    CHECK(run(gedp, second) == BRLCAD_OK && run(gedp, undo) == BRLCAD_OK);
+    CHECK(run(gedp, embedded) == BRLCAD_OK && contains_result(gedp, "mode embedded"));
+    const auto root = selected_id(gedp);
+    CHECK(!root.empty());
+
+    owner.reset(ged_open("db", path, 1));
+    gedp = owner.get();
+    CHECK(gedp && selected_id(gedp) == root);
+    CHECK(run(gedp, status) == BRLCAD_OK && contains_result(gedp, "title second branch (preferred)"));
+    const std::string result = bu_vls_addr(gedp->ged_result_str);
+    const auto label = result.find(" title first branch");
+    CHECK(label != std::string::npos);
+    const auto line = result.rfind("\nredo ", label);
+    CHECK(line != std::string::npos);
+    const std::string_view tag("\nredo ");
+    const auto first_id = result.substr(line + tag.size(), label - line - tag.size());
+    CHECK(run(gedp, redo) == BRLCAD_OK && run(gedp, title) == BRLCAD_OK && contains_result(gedp, "second branch"));
+    CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == root);
+    const char *other[] = {"db", "redo", first_id.c_str(), nullptr};
+    CHECK(run(gedp, other) == BRLCAD_OK && run(gedp, title) == BRLCAD_OK && contains_result(gedp, "first branch"));
+    return 0;
+}
+
 
 int
 main(int argc, const char *argv[])
@@ -279,7 +457,11 @@ main(int argc, const char *argv[])
     CHECK(get_result == BRLCAD_OK);
     CHECK(BU_STR_EQUAL(bu_vls_addr(original->ged_result_str), "skt_0"));
     ged_close(original);
-    return test_disk_history();
+    const int session_status = test_disk_history();
+    if (session_status)
+	return session_status;
+    const int embedded_status = test_embedded_history();
+    return embedded_status ? embedded_status : test_session_promotion();
 }
 
 // Local Variables:

@@ -228,12 +228,15 @@ void ged_selection_presenter_clear_private(struct ged *gedp,
 void ged_event_database_set_private(struct ged *gedp, struct db_i *dbip);
 void ged_event_stage_private(struct ged *gedp, int staged);
 void ged_db_history_reset(struct ged *gedp);
+GED_EXPORT void ged_db_history_open(struct ged *gedp);
 int ged_db_history_enter(struct ged *gedp, const char *command, int argc,
 			 const char **argv, struct db_edit **edit);
 int ged_db_history_leave(struct ged *gedp, struct db_edit *edit, int result);
 
 /* Called by the db command plugin. */
 GED_EXPORT int ged_db_history_command(struct ged *gedp, int argc, const char **argv);
+#define GED_DB_HISTORY_USAGE "status | enable [embedded | session [bytes]] | log [--object name] | show <revision> | " \
+    "checkout <revision> | diff <a> <b> [--object name] | mark <name> [--move]"
 
 #ifndef FALSE
 #  define FALSE 0

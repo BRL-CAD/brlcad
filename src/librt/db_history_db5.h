@@ -48,6 +48,10 @@ struct Db5HistoryDraft {
     Db5HistoryDraft(Db5HistoryDraft &&) = default;
     Db5HistoryDraft &operator=(Db5HistoryDraft &&) = default;
 
+    RT_EXPORT void store(const ArtifactKey &key, Bytes &&payload);
+    // Store the revision and its full selected manifest and update head.
+    RT_EXPORT bool record(const Manifest &manifest, Revision &revision);
+
     std::shared_ptr<const uint8_t> backing;
     std::map<ArtifactKey, Bytes> owned;
     Pack pack;
@@ -77,6 +81,11 @@ RT_EXPORT bool stage_db5_checkout(const EmbeddedPack &archive, const Id &target,
 // Return an owned archive for Current and ExternalEdits. Opening never
 // modifies the database. The remaining statuses leave result untouched.
 RT_EXPORT EmbeddedStatus read_db5_history(const struct db_i *db, EmbeddedPack &result);
+
+// Reload the archive on the freshly published handle returned by
+// save_db5_history. That publisher has already compared the live model.
+RT_EXPORT bool read_published_db5_history(const struct db_i *db, const Id &expected,
+					 EmbeddedPack &result);
 
 // These helpers are used by the DB5 publisher and archive opener to
 // compare exactly the same model representations.
