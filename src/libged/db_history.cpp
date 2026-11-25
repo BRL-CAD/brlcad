@@ -704,27 +704,44 @@ archive_session(const ged_db_history &history, db_history::Db5HistoryDraft &draf
 	if (!apply_session_revision(oldest, revisions.at(cursor), true))
 	    return false;
 
-    std::map<uint64_t, db_history::Id> ids;
+    struct PromotedRevision {
+	db_history::Id id;
+	size_t distance;
+    };
+    std::map<uint64_t, PromotedRevision> ids;
+    uint64_t previous = no_revision;
+    db_history::Manifest previous_model;
     for (const auto &entry : history.revisions) {
 	auto &revision = revisions.at(entry.first);
 	db_history::Manifest model;
+	size_t distance = 0;
 	if (entry.second.parent == no_revision) {
 	    model = std::move(oldest);
 	} else {
-	    revision.parent = ids.at(entry.second.parent);
-	    if (!db_history::read_manifest(draft.pack, revisions.at(entry.second.parent).model, model) ||
-		!apply_session_revision(model, revision, false))
+	    const auto &parent = ids.at(entry.second.parent);
+	    revision.parent = parent.id;
+	    distance = parent.distance + 1;
+	    if (entry.second.parent == previous)
+		model = std::move(previous_model);
+	    else if (!db_history::manifest_at_revision(draft.pack, revision.parent, model))
+		return false;
+	    if (!apply_session_revision(model, revision, false))
 		return false;
 	}
-	if (!draft.record(model, revision))
+	const bool checkpoint = entry.first == history.head || !distance || distance >= db_history::max_manifest_distance;
+	if (!draft.record(model, revision, checkpoint))
 	    return false;
-	ids.emplace(entry.first, draft.pack.selected_revision);
+	if (checkpoint)
+	    distance = 0;
+	ids.emplace(entry.first, PromotedRevision{draft.pack.selected_revision, distance});
+	previous = entry.first;
+	previous_model = std::move(model);
     }
 
     for (const auto &entry : history.revisions)
 	if (entry.second.preferred != no_revision)
-	    draft.pack.preferences.emplace(ids.at(entry.first), ids.at(entry.second.preferred));
-    draft.pack.selected_revision = ids.at(history.head);
+	    draft.pack.preferences.emplace(ids.at(entry.first).id, ids.at(entry.second.preferred).id);
+    draft.pack.selected_revision = ids.at(history.head).id;
     draft.pack.selected_model = revisions.at(history.head).model;
     return draft.pack.selected_model == live_model;
 }

@@ -38,6 +38,8 @@ struct bu_vls;
 
 namespace db_history {
 
+constexpr size_t max_manifest_distance = 64;
+
 using Bytes = std::vector<uint8_t>;
 using Id = std::array<uint8_t, 32>;
 constexpr Id absent{};

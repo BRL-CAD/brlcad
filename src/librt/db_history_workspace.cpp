@@ -64,15 +64,15 @@ constexpr char data_file_name[] = "data.mdb";
 constexpr std::array<uint8_t, 8> signature{'B', 'R', 'L', 'C', 'A', 'D', 'W', 0};
 constexpr uint16_t schema_major = 1;
 constexpr uint16_t unpinned_minor = 0;
-constexpr uint16_t schema_minor = 1;
+constexpr uint16_t pinned_minor = 1;
+constexpr uint16_t sparse_minor = 2;
 constexpr uint64_t reader_pin_feature = 1;
-constexpr uint64_t required_features = reader_pin_feature;
+constexpr uint64_t sparse_manifest_feature = 1 << 1;
+constexpr uint64_t sparse_features = reader_pin_feature | sparse_manifest_feature;
 #ifdef DB_HISTORY_FILE_LOCKS
-constexpr uint16_t new_workspace_minor = schema_minor;
-constexpr uint64_t new_workspace_features = required_features;
+constexpr uint64_t new_workspace_features = sparse_features;
 #else
-constexpr uint16_t new_workspace_minor = unpinned_minor;
-constexpr uint64_t new_workspace_features = 0;
+constexpr uint64_t new_workspace_features = sparse_manifest_feature;
 #endif
 constexpr uint16_t artifact_encoding = 1;
 constexpr size_t bootstrap_size = signature.size() + 3 * sizeof(uint16_t) + sizeof(uint64_t);
@@ -358,7 +358,7 @@ read_integer(const uint8_t *source, Integer &number)
 }
 
 bool
-check_bootstrap(MDB_txn *txn, MDB_dbi table, bool &reader_pins, struct bu_vls *message)
+check_bootstrap(MDB_txn *txn, MDB_dbi table, uint64_t &features, struct bu_vls *message)
 {
     ByteView format;
     if (!get(txn, table, bytes(bootstrap_key), format) || format.size < signature.size() ||
@@ -377,10 +377,13 @@ check_bootstrap(MDB_txn *txn, MDB_dbi table, bool &reader_pins, struct bu_vls *m
     rest = read_integer(rest, minor);
     rest = read_integer(rest, required);
     read_integer(rest, encoding);
-    const uint64_t expected = minor == unpinned_minor ? 0 : required_features;
-    if ((minor != unpinned_minor && minor != schema_minor) || required != expected || encoding != artifact_encoding)
+
+    const bool supported = (minor == unpinned_minor && required == 0) ||
+	(minor == pinned_minor && required == reader_pin_feature) ||
+	(minor == sparse_minor && (required == sparse_manifest_feature || required == sparse_features));
+    if (!supported || encoding != artifact_encoding)
 	return report(message, "Unsupported BRL-CAD workspace schema, features or artifact encoding");
-    reader_pins = (required & reader_pin_feature) != 0;
+    features = required;
     return true;
 }
 
@@ -572,6 +575,31 @@ load_pack(MDB_txn *txn, const Tables &tables, const WorkspaceHead &head, bool gr
     }) && pack.artifacts.count({Kind::Revision, head.revision});
 }
 
+struct WorkspaceArchive {
+    Pack pack;
+    Bytes selected_payload;
+};
+
+bool
+load_archive(MDB_txn *txn, const Tables &tables, const WorkspaceHead &head, bool sparse, WorkspaceArchive &archive)
+{
+    if (!load_pack(txn, tables, head, false, archive.pack))
+	return false;
+    const ArtifactKey selected{Kind::Manifest, head.model};
+    if (archive.pack.artifacts.count(selected))
+	return true;
+
+    // Portable history needs a selected snapshot. Reconstruct it here so
+    // the working store can persist only the bounded replay checkpoints.
+    Manifest model;
+    if (!sparse || !load_model_at(txn, tables, head.revision, model) ||
+	!encode_manifest(model, archive.selected_payload) ||
+	identify(Kind::Manifest, archive.selected_payload) != head.model)
+	return false;
+    archive.pack.artifacts.emplace(selected, archive.selected_payload);
+    return true;
+}
+
 void
 copy_pack(Pack &&pack, Db5HistoryDraft &result)
 {
@@ -621,13 +649,14 @@ read_model(MDB_txn *txn, const Tables &tables, const Id &selected, Manifest &mod
 #ifdef DB_HISTORY_FILE_LOCKS
 bool
 prepare_retention(MDB_txn *txn, const Tables &tables, const WorkspaceHead &head, const WorkspaceRetention &policy,
-		  const std::set<Id> &pins, Pack &source, RetainedWorkspace &planned, struct bu_vls *message)
+		  const std::set<Id> &pins, bool sparse, WorkspaceArchive &source, RetainedWorkspace &planned,
+		  struct bu_vls *message)
 {
     Manifest live;
-    if (!load_pack(txn, tables, head, false, source))
+    if (!load_archive(txn, tables, head, sparse, source))
 	return report(message, "The workspace archive is invalid");
     return read_model(txn, tables, head.model, live, message) &&
-	plan_retention(source, head, policy, pins, planned, message);
+	plan_retention(source.pack, head, policy, pins, planned, message);
 }
 #endif
 
@@ -668,6 +697,24 @@ store_model(MDB_txn *txn, const Tables &tables, const Id &id, const Manifest &mo
 	return false;
     store_artifact(txn, tables, {Kind::Manifest, id}, encoded);
     return true;
+}
+
+bool
+needs_manifest(MDB_txn *txn, const Tables &tables, const Revision &parent, bool &needed)
+{
+    const Revision *cursor = &parent;
+    Revision ancestor;
+    for (size_t distance = 0; distance <= max_manifest_distance; ++distance) {
+	ByteView stored;
+	if (get(txn, tables.artifacts, bytes(artifact_key({Kind::Manifest, cursor->model})), stored)) {
+	    needed = distance >= max_manifest_distance - 1;
+	    return stored.size != 0;
+	}
+	if (distance == max_manifest_distance || !load_revision(txn, tables, cursor->parent, ancestor))
+	    return false;
+	cursor = &ancestor;
+    }
+    return false;
 }
 
 bool
@@ -731,7 +778,7 @@ import_pack(MDB_env *env, const Pack &pack, const Manifest &manifest, struct bu_
     std::array<uint8_t, bootstrap_size> format;
     auto *rest = std::copy(signature.begin(), signature.end(), format.data());
     rest = write_integer(rest, schema_major);
-    rest = write_integer(rest, new_workspace_minor);
+    rest = write_integer(rest, sparse_minor);
     rest = write_integer(rest, new_workspace_features);
     write_integer(rest, artifact_encoding);
     put(txn.get(), tables.metadata, bytes(bootstrap_key), bytes(format));
@@ -850,7 +897,9 @@ struct Workspace::Store {
     Environment env;
     Tables handles;
     bool writable;
-    bool reader_pins = false;
+    uint64_t features = 0;
+    bool reader_pins() const { return features & reader_pin_feature; }
+    bool sparse_manifests() const { return features & sparse_manifest_feature; }
     size_t clients = 0;
     // LMDB needs all local transactions drained before resizing a map.
     mutable std::shared_mutex transactions;
@@ -974,7 +1023,7 @@ Workspace::open(const char *path, struct bu_vls *message, bool writable)
 	auto store = std::make_unique<Store>(canonical, std::move(env), can_write);
 	auto txn = begin(store->env.get(), MDB_RDONLY);
 	check(mdb_dbi_open(txn.get(), nullptr, 0, &store->handles.metadata));
-	if (!check_bootstrap(txn.get(), store->handles.metadata, store->reader_pins, message))
+	if (!check_bootstrap(txn.get(), store->handles.metadata, store->features, message))
 	    return nullptr;
 	open_tables(txn.get(), store->handles, 0);
 	WorkspaceHead head;
@@ -1006,7 +1055,7 @@ Workspace::open_revision(const char *path, const Id &revision, WorkspaceHead &he
 
 #ifdef DB_HISTORY_FILE_LOCKS
     std::unique_ptr<FileLock> guard;
-    if (workspace->store->reader_pins) {
+    if (workspace->store->reader_pins()) {
 	guard = std::make_unique<FileLock>(workspace->store->path / data_file_name);
 	if (!guard->acquire(FileLockMode::Shared)) {
 	    report(message, "The workspace reader could not acquire a retention lock");
@@ -1014,7 +1063,7 @@ Workspace::open_revision(const char *path, const Id &revision, WorkspaceHead &he
 	}
     }
 #else
-    if (workspace->store->reader_pins) {
+    if (workspace->store->reader_pins()) {
 	report(message, "This workspace requires reader locks that are unavailable on this platform");
 	return nullptr;
     }
@@ -1193,10 +1242,10 @@ bool
 Workspace::copy_to(const WorkspaceHead &selected, const char *destination, struct bu_vls *message) const
 {
     return store->read([&](MDB_txn *txn, const Tables &tables) {
-	Pack archive;
-	if (!load_pack(txn, tables, selected, false, archive))
+	WorkspaceArchive archive;
+	if (!load_archive(txn, tables, selected, store->sparse_manifests(), archive))
 	    return report(message, "The workspace archive is invalid");
-	return create(destination, archive, message);
+	return create(destination, archive.pack, message);
     }, message);
 }
 
@@ -1211,11 +1260,11 @@ Workspace::export_snapshot(const struct db_i *snapshot, const char *destination,
     }
     auto result = DB5_SAVE_ERROR;
     const bool read = store->read([&](MDB_txn *txn, const Tables &tables) {
-	Pack archive;
+	WorkspaceArchive archive;
 	if (with_history) {
-	    if (!load_pack(txn, tables, state->head, false, archive))
+	    if (!load_archive(txn, tables, state->head, store->sparse_manifests(), archive))
 		return report(message, "The workspace archive is invalid");
-	    if (!verify_pack(archive, message))
+	    if (!verify_pack(archive.pack, message))
 		return false;
 	}
 	const auto reader = [&](const struct directory *dp, struct bu_external *record) {
@@ -1229,7 +1278,7 @@ Workspace::export_snapshot(const struct db_i *snapshot, const char *destination,
 	    bu_free_external(record);
 	    return false;
 	};
-	result = export_db5_snapshot(snapshot, destination, with_history ? &archive : nullptr, message, reader);
+	result = export_db5_snapshot(snapshot, destination, with_history ? &archive.pack : nullptr, message, reader);
 	return true;
     }, message);
     return read ? result : DB5_SAVE_ERROR;
@@ -1242,6 +1291,7 @@ Workspace::export_staged(const WorkspaceHead &base, const Pack &staged, const ch
     auto result = DB5_SAVE_ERROR;
     const bool read = store->read([&](MDB_txn *txn, const Tables &tables) {
 	Pack archive;
+	// The staged pack supplies the selected manifest for the export.
 	if (!load_pack(txn, tables, base, false, archive))
 	    return report(message, "The base workspace archive is invalid");
 	archive.artifacts.insert(staged.artifacts.begin(), staged.artifacts.end());
@@ -1259,10 +1309,10 @@ Workspace::verify(struct bu_vls *message) const
     return store->read([&](MDB_txn *txn, const Tables &tables) {
 	WorkspaceHead head;
 	Manifest model;
-	Pack archive;
-	if (!read_head(txn, tables, head) || !load_pack(txn, tables, head, false, archive))
+	WorkspaceArchive archive;
+	if (!read_head(txn, tables, head) || !load_archive(txn, tables, head, store->sparse_manifests(), archive))
 	    return report(message, "The workspace archive is invalid");
-	return read_model(txn, tables, head.model, model, message) && verify_pack(archive, message);
+	return read_model(txn, tables, head.model, model, message) && verify_pack(archive.pack, message);
     }, message);
 }
 
@@ -1294,7 +1344,7 @@ Workspace::preview_prune(const WorkspaceHead &expected, const WorkspaceRetention
 			 WorkspacePrunePreview &preview, struct bu_vls *message) const
 {
 #ifdef DB_HISTORY_FILE_LOCKS
-    if (!store->reader_pins)
+    if (!store->reader_pins())
 	return report(message, "Copy this workspace to a new directory with db history workspace to enable pruning");
     FileLock guard(store->path / data_file_name);
     if (!guard.acquire(FileLockMode::TryExclusive))
@@ -1309,9 +1359,9 @@ Workspace::preview_prune(const WorkspaceHead &expected, const WorkspaceRetention
 	    return report(message, "The workspace head is invalid");
 	if (!same_head(head, expected))
 	    return report_stale(message, expected, head);
-	Pack source;
+	WorkspaceArchive source;
 	RetainedWorkspace planned;
-	if (!prepare_retention(txn, tables, head, policy, pins, source, planned, message))
+	if (!prepare_retention(txn, tables, head, policy, pins, store->sparse_manifests(), source, planned, message))
 	    return false;
 	preview = std::move(planned.preview);
 	return true;
@@ -1329,7 +1379,7 @@ Workspace::prune(const WorkspaceHead &expected, const WorkspaceRetention &policy
 		 WorkspacePrunePreview &preview, WorkspaceHead &actual, struct bu_vls *message)
 {
 #ifdef DB_HISTORY_FILE_LOCKS
-    if (!store->reader_pins) {
+    if (!store->reader_pins()) {
 	report(message, "Copy this workspace to a new directory with db history workspace to enable pruning");
 	return WorkspaceWriteStatus::Error;
     }
@@ -1349,9 +1399,9 @@ Workspace::prune(const WorkspaceHead &expected, const WorkspaceRetention &policy
     WorkspacePrunePreview applied;
     const auto status = store->write(expected, actual, [&](MDB_txn *txn, const Tables &tables,
 	const WorkspaceHead &base, const Revision &, WorkspaceHead &) {
-	Pack source;
+	WorkspaceArchive source;
 	RetainedWorkspace planned;
-	if (!prepare_retention(txn, tables, base, policy, pins, source, planned, message))
+	if (!prepare_retention(txn, tables, base, policy, pins, store->sparse_manifests(), source, planned, message))
 	    return ChangeStatus::Error;
 	if (id_string(planned.preview.token) != token)
 	    return fail_change(message, "The prune preview changed. Preview the workspace again before applying.");
@@ -1361,14 +1411,16 @@ Workspace::prune(const WorkspaceHead &expected, const WorkspaceRetention &policy
 
 	for (const auto &entry : planned.archive.owned)
 	    store_artifact(txn, tables, entry.first, entry.second);
+	if (!source.selected_payload.empty())
+	    store_artifact(txn, tables, {Kind::Manifest, base.model}, source.selected_payload);
 	const auto &kept = planned.archive.pack;
 	for (const auto &boundary : kept.boundaries)
-	    if (!source.boundaries.count(boundary))
+	    if (!source.pack.boundaries.count(boundary))
 		put(txn, tables.boundaries, bytes(boundary), {});
-	for (const auto &boundary : source.boundaries)
+	for (const auto &boundary : source.pack.boundaries)
 	    if (!kept.boundaries.count(boundary))
 		erase(txn, tables.boundaries, bytes(boundary));
-	for (const auto &preference : source.preferences)
+	for (const auto &preference : source.pack.preferences)
 	    if (!kept.preferences.count(preference.first))
 		erase(txn, tables.preferences, bytes(preference.first));
 	for (const auto &key : planned.expired)
@@ -1406,7 +1458,7 @@ Workspace::commit(const WorkspaceHead &expected, const Revision &revision, const
 	return WorkspaceWriteStatus::Error;
     }
     return store->write(expected, actual, [&](MDB_txn *txn, const Tables &tables,
-	const WorkspaceHead &base, const Revision &, WorkspaceHead &next) {
+	const WorkspaceHead &base, const Revision &parent, WorkspaceHead &next) {
 	Bytes encoded;
 	if (revision.parent != base.revision || !encode_revision(revision, encoded))
 	    return fail_change(message, "The workspace revision is invalid for the selected parent");
@@ -1421,7 +1473,10 @@ Workspace::commit(const WorkspaceHead &expected, const Revision &revision, const
 	    if (id != absent && !store_record(txn, tables, artifacts, id, entry.first))
 		return fail_change(message, "A changed record has missing or invalid workspace artifacts");
 	}
-	if (!store_model(txn, tables, revision.model, model))
+	bool checkpoint = true;
+	if (store->sparse_manifests() && !needs_manifest(txn, tables, parent, checkpoint))
+	    return fail_change(message, "The workspace checkpoint ancestry is incomplete");
+	if (checkpoint && !store_model(txn, tables, revision.model, model))
 	    return fail_change(message, "The workspace model cannot be stored");
 	const auto id = identify(Kind::Revision, encoded);
 	if (id == absent)
@@ -1455,7 +1510,7 @@ Workspace::checkout(const WorkspaceHead &expected, const Id &target, WorkspaceHe
 	Manifest current;
 	if (!read_model(txn, tables, base.model, current, message))
 	    return ChangeStatus::Error;
-	if (!store_model(txn, tables, revision.model, model))
+	if (!store->sparse_manifests() && !store_model(txn, tables, revision.model, model))
 	    return fail_change(message, "The workspace model cannot be stored");
 	if (!write_directory(txn, tables, diff_manifests(current, model), message))
 	    return ChangeStatus::Error;

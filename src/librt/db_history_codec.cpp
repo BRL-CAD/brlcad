@@ -45,7 +45,6 @@ constexpr std::array<uint8_t, 8> pack_signature{'B', 'R', 'L', 'C', 'A', 'D', 'H
 constexpr uint16_t pack_major = 1;
 constexpr uint16_t pack_minor = 0;
 constexpr uint64_t pack_required_features = 0;
-constexpr size_t max_manifest_distance = 64;
 constexpr size_t pack_header_size = pack_signature.size() + 2 * sizeof(uint16_t) + 4 * integer_size + 2 * id_size;
 constexpr size_t pack_entry_size = sizeof(uint8_t) + id_size + 2 * integer_size;
 

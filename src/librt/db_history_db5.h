@@ -50,7 +50,7 @@ struct Db5HistoryDraft {
 
     RT_EXPORT void store(const ArtifactKey &key, Bytes &&payload);
     // Store the revision and its full selected manifest and update head.
-    RT_EXPORT bool record(const Manifest &manifest, Revision &revision);
+    RT_EXPORT bool record(const Manifest &manifest, Revision &revision, bool keep_manifest = true);
 
     std::shared_ptr<const uint8_t> backing;
     std::map<ArtifactKey, Bytes> owned;

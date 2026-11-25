@@ -19,6 +19,9 @@
  */
 #include "common.h"
 
+#include <array>
+#include <map>
+
 #include "bu/malloc.h"
 #include "bu/mapped_file.h"
 #include "db_history_db5.h"
@@ -93,6 +96,53 @@ live_manifest(const struct db_i *db, const struct directory *archive, Manifest &
     });
 }
 
+void
+drop_previous_manifest(Pack &pack, const Id &previous)
+{
+    const ArtifactKey key{Kind::Manifest, previous};
+    if (previous == pack.selected_model || !pack.artifacts.count(key))
+	return;
+
+    // A previously selected manifest can be shared by several revisions.
+    // Prove each branch still has a bounded replay path before dropping it.
+    constexpr size_t unvisited = max_manifest_distance + 1;
+    struct Path {
+	Id parent;
+	size_t distance;
+    };
+    std::map<Id, Path> paths;
+    for (auto item = pack.artifacts.lower_bound({Kind::Revision, absent});
+	 item != pack.artifacts.end() && item->first.first == Kind::Revision; ++item) {
+	const auto &id = item->first.second;
+	Revision revision;
+	if (!read_revision(pack, id, revision))
+	    return;
+	const bool saved = revision.model != previous && pack.artifacts.count({Kind::Manifest, revision.model});
+	if (!saved && (revision.parent == absent || pack.boundaries.count(id)))
+	    return;
+	paths.emplace(id, Path{revision.parent, saved ? 0 : unvisited});
+    }
+    std::array<Path *, max_manifest_distance> trail;
+    for (auto &entry : paths) {
+	size_t steps = 0;
+	auto *path = &entry.second;
+	while (path->distance == unvisited) {
+	    const auto parent = paths.find(path->parent);
+	    if (steps == trail.size() || parent == paths.end())
+		return;
+	    trail[steps++] = path;
+	    path = &parent->second;
+	}
+	size_t distance = path->distance;
+	if (distance + steps > max_manifest_distance)
+	    return;
+	while (steps)
+	    trail[--steps]->distance = ++distance;
+    }
+
+    pack.artifacts.erase(key);
+}
+
 } // namespace
 
 void
@@ -106,7 +156,7 @@ Db5HistoryDraft::store(const ArtifactKey &key, Bytes &&payload)
 }
 
 bool
-Db5HistoryDraft::record(const Manifest &manifest, Revision &revision)
+Db5HistoryDraft::record(const Manifest &manifest, Revision &revision, bool keep_manifest)
 {
     Bytes model, encoded_revision;
     if (!manifest.count(DB5_GLOBAL_OBJECT_NAME) || !encode_manifest(manifest, model))
@@ -118,7 +168,8 @@ Db5HistoryDraft::record(const Manifest &manifest, Revision &revision)
     pack.selected_revision = identify(Kind::Revision, encoded_revision);
     if (pack.selected_revision == absent)
 	return false;
-    store({Kind::Manifest, revision.model}, std::move(model));
+    if (keep_manifest)
+	store({Kind::Manifest, revision.model}, std::move(model));
     store({Kind::Revision, pack.selected_revision}, std::move(encoded_revision));
     return true;
 }
@@ -280,6 +331,7 @@ append_db5_history(const EmbeddedPack &archive, struct db_edit *edit, int64_t ti
     if (db_edit_visit_renames(edit, collect_revision_rename, &revision.renames) != 0 ||
 	!draft.record(manifest, revision))
 	return AppendStatus::Error;
+    drop_previous_manifest(draft.pack, archive.pack.selected_model);
     result = std::move(draft);
     return AppendStatus::Ready;
 }
@@ -324,6 +376,7 @@ stage_db5_adoption(const struct db_i *db, const EmbeddedPack &archive, int64_t t
 	revision.label = "Adopt external DB5 edits";
 	if (!draft.record(model, revision))
 	    return AppendStatus::Error;
+	drop_previous_manifest(draft.pack, archive.pack.selected_model);
 	*result = std::move(draft);
     }
     changes = std::move(revision.changes);
@@ -403,6 +456,7 @@ stage_db5_checkout(const EmbeddedPack &archive, const Id &target, struct db_edit
 	draft.pack.preferences.insert_or_assign(target, archive.pack.selected_revision);
     else if (archive.pack.selected_revision == revision.parent)
 	draft.pack.preferences.insert_or_assign(revision.parent, target);
+    drop_previous_manifest(draft.pack, archive.pack.selected_model);
     result = std::move(draft);
     return true;
 }

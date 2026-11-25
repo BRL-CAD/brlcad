@@ -97,7 +97,7 @@ read_record(struct db_i *db, const char *name)
 }
 
 static bool
-change_bootstrap(const std::string &path, size_t index, uint8_t replacement)
+change_bootstrap(const std::string &path, size_t index, uint8_t replacement, uint8_t *previous = nullptr)
 {
     MDB_env *env = nullptr;
     if (mdb_env_create(&env) != MDB_SUCCESS)
@@ -117,6 +117,8 @@ change_bootstrap(const std::string &path, size_t index, uint8_t replacement)
 	return false;
     const auto *data = static_cast<const uint8_t *>(found.mv_data);
     Bytes format(data, data + found.mv_size);
+    if (previous)
+	*previous = format[index];
     format[index] = replacement;
     MDB_val updated{format.size(), format.data()};
     return mdb_put(raw, db, &key, &updated, 0) == MDB_SUCCESS &&
@@ -362,7 +364,7 @@ test_compact_checkout(const char *path, Edit stage, const Db5HistoryDraft &edite
     const auto initial = next.pack.references.at("before");
     next.pack.references.clear();
     const ArtifactKey reused_model{Kind::Manifest, prior.pack.selected_model};
-    CHECK(next.pack.artifacts.erase(reused_model) == 1);
+    CHECK(!next.pack.artifacts.count(reused_model));
     CHECK(Workspace::create(path, next.pack, message));
     auto workspace = Workspace::open(path, message, true);
     WorkspaceHead latest, selected;
@@ -372,7 +374,8 @@ test_compact_checkout(const char *path, Edit stage, const Db5HistoryDraft &edite
     CHECK(!workspace->fetch_artifact(reused_model, payload, message));
     WorkspaceRetention policy{2, {}};
     WorkspacePrunePreview preview;
-    if (workspace->preview_prune(latest, policy, preview, message)) {
+    const bool pruned = workspace->preview_prune(latest, policy, preview, message);
+    if (pruned) {
 	CHECK(preview.expired_revisions == std::set<Id>{initial} &&
 	    preview.boundaries == std::set<Id>{prior.pack.selected_revision});
 	CHECK(workspace->prune(latest, policy, id_string(preview.token), preview, selected, message) == WorkspaceWriteStatus::Ok);
@@ -385,7 +388,64 @@ test_compact_checkout(const char *path, Edit stage, const Db5HistoryDraft &edite
     CHECK(workspace->read_directory(selected, model, message) && model == prior.model);
     CHECK(selected.model == reused_model.second && selected.revision == prior.pack.selected_revision &&
 	selected.generation == latest.generation + 1);
-    CHECK(workspace->fetch_artifact(reused_model, payload, message));
+    CHECK(workspace->fetch_artifact(reused_model, payload, message) == pruned);
+    return 0;
+}
+
+static int
+test_sparse_manifests(const std::string &path, const EmbeddedPack &initial, struct bu_vls *message)
+{
+    CHECK(Workspace::create(path.c_str(), initial.pack, message));
+    auto writer = Workspace::open(path.c_str(), message, true);
+    WorkspaceHead head;
+    Manifest model;
+    CHECK(writer && writer->read_directory(head, model, message));
+    WorkspaceHead first, checkpoint, portable_checkpoint;
+    std::vector<Db5HistoryDraft> drafts;
+    for (size_t step = 1; step <= max_manifest_distance + 2; ++step) {
+	Database view(Workspace::open_snapshot(path.c_str(), head, message), db_close);
+	const auto *current = Workspace::snapshot_model(view.get());
+	CHECK(current);
+	EmbeddedPack base;
+	base.model = *current;
+	base.pack = drafts.empty() ? initial.pack : drafts.back().pack;
+	CHECK(base.pack.selected_revision == head.revision && base.pack.selected_model == head.model);
+	const std::string title = std::to_string(step);
+	Edit edit(db_edit_begin(view.get(), "Change title"), db_edit_abort);
+	CHECK(edit && db5_update_ident(db_edit_view(edit.get()), title.c_str(), 1.0) == 0);
+	Db5HistoryDraft next;
+	Revision revision;
+	CHECK(append_db5_history(base, edit.get(), static_cast<int64_t>(step), next) == AppendStatus::Ready &&
+	    read_revision(next.pack, next.pack.selected_revision, revision));
+	WorkspaceHead selected;
+	CHECK(writer->commit(head, revision, next.pack.artifacts, selected, message) == WorkspaceWriteStatus::Ok);
+	if (step == 1)
+	    first = selected;
+	if (step == max_manifest_distance)
+	    checkpoint = selected;
+	if (step == max_manifest_distance + 1)
+	    portable_checkpoint = selected;
+	head = selected;
+	drafts.push_back(std::move(next));
+    }
+
+    Bytes payload;
+    CHECK(!writer->fetch_artifact({Kind::Manifest, first.model}, payload, message));
+    CHECK(writer->fetch_artifact({Kind::Manifest, checkpoint.model}, payload, message));
+    CHECK(!writer->fetch_artifact({Kind::Manifest, head.model}, payload, message));
+    CHECK(writer->verify(message));
+    const auto &portable = drafts.back().pack;
+    CHECK(!portable.artifacts.count({Kind::Manifest, first.model}) &&
+	portable.artifacts.count({Kind::Manifest, portable_checkpoint.model}) && verify_pack(portable, message));
+    const auto copy_path = path + "-copy";
+    CHECK(writer->copy_to(head, copy_path.c_str(), message));
+    auto copy = Workspace::open(copy_path.c_str(), message);
+    WorkspaceHead copied;
+    CHECK(copy && copy->verify(message) && copy->read_directory(copied, model, message) && copied.revision == head.revision);
+    WorkspaceHead selected;
+    CHECK(writer->checkout(head, first.revision, selected, message) == WorkspaceWriteStatus::Ok &&
+	selected.revision == first.revision && writer->verify(message));
+    CHECK(!writer->fetch_artifact({Kind::Manifest, first.model}, payload, message));
     return 0;
 }
 
@@ -430,14 +490,15 @@ test_workspace(const std::string &path, const Pack &pack, const Manifest &expect
     constexpr size_t required_low_byte = 19;
     constexpr size_t artifact_low_byte = 21;
     constexpr uint8_t reader_pin_bit = 1;
-    constexpr uint8_t unknown_feature_bit = 2;
+    constexpr uint8_t unknown_feature_bit = 0x80;
+    uint8_t original_features = 0;
     CHECK(change_bootstrap(path, major_low_byte, 2));
     CHECK(!Workspace::open(path.c_str(), message) && BU_STR_EQUAL(bu_vls_addr(message), "Unsupported BRL-CAD workspace schema"));
     CHECK(change_bootstrap(path, major_low_byte, 1));
-    CHECK(change_bootstrap(path, required_low_byte, unknown_feature_bit));
+    CHECK(change_bootstrap(path, required_low_byte, unknown_feature_bit, &original_features));
     CHECK(!Workspace::open(path.c_str(), message) &&
 	BU_STR_EQUAL(bu_vls_addr(message), "Unsupported BRL-CAD workspace schema, features or artifact encoding"));
-    CHECK(change_bootstrap(path, required_low_byte, reader_pin_bit));
+    CHECK(change_bootstrap(path, required_low_byte, original_features));
     CHECK(change_bootstrap(path, artifact_low_byte, 2));
     CHECK(!Workspace::open(path.c_str(), message) &&
 	BU_STR_EQUAL(bu_vls_addr(message), "Unsupported BRL-CAD workspace schema, features or artifact encoding"));
@@ -447,7 +508,17 @@ test_workspace(const std::string &path, const Pack &pack, const Manifest &expect
     CHECK(head.revision == pack.selected_revision && model == expected);
     workspace.reset();
 
-    // A 1.0 workspace can still be read and copied into the new format.
+    // Readers can open workspaces written before sparse manifests and pins.
+    CHECK(change_bootstrap(path, minor_low_byte, 1) && change_bootstrap(path, required_low_byte, reader_pin_bit));
+    workspace = Workspace::open(path.c_str(), message);
+    CHECK(workspace && workspace->verify(message) && workspace->read_directory(head, model, message));
+    const auto pinned_copy_path = path + "-pinned-copy";
+    CHECK(workspace->copy_to(head, pinned_copy_path.c_str(), message));
+    auto pinned_copy = Workspace::open(pinned_copy_path.c_str(), message);
+    WorkspaceHead pinned_head;
+    CHECK(pinned_copy && pinned_copy->verify(message) && pinned_copy->read_directory(pinned_head, model, message) &&
+	pinned_head.revision == head.revision && pinned_head.model == head.model && model == expected);
+    workspace.reset();
     CHECK(change_bootstrap(path, minor_low_byte, 0) && change_bootstrap(path, required_low_byte, 0));
     workspace = Workspace::open(path.c_str(), message);
     CHECK(workspace && workspace->read_directory(head, model, message));
@@ -527,6 +598,8 @@ main(int argc, const char **argv)
 	    initial, edited.pack, &message);
     if (!result)
 	result = test_compact_checkout((fixture.path / "compact").string().c_str(), std::move(edit), edited, &message);
+    if (!result)
+	result = test_sparse_manifests((fixture.path / "sparse").string(), initial, &message);
     if (result)
 	bu_log("%s\n", bu_vls_addr(&message));
     bu_vls_free(&message);

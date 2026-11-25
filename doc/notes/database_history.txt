@@ -467,6 +467,10 @@ retained its exact bytes. Opening the incomplete destination was
 rejected. A fresh migration created a verified 1.1 workspace with the
 same selected revision.
 
+Repeating the interruption during a 1.1 to 1.2 copy preserved the
+source bytes and left a destination that readers rejected. Retrying
+produced a verified 1.2 store with the original selected revision.
+
 With QGED's software display, Undo and Redo from the modeling viewport
 selected the expected embedded revisions. Plain DB5 snapshots exported
 after each shortcut independently confirmed that the new primitive was
@@ -585,6 +589,27 @@ The converted DB5 kept the title, named objects and sampled ARB
 geometry. After enabling history, Undo restored the title and full
 archive verification passed. The DB4 source digest matched before
 and after conversion.
+
+A synthetic workspace with 1,280 additional primitives accumulated
+1,024 title edits. Its portable export initially measured 69.8 MB.
+With schema 1.2's periodic manifests, the same workload exported at
+1.93 MB. Both exports matched their source revision IDs, checkpoints
+and checkout results. A new schema 1.2 M1917 workspace used 49.2 KB
+of filesystem output for the title edit, compared with 1.21 MB before
+periodic manifests. Undo restored the original title and archive
+verification passed.
+
+A separate M1917 workspace accumulated 65 title edits in 19.8
+seconds. A fresh process checked out the root in 0.58 seconds and
+checked out a revision 63 links from a stored manifest in 0.99
+seconds. Another process verified the replayed archive and model in
+5.78 seconds.
+
+Writing 1,024 title edits directly to embedded DB5 left a 1.92 MB
+file on the same synthetic model. Fresh readers checked the first,
+middle and final revisions. Promoting a shorter session with two
+branches retained all 131 edits in a 580 KB DB5 file. Both promoted
+branches and the initial model were available after reopening.
 
 Implementation starting points in the source tree
 -------------------------------------------------
