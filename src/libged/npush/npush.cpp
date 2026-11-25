@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <set>
 #include <map>
+#include <memory>
 #include <queue>
 #include <string>
 #include <vector>
@@ -35,7 +36,7 @@
 #include <limits>
 
 #include "bu/cmd.h"
-#include "bu/opt.h"
+#include "npush_options.h"
 
 #include "../ged_private.h"
 
@@ -172,28 +173,49 @@ public:
 };
 
 
+struct push_internal_deleter {
+    void operator()(struct rt_db_internal *internal) const
+    {
+	rt_db_free_internal(internal);
+	BU_PUT(internal, struct rt_db_internal);
+    }
+};
+
+using push_internal = std::unique_ptr<struct rt_db_internal, push_internal_deleter>;
+
+struct push_addition {
+    int flags;
+    push_internal internal;
+};
+
+static push_internal
+alloc_push_internal()
+{
+    struct rt_db_internal *internal;
+    BU_GET(internal, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(internal);
+    return push_internal(internal);
+}
+
 /* Container to hold information during tree walk. */
 struct push_state {
 
     /* Variables used for validity checking of specified push object(s).  The
      * target_objects set is user specified - if objects are specified that are
      * below other target objects, flag valid_push is set to false and the user
-     * gets an error report.  Conveniently, that mechanism will also recognize
-     * and reject cyclic trees. */
+     * gets an error report. */
     bool final_check = false;
     bool valid_push = true;
     bool walk_error = false;
     std::set<std::string> initial_missing;
     std::set<std::string> target_objs;
     struct bu_vls *msgs = NULL;
-    std::string problem_obj;
 
     /* User-supplied flags controlling tree walking behavior */
-    bool dry_run = false;
     bool stop_at_regions = false;
     bool stop_at_shapes = false;
     int max_depth = 0;
-    int verbosity = 0;
+    long verbosity = 0;
 
     /* Containers for instance structures being built up during the push walk.
      * We do not need to duplicate these - the combination of matrix and dp
@@ -213,9 +235,18 @@ struct push_state {
 
     /* Containers for finalized database objects, used to assemble and
      * store them prior to the database writing step. */
-    std::map<struct directory *, struct rt_db_internal *> updated;
-    std::map<struct directory *, struct rt_db_internal *> added;
+    std::map<struct directory *, push_internal> updated;
+    std::map<std::string, push_addition> added;
 };
+
+static void
+queue_push_object(struct push_state &state, const dp_i &object, push_internal internal)
+{
+    if (object.iname.empty())
+	state.updated.insert_or_assign(object.dp, std::move(internal));
+    else
+	state.added.emplace(object.iname, push_addition{object.dp->d_flags, std::move(internal)});
+}
 
 /* Tree walks terminate at leaves.  However, what constitutes a leaf is not always
  * the same, depending on the specific stage of the push operation we are in.
@@ -313,6 +344,11 @@ validate_walk_subtree(struct db_i *dbip,
 		return;
 	    }
 
+	    if (db_full_path_search(dfp, dp)) {
+		bu_vls_printf(s->msgs, "Cyclic path found at %s\n", dp->d_namep);
+		s->valid_push = false;
+		return;
+	    }
 	    db_add_node_to_full_path(dfp, dp);
 
 	    if (!s->final_check) {
@@ -326,7 +362,6 @@ validate_walk_subtree(struct db_i *dbip,
 			    bu_vls_printf(s->msgs, "W1[%s]: user specified push object %s is below user specified push object %s\n", ps, ldp->d_namep, rdp->d_namep);
 			bu_free(ps, "path string");
 		    }
-		    s->problem_obj = std::string(dp->d_namep);
 		    DB_FULL_PATH_POP(dfp);
 		    return;
 		}
@@ -349,9 +384,16 @@ validate_walk_subtree(struct db_i *dbip,
 	    validate_walk_subtree(dbip, dfp, tp->tr_b.tb_left, client_data);
 	    validate_walk_subtree(dbip, dfp, tp->tr_b.tb_right, client_data);
 	    break;
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    validate_walk_subtree(dbip, dfp, tp->tr_b.tb_left, client_data);
+	    break;
+	case OP_NOP:
+	    break;
 	default:
-	    bu_log("validate_walk_subtree: unrecognized operator %d\n", tp->tr_op);
-	    bu_bomb("validate_walk_subtree: unrecognized operator\n");
+	    bu_vls_printf(s->msgs, "Unsupported combination operator %d\n", tp->tr_op);
+	    s->valid_push = false;
     }
 }
 
@@ -431,7 +473,8 @@ push_walk_subtree(
     // way to find/inspect information related to an instance in the database.
     dnew.parent_dp = DB_FULL_PATH_CUR_DIR(dfp);
 
-    if (!tp)
+
+    if (!tp || s->walk_error)
 	return;
 
     RT_CHECK_DBI(s->dbip);
@@ -444,6 +487,8 @@ push_walk_subtree(
 	    // Don't consider the leaf it if doesn't exist (TODO - is this always
 	    // what we want to do when pushing?)
 	    if ((dp=db_lookup(s->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
+		return;
+	    if (survey && db_full_path_search(dfp, dp))
 		return;
 
 	    /* Update current matrix state to reflect the new branch of
@@ -621,9 +666,16 @@ push_walk_subtree(
 	    push_walk_subtree(dfp, tp->tr_b.tb_left, depth, curr_mat, survey, client_data);
 	    push_walk_subtree(dfp, tp->tr_b.tb_right, depth, curr_mat, survey, client_data);
 	    break;
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    push_walk_subtree(dfp, tp->tr_b.tb_left, depth, curr_mat, survey, client_data);
+	    break;
+	case OP_NOP:
+	    break;
 	default:
-	    bu_log("push_walk_subtree: unrecognized operator %d\n", tp->tr_op);
-	    bu_bomb("push_walk_subtree: unrecognized operator\n");
+	    bu_vls_printf(s->msgs, "Unsupported combination operator %d\n", tp->tr_op);
+	    s->walk_error = true;
     }
 }
 
@@ -650,8 +702,11 @@ push_walk(struct db_full_path *dfp,
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
-	if (rt_db_get_internal5(&in, dp, s->dbip, NULL) < 0)
+	if (rt_db_get_internal5(&in, dp, s->dbip, NULL) < 0) {
+	    bu_vls_printf(s->msgs, "Unable to read combination %s\n", dp->d_namep);
+	    s->walk_error = true;
 	    return;
+	}
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
 	push_walk_subtree(dfp, comb->tree, depth+1, curr_mat, survey, client_data);
@@ -689,7 +744,7 @@ tree_update_walk_subtree(
     dp_i ldpi;
     bool found = false;
 
-    if (!tp)
+    if (!tp || s->walk_error)
 	return;
 
     RT_CK_TREE(tp);
@@ -892,9 +947,16 @@ tree_update_walk_subtree(
 	    tree_update_walk_subtree(parent_dpi, dfp, tp->tr_b.tb_left, wtp->tr_b.tb_left, depth, curr_mat, tree_altered, client_data);
 	    tree_update_walk_subtree(parent_dpi, dfp, tp->tr_b.tb_right, wtp->tr_b.tb_right, depth, curr_mat, tree_altered, client_data);
 	    break;
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    tree_update_walk_subtree(parent_dpi, dfp, tp->tr_b.tb_left, wtp->tr_b.tb_left, depth, curr_mat, tree_altered, client_data);
+	    break;
+	case OP_NOP:
+	    break;
 	default:
-	    bu_log("tree_update_walk_subtree: unrecognized operator %d\n", tp->tr_op);
-	    bu_bomb("tree_update_walk_subtree: unrecognized operator\n");
+	    bu_vls_printf(s->msgs, "Unsupported combination operator %d\n", tp->tr_op);
+	    s->walk_error = true;
     }
 }
 
@@ -906,230 +968,70 @@ tree_update_walk(
     mat_t *curr_mat,
     void *client_data)
 {
-    struct directory *dp;
-    struct push_state *s = (struct push_state *)client_data;
+    auto *state = static_cast<struct push_state *>(client_data);
+    if (state->walk_error || (!dpi.iname.empty() && state->added.count(dpi.iname)))
+	return;
 
     if (dpi.dp->d_flags & RT_DIR_COMB) {
+	const bool at_boundary = (state->max_depth && depth >= state->max_depth) ||
+	    (state->stop_at_regions && (dpi.dp->d_flags & RT_DIR_REGION));
+	if (at_boundary && dpi.iname.empty())
+	    return;
 
-	/* If this comb is itself a push leaf (depth-limited or region-halted),
-	 * do NOT walk its internal tree - everything inside is below the push
-	 * boundary and remains unchanged.  If an iname was assigned, we do
-	 * need to create the copy (same tree content as the original), but
-	 * that copy's tree must not be further modified. */
-	bool is_depth_leaf = s->max_depth && (depth >= s->max_depth);
-	bool is_region_leaf = (dpi.dp->d_flags & RT_DIR_REGION) && s->stop_at_regions;
-	if (is_depth_leaf || is_region_leaf) {
-	    if (!dpi.iname.length())
-		return; /* no copy needed */
-	    /* Create an identical copy under the new name */
-	    struct rt_db_internal *in;
-	    BU_GET(in, struct rt_db_internal);
-	    if (rt_db_get_internal5(in, dpi.dp, s->dbip, NULL) < 0) {
-		BU_PUT(in, struct rt_db_internal);
-		return;
-	    }
-	    dp = db_lookup(s->dbip, dpi.iname.c_str(), LOOKUP_QUIET);
-	    if (dp != RT_DIR_NULL) {
-		/* Already created by another branch */
-		rt_db_free_internal(in);
-		BU_PUT(in, struct rt_db_internal);
-		return;
-	    }
-	    dp = db_diradd(s->dbip, dpi.iname.c_str(), RT_DIR_PHONY_ADDR, 0, dpi.dp->d_flags, (void *)&in->idb_type);
-	    if (dp == RT_DIR_NULL) {
-		bu_log("Unable to add %s to the database directory", dpi.iname.c_str());
-		rt_db_free_internal(in);
-		BU_PUT(in, struct rt_db_internal);
-		return;
-	    }
-	    s->added[dp] = in;
+	auto internal = alloc_push_internal();
+	if (rt_db_get_internal5(internal.get(), dpi.dp, state->dbip, NULL) < 0) {
+	    bu_vls_printf(state->msgs, "Unable to read combination %s\n", dpi.dp->d_namep);
+	    state->walk_error = true;
+	    return;
+	}
+	if (at_boundary) {
+	    queue_push_object(*state, dpi, std::move(internal));
 	    return;
 	}
 
-	/* Read only copy of comb tree - use for steering the walk */
-	struct rt_db_internal intern;
-	struct rt_comb_internal *comb;
-	bool tree_altered = false;
-	if (rt_db_get_internal5(&intern, dpi.dp, s->dbip, NULL) < 0) {
+	// Walk a stable copy while recording the new references and matrices.
+	auto original = alloc_push_internal();
+	if (rt_db_get_internal5(original.get(), dpi.dp, state->dbip, NULL) < 0) {
+	    bu_vls_printf(state->msgs, "Unable to read combination %s\n", dpi.dp->d_namep);
+	    state->walk_error = true;
 	    return;
 	}
-	comb = (struct rt_comb_internal *)intern.idb_ptr;
-
-	/* Copy of comb tree for editing - use for recording new tree */
-	struct rt_db_internal *in;
-	struct rt_comb_internal *wcomb;
-	BU_GET(in, struct rt_db_internal);
-	if (rt_db_get_internal5(in, dpi.dp, s->dbip, NULL) < 0) {
-	    BU_PUT(in, struct rt_db_internal);
-	    return;
-	}
-	wcomb = (struct rt_comb_internal *)in->idb_ptr;
-
-	// Walk one tree copy, while recording updates in the other one
-	tree_update_walk_subtree(dpi, dfp, comb->tree, wcomb->tree, depth + 1, curr_mat, &tree_altered, client_data);
-
-	// Read-only copy is done
-	rt_db_free_internal(&intern);
-
-	// If we didn't alter the working comb tree, we're done.
-	if (!tree_altered && !dpi.iname.length()) {
-	    rt_db_free_internal(in);
-	    BU_PUT(in, struct rt_db_internal);
-	    return;
-	}
-
-	// If we DID alter the comb tree (typically we will) or we have an
-	// iname, we have to get the new tree on to disk.  If this instance has
-	// an iname, we are not updating the existing object but instead
-	// creating a new one.
-	//
-	// At this point in processing, we can either rely on the uniqueness
-	// of the dp->instance mapping (vanilla push) or we use the inames to
-	// create new dp objects - i.e., at this point, we have enough information
-	// to make a unique 1-1 mapping between a struct directory pointer and
-	// the object information needed for a pushed object instance.
-	if (dpi.iname.length()) {
-
-	    // New name, new dp
-	    dp = db_lookup(s->dbip, dpi.iname.c_str(), LOOKUP_QUIET);
-
-	    if (dp != RT_DIR_NULL) {
-		// If we've already created the dp, we don't need to do so
-		// again.  Theoretically this might happen if two separate
-		// branches of tree walking happen to produce the same instance
-		// in their trees.
-		rt_db_free_internal(in);
-		BU_PUT(in, struct rt_db_internal);
-		return;
-	    }
-
-	    // Haven't already created this particular instance dp - proceed,
-	    // but don't (yet) alter the database by writing the internal
-	    // contents. That will be done with all other file changes at the
-	    // end of processing.
-	    dp = db_diradd(s->dbip, dpi.iname.c_str(), RT_DIR_PHONY_ADDR, 0, dpi.dp->d_flags, (void *)&in->idb_type);
-	    if (dp == RT_DIR_NULL) {
-		bu_log("Unable to add %s to the database directory", dpi.iname.c_str());
-		rt_db_free_internal(in);
-		BU_PUT(in, struct rt_db_internal);
-		return;
-	    }
-	    s->added[dp] = in;
-	} else {
-	    // We're editing the existing tree - reuse dp
-	    dp = dpi.dp;
-	    s->updated[dp] = in;
-	}
-
-
-    } else {
-
-	// If we're not copying the solid and not applying a matrix, we're done
-	if (!dpi.iname.length() && dpi.mat_is_idn)
-	    return;
-
-	if (s->verbosity > 3 && s->msgs) {
-	    if (dpi.iname.length()) {
-		bu_vls_printf(s->msgs, "Solid process %s->%s\n", dpi.parent_dp->d_namep, dpi.iname.c_str());
-	    } else {
-		bu_vls_printf(s->msgs, "Solid process %s->%s\n", dpi.parent_dp->d_namep, dpi.dp->d_namep);
-	    }
-	}
-
-	struct rt_db_internal *in;
-	BU_GET(in, struct rt_db_internal);
-	if (dpi.apply_to_solid) {
-	    // If there is a non-IDN matrix, this is where we apply it
-	    // First step, check for validity.
-	    //
-	    // Note: tor has a specific restriction in that it needs a uniform
-	    // matrix - if I'm deciphering the code in rt_tor_import5
-	    // correctly, it handles this by simply ignoring a non-conforming
-	    // matrix on import.  As currently implemented, this limitation
-	    // applies whether the matrix is above the torus in a given tree or
-	    // an attempt is made to apply the matrix directly to the solid's
-	    // parameters.
-	    //
-	    // Because the same bn_mat_is_non_unif matrix is ignored for a tor
-	    // regardless of where the problem matrix is in the tree, trying to
-	    // apply this matrix to the tor is not currently considered a
-	    // "failure" - previously a "push" operation on such a tor would
-	    // complete, clear the matrix from the tree, and simply skip
-	    // applying the updates to the torus.  This certainly is a failure
-	    // to make the specified changes to the torus, but since the desired
-	    // shape was never achieved in the tree with or without the matrix
-	    // above it, the geometry the raytracer reports has not changed and
-	    // the realized shape pre and post push is consistent.
-	    //
-	    // Accordingly, we're deliberately NOT checking for the tor+non_unif
-	    // case in this validation step.
-	    if (bn_mat_ck(dpi.dp->d_namep, dpi.mat) < 0) {
-		if (s->msgs) {
-		    char *ps = db_path_to_string(dfp);
-		    bu_vls_printf(s->msgs, "%s: attempting to apply a matrix that does does not preserve axis perpendicularity to solid %s\n", ps, dpi.dp->d_namep);
-		    bu_free(ps, "path string");
-		}
-		BU_PUT(in, struct rt_db_internal);
-		s->walk_error = true;
-		return;
-	    }
-
-
-	    if (s->verbosity > 3 && !dpi.mat_is_idn && s->msgs) {
-		bn_mat_print_vls(dpi.dp->d_namep, dpi.mat, s->msgs);
-		bn_mat_print_vls("curr_mat", *curr_mat, s->msgs);
-	    }
-	    if (rt_db_get_internal(in, dpi.dp, s->dbip, dpi.mat) < 0) {
-		if (s->msgs)
-		    bu_vls_printf(s->msgs, "Read error fetching '%s'\n", dpi.dp->d_namep);
-		BU_PUT(in, struct rt_db_internal);
-		s->walk_error = true;
-		return;
-	    }
-	} else {
-	    // If there is a non-IDN matrix, this is where we apply it
-	    if (rt_db_get_internal(in, dpi.dp, s->dbip, bn_mat_identity) < 0) {
-		if (s->msgs)
-		    bu_vls_printf(s->msgs, "Read error fetching '%s'\n", dpi.dp->d_namep);
-		BU_PUT(in, struct rt_db_internal);
-		s->walk_error = true;
-		return;
-	    }
-	}
-	RT_CK_DB_INTERNAL(in);
-
-	if (dpi.iname.length()) {
-	    // If we have an iname, we need a new directory pointer.
-	    dp = db_lookup(s->dbip, dpi.iname.c_str(), LOOKUP_QUIET);
-	    if (dp != RT_DIR_NULL) {
-		// If we've already created this, we're done
-		rt_db_free_internal(in);
-		BU_PUT(in, struct rt_db_internal);
-		return;
-	    }
-	    dp = db_diradd(s->dbip, dpi.iname.c_str(), RT_DIR_PHONY_ADDR, 0, dpi.dp->d_flags, (void *)&in->idb_type);
-	    if (dp == RT_DIR_NULL) {
-		if (s->msgs)
-		    bu_vls_printf(s->msgs, "Unable to add %s to the database directory\n", dpi.iname.c_str());
-		rt_db_free_internal(in);
-		BU_PUT(in, struct rt_db_internal);
-		s->walk_error = true;
-		return;
-	    }
-	    if (s->verbosity > 1 && s->msgs)
-		bu_vls_printf(s->msgs, "Write solid %s contents\n", dpi.iname.c_str());
-
-	    s->added[dp] = in;
-	} else {
-	    if (s->verbosity > 1 && s->msgs)
-		bu_vls_printf(s->msgs, "Write solid %s contents\n", dpi.dp->d_namep);
-
-	    dp = dpi.dp;
-	    s->updated[dp] = in;
-	}
-
-
+	const auto *old_comb = static_cast<const struct rt_comb_internal *>(original->idb_ptr);
+	auto *comb = static_cast<struct rt_comb_internal *>(internal->idb_ptr);
+	bool changed = false;
+	tree_update_walk_subtree(dpi, dfp, old_comb->tree, comb->tree, depth + 1, curr_mat, &changed, client_data);
+	if (!state->walk_error && (changed || !dpi.iname.empty()))
+	    queue_push_object(*state, dpi, std::move(internal));
+	return;
     }
+
+    if (dpi.iname.empty() && dpi.mat_is_idn)
+	return;
+
+    if (dpi.apply_to_solid && bn_mat_ck(dpi.dp->d_namep, dpi.mat) < 0) {
+	char *path = db_path_to_string(dfp);
+	bu_vls_printf(state->msgs, "%s: matrix does not preserve axis perpendicularity for %s\n",
+		      path, dpi.dp->d_namep);
+	bu_free(path, "push path");
+	state->walk_error = true;
+	return;
+    }
+
+    if (state->verbosity > 3 && dpi.apply_to_solid && !dpi.mat_is_idn) {
+	bn_mat_print_vls(dpi.dp->d_namep, dpi.mat, state->msgs);
+	bn_mat_print_vls("curr_mat", *curr_mat, state->msgs);
+    }
+
+    auto internal = alloc_push_internal();
+    if (rt_db_get_internal(internal.get(), dpi.dp, state->dbip, dpi.apply_to_solid ? dpi.mat : bn_mat_identity) < 0) {
+	bu_vls_printf(state->msgs, "Read error fetching '%s'\n", dpi.dp->d_namep);
+	state->walk_error = true;
+	return;
+    }
+
+    if (state->verbosity > 1)
+	bu_vls_printf(state->msgs, "Prepare solid %s\n", dpi.iname.empty() ? dpi.dp->d_namep : dpi.iname.c_str());
+    queue_push_object(*state, dpi, std::move(internal));
 }
 
 
@@ -1148,48 +1050,35 @@ npush_usage(struct bu_vls *str, struct bu_opt_desc *d) {
 extern "C" int
 ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int print_help = 0;
-    int xpush = 0;
-    int to_regions = 0;
-    int to_solids = 0;
-    int max_depth = 0;
-    int verbosity = 0;
-    int local_changes_only = 0;
-    int dry_run = 0;
-    struct bu_opt_desc d[11];
-    BU_OPT(d[0], "h", "help",      "",   NULL,         &print_help,  "Print help and exit");
-    BU_OPT(d[1], "?", "",          "",   NULL,         &print_help,  "");
-    BU_OPT(d[2], "v", "verbosity",  "",  &bu_opt_incr_long, &verbosity,     "Increase output verbosity (multiple specifications of -v increase verbosity)");
-    BU_OPT(d[3], "f", "force",     "",   NULL,         &xpush,       "Create new objects if needed to push matrices (xpush)");
-    BU_OPT(d[4], "x", "xpush",     "",   NULL,         &xpush,       "");
-    BU_OPT(d[5], "r", "regions",   "",   NULL,         &to_regions,  "Halt push at regions (matrix will be above region reference)");
-    BU_OPT(d[6], "s", "solids",    "",   NULL,         &to_solids,   "Halt push at solids (matrix will be above solid reference)");
-    BU_OPT(d[7], "d", "max-depth", "",   &bu_opt_int,  &max_depth,   "Halt at depth # from tree root (matrix will be above item # layers deep)");
-    BU_OPT(d[8], "L", "local", "",       NULL,  &local_changes_only,   "Ensure push operations do not impact geometry outside the specified trees.");
-    BU_OPT(d[9], "D", "dry-run", "",       NULL,  &dry_run,   "Calculate the changes but do not apply them.");
-
-    BU_OPT_NULL(d[10]);
-
-    /* Skip command name */
-    argc--; argv++;
-
-    /* parse standard options */
-    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
-
-    if (!argc || print_help) {
-	struct bu_vls npush_help = BU_VLS_INIT_ZERO;
-	npush_usage(&npush_help, d);
-	bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&npush_help));
-	bu_vls_free(&npush_help);
-	return BRLCAD_OK;
+    bu_vls_trunc(gedp->ged_result_str, 0);
+    npush_options options;
+    --argc;
+    ++argv;
+    if (!argc) {
+        npush_usage(gedp->ged_result_str, options.descriptors);
+        return BRLCAD_OK;
     }
 
-    /* adjust argc to match the leftovers of the options parsing */
-    argc = opt_ret;
+    argc = bu_opt_parse(gedp->ged_result_str, argc, argv, options.descriptors);
+    if (argc < 0)
+        return BRLCAD_ERROR;
+    if (options.help) {
+        npush_usage(gedp->ged_result_str, options.descriptors);
+        return BRLCAD_OK;
+    }
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    if (!options.dry_run) {
+        GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    }
+    if (!argc) {
+        bu_vls_printf(gedp->ged_result_str, "Specify at least one push object");
+        return BRLCAD_ERROR;
+    }
+    if (db_version(gedp->dbip) != 5) {
+        bu_vls_printf(gedp->ged_result_str, "npush requires a DB5 database");
+        return BRLCAD_ERROR;
+    }
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     struct db_i *dbip = gedp->dbip;
 
@@ -1203,12 +1092,11 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     /* Based on the push arg list, walk the specified trees to identify
      * instances involved with matrices */
     struct push_state s;
-    s.verbosity = verbosity;
+    s.verbosity = options.verbosity;
     s.tol = &wdbp->wdb_tol;
-    s.max_depth = max_depth;
-    s.stop_at_regions = (to_regions) ? true : false;
-    s.stop_at_shapes = (to_solids) ? true : false;
-    s.dry_run = (dry_run) ? true : false;
+    s.max_depth = options.max_depth;
+    s.stop_at_regions = options.to_regions;
+    s.stop_at_shapes = options.to_solids;
     s.dbip = gedp->dbip;
     s.msgs = gedp->ged_result_str;
     for (int i = 0; i < argc; i++) {
@@ -1235,9 +1123,6 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	db_add_node_to_full_path(dfp, dp);
 	validate_walk(dbip, dfp, &s);
 	if (!s.valid_push) {
-	    if (BU_STR_EQUAL(dp->d_namep, s.problem_obj.c_str())) {
-		bu_vls_printf(gedp->ged_result_str, "NOTE: cyclic path found: %s is below itself", dp->d_namep);
-	    }
 	    db_free_full_path(dfp);
 	    BU_PUT(dfp, struct db_full_path);
 	    return BRLCAD_ERROR;
@@ -1284,7 +1169,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    if (local_changes_only) {
+    if (options.local_only) {
 	/* Because pushes have potentially global consequences, we provide an
 	 * option that records ALL unique object instances in the database.
 	 * That information will allow the push operation to tell if any given
@@ -1312,6 +1197,8 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 
     // We're done with the tops dps now - free the array.
     bu_free(all_paths, "free db_ls output");
+    if (s.walk_error)
+	return BRLCAD_ERROR;
 
     // Create a vector of unique instances for easier manipulation.
     std::vector<dp_i> uniq_instances(s.instances.size());
@@ -1350,7 +1237,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 
     // If we don't have force-push on, and we have non-unique mapping between
     // dp pointers and instances, we can't proceed.
-    if (!xpush) {
+    if (!options.xpush) {
 	bool conflict = false;
 	struct bu_vls msgs = BU_VLS_INIT_ZERO;
 	for (size_t i = 0; i < uniq_instances.size(); i++) {
@@ -1381,7 +1268,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 
 	    // If we're not being verbose, the first failure means we can just
 	    // immediately bail.
-	    if (!verbosity) {
+	    if (!s.verbosity) {
 		bu_vls_printf(gedp->ged_result_str, "Operation failed - force not enabled and one or more solids are being moved in conflicting directions by multiple comb instances.");
 		return BRLCAD_ERROR;
 	    }
@@ -1597,110 +1484,83 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    // If anything went wrong, there's no point in going any further.
     if (s.walk_error) {
-	bu_vls_printf(gedp->ged_result_str, "Fatal error preparing new trees\n");
-	std::map<struct directory *, struct rt_db_internal *>::iterator uf_it;
-	for (uf_it = s.updated.begin(); uf_it != s.updated.end(); uf_it++) {
-	    struct rt_db_internal *in = uf_it->second;
-	    rt_db_free_internal(in);
-	    BU_PUT(in, struct rt_db_internal);
-	}
-	for (uf_it = s.added.begin(); uf_it != s.added.end(); uf_it++) {
-	    struct rt_db_internal *in = uf_it->second;
-	    rt_db_free_internal(in);
-	    BU_PUT(in, struct rt_db_internal);
-	    db_dirdelete(gedp->dbip, uf_it->first);
-	}
+	bu_vls_printf(gedp->ged_result_str, "Fatal error preparing new trees");
 	return BRLCAD_ERROR;
     }
 
-    /* We now know everything we need.  For combs and primitives that have updates
-     * or are being newly created apply those changes to the .g file.  Because this
-     * step is destructive, it is carried out only after all characterization steps
-     * are complete in order to avoid any risk of changing what is being analyzed
-     * mid-stream.  (Problems of that nature are not always simple to observe, and
-     * can be *very* difficult to debug.) */
-    std::map<struct directory *, struct rt_db_internal *>::iterator u_it;
-    for (u_it = s.updated.begin(); u_it != s.updated.end(); u_it++) {
-	struct directory *dp = u_it->first;
-	if (s.verbosity > 4) {
-	    bu_log("Writing %s to database\n", dp->d_namep);
-	}
-	struct rt_db_internal *in = u_it->second;
-	if (!s.dry_run) {
-	    if (rt_db_put_internal(dp, s.dbip, in) < 0) {
-		bu_log("Unable to store %s to the database", dp->d_namep);
-	    }
-	}
-	rt_db_free_internal(in);
-	BU_PUT(in, struct rt_db_internal);
+    if (options.dry_run) {
+	bu_vls_printf(gedp->ged_result_str, "Would update %zu objects and create %zu objects",
+		      s.updated.size(), s.added.size());
+	return BRLCAD_OK;
     }
-    for (u_it = s.added.begin(); u_it != s.added.end(); u_it++) {
-	struct directory *dp = u_it->first;
-	if (s.verbosity > 4) {
-	    bu_log("Adding %s to database\n", dp->d_namep);
+
+    for (const auto &entry : s.updated) {
+	if (rt_db_put_internal(entry.first, dbip, entry.second.get()) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "Unable to store %s in the database", entry.first->d_namep);
+	    return BRLCAD_ERROR;
 	}
-	struct rt_db_internal *in = u_it->second;
-	if (!s.dry_run) {
-	    if (rt_db_put_internal(dp, s.dbip, in) < 0) {
-		bu_log("Unable to store %s to the database", dp->d_namep);
-	    }
-	} else {
-	    // Delete the directory pointers we set up - dry run, so we're not
-	    // actually creating the objects.
-	    db_dirdelete(gedp->dbip, dp);
+    }
+    for (const auto &entry : s.added) {
+	auto *internal = entry.second.internal.get();
+	auto *dp = db_diradd(dbip, entry.first.c_str(), RT_DIR_PHONY_ADDR, 0,
+			     entry.second.flags, &internal->idb_type);
+	if (!dp) {
+	    bu_vls_printf(gedp->ged_result_str, "Unable to add %s to the database directory", entry.first.c_str());
+	    return BRLCAD_ERROR;
 	}
-	rt_db_free_internal(in);
-	BU_PUT(in, struct rt_db_internal);
+	if (rt_db_put_internal(dp, dbip, internal) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "Unable to store %s in the database", entry.first.c_str());
+	    if (dp->d_addr == RT_DIR_PHONY_ADDR)
+		(void)db_dirdelete(dbip, dp);
+	    return BRLCAD_ERROR;
+	}
     }
 
     // We've written to the database - everything should be finalized now.  Do a final
     // validation check.
     s.valid_push = true;
     s.final_check = true;
-    if (!s.dry_run) {
-	for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
-	    struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
-	    struct db_full_path *dfp;
-	    BU_GET(dfp, struct db_full_path);
-	    db_full_path_init(dfp);
-	    db_add_node_to_full_path(dfp, dp);
-	    validate_walk(dbip, dfp, &s);
-	    db_free_full_path(dfp);
-	    BU_PUT(dfp, struct db_full_path);
-	}
-	if (!s.valid_push) {
-	    bu_vls_printf(gedp->ged_result_str, "failed to generate one or more objects listed in pushed trees.");
-	    return BRLCAD_ERROR;
-	}
+    for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
+	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
+	struct db_full_path *dfp;
+	BU_GET(dfp, struct db_full_path);
+	db_full_path_init(dfp);
+	db_add_node_to_full_path(dfp, dp);
+	validate_walk(dbip, dfp, &s);
+	db_free_full_path(dfp);
+	BU_PUT(dfp, struct db_full_path);
+    }
+    if (!s.valid_push) {
+	bu_vls_printf(gedp->ged_result_str, "failed to generate one or more objects listed in pushed trees.");
+	return BRLCAD_ERROR;
+    }
 
-	// Writing done - update nref again to reflect changes
-	db_update_nref(dbip);
+    // Writing done - update nref again to reflect changes
+    db_update_nref(dbip);
 
-	// Repeat the db_ls call and verify it is consistent.
-	struct directory **final_paths;
-	int final_tops_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &final_paths);
-	std::set<std::string> tops2;
-	for (int i = 0; i < final_tops_cnt; i++) {
-	    tops2.insert(std::string(final_paths[i]->d_namep));
-	}
-	bu_free(final_paths, "free db_ls output");
+    // Repeat the db_ls call and verify it is consistent.
+    struct directory **final_paths;
+    int final_tops_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &final_paths);
+    std::set<std::string> tops2;
+    for (int i = 0; i < final_tops_cnt; i++) {
+	tops2.insert(std::string(final_paths[i]->d_namep));
+    }
+    bu_free(final_paths, "free db_ls output");
 
-	// Report any differences
-	std::set<std::string> removed_tops, added_tops;
-	std::set_difference(tops1.begin(), tops1.end(), tops2.begin(), tops2.end(), std::inserter(removed_tops, removed_tops.end()));
-	std::set_difference(tops2.begin(), tops2.end(), tops1.begin(), tops1.end(), std::inserter(added_tops, added_tops.end()));
-	for (s_it = removed_tops.begin(); s_it != removed_tops.end(); s_it++) {
-	    bu_vls_sprintf(gedp->ged_result_str, "Error: object %s is no longer a tops object\n", (*s_it).c_str());
-	}
-	for (s_it = added_tops.begin(); s_it != added_tops.end(); s_it++) {
-	    bu_vls_sprintf(gedp->ged_result_str, "Error: object %s is now a tops object\n", (*s_it).c_str());
-	}
+    // Report any differences
+    std::set<std::string> removed_tops, added_tops;
+    std::set_difference(tops1.begin(), tops1.end(), tops2.begin(), tops2.end(), std::inserter(removed_tops, removed_tops.end()));
+    std::set_difference(tops2.begin(), tops2.end(), tops1.begin(), tops1.end(), std::inserter(added_tops, added_tops.end()));
+    for (s_it = removed_tops.begin(); s_it != removed_tops.end(); s_it++) {
+	bu_vls_sprintf(gedp->ged_result_str, "Error: object %s is no longer a tops object\n", (*s_it).c_str());
+    }
+    for (s_it = added_tops.begin(); s_it != added_tops.end(); s_it++) {
+	bu_vls_sprintf(gedp->ged_result_str, "Error: object %s is now a tops object\n", (*s_it).c_str());
+    }
 
-	if (removed_tops.size() || added_tops.size()) {
-	    return BRLCAD_ERROR;
-	}
+    if (removed_tops.size() || added_tops.size()) {
+	return BRLCAD_ERROR;
     }
 
     return BRLCAD_OK;

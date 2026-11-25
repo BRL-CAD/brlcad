@@ -710,6 +710,21 @@ and Redo each took 0.53 seconds. An independent DB5 reader confirmed
 all six translated bounds after Redo. Workspace verification took
 5.06 seconds.
 
+GED previewed a local npush on read-only session DB5, embedded DB5 and
+LMDB documents. Applying it created two positioned copies and rewrote
+their combination references in one revision. A failed second write
+left the original model and selection intact and emitted no committed
+change event. Undo and Redo restored the corresponding references and
+primitive positions. A cycle below the push root was rejected before
+writing. All seven existing npush fixture comparisons passed.
+
+On an M1917 workspace copy, a local push copied the 41.54 MB BREP so
+that a second assembly could keep using the original. Preview took
+2.85 seconds, commit took 7.06 seconds, and Undo and Redo each took
+under 0.76 seconds. A plain DB5 subset confirmed the translated BREP
+bounds after Redo. The second assembly retained its original reference
+and the workspace verifier passed.
+
 Two GED clients exercised stale-write recovery in session DB5,
 embedded DB5 and LMDB. Recovery opened the staged geometry in a new
 file. Embedded and workspace recovery preserved the archive and

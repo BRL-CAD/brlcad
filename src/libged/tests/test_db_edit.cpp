@@ -1153,6 +1153,88 @@ test_instance_history(struct ged *gedp)
 }
 
 static int
+test_push_history(struct ged *gedp)
+{
+    const char *setup[] = {"db", "history", "batch", "Place shared instances",
+	"{in push-shared.s sph 0 0 0 2} {g push-left.c push-shared.s} {g push-right.c push-shared.s}"
+	" {g push-outside.c push-shared.s} {g push-root.c push-left.c push-right.c}"
+	" {arced push-left.c/push-shared.s matrix rarc xlate -10 0 0}"
+	" {arced push-right.c/push-shared.s matrix rarc xlate 10 0 0}", nullptr};
+    CHECK(run(gedp, setup) == BRLCAD_OK);
+    const auto before = selected_id(gedp);
+
+    const auto instance_matches = [](struct db_i *dbip, const char *group, const char *primitive, fastf_t center, fastf_t translate) {
+	const auto *dp = db_lookup(dbip, group, LOOKUP_QUIET);
+	struct rt_db_internal internal = RT_DB_INTERNAL_INIT_ZERO;
+	if (!dp || rt_db_get_internal(&internal, dp, dbip, nullptr) < 0)
+	    return false;
+	const auto *comb = internal.idb_type == ID_COMBINATION ? static_cast<const struct rt_comb_internal *>(internal.idb_ptr) : nullptr;
+	const auto *leaf = comb ? comb->tree : nullptr;
+	std::string name;
+	if (leaf && leaf->tr_op == OP_DB_LEAF && EQUAL(leaf->tr_l.tl_mat ? leaf->tr_l.tl_mat[MDX] : 0.0, translate))
+	    name = leaf->tr_l.tl_name;
+	rt_db_free_internal(&internal);
+	if (primitive ? name != primitive : name.find("push-shared.s_") != 0)
+	    return false;
+	const auto *shape = db_lookup(dbip, name.c_str(), LOOKUP_QUIET);
+	if (!shape || rt_db_get_internal(&internal, shape, dbip, nullptr) < 0)
+	    return false;
+	const auto *sphere = static_cast<const struct rt_ell_internal *>(internal.idb_ptr);
+	const bool positioned = (internal.idb_type == ID_SPH || internal.idb_type == ID_ELL) && EQUAL(sphere->v[X], center);
+	rt_db_free_internal(&internal);
+	return positioned;
+    };
+    const auto original = [gedp, &instance_matches]() {
+	return instance_matches(gedp->dbip, "push-left.c", "push-shared.s", 0, -10) &&
+	    instance_matches(gedp->dbip, "push-right.c", "push-shared.s", 0, 10) &&
+	    !db_lookup(gedp->dbip, "push-shared.s_0", LOOKUP_QUIET);
+    };
+    CHECK(original());
+
+    const std::unique_ptr<struct ged, decltype(&ged_close)> reader(ged_create(), ged_close);
+    const char *open[] = {"db", "open", "-r", gedp->dbip->dbi_filename, nullptr};
+    const char *preview[] = {"npush", "push-root.c", "-vDLx", nullptr};
+    const char *apply[] = {"npush", "-Lx", "push-root.c", nullptr};
+    CHECK(reader && run(reader.get(), open) == BRLCAD_OK);
+    CHECK(run(reader.get(), preview) == BRLCAD_OK && contains_result(reader.get(), "update 2 objects and create 2 objects"));
+    CHECK(!db_lookup(reader->dbip, "push-shared.s_0", LOOKUP_QUIET) && run(reader.get(), apply) == BRLCAD_ERROR);
+    CHECK(selected_id(gedp) == before && original());
+
+    int commits = 0;
+    const auto observer = ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE, count_commit, &commits);
+    CHECK(observer);
+    int staged_writes = 0;
+    CHECK(ged_clbk_set(gedp, "npush", BU_CLBK_PRE, fail_staged_edit, &staged_writes) == BRLCAD_OK);
+    CHECK(run(gedp, apply) == BRLCAD_ERROR && contains_result(gedp, "Unable to store") && staged_writes == 1);
+    CHECK(ged_clbk_set(gedp, "npush", BU_CLBK_PRE, nullptr, nullptr) == GED_OVERRIDE);
+    CHECK(selected_id(gedp) == before && original() && commits == 0);
+
+    CHECK(run(gedp, apply) == BRLCAD_OK && commits == 1);
+    CHECK(ged_event_observer_remove(gedp, observer) == 1);
+    const auto pushed = selected_id(gedp);
+    const auto pushed_instances = [gedp, &instance_matches]() {
+	return instance_matches(gedp->dbip, "push-left.c", nullptr, -10, 0) &&
+	    instance_matches(gedp->dbip, "push-right.c", nullptr, 10, 0) &&
+	    instance_matches(gedp->dbip, "push-outside.c", "push-shared.s", 0, 0);
+    };
+    CHECK(pushed != before && pushed_instances());
+    const char *undo[] = {"db", "undo", nullptr};
+    const char *redo[] = {"db", "redo", nullptr};
+    CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == before && original());
+    CHECK(run(gedp, redo) == BRLCAD_OK && selected_id(gedp) == pushed && pushed_instances());
+
+    const char *cycle[] = {"db", "history", "batch", "Create nested cycle",
+	"{g push-cycle-a.c push-shared.s} {g push-cycle-b.c push-cycle-a.c}"
+	" {g push-cycle-a.c push-cycle-b.c} {g push-cycle-root.c push-cycle-a.c}", nullptr};
+    CHECK(run(gedp, cycle) == BRLCAD_OK);
+    const auto cycle_id = selected_id(gedp);
+    const char *reject_cycle[] = {"npush", "push-cycle-root.c", nullptr};
+    CHECK(run(gedp, reject_cycle) == BRLCAD_ERROR && contains_result(gedp, "Cyclic path found") &&
+	selected_id(gedp) == cycle_id);
+    return 0;
+}
+
+static int
 test_backend_parity(const std::filesystem::path &directory)
 {
     using Records = std::map<std::string, std::vector<uint8_t>>;
@@ -1240,6 +1322,7 @@ test_backend_parity(const std::filesystem::path &directory)
 	    CHECK(test_opaque_rename(gedp) == 0);
 	    CHECK(test_sketch_rename(gedp) == 0);
 	    CHECK(test_instance_history(gedp) == 0);
+	    CHECK(test_push_history(gedp) == 0);
 	}
     }
     return 0;

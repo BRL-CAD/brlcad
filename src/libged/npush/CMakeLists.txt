@@ -7,6 +7,7 @@ ged_plugin_library(ged-npush
 
 cmakefiles(
   CMakeLists.txt
+  npush_options.h
 )
 
 # Local Variables:

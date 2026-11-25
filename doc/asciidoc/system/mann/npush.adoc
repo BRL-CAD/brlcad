@@ -23,6 +23,11 @@ options, it can perform a full push, halt at regions or solids, stop at a
 specified depth, confine changes to the named trees, or preview the changes
 without writing them.
 
+Use *-D* to see how many objects would be updated or created. This
+preview also works on read-only databases. With database history
+enabled, *db undo* restores both the original geometry and the original
+instance references in one step.
+
 
 [[npush_background]]
 == Background: Matrices in BRL-CAD

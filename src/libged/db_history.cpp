@@ -40,6 +40,7 @@
 #include "ged.h"
 #include "ged/history.h"
 #include "ged_private.h"
+#include "npush/npush_options.h"
 #include "../libbu/json.hpp"
 #include "../librt/db_history_db5.h"
 #include "../librt/db_history_workspace.h"
@@ -169,12 +170,21 @@ permitted_edit(std::string_view command, int argc, const char **argv)
 	return argc > 1 && std::string_view(argv[1]) == "-i";
     return one_of(command, {"adjust", "arced", "c", "comb", "comb_std", "concat", "copyeval", "cp", "dbconcat", "g", "group",
 	"hide", "in", "kill", "killall", "killrefs", "killtree", "make", "move", "move_all", "mv", "mvall",
-	"put", "r", "regdef", "region", "rm", "unhide"});
+	"npush", "put", "r", "regdef", "region", "rm", "unhide"});
 }
 
 bool
 permitted_query(std::string_view command, int argc, const char **argv)
 {
+    if (command == "npush") {
+	if (argc <= 1)
+	    return true;
+	// Options are rearranged by the parser. Leave the dispatched argv intact.
+	std::vector<const char *> args(argv + 1, argv + argc);
+	npush_options options;
+	return bu_opt_parse(nullptr, args.size(), args.data(), options.descriptors) >= 0 &&
+	    (options.help || options.dry_run);
+    }
     if (command == "attr")
 	return argc <= 1 || one_of(argv[1], {"get", "list", "show", "sort"});
     if (one_of(command, {"arced", "bo", "c", "comb_std", "copyeval", "move", "mv", "r", "regdef", "region", "title", "units"}))
