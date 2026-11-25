@@ -110,6 +110,7 @@ namespace {
 using Change = ged_db_history::Change;
 using Revision = ged_db_history::Revision;
 using db_history::EmbeddedStatus;
+using db_history::RevisionLookup;
 using db_history::Workspace;
 using db_history::WorkspaceHead;
 using db_history::WorkspaceWriteStatus;
@@ -1232,38 +1233,81 @@ visit_archive_revisions(const db_history::Pack &pack, Visitor visit)
 }
 
 bool
-resolve_archive_revision(struct bu_vls *out, const db_history::Pack &pack, std::string argument, db_history::Id &target)
+resolve_archive_revision(struct bu_vls *out, const db_history::Pack &pack, std::string_view argument, db_history::Id &target)
 {
     const auto ref = pack.references.find(argument);
     if (ref != pack.references.end()) {
 	target = ref->second;
 	return true;
     }
-
-    for (char &c : argument) {
-	if (c >= 'A' && c <= 'F')
-	    c = c - 'A' + 'a';
-    }
-    bool matched = false;
-    if (!argument.empty() && argument.size() <= 2 * target.size()) {
-	for (const auto &entry : pack.artifacts) {
-	    if (entry.first.first != db_history::Kind::Revision ||
-		id_string(entry.first.second).compare(0, argument.size(), argument) != 0)
-		continue;
-	    if (matched) {
-		if (out)
-		    bu_vls_printf(out, "Ambiguous revision prefix %s", argument.c_str());
+    db_history::Id lower;
+    if (db_history::decode_id_prefix(argument, lower)) {
+	const auto matches = [&](const auto &entry) {
+	    return entry != pack.artifacts.end() && entry->first.first == db_history::Kind::Revision &&
+		db_history::matches_id_prefix(entry->first.second, lower, argument.size());
+	};
+	const auto first = pack.artifacts.lower_bound({db_history::Kind::Revision, lower});
+	if (matches(first)) {
+	    if (matches(std::next(first))) {
+		if (out) {
+		    bu_vls_strcat(out, "Ambiguous revision prefix ");
+		    append_printable(out, argument);
+		}
 		return false;
 	    }
-	    target = entry.first.second;
-	    matched = true;
+	    target = first->first.second;
+	    return true;
 	}
     }
-    if (!matched && out) {
+    if (out) {
 	bu_vls_strcat(out, "Unknown revision ");
 	append_printable(out, argument);
     }
-    return matched;
+    return false;
+}
+
+bool
+read_workspace_revisions(struct bu_vls *out, const Workspace &workspace, RevisionLookup *requests, size_t count)
+{
+    if (workspace.read_revisions(requests, count, out))
+	return true;
+    for (size_t i = 0; out && i < count; ++i) {
+	const auto &request = requests[i];
+	if (request.failure == RevisionLookup::Failure::None)
+	    continue;
+	bu_vls_strcat(out, request.failure == RevisionLookup::Failure::Unknown ? "Unknown revision " : "Ambiguous revision prefix ");
+	append_printable(out, request.selector);
+	break;
+    }
+    return false;
+}
+
+const db_history::Pack *
+embedded_history_pack(struct bu_vls *out, const ged_db_history &history)
+{
+    const auto &pack = history.embedded.pack;
+    if (pack.selected_revision != db_history::absent)
+	return &pack;
+    if (out)
+	bu_vls_printf(out, "Embedded history is unavailable (%s)", embedded_status_text(history.embedded_status));
+    return nullptr;
+}
+
+bool
+read_persistent_revision(struct bu_vls *out, const ged_db_history &history, RevisionLookup &request)
+{
+    if (history.workspace)
+	return read_workspace_revisions(out, *history.workspace, &request, 1);
+    const auto *pack = embedded_history_pack(out, history);
+    if (!pack || !resolve_archive_revision(out, *pack, request.selector, request.id))
+	return false;
+    if (!db_history::read_revision(*pack, request.id, request.revision)) {
+	if (out)
+	    bu_vls_strcat(out, "The archived revision could not be read");
+	return false;
+    }
+    request.boundary = pack->boundaries.count(request.id) != 0;
+    return true;
 }
 
 const db_history::Pack *
@@ -1275,11 +1319,7 @@ history_graph(struct bu_vls *out, const ged_db_history &history, db_history::Db5
 	    return nullptr;
 	return &draft.pack;
     }
-    if (history.embedded.pack.selected_revision != db_history::absent)
-	return &history.embedded.pack;
-    if (out)
-	bu_vls_printf(out, "Embedded history is unavailable (%s)", embedded_status_text(history.embedded_status));
-    return nullptr;
+    return embedded_history_pack(out, history);
 }
 
 int
@@ -1319,16 +1359,13 @@ prune_workspace(struct ged *gedp, ged_db_history *history, int argc, const char 
 	return BRLCAD_ERROR;
     }
     if (!drop.empty()) {
-	db_history::Db5HistoryDraft graph;
-	const auto *pack = history_graph(out, *history, graph);
-	if (!pack)
+	std::vector<RevisionLookup> revisions;
+	for (const auto *argument : drop)
+	    revisions.push_back({argument});
+	if (!read_workspace_revisions(out, *history->workspace, revisions.data(), revisions.size()))
 	    return BRLCAD_ERROR;
-	for (const auto *argument : drop) {
-	    db_history::Id id;
-	    if (!resolve_archive_revision(out, *pack, argument, id))
-		return BRLCAD_ERROR;
-	    policy.drop.insert(id);
-	}
+	for (const auto &revision : revisions)
+	    policy.drop.insert(revision.id);
     }
 
     db_history::WorkspacePrunePreview preview;
@@ -1675,14 +1712,13 @@ visit_session_revision(const ged_db_history &history, uint64_t id, const Revisio
 }
 
 int
-visit_persistent_revision(const db_history::Pack &pack, const db_history::Id &id, const db_history::Revision &revision,
+visit_persistent_revision(const db_history::Id &id, const db_history::Revision &revision, bool selected, bool boundary,
 			  ged_history_revision_func_t visit, void *data)
 {
     const auto key = id_string(id);
-    const bool boundary = pack.boundaries.count(id) != 0;
     const auto parent = boundary || revision.parent == db_history::absent ? std::string() : id_string(revision.parent);
     const struct ged_history_revision row{key.c_str(), parent.empty() ? nullptr : parent.c_str(),
-	revision.label.c_str(), revision.time, id == pack.selected_revision, boundary};
+	revision.label.c_str(), revision.time, selected, boundary};
     return visit(&row, data);
 }
 
@@ -1721,7 +1757,8 @@ visit_persistent_log(const db_history::Pack &pack, const char *object,
 	return a.second.time != b.second.time ? a.second.time > b.second.time : a.first < b.first;
     });
     for (const auto &entry : entries) {
-	if (visit_persistent_revision(pack, entry.first, entry.second, visit, data) != BRLCAD_OK)
+	if (visit_persistent_revision(entry.first, entry.second, entry.first == pack.selected_revision,
+		pack.boundaries.count(entry.first) != 0, visit, data) != BRLCAD_OK)
 	    return BRLCAD_ERROR;
     }
     if (!object && checkpoint) {
@@ -1780,16 +1817,26 @@ diff_session_revisions(struct bu_vls *out, const ged_db_history &history,
 }
 
 int
-diff_archive_revisions(struct ged *gedp, const db_history::Pack &pack, const Workspace *workspace,
+diff_archive_revisions(struct ged *gedp, const ged_db_history &history,
 		       const char *a, const char *b, const char *object)
 {
     auto *out = gedp->ged_result_str;
+    const db_history::Pack *pack = nullptr;
     db_history::Id first, second;
-    if (!resolve_archive_revision(out, pack, a, first) || !resolve_archive_revision(out, pack, b, second))
-	return BRLCAD_ERROR;
+    if (history.workspace) {
+	RevisionLookup requested[] = {{a}, {b}};
+	if (!read_workspace_revisions(out, *history.workspace, requested, std::size(requested)))
+	    return BRLCAD_ERROR;
+	first = requested[0].id;
+	second = requested[1].id;
+    } else {
+	pack = embedded_history_pack(out, history);
+	if (!pack || !resolve_archive_revision(out, *pack, a, first) || !resolve_archive_revision(out, *pack, b, second))
+	    return BRLCAD_ERROR;
+    }
     db_history::Manifest before, after;
     const auto load = [&](const db_history::Id &id, db_history::Manifest &model) {
-	return workspace ? workspace->read_model_at(id, model, nullptr) : db_history::manifest_at_revision(pack, id, model);
+	return pack ? db_history::manifest_at_revision(*pack, id, model) : history.workspace->read_model_at(id, model, nullptr);
     };
     if (!load(first, before) || !load(second, after)) {
 	bu_vls_strcat(out, "An archived model could not be reconstructed");
@@ -2032,24 +2079,18 @@ handle_conflict(struct bu_vls *out, const ged_db_history *history, const char *d
 
 int
 step_archive_revision(struct ged *gedp, ged_db_history &history, const db_history::Pack &pack,
-		      bool undo, const char *argument)
+		      bool undo)
 {
     auto *out = gedp->ged_result_str;
     db_history::Id target = db_history::absent;
-    if (undo || argument) {
-	if (argument && !resolve_archive_revision(out, pack, argument, target))
-	    return BRLCAD_ERROR;
+    if (undo) {
 	db_history::Revision revision;
-	if (!db_history::read_revision(pack, undo ? pack.selected_revision : target, revision)) {
+	if (!db_history::read_revision(pack, pack.selected_revision, revision)) {
 	    bu_vls_strcat(out, "The archived revision could not be read");
 	    return BRLCAD_ERROR;
 	}
-	if (undo && !pack.boundaries.count(pack.selected_revision))
+	if (!pack.boundaries.count(pack.selected_revision))
 	    target = revision.parent;
-	if (!undo && (revision.parent != pack.selected_revision || pack.boundaries.count(target))) {
-	    bu_vls_strcat(out, "Redo revision must be a child of the current revision");
-	    return BRLCAD_ERROR;
-	}
     } else {
 	const auto preferred = pack.preferences.find(pack.selected_revision);
 	size_t children = 0;
@@ -2165,18 +2206,14 @@ ged_history_visit_revision(struct ged *gedp, const char *id, ged_history_revisio
 	return BRLCAD_OK;
     }
 
-    db_history::Db5HistoryDraft graph;
-    const auto *pack = history_graph(message, *history, graph);
-    db_history::Id target;
-    if (!pack || !resolve_archive_revision(message, *pack, id, target))
+    RevisionLookup requested{id};
+    if (!read_persistent_revision(message, *history, requested))
 	return BRLCAD_ERROR;
-    db_history::Revision saved;
-    if (!db_history::read_revision(*pack, target, saved)) {
-	if (message)
-	    bu_vls_strcat(message, "The archived revision could not be read");
-	return BRLCAD_ERROR;
-    }
-    if (revision && visit_persistent_revision(*pack, target, saved, revision, data) != BRLCAD_OK)
+
+    const auto &selected = history->workspace ? history->workspace_head.revision : history->embedded.pack.selected_revision;
+    const auto &saved = requested.revision;
+    if (revision && visit_persistent_revision(requested.id, saved, requested.id == selected,
+	    requested.boundary, revision, data) != BRLCAD_OK)
 	return BRLCAD_ERROR;
     if (!change)
 	return BRLCAD_OK;
@@ -2208,19 +2245,17 @@ ged_history_open_revision(struct ged *gedp, const char *id, struct bu_vls *messa
 	return session_snapshot(*history, target, steps, message).release();
     }
 
-    db_history::Db5HistoryDraft graph;
-    const auto *pack = history_graph(message, *history, graph);
-    db_history::Id target;
-    if (!pack || !resolve_archive_revision(message, *pack, id, target))
+    RevisionLookup requested{id};
+    if (!read_persistent_revision(message, *history, requested))
 	return nullptr;
     if (history->workspace) {
 	WorkspaceHead selected;
-	return Workspace::open_revision(history->live->dbi_filename, target, selected, message);
+	return Workspace::open_revision(history->live->dbi_filename, requested.id, selected, message);
     }
 
     const auto *external_base = history->embedded_status == EmbeddedStatus::ExternalEdits ? history->live : nullptr;
     Edit edit(db_edit_begin(history->live, "Preview revision"), db_edit_abort);
-    if (edit && db_history::stage_db5_preview(history->embedded, target, edit.get(), external_base)) {
+    if (edit && db_history::stage_db5_preview(history->embedded, requested.id, edit.get(), external_base)) {
 	if (auto *snapshot = db_edit_commit(edit.get())) {
 	    edit.release();
 	    return snapshot;
@@ -2618,12 +2653,10 @@ ged_db_history_command(struct ged *gedp, int argc, const char **argv)
 	    return history_show(gedp, argv[2], argc == 4);
 	if (argc == 3 && BU_STR_EQUAL(argv[1], "checkout")) {
 	    if (history && (history->workspace || is_embedded(*history))) {
-		db_history::Db5HistoryDraft graph;
-		const auto *pack = history_graph(gedp->ged_result_str, *history, graph);
-		db_history::Id id;
-		if (!pack || !resolve_archive_revision(gedp->ged_result_str, *pack, argv[2], id))
+		RevisionLookup requested{argv[2]};
+		if (!read_persistent_revision(gedp->ged_result_str, *history, requested))
 		    return BRLCAD_ERROR;
-		return checkout_history(gedp, *history, id);
+		return checkout_history(gedp, *history, requested.id);
 	    }
 	    uint64_t target;
 	    if (!find_revision(gedp->ged_result_str, history, argv[2], target))
@@ -2648,9 +2681,7 @@ ged_db_history_command(struct ged *gedp, int argc, const char **argv)
 	    const char *object = argc == 6 ? argv[5] : nullptr;
 	    if (!persistent)
 		return diff_session_revisions(gedp->ged_result_str, *history, argv[2], argv[3], object);
-	    db_history::Db5HistoryDraft graph;
-	    const auto *pack = history_graph(gedp->ged_result_str, *history, graph);
-	    return pack ? diff_archive_revisions(gedp, *pack, history->workspace.get(), argv[2], argv[3], object) : BRLCAD_ERROR;
+	    return diff_archive_revisions(gedp, *history, argv[2], argv[3], object);
 	}
 	bu_vls_strcat(gedp->ged_result_str, "Usage: db history " GED_DB_HISTORY_USAGE);
 	return GED_HELP;
@@ -2665,14 +2696,25 @@ ged_db_history_command(struct ged *gedp, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     if (history->workspace || is_embedded(*history)) {
+	if (argc == 2) {
+	    RevisionLookup requested{argv[1]};
+	    if (!read_persistent_revision(gedp->ged_result_str, *history, requested))
+		return BRLCAD_ERROR;
+	    const auto &selected = history->workspace ? history->workspace_head.revision : history->embedded.pack.selected_revision;
+	    if (requested.boundary || requested.revision.parent != selected) {
+		bu_vls_strcat(gedp->ged_result_str, "Redo revision must be a child of the current revision");
+		return BRLCAD_ERROR;
+	    }
+	    return checkout_history(gedp, *history, requested.id);
+	}
 	db_history::Db5HistoryDraft graph;
-	if (history->workspace && argc == 1) {
+	if (history->workspace) {
 	    WorkspaceHead observed;
 	    return history->workspace->read_navigation(history->workspace_head, observed, graph, gedp->ged_result_str) ?
-		step_archive_revision(gedp, *history, graph.pack, undo, nullptr) : BRLCAD_ERROR;
+		step_archive_revision(gedp, *history, graph.pack, undo) : BRLCAD_ERROR;
 	}
-	const auto *pack = history_graph(gedp->ged_result_str, *history, graph);
-	return pack ? step_archive_revision(gedp, *history, *pack, undo, argc == 2 ? argv[1] : nullptr) : BRLCAD_ERROR;
+	const auto *pack = embedded_history_pack(gedp->ged_result_str, *history);
+	return pack ? step_archive_revision(gedp, *history, *pack, undo) : BRLCAD_ERROR;
     }
 
     const auto &revision = history->revisions.at(history->head);

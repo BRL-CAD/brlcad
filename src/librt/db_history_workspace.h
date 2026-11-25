@@ -42,6 +42,15 @@ struct WorkspaceExport {
     int64_t timestamp = 0;
 };
 
+struct RevisionLookup {
+    enum class Failure { None, Unknown, Ambiguous };
+    std::string_view selector;
+    Id id = absent;
+    Revision revision{};
+    bool boundary = false;
+    Failure failure = Failure::None;
+};
+
 struct WorkspaceRetention {
     size_t keep = 0;
     std::set<Id> drop;
@@ -97,6 +106,9 @@ public:
     // child revision payloads, plus their boundary and preference data.
     RT_EXPORT bool read_navigation(const WorkspaceHead &view, WorkspaceHead &current,
 	Db5HistoryDraft &result, struct bu_vls *message, WorkspaceExport *last_export = nullptr) const;
+    // Resolve checkpoints and ID prefixes together in one read transaction.
+    // An unknown or ambiguous selector is marked on its request.
+    RT_EXPORT bool read_revisions(RevisionLookup *requests, size_t count, struct bu_vls *message) const;
     RT_EXPORT bool read_model_at(const Id &revision, Manifest &model, struct bu_vls *message) const;
     RT_EXPORT bool copy_to(const WorkspaceHead &view, const char *destination, struct bu_vls *message) const;
     RT_EXPORT enum db5_save_result export_snapshot(const struct db_i *view, const char *destination,

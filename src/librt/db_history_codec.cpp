@@ -36,6 +36,7 @@ namespace db_history {
 namespace {
 
 constexpr char hash_domain[] = "BRLCAD-HISTORY";
+constexpr std::string_view hex_digits = "0123456789abcdef";
 constexpr std::array<uint8_t, 2> hash_version{0, 1};
 constexpr size_t integer_size = sizeof(uint64_t);
 constexpr size_t id_size = absent.size();
@@ -392,14 +393,40 @@ identify(Kind kind, ByteView payload)
 std::string
 id_string(const Id &id)
 {
-    constexpr char digits[] = "0123456789abcdef";
     std::string hex;
     hex.reserve(2 * id.size());
     for (const uint8_t byte : id) {
-	hex += digits[byte >> 4];
-	hex += digits[byte & 0xf];
+	hex += hex_digits[byte >> 4];
+	hex += hex_digits[byte & 0xf];
     }
     return hex;
+}
+
+bool
+decode_id_prefix(std::string_view text, Id &lower)
+{
+    if (text.empty() || text.size() > 2 * lower.size())
+	return false;
+    Id decoded{};
+    for (size_t i = 0; i < text.size(); ++i) {
+	const char c = text[i];
+	const auto nibble = hex_digits.find(c >= 'A' && c <= 'F' ? static_cast<char>(c - 'A' + 'a') : c);
+	if (nibble == std::string_view::npos)
+	    return false;
+	decoded[i / 2] |= static_cast<uint8_t>(i % 2 ? nibble : nibble << 4);
+    }
+    lower = decoded;
+    return true;
+}
+
+bool
+matches_id_prefix(const Id &id, const Id &lower, size_t digits)
+{
+    if (!digits || digits > 2 * id.size())
+	return false;
+    const size_t whole = digits / 2;
+    return std::equal(id.begin(), id.begin() + whole, lower.begin()) &&
+	(!(digits % 2) || (id[whole] >> 4) == (lower[whole] >> 4));
 }
 
 bool

@@ -1391,13 +1391,17 @@ test_workspace_history()
 	contains_result(writer.get(), "outline.s"));
     const auto renamed = selected_id(writer.get());
     CHECK(!renamed.empty() && renamed != root);
+    std::string renamed_prefix = renamed.substr(0, 13);
+    for (auto &c : renamed_prefix)
+	if (c >= 'a' && c <= 'f')
+	    c = static_cast<char>(c - 'a' + 'A');
     const Db initial_view(ged_history_open_revision(writer.get(), root.c_str(), nullptr), db_close);
     CHECK(initial_view && initial_view->dbi_read_only && db_lookup(initial_view.get(), old_name.c_str(), LOOKUP_QUIET) &&
 	!db_lookup(initial_view.get(), "outline.s", LOOKUP_QUIET) && selected_id(writer.get()) == renamed);
     HistoryStatus renamed_status(ged_history_status_create(writer.get(), nullptr), ged_history_status_destroy);
     CHECK(renamed_status && renamed == renamed_status->selected_revision && root == renamed_status->undo.revision &&
 	root == initial_status->selected_revision && !initial_status->undo.revision);
-    const char *show[] = {"db", "history", "show", renamed.c_str(), nullptr};
+    const char *show[] = {"db", "history", "show", renamed_prefix.c_str(), nullptr};
     CHECK(run(writer.get(), show) == BRLCAD_OK && contains_result(writer.get(), " -> outline.s") &&
 	contains_result(writer.get(), "update extrusion.s") && contains_result(writer.get(), "update assembly.c"));
     const char *mark[] = {"db", "history", "mark", "rename", nullptr};
@@ -1469,6 +1473,10 @@ test_workspace_history()
     writer.reset(ged_open("db", workspace.c_str(), 1));
     CHECK(writer && run(writer.get(), status) == BRLCAD_OK && contains_result(writer.get(), "(preferred)"));
     CHECK(run(writer.get(), redo) == BRLCAD_OK && selected_id(writer.get()) == renamed);
+    const char *redo_mark[] = {"db", "redo", "rename", nullptr};
+    CHECK(run(writer.get(), redo_mark) != BRLCAD_OK && contains_result(writer.get(), "must be a child"));
+    CHECK(run(writer.get(), undo) == BRLCAD_OK && run(writer.get(), redo_mark) == BRLCAD_OK &&
+	selected_id(writer.get()) == renamed);
     const char *checkout[] = {"db", "history", "checkout", root.c_str(), nullptr};
     CHECK(run(writer.get(), checkout) == BRLCAD_OK && selected_id(writer.get()) == root);
     CHECK(run(writer.get(), staged_title) == BRLCAD_OK);

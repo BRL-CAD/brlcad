@@ -466,6 +466,35 @@ test_sparse_manifests(const std::string &path, const EmbeddedPack &initial, stru
     CHECK(writer->checkout(head, first.revision, selected, message) == WorkspaceWriteStatus::Ok &&
 	selected.revision == first.revision && writer->verify(message));
     CHECK(!writer->fetch_artifact({Kind::Manifest, first.model}, payload, message));
+
+    constexpr std::string_view hex = "0123456789ABCDEF";
+    std::array<std::vector<Id>, hex.size()> prefixes;
+    prefixes[initial.pack.selected_revision.front() >> 4].push_back(initial.pack.selected_revision);
+    for (const auto &draft : drafts) {
+	const auto &id = draft.pack.selected_revision;
+	prefixes[id.front() >> 4].push_back(id);
+    }
+    for (size_t digit = 0; digit < hex.size(); ++digit) {
+	RevisionLookup lookup{hex.substr(digit, 1)};
+	const auto &matches = prefixes[digit];
+	const bool found = writer->read_revisions(&lookup, 1, message);
+	if (matches.size() == 1) {
+	    CHECK(found && lookup.id == matches.front());
+	} else {
+	    CHECK(!found && lookup.failure == (matches.empty() ? RevisionLookup::Failure::Unknown :
+		RevisionLookup::Failure::Ambiguous));
+	}
+    }
+
+    const std::string head_id = id_string(head.revision);
+    const std::string long_name(700, 'm');
+    WorkspaceHead marked;
+    CHECK(writer->mark(selected, head_id, false, marked, message) == WorkspaceWriteStatus::Ok);
+    CHECK(writer->mark(marked, long_name, false, selected, message) == WorkspaceWriteStatus::Ok);
+    RevisionLookup lookups[] = {{head_id}, {long_name}};
+    CHECK(writer->read_revisions(lookups, 2, message) && lookups[0].id == first.revision && lookups[1].id == first.revision);
+    RevisionLookup unknown{"not-a-checkpoint"};
+    CHECK(!writer->read_revisions(&unknown, 1, message) && unknown.failure == RevisionLookup::Failure::Unknown);
     return 0;
 }
 
@@ -538,6 +567,8 @@ test_workspace(const std::string &path, const Pack &pack, const Manifest &expect
     WorkspaceHead observed;
     CHECK(workspace && workspace->read_navigation(head, observed, navigation, message) &&
 	navigation.pack.artifacts.count({Kind::Revision, parent}) && workspace->verify(message));
+    RevisionLookup old_mark{"before"};
+    CHECK(workspace->read_revisions(&old_mark, 1, message) && old_mark.id == parent);
     const auto indexed_copy_path = path + "-indexed-copy";
     CHECK(workspace->copy_to(head, indexed_copy_path.c_str(), message));
     auto indexed_copy = Workspace::open(indexed_copy_path.c_str(), message);

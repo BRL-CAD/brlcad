@@ -97,6 +97,9 @@ struct Revision {
 // Canonical encodings from doc/notes/database_history_format.txt.
 RT_EXPORT Id identify(Kind kind, ByteView payload);
 RT_EXPORT std::string id_string(const Id &id);
+// Decode a hexadecimal selector to the least ID that could match it.
+RT_EXPORT bool decode_id_prefix(std::string_view text, Id &lower);
+RT_EXPORT bool matches_id_prefix(const Id &id, const Id &lower, size_t digits);
 
 // Factoring borrows the name and body from the supplied DB5 record.
 RT_EXPORT bool factor_record(ByteView record, RecordArtifact &result);

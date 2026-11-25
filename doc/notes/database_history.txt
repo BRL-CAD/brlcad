@@ -800,6 +800,16 @@ typed status query took 6.4 microseconds once the document was open.
 Undo reported the former selection as the preferred Redo child.
 Redo restored the revision and full workspace verification passed.
 
+On the workspace with 12,000 title edits, an open GED document took
+7.7 milliseconds to resolve a checkpoint and 9.2 milliseconds to
+resolve an uppercase nine-digit ID prefix before indexed lookup.
+Using the existing checkpoint and artifact keys lowered those medians
+to 2.1 and 2.4 microseconds across 150 warm queries each. The same
+prefix took 2.4 microseconds on the schema 1.2 source workspace.
+On an M1917 copy with six title edits, checkpoint and prefix selection,
+diff, checkout and explicit Redo returned the expected revisions.
+The resulting workspace passed full verification.
+
 Implementation starting points in the source tree
 -------------------------------------------------
 

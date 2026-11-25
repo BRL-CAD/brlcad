@@ -527,13 +527,13 @@ load_model_at(MDB_txn *txn, const Tables &tables, const Id &id, Manifest &model)
 
 template <typename Visit>
 bool
-scan_table(MDB_txn *txn, MDB_dbi table, ByteView prefix, Visit visit)
+scan_table(MDB_txn *txn, MDB_dbi table, ByteView prefix, Visit visit, ByteView lower = {})
 {
     MDB_cursor *raw = nullptr;
     check(mdb_cursor_open(txn, table, &raw));
     const Cursor cursor(raw, mdb_cursor_close);
-    MDB_val key = value(prefix), row;
-    int status = mdb_cursor_get(raw, &key, &row, prefix.size ? MDB_SET_RANGE : MDB_FIRST);
+    MDB_val key = value(lower.size ? lower : prefix), row;
+    int status = mdb_cursor_get(raw, &key, &row, key.mv_size ? MDB_SET_RANGE : MDB_FIRST);
     while (status == MDB_SUCCESS) {
 	const auto name = view(key);
 	if (prefix.size && (name.size < prefix.size || std::memcmp(name.data, prefix.data, prefix.size)))
@@ -554,6 +554,53 @@ read_id(ByteView raw, Id &id)
 	return false;
     std::copy_n(raw.data, raw.size, id.begin());
     return id != absent;
+}
+
+bool
+resolve_revision(MDB_txn *txn, const Tables &tables, RevisionLookup &request, struct bu_vls *message)
+{
+    Id id = absent;
+    if (!request.selector.empty() && !lookup_named(txn, tables.references, request.selector, id))
+	return report(message, "The workspace checkpoint is invalid");
+    if (id == absent) {
+	Id lower;
+	if (decode_id_prefix(request.selector, lower)) {
+	    // Seek through a partial byte too, so neighboring prefixes are skipped.
+	    const auto start = artifact_key({Kind::Revision, lower});
+	    const ByteView prefix{start.data(), 1 + request.selector.size() / 2};
+	    bool malformed = false;
+	    scan_table(txn, tables.artifacts, prefix, [&](ByteView key, ByteView UNUSED(payload)) {
+		Id found;
+		if (!read_id({key.data + 1, key.size - 1}, found)) {
+		    malformed = true;
+		    return false;
+		}
+		if (!matches_id_prefix(found, lower, request.selector.size()))
+		    return false;
+		if (id != absent) {
+		    request.failure = RevisionLookup::Failure::Ambiguous;
+		    return false;
+		}
+		id = found;
+		return true;
+	    }, bytes(start));
+	    if (malformed)
+		return report(message, "The workspace revision key is invalid");
+	    if (request.failure != RevisionLookup::Failure::None)
+		return false;
+	}
+	if (id == absent) {
+	    request.failure = RevisionLookup::Failure::Unknown;
+	    return false;
+	}
+    }
+
+    ByteView boundary;
+    request.boundary = get(txn, tables.boundaries, bytes(id), boundary);
+    if ((request.boundary && boundary.size) || !load_revision(txn, tables, id, request.revision))
+	return report(message, "The workspace revision could not be read");
+    request.id = id;
+    return true;
 }
 
 std::array<uint8_t, 2 * absent.size()>
@@ -1337,6 +1384,19 @@ Workspace::read_navigation(const WorkspaceHead &selected, WorkspaceHead &current
 	current = observed;
 	if (last_export)
 	    *last_export = exported;
+	return true;
+    }, message);
+}
+
+bool
+Workspace::read_revisions(RevisionLookup *requests, size_t count, struct bu_vls *message) const
+{
+    for (size_t i = 0; i < count; ++i)
+	requests[i].failure = RevisionLookup::Failure::None;
+    return store->read([&](MDB_txn *txn, const Tables &tables) {
+	for (size_t i = 0; i < count; ++i)
+	    if (!resolve_revision(txn, tables, requests[i], message))
+		return false;
 	return true;
     }, message);
 }
