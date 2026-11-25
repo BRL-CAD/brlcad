@@ -216,7 +216,8 @@ main(int argc, const char *argv[])
 	    return -1;
 	}
 
-	std::regex f_regex("file:/(.*)");
+	std::regex file_regex("file:/(.*)");
+	std::regex usedby_regex("usedby:/(.*)");
 	std::regex srcfile_regex(".*[.](c|cpp|cxx|h|hpp|hxx|tcl)$");
 	std::regex svn_regex(".*[\\/][.]svn[\\/].*");
 	std::string root_path(argv[3]);
@@ -248,11 +249,9 @@ main(int argc, const char *argv[])
 		continue;
 	    }
 	    while (std::getline(license_stream, lline)) {
-		if (!std::regex_match(std::string(lline), f_regex)) {
-		    continue;
-		}
 		std::smatch lfile_ref;
-		if (!std::regex_search(lline, lfile_ref, f_regex)) {
+		bool is_file_ref = std::regex_match(lline, lfile_ref, file_regex);
+		if (!is_file_ref && !std::regex_match(lline, lfile_ref, usedby_regex)) {
 		    continue;
 		}
 		std::string lfile_id =  root_path + std::string("/") + std::string(lfile_ref[1]);
@@ -264,7 +263,11 @@ main(int argc, const char *argv[])
 		    continue;
 		}
 		lfile_s.close();
-		file_to_license[lfile_id] = lfile;
+		/* A usedby reference documents dependency use; it does not apply
+		 * the dependency's license to the consumer. */
+		if (is_file_ref) {
+		    file_to_license[lfile_id] = lfile;
+		}
 		valid_ref_cnt++;
 	    }
 	    license_stream.close();
