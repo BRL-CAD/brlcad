@@ -576,6 +576,11 @@ db_version(const struct db_i *dbip)
     if (dbip->i->dbi_version != 0)
 	return abs(dbip->i->dbi_version);
 
+    /* A replacement can occur between opening the map and the stream.
+     * Interpret the header of the same snapshot that db5_scan reads. */
+    if (dbip->i->dbi_mf)
+	return db_version_inmem(dbip, dbip->i->dbi_inmem, dbip->i->dbi_mf->buflen);
+
     if (!dbip->i->dbi_fp) {
 	return -1;
     }
@@ -586,13 +591,7 @@ db_version(const struct db_i *dbip)
 	return -1;
     }
 
-    if (db5_header_is_valid(header)) {
-	return 5;
-    } else if (header[0] == 'I') {
-	return 4;
-    }
-
-    return -1;
+    return db_version_inmem(dbip, header, sizeof(header));
 }
 
 
@@ -610,7 +609,6 @@ db_version_inmem(const struct db_i *dbip, const void *data, b_off_t data_size)
     if (dbip->i->dbi_version != 0)
 	return abs(dbip->i->dbi_version);
 
-    rewind(dbip->i->dbi_fp);
     if (!data || (data_size < 8)) {
 	bu_log("ERROR: data chunk too short to be a BRL-CAD database\n");
 	return -1;

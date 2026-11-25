@@ -58,6 +58,33 @@
 
 #define DEFAULT_DB_TITLE "Untitled BRL-CAD Database"
 
+static FILE *
+db_file_open(const char *name, int writable)
+{
+    const char *mode = writable ? "r+b" : "rb";
+#if defined(_WIN32) && defined(HAVE_WINDOWS_H) && !defined(__CYGWIN__) && !defined(__MSYS__)
+    /* Let a new revision replace the path while this handle continues to
+     * read the original file. The replacement path checks file identity. */
+    const DWORD access = writable ? GENERIC_READ | GENERIC_WRITE : GENERIC_READ;
+    HANDLE handle = CreateFileA(name, access, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+	NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (handle == INVALID_HANDLE_VALUE)
+	return NULL;
+    const int flags = (writable ? _O_RDWR : _O_RDONLY) | _O_BINARY | _O_NOINHERIT;
+    const int fd = _open_osfhandle((intptr_t)handle, flags);
+    if (fd < 0) {
+	CloseHandle(handle);
+	return NULL;
+    }
+    FILE *stream = fdopen(fd, mode);
+    if (!stream)
+	close(fd);
+    return stream;
+#else
+    return fopen(name, mode);
+#endif
+}
+
 
 struct db_i *
 db_open(const char *name, const char *mode)
@@ -116,7 +143,7 @@ db_open(const char *name, const char *mode)
 	dbip->i->dbi_mf->apbuf = (void *)dbip;
 
 	/* Do this too, so we can seek around on the file */
-	if ((dbip->i->dbi_fp = fopen(name, "rb")) == NULL) {
+	if ((dbip->i->dbi_fp = db_file_open(name, 0)) == NULL) {
 	    if (RT_G_DEBUG & RT_DEBUG_DB) {
 		bu_log("db_open(%s) FAILED, unable to open file for reading\n", name);
 	    }
@@ -136,7 +163,7 @@ db_open(const char *name, const char *mode)
 	dbip->i = db_i_internal_create();
 	dbip->i->dbi_eof = (b_off_t)-1L;
 
-	if ((dbip->i->dbi_fp = fopen(name, "r+b")) == NULL) {
+	if ((dbip->i->dbi_fp = db_file_open(name, 1)) == NULL) {
 	    if (RT_G_DEBUG & RT_DEBUG_DB) {
 		bu_log("db_open(%s) FAILED, unable to open file for reading/writing\n", name);
 	    }

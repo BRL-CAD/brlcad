@@ -19,10 +19,14 @@
  */
 #include "common.h"
 
+#include <cstddef>
 #include <cstdlib>
+#include <cstring>
 #include <filesystem>
+#include <limits>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "bio.h"
 #include "bu/app.h"
@@ -34,28 +38,47 @@
 #include "bu/vls.h"
 #include "raytrace.h"
 #include "db_history_db5.h"
+#include "db_history_file_lock.h"
 #include "librt_private.h"
 
 #if defined(_WIN32) && defined(HAVE_WINDOWS_H) && !defined(__CYGWIN__) && !defined(__MSYS__)
 #  define DB5_WIN32_EXPORT 1
+#  if defined(FILE_RENAME_FLAG_POSIX_SEMANTICS) && defined(FILE_RENAME_FLAG_REPLACE_IF_EXISTS)
+#    define DB5_WIN32_REPLACEMENT 1
+#  endif
 #elif defined(HAVE_FSYNC) && defined(HAVE_MKSTEMP) && defined(HAVE_SYS_FILE_H) && \
     defined(HAVE_SYS_STAT_H) && defined(HAVE_LSTAT) && defined(HAVE_UNISTD_H)
 #  include <sys/file.h>
 #  include <sys/stat.h>
 #  if defined(LOCK_EX) && defined(LOCK_NB)
-#    define DB5_ATOMIC_REPLACEMENT 1
+#    define DB5_POSIX_REPLACEMENT 1
 #  endif
+#endif
+
+#if defined(DB5_POSIX_REPLACEMENT) || defined(DB5_WIN32_REPLACEMENT)
+#  define DB5_ATOMIC_REPLACEMENT 1
 #endif
 
 #if defined(DB5_ATOMIC_REPLACEMENT) || defined(DB5_WIN32_EXPORT)
 #  define DB5_ATOMIC_EXPORT 1
 #endif
 
+#ifdef DB5_WIN32_EXPORT
+struct SnapshotFileState {
+    BY_HANDLE_FILE_INFORMATION info;
+    FILE_BASIC_INFO basic;
+};
+#elif defined(DB5_POSIX_REPLACEMENT)
+using SnapshotFileState = struct stat;
+#endif
+
 struct db5_save {
 #ifdef DB5_ATOMIC_REPLACEMENT
     std::string path;
-    struct stat original = {};
+    SnapshotFileState original = {};
+#  ifdef DB5_POSIX_REPLACEMENT
     std::filesystem::file_time_type modified;
+#  endif
     const struct db_i *base = nullptr;
     bool installed = false;
 #endif
@@ -86,17 +109,17 @@ public:
     int fd;
 };
 
-#ifdef DB5_WIN32_EXPORT
-class ExportDirectory {
+class SnapshotDirectory {
 public:
-    explicit ExportDirectory(const std::string &path) :
+#ifdef DB5_WIN32_EXPORT
+    explicit SnapshotDirectory(const std::string &path) :
 	handle(CreateFileW(std::filesystem::path(path).c_str(), GENERIC_WRITE,
 		    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
 		    FILE_FLAG_BACKUP_SEMANTICS, nullptr))
     {}
-    ExportDirectory(const ExportDirectory &) = delete;
-    ExportDirectory &operator=(const ExportDirectory &) = delete;
-    ~ExportDirectory()
+    SnapshotDirectory(const SnapshotDirectory &) = delete;
+    SnapshotDirectory &operator=(const SnapshotDirectory &) = delete;
+    ~SnapshotDirectory()
     {
 	if (valid())
 	    CloseHandle(handle);
@@ -106,12 +129,24 @@ public:
 
 private:
     HANDLE handle;
-};
+#else
+    explicit SnapshotDirectory(const std::string &path) : descriptor(open(path.c_str(), O_RDONLY)) {}
+    bool valid() const { return descriptor.fd >= 0; }
+    bool synchronize() const { return fsync(descriptor.fd) == 0; }
+
+private:
+    FileDescriptor descriptor;
 #endif
+};
 
 class TemporarySnapshot {
 public:
+#ifdef DB5_WIN32_EXPORT
+    explicit TemporarySnapshot(const std::string &directory, SECURITY_ATTRIBUTES *security = nullptr,
+	DWORD attributes = FILE_ATTRIBUTE_NORMAL)
+#else
     explicit TemporarySnapshot(const std::string &directory)
+#endif
     {
 #ifdef DB5_WIN32_EXPORT
 	// The UUID API writes a 128-bit identifier and its nul-terminated text.
@@ -121,11 +156,21 @@ public:
 	    return;
 	path = directory + "/.brlcad-db5-" + reinterpret_cast<const char *>(suffix);
 	native_path = path;
+	const DWORD create_attributes = attributes & ~FILE_ATTRIBUTE_NOT_CONTENT_INDEXED;
 	const HANDLE handle = CreateFileW(native_path.c_str(), GENERIC_WRITE,
-	    0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
+	    0, security, CREATE_NEW, create_attributes ? create_attributes : FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (handle == INVALID_HANDLE_VALUE)
 	    return;
 	created = true;
+	if (attributes & FILE_ATTRIBUTE_NOT_CONTENT_INDEXED) {
+	    // CreateFileW does not set the indexing attribute on a new file.
+	    FILE_BASIC_INFO update = {};
+	    update.FileAttributes = attributes & ~FILE_ATTRIBUTE_ENCRYPTED;
+	    if (!SetFileInformationByHandle(handle, FileBasicInfo, &update, sizeof(update))) {
+		CloseHandle(handle);
+		return;
+	    }
+	}
 	FileDescriptor descriptor(_open_osfhandle(reinterpret_cast<intptr_t>(handle),
 	    _O_WRONLY | _O_BINARY | _O_NOINHERIT));
 	if (descriptor.fd < 0)
@@ -190,6 +235,34 @@ public:
 	return fclose(finished) == 0;
     }
 
+#ifdef DB5_WIN32_REPLACEMENT
+    bool replace(const std::filesystem::path &destination)
+    {
+	const auto &name = destination.native();
+	const size_t length = name.size() * sizeof(wchar_t);
+	if (length > std::numeric_limits<DWORD>::max() - sizeof(FILE_RENAME_INFO))
+	    return false;
+	// The Win32 path conversion expects a trailing nul even though the
+	// counted filename sent to the filesystem excludes it.
+	const DWORD size = static_cast<DWORD>(sizeof(FILE_RENAME_INFO) + length);
+	std::vector<uint8_t> buffer(size);
+	FILE_RENAME_INFO rename = {};
+	rename.Flags = FILE_RENAME_FLAG_POSIX_SEMANTICS | FILE_RENAME_FLAG_REPLACE_IF_EXISTS;
+	rename.FileNameLength = static_cast<DWORD>(length);
+	memcpy(buffer.data(), &rename, offsetof(FILE_RENAME_INFO, FileName));
+	memcpy(buffer.data() + offsetof(FILE_RENAME_INFO, FileName), name.c_str(), length + sizeof(wchar_t));
+
+	const HANDLE handle = CreateFileW(native_path.c_str(), DELETE,
+	    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+	    FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+	if (handle == INVALID_HANDLE_VALUE)
+	    return false;
+	const bool moved = SetFileInformationByHandle(handle, FileRenameInfoEx, buffer.data(), size) != 0;
+	CloseHandle(handle);
+	return moved;
+    }
+#endif
+
 #ifdef DB5_WIN32_EXPORT
     bool publish_new(const std::filesystem::path &destination)
     {
@@ -212,22 +285,22 @@ private:
 };
 
 #ifdef DB5_WIN32_EXPORT
-struct ExportSourceState {
-    BY_HANDLE_FILE_INFORMATION info;
-    FILE_BASIC_INFO basic;
-};
-
 bool
-read_export_source_state(int descriptor, ExportSourceState &state)
+read_windows_state(HANDLE handle, SnapshotFileState &state)
 {
-    const auto handle = reinterpret_cast<HANDLE>(_get_osfhandle(descriptor));
     return handle != INVALID_HANDLE_VALUE && GetFileType(handle) == FILE_TYPE_DISK &&
 	GetFileInformationByHandle(handle, &state.info) && !(state.info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
 	GetFileInformationByHandleEx(handle, FileBasicInfo, &state.basic, sizeof(state.basic));
 }
 
 bool
-same_state(const ExportSourceState &before, const ExportSourceState &after)
+read_snapshot_file_state(int descriptor, SnapshotFileState &state)
+{
+    return read_windows_state(reinterpret_cast<HANDLE>(_get_osfhandle(descriptor)), state);
+}
+
+bool
+same_state(const SnapshotFileState &before, const SnapshotFileState &after)
 {
     const auto &original = before.info;
     const auto &current = after.info;
@@ -239,10 +312,8 @@ same_state(const ExportSourceState &before, const ExportSourceState &after)
 	after.basic.ChangeTime.QuadPart == before.basic.ChangeTime.QuadPart;
 }
 #else
-using ExportSourceState = struct stat;
-
 bool
-read_export_source_state(int descriptor, ExportSourceState &state)
+read_snapshot_file_state(int descriptor, SnapshotFileState &state)
 {
     return fstat(descriptor, &state) == 0 && S_ISREG(state.st_mode);
 }
@@ -258,7 +329,39 @@ same_state(const struct stat &original, const struct stat &current)
 }
 #endif
 
-#ifdef DB5_ATOMIC_REPLACEMENT
+#ifdef DB5_WIN32_REPLACEMENT
+bool
+unchanged(const struct db5_save *save, int descriptor)
+{
+    SnapshotFileState visible;
+    const auto path = std::filesystem::path(save->path);
+    const HANDLE handle = CreateFileW(path.c_str(), FILE_READ_ATTRIBUTES,
+	FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+	FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+    if (handle == INVALID_HANDLE_VALUE)
+	return false;
+    const bool identified = read_windows_state(handle, visible);
+    CloseHandle(handle);
+    if (!identified || !same_state(save->original, visible))
+	return false;
+    SnapshotFileState opened;
+    return descriptor < 0 || (read_snapshot_file_state(descriptor, opened) && same_state(save->original, opened));
+}
+
+bool
+read_snapshot_permissions(FILE *file, std::vector<uint8_t> &security)
+{
+    const HANDLE handle = reinterpret_cast<HANDLE>(_get_osfhandle(fileno(file)));
+    const SECURITY_INFORMATION permissions = OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
+	DACL_SECURITY_INFORMATION;
+    DWORD length = 0;
+    if (GetKernelObjectSecurity(handle, permissions, nullptr, 0, &length) ||
+	GetLastError() != ERROR_INSUFFICIENT_BUFFER || !length)
+	return false;
+    security.resize(length);
+    return GetKernelObjectSecurity(handle, permissions, security.data(), length, &length) != 0;
+}
+#elif defined(DB5_POSIX_REPLACEMENT)
 bool
 unchanged(const struct db5_save *save, int descriptor)
 {
@@ -379,9 +482,14 @@ db5_save_begin(const struct db_i *base, struct bu_vls *message)
 	bu_free(path, "DB5 save path");
     }
     const int fd = fileno(base->i->dbi_fp);
+#ifdef DB5_WIN32_REPLACEMENT
+    if (!read_snapshot_file_state(fd, save->original) || save->original.info.nNumberOfLinks != 1 ||
+	(save->original.info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) || !unchanged(save.get(), fd)) {
+#else
     std::error_code error;
     save->modified = std::filesystem::last_write_time(save->path, error);
     if (error || fstat(fd, &save->original) != 0 || save->original.st_nlink != 1 || !unchanged(save.get(), fd)) {
+#endif
 	db5_save_message(message, "Could not identify an unchanged single-link DB5 file");
 	return nullptr;
     }
@@ -422,11 +530,28 @@ replace_snapshot(struct db5_save *save, const struct db_i *snapshot, const db_hi
     }
 
     const std::string directory = snapshot_directory(save->path.c_str());
+#ifdef DB5_WIN32_REPLACEMENT
+    std::vector<uint8_t> descriptor;
+    if (!read_snapshot_permissions(save->base->i->dbi_fp, descriptor)) {
+	db5_save_message(message, "Could not read the permissions of the DB5 file");
+	return DB5_SAVE_ERROR;
+    }
+    SECURITY_ATTRIBUTES security = {sizeof(SECURITY_ATTRIBUTES), descriptor.data(), FALSE};
+    constexpr DWORD copy_attributes = FILE_ATTRIBUTE_ENCRYPTED | FILE_ATTRIBUTE_HIDDEN |
+	FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_NOT_CONTENT_INDEXED;
+    const DWORD attributes = save->original.info.dwFileAttributes & copy_attributes;
+    TemporarySnapshot temporary(directory, &security, attributes ? attributes : FILE_ATTRIBUTE_NORMAL);
+#else
     TemporarySnapshot temporary(directory);
+#endif
     // The write must be complete and the new database usable before
     // replacing the only directory entry for the original file.
     if (!temporary.file || !write_snapshot(temporary.file, snapshot, pack, false, message) ||
+#ifdef DB5_WIN32_REPLACEMENT
+	!temporary.finish()) {
+#else
 	!temporary.finish(&save->original)) {
+#endif
 	if (message && bu_vls_strlen(message) == 0)
 	    db5_save_message(message, "Could not write and synchronize the DB5 snapshot");
 	return DB5_SAVE_ERROR;
@@ -440,26 +565,39 @@ replace_snapshot(struct db5_save *save, const struct db_i *snapshot, const db_hi
 
     // Cooperating writers lock the inode then verify the directory entry
     // still names it. Each save opens its own descriptor for this lock.
+#ifdef DB5_WIN32_REPLACEMENT
+    db_history::FileLock existing(std::filesystem::path(save->path));
+    if (!existing.acquire(db_history::FileLockMode::TryExclusive)) {
+#else
     FileDescriptor existing(open(save->path.c_str(), O_RDONLY));
     if (existing.fd < 0 || flock(existing.fd, LOCK_EX | LOCK_NB) != 0) {
+#endif
 	db5_save_message(message, "Could not lock the destination DB5 file");
 	return DB5_SAVE_ERROR;
     }
+#ifdef DB5_WIN32_REPLACEMENT
+    if (!unchanged(save, fileno(save->base->i->dbi_fp))) {
+#else
     if (!unchanged(save, existing.fd)) {
+#endif
 	db5_save_message(message, "DB5 file changed during save");
 	return DB5_SAVE_STALE;
     }
-    FileDescriptor parent_fd(open(directory.c_str(), O_RDONLY));
-    if (parent_fd.fd < 0) {
+    const SnapshotDirectory parent(directory);
+    if (!parent.valid()) {
 	db5_save_message(message, "Could not open the database directory for synchronization");
 	return DB5_SAVE_ERROR;
     }
 
     bu_free(staged->dbi_filename, "staged filename");
     staged->dbi_filename = bu_strdup(save->path.c_str());
+#ifdef DB5_WIN32_REPLACEMENT
+    if (!temporary.replace(std::filesystem::path(save->path))) {
+#else
     std::error_code error;
     std::filesystem::rename(temporary.path, save->path, error);
     if (error) {
+#endif
 	db5_save_message(message, "Could not replace the DB5 file");
 	return DB5_SAVE_ERROR;
     }
@@ -467,7 +605,7 @@ replace_snapshot(struct db5_save *save, const struct db_i *snapshot, const db_hi
     temporary.created = false;
     save->installed = true;
     *replacement = staged.release();
-    if (fsync(parent_fd.fd) != 0) {
+    if (!parent.synchronize()) {
 	db5_save_message(message, "DB5 file replaced but directory synchronization failed");
 	return DB5_SAVE_SYNC_FAILED;
     }
@@ -530,27 +668,22 @@ db_history::export_db5_snapshot(const struct db_i *snapshot, const char *destina
 	db5_save_message(message, "The export destination already exists");
 	return DB5_SAVE_ERROR;
     }
-    const ExportDirectory parent(directory);
-    if (!parent.valid()) {
-	db5_save_message(message, "Could not open the export directory for synchronization");
-	return DB5_SAVE_ERROR;
-    }
 #else
     struct stat existing;
     if (lstat(destination, &existing) == 0) {
 	db5_save_message(message, "The export destination already exists");
 	return DB5_SAVE_ERROR;
     }
-    FileDescriptor parent_fd(open(directory.c_str(), O_RDONLY));
-    if (parent_fd.fd < 0) {
-	db5_save_message(message, "Could not open the export directory");
+#endif
+    const SnapshotDirectory parent(directory);
+    if (!parent.valid()) {
+	db5_save_message(message, "Could not open the export directory for synchronization");
 	return DB5_SAVE_ERROR;
     }
-#endif
 
     const int source_fd = snapshot->i->dbi_fp ? fileno(snapshot->i->dbi_fp) : -1;
-    ExportSourceState original;
-    if (source_fd >= 0 && !read_export_source_state(source_fd, original)) {
+    SnapshotFileState original;
+    if (source_fd >= 0 && !read_snapshot_file_state(source_fd, original)) {
 	db5_save_message(message, "Could not identify the source DB5 file");
 	return DB5_SAVE_ERROR;
     }
@@ -576,8 +709,8 @@ db_history::export_db5_snapshot(const struct db_i *snapshot, const char *destina
 	db5_save_message(message, "Could not reopen the staged DB5 export");
 	return DB5_SAVE_ERROR;
     }
-    ExportSourceState current;
-    if (source_fd >= 0 && (!read_export_source_state(source_fd, current) || !same_state(original, current))) {
+    SnapshotFileState current;
+    if (source_fd >= 0 && (!read_snapshot_file_state(source_fd, current) || !same_state(original, current))) {
 	db5_save_message(message, "The source database changed during export");
 	return DB5_SAVE_STALE;
     }
@@ -586,7 +719,6 @@ db_history::export_db5_snapshot(const struct db_i *snapshot, const char *destina
 	db5_save_message(message, "Could not publish the DB5 export to a new path");
 	return DB5_SAVE_ERROR;
     }
-    if (!parent.synchronize()) {
 #else
     if (track_source_path) {
 	const auto modified = std::filesystem::last_write_time(snapshot->dbi_filename, error);
@@ -608,8 +740,8 @@ db_history::export_db5_snapshot(const struct db_i *snapshot, const char *destina
 	db5_save_message(message, "DB5 export published but its temporary name could not be removed");
 	return DB5_SAVE_SYNC_FAILED;
     }
-    if (fsync(parent_fd.fd) != 0) {
 #endif
+    if (!parent.synchronize()) {
 	db5_save_message(message, "DB5 export published but directory synchronization failed");
 	return DB5_SAVE_SYNC_FAILED;
     }

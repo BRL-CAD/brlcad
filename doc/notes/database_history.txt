@@ -422,15 +422,20 @@ termination before and after the durable LMDB commit recovered the
 old and new states on restart, with archive verification passing in
 both cases.
 
-The Windows workspace lock code cross-compiled, and a Win32 test
-under Wine exercised shared locks, writes through another handle,
-second-process contention, and release on process termination.
-A separate Win32 export test passed staging, file and directory
-flushes, source change detection, and refusal to replace a competing
-destination. The library export test reopens the new DB5 and compares
-its record with the source.
-Native Windows integration and physical-device power-loss checks
-remain pending.
+Windows workspace locks passed shared access, ordinary writes,
+second-process contention, and release on process termination under
+Wine and in a Windows guest on NTFS. The Windows export helpers passed
+file and directory flushes, source change detection, and refusal to
+replace a competing destination. The library export test reopens the
+new DB5 and compares its record with the source.
+
+In the Windows guest, the DB5 save helpers preserved an explicit
+access control list and file attributes. A mapped reader retained the
+old bytes after rename. The new path opened with the staged file ID
+and bytes, the old state was reported as stale, and the parent directory
+flush succeeded. The mapping helper also read both ends of a sparse
+NTFS file with data beyond 4 GiB. A full Windows editor run and
+physical-device power loss checks remain pending.
 
 Building a native librt directory from the M1917 workspace took
 231 milliseconds. A standard database record read reconstructed

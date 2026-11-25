@@ -66,13 +66,8 @@
 #  define MAP_ANON      MAP_ANONYMOUS
 #  define MAP_FAILED    ((void *) -1)
 
-#  ifdef HAVE_OFF_T_64BIT
-#    define DWORD_HI(x) (x >> 32)
-#    define DWORD_LO(x) ((x) & 0xffffffff)
-#  else
-#    define DWORD_HI(x) (0)
-#    define DWORD_LO(x) (x)
-#  endif
+#  define DWORD_HI(x) ((DWORD)((uint64_t)(x) >> (sizeof(DWORD) * CHAR_BIT)))
+#  define DWORD_LO(x) ((DWORD)(x))
 
 
 static void *
@@ -150,11 +145,21 @@ win_munmap(void *addr, void *hv)
 /* list of currently open mapped files */
 #define NUM_INITIAL_MAPPED_FILES 8
 
+struct mapped_file_identity {
+#ifdef HAVE_WINDOWS_H
+    BY_HANDLE_FILE_INFORMATION file;
+    int known;
+#else
+    dev_t device;
+    ino_t inode;
+#endif
+};
+
 /* Keep the identity private so readers of an atomically replaced path
  * see the new inode even when file length and mtime match. */
 struct mapped_file_entry {
     struct bu_mapped_file file;
-    struct stat identity;
+    struct mapped_file_identity identity;
     int invalid;
 };
 
@@ -162,6 +167,36 @@ static struct bu_mapped_file_list {
     size_t size, capacity;
     struct bu_mapped_file **mapped_files;
 } all_mapped_files = { 0, 0, NULL };
+
+static int
+mapped_file_stat(int fd, struct stat *state, struct mapped_file_identity *identity)
+{
+    if (fstat(fd, state) != 0)
+	return -1;
+#ifdef HAVE_WINDOWS_H
+    const HANDLE handle = (HANDLE)_get_osfhandle(fd);
+    identity->known = GetFileInformationByHandle(handle, &identity->file) != 0;
+#else
+    identity->device = state->st_dev;
+    identity->inode = state->st_ino;
+#endif
+    return 0;
+}
+
+static int
+mapped_file_replaced(const struct mapped_file_identity *previous, const struct mapped_file_identity *current)
+{
+#ifdef HAVE_WINDOWS_H
+    if (!previous->known || !current->known)
+	return 0;
+    return previous->file.dwVolumeSerialNumber != current->file.dwVolumeSerialNumber ||
+	previous->file.nFileIndexHigh != current->file.nFileIndexHigh ||
+	previous->file.nFileIndexLow != current->file.nFileIndexLow;
+#else
+    return previous->inode && current->inode &&
+	(previous->inode != current->inode || previous->device != current->device);
+#endif
+}
 
 
 static struct bu_mapped_file *
@@ -216,6 +251,7 @@ mapped_file_is_valid(struct bu_mapped_file *mp)
     int fd;
     int ret;
     struct stat sb;
+    struct mapped_file_identity identity = {0};
 
     if (!mp || mp->name == NULL)
 	return 0;
@@ -231,7 +267,7 @@ mapped_file_is_valid(struct bu_mapped_file *mp)
     }
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    ret = fstat(fd, &sb);
+    ret = mapped_file_stat(fd, &sb, &identity);
     (void)close(fd);
     bu_semaphore_release(BU_SEM_SYSCALL);
 
@@ -243,8 +279,8 @@ mapped_file_is_valid(struct bu_mapped_file *mp)
     }
 
     const struct mapped_file_entry *entry = (const struct mapped_file_entry *)mp;
-    if (entry->identity.st_ino && sb.st_ino &&
-	(entry->identity.st_ino != sb.st_ino || entry->identity.st_dev != sb.st_dev))
+
+    if (mapped_file_replaced(&entry->identity, &identity))
 	return 0;
 
     if ((size_t)sb.st_size != mp->buflen) {
@@ -266,7 +302,7 @@ mapped_file_is_valid(struct bu_mapped_file *mp)
 
 
 static struct bu_mapped_file *
-mapped_file_add(struct bu_mapped_file *mp, const struct stat *identity)
+mapped_file_add(struct bu_mapped_file *mp, const struct mapped_file_identity *identity)
 {
     bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
     {
@@ -309,6 +345,7 @@ bu_open_mapped_file(const char *name, const char *appl)
     struct bu_mapped_file newlymapped = BU_MAPPED_FILE_INIT_ZERO;
     struct bu_mapped_file *mp = (struct bu_mapped_file *)NULL;
     struct stat sb;
+    struct mapped_file_identity identity = {0};
     int fd = -1;	/* unix file descriptor */
     int readval;
     int ret;
@@ -347,7 +384,7 @@ bu_open_mapped_file(const char *name, const char *appl)
     }
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    ret = fstat(fd, &sb);
+    ret = mapped_file_stat(fd, &sb, &identity);
     bu_semaphore_release(BU_SEM_SYSCALL);
 
     if (UNLIKELY(ret < 0)) {
@@ -421,7 +458,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 	bu_pr_mapped_file("1st_open", mp);
     }
 
-    return mapped_file_add(mp, &sb);
+    return mapped_file_add(mp, &identity);
 
 fail:
     if (fd >= 0) {
