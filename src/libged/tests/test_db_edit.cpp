@@ -412,7 +412,8 @@ test_embedded_history()
     const char *export_archive[] = {"db", "history", "export", archive_copy, "--with-history", nullptr};
     CHECK(run(inspector.get(), export_archive) != BRLCAD_OK && contains_result(inspector.get(), "already exists"));
     CHECK(bu_file_delete(archive_copy));
-    CHECK(run(inspector.get(), export_archive) == BRLCAD_OK);
+    const char *dump_archive[] = {"dump", archive_copy, nullptr};
+    CHECK(run(inspector.get(), dump_archive) == BRLCAD_OK);
     Ged archived(ged_open("db", archive_copy, 1), ged_close);
     CHECK(archived && selected_id(archived.get()) == fork && run(archived.get(), show) == BRLCAD_OK);
     const char *full_log[] = {"db", "history", "log", "--json", nullptr};
@@ -1535,6 +1536,15 @@ test_workspace_history()
     const auto archive = (fixture.path / "archive.g").string();
     const char *export_archive[] = {"db", "history", "export", "--with-history", archive.c_str(), nullptr};
     CHECK(run(writer.get(), export_archive) == BRLCAD_OK);
+    const char *overwrite_archive[] = {"dump", archive.c_str(), nullptr};
+    CHECK(run(legacy.get(), overwrite_archive) != BRLCAD_OK && contains_result(legacy.get(), "already exists"));
+    const char *overwrite_source[] = {"dump", source.c_str(), nullptr};
+    CHECK(run(legacy.get(), overwrite_source) != BRLCAD_OK && contains_result(legacy.get(), "already exists"));
+    const auto dumped = (fixture.path / "dumped.g").string();
+    const char *dump_workspace[] = {"dump", dumped.c_str(), nullptr};
+    CHECK(run(writer.get(), dump_workspace) == BRLCAD_OK && selected_id(writer.get()) == branch);
+    Ged dumped_db(ged_open("db", dumped.c_str(), 1), ged_close);
+    CHECK(dumped_db && selected_id(dumped_db.get()) == branch && run(dumped_db.get(), verify) == BRLCAD_OK);
     writer.reset(ged_open("db", workspace.c_str(), 1));
     CHECK(writer && run(writer.get(), status) == BRLCAD_OK && contains_result(writer.get(), ("last export " + branch).c_str()));
     CHECK(run(writer.get(), status_json) == BRLCAD_OK);

@@ -211,7 +211,7 @@ permitted_query(std::string_view command, int argc, const char **argv)
 bool
 permitted_standalone(std::string_view command)
 {
-    return one_of(command, {"draw", "e", "edit", "erase", "ev", "garbage_collect", "keep", "redraw", "setview",
+    return one_of(command, {"draw", "dump", "e", "edit", "erase", "ev", "garbage_collect", "keep", "redraw", "setview",
 	"view", "view2", "view_func", "who", "zap"});
 }
 
@@ -2603,6 +2603,10 @@ ged_db_history_command(struct ged *gedp, int argc, const char **argv)
     if (history && history->stage) {
 	bu_vls_printf(gedp->ged_result_str, "History commands require a completed edit");
 	return BRLCAD_ERROR;
+    }
+    if (command == "dump" && argc == 2) {
+	const bool persistent = history && (history->workspace || is_embedded(*history));
+	return export_history(gedp, history, argv[1], persistent);
     }
     if (command == "history") {
 	if (argc == 4 && BU_STR_EQUAL(argv[1], "batch"))

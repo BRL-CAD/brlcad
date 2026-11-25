@@ -25,18 +25,12 @@
 
 #include "common.h"
 
-#include <string.h>
-
-#include "bu/cmd.h"
-
 #include "../ged_private.h"
 
 
 int
 ged_dump_core(struct ged *gedp, int argc, const char *argv[])
 {
-    struct rt_wdb *op;
-    int ret;
     static const char *usage = "file.g";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -56,21 +50,7 @@ ged_dump_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    op = wdb_fopen(argv[1]);
-    if (op == RT_WDB_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "dump: %s: cannot create", argv[1]);
-	return BRLCAD_ERROR;
-    }
-
-    ret = db_dump(op, gedp->dbip);
-    db_close(op->dbip);
-
-    if (ret < 0) {
-	bu_vls_printf(gedp->ged_result_str, "dump: %s: db_dump() error", argv[1]);
-	return BRLCAD_ERROR;
-    }
-
-    return BRLCAD_OK;
+    return ged_db_history_command(gedp, argc, argv);
 }
 
 #include "../include/plugin.h"

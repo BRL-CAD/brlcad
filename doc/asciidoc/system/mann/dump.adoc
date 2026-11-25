@@ -17,7 +17,12 @@ dump {keep_file}
 [[description]]
 == DESCRIPTION
 
-Copies the entire dababase to the __keep_file__. The __keep_file__ is a _BRL-CAD_ database file and will be located in the current working direction (use the *pwd* command to show the current working directory). Note the new file might have a smaller filesize than the current file as dumping the file has the same effect that the *garbage_collect* command has.
+Copies the entire DB5 model to a new destination. The copy may be
+smaller because it omits unused file space.
+
+For embedded history or an LMDB workspace, the copy includes the complete
+retained history and selected revision. Session history stays in the open
+editor unless you explicitly use `db history export <path> --with-history`.
 
 
 [[examples]]

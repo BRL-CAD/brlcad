@@ -836,6 +836,11 @@ terminating before replacement preserved the input bytes. Terminating
 after replacement left a file 64 KiB smaller. Both reopened with the
 same selected revision and checkpoints and passed archive verification.
 
+The dump command publishes a full snapshot to a new path. An ordinary
+DB5 source cannot replace an existing embedded archive. Copies from
+an embedded file or a workspace reopened with the same selected
+revision and passed verification.
+
 The Linux suite passed 1,440 tests across the initial run and reruns
 with access to local sockets and X11. Its CTest notice returned the
 expected failure. The 5 GiB DB5 stress test skipped because it requires
