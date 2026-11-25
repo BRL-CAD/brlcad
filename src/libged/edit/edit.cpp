@@ -2682,10 +2682,16 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    const bool versioned = gedp->i->db_history;
+    if (!versioned) {
+	GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    }
 
-    /* Skip past the "edit" command name */
-    argc--; argv++;
+    // Option parsing compacts these arguments. Keep caller-owned lists reusable.
+    std::vector<const char *> arguments(argv + 1, argv + argc);
+    arguments.push_back(nullptr);
+    argc--;
+    argv = arguments.data();
 
     /* ---- Build subcommand map --------------------------------------- */
     std::map<std::string, ged_subcmd *> edit_cmds;
@@ -2923,6 +2929,19 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
     const char *resolved_type = res_t.empty() ? NULL : res_t.c_str();
 
     std::string cmd_str(argv[0]);
+    if (versioned) {
+	if (cmd_str == "perturb") {
+	    bu_vls_strcat(gedp->ged_result_str, "Perturb is unavailable in a versioned edit session");
+	    return BRLCAD_ERROR;
+	}
+	static const std::set<std::string> session_controls = {
+	    "cancel", "checkpoint", "commit", "get", "reset", "revert", "status"
+	};
+	if (!ctx.flag_i && !session_controls.count(cmd_str)) {
+	    bu_vls_strcat(gedp->ged_result_str, "Use edit -i to prepare geometry, then edit <path> commit");
+	    return BRLCAD_ERROR;
+	}
+    }
     if (ctx.occurrence) {
 	static const std::set<std::string> occurrence_commands = {
 	    "cancel", "checkpoint", "commit", "mat", "reset", "revert",

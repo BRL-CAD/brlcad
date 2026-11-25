@@ -40,6 +40,10 @@ subcommands manage and inspect the command-selected session.  Applications
 using the libged API may create other independent sessions for the same path;
 the command does not select or modify those sessions.
 
+When database history is enabled, prepare the change with *-i* and run
+`edit geometry commit` in the same editor. The commit publishes one
+undoable revision. Use `edit geometry cancel` to discard the preview.
+
 
 [[geometry_specifiers]]
 == GEOMETRY SPECIFIERS

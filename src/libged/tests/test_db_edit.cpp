@@ -1009,6 +1009,22 @@ test_history_edit_session()
 	NEAR_EQUAL(test_torus_radius(gedp), value[0], SMALL_FASTF));
     CHECK(ged_edit_session_begin(gedp, "torus.s", GED_EDIT_TARGET_OBJECT, &edit) == GED_EDIT_OK &&
 	ged_edit_session_commit(gedp, edit) == GED_EDIT_OK && selected_id(gedp) == tip);
+
+    constexpr fastf_t accepted_radius = 3.0;
+    const auto cli_radius = std::to_string(accepted_radius);
+    const char *prepare[] = {"edit", "-i", "torus.s", "r1", cli_radius.c_str(), nullptr};
+    const char *status[] = {"edit", "torus.s", "status", nullptr};
+    const char *commit[] = {"edit", "torus.s", "commit", nullptr};
+    const char *cancel[] = {"edit", "torus.s", "cancel", nullptr};
+    const char *immediate[] = {"edit", "torus.s", "r1", cli_radius.c_str(), nullptr};
+    CHECK(run(gedp, immediate) == BRLCAD_ERROR && contains_result(gedp, "Use edit -i") && selected_id(gedp) == tip);
+    CHECK(run(gedp, prepare) == BRLCAD_OK && run(gedp, status) == BRLCAD_OK && contains_result(gedp, "dirty=1"));
+    CHECK(selected_id(gedp) == tip && NEAR_EQUAL(test_torus_radius(gedp), value[0], SMALL_FASTF));
+    CHECK(run(gedp, cancel) == BRLCAD_OK && selected_id(gedp) == tip);
+    CHECK(run(gedp, prepare) == BRLCAD_OK && run(gedp, commit) == BRLCAD_OK &&
+	NEAR_EQUAL(test_torus_radius(gedp), accepted_radius, SMALL_FASTF));
+    CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == tip &&
+	NEAR_EQUAL(test_torus_radius(gedp), value[0], SMALL_FASTF));
     return 0;
 }
 
