@@ -432,6 +432,7 @@ Implementation starting points in the source tree
   include/rt/db_io.h and include/rt/db_instance.h
   src/librt/db5_io.c, db_io.c, db_lookup.c, db_alloc.c, wdb.c, attributes.c
   src/libged/exec.cpp, db/db.c, event.cpp and move_all/move_all.c
+  include/ged/history.h for typed status and undo/redo choices
   src/mged/buttons.c and src/qged/QgEdMainWindow.cpp
   include/rt/db_diff.h for model-aware revision comparisons
   doc/asciidoc/system/mann/db.adoc for the user-facing command reference

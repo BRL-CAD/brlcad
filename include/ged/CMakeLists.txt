@@ -7,6 +7,7 @@ set(
   defines.h
   edit.h
   event.h
+  history.h
   objects.h
   scene.h
   scene_types.h

@@ -28,6 +28,8 @@
 #include "bu/file.h"
 #include "ged.h"
 #include "ged/event.h"
+#include "ged/history.h"
+#include "../../libbu/json.hpp"
 
 #define CHECK(expr) do { \
     if (!(expr)) { \
@@ -148,6 +150,12 @@ test_disk_history()
     if (enable_result != BRLCAD_OK && contains_result(gedp, "Atomic DB5 replacement is unavailable"))
 	return 0;
     CHECK(enable_result == BRLCAD_OK && contains_result(gedp, "revision 0"));
+    const char *status_json[] = {"db", "history", "status", "--json", nullptr};
+    CHECK(run(gedp, status_json) == BRLCAD_OK);
+    const auto session_json = nlohmann::json::parse(bu_vls_addr(gedp->ged_result_str), nullptr, false);
+    CHECK(!session_json.is_discarded() && session_json["mode"] == "session" && session_json["revision"] == "0" &&
+	session_json["oldest_revision"] == "0" && session_json["generation"].is_null() &&
+	session_json["undo"].is_null() && session_json["redo"].empty());
     auto *sketch = db_lookup(gedp->dbip, old_name.c_str(), LOOKUP_QUIET);
     CHECK(sketch && db_rename(gedp->dbip, sketch, "bypass.s") < 0);
     CHECK(db_dirdelete(gedp->dbip, sketch) < 0);
@@ -514,6 +522,11 @@ test_workspace_history()
     CHECK(run(writer.get(), create) == BRLCAD_OK && contains_result(writer.get(), "mode workspace"));
     const auto root = selected_id(writer.get());
     CHECK(!root.empty());
+    using HistoryStatus = std::unique_ptr<const struct ged_history_status, decltype(&ged_history_status_destroy)>;
+    HistoryStatus initial_status(ged_history_status_create(writer.get(), nullptr), ged_history_status_destroy);
+    CHECK(initial_status && initial_status->mode == GED_HISTORY_WORKSPACE && initial_status->writable &&
+	initial_status->state == GED_HISTORY_CURRENT && !initial_status->undo.revision &&
+	!initial_status->redo_count && root == initial_status->selected_revision);
     CHECK(run(writer.get(), create) == BRLCAD_OK && selected_id(writer.get()) == root);
     const char *existing[] = {"db", "history", "workspace", path, nullptr};
     CHECK(run(writer.get(), existing) != BRLCAD_OK && selected_id(writer.get()) == root);
@@ -529,6 +542,9 @@ test_workspace_history()
 	contains_result(writer.get(), "outline.s"));
     const auto renamed = selected_id(writer.get());
     CHECK(!renamed.empty() && renamed != root);
+    HistoryStatus renamed_status(ged_history_status_create(writer.get(), nullptr), ged_history_status_destroy);
+    CHECK(renamed_status && renamed == renamed_status->selected_revision && root == renamed_status->undo.revision &&
+	root == initial_status->selected_revision && !initial_status->undo.revision);
     const char *show[] = {"db", "history", "show", renamed.c_str(), nullptr};
     CHECK(run(writer.get(), show) == BRLCAD_OK && contains_result(writer.get(), " -> outline.s") &&
 	contains_result(writer.get(), "update extrusion.s") && contains_result(writer.get(), "update assembly.c"));
@@ -546,6 +562,12 @@ test_workspace_history()
 	contains_result(stale.get(), root.c_str()) && contains_result(stale.get(), renamed.c_str()));
     CHECK(run(stale.get(), status) == BRLCAD_OK && contains_result(stale.get(), "status stale") &&
 	contains_result(stale.get(), "staged conflict"));
+    const char *status_json[] = {"db", "history", "status", "--json", nullptr};
+    CHECK(run(stale.get(), status_json) == BRLCAD_OK);
+    const auto stale_json = nlohmann::json::parse(bu_vls_addr(stale->ged_result_str), nullptr, false);
+    CHECK(!stale_json.is_discarded() && stale_json["schema"] == 1 && stale_json["mode"] == "workspace" &&
+	stale_json["state"] == "stale" && stale_json["revision"] == root && stale_json["workspace_head"] == renamed &&
+	stale_json["staged_conflict"] == true && stale_json["undo"].is_null());
     const char *conflict[] = {"db", "history", "conflict", nullptr};
     CHECK(run(stale.get(), conflict) == BRLCAD_OK && contains_result(stale.get(), "update _GLOBAL"));
     CHECK(run(stale.get(), reference) == BRLCAD_OK && contains_result(stale.get(), old_name.c_str()));
@@ -622,6 +644,10 @@ test_workspace_history()
     CHECK(run(archived.get(), show_mark) == BRLCAD_OK && contains_result(archived.get(), "(retention boundary)"));
     CHECK(run(archived.get(), undo) != BRLCAD_OK && contains_result(archived.get(), "retention boundary"));
     CHECK(run(archived.get(), verify) == BRLCAD_OK);
+    CHECK(run(archived.get(), status_json) == BRLCAD_OK);
+    const auto pruned_json = nlohmann::json::parse(bu_vls_addr(archived->ged_result_str), nullptr, false);
+    CHECK(!pruned_json.is_discarded() && pruned_json["revision"] == branch &&
+	pruned_json["retention_boundary"] == true && pruned_json["undo"].is_null());
     return 0;
 }
 

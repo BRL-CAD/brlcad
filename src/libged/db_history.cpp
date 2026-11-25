@@ -32,10 +32,13 @@
 
 #include "bu/datetime.h"
 #include "bu/file.h"
+#include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "ged.h"
+#include "ged/history.h"
 #include "ged_private.h"
+#include "../libbu/json.hpp"
 #include "../librt/db_history_db5.h"
 #include "../librt/db_history_workspace.h"
 #include "../librt/librt_private.h"
@@ -1044,81 +1047,232 @@ prune_workspace(struct ged *gedp, ged_db_history *history, int argc, const char 
     return BRLCAD_OK;
 }
 
+struct StatusChoice {
+    std::string revision;
+    std::string label;
+    bool preferred = false;
+};
+
 void
-print_revision_options(struct bu_vls *out, const db_history::Pack &pack)
+copy_choices(struct ged_history_status &status, const StatusChoice &undo, const std::vector<StatusChoice> &redo)
 {
-    if (pack.selected_revision == db_history::absent)
+    if (!undo.revision.empty())
+	status.undo = {bu_strdup(undo.revision.c_str()), bu_strdup(undo.label.c_str()), 0};
+    if (redo.empty())
 	return;
-    bu_vls_printf(out, "\nrevision %s", id_string(pack.selected_revision).c_str());
-    if (pack.boundaries.count(pack.selected_revision))
-	bu_vls_strcat(out, "\nretention boundary");
-    db_history::Revision selected;
-    if (db_history::read_revision(pack, pack.selected_revision, selected) &&
-	selected.parent != db_history::absent && !pack.boundaries.count(pack.selected_revision)) {
-	bu_vls_printf(out, "\nundo %s ", id_string(selected.parent).c_str());
-	append_printable(out, selected.label);
+    auto *choices = static_cast<struct ged_history_choice *>(bu_calloc(redo.size(), sizeof(struct ged_history_choice),
+	"history redo choices"));
+    for (size_t i = 0; i < redo.size(); ++i)
+	choices[i] = {bu_strdup(redo[i].revision.c_str()), bu_strdup(redo[i].label.c_str()), redo[i].preferred};
+    status.redo = choices;
+    status.redo_count = redo.size();
+}
+
+enum ged_history_state
+history_state(EmbeddedStatus embedded)
+{
+    switch (embedded) {
+	case EmbeddedStatus::Current: return GED_HISTORY_CURRENT;
+	case EmbeddedStatus::ExternalEdits: return GED_HISTORY_EXTERNAL_EDITS;
+	case EmbeddedStatus::Malformed: return GED_HISTORY_MALFORMED;
+	case EmbeddedStatus::Unsupported: return GED_HISTORY_UNSUPPORTED;
+	case EmbeddedStatus::Missing:
+	case EmbeddedStatus::Collision: return GED_HISTORY_UNAVAILABLE;
     }
-    const auto preferred = pack.preferences.find(pack.selected_revision);
-    if (!visit_archive_revisions(pack, [&](const db_history::Id &id, const db_history::Revision &revision) {
-	if (revision.parent != pack.selected_revision || pack.boundaries.count(id))
-	    return;
-	bu_vls_printf(out, "\nredo %s ", id_string(id).c_str());
-	append_printable(out, revision.label);
-	if (preferred != pack.preferences.end() && preferred->second == id)
+    return GED_HISTORY_UNAVAILABLE;
+}
+
+bool
+load_history_status(const ged_db_history *history, struct ged_history_status &status, struct bu_vls *message)
+{
+    if (!history)
+	return true;
+
+    status.edit_active = history->stage != nullptr;
+    status.staged_conflict = static_cast<bool>(history->conflict);
+    StatusChoice undo;
+    std::vector<StatusChoice> redo;
+    if (!history->workspace && !is_embedded(*history)) {
+	status.mode = GED_HISTORY_SESSION;
+	status.state = GED_HISTORY_CURRENT;
+	status.writable = static_cast<bool>(history->save);
+	status.session_bytes = history->used;
+	status.session_limit = history->limit;
+	const auto oldest = history->revisions.begin()->first;
+	status.oldest_revision = bu_strdup(std::to_string(oldest).c_str());
+	status.selected_revision = bu_strdup(std::to_string(history->head).c_str());
+	const auto &head = history->revisions.at(history->head);
+	status.retention_boundary = oldest != 0 && history->head == oldest;
+	if (head.parent != no_revision)
+	    undo = {std::to_string(head.parent), head.label};
+	for (const auto &entry : history->revisions)
+	    if (entry.second.parent == history->head)
+		redo.push_back({std::to_string(entry.first), entry.second.label, head.preferred == entry.first});
+    } else {
+	db_history::Db5HistoryDraft graph;
+	const auto *pack = &history->embedded.pack;
+	if (history->workspace) {
+	    WorkspaceHead current;
+	    db_history::Id last_export;
+	    if (!history->workspace->read_graph(history->workspace_head, current, graph, message, &last_export))
+		return false;
+	    pack = &graph.pack;
+	    status.mode = GED_HISTORY_WORKSPACE;
+	    const bool current_view = current.generation == history->workspace_head.generation &&
+		current.revision == history->workspace_head.revision && current.model == history->workspace_head.model;
+	    status.state = current_view ? GED_HISTORY_CURRENT : GED_HISTORY_STALE;
+	    status.writable = history->workspace_writable;
+	    status.generation = history->workspace_head.generation;
+	    status.workspace_generation = current.generation;
+	    status.workspace_head = bu_strdup(id_string(current.revision).c_str());
+	    if (history->local_export != db_history::absent)
+		last_export = history->local_export;
+	    if (last_export != db_history::absent)
+		status.exported_revision = bu_strdup(id_string(last_export).c_str());
+	} else {
+	    status.mode = GED_HISTORY_EMBEDDED;
+	    status.state = history_state(history->embedded_status);
+	    status.writable = history->save && history->embedded_status == EmbeddedStatus::Current;
+	}
+
+	if (pack->selected_revision != db_history::absent) {
+	    status.selected_revision = bu_strdup(id_string(pack->selected_revision).c_str());
+	    status.retention_boundary = pack->boundaries.count(pack->selected_revision) != 0;
+	    db_history::Revision selected;
+	    if (!db_history::read_revision(*pack, pack->selected_revision, selected)) {
+		status.state = GED_HISTORY_MALFORMED;
+		status.writable = 0;
+		return true;
+	    }
+	    if (selected.parent != db_history::absent && !status.retention_boundary)
+		undo = {id_string(selected.parent), selected.label};
+
+	    const auto preferred = pack->preferences.find(pack->selected_revision);
+	    if (!visit_archive_revisions(*pack, [&](const db_history::Id &id, const db_history::Revision &revision) {
+		if (revision.parent == pack->selected_revision && !pack->boundaries.count(id))
+		    redo.push_back({id_string(id), revision.label,
+			preferred != pack->preferences.end() && preferred->second == id});
+	    })) {
+		if (message)
+		    bu_vls_strcpy(message, "An archived revision could not be read");
+		return false;
+	    }
+	}
+    }
+    copy_choices(status, undo, redo);
+    return true;
+}
+
+const char *
+mode_name(enum ged_history_mode mode)
+{
+    switch (mode) {
+	case GED_HISTORY_SESSION: return "session";
+	case GED_HISTORY_EMBEDDED: return "embedded";
+	case GED_HISTORY_WORKSPACE: return "workspace";
+	case GED_HISTORY_DISABLED: return "disabled";
+    }
+    return "disabled";
+}
+
+const char *
+state_name(enum ged_history_state state, bool json = false)
+{
+    switch (state) {
+	case GED_HISTORY_INACTIVE: return "inactive";
+	case GED_HISTORY_CURRENT: return "current";
+	case GED_HISTORY_STALE: return "stale";
+	case GED_HISTORY_EXTERNAL_EDITS: return json ? "external_edits" : "external edits";
+	case GED_HISTORY_MALFORMED: return json ? "malformed" : "malformed archive";
+	case GED_HISTORY_UNSUPPORTED: return json ? "unsupported" : "unsupported archive";
+	case GED_HISTORY_UNAVAILABLE: return "unavailable";
+    }
+    return "unavailable";
+}
+
+void
+print_status_text(struct bu_vls *out, const struct ged_history_status &status)
+{
+    bu_vls_printf(out, "mode %s", mode_name(status.mode));
+    if (status.mode == GED_HISTORY_DISABLED)
+	return;
+    const bool session = status.mode == GED_HISTORY_SESSION;
+    const bool workspace = status.mode == GED_HISTORY_WORKSPACE;
+    if (!session)
+	bu_vls_printf(out, "\nstatus %s\naccess %s", state_name(status.state), status.writable ? "read-write" : "read-only");
+    if (workspace)
+	bu_vls_printf(out, "\ngeneration %ju", (uintmax_t)status.generation);
+    if (status.selected_revision)
+	bu_vls_printf(out, "\nrevision %s", status.selected_revision);
+    if (session)
+	bu_vls_printf(out, "\noldest %s\nbytes %zu\nlimit %zu", status.oldest_revision, status.session_bytes, status.session_limit);
+    if (!session && status.retention_boundary)
+	bu_vls_strcat(out, "\nretention boundary");
+    if (status.undo.revision) {
+	bu_vls_strcat(out, "\nundo ");
+	if (!session)
+	    bu_vls_printf(out, "%s ", status.undo.revision);
+	append_printable(out, status.undo.label);
+    }
+    for (size_t i = 0; i < status.redo_count; ++i) {
+	const auto &redo = status.redo[i];
+	bu_vls_printf(out, "\nredo %s ", redo.revision);
+	append_printable(out, redo.label);
+	if (!session && redo.preferred)
 	    bu_vls_strcat(out, " (preferred)");
-    }))
-	bu_vls_strcat(out, "\nAn archived revision could not be read");
+    }
+    if (workspace) {
+	if (status.state == GED_HISTORY_STALE)
+	    bu_vls_printf(out, "\nworkspace head %s generation %ju", status.workspace_head, (uintmax_t)status.workspace_generation);
+	if (status.staged_conflict)
+	    bu_vls_strcat(out, "\nstaged conflict");
+	bu_vls_printf(out, "\nlast export %s", status.exported_revision ? status.exported_revision : "none");
+    }
+}
+
+void
+print_status_json(struct bu_vls *out, const struct ged_history_status &status)
+{
+    using Json = nlohmann::json;
+    constexpr int schema_version = 1;
+    const auto optional_text = [](const char *value) {
+	return value ? Json(value) : Json(nullptr);
+    };
+    const auto choice = [](const struct ged_history_choice &action) {
+	return Json{{"revision", action.revision}, {"label", action.label}, {"preferred", action.preferred != 0}};
+    };
+    Json redo = Json::array();
+    for (size_t i = 0; i < status.redo_count; ++i)
+	redo.push_back(choice(status.redo[i]));
+    const bool workspace = status.mode == GED_HISTORY_WORKSPACE;
+    const bool session = status.mode == GED_HISTORY_SESSION;
+    const Json result = {
+	{"schema", schema_version}, {"mode", mode_name(status.mode)}, {"state", state_name(status.state, true)},
+	{"writable", status.writable != 0}, {"edit_active", status.edit_active != 0},
+	{"staged_conflict", status.staged_conflict != 0}, {"retention_boundary", status.retention_boundary != 0},
+	{"revision", optional_text(status.selected_revision)}, {"oldest_revision", optional_text(status.oldest_revision)},
+	{"workspace_head", optional_text(status.workspace_head)}, {"last_export", optional_text(status.exported_revision)},
+	{"generation", workspace ? Json(status.generation) : Json(nullptr)},
+	{"workspace_generation", workspace ? Json(status.workspace_generation) : Json(nullptr)},
+	{"session_bytes", session ? Json(status.session_bytes) : Json(nullptr)},
+	{"session_limit", session ? Json(status.session_limit) : Json(nullptr)},
+	{"undo", status.undo.revision ? choice(status.undo) : Json(nullptr)}, {"redo", std::move(redo)}
+    };
+    bu_vls_strcat(out, result.dump(-1, ' ', false, Json::error_handler_t::replace).c_str());
 }
 
 int
-print_status(struct ged *gedp, const ged_db_history *history)
+print_status(struct ged *gedp, bool json = false)
 {
     auto *out = gedp->ged_result_str;
-    if (!history) {
-	bu_vls_strcat(out, "mode disabled");
-	return BRLCAD_OK;
-    }
-    if (history->workspace) {
-	db_history::Db5HistoryDraft graph;
-	WorkspaceHead observed;
-	db_history::Id last_export;
-	const auto *pack = history_graph(gedp, *history, graph, &observed, &last_export);
-	if (!pack)
-	    return BRLCAD_ERROR;
-	const bool stale = observed.generation != history->workspace_head.generation;
-	bu_vls_printf(out, "mode workspace\nstatus %s\naccess %s\ngeneration %ju", stale ? "stale" : "current",
-	    history->workspace_writable ? "read-write" : "read-only", (uintmax_t)history->workspace_head.generation);
-	print_revision_options(out, *pack);
-	if (stale)
-	    bu_vls_printf(out, "\nworkspace head %s generation %ju",
-		id_string(observed.revision).c_str(), (uintmax_t)observed.generation);
-	if (history->conflict)
-	    bu_vls_strcat(out, "\nstaged conflict");
-	if (history->local_export != db_history::absent)
-	    last_export = history->local_export;
-	bu_vls_printf(out, "\nlast export %s", last_export == db_history::absent ? "none" : id_string(last_export).c_str());
-	return BRLCAD_OK;
-    }
-    if (is_embedded(*history)) {
-	bu_vls_printf(out, "mode embedded\nstatus %s\naccess %s", embedded_status_text(history->embedded_status),
-	    history->save && history->embedded_status == EmbeddedStatus::Current ? "read-write" : "read-only");
-	print_revision_options(out, history->embedded.pack);
-	return BRLCAD_OK;
-    }
-    const auto &head = history->revisions.at(history->head);
-    bu_vls_printf(gedp->ged_result_str, "mode session\nrevision %ju\noldest %ju\nbytes %zu\nlimit %zu",
-	(uintmax_t)history->head, (uintmax_t)history->revisions.begin()->first,
-	history->used, history->limit);
-    if (head.parent != no_revision) {
-	bu_vls_strcat(gedp->ged_result_str, "\nundo ");
-	append_printable(gedp->ged_result_str, head.label);
-    }
-    for (const auto &entry : history->revisions) {
-	if (entry.second.parent == history->head) {
-	    bu_vls_printf(gedp->ged_result_str, "\nredo %ju ", (uintmax_t)entry.first);
-	    append_printable(gedp->ged_result_str, entry.second.label);
-	}
-    }
+    const std::unique_ptr<const struct ged_history_status, decltype(&ged_history_status_destroy)>
+	status(ged_history_status_create(gedp, out), ged_history_status_destroy);
+    if (!status)
+	return BRLCAD_ERROR;
+    if (json)
+	print_status_json(out, *status);
+    else
+	print_status_text(out, *status);
     return BRLCAD_OK;
 }
 
@@ -1441,7 +1595,7 @@ step_archive_revision(struct ged *gedp, ged_db_history &history, const db_histor
 	    return BRLCAD_ERROR;
 	}
 	if (children > 1 && (preferred == pack.preferences.end() || preferred->second != target)) {
-	    print_status(gedp, &history);
+	    print_status(gedp);
 	    bu_vls_strcat(out, "\nSelect a revision with db redo <revision>");
 	    return BRLCAD_ERROR;
 	}
@@ -1457,6 +1611,40 @@ step_archive_revision(struct ged *gedp, ged_db_history &history, const db_histor
 
 } // namespace
 
+
+const struct ged_history_status *
+ged_history_status_create(struct ged *gedp, struct bu_vls *message)
+{
+    if (!gedp || !gedp->i) {
+	if (message)
+	    bu_vls_strcpy(message, "A GED context is required to query database history");
+	return nullptr;
+    }
+    struct ged_history_status *allocated;
+    BU_ALLOC(allocated, struct ged_history_status);
+    std::unique_ptr<struct ged_history_status, decltype(&ged_history_status_destroy)>
+	status(allocated, ged_history_status_destroy);
+    return load_history_status(gedp->i->db_history, *status, message) ? status.release() : nullptr;
+}
+
+void
+ged_history_status_destroy(const struct ged_history_status *status)
+{
+    if (!status)
+	return;
+    const char *fields[] = {status->selected_revision, status->oldest_revision, status->workspace_head,
+	status->exported_revision, status->undo.revision, status->undo.label};
+    for (const auto *field : fields)
+	if (field)
+	    bu_free(const_cast<char *>(field), "history status text");
+    for (size_t i = 0; i < status->redo_count; ++i) {
+	bu_free(const_cast<char *>(status->redo[i].revision), "history redo revision");
+	bu_free(const_cast<char *>(status->redo[i].label), "history redo label");
+    }
+    if (status->redo)
+	bu_free(const_cast<struct ged_history_choice *>(status->redo), "history redo choices");
+    bu_free(const_cast<struct ged_history_status *>(status), "history status");
+}
 
 void
 ged_db_history_reset(struct ged *gedp)
@@ -1614,8 +1802,8 @@ ged_db_history_command(struct ged *gedp, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     if (command == "history") {
-	if (argc == 2 && BU_STR_EQUAL(argv[1], "status"))
-	    return print_status(gedp, history);
+	if ((argc == 2 || (argc == 3 && BU_STR_EQUAL(argv[2], "--json"))) && BU_STR_EQUAL(argv[1], "status"))
+	    return print_status(gedp, argc == 3);
 	if (argc >= 2 && BU_STR_EQUAL(argv[1], "prune")) {
 	    const int pruned = prune_workspace(gedp, history, argc, argv);
 	    if (pruned == GED_HELP)
@@ -1629,7 +1817,7 @@ ged_db_history_command(struct ged *gedp, int argc, const char **argv)
 		return status;
 	    if (bu_vls_strlen(gedp->ged_result_str))
 		bu_vls_putc(gedp->ged_result_str, '\n');
-	    return print_status(gedp, gedp->i->db_history);
+	    return print_status(gedp);
 	}
 	if (argc == 2 && BU_STR_EQUAL(argv[1], "conflict")) {
 	    auto *out = gedp->ged_result_str;
@@ -1672,7 +1860,7 @@ ged_db_history_command(struct ged *gedp, int argc, const char **argv)
 	    if (enabled == BRLCAD_OK) {
 		if (bu_vls_strlen(gedp->ged_result_str))
 		    bu_vls_putc(gedp->ged_result_str, '\n');
-		print_status(gedp, gedp->i->db_history);
+		print_status(gedp);
 	    }
 	    return enabled;
 	}
@@ -1684,7 +1872,7 @@ ged_db_history_command(struct ged *gedp, int argc, const char **argv)
 	    }
 	    const int enabled = enable_session(gedp, static_cast<size_t>(limit));
 	    if (enabled == BRLCAD_OK)
-		print_status(gedp, gedp->i->db_history);
+		print_status(gedp);
 	    return enabled;
 	}
 	if ((argc == 2 || (argc == 4 && BU_STR_EQUAL(argv[2], "--object"))) && BU_STR_EQUAL(argv[1], "log")) {
@@ -1760,7 +1948,7 @@ ged_db_history_command(struct ged *gedp, int argc, const char **argv)
 	}
     } else if (!undo && target == no_revision && revision.children) {
 	if (revision.children > 1) {
-	    print_status(gedp, history);
+	    print_status(gedp);
 	    bu_vls_printf(gedp->ged_result_str, "\nSelect a revision with db redo <revision>");
 	    return BRLCAD_ERROR;
 	}
