@@ -508,6 +508,13 @@ processes gave title edits a median of 0.615 seconds and a 95th
 percentile of 0.640 seconds. Undo measured 0.605 and 0.627 seconds,
 respectively.
 
+On disk-backed M1917 copies, fresh GED processes drew the largest
+BREP in a median of 3.61 seconds from DB5 and 2.12 seconds from LMDB
+after evicting the data file's cached pages. Warm medians were 2.15
+and 1.99 seconds, respectively. There were three runs per condition.
+Before the warm draws, the DB5 file had 1.22 GB resident and the
+workspace data file had 82 MB resident.
+
 The same combination, group, removal, rename and metadata edits ran
 on ordinary DB5, session DB5, embedded DB5 and LMDB. All final named
 model records matched byte for byte, and a ray hit the geometry
