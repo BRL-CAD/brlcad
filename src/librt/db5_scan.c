@@ -61,14 +61,14 @@ db5_scan(
 
 	eof = (b_off_t)dbip->i->dbi_mf->buflen;
 
-	if (db5_header_is_valid(cp) == 0) {
+	if (eof < (b_off_t)sizeof(header) || db5_header_is_valid(cp) == 0) {
 	    bu_log("db5_scan ERROR:  %s is lacking a proper BRL-CAD v5 database header\n", dbip->dbi_filename);
 	    goto fatal;
 	}
 	cp += sizeof(header);
 	addr = (b_off_t)sizeof(header);
 	while (addr < eof) {
-	    if ((cp = db5_get_raw_internal_ptr(&raw, cp)) == NULL) {
+	    if ((cp = db5_get_raw_internal_bounded(&raw, cp, (size_t)(eof - addr))) == NULL) {
 		goto fatal;
 	    }
 	    (*handler)(dbip, &raw, addr, client_data);
@@ -134,7 +134,7 @@ db5_scan_inmem(
     raw.magic = DB5_RAW_INTERNAL_MAGIC;
     nrec = 0L;
 
-    if (db5_header_is_valid(cp) == 0) {
+    if (data_size < (b_off_t)sizeof(header) || db5_header_is_valid(cp) == 0) {
 	bu_log("db5_scan_inmem ERROR:  data is lacking a proper BRL-CAD v5 database header\n");
 	goto fatal;
     }
@@ -143,7 +143,7 @@ db5_scan_inmem(
     while (addr < data_size) {
 	const unsigned char *current_data = cp;
 	void *dp_copy;
-	if ((cp = db5_get_raw_internal_ptr(&raw, cp)) == NULL) {
+	if ((cp = db5_get_raw_internal_bounded(&raw, cp, (size_t)(data_size - addr))) == NULL) {
 	    goto fatal;
 	}
 	dp_copy = bu_malloc(raw.object_length, "db5_scan_inmem raw dp data");
@@ -178,6 +178,9 @@ db_diradd5(
     struct bu_vls local = BU_VLS_INIT_ZERO;
 
     RT_CK_DBI(dbip);
+
+    if (dbip->i->dbi_edit && dbip->dbi_read_only)
+	return RT_DIR_NULL;
 
     bu_vls_strcpy(&local, name);
     if (db_dircheck(dbip, &local, 0, &headp) < 0) {

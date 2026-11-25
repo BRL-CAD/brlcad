@@ -164,6 +164,9 @@ db_inmem(struct directory *dp, struct bu_external *ext, int flags, struct db_i *
     BU_CK_EXTERNAL(ext);
     RT_CK_DIR(dp);
 
+    if (dbip->i->dbi_edit && dbip->dbi_read_only)
+	return;
+    db_edit_detach_record(dbip, dp);
     if (dp->d_flags & RT_DIR_INMEM)
 	bu_free(dp->d_un.ptr, "db_inmem() ext ptr");
     dp->d_un.ptr = ext->ext_buf;

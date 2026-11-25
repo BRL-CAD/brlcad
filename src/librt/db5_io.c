@@ -250,170 +250,118 @@ crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
 }
 
 
-const unsigned char *
-db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
+/* Include the length field itself in the limit. */
+static int
+db5_take_length(size_t *len, const unsigned char **cp, size_t *available, int format)
 {
-    const unsigned char *cp = ip;
+    const size_t width = ENCODE_LEN(format);
+    if (width > *available || width > sizeof(size_t))
+	return -1;
+    *cp += db5_decode_length(len, *cp, format);
+    *available -= width;
+    return 0;
+}
 
-    if (crack_disk_header(rip, cp) < 0)
+
+static int
+db5_take_field(struct bu_external *field, const unsigned char **cp, size_t *available, int format)
+{
+    if (db5_take_length(&field->ext_nbytes, cp, available, format) < 0 ||
+	field->ext_nbytes > *available)
+	return -1;
+
+    field->ext_buf = (uint8_t *)*cp;
+    *cp += field->ext_nbytes;
+    *available -= field->ext_nbytes;
+    return 0;
+}
+
+
+const unsigned char *
+db5_get_raw_internal_bounded(struct db5_raw_internal *rip, const unsigned char *ip, size_t available)
+{
+    const size_t header_size = sizeof(struct db5_ondisk_header);
+    if (!ip || available < header_size || crack_disk_header(rip, ip) < 0)
 	return NULL;
-    cp += sizeof(struct db5_ondisk_header);
 
-    cp += db5_decode_length(&rip->object_length, cp, rip->h_object_width);
-    rip->object_length <<= 3;	/* cvt 8-byte chunks to byte count */
-
-    if ((size_t)rip->object_length < sizeof(struct db5_ondisk_header)) {
-	bu_log("db5_get_raw_internal_ptr(): object_length=%zu is too short, database possibly corrupted\n", rip->object_length);
+    const unsigned char *cp = ip + header_size;
+    size_t chunks;
+    size_t remaining = available - header_size;
+    if (db5_take_length(&chunks, &cp, &remaining, rip->h_object_width) < 0 ||
+	chunks > available / 8)
 	return NULL;
-    }
 
-    /* Verify trailing magic number */
-    if (ip[rip->object_length-1] != DB5HDR_MAGIC2) {
-	bu_log("db5_get_raw_internal_ptr() bad magic2: expected x%x, got x%x\n", DB5HDR_MAGIC2, ip[rip->object_length-1]);
+    rip->object_length = chunks * 8;
+    const size_t payload_start = available - remaining;
+    if (rip->object_length <= payload_start || ip[rip->object_length - 1] != DB5HDR_MAGIC2)
 	return NULL;
-    }
+    remaining = rip->object_length - payload_start - 1;
 
     BU_EXTERNAL_INIT(&rip->name);
     BU_EXTERNAL_INIT(&rip->body);
     BU_EXTERNAL_INIT(&rip->attributes);
+    if (rip->h_name_present &&
+	(db5_take_field(&rip->name, &cp, &remaining, rip->h_name_width) < 0 ||
+	 !rip->name.ext_nbytes ||
+	 memchr(rip->name.ext_buf, '\0', rip->name.ext_nbytes) !=
+	 rip->name.ext_buf + rip->name.ext_nbytes - 1))
+	return NULL;
 
-    /* Grab name, if present */
-    if (rip->h_name_present) {
-	cp += db5_decode_length(&rip->name.ext_nbytes, cp, rip->h_name_width);
-	rip->name.ext_buf = (uint8_t *)cp;	/* discard const */
-	cp += rip->name.ext_nbytes;
-    }
-
-    /* Point to attributes, if present */
     if (rip->a_present) {
-	cp += db5_decode_length(&rip->attributes.ext_nbytes, cp, rip->a_width);
-	rip->attributes.ext_buf = (uint8_t *)cp;	/* discard const */
+	if (db5_take_field(&rip->attributes, &cp, &remaining, rip->a_width) < 0)
+	    return NULL;
 #if defined(USE_BINARY_ATTRIBUTES)
 	rip->attributes.widcode = rip->a_width;
 #endif
-	cp += rip->attributes.ext_nbytes;
     }
 
-    /* Point to body, if present */
-    if (rip->b_present) {
-	cp += db5_decode_length(&rip->body.ext_nbytes, cp, rip->b_width);
-	rip->body.ext_buf = (uint8_t *)cp;	/* discard const */
-    }
+    if (rip->b_present && db5_take_field(&rip->body, &cp, &remaining, rip->b_width) < 0)
+	return NULL;
 
-    rip->buf = NULL;	/* no buffer needs freeing */
-
+    rip->buf = NULL;
     return ip + rip->object_length;
+}
+
+
+const unsigned char *
+db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
+{
+    return db5_get_raw_internal_bounded(rip, ip, SIZE_MAX);
 }
 
 
 int
 db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 {
-    struct db5_ondisk_header header;
-    unsigned char lenbuf[8];
-    size_t count = 0;
-    size_t used;
-    size_t want, got;
-    size_t dlen;
-    unsigned char *cp;
+    unsigned char prefix[sizeof(struct db5_ondisk_header) + sizeof(uint64_t)];
+    const size_t header_size = sizeof(struct db5_ondisk_header);
+    size_t got = fread(prefix, 1, header_size, fp);
+    if (got != header_size)
+	return (!got && feof(fp)) ? -1 : -2;
 
-    if (fread((unsigned char *)&header, sizeof header, 1, fp) != 1) {
-	if (feof(fp))
-	    return -1;
-	bu_log("db5_get_raw_internal_fp(): fread header error\n");
+    if (crack_disk_header(rip, prefix) < 0)
 	return -2;
-    }
-    if (crack_disk_header(rip, (unsigned char *)&header) < 0)
+    const size_t width = ENCODE_LEN(rip->h_object_width);
+    if (width > sizeof(size_t) || fread(prefix + header_size, 1, width, fp) != width)
 	return -2;
-    used = sizeof(header);
 
-    switch (rip->h_object_width) {
-	case DB5HDR_WIDTHCODE_8BIT:
-	    count = 1;
-	    break;
-	case DB5HDR_WIDTHCODE_16BIT:
-	    count = 2;
-	    break;
-	case DB5HDR_WIDTHCODE_32BIT:
-	    count = 4;
-	    break;
-	case DB5HDR_WIDTHCODE_64BIT:
-	    count = 8;
-    }
-    if (fread(lenbuf, count, 1, fp)  != 1) {
-	perror("fread");
-	bu_log("db5_get_raw_internal_fp(): fread lenbuf error\n");
+    size_t chunks;
+    db5_decode_length(&chunks, prefix + header_size, rip->h_object_width);
+    const size_t used = header_size + width;
+    if (chunks > SIZE_MAX / 8 || chunks * 8 <= used)
+	return -2;
+
+    const size_t length = chunks * 8;
+    unsigned char *record = (unsigned char *)bu_malloc(length, "raw v5 object");
+    memcpy(record, prefix, used);
+    if (fread(record + used, 1, length - used, fp) != length - used ||
+	!db5_get_raw_internal_bounded(rip, record, length)) {
+	bu_free(record, "raw v5 object");
 	return -2;
     }
 
-    dlen = db5_decode_length(&rip->object_length, lenbuf, rip->h_object_width);
-    if (dlen < 1 || dlen > sizeof(size_t)) {
-	bu_log("db5_get_raw_internal_fp(): Error decoding object length (got %zd)\n", dlen);
-	return -1;
-    }
-    used += dlen;
-
-    /* verify the length won't overflow before we <<=3 it */
-    if (rip->object_length > UINTPTR_MAX>>3) {
-	bu_log("db5_get_raw_internal_fp():  bad length read\n");
-	return -1;
-    }
-    rip->object_length <<= 3;	/* cvt 8-byte chunks to byte count */
-
-    if (rip->object_length < sizeof(struct db5_ondisk_header) || rip->object_length < used) {
-	bu_log("db5_get_raw_internal_fp(): object_length=%zu is too short, database possibly corrupted\n",
-	       rip->object_length);
-	return -1;
-    }
-
-    /* Now that we finally know how large the object is, get it all */
-    rip->buf = (unsigned char *)bu_malloc(rip->object_length, "raw v5 object");
-
-    *((struct db5_ondisk_header *)rip->buf) = header;	/* struct copy */
-    memcpy(rip->buf+sizeof(header), lenbuf, count);
-
-    cp = rip->buf + used;
-    want = rip->object_length - used;
-
-    if ((got = fread(cp, 1, want, fp)) != want) {
-	bu_log("db5_get_raw_internal_fp(): database is too short, want=%zu, got=%zu\n", want, got);
-	return -2;
-    }
-
-    /* Verify trailing magic number */
-    if (rip->buf[rip->object_length-1] != DB5HDR_MAGIC2) {
-	bu_log("db5_get_raw_internal_fp() bad magic2: expected x%x, got x%x\n", DB5HDR_MAGIC2, rip->buf[rip->object_length-1]);
-	return -2;
-    }
-
-    BU_EXTERNAL_INIT(&rip->name);
-    BU_EXTERNAL_INIT(&rip->body);
-    BU_EXTERNAL_INIT(&rip->attributes);
-
-    /* Grab name, if present */
-    if (rip->h_name_present) {
-	cp += db5_decode_length(&rip->name.ext_nbytes, cp, rip->h_name_width);
-	rip->name.ext_buf = (uint8_t *)cp;	/* discard const */
-	cp += rip->name.ext_nbytes;
-    }
-
-    /* Point to attributes, if present */
-    if (rip->a_present) {
-	cp += db5_decode_length(&rip->attributes.ext_nbytes, cp, rip->a_width);
-	rip->attributes.ext_buf = (uint8_t *)cp;	/* discard const */
-#if defined(USE_BINARY_ATTRIBUTES)
-	rip->attributes.widcode = rip->a_width;
-#endif
-	cp += rip->attributes.ext_nbytes;
-    }
-
-    /* Point to body, if present */
-    if (rip->b_present) {
-	cp += db5_decode_length(&rip->body.ext_nbytes, cp, rip->b_width);
-	rip->body.ext_buf = (uint8_t *)cp;	/* discard const */
-    }
-
-    return 0;		/* success */
+    rip->buf = record;
+    return 0;
 }
 
 
@@ -713,13 +661,12 @@ db_wrap_v5_external(struct bu_external *ep, const char *name)
 
     BU_CK_EXTERNAL(ep);
 
-    /* Crack the external form into parts */
-    if (db5_get_raw_internal_ptr(&raw, (unsigned char *)ep->ext_buf) == NULL) {
-	bu_log("db_put_external5(%s) failure in db5_get_raw_internal_ptr()\n",
-	       name);
+    const unsigned char *end = db5_get_raw_internal_bounded(&raw, ep->ext_buf, ep->ext_nbytes);
+    if (!end || raw.object_length != ep->ext_nbytes ||
+	raw.h_dli != DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT) {
+	bu_log("db_wrap_v5_external(%s): invalid external record\n", name);
 	return -1;
     }
-    BU_ASSERT(raw.h_dli == DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT);
 
     /* See if name needs to be changed */
     if (raw.name.ext_buf == NULL || !BU_STR_EQUAL(name, (const char *)raw.name.ext_buf)) {
@@ -748,48 +695,47 @@ db_wrap_v5_external(struct bu_external *ep, const char *name)
 }
 
 
-int
-db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
+static int
+db5_store_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 {
-    RT_CK_DBI(dbip);
-    RT_CK_DIR(dp);
-    BU_CK_EXTERNAL(ep);
-
-    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db_put_external5(%s) ep=%p, dbip=%p, dp=%p\n",
-				       dp->d_namep, (void *)ep, (void *)dbip, (void *)dp);
-
-    if (dbip->dbi_read_only) {
-	bu_log("db_put_external5(%s):  READ-ONLY file\n",
-	       dbip->dbi_filename);
+    if (dbip->dbi_read_only)
 	return -1;
-    }
 
-    BU_ASSERT(dbip->i->dbi_version == 5);
-
-    /* First, change the name. */
-    if (db_wrap_v5_external(ep, dp->d_namep) < 0) {
-	bu_log("db_put_external5(%s) failure in db_wrap_v5_external()\n",
-	       dp->d_namep);
-	return -1;
-    }
-
-    /* Second, obtain storage for final object */
-    if (ep->ext_nbytes != dp->d_len || (size_t)dp->d_addr == (size_t)RT_DIR_PHONY_ADDR) {
+    db_edit_detach_record(dbip, dp);
+    if (ep->ext_nbytes != dp->d_len || dp->d_addr == RT_DIR_PHONY_ADDR) {
 	if (db5_realloc(dbip, dp, ep) < 0) {
-	    bu_log("db_put_external(%s) db_realloc5() failed\n", dp->d_namep);
+	    bu_log("db5_store_external(%s): allocation failed\n", dp->d_namep);
 	    return -5;
 	}
     }
     BU_ASSERT(ep->ext_nbytes == dp->d_len);
 
     if (dp->d_flags & RT_DIR_INMEM) {
-	memcpy(dp->d_un.ptr, (char *)ep->ext_buf, ep->ext_nbytes);
-    } else if (db_write(dbip, (char *)ep->ext_buf, ep->ext_nbytes, dp->d_addr) < 0) {
+	memcpy(dp->d_un.ptr, ep->ext_buf, ep->ext_nbytes);
+    } else if (db_write(dbip, ep->ext_buf, ep->ext_nbytes, dp->d_addr) < 0) {
 	return -1;
     }
 
     db_notify_changed(dbip, dp, 0);
     return 0;
+}
+
+
+int
+db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
+{
+    RT_CK_DBI(dbip);
+    RT_CK_DIR(dp);
+    BU_CK_EXTERNAL(ep);
+    BU_ASSERT(dbip->i->dbi_version == 5);
+
+    int result = -1;
+    if (!dbip->dbi_read_only && db_wrap_v5_external(ep, dp->d_namep) == 0)
+	result = db5_store_external(ep, dp, dbip);
+
+    if (result < 0)
+	db_edit_record_failure(dbip);
+    return result;
 }
 
 
@@ -800,44 +746,26 @@ rt_db_put_internal_v5(
     struct rt_db_internal *ip,
     const int major)
 {
-    struct bu_external ext;
+    struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
+    int result = -2;
 
     RT_CK_DIR(dp);
     RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
     BU_ASSERT(dbip->i->dbi_version == 5);
 
-    BU_EXTERNAL_INIT(&ext);
-    if (rt_db_cvt_to_ext5(&ext, dp->d_namep, ip, 1.0, dbip, major) < 0) {
-	bu_log("rt_db_put_internal5(%s):  export failure\n",
-	       dp->d_namep);
-	goto fail;
-    }
-    BU_CK_EXTERNAL(&ext);
-
-    if (ext.ext_nbytes != dp->d_len || dp->d_addr == RT_DIR_PHONY_ADDR) {
-	if (db5_realloc(dbip, dp, &ext) < 0) {
-	    bu_log("rt_db_put_internal5(%s) db_realloc5() failed\n", dp->d_namep);
-	    goto fail;
-	}
-    }
-    BU_ASSERT(ext.ext_nbytes == dp->d_len);
-
-    if (dp->d_flags & RT_DIR_INMEM) {
-	memcpy(dp->d_un.ptr, ext.ext_buf, ext.ext_nbytes);
-    } else if (db_write(dbip, (char *)ext.ext_buf, ext.ext_nbytes, dp->d_addr) < 0) {
-	goto fail;
+    if (!dbip->dbi_read_only) {
+	if (rt_db_cvt_to_ext5(&ext, dp->d_namep, ip, 1.0, dbip, major) < 0)
+	    bu_log("rt_db_put_internal_v5(%s): export failure\n", dp->d_namep);
+	else if (db5_store_external(&ext, dp, dbip) == 0)
+	    result = 0;
     }
 
-    db_notify_changed(dbip, dp, 0);
+    if (result < 0)
+	db_edit_record_failure(dbip);
     bu_free_external(&ext);
     rt_db_free_internal(ip);
-    return 0;			/* OK */
-
-fail:
-    bu_free_external(&ext);
-    rt_db_free_internal(ip);
-    return -2;		/* FAIL */
+    return result;
 }
 
 int

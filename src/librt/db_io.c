@@ -81,6 +81,8 @@ db_read(const struct db_i *dbip, void *addr, size_t count, b_off_t offset)
 	memcpy(addr, ((char *)dbip->i->dbi_inmem) + offset, count);
 	return 0;
     }
+    if (!dbip->i->dbi_fp)
+	return -1;
     bu_semaphore_acquire(BU_SEM_SYSCALL);
 
     ret = bu_fseek(dbip->i->dbi_fp, offset, 0);
@@ -194,8 +196,9 @@ db_write(struct db_i *dbip, const void *addr, size_t count, b_off_t offset)
     if (count == 0) {
 	return -1;
     }
-    if (dbip->i->dbi_inmem) {
-	bu_log("db_write() in memory?\n");
+    if (dbip->i->dbi_inmem || !dbip->i->dbi_fp) {
+	bu_log("db_write(): a file-backed database is required\n");
+	db_edit_record_failure(dbip);
 	return -1;
     }
     bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -256,6 +259,25 @@ db_put(struct db_i *dbip, const struct directory *dp, union record *where, b_off
 
 
 int
+db_read_external_bytes(const struct db_i *dbip, const struct directory *dp, void *buffer, size_t count)
+{
+    int inherited;
+    const int result = db_edit_read_base(dbip, dp, buffer, count, &inherited);
+    if (inherited)
+	return result;
+    if (dp->d_flags & RT_DIR_INMEM) {
+	if (!dp->d_un.ptr)
+	    return -1;
+	memcpy(buffer, dp->d_un.ptr, count);
+	return 0;
+    }
+    if (dp->d_addr == RT_DIR_PHONY_ADDR)
+	return -1;
+    return db_read(dbip, buffer, count, dp->d_addr);
+}
+
+
+int
 db_get_external(register struct bu_external *ep, const struct directory *dp, const struct db_i *dbip)
 {
     RT_CK_DBI(dbip);
@@ -263,8 +285,8 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
     if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db_get_external(%s) ep=%p, dbip=%p, dp=%p\n",
 				    dp->d_namep, (void *)ep, (void *)dbip, (void *)dp);
 
-    if ((dp->d_flags & RT_DIR_INMEM) == 0 && dp->d_addr == RT_DIR_PHONY_ADDR)
-	return -1;		/* was dummy DB entry */
+    if (!dp->d_len)
+	return -1;
 
     BU_EXTERNAL_INIT(ep);
     if (db_version(dbip) < 5)
@@ -273,12 +295,7 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
 	ep->ext_nbytes = dp->d_len;
     ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "db_get_ext ext_buf");
 
-    if (dp->d_flags & RT_DIR_INMEM) {
-	memcpy((char *)ep->ext_buf, dp->d_un.ptr, ep->ext_nbytes);
-	return 0;
-    }
-
-    if (db_read(dbip, (char *)ep->ext_buf, ep->ext_nbytes, dp->d_addr) < 0) {
+    if (db_read_external_bytes(dbip, dp, ep->ext_buf, ep->ext_nbytes) < 0) {
 	bu_free(ep->ext_buf, "db_get_ext ext_buf");
 	ep->ext_buf = (uint8_t *)NULL;
 	ep->ext_nbytes = 0;
@@ -346,6 +363,7 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 void
 db_notify_changed(struct db_i *dbip, struct directory *dp, int mode)
 {
+    db_edit_record_change(dbip, dp->d_namep);
     struct bu_ptbl *callbacks = &dbip->i->dbi_changed_clbks;
     if (!BU_PTBL_IS_INITIALIZED(callbacks))
 	return;

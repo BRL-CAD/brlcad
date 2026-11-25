@@ -114,8 +114,8 @@ wdb_set_directory_type(struct directory *dp, int version,
 }
 
 
-int
-wdb_export_external(
+static int
+wdb_export_external_impl(
     struct rt_wdb *wdbp,
     struct bu_external *ep,
     const char *name,
@@ -129,6 +129,9 @@ wdb_export_external(
 
     RT_CK_WDB(wdbp);
     BU_CK_EXTERNAL(ep);
+
+    if (wdbp->dbip->i->dbi_edit && wdbp->dbip->dbi_read_only)
+	return -5;
 
     /* Stash name into external representation */
     version = db_version(wdbp->dbip);
@@ -259,6 +262,15 @@ wdb_export_external(
     return 0;
 }
 
+int
+wdb_export_external(struct rt_wdb *wdbp, struct bu_external *ep, const char *name,
+		    int flags, unsigned char type)
+{
+    const int result = wdb_export_external_impl(wdbp, ep, name, flags, type);
+    if (result < 0)
+	db_edit_record_failure(wdbp->dbip);
+    return result;
+}
 
 int
 wdb_put_internal(

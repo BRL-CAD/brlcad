@@ -101,6 +101,7 @@ struct db_i_internal {
     struct bu_ptbl dbi_changed_clbks;     /**< @brief dbi_changed_t callbacks */
     struct bu_ptbl dbi_update_nref_clbks; /**< @brief dbi_update_nref_t callbacks */
     int dbi_use_comb_instance_ids;        /**< @brief flag for comb instance tracking */
+    struct db_edit *dbi_edit;             /**< @brief staged DB5 view and retained base */
 
     struct directory *dbi_directory_hd;         /**< @brief directory entry freelist */
     struct bu_ptbl   dbi_directory_blocks;      /**< @brief Table of malloc'ed blocks */
@@ -109,6 +110,14 @@ struct db_i_internal {
 struct db_i_internal * db_i_internal_create(void);
 void db_i_internal_destroy(struct db_i_internal *i);
 void db_notify_changed(struct db_i *dbip, struct directory *dp, int mode);
+void db_edit_free_view(struct db_i_internal *i);
+void db_edit_record_failure(struct db_i *dbip);
+void db_edit_record_change(struct db_i *dbip, const char *name);
+int db_edit_detach_record(struct db_i *dbip, struct directory *dp);
+int db_read_external_bytes(const struct db_i *dbip, const struct directory *dp,
+			  void *buffer, size_t count);
+int db_edit_read_base(const struct db_i *dbip, const struct directory *dp,
+		     void *buffer, size_t count, int *found);
 
 
 /**

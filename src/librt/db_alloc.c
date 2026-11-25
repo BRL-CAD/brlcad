@@ -139,10 +139,18 @@ db_delete(struct db_i *dbip, struct directory *dp)
     if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db_delete(%s) %p, %p\n",
 				    dp->d_namep, (void *)dbip, (void *)dp);
 
+    if (dbip->i->dbi_edit && dbip->dbi_read_only)
+	return -1;
+    if (db_edit_detach_record(dbip, dp)) {
+	db_edit_record_change(dbip, dp->d_namep);
+	return 0;
+    }
+
     if (dp->d_flags & RT_DIR_INMEM) {
 	bu_free(dp->d_un.ptr, "db_delete d_un.ptr");
 	dp->d_un.ptr = NULL;
 	dp->d_len = 0;
+	db_edit_record_change(dbip, dp->d_namep);
 	return 0;
     }
 

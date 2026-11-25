@@ -72,12 +72,7 @@ db_get_external_reuse(struct bu_external *ep, const struct directory *dp, const 
 {
     ep->ext_nbytes = dp->d_len;
 
-    if (dp->d_flags & RT_DIR_INMEM) {
-	memcpy((char *)ep->ext_buf, dp->d_un.ptr, ep->ext_nbytes);
-	return 0;
-    }
-
-    if (db_read(dbip, (char *)ep->ext_buf, ep->ext_nbytes, dp->d_addr) < 0) {
+    if (db_read_external_bytes(dbip, dp, ep->ext_buf, ep->ext_nbytes) < 0) {
 	memset(ep->ext_buf, 0, dp->d_len);
 	ep->ext_nbytes = 0;
 	return -1;      /* VERY BAD */

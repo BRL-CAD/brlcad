@@ -613,6 +613,8 @@ db_i_internal_destroy(struct db_i_internal *i)
     if (i->mesh_c)
 	bv_mesh_lod_context_destroy(i->mesh_c);
 
+    db_edit_free_view(i);
+
     /* Free any directory blocks */
     for (size_t ii = 0; ii < BU_PTBL_LEN(&i->dbi_directory_blocks); ii++)
 	bu_free(BU_PTBL_GET(&i->dbi_directory_blocks, ii), "directory block");

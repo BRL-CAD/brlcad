@@ -350,6 +350,14 @@ RT_EXPORT extern unsigned char *db5_encode_length(unsigned char *cp,
 RT_EXPORT extern const unsigned char *db5_get_raw_internal_ptr(struct db5_raw_internal *rip,
 							       const unsigned char *ip);
 
+/**
+ * Decode one DB5 record using at most available bytes. On success the
+ * result borrows its fields from ip and the return value points just
+ * beyond the record. On malformed or truncated input, return NULL.
+ */
+RT_EXPORT extern const unsigned char *
+db5_get_raw_internal_bounded(struct db5_raw_internal *rip,
+			     const unsigned char *ip, size_t available);
 
 /**
  * Given a file pointer to an open geometry database positioned on a
@@ -551,6 +559,44 @@ RT_EXPORT extern int db_get_external(struct bu_external *ep,
 RT_EXPORT extern int db_put_external(struct bu_external *ep,
 				     struct directory *dp,
 				     struct db_i *dbip);
+
+struct db_edit;
+
+/**
+ * Begin a DB5 edit against a built, read-only database directory.
+ * The edit retains a reference to base. Its backing records must stay
+ * unchanged for the lifetime of the edit and any committed view.
+ * Use the edit and its writable view from the creating thread.
+ */
+RT_EXPORT extern struct db_edit *db_edit_begin(struct db_i *base, const char *label);
+
+/** Borrow the writer's private database view until commit or abort. */
+RT_EXPORT extern struct db_i *db_edit_view(struct db_edit *edit);
+
+/** Borrow the operation label until the edit is committed or aborted. */
+RT_EXPORT extern const char *db_edit_label(const struct db_edit *edit);
+
+/**
+ * Observe the before and after bytes for one changed name. A NULL
+ * record denotes an absent object. The buffers are borrowed for the
+ * duration of the call. Return zero to continue.
+ */
+typedef int (*db_edit_visit_t)(const char *name, const struct bu_external *before,
+			     const struct bu_external *after, void *data);
+
+/** Visit net changes in name order. The visitor must leave the view unchanged. */
+RT_EXPORT extern int db_edit_visit(struct db_edit *edit, db_edit_visit_t visit, void *data);
+
+/**
+ * On success consume the edit and return the new read-only database view.
+ * The caller owns one reference and releases it with db_close. The original
+ * base and its readers remain valid. Failure leaves the edit available for
+ * abort. Publishing a view to a durable store is a separate operation.
+ */
+RT_EXPORT extern struct db_i *db_edit_commit(struct db_edit *edit);
+
+/** Discard staged writes and consume the edit. Accepts NULL. */
+RT_EXPORT extern void db_edit_abort(struct db_edit *edit);
 
 /* db_scan.c */
 /* read db (to build directory) */

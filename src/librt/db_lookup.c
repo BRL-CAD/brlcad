@@ -241,6 +241,9 @@ db_diradd(struct db_i *dbip, const char *name, b_off_t laddr, size_t len, int fl
 
     RT_CK_DBI(dbip);
 
+    if (dbip->i->dbi_edit && dbip->dbi_read_only)
+	return RT_DIR_NULL;
+
     if (RT_G_DEBUG&RT_DEBUG_DB) {
 	bu_log("db_diradd(dbip=%p, name='%s', addr=%jd, len=%zu, flags=0x%x, ptr=%p)\n",
 	       (void *)dbip, name, (intmax_t)laddr, len, flags, ptr);
@@ -322,17 +325,25 @@ db_dirdelete(struct db_i *dbip, struct directory *dp)
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
 
+    if (dbip->i->dbi_edit && dbip->dbi_read_only) {
+	db_edit_record_failure(dbip);
+	return -1;
+    }
+
     struct directory **link = &dbip->i->dbi_Head[db_dirhash(dp->d_namep)];
     while (*link && *link != dp)
 	link = &(*link)->d_forw;
-    if (!*link)
+    if (!*link) {
+	db_edit_record_failure(dbip);
 	return -1;
+    }
 
     /* Observers must see the updated directory while the removed entry is
      * still available to identify the change. */
     *link = dp->d_forw;
     db_notify_changed(dbip, dp, 2);
 
+    db_edit_detach_record(dbip, dp);
     if ((dp->d_flags & RT_DIR_INMEM) && dp->d_un.ptr)
 	bu_free(dp->d_un.ptr, "db_dirdelete() inmem ptr");
     RT_DIR_FREE_NAMEP(dp);
@@ -353,6 +364,11 @@ db_rename(struct db_i *dbip, struct directory *dp, const char *newname)
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
 
+    if (dbip->i->dbi_edit && dbip->dbi_read_only) {
+	db_edit_record_failure(dbip);
+	return -1;
+    }
+
     /* Remove from linked list */
     headp = &(dbip->i->dbi_Head[db_dirhash(dp->d_namep)]);
     if (*headp == dp) {
@@ -366,10 +382,12 @@ db_rename(struct db_i *dbip, struct directory *dp, const char *newname)
 	    findp->d_forw = dp->d_forw;
 	    goto out;
 	}
+	db_edit_record_failure(dbip);
 	return -1;		/* ERROR: can't find */
     }
 
 out:
+    db_edit_record_change(dbip, dp->d_namep);
     /* Present the old name as a detached entry once the new name is live. */
     old_entry = *dp;
     notify = BU_PTBL_IS_INITIALIZED(&dbip->i->dbi_changed_clbks) &&
@@ -390,6 +408,8 @@ out:
 	db_notify_changed(dbip, &old_entry, 2);
 	db_notify_changed(dbip, dp, 1);
 	RT_DIR_FREE_NAMEP(&old_entry);
+    } else {
+	db_edit_record_change(dbip, dp->d_namep);
     }
     return 0;
 }
