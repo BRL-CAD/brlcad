@@ -179,17 +179,23 @@ collect_revision_rename(const char *before, const char *after, void *data)
     return renames.emplace(before, after).second ? 0 : -1;
 }
 
+} // namespace
+
 bool
-checkout_record(const Pack &pack, const Id &id, Bytes &record)
+read_archived_record(const Pack &pack, const Id &id, Bytes &record)
 {
-    if (id == absent)
+	if (id == absent) {
+	record.clear();
 	return true;
+    }
     ByteView descriptor, body;
     Object object;
     return read_artifact(pack, {Kind::Object, id}, descriptor) && decode_object(descriptor, object) &&
 	(object.body_id == absent || read_artifact(pack, {Kind::Body, object.body_id}, body)) &&
 	materialize_record(object, body, record);
 }
+
+namespace {
 
 bool
 checkout_change(const Pack &pack, struct db_edit *edit, const std::string &name, const Id &from, const Id &to,
@@ -198,8 +204,8 @@ checkout_change(const Pack &pack, struct db_edit *edit, const std::string &name,
     if (from == to)
 	return true;
     Bytes before, after;
-    if ((!before_override.size && !checkout_record(pack, from, before)) ||
-	!checkout_record(pack, to, after))
+    if ((!before_override.size && !read_archived_record(pack, from, before)) ||
+	!read_archived_record(pack, to, after))
 	return false;
     struct bu_external before_ext = BU_EXTERNAL_INIT_ZERO;
     struct bu_external after_ext = BU_EXTERNAL_INIT_ZERO;

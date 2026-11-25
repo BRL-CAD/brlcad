@@ -29,6 +29,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <variant>
 #include <vector>
 
 #include "bu/datetime.h"
@@ -76,6 +77,12 @@ struct ged_db_history {
 	db_history::Renames renames;
     };
 
+    struct SessionConflict {
+	Snapshot snapshot;
+	Revision revision;
+    };
+
+    using Conflict = std::variant<db_history::Db5HistoryDraft, SessionConflict>;
 
     struct db_i *live = nullptr;
     struct db_edit *stage = nullptr;
@@ -87,8 +94,7 @@ struct ged_db_history {
     db_history::WorkspaceHead workspace_head;
     bool workspace_writable = false;
     db_history::WorkspaceExport local_export;
-    Edit conflict{nullptr, db_edit_abort};
-    db_history::Revision conflict_revision;
+    std::unique_ptr<Conflict> conflict;
     std::unique_ptr<struct db5_save, decltype(&db5_save_free)> save{nullptr, db5_save_free};
     size_t limit = session_budget;
     size_t used = 0;
@@ -334,19 +340,26 @@ prune(ged_db_history &history)
 }
 
 bool
+has_pending_conflict(const ged_db_history &history, struct bu_vls *out)
+{
+    if (!history.conflict)
+	return false;
+    bu_vls_strcat(out, "Use db history conflict to inspect or export the staged edit, then reopen the database");
+    return true;
+}
+
+bool
 can_write_history(struct ged *gedp, const ged_db_history &history, bool adopt_external = false)
 {
     if (history.live != gedp->dbip) {
 	bu_vls_printf(gedp->ged_result_str, "The open database has changed since history was loaded");
 	return false;
     }
+    if (has_pending_conflict(history, gedp->ged_result_str))
+	return false;
     if (history.workspace) {
 	if (!history.workspace_writable) {
 	    bu_vls_strcat(gedp->ged_result_str, "The workspace is open read-only");
-	    return false;
-	}
-	if (history.conflict) {
-	    bu_vls_strcat(gedp->ged_result_str, "Inspect the staged edit with db history conflict, then reopen the workspace");
 	    return false;
 	}
 	return can_replace_database(gedp);
@@ -365,13 +378,13 @@ can_write_history(struct ged *gedp, const ged_db_history &history, bool adopt_ex
     return can_replace_database(gedp);
 }
 
-bool
+enum db5_save_result
 save_snapshot(struct ged *gedp, ged_db_history &history, const struct db_i *snapshot,
 	      struct db_i **replacement, const db_history::Pack *pack = nullptr)
 {
     if (!snapshot) {
 	bu_vls_printf(gedp->ged_result_str, "\nDatabase edit could not be committed");
-	return false;
+	return DB5_SAVE_ERROR;
     }
 
     struct bu_vls message = BU_VLS_INIT_ZERO;
@@ -380,7 +393,21 @@ save_snapshot(struct ged *gedp, ged_db_history &history, const struct db_i *snap
     if (status != DB5_SAVE_OK)
 	bu_vls_printf(gedp->ged_result_str, "\n%s", bu_vls_addr(&message));
     bu_vls_free(&message);
-    return status == DB5_SAVE_OK || status == DB5_SAVE_SYNC_FAILED;
+    return status;
+}
+
+bool
+saved_database(enum db5_save_result result)
+{
+    return result == DB5_SAVE_OK || result == DB5_SAVE_SYNC_FAILED;
+}
+
+void
+retain_conflict(struct ged *gedp, ged_db_history &history, ged_db_history::Conflict &&conflict)
+{
+    history.conflict = std::make_unique<ged_db_history::Conflict>(std::move(conflict));
+    bu_vls_strcat(gedp->ged_result_str,
+	"\nInspect with db history conflict or save to a new file with db history conflict export <path>");
 }
 
 void
@@ -545,8 +572,13 @@ travel(struct ged *gedp, ged_db_history &history, uint64_t target)
     if (!snapshot)
 	return BRLCAD_ERROR;
     struct db_i *replacement = nullptr;
-    if (!save_snapshot(gedp, history, snapshot.get(), &replacement))
+    // Keep the requested view if another writer won publication.
+    const auto result = save_snapshot(gedp, history, snapshot.get(), &replacement);
+    if (!saved_database(result)) {
+	if (result == DB5_SAVE_STALE)
+	    retain_conflict(gedp, history, ged_db_history::SessionConflict{std::move(snapshot), history.revisions.at(target)});
 	return BRLCAD_ERROR;
+    }
     snapshot.reset();
     for (const auto &step : steps) {
 	const auto &revision = history.revisions.at(step.revision);
@@ -743,7 +775,7 @@ enable_embedded(struct ged *gedp)
 	return BRLCAD_ERROR;
 
     struct db_i *replacement = nullptr;
-    if (!save_snapshot(gedp, *history, history->live, &replacement, &draft.pack))
+    if (!saved_database(save_snapshot(gedp, *history, history->live, &replacement, &draft.pack)))
 	return BRLCAD_ERROR;
     if (initial)
 	gedp->i->db_history = initial.release();
@@ -763,6 +795,8 @@ create_workspace(struct ged *gedp, const char *path)
     auto *history = gedp->i->db_history;
     if (history && history->workspace && bu_file_same(path, gedp->dbip->dbi_filename))
 	return BRLCAD_OK;
+    if (history && has_pending_conflict(*history, out))
+	return BRLCAD_ERROR;
     if (!can_replace_database(gedp))
 	return BRLCAD_ERROR;
 
@@ -830,11 +864,8 @@ publish_workspace_edit(struct ged *gedp, ged_db_history &history, Edit &edit)
     if (write != WorkspaceWriteStatus::Ok)
 	bu_vls_printf(out, "\n%s", bu_vls_addr(&message));
     bu_vls_free(&message);
-    if (write == WorkspaceWriteStatus::Stale) {
-	history.conflict = std::move(edit);
-	history.conflict_revision = std::move(revision);
-	bu_vls_strcat(out, "\nInspect the staged edit with db history conflict");
-    }
+    if (write == WorkspaceWriteStatus::Stale)
+	retain_conflict(gedp, history, std::move(draft));
     if (write != WorkspaceWriteStatus::Ok)
 	return BRLCAD_ERROR;
     edit.reset();
@@ -843,14 +874,19 @@ publish_workspace_edit(struct ged *gedp, ged_db_history &history, Edit &edit)
 }
 
 int
-publish_embedded_edit(struct ged *gedp, ged_db_history &history, Edit &edit, const db_history::Pack &pack)
+publish_embedded_edit(struct ged *gedp, ged_db_history &history, Edit &edit, db_history::Db5HistoryDraft &draft)
 {
     Snapshot snapshot(db_edit_commit(edit.get()), db_close);
     if (snapshot)
 	edit.release();
     struct db_i *replacement = nullptr;
-    if (!save_snapshot(gedp, history, snapshot.get(), &replacement, &pack))
+    const auto &pack = draft.pack;
+    const auto result = save_snapshot(gedp, history, snapshot.get(), &replacement, &pack);
+    if (!saved_database(result)) {
+	if (result == DB5_SAVE_STALE)
+	    retain_conflict(gedp, history, std::move(draft));
 	return BRLCAD_ERROR;
+    }
     snapshot.reset();
     install_snapshot(gedp, history, replacement, &pack.selected_revision);
     return BRLCAD_OK;
@@ -867,7 +903,7 @@ checkout_embedded(struct ged *gedp, ged_db_history &history, const db_history::I
 	bu_vls_printf(gedp->ged_result_str, "Could not replay the selected revision against the current model");
 	return BRLCAD_ERROR;
     }
-    return publish_embedded_edit(gedp, history, edit, draft.pack);
+    return publish_embedded_edit(gedp, history, edit, draft);
 }
 
 int
@@ -1237,8 +1273,8 @@ load_history_status(const ged_db_history *history, struct ged_history_status &st
     std::vector<StatusChoice> redo;
     if (!history->workspace && !is_embedded(*history)) {
 	status.mode = GED_HISTORY_SESSION;
-	status.state = GED_HISTORY_CURRENT;
-	status.writable = static_cast<bool>(history->save);
+	status.state = history->conflict ? GED_HISTORY_STALE : GED_HISTORY_CURRENT;
+	status.writable = history->save && !history->conflict;
 	status.session_bytes = history->used;
 	status.session_limit = history->limit;
 	const auto oldest = history->revisions.begin()->first;
@@ -1277,8 +1313,8 @@ load_history_status(const ged_db_history *history, struct ged_history_status &st
 	    }
 	} else {
 	    status.mode = GED_HISTORY_EMBEDDED;
-	    status.state = history_state(history->embedded_status);
-	    status.writable = history->save && history->embedded_status == EmbeddedStatus::Current;
+	    status.state = history->conflict ? GED_HISTORY_STALE : history_state(history->embedded_status);
+	    status.writable = history->save && history->embedded_status == EmbeddedStatus::Current && !history->conflict;
 	}
 
 	if (pack->selected_revision != db_history::absent) {
@@ -1344,7 +1380,7 @@ print_status_text(struct bu_vls *out, const struct ged_history_status &status)
 	return;
     const bool session = status.mode == GED_HISTORY_SESSION;
     const bool workspace = status.mode == GED_HISTORY_WORKSPACE;
-    if (!session)
+    if (!session || status.staged_conflict)
 	bu_vls_printf(out, "\nstatus %s\naccess %s", state_name(status.state), status.writable ? "read-write" : "read-only");
     if (workspace)
 	bu_vls_printf(out, "\ngeneration %ju", (uintmax_t)status.generation);
@@ -1367,11 +1403,11 @@ print_status_text(struct bu_vls *out, const struct ged_history_status &status)
 	if (!session && redo.preferred)
 	    bu_vls_strcat(out, " (preferred)");
     }
+    if (status.staged_conflict)
+	bu_vls_strcat(out, "\nstaged conflict");
     if (workspace) {
 	if (status.state == GED_HISTORY_STALE)
 	    bu_vls_printf(out, "\nworkspace head %s generation %ju", status.workspace_head, (uintmax_t)status.workspace_generation);
-	if (status.staged_conflict)
-	    bu_vls_strcat(out, "\nstaged conflict");
 	bu_vls_printf(out, "\nlast export %s", status.exported_revision ? status.exported_revision : "none");
 	if (status.exported_at) {
 	    struct bu_vls utc = BU_VLS_INIT_ZERO;
@@ -1719,7 +1755,7 @@ adopt_external_history(struct ged *gedp, ged_db_history &history, bool apply)
     }
 
     struct db_i *replacement = nullptr;
-    if (!save_snapshot(gedp, history, history.live, &replacement, &draft.pack))
+    if (!saved_database(save_snapshot(gedp, history, history.live, &replacement, &draft.pack)))
 	return BRLCAD_ERROR;
     if (bu_vls_strlen(out))
 	bu_vls_putc(out, '\n');
@@ -1753,7 +1789,7 @@ mark_archive_revision(struct ged *gedp, ged_db_history &history, const char *nam
     auto marked = current;
     marked.references.insert_or_assign(name, marked.selected_revision);
     struct db_i *replacement = nullptr;
-    if (!save_snapshot(gedp, history, history.live, &replacement, &marked))
+    if (!saved_database(save_snapshot(gedp, history, history.live, &replacement, &marked)))
 	return BRLCAD_ERROR;
     install_snapshot(gedp, history, replacement, &marked.selected_revision);
     return BRLCAD_OK;
@@ -1800,7 +1836,54 @@ export_history(struct ged *gedp, ged_db_history *history, const char *path, bool
 	    }
 	}
     }
-    return status == DB5_SAVE_OK || status == DB5_SAVE_SYNC_FAILED ? BRLCAD_OK : BRLCAD_ERROR;
+    return saved_database(status) ? BRLCAD_OK : BRLCAD_ERROR;
+}
+
+int
+handle_conflict(struct bu_vls *out, const ged_db_history *history, const char *destination)
+{
+    if (!history || !history->conflict) {
+	bu_vls_strcat(out, "There is no staged conflict");
+	return BRLCAD_ERROR;
+    }
+
+    const auto *session = std::get_if<ged_db_history::SessionConflict>(history->conflict.get());
+    const auto *archive = std::get_if<db_history::Db5HistoryDraft>(history->conflict.get());
+    if (destination) {
+	enum db5_save_result saved;
+	if (session)
+	    saved = db_history::export_db5_conflict(history->save.get(), session->snapshot.get(), destination, out);
+	else if (history->workspace)
+	    saved = history->workspace->export_staged(history->workspace_head, archive->pack, destination, out);
+	else
+	    saved = db_history::export_db5_archive(archive->pack, destination, out);
+	if (saved == DB5_SAVE_OK) {
+	    bu_vls_strcat(out, "Exported staged revision to ");
+	    append_printable(out, destination);
+	}
+	return saved_database(saved) ? BRLCAD_OK : BRLCAD_ERROR;
+    }
+
+    if (session) {
+	const auto &revision = session->revision;
+	bu_vls_strcat(out, "staged session revision ");
+	append_printable(out, revision.label);
+	visit_rename_changes(revision.renames, print_revision_change, out);
+	for (const auto &change : revision.changes)
+	    print_change(out, !change.before.empty(), !change.after.empty(), change.name);
+	return BRLCAD_OK;
+    }
+
+    db_history::Revision revision;
+    if (!db_history::read_revision(archive->pack, archive->pack.selected_revision, revision)) {
+	bu_vls_strcat(out, "The staged revision could not be read");
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(out, "staged edit from %s ", id_string(revision.parent).c_str());
+    append_printable(out, revision.label);
+    visit_rename_changes(revision.renames, print_revision_change, out);
+    print_archive_changes(out, revision.changes);
+    return BRLCAD_OK;
 }
 
 int
@@ -2253,7 +2336,7 @@ ged_db_history_leave(struct ged *gedp, struct db_edit *stage, int result)
 	    case db_history::AppendStatus::Unchanged:
 		return BRLCAD_OK;
 	    case db_history::AppendStatus::Ready:
-		return publish_embedded_edit(gedp, *history, edit, draft.pack);
+		return publish_embedded_edit(gedp, *history, edit, draft);
 	    case db_history::AppendStatus::Error:
 		bu_vls_strcat(gedp->ged_result_str, "\nCould not record the staged changes in embedded history");
 		return BRLCAD_ERROR;
@@ -2281,8 +2364,12 @@ ged_db_history_leave(struct ged *gedp, struct db_edit *stage, int result)
     if (snapshot)
 	edit.release();
     struct db_i *replacement = nullptr;
-    if (!save_snapshot(gedp, *history, snapshot.get(), &replacement))
+    const auto saved = save_snapshot(gedp, *history, snapshot.get(), &replacement);
+    if (!saved_database(saved)) {
+	if (saved == DB5_SAVE_STALE)
+	    retain_conflict(gedp, *history, ged_db_history::SessionConflict{std::move(snapshot), std::move(pending.begin()->second)});
 	return BRLCAD_ERROR;
+    }
     snapshot.reset();
     history->revisions.at(history->head).children++;
     history->head = history->next++;
@@ -2324,19 +2411,9 @@ ged_db_history_command(struct ged *gedp, int argc, const char **argv)
 		bu_vls_putc(gedp->ged_result_str, '\n');
 	    return print_status(gedp);
 	}
-	if (argc == 2 && BU_STR_EQUAL(argv[1], "conflict")) {
-	    auto *out = gedp->ged_result_str;
-	    if (!history || !history->conflict) {
-		bu_vls_strcat(out, "There is no staged workspace conflict");
-		return BRLCAD_ERROR;
-	    }
-	    const auto &revision = history->conflict_revision;
-	    bu_vls_printf(out, "staged edit from %s ", id_string(revision.parent).c_str());
-	    append_printable(out, revision.label);
-	    visit_rename_changes(revision.renames, print_revision_change, out);
-	    print_archive_changes(out, revision.changes);
-	    return BRLCAD_OK;
-	}
+	const bool save_conflict = argc == 4 && BU_STR_EQUAL(argv[2], "export");
+	if ((argc == 2 || save_conflict) && BU_STR_EQUAL(argv[1], "conflict"))
+	    return handle_conflict(gedp->ged_result_str, history, save_conflict ? argv[3] : nullptr);
 	const bool verify = argc == 2 && BU_STR_EQUAL(argv[1], "verify");
 	const bool adopt = (argc == 2 || (argc == 3 && BU_STR_EQUAL(argv[2], "--apply"))) && BU_STR_EQUAL(argv[1], "adopt");
 	if (verify || adopt) {

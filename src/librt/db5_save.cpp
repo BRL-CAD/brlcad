@@ -300,15 +300,21 @@ read_snapshot_file_state(int descriptor, SnapshotFileState &state)
 }
 
 bool
-same_state(const SnapshotFileState &before, const SnapshotFileState &after)
+same_contents(const SnapshotFileState &before, const SnapshotFileState &after)
 {
     const auto &original = before.info;
     const auto &current = after.info;
     return current.dwVolumeSerialNumber == original.dwVolumeSerialNumber &&
 	current.nFileIndexHigh == original.nFileIndexHigh && current.nFileIndexLow == original.nFileIndexLow &&
 	current.nFileSizeHigh == original.nFileSizeHigh && current.nFileSizeLow == original.nFileSizeLow &&
-	current.nNumberOfLinks == original.nNumberOfLinks && current.dwFileAttributes == original.dwFileAttributes &&
-	after.basic.LastWriteTime.QuadPart == before.basic.LastWriteTime.QuadPart &&
+	current.dwFileAttributes == original.dwFileAttributes &&
+	after.basic.LastWriteTime.QuadPart == before.basic.LastWriteTime.QuadPart;
+}
+
+bool
+same_state(const SnapshotFileState &before, const SnapshotFileState &after)
+{
+    return same_contents(before, after) && after.info.nNumberOfLinks == before.info.nNumberOfLinks &&
 	after.basic.ChangeTime.QuadPart == before.basic.ChangeTime.QuadPart;
 }
 #else
@@ -319,13 +325,32 @@ read_snapshot_file_state(int descriptor, SnapshotFileState &state)
 }
 
 bool
-same_state(const struct stat &original, const struct stat &current)
+same_write_time(const struct stat &original, const struct stat &current)
 {
-    return S_ISREG(current.st_mode) && current.st_nlink == original.st_nlink &&
-	current.st_dev == original.st_dev && current.st_ino == original.st_ino &&
+#if defined(__APPLE__) && !defined(st_mtime)
+    return current.st_mtime == original.st_mtime && current.st_mtimensec == original.st_mtimensec;
+#elif defined(__APPLE__)
+    return current.st_mtime == original.st_mtime &&
+	current.st_mtimespec.tv_nsec == original.st_mtimespec.tv_nsec;
+#else
+    return current.st_mtime == original.st_mtime && current.st_mtim.tv_nsec == original.st_mtim.tv_nsec;
+#endif
+}
+
+bool
+same_contents(const struct stat &original, const struct stat &current)
+{
+    return S_ISREG(current.st_mode) && current.st_dev == original.st_dev && current.st_ino == original.st_ino &&
 	current.st_size == original.st_size && current.st_mode == original.st_mode &&
 	current.st_uid == original.st_uid && current.st_gid == original.st_gid &&
-	current.st_ctime == original.st_ctime && current.st_mtime == original.st_mtime;
+	same_write_time(original, current);
+}
+
+bool
+same_state(const struct stat &original, const struct stat &current)
+{
+    return same_contents(original, current) && current.st_nlink == original.st_nlink &&
+	current.st_ctime == original.st_ctime;
 }
 #endif
 
@@ -435,6 +460,26 @@ write_snapshot(FILE *file, const struct db_i *snapshot, const db_history::Pack *
 	return false;
     }
     return !pack || db_history::write_embedded_pack(file, *pack);
+}
+
+bool
+write_archived_snapshot(FILE *file, const db_history::Pack &pack, const db_history::Manifest &model)
+{
+    using namespace db_history;
+    if (db5_fwrite_header(file) < 0)
+	return false;
+
+    Bytes record;
+    for (const auto &entry : model) {
+	if (!read_archived_record(pack, entry.second, record))
+	    return false;
+	struct bu_external external = BU_EXTERNAL_INIT_ZERO;
+	external.ext_buf = record.data();
+	external.ext_nbytes = record.size();
+	if (bu_fwrite_external(file, &external) != 0)
+	    return false;
+    }
+    return write_embedded_pack(file, pack);
 }
 
 std::string
@@ -644,21 +689,13 @@ db_history::db5_history_save_is_current(const struct db5_save *save)
 #endif
 }
 
-enum db5_save_result
-db_history::export_db5_snapshot(const struct db_i *snapshot, const char *destination,
-			      const Pack *pack, struct bu_vls *message)
-{
-    return export_db5_snapshot(snapshot, destination, pack, message, {});
-}
-
-enum db5_save_result
-db_history::export_db5_snapshot(const struct db_i *snapshot, const char *destination,
-			       const Pack *pack, struct bu_vls *message, const SnapshotRecordReader &reader)
-{
-    db5_save_message(message, "");
 #ifdef DB5_ATOMIC_EXPORT
-    if (!snapshot || db_version(snapshot) != 5 || !destination || !*destination) {
-	db5_save_message(message, "A DB5 model and a new export path are required");
+template <typename Writer>
+static enum db5_save_result
+publish_export(const struct db_i *snapshot, const char *destination, struct bu_vls *message, Writer write)
+{
+    if (!destination || !*destination) {
+	db5_save_message(message, "A new export path is required");
 	return DB5_SAVE_ERROR;
     }
     const std::string directory = snapshot_directory(destination);
@@ -681,7 +718,7 @@ db_history::export_db5_snapshot(const struct db_i *snapshot, const char *destina
 	return DB5_SAVE_ERROR;
     }
 
-    const int source_fd = snapshot->i->dbi_fp ? fileno(snapshot->i->dbi_fp) : -1;
+    const int source_fd = snapshot && snapshot->i->dbi_fp ? fileno(snapshot->i->dbi_fp) : -1;
     SnapshotFileState original;
     if (source_fd >= 0 && !read_snapshot_file_state(source_fd, original)) {
 	db5_save_message(message, "Could not identify the source DB5 file");
@@ -700,7 +737,7 @@ db_history::export_db5_snapshot(const struct db_i *snapshot, const char *destina
     }
 #endif
     TemporarySnapshot temporary(directory);
-    if (!temporary.file || !write_snapshot(temporary.file, snapshot, pack, true, message, reader) || !temporary.finish()) {
+    if (!temporary.file || !write(temporary.file) || !temporary.finish()) {
 	if (message && !bu_vls_strlen(message))
 	    db5_save_message(message, "Could not write and synchronize the DB5 export");
 	return DB5_SAVE_ERROR;
@@ -746,11 +783,95 @@ db_history::export_db5_snapshot(const struct db_i *snapshot, const char *destina
 	return DB5_SAVE_SYNC_FAILED;
     }
     return DB5_SAVE_OK;
+}
+#endif
+
+enum db5_save_result
+db_history::export_db5_snapshot(const struct db_i *snapshot, const char *destination,
+			      const Pack *pack, struct bu_vls *message)
+{
+    return export_db5_snapshot(snapshot, destination, pack, message, {});
+}
+
+enum db5_save_result
+db_history::export_db5_snapshot(const struct db_i *snapshot, const char *destination,
+			       const Pack *pack, struct bu_vls *message, const SnapshotRecordReader &reader)
+{
+    db5_save_message(message, "");
+#ifdef DB5_ATOMIC_EXPORT
+    if (!snapshot || db_version(snapshot) != 5) {
+	db5_save_message(message, "A DB5 model is required for export");
+	return DB5_SAVE_ERROR;
+    }
+    return publish_export(snapshot, destination, message, [&](FILE *file) {
+	return write_snapshot(file, snapshot, pack, true, message, reader);
+    });
 #else
     (void)snapshot;
     (void)destination;
     (void)pack;
     (void)reader;
+    db5_save_message(message, "Atomic DB5 export is unavailable on this platform");
+    return DB5_SAVE_ERROR;
+#endif
+}
+
+enum db5_save_result
+db_history::export_db5_archive(const Pack &pack, const char *destination, struct bu_vls *message)
+{
+    db5_save_message(message, "");
+#ifdef DB5_ATOMIC_EXPORT
+    return publish_export(nullptr, destination, message, [&](FILE *file) {
+	Manifest model;
+	if (!selected_manifest(pack, model) || !verify_pack(pack, message))
+	    return false;
+	return write_archived_snapshot(file, pack, model);
+    });
+#else
+    (void)pack;
+    (void)destination;
+    db5_save_message(message, "Atomic DB5 export is unavailable on this platform");
+    return DB5_SAVE_ERROR;
+#endif
+}
+
+enum db5_save_result
+db_history::export_db5_conflict(const struct db5_save *save, const struct db_i *snapshot,
+			       const char *destination, struct bu_vls *message)
+{
+    db5_save_message(message, "");
+#ifdef DB5_ATOMIC_REPLACEMENT
+    if (!save || save->installed || !snapshot || db_version(snapshot) != 5) {
+	db5_save_message(message, "The staged DB5 view is unavailable");
+	return DB5_SAVE_ERROR;
+    }
+    const int fd = fileno(save->base->i->dbi_fp);
+    SnapshotFileState base = {};
+    const bool identified = read_snapshot_file_state(fd, base);
+    // Replacing the pathname can unlink the old file while its descriptor
+    // still supplies the original records. Only allow that metadata change.
+#ifdef DB5_WIN32_REPLACEMENT
+    const bool detached = base.info.nNumberOfLinks == 0;
+#else
+    const bool detached = base.st_nlink == 0;
+#endif
+
+    if (!identified || (!same_state(save->original, base) && !(detached && same_contents(save->original, base)))) {
+	db5_save_message(message, "The original file contents changed. The staged session model cannot be recovered from them.");
+	return DB5_SAVE_STALE;
+    }
+    return publish_export(save->base, destination, message, [&](FILE *file) {
+	SnapshotFileState current;
+	if (!read_snapshot_file_state(fd, current) || !same_state(base, current)) {
+	    db5_save_message(message, "The original DB5 file changed during recovery");
+	    return false;
+	}
+	return write_snapshot(file, snapshot, nullptr, true, message);
+    });
+#else
+    (void)save;
+    (void)snapshot;
+    (void)destination;
     db5_save_message(message, "Atomic DB5 export is unavailable on this platform");
     return DB5_SAVE_ERROR;
 #endif

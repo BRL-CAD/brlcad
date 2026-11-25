@@ -243,7 +243,7 @@ GED_EXPORT const struct directory *ged_db_history_archive(const struct db_i *dbi
 GED_EXPORT int ged_db_history_command(struct ged *gedp, int argc, const char **argv);
 #define GED_DB_HISTORY_USAGE "status [--json] | enable [embedded | session [bytes]] | log [--object name] [--json] | show <revision> [--json] | " \
     "checkout <revision> | diff <a> <b> [--object name] | mark <name> [--move] | export <path> [--with-history] | " \
-    "workspace <directory> | batch <label> <command-list> | verify | adopt [--apply] | conflict | " \
+    "workspace <directory> | batch <label> <command-list> | verify | adopt [--apply] | conflict [export <path>] | " \
     "prune --keep <revisions> [--drop <tip>]... [--apply <preview>]"
 
 #ifndef FALSE

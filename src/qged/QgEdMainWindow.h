@@ -108,6 +108,7 @@ class QgEdMainWindow : public QMainWindow
 	void ConnectWidgets();
 	void SetupMenu();
 	void UpdateHistoryControls();
+	void SaveStagedEdit();
 	void RedoHistory();
 	void ShowHistory();
 
@@ -119,6 +120,7 @@ class QgEdMainWindow : public QMainWindow
 	QAction *history_undo = nullptr;
 	QAction *history_redo = nullptr;
 	QAction *history_view = nullptr;
+	QAction *history_save_staged = nullptr;
 	QLabel *history_mode = nullptr;
 
 	// Organizational widget

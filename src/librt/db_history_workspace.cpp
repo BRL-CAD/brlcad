@@ -1235,6 +1235,24 @@ Workspace::export_snapshot(const struct db_i *snapshot, const char *destination,
     return read ? result : DB5_SAVE_ERROR;
 }
 
+enum db5_save_result
+Workspace::export_staged(const WorkspaceHead &base, const Pack &staged, const char *destination,
+			 struct bu_vls *message) const
+{
+    auto result = DB5_SAVE_ERROR;
+    const bool read = store->read([&](MDB_txn *txn, const Tables &tables) {
+	Pack archive;
+	if (!load_pack(txn, tables, base, false, archive))
+	    return report(message, "The base workspace archive is invalid");
+	archive.artifacts.insert(staged.artifacts.begin(), staged.artifacts.end());
+	archive.selected_model = staged.selected_model;
+	archive.selected_revision = staged.selected_revision;
+	result = export_db5_archive(archive, destination, message);
+	return true;
+    }, message);
+    return read ? result : DB5_SAVE_ERROR;
+}
+
 bool
 Workspace::verify(struct bu_vls *message) const
 {

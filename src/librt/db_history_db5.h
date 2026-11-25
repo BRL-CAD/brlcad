@@ -101,6 +101,7 @@ RT_EXPORT bool read_published_db5_history(const struct db_i *db, const Id &expec
 // compare exactly the same model representations.
 bool selected_manifest(const Pack &pack, Manifest &manifest);
 bool add_model_record(Manifest &manifest, std::string_view name, ByteView record);
+bool read_archived_record(const Pack &pack, const Id &id, Bytes &record);
 RT_EXPORT EmbeddedStatus inspect_db5_history(const struct db_i *db);
 
 // Atomically stream a complete DB5 snapshot and replace or append its
@@ -114,6 +115,14 @@ RT_EXPORT bool db5_history_save_is_current(const struct db5_save *save);
 // a supplied pack, omit recognized archives and retain user objects.
 RT_EXPORT enum db5_save_result export_db5_snapshot(const struct db_i *snapshot,
 	const char *destination, const Pack *pack, struct bu_vls *message);
+
+// Recover a DB5 snapshot directly from the selected archive model.
+RT_EXPORT enum db5_save_result export_db5_archive(const Pack &pack,
+	const char *destination, struct bu_vls *message);
+
+// Save a staged session view whose inherited records still match its base.
+RT_EXPORT enum db5_save_result export_db5_conflict(const struct db5_save *save,
+	const struct db_i *snapshot, const char *destination, struct bu_vls *message);
 
 // A workspace supplies records from the same read transaction as its pack.
 // The reader returns an owned external record, as db_get_external does.

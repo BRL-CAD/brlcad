@@ -96,6 +96,8 @@ public:
     RT_EXPORT bool copy_to(const WorkspaceHead &view, const char *destination, struct bu_vls *message) const;
     RT_EXPORT enum db5_save_result export_snapshot(const struct db_i *view, const char *destination,
 	bool with_history, struct bu_vls *message) const;
+    RT_EXPORT enum db5_save_result export_staged(const WorkspaceHead &base, const Pack &staged,
+	const char *destination, struct bu_vls *message) const;
     RT_EXPORT bool verify(struct bu_vls *message) const;
     RT_EXPORT bool record_export(const WorkspaceExport &exported, struct bu_vls *message);
     RT_EXPORT bool preview_prune(const WorkspaceHead &expected, const WorkspaceRetention &policy,

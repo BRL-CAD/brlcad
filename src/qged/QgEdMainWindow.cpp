@@ -344,6 +344,11 @@ QgEdMainWindow::SetupMenu()
     connect(cad_save_settings, &QAction::triggered, ((QgEdApp *)qApp), &QgEdApp::write_settings);
     file_menu->addAction(cad_save_settings);
 
+    history_save_staged = file_menu->addAction(tr("Save Staged Edit As…"));
+    history_save_staged->setEnabled(false);
+    connect(history_save_staged, &QAction::triggered, this, &QgEdMainWindow::SaveStagedEdit);
+    connect(file_menu, &QMenu::aboutToShow, this, &QgEdMainWindow::UpdateHistoryControls);
+
 #if 0
     cad_save_image = new QAction("Save Image", this);
     connect(cad_save_image, &QAction::triggered, this, &QgEdMainWindow::save_image);
@@ -418,6 +423,7 @@ QgEdMainWindow::UpdateHistoryControls()
     history_undo->setEnabled(writable && status->undo.revision);
     history_redo->setEnabled(writable && status->redo_count);
     history_view->setEnabled(status && status->mode != GED_HISTORY_DISABLED);
+    history_save_staged->setEnabled(!app->command_pending() && status && status->staged_conflict);
 
     QString mode;
     QString export_time;
@@ -428,7 +434,9 @@ QgEdMainWindow::UpdateHistoryControls()
 	    case GED_HISTORY_EMBEDDED: mode = tr("Embedded history"); break;
 	    case GED_HISTORY_WORKSPACE: mode = tr("Workspace"); break;
 	}
-	if (!mode.isEmpty() && !status->writable)
+	if (status->staged_conflict)
+	    mode += tr(" · Staged edit");
+	else if (!mode.isEmpty() && !status->writable)
 	    mode += tr(" (read-only)");
 	if (status->exported_revision)
 	    mode += tr(" · Exported %1").arg(QString::fromUtf8(status->exported_revision).left(12));
@@ -438,6 +446,27 @@ QgEdMainWindow::UpdateHistoryControls()
     history_mode->setText(mode);
     history_mode->setToolTip(export_time);
     history_mode->setVisible(!mode.isEmpty());
+}
+
+void
+QgEdMainWindow::SaveStagedEdit()
+{
+    auto *app = static_cast<QgEdApp *>(qApp);
+    const QString path = QFileDialog::getSaveFileName(this, tr("Save Staged Edit As"),
+	QStringLiteral("recovered.g"), tr("BRL-CAD databases (*.g)"), nullptr, QFileDialog::DontConfirmOverwrite);
+    if (path.isEmpty())
+	return;
+
+    const QByteArray destination = path.toLocal8Bit();
+    const char *argv[] = {"db", "history", "conflict", "export", destination.constData()};
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    const int status = app->run_cmd(&result, sizeof(argv) / sizeof(argv[0]), argv);
+    const QString message = QString::fromLocal8Bit(bu_vls_cstr(&result));
+    bu_vls_free(&result);
+    if (status == BRLCAD_OK)
+	QMessageBox::information(this, tr("Save Staged Edit As"), message);
+    else
+	QMessageBox::warning(this, tr("Save Staged Edit As"), message);
 }
 
 void

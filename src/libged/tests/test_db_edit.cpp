@@ -225,8 +225,15 @@ test_disk_history()
 
     // A different writer may change the file while a session is idle.
     const std::unique_ptr<struct ged, decltype(&ged_close)> external(ged_open("db", path, 1), ged_close);
-    CHECK(external && run(external.get(), title) == BRLCAD_OK);
+    const char *external_shape[] = {"make", "external.s", "sph", nullptr};
+    CHECK(external && run(external.get(), title) == BRLCAD_OK && run(external.get(), external_shape) == BRLCAD_OK);
     CHECK(run(gedp, undo) != BRLCAD_OK && contains_result(gedp, "changed since staging began"));
+    char recovered_path[MAXPATHLEN] = {};
+    file = bu_temp_file(recovered_path, sizeof(recovered_path));
+    CHECK(file && fclose(file) == 0 && bu_file_delete(recovered_path));
+    const char *save_conflict[] = {"db", "history", "conflict", "export", recovered_path, nullptr};
+    CHECK(run(gedp, save_conflict) != BRLCAD_OK && contains_result(gedp, "original file contents changed") &&
+	!bu_file_exists(recovered_path, nullptr));
     CHECK(commits == 9);
     const char *quit[] = {"quit", nullptr};
     CHECK(run(gedp, quit) == GED_EXIT);
@@ -257,6 +264,18 @@ test_disk_history()
     CHECK(run(bounded.get(), expired) != BRLCAD_OK && contains_result(bounded.get(), "expired"));
     CHECK(run(bounded.get(), undo) == BRLCAD_OK);
     CHECK(run(bounded.get(), query_title) == BRLCAD_OK && contains_result(bounded.get(), "five"));
+
+    const std::unique_ptr<struct ged, decltype(&ged_close)> stale(ged_open("db", path, 1), ged_close);
+    CHECK(stale && run(stale.get(), enable) == BRLCAD_OK);
+    CHECK(run(bounded.get(), title) == BRLCAD_OK);
+    CHECK(run(stale.get(), new_title) != BRLCAD_OK && contains_result(stale.get(), "conflict export"));
+    CHECK(run(stale.get(), status) == BRLCAD_OK && contains_result(stale.get(), "status stale"));
+    CHECK(run(stale.get(), save_conflict) == BRLCAD_OK);
+    const std::unique_ptr<struct ged, decltype(&ged_close)> saved(ged_open("db", recovered_path, 1), ged_close);
+    CHECK(saved && run(saved.get(), query_title) == BRLCAD_OK && contains_result(saved.get(), "too large"));
+    CHECK(run(saved.get(), reference) == BRLCAD_OK && contains_result(saved.get(), "outline.s"));
+    CHECK(db_lookup(saved->dbip, "external.s", LOOKUP_QUIET));
+    CHECK(run(bounded.get(), query_title) == BRLCAD_OK && contains_result(bounded.get(), "fork"));
     return 0;
 }
 
@@ -434,6 +453,30 @@ test_embedded_history()
     CHECK(run(gedp, redo) == BRLCAD_OK && selected_id(gedp) == adopted);
     CHECK(run(gedp, title) == BRLCAD_OK && contains_result(gedp, "legacy title"));
     CHECK(!db_lookup(gedp->dbip, "assembly.c", LOOKUP_QUIET) && db_lookup(gedp->dbip, "imported.s", LOOKUP_QUIET));
+
+    Ged stale(ged_open("db", path, 1), ged_close);
+    CHECK(stale && selected_id(stale.get()) == adopted);
+    CHECK(run(gedp, fork_title) == BRLCAD_OK);
+    const auto committed = selected_id(gedp);
+    const char *staged_title[] = {"title", "unpublished embedded title", nullptr};
+    CHECK(run(stale.get(), staged_title) != BRLCAD_OK && contains_result(stale.get(), "conflict export"));
+    CHECK(run(stale.get(), status) == BRLCAD_OK && contains_result(stale.get(), "status stale") &&
+	contains_result(stale.get(), "staged conflict"));
+    const char *conflict[] = {"db", "history", "conflict", nullptr};
+    CHECK(run(stale.get(), conflict) == BRLCAD_OK && contains_result(stale.get(), "update _GLOBAL"));
+    const char *existing_conflict_export[] = {"db", "history", "conflict", "export", path, nullptr};
+    CHECK(run(stale.get(), existing_conflict_export) != BRLCAD_OK && contains_result(stale.get(), "already exists"));
+    char recovered_path[MAXPATHLEN] = {};
+    file = bu_temp_file(recovered_path, sizeof(recovered_path));
+    CHECK(file && fclose(file) == 0 && bu_file_delete(recovered_path));
+    const char *save_conflict[] = {"db", "history", "conflict", "export", recovered_path, nullptr};
+    CHECK(run(stale.get(), save_conflict) == BRLCAD_OK);
+    Ged recovered_conflict(ged_open("db", recovered_path, 1), ged_close);
+    CHECK(recovered_conflict && run(recovered_conflict.get(), verify) == BRLCAD_OK &&
+	run(recovered_conflict.get(), title) == BRLCAD_OK && contains_result(recovered_conflict.get(), "unpublished embedded title"));
+    CHECK(run(recovered_conflict.get(), undo) == BRLCAD_OK && selected_id(recovered_conflict.get()) == adopted);
+    Ged original(ged_open("db", path, 1), ged_close);
+    CHECK(original && selected_id(original.get()) == committed && selected_id(stale.get()) == adopted);
     return 0;
 }
 
@@ -698,6 +741,19 @@ test_workspace_history()
     const char *conflict[] = {"db", "history", "conflict", nullptr};
     CHECK(run(stale.get(), conflict) == BRLCAD_OK && contains_result(stale.get(), "update _GLOBAL"));
     CHECK(run(stale.get(), reference) == BRLCAD_OK && contains_result(stale.get(), old_name.c_str()));
+    const auto recovered_path = (fixture.path / "recovered.g").string();
+    const char *save_conflict[] = {"db", "history", "conflict", "export", recovered_path.c_str(), nullptr};
+    const int recovered_status = run(stale.get(), save_conflict);
+    if (recovered_status != BRLCAD_OK && contains_result(stale.get(), "Atomic DB5 export is unavailable"))
+	return 0;
+    CHECK(recovered_status == BRLCAD_OK);
+    Ged recovered_conflict(ged_open("db", recovered_path.c_str(), 1), ged_close);
+    const char *title[] = {"title", nullptr};
+    const char *verify[] = {"db", "history", "verify", nullptr};
+    CHECK(recovered_conflict && run(recovered_conflict.get(), verify) == BRLCAD_OK &&
+	run(recovered_conflict.get(), title) == BRLCAD_OK && contains_result(recovered_conflict.get(), "staged conflict") &&
+	run(recovered_conflict.get(), show) == BRLCAD_OK && contains_result(recovered_conflict.get(), "outline.s"));
+    CHECK(selected_id(writer.get()) == renamed && selected_id(stale.get()) == root);
     const char *open[] = {"db", "open", workspace.c_str(), nullptr};
     CHECK(run(stale.get(), open) == BRLCAD_OK && selected_id(stale.get()) == renamed);
     CHECK(run(stale.get(), conflict) != BRLCAD_OK);
@@ -721,7 +777,6 @@ test_workspace_history()
     CHECK(!branch.empty() && branch != root && branch != renamed);
     const char *move_mark[] = {"db", "history", "mark", "rename", "--move", nullptr};
     CHECK(run(writer.get(), move_mark) == BRLCAD_OK && selected_id(writer.get()) == branch);
-    const char *verify[] = {"db", "history", "verify", nullptr};
     CHECK(run(writer.get(), verify) == BRLCAD_OK && contains_result(writer.get(), "verified"));
     const char *invalid_dir[] = {"db", "open", path, nullptr};
     CHECK(run(writer.get(), invalid_dir) != BRLCAD_OK && contains_result(writer.get(), "no LMDB data file") &&
@@ -739,7 +794,6 @@ test_workspace_history()
     CHECK(run(writer.get(), status) == BRLCAD_OK && contains_result(writer.get(), ("last export " + branch).c_str()) &&
 	contains_result(writer.get(), "last export time "));
     Ged plain_db(ged_open("db", plain.c_str(), 1), ged_close);
-    const char *title[] = {"title", nullptr};
     CHECK(plain_db && run(plain_db.get(), status) == BRLCAD_OK && contains_result(plain_db.get(), "mode disabled") &&
 	run(plain_db.get(), title) == BRLCAD_OK && contains_result(plain_db.get(), "staged conflict"));
     const auto archive = (fixture.path / "archive.g").string();

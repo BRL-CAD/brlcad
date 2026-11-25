@@ -94,8 +94,8 @@ __history verify__::
 Check the stored history's bytes, revision graph, and object records, then compare the live DB5 model or workspace directory with the selected revision. A valid embedded archive with external model changes reports a mismatch.
 
 
-__history conflict__::
-Show the workspace edit retained after a stale-writer conflict. Reopen the workspace to load the current head and discard the staged edit.
+__history conflict [export path]__::
+Inspect an edit retained after a stale-writer conflict. Use `export path` to save the staged revision to a new DB5 file. Embedded and workspace exports include retained history. Session exports are plain DB5 and require the original records to still be readable through their open handle. In QGED, choose *Save Staged Edit As* from the File menu. Reopen the source to load its current state and discard the staged edit.
 
 
 __history prune --keep revisions [--drop tip]... [--apply preview]__::

@@ -47,6 +47,8 @@ Generate terminal text, menus and history views from those results.
   db history verify               Check the graph, blobs and current model.
   db history adopt                Preview external DB5 edits. With --apply,
                                   record those edits against the saved head.
+  db history conflict [export <path>]
+                                  Inspect a stale edit or save it to a new DB5.
   db history batch <label> <commands>
                                   Publish a Tcl list of GED argument lists
                                   as one revision.
@@ -562,6 +564,21 @@ A typed GED edit session kept a torus radius change private until
 commit. A competing session and a host replacement veto each left the
 dirty preview available. One successful commit saved the geometry
 and its existing attributes. Undo and Redo restored the two radii.
+
+Two GED clients exercised stale-write recovery in session DB5,
+embedded DB5 and LMDB. Recovery opened the staged geometry in a new
+file. Embedded and workspace recovery preserved the archive and
+revision IDs. Session recovery used the original records held by an
+open handle and refused to publish after an in-place external edit
+changed those records. A QGED File-menu recovery to a path containing
+a space created an independently verified archive with the staged
+title while the original file retained the competing title.
+
+On the M1917 workspace, exporting a stale title edit after another
+process committed a new primitive took 20.7 seconds and wrote a
+2.42 GB DB5 file. Fresh processes verified both archives. The staged
+title was selected in the export, the competing revision was retained,
+and Undo returned to the original base revision.
 
 Implementation starting points in the source tree
 -------------------------------------------------
