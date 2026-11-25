@@ -1,4 +1,4 @@
-/*              D B _ H I S T O R Y _ F I L E _ L O C K . H
+/*                   D B _ H I S T O R Y _ F I L E . H
  * BRL-CAD
  *
  * Copyright (c) 2026 United States Government as represented by
@@ -18,8 +18,8 @@
  * information.
  */
 
-#ifndef LIBRT_DB_HISTORY_FILE_LOCK_H
-#define LIBRT_DB_HISTORY_FILE_LOCK_H
+#ifndef LIBRT_DB_HISTORY_FILE_H
+#define LIBRT_DB_HISTORY_FILE_H
 
 #include "common.h"
 
@@ -40,9 +40,13 @@
 #  endif
 #endif
 
-#ifdef DB_HISTORY_FILE_LOCKS
+#if defined(DB_HISTORY_WIN32_FILE_LOCKS) || (defined(HAVE_FSYNC) && defined(HAVE_UNISTD_H))
+#  define DB_HISTORY_DIRECTORY_SYNC 1
+#endif
+
 namespace db_history {
 
+#ifdef DB_HISTORY_FILE_LOCKS
 enum class FileLockMode { Shared, TryExclusive };
 
 class FileLock {
@@ -134,11 +138,60 @@ private:
 #endif
     bool contended = false;
 };
-
-} // namespace db_history
 #endif
 
-#endif /* LIBRT_DB_HISTORY_FILE_LOCK_H */
+#ifdef DB_HISTORY_DIRECTORY_SYNC
+class DirectorySync {
+public:
+    explicit DirectorySync(const std::filesystem::path &path)
+#ifdef DB_HISTORY_WIN32_FILE_LOCKS
+	: handle(CreateFileW(path.c_str(), GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+		    nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr))
+#else
+	: fd(open(path.c_str(), O_RDONLY))
+#endif
+    {}
+
+    DirectorySync(const DirectorySync &) = delete;
+    DirectorySync &operator=(const DirectorySync &) = delete;
+
+    ~DirectorySync()
+    {
+	if (!valid())
+	    return;
+#ifdef DB_HISTORY_WIN32_FILE_LOCKS
+	CloseHandle(handle);
+#else
+	close(fd);
+#endif
+    }
+
+#ifdef DB_HISTORY_WIN32_FILE_LOCKS
+    bool valid() const { return handle != INVALID_HANDLE_VALUE; }
+    bool synchronize() const { return FlushFileBuffers(handle) != 0; }
+
+private:
+    HANDLE handle;
+#else
+    bool valid() const { return fd >= 0; }
+    bool synchronize() const
+    {
+	int status;
+	do {
+	    status = fsync(fd);
+	} while (status && errno == EINTR);
+	return status == 0;
+    }
+
+private:
+    int fd;
+#endif
+};
+#endif
+
+} // namespace db_history
+
+#endif /* LIBRT_DB_HISTORY_FILE_H */
 
 // Local Variables:
 // tab-width: 8

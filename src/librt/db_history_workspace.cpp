@@ -37,7 +37,7 @@
 #include "bu/vls.h"
 #include "../libbu/picohash.h"
 #include "db_history_db5.h"
-#include "db_history_file_lock.h"
+#include "db_history_file.h"
 #include "db_history_retention.h"
 #include "db_history_workspace.h"
 #include "librt_private.h"
@@ -330,6 +330,23 @@ open_environment(const char *path, unsigned int flags, size_t map_size = 0)
 	check(mdb_env_set_mapsize(raw, map_size));
     check(mdb_env_open(raw, path, flags, 0660));
     return env;
+}
+
+bool
+sync_import_directories(const fs::path &directory, struct bu_vls *message)
+{
+#ifdef DB_HISTORY_DIRECTORY_SYNC
+    const DirectorySync workspace(directory);
+    if (!workspace.valid() || !workspace.synchronize())
+	return report(message, "Could not synchronize the new workspace directory");
+
+    const DirectorySync parent(directory.parent_path());
+    return (parent.valid() && parent.synchronize()) ||
+	report(message, "Could not synchronize the parent of the new workspace");
+#else
+    (void)directory;
+    return report(message, "Workspace creation requires directory synchronization on this platform");
+#endif
 }
 
 void
@@ -1126,15 +1143,18 @@ Workspace::create(const char *path, const Pack &pack, struct bu_vls *message)
     try {
 	const auto location = canonical.u8string();
 	const auto env = open_environment(location.c_str(), 0, import_map_size(pack));
-	for (;;) {
-	    try {
-		if (import_pack(env.get(), pack, manifest, message))
-		    return true;
-		break;
-	    } catch (const LmdbError &failure) {
-		if (failure.code != MDB_MAP_FULL)
-		    throw;
-		grow_map(env.get());
+	// Make the environment reachable on disk before committing its bootstrap.
+	if (sync_import_directories(canonical, message)) {
+	    for (;;) {
+		try {
+		    if (import_pack(env.get(), pack, manifest, message))
+			return true;
+		    break;
+		} catch (const LmdbError &failure) {
+		    if (failure.code != MDB_MAP_FULL)
+			throw;
+		    grow_map(env.get());
+		}
 	    }
 	}
     } catch (const LmdbError &failure) {

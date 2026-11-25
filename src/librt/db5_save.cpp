@@ -38,7 +38,7 @@
 #include "bu/vls.h"
 #include "raytrace.h"
 #include "db_history_db5.h"
-#include "db_history_file_lock.h"
+#include "db_history_file.h"
 #include "librt_private.h"
 
 #if defined(_WIN32) && defined(HAVE_WINDOWS_H) && !defined(__CYGWIN__) && !defined(__MSYS__)
@@ -107,36 +107,6 @@ public:
     FileDescriptor(const FileDescriptor &) = delete;
     FileDescriptor &operator=(const FileDescriptor &) = delete;
     int fd;
-};
-
-class SnapshotDirectory {
-public:
-#ifdef DB5_WIN32_EXPORT
-    explicit SnapshotDirectory(const std::string &path) :
-	handle(CreateFileW(std::filesystem::path(path).c_str(), GENERIC_WRITE,
-		    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
-		    FILE_FLAG_BACKUP_SEMANTICS, nullptr))
-    {}
-    SnapshotDirectory(const SnapshotDirectory &) = delete;
-    SnapshotDirectory &operator=(const SnapshotDirectory &) = delete;
-    ~SnapshotDirectory()
-    {
-	if (valid())
-	    CloseHandle(handle);
-    }
-    bool valid() const { return handle != INVALID_HANDLE_VALUE; }
-    bool synchronize() const { return FlushFileBuffers(handle) != 0; }
-
-private:
-    HANDLE handle;
-#else
-    explicit SnapshotDirectory(const std::string &path) : descriptor(open(path.c_str(), O_RDONLY)) {}
-    bool valid() const { return descriptor.fd >= 0; }
-    bool synchronize() const { return fsync(descriptor.fd) == 0; }
-
-private:
-    FileDescriptor descriptor;
-#endif
 };
 
 class TemporarySnapshot {
@@ -628,7 +598,7 @@ replace_snapshot(struct db5_save *save, const struct db_i *snapshot, const db_hi
 	db5_save_message(message, "DB5 file changed during save");
 	return DB5_SAVE_STALE;
     }
-    const SnapshotDirectory parent(directory);
+    const db_history::DirectorySync parent(directory);
     if (!parent.valid()) {
 	db5_save_message(message, "Could not open the database directory for synchronization");
 	return DB5_SAVE_ERROR;
@@ -715,7 +685,7 @@ publish_export(const struct db_i *snapshot, const char *destination, struct bu_v
 	return DB5_SAVE_ERROR;
     }
 #endif
-    const SnapshotDirectory parent(directory);
+    const db_history::DirectorySync parent(directory);
     if (!parent.valid()) {
 	db5_save_message(message, "Could not open the export directory for synchronization");
 	return DB5_SAVE_ERROR;

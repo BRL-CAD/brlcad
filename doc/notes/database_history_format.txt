@@ -197,6 +197,13 @@ its LMDB environment closes. It can open other workspaces during the
 import. Readers in other processes require the committed bootstrap
 before accepting the destination as a workspace.
 
+Before the import transaction, creation synchronizes the new
+workspace directory to persist the LMDB file entries, then synchronizes
+its parent to persist the workspace entry. The durable LMDB commit
+publishes the bootstrap after both synchronizations succeed. A reported
+synchronization failure aborts creation and attempts to remove the
+incomplete workspace.
+
 Each artifact occupies one LMDB value and must fit the linked LMDB
 library's per-value limit, at most 4 GiB minus one byte. A workspace
 can exceed that size in total across its values.

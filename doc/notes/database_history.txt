@@ -558,6 +558,16 @@ disk-full failure left the same path available for a successful retry.
 The source workspace data digest and supplied DB5 identity matched
 before and after the test.
 
+A separate Linux import trace confirmed that the workspace directory
+and its parent were synchronized before the bootstrap commit, both
+on a small fixture and on a 1.23 GB M1917 workspace. An injected error
+at either directory synchronization prevented the commit. Retrying on
+the same path produced a verified workspace and preserved the source.
+In an ext4 guest with a direct-I/O virtual disk, stopping the VM
+immediately before commit left an incomplete workspace that readers
+rejected. Stopping it immediately after the durable commit recovered
+a workspace that passed verification and matched the source title.
+
 With QGED's software display, Undo and Redo from the modeling viewport
 selected the expected embedded revisions. Plain DB5 snapshots exported
 after each shortcut independently confirmed that the new primitive was
