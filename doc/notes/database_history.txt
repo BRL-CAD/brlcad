@@ -841,6 +841,15 @@ DB5 source cannot replace an existing embedded archive. Copies from
 an embedded file or a workspace reopened with the same selected
 revision and passed verification.
 
+A separate wide-offset fixture stored forty distinct 128 MiB binary
+bodies and one primitive. Its embedded archive exceeded 5 GiB and
+indexed eight bodies past the 4 GiB offset. The file reopened after a
+title edit and passed archive verification. Import to LMDB preserved
+both revision IDs. Undo and Redo restored the two titles. A direct
+database read matched every byte of the last 128 MiB body. The 10 GiB
+history-preserving export reopened with the same selected revision and
+binary body and passed full verification.
+
 The Linux suite passed 1,440 tests across the initial run and reruns
 with access to local sockets and X11. Its CTest notice returned the
 expected failure. The 5 GiB DB5 stress test skipped because it requires
