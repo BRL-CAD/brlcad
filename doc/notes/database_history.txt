@@ -817,6 +817,26 @@ The workspace retained the new title and recorded the exported
 revision. A trace found no LMDB read transaction held during the
 paused record write or the file flush.
 
+A separate gsh build predating database history opened the embedded
+model, compared its primitive and attributes, and wrote a geometry
+subset with no archive. The older build also changed the title. The
+current editor reported external edits, exported the altered geometry,
+adopted the edit, and undid it. The older build read the original title
+and geometry again after Undo.
+
+GED also opened copies with an unsupported archive version and a
+damaged archive index digest. It reported the appropriate status,
+refused modification, and exported readable geometry without history.
+Each input file kept its exact SHA-256 digest.
+
+The Linux suite passed 1,440 tests across the initial run and reruns
+with access to local sockets and X11. Its CTest notice returned the
+expected failure. The 5 GiB DB5 stress test skipped because it requires
+25 GiB of available memory. The repository and license checks passed.
+In a separate QGED run, viewport shortcuts moved between the expected
+workspace revisions. A terminal reader confirmed the restored primitive
+and verified the archive.
+
 Implementation starting points in the source tree
 -------------------------------------------------
 
