@@ -34,6 +34,9 @@ struct db_edit {
     struct db_i *view = nullptr;
     std::map<const struct directory *, const struct directory *> inherited;
     std::set<std::string> touched;
+    // A missing entry has its original name. An empty origin marks a
+    // vacated name, so a later creation cannot claim the former record.
+    std::map<std::string, std::string, std::less<>> origins;
     std::string label;
     bool failed = false;
     bool active = true;
@@ -153,6 +156,26 @@ db_edit_record_change(struct db_i *dbip, const char *name)
 	edit->touched.emplace(name);
 }
 
+void
+db_edit_record_removal(struct db_i *dbip, const char *name)
+{
+    auto *edit = dbip->i->dbi_edit;
+    if (edit && edit->active)
+	edit->origins[name].clear();
+}
+
+void
+db_edit_record_rename(struct db_i *dbip, const char *before, const char *after)
+{
+    auto *edit = dbip->i->dbi_edit;
+    if (!edit || !edit->active || BU_STR_EQUAL(before, after))
+	return;
+
+    auto origin = edit->origins.try_emplace(before, before).first;
+    edit->origins[after] = std::move(origin->second);
+    origin->second.clear();
+}
+
 static struct directory *
 db_edit_lookup_name(const struct db_i *dbip, const char *name)
 {
@@ -203,6 +226,25 @@ db_edit_visit(struct db_edit *edit, db_edit_visit_t visit, void *data)
 	    result = visit(name.c_str(), previous, current, data);
 	bu_free_external(&old_record);
 	bu_free_external(&new_record);
+	if (result)
+	    return result;
+    }
+    return 0;
+}
+
+int
+db_edit_visit_renames(const struct db_edit *edit, db_edit_rename_visit_t visit, void *data)
+{
+    if (!edit || !edit->active || edit->failed || !visit)
+	return -1;
+
+    for (const auto &entry : edit->origins) {
+	const char *before = entry.second.c_str();
+	const char *after = entry.first.c_str();
+	if (!*before || !db_edit_lookup_name(edit->base, before) || db_edit_lookup_name(edit->view, before) ||
+	    db_edit_lookup_name(edit->base, after) || !db_edit_lookup_name(edit->view, after))
+	    continue;
+	const int result = visit(before, after, data);
 	if (result)
 	    return result;
     }

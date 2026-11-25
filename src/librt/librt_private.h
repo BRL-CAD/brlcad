@@ -118,6 +118,8 @@ int db5_load_global(struct db_i *dbip, const struct directory *dp);
 void db_edit_free_view(struct db_i_internal *i);
 void db_edit_record_failure(struct db_i *dbip);
 void db_edit_record_change(struct db_i *dbip, const char *name);
+void db_edit_record_removal(struct db_i *dbip, const char *name);
+void db_edit_record_rename(struct db_i *dbip, const char *before, const char *after);
 int db_edit_detach_record(struct db_i *dbip, struct directory *dp);
 int db_read_external_bytes(const struct db_i *dbip, const struct directory *dp,
 			  void *buffer, size_t count);

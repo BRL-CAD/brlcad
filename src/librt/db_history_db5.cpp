@@ -172,6 +172,13 @@ collect_revision_change(const char *name, const struct bu_external *before,
     return 0;
 }
 
+int
+collect_revision_rename(const char *before, const char *after, void *data)
+{
+    auto &renames = *static_cast<Renames *>(data);
+    return renames.emplace(before, after).second ? 0 : -1;
+}
+
 bool
 checkout_record(const Pack &pack, const Id &id, Bytes &record)
 {
@@ -261,7 +268,8 @@ append_db5_history(const EmbeddedPack &archive, struct db_edit *edit, int64_t ti
 	return AppendStatus::Error;
     if (revision.changes.empty())
 	return AppendStatus::Unchanged;
-    if (!draft.record(manifest, revision))
+    if (db_edit_visit_renames(edit, collect_revision_rename, &revision.renames) != 0 ||
+	!draft.record(manifest, revision))
 	return AppendStatus::Error;
     result = std::move(draft);
     return AppendStatus::Ready;

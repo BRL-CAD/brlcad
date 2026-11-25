@@ -341,6 +341,7 @@ db_dirdelete(struct db_i *dbip, struct directory *dp)
     /* Observers must see the updated directory while the removed entry is
      * still available to identify the change. */
     *link = dp->d_forw;
+    db_edit_record_removal(dbip, dp->d_namep);
     db_notify_changed(dbip, dp, 2);
 
     db_edit_detach_record(dbip, dp);
@@ -388,6 +389,7 @@ db_rename(struct db_i *dbip, struct directory *dp, const char *newname)
 
 out:
     db_edit_record_change(dbip, dp->d_namep);
+    db_edit_record_rename(dbip, dp->d_namep, newname);
     /* Present the old name as a detached entry once the new name is live. */
     old_entry = *dp;
     notify = BU_PTBL_IS_INITIALIZED(&dbip->i->dbi_changed_clbks) &&

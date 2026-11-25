@@ -61,7 +61,7 @@ List retained revisions, including alternate branches. The optional name filter 
 
 
 __history show revision__::
-List the records created, deleted, or updated by a single revision. A rename appears as the deletion of the old name and creation of the new one, along with any changed references in the same revision.
+List the records created, deleted, or updated by a single revision. A recorded rename also shows the old and new names together. Changed references appear in the same revision.
 
 
 __history checkout revision__::

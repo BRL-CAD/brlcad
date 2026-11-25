@@ -65,6 +65,7 @@ struct ged_db_history {
 	int64_t authored = 0;
 	std::string label;
 	std::vector<Change> changes;
+	db_history::Renames renames;
     };
 
 
@@ -235,6 +236,25 @@ collect_change(const char *name, const struct bu_external *before,
     return 0;
 }
 
+int
+collect_rename(const char *before, const char *after, void *data)
+{
+    auto &collect = *static_cast<Collect *>(data);
+    auto &revision = collect.revision;
+    const size_t overhead = sizeof(db_history::Renames::value_type);
+    const size_t previous = strlen(before) + 1;
+    const size_t current = strlen(after) + 1;
+    const size_t remaining = collect.limit - revision.bytes;
+    if (overhead > remaining || previous > remaining - overhead ||
+	current > remaining - overhead - previous)
+	return -1;
+
+    if (!revision.renames.emplace(before, after).second)
+	return -1;
+    revision.bytes += overhead + previous + current;
+    return 0;
+}
+
 struct bu_external
 record_view(const std::vector<uint8_t> &bytes)
 {
@@ -273,6 +293,7 @@ prune(ged_db_history &history)
 	child->second.parent = no_revision;
 	child->second.bytes = 0;
 	std::vector<Change>().swap(child->second.changes);
+	child->second.renames.clear();
 	history.revisions.erase(root);
     }
 }
@@ -505,6 +526,7 @@ archive_session(const ged_db_history &history, db_history::Db5HistoryDraft &draf
 	auto &revision = revisions[entry.first];
 	revision.label = entry.second.label;
 	revision.time = entry.second.authored;
+	revision.renames = entry.second.renames;
 	for (const auto &record : entry.second.changes) {
 	    db_history::Change change;
 	    if (!archive_session_record(draft, record, record.before, change.before) ||
@@ -686,6 +708,17 @@ print_archive_changes(struct bu_vls *out, const db_history::Changes &changes, co
 }
 
 void
+print_renames(struct bu_vls *out, const db_history::Renames &renames)
+{
+    for (const auto &rename : renames) {
+	bu_vls_strcat(out, "\nrename ");
+	append_printable(out, rename.first);
+	bu_vls_strcat(out, " -> ");
+	append_printable(out, rename.second);
+    }
+}
+
+void
 print_archive_revision(struct bu_vls *out, const db_history::Pack &pack, const db_history::Id &id,
 		       const db_history::Revision &revision)
 {
@@ -859,6 +892,7 @@ print_changes(struct ged *gedp, const ged_db_history &history, uint64_t id, cons
 {
     auto *out = gedp->ged_result_str;
     print_revision(out, history, id, revision);
+    print_renames(out, revision.renames);
     for (const auto &change : revision.changes)
 	print_change(out, !change.before.empty(), !change.after.empty(), change.name);
 }
@@ -912,12 +946,7 @@ show_archive_revision(struct ged *gedp, const db_history::Pack &pack, const db_h
 	return BRLCAD_ERROR;
     }
     print_archive_revision(out, pack, id, revision);
-    for (const auto &rename : revision.renames) {
-	bu_vls_strcat(out, "\nrename ");
-	append_printable(out, rename.first);
-	bu_vls_strcat(out, " -> ");
-	append_printable(out, rename.second);
-    }
+    print_renames(out, revision.renames);
     print_archive_changes(out, revision.changes);
     return BRLCAD_OK;
 }
@@ -1241,7 +1270,8 @@ ged_db_history_leave(struct ged *gedp, struct db_edit *stage, int result)
     revision.authored = revision_time();
     revision.label = db_edit_label(stage);
     Collect collect{revision, history->limit};
-    if (db_edit_visit(stage, collect_change, &collect) != 0) {
+    if (db_edit_visit(stage, collect_change, &collect) != 0 ||
+	db_edit_visit_renames(stage, collect_rename, &collect) != 0) {
 	bu_vls_printf(gedp->ged_result_str, "\nDatabase edit failed or exceeds the session history budget");
 	return BRLCAD_ERROR;
     }

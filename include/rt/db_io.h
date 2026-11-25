@@ -588,6 +588,14 @@ typedef int (*db_edit_visit_t)(const char *name, const struct bu_external *befor
 RT_EXPORT extern int db_edit_visit(struct db_edit *edit, db_edit_visit_t visit, void *data);
 
 /**
+ * Visit rename hints between deleted names and newly created names.
+ * Consecutive renames of one record are reported by their endpoints.
+ * The visitor must leave the view unchanged and return zero to continue.
+ */
+typedef int (*db_edit_rename_visit_t)(const char *before, const char *after, void *data);
+RT_EXPORT extern int db_edit_visit_renames(const struct db_edit *edit, db_edit_rename_visit_t visit, void *data);
+
+/**
  * Apply one recorded change to the private view. NULL denotes absence.
  * The current bytes must match expected. The edit cannot be committed
  * after a mismatch or invalid replacement record.

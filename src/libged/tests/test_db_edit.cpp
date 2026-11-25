@@ -66,6 +66,16 @@ count_change(const char *UNUSED(name), const struct bu_external *UNUSED(before),
     return 0;
 }
 
+static int
+record_rename(const char *before, const char *after, void *data)
+{
+    auto &names = *static_cast<std::string *>(data);
+    names += before;
+    names += " -> ";
+    names += after;
+    return 0;
+}
+
 static void
 fail_after_write(struct db_i *dbip, struct directory *UNUSED(dp), int mode, void *data)
 {
@@ -178,6 +188,7 @@ test_disk_history()
     CHECK(!contains_result(gedp, "revision 2"));
     const char *show[] = {"db", "history", "show", "1", nullptr};
     CHECK(run(gedp, show) == BRLCAD_OK && contains_result(gedp, "create outline.s"));
+    CHECK(contains_result(gedp, ("rename " + old_name + " -> outline.s").c_str()));
     CHECK(contains_result(gedp, ("delete " + old_name).c_str()));
     CHECK(contains_result(gedp, "update assembly.c") && contains_result(gedp, "update extrusion.s"));
     CHECK(commits == 6);
@@ -292,6 +303,7 @@ test_embedded_history()
     const std::string prefix = head.substr(0, head.size() / 2);
     const char *show[] = {"db", "history", "show", prefix.c_str(), nullptr};
     CHECK(run(gedp, show) == BRLCAD_OK && contains_result(gedp, "create outline.s"));
+    CHECK(contains_result(gedp, ("rename " + old_name + " -> outline.s").c_str()));
     CHECK(contains_result(gedp, "update assembly.c") && contains_result(gedp, "update extrusion.s"));
     const char *mark[] = {"db", "history", "mark", "rename-point", nullptr};
     CHECK(run(gedp, mark) == BRLCAD_OK && selected_id(gedp) == head);
@@ -413,19 +425,23 @@ test_session_promotion()
     auto *gedp = owner.get();
     CHECK(gedp);
 
+    const char *make[] = {"make", "branch.s", "sph", nullptr};
+    CHECK(run(gedp, make) == BRLCAD_OK);
     const char *session[] = {"db", "history", "enable", "session", nullptr};
     const int enabled = run(gedp, session);
     if (enabled != BRLCAD_OK && contains_result(gedp, "Atomic DB5 replacement is unavailable"))
 	return 0;
     CHECK(enabled == BRLCAD_OK);
     const char *first[] = {"title", "first branch", nullptr};
+    const char *rename[] = {"mv", "branch.s", "renamed.s", nullptr};
     const char *second[] = {"title", "second branch", nullptr};
     const char *undo[] = {"db", "undo", nullptr};
     const char *redo[] = {"db", "redo", nullptr};
     const char *embedded[] = {"db", "history", "enable", "embedded", nullptr};
     const char *status[] = {"db", "history", "status", nullptr};
     const char *title[] = {"title", nullptr};
-    CHECK(run(gedp, first) == BRLCAD_OK && run(gedp, undo) == BRLCAD_OK);
+    CHECK(run(gedp, first) == BRLCAD_OK && run(gedp, rename) == BRLCAD_OK);
+    CHECK(run(gedp, undo) == BRLCAD_OK && run(gedp, undo) == BRLCAD_OK);
     CHECK(run(gedp, second) == BRLCAD_OK && run(gedp, undo) == BRLCAD_OK);
     char archive_copy[MAXPATHLEN] = {};
     file = bu_temp_file(archive_copy, sizeof(archive_copy));
@@ -455,6 +471,10 @@ test_session_promotion()
     CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == root);
     const char *other[] = {"db", "redo", first_id.c_str(), nullptr};
     CHECK(run(gedp, other) == BRLCAD_OK && run(gedp, title) == BRLCAD_OK && contains_result(gedp, "first branch"));
+    CHECK(run(gedp, redo) == BRLCAD_OK && db_lookup(gedp->dbip, "renamed.s", LOOKUP_QUIET));
+    const std::string renamed = selected_id(gedp);
+    const char *show[] = {"db", "history", "show", renamed.c_str(), nullptr};
+    CHECK(run(gedp, show) == BRLCAD_OK && contains_result(gedp, "rename branch.s -> renamed.s"));
     return 0;
 }
 
@@ -483,10 +503,14 @@ main(int argc, const char *argv[])
     CHECK(gedp && run(gedp, list) == BRLCAD_OK);
     const std::string_view listed(bu_vls_addr(gedp->ged_result_str));
     CHECK(listed.find("skt_0") != std::string_view::npos);
-    CHECK(run(gedp, rename) == BRLCAD_OK);
+    const char *temporary_rename[] = {"db", "mvall", "skt_0", "intermediate.s", nullptr};
+    const char *final_rename[] = {"db", "mvall", "intermediate.s", "outline.s", nullptr};
+    CHECK(run(gedp, temporary_rename) == BRLCAD_OK && run(gedp, final_rename) == BRLCAD_OK);
 
     int changed = 0;
     CHECK(db_edit_visit(edit, count_change, &changed) == 0 && changed == 4);
+    std::string renamed;
+    CHECK(db_edit_visit_renames(edit, record_rename, &renamed) == 0 && renamed == "skt_0 -> outline.s");
     CHECK(db_lookup(base, "skt_0", LOOKUP_QUIET));
     CHECK(!db_lookup(base, "outline.s", LOOKUP_QUIET));
     ged_close(gedp);
@@ -495,6 +519,20 @@ main(int argc, const char *argv[])
     CHECK(published && db_lookup(published, "outline.s", LOOKUP_QUIET));
     CHECK(!db_lookup(published, "skt_0", LOOKUP_QUIET));
     db_close(published);
+
+    edit = db_edit_begin(base, "rename a replacement");
+    CHECK(edit);
+    auto *staged = db_edit_view(edit);
+    auto *sketch = db_lookup(staged, "skt_0", LOOKUP_QUIET);
+    CHECK(sketch && db_dirdelete(staged, sketch) == 0);
+    gedp = open_inmem(db_clone_dbi(staged, nullptr));
+    const char *make_replacement[] = {"make", "skt_0", "sph", nullptr};
+    const char *move_replacement[] = {"mv", "skt_0", "outline.s", nullptr};
+    CHECK(gedp && run(gedp, make_replacement) == BRLCAD_OK && run(gedp, move_replacement) == BRLCAD_OK);
+    renamed.clear();
+    CHECK(db_edit_visit_renames(edit, record_rename, &renamed) == 0 && renamed.empty());
+    ged_close(gedp);
+    db_edit_abort(edit);
 
     edit = db_edit_begin(base, "rename with write failure");
     CHECK(edit);

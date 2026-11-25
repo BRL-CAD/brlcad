@@ -79,6 +79,7 @@ struct Change {
 };
 
 using Changes = std::map<std::string, Change, std::less<>>;
+using Renames = std::map<std::string, std::string, std::less<>>;
 
 struct Revision {
     Id parent = absent;
@@ -87,7 +88,7 @@ struct Revision {
     std::string label;
     std::string author;
     Changes changes;
-    std::map<std::string, std::string, std::less<>> renames;
+    Renames renames;
 };
 
 // Canonical encodings from doc/notes/database_history_format.txt.
