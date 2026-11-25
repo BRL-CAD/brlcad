@@ -30,19 +30,71 @@
 
 #include "lmdb.h"
 
+#include "bio.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "../libbu/picohash.h"
 #include "db_history_db5.h"
+#include "db_history_retention.h"
 #include "db_history_workspace.h"
 #include "librt_private.h"
+
+#if defined(HAVE_SYS_FILE_H) && defined(HAVE_UNISTD_H)
+#  include <sys/file.h>
+#  if defined(LOCK_SH) && defined(LOCK_EX) && defined(LOCK_NB) && defined(O_CLOEXEC) && defined(O_NOFOLLOW)
+#    define WORKSPACE_READER_LOCKS 1
+#  endif
+#endif
+
+#ifdef WORKSPACE_READER_LOCKS
+namespace {
+
+class WorkspaceFileLock {
+public:
+    explicit WorkspaceFileLock(const std::filesystem::path &path, bool create = false)
+    {
+	const int access = O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK;
+	fd = create ? ::open(path.string().c_str(), access | O_CREAT, 0660) :
+	    ::open(path.string().c_str(), access);
+	if (fd < 0)
+	    error = errno;
+    }
+    WorkspaceFileLock(const WorkspaceFileLock &) = delete;
+    WorkspaceFileLock &operator=(const WorkspaceFileLock &) = delete;
+    ~WorkspaceFileLock()
+    {
+	if (fd >= 0)
+	    close(fd);
+    }
+    bool acquire(int mode)
+    {
+	if (fd < 0)
+	    return false;
+	int status;
+	do {
+	    status = flock(fd, mode);
+	} while (status && errno == EINTR);
+	error = status ? errno : 0;
+	return status == 0;
+    }
+    int error = 0;
+
+private:
+    int fd = -1;
+};
+
+} // namespace
+#endif
 
 struct db_workspace_view {
     std::unique_ptr<db_history::Workspace> workspace;
     db_history::Manifest model;
     db_history::WorkspaceHead head;
+#ifdef WORKSPACE_READER_LOCKS
+    std::unique_ptr<WorkspaceFileLock> reader_pin;
+#endif
 };
 
 namespace db_history {
@@ -53,10 +105,13 @@ namespace fs = std::filesystem;
 constexpr std::string_view bootstrap_key = "workspace";
 constexpr std::string_view head_key = "head";
 constexpr std::string_view export_key = "last_export";
+constexpr char data_file_name[] = "data.mdb";
 constexpr std::array<uint8_t, 8> signature{'B', 'R', 'L', 'C', 'A', 'D', 'W', 0};
 constexpr uint16_t schema_major = 1;
-constexpr uint16_t schema_minor = 0;
-constexpr uint64_t required_features = 0;
+constexpr uint16_t unpinned_minor = 0;
+constexpr uint16_t schema_minor = 1;
+constexpr uint64_t reader_pin_feature = 1;
+constexpr uint64_t required_features = reader_pin_feature;
 constexpr uint16_t artifact_encoding = 1;
 constexpr size_t bootstrap_size = signature.size() + 3 * sizeof(uint16_t) + sizeof(uint64_t);
 constexpr size_t head_size = 2 * absent.size() + sizeof(uint64_t);
@@ -103,6 +158,85 @@ report(struct bu_vls *message, const LmdbError &error)
 {
     return report(message, mdb_strerror(error.code));
 }
+
+bool
+same_head(const WorkspaceHead &current, const WorkspaceHead &expected)
+{
+    return current.generation == expected.generation && current.revision == expected.revision &&
+	current.model == expected.model;
+}
+
+bool
+report_stale(struct bu_vls *message, const WorkspaceHead &expected, const WorkspaceHead &current)
+{
+    if (message) {
+	bu_vls_trunc(message, 0);
+	bu_vls_printf(message, "Workspace base changed from %s (generation %ju) to %s (generation %ju)",
+	    id_string(expected.revision).c_str(), (uintmax_t)expected.generation,
+	    id_string(current.revision).c_str(), (uintmax_t)current.generation);
+    }
+    return false;
+}
+
+#ifdef WORKSPACE_READER_LOCKS
+constexpr char pins_directory_name[] = "history-pins";
+
+bool
+decode_pin_name(std::string_view name, Id &id)
+{
+    constexpr std::string_view hex = "0123456789abcdef";
+    constexpr size_t digits_per_byte = 2;
+    if (name.size() != id.size() * digits_per_byte)
+	return false;
+    for (size_t i = 0; i < id.size(); ++i) {
+	const auto high = hex.find(name[i * digits_per_byte]);
+	const auto low = hex.find(name[i * digits_per_byte + 1]);
+	if (high == std::string_view::npos || low == std::string_view::npos)
+	    return false;
+	id[i] = static_cast<uint8_t>(high * hex.size() + low);
+    }
+    return id != absent;
+}
+
+std::unique_ptr<WorkspaceFileLock>
+pin_revision(const fs::path &workspace, const Id &revision)
+{
+    const auto directory = workspace / pins_directory_name;
+    std::error_code error;
+    fs::create_directory(directory, error);
+    // A reader with limited permissions can fall back to a shared
+    // guard on the environment file instead of registering a revision.
+    if (!fs::is_directory(fs::symlink_status(directory, error)))
+	return nullptr;
+    auto file = std::make_unique<WorkspaceFileLock>(directory / id_string(revision), true);
+    return file->acquire(LOCK_SH) ? std::move(file) : nullptr;
+}
+
+bool
+read_pins(const fs::path &workspace, std::set<Id> &pins, struct bu_vls *message)
+{
+    const auto directory = workspace / pins_directory_name;
+    std::error_code error;
+    const auto kind = fs::symlink_status(directory, error).type();
+    if (kind == fs::file_type::not_found)
+	return true;
+    if (error || kind != fs::file_type::directory)
+	return report(message, "The workspace reader registry could not be opened");
+    fs::directory_iterator entry(directory, error), end;
+    for (; !error && entry != end; entry.increment(error)) {
+	Id revision;
+	if (!decode_pin_name(entry->path().filename().string(), revision))
+	    continue;
+	WorkspaceFileLock file(entry->path());
+	if (file.acquire(LOCK_EX | LOCK_NB))
+	    continue;
+	if (file.error != EWOULDBLOCK && file.error != EAGAIN)
+	    return report(message, "A workspace reader lock could not be inspected");
+	pins.insert(revision);
+    }
+    return !error || report(message, "The workspace reader registry could not be read");
+}
+#endif
 
 ChangeStatus
 fail_change(struct bu_vls *message, const char *reason)
@@ -234,7 +368,7 @@ read_integer(const uint8_t *source, Integer &number)
 }
 
 bool
-check_bootstrap(MDB_txn *txn, MDB_dbi table, struct bu_vls *message)
+check_bootstrap(MDB_txn *txn, MDB_dbi table, bool &reader_pins, struct bu_vls *message)
 {
     ByteView format;
     if (!get(txn, table, bytes(bootstrap_key), format) || format.size < signature.size() ||
@@ -253,8 +387,10 @@ check_bootstrap(MDB_txn *txn, MDB_dbi table, struct bu_vls *message)
     rest = read_integer(rest, minor);
     rest = read_integer(rest, required);
     read_integer(rest, encoding);
-    if (minor != schema_minor || (required & ~required_features) || encoding != artifact_encoding)
+    const uint64_t expected = minor == unpinned_minor ? 0 : required_features;
+    if ((minor != unpinned_minor && minor != schema_minor) || required != expected || encoding != artifact_encoding)
 	return report(message, "Unsupported BRL-CAD workspace schema, features or artifact encoding");
+    reader_pins = (required & reader_pin_feature) != 0;
     return true;
 }
 
@@ -492,6 +628,19 @@ read_model(MDB_txn *txn, const Tables &tables, const Id &selected, Manifest &mod
     return true;
 }
 
+#ifdef WORKSPACE_READER_LOCKS
+bool
+prepare_retention(MDB_txn *txn, const Tables &tables, const WorkspaceHead &head, const WorkspaceRetention &policy,
+		  const std::set<Id> &pins, Pack &source, RetainedWorkspace &planned, struct bu_vls *message)
+{
+    Manifest live;
+    if (!load_pack(txn, tables, head, false, source))
+	return report(message, "The workspace archive is invalid");
+    return read_model(txn, tables, head.model, live, message) &&
+	plan_retention(source, head, policy, pins, planned, message);
+}
+#endif
+
 bool
 write_directory(MDB_txn *txn, const Tables &tables, const Changes &changes, struct bu_vls *message)
 {
@@ -680,12 +829,8 @@ struct Workspace::Store {
 		    report(message, "The workspace head is invalid");
 		    return WorkspaceWriteStatus::Error;
 		}
-		if (current.generation != expected.generation || current.revision != expected.revision ||
-		    current.model != expected.model) {
-		    if (message)
-			bu_vls_printf(message, "Workspace base changed from %s (generation %ju) to %s (generation %ju)",
-			    id_string(expected.revision).c_str(), (uintmax_t)expected.generation,
-			    id_string(current.revision).c_str(), (uintmax_t)current.generation);
+		if (!same_head(current, expected)) {
+		    report_stale(message, expected, current);
 		    actual = current;
 		    return WorkspaceWriteStatus::Stale;
 		}
@@ -715,6 +860,7 @@ struct Workspace::Store {
     Environment env;
     Tables handles;
     bool writable;
+    bool reader_pins = false;
     size_t clients = 0;
     // LMDB needs all local transactions drained before resizing a map.
     mutable std::shared_mutex transactions;
@@ -781,7 +927,7 @@ Workspace::create(const char *path, const Pack &pack, struct bu_vls *message)
     // reported failure remove only the files this new store used.
     const fs::path directory(path);
     bu_file_remove((directory / "lock.mdb").string().c_str());
-    bu_file_remove((directory / "data.mdb").string().c_str());
+    bu_file_remove((directory / data_file_name).string().c_str());
     if (!bu_file_remove(path) && message)
 	bu_vls_strcat(message, "\nCould not remove the incomplete workspace directory");
     return false;
@@ -803,7 +949,7 @@ Workspace::open(const char *path, struct bu_vls *message, bool writable)
 	report(message, error.message().c_str());
 	return nullptr;
     }
-    const auto file_size = fs::file_size(canonical / "data.mdb", error);
+    const auto file_size = fs::file_size(canonical / data_file_name, error);
     if (error || !file_size) {
 	report(message, "The workspace directory has no LMDB data file");
 	return nullptr;
@@ -838,7 +984,7 @@ Workspace::open(const char *path, struct bu_vls *message, bool writable)
 	auto store = std::make_unique<Store>(canonical, std::move(env), can_write);
 	auto txn = begin(store->env.get(), MDB_RDONLY);
 	check(mdb_dbi_open(txn.get(), nullptr, 0, &store->handles.metadata));
-	if (!check_bootstrap(txn.get(), store->handles.metadata, message))
+	if (!check_bootstrap(txn.get(), store->handles.metadata, store->reader_pins, message))
 	    return nullptr;
 	open_tables(txn.get(), store->handles, 0);
 	WorkspaceHead head;
@@ -862,6 +1008,16 @@ Workspace::open_snapshot(const char *path, WorkspaceHead &head, struct bu_vls *m
     if (!workspace)
 	return nullptr;
 
+#ifdef WORKSPACE_READER_LOCKS
+    std::unique_ptr<WorkspaceFileLock> guard;
+    if (workspace->store->reader_pins) {
+	guard = std::make_unique<WorkspaceFileLock>(workspace->store->path / data_file_name);
+	if (!guard->acquire(LOCK_SH)) {
+	    report(message, "The workspace reader could not acquire a retention lock");
+	    return nullptr;
+	}
+    }
+#endif
     const auto location = workspace->store->path.string();
     const auto parent = workspace->store->path.parent_path().string();
     auto state = std::make_unique<db_workspace_view>();
@@ -888,6 +1044,14 @@ Workspace::open_snapshot(const char *path, WorkspaceHead &head, struct bu_vls *m
     if (!built)
 	return nullptr;
 
+#ifdef WORKSPACE_READER_LOCKS
+    if (guard) {
+	state->reader_pin = pin_revision(workspace->store->path, selected.revision);
+	if (!state->reader_pin)
+	    state->reader_pin = std::move(guard);
+	guard.reset();
+    }
+#endif
     auto *dbip = db.get();
     dbip->dbi_filename = bu_strdup(location.c_str());
     const char *paths[] = {".", parent.c_str()};
@@ -1083,6 +1247,115 @@ Workspace::record_export(const Id &revision, struct bu_vls *message)
     } catch (const LmdbError &failure) {
 	return report(message, failure);
     }
+}
+
+bool
+Workspace::preview_prune(const WorkspaceHead &expected, const WorkspaceRetention &policy,
+			 WorkspacePrunePreview &preview, struct bu_vls *message) const
+{
+#ifdef WORKSPACE_READER_LOCKS
+    if (!store->reader_pins)
+	return report(message, "Copy this workspace to a new directory with db history workspace to enable pruning");
+    WorkspaceFileLock guard(store->path / data_file_name);
+    if (!guard.acquire(LOCK_EX | LOCK_NB))
+	return report(message, "The workspace is busy registering readers or has an unregistered reader");
+    std::set<Id> pins;
+    if (!read_pins(store->path, pins, message))
+	return false;
+
+    return store->read([&](MDB_txn *txn, const Tables &tables) {
+	WorkspaceHead head;
+	if (!read_head(txn, tables, head))
+	    return report(message, "The workspace head is invalid");
+	if (!same_head(head, expected))
+	    return report_stale(message, expected, head);
+	Pack source;
+	RetainedWorkspace planned;
+	if (!prepare_retention(txn, tables, head, policy, pins, source, planned, message))
+	    return false;
+	preview = std::move(planned.preview);
+	return true;
+    }, message);
+#else
+    (void)expected;
+    (void)policy;
+    (void)preview;
+    return report(message, "Workspace pruning is unavailable on this platform");
+#endif
+}
+
+WorkspaceWriteStatus
+Workspace::prune(const WorkspaceHead &expected, const WorkspaceRetention &policy, std::string_view token,
+		 WorkspacePrunePreview &preview, WorkspaceHead &actual, struct bu_vls *message)
+{
+#ifdef WORKSPACE_READER_LOCKS
+    if (!store->reader_pins) {
+	report(message, "Copy this workspace to a new directory with db history workspace to enable pruning");
+	return WorkspaceWriteStatus::Error;
+    }
+    if (!writable) {
+	report(message, "The workspace is open read-only");
+	return WorkspaceWriteStatus::Error;
+    }
+    WorkspaceFileLock guard(store->path / data_file_name);
+    if (!guard.acquire(LOCK_EX | LOCK_NB)) {
+	report(message, "The workspace is busy registering readers or has an unregistered reader");
+	return WorkspaceWriteStatus::Error;
+    }
+    std::set<Id> pins;
+    if (!read_pins(store->path, pins, message))
+	return WorkspaceWriteStatus::Error;
+
+    WorkspacePrunePreview applied;
+    const auto status = store->write(expected, actual, [&](MDB_txn *txn, const Tables &tables,
+	const WorkspaceHead &base, const Revision &, WorkspaceHead &) {
+	Pack source;
+	RetainedWorkspace planned;
+	if (!prepare_retention(txn, tables, base, policy, pins, source, planned, message))
+	    return ChangeStatus::Error;
+	if (id_string(planned.preview.token) != token)
+	    return fail_change(message, "The prune preview changed. Preview the workspace again before applying.");
+	applied = std::move(planned.preview);
+	if (planned.expired.empty())
+	    return ChangeStatus::Unchanged;
+
+	for (const auto &entry : planned.archive.owned)
+	    store_artifact(txn, tables, entry.first, entry.second);
+	const auto &kept = planned.archive.pack;
+	for (const auto &boundary : kept.boundaries)
+	    if (!source.boundaries.count(boundary))
+		put(txn, tables.boundaries, bytes(boundary), {});
+	for (const auto &boundary : source.boundaries)
+	    if (!kept.boundaries.count(boundary))
+		erase(txn, tables.boundaries, bytes(boundary));
+	for (const auto &preference : source.preferences)
+	    if (!kept.preferences.count(preference.first))
+		erase(txn, tables.preferences, bytes(preference.first));
+	for (const auto &key : planned.expired)
+	    erase(txn, tables.artifacts, bytes(artifact_key(key)));
+	return ChangeStatus::Changed;
+    }, message);
+    if (status != WorkspaceWriteStatus::Ok)
+	return status;
+
+    // Inactive lock files can be removed once their revision expires.
+    // The registration guard excludes a concurrent open until then.
+    for (const auto &id : applied.expired_revisions) {
+	const auto path = (store->path / pins_directory_name / id_string(id)).string();
+	if (bu_file_exists(path.c_str(), nullptr) && !bu_file_remove(path.c_str()) && message)
+	    bu_vls_printf(message, "Could not remove the unused reader lock for %s\n", id_string(id).c_str());
+    }
+    preview = std::move(applied);
+    return status;
+#else
+    (void)expected;
+    (void)policy;
+    (void)token;
+    (void)preview;
+    (void)actual;
+    report(message, "Workspace pruning is unavailable on this platform");
+    return WorkspaceWriteStatus::Error;
+#endif
 }
 
 WorkspaceWriteStatus

@@ -170,8 +170,8 @@ databases. Its fixed bootstrap value uses the following fields.
 
     u8[8] signature           (42 52 4c 43 41 44 57 00)
     u16 schema_major          (1)
-    u16 schema_minor          (0)
-    u64 required_features     (0)
+    u16 schema_minor          (1)
+    u64 required_features     (1)
     u16 artifact_encoding     (1)
 
 Reject unrecognized schema versions, feature bits or artifact
@@ -179,7 +179,7 @@ encodings before interpreting the workspace data. The `head` key in
 the unnamed database contains the selected revision ID, the selected
 model ID and a u64 generation that starts at 1.
 
-In schema 1.0, the named `artifacts` database maps a one-byte artifact
+In schemas 1.0 and 1.1, the named `artifacts` database maps a one-byte artifact
 tag and an ID to the canonical payload. The `directory` and
 `references` databases use SHA-256 of the raw name as the key. The
 value is the object or revision ID followed by the original name.
@@ -204,6 +204,27 @@ An optional `last_export` key in the unnamed database holds the ID of
 the last successfully exported revision recorded by a writable
 workspace handle. This observation leaves the modeling generation
 unchanged.
+
+Pruning publishes retained artifacts, new boundary snapshots, updated
+redo preferences and the advanced generation together. Unchanged
+revisions keep their original IDs and parents. A retained revision
+with an expired parent is a boundary. Its model is materialized, and
+both sides of its recorded changes remain available for verification.
+
+On systems with local advisory file locks, a native database reader
+registers its selected revision by locking the matching hexadecimal
+name in `history-pins`. A lock on `data.mdb` coordinates registration
+and pruning. A reader unable to register keeps a shared lock on that
+file for its lifetime, which postpones pruning. The operating system
+releases reader locks after process exit. These files are local
+coordination state and are omitted from exports and new workspace
+copies.
+Schema 1.1 requires the reader-pin protocol (feature bit 0).
+Schema 1.0 has required features zero and supports inspection and
+ordinary editing. Copying a 1.0 workspace creates a verified 1.1
+workspace with the same retained revisions and selected model.
+Pruning is available on the copied workspace. The 1.0 source stays
+available to its readers throughout the migration.
 
 Independent identity vectors
 ----------------------------

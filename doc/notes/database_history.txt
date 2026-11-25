@@ -412,6 +412,19 @@ took 5.1 seconds. A history-preserving DB5 export took 23.0 seconds
 and reopened with the same selected revision and BREP attribute.
 The source file retained its initial title and file identity.
 
+On the M1917 workspace, pruning kept the selected tip and a named
+checkpoint. Preview and apply took 5.1 and 5.0 seconds. The applied
+plan expired two revisions and 2.30 MB of artifact payloads. Undo
+stopped at the materialized checkpoint boundary. Copying the retained
+workspace to a new directory reduced the data file by 2.40 MB and
+preserved the selected revision ID.
+
+A separate Linux test terminated a migration from workspace schema
+1.0 immediately before the destination commit. The source data file
+retained its exact bytes. Opening the incomplete destination was
+rejected. A fresh migration created a verified 1.1 workspace with the
+same selected revision.
+
 Implementation starting points in the source tree
 -------------------------------------------------
 

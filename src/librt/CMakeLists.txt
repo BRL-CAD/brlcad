@@ -131,6 +131,7 @@ set(
   db_fullpath.cpp
   db_history_codec.cpp
   db_history_db5.cpp
+  db_history_retention.cpp
   db_history_workspace.cpp
   db_inmem.c
   db_io.c
@@ -329,6 +330,7 @@ set(
   cut_private.h
   db_history_codec.h
   db_history_db5.h
+  db_history_retention.h
   db_history_workspace.h
   librt_private.h
   material/materialX.cpp
@@ -488,6 +490,7 @@ brlcad_addlib(librt "${LIBRT_SOURCES}" "${RT_INCLUDE_DIRS}" "${RT_LOCAL_INCLUDE_
   UNITY_BUILD_SKIP
     rt_init.cpp
     db_history_workspace.cpp
+    db_history_retention.cpp
     search.cpp
     search_old.cpp
     primitives/annot/annot.c

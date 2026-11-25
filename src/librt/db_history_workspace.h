@@ -37,6 +37,20 @@ struct WorkspaceHead {
     uint64_t generation = 0;
 };
 
+struct WorkspaceRetention {
+    size_t keep = 0;
+    std::set<Id> drop;
+};
+
+struct WorkspacePrunePreview {
+    Id token = absent;
+    std::set<Id> expired_revisions;
+    std::set<Id> boundaries;
+    size_t retained_revisions = 0;
+    size_t expired_artifacts = 0;
+    uint64_t expired_bytes = 0;
+};
+
 enum class WorkspaceWriteStatus {
     Ok,
     Stale,
@@ -76,6 +90,10 @@ public:
 	bool with_history, struct bu_vls *message) const;
     RT_EXPORT bool verify(struct bu_vls *message) const;
     RT_EXPORT bool record_export(const Id &revision, struct bu_vls *message);
+    RT_EXPORT bool preview_prune(const WorkspaceHead &expected, const WorkspaceRetention &policy,
+	WorkspacePrunePreview &preview, struct bu_vls *message) const;
+    RT_EXPORT WorkspaceWriteStatus prune(const WorkspaceHead &expected, const WorkspaceRetention &policy,
+	std::string_view token, WorkspacePrunePreview &preview, WorkspaceHead &actual, struct bu_vls *message);
 
     // The caller keeps its staged edit on failure. On success or a stale
     // base, actual receives the authoritative head from the transaction.

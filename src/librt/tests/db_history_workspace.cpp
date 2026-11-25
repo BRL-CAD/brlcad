@@ -47,6 +47,32 @@ using Database = std::unique_ptr<struct db_i, decltype(&db_close)>;
 using Edit = std::unique_ptr<struct db_edit, decltype(&db_edit_abort)>;
 
 constexpr char region_name[] = "workspace.r";
+constexpr char pin_ready = 'P';
+constexpr int child_timeout_ms = 10000;
+constexpr char pruning_unavailable[] = "Workspace pruning is unavailable on this platform";
+
+struct PinProcess {
+    ~PinProcess() { stop(); }
+
+    bool start(const char *program, const char *path)
+    {
+	const char *args[] = {program, "--pin-revision", path, nullptr};
+	bu_process_create(&process, args, BU_PROCESS_OUT_EQ_ERR);
+	char received = 0;
+	return process && bu_process_read_n(process, BU_PROCESS_STDOUT, sizeof(received), &received) == 1 &&
+	    received == pin_ready;
+    }
+
+    void stop()
+    {
+	if (!process)
+	    return;
+	bu_process_terminate(process);
+	bu_process_wait_n(&process, child_timeout_ms);
+    }
+
+    struct bu_process *process = nullptr;
+};
 
 struct TestDirectory {
     ~TestDirectory()
@@ -276,15 +302,42 @@ test_writes(const char *path, const char *program, struct db_i *source, const Em
     RecordArtifact factored;
     CHECK(factor_record(record, factored) && factored.body_id == identify(Kind::Body, large_body));
 
+    WorkspaceRetention policy{1, {}};
+    WorkspacePrunePreview preview;
+    const bool pruning = writer->preview_prune(selected, policy, preview, message);
+    CHECK(pruning || BU_STR_EQUAL(bu_vls_addr(message), pruning_unavailable));
+    PinProcess pin;
+    if (pruning)
+	CHECK(pin.start(program, path));
+
     // An independently opened process sees the entire write and
     // publishes its checkout for these open readers to observe.
     const char *args[] = {program, "--checkout-parent", path, nullptr};
     struct bu_process *child = nullptr;
     bu_process_create(&child, args, BU_PROCESS_OUT_EQ_ERR);
-    constexpr int process_timeout_ms = 10000;
-    CHECK(child && bu_process_wait_n(&child, process_timeout_ms) == 0);
+    CHECK(child && bu_process_wait_n(&child, child_timeout_ms) == 0);
     CHECK(reader->read_directory(actual, model, message) && actual.revision == base.revision &&
 	actual.generation == selected.generation + 1 && model == initial.model);
+    if (!pruning)
+	return 0;
+
+    // A reader process pins the branch it opened even after checkout.
+    policy.drop.insert(selected.revision);
+    CHECK(!writer->preview_prune(actual, policy, preview, message) &&
+	std::string_view(bu_vls_addr(message)).find("reader-pinned") != std::string_view::npos);
+    pin.stop();
+    CHECK(!pin.process);
+    CHECK(writer->preview_prune(actual, policy, preview, message) &&
+	preview.expired_revisions == policy.drop && preview.expired_bytes >= body_size);
+    const auto previous_token = id_string(preview.token);
+    WorkspaceHead marked, pruned;
+    CHECK(writer->mark(actual, "root", false, marked, message) == WorkspaceWriteStatus::Ok);
+    CHECK(writer->prune(marked, policy, previous_token, preview, pruned, message) == WorkspaceWriteStatus::Error);
+    CHECK(writer->preview_prune(marked, policy, preview, message));
+    CHECK(writer->prune(marked, policy, id_string(preview.token), preview, pruned, message) == WorkspaceWriteStatus::Ok);
+    CHECK(pruned.generation == marked.generation + 1 && pruned.revision == base.revision);
+    CHECK(!reader->fetch_artifact({Kind::Body, factored.body_id}, payload, message));
+    CHECK(writer->verify(message) && test_native_geometry(newer.get()) == 0);
     return 0;
 }
 
@@ -301,6 +354,8 @@ test_compact_checkout(const char *path, Edit stage, const Db5HistoryDraft &edite
     CHECK(edit && db5_update_ident(db_edit_view(edit.get()), "Third title", 1.0) == 0);
     Db5HistoryDraft next;
     CHECK(append_db5_history(prior, edit.get(), 3, next) == AppendStatus::Ready);
+    const auto initial = next.pack.references.at("before");
+    next.pack.references.clear();
     const ArtifactKey reused_model{Kind::Manifest, prior.pack.selected_model};
     CHECK(next.pack.artifacts.erase(reused_model) == 1);
     CHECK(Workspace::create(path, next.pack, message));
@@ -310,6 +365,17 @@ test_compact_checkout(const char *path, Edit stage, const Db5HistoryDraft &edite
     CHECK(workspace && workspace->read_directory(latest, model, message));
     Bytes payload;
     CHECK(!workspace->fetch_artifact(reused_model, payload, message));
+    WorkspaceRetention policy{2, {}};
+    WorkspacePrunePreview preview;
+    if (workspace->preview_prune(latest, policy, preview, message)) {
+	CHECK(preview.expired_revisions == std::set<Id>{initial} &&
+	    preview.boundaries == std::set<Id>{prior.pack.selected_revision});
+	CHECK(workspace->prune(latest, policy, id_string(preview.token), preview, selected, message) == WorkspaceWriteStatus::Ok);
+	CHECK(workspace->verify(message) && workspace->fetch_artifact(reused_model, payload, message));
+	latest = selected;
+    } else {
+	CHECK(BU_STR_EQUAL(bu_vls_addr(message), pruning_unavailable));
+    }
     CHECK(workspace->checkout(latest, prior.pack.selected_revision, selected, message) == WorkspaceWriteStatus::Ok);
     CHECK(workspace->read_directory(selected, model, message) && model == prior.model);
     CHECK(selected.model == reused_model.second && selected.revision == prior.pack.selected_revision &&
@@ -355,15 +421,18 @@ test_workspace(const std::string &path, const Pack &pack, const Manifest &expect
     another.reset();
 
     constexpr size_t major_low_byte = 9;
+    constexpr size_t minor_low_byte = 11;
     constexpr size_t required_low_byte = 19;
     constexpr size_t artifact_low_byte = 21;
+    constexpr uint8_t reader_pin_bit = 1;
+    constexpr uint8_t unknown_feature_bit = 2;
     CHECK(change_bootstrap(path, major_low_byte, 2));
     CHECK(!Workspace::open(path.c_str(), message) && BU_STR_EQUAL(bu_vls_addr(message), "Unsupported BRL-CAD workspace schema"));
     CHECK(change_bootstrap(path, major_low_byte, 1));
-    CHECK(change_bootstrap(path, required_low_byte, 1));
+    CHECK(change_bootstrap(path, required_low_byte, unknown_feature_bit));
     CHECK(!Workspace::open(path.c_str(), message) &&
 	BU_STR_EQUAL(bu_vls_addr(message), "Unsupported BRL-CAD workspace schema, features or artifact encoding"));
-    CHECK(change_bootstrap(path, required_low_byte, 0));
+    CHECK(change_bootstrap(path, required_low_byte, reader_pin_bit));
     CHECK(change_bootstrap(path, artifact_low_byte, 2));
     CHECK(!Workspace::open(path.c_str(), message) &&
 	BU_STR_EQUAL(bu_vls_addr(message), "Unsupported BRL-CAD workspace schema, features or artifact encoding"));
@@ -371,6 +440,27 @@ test_workspace(const std::string &path, const Pack &pack, const Manifest &expect
     workspace = Workspace::open(path.c_str(), message);
     CHECK(workspace && workspace->read_directory(head, model, message));
     CHECK(head.revision == pack.selected_revision && model == expected);
+    workspace.reset();
+
+    // A 1.0 workspace can still be read and copied into the new format.
+    CHECK(change_bootstrap(path, minor_low_byte, 0) && change_bootstrap(path, required_low_byte, 0));
+    workspace = Workspace::open(path.c_str(), message);
+    CHECK(workspace && workspace->read_directory(head, model, message));
+    WorkspaceRetention policy{1, {}};
+    WorkspacePrunePreview preview;
+    CHECK(!workspace->preview_prune(head, policy, preview, message));
+    const std::string migration_message = bu_vls_addr(message);
+    const bool pruning = migration_message != pruning_unavailable;
+    CHECK(!pruning || migration_message.find("Copy this workspace") != std::string::npos);
+    const auto destination = path + "-migrated";
+    CHECK(workspace->copy_to(head, destination.c_str(), message));
+    auto migrated = Workspace::open(destination.c_str(), message);
+    WorkspaceHead copied;
+    CHECK(migrated && migrated->read_directory(copied, model, message) &&
+	copied.revision == head.revision && copied.model == head.model && model == expected && migrated->verify(message));
+    CHECK(!workspace->preview_prune(head, policy, preview, message));
+    if (pruning)
+	CHECK(migrated->preview_prune(copied, policy, preview, message));
     return 0;
 }
 
@@ -382,6 +472,14 @@ main(int argc, const char **argv)
 
     if (argc == 3 && BU_STR_EQUAL(argv[1], "--checkout-parent"))
 	return checkout_parent(argv[2], nullptr);
+    if (argc == 3 && BU_STR_EQUAL(argv[1], "--pin-revision")) {
+	WorkspaceHead head;
+	Database pinned(Workspace::open_snapshot(argv[2], head, nullptr), db_close);
+	if (!pinned || fputc(pin_ready, stdout) == EOF || fflush(stdout) == EOF)
+	    return 1;
+	(void)fgetc(stdin);
+	return 0;
+    }
 
     char path[MAXPATHLEN] = {};
     FILE *temporary = bu_temp_file(path, sizeof(path));

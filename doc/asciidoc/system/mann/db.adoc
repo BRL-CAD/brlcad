@@ -92,6 +92,12 @@ __history conflict__::
 Show the workspace edit retained after a stale-writer conflict. Reopen the workspace to load the current head and discard the staged edit.
 
 
+__history prune --keep revisions [--drop tip]... [--apply preview]__::
+Preview workspace history retention. Keep up to the specified number of revisions, including the anchor, along the parent path of the selected revision, each marked or reader-pinned revision, and each remaining branch tip. Use `--drop` to release an abandoned branch tip. The selected, marked, and reader-pinned revisions stay available.
++
+The preview reports the expiring revisions, their artifact payload size, and the resulting retention boundaries. Repeat the options with `--apply` and the preview token to publish the change. A changed plan requires a new preview. Undo stops at a retained boundary. LMDB reuses reclaimed pages for subsequent writes. Copy the workspace to a new directory to reclaim file space or to upgrade a schema 1.0 workspace for pruning. Pruning requires local advisory file locks.
+
+
 __history adopt [--apply]__::
 Preview live DB5 records changed by an external writer. `--apply` records those changes as one revision whose parent is the archived selection. Adoption requires a writable database and an intact archive. Undo restores the archived model that preceded the external edits.
 

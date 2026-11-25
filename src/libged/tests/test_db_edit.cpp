@@ -601,6 +601,27 @@ test_workspace_history()
     const char *copy_workspace[] = {"db", "history", "workspace", cloned.c_str(), nullptr};
     CHECK(run(archived.get(), copy_workspace) == BRLCAD_OK && selected_id(archived.get()) == branch &&
 	run(archived.get(), verify) == BRLCAD_OK);
+
+    const char *preview[] = {"db", "history", "prune", "--keep", "1", "--drop", renamed.c_str(), nullptr};
+    const int previewed = run(archived.get(), preview);
+    if (previewed != BRLCAD_OK && contains_result(archived.get(), "unavailable on this platform"))
+	return 0;
+    CHECK(previewed == BRLCAD_OK && contains_result(archived.get(), ("expire revision " + renamed).c_str()) &&
+	contains_result(archived.get(), ("retention boundary " + branch).c_str()));
+    const std::string_view result(bu_vls_addr(archived->ged_result_str));
+    constexpr std::string_view field = "preview ";
+    CHECK(result.substr(0, field.size()) == field);
+    const auto token = std::string(result.substr(field.size(), result.find('\n') - field.size()));
+    CHECK(run(archived.get(), show) == BRLCAD_OK);
+    const char *apply[] = {"db", "history", "prune", "--keep", "1", "--drop", renamed.c_str(),
+	"--apply", token.c_str(), nullptr};
+    CHECK(run(archived.get(), apply) == BRLCAD_OK && contains_result(archived.get(), "Prune applied") &&
+	selected_id(archived.get()) == branch);
+    CHECK(run(archived.get(), show) != BRLCAD_OK && contains_result(archived.get(), "Unknown revision"));
+    const char *show_mark[] = {"db", "history", "show", "rename", nullptr};
+    CHECK(run(archived.get(), show_mark) == BRLCAD_OK && contains_result(archived.get(), "(retention boundary)"));
+    CHECK(run(archived.get(), undo) != BRLCAD_OK && contains_result(archived.get(), "retention boundary"));
+    CHECK(run(archived.get(), verify) == BRLCAD_OK);
     return 0;
 }
 

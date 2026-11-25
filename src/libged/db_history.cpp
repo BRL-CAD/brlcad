@@ -894,7 +894,9 @@ print_archive_revision(struct bu_vls *out, const db_history::Pack &pack, const d
     bu_vls_printf(out, "revision %s", id_string(id).c_str());
     if (id == pack.selected_revision)
 	bu_vls_strcat(out, " (selected)");
-    if (revision.parent != db_history::absent && !pack.boundaries.count(id))
+    if (pack.boundaries.count(id))
+	bu_vls_strcat(out, " (retention boundary)");
+    else if (revision.parent != db_history::absent)
 	bu_vls_printf(out, " parent %s", id_string(revision.parent).c_str());
     if (!revision.label.empty()) {
 	bu_vls_putc(out, ' ');
@@ -971,12 +973,85 @@ history_graph(struct ged *gedp, const ged_db_history &history, db_history::Db5Hi
     return nullptr;
 }
 
+int
+prune_workspace(struct ged *gedp, ged_db_history *history, int argc, const char **argv)
+{
+    auto *out = gedp->ged_result_str;
+    if (!history || !history->workspace) {
+	bu_vls_strcat(out, "Pruning requires a workspace");
+	return BRLCAD_ERROR;
+    }
+    db_history::WorkspaceRetention policy;
+    const char *approval = nullptr;
+    std::vector<const char *> drop;
+    for (int i = 2; i < argc; i += 2) {
+	if (i + 1 == argc)
+	    return GED_HELP;
+	const std::string_view flag(argv[i]);
+	if (flag == "--keep" && !policy.keep) {
+	    uint64_t keep = 0;
+	    if (!parse_number(argv[i + 1], keep) || !keep || keep > SIZE_MAX) {
+		bu_vls_strcat(out, "Expected a positive number of revisions to keep");
+		return BRLCAD_ERROR;
+	    }
+	    policy.keep = static_cast<size_t>(keep);
+	} else if (flag == "--drop") {
+	    drop.push_back(argv[i + 1]);
+	} else if (flag == "--apply" && !approval) {
+	    approval = argv[i + 1];
+	} else {
+	    return GED_HELP;
+	}
+    }
+    if (!policy.keep)
+	return GED_HELP;
+    if (approval && std::string_view(approval).size() != id_string(db_history::absent).size()) {
+	bu_vls_strcat(out, "Expected the full preview token from db history prune");
+	return BRLCAD_ERROR;
+    }
+    if (!drop.empty()) {
+	db_history::Db5HistoryDraft graph;
+	const auto *pack = history_graph(gedp, *history, graph);
+	if (!pack)
+	    return BRLCAD_ERROR;
+	for (const auto *argument : drop) {
+	    db_history::Id id;
+	    if (!resolve_archive_revision(out, *pack, argument, id))
+		return BRLCAD_ERROR;
+	    policy.drop.insert(id);
+	}
+    }
+
+    db_history::WorkspacePrunePreview preview;
+    if (approval) {
+	WorkspaceHead committed;
+	if (history->workspace->prune(history->workspace_head, policy, approval, preview, committed, out) !=
+	    WorkspaceWriteStatus::Ok)
+	    return BRLCAD_ERROR;
+	history->workspace_head = committed;
+	bu_vls_strcat(out, "Prune applied\n");
+    } else {
+	if (!history->workspace->preview_prune(history->workspace_head, policy, preview, out))
+	    return BRLCAD_ERROR;
+	bu_vls_printf(out, "preview %s\n", id_string(preview.token).c_str());
+    }
+    bu_vls_printf(out, "retained revisions %zu\nexpired artifacts %zu\nexpired payload bytes %ju",
+	preview.retained_revisions, preview.expired_artifacts, (uintmax_t)preview.expired_bytes);
+    for (const auto &expired : preview.expired_revisions)
+	bu_vls_printf(out, "\nexpire revision %s", id_string(expired).c_str());
+    for (const auto &boundary : preview.boundaries)
+	bu_vls_printf(out, "\nretention boundary %s", id_string(boundary).c_str());
+    return BRLCAD_OK;
+}
+
 void
 print_revision_options(struct bu_vls *out, const db_history::Pack &pack)
 {
     if (pack.selected_revision == db_history::absent)
 	return;
     bu_vls_printf(out, "\nrevision %s", id_string(pack.selected_revision).c_str());
+    if (pack.boundaries.count(pack.selected_revision))
+	bu_vls_strcat(out, "\nretention boundary");
     db_history::Revision selected;
     if (db_history::read_revision(pack, pack.selected_revision, selected) &&
 	selected.parent != db_history::absent && !pack.boundaries.count(pack.selected_revision)) {
@@ -1373,6 +1448,8 @@ step_archive_revision(struct ged *gedp, ged_db_history &history, const db_histor
     }
     if (target == db_history::absent) {
 	bu_vls_printf(out, "No retained revision to %s", undo ? "undo" : "redo");
+	if (undo && pack.boundaries.count(pack.selected_revision))
+	    bu_vls_strcat(out, " (retention boundary)");
 	return BRLCAD_ERROR;
     }
     return checkout_history(gedp, history, target);
@@ -1539,6 +1616,13 @@ ged_db_history_command(struct ged *gedp, int argc, const char **argv)
     if (command == "history") {
 	if (argc == 2 && BU_STR_EQUAL(argv[1], "status"))
 	    return print_status(gedp, history);
+	if (argc >= 2 && BU_STR_EQUAL(argv[1], "prune")) {
+	    const int pruned = prune_workspace(gedp, history, argc, argv);
+	    if (pruned == GED_HELP)
+		bu_vls_strcat(gedp->ged_result_str,
+		    "Usage: db history prune --keep <revisions> [--drop <tip>]... [--apply <preview>]");
+	    return pruned;
+	}
 	if (argc == 3 && BU_STR_EQUAL(argv[1], "workspace")) {
 	    const int status = create_workspace(gedp, argv[2]);
 	    if (status != BRLCAD_OK)
