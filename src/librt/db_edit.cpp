@@ -175,18 +175,26 @@ db_edit_write_blocked(const struct db_i *dbip)
 
 
 int
+db_edit_record_source(const struct db_i **db, const struct directory **entry)
+{
+    const auto *edit = (*db)->i->dbi_edit;
+    if (!edit)
+	return 0;
+    const auto inherited = edit->inherited.find(*entry);
+    if (inherited == edit->inherited.end())
+	return 0;
+    *db = edit->base;
+    *entry = inherited->second;
+    return 1;
+}
+
+
+int
 db_edit_read_base(const struct db_i *dbip, const struct directory *dp,
 		  void *buffer, size_t count, int *found)
 {
-    *found = 0;
-    const auto *edit = dbip->i->dbi_edit;
-    if (!edit)
-	return 0;
-    const auto inherited = edit->inherited.find(dp);
-    if (inherited == edit->inherited.end())
-	return 0;
-    *found = 1;
-    return db_read_external_bytes(edit->base, inherited->second, buffer, count);
+    *found = db_edit_record_source(&dbip, &dp);
+    return *found ? db_read_external_bytes(dbip, dp, buffer, count) : 0;
 }
 
 

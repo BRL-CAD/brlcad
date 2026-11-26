@@ -104,6 +104,10 @@ bool selected_manifest(const Pack &pack, Manifest &manifest);
 bool add_model_record(Manifest &manifest, std::string_view name, ByteView record);
 bool read_archived_record(const Pack &pack, const Id &id, Bytes &record);
 RT_EXPORT EmbeddedStatus inspect_db5_history(const struct db_i *db);
+// Recognize an archive before omitting its record from a snapshot. A
+// replacement can also validate the index without retaining the payloads.
+EmbeddedStatus inspect_db5_archive_record(const struct db_i *db, const struct directory *entry,
+	bool verify_index);
 
 // Atomically stream a complete DB5 snapshot and replace or append its
 // recognized history archive. Both the pack and its borrowed payloads

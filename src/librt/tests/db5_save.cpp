@@ -172,6 +172,7 @@ verify_embedded(const char *path, struct db_i *initial, const struct db_i *diffe
 
     EmbeddedPack opened;
     CHECK(read_db5_history(newest.get(), opened) == EmbeddedStatus::Current);
+    CHECK(inspect_db5_history(newest.get()) == EmbeddedStatus::Current);
     CHECK(opened.pack.selected_revision == next.pack.selected_revision && opened.model == model);
     Revision prior;
     CHECK(read_revision(opened.pack, revision.parent, prior) && prior.label == "Initial model");
@@ -248,12 +249,15 @@ verify_embedded(const char *path, struct db_i *initial, const struct db_i *diffe
     CHECK(archive_entry && db_put_external5(&external, archive_entry, newest.get()) == 0);
     db_sync(newest.get());
     CHECK(read_db5_history(newest.get(), opened) == EmbeddedStatus::Malformed);
+    CHECK(inspect_db5_history(newest.get()) == EmbeddedStatus::Malformed);
+    CHECK(verify_pack(opened.pack, error));
     newer[signature_offset + selected_id_offset] ^= 1;
     constexpr size_t major_version_low_byte = 9;
     newer[signature_offset + major_version_low_byte]++;
     CHECK(archive_entry && db_put_external5(&external, archive_entry, newest.get()) == 0);
     db_sync(newest.get());
     CHECK(read_db5_history(newest.get(), opened) == EmbeddedStatus::Unsupported);
+    CHECK(inspect_db5_history(newest.get()) == EmbeddedStatus::Unsupported);
     Save unsupported(db5_save_begin(newest.get(), error), db5_save_free);
     CHECK(unsupported && save_db5_history(unsupported.get(), newest.get(), next.pack, &replacement, error) == DB5_SAVE_ERROR);
     CHECK(!replacement && record_bytes(newest.get(), archive_name) == newer);
@@ -275,6 +279,7 @@ verify_embedded(const char *path, struct db_i *initial, const struct db_i *diffe
     CHECK(db_put_external5(&external, archive_entry, newest.get()) == 0);
     db_sync(newest.get());
     CHECK(read_db5_history(newest.get(), opened) == EmbeddedStatus::Collision);
+    CHECK(inspect_db5_history(newest.get()) == EmbeddedStatus::Collision);
     Save collision(db5_save_begin(newest.get(), error), db5_save_free);
     CHECK(collision && save_db5_history(collision.get(), newest.get(), next.pack, &replacement, error) == DB5_SAVE_ERROR);
     CHECK(!replacement && record_bytes(newest.get(), archive_name) == newer);

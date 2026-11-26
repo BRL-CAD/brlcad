@@ -390,6 +390,17 @@ write_snapshot(FILE *file, const struct db_i *snapshot, const db_history::Pack *
     FOR_ALL_DIRECTORY_START(dp, snapshot) {
 	if (!(dp->d_flags & RT_DIR_INMEM) && dp->d_addr == RT_DIR_PHONY_ADDR)
 	    continue;
+	if ((pack || omit_archive) && BU_STR_EQUAL(dp->d_namep, db_history::archive_name)) {
+	    const auto archive = db_history::inspect_db5_archive_record(snapshot, dp, false);
+	    if (archive == db_history::EmbeddedStatus::Current)
+		continue;
+	    if (archive == db_history::EmbeddedStatus::Malformed)
+		return false;
+	    if (pack) {
+		db5_save_message(message, "A user object occupies the embedded history name");
+		return false;
+	    }
+	}
 
 	struct bu_external record = BU_EXTERNAL_INIT_ZERO;
 	if (db_get_external(&record, dp, snapshot) < 0)
@@ -404,17 +415,8 @@ write_snapshot(FILE *file, const struct db_i *snapshot, const db_history::Pack *
 	    valid = !global && raw.major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY;
 	    global = valid;
 	}
-	bool skip = false;
-	if (valid && (pack || omit_archive) && BU_STR_EQUAL(dp->d_namep, db_history::archive_name)) {
-	    db_history::ByteView body;
-	    skip = db_history::archive_payload(raw, body);
-	    if (!skip && pack) {
-		db5_save_message(message, "A user object occupies the embedded history name");
-		valid = false;
-	    }
-	}
 	bool written = valid;
-	if (valid && !skip) {
+	if (valid) {
 	    written = !pack || db_history::add_model_record(actual, dp->d_namep, {record.ext_buf, record.ext_nbytes});
 	    if (written)
 		written = bu_fwrite_external(file, &record) == 0;

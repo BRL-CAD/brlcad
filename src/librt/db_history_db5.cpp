@@ -491,12 +491,84 @@ selected_manifest(const Pack &pack, Manifest &manifest)
 }
 
 static EmbeddedStatus
-read_db5_index(const struct db_i *db, const struct directory *dp, EmbeddedPack *result)
+archive_index_status(PackStatus status)
+{
+    switch (status) {
+	case PackStatus::Ok:
+	    return EmbeddedStatus::Current;
+	case PackStatus::Malformed:
+	    return EmbeddedStatus::Malformed;
+	case PackStatus::Unsupported:
+	    return EmbeddedStatus::Unsupported;
+    }
+    return EmbeddedStatus::Malformed;
+}
+
+static bool
+archive_directory_type(const struct directory *entry)
+{
+    return (entry->d_flags & RT_DIR_HIDDEN) && entry->d_major_type == DB5_MAJORTYPE_BINARY_UNIF &&
+	entry->d_minor_type == DB5_MINORTYPE_BINU_8BITINT_U;
+}
+
+static bool
+named_record(const struct db5_raw_internal &raw, const struct directory *entry)
+{
+    return raw.h_dli == DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT && raw.h_name_present &&
+	BU_STR_EQUAL(entry->d_namep, reinterpret_cast<const char *>(raw.name.ext_buf));
+}
+
+EmbeddedStatus
+inspect_db5_archive_record(const struct db_i *db, const struct directory *entry, bool verify_index)
+{
+    const struct db_i *source = db;
+    const struct directory *stored = entry;
+    while (db_edit_record_source(&source, &stored)) {
+	// An edit view can inherit a record from an earlier committed view.
+    }
+
+    struct db5_raw_internal raw;
+    if (source->i->dbi_fp && !source->i->dbi_mf && !(stored->d_flags & RT_DIR_INMEM)) {
+	size_t body_offset;
+	if (db5_read_disk_record_metadata(source, stored, &raw, &body_offset) < 0)
+	    return EmbeddedStatus::Malformed;
+	const bool named = named_record(raw, entry);
+	const bool wrapper = archive_wrapper(raw);
+	bu_free(raw.buf, "raw v5 object");
+	if (!verify_index && !named)
+	    return EmbeddedStatus::Malformed;
+	if (!wrapper)
+	    return EmbeddedStatus::Collision;
+	const auto read_body = [&](size_t offset, void *buffer, size_t count) {
+	    return offset <= raw.body.ext_nbytes && count <= raw.body.ext_nbytes - offset &&
+		db_read(source, buffer, count, stored->d_addr + static_cast<b_off_t>(body_offset + offset)) == 0;
+	};
+	std::array<uint8_t, archive_signature_size> signature;
+	if (!read_body(0, signature.data(), signature.size()))
+	    return EmbeddedStatus::Malformed;
+	if (!archive_signature({signature.data(), signature.size()}))
+	    return EmbeddedStatus::Collision;
+	return verify_index ? archive_index_status(inspect_pack_index(raw.body.ext_nbytes, read_body)) : EmbeddedStatus::Current;
+    }
+
+    DatabaseRecord record(source, stored);
+    if (!db5_get_raw_internal_bounded(&raw, record.bytes.data, record.bytes.size) ||
+	raw.object_length != record.bytes.size || (!verify_index && !named_record(raw, entry)))
+	return EmbeddedStatus::Malformed;
+    ByteView body;
+    if (!archive_payload(raw, body))
+	return EmbeddedStatus::Collision;
+    Pack pack;
+    return verify_index ? archive_index_status(read_pack(body, pack)) : EmbeddedStatus::Current;
+}
+
+static EmbeddedStatus
+read_db5_index(const struct db_i *db, const struct directory *dp, EmbeddedPack &result)
 {
     if (!dp)
 	return EmbeddedStatus::Missing;
-    if (!(dp->d_flags & RT_DIR_HIDDEN) || dp->d_major_type != DB5_MAJORTYPE_BINARY_UNIF ||
-	dp->d_minor_type != DB5_MINORTYPE_BINU_8BITINT_U)
+
+    if (!archive_directory_type(dp))
 	return EmbeddedStatus::Collision;
 
     DatabaseRecord record(db, dp);
@@ -509,25 +581,23 @@ read_db5_index(const struct db_i *db, const struct directory *dp, EmbeddedPack *
 	return EmbeddedStatus::Collision;
 
     Pack pack;
-    switch (read_pack(body, pack)) {
-	case PackStatus::Ok:
-	    if (result) {
-		result->backing = record.retain(db);
-		result->pack = std::move(pack);
-	    }
-	    return EmbeddedStatus::Current;
-	case PackStatus::Malformed:
-	    return EmbeddedStatus::Malformed;
-	case PackStatus::Unsupported:
-	    return EmbeddedStatus::Unsupported;
+    const auto status = archive_index_status(read_pack(body, pack));
+    if (status == EmbeddedStatus::Current) {
+	result.backing = record.retain(db);
+	result.pack = std::move(pack);
     }
-    return EmbeddedStatus::Malformed;
+    return status;
 }
 
 EmbeddedStatus
 inspect_db5_history(const struct db_i *db)
 {
-    return read_db5_index(db, db_lookup(db, archive_name, LOOKUP_QUIET), nullptr);
+    const auto *entry = db_lookup(db, archive_name, LOOKUP_QUIET);
+    if (!entry)
+	return EmbeddedStatus::Missing;
+    if (!archive_directory_type(entry))
+	return EmbeddedStatus::Collision;
+    return inspect_db5_archive_record(db, entry, true);
 }
 
 EmbeddedStatus
@@ -538,7 +608,7 @@ read_db5_history(const struct db_i *db, EmbeddedPack &result)
 
     const auto *dp = db_lookup(db, archive_name, LOOKUP_QUIET);
     EmbeddedPack archive;
-    const auto status = read_db5_index(db, dp, &archive);
+    const auto status = read_db5_index(db, dp, archive);
     if (status != EmbeddedStatus::Current)
 	return status;
 
@@ -556,7 +626,7 @@ read_published_db5_history(const struct db_i *db, const Id &expected, EmbeddedPa
 {
     EmbeddedPack archive;
     const auto *dp = db_lookup(db, archive_name, LOOKUP_QUIET);
-    if (read_db5_index(db, dp, &archive) != EmbeddedStatus::Current ||
+    if (read_db5_index(db, dp, archive) != EmbeddedStatus::Current ||
 	archive.pack.selected_revision != expected || !selected_manifest(archive.pack, archive.model))
 	return false;
     result = std::move(archive);

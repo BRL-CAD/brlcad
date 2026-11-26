@@ -42,7 +42,7 @@ constexpr size_t integer_size = sizeof(uint64_t);
 constexpr size_t id_size = absent.size();
 constexpr size_t min_encoded_name = integer_size + 1;
 constexpr uint64_t max_hash_bytes = std::numeric_limits<uint64_t>::max() / 8;
-constexpr std::array<uint8_t, 8> pack_signature{'B', 'R', 'L', 'C', 'A', 'D', 'H', 0};
+constexpr std::array<uint8_t, archive_signature_size> pack_signature{'B', 'R', 'L', 'C', 'A', 'D', 'H', 0};
 constexpr uint16_t pack_major = 1;
 constexpr uint16_t pack_minor = 0;
 constexpr uint64_t pack_required_features = 0;
@@ -678,24 +678,44 @@ diff_manifests(const Manifest &before, const Manifest &after)
 }
 
 bool
+archive_wrapper(const struct db5_raw_internal &raw)
+{
+    return raw.h_dli == DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT && raw.h_name_present &&
+	raw.h_name_hidden && raw.major_type == DB5_MAJORTYPE_BINARY_UNIF &&
+	raw.minor_type == DB5_MINORTYPE_BINU_8BITINT_U && raw.b_present &&
+	raw.b_zzz == DB5_ZZZ_UNCOMPRESSED && raw.name.ext_nbytes == sizeof(archive_name) &&
+	std::equal(std::begin(archive_name), std::end(archive_name), raw.name.ext_buf) &&
+	raw.body.ext_nbytes >= pack_signature.size();
+}
+
+bool
+archive_signature(ByteView bytes)
+{
+    return bytes.size >= pack_signature.size() &&
+	std::equal(pack_signature.begin(), pack_signature.end(), bytes.data);
+}
+
+bool
 archive_payload(const struct db5_raw_internal &raw, ByteView &result)
 {
-    if (raw.h_dli != DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT || !raw.h_name_present ||
-	!raw.h_name_hidden || raw.major_type != DB5_MAJORTYPE_BINARY_UNIF ||
-	raw.minor_type != DB5_MINORTYPE_BINU_8BITINT_U || !raw.b_present ||
-	raw.b_zzz != DB5_ZZZ_UNCOMPRESSED || raw.name.ext_nbytes != sizeof(archive_name) ||
-	!std::equal(std::begin(archive_name), std::end(archive_name), raw.name.ext_buf) ||
-	raw.body.ext_nbytes < pack_signature.size() ||
-	!std::equal(pack_signature.begin(), pack_signature.end(), raw.body.ext_buf))
+    if (!archive_wrapper(raw) || !archive_signature({raw.body.ext_buf, raw.body.ext_nbytes}))
 	return false;
     result = {raw.body.ext_buf, raw.body.ext_nbytes};
     return true;
 }
 
-PackStatus
-read_pack(ByteView body, Pack &result)
+struct PackIndexHeader {
+    Id selected_revision;
+    Id selected_model;
+    size_t metadata_size;
+    size_t entries;
+    size_t index_end;
+};
+
+static PackStatus
+read_pack_index_header(ByteView prefix, size_t body_size, PackIndexHeader &header)
 {
-    Reader reader(body);
+    Reader reader(prefix);
     ByteView signature;
     uint16_t major, minor;
     uint64_t required_features;
@@ -706,46 +726,89 @@ read_pack(ByteView body, Pack &result)
     if (major != pack_major || minor != pack_minor || required_features != pack_required_features)
 	return PackStatus::Unsupported;
 
-    Pack pack;
     uint64_t total, metadata_length, count;
-    ByteView metadata;
-    if (!reader.integer(total) || total != body.size || !reader.id(pack.selected_revision) ||
-	!reader.id(pack.selected_model) || !reader.integer(metadata_length) || !reader.integer(count) ||
-	!reader.take(metadata_length, metadata) || reader.size() < id_size ||
-	count > (reader.size() - id_size) / pack_entry_size)
+    if (!reader.integer(total) || total != body_size || !reader.id(header.selected_revision) ||
+	!reader.id(header.selected_model) || !reader.integer(metadata_length) || !reader.integer(count) ||
+	body_size < pack_header_size + id_size || metadata_length > body_size - pack_header_size - id_size ||
+	count > (body_size - pack_header_size - id_size - metadata_length) / pack_entry_size)
+	return PackStatus::Malformed;
+
+    header.metadata_size = static_cast<size_t>(metadata_length);
+    header.entries = static_cast<size_t>(count);
+    header.index_end = pack_header_size + header.metadata_size + header.entries * pack_entry_size;
+    return header.index_end <= max_hash_bytes ? PackStatus::Ok : PackStatus::Malformed;
+}
+
+static PackStatus
+read_pack_index(ByteView prefix, size_t body_size, Pack *result)
+{
+    PackIndexHeader header;
+    const auto status = read_pack_index_header(prefix, body_size, header);
+    if (status != PackStatus::Ok)
+	return status;
+    if (prefix.size < header.index_end + id_size)
 	return PackStatus::Malformed;
 
     // Check the index and metadata together before trusting offsets or
     // allocating tables. Large payloads are hashed on demand.
-    const size_t index_end = body.size - reader.size() + static_cast<size_t>(count) * pack_entry_size;
-    if (index_end > max_hash_bytes)
-	return PackStatus::Malformed;
-    const Id digest = checksum({body.data, index_end});
-    if (!std::equal(digest.begin(), digest.end(), body.data + index_end) ||
-	!decode_pack_metadata(metadata, pack))
+    const Id digest = checksum({prefix.data, header.index_end});
+    Pack pack;
+    pack.selected_revision = header.selected_revision;
+    pack.selected_model = header.selected_model;
+    if (!std::equal(digest.begin(), digest.end(), prefix.data + header.index_end) ||
+	!decode_pack_metadata({prefix.data + pack_header_size, header.metadata_size}, pack))
 	return PackStatus::Malformed;
 
-    size_t next_offset = index_end + id_size;
-    for (uint64_t i = 0; i < count; i++) {
+    const size_t entries_start = pack_header_size + header.metadata_size;
+    Reader reader({prefix.data + entries_start, header.index_end - entries_start});
+    size_t next_offset = header.index_end + id_size;
+    for (size_t i = 0; i < header.entries; i++) {
 	uint8_t tag;
 	Id id;
 	uint64_t offset, length;
 	if (!reader.integer(tag) || !reader.id(id) || id == absent ||
 	    !reader.integer(offset) || !reader.integer(length) ||
-	    offset != next_offset || !length || length > body.size - next_offset)
+	    offset != next_offset || !length || length > body_size - next_offset)
 	    return PackStatus::Malformed;
 	const ArtifactKey key{static_cast<Kind>(tag), id};
 	if (!artifact_kind(key.first) || (!pack.artifacts.empty() && key <= pack.artifacts.rbegin()->first))
 	    return PackStatus::Malformed;
 	const auto size = static_cast<size_t>(length);
-	pack.artifacts.emplace_hint(pack.artifacts.end(), key, ByteView{body.data + next_offset, size});
+	const uint8_t *payload = result ? prefix.data + next_offset : nullptr;
+	pack.artifacts.emplace_hint(pack.artifacts.end(), key, ByteView{payload, size});
 	next_offset += size;
     }
-    if (next_offset != body.size || !valid_pack_references(pack))
+    if (next_offset != body_size || !valid_pack_references(pack))
 	return PackStatus::Malformed;
 
-    result = std::move(pack);
+    if (result)
+	*result = std::move(pack);
     return PackStatus::Ok;
+}
+
+PackStatus
+read_pack(ByteView body, Pack &result)
+{
+    return read_pack_index(body, body.size, &result);
+}
+
+PackStatus
+inspect_pack_index(size_t body_size, const std::function<bool(size_t, void *, size_t)> &read_bytes)
+{
+    std::array<uint8_t, pack_header_size> fixed;
+    const size_t header_size = std::min(body_size, fixed.size());
+    PackIndexHeader header;
+    if (!header_size || !read_bytes(0, fixed.data(), header_size))
+	return PackStatus::Malformed;
+    const auto status = read_pack_index_header({fixed.data(), header_size}, body_size, header);
+    if (status != PackStatus::Ok)
+	return status;
+
+    Bytes prefix(header.index_end + id_size);
+    std::copy(fixed.begin(), fixed.end(), prefix.begin());
+    if (!read_bytes(fixed.size(), prefix.data() + fixed.size(), prefix.size() - fixed.size()))
+	return PackStatus::Malformed;
+    return read_pack_index(prefix, body_size, nullptr);
 }
 
 bool

@@ -117,6 +117,8 @@ int db5_fwrite_hidden_u8(FILE *fp, const char *name, size_t body_size,
 			 int (*write_body)(FILE *, void *), void *data);
 int db5_load_global(struct db_i *dbip, const struct directory *dp);
 int db5_read_raw_internal_fp(struct db5_raw_internal *raw, FILE *fp, uintmax_t available, int metadata_only);
+int db5_read_disk_record_metadata(const struct db_i *db, const struct directory *entry,
+				 struct db5_raw_internal *raw, size_t *body_offset);
 int db5_get_raw_internal_split(struct db5_raw_internal *raw, const unsigned char *prefix,
 			       size_t prefix_size, const unsigned char *suffix, size_t suffix_size);
 int db5_parse_struct_body(const struct bu_external *body, const struct bu_structparse *fields, void *parameters);
@@ -142,6 +144,7 @@ int db_read_external_bytes(const struct db_i *dbip, const struct directory *dp,
 			  void *buffer, size_t count);
 int db_edit_read_base(const struct db_i *dbip, const struct directory *dp,
 		     void *buffer, size_t count, int *found);
+int db_edit_record_source(const struct db_i **db, const struct directory **entry);
 
 
 /**

@@ -514,24 +514,35 @@ switch_database(struct ged *gedp, struct db_i *replacement)
 
 void
 install_snapshot(struct ged *gedp, ged_db_history &history, struct db_i *replacement,
-		 const db_history::Id *embedded_head = nullptr)
+		 std::optional<db_history::Id> embedded_head = std::nullopt)
 {
     if (!history.workspace)
 	history.save.reset(db5_save_begin(replacement, nullptr));
     attach_history(history, replacement);
     if (embedded_head) {
 	history.embedded_children.reset();
+	// Publication has succeeded. Release the retired archive before
+	// loading the new owned snapshot from its replacement handle.
+	history.embedded = {};
 	db_history::EmbeddedPack published;
 	if (db_history::read_published_db5_history(replacement, *embedded_head, published)) {
 	    history.embedded_status = EmbeddedStatus::Current;
 	    history.embedded = std::move(published);
 	} else {
 	    history.embedded_status = EmbeddedStatus::Malformed;
-	    history.embedded = {};
 	    bu_vls_printf(gedp->ged_result_str, "\nDatabase saved. Reopen it to reload embedded history.");
 	}
     }
     switch_database(gedp, replacement);
+}
+
+void
+install_embedded_draft(struct ged *gedp, ged_db_history &history, struct db_i *replacement,
+		       db_history::Db5HistoryDraft &draft)
+{
+    const auto head = draft.pack.selected_revision;
+    draft = {};
+    install_snapshot(gedp, history, replacement, head);
 }
 
 std::unique_ptr<ged_db_history>
@@ -915,7 +926,7 @@ enable_embedded(struct ged *gedp)
     if (initial)
 	gedp->i->db_history = initial.release();
     history->revisions.clear();
-    install_snapshot(gedp, *history, replacement, &draft.pack.selected_revision);
+    install_embedded_draft(gedp, *history, replacement, draft);
     return BRLCAD_OK;
 }
 
@@ -1031,7 +1042,7 @@ publish_embedded_edit(struct ged *gedp, ged_db_history &history, Edit &edit, db_
     }
     copy_region_defaults(history.live, snapshot.get());
     snapshot.reset();
-    install_snapshot(gedp, history, replacement, &pack.selected_revision);
+    install_embedded_draft(gedp, history, replacement, draft);
     return BRLCAD_OK;
 }
 
@@ -2040,7 +2051,7 @@ adopt_external_history(struct ged *gedp, ged_db_history &history, bool apply)
 	bu_vls_putc(out, '\n');
     bu_vls_printf(out, "Adopted external DB5 edits in revision %s", id_string(draft.pack.selected_revision).c_str());
     print_archive_changes(out, changes);
-    install_snapshot(gedp, history, replacement, &draft.pack.selected_revision);
+    install_embedded_draft(gedp, history, replacement, draft);
     return BRLCAD_OK;
 }
 
@@ -2070,7 +2081,7 @@ mark_archive_revision(struct ged *gedp, ged_db_history &history, const char *nam
     struct db_i *replacement = nullptr;
     if (!saved_database(save_snapshot(gedp, history, history.live, &replacement, &marked)))
 	return BRLCAD_ERROR;
-    install_snapshot(gedp, history, replacement, &marked.selected_revision);
+    install_snapshot(gedp, history, replacement, marked.selected_revision);
     return BRLCAD_OK;
 }
 
@@ -2713,8 +2724,8 @@ ged_db_history_compact(struct ged *gedp)
 	return BRLCAD_ERROR;
 
     const auto compacted_bytes = replacement->i->dbi_eof;
-    const auto selected = pack ? pack->selected_revision : db_history::absent;
-    install_snapshot(gedp, history, replacement, pack ? &selected : nullptr);
+    const auto selected = pack ? std::optional{pack->selected_revision} : std::nullopt;
+    install_snapshot(gedp, history, replacement, selected);
     if (result == DB5_SAVE_OK)
 	bu_vls_printf(out, "Compacted DB5 from %jd to %jd bytes", (intmax_t)original_bytes, (intmax_t)compacted_bytes);
     return BRLCAD_OK;

@@ -141,12 +141,18 @@ enum class PackStatus {
 };
 
 constexpr char archive_name[] = "_BRLCAD_HISTORY";
+constexpr size_t archive_signature_size = 8;
 
 // Match the reserved name, DB5 wrapper and pack signature.
 RT_EXPORT bool archive_payload(const struct db5_raw_internal &raw, ByteView &result);
+bool archive_wrapper(const struct db5_raw_internal &raw);
+bool archive_signature(ByteView bytes);
 // The decoded index borrows from the DB5 body. Payload hashes are
 // checked by read_artifact when the indexed data is requested.
 RT_EXPORT PackStatus read_pack(ByteView body, Pack &result);
+// Validate the index and its offsets with reads relative to the body start.
+PackStatus inspect_pack_index(size_t body_size,
+	const std::function<bool(size_t, void *, size_t)> &read_bytes);
 RT_EXPORT bool read_artifact(const Pack &pack, const ArtifactKey &key, ByteView &result);
 // Stream the validated header, index and payloads to a staging file.
 RT_EXPORT bool write_pack(FILE *output, const Pack &pack);

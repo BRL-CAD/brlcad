@@ -1133,6 +1133,16 @@ and both selected archives verified. Each full operation peaked at
 2.33 GiB of resident memory. The supplied model's identity, size and
 modification time matched before and after the test.
 
+The publisher now checks the existing archive's index directly from
+the open file and checks the old record's signature before omitting it
+from the replacement. Both checks avoid reading the old payloads.
+After publication the editor releases the finished draft and retired
+archive before loading the replacement. On the same M1917 fixture,
+index inspection and directory build peaked at 27 MiB. A title edit,
+Undo and Redo completed under a 2 GiB address-space limit and each
+peaked at 1.25 GiB of resident memory. Fresh readers verified the
+selected archives and the expected titles at both revisions.
+
 A full Linux Release suite passed 1,444 tests with access to local
 sockets and private Xvfb displays. The run excluded the explanatory
 CTest notice. The 1 GiB DB5 title stress test passed. The 5 GiB title

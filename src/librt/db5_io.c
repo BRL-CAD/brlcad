@@ -33,6 +33,7 @@
 #include "bnetwork.h"
 
 #include "bu/endian.h"
+#include "bu/parallel.h"
 #include "bu/parse.h"
 #include "bu/cv.h"
 #include "vmath.h"
@@ -407,11 +408,11 @@ db5_read_metadata_field(FILE *fp, struct bu_external *field, int format, size_t 
 
 
 static int
-db5_read_directory_record(struct db5_raw_internal *rip, FILE *fp, size_t remaining)
+db5_read_directory_record(struct db5_raw_internal *rip, FILE *fp, size_t remaining, size_t *body_offset)
 {
     unsigned char *metadata = NULL;
     db5_init_record_fields(rip);
-	if (rip->h_name_present &&
+    if (rip->h_name_present &&
 	(db5_read_metadata_field(fp, &rip->name, rip->h_name_width, &remaining, &metadata, 0) < 0 ||
 	 !db5_name_valid(metadata, rip->name.ext_nbytes)))
 	goto invalid;
@@ -437,6 +438,8 @@ db5_read_directory_record(struct db5_raw_internal *rip, FILE *fp, size_t remaini
 #endif
     }
     rip->buf = metadata;
+    if (body_offset)
+	*body_offset = rip->object_length - remaining - 1;
     return 0;
 
 invalid:
@@ -445,8 +448,9 @@ invalid:
 }
 
 
-int
-db5_read_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp, uintmax_t available, int metadata_only)
+static int
+db5_read_record_fp(struct db5_raw_internal *rip, FILE *fp, uintmax_t available, int metadata_only,
+		  size_t *body_offset)
 {
     unsigned char prefix[sizeof(struct db5_ondisk_header) + sizeof(uint64_t)];
     const size_t header_size = sizeof(struct db5_ondisk_header);
@@ -467,9 +471,9 @@ db5_read_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp, uintmax_t avail
 	return -2;
 
     const size_t length = chunks * 8;
-    if (metadata_only && length > BUFSIZ) {
+    if (body_offset || (metadata_only && length > BUFSIZ)) {
 	rip->object_length = length;
-	return db5_read_directory_record(rip, fp, length - used - 1);
+	return db5_read_directory_record(rip, fp, length - used - 1, body_offset);
     }
 
     unsigned char *record = (unsigned char *)bu_malloc(length, "raw v5 object");
@@ -481,6 +485,36 @@ db5_read_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp, uintmax_t avail
     }
 
     rip->buf = record;
+    return 0;
+}
+
+
+int
+db5_read_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp, uintmax_t available, int metadata_only)
+{
+    return db5_read_record_fp(rip, fp, available, metadata_only, NULL);
+}
+
+
+int
+db5_read_disk_record_metadata(const struct db_i *db, const struct directory *entry,
+			     struct db5_raw_internal *raw, size_t *body_offset)
+{
+    FILE *fp = db->i->dbi_fp;
+    if (!fp || entry->d_addr < 0 || entry->d_addr >= db->i->dbi_eof ||
+	entry->d_len > (uintmax_t)(db->i->dbi_eof - entry->d_addr))
+	return -1;
+
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    const int status = bu_fseek(fp, entry->d_addr, SEEK_SET) != 0 ? -1 :
+	db5_read_record_fp(raw, fp, entry->d_len, 1, body_offset);
+    bu_semaphore_release(BU_SEM_SYSCALL);
+    if (status < 0)
+	return -1;
+    if (raw->object_length != entry->d_len) {
+	bu_free(raw->buf, "raw v5 object");
+	return -1;
+    }
     return 0;
 }
 
