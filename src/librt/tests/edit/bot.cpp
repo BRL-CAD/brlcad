@@ -38,8 +38,8 @@
  * RT_PARAMS_EDIT_TRANS (e_para=(5,5,5)):
  *   All vertices shift by (5,5,5): v[0]→(5,5,5), v[3]→(5,5,6).
  *
- * RT_PARAMS_EDIT_ROT (e_para=(5,5,5), keypoint=v[0]=(0,0,0)):
- *   v[0] stays at origin (it IS the keypoint). v[1] rotates.
+ * RT_PARAMS_EDIT_ROT (e_para=(0,0,90), keypoint=v[0]=(0,0,0)):
+ *   v[0] stays at the origin. v[1] and the shared surface normal rotate.
  *
  * ECMD_BOT_MOVEV (move vertex 2 to (3,3,3)):
  *   b->bot_verts[0]=2, e_inpara=3, e_para=(3,3,3).
@@ -322,35 +322,35 @@ rt_edit_test_bot(void)
 	       V3ARGS(&bot->vertices[0]), V3ARGS(&bot->vertices[9]));
     }
 
-    /* ================================================================
-     * RT_PARAMS_EDIT_ROT (rotate about keypoint (0,0,0), angles=5,5,5)
-     *
-     * v[0] stays at origin. v[1]=(1,0,0) rotates.
-     * ================================================================*/
+    /* Rotate about the origin with one normal shared by every face corner. */
     bot_reset(s, bot, b);
-    MAT_IDN(s->acc_rot_sol);
-    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, RT_PARAMS_EDIT_ROT);
-    s->e_inpara = 1;
-    VSET(s->e_para, 5, 5, 5);
-    s->vp->gv_rotate_about = 'k';
-    VSET(s->e_keypoint, 0, 0, 0);
-    b->bot_verts[0] = -1;
-    b->bot_verts[1] = -1;
-    b->bot_verts[2] = -1;
+    vect_t normal = {1, 0, 0};
+    int face_normals[4 * 3] = {};
+    bot->bot_flags |= RT_BOT_HAS_SURFACE_NORMALS;
+    bot->num_normals = 1;
+    bot->normals = normal;
+    bot->num_face_normals = bot->num_faces;
+    bot->face_normals = face_normals;
 
-    rt_edit_process(s);
-    {
-	vect_t exp_v0 = {0, 0, 0};
-	if (!VNEAR_EQUAL(&bot->vertices[0], exp_v0, VUNITIZE_TOL))
-	    bu_exit(1, "ERROR: RT_PARAMS_EDIT_ROT(k): v[0] moved: %g,%g,%g\n",
-		    V3ARGS(&bot->vertices[0]));
-	vect_t orig_v1 = {1, 0, 0};
-	if (VNEAR_EQUAL(&bot->vertices[3], orig_v1, VUNITIZE_TOL))
-	    bu_exit(1, "ERROR: RT_PARAMS_EDIT_ROT(k): v[1] not rotated (%g,%g,%g)\n",
-		    V3ARGS(&bot->vertices[3]));
-	bu_log("RT_PARAMS_EDIT_ROT(k) SUCCESS: v[0]=%g,%g,%g v[1]=%g,%g,%g\n",
-	       V3ARGS(&bot->vertices[0]), V3ARGS(&bot->vertices[3]));
-    }
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, RT_PARAMS_EDIT_ROT);
+    s->e_inpara = 3;
+    VSET(s->e_para, 0, 0, 90);
+    s->vp->gv_rotate_about = 'k';
+
+    const point_t expected_origin = VINIT_ZERO;
+    const vect_t expected_rotated = {0, 1, 0};
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!VNEAR_EQUAL(&bot->vertices[0], expected_origin, VUNITIZE_TOL) ||
+	!VNEAR_EQUAL(&bot->vertices[3], expected_rotated, VUNITIZE_TOL) ||
+	!VNEAR_EQUAL(normal, expected_rotated, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: RT_PARAMS_EDIT_ROT failed for a BOT with shared normals\n");
+    bu_log("RT_PARAMS_EDIT_ROT SUCCESS: vertices and shared normal rotated\n");
+
+    bot->bot_flags &= ~RT_BOT_HAS_SURFACE_NORMALS;
+    bot->num_normals = 0;
+    bot->normals = NULL;
+    bot->num_face_normals = 0;
+    bot->face_normals = NULL;
 
     /* ================================================================
      * ECMD_BOT_MOVEV (move vertex 2 to (3,3,3))

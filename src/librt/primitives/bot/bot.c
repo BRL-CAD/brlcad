@@ -2399,7 +2399,7 @@ rt_bot_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     if (tip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
 	if (!(top->bot_flags & RT_BOT_HAS_SURFACE_NORMALS))
 	    return BRLCAD_ERROR;
-	if (tip->num_normals != top->num_vertices)
+	if (tip->num_normals != top->num_normals)
 	    return BRLCAD_ERROR;
     }
     if (tip->bot_flags & RT_BOT_HAS_TEXTURE_UVS) {
