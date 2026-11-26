@@ -1098,14 +1098,6 @@ print_change(struct bu_vls *out, bool before, bool after, std::string_view name)
     append_printable(out, name);
 }
 
-void
-print_archive_changes(struct bu_vls *out, const db_history::Changes &changes, const char *object = nullptr)
-{
-    for (const auto &change : changes)
-	if (!object || change.first == object)
-	    print_change(out, change.second.before != db_history::absent, change.second.after != db_history::absent, change.first);
-}
-
 int
 print_revision(const struct ged_history_revision *revision, void *data)
 {
@@ -1146,6 +1138,27 @@ print_revision_change(const struct ged_history_change *change, void *data)
 	append_printable(out, change->new_name);
     }
     return BRLCAD_OK;
+}
+
+int
+visit_archive_changes(const db_history::Changes &changes, const char *object,
+		      ged_history_change_func_t visit, void *data)
+{
+    for (const auto &entry : changes) {
+	if (object && entry.first != object)
+	    continue;
+	const struct ged_history_change row{change_type(entry.second.before != db_history::absent,
+	    entry.second.after != db_history::absent), entry.first.c_str(), nullptr};
+	if (visit(&row, data) != BRLCAD_OK)
+	    return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
+
+void
+print_archive_changes(struct bu_vls *out, const db_history::Changes &changes)
+{
+    visit_archive_changes(changes, nullptr, print_revision_change, out);
 }
 
 Json
@@ -1793,9 +1806,16 @@ visit_rename_changes(const db_history::Renames &renames, ged_history_change_func
     return BRLCAD_OK;
 }
 
+struct DiffVisitor {
+    const char *object;
+    void (*begin)(const char *first, const char *second, void *data);
+    ged_history_change_func_t change;
+    void *data;
+};
+
 int
 diff_session_revisions(struct bu_vls *out, const ged_db_history &history,
-		       const char *a, const char *b, const char *object)
+		       const char *a, const char *b, const DiffVisitor &visit)
 {
     uint64_t first, second;
     if (!find_revision(out, &history, a, first) || !find_revision(out, &history, b, second))
@@ -1810,7 +1830,7 @@ diff_session_revisions(struct bu_vls *out, const ged_db_history &history,
     std::map<std::string_view, RecordChange> changed;
     for (const auto &step : session_replay(history, first, second)) {
 	for (const auto &change : history.revisions.at(step.revision).changes) {
-	    if (object && change.name != object)
+	    if (visit.object && change.name != visit.object)
 		continue;
 	    const auto &before = step.reverse ? change.after : change.before;
 	    const auto &after = step.reverse ? change.before : change.after;
@@ -1819,22 +1839,26 @@ diff_session_revisions(struct bu_vls *out, const ged_db_history &history,
 	}
     }
 
-    bu_vls_printf(out, "changes %ju %ju", static_cast<uintmax_t>(first), static_cast<uintmax_t>(second));
+    if (visit.begin)
+	visit.begin(std::to_string(first).c_str(), std::to_string(second).c_str(), visit.data);
     for (const auto &entry : changed) {
 	const auto &change = entry.second;
-	if (*change.before != *change.after)
-	    print_change(out, !change.before->empty(), !change.after->empty(), entry.first);
+	if (*change.before == *change.after)
+	    continue;
+	const struct ged_history_change row{change_type(!change.before->empty(), !change.after->empty()),
+	    entry.first.data(), nullptr};
+	if (visit.change(&row, visit.data) != BRLCAD_OK)
+	    return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
 }
 
 int
-diff_archive_revisions(struct ged *gedp, const ged_db_history &history,
-		       const char *a, const char *b, const char *object)
+diff_archive_revisions(struct bu_vls *out, const ged_db_history &history, const char *a, const char *b,
+		       RevisionLookup::Match match, const DiffVisitor &visit)
 {
-    auto *out = gedp->ged_result_str;
     const db_history::Pack *pack = nullptr;
-    RevisionLookup requested[] = {{a}, {b}};
+    RevisionLookup requested[] = {{a, match}, {b, match}};
     if (history.workspace) {
 	if (!read_workspace_revisions(out, *history.workspace, requested, std::size(requested)))
 	    return BRLCAD_ERROR;
@@ -1846,16 +1870,34 @@ diff_archive_revisions(struct ged *gedp, const ged_db_history &history,
     const auto &first = requested[0].id;
     const auto &second = requested[1].id;
     db_history::Manifest before, after;
+    WorkspaceHead pinned_head;
+    const auto *pinned = history.workspace ? Workspace::snapshot_model(history.live, &pinned_head) : nullptr;
     const auto load = [&](const db_history::Id &id, db_history::Manifest &model) {
-	return pack ? db_history::manifest_at_revision(*pack, id, model) : history.workspace->read_model_at(id, model, nullptr);
+	if (pinned && id == pinned_head.revision)
+	    return pinned;
+	const bool loaded = pack ? db_history::manifest_at_revision(*pack, id, model) :
+	    history.workspace->read_model_at(id, model, nullptr);
+	return loaded ? static_cast<const db_history::Manifest *>(&model) : nullptr;
     };
-    if (!load(first, before) || !load(second, after)) {
-	bu_vls_strcat(out, "An archived model could not be reconstructed");
+    const auto *from = load(first, before);
+    const auto *to = first == second ? from : load(second, after);
+    if (!from || !to) {
+	if (out)
+	    bu_vls_strcat(out, "An archived model could not be reconstructed");
 	return BRLCAD_ERROR;
     }
-    bu_vls_printf(out, "changes %s %s", id_string(first).c_str(), id_string(second).c_str());
-    print_archive_changes(out, db_history::diff_manifests(before, after), object);
-    return BRLCAD_OK;
+    if (visit.begin)
+	visit.begin(id_string(first).c_str(), id_string(second).c_str(), visit.data);
+    return visit_archive_changes(db_history::diff_manifests(*from, *to), visit.object, visit.change, visit.data);
+}
+
+int
+diff_history_revisions(struct bu_vls *out, const ged_db_history &history, const char *first, const char *second,
+		       RevisionLookup::Match match, const DiffVisitor &visit)
+{
+    return history.workspace || is_embedded(history) ?
+	diff_archive_revisions(out, history, first, second, match, visit) :
+	diff_session_revisions(out, history, first, second, visit);
 }
 
 bool
@@ -2232,13 +2274,7 @@ visit_history_revision(struct ged *gedp, const char *id, RevisionLookup::Match m
 	return BRLCAD_OK;
     if (visit_rename_changes(saved.renames, change, data) != BRLCAD_OK)
 	return BRLCAD_ERROR;
-    for (const auto &entry : saved.changes) {
-	const struct ged_history_change row{change_type(entry.second.before != db_history::absent,
-	    entry.second.after != db_history::absent), entry.first.c_str(), nullptr};
-	if (change(&row, data) != BRLCAD_OK)
-	    return BRLCAD_ERROR;
-    }
-    return BRLCAD_OK;
+    return visit_archive_changes(saved.changes, nullptr, change, data);
 }
 
 struct db_i *
@@ -2293,6 +2329,20 @@ ged_history_visit_revision_by_id(struct ged *gedp, const char *id, ged_history_r
     ged_history_change_func_t change, void *data, struct bu_vls *message)
 {
     return visit_history_revision(gedp, id, RevisionLookup::Match::FullId, revision, change, data, message);
+}
+
+int
+ged_history_visit_diff_by_id(struct ged *gedp, const char *before, const char *after, const char *object,
+    ged_history_change_func_t change, void *data, struct bu_vls *message)
+{
+    const auto *history = gedp && gedp->i ? gedp->i->db_history : nullptr;
+    if (!history || !before || !after || !change) {
+	if (message)
+	    bu_vls_strcat(message, !history ? "History is disabled" : "Two revision IDs and a change visitor are required");
+	return BRLCAD_ERROR;
+    }
+    return diff_history_revisions(message, *history, before, after, RevisionLookup::Match::FullId,
+	{object, nullptr, change, data});
 }
 
 struct db_i *
@@ -2762,9 +2812,10 @@ ged_db_history_command(struct ged *gedp, int argc, const char **argv)
 		return mark_archive_revision(gedp, *history, argv[2], argc == 4);
 	    }
 	    const char *object = argc == 6 ? argv[5] : nullptr;
-	    if (!persistent)
-		return diff_session_revisions(gedp->ged_result_str, *history, argv[2], argv[3], object);
-	    return diff_archive_revisions(gedp, *history, argv[2], argv[3], object);
+	    const DiffVisitor visit{object, [](const char *first, const char *second, void *data) {
+		bu_vls_printf(static_cast<struct bu_vls *>(data), "changes %s %s", first, second);
+	    }, print_revision_change, gedp->ged_result_str};
+	    return diff_history_revisions(gedp->ged_result_str, *history, argv[2], argv[3], RevisionLookup::Match::Selector, visit);
 	}
 	bu_vls_strcat(gedp->ged_result_str, "Usage: db history " GED_DB_HISTORY_USAGE);
 	return GED_HELP;

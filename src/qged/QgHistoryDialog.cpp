@@ -22,6 +22,7 @@
 
 #include <memory>
 
+#include <QCheckBox>
 #include <QDateTime>
 #include <QDialog>
 #include <QDialogButtonBox>
@@ -153,6 +154,7 @@ private:
     QgEdApp *app;
     QTreeWidget *revisions;
     QTreeWidget *changes;
+    QCheckBox *compare;
     QLabel *status_text = nullptr;
     QLabel *message;
     QPushButton *checkout;
@@ -181,7 +183,12 @@ HistoryDialog::HistoryDialog(QgEdApp *application, QWidget *parent) :
     revisions->header()->setSectionResizeMode(Operation, QHeaderView::Stretch);
     layout->addWidget(revisions);
 
-    layout->addWidget(new QLabel(tr("Changed objects"), this));
+    auto *change_controls = new QHBoxLayout;
+    change_controls->addWidget(new QLabel(tr("Changed objects"), this));
+    change_controls->addStretch();
+    compare = new QCheckBox(tr("Compare current to selected"), this);
+    change_controls->addWidget(compare);
+    layout->addLayout(change_controls);
     changes = new QTreeWidget(this);
     changes->setRootIsDecorated(false);
     changes->setHeaderLabels({tr("Change"), tr("Object"), tr("Rename destination")});
@@ -189,6 +196,7 @@ HistoryDialog::HistoryDialog(QgEdApp *application, QWidget *parent) :
     layout->addWidget(changes);
 
     message = new QLabel(this);
+    message->setTextFormat(Qt::PlainText);
     message->setWordWrap(true);
     message->hide();
     layout->addWidget(message);
@@ -199,6 +207,7 @@ HistoryDialog::HistoryDialog(QgEdApp *application, QWidget *parent) :
     mark = buttons->addButton(tr("Mark Current Revision…"), QDialogButtonBox::ActionRole);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
     connect(revisions, &QTreeWidget::itemSelectionChanged, this, &HistoryDialog::updateSelection);
+    connect(compare, &QCheckBox::toggled, this, &HistoryDialog::updateSelection);
     connect(app, &QgEdApp::history_update, this, &HistoryDialog::refresh);
     connect(mark, &QPushButton::clicked, this, &HistoryDialog::markRevision);
     connect(preview, &QPushButton::clicked, this, &HistoryDialog::previewRevision);
@@ -304,6 +313,7 @@ HistoryDialog::updateActions(const QString &revision)
 {
     checkout->setEnabled(writable && !revision.isEmpty() && revision != currentRevision);
     preview->setEnabled(!revision.isEmpty());
+    compare->setEnabled(!revision.isEmpty() && !currentRevision.isEmpty());
 }
 
 void
@@ -337,12 +347,22 @@ HistoryDialog::updateSelection()
     changes->clear();
     const QString revision = selectedRevision();
     updateActions(revision);
+    const bool comparing = compare->isChecked() && compare->isEnabled();
+    changes->setColumnHidden(2, comparing);
     if (revision.isEmpty())
 	return;
     struct bu_vls diagnostic = BU_VLS_INIT_ZERO;
     const QByteArray id = revision.toLatin1();
-    if (ged_history_visit_revision_by_id(app->mdl->gedp, id.constData(), nullptr, addChange, this, &diagnostic) != BRLCAD_OK) {
+    auto *gedp = app->mdl->gedp;
+    const int result = comparing ?
+	ged_history_visit_diff_by_id(gedp, currentRevision.toLatin1().constData(), id.constData(),
+	    nullptr, addChange, this, &diagnostic) :
+	ged_history_visit_revision_by_id(gedp, id.constData(), nullptr, addChange, this, &diagnostic);
+    if (result != BRLCAD_OK) {
 	message->setText(QString::fromUtf8(bu_vls_cstr(&diagnostic)));
+	message->show();
+    } else if (comparing && !changes->topLevelItemCount()) {
+	message->setText(tr("No object changes between these revisions."));
 	message->show();
     } else {
 	message->hide();
@@ -384,14 +404,20 @@ HistoryDialog::previewRevision()
     selector->addWidget(draw);
     layout->addLayout(selector);
 
-    auto *change = changes->currentItem();
-    if (!change)
-	change = changes->topLevelItem(0);
-    if (change) {
+    const auto draw_candidate = [&](const QTreeWidgetItem *change) {
+	if (!change)
+	    return false;
 	const QString name = change->text(2).isEmpty() ? change->text(1) : change->text(2);
 	const auto *dp = db_lookup(snapshot, name.toUtf8().constData(), LOOKUP_QUIET);
-	if (dp && !(dp->d_flags & DB_LS_HIDDEN))
-	    path->setText(name);
+	if (!dp || (dp->d_flags & DB_LS_HIDDEN))
+	    return false;
+	path->setText(name);
+	return true;
+    };
+    if (!draw_candidate(changes->currentItem())) {
+	for (int i = 0; i < changes->topLevelItemCount(); ++i)
+	    if (draw_candidate(changes->topLevelItem(i)))
+		break;
     }
 
     auto *canvas = new QgView(&window, QgView_SW);

@@ -180,6 +180,15 @@ GED_EXPORT extern int ged_history_visit_revision_by_id(struct ged *gedp, const c
     void *data, struct bu_vls *message);
 
 /**
+ * Visit net object changes from one full revision ID to another. Pass
+ * NULL for @p object to visit all changed objects. A rename appears as
+ * a deletion and a creation. The caller's selected revision stays open.
+ */
+GED_EXPORT extern int ged_history_visit_diff_by_id(struct ged *gedp, const char *before,
+    const char *after, const char *object, ged_history_change_func_t change,
+    void *data, struct bu_vls *message);
+
+/**
  * Open an independent, read-only librt view of a retained revision.
  * Decimal session IDs, persistent IDs and checkpoint names use the same
  * forms as db history show. The caller releases the view with db_close.

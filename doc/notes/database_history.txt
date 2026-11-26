@@ -631,6 +631,18 @@ activation check passed on the M1917 workspace copy. Reactivating an
 already open History dialog also disabled checkpoint changes. After a
 portable export, both status views displayed its recorded time.
 
+On read-only embedded DB5 and workspace documents, QGED compared two
+sibling revisions and showed the deleted and created objects in order
+from the open revision to the selected one. The selected revision's
+preview chose an object present in that snapshot. The File menu
+exported a plain DB5 and a DB5 with retained history. Both reopened
+with the expected geometry. The archive verified, and trying an
+existing destination preserved the prior export. The same workflow
+on the M1917 workspace produced a 1.22 GB plain snapshot and a
+2.42 GB snapshot with history. The archive reopened at the working
+revision and verified. The source workspace continued to report the
+same revision and metadata, and its data file digest matched.
+
 QGED drew a primitive from an independent revision preview while
 the working file was at an earlier revision. Opening and closing the
 preview left the DB5 file byte-identical. The M1917 workspace preview

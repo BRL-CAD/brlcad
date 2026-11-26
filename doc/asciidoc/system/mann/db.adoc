@@ -92,6 +92,8 @@ Restore the database to any retained revision. Use `db history log` to find its 
 
 __history diff first second [--object name]__::
 List the records created, deleted, or changed between two retained revisions. Use `--object` to limit the result to an exact object name.
++
+In QGED's History dialog, *Compare current to selected* lists the net changes from the open revision to the selected row. Comparison is available on read-only documents.
 
 
 __history mark name [--move]__::
@@ -100,6 +102,8 @@ Name the selected embedded or workspace revision for later inspection or checkou
 
 __history export path [--with-history]__::
 Write the open model to a new DB5 file. A plain export omits the recognized history archive and can recover geometry after an external edit or archive error. `--with-history` includes the retained session, embedded, or workspace history. An exported file and the workspace can then evolve independently. The destination must be a new path.
++
+In QGED, choose *Export DB5 Snapshot* from the File menu. Select *DB5 snapshot with history* in the file dialog to include the retained history. Export is available on read-only documents.
 
 
 __history verify__::

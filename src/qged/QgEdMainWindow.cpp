@@ -340,6 +340,10 @@ QgEdMainWindow::SetupMenu()
     auto *open_workspace = file_menu->addAction(tr("Open Workspace…"));
     connect(open_workspace, &QAction::triggered, app, &QgEdApp::open_workspace);
 
+    history_export = file_menu->addAction(tr("Export DB5 Snapshot…"));
+    history_export->setEnabled(false);
+    connect(history_export, &QAction::triggered, this, &QgEdMainWindow::ExportSnapshot);
+
     cad_save_settings = new QAction("Save Settings", this);
     connect(cad_save_settings, &QAction::triggered, ((QgEdApp *)qApp), &QgEdApp::write_settings);
     file_menu->addAction(cad_save_settings);
@@ -413,9 +417,9 @@ void
 QgEdMainWindow::UpdateHistoryControls()
 {
     auto *app = static_cast<QgEdApp *>(qApp);
+    auto *gedp = app->mdl ? app->mdl->gedp : nullptr;
     const std::unique_ptr<const struct ged_history_status, decltype(&ged_history_status_destroy)>
-	status(app->mdl ? ged_history_status_create(app->mdl->gedp, nullptr) : nullptr,
-	    ged_history_status_destroy);
+	status(ged_history_status_create(gedp, nullptr), ged_history_status_destroy);
     const bool writable = qged_history_writable(status.get(), app->command_pending());
     const char *undo_label = status ? status->undo.label : nullptr;
     const char *redo_label = nullptr;
@@ -432,6 +436,8 @@ QgEdMainWindow::UpdateHistoryControls()
     history_undo->setEnabled(writable && status->undo.revision);
     history_redo->setEnabled(writable && status->redo_count);
     history_view->setEnabled(status && status->mode != GED_HISTORY_DISABLED);
+    history_export->setEnabled(!app->command_pending() && gedp && gedp->dbip &&
+	db_version(gedp->dbip) == BRLCAD_DB_FORMAT_LATEST && (!status || !status->edit_active));
     history_save_staged->setEnabled(!app->command_pending() && status && status->staged_conflict);
 
     const auto text = status ? qged_history_status_text(*status) : QgHistoryStatusText{};
@@ -441,9 +447,37 @@ QgEdMainWindow::UpdateHistoryControls()
 }
 
 void
-QgEdMainWindow::SaveStagedEdit()
+QgEdMainWindow::ExportSnapshot()
 {
     auto *app = static_cast<QgEdApp *>(qApp);
+    const std::unique_ptr<const struct ged_history_status, decltype(&ged_history_status_destroy)>
+	status(ged_history_status_create(app->mdl->gedp, nullptr), ged_history_status_destroy);
+    const bool can_include_history = status && (status->mode == GED_HISTORY_WORKSPACE ||
+	status->mode == GED_HISTORY_SESSION || (status->mode == GED_HISTORY_EMBEDDED &&
+	    (status->state == GED_HISTORY_CURRENT || status->staged_conflict)));
+
+    const QString title = tr("Export DB5 Snapshot");
+    const QString plain = tr("DB5 snapshot (*.g)");
+    const QString with_history = tr("DB5 snapshot with history (*.g)");
+    QFileDialog dialog(this, title);
+    dialog.setAcceptMode(QFileDialog::AcceptSave);
+    dialog.setFileMode(QFileDialog::AnyFile);
+    dialog.setOption(QFileDialog::DontConfirmOverwrite);
+    dialog.setDefaultSuffix(QStringLiteral("g"));
+    dialog.setNameFilters(can_include_history ? QStringList{plain, with_history} : QStringList{plain});
+    dialog.selectFile(QStringLiteral("snapshot.g"));
+    if (dialog.exec() != QDialog::Accepted)
+	return;
+
+    const QByteArray destination = dialog.selectedFiles().front().toLocal8Bit();
+    const char *argv[] = {"db", "history", "export", destination.constData(), "--with-history"};
+    const int argc = sizeof(argv) / sizeof(argv[0]);
+    RunFileExport(title, dialog.selectedNameFilter() == with_history ? argc : argc - 1, argv);
+}
+
+void
+QgEdMainWindow::SaveStagedEdit()
+{
     const QString path = QFileDialog::getSaveFileName(this, tr("Save Staged Edit As"),
 	QStringLiteral("recovered.g"), tr("BRL-CAD databases (*.g)"), nullptr, QFileDialog::DontConfirmOverwrite);
     if (path.isEmpty())
@@ -451,14 +485,21 @@ QgEdMainWindow::SaveStagedEdit()
 
     const QByteArray destination = path.toLocal8Bit();
     const char *argv[] = {"db", "history", "conflict", "export", destination.constData()};
+    RunFileExport(tr("Save Staged Edit As"), sizeof(argv) / sizeof(argv[0]), argv);
+}
+
+void
+QgEdMainWindow::RunFileExport(const QString &title, int argc, const char **argv)
+{
+    auto *app = static_cast<QgEdApp *>(qApp);
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    const int status = app->run_cmd(&result, sizeof(argv) / sizeof(argv[0]), argv);
+    const int status = app->run_cmd(&result, argc, argv);
     const QString message = QString::fromLocal8Bit(bu_vls_cstr(&result));
     bu_vls_free(&result);
-    if (status == BRLCAD_OK)
-	QMessageBox::information(this, tr("Save Staged Edit As"), message);
-    else
-	QMessageBox::warning(this, tr("Save Staged Edit As"), message);
+    QMessageBox response(status == BRLCAD_OK ? QMessageBox::Information : QMessageBox::Warning,
+	title, message, QMessageBox::Ok, this);
+    response.setTextFormat(Qt::PlainText);
+    response.exec();
 }
 
 void

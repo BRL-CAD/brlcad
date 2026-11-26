@@ -1317,6 +1317,24 @@ test_history_selection(struct ged *gedp, bool checkpoints)
     CHECK(preview && preview->dbi_read_only && db_lookup(preview.get(), "history-selected.s", LOOKUP_QUIET) &&
 	!db_lookup(preview.get(), "history-other.s", LOOKUP_QUIET) && selected_id(gedp) == other);
 
+    using ObjectChanges = std::map<std::string, enum ged_history_change_type>;
+    ObjectChanges changes;
+    const auto collect = [](const struct ged_history_change *change, void *data) {
+	auto &collected = *static_cast<ObjectChanges *>(data);
+	return !change->new_name && collected.emplace(change->name, change->type).second ? BRLCAD_OK : BRLCAD_ERROR;
+    };
+    const ObjectChanges expected{{"history-other.s", GED_HISTORY_DELETE}, {"history-selected.s", GED_HISTORY_CREATE}};
+    CHECK(ged_history_visit_diff_by_id(gedp, other.c_str(), selected.c_str(), nullptr, collect, &changes, nullptr) == BRLCAD_OK);
+    CHECK(changes == expected && selected_id(gedp) == other);
+    changes.clear();
+    CHECK(ged_history_visit_diff_by_id(gedp, selected.c_str(), other.c_str(), "history-selected.s",
+	    collect, &changes, nullptr) == BRLCAD_OK);
+    const ObjectChanges filtered{{"history-selected.s", GED_HISTORY_DELETE}};
+    CHECK(changes == filtered);
+    changes.clear();
+    CHECK(ged_history_visit_diff_by_id(gedp, other.c_str(), other.c_str(), nullptr, collect, &changes, nullptr) == BRLCAD_OK);
+    CHECK(changes.empty() && selected_id(gedp) == other);
+
     const char *checkout[] = {"db", "history", "checkout", "--id", selected.c_str(), nullptr};
     CHECK(run(gedp, checkout) == BRLCAD_OK && selected_id(gedp) == selected);
     CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == root);
