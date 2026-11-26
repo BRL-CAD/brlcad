@@ -33,13 +33,14 @@
 #include "librt_private.h"
 
 
-int
-db5_scan(
+static int
+db5_scan_impl(
     struct db_i *dbip,
     void (*handler)(struct db_i *,
 		    const struct db5_raw_internal *,
 		    b_off_t addr, void *client_data),
-    void *client_data)
+    void *client_data,
+    int skip_free_payload)
 {
     unsigned char header[8];
     struct db5_raw_internal raw;
@@ -87,7 +88,7 @@ db5_scan(
 	}
 	for (;;) {
 	    addr = bu_ftell(dbip->i->dbi_fp);
-	    if ((got = db5_get_raw_internal_fp(&raw, dbip->i->dbi_fp)) < 0) {
+	    if ((got = db5_read_raw_internal_fp(&raw, dbip->i->dbi_fp, skip_free_payload)) < 0) {
 		if (got == -1) break;		/* EOF */
 		goto fatal;
 	    }
@@ -108,6 +109,16 @@ db5_scan(
 fatal:
     dbip->dbi_read_only = 1;	/* Writing could corrupt it worse */
     return -1;			/* fatal error */
+}
+
+
+int
+db5_scan(
+    struct db_i *dbip,
+    void (*handler)(struct db_i *, const struct db5_raw_internal *, b_off_t, void *),
+    void *client_data)
+{
+    return db5_scan_impl(dbip, handler, client_data, 0);
 }
 
 
@@ -455,7 +466,7 @@ db_dirbuild(struct db_i *dbip)
 	struct directory *dp;
 
 	/* File is v5 format */
-	if (db5_scan(dbip, db5_diradd_handler, NULL) < 0) {
+	if (db5_scan_impl(dbip, db5_diradd_handler, NULL, 1) < 0) {
 	    bu_log("db_dirbuild(%s): db5_scan() failed\n", dbip->dbi_filename);
 	    return -1;
 	}

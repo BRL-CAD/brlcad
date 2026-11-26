@@ -20,10 +20,15 @@
 #include "common.h"
 
 #include <filesystem>
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
 
+#include "bio.h"
+#if defined(_WIN32) && !defined(__CYGWIN__) && !defined(__MSYS__)
+#  include <winioctl.h>
+#endif
 #include "bu/app.h"
 #include "bu/file.h"
 #include "bu/vls.h"
@@ -40,6 +45,9 @@
 
 using Database = std::unique_ptr<struct db_i, decltype(&db_close)>;
 using Save = std::unique_ptr<struct db5_save, decltype(&db5_save_free)>;
+
+static constexpr int test_skipped = 77;
+static constexpr char replacement_unavailable[] = "Atomic DB5 replacement is unavailable on this platform";
 
 static std::vector<uint8_t>
 record_bytes(const struct db_i *dbip, const char *name)
@@ -72,7 +80,7 @@ verify_export(const struct db_i *base, const std::vector<uint8_t> &original_reco
     const auto status = db_history::export_db5_snapshot(base, path, nullptr, error);
     if (status == DB5_SAVE_ERROR &&
 	BU_STR_EQUAL(bu_vls_addr(error), "Atomic DB5 export is unavailable on this platform"))
-	return 77;
+	return test_skipped;
     CHECK(status == DB5_SAVE_OK);
     Database exported(db_open(path, DB_OPEN_READONLY), db_close);
     CHECK(exported && db_dirbuild(exported.get()) == 0);
@@ -104,6 +112,8 @@ verify_embedded(const char *path, struct db_i *initial, const struct db_i *diffe
     CHECK(seed_db5_history(plain.get(), "Initial model", 0, root));
     CHECK(seed_db5_history(different, "Different model", 0, wrong));
     Save first(db5_save_begin(initial, error), db5_save_free);
+    if (!first && BU_STR_EQUAL(bu_vls_addr(error), replacement_unavailable))
+	return test_skipped;
     struct db_i *replacement = nullptr;
     CHECK(first && save_db5_history(first.get(), plain.get(), wrong.pack, &replacement, error) == DB5_SAVE_ERROR);
     CHECK(!replacement && std::string_view(bu_vls_addr(error)).find("differs") != std::string_view::npos);
@@ -272,6 +282,67 @@ verify_embedded(const char *path, struct db_i *initial, const struct db_i *diffe
     return 0;
 }
 
+static int
+verify_wide_offsets(struct db_i *seed, const std::vector<uint8_t> &global,
+		    const std::vector<uint8_t> &shape, struct bu_vls *error)
+{
+    constexpr uint64_t gibibyte = 1024 * 1024 * 1024;
+    constexpr uint64_t extent = 5 * gibibyte;
+    unsigned char header[8];
+    if (extent > SIZE_MAX || extent + sizeof(header) > static_cast<uint64_t>(std::numeric_limits<b_off_t>::max())) {
+	bu_log("Skipping wide DB5 offsets on a platform with narrow file sizes or offsets\n");
+	return test_skipped;
+    }
+    const auto trailer = static_cast<b_off_t>(extent + sizeof(header) - 1);
+    auto close_file = [](FILE *file) { fclose(file); };
+    using File = std::unique_ptr<FILE, decltype(close_file)>;
+    File source(fopen(seed->dbi_filename, "rb"), close_file);
+    CHECK(source && fread(header, 1, sizeof(header), source.get()) == sizeof(header));
+    CHECK(db5_header_is_valid(header));
+    source.reset();
+
+    char path[MAXPATHLEN] = {};
+    File fixture(bu_temp_file(path, sizeof(path)), close_file);
+    CHECK(fixture);
+#if defined(_WIN32) && !defined(__CYGWIN__) && !defined(__MSYS__)
+    const auto handle = reinterpret_cast<HANDLE>(_get_osfhandle(_fileno(fixture.get())));
+    DWORD returned;
+    if (!DeviceIoControl(handle, FSCTL_SET_SPARSE, nullptr, 0, nullptr, 0, &returned, nullptr)) {
+	bu_log("Skipping wide DB5 offsets: could not mark the fixture sparse (Windows error %lu)\n", GetLastError());
+	return test_skipped;
+    }
+#endif
+    CHECK(fwrite(header, 1, sizeof(header), fixture.get()) == sizeof(header));
+    struct bu_external free_header = BU_EXTERNAL_INIT_ZERO;
+    db5_make_free_object_hdr(&free_header, static_cast<size_t>(extent));
+    const bool wrote_header = fwrite(free_header.ext_buf, 1, free_header.ext_nbytes, fixture.get()) == free_header.ext_nbytes;
+    bu_free_external(&free_header);
+    CHECK(wrote_header && bu_fseek(fixture.get(), trailer, SEEK_SET) == 0);
+    CHECK(fputc(0, fixture.get()) == 0);
+    CHECK(fwrite(global.data(), 1, global.size(), fixture.get()) == global.size());
+    CHECK(fwrite(shape.data(), 1, shape.size(), fixture.get()) == shape.size());
+    CHECK(fclose(fixture.release()) == 0);
+
+    // Seeking past the unused storage must still reject a bad trailer.
+    Database malformed(db_open(path, DB_OPEN_READWRITE), db_close);
+    CHECK(malformed && db_dirbuild(malformed.get()) < 0);
+    malformed.reset();
+
+    fixture.reset(fopen(path, "rb+"));
+    CHECK(fixture && bu_fseek(fixture.get(), trailer, SEEK_SET) == 0);
+    CHECK(fputc(DB5HDR_MAGIC2, fixture.get()) == DB5HDR_MAGIC2 && fclose(fixture.release()) == 0);
+
+    Database writable(db_open(path, DB_OPEN_READWRITE), db_close);
+    CHECK(writable && db_dirbuild(writable.get()) == 0);
+    const auto *dp = db_lookup(writable.get(), "shape.s", LOOKUP_QUIET);
+    CHECK(dp && dp->d_addr == trailer + 1 + static_cast<b_off_t>(global.size()));
+    CHECK(record_bytes(writable.get(), DB5_GLOBAL_OBJECT_NAME) == global);
+    CHECK(record_bytes(writable.get(), "shape.s") == shape);
+
+    CHECK(db5_update_ident(seed, "Different model", seed->dbi_local2base) == 0);
+    return verify_embedded(path, writable.get(), seed, error);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -291,15 +362,19 @@ main(int argc, char *argv[])
     CHECK(!original_record.empty() && !global.empty());
 
     struct bu_vls error = BU_VLS_INIT_ZERO;
-    if (argc == 2 && BU_STR_EQUAL(argv[1], "--export")) {
-	const int result = verify_export(base.get(), original_record, &error);
+    if (argc == 2) {
+	int result = 1;
+	if (BU_STR_EQUAL(argv[1], "--export"))
+	    result = verify_export(base.get(), original_record, &error);
+	else if (BU_STR_EQUAL(argv[1], "--wide-offsets"))
+	    result = verify_wide_offsets(base.get(), global, original_record, &error);
 	bu_vls_free(&error);
 	return result;
     }
     Save first(db5_save_begin(base.get(), &error), db5_save_free);
-    if (!first && BU_STR_EQUAL(bu_vls_addr(&error), "Atomic DB5 replacement is unavailable on this platform")) {
+    if (!first && BU_STR_EQUAL(bu_vls_addr(&error), replacement_unavailable)) {
 	bu_vls_free(&error);
-	return 77;
+	return test_skipped;
     }
     CHECK(first);
     Save concurrent(db5_save_begin(base.get(), &error), db5_save_free);

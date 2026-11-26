@@ -366,7 +366,7 @@ db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
 
 
 int
-db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
+db5_read_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp, int skip_free_payload)
 {
     unsigned char prefix[sizeof(struct db5_ondisk_header) + sizeof(uint64_t)];
     const size_t header_size = sizeof(struct db5_ondisk_header);
@@ -387,6 +387,23 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 	return -2;
 
     const size_t length = chunks * 8;
+    if (skip_free_payload && length > BUFSIZ && rip->h_dli == DB5HDR_HFLAGS_DLI_FREE_STORAGE &&
+	!rip->h_name_present && !rip->a_present && !rip->b_present) {
+	/* A directory scan needs the free extent and its trailer. The
+	 * unused interior can span gigabytes after a legacy deletion. */
+	const size_t unused = length - used - 1;
+	const b_off_t offset = (b_off_t)unused;
+	if (offset < 0 || (size_t)offset != unused ||
+	    bu_fseek(fp, offset, SEEK_CUR) != 0 || fgetc(fp) != DB5HDR_MAGIC2)
+	    return -2;
+
+	const unsigned char *cp = prefix + used;
+	size_t remaining = 0;
+	rip->object_length = length;
+	rip->buf = NULL;
+	return db5_take_record_metadata(rip, &cp, &remaining) < 0 ? -2 : 0;
+    }
+
     unsigned char *record = (unsigned char *)bu_malloc(length, "raw v5 object");
     memcpy(record, prefix, used);
     if (fread(record + used, 1, length - used, fp) != length - used ||
@@ -397,6 +414,13 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 
     rip->buf = record;
     return 0;
+}
+
+
+int
+db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
+{
+    return db5_read_raw_internal_fp(rip, fp, 0);
 }
 
 

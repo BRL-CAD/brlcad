@@ -1105,10 +1105,21 @@ database read matched every byte of the last 128 MiB body. The 10 GiB
 history-preserving export reopened with the same selected revision and
 binary body and passed full verification.
 
-A full Linux Release rebuild passed 1,442 tests with access to local
+The rt_db5_wide_offsets regression puts _GLOBAL and a sphere beyond a
+sparse 5 GiB free record. A writable directory scan seeks to the free
+record's trailer, validates it, and resumes at the following object.
+The test rejects an invalid trailer, then enrolls the repaired file in
+embedded history. It checks exact DB5 records, replacement while an old
+reader is mapped, and checkout of both revisions. The Linux run peaked
+at 22 MiB of resident memory. A separate writable gsh open under a 1 GiB
+address-space limit produced the same object listing as the compact
+file. The previous reader failed allocating the free record under that
+limit.
+
+A full Linux Release suite passed 1,443 tests with access to local
 sockets and private Xvfb displays. The run excluded the explanatory
-CTest notice. The 1 GiB DB5 stress test passed. The 5 GiB stress test
-skipped because its title copies require 25 GiB of available memory.
+CTest notice. The 1 GiB DB5 title stress test passed. The 5 GiB title
+stress test skipped because its copies require 25 GiB of available memory.
 The repository and license checks passed.
 In a separate QGED run, viewport shortcuts moved between the expected
 workspace revisions. A terminal reader confirmed the restored primitive
