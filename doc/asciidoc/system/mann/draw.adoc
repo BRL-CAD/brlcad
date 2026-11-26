@@ -29,6 +29,14 @@ Adds _objects_ to the display list so that they will appear on the MGED display.
 * The _-S_ option tells draw to be "simplified" by skipping subtraction objects when drawing, not drawing NMG interior surfaces, and potentially more. Skipping subtractions is useful in situations where an object has many large objects subtracted from it but those objects have relatively minimal impact on the shape. This results in the default wireframe bearing little resemablance to the evaluated shape.
 
 
+In QGED, shaded BoTs drawn with *-m1* or *-m2* can display embedded RGB
+textures, including those imported from glTF. Draw the region or an enclosing
+combination so that the viewer can resolve the texture material. The mesh LoD
+setting (*view lod mesh 1*) adjusts the UV coordinates of surviving triangles
+for vertex snapping and keeps the two sides of UV seams separate.
+Coarse levels can still distort markings as the underlying triangles move.
+*view lod texture_error* controls the screen-space limit on that movement.
+
 [[examples]]
 == EXAMPLES
 

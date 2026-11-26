@@ -83,7 +83,7 @@ prim_tess(struct bv_scene_obj *s, struct rt_db_internal *ip)
     return 0;
 }
 
-static void
+extern "C" void
 draw_free_data(struct bv_scene_obj *s)
 {
     /* Validate */
@@ -100,6 +100,8 @@ draw_free_data(struct bv_scene_obj *s)
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     if (!d)
 	return;
+    bu_free(d->bot_uvs, "BoT texture coordinates");
+    bu_free(d->bot_face_uvs, "BoT texture coordinate indices");
     BU_PUT(d, struct draw_update_data_t);
     s->s_i_data = NULL;
 }
@@ -209,6 +211,7 @@ bot_mesh_info_clbk(struct bv_mesh_lod *lod, void *cb_data)
     lod->faces = bot->faces;
     lod->fcnt = bot->num_faces;
     lod->pcnt = bot->num_vertices;
+    lod->porig_cnt = lod->pcnt;
     lod->points = (const point_t *)bot->vertices;
     lod->points_orig = (const point_t *)bot->vertices;
 
@@ -229,6 +232,7 @@ bot_mesh_info_clear_clbk(struct bv_mesh_lod *lod, void *cb_data)
     lod->faces = NULL;
     lod->fcnt = 0;
     lod->pcnt = 0;
+    lod->porig_cnt = 0;
     lod->points = NULL;
     lod->points_orig = NULL;
 
@@ -245,11 +249,42 @@ bot_mesh_info_free_clbk(struct bv_mesh_lod *lod, void *cb_data)
     return 0;
 }
 
-static void
+static unsigned long long
+bot_draw_cache(struct draw_update_data_t *d, struct directory *dp, unsigned long long key)
+{
+    struct rt_db_internal in;
+    RT_DB_INTERNAL_INIT(&in);
+    if (rt_db_get_internal(&in, dp, d->dbip, NULL) < 0)
+	return 0;
+    auto *bot = (struct rt_bot_internal *)in.idb_ptr;
+    RT_BOT_CK_MAGIC(bot);
+    if (!key) {
+	key = bv_mesh_lod_cache(d->mesh_c, (const point_t *)bot->vertices,
+	    bot->num_vertices, NULL, bot->faces, bot->num_faces, 0, 0.66);
+	if (key)
+	    bv_mesh_lod_key_put(d->mesh_c, dp->d_namep, key);
+    }
+    if (d->texture && !d->bot_uvs_checked) {
+	d->bot_uvs_checked = 1;
+	if (rt_bot_has_uvs(bot)) {
+	    d->bot_uvs = bot->uvs;
+	    d->bot_face_uvs = bot->face_uvs;
+	    d->bot_uv_face_count = bot->num_face_uvs;
+	    d->bot_clockwise = (bot->orientation == RT_BOT_CW);
+	    // UVs are shared by all views and survive release of LoD geometry.
+	    bot->uvs = NULL;
+	    bot->face_uvs = NULL;
+	}
+    }
+    rt_db_free_internal(&in);
+    return key;
+}
+
+static bool
 bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 {
     if (!s || !v)
-	return;
+	return false;
 
     s->csg_obj = 0;
     s->mesh_obj = 1;
@@ -259,79 +294,43 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
     struct bv_scene_obj *vo = bv_obj_for_view(s, v);
 
     if (!vo) {
-
-	vo = bv_obj_get_vo(s, v);
-
-	vo->csg_obj = 0;
-	vo->mesh_obj = 1;
-
 	struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
 	if (!d || !d->mesh_c)
-	    return;
+	    return false;
 	struct db_i *dbip = d->dbip;
 	struct db_full_path *fp = (struct db_full_path *)s->s_path;
 	struct directory *dp = (fp) ? DB_FULL_PATH_CUR_DIR(fp) : (struct directory *)s->dp;
 
 	if (!dp)
-	    return;
+	    return false;
 
-	// We need the key to look up the LoD data from the cache, and if we don't
-	// already have cache data for this bot we need to generate it.
 	unsigned long long key = bv_mesh_lod_key_get(d->mesh_c, dp->d_namep);
-	if (!key) {
-	    // We don't have a key associated with the name.  Get and check the BoT
-	    // data itself, creating the LoD data if we don't already have it
-	    struct rt_db_internal dbintern;
-	    RT_DB_INTERNAL_INIT(&dbintern);
-	    struct rt_db_internal *ip = &dbintern;
-	    int ret = rt_db_get_internal(ip, dp, dbip, NULL);
-	    if (ret < 0)
-		return;
-	    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
-	    RT_BOT_CK_MAGIC(bot);
-	    key = bv_mesh_lod_cache(d->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0, 0.66);
-	    bv_mesh_lod_key_put(d->mesh_c, dp->d_namep, key);
-	    rt_db_free_internal(&dbintern);
-	}
+	if (!key || (d->texture && !d->bot_uvs_checked))
+	    key = bot_draw_cache(d, dp, key);
 	if (!key)
-	    return;
+	    return false;
 
-	// Once we have a valid key, proceed to create the necessary
-	// data structures and objects.
 	struct bv_mesh_lod *lod = bv_mesh_lod_create(d->mesh_c, key);
 	if (!lod) {
-	    // Stale key?  Clear it and try a regeneration
-	    unsigned long long old_key = key;
+	    // Regeneration may reproduce the same content key.
 	    bv_mesh_lod_clear_cache(d->mesh_c, key);
-
-	    // Load mesh and process
-	    struct rt_db_internal dbintern;
-	    RT_DB_INTERNAL_INIT(&dbintern);
-	    struct rt_db_internal *ip = &dbintern;
-	    int ret = rt_db_get_internal(ip, dp, dbip, NULL);
-	    if (ret < 0)
-		return;
-	    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
-	    RT_BOT_CK_MAGIC(bot);
-	    key = bv_mesh_lod_cache(d->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0, 0.66);
-	    bv_mesh_lod_key_put(d->mesh_c, dp->d_namep, key);
-	    rt_db_free_internal(&dbintern);
-
-	    // Sanity
-	    if (old_key == key) {
-		bu_log("%s: LoD lookup by key failed, but regeneration generated the same key (?)\n", dp->d_namep);
-		return;
-	    }
-	    unsigned long long new_key = bv_mesh_lod_key_get(d->mesh_c, dp->d_namep);
-	    if (new_key == old_key) {
-		bu_log("%s: LoD regenerated with new key, but key lookup still returns old key (?)\n", dp->d_namep);
-		return;
-	    }
-
-	    // If after all that we STILL don't get an LoD struct, give up
-	    lod = bv_mesh_lod_create(d->mesh_c, key);
+	    lod = bv_mesh_lod_create(d->mesh_c, bot_draw_cache(d, dp, 0));
 	    if (!lod)
-		return;
+		return false;
+	}
+
+	vo = bv_obj_get_vo(s, v);
+	if (!vo) {
+	    bv_mesh_lod_destroy(lod);
+	    return false;
+	}
+	vo->mesh_obj = 1;
+	if (d->bot_uvs) {
+	    vo->s_texture = d->texture;
+	    lod->uvs = (const point_t *)d->bot_uvs;
+	    lod->face_uvs = d->bot_face_uvs;
+	    lod->uv_face_count = d->bot_uv_face_count;
+	    lod->clockwise = d->bot_clockwise;
 	}
 
 	// Assign the LoD information to the object's draw_data, and let
@@ -339,15 +338,8 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	vo->draw_data = (void *)lod;
 	lod->s = vo;
 
-	// The object bounds are based on the LoD's calculations.  Because the LoD
-	// cache stores only one cached data set per object, but full path
-	// instances in the scene can be placed with matrices, we must apply the
-	// s_mat transformation to the "baseline" LoD bbox info to get the correct
-	// box for the instance.
-	MAT4X3PNT(vo->bmin, s->s_mat, lod->bmin);
-	MAT4X3PNT(vo->bmax, s->s_mat, lod->bmax);
-	VMOVE(s->bmin, vo->bmin);
-	VMOVE(s->bmax, vo->bmax);
+	vo->s_type_flags |= BV_MESH_LOD;
+	bv_scene_obj_bound(s, v);
 
 	// Record the necessary information for full detail information recovery.  We
 	// don't duplicate the full mesh detail in the on-disk LoD storage, since we
@@ -372,15 +364,10 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	if (level < 0) {
 	    bu_log("Error loading info for initial LoD view\n");
 	}
-
-	// Mark the object as a Mesh LoD so the drawing routine knows to handle it differently
-	vo->s_type_flags |= BV_MESH_LOD;
     }
 
     bv_mesh_lod_view(vo, v, 0);
-    bv_obj_stale(vo);
-
-    return;
+    return true;
 }
 
 static void
@@ -489,15 +476,8 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	vo->draw_data = (void *)lod;
 	lod->s = vo;
 
-	// The object bounds are based on the LoD's calculations.  Because the LoD
-	// cache stores only one cached data set per object, but full path
-	// instances in the scene can be placed with matrices, we must apply the
-	// s_mat transformation to the "baseline" LoD bbox info to get the correct
-	// box for the instance.
-	MAT4X3PNT(vo->bmin, s->s_mat, lod->bmin);
-	MAT4X3PNT(vo->bmax, s->s_mat, lod->bmax);
-	VMOVE(s->bmin, vo->bmin);
-	VMOVE(s->bmax, vo->bmax);
+	vo->s_type_flags |= BV_MESH_LOD;
+	bv_scene_obj_bound(s, v);
 
 	// Record the necessary information for full detail information recovery.  We
 	// don't duplicate the full mesh detail in the on-disk LoD storage, since we
@@ -522,9 +502,6 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	if (level < 0) {
 	    bu_log("Error loading info for initial LoD view\n");
 	}
-
-	// Mark the object as a Mesh LoD so the drawing routine knows to handle it differently
-	vo->s_type_flags |= BV_MESH_LOD;
     }
 
     bv_mesh_lod_view(vo, vo->s_v, 0);
@@ -662,21 +639,30 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
     if (!dp)
 	return;
 
+    const bool bot = dp->d_major_type == DB5_MAJORTYPE_BRLCAD &&
+	dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT;
+
     // Adaptive BoTs have specialized LoD routines to help cope with very large
     // data sets, both for wireframe and shaded mode.
-    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && v && v->gv_s->adaptive_plot_mesh &&
-       (s->s_os->s_dmode == 0 || s->s_os->s_dmode == 1)) {
-	bot_adaptive_plot(s, v);
+    if (bot && v && v->gv_s->adaptive_plot_mesh &&
+       (s->s_os->s_dmode == 0 || s->s_os->s_dmode == 1 ||
+	(s->s_os->s_dmode == 2 && d->texture)) && bot_adaptive_plot(s, v)) {
 	return;
     }
 
     // Adaptive BReps have specialized LoD routines to manage shaded displays, which
     // can involve slow and large mesh generations.  BRep wireframes are based on the
     // NURBS data, so this is used only for shaded mode
-    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BREP && v && v->gv_s->adaptive_plot_mesh && s->s_os->s_dmode == 1) {
+    if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD &&
+	dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BREP &&
+	v && v->gv_s->adaptive_plot_mesh && s->s_os->s_dmode == 1) {
 	brep_adaptive_plot(s, v);
 	return;
     }
+
+    // The full-detail BoT vlist is shared across views.
+    if (bot && s->current && s->s_os->s_dmode > 0)
+	return;
 
     /**************************************************************************
      * For the remainder of the options we're into more standard wireframe
@@ -709,7 +695,12 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
     if (s->s_os->s_dmode > 0) {
 	switch (ip->idb_minor_type) {
 	    case DB5_MINORTYPE_BRLCAD_BOT:
-		(void)rt_bot_plot_poly(&s->s_vlist, ip, ttol, tol);
+		if (d->texture)
+		    s->s_texture = rt_bot_plot_poly_uv(&s->s_vlist, ip) ? d->texture : NULL;
+		else
+		    (void)rt_bot_plot_poly(&s->s_vlist, ip, ttol, tol);
+		s->mesh_obj = (s->s_os->s_dmode <= 1 || d->texture);
+		s->current = 1;
 		goto geom_done;
 		break;
 	    case DB5_MINORTYPE_BRLCAD_POLY:

@@ -108,6 +108,7 @@ struct gl_internal_vars {
 
 struct gl_vars {
     struct dm *this_dm;
+    struct bu_hash_tbl *texture_cache;
     int cueing_on;
     int zclipping_on;
     int zbuffer_on;
@@ -163,6 +164,8 @@ DMGL_EXPORT extern int gl_drawPoints3D(struct dm *dmp, int npoints, point_t *poi
 DMGL_EXPORT extern int gl_drawVList(struct dm *dmp, struct bv_vlist *vp);
 DMGL_EXPORT extern int gl_drawVListHiddenLine(struct dm *dmp, struct bv_vlist *vp);
 DMGL_EXPORT extern int gl_draw_obj(struct dm *dmp, struct bv_scene_obj *s);
+DMGL_EXPORT extern int gl_bind_texture(struct dm *dmp, const struct bv_texture *image);
+DMGL_EXPORT extern void gl_texture_cache_clear(struct dm *dmp, int have_context);
 DMGL_EXPORT extern int gl_draw_data_axes(struct dm *dmp, fastf_t sf,  struct bv_data_axes_state *bndasp);
 DMGL_EXPORT extern int gl_draw_display_list(struct dm *dmp, struct display_list *obj);
 DMGL_EXPORT extern int gl_endDList(struct dm *dmp);

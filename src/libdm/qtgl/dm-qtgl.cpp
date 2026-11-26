@@ -173,11 +173,14 @@ qtgl_close(struct dm *dmp)
 {
     struct qtgl_vars *pv = (struct qtgl_vars *)dmp->i->dm_vars.priv_vars;
     gl_debug_print(dmp, "qtgl_close", dmp->i->dm_debugLevel);
-    if (pv->fs) {
-	(void)qtgl_makeCurrent(dmp);
-	glfonsDelete(pv->fs);
-	pv->fs = NULL;
+    if (qtgl_makeCurrent(dmp) == BRLCAD_OK) {
+	if (pv->fs) {
+	    glfonsDelete(pv->fs);
+	    pv->fs = NULL;
+	}
+	gl_texture_cache_clear(dmp, 1);
     }
+    (void)gl_put_internal(dmp);
     bu_vls_free(&dmp->i->dm_pathName);
     bu_vls_free(&dmp->i->dm_tkName);
     bu_vls_free(&dmp->i->dm_dName);

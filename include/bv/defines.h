@@ -318,6 +318,9 @@ struct bv_scene_obj  {
      * additional drawing data associated with a scene object */
     void *draw_data;
 
+    /* Optional embedded RGB image for shaded geometry with UV coordinates. */
+    const struct bv_texture *s_texture;
+
     /* User data to associate with this view object */
     void *s_u_data;
 };
@@ -388,6 +391,15 @@ struct bv_scene_obj  {
 #define bv_scene_group bv_scene_obj
 
 
+/* Display texture in RGB byte order, with the bottom scanline first. */
+struct bv_texture {
+    int width;
+    int height;
+    const unsigned char *rgb;
+    /* Content identity for sharing uploads and detecting image edits. */
+    unsigned long long key;
+};
+
 /* The primary "working" data for mesh Level-of-Detail (LoD) drawing is stored
  * in a bv_mesh_lod container.
  *
@@ -400,6 +412,14 @@ struct bv_mesh_lod {
     // The set of triangle faces to be used when drawing
     int fcnt;
     const int *faces;
+    /* Source face for each simplified triangle.  NULL at full detail. */
+    const int *face_sources;
+
+    /* UV table and face-corner indices in original BoT order. */
+    const point_t *uvs;
+    const int *face_uvs;
+    size_t uv_face_count;
+    int clockwise;
 
     // The vertices used by the faces array
     int pcnt;
@@ -433,6 +453,9 @@ struct bv_mesh_lod {
 #define BV_SNAP_VIEW    0x8
 #define BV_SNAP_TCL    0x10
 
+/* Default maximum texture snap displacement in viewport pixels. */
+#define BV_LOD_TEXTURE_ERROR_DEFAULT 2.0
+
 /* We encapsulate non-camera settings into a container mainly to allow for
  * easier reuse of the same settings between different views - if a common
  * setting set is maintained between different views, this container allows
@@ -455,6 +478,7 @@ struct bview_settings {
     fastf_t       point_scale;
     int           redraw_on_zoom;
     fastf_t 	  lod_scale;
+    fastf_t        lod_texture_error; /* 0 disables the textured mesh pixel limit. */
 
     // Faceplate elements fall into two general categories: those which are
     // interactively adjusted (in a geometric sense) and those which are not.

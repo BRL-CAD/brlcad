@@ -71,6 +71,7 @@ bv_vlist_bbox_internal(struct bv_vlist *vp, point_t *bmin, point_t *bmax, int *d
 	    case BV_VLIST_POLY_VERTNORM:
 	    case BV_VLIST_TRI_START:
 	    case BV_VLIST_TRI_VERTNORM:
+	    case BV_VLIST_TRI_UV:
 	    case BV_VLIST_POINT_SIZE:
 	    case BV_VLIST_LINE_WIDTH:
 	    case BV_VLIST_MODEL_MAT:
@@ -138,10 +139,6 @@ bv_vlist_bbox(struct bu_list *vlistp, point_t *bmin, point_t *bmax, size_t *leng
 const char *
 bv_vlist_get_cmd_description(int cmd)
 {
-    /* bv_vlist_cmd_descriptions contains descriptions of the first
-     * num_described_cmds vlist cmds
-     */
-    const int num_described_cmds = 13;
     static const char *bv_vlist_cmd_descriptions[] = {
 	"line move ",
 	"line draw ",
@@ -156,10 +153,13 @@ bv_vlist_get_cmd_description(int cmd)
 	"tri end",
 	"tri vnorm",
 	"point draw",
-	"model mat",
+	"point size",
+	"line width",
 	"display mat",
+	"model mat",
+	"tri uv",
     };
-    if (cmd < num_described_cmds) {
+    if (cmd >= 0 && cmd <= BV_VLIST_CMD_MAX) {
 	return bv_vlist_cmd_descriptions[cmd];
     } else {
 	return "**unknown*";
@@ -628,6 +628,7 @@ bv_vlist_to_uplot(FILE *fp, const struct bu_list *vhead)
 	    switch (*cmd) {
 		case BV_VLIST_POLY_START:
 		case BV_VLIST_TRI_START:
+		case BV_VLIST_TRI_UV:
 		    break;
 		case BV_VLIST_POLY_MOVE:
 		case BV_VLIST_LINE_MOVE:

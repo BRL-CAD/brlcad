@@ -727,6 +727,7 @@ bv_settings_init(struct bview_settings *s)
     s->curve_scale = 1;
     s->bot_threshold = 0;
     s->lod_scale = 1.0;
+    s->lod_texture_error = BV_LOD_TEXTURE_ERROR_DEFAULT;
 
     // Higher values indicate more aggressive behavior (i.e. points further away will be snapped).
     s->gv_snap_tol_factor = 10;
@@ -1318,8 +1319,8 @@ bv_obj_reset(struct bv_scene_obj *s)
     }
     bu_ptbl_reset(&s->children);
 
-    if (s->i)
-	s->i->vobjs.clear();
+    if (s->i && !s->i->vobjs.empty())
+	bv_clear_view_obj(s, NULL);
 
     // If we have a callback for the internal data, use it
     if (s->s_free_callback)
@@ -1367,6 +1368,7 @@ bv_obj_reset(struct bv_scene_obj *s)
     s->curve_scale = 0;
     s->dp = NULL;
     s->draw_data = NULL;
+    s->s_texture = NULL;
     s->have_bbox = 0;
     s->mesh_obj = 0;
     s->point_scale = 0;
@@ -1543,18 +1545,15 @@ bv_obj_get_vo(struct bv_scene_obj *s, struct bview *v)
     struct bv_scene_obj *vo = NULL;
 
     // View local object - use the view obj pool
-    struct bv_scene_obj *free_scene_obj = v->vset->i->free_scene_obj;
+    struct bv_scene_obj *free_scene_obj = s->free_scene_obj;
+    if (!free_scene_obj)
+	return NULL;
     if (BU_LIST_IS_EMPTY(&free_scene_obj->l)) {
 	BU_ALLOC((vo), struct bv_scene_obj);
 	vo->i = new bv_scene_obj_internal;
     } else {
-	vo = BU_LIST_NEXT(bv_scene_obj, &s->free_scene_obj->l);
-	if (!vo) {
-	    BU_ALLOC((vo), struct bv_scene_obj);
-	    vo->i = new bv_scene_obj_internal;
-	} else {
-	    BU_LIST_DEQUEUE(&((vo)->l));
-	}
+	vo = BU_LIST_NEXT(bv_scene_obj, &free_scene_obj->l);
+	BU_LIST_DEQUEUE(&vo->l);
     }
 
     // Use reset to do most of the initialization
@@ -1566,6 +1565,7 @@ bv_obj_get_vo(struct bv_scene_obj *s, struct bview *v)
 
     // View local object - the local vlist pool
     vo->vlfree = &v->gv_objs.gv_vlfree;
+    vo->free_scene_obj = free_scene_obj;
 
     bu_vls_sprintf(&vo->s_name, "%s", bu_vls_cstr(&s->s_name));
 
@@ -1601,12 +1601,14 @@ bv_clear_view_obj(struct bv_scene_obj *s, struct bview *v)
     bv_log(1, "bv_clear_view_obj %s(%s)", bu_vls_cstr(&s->s_name), (v) ? bu_vls_cstr(&v->gv_name) : "NULL");
 
     if (!v) {
+	int cleared = !s->i->vobjs.empty();
 	std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
 	for (vo_it = s->i->vobjs.begin(); vo_it != s->i->vobjs.end(); vo_it++) {
 	    struct bv_scene_obj *vobj = vo_it->second;
 	    bv_obj_put(vobj);
 	}
 	s->i->vobjs.clear();
+	return cleared;
     }
 
     std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
@@ -1635,6 +1637,14 @@ bv_find_child(struct bv_scene_obj *s, const char *vname)
     return NULL;
 }
 
+static void
+mesh_instance_bound(struct bv_scene_obj *s, const struct bv_mesh_lod *lod)
+{
+    VSETALL(s->bmin, INFINITY);
+    VSETALL(s->bmax, -INFINITY);
+    bg_rotate_bbox(s->bmin, s->bmax, s->s_mat, lod->bmin, lod->bmax);
+}
+
 int
 bv_scene_obj_bound(struct bv_scene_obj *sp, struct bview *v)
 {
@@ -1650,14 +1660,7 @@ bv_scene_obj_bound(struct bv_scene_obj *sp, struct bview *v)
     if (s->s_type_flags & BV_MESH_LOD) {
 	struct bv_mesh_lod *i = (struct bv_mesh_lod *)s->draw_data;
 	if (i) {
-	    point_t obmin, obmax;
-	    VMOVE(obmin, i->bmin);
-	    VMOVE(obmax, i->bmax);
-	    // Apply the scene matrix to the bounding box values to bound this
-	    // instance, since the BV_MESH_LOD data is based on the
-	    // non-instanced mesh.
-	    MAT4X3PNT(s->bmin, s->s_mat, obmin);
-	    MAT4X3PNT(s->bmax, s->s_mat, obmax);
+	    mesh_instance_bound(s, i);
 	    calc = 1;
 	}
     } else if (bu_list_len(&s->s_vlist)) {
@@ -1678,14 +1681,7 @@ bv_scene_obj_bound(struct bv_scene_obj *sp, struct bview *v)
 	    if (lv->s_type_flags & BV_MESH_LOD) {
 		struct bv_mesh_lod *i = (struct bv_mesh_lod *)lv->draw_data;
 		if (i) {
-		    point_t obmin, obmax;
-		    VMOVE(obmin, i->bmin);
-		    VMOVE(obmax, i->bmax);
-		    // Apply the scene matrix to the bounding box values to bound this
-		    // instance, since the BV_MESH_LOD data is based on the
-		    // non-instanced mesh.
-		    MAT4X3PNT(lv->bmin, lv->s_mat, obmin);
-		    MAT4X3PNT(lv->bmax, lv->s_mat, obmax);
+		    mesh_instance_bound(lv, i);
 		    calc = 1;
 		}
 	    } else if (bu_list_len(&lv->s_vlist)) {

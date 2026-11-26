@@ -67,6 +67,13 @@ Get (without arguments) or set the eye point. Setting the eye point also changes
 Manipulate options for the faceplate.
 
 
+*lod texture_error* [_pixels_]::
+Get or set the maximum estimated screen-space displacement allowed when mesh
+LoD snaps vertices of a textured BoT. The default is 2 pixels. A lower
+positive value can keep more triangles visible. Set the limit to 0 to use
+ordinary mesh LoD selection for textured BoTs.
+
+
 *lookat* _x y z_::
 Adjusts the current view such that the eye is looking in the direction of the given coordinates, but does not move the eye point nor change the view size. Center, azimuth, and elevation will change.
 

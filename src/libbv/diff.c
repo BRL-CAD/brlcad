@@ -429,6 +429,7 @@ _bv_settings_differ(struct bview_settings *v1, struct bview_settings *v2)
 
     BV_NDIFF(1,adaptive_plot_mesh);
     BV_NDIFF(1,adaptive_plot_csg);
+    BV_NDIFF(1,lod_texture_error);
     BV_NDIFF(1,redraw_on_zoom);
     BV_NDIFF(1,point_scale);
     BV_NDIFF(1,curve_scale);

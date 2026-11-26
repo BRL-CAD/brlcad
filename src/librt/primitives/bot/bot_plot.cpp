@@ -26,6 +26,8 @@
 
 #include "common.h"
 
+#include <cmath>
+
 extern "C" {
 #include "vds.h"
 
@@ -289,72 +291,95 @@ rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
 
 extern "C" int
-rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_bot_has_uvs(const struct rt_bot_internal *bot)
 {
-    struct rt_bot_internal *bot_ip;
-    size_t i;
+    if (!bot || !(bot->bot_flags & RT_BOT_HAS_TEXTURE_UVS) || !bot->uvs ||
+	!bot->face_uvs || !bot->num_faces || bot->num_face_uvs != bot->num_faces)
+	return 0;
 
+    for (size_t i = 0; i < bot->num_faces * 3; i++) {
+	int uv = bot->face_uvs[i];
+	if (uv < 0 || (size_t)uv >= bot->num_uvs)
+	    return 0;
+	const fastf_t *coord = &bot->uvs[(size_t)uv * 3];
+	if (!std::isfinite(coord[0]) || !std::isfinite(coord[1]))
+	    return 0;
+    }
+    return 1;
+}
+
+static int
+bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, bool texture)
+{
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     struct bu_list *vlfree = &rt_vlfree;
-    bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
+    struct rt_bot_internal *bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
 
-    if (bot_ip->num_vertices <= 0 || !bot_ip->vertices || bot_ip->num_faces <= 0 || !bot_ip->faces)
+    if (!bot_ip->num_vertices || !bot_ip->vertices || !bot_ip->num_faces || !bot_ip->faces)
 	return 0;
 
-    /* XXX Should consider orientation here, flip if necessary. */
-    for (i = 0; i < bot_ip->num_faces; i++) {
-	point_t aa, bb, cc;
-	vect_t ab, ac;
-	vect_t norm;
-
-	if (bot_ip->faces[i*3+2] < 0 || (size_t)bot_ip->faces[i*3+2] > bot_ip->num_vertices)
-	    continue; /* sanity */
-
-	VMOVE(aa, &bot_ip->vertices[bot_ip->faces[i*3+0]*3]);
-	if (bot_ip->orientation == RT_BOT_CW) {
-	    VMOVE(bb, &bot_ip->vertices[bot_ip->faces[i*3+2]*3]);
-	    VMOVE(cc, &bot_ip->vertices[bot_ip->faces[i*3+1]*3]);
-	} else {
-	    VMOVE(bb, &bot_ip->vertices[bot_ip->faces[i*3+1]*3]);
-	    VMOVE(cc, &bot_ip->vertices[bot_ip->faces[i*3+2]*3]);
+    const bool have_uvs = texture && rt_bot_has_uvs(bot_ip);
+    const bool have_normals = (bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) &&
+	(bot_ip->bot_flags & RT_BOT_USE_NORMALS) && bot_ip->normals && bot_ip->face_normals;
+    const bool clockwise = bot_ip->orientation == RT_BOT_CW;
+    const size_t corners[3] = {0, clockwise ? 2u : 1u, clockwise ? 1u : 2u};
+    for (size_t i = 0; i < bot_ip->num_faces; i++) {
+	point_t vertices[3];
+	size_t j = 0;
+	for (; j < 3; j++) {
+	    int index = bot_ip->faces[i*3 + corners[j]];
+	    if (index < 0 || (size_t)index >= bot_ip->num_vertices)
+		break;
+	    VMOVE(vertices[j], &bot_ip->vertices[(size_t)index * 3]);
 	}
+	if (j < 3)
+	    continue;
 
-	VSUB2(ab, aa, bb);
-	VSUB2(ac, aa, cc);
+	vect_t ab, ac, norm;
+	VSUB2(ab, vertices[0], vertices[1]);
+	VSUB2(ac, vertices[0], vertices[2]);
 	VCROSS(norm, ab, ac);
 	VUNITIZE(norm);
 	BV_ADD_VLIST(vlfree, vhead, norm, BV_VLIST_TRI_START);
 
-	if ((bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) &&
-		(bot_ip->bot_flags & RT_BOT_USE_NORMALS)) {
-	    vect_t na, nb, nc;
-
-	    VMOVE(na, &bot_ip->normals[bot_ip->face_normals[i*3+0]*3]);
-	    if (bot_ip->orientation == RT_BOT_CW) {
-		VMOVE(nb, &bot_ip->normals[bot_ip->face_normals[i*3+2]*3]);
-		VMOVE(nc, &bot_ip->normals[bot_ip->face_normals[i*3+1]*3]);
-	    } else {
-		VMOVE(nb, &bot_ip->normals[bot_ip->face_normals[i*3+1]*3]);
-		VMOVE(nc, &bot_ip->normals[bot_ip->face_normals[i*3+2]*3]);
+	for (j = 0; j < 3; j++) {
+	    size_t corner = i*3 + corners[j];
+	    if (have_normals && i < bot_ip->num_face_normals) {
+		int normal = bot_ip->face_normals[corner];
+		if (normal >= 0 && (size_t)normal < bot_ip->num_normals) {
+		    const fastf_t *n = &bot_ip->normals[(size_t)normal * 3];
+		    BV_ADD_VLIST(vlfree, vhead, n, BV_VLIST_TRI_VERTNORM);
+		} else {
+		    BV_ADD_VLIST(vlfree, vhead, norm, BV_VLIST_TRI_VERTNORM);
+		}
 	    }
-	    BV_ADD_VLIST(vlfree, vhead, na, BV_VLIST_TRI_VERTNORM);
-	    BV_ADD_VLIST(vlfree, vhead, aa, BV_VLIST_TRI_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead, nb, BV_VLIST_TRI_VERTNORM);
-	    BV_ADD_VLIST(vlfree, vhead, bb, BV_VLIST_TRI_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, nc, BV_VLIST_TRI_VERTNORM);
-	    BV_ADD_VLIST(vlfree, vhead, cc, BV_VLIST_TRI_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, aa, BV_VLIST_TRI_END);
-	} else {
-	    BV_ADD_VLIST(vlfree, vhead, aa, BV_VLIST_TRI_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead, bb, BV_VLIST_TRI_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, cc, BV_VLIST_TRI_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, aa, BV_VLIST_TRI_END);
+	    if (have_uvs) {
+		const fastf_t *uv = &bot_ip->uvs[(size_t)bot_ip->face_uvs[corner] * 3];
+		point_t coord = {uv[0], uv[1], 0};
+		BV_ADD_VLIST(vlfree, vhead, coord, BV_VLIST_TRI_UV);
+	    }
+	    int cmd = (j == 0) ? BV_VLIST_TRI_MOVE : BV_VLIST_TRI_DRAW;
+	    BV_ADD_VLIST(vlfree, vhead, vertices[j], cmd);
 	}
+	BV_ADD_VLIST(vlfree, vhead, vertices[0], BV_VLIST_TRI_END);
     }
 
+    return have_uvs;
+}
+
+extern "C" int
+rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+{
+    bot_plot_poly(vhead, ip, false);
     return 0;
+}
+
+extern "C" int
+rt_bot_plot_poly_uv(struct bu_list *vhead, struct rt_db_internal *ip)
+{
+    return bot_plot_poly(vhead, ip, true);
 }
 
 

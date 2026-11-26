@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <cmath>
+
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -55,6 +57,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
     static const char *usage = "view lod [csg|mesh] [0|1]\n"
 	"view lod cache [clear [all_files] | exists] \n"
 	"view lod scale [factor]\n"
+	"view lod texture_error [pixels]\n"
 	"view lod point_scale [factor]\n"
 	"view lod curve_scale [factor]\n"
 	"view lod bot_threshold [face_cnt]\n";
@@ -94,6 +97,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "enabled(mesh/csg): %d/%d\n", gvp->gv_s->adaptive_plot_mesh, gvp->gv_s->adaptive_plot_csg);
 	bu_vls_printf(gedp->ged_result_str, "scale: %g\n", gvp->gv_s->lod_scale);
+	bu_vls_printf(gedp->ged_result_str, "texture_error: %g pixels\n", gvp->gv_s->lod_texture_error);
 	bu_vls_printf(gedp->ged_result_str, "point_scale: %g\n", gvp->gv_s->point_scale);
 	bu_vls_printf(gedp->ged_result_str, "curve_scale: %g\n", gvp->gv_s->curve_scale);
 	bu_vls_printf(gedp->ged_result_str, "bot_threshold: %zd\n", gvp->gv_s->bot_threshold);
@@ -344,6 +348,21 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
 	gvp->gv_s->lod_scale = scale;
+	return BRLCAD_OK;
+    }
+
+    if (BU_STR_EQUAL(argv[0], "texture_error")) {
+	if (argc == 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%g\n", gvp->gv_s->lod_texture_error);
+	    return BRLCAD_OK;
+	}
+	fastf_t pixels = 0.0;
+	if (argc != 2 || bu_opt_fastf_t(NULL, 1, &argv[1], &pixels) != 1 ||
+	    !std::isfinite(pixels) || pixels < 0.0) {
+	    bu_vls_printf(gedp->ged_result_str, "texture_error requires a non-negative pixel limit\n");
+	    return BRLCAD_ERROR;
+	}
+	gvp->gv_s->lod_texture_error = pixels;
 	return BRLCAD_OK;
     }
 

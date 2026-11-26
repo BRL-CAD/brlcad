@@ -220,7 +220,7 @@ test_format_invalidation(void)
 	bu_dir(fmt_path, MAXPATHLEN, BU_DIR_CACHE, ".POPLoD", "format", NULL);
 	FILE *fp = fopen(fmt_path, "w");
 	if (fp) {
-	    fprintf(fp, "1\n");   /* version 1 — older than CACHE_CURRENT_FORMAT (2), forces invalidation */
+	    fprintf(fp, "1\n");   /* Force invalidation with an older format. */
 	    fclose(fp);
 	    bu_log("  Corrupted format file at %s\n", fmt_path);
 	} else {

@@ -213,6 +213,12 @@ struct draw_update_data_t {
     const struct bn_tol *tol;
     const struct bg_tess_tol *ttol;
     struct bv_mesh_lod_context *mesh_c;
+    const struct bv_texture *texture;
+    fastf_t *bot_uvs;
+    int *bot_face_uvs;
+    size_t bot_uv_face_count;
+    int bot_uvs_checked;
+    int bot_clockwise;
 };
 
 GED_EXPORT extern unsigned long long dl_name_hash(struct ged *gedp);

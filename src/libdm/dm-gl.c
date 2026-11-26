@@ -334,6 +334,120 @@ int gl_getLight(struct dm *dmp)
 /*
  * There are global variables which are parameters to this routine.
  */
+struct gl_texture_entry {
+    GLuint id;
+    int used;
+};
+
+static void
+gl_texture_cache_end_frame(struct dm *dmp)
+{
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+    struct bu_hash_tbl *cache = mvars->texture_cache;
+    if (!cache)
+	return;
+
+    struct bu_hash_entry *entry = bu_hash_next(cache, NULL);
+    while (entry) {
+	struct gl_texture_entry *texture = (struct gl_texture_entry *)bu_hash_value(entry, NULL);
+	struct bu_hash_entry *next = bu_hash_next(cache, entry);
+	if (texture->used) {
+	    texture->used = 0;
+	} else {
+	    uint8_t *key = NULL;
+	    size_t key_size = 0;
+	    bu_hash_key(entry, &key, &key_size);
+	    glDeleteTextures(1, &texture->id);
+	    BU_PUT(texture, struct gl_texture_entry);
+	    bu_hash_rm(cache, key, key_size);
+	}
+	entry = next;
+    }
+}
+
+void
+gl_texture_cache_clear(struct dm *dmp, int have_context)
+{
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+    struct bu_hash_tbl *cache = mvars->texture_cache;
+    if (!cache)
+	return;
+    for (struct bu_hash_entry *e = bu_hash_next(cache, NULL); e; e = bu_hash_next(cache, e)) {
+	struct gl_texture_entry *texture = (struct gl_texture_entry *)bu_hash_value(e, NULL);
+	if (have_context)
+	    glDeleteTextures(1, &texture->id);
+	BU_PUT(texture, struct gl_texture_entry);
+    }
+    bu_hash_destroy(cache);
+    mvars->texture_cache = NULL;
+}
+
+static GLuint
+gl_upload_texture(const struct bv_texture *image)
+{
+    GLint limit = 0;
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &limit);
+    if (image->width > limit || image->height > limit)
+	return 0;
+
+    GLuint id = 0;
+    glGenTextures(1, &id);
+    if (!id)
+	return 0;
+    glBindTexture(GL_TEXTURE_2D, id);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+    glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+    glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, image->width, image->height,
+	0, GL_RGB, GL_UNSIGNED_BYTE, image->rgb);
+    glPopClientAttrib();
+
+    GLint width = 0;
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
+    if (width != image->width) {
+	glDeleteTextures(1, &id);
+	return 0;
+    }
+    return id;
+}
+
+int
+gl_bind_texture(struct dm *dmp, const struct bv_texture *image)
+{
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+    if (!mvars->texture_cache)
+	mvars->texture_cache = bu_hash_create(0);
+    if (!mvars->texture_cache)
+	return 0;
+    const uint64_t key[] = {image->key, (uint64_t)image->width, (uint64_t)image->height};
+    struct gl_texture_entry *texture = (struct gl_texture_entry *)bu_hash_get(
+	mvars->texture_cache, (const uint8_t *)key, sizeof(key));
+    if (!texture) {
+	BU_GET(texture, struct gl_texture_entry);
+	texture->id = gl_upload_texture(image);
+	if (bu_hash_set(mvars->texture_cache, (const uint8_t *)key, sizeof(key), texture) < 0) {
+	    glDeleteTextures(1, &texture->id);
+	    BU_PUT(texture, struct gl_texture_entry);
+	    return 0;
+	}
+    }
+    texture->used = 1;
+    if (!texture->id)
+	return 0;
+
+    glBindTexture(GL_TEXTURE_2D, texture->id);
+    glEnable(GL_TEXTURE_2D);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    return 1;
+}
+
 int gl_drawBegin(struct dm *dmp)
 {
     gl_debug_print(dmp, "gl_drawBegin", dmp->i->dm_debugLevel);
@@ -377,6 +491,7 @@ int gl_drawEnd(struct dm *dmp)
     gl_debug_print(dmp, "gl_drawEnd", dmp->i->dm_debugLevel);
 
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+    gl_texture_cache_end_frame(dmp);
 
     if (mvars->lighting_on) {
 	glMatrixMode(GL_MODELVIEW);
@@ -847,6 +962,9 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
 		    first = 1;
 		    break;
 		case BV_VLIST_TRI_END:
+		    break;
+		case BV_VLIST_TRI_UV:
+		    glTexCoord2d(dpt[0], dpt[1]);
 		    break;
 		case BV_VLIST_POLY_VERTNORM:
 		case BV_VLIST_TRI_VERTNORM:
@@ -1655,6 +1773,7 @@ int gl_put_internal(struct dm *dmp)
 {
     struct gl_vars *mvars = NULL;
     if (dmp->i->m_vars) {
+	gl_texture_cache_clear(dmp, 0);
 	mvars = (struct gl_vars *)dmp->i->m_vars;
 	bu_vls_free(&(mvars->log));
 	BU_PUT(dmp->i->m_vars, struct gl_vars);

@@ -169,6 +169,14 @@ BV_EXPORT void
 bv_mesh_lod_destroy(struct bv_mesh_lod *l);
 
 /**
+ * Return UVs compensated for vertex snapping, one pair per face corner in
+ * current draw order. Returns NULL when the original UVs should be used.
+ * The result is owned by the LoD and expires when its geometry changes.
+ */
+BV_EXPORT const point2d_t *
+bv_mesh_lod_snapped_uvs(struct bv_mesh_lod *lod);
+
+/**
  * Given a scene object with mesh LoD data stored in s->draw_data, reduce
  * memory footprint (for use after client codes have completed use of a
  * particular level's info, but aren't done with the object.  Main use case

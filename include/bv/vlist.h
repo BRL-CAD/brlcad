@@ -90,7 +90,8 @@ struct bv_vlist  {
 #define BV_VLIST_LINE_WIDTH		14	/**< @brief specify line pixel width */
 #define BV_VLIST_DISPLAY_MAT		15	/**< @brief specify the model matrix */
 #define BV_VLIST_MODEL_MAT		16	/**< @brief specify the display matrix */
-#define BV_VLIST_CMD_MAX		16	/**< @brief Max command number */
+#define BV_VLIST_TRI_UV			17	/**< @brief UV for the next triangle vertex */
+#define BV_VLIST_CMD_MAX		17	/**< @brief Max command number */
 /**
  * Applications that are going to use BV_ADD_VLIST and BV_GET_VLIST
  * are required to execute this macro once, on their _free_hd:

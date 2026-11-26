@@ -274,6 +274,7 @@ extgl_close(struct dm *dmp)
     if (!dmp)
 	return BRLCAD_OK;
     if (extgl_make_current(dmp) == BRLCAD_OK) {
+	gl_texture_cache_clear(dmp, 1);
 	GLint matrix_mode;
 	glGetIntegerv(GL_MATRIX_MODE, &matrix_mode);
 	(void)gl_hud_end(dmp);

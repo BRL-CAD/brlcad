@@ -91,14 +91,36 @@ bv_set_add_view(struct bview_set *s, struct bview *v){
     v->independent = 0;
 }
 
+static void
+clear_view_draw_data(struct bv_scene_obj *s, struct bview *v)
+{
+    bv_clear_view_obj(s, v);
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++)
+	clear_view_draw_data((struct bv_scene_obj *)BU_PTBL_GET(&s->children, i), v);
+}
+
 void
-bv_set_rm_view(struct bview_set *s, struct bview *v){
+bv_set_rm_view(struct bview_set *s, struct bview *v)
+{
     if (!s)
 	return;
 
     if (!v) {
-	bu_ptbl_reset(&s->i->views);
+	while (BU_PTBL_LEN(&s->i->views)) {
+	    auto *view = (struct bview *)BU_PTBL_GET(&s->i->views, 0);
+	    bv_set_rm_view(s, view);
+	}
 	return;
+    }
+
+    // View-local draw objects may still use this view's vlist pool.
+    struct bu_ptbl *objects[] = {&s->i->shared_db_objs, &s->i->shared_view_objs,
+	v->gv_objs.db_objs, v->gv_objs.view_objs};
+    for (auto *table : objects) {
+	if (!table)
+	    continue;
+	for (size_t i = 0; i < BU_PTBL_LEN(table); i++)
+	    clear_view_draw_data((struct bv_scene_obj *)BU_PTBL_GET(table, i), v);
     }
 
     bu_ptbl_rm(&s->i->views, (long int *)v);

@@ -46,6 +46,47 @@ struct swrast_vars_fast {
     void *os_b;
 };
 
+class gl_texture_binding {
+public:
+    gl_texture_binding(struct dm *dmp, struct bv_scene_obj *s) : dm(dmp)
+    {
+	const struct bv_texture *image = s->s_texture;
+	int mode = s->s_os->s_dmode;
+	if (!image || !image->rgb || (mode != 1 && mode != 2) ||
+	    s->s_iflag == UP || s->s_os->color_override)
+	    return;
+
+	// Keep texture binding outside geometry display lists so that image
+	// edits only require uploading the replacement image.
+	glPushAttrib(GL_TEXTURE_BIT | GL_CURRENT_BIT);
+	if (!gl_bind_texture(dmp, image)) {
+	    glPopAttrib();
+	    return;
+	}
+
+	bound = true;
+	opacity = ((struct gl_vars *)dmp->i->m_vars)->i.wireColor[3];
+	const unsigned char *fg = dm_get_fg(dmp);
+	VMOVE(saved_fg, fg);
+	const unsigned char white = 255;
+	dm_set_fg(dmp, white, white, white, 0, opacity);
+    }
+
+    ~gl_texture_binding()
+    {
+	if (bound) {
+	    dm_set_fg(dm, saved_fg[0], saved_fg[1], saved_fg[2], 0, opacity);
+	    glPopAttrib();
+	}
+    }
+
+private:
+    struct dm *dm;
+    unsigned char saved_fg[3];
+    fastf_t opacity = 1.0;
+    bool bound = false;
+};
+
 static int
 gl_swrast_database_wireframe(struct dm *dmp, struct bv_scene_obj *s)
 {
@@ -276,13 +317,14 @@ dlist_free_callback(struct bv_scene_obj *s)
 {
     if (!s)
 	return;
-    bu_log("dlist cleanup\n");
     for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
 	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(&s->children, i);
 	dlist_free_callback(cg);
     }
     if (s->s_dlist) {
-	glDeleteLists(s->s_dlist, 1);
+	struct dm *dmp = s->s_v ? (struct dm *)s->s_v->dmp : NULL;
+	if (dmp && dm_make_current(dmp) == BRLCAD_OK)
+	    glDeleteLists(s->s_dlist, 1);
 	s->s_dlist = 0;
     }
     s->s_dlist_stale = 0;
@@ -294,77 +336,103 @@ dlist_free_callback(struct bv_scene_obj *s)
 // in memory at the same time.  For that scenario, we would first need to break
 // down the big mesh into smaller pieces as in the earlier LoD experiments in
 // order to keep using display lists...
-static int
-gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
+static void
+gl_mesh_triangles(struct bv_mesh_lod *lod, bool shaded)
 {
-    int fcnt = lod->fcnt;
-    int pcnt = lod->pcnt;
-    const int *faces = lod->faces;
-    const point_t *points = lod->points;
-    const point_t *points_orig = lod->points_orig;
-    const vect_t *normals = lod->normals;
-    struct bv_scene_obj *s = lod->s;
-    int mode = s->s_os->s_dmode;
-    mat_t save_mat, draw_mat;
+    const bool clockwise = shaded && lod->clockwise;
+    const int corners[3] = {0, clockwise ? 2 : 1, clockwise ? 1 : 2};
+    const point2d_t *snapped_uvs = shaded ? bv_mesh_lod_snapped_uvs(lod) : NULL;
+    if (shaded)
+	glBegin(GL_TRIANGLES);
 
-    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
-    GLdouble dpt[3];
-    static float black[4] = {0.0, 0.0, 0.0, 0.0};
-    GLfloat originalLineWidth;
+    for (int i = 0; i < lod->fcnt; i++) {
+	const size_t offset = (size_t)i * 3;
+	const int *face = &lod->faces[offset];
+	bool valid = true;
+	for (int j = 0; j < 3; j++) {
+	    if (face[j] < 0 || face[j] >= lod->pcnt) {
+		bu_log("bad face %d - skipping\n", i);
+		valid = false;
+		break;
+	    }
+	}
+	if (!valid)
+	    continue;
 
-    if (mode < 0 || mode > 1)
-	return BRLCAD_ERROR;
+	if (!shaded) {
+	    glBegin(GL_LINE_STRIP);
+	    for (int j = 0; j < 3; j++)
+		glVertex3dv(lod->points[face[j]]);
+	    glVertex3dv(lod->points[face[0]]);
+	    glEnd();
+	    continue;
+	}
 
-    glGetFloatv(GL_LINE_WIDTH, &originalLineWidth);
+	vect_t ab, ac, norm;
+	VSUB2(ab, lod->points_orig[face[0]], lod->points_orig[face[corners[1]]]);
+	VSUB2(ac, lod->points_orig[face[0]], lod->points_orig[face[corners[2]]]);
+	VCROSS(norm, ab, ac);
+	VUNITIZE(norm);
+	glNormal3dv(norm);
 
-    gl_debug_print(dmp, "gl_draw_tri", dmp->i->dm_debugLevel);
+	// The LoD cache preserves corner order even when it snaps two
+	// different vertices to the same position.
+	const int source = lod->face_sources ? lod->face_sources[i] : i;
+	const int *indices = NULL;
+	if (lod->face_uvs && source >= 0 && (size_t)source < lod->uv_face_count)
+	    indices = &lod->face_uvs[(size_t)source * 3];
 
-    // If the dlist is stale, clear it
-    if (s->s_dlist_stale) {
-	glDeleteLists(s->s_dlist, 1);
-	s->s_dlist = 0;
-
-	if (!pcnt || !fcnt) {
-	    // If we've had a memshrink, the loaded data isn't
-	    // going to be correct to generate new draw info.
-	    // First, find out the current level:
-	    int curr_level = bv_mesh_lod_level(s, -1, 0);
-
-	    // Trigger a load operation to restore it
-	    bv_mesh_lod_level(s, curr_level, 1);
-
-	    fcnt = lod->fcnt;
-	    pcnt = lod->pcnt;
-	    faces = lod->faces;
-	    points = lod->points;
-	    points_orig = lod->points_orig;
-	    normals = lod->normals;
+	for (int j : corners) {
+	    if (lod->normals) {
+		const fastf_t *n = lod->normals[offset + j];
+		glNormal3dv(VNEAR_ZERO(n, SMALL_FASTF) ? norm : n);
+	    }
+	    if (snapped_uvs)
+		glTexCoord2dv(snapped_uvs[offset + j]);
+	    else if (indices)
+		glTexCoord2dv(lod->uvs[indices[j]]);
+	    glVertex3dv(lod->points[face[j]]);
 	}
     }
 
-    // We don't want color to be part of the dlist, to allow the app
-    // to change it without regeneration - hence, we need to do it
-    // up front
-    if (mode == 0) {
-	if (s->s_iflag == UP) {
-	    dm_set_fg(dmp, 255, 255, 255, 0, s->s_os->transparency);
-	}
-	if (mvars->lighting_on) {
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, mvars->i.wireColor);
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
+    if (shaded)
+	glEnd();
+}
+
+static int
+gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
+{
+    struct bv_scene_obj *s = lod->s;
+    const int mode = s->s_os->s_dmode;
+    if (mode < 0 || mode > 2)
+	return BRLCAD_ERROR;
+    const bool shaded = mode != 0;
+    auto *mvars = (struct gl_vars *)dmp->i->m_vars;
+
+    gl_debug_print(dmp, "gl_draw_tri", dmp->i->dm_debugLevel);
+
+    if (s->s_dlist && (s->s_dlist_stale || s->s_dlist_mode != mode)) {
+	glDeleteLists(s->s_dlist, 1);
+	s->s_dlist = 0;
+    }
+    if (!s->s_dlist && !lod->points) {
+	const int level = bv_mesh_lod_level(s, -1, 0);
+	bv_mesh_lod_level(s, level, 1);
+    }
+    if (!s->s_dlist && !lod->fcnt)
+	return BRLCAD_OK;
+
+    // Material and texture state must apply on both immediate and cached draws.
+    glPushAttrib(GL_LIGHTING_BIT | GL_COLOR_BUFFER_BIT);
+    if (mvars->lighting_on) {
+	static const float black[4] = {0.0, 0.0, 0.0, 0.0};
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, shaded ? black : mvars->i.wireColor);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, shaded ? mvars->i.ambientColor : black);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, shaded ? mvars->i.specularColor : black);
+	if (!shaded) {
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
-	    if (mvars->transparency_on)
-		glDisable(GL_BLEND);
-	}
-    } else {
-	if (s->s_iflag == UP) {
-	    dm_set_fg(dmp, 255, 255, 255, 0, s->s_os->transparency);
-	}
-	if (mvars->lighting_on) {
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mvars->i.ambientColor);
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mvars->i.specularColor);
+	} else {
+	    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 	    glMaterialfv(GL_FRONT, GL_DIFFUSE, mvars->i.diffuseColor);
 	    switch (mvars->lighting_on) {
 		case 1:
@@ -380,231 +448,49 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 		    break;
 	    }
 	}
-	if (mvars->lighting_on) {
-	    if (mvars->transparency_on) {
+	if (mvars->transparency_on) {
+	    if (shaded) {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	    }
-	}
-    }
-
-    // If we have a dlist in the correct mode, use it
-    if (s->s_dlist) {
-	if (mode == s->s_dlist_mode) {
-	    //bu_log("use dlist %d\n", s->s_dlist);
-	    MAT_COPY(save_mat, s->s_v->gv_model2view);
-	    bn_mat_mul(draw_mat, s->s_v->gv_model2view, s->s_mat);
-	    dm_loadmatrix(dmp, draw_mat, 0);
-	    glCallList(s->s_dlist);
-	    dm_loadmatrix(dmp, save_mat, 0);
-	    glLineWidth(originalLineWidth);
-	    if (mvars->transparency_on)
-		glDisable(GL_BLEND);
-	    return BRLCAD_OK;
-	} else {
-	    // Display list mode is incorrect (wireframe when we
-	    // want shaded, or vice versa.)
-	    glDeleteLists(s->s_dlist, 1);
-	    s->s_dlist = 0;
-	}
-    }
-
-    // Figure out if we need a new dlist (and if so whether this triangle set
-    // is a candidate.)  OpenGL Display Lists are faster than immediate
-    // triangle drawing when we can use them, but they require more memory
-    // usage while they are being generated.  If we're tight on memory and the
-    // triangle set is large, accept the slower drawing to avoid memory stress
-    // - otherwise, we want the list
-    ssize_t avail_mem = 0.5*bu_mem(BU_MEM_AVAIL, NULL);
-    size_t size_est = (size_t)(fcnt*3*sizeof(point_t));
-    bool gen_dlist = false;
-    if (!s->s_dlist && avail_mem > 0 && size_est < (size_t)avail_mem) {
-	gen_dlist = true;
-	s->s_dlist = glGenLists(1);
-	s->s_dlist_mode = mode;
-	//bu_log("gen_dlist: %d\n", s->s_dlist);
-	s->s_dlist_free_callback = &dlist_free_callback;
-	glNewList(s->s_dlist, GL_COMPILE);
-    } else {
-	bu_log("Not using dlist\n");
-	// Straight-up drawing - set up the matrix
-	MAT_COPY(save_mat, s->s_v->gv_model2view);
-	bn_mat_mul(draw_mat, s->s_v->gv_model2view, s->s_mat);
-	dm_loadmatrix(dmp, draw_mat, 0);
-    }
-
-    // Wireframe
-    if (mode == 0) {
-	// Draw all the triangles in faces array
-	for (int i = 0; i < fcnt; i++) {
-
-	    bool bad_face = false;
-	    for (int j = 0; j < 3; j++) {
-		int f_ind = faces[3*i+j];
-		if (f_ind >= pcnt || f_ind < 0) {
-		    bu_log("bad face %d - skipping\n", i);
-		    bad_face = true;
-		    break;
-		}
-	    }
-	    if (bad_face)
-		continue;
-
-	    glBegin(GL_LINE_STRIP);
-	    VMOVE(dpt, points[faces[3*i+0]]);
-	    glVertex3dv(dpt);
-	    VMOVE(dpt, points[faces[3*i+1]]);
-	    glVertex3dv(dpt);
-	    VMOVE(dpt, points[faces[3*i+2]]);
-	    glVertex3dv(dpt);
-	    VMOVE(dpt, points[faces[3*i+0]]);
-	    glVertex3dv(dpt);
-	    glEnd();
-	}
-	if (gen_dlist) {
-	    glEndList();
-	    s->s_dlist_stale = 0;
-	    if (size_est > (avail_mem * 0.01)) {
-		// If the original data is sizable, clear it to save system memory.
-		// The dlist has what it needs, and the LoD code will re-load info
-		// as needed for updates.
-		bv_mesh_lod_memshrink(s);
-	    }
-
-	    MAT_COPY(save_mat, s->s_v->gv_model2view);
-	    bn_mat_mul(draw_mat, s->s_v->gv_model2view, s->s_mat);
-	    dm_loadmatrix(dmp, draw_mat, 0);
-	    glCallList(s->s_dlist);
-	    dm_loadmatrix(dmp, save_mat, 0);
-	}
-
-	glLineWidth(originalLineWidth);
-
-	if (mvars->transparency_on)
-	    glDisable(GL_BLEND);
-
-	// Without dlist, we had to set the matrix - restore
-	if (!s->s_dlist)
-	    dm_loadmatrix(dmp, save_mat, 0);
-
-	return BRLCAD_OK;
-    }
-
-    // Shaded
-    if (mode == 1) {
-
-	// For LoD drawing, we need to use two sided shading - thin objects or
-	// very low detail triangle objects will sometimes draw multiple
-	// triangles in the same position, which can result in the wrong "side"
-	// being visible from some views.
-	GLint two_sided;
-	glGetIntegerv(GL_LIGHT_MODEL_TWO_SIDE, &two_sided);
-	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-
-	glBegin(GL_TRIANGLES);
-
-	// Draw all the triangles in faces array
-	for (int i = 0; i < fcnt; i++) {
-
-	    bool bad_face = false;
-	    for (int j = 0; j < 3; j++) {
-		int f_ind = faces[3*i+j];
-		if (f_ind >= pcnt || f_ind < 0) {
-		    bu_log("bad face %d - skipping\n", i);
-		    bad_face = true;
-		    break;
-		}
-	    }
-	    if (bad_face)
-		continue;
-
-	    // Set surface normal
-	    vect_t ab, ac, norm;
-	    VSUB2(ab, points_orig[faces[3*i+0]], points_orig[faces[3*i+1]]);
-	    VSUB2(ac, points_orig[faces[3*i+0]], points_orig[faces[3*i+2]]);
-	    VCROSS(norm, ab, ac);
-	    VUNITIZE(norm);
-
-	    if (normals) {
-		vect_t vnorm;
-		VMOVE(vnorm, normals[3*i+0]);
-		if (((int)(vnorm[0]*10+vnorm[1]*10+vnorm[2]*10)) != 0) {
-		    glNormal3dv(vnorm);
-		} else {
-		    glNormal3dv(norm);
-		}
-		VMOVE(dpt, points[faces[3*i+0]]);
-		glVertex3dv(dpt);
-
-		VMOVE(vnorm, normals[3*i+1]);
-		if (((int)(vnorm[0]*10+vnorm[1]*10+vnorm[2]*10)) != 0) {
-		    glNormal3dv(vnorm);
-		} else {
-		    glNormal3dv(norm);
-		}
-		VMOVE(dpt, points[faces[3*i+1]]);
-		glVertex3dv(dpt);
-
-		VMOVE(vnorm, normals[3*i+2]);
-		if (((int)(vnorm[0]*10+vnorm[1]*10+vnorm[2]*10)) != 0) {
-		    glNormal3dv(vnorm);
-		} else {
-		    glNormal3dv(norm);
-		}
-		VMOVE(dpt, points[faces[3*i+2]]);
-		glVertex3dv(dpt);
-
 	    } else {
-		glNormal3dv(norm);
-		VMOVE(dpt, points[faces[3*i+0]]);
-		glVertex3dv(dpt);
-		VMOVE(dpt, points[faces[3*i+1]]);
-		glVertex3dv(dpt);
-		VMOVE(dpt, points[faces[3*i+2]]);
-		glVertex3dv(dpt);
+		glDisable(GL_BLEND);
 	    }
-
 	}
-
-	glEnd();
-
-	if (gen_dlist) {
-	    glEndList();
-	    s->s_dlist_stale = 0;
-	    if (size_est > (avail_mem * 0.01)) {
-		// If the original data is sizable, clear it to save system memory.
-		// The dlist has what it needs, and the LoD code will re-load info
-		// as needed for updates.
-		bv_mesh_lod_memshrink(s);
-	    }
-
-	    /* notify registered sensors that the dlist was regenerated */
-	    dm_fire_dlist_sensors(dmp);
-
-	    MAT_COPY(save_mat, s->s_v->gv_model2view);
-	    bn_mat_mul(draw_mat, s->s_v->gv_model2view, s->s_mat);
-	    dm_loadmatrix(dmp, draw_mat, 0);
-	    glCallList(s->s_dlist);
-	    dm_loadmatrix(dmp, save_mat, 0);
-	}
-
-	if (mvars->lighting_on && mvars->transparency_on)
-	    glDisable(GL_BLEND);
-
-	// Put the lighting model back where it was prior to this operation
-	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, two_sided);
-
-	glLineWidth(originalLineWidth);
-
-	// If we're not using a pre-baked dlist, restore matrix
-	if (!s->s_dlist)
-	    dm_loadmatrix(dmp, save_mat, 0);
-
-	return BRLCAD_OK;
     }
 
-    return BRLCAD_ERROR;
+    if (!s->s_dlist) {
+	// Large meshes may require more memory to compile than is available.
+	const ssize_t avail_mem = bu_mem(BU_MEM_AVAIL, NULL) / 2;
+	const size_t vertex_size = sizeof(point_t) + ((shaded && lod->uvs) ? 2 * sizeof(GLdouble) : 0);
+	const size_t size_est = (size_t)lod->fcnt * 3 * vertex_size;
+	if (avail_mem > 0 && size_est < (size_t)avail_mem)
+	    s->s_dlist = glGenLists(1);
+	if (s->s_dlist) {
+	    glNewList(s->s_dlist, GL_COMPILE);
+	    gl_mesh_triangles(lod, shaded);
+	    glEndList();
+	    s->s_dlist_mode = mode;
+	    s->s_dlist_stale = 0;
+	    s->s_dlist_free_callback = &dlist_free_callback;
+	    if (size_est > (size_t)avail_mem / 100)
+		bv_mesh_lod_memshrink(s);
+	    dm_fire_dlist_sensors(dmp);
+	}
+    }
+
+    mat_t draw_mat;
+    bn_mat_mul(draw_mat, s->s_v->gv_model2view, s->s_mat);
+    dm_loadmatrix(dmp, draw_mat, 0);
+    if (s->s_dlist)
+	glCallList(s->s_dlist);
+    else
+	gl_mesh_triangles(lod, shaded);
+    dm_loadmatrix(dmp, s->s_v->gv_model2view, 0);
+    glPopAttrib();
+
+    return BRLCAD_OK;
 }
+
 
 static int
 gl_csg_lod(struct dm *dmp, struct bv_scene_obj *s)
@@ -783,6 +669,7 @@ int gl_draw_obj(struct dm *dmp, struct bv_scene_obj *s)
     int restoreShadeModel = 0;
     GLboolean lightingWasEnabled = GL_FALSE;
     int restoreLighting = 0;
+    gl_texture_binding texture(dmp, s);
 
     if (s->s_type_flags & BV_MESH_LOD) {
 	struct bv_mesh_lod *lod = (struct bv_mesh_lod *)s->draw_data;

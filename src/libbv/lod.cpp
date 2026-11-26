@@ -55,6 +55,8 @@
  */
 
 #include "common.h"
+#include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <stdlib.h>
 #include <map>
@@ -103,7 +105,7 @@
 /* On-disk format version.  Increment whenever the binary layout of any cached
  * payload changes.  bv_mesh_lod_context_create() reads this from
  * BU_DIR_CACHE/.POPLoD/format; a mismatch clears the entire .POPLoD tree. */
-#define CACHE_CURRENT_FORMAT 2
+#define CACHE_CURRENT_FORMAT 3
 
 /* There are various individual pieces of data in the cache associated with
  * each object key.  For lookup they use short suffix strings to distinguish
@@ -766,6 +768,7 @@ class POPState {
 
 	// Based on a view size, recommend a level
 	int get_level(fastf_t len);
+	int texture_level(const struct bview *v, int level) const;
 
 	// Load/unload data level
 	void set_level(int level);
@@ -784,6 +787,8 @@ class POPState {
 
 	// Active faces needed by the current LoD (indexes into lod_tri_pnts).
 	std::vector<int> lod_tris;
+	std::vector<int> lod_tri_sources;
+	std::vector<fastf_t> lod_corner_uvs;
 
 	// This is where we store the active points - i.e., those needed for
 	// the current LoD.  When initially creating the breakout from BoT data
@@ -1239,11 +1244,15 @@ POPState::tri_pop_load(int start_level, int level)
 	bu_vls_sprintf(&kbuf, "%s%d", CACHE_TRI_LEVEL, i);
 	int *b = NULL;
 	size_t bsize = cache_get((void **)&b, bu_vls_cstr(&kbuf));
-	if (bsize != level_tricnt[i]*3*sizeof(int)) {
+	if (bsize != level_tricnt[i]*4*sizeof(int)) {
 	    bu_log("Incorrect data size found loading level %d tri data\n", i);
+	    cache_done();
 	    return;
 	}
-	lod_tris.insert(lod_tris.end(), &b[0], &b[level_tricnt[i]*3]);
+	for (size_t j = 0; j < level_tricnt[i]; j++, b += 4) {
+	    lod_tris.insert(lod_tris.end(), b, b + 3);
+	    lod_tri_sources.push_back(b[3]);
+	}
 	cache_done();
     }
 
@@ -1274,6 +1283,10 @@ POPState::shrink_memory()
     lod_tri_norms.shrink_to_fit();
     lod_tris.clear();
     lod_tris.shrink_to_fit();
+    lod_tri_sources.clear();
+    lod_tri_sources.shrink_to_fit();
+    lod_corner_uvs.clear();
+    lod_corner_uvs.shrink_to_fit();
     lod_tri_pnts_snapped.clear();
     lod_tri_pnts_snapped.shrink_to_fit();
 }
@@ -1297,6 +1310,8 @@ POPState::tri_pop_trim(int level)
     lod_tri_norms.shrink_to_fit();
     lod_tris.resize(fkeep_cnt*3);
     lod_tris.shrink_to_fit();
+    lod_tri_sources.resize(fkeep_cnt);
+    lod_tri_sources.shrink_to_fit();
 
     // Re-snap all vertices loaded at the new level
     lod_tri_pnts_snapped.clear();
@@ -1367,6 +1382,59 @@ POPState::get_level(fastf_t vlen)
     return POP_MAXLEVEL - 1;
 }
 
+int
+POPState::texture_level(const struct bview *v, int level) const
+{
+    if (level > max_pop_threshold_level || v->gv_width <= 0 || v->gv_height <= 0)
+	return level;
+
+    mat_t model, clip;
+    bn_mat_mul(model, v->gv_model2view, lod->s->s_mat);
+    const fastf_t aspect = (fastf_t)v->gv_width / (fastf_t)v->gv_height;
+    HSCALE(&model[4], &model[4], aspect);
+    if (v->gv_perspective > SMALL_FASTF)
+	bn_mat_mul(clip, v->gv_pmat, model);
+    else
+	MAT_COPY(clip, model);
+
+    point_t center;
+    vect_t half_extent, snap_range;
+    VADD2SCALE(center, bbmin, bbmax, 0.5);
+    VSUB2SCALE(half_extent, bbmax, bbmin, 0.5);
+    VSET(snap_range, (fastf_t)maxx - minx, (fastf_t)maxy - miny, (fastf_t)maxz - minz);
+
+    vect_t middle, span, shift;
+    const int offsets[3] = {0, 4, 12};  // X, Y and homogeneous W rows
+    for (int i = 0; i < 3; i++) {
+	const fastf_t *row = &clip[offsets[i]];
+	vect_t abs_row;
+	VSET(abs_row, fabs(row[0]), fabs(row[1]), fabs(row[2]));
+	middle[i] = VDOT(row, center) + row[3];
+	span[i] = VDOT(abs_row, half_extent);
+	shift[i] = VDOT(abs_row, snap_range);
+    }
+
+    const fastf_t min_w = middle[2] - span[2];
+    const fastf_t limit = v->gv_s->lod_texture_error;
+    for (; level <= max_pop_threshold_level; level++) {
+	// The quantizer moves a coordinate by at most half a grid cell.
+	const fastf_t step = PRECOMPUTED_MASKS[level] / (2.0 * USHRT_MAX);
+	const fastf_t dw = shift[2] * step;
+	// Perspective displacement is unbounded if the snapped box can
+	// cross the eye plane. Continue refining until the projection is safe.
+	if (min_w <= dw)
+	    continue;
+	const fastf_t x_max = fabs(middle[0]) + span[0];
+	const fastf_t y_max = fabs(middle[1]) + span[1];
+	const fastf_t displaced_w = min_w - dw;
+	const fastf_t dx = (shift[0] * step + x_max / min_w * dw) / displaced_w;
+	const fastf_t dy = (shift[1] * step + y_max / min_w * dw) / displaced_w;
+	if (hypot(dx * v->gv_width * 0.5, dy * v->gv_height * 0.5) <= limit)
+	    break;
+    }
+    return level;
+}
+
 void
 POPState::set_level(int level)
 {
@@ -1374,12 +1442,16 @@ POPState::set_level(int level)
     if (level == curr_level && !force_update)
 	return;
 
+    lod_corner_uvs.clear();
+
     // If we're doing a forced update, it's like starting from
     // scratch - reset to 0
     if (force_update) {
 	force_update = false;
-	set_level(0);
-	set_level(level);
+	if (curr_level > max_pop_threshold_level && full_detail_clear_clbk)
+	    (*full_detail_clear_clbk)(lod, detail_clbk_data);
+	shrink_memory();
+	curr_level = -1;
     }
 
     //    int64_t start, elapsed;
@@ -1423,14 +1495,7 @@ POPState::set_level(int level)
     if (level > curr_level && level > max_pop_threshold_level && curr_level <= max_pop_threshold_level) {
 
 	// Clear the LoD data - we need the full set now
-	lod_tri_pnts_snapped.clear();
-	lod_tri_pnts_snapped.shrink_to_fit();
-	lod_tri_pnts.clear();
-	lod_tri_pnts.shrink_to_fit();
-	lod_tri_norms.clear();
-	lod_tri_norms.shrink_to_fit();
-	lod_tris.clear();
-	lod_tris.shrink_to_fit();
+	shrink_memory();
 
 	// Use the callback to set up the full data pointers
 	if (full_detail_setup_clbk)
@@ -1564,10 +1629,11 @@ POPState::cache_tri()
 	    // Write out the mapped triangle indices
 	    std::vector<size_t>::iterator s_it;
 	    for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
-		int vt[3];
+		int vt[4];
 		vt[0] = (int)tri_ind_map[faces_array[3*(*s_it)+0]];
 		vt[1] = (int)tri_ind_map[faces_array[3*(*s_it)+1]];
 		vt[2] = (int)tri_ind_map[faces_array[3*(*s_it)+2]];
+		vt[3] = (int)*s_it;
 		s.write(reinterpret_cast<const char *>(&vt[0]), sizeof(vt));
 	    }
 	    bu_vls_sprintf(&kbuf, "%s%d", CACHE_TRI_LEVEL, i);
@@ -1837,6 +1903,109 @@ bv_mesh_lod_destroy(struct bv_mesh_lod *lod)
     BU_PUT(lod, struct bv_mesh_lod);
 }
 
+struct lod_uv_fit {
+    point2d_t shift = {0.0, 0.0};
+    fastf_t weight = 0.0;
+    fastf_t max_edge_sq = 0.0;
+};
+
+static uint64_t
+lod_uv_vertex_key(int point, int uv)
+{
+    return ((uint64_t)(uint32_t)point << std::numeric_limits<uint32_t>::digits) | (uint32_t)uv;
+}
+
+const point2d_t *
+bv_mesh_lod_snapped_uvs(struct bv_mesh_lod *lod)
+{
+    if (!lod || !lod->i || !lod->faces || !lod->face_sources || !lod->uvs || !lod->face_uvs ||
+	!lod->points || !lod->points_orig || lod->fcnt <= 0)
+	return NULL;
+
+    auto &result = ((struct bv_mesh_lod_internal *)lod->i)->s->lod_corner_uvs;
+    if (!result.empty())
+	return (const point2d_t *)result.data();
+
+    // Match the position and UV index together. Sharing a position alone
+    // would let a seam's unrelated texture coordinates influence the fit.
+    std::unordered_map<uint64_t, lod_uv_fit> fits;
+    for (int i = 0; i < lod->fcnt; i++) {
+	const int source = lod->face_sources[i];
+	const int *face = &lod->faces[(size_t)i * 3];
+	if (source < 0 || (size_t)source >= lod->uv_face_count ||
+	    face[0] < 0 || face[0] >= lod->pcnt || face[1] < 0 ||
+	    face[1] >= lod->pcnt || face[2] < 0 || face[2] >= lod->pcnt)
+	    return NULL;
+
+	const int *indices = &lod->face_uvs[(size_t)source * 3];
+	const auto &a = lod->points_orig[face[0]];
+	const auto &b = lod->points_orig[face[1]];
+	const auto &c = lod->points_orig[face[2]];
+	vect_t ab, ac, normal;
+	VSUB2(ab, b, a);
+	VSUB2(ac, c, a);
+	VCROSS(normal, ab, ac);
+	const fastf_t area_sq = MAGSQ(normal);
+	const fastf_t edge_sq = std::max({MAGSQ(ab), MAGSQ(ac), DIST_PNT_PNT_SQ(b, c)});
+	if (!(area_sq > SMALL_FASTF * edge_sq * edge_sq) || !std::isfinite(area_sq))
+	    continue;
+
+	// These vectors give the change in barycentric coordinates for a
+	// displacement projected onto the original triangle's plane.
+	vect_t dual_b, dual_c;
+	VCROSS(dual_b, ac, normal);
+	VCROSS(dual_c, normal, ab);
+	vect2d_t uv_ab, uv_ac, uv_bc;
+	V2SUB2(uv_ab, lod->uvs[indices[1]], lod->uvs[indices[0]]);
+	V2SUB2(uv_ac, lod->uvs[indices[2]], lod->uvs[indices[0]]);
+	V2SUB2(uv_bc, uv_ac, uv_ab);
+	const fastf_t uv_edge_sq[] = {V2DOT(uv_ab, uv_ab), V2DOT(uv_bc, uv_bc), V2DOT(uv_ac, uv_ac)};
+
+	// Weight by squared altitude so thin triangles with steep gradients
+	// have less influence on a corner shared by better-conditioned faces.
+	const fastf_t weight = area_sq / edge_sq;
+	for (int j = 0; j < 3; j++) {
+	    vect_t displacement;
+	    VSUB2(displacement, lod->points[face[j]], lod->points_orig[face[j]]);
+	    const fastf_t wb = VDOT(displacement, dual_b) / area_sq;
+	    const fastf_t wc = VDOT(displacement, dual_c) / area_sq;
+	    auto &fit = fits[lod_uv_vertex_key(face[j], indices[j])];
+	    fit.shift[0] += weight * (wb * uv_ab[0] + wc * uv_ac[0]);
+	    fit.shift[1] += weight * (wb * uv_ab[1] + wc * uv_ac[1]);
+	    fit.weight += weight;
+	    fit.max_edge_sq = std::max({fit.max_edge_sq, uv_edge_sq[j], uv_edge_sq[(j + 2) % 3]});
+	}
+    }
+
+    // Allow local extrapolation but limit it to one incident UV edge length
+    // to avoid long jumps across the texture atlas at coarser levels.
+    for (auto &entry : fits) {
+	auto &fit = entry.second;
+	V2SCALE(fit.shift, fit.shift, 1.0 / fit.weight);
+	const fastf_t move_sq = V2DOT(fit.shift, fit.shift);
+	if (!std::isfinite(move_sq)) {
+	    V2SET(fit.shift, 0.0, 0.0);
+	} else if (move_sq > fit.max_edge_sq) {
+	    V2SCALE(fit.shift, fit.shift, sqrt(fit.max_edge_sq / move_sq));
+	}
+    }
+
+    result.resize((size_t)lod->fcnt * 3 * 2);
+    for (int i = 0; i < lod->fcnt; i++) {
+	const size_t offset = (size_t)i * 3;
+	const int *indices = &lod->face_uvs[(size_t)lod->face_sources[i] * 3];
+	for (int j = 0; j < 3; j++) {
+	    const int uv = indices[j];
+	    auto fit = fits.find(lod_uv_vertex_key(lod->faces[offset + j], uv));
+	    fastf_t *out = &result[(offset + j) * 2];
+	    V2MOVE(out, lod->uvs[uv]);
+	    if (fit != fits.end())
+		V2ADD2(out, out, fit->second.shift);
+	}
+    }
+    return (const point2d_t *)result.data();
+}
+
 static void
 dlist_stale(struct bv_scene_obj *s)
 {
@@ -1871,8 +2040,9 @@ bv_mesh_lod_level(struct bv_scene_obj *s, int level, int reset)
     if (sp->curr_level <= sp->max_pop_threshold_level) {
 	l->fcnt = (int)sp->lod_tris.size()/3;
 	l->faces = sp->lod_tris.data();
+	l->face_sources = sp->lod_tri_sources.data();
 	l->points_orig = (const point_t *)sp->lod_tri_pnts.data();
-	l->porig_cnt = (int)sp->lod_tri_pnts.size();
+	l->porig_cnt = (int)(sp->lod_tri_pnts.size()/3);
 #if 0
 	// TODO - there's still some error with normals - they seem to work,
 	// but when zooming way out and back in (at least on Windows) we're
@@ -1885,8 +2055,11 @@ bv_mesh_lod_level(struct bv_scene_obj *s, int level, int reset)
 #else
 	l->normals = NULL;
 #endif
-	l->points = (const point_t *)sp->lod_tri_pnts_snapped.data();
-	l->pcnt = (int)sp->lod_tri_pnts_snapped.size();
+	l->points = sp->lod_tri_pnts_snapped.empty() ? NULL :
+	    (const point_t *)sp->lod_tri_pnts_snapped.data();
+	l->pcnt = (int)(sp->lod_tri_pnts_snapped.size()/3);
+    } else {
+	l->face_sources = NULL;
     }
 
     bv_log(2, "bv_mesh_lod_level %s[%d](%d): %d", bu_vls_cstr(&s->s_name), level, reset, l->fcnt);
@@ -1915,6 +2088,9 @@ bv_mesh_lod_view(struct bv_scene_obj *s, struct bview *v, int reset)
     int vscale = (int)((double)sp->get_level(v->gv_size) * v->gv_s->lod_scale);
     vscale = (vscale < 0) ? 0 : vscale;
     vscale = (vscale >= POP_MAXLEVEL) ? POP_MAXLEVEL-1 : vscale;
+    if (s->s_texture && s->s_texture->rgb && s->s_os->s_dmode > 0 &&
+	v->gv_s->lod_texture_error > 0.0)
+	vscale = sp->texture_level(v, vscale);
 
     bv_log(2, "bv_mesh_lod_view %s[%s][%d]", bu_vls_cstr(&s->s_name), bu_vls_cstr(&v->gv_name), vscale);
 
@@ -1937,8 +2113,13 @@ bv_mesh_lod_memshrink(struct bv_scene_obj *s)
 
     struct bv_mesh_lod_internal *i = (struct bv_mesh_lod_internal *)l->i;
     POPState *sp = i->s;
+    if (sp->curr_level > sp->max_pop_threshold_level && sp->full_detail_clear_clbk)
+	(*sp->full_detail_clear_clbk)(l, sp->detail_clbk_data);
     sp->shrink_memory();
-    bu_log("memshrink\n");
+    l->fcnt = l->pcnt = l->porig_cnt = 0;
+    l->faces = l->face_sources = NULL;
+    l->points = l->points_orig = NULL;
+    l->normals = NULL;
 }
 
 static void
@@ -2075,9 +2256,7 @@ bv_mesh_lod_free(struct bv_scene_obj *s)
 {
     if (!s || !s->draw_data)
 	return;
-    struct bv_mesh_lod *l = (struct bv_mesh_lod *)s->draw_data;
-    struct bv_mesh_lod_internal *i = (struct bv_mesh_lod_internal *)l->i;
-    delete i->s;
+    bv_mesh_lod_destroy((struct bv_mesh_lod *)s->draw_data);
     s->draw_data = NULL;
 }
 

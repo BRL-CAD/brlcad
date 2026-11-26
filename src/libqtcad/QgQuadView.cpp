@@ -215,6 +215,7 @@ QgQuadView::changeToQuadFrame()
 	// enabled - we lose the memory and performance benefits if we have to
 	// load a full-sized mesh in one of them.
 	views[i]->view()->gv_s->adaptive_plot_mesh = views[UPPER_RIGHT_QUADRANT]->view()->gv_s->adaptive_plot_mesh;
+	views[i]->view()->gv_s->lod_texture_error = views[UPPER_RIGHT_QUADRANT]->view()->gv_s->lod_texture_error;
 	// For consistency, do the same with CSG lod - this actually cuts against
 	// us in memory usage as a rule, but default to matching the mesh setting
 	// behavior

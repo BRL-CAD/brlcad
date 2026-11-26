@@ -454,6 +454,14 @@ class GED_EXPORT DbiState {
 	unsigned long long update_dp(struct directory *dp, int reset);
 	unsigned int color_int(struct bu_color *);
 	int int_color(struct bu_color *c, unsigned int);
+	const struct bv_texture *path_texture(const std::vector<unsigned long long> &path);
+	struct TextureImage {
+	    struct bv_texture image = {};
+	    std::vector<unsigned char> pixels;
+	};
+	void load_texture(TextureImage &texture, const std::string &name);
+	std::map<std::string, std::map<std::pair<int, int>, TextureImage>> textures;
+	std::unordered_map<unsigned long long, std::pair<std::string, bool>> shaders;
 	struct resource *res = NULL;
 	struct ged_draw_cache *dcache = NULL;
 	ged_event_observer_token event_observer = 0;

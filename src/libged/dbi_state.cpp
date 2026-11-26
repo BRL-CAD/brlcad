@@ -48,6 +48,7 @@ extern "C" {
 #include "bu/path.h"
 #include "bu/opt.h"
 #include "bu/sort.h"
+#include "bg/plane.h"
 #include "bv/lod.h"
 #include "raytrace.h"
 #include "ged/defines.h"
@@ -56,6 +57,8 @@ extern "C" {
 #include "./ged_private.h"
 
 #include "./dbi.h"
+
+extern "C" void draw_free_data(struct bv_scene_obj *);
 
 // Subdirectory in BRL-CAD cache to Dbi state data
 #define DBI_CACHEDIR ".Dbi"
@@ -561,8 +564,14 @@ DbiState::populate_maps(struct directory *dp, unsigned long long phash, int rese
 	if (rt_db_get_internal(&in, dp, dbip, NULL) < 0)
 	    return;
 	struct rt_comb_internal *comb = (struct rt_comb_internal *)in.idb_ptr;
-	if (!comb->tree)
+	if (bu_vls_strlen(&comb->shader))
+	    shaders[phash] = {bu_vls_cstr(&comb->shader), comb->inherit != 0};
+	else
+	    shaders.erase(phash);
+	if (!comb->tree) {
+	    rt_db_free_internal(&in);
 	    return;
+	}
 
 	std::unordered_map<unsigned long long, unsigned long long> i_count;
 	struct walk_data d;
@@ -1149,6 +1158,104 @@ DbiState::path_color(struct bu_color *c, std::vector<unsigned long long> &elemen
     return false;
 }
 
+void
+DbiState::load_texture(TextureImage &texture, const std::string &name)
+{
+    auto &image = texture.image;
+    image.rgb = NULL;
+    image.key = 0;
+    texture.pixels.clear();
+    const size_t channels = 3;
+    if ((size_t)image.width > SIZE_MAX / (size_t)image.height / channels)
+	return;
+    const size_t bytes = (size_t)image.width * (size_t)image.height * channels;
+
+    struct directory *dp = db_lookup(dbip, name.c_str(), LOOKUP_QUIET);
+    if (!dp || dp->d_major_type != DB5_MAJORTYPE_BINARY_UNIF ||
+	dp->d_minor_type != DB5_MINORTYPE_BINU_8BITINT_U)
+	return;
+    struct rt_db_internal ip;
+    RT_DB_INTERNAL_INIT(&ip);
+    if (rt_db_get_internal(&ip, dp, dbip, NULL) < 0)
+	return;
+
+    const auto *bin = (const struct rt_binunif_internal *)ip.idb_ptr;
+    if (bin->count == bytes) {
+	texture.pixels.assign(bin->u.uint8, bin->u.uint8 + bytes);
+	image.rgb = texture.pixels.data();
+	image.key = bu_data_hash(image.rgb, bytes);
+    }
+    rt_db_free_internal(&ip);
+}
+
+const struct bv_texture *
+DbiState::path_texture(const std::vector<unsigned long long> &path)
+{
+    const std::string *shader = NULL;
+    // Material inheritance stops at the first region, as it does for rt.
+    for (auto hash : path) {
+	auto occurrence = i_map.find(hash);
+	if (occurrence != i_map.end())
+	    hash = occurrence->second;
+	auto entry = shaders.find(hash);
+	if (entry != shaders.end()) {
+	    shader = &entry->second.first;
+	    if (entry->second.second)
+		break;
+	}
+	struct directory *dp = get_hdp(hash);
+	if (dp && (dp->d_flags & RT_DIR_REGION))
+	    break;
+    }
+    if (!shader)
+	return NULL;
+
+    int argc = 0;
+    const char **argv = NULL;
+    if (bu_argv_from_tcl_list(shader->c_str(), &argc, &argv))
+	return NULL;
+    std::string options;
+    if (argc == 2 && BU_STR_EQUAL(argv[0], "texture"))
+	options = argv[1];
+    bu_free(argv, "shader words");
+    if (options.empty() || bu_argv_from_tcl_list(options.c_str(), &argc, &argv))
+	return NULL;
+
+    // Use the opaque, embedded RGB form of the texture shader.
+    const int default_width = 512;
+    int width = default_width;
+    int height = -1;
+    std::string name;
+    bool valid = argc % 2 == 0;
+    for (int i = 0; valid && i < argc; i += 2) {
+	const char *key = argv[i];
+	const char *value = argv[i+1];
+	if (BU_STR_EQUAL(key, "obj") || BU_STR_EQUAL(key, "object")) {
+	    name = value;
+	} else if (BU_STR_EQUAL(key, "w")) {
+	    valid = bu_opt_int(NULL, 1, &value, &width) == 1 && width > 0;
+	} else if (BU_STR_EQUAL(key, "n") || BU_STR_EQUAL(key, "l")) {
+	    valid = bu_opt_int(NULL, 1, &value, &height) == 1 && height > 0;
+	} else {
+	    valid = false;
+	}
+    }
+    bu_free(argv, "texture options");
+    if (!valid || name.empty())
+	return NULL;
+    if (height < 0)
+	height = width;
+
+    auto result = textures[name].emplace(std::make_pair(width, height), TextureImage{});
+    auto &texture = result.first->second;
+    if (result.second) {
+	texture.image.width = width;
+	texture.image.height = height;
+	load_texture(texture, name);
+    }
+    return &texture.image;
+}
+
 bool
 DbiState::path_is_subtraction(std::vector<unsigned long long> &elements)
 {
@@ -1268,6 +1375,18 @@ DbiState::get_path_matrix(matp_t m, std::vector<unsigned long long> &elements)
     return have_mat;
 }
 
+static void
+extend_instance_bbox(point_t *bbmin, point_t *bbmax, const mat_t mat,
+	const point_t local_min, const point_t local_max)
+{
+    if (mat) {
+	bg_rotate_bbox(*bbmin, *bbmax, mat, local_min, local_max);
+    } else {
+	VMINMAX(*bbmin, *bbmax, local_min);
+	VMINMAX(*bbmin, *bbmax, local_max);
+    }
+}
+
 bool
 DbiState::get_bbox(point_t *bbmin, point_t *bbmax, matp_t curr_mat, unsigned long long hash)
 {
@@ -1296,16 +1415,7 @@ DbiState::get_bbox(point_t *bbmin, point_t *bbmax, matp_t curr_mat, unsigned lon
 	lbmax[Y] = b_it->second[4];
 	lbmax[Z] = b_it->second[5];
 
-	if (curr_mat) {
-	    point_t tbmin, tbmax;
-	    MAT4X3PNT(tbmin, curr_mat, lbmin);
-	    VMOVE(lbmin, tbmin);
-	    MAT4X3PNT(tbmax, curr_mat, lbmax);
-	    VMOVE(lbmax, tbmax);
-	}
-
-	VMINMAX(*bbmin, *bbmax, lbmin);
-	VMINMAX(*bbmin, *bbmax, lbmax);
+	extend_instance_bbox(bbmin, bbmax, curr_mat, lbmin, lbmax);
 	return true;
     }
 
@@ -1375,13 +1485,15 @@ DbiState::get_bbox(point_t *bbmin, point_t *bbmax, matp_t curr_mat, unsigned lon
     if (!dp)
 	return false;
     if (!have_bbox) {
-	if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && gedp->ged_lod) {
+	if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD &&
+	    dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && gedp->ged_lod) {
 	    key = bv_mesh_lod_key_get(gedp->ged_lod, dp->d_namep);
 	    if (key) {
 		struct bv_mesh_lod *lod = bv_mesh_lod_create(gedp->ged_lod, key);
 		if (lod) {
 		    VMOVE(bmin, lod->bmin);
 		    VMOVE(bmax, lod->bmax);
+		    bv_mesh_lod_destroy(lod);
 		    have_bbox = true;
 
 		    std::stringstream s;
@@ -1416,8 +1528,7 @@ DbiState::get_bbox(point_t *bbmin, point_t *bbmax, matp_t curr_mat, unsigned lon
 	for (size_t j = 0; j < 3; j++)
 	    bboxes[hash].push_back(bmax[j]);
 
-	VMINMAX(*bbmin, *bbmax, bmin);
-	VMINMAX(*bbmin, *bbmax, bmax);
+	extend_instance_bbox(bbmin, bbmax, curr_mat, bmin, bmax);
 	ret = true;
     }
 
@@ -1677,6 +1788,20 @@ DbiState::reconcile(const DbiStateChange &change)
 	changed_hashes.insert(hash);
     }
 
+    // Texture objects can change independently of any combination path.
+    for (auto &entry : textures) {
+	const std::string &name = entry.first;
+	if (!change.rebuild && !change.modified.count(name) &&
+	    !change.added.count(name) && !change.removed.count(name) &&
+	    !change.renamed.count(name) &&
+	    std::none_of(change.renamed.begin(), change.renamed.end(),
+		[&name](const auto &rename) { return rename.second == name; }))
+	    continue;
+	for (auto &image : entry.second)
+	    load_texture(image.second, name);
+	ret |= GED_DBISTATE_VIEW_CHANGE;
+    }
+
     // Update the primary data structures
     for(s_it = removed.begin(); s_it != removed.end(); s_it++) {
 	bu_log("removed: %llu\n", *s_it);
@@ -1701,6 +1826,7 @@ DbiState::reconcile(const DbiStateChange &change)
 	c_inherit.erase(*s_it);
 	rgb.erase(*s_it);
 	region_id.erase(*s_it);
+	shaders.erase(*s_it);
 	matrices.erase(*s_it);
 	i_bool.erase(*s_it);
 
@@ -2585,18 +2711,19 @@ BViewState::scene_obj(
     ud->tol = &wdbp->wdb_tol;
     ud->ttol = &wdbp->wdb_ttol;
     ud->mesh_c = dbis->gedp->ged_lod;
+    if ((curr_mode == 1 || curr_mode == 2) && dp->d_major_type == DB5_MAJORTYPE_BRLCAD &&
+	dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && !(vs && vs->color_override))
+	ud->texture = dbis->path_texture(path_hashes);
     sp->dp = dp;
     sp->s_i_data = (void *)ud;
+    sp->s_free_callback = &draw_free_data;
 
     // Get color from path, unless we're overridden
     struct bu_color c;
     dbis->path_color(&c, path_hashes);
     bu_color_to_rgb_chars(&c, sp->s_color);
     if (vs && vs->color_override) {
-	// TODO - shouldn't be using s_color for the override...
-	sp->s_color[0] = vs->color[0];
-	sp->s_color[1] = vs->color[1];
-	sp->s_color[2] = vs->color[2];
+	VMOVE(sp->s_color, vs->color);
     }
 
     // Set drawing mode
@@ -2939,6 +3066,7 @@ BViewState::refresh(struct bview *v, int argc, const char **argv)
 	    struct bv_scene_obj *nso = bv_obj_get(v, BV_DB_OBJS);
 	    bv_obj_sync(nso, s);
 	    nso->s_i_data = s->s_i_data;
+	    nso->s_free_callback = s->s_free_callback;
 	    s->s_i_data = NULL;
 	    s_map[*k_it].erase(mm_it->first);
 	    ret = GED_DBISTATE_VIEW_CHANGE;
