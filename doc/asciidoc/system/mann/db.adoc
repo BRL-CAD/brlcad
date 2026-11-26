@@ -57,6 +57,8 @@ For a DB4 file, run `dbupgrade legacy.g new.g` from a terminal. Open `new.g` and
 __history status [--json]__::
 Report the active history mode and available undo and redo operations. Session history reports the oldest retained revision and journal usage. Embedded history reports the selected revision, archive status, and access state. Workspace history reports the revision open in this document, its generation, and the last exported revision and export time when available. If another writer advances the workspace, status reports both the open revision and the current head. If an external editor changes a DB5 model independently of its embedded archive, GED permits inspection and protects the file from further edits.
 +
+QGED shows when Undo reaches the retained history boundary. The History dialog and status bar tooltip show the session journal limit or the open and current workspace revisions when they differ. The controls refresh when their window is activated.
++
 Use `--json` for a structured status object with schema version 1. Revision IDs are strings. `last_export_time` is in Unix seconds. Optional values are null when unavailable. `undo` is a single action or null, and `redo` is an array of actions. Actions report the destination revision, the operation label, and whether the child is preferred. Applications can query the same state using `ged_history_status_create` from `ged/history.h`.
 
 

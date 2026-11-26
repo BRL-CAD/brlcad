@@ -56,6 +56,16 @@
 #include "plugins/plugin.h"
 #include "QgEdPalette.h"
 
+struct ged_history_status;
+
+struct QgHistoryStatusText {
+    QString label;
+    QString details;
+};
+
+QgHistoryStatusText qged_history_status_text(const struct ged_history_status &status);
+bool qged_history_writable(const struct ged_history_status *status, bool command_pending);
+
 class QgEdMainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -103,6 +113,7 @@ class QgEdMainWindow : public QMainWindow
 
     private:
 
+	bool event(QEvent *event) override;
 	void CreateWidgets(int canvas_type);
 	void LocateWidgets();
 	void ConnectWidgets();

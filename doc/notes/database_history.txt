@@ -622,6 +622,15 @@ the same selection, preview and checkout sequence. The GED regression
 exercised exact Show, preview, Checkout and Redo across session,
 embedded and workspace history.
 
+QGED explained disabled Undo at the oldest retained revision in a
+700-byte session journal and in a pruned workspace. The session view
+listed the oldest revision and the bytes used. After a second process
+edited a workspace, activating the QGED window disabled Undo and
+showed the open and current revision IDs and generations. The same
+activation check passed on the M1917 workspace copy. Reactivating an
+already open History dialog also disabled checkpoint changes. After a
+portable export, both status views displayed its recorded time.
+
 QGED drew a primitive from an independent revision preview while
 the working file was at an earlier revision. Opening and closing the
 preview left the DB5 file byte-identical. The M1917 workspace preview

@@ -26,7 +26,7 @@
 #include <memory>
 
 #include <QCursor>
-#include <QDateTime>
+#include <QEvent>
 #include <QKeySequence>
 #include <QTimer>
 #include <QMessageBox>
@@ -386,6 +386,7 @@ QgEdMainWindow::SetupMenu()
     connect(app, &QgEdApp::history_update, this, &QgEdMainWindow::UpdateHistoryControls);
     connect(app, &QgEdApp::dbi_update, this, &QgEdMainWindow::UpdateHistoryControls);
     history_mode = new QLabel(this);
+    history_mode->setTextFormat(Qt::PlainText);
     statusBar()->addPermanentWidget(history_mode);
     history_mode->hide();
 
@@ -399,6 +400,15 @@ QgEdMainWindow::SetupMenu()
     menuBar()->addMenu("Help");
 }
 
+bool
+QgEdMainWindow::event(QEvent *event)
+{
+    const bool handled = QMainWindow::event(event);
+    if (event->type() == QEvent::WindowActivate && history_mode)
+	UpdateHistoryControls();
+    return handled;
+}
+
 void
 QgEdMainWindow::UpdateHistoryControls()
 {
@@ -406,8 +416,7 @@ QgEdMainWindow::UpdateHistoryControls()
     const std::unique_ptr<const struct ged_history_status, decltype(&ged_history_status_destroy)>
 	status(app->mdl ? ged_history_status_create(app->mdl->gedp, nullptr) : nullptr,
 	    ged_history_status_destroy);
-    const bool writable = !app->command_pending() && status && status->state == GED_HISTORY_CURRENT &&
-	status->writable && !status->edit_active && !status->staged_conflict;
+    const bool writable = qged_history_writable(status.get(), app->command_pending());
     const char *undo_label = status ? status->undo.label : nullptr;
     const char *redo_label = nullptr;
     if (status) {
@@ -425,27 +434,10 @@ QgEdMainWindow::UpdateHistoryControls()
     history_view->setEnabled(status && status->mode != GED_HISTORY_DISABLED);
     history_save_staged->setEnabled(!app->command_pending() && status && status->staged_conflict);
 
-    QString mode;
-    QString export_time;
-    if (status) {
-	switch (status->mode) {
-	    case GED_HISTORY_DISABLED: break;
-	    case GED_HISTORY_SESSION: mode = tr("Session history"); break;
-	    case GED_HISTORY_EMBEDDED: mode = tr("Embedded history"); break;
-	    case GED_HISTORY_WORKSPACE: mode = tr("Workspace"); break;
-	}
-	if (status->staged_conflict)
-	    mode += tr(" · Staged edit");
-	else if (!mode.isEmpty() && !status->writable)
-	    mode += tr(" (read-only)");
-	if (status->exported_revision)
-	    mode += tr(" · Exported %1").arg(QString::fromUtf8(status->exported_revision).left(12));
-	if (status->exported_at)
-	    export_time = tr("Last DB5 export at %1").arg(QDateTime::fromSecsSinceEpoch(status->exported_at).toUTC().toString(Qt::ISODate));
-    }
-    history_mode->setText(mode);
-    history_mode->setToolTip(export_time);
-    history_mode->setVisible(!mode.isEmpty());
+    const auto text = status ? qged_history_status_text(*status) : QgHistoryStatusText{};
+    history_mode->setText(text.label);
+    history_mode->setToolTip(text.details);
+    history_mode->setVisible(!text.label.isEmpty());
 }
 
 void

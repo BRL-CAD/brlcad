@@ -22,8 +22,10 @@
 
 #include <memory>
 
+#include <QDateTime>
 #include <QDialog>
 #include <QDialogButtonBox>
+#include <QEvent>
 #include <QHash>
 #include <QHeaderView>
 #include <QHBoxLayout>
@@ -34,6 +36,7 @@
 #include <QPushButton>
 #include <QSet>
 #include <QSignalBlocker>
+#include <QStringList>
 #include <QTreeWidget>
 #include <QVBoxLayout>
 
@@ -44,6 +47,85 @@
 #include "QgEdApp.h"
 #include "QgEdMainWindow.h"
 #include "../libged/dbi.h"
+
+bool
+qged_history_writable(const struct ged_history_status *status, bool command_pending)
+{
+    return !command_pending && status && status->state == GED_HISTORY_CURRENT &&
+	status->writable && !status->edit_active && !status->staged_conflict;
+}
+
+QgHistoryStatusText
+qged_history_status_text(const struct ged_history_status &status)
+{
+    const auto tr = [](const char *text) { return QgEdMainWindow::tr(text); };
+    QStringList label, details;
+    switch (status.mode) {
+	case GED_HISTORY_DISABLED: return {};
+	case GED_HISTORY_SESSION: label << tr("Session history"); break;
+	case GED_HISTORY_EMBEDDED: label << tr("Embedded history"); break;
+	case GED_HISTORY_WORKSPACE: label << tr("Workspace"); break;
+    }
+
+    if (status.staged_conflict) {
+	label << tr("Staged edit");
+	details << tr("Use Save Staged Edit As to keep the edit before reopening the database.");
+    } else {
+	switch (status.state) {
+	    case GED_HISTORY_INACTIVE: break;
+	    case GED_HISTORY_CURRENT:
+		if (!status.writable) {
+		    label << tr("Read-only");
+		    details << tr("You can inspect retained revisions in this read-only document.");
+		}
+		break;
+	    case GED_HISTORY_STALE:
+		label << tr("Changed on disk");
+		details << tr("Reopen the database to continue editing.");
+		if (status.workspace_head && status.selected_revision) {
+		    details << tr("Open revision %1 (generation %2)")
+			.arg(QString::fromLatin1(status.selected_revision).left(12)).arg(static_cast<qulonglong>(status.generation));
+		    details << tr("Workspace head %1 (generation %2)")
+			.arg(QString::fromLatin1(status.workspace_head).left(12)).arg(static_cast<qulonglong>(status.workspace_generation));
+		}
+		break;
+	    case GED_HISTORY_EXTERNAL_EDITS:
+		label << tr("External DB5 edits");
+		details << tr("Use db history adopt to inspect the changes made outside this editor.");
+		break;
+	    case GED_HISTORY_MALFORMED:
+		label << tr("Unreadable history");
+		details << tr("The saved history could not be read.");
+		break;
+	    case GED_HISTORY_UNSUPPORTED:
+		label << tr("Unsupported history format");
+		details << tr("This release cannot read the saved history format.");
+		break;
+	    case GED_HISTORY_UNAVAILABLE:
+		label << tr("Unavailable");
+		details << tr("Close all open views and reopen the database to reload its history.");
+		break;
+	}
+    }
+
+    if (status.retention_boundary) {
+	label << tr("Undo limit reached");
+	details << tr("Earlier revisions on this branch have expired.");
+    }
+    if (status.oldest_revision) {
+	details << tr("Oldest retained revision %1. Journal uses %L2 of %L3 bytes.")
+	    .arg(QString::fromLatin1(status.oldest_revision))
+	    .arg(static_cast<qulonglong>(status.session_bytes)).arg(static_cast<qulonglong>(status.session_limit));
+    }
+    if (status.edit_active)
+	details << tr("Finish the current edit before changing revisions.");
+    if (status.exported_revision)
+	label << tr("Exported %1").arg(QString::fromLatin1(status.exported_revision).left(12));
+    if (status.exported_at)
+	details << tr("Last DB5 export at %1")
+	    .arg(QDateTime::fromSecsSinceEpoch(status.exported_at).toUTC().toString(Qt::ISODate));
+    return {label.join(QStringLiteral(" · ")), details.join(QLatin1Char('\n'))};
+}
 
 namespace {
 
@@ -58,7 +140,10 @@ private:
     static int addCheckpoint(const char *name, const char *revision, void *data);
     static int addChange(const struct ged_history_change *change, void *data);
 
+    bool event(QEvent *event) override;
     void refresh();
+    void updateStatus(const struct ged_history_status *status);
+    void updateActions(const QString &revision);
     void updateSelection();
     void previewRevision();
     void markRevision();
@@ -68,6 +153,7 @@ private:
     QgEdApp *app;
     QTreeWidget *revisions;
     QTreeWidget *changes;
+    QLabel *status_text = nullptr;
     QLabel *message;
     QPushButton *checkout;
     QPushButton *mark;
@@ -84,6 +170,11 @@ HistoryDialog::HistoryDialog(QgEdApp *application, QWidget *parent) :
     setWindowTitle(tr("Database History"));
 
     auto *layout = new QVBoxLayout(this);
+    status_text = new QLabel(this);
+    status_text->setTextFormat(Qt::PlainText);
+    status_text->setWordWrap(true);
+    layout->addWidget(status_text);
+
     revisions = new QTreeWidget(this);
     revisions->setRootIsDecorated(false);
     revisions->setHeaderLabels({tr("Operation"), tr("Revision"), tr("Parent"), tr("Checkpoints")});
@@ -185,6 +276,36 @@ HistoryDialog::selectedRevision() const
     return item ? item->data(Revision, Qt::UserRole).toString() : QString();
 }
 
+bool
+HistoryDialog::event(QEvent *event)
+{
+    const bool handled = QDialog::event(event);
+    if (event->type() == QEvent::WindowActivate && status_text) {
+	const std::unique_ptr<const struct ged_history_status, decltype(&ged_history_status_destroy)>
+	    status(ged_history_status_create(app->mdl->gedp, nullptr), ged_history_status_destroy);
+	updateStatus(status.get());
+    }
+    return handled;
+}
+
+void
+HistoryDialog::updateStatus(const struct ged_history_status *status)
+{
+    writable = qged_history_writable(status, app->command_pending());
+    mark->setEnabled(writable && (status->mode == GED_HISTORY_EMBEDDED || status->mode == GED_HISTORY_WORKSPACE));
+    const auto text = status ? qged_history_status_text(*status) : QgHistoryStatusText{};
+    status_text->setText(text.details);
+    status_text->setVisible(!text.details.isEmpty());
+    updateActions(selectedRevision());
+}
+
+void
+HistoryDialog::updateActions(const QString &revision)
+{
+    checkout->setEnabled(writable && !revision.isEmpty() && revision != currentRevision);
+    preview->setEnabled(!revision.isEmpty());
+}
+
 void
 HistoryDialog::refresh()
 {
@@ -199,9 +320,7 @@ HistoryDialog::refresh()
     struct bu_vls diagnostic = BU_VLS_INIT_ZERO;
     const std::unique_ptr<const struct ged_history_status, decltype(&ged_history_status_destroy)>
 	status(ged_history_status_create(gedp, &diagnostic), ged_history_status_destroy);
-    writable = !app->command_pending() && status && status->writable && status->state == GED_HISTORY_CURRENT &&
-	!status->edit_active && !status->staged_conflict;
-    mark->setEnabled(writable && (status->mode == GED_HISTORY_EMBEDDED || status->mode == GED_HISTORY_WORKSPACE));
+    updateStatus(status.get());
     if (status && ged_history_visit(gedp, nullptr, addRevision, addCheckpoint, this, &diagnostic) == BRLCAD_OK) {
 	auto *item = revisionItems.value(previous, revisionItems.value(currentRevision));
 	revisions->setCurrentItem(item);
@@ -217,8 +336,7 @@ HistoryDialog::updateSelection()
 {
     changes->clear();
     const QString revision = selectedRevision();
-    checkout->setEnabled(writable && !revision.isEmpty() && revision != currentRevision);
-    preview->setEnabled(!revision.isEmpty());
+    updateActions(revision);
     if (revision.isEmpty())
 	return;
     struct bu_vls diagnostic = BU_VLS_INIT_ZERO;
