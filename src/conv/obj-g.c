@@ -1222,19 +1222,8 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 
 
 /*
- * Populate the triangle index structure with the vertex indexes of
- * one or more triangles which represent a single face. This function
- * triangulates a face and places these triangles into the triangle
- * indexes (ti) structure to be processed later. Only convex
- * faces/polygons with coplanar vertices can be accurately
- * triangulated. It is assumed that when this function is called, the
- * number of face vertices is >= 3. This function allocates the memory
- * for the contents of the triangle indexes (ti) structure and this
- * memory is expected to be freed outside this function.
- *
- * Recommended function improvements:
- * - Correctly triangulate more than convex faces
- * - Warn of faces which may not be triangulated correctly
+ * Append the triangulated face's OBJ indices to ti, which owns the
+ * resulting vertex, normal, and texture index arrays.
  */
 void
 populate_triangle_indexes(struct ga_t *ga,
@@ -1268,8 +1257,6 @@ populate_triangle_indexes(struct ga_t *ga,
     double *facePoints;
     int *triFaces = NULL;
     size_t i, numFacePoints;
-    struct faceuse *fu;
-    const int POINTS_PER_FACE = 3;
 
     if (ti->index_arr_tri == (void *)NULL) {
 
@@ -1350,38 +1337,7 @@ populate_triangle_indexes(struct ga_t *ga,
 	VMOVE(&facePoints[i * ELEMENTS_PER_POINT], tmp_v);
     }
 
-    fu = make_faceuse_from_face(facePoints, numFacePoints, vlfree);
-
-    /* only try triangulation if face is well-formed enough to yield a faceuse */
-    if (fu != NULL) {
-
-	/* do simple or robust triangulation based on whether face is concave or convex */
-	if (nmg_lu_is_convex(BU_LIST_FIRST(loopuse, &fu->lu_hd), vlfree, tol)) {
-
-	    /* compute number of new triangles to create */
-	    if (gfi->num_vertices_arr[face_idx] > 3) {
-		num_new_tri = gfi->num_vertices_arr[face_idx] - 2;
-	    } else {
-		num_new_tri = 1;
-	    }
-
-	    /* create triangles that all start at the first face vertex */
-	    triFaces = (int*)bu_malloc(num_new_tri * POINTS_PER_FACE * sizeof(int), "triFaces");
-
-	    for (vert_idx = 0; vert_idx < num_new_tri; vert_idx++) {
-		triFaces[vert_idx * ELEMENTS_PER_POINT + X] = 0;
-		triFaces[vert_idx * ELEMENTS_PER_POINT + Y] = (int)vert_idx + 1;
-		triFaces[vert_idx * ELEMENTS_PER_POINT + Z] = (int)vert_idx + 2;
-	    }
-
-	    nmg_km(fu->s_p->r_p->m_p);
-	} else {
-	    triangulateFace(&triFaces, &num_new_tri, facePoints, numFacePoints, *tol, vlfree);
-	}
-    } else {
-	num_new_tri = 0;
-    }
-
+    obj_triangulate_face(&triFaces, &num_new_tri, facePoints, numFacePoints, tol, vlfree);
     bu_free(facePoints, "facePoints");
 
     /* if needed, increase size of 'ti->index_arr_tri' array */

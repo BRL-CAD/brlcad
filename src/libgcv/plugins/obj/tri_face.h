@@ -19,24 +19,17 @@
  */
 /** @file tri_face.h
  *
- * triangulateFace routine for triangulating convex/concave planar N-gons.
+ * Shared OBJ face triangulation.
  *
  */
 
 #ifndef LIBGCV_WFOBJ_TRI_FACE_H
 #define LIBGCV_WFOBJ_TRI_FACE_H
 
-struct faceuse*
-make_faceuse_from_face(const double points[], size_t numPoints, struct bu_list *vlfree);
-
+/* Output triangles contain three indices into the input array of 3D points. */
 void
-triangulateFace(
-    int **faces,
-    size_t *numFaces,
-    const double points[],
-    size_t numPoints,
-    struct bn_tol tol,
-    struct bu_list *vlfree);
+obj_triangulate_face(int **faces, size_t *num_faces, const double points[], size_t num_points,
+		     const struct bn_tol *tol, struct bu_list *vlfree);
 
 #endif
 

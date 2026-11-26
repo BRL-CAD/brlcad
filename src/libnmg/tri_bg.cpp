@@ -366,6 +366,9 @@ nmg_tri_fu_bg(struct faceuse *fu, struct bu_list *UNUSED(vlfree),
 	    if (eu->radial_p == eu->eumate_p)
 		continue; /* no adjacent face on this edge */
 	    struct edgeuse *sw = eu->radial_p;
+	    struct faceuse *sw_fu = nmg_find_fu_of_eu(sw);
+	    if (sw_fu == fu || sw_fu == fu->fumate_p)
+		continue; /* this edgeuse will be removed with the face */
 	    /* Key: the side-wall edgeuse's own direction. */
 	    swmap.emplace(VPair{eu_src(sw), eu_dst(sw)}, sw);
 	}
@@ -424,14 +427,21 @@ nmg_tri_fu_bg(struct faceuse *fu, struct bu_list *UNUSED(vlfree),
 	return 1; /* fu unchanged; use ear-clip fallback */
     }
 
-    /* ---- 7. Kill original face, create new triangle faceuses ---- */
+    /* ---- 7. Replace the original face with triangle faceuses ---- */
     struct shell *s = fu->s_p;
-    (void)nmg_kfu(fu); /* fu is now invalid – do not use */
+
+    /* Keep the original loops alive until the replacement triangles have
+     * taken their own uses of the vertices.  A boundary vertex may have
+     * no other use in the shell, and removing its last use frees it. */
 
     /* Map of NEW triangle OT_SAME edgeuses: (src,dst) → edgeuse.
      * Populated in one pass, then consumed in the glue pass.           */
     EdgeMap new_tri_map;
     new_tri_map.reserve((size_t)num_tri * 6); /* 3 edges × 2 directions */
+
+    struct bn_tol geom_tol = *tol;
+    geom_tol.dist = SMALL_FASTF;
+    geom_tol.dist_sq = SMALL_FASTF * SMALL_FASTF;
 
     for (int k = 0; k < num_tri; k++) {
 	int i0 = tri_faces[3*k];
@@ -456,40 +466,15 @@ nmg_tri_fu_bg(struct faceuse *fu, struct bu_list *UNUSED(vlfree),
 	if (tv[0] == tv[1] || tv[1] == tv[2] || tv[0] == tv[2])
 	    continue;
 
-	struct faceuse *nfu = nmg_cface(s, tv, 3);
-	if (!nfu)
+	/* Use a small absolute tolerance to keep valid triangles whose
+	 * vertices are closer together than tol->dist. */
+	plane_t tri_plane;
+	if (bg_make_plane_3pnts(tri_plane, tv[0]->vg_p->coord,
+		    tv[1]->vg_p->coord, tv[2]->vg_p->coord, &geom_tol) < 0)
 	    continue;
 
-	/* Compute face plane directly from the 3 vertex coordinates.
-	 *
-	 * nmg_fu_planeeqn() rejects triangles whose vertices are within
-	 * tol->dist of each other ("Cannot find three distinct vertices").
-	 * For freshly-created CDT triangles this is too aggressive: a cap
-	 * polygon on a small-radius cylinder (e.g. r=0.1 mm) produces many
-	 * valid but tiny triangles that all share the same geometric centre
-	 * – they ARE distinct 3-D points but fall within the NMG tolerance.
-	 * Silently dropping them leaves gaps → open edges in the final BOT.
-	 *
-	 * Instead we call bg_make_plane_3pnts() directly with a very small
-	 * absolute tolerance (SMALL_FASTF) so only truly degenerate
-	 * (zero-area) triangles are discarded.  nmg_face_g() assigns the
-	 * resulting plane to the new faceuse without any vertex-distance
-	 * checks.                                                           */
-	{
-	    plane_t tri_plane;
-	    const fastf_t *p0 = tv[0]->vg_p->coord;
-	    const fastf_t *p1 = tv[1]->vg_p->coord;
-	    const fastf_t *p2 = tv[2]->vg_p->coord;
-	    struct bn_tol geom_tol = *tol;
-	    geom_tol.dist    = SMALL_FASTF;
-	    geom_tol.dist_sq = SMALL_FASTF * SMALL_FASTF;
-	    if (bg_make_plane_3pnts(tri_plane, p0, p1, p2, &geom_tol) < 0) {
-		/* Truly zero-area triangle – skip it. */
-		(void)nmg_kfu(nfu);
-		continue;
-	    }
-	    nmg_face_g(nfu, tri_plane);
-	}
+	struct faceuse *nfu = nmg_cface(s, tv, 3);
+	nmg_face_g(nfu, tri_plane);
 
 	/* Collect OT_SAME edgeuses into new_tri_map. */
 	struct loopuse *nlu = BU_LIST_FIRST(loopuse, &nfu->lu_hd);
@@ -501,6 +486,10 @@ nmg_tri_fu_bg(struct faceuse *fu, struct bu_list *UNUSED(vlfree),
     }
 
     bu_free(tri_faces, "nmg_tri_fu_bg tri_faces");
+    if (new_tri_map.empty())
+	return 1;
+
+    (void)nmg_kfu(fu);
 
     /* ---- 8. Glue pass (all O(1) lookups via hash maps) ----
      *
