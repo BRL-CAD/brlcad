@@ -972,7 +972,7 @@ function(brlcad_load_bext_install_exclude_manifest manifest install_root valid_v
 
   file(READ "${manifest}" _brlcad_manifest_json)
   string(JSON _brlcad_schema ERROR_VARIABLE _brlcad_schema_error GET "${_brlcad_manifest_json}" schema)
-  if(NOT "${_brlcad_schema_error}" STREQUAL "NOTFOUND" OR NOT "${_brlcad_schema}" STREQUAL "1")
+  if(NOT "${_brlcad_schema_error}" STREQUAL "NOTFOUND" OR NOT "${_brlcad_schema}" STREQUAL "2")
     set(${reason_var} "unsupported or invalid schema" PARENT_SCOPE)
     return()
   endif()

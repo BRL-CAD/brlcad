@@ -49,6 +49,7 @@ struct options {
     fs::path install_root;
     fs::path project_manifest;
     fs::path output;
+    std::set<std::string> incorporated_components;
     std::string version;
     std::string revision;
     std::string created;
@@ -73,6 +74,8 @@ parse_options(int argc, char **argv)
             result.component_manifest = required_value(index, argc, argv);
         } else if (argument == "--dependency-sbom") {
             result.dependency_sbom = required_value(index, argc, argv);
+        } else if (argument == "--incorporated-component") {
+            result.incorporated_components.insert(required_value(index, argc, argv));
         } else if (argument == "--install-root") {
             result.install_root = required_value(index, argc, argv);
         } else if (argument == "--project-manifest") {
@@ -95,6 +98,9 @@ parse_options(int argc, char **argv)
     }
     if (result.component_manifest.empty() != result.dependency_sbom.empty()) {
         throw std::runtime_error("--component-manifest and --dependency-sbom must be specified together");
+    }
+    if (!result.incorporated_components.empty() && result.component_manifest.empty()) {
+        throw std::runtime_error("--incorporated-component requires dependency metadata");
     }
     return result;
 }
@@ -438,34 +444,51 @@ generate_sbom(const options &opts)
             throw std::runtime_error("unsupported or invalid bext SPDX document");
         }
 
+        std::set<std::string> requested_ids;
+        for (const auto &package_component : package_components) {
+            const std::string &package_id = package_component.first;
+            const std::string &project = package_component.second;
+            if (component_counts.count(project) != 0) {
+                requested_ids.insert(package_id);
+            }
+        }
+        for (const auto &project : opts.incorporated_components) {
+            const auto primary = primary_package_ids.find(project);
+            if (primary == primary_package_ids.end()) {
+                throw std::runtime_error("incorporated bext component has no primary package: " + project);
+            }
+            requested_ids.insert(primary->second);
+        }
+
         std::set<std::string> resolved_projects;
         for (auto package : dependency_sbom.at("packages")) {
             const std::string package_id = package.at("SPDXID").get<std::string>();
+            if (requested_ids.count(package_id) == 0) {
+                continue;
+            }
             const auto package_component = package_components.find(package_id);
             if (package_component == package_components.end()) {
-                continue;
+                throw std::runtime_error("selected bext package has no component mapping: " + package_id);
             }
             const std::string &project = package_component->second;
             const auto count = component_counts.find(project);
-            if (count == component_counts.end()) {
-                continue;
-            }
             std::string comment = package.value("comment", "");
             if (!comment.empty()) {
                 comment += "; ";
             }
-            package["comment"] = comment + "installed files attributed to bext project " + project + ": " +
-                std::to_string(count->second);
+            if (count != component_counts.end()) {
+                package["comment"] = comment + "installed files attributed to bext project " + project + ": " +
+                    std::to_string(count->second);
+            } else {
+                package["comment"] = comment + "incorporated into BRL-CAD binaries from bext project " + project;
+            }
             selected_ids.insert(package_id);
             selected_packages.push_back(std::move(package));
             resolved_projects.insert(project);
         }
-        for (const auto &package_component : package_components) {
-            if (component_counts.count(package_component.second) == 0) {
-                continue;
-            }
-            if (selected_ids.count(package_component.first) == 0) {
-                throw std::runtime_error("selected bext package is absent from dependency SBOM: " + package_component.first);
+        for (const auto &package_id : requested_ids) {
+            if (selected_ids.count(package_id) == 0) {
+                throw std::runtime_error("selected bext package is absent from dependency SBOM: " + package_id);
             }
         }
         for (const auto &component : component_counts) {
@@ -477,6 +500,12 @@ generate_sbom(const options &opts)
                 throw std::runtime_error("installed component has no selected primary package: " + component.first);
             }
             project_package_ids.emplace(component.first, primary->second);
+        }
+        for (const auto &project : opts.incorporated_components) {
+            if (resolved_projects.count(project) == 0) {
+                throw std::runtime_error("no bext SPDX package describes incorporated component: " + project);
+            }
+            project_package_ids.emplace(project, primary_package_ids.at(project));
         }
 
         if (!dependency_sbom.contains("relationships") || !dependency_sbom.at("relationships").is_array()) {
@@ -537,7 +566,8 @@ generate_sbom(const options &opts)
         const std::string package_id = package.at("SPDXID").get<std::string>();
         const std::string &project = package_components.at(package_id);
         const auto primary = project_package_ids.find(project);
-        if (primary != project_package_ids.end() && primary->second == package_id) {
+        if (primary != project_package_ids.end() && primary->second == package_id &&
+            component_counts.count(project) != 0) {
             package["filesAnalyzed"] = true;
             package["packageVerificationCode"] = {{"packageVerificationCodeValue", package_verification_code(installed_files, project)}};
         }

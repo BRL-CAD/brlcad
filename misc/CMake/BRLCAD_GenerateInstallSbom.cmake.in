@@ -123,6 +123,10 @@ if(EXISTS [==[@BRLCAD_BEXT_COMPONENT_MANIFEST@]==] AND EXISTS [==[@BRLCAD_BEXT_S
     --component-manifest [==[@BRLCAD_BEXT_COMPONENT_MANIFEST@]==]
     --dependency-sbom [==[@BRLCAD_BEXT_SBOM@]==]
   )
+  set(_brlcad_incorporated_components [==[@BRLCAD_BEXT_INCORPORATED_COMPONENTS@]==])
+  foreach(_brlcad_component IN LISTS _brlcad_incorporated_components)
+    list(APPEND _brlcad_sbom_arguments --incorporated-component "${_brlcad_component}")
+  endforeach()
 endif()
 execute_process(
   COMMAND [==[@BRLCAD_SBOM_EXECUTABLE@]==] ${_brlcad_sbom_arguments}

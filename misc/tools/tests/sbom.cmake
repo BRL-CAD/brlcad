@@ -17,7 +17,9 @@ file(WRITE "${TEST_ROOT}/components.json" [=[
     {"path": "lib/zlib-test.txt", "component": "zlib"}
   ],
   "packages": [
-    {"component": "zlib", "id": "zlib/zlib", "spdx_id": "SPDXRef-Package-zlib", "primary": true, "output": "install"}
+    {"component": "zlib", "id": "zlib/zlib", "spdx_id": "SPDXRef-Package-zlib", "primary": true, "output": "install"},
+    {"component": "eigen", "id": "eigen/eigen", "spdx_id": "SPDXRef-Package-eigen", "primary": true, "output": "noinstall"},
+    {"component": "eigen", "id": "eigen/eigen#unused", "spdx_id": "SPDXRef-Package-eigen-unused", "primary": false, "output": "noinstall"}
   ]
 }
 ]=])
@@ -55,6 +57,28 @@ file(WRITE "${TEST_ROOT}/dependencies.spdx.json" [=[
       "licenseDeclared": "NOASSERTION",
       "copyrightText": "NOASSERTION",
       "comment": "bext project: zlib; output: install"
+    },
+    {
+      "name": "Eigen",
+      "SPDXID": "SPDXRef-Package-eigen",
+      "versionInfo": "5.0.1",
+      "downloadLocation": "https://gitlab.com/libeigen/eigen/-/archive/5.0.1/eigen-5.0.1.tar.gz",
+      "filesAnalyzed": false,
+      "primaryPackagePurpose": "LIBRARY",
+      "licenseConcluded": "MPL-2.0 AND BSD-3-Clause",
+      "licenseDeclared": "MPL-2.0 AND BSD-3-Clause",
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "name": "unused Eigen subcomponent",
+      "SPDXID": "SPDXRef-Package-eigen-unused",
+      "versionInfo": "1.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "primaryPackagePurpose": "LIBRARY",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
     }
   ],
   "relationships": [
@@ -62,6 +86,16 @@ file(WRITE "${TEST_ROOT}/dependencies.spdx.json" [=[
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-zlib"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-eigen"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-eigen",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-Package-eigen-unused"
     }
   ]
 }
@@ -72,6 +106,7 @@ set(arguments
   --project-manifest "${TEST_ROOT}/project-files.txt"
   --component-manifest "${TEST_ROOT}/components.json"
   --dependency-sbom "${TEST_ROOT}/dependencies.spdx.json"
+  --incorporated-component eigen
   --output "${output}"
   --version 1.0.0
   --revision 0123456789abcdef
@@ -128,17 +163,31 @@ endif()
 string(JSON package_count LENGTH "${sbom}" packages)
 math(EXPR package_last "${package_count} - 1")
 set(zlib_package_analyzed FALSE)
+set(eigen_package_found FALSE)
+set(eigen_package_analyzed TRUE)
+set(eigen_subcomponent_found FALSE)
 set(unused_package_found FALSE)
 foreach(index RANGE ${package_last})
   string(JSON package_id GET "${sbom}" packages ${index} SPDXID)
   if(package_id STREQUAL "SPDXRef-Package-zlib")
     string(JSON zlib_package_analyzed GET "${sbom}" packages ${index} filesAnalyzed)
+  elseif(package_id STREQUAL "SPDXRef-Package-eigen")
+    set(eigen_package_found TRUE)
+    string(JSON eigen_package_analyzed GET "${sbom}" packages ${index} filesAnalyzed)
+  elseif(package_id STREQUAL "SPDXRef-Package-eigen-unused")
+    set(eigen_subcomponent_found TRUE)
   elseif(package_id STREQUAL "SPDXRef-Package-zlib-unused")
     set(unused_package_found TRUE)
   endif()
 endforeach()
 if(NOT zlib_package_analyzed)
   message(FATAL_ERROR "Installed dependency package is not marked as analyzed")
+endif()
+if(NOT eigen_package_found OR eigen_package_analyzed)
+  message(FATAL_ERROR "Incorporated dependency package is not retained without analyzed files")
+endif()
+if(eigen_subcomponent_found)
+  message(FATAL_ERROR "Unused subcomponent of an incorporated dependency was retained")
 endif()
 if(unused_package_found)
   message(FATAL_ERROR "Installed SBOM retained an unselected dependency package")
@@ -147,16 +196,23 @@ endif()
 string(JSON relationship_count LENGTH "${sbom}" relationships)
 math(EXPR relationship_last "${relationship_count} - 1")
 set(zlib_contains_file FALSE)
+set(eigen_dependency FALSE)
 foreach(index RANGE ${relationship_last})
   string(JSON source GET "${sbom}" relationships ${index} spdxElementId)
   string(JSON type GET "${sbom}" relationships ${index} relationshipType)
   string(JSON target GET "${sbom}" relationships ${index} relatedSpdxElement)
   if(source STREQUAL "SPDXRef-Package-zlib" AND type STREQUAL "CONTAINS" AND target STREQUAL zlib_file_id)
     set(zlib_contains_file TRUE)
+  elseif(source STREQUAL "SPDXRef-Package-BRL-CAD" AND type STREQUAL "DEPENDS_ON" AND
+      target STREQUAL "SPDXRef-Package-eigen")
+    set(eigen_dependency TRUE)
   endif()
 endforeach()
 if(NOT zlib_contains_file)
   message(FATAL_ERROR "Installed dependency file is not attributed to its package")
+endif()
+if(NOT eigen_dependency)
+  message(FATAL_ERROR "BRL-CAD does not depend on the incorporated dependency package")
 endif()
 
 file(APPEND "${TEST_ROOT}/project-files.txt" "${TEST_ROOT}/install/lib/zlib-test.txt\n")
