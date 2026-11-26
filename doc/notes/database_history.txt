@@ -229,16 +229,45 @@ zlib. A one-vertex reverse delta took 46 bytes and a localized edit
 of 4,096 vertices took 40 KB before compression. Shuffling face order
 produced a 2.46 MB delta, or 555 KB after compression, and took much
 longer to encode. All three recovered identical bytes. These results
-cover one synthetic surface mesh. Measure BREP export stability and
-representative grid edits before specifying a required codec.
+cover one synthetic surface mesh.
 
 A second experiment translated the largest M1917 BREP by 10, 20 and
 30 model units. Both serialized bodies were 41.54 MB. The original
-body compressed to 15.36 MB with zlib. The Fossil reverse delta took
-24.02 MB, or 13.46 MB after compression. It encoded in 12.5 seconds
-and recovered the original body byte for byte in 0.28 seconds. The
-modest storage savings and encode latency support whole-body storage
-for this edit trace.
+body compressed to 15.36 MB with zlib. Compressed 64 KiB chunks and
+their SHA-256 list took 15.23 MB. The Fossil reverse delta took
+24.02 MB, or 13.46 MB after compression. Across two measurements,
+it took 3.8 to 12.5 seconds to encode before compression and 0.14 to
+0.28 seconds to recover the original bytes. The modest storage savings
+and encode latency support whole-body storage for this edit trace.
+
+Three identity-transform exports of the same 41.54 MB BREP used
+copyeval in fresh processes, including a second export of a previously
+exported object. Each body matched the original byte for byte. A full
+zlib copy of the body took 15.36 MB. A standalone list of 634 shared
+64 KiB chunks took 20,288 bytes. A zlib-compressed Fossil delta took
+25 bytes and 0.22 seconds to encode before compression. Whole-body
+deduplication adds no body bytes for these exports.
+
+BRL-CAD retessellated the M1917 PJC_Def_03.s BREP at relative
+tolerances of 0.02 and 0.005 with absolute and normal tolerances set
+to zero. The meshes contained 24,978 and 42,460 triangles. Restoring
+the coarser mesh from the finer one took 264,504 bytes as a full zlib
+body or 268,948 bytes with compressed 64 KiB chunks and their SHA-256
+list. No chunks were shared. A zlib-compressed Fossil reverse delta
+took 132,825 bytes, 0.017 seconds to encode before compression and
+0.002 seconds to decompress and apply. Restoring the finer mesh from
+the coarser one took 307,047 bytes as a compressed delta compared
+with 441,269 bytes as a full zlib body. Both directions reconstructed
+the target bytes exactly.
+
+A separate edit moved one vertex of the coarser mesh. The older body
+took 45,229 bytes as compressed chunks, including the chunk list, and
+33 bytes as a compressed reverse delta. Both restored the original
+bytes exactly. Undo and Redo through embedded DB5 history also
+restored the corresponding whole bodies in fresh processes, and the
+archive verifier passed. The supplied model was opened read-only. Its
+identity, size and modification time matched before and after the
+remeshing run.
 
 Two synthetic object-backed grids were serialized to DB5 and reopened
 as DSP and VOL primitives before extracting their binary object
@@ -311,11 +340,11 @@ primitive and returned all bitmap bytes intact at each revision.
 Workspace verification passed in 5.07 seconds. The supplied file's
 identity, size and modification time matched before and after the test.
 
-These grids support offering reverse deltas for localized edits and
-offset shifts when encoding fits a predictable time budget. A noisy
-replacement benefits from a full-body fallback. Keep version 1's
-whole-body encoding as the default until production traces justify
-the codec and its replay limits.
+The grid and mesh traces support reverse deltas for localized edits,
+offset shifts and some remeshing when encoding fits a predictable time
+budget. A noisy replacement benefits from a full-body fallback. Keep
+version 1's whole-body encoding as the default until production traces
+justify the codec and its replay limits.
 
 Encode the portable archive as a hidden unsigned-byte binunif. Reserve
 _BRLCAD_HISTORY only after checking both name and format signature.
