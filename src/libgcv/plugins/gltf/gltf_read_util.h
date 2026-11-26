@@ -400,6 +400,13 @@ public:
 	    static_cast<uint32_t>(source_path_.size()), &options);
     }
 
+    bool read_resource(tg3_str uri, uint8_t **data, uint64_t *size)
+    {
+	const std::string path = root_directory_ + to_string(uri);
+	return uri.len && path.size() <= std::numeric_limits<uint32_t>::max() &&
+	    read_file(data, size, path.c_str(), static_cast<uint32_t>(path.size()), this);
+    }
+
 private:
     bool resolve_confined_path(std::string &result, const char *path,
 	uint32_t path_length) const

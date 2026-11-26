@@ -24,10 +24,26 @@ if(TARGET gltf-g AND TARGET gcv AND TARGET gcv-gltf AND TARGET mged)
   distclean("${CMAKE_CURRENT_BINARY_DIR}/gltf-scene")
 endif()
 
+if(TARGET gcv AND TARGET gcv-gltf AND TARGET rt)
+  brlcad_add_test(
+    NAME regress-gltf-texture
+    COMMAND ${CMAKE_COMMAND}
+      "-DGCV=$<TARGET_FILE:gcv>"
+      "-DRT=$<TARGET_FILE:rt>"
+      "-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/textured-quad.gltf"
+      "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/gltf-texture"
+      -P "${CMAKE_CURRENT_SOURCE_DIR}/check_texture.cmake"
+  )
+  brlcad_regression_test(regress-gltf-texture "gcv;gcv-gltf;rt" TEST_DEFINED)
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/gltf-texture")
+endif()
+
 cmakefiles(
   CMakeLists.txt
   check_scene.cmake
+  check_texture.cmake
   instanced-scene.gltf
+  textured-quad.gltf
   tetra-gltf2.0.gltf
   tetra-glb2.0.glb
   tetra.bin # support file for glb
