@@ -526,8 +526,19 @@ access control list and file attributes. A mapped reader retained the
 old bytes after rename. The new path opened with the staged file ID
 and bytes, the old state was reported as stale, and the parent directory
 flush succeeded. The mapping helper also read both ends of a sparse
-NTFS file with data beyond 4 GiB. A full Windows editor run and
-physical-device power loss checks remain pending.
+NTFS file with data beyond 4 GiB.
+
+A separate Windows guest probe ran the production DB5 replacement
+code on NTFS with prepared embedded DB5 fixtures and a fixture directory
+reader. Denying the staged reopen preserved the original file and save
+identity. Failing the directory sync after replacement returned an open
+handle to the new file and a warning. A normal replacement synchronized
+the new file successfully. In all three cases, an existing mapped reader
+retained the original bytes and the temporary name was removed. The three
+files recovered from the NTFS volume matched their expected DB5 fixtures
+byte for byte. Independent GED readers verified their archives and
+selected revisions. A full Windows editor run and physical-device
+power loss checks remain pending.
 
 Building a native librt directory from the M1917 workspace took
 231 milliseconds. A standard database record read reconstructed
