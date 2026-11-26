@@ -123,14 +123,20 @@ _brep_csg_tessellate(struct rt_bot_internal **obot, struct ged *gedp,
     RT_DB_INTERNAL_INIT(&result_internal);
     int get_result = result_dp ? rt_db_get_internal(&result_internal,
 	    result_dp, wgedp->dbip, NULL) : -1;
-    if (get_result < 0 || result_internal.idb_minor_type != ID_BOT) {
+    const struct rt_bot_internal *result_bot =
+	get_result >= 0 && result_internal.idb_minor_type == ID_BOT ?
+	static_cast<const struct rt_bot_internal *>(result_internal.idb_ptr) : NULL;
+    /* An empty Boolean result cannot represent the original BREP. Let the
+     * caller try another tessellation method. */
+    if (!result_bot || !result_bot->num_faces || !result_bot->num_vertices ||
+	!result_bot->faces || !result_bot->vertices) {
 	if (get_result >= 0)
 	    rt_db_free_internal(&result_internal);
 	ged_close(wgedp);
 	bu_file_delete(tmpfil);
 	return BRLCAD_ERROR;
     }
-    *obot = rt_bot_dup((struct rt_bot_internal *)result_internal.idb_ptr);
+    *obot = rt_bot_dup(result_bot);
     rt_db_free_internal(&result_internal);
     ged_close(wgedp);
     if (!*obot) {
