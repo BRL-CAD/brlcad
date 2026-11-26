@@ -18,6 +18,7 @@
 
 #include "bu/app.h"
 #include "qtcad/QgModel.h"
+#include "wdb.h"
 
 
 static bool
@@ -72,6 +73,18 @@ main(int argc, char **argv)
 	bu_log("A hierarchy row retained a directory entry from the old database\n");
 	return 1;
     }
+
+    const QByteArray textured = directory.filePath("texture.g").toUtf8();
+    struct rt_wdb *db = wdb_fopen(textured.constData());
+    if (!db)
+	return 1;
+    // The unsigned byte minor type shares its number with ARB8.
+    const unsigned char rgb[] = {255, 0, 0};
+    int written = mk_binunif(db, "texture.rgb", rgb, WDB_BINUNIF_UINT8, sizeof(rgb));
+    db_close(db->dbip);
+    const char *open_texture[] = {"opendb", textured.constData()};
+    if (written || !check_command(model, 2, open_texture, 1))
+	return 1;
 
     return 0;
 }

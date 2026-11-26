@@ -151,7 +151,7 @@ QgIcon(struct directory *dp, struct db_i *dbip)
 {
     int type = 0;
     QImage raw_type_icon;
-    if (dbip != DBI_NULL && dp != RT_DIR_NULL) {
+    if (dbip != DBI_NULL && dp != RT_DIR_NULL && dp->d_major_type == DB5_MAJORTYPE_BRLCAD) {
 	switch(dp->d_minor_type) {
 	    case DB5_MINORTYPE_BRLCAD_TOR:
 		raw_type_icon.load(":/images/primitives/tor.png");
@@ -311,8 +311,11 @@ QgIcon(struct directory *dp, struct db_i *dbip)
 		raw_type_icon.load(":/images/primitives/other.png");
 		break;
 	}
-    } else {
+    } else if (!dbip || !dp) {
 	raw_type_icon.load(":/images/primitives/invalid.png");
+    } else {
+	// Minor type numbers are local to each major type (e.g. BINUNIF).
+	raw_type_icon.load(":/images/primitives/other.png");
     }
 
     return raw_type_icon;
