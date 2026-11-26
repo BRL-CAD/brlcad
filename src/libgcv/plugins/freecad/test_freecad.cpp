@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <cstring>
 #include <fstream>
+#include <limits>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
@@ -325,6 +326,113 @@ generate_arrays()
     write_entry("scales.bin", scales);
 }
 
+static void
+generate_links_and_appearance()
+{
+    write_box();
+    write_entry("Document.xml", R"xml(
+<Document SchemaVersion="4" ProgramVersion="1.1R0">
+  <Objects>
+    <Object name="Box" type="Part::Feature"/>
+    <Object name="Cross" type="App::Link"/>
+    <Object name="Component" type="App::Link"/>
+    <Object name="Elements" type="App::Link"/>
+    <Object name="Panel" type="Mesh::Feature"/>
+  </Objects>
+  <ObjectData>
+    <Object name="Box"><Properties>
+      <Property name="Shape"><Part file="box.brp"/></Property>
+    </Properties></Object>
+    <Object name="Cross"><Properties>
+      <Property name="LinkedObject"><XLink file="linked assets/Shared.FCStd" name="Group"/></Property>
+    </Properties></Object>
+    <Object name="Component"><Properties>
+      <Property name="LinkedObject"><XLink file="linked assets/Shared.FCStd" name="Group" sub="$Named box."/></Property>
+      <Property name="LinkTransform"><Bool value="true"/></Property>
+    </Properties></Object>
+    <Object name="Elements"><Properties>
+      <Property name="LinkedObject"><XLink file="linked assets/Shared.FCStd" name="Group" count="3">
+        <Sub value="Box.Face1"/><Sub value="Box.Edge1"/><Sub value="Box.Vertex1"/>
+      </XLink></Property>
+    </Properties></Object>
+    <Object name="Panel"><Properties>
+      <Property name="Mesh"><Mesh file="panel.bms"/></Property>
+      <Property name="Placement"><PropertyPlacement Px="40" Py="50"/></Property>
+    </Properties></Object>
+  </ObjectData>
+</Document>
+)xml");
+    write_entry("Shared.xml", R"xml(
+<Document SchemaVersion="4">
+  <Objects>
+    <Object name="Group" type="App::Part"/>
+    <Object name="Box" type="Part::Feature"/>
+    <Object name="Unused" type="Part::Feature"/>
+  </Objects>
+  <ObjectData>
+    <Object name="Group"><Properties>
+      <Property name="Group"><LinkList count="1"><Link value="Box"/></LinkList></Property>
+      <Property name="Placement"><PropertyPlacement Px="1000"/></Property>
+    </Properties></Object>
+    <Object name="Box"><Properties>
+      <Property name="Label"><String value="Named box"/></Property>
+      <Property name="Shape"><Part file="box.brp"/></Property>
+      <Property name="Placement"><PropertyPlacement Px="100"/></Property>
+    </Properties></Object>
+    <Object name="Unused"><Properties>
+      <Property name="Shape"><Part file="missing.brp"/></Property>
+    </Properties></Object>
+  </ObjectData>
+</Document>
+)xml");
+    write_entry("GuiDocument.xml", R"xml(
+<Document><ViewProviderData>
+  <ViewProvider name="Box"><Properties>
+    <Property name="ShapeAppearance"><MaterialList file="material.bin" version="3"/></Property>
+  </Properties></ViewProvider>
+  <ViewProvider name="Panel"><Properties>
+    <Property name="Transparency"><Integer value="45"/></Property>
+  </Properties></ViewProvider>
+</ViewProviderData></Document>
+)xml");
+    std::string mesh;
+    constexpr uint32_t mesh_magic = 0xa0b0c0d0;
+    constexpr uint32_t mesh_version = 0x010000;
+    constexpr size_t mesh_description_length = 256;
+    constexpr std::array<float, 9> vertices = {0, 0, 0, 2, 0, 0, 0, 3, 0};
+    constexpr std::array<float, 6> bounds = {0, 2, 0, 3, 0, 0};
+    const uint32_t no_neighbor = std::numeric_limits<uint32_t>::max();
+    append_binary<uint32_t>(mesh, mesh_magic);
+    append_binary<uint32_t>(mesh, mesh_version);
+    mesh.append(mesh_description_length, ' ');
+    append_binary<uint32_t>(mesh, uint32_t(3));
+    append_binary<uint32_t>(mesh, uint32_t(1));
+    for (float xyz : vertices)
+	append_binary<uint32_t>(mesh, xyz);
+    for (const auto index : {0u, 1u, 2u, no_neighbor, no_neighbor, no_neighbor})
+	append_binary<uint32_t>(mesh, index);
+    for (float bound : bounds)
+	append_binary<uint32_t>(mesh, bound);
+    write_entry("panel.bms", mesh);
+
+    constexpr std::array<uint32_t, 6> packed_colors = {
+	0xff0000ff, 0x00ff00ff, 0x0000ffff, 0x330000ff, 0x003300ff, 0x000033ff
+    };
+    std::string appearances;
+    append_binary<uint32_t>(appearances, static_cast<uint32_t>(packed_colors.size()));
+    for (size_t i = 0; i < packed_colors.size(); ++i) {
+	append_binary<uint32_t>(appearances, uint32_t(0)); // ambient
+	append_binary<uint32_t>(appearances, packed_colors[i]);
+	append_binary<uint32_t>(appearances, uint32_t(0)); // specular
+	append_binary<uint32_t>(appearances, uint32_t(0)); // emission
+	append_binary<uint32_t>(appearances, float(0.5)); // shine
+	append_binary<uint32_t>(appearances, i == 1 ? float(0.5) : float(0.0));
+    }
+    // Version 3 appends three length-prefixed strings per material.
+    appearances.append(packed_colors.size() * 3 * sizeof(uint32_t), '\0');
+    write_entry("material.bin", appearances);
+}
+
 class Internal {
 public:
     Internal(struct db_i *db, const char *name, int type)
@@ -541,6 +649,69 @@ check_arrays(const char *path)
 	throw std::runtime_error("incorrect compact array placements");
 }
 
+static void
+check_links_and_appearance(const char *path)
+{
+    std::unique_ptr<struct db_i, decltype(&db_close)> database(db_open(path, DB_OPEN_READONLY), db_close);
+    struct db_i *db = database.get();
+    if (!db || db_dirbuild(db) < 0)
+	throw std::runtime_error("could not read the linked-document fixture");
+    const Internal root(db, "links", ID_COMBINATION);
+    const Internal cross(db, "Cross", ID_COMBINATION);
+    const Internal component(db, "Component", ID_COMBINATION);
+    const Internal group(db, "Group", ID_COMBINATION);
+    const Internal external(db, "Box_2", ID_COMBINATION);
+    const Internal elements(db, "Elements", ID_COMBINATION);
+    const Internal panel(db, "Panel", ID_COMBINATION);
+    const Internal mesh(db, "Panel.s", ID_BOT);
+    const auto *bot = static_cast<const struct rt_bot_internal *>(mesh.object.idb_ptr);
+    if (bot->mode != RT_BOT_SURFACE || bot->num_faces != 1 || bot->num_vertices != 3 ||
+	!EQUAL(bot->vertices[3], 2.0) || !EQUAL(bot->vertices[7], 3.0))
+	throw std::runtime_error("wrong BoT positions, topology, or mode");
+    const point_t origin = {0, 0, 0};
+    const point_t local_box = {100, 0, 0};
+    const point_t placed_box = {1100, 0, 0};
+    const point_t placed_panel = {40, 50, 0};
+    check_member(root, "Panel", origin, placed_panel);
+    check_member(cross, "Group", origin, origin);
+    check_member(group, "Box_2", origin, local_box);
+    check_member(component, "Box_2", origin, placed_box);
+    check_member(elements, "Box.Face1", origin, local_box);
+    check_member(elements, "Box.Edge1", origin, local_box);
+    check_member(elements, "Box.Vertex1", origin, local_box);
+    check_attribute(external, "freecad:document", "Shared.FCStd");
+    check_attribute(panel, "freecad:transparency", "0.450000");
+    check_solid(db, "Box.s", 6);
+    check_solid(db, "Box.s_2", 6);
+    const Internal box(db, "Box.s", ID_BREP);
+    const Internal face(db, "Box.Face1.s", ID_BREP);
+    const Internal edge(db, "Box.Edge1.s", ID_BREP);
+    const Internal vertex(db, "Box.Vertex1.s", ID_PNTS);
+    const auto *box_brep = static_cast<const struct rt_brep_internal *>(box.object.idb_ptr)->brep;
+    const auto *face_brep = static_cast<const struct rt_brep_internal *>(face.object.idb_ptr)->brep;
+    const auto *edge_brep = static_cast<const struct rt_brep_internal *>(edge.object.idb_ptr)->brep;
+    if (face_brep->m_F.Count() != 1 || edge_brep->m_F.Count() || edge_brep->m_E.Count() != 1 ||
+	!edge_brep->IsValid())
+	throw std::runtime_error("link did not select the requested topology");
+    if (box_brep->m_F[0].PerFaceColor() != ON_Color(255, 0, 0, 0) ||
+	box_brep->m_F[1].PerFaceColor() != ON_Color(0, 255, 0, 128))
+	throw std::runtime_error("BRep face materials did not survive round trip");
+}
+
+static void
+check_recompute(const char *path, double length)
+{
+    std::unique_ptr<struct db_i, decltype(&db_close)> database(db_open(path, DB_OPEN_READONLY), db_close);
+    struct db_i *db = database.get();
+    if (!db || db_dirbuild(db) < 0)
+	throw std::runtime_error("could not read the recompute fixture");
+    const Internal box(db, "Box.s", ID_BREP);
+    const auto *brep = static_cast<const struct rt_brep_internal *>(box.object.idb_ptr)->brep;
+    const auto bounds = brep->BoundingBox();
+    if (!NEAR_EQUAL(bounds.Max().x - bounds.Min().x, length, fixture_tolerance))
+	throw std::runtime_error("unexpected box length after FreeCAD import");
+}
+
 int
 main(int argc, char **argv)
 {
@@ -557,6 +728,12 @@ main(int argc, char **argv)
 	    generate_arrays();
 	else if (command == "check-arrays" && argc == 3)
 	    check_arrays(argv[2]);
+	else if (command == "generate-links" && argc == 2)
+	    generate_links_and_appearance();
+	else if (command == "check-links" && argc == 3)
+	    check_links_and_appearance(argv[2]);
+	else if (command == "check-recompute" && argc == 4)
+	    check_recompute(argv[2], std::stod(argv[3]));
 	else
 	    return 1;
 	return 0;

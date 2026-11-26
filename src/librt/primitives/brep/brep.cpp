@@ -3119,6 +3119,32 @@ brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& model)
     //model.Polish();
 }
 
+static int
+brep_archive_version(const struct rt_db_internal *intern)
+{
+    const auto *bi = static_cast<const struct rt_brep_internal *>(intern->idb_ptr);
+    // Version 7 is the first archive format with per-face colors.
+    return bi->brep->HasPerFaceColors() ? 7 : 4;
+}
+
+int
+rt_brep_face_color(const struct soltab *stp, int face, unsigned char rgba[4])
+{
+    if (!stp || stp->st_id != ID_BREP || !stp->st_specific || !rgba)
+	return 0;
+    const auto *specific = static_cast<const struct brep_specific *>(stp->st_specific);
+    if (!specific->brep || face < 0 || face >= specific->brep->m_F.Count())
+	return 0;
+    const auto color = specific->brep->m_F[face].PerFaceColor();
+    if (color == ON_Color::UnsetColor)
+	return 0;
+    rgba[0] = static_cast<unsigned char>(color.Red());
+    rgba[1] = static_cast<unsigned char>(color.Green());
+    rgba[2] = static_cast<unsigned char>(color.Blue());
+    rgba[3] = static_cast<unsigned char>(color.Alpha());
+    return 1;
+}
+
 
 int
 rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
@@ -3132,7 +3158,7 @@ rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 	/* Create a serialized version for base-64 encoding */
 	RT_MemoryArchive archive;
 	ON_TextLog err(stderr);
-	bool ok = model.Write(archive, 4, &err);
+	bool ok = model.Write(archive, brep_archive_version(intern), &err);
 	if (ok) {
 	    void *archive_cp = archive.CreateCopy();
 	    signed char *brep64 = bu_b64_encode_block((const signed char *)archive_cp, archive.Size());
@@ -3195,7 +3221,7 @@ rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
     RT_MemoryArchive archive;
     ON_TextLog err(stderr);
-    bool ok = model.Write(archive, 4, &err);
+    bool ok = model.Write(archive, brep_archive_version(ip), &err);
     if (ok) {
 	ep->ext_nbytes = (long)archive.Size();
 	ep->ext_buf = archive.CreateCopy();

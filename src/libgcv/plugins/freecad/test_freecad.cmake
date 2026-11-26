@@ -18,6 +18,72 @@ function(check_failed input output error_message)
   endif()
 endfunction()
 
+if(CASE STREQUAL "gcv_freecad_links")
+  execute_process(COMMAND "${FIXTURE}" generate-links
+    WORKING_DIRECTORY "${WORK}" COMMAND_ERROR_IS_FATAL ANY)
+  set(shared "${WORK}/shared")
+  file(MAKE_DIRECTORY "${shared}" "${WORK}/linked assets")
+  file(COPY_FILE "${WORK}/Shared.xml" "${shared}/Document.xml")
+  file(COPY_FILE "${WORK}/box.brp" "${shared}/box.brp")
+  pack_fixture("${WORK}/linked assets/Shared.FCStd" "${shared}" Document.xml box.brp)
+  set(input "${WORK}/links.FCStd")
+  set(output "${WORK}/links.g")
+  file(REMOVE "${output}")
+  pack_fixture("${input}" "${WORK}" panel.bms material.bin GuiDocument.xml box.brp Document.xml)
+  execute_process(COMMAND "${GCV}" -I --strict -i "${input}" -o "${output}" COMMAND_ERROR_IS_FATAL ANY)
+  execute_process(COMMAND "${FIXTURE}" check-links "${output}" COMMAND_ERROR_IS_FATAL ANY)
+  check_failed("${input}" "${WORK}/failed-recompute.g"
+    "could not launch|feature recomputation failed"
+    -I --recompute "${WORK}/missing FreeCAD executable")
+
+  # Exercise the real feature engine when a compatible FreeCAD Python is available.
+  if(DEFINED ENV{BRLCAD_FREECAD_TEST_PYTHON})
+    set(python "$ENV{BRLCAD_FREECAD_TEST_PYTHON}")
+    set(make_stale [=[
+from pathlib import Path
+import sys
+from xml.etree import ElementTree
+from zipfile import ZipFile
+import FreeCAD
+import Part
+
+work = Path(sys.argv[1])
+doc = FreeCAD.newDocument("RecomputeFixture")
+box = doc.addObject("Part::Box", "Box")
+box.Length = 4
+doc.recompute()
+doc.saveAs(str(work / "short.FCStd"))
+box.Length = 17
+doc.recompute()
+doc.saveCopy(str(work / "long.FCStd"))
+def shape_member(archive):
+    xml = ElementTree.fromstring(archive.read("Document.xml"))
+    return xml.find(".//ObjectData/Object[@name='Box']/Properties/Property[@name='Shape']/Part").get("file")
+
+with ZipFile(work / "short.FCStd") as short, ZipFile(work / "long.FCStd") as long:
+    short_shape = short.read(shape_member(short))
+    long_shape = shape_member(long)
+    with ZipFile(work / "stale.FCStd", "w") as stale:
+        for member in long.namelist():
+            stale.writestr(member, short_shape if member == long_shape else long.read(member))
+]=])
+    execute_process(COMMAND "${python}" -c "${make_stale}" "${WORK}" COMMAND_ERROR_IS_FATAL ANY)
+    file(SHA256 "${WORK}/stale.FCStd" before)
+    file(REMOVE "${WORK}/saved.g" "${WORK}/recomputed.g")
+    execute_process(COMMAND "${GCV}" -I --strict -i "${WORK}/stale.FCStd" -o "${WORK}/saved.g"
+      COMMAND_ERROR_IS_FATAL ANY)
+    execute_process(COMMAND "${FIXTURE}" check-recompute "${WORK}/saved.g" 4 COMMAND_ERROR_IS_FATAL ANY)
+    execute_process(COMMAND "${GCV}" -I --strict --recompute "${python}"
+      -i "${WORK}/stale.FCStd" -o "${WORK}/recomputed.g" COMMAND_ERROR_IS_FATAL ANY)
+    execute_process(COMMAND "${FIXTURE}" check-recompute "${WORK}/recomputed.g" 17 COMMAND_ERROR_IS_FATAL ANY)
+    file(SHA256 "${WORK}/stale.FCStd" after)
+    if(NOT before STREQUAL after)
+      message(FATAL_ERROR "FreeCAD recompute changed its source archive")
+    endif()
+  endif()
+  return()
+endif()
+
 if(CASE STREQUAL "gcv_freecad_arrays")
   execute_process(COMMAND "${FIXTURE}" generate-arrays
     WORKING_DIRECTORY "${WORK}" COMMAND_ERROR_IS_FATAL ANY)

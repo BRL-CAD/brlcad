@@ -35,6 +35,12 @@
 
 __BEGIN_DECLS
 
+struct soltab;
+
+/** Get a prepared BRep face's explicit RGB and transparency (0 opaque, 255 clear).
+ * Returns one if the face has an appearance override, zero otherwise. */
+RT_EXPORT extern int rt_brep_face_color(const struct soltab *stp, int face, unsigned char rgba[4]);
+
 /* BREP drawing routines */
 RT_EXPORT extern int rt_brep_plot(struct bu_list                *vhead,
 				  struct rt_db_internal          *ip,

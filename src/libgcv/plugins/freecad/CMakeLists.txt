@@ -66,6 +66,7 @@ target_link_libraries(gcv-freecad
   libgcv
   libwdb
   librt
+  libbg
   libbn
   libbu
   OPENNURBS::OPENNURBS
@@ -84,7 +85,7 @@ if(BUILD_TESTING AND TARGET TKPrim AND TARGET TKTopAlgo)
   brlcad_addexec(test_gcv_freecad test_freecad.cpp
     "librt;libbu;OPENNURBS::OPENNURBS;TKPrim;TKTopAlgo" TEST)
   target_include_directories(test_gcv_freecad SYSTEM PRIVATE "${OpenCASCADE_INCLUDE_DIR}")
-  foreach(freecad_test IN ITEMS gcv_freecad gcv_freecad_arrays)
+  foreach(freecad_test IN ITEMS gcv_freecad gcv_freecad_arrays gcv_freecad_links)
     brlcad_add_test(NAME ${freecad_test} COMMAND ${CMAKE_COMMAND}
       -DGCV=$<TARGET_FILE:gcv>
       -DFIXTURE=$<TARGET_FILE:test_gcv_freecad>

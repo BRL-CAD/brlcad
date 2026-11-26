@@ -34,6 +34,7 @@
 struct phong_specific {
     uint32_t magic;
     int	shine;
+    int face_colors;
     double	wgt_specular;
     double	wgt_diffuse;
     double	transmit;       /**< @brief Moss "transparency" */

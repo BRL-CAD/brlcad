@@ -244,14 +244,13 @@ placement_matrix(const gp_Quaternion &rotation, const std::array<double, 3> &pos
 }
 
 static size_t
-array_count(XmlAttributes attributes)
+read_count(const std::string &value)
 {
-    const auto value = attribute(attributes, "value");
     unsigned int count = 0;
     const auto end = value.data() + value.size();
     const auto converted = std::from_chars(value.data(), end, count);
     if (converted.ec != std::errc() || converted.ptr != end)
-	throw std::runtime_error("invalid FreeCAD link array count");
+	throw std::runtime_error("invalid FreeCAD link count");
     return count;
 }
 
@@ -277,7 +276,13 @@ packed_color(XmlAttributes attributes, const char *key)
     uint32_t rgba = 0;
     if (!(in >> rgba) || !(in >> std::ws).eof())
 	return std::nullopt;
-    return Rgb{static_cast<unsigned char>(rgba >> 24),
+    return unpack_rgb(rgba);
+}
+
+Rgb
+unpack_rgb(uint32_t rgba)
+{
+    return {static_cast<unsigned char>(rgba >> 24),
 	static_cast<unsigned char>(rgba >> 16), static_cast<unsigned char>(rgba >> 8)};
 }
 
@@ -293,20 +298,37 @@ read_property(Object &object, XmlAttributes attributes, const std::string &prope
 	object.color = packed_color(attributes, "value");
     } else if (view && property == "ShapeMaterial" && element == "PropertyMaterial") {
 	object.material_color = packed_color(attributes, "diffuseColor");
+	const auto value = attribute(attributes, "transparency");
+	if (!value.empty())
+	    object.material_transparency = std::clamp(xml_number(value, 0.0), 0.0, 1.0);
+    } else if (view && property == "Transparency" && element == "Integer") {
+	object.transparency = std::clamp(number_attribute(attributes, "value") / 100.0, 0.0, 1.0);
+    } else if (view && property == "ShapeAppearance" && element == "MaterialList") {
+	object.appearance_file = attribute(attributes, "file");
+    } else if (view && property == "DiffuseColor" && element == "ColorList") {
+	object.diffuse_file = attribute(attributes, "file");
     } else if (view && property == "OverrideMaterial" && element == "Bool") {
 	object.override_material = xml_bool(attribute(attributes, "value"));
     } else if (!view) {
 	if (property == "Shape" && element == "Part")
 	    object.shape_file = attribute(attributes, "file");
+	else if (property == "Mesh" && element == "Mesh")
+	    object.mesh_file = attribute(attributes, "file");
 	else if (property == "Placement" && element == "PropertyPlacement")
 	    object.placement = read_placement(attributes);
 	else if (property == "LinkPlacement" && element == "PropertyPlacement") {
 	    object.link_placement = read_placement(attributes);
 	    object.has_link_placement = true;
-	} else if (property == "LinkedObject" && element == "XLink") {
-	    object.linked_object = attribute(attributes, "name");
-	    object.unsupported_link |= !attribute(attributes, "file").empty() ||
-		!attribute(attributes, "sub").empty() || number_attribute(attributes, "count") > 0.0;
+	} else if (property == "LinkedObject" && (element == "XLink" || element == "LinkSub")) {
+	    object.linked_object = attribute(attributes, element == "XLink" ? "name" : "value");
+	    if (element == "XLink")
+		object.linked_file = attribute(attributes, "file");
+	    const auto count = attribute(attributes, "count");
+	    if (!count.empty())
+		object.linked_subobject_count = read_count(count);
+	    auto sub = attribute(attributes, "sub");
+	    if (!sub.empty())
+		object.linked_subobjects.push_back(std::move(sub));
 	} else if (property == "LinkedObject" && element == "Link")
 	    object.linked_object = attribute(attributes, "value");
 	else if (property == "LinkedObject")
@@ -316,7 +338,7 @@ read_property(Object &object, XmlAttributes attributes, const std::string &prope
 	else if (property == "VisibilityList" && element == "BoolList")
 	    object.element_visibility = attribute(attributes, "value");
 	else if (property == "ElementCount" && element == "Integer" && object.is_link())
-	    object.element_count = array_count(attributes);
+	    object.element_count = read_count(attribute(attributes, "value"));
 	else if (property == "PlacementList" && element == "PlacementList" && object.is_link())
 	    object.array_placements = attribute(attributes, "file");
 	else if (property == "ScaleList" && element == "VectorList" && object.is_link())
@@ -343,6 +365,7 @@ struct XmlContext {
     Document &document;
     XML_Parser parser;
     bool view;
+    bool version_only;
     size_t depth = 0;
     std::string section = {};
     Object *object = nullptr;
@@ -367,6 +390,16 @@ read_element(XmlContext &context, std::string_view element, XmlAttributes attrib
     if (depth == 0) {
 	if (element != "Document" && !(view && element == "GuiDocument"))
 	    throw std::runtime_error("unexpected root element in FCStd XML");
+	if (!view) {
+	    std::istringstream version(attribute(attributes, "ProgramVersion"));
+	    int major = 0;
+	    int minor = 0;
+	    char dot = 0;
+	    if (version >> major >> dot >> minor && dot == '.')
+		document.legacy_alpha = major < 1 || (major == 1 && minor < 1);
+	}
+    } else if (context.version_only) {
+	return;
     } else if (depth == 1) {
 	section = element;
 	object = nullptr;
@@ -402,8 +435,12 @@ read_element(XmlContext &context, std::string_view element, XmlAttributes attrib
 	} else if (!view && depth == 6 && element == "Link" && property == "ElementList" &&
 		object->is_link()) {
 	    object->array_elements.push_back(attribute(attributes, "value"));
-	} else if (!view && depth == 6 && property == "LinkedObject")
-	    object->unsupported_link = true;
+	} else if (!view && depth == 6 && property == "LinkedObject") {
+	    if (element == "Sub")
+		object->linked_subobjects.push_back(attribute(attributes, "value"));
+	    else
+		object->unsupported_link = true;
+	}
     }
 }
 
@@ -435,14 +472,14 @@ start_doctype(void *data, const XML_Char *, const XML_Char *, const XML_Char *, 
 }
 
 static void
-read_document_xml(Document &document, Archive &archive, bool view)
+read_document_xml(Document &document, Archive &archive, bool view, bool version_only = false)
 {
     std::unique_ptr<XML_ParserStruct, decltype(&XML_ParserFree)> parser(
 	XML_ParserCreateNS(nullptr, xml_namespace_separator), XML_ParserFree);
     if (!parser)
 	throw std::runtime_error("could not open FCStd XML parser");
 
-    XmlContext context{document, parser.get(), view};
+    XmlContext context{document, parser.get(), view, version_only};
     XML_SetUserData(parser.get(), &context);
     XML_SetElementHandler(parser.get(), start_element, end_element);
     XML_SetStartDoctypeDeclHandler(parser.get(), start_doctype);
@@ -470,7 +507,7 @@ read_document_xml(Document &document, Archive &archive, bool view)
 }
 
 Document
-read_document(const char *path)
+read_document(const char *path, const char *view_path)
 {
     Archive input(path);
     Document document;
@@ -483,7 +520,7 @@ read_document(const char *path)
 		throw std::runtime_error("duplicate FCStd Document.xml member");
 	    read_document_xml(document, input, false);
 	    found_document = true;
-	} else if (name == "GuiDocument.xml") {
+	} else if (!view_path && name == "GuiDocument.xml") {
 	    if (found_view)
 		throw std::runtime_error("duplicate FCStd GuiDocument.xml member");
 	    read_document_xml(document, input, true);
@@ -492,6 +529,17 @@ read_document(const char *path)
     }
     if (!found_document)
 	throw std::runtime_error("FCStd archive has no Document.xml");
+    if (view_path) {
+	// Headless FreeCAD saves geometry without the view providers. Read
+	// appearance and visibility from the original archive.
+	Archive view(view_path);
+	while (view.next(name)) {
+	    if (name == "Document.xml")
+		read_document_xml(document, view, false, true);
+	    else if (name == "GuiDocument.xml")
+		read_document_xml(document, view, true);
+	}
+    }
     return document;
 }
 

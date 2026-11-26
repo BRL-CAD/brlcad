@@ -46,22 +46,31 @@ filter, or both, allowing format-specific behavior to be tuned without
 
 Builds with Open CASCADE, Expat, and one of minizip-ng, minizip, or libarchive
 can import FreeCAD *.FCStd* files. With minizip-ng or minizip, the reader uses
-the ZIP central directory for member lookups. It imports saved BRep solids
-and surfaces in millimeters and retains visible groups, placements, local links,
-and link arrays as BRL-CAD combinations. Referenced definitions
-are shared by their instances, including hidden definitions. Document and
-object labels and other scalar properties are stored as *freecad:* attributes.
-The reader imports saved object colors and link material overrides from the
-GUI document.
+the ZIP central directory for member lookups. It imports saved BReps and
+triangle meshes in millimeters and retains visible groups, placements, and
+link arrays as BRL-CAD combinations. It resolves external FCStd paths
+relative to the referencing document and handles links to named components
+and indexed shape elements. Instances share referenced geometry, including
+hidden definitions. Document and object labels and other scalar properties
+are stored as *freecad:* attributes.
+
+The reader uses the GUI document to import diffuse colors, transparency,
+and link material overrides. It stores per-face diffuse colors and
+transparency on BRep faces, where the CPU ray tracer can use them.
 Validated BReps with authored nonmanifold edge uses carry the
 *freecad:topology=source_nonmanifold* attribute.
 
 The reader honors saved array placements, scales, element visibility, and
-suppression. External and subobject links and mesh objects are reported and
-skipped. Pass *-I --strict* to reject unavailable geometry references or
-rejected BReps, including arrays with missing placement or scale files.
-FreeCAD feature history, transparency, and per-face display materials
-are outside the reader's supported inputs.
+suppression. Pass *-I --strict* to reject partial geometry imports,
+including missing linked documents, unavailable subobjects, or missing
+array placement and scale files.
+
+Pass *-I --recompute* _python_ to recompute a trusted document and its
+dependencies before importing. _python_ must be a Python executable
+configured to import the FreeCAD module and the model's workbenches.
+Recomputation runs the document's feature code in FreeCAD and saves
+temporary snapshots. The source files supply the saved views and remain
+unchanged. The resulting database contains the evaluated geometry.
 
 [[options]]
 == OPTIONS

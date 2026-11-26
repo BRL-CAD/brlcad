@@ -33,6 +33,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
+#include "rt/primitives/brep.h"
 #include "optical.h"
 #include "optical/light.h"
 #include "optical/plastic.h"
@@ -46,6 +47,7 @@
 struct bu_structparse phong_parse[] = {
     {"%d",	1, "shine",		PL_O(shine),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "sh",		PL_O(shine),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "face_colors",	PL_O(face_colors),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g",	1, "specular",		PL_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g",	1, "sp",		PL_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g",	1, "diffuse",		PL_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -95,6 +97,7 @@ phong_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
 
     BU_CK_VLS(matparm);
     BU_GET(pp, struct phong_specific);
+    pp->face_colors = 0;
     *dpp = pp;
 
     pp->magic = PL_MAGIC;
@@ -112,7 +115,7 @@ phong_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
 	return -1;
     }
 
-    if (pp->transmit > 0)
+    if (pp->transmit > 0 || pp->face_colors)
 	rp->reg_transmit = 1;
     return 1;
 }
@@ -125,6 +128,7 @@ mirror_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, con
 
     BU_CK_VLS(matparm);
     BU_GET(pp, struct phong_specific);
+    pp->face_colors = 0;
     *dpp = pp;
 
     pp->magic = PL_MAGIC;
@@ -155,6 +159,7 @@ glass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
 
     BU_CK_VLS(matparm);
     BU_GET(pp, struct phong_specific);
+    pp->face_colors = 0;
     *dpp = pp;
 
     pp->magic = PL_MAGIC;
@@ -286,6 +291,14 @@ phong_render(register struct application *ap, const struct partition *pp, struct
 	bu_struct_print("phong_render", phong_parse, (char *)ps);
 
     swp->sw_transmit = ps->transmit;
+    if (ps->face_colors) {
+	unsigned char rgba[4];
+	if (rt_brep_face_color(pp->pt_inseg->seg_stp, swp->sw_hit.hit_surfno, rgba)) {
+	    VSET(swp->sw_color, rgba[0] / 255.0, rgba[1] / 255.0, rgba[2] / 255.0);
+	    VMOVE(swp->sw_basecolor, swp->sw_color);
+	    swp->sw_transmit = rgba[3] / 255.0;
+	}
+    }
     swp->sw_reflect = ps->reflect;
     swp->sw_refrac_index = ps->refrac_index;
     swp->sw_extinction = ps->extinction;

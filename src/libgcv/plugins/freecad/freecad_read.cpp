@@ -13,11 +13,16 @@
 
 #include <algorithm>
 #include <array>
+#include <charconv>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
+#include <deque>
+#include <filesystem>
+#include <fstream>
 #include <istream>
+#include <limits>
 #include <locale>
 #include <map>
 #include <memory>
@@ -25,6 +30,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <vector>
 
 #include <BRepTools.hxx>
@@ -45,8 +51,12 @@
 #include "opennurbs.h"
 
 #include "bn/mat.h"
+#include "bg/trimesh.h"
+#include "bu/app.h"
+#include "bu/file.h"
 #include "bu/opt.h"
 #include "bu/path.h"
+#include "bu/process.h"
 #include "gcv/api.h"
 #include "rt/geom.h"
 #include "wdb.h"
@@ -178,7 +188,8 @@ struct Member {
 static void
 write_combination(struct rt_wdb *writer, const std::string &name,
 	const std::vector<Member> &members, const Properties &properties,
-	const unsigned char *color, bool override_color = false)
+	const unsigned char *color = nullptr, bool override_color = false,
+	std::optional<double> transparency = std::nullopt, bool face_colors = false)
 {
     struct wmember head;
     BU_LIST_INIT(&head.l);
@@ -189,105 +200,318 @@ write_combination(struct rt_wdb *writer, const std::string &name,
 	mk_freemembers(&head.l);
 	throw std::runtime_error("could not add member to " + name);
     }
-    if (mk_comb(writer, name.c_str(), &head.l, 0, nullptr, nullptr, color,
-	    0, 0, 0, 0, color && override_color, 0, 0))
+    const bool transmit = transparency && (override_color || !ZERO(*transparency));
+    char shader[] = "plastic";
+    std::string shader_args = transmit ? "tr=" + std::to_string(*transparency) : "";
+    if (face_colors)
+	shader_args += shader_args.empty() ? "face_colors=1" : " face_colors=1";
+    if (mk_comb(writer, name.c_str(), &head.l, 0, shader_args.empty() ? nullptr : shader,
+	    shader_args.empty() ? nullptr : shader_args.data(), color,
+	    0, 0, 0, 0, override_color && (color || transparency), 0, 0))
 	throw std::runtime_error("could not write FreeCAD combination " + name);
     struct directory *entry = db_lookup(writer->dbip, name.c_str(), LOOKUP_QUIET);
     if (!entry)
 	throw std::runtime_error("could not find FreeCAD combination " + name);
 
     struct bu_attribute_value_set attrs;
-    bu_avs_init(&attrs, properties.size(), "FreeCAD properties");
+    bu_avs_init(&attrs, properties.size() + (transparency ? 1 : 0), "FreeCAD properties");
     for (const auto &property : properties)
 	bu_avs_add(&attrs, ("freecad:" + property.first).c_str(), property.second.c_str());
+    if (transparency)
+	bu_avs_add(&attrs, "freecad:transparency", std::to_string(*transparency).c_str());
     if (db5_update_attributes(entry, &attrs, writer->dbip))
 	throw std::runtime_error("could not write FreeCAD properties for " + name);
 }
 
-static bool
-has_link(const Object &object)
+struct ObjectKey {
+    size_t archive;
+    std::string id;
+    std::string selection = {};
+
+    bool operator<(const ObjectKey &other) const
+    {
+	return std::tie(archive, id, selection) < std::tie(other.archive, other.id, other.selection);
+    }
+
+    std::string name() const
+    {
+	return selection.empty() ? id : id + "." + selection;
+    }
+};
+
+struct SourceDocument {
+    std::string path;
+    std::string archive;
+    Document document;
+    std::map<std::string, std::optional<size_t>> resolved = {};
+};
+
+using Snapshots = std::map<std::filesystem::path, std::string>;
+
+static std::filesystem::path
+normalized_path(const std::filesystem::path &file)
 {
-    return !object.linked_object.empty() || object.is_link() || object.unsupported_link;
+    std::error_code error;
+    const auto path = std::filesystem::weakly_canonical(file, error);
+    return error || !path.is_absolute() ? std::filesystem::absolute(file).lexically_normal() : path;
 }
 
-static std::vector<std::string>
-child_dependencies(const Document &document, const std::string &id,
+class DocumentSet {
+public:
+    explicit DocumentSet(const char *path, const Snapshots &updates) : snapshots(updates)
+    {
+	const auto file = normalized_path(std::filesystem::u8path(path));
+	load(file);
+	files.emplace(file, 0);
+    }
+
+    std::optional<size_t> resolve(size_t owner, const std::string &name)
+    {
+	if (name.empty())
+	    return owner;
+	auto &source = sources.at(owner);
+	const auto reference = source.resolved.try_emplace(name, std::nullopt);
+	if (!reference.second)
+	    return reference.first->second;
+	const auto file = normalized_path(std::filesystem::u8path(source.path).parent_path() /
+		std::filesystem::u8path(name));
+	const auto result = files.try_emplace(file, std::nullopt);
+	auto &index = result.first->second;
+	if (result.second) {
+	    try {
+		load(file);
+		index = sources.size() - 1;
+	    } catch (const std::exception &failure) {
+		bu_log("FreeCAD: could not read linked document %s: %s\n", name.c_str(), failure.what());
+	    }
+	}
+	reference.first->second = index;
+	return index;
+    }
+
+    const Object &object(const ObjectKey &key) const
+    {
+	return sources.at(key.archive).document.objects.at(key.id);
+    }
+
+    std::deque<SourceDocument> sources;
+
+private:
+    void load(const std::filesystem::path &file)
+    {
+	const auto origin = file.u8string();
+	const auto update = snapshots.find(file);
+	if (update == snapshots.end()) {
+	    sources.push_back({origin, origin, read_document(origin.c_str())});
+	    return;
+	}
+	sources.push_back({origin, update->second, read_document(update->second.c_str(), origin.c_str())});
+    }
+
+    const Snapshots &snapshots;
+    std::map<std::filesystem::path, std::optional<size_t>> files;
+};
+
+struct Reference {
+    ObjectKey key;
+    Matrix prefix = MAT_INIT_IDN;
+    bool use_placement = true;
+};
+
+static std::vector<Reference>
+child_dependencies(const Document &document, const ObjectKey &key,
 	const Object &object, const std::vector<std::string> &entries, bool per_element,
 	size_t &unavailable)
 {
-    std::vector<std::string> children;
+    std::vector<Reference> children;
     for (size_t index = 0; index < entries.size(); ++index) {
 	const auto &child = entries[index];
 	if (child.empty() || (per_element && !object.element_visible(index)))
 	    continue;
 	const auto found = document.objects.find(child);
 	if (found == document.objects.end()) {
-	    bu_log("FreeCAD: %s references missing group member %s\n", id.c_str(), child.c_str());
+	    bu_log("FreeCAD: %s references missing group member %s\n", key.id.c_str(), child.c_str());
 	    ++unavailable;
 	    continue;
 	}
 	// Link groups and arrays can show a member hidden elsewhere.
 	if (!found->second.suppressed && (per_element || found->second.visible))
-	    children.push_back(child);
+	    children.push_back({{key.archive, child}});
     }
     return children;
 }
 
-static std::vector<std::string>
-dependencies(const Document &document, const std::string &id, const Object &object,
-	size_t &unavailable)
+static Matrix
+object_placement(const Object &object)
 {
-    if (has_link(object)) {
+    const Matrix identity = MAT_INIT_IDN;
+    return object.has_link_placement ? object.link_placement : object.placement.value_or(identity);
+}
+
+static Matrix scale_matrix(const Scale &values);
+
+static Matrix
+link_scale(const Object &object)
+{
+    return scale_matrix(object.has_scale_vector ? object.scale_vector :
+	Scale{object.scale, object.scale, object.scale});
+}
+
+static std::optional<ObjectKey>
+linked_root(DocumentSet &documents, size_t archive, const Object &object)
+{
+    const auto source = documents.resolve(archive, object.linked_file);
+    if (!source || !documents.sources[*source].document.objects.count(object.linked_object))
+	return std::nullopt;
+    return ObjectKey{*source, object.linked_object};
+}
+
+static std::optional<Reference>
+resolve_subobject(DocumentSet &documents, const ObjectKey &root, std::string path,
+	bool link_transform)
+{
+    Reference target{root};
+    bool use_placement = link_transform;
+    std::set<ObjectKey> traversed;
+    const auto append_transform = [&](const Matrix &transform) {
+	Matrix prefix;
+	bn_mat_mul(prefix.data(), target.prefix.data(), transform.data());
+	target.prefix = prefix;
+    };
+    while (!path.empty()) {
+	const auto &parent = documents.object(target.key);
+	if (!traversed.insert(target.key).second)
+	    return std::nullopt;
+	const auto dot = path.find('.');
+	if (!parent.has_link() && dot == std::string::npos)
+	    break;
+	if (use_placement) {
+	    append_transform(object_placement(parent));
+	}
+	if (parent.has_link() && !parent.expanded_array()) {
+	    if (parent.unsupported_link || parent.element_count || parent.linked_subobjects.size() > 1)
+		return std::nullopt;
+	    const auto next = linked_root(documents, target.key.archive, parent);
+	    if (!next || documents.object(*next).suppressed)
+		return std::nullopt;
+	    if (!parent.linked_subobjects.empty() && !parent.linked_subobjects.front().empty()) {
+		const auto &selected = parent.linked_subobjects.front();
+		if (selected.back() != '.')
+		    return std::nullopt;
+		path.insert(0, selected);
+	    }
+	    append_transform(link_scale(parent));
+	    target.key = *next;
+	    use_placement = parent.link_transform;
+	    continue;
+	}
+	if (dot == std::string::npos)
+	    return std::nullopt;
+	const auto &document = documents.sources[target.key.archive].document;
+	const auto child_name = std::string_view(path).substr(0, dot);
+	const auto match = [&](const std::string &id) {
+	    const auto child = document.objects.find(id);
+	    if (child == document.objects.end() || child->second.suppressed)
+		return false;
+	    if (child_name == id)
+		return true;
+	    const auto label = child->second.properties.find("Label");
+	    return !child_name.empty() && child_name.front() == '$' &&
+		label != child->second.properties.end() && label->second == child_name.substr(1);
+	};
+	const auto &children = parent.expanded_array() ? parent.array_elements : parent.children;
+	const auto child = std::find_if(children.begin(), children.end(), match);
+	if (child == children.end())
+	    return std::nullopt;
+	if (parent.expanded_array())
+	    append_transform(link_scale(parent));
+	target.key.id = *child;
+	use_placement = true;
+	path.erase(0, dot + 1);
+    }
+    target.key.selection = path;
+    target.use_placement = use_placement;
+    return target;
+}
+
+static std::vector<Reference>
+dependencies(DocumentSet &documents, const ObjectKey &key, size_t &unavailable)
+{
+    const auto &document = documents.sources[key.archive].document;
+    const auto &object = documents.object(key);
+    if (!key.selection.empty())
+	return {};
+    if (object.has_link()) {
 	if (object.unsupported_link) {
-	    bu_log("FreeCAD: %s uses an external or subobject link\n", id.c_str());
+	    bu_log("FreeCAD: %s has an unsupported link property\n", key.id.c_str());
+	    ++unavailable;
+	    return {};
+	}
+	if (object.linked_subobject_count && *object.linked_subobject_count != object.linked_subobjects.size()) {
+	    bu_log("FreeCAD: %s has an inconsistent subobject list\n", key.id.c_str());
 	    ++unavailable;
 	    return {};
 	}
 	if (object.expanded_array()) {
 	    if (object.array_elements.size() != object.element_count) {
-		bu_log("FreeCAD: %s has an inconsistent link array element list\n", id.c_str());
+		bu_log("FreeCAD: %s has an inconsistent link array element list\n", key.id.c_str());
 		++unavailable;
 		return {};
 	    }
-	    return child_dependencies(document, id, object, object.array_elements, true, unavailable);
+	    return child_dependencies(document, key, object, object.array_elements, true, unavailable);
 	}
-	const auto target = document.objects.find(object.linked_object);
-	if (target != document.objects.end()) {
-	    if (target->second.suppressed)
+	const auto root = linked_root(documents, key.archive, object);
+	if (root) {
+	    if (documents.object(*root).suppressed)
 		return {};
-	    return {object.linked_object};
+	    if (object.linked_subobjects.empty())
+		return {{*root, MAT_INIT_IDN, object.link_transform}};
+	    std::vector<Reference> targets;
+	    for (const auto &path : object.linked_subobjects) {
+		auto target = resolve_subobject(documents, *root, path, object.link_transform);
+		if (target) {
+		    targets.push_back(std::move(*target));
+		} else {
+		    bu_log("FreeCAD: %s has an unavailable subobject %s.%s\n", key.id.c_str(),
+			root->id.c_str(), path.c_str());
+		    ++unavailable;
+		}
+	    }
+	    return targets;
 	}
-	bu_log("FreeCAD: %s has a missing link target\n", id.c_str());
+	bu_log("FreeCAD: %s has a missing link target %s\n", key.id.c_str(), object.linked_object.c_str());
 	++unavailable;
 	return {};
     }
     // A saved Body shape already represents its modeling history.
     if (!object.shape_file.empty() && object.type == "PartDesign::Body")
 	return {};
-    if (object.shape_file.empty() && (object.type == "Mesh::Feature" || object.type == "Mesh::FeaturePython")) {
-	bu_log("FreeCAD: %s uses an unsupported mesh object\n", id.c_str());
+    if (object.mesh_file.empty() && (object.type == "Mesh::Feature" || object.type == "Mesh::FeaturePython")) {
+	bu_log("FreeCAD: %s has no saved mesh\n", key.id.c_str());
 	++unavailable;
     }
-    return child_dependencies(document, id, object, object.children, object.is_link_group(), unavailable);
+    return child_dependencies(document, key, object, object.children, object.is_link_group(), unavailable);
 }
 
 struct Node {
     Member occurrence;
-    std::vector<std::string> dependencies;
+    std::vector<Reference> dependencies;
     bool complete = false;
 };
 
-static std::vector<std::string>
-order_nodes(const Document &document, const std::vector<std::string> &roots,
-	std::map<std::string, Node> &nodes, size_t &unavailable)
+using Nodes = std::map<ObjectKey, Node>;
+
+static std::vector<ObjectKey>
+order_nodes(DocumentSet &documents, const std::vector<ObjectKey> &roots,
+	Nodes &nodes, size_t &unavailable)
 {
-    std::vector<std::string> order;
+    std::vector<ObjectKey> order;
     for (const auto &root : roots) {
 	auto added = nodes.emplace(root, Node());
 	if (!added.second)
 	    continue;
-	added.first->second.dependencies = dependencies(document, root, document.objects.at(root), unavailable);
-	std::vector<std::pair<std::string, size_t>> stack = {{root, 0}};
+	added.first->second.dependencies = dependencies(documents, root, unavailable);
+	std::vector<std::pair<ObjectKey, size_t>> stack = {{root, 0}};
 	while (!stack.empty()) {
 	    auto &frame = stack.back();
 	    Node &node = nodes.at(frame.first);
@@ -297,14 +521,17 @@ order_nodes(const Document &document, const std::vector<std::string> &roots,
 		stack.pop_back();
 		continue;
 	    }
-	    const auto &child = node.dependencies[frame.second++];
+	    const size_t child_index = frame.second++;
+	    const auto &child = node.dependencies[child_index].key;
 	    auto inserted = nodes.emplace(child, Node());
 	    if (inserted.second) {
-		inserted.first->second.dependencies = dependencies(document, child,
-		    document.objects.at(child), unavailable);
+		inserted.first->second.dependencies = dependencies(documents, child, unavailable);
 		stack.emplace_back(child, 0);
 	    } else if (!inserted.first->second.complete) {
-		throw std::runtime_error("cyclic FreeCAD hierarchy at " + child);
+		bu_log("FreeCAD: cyclic reference from %s to %s\n", frame.first.id.c_str(), child.id.c_str());
+		++unavailable;
+		node.dependencies.erase(node.dependencies.begin() + child_index);
+		--frame.second;
 	    }
 	}
     }
@@ -316,7 +543,16 @@ struct Geometry {
     std::vector<Member> parts;
     size_t invalid_parts = 0;
     size_t nonmanifold_parts = 0;
+    bool face_colors = false;
 };
+
+struct Appearance {
+    Rgb color;
+    double transparency;
+};
+
+using Shapes = NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher>;
+using Appearances = std::vector<Appearance>;
 
 using ImportClock = std::chrono::steady_clock;
 
@@ -365,15 +601,28 @@ preserves_source_nonmanifold_edges(const TopoDS_Shape &shape, const ON_Brep &bre
 }
 
 static void
-write_shape(struct rt_wdb *writer, const std::string &name,
-	const TopoDS_Shape &shape, double tolerance, Geometry &geometry, ImportTimings &timings)
+write_shape(struct rt_wdb *writer, const ObjectKey &key,
+	const TopoDS_Shape &shape, double tolerance, Geometry &geometry, ImportTimings &timings,
+	const Shapes &source_faces, const Appearances &appearance)
 {
     if (shape.ShapeType() == TopAbs_COMPOUND || shape.ShapeType() == TopAbs_COMPSOLID) {
 	for (TopoDS_Iterator child(shape); child.More(); child.Next())
-	    write_shape(writer, name, child.Value(), tolerance, geometry, timings);
+	    write_shape(writer, key, child.Value(), tolerance, geometry, timings, source_faces, appearance);
 	return;
     }
-    if (!TopExp_Explorer(shape, TopAbs_FACE).More())
+    if (key.selection.empty() && !TopExp_Explorer(shape, TopAbs_FACE).More())
+	return;
+    const auto name = key.name();
+    if (shape.ShapeType() == TopAbs_VERTEX) {
+	const auto point = BRep_Tool::Pnt(TopoDS::Vertex(shape));
+	const point_t position = {point.X(), point.Y(), point.Z()};
+	const auto primitive = unique_name(writer->dbip, name + ".s");
+	if (mk_pnts(writer, primitive.c_str(), RT_PNT_TYPE_PNT, 0.0, 1, position, nullptr, nullptr, nullptr))
+	    throw std::runtime_error("could not write FreeCAD point " + primitive);
+	geometry.parts.push_back({primitive});
+	return;
+    }
+    if (!TopExp_Explorer(shape, TopAbs_VERTEX).More())
 	return;
 
     auto brep = std::make_unique<ON_Brep>();
@@ -382,7 +631,7 @@ write_shape(struct rt_wdb *writer, const std::string &name,
     try {
 	ON_wString diagnostic;
 	ON_TextLog log(diagnostic);
-	const bool valid = occt_to_brep(shape, *brep, tolerance, &log) && brep->m_F.Count() > 0;
+	const bool valid = occt_to_brep(shape, *brep, tolerance, &log);
 	const bool solid = shape.ShapeType() != TopAbs_SOLID || (valid && brep->IsSolid());
 	nonmanifold = valid && !solid && preserves_source_nonmanifold_edges(shape, *brep);
 	timings.translate += ImportClock::now() - started;
@@ -414,6 +663,24 @@ write_shape(struct rt_wdb *writer, const std::string &name,
 	bu_log("FreeCAD: %s: %s\n", name.c_str(), message ? message : "BRep conversion failed");
 	return;
     }
+    if (!source_faces.IsEmpty()) {
+	Shapes faces;
+	TopExp::MapShapes(shape, TopAbs_FACE, faces);
+	for (int face = 0; face < brep->m_F.Count(); ++face) {
+	    const auto source = source_faces.FindIndex(faces.FindKey(face + 1));
+	    if (!source)
+		continue;
+	    const auto &material = appearance[source - 1];
+	    constexpr auto channel_max = std::numeric_limits<unsigned char>::max();
+	    const int transparency = static_cast<int>(std::lround(material.transparency * channel_max));
+	    ON_Color color(material.color[0], material.color[1], material.color[2], transparency);
+	    // openNURBS reserves transparent white for faces without an override.
+	    if (color == ON_Color::UnsetColor)
+		color.SetRGBA(color.Red(), color.Green(), color.Blue() - 1, transparency);
+	    brep->m_F[face].SetPerFaceColor(color);
+	}
+	geometry.face_colors |= brep->HasPerFaceColors();
+    }
     const auto primitive = unique_name(writer->dbip, name + ".s");
     const auto store_started = ImportClock::now();
     // wdb_export takes ownership.  The BRep already uses millimeters.
@@ -434,11 +701,9 @@ write_shape(struct rt_wdb *writer, const std::string &name,
     timings.store += ImportClock::now() - store_started;
 }
 
-static Geometry
-read_shape(Archive &archive, const std::string &member, const std::string &name,
-	struct rt_wdb *writer, double tolerance, ImportTimings &timings)
+static TopoDS_Shape
+read_shape(Archive &archive, const std::string &member, ImportTimings &timings)
 {
-    Geometry result;
     TopoDS_Shape shape;
     const auto started = ImportClock::now();
     bool has_data = false;
@@ -466,18 +731,65 @@ read_shape(Archive &archive, const std::string &member, const std::string &name,
 	source.finish();
     }
     timings.decode += ImportClock::now() - started;
-    if (shape.IsNull()) {
-	if (has_data) {
-	    ++result.invalid_parts;
-	    bu_log("FreeCAD: could not decode shape member %s\n", member.c_str());
-	}
-	return result;
+    if (shape.IsNull() && has_data)
+	throw std::runtime_error("could not decode shape member " + member);
+    return shape;
+}
+
+static TopoDS_Shape
+select_shape(const TopoDS_Shape &shape, const std::string &selection)
+{
+    static constexpr std::pair<std::string_view, TopAbs_ShapeEnum> types[] = {
+	{"Compound", TopAbs_COMPOUND}, {"CompSolid", TopAbs_COMPSOLID},
+	{"Solid", TopAbs_SOLID}, {"Shell", TopAbs_SHELL}, {"Face", TopAbs_FACE},
+	{"Wire", TopAbs_WIRE}, {"Edge", TopAbs_EDGE}, {"Vertex", TopAbs_VERTEX}
+    };
+    for (const auto &type : types) {
+	if (selection.compare(0, type.first.size(), type.first))
+	    continue;
+	int index = 0;
+	const char *end = selection.data() + selection.size();
+	const auto converted = std::from_chars(selection.data() + type.first.size(), end, index);
+	if (converted.ec != std::errc() || converted.ptr != end || index <= 0)
+	    return {};
+	NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher> elements;
+	TopExp::MapShapes(shape, type.second, elements);
+	return static_cast<size_t>(index) <= static_cast<size_t>(elements.Size())
+	    ? elements.FindKey(index) : TopoDS_Shape();
     }
+    return {};
+}
+
+static Geometry
+translate_shape(struct rt_wdb *writer, const ObjectKey &key, TopoDS_Shape shape,
+	double tolerance, ImportTimings &timings, const Appearances &appearance)
+{
+    Geometry result;
+    if (shape.IsNull())
+	return result;
     // Keep the geometry reusable. The saved location can contain a shape
     // offset in addition to the owning object's placement.
     result.location = placement_matrix(shape.Location().Transformation());
     shape.Location(TopLoc_Location());
-    write_shape(writer, name, shape, tolerance, result, timings);
+    Shapes source_faces;
+    if (appearance.size() > 1) {
+	TopExp::MapShapes(shape, TopAbs_FACE, source_faces);
+	const auto face_count = static_cast<size_t>(source_faces.Size());
+	if (face_count != appearance.size()) {
+	    bu_log("FreeCAD: %s has %zu appearance entries for %zu saved faces\n",
+		key.id.c_str(), appearance.size(), face_count);
+	    source_faces.Clear();
+	}
+    }
+    if (!key.selection.empty()) {
+	shape = select_shape(shape, key.selection);
+	if (shape.IsNull()) {
+	    bu_log("FreeCAD: %s has no saved %s\n", key.id.c_str(), key.selection.c_str());
+	    ++result.invalid_parts;
+	    return result;
+	}
+    }
+    write_shape(writer, key, shape, tolerance, result, timings, source_faces, appearance);
     return result;
 }
 
@@ -526,14 +838,14 @@ read_little_endian(const char *data)
 
 template <typename Real, typename UInt>
 static Real
-read_list_real(const char *data)
+read_binary_real(const char *data)
 {
     static_assert(sizeof(Real) == sizeof(UInt), "unsupported floating-point size");
     const auto bits = read_little_endian<UInt>(data);
     Real result;
     std::memcpy(&result, &bits, sizeof(result));
     if (!std::isfinite(result))
-	throw std::runtime_error("non-finite value in FCStd link array");
+	throw std::runtime_error("non-finite value in FCStd binary member");
     return result;
 }
 
@@ -565,10 +877,148 @@ read_array_list(Archive &archive, size_t components)
     for (size_t index = 0; index < values; ++index) {
 	const char *value = data.data() + index * bytes;
 	if (bytes == sizeof(uint32_t))
-	    result.push_back(read_list_real<float, uint32_t>(value));
+	    result.push_back(read_binary_real<float, uint32_t>(value));
 	else
-	    result.push_back(read_list_real<double, uint64_t>(value));
+	    result.push_back(read_binary_real<double, uint64_t>(value));
     }
+    return result;
+}
+
+static Appearances
+read_appearance_list(Archive &archive, bool materials, bool legacy_alpha)
+{
+    const BinaryMemberBuffer buffer(archive);
+    auto data = buffer.data();
+    if (data.size() < sizeof(uint32_t))
+	throw std::runtime_error("truncated FCStd appearance header");
+    auto count = read_little_endian<uint32_t>(data.data());
+    data.remove_prefix(sizeof(uint32_t));
+    // Early MaterialList writers stored a negative version marker before the count.
+    if (materials && count > static_cast<uint32_t>(std::numeric_limits<int32_t>::max()) &&
+	data.size() >= sizeof(uint32_t)) {
+	count = read_little_endian<uint32_t>(data.data());
+	data.remove_prefix(sizeof(uint32_t));
+    }
+    // Material lists store ambient, diffuse, specular, emission, shine and transparency.
+    constexpr size_t material_size = 4 * sizeof(uint32_t) + 2 * sizeof(float);
+    constexpr size_t diffuse_offset = sizeof(uint32_t);
+    constexpr size_t transparency_offset = material_size - sizeof(float);
+    const size_t stride = materials ? material_size : sizeof(uint32_t);
+    if (count > data.size() / stride || (!materials && count * stride != data.size()))
+	throw std::runtime_error("invalid FCStd appearance list size");
+    Appearances result;
+    result.reserve(count);
+    for (size_t index = 0; index < count; ++index) {
+	const char *entry = data.data() + index * stride;
+	const auto rgba = read_little_endian<uint32_t>(entry + (materials ? diffuse_offset : 0));
+	constexpr auto channel_max = std::numeric_limits<unsigned char>::max();
+	const double alpha = static_cast<unsigned char>(rgba) / static_cast<double>(channel_max);
+	const double transparency = materials ? read_binary_real<float, uint32_t>(entry + transparency_offset)
+	    : (legacy_alpha ? alpha : 1.0 - alpha);
+	result.push_back({unpack_rgb(rgba), std::clamp(transparency, 0.0, 1.0)});
+    }
+    return result;
+}
+
+using AppearanceLists = std::map<std::string, Appearances>;
+
+static std::string
+appearance_member(const Object &object)
+{
+    return object.appearance_file.empty() ? object.diffuse_file : object.appearance_file;
+}
+
+static AppearanceLists
+read_appearances(const SourceDocument &source, const std::map<std::string, bool> &wanted)
+{
+    AppearanceLists result;
+    if (wanted.empty())
+	return result;
+    Archive archive(source.path.c_str());
+    std::string member;
+    while (archive.next(member)) {
+	const auto entry = wanted.find(member);
+	if (entry != wanted.end() &&
+	    !result.emplace(member, read_appearance_list(archive, entry->second,
+		source.document.legacy_alpha)).second)
+	    throw std::runtime_error("duplicate FCStd appearance member " + member);
+    }
+    for (const auto &entry : wanted)
+	if (!result.count(entry.first))
+	    bu_log("FreeCAD: missing appearance member %s\n", entry.first.c_str());
+    return result;
+}
+
+struct TriangleMesh {
+    std::vector<fastf_t> vertices;
+    std::vector<int> faces;
+};
+
+static TriangleMesh
+read_mesh(Archive &archive)
+{
+    const BinaryMemberBuffer source(archive);
+    const auto data = source.data();
+    // MeshKernel::Write stores a magic number, version, and 256-byte description.
+    constexpr uint32_t mesh_magic = 0xa0b0c0d0;
+    constexpr uint32_t mesh_version = 0x010000;
+    constexpr size_t count_offset = 2 * sizeof(uint32_t) + 256;
+    constexpr size_t header_size = count_offset + 2 * sizeof(uint32_t);
+    constexpr size_t point_size = ELEMENTS_PER_VECT * sizeof(float);
+    constexpr size_t facet_size = 2 * ELEMENTS_PER_VECT * sizeof(uint32_t);
+    constexpr size_t bounds_size = 2 * point_size;
+    if (data.size() < header_size + bounds_size ||
+	read_little_endian<uint32_t>(data.data()) != mesh_magic ||
+	read_little_endian<uint32_t>(data.data() + sizeof(uint32_t)) != mesh_version)
+	throw std::runtime_error("unsupported or truncated FCStd mesh header");
+    const auto point_count = read_little_endian<uint32_t>(data.data() + count_offset);
+    const auto face_count = read_little_endian<uint32_t>(data.data() + count_offset + sizeof(uint32_t));
+    const size_t payload = data.size() - header_size - bounds_size;
+    constexpr auto max_elements = std::numeric_limits<int>::max() / ELEMENTS_PER_VECT;
+    if (point_count > max_elements || face_count > max_elements ||
+	point_count > payload / point_size || face_count > (payload - point_count * point_size) / facet_size ||
+	point_count * point_size + face_count * facet_size != payload)
+	throw std::runtime_error("invalid FCStd mesh member size");
+    if (!point_count || !face_count)
+	return {};
+
+    const char *point = data.data() + header_size;
+    TriangleMesh mesh;
+    mesh.vertices.reserve(static_cast<size_t>(point_count) * ELEMENTS_PER_VECT);
+    for (size_t index = 0; index < static_cast<size_t>(point_count) * ELEMENTS_PER_VECT; ++index) {
+	mesh.vertices.push_back(read_binary_real<float, uint32_t>(point));
+	point += sizeof(float);
+    }
+    mesh.faces.reserve(static_cast<size_t>(face_count) * ELEMENTS_PER_VECT);
+    for (size_t face = 0; face < face_count; ++face, point += facet_size) {
+	for (size_t corner = 0; corner < ELEMENTS_PER_VECT; ++corner) {
+	    const auto index = read_little_endian<uint32_t>(point + corner * sizeof(uint32_t));
+	    if (index >= point_count)
+		throw std::runtime_error("FCStd mesh facet references a missing vertex");
+	    mesh.faces.push_back(static_cast<int>(index));
+	}
+    }
+    return mesh;
+}
+
+static Geometry
+write_mesh(struct rt_wdb *writer, const std::string &name, TriangleMesh &mesh, ImportTimings &timings)
+{
+    if (mesh.faces.empty())
+	return {};
+    const auto point_count = mesh.vertices.size() / ELEMENTS_PER_VECT;
+    const auto face_count = mesh.faces.size() / ELEMENTS_PER_VECT;
+    const auto store_started = ImportClock::now();
+    const bool closed = !bg_trimesh_solid(static_cast<int>(point_count), static_cast<int>(face_count),
+	mesh.vertices.data(), mesh.faces.data(), nullptr);
+    const auto primitive = unique_name(writer->dbip, name + ".s");
+    if (mk_bot(writer, primitive.c_str(), closed ? RT_BOT_SOLID : RT_BOT_SURFACE,
+	    closed ? RT_BOT_CCW : RT_BOT_UNORIENTED, 0, point_count, face_count,
+	    mesh.vertices.data(), mesh.faces.data(), nullptr, nullptr))
+	throw std::runtime_error("could not write FreeCAD mesh " + primitive);
+    Geometry result;
+    result.parts.push_back({primitive});
+    timings.store += ImportClock::now() - store_started;
     return result;
 }
 
@@ -588,16 +1038,15 @@ find_array_list(const ArrayLists &lists, const std::string &file, const std::vec
 
 static void
 write_link_members(const Object &object, const Node &node,
-	const std::map<std::string, Node> &nodes, const ArrayLists &lists,
+	const Nodes &nodes, const ArrayLists &lists,
 	std::vector<Member> &members, const std::string &id, size_t &unavailable)
 {
     if (node.dependencies.empty())
 	return;
-    const Matrix scale = scale_matrix(object.has_scale_vector ? object.scale_vector :
-	Scale{object.scale, object.scale, object.scale});
+    const Matrix scale = link_scale(object);
     if (object.expanded_array()) {
 	for (const auto &element : node.dependencies) {
-	    Member target = nodes.at(element).occurrence;
+	    Member target = nodes.at(element.key).occurrence;
 	    if (!target.name.empty()) {
 		bn_mat_mul2(scale.data(), target.transform.data());
 		members.push_back(std::move(target));
@@ -606,28 +1055,17 @@ write_link_members(const Object &object, const Node &node,
 	return;
     }
 
-    const auto &target = nodes.at(node.dependencies.front()).occurrence;
-    if (target.name.empty())
-	return;
-    const Matrix identity = MAT_INIT_IDN;
-    const Matrix &target_placement = object.link_transform ? target.transform : identity;
-    if (!object.element_count) {
-	Member member{target.name, target_placement};
-	bn_mat_mul2(scale.data(), member.transform.data());
-	members.push_back(std::move(member));
-	return;
-    }
-
     const std::vector<double> *placements = nullptr;
     const std::vector<double> *scales = nullptr;
-    if (!find_array_list(lists, object.array_placements, placements) ||
-	    !find_array_list(lists, object.array_scales, scales)) {
+    if (object.element_count && (!find_array_list(lists, object.array_placements, placements) ||
+	    !find_array_list(lists, object.array_scales, scales))) {
 	bu_log("FreeCAD: %s is missing an array placement or scale member\n", id.c_str());
 	++unavailable;
 	return;
     }
-    for (size_t index = 0; index < object.element_count; ++index) {
-	if (!object.element_visible(index))
+    const size_t count = object.element_count ? object.element_count : 1;
+    for (size_t index = 0; index < count; ++index) {
+	if (object.element_count && !object.element_visible(index))
 	    continue;
 	Matrix element_placement = MAT_INIT_IDN;
 	if (placements && index < placements->size() / placement_components) {
@@ -639,19 +1077,52 @@ write_link_members(const Object &object, const Node &node,
 	    const double *s = scales->data() + index * scale_components;
 	    element_scale = scale_matrix({s[0], s[1], s[2]});
 	}
-	Member member{target.name};
-	bn_mat_mul4(member.transform.data(), scale.data(), element_placement.data(),
-	    element_scale.data(), target_placement.data());
-	members.push_back(std::move(member));
+	for (const auto &reference : node.dependencies) {
+	    const auto &target = nodes.at(reference.key).occurrence;
+	    if (target.name.empty())
+		continue;
+	    Matrix target_transform = reference.prefix;
+	    if (reference.use_placement)
+		bn_mat_mul(target_transform.data(), reference.prefix.data(), target.transform.data());
+	    Member member{target.name};
+	    bn_mat_mul4(member.transform.data(), scale.data(), element_placement.data(),
+		element_scale.data(), target_transform.data());
+	    members.push_back(std::move(member));
+	}
     }
 }
 
+struct ArchiveRequests {
+    std::map<std::string, std::vector<ObjectKey>> geometry;
+    std::map<std::string, size_t> array_fields;
+    ArrayLists array_lists;
+    std::map<std::string, bool> appearance_fields;
+    AppearanceLists appearances;
+
+    const Appearances &appearance(const Object &object) const
+    {
+	static const Appearances empty;
+	const auto found = appearances.find(appearance_member(object));
+	return found == appearances.end() ? empty : found->second;
+    }
+
+    void request_list(const std::string &file, size_t components)
+    {
+	if (file.empty())
+	    return;
+	const auto result = array_fields.emplace(file, components);
+	if (result.first->second != components)
+	    throw std::runtime_error("conflicting FCStd link array member " + file);
+    }
+};
+
 static bool
 import_document(struct rt_wdb *writer, const gcv_opts *options, const char *source_path,
-	bool strict)
+	bool strict, const Snapshots &snapshots)
 {
     const auto started = ImportClock::now();
-    const Document document = read_document(source_path);
+    DocumentSet documents(source_path, snapshots);
+    const auto &document = documents.sources.front().document;
     std::set<std::string> group_members;
     for (const auto &entry : document.objects) {
 	const auto &object = entry.second;
@@ -659,135 +1130,201 @@ import_document(struct rt_wdb *writer, const gcv_opts *options, const char *sour
 	if (object.expanded_array())
 	    group_members.insert(object.array_elements.begin(), object.array_elements.end());
     }
-    std::vector<std::string> roots;
+    std::vector<ObjectKey> roots;
     for (const auto &entry : document.objects)
 	if (entry.second.visible && !entry.second.suppressed && !group_members.count(entry.first))
-	    roots.push_back(entry.first);
+	    roots.push_back({0, entry.first});
 
-    std::map<std::string, Node> nodes;
+    Nodes nodes;
     size_t unavailable = 0;
-    const auto order = order_nodes(document, roots, nodes, unavailable);
+    const auto order = order_nodes(documents, roots, nodes, unavailable);
     if (strict && unavailable) {
 	bu_log("FreeCAD: strict import rejected %zu unavailable references\n", unavailable);
 	return false;
     }
-    std::map<std::string, std::string> wanted;
-    std::map<std::string, Geometry> geometry;
-    std::map<std::string, size_t> array_fields;
-    ArrayLists array_lists;
-    const auto request_list = [&](const std::string &file, size_t components) {
-	if (file.empty())
-	    return;
-	const auto result = array_fields.emplace(file, components);
-	if (result.first->second != components)
-	    throw std::runtime_error("conflicting FCStd link array member " + file);
-    };
-    for (const auto &id : order) {
-	const auto &object = document.objects.at(id);
-	if (!has_link(object) && !object.shape_file.empty())
-	    wanted.emplace(object.shape_file, id);
-	if (object.element_count && !object.expanded_array() && !nodes.at(id).dependencies.empty()) {
-	    request_list(object.array_placements, placement_components);
-	    request_list(object.array_scales, scale_components);
+    std::vector<ArchiveRequests> archives(documents.sources.size());
+    for (const auto &key : order) {
+	const auto &object = documents.object(key);
+	auto &requests = archives[key.archive];
+	const auto appearance = appearance_member(object);
+	if (!appearance.empty() && (!object.has_link() || object.override_material))
+	    requests.appearance_fields.emplace(appearance, !object.appearance_file.empty());
+	if (!object.has_link()) {
+	    const auto &asset = object.shape_file.empty() ? object.mesh_file : object.shape_file;
+	    if (!asset.empty() && (key.selection.empty() || !object.shape_file.empty()))
+		requests.geometry[asset].push_back(key);
+	    else if (!key.selection.empty()) {
+		bu_log("FreeCAD: %s has no saved shape for %s\n", key.id.c_str(), key.selection.c_str());
+		++unavailable;
+	    }
+	}
+	if (object.element_count && !object.expanded_array() && !nodes.at(key).dependencies.empty()) {
+	    requests.request_list(object.array_placements, placement_components);
+	    requests.request_list(object.array_scales, scale_components);
 	}
     }
+    size_t wanted = 0;
+    for (const auto &requests : archives)
+	wanted += requests.geometry.size();
+    size_t processed = 0;
     size_t written = 0;
+    size_t meshes = 0;
     size_t invalid_parts = 0;
     size_t nonmanifold_parts = 0;
+    std::map<ObjectKey, Geometry> geometry;
     ImportTimings timings;
     constexpr size_t progress_threshold = 128;
     constexpr auto report_interval = std::chrono::seconds(15);
-    const bool report_progress = wanted.size() >= progress_threshold || options->verbosity_level;
+    const bool report_progress = wanted >= progress_threshold || options->verbosity_level;
     auto last_report = ImportClock::now();
     if (report_progress)
-	bu_log("FreeCAD: reading %zu shape members from %zu document objects (metadata %.1fs)\n",
-	    wanted.size(), document.objects.size(), seconds(last_report - started));
-    if (!wanted.empty()) {
-	Archive archive(source_path);
+	bu_log("FreeCAD: reading %zu geometry members from %zu documents (metadata %.1fs)\n",
+	    wanted, archives.size(), seconds(last_report - started));
+    for (size_t source = 0; source < archives.size(); ++source) {
+	auto &requests = archives[source];
+	requests.appearances = read_appearances(documents.sources[source], requests.appearance_fields);
+	if (requests.geometry.empty() && requests.array_fields.empty())
+	    continue;
+	Archive archive(documents.sources[source].archive.c_str());
 	const double tolerance = options->calculational_tolerance.dist;
+	std::set<std::string> seen;
 	std::string member;
 	while (archive.next(member)) {
-	    const auto requested = wanted.find(member);
-	    const auto array = array_fields.find(member);
-	    if (array != array_fields.end()) {
-		if (requested != wanted.end() || array_lists.count(member))
+	    const auto requested = requests.geometry.find(member);
+	    const auto array = requests.array_fields.find(member);
+	    if (array != requests.array_fields.end()) {
+		if (requested != requests.geometry.end() || requests.array_lists.count(member))
 		    throw std::runtime_error("duplicate or conflicting FCStd array member " + member);
-		array_lists.emplace(member, read_array_list(archive, array->second));
+		requests.array_lists.emplace(member, read_array_list(archive, array->second));
 		continue;
 	    }
-	    if (requested == wanted.end())
+	    if (requested == requests.geometry.end())
 		continue;
-	    if (geometry.find(member) != geometry.end())
-		throw std::runtime_error("duplicate FCStd shape member " + member);
-	    Geometry result;
+	    if (!seen.insert(member).second)
+		throw std::runtime_error("duplicate FCStd geometry member " + member);
+	    const auto &first = requested->second.front();
+	    const bool mesh = documents.object(first).shape_file.empty();
+	    TopoDS_Shape shape;
+	    TriangleMesh triangles;
 	    try {
-		result = read_shape(archive, member, requested->second, writer, tolerance, timings);
+		if (mesh) {
+		    const auto decode_started = ImportClock::now();
+		    triangles = read_mesh(archive);
+		    timings.decode += ImportClock::now() - decode_started;
+		} else {
+		    shape = read_shape(archive, member, timings);
+		}
 	    } catch (const Standard_Failure &failure) {
-		++result.invalid_parts;
 		const char *message = occt_failure_message(failure);
 		bu_log("FreeCAD: %s: %s\n", member.c_str(), message ? message : "shape read failed");
+		++invalid_parts;
+		continue;
+	    } catch (const std::runtime_error &failure) {
+		bu_log("FreeCAD: %s: %s\n", member.c_str(), failure.what());
+		++invalid_parts;
+		continue;
 	    }
-	    if (result.parts.empty() && !result.invalid_parts) {
-		bu_log("FreeCAD: %s contains no saved BRep surfaces\n", member.c_str());
-		++result.invalid_parts;
+
+	    std::map<std::pair<std::string, std::string>, const Geometry *> translated;
+	    for (const auto &key : requested->second) {
+		const auto &object = documents.object(key);
+		const auto &appearance = requests.appearance(object);
+		const auto variant = std::make_pair(key.selection,
+		    !mesh && appearance.size() > 1 ? appearance_member(object) : std::string());
+		const auto reused = translated.find(variant);
+		if (reused != translated.end()) {
+		    geometry.emplace(key, *reused->second);
+		    continue;
+		}
+		Geometry result = mesh ? write_mesh(writer, first.name(), triangles, timings) :
+		    translate_shape(writer, key, shape, tolerance, timings, appearance);
+		if (result.parts.empty() && !result.invalid_parts) {
+		    bu_log("FreeCAD: %s contains no saved geometry for %s\n", member.c_str(), key.name().c_str());
+		    ++result.invalid_parts;
+		}
+		written += result.parts.size();
+		if (mesh)
+		    meshes += result.parts.size();
+		invalid_parts += result.invalid_parts;
+		nonmanifold_parts += result.nonmanifold_parts;
+		const auto stored = geometry.emplace(key, std::move(result));
+		translated.emplace(variant, &stored.first->second);
 	    }
-	    written += result.parts.size();
-	    invalid_parts += result.invalid_parts;
-	    nonmanifold_parts += result.nonmanifold_parts;
-	    geometry.emplace(member, std::move(result));
+	    ++processed;
 	    const auto now = ImportClock::now();
 	    if (report_progress && now - last_report >= report_interval) {
-		bu_log("FreeCAD: %zu/%zu shape members, %zu BReps, %zu rejected parts (%.1fs elapsed, last %s)\n",
-		    geometry.size(), wanted.size(), written, invalid_parts, seconds(now - started),
-		    requested->second.c_str());
+		bu_log("FreeCAD: %zu/%zu geometry members, %zu BReps, %zu meshes, %zu rejected parts (%.1fs elapsed, last %s)\n",
+		    processed, wanted, written - meshes, meshes, invalid_parts, seconds(now - started),
+		    first.name().c_str());
 		last_report = now;
 	    }
 	}
-	for (const auto &request : wanted)
-	    if (!geometry.count(request.first)) {
+	for (const auto &request : requests.geometry)
+	    if (!seen.count(request.first)) {
 		++invalid_parts;
 		bu_log("FreeCAD: missing archive member %s\n", request.first.c_str());
 	    }
     }
     if (!written) {
-	bu_log("FreeCAD: no saved BRep geometry could be imported\n");
+	bu_log("FreeCAD: no saved geometry could be imported\n");
 	return false;
     }
 
-    for (const auto &id : order) {
-	const auto &object = document.objects.at(id);
-	Node &node = nodes.at(id);
+    for (const auto &key : order) {
+	const auto &object = documents.object(key);
+	Node &node = nodes.at(key);
 	std::vector<Member> members;
-	if (object.placement)
-	    node.occurrence.transform = *object.placement;
-	const bool linked = has_link(object);
+	bool face_colors = false;
+	node.occurrence.transform = object_placement(object);
+	const bool linked = object.has_link();
 	if (linked) {
-	    write_link_members(object, node, nodes, array_lists, members, id, unavailable);
-	    if (object.has_link_placement)
-		node.occurrence.transform = object.link_placement;
+	    const auto &lists = archives[key.archive].array_lists;
+	    write_link_members(object, node, nodes, lists, members, key.id, unavailable);
 	} else {
-	    const auto shape = geometry.find(object.shape_file);
-	    if (shape != geometry.end() && !shape->second.parts.empty())
-		place_shape(object, shape->second, node.occurrence, members);
+	    const auto shape = geometry.find(key);
+	    if (shape != geometry.end() && !shape->second.parts.empty()) {
+		face_colors = shape->second.face_colors;
+		if (object.shape_file.empty())
+		    members = shape->second.parts;
+		else
+		    place_shape(object, shape->second, node.occurrence, members);
+	    }
 	    for (const auto &child : node.dependencies) {
-		const Member &occurrence = nodes.at(child).occurrence;
+		const Member &occurrence = nodes.at(child.key).occurrence;
 		if (!occurrence.name.empty())
 		    members.push_back(occurrence);
 	    }
 	}
 	if (members.empty())
 	    continue;
-	node.occurrence.name = unique_name(writer->dbip, id);
+	node.occurrence.name = unique_name(writer->dbip, key.name());
 	Properties properties = object.properties;
-	properties["name"] = id;
+	properties["name"] = key.id;
 	properties["type"] = object.type;
 	properties["visible"] = object.visible ? "true" : "false";
-	if (linked)
+	if (!key.selection.empty())
+	    properties["subobject"] = key.selection;
+	if (key.archive)
+	    properties["document"] = std::filesystem::u8path(documents.sources[key.archive].path).filename().u8string();
+	if (linked) {
 	    properties["linked_object"] = object.linked_object;
-	const auto &color = object.material_color && (!linked || object.override_material)
+	    if (!object.linked_file.empty())
+		properties["linked_file"] = object.linked_file;
+	}
+	auto color = object.material_color && (!linked || object.override_material)
 	    ? object.material_color : object.color;
+	auto transparency = linked && !object.override_material ? std::nullopt
+	    : (object.material_transparency ? object.material_transparency : object.transparency);
+	const auto &appearance = archives[key.archive].appearance(object);
+	if (!appearance.empty() && (!linked || object.override_material)) {
+	    color = appearance.front().color;
+	    if (!object.appearance_file.empty() || !transparency || appearance.size() > 1)
+		transparency = appearance.front().transparency;
+	}
+	if (linked && object.override_material && color && !transparency)
+	    transparency = 0.0;
 	write_combination(writer, node.occurrence.name, members, properties,
-	    color ? color->data() : nullptr, linked);
+	    color ? color->data() : nullptr, linked, transparency, face_colors);
     }
     if (unavailable || invalid_parts) {
 	bu_log("FreeCAD: %s (%zu unavailable references, %zu rejected parts)\n",
@@ -796,8 +1333,8 @@ import_document(struct rt_wdb *writer, const gcv_opts *options, const char *sour
 	    return false;
     }
     std::vector<Member> members;
-    for (const auto &id : roots) {
-	const Member &occurrence = nodes.at(id).occurrence;
+    for (const auto &key : roots) {
+	const Member &occurrence = nodes.at(key).occurrence;
 	if (!occurrence.name.empty())
 	    members.push_back(occurrence);
     }
@@ -810,31 +1347,129 @@ import_document(struct rt_wdb *writer, const gcv_opts *options, const char *sour
 	default_name = bu_vls_cstr(&basename);
     const auto root_name = unique_name(writer->dbip, default_name);
     bu_vls_free(&basename);
-    write_combination(writer, root_name, members, document.properties, nullptr);
+    write_combination(writer, root_name, members, document.properties);
     if (report_progress)
-	bu_log("FreeCAD: %zu BReps from %zu shape members, %zu rejected parts, %zu source nonmanifold parts, %zu assembly roots (%.1fs read, %.1fs translate, %.1fs store, %.1fs reader total)\n",
-	    written, geometry.size(), invalid_parts, nonmanifold_parts, members.size(), seconds(timings.decode),
+	bu_log("FreeCAD: %zu BReps, %zu meshes from %zu archive members, %zu rejected parts, %zu source nonmanifold parts, %zu assembly roots (%.1fs read, %.1fs translate, %.1fs store, %.1fs reader total)\n",
+	    written - meshes, meshes, processed, invalid_parts, nonmanifold_parts, members.size(), seconds(timings.decode),
 	    seconds(timings.translate), seconds(timings.store), seconds(ImportClock::now() - started));
     return true;
 }
 
+class RecomputedDocuments {
+public:
+    ~RecomputedDocuments()
+    {
+	if (!folder.empty()) {
+	    std::error_code error;
+	    std::filesystem::remove_all(folder, error);
+	    if (error)
+		bu_log("FreeCAD: could not remove recompute workspace: %s\n", error.message().c_str());
+	}
+    }
+
+    Snapshots run(const char *python, const char *source_path)
+    {
+	char temporary[MAXPATHLEN];
+	FILE *reservation = bu_temp_file(temporary, sizeof(temporary));
+	if (!reservation)
+	    throw std::runtime_error("could not reserve a FreeCAD recompute workspace");
+	std::fclose(reservation);
+	auto directory = std::filesystem::u8path(temporary);
+	directory += ".d";
+	std::error_code error;
+	const bool created = std::filesystem::create_directory(directory, error);
+	bu_file_delete(temporary);
+	if (!created)
+	    throw std::runtime_error("could not create FreeCAD recompute workspace");
+	folder = std::move(directory);
+#ifndef _WIN32
+	std::filesystem::permissions(folder, std::filesystem::perms::owner_all);
+#endif
+	const auto path = normalized_path(std::filesystem::u8path(source_path));
+	const auto input = path.u8string();
+	const auto output = folder.u8string();
+
+	// Force stale as well as touched features. FreeCAD owns feature
+	// evaluation and dependency order, including those in linked documents.
+	static constexpr char program[] = R"PY(
+import sys
+from pathlib import Path
+import FreeCAD
+
+root = FreeCAD.openDocument(sys.argv[1])
+out = Path(sys.argv[2])
+with (out / 'sources').open('wb') as manifest:
+    for index, doc in enumerate(root.getDependentDocuments()):
+        print('FreeCAD: recomputing ' + doc.Name, flush=True)
+        for obj in doc.Objects:
+            obj.enforceRecompute()
+        count = doc.recompute(None, True)
+        failed = [obj.Name for obj in doc.Objects if 'Invalid' in obj.State]
+        if failed:
+            raise RuntimeError(doc.Name + ': invalid features: ' + ', '.join(failed))
+        print('FreeCAD: recomputed ' + str(count) + ' features in ' + doc.Name, flush=True)
+        doc.saveCopy(str(out / (str(index) + '.FCStd')))
+        manifest.write(doc.FileName.encode('utf-8') + b'\0')
+)PY";
+	const char *args[] = {python, "-c", program, input.c_str(), output.c_str(), nullptr};
+	struct bu_process *process = nullptr;
+	bu_process_create(&process, args, BU_PROCESS_OUT_EQ_ERR | BU_PROCESS_HIDE_WINDOW);
+	if (!process)
+	    throw std::runtime_error("could not launch FreeCAD's Python runtime");
+	bu_process_file_close(process, BU_PROCESS_STDIN);
+	if (FILE *diagnostic = bu_process_file_open(process, BU_PROCESS_STDOUT)) {
+	    std::array<char, 4096> line;
+	    while (bu_fgets(line.data(), line.size(), diagnostic))
+		bu_log("%s", line.data());
+	}
+	if (bu_process_wait_n(&process, 0))
+	    throw std::runtime_error("FreeCAD feature recomputation failed");
+
+	std::ifstream manifest(folder / "sources", std::ios::binary);
+	Snapshots snapshots;
+	size_t index = 0;
+	std::string origin;
+	while (std::getline(manifest, origin, '\0')) {
+	    if (origin.empty())
+		throw std::runtime_error("invalid FreeCAD recompute snapshot source");
+	    const auto archive = folder / (std::to_string(index++) + ".FCStd");
+	    if (!std::filesystem::is_regular_file(archive))
+		throw std::runtime_error("missing FreeCAD recompute snapshot");
+	    snapshots.emplace(normalized_path(std::filesystem::u8path(origin)), archive.u8string());
+	}
+	if (!snapshots.count(path))
+	    throw std::runtime_error("FreeCAD recompute did not save the requested document");
+	return snapshots;
+    }
+
+private:
+    std::filesystem::path folder;
+};
+
+struct ReaderOptions {
+    int strict = 0;
+    const char *python = nullptr;
+};
+
 static void
 create_options(struct bu_opt_desc **descriptions, void **data)
 {
-    auto strict = std::make_unique<int>(0);
+    auto reader_options = std::make_unique<ReaderOptions>();
     const struct bu_opt_desc options[] = {
-	{"", "strict", "", nullptr, strict.get(), "reject partial geometry imports"},
+	{"", "strict", "", nullptr, &reader_options->strict, "reject partial geometry imports"},
+	{"", "recompute", "PYTHON", bu_opt_str, &reader_options->python,
+	    "recompute trusted documents using a Python executable that can import FreeCAD"},
 	BU_OPT_DESC_NULL
     };
     *descriptions = static_cast<struct bu_opt_desc *>(bu_malloc(sizeof(options), "FreeCAD reader options"));
     std::copy_n(options, sizeof(options) / sizeof(options[0]), *descriptions);
-    *data = strict.release();
+    *data = reader_options.release();
 }
 
 static void
 free_options(void *data)
 {
-    delete static_cast<int *>(data);
+    delete static_cast<ReaderOptions *>(data);
 }
 
 static int
@@ -846,7 +1481,10 @@ read(gcv_context *context, const gcv_opts *options, const void *data, const char
     if (!writer)
 	return 0;
     try {
-	return import_document(writer, options, path, data && *static_cast<const int *>(data));
+	const auto reader_options = data ? *static_cast<const ReaderOptions *>(data) : ReaderOptions{};
+	RecomputedDocuments recomputed;
+	const auto snapshots = reader_options.python ? recomputed.run(reader_options.python, path) : Snapshots{};
+	return import_document(writer, options, path, reader_options.strict, snapshots);
     } catch (const Standard_Failure &failure) {
 	const char *message = occt_failure_message(failure);
 	bu_log("FreeCAD: %s: %s\n", path, message ? message : "OCCT import failed");

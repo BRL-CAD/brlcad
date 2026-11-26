@@ -14,6 +14,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <optional>
@@ -32,13 +33,21 @@ using Properties = std::map<std::string, std::string>;
 using Rgb = std::array<unsigned char, 3>;
 using Scale = std::array<double, 3>;
 
+Rgb unpack_rgb(uint32_t rgba);
+
 Matrix placement_matrix(const gp_Trsf &transform);
 Matrix placement_matrix(const gp_Quaternion &rotation, const std::array<double, 3> &position);
 
 struct Object {
     std::string type;
     std::string shape_file;
+    std::string mesh_file;
+    std::string appearance_file;
+    std::string diffuse_file;
     std::string linked_object;
+    std::string linked_file;
+    std::vector<std::string> linked_subobjects;
+    std::optional<size_t> linked_subobject_count;
     std::vector<std::string> children;
     std::vector<std::string> array_elements;
     std::string element_visibility;
@@ -60,6 +69,8 @@ struct Object {
     bool override_material = false;
     std::optional<Rgb> color;
     std::optional<Rgb> material_color;
+    std::optional<double> transparency;
+    std::optional<double> material_transparency;
 
     bool is_link_group() const
     {
@@ -74,6 +85,11 @@ struct Object {
     bool is_link() const
     {
 	return type == "App::Link" || type == "App::LinkPython" || is_link_element();
+    }
+
+    bool has_link() const
+    {
+	return !linked_object.empty() || is_link() || unsupported_link;
     }
 
     bool expanded_array() const
@@ -92,6 +108,7 @@ struct Object {
 struct Document {
     Properties properties;
     std::map<std::string, Object> objects;
+    bool legacy_alpha = true;
 };
 
 class Archive {
@@ -109,7 +126,7 @@ private:
     std::unique_ptr<Impl> impl;
 };
 
-Document read_document(const char *path);
+Document read_document(const char *path, const char *view_path = nullptr);
 
 }
 
