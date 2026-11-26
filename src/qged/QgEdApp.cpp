@@ -221,7 +221,7 @@ QgEdApp::QgEdApp(int &argc, char *argv[], const char *g_file, int swrast_mode, i
     gedp->ged_fbs->fbs_close_ipc_client_handler = &qdm_close_ipc_client_handler;
 
     // Read the saved window size, if any
-    QSettings settings("BRL-CAD", "QGED");
+    QSettings settings(QSettings::defaultFormat(), QSettings::UserScope, "BRL-CAD", "QGED");
 
     // (Debugging) Report settings filename
     if (QFileInfo(settings.fileName()).exists())
@@ -678,7 +678,7 @@ void
 QgEdApp::write_settings()
 {
     QTCAD_SLOT("QgEdApp::write_settings", 1);
-    QSettings settings("BRL-CAD", "QGED");
+    QSettings settings(QSettings::defaultFormat(), QSettings::UserScope, "BRL-CAD", "QGED");
 
     // TODO - write user settings here.  Window state saving is handled by
     // QgEdMainWindow closeEvent

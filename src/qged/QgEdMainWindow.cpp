@@ -638,7 +638,7 @@ QgEdMainWindow::close()
 void
 QgEdMainWindow::closeEvent(QCloseEvent* e)
 {
-    QSettings settings("BRL-CAD", "QGED");
+    QSettings settings(QSettings::defaultFormat(), QSettings::UserScope, "BRL-CAD", "QGED");
     // https://bugreports.qt.io/browse/QTBUG-16252?focusedCommentId=250562&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-250562
     settings.setValue("geometry", QVariant(geometry()));
     settings.setValue("windowState", saveState());

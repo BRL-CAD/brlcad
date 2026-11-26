@@ -653,6 +653,16 @@ Closing a workspace cleared the displayed path and disabled setup
 actions. From a read-only copy of the M1917 DB5, the same menu created
 and opened a verified writable workspace. The source digest matched.
 
+The qged_history test uses the normal QGED menus and dialogs with the
+offscreen software display. It exercises Undo and Redo across session
+promotion, creates a workspace from the File menu, and compares sibling
+revisions after reopening the workspace read-only. Checkout stays
+disabled in the history dialog. A separate GED reader verifies the
+history-preserving DB5 export from the File menu. Closing the document
+clears the displayed path and disables document actions. The test runs
+with the standard validation suite when Qt and the software display
+are built.
+
 QGED drew a primitive from an independent revision preview while
 the working file was at an earlier revision. Opening and closing the
 preview left the DB5 file byte-identical. The M1917 workspace preview
