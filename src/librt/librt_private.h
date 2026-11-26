@@ -128,6 +128,8 @@ int rt_ebm_rename_database_reference(struct bu_external *out, const struct bu_ex
 int rt_vol_rename_database_reference(struct bu_external *out, const struct bu_external *body, const char *name);
 void db_workspace_free_view(struct db_i_internal *i);
 int db_workspace_read(const struct db_i *dbip, const struct directory *dp, void *buffer, size_t count);
+int db_workspace_read_attributes(const struct db_i *dbip, const struct directory *dp,
+				 struct bu_attribute_value_set *avs);
 void db_edit_free_view(struct db_i_internal *i);
 int db_edit_write_blocked(const struct db_i *dbip);
 void db_edit_record_failure(struct db_i *dbip);

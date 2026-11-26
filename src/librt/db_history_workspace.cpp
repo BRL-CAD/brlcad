@@ -1647,6 +1647,24 @@ Workspace::read_record(const Id &id, void *record, size_t size) const
     }, nullptr);
 }
 
+int
+Workspace::read_attributes(const Id &id, struct bu_attribute_value_set *avs) const
+{
+    int status = 0;
+    const bool read = store->read([&](MDB_txn *txn, const Tables &tables) {
+	Object object;
+	struct db5_raw_internal raw;
+	// The verified descriptor holds the attribute bytes. Import them
+	// while the read transaction keeps the mapped bytes valid.
+	if (!load_object(txn, tables, id, object) || !record_metadata(object, raw))
+	    return false;
+	if (raw.attributes.ext_buf && db5_import_attributes(avs, &raw.attributes) < 0)
+	    status = -3;
+	return true;
+    }, nullptr);
+    return read ? status : -1;
+}
+
 bool
 Workspace::read_graph(const WorkspaceHead &selected, WorkspaceHead &current,
 		      Db5HistoryDraft &result, struct bu_vls *message) const
@@ -2050,6 +2068,14 @@ db_workspace_read(const struct db_i *dbip, const struct directory *dp, void *buf
     const auto &view = *dbip->i->dbi_workspace;
     const auto object = view.model.find(dp->d_namep);
     return object != view.model.end() && view.workspace->read_record(object->second, buffer, count) ? 0 : -1;
+}
+
+int
+db_workspace_read_attributes(const struct db_i *dbip, const struct directory *dp, struct bu_attribute_value_set *avs)
+{
+    const auto &view = *dbip->i->dbi_workspace;
+    const auto object = view.model.find(dp->d_namep);
+    return object == view.model.end() ? -1 : view.workspace->read_attributes(object->second, avs);
 }
 
 // Local Variables:

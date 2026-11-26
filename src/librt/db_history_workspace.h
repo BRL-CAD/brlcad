@@ -114,6 +114,7 @@ public:
     RT_EXPORT bool fetch_artifact(const ArtifactKey &key, Bytes &payload, struct bu_vls *message) const;
     RT_EXPORT bool fetch_record(const Id &id, Bytes &record, struct bu_vls *message) const;
     bool read_record(const Id &id, void *record, size_t size) const;
+    int read_attributes(const Id &id, struct bu_attribute_value_set *avs) const;
     // Read graph metadata and owned revision payloads for inspection.
     // The result omits model snapshots, descriptors and bodies.
     RT_EXPORT bool read_graph(const WorkspaceHead &view, WorkspaceHead &current,

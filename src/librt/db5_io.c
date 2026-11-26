@@ -1091,6 +1091,8 @@ db5_get_attributes(const struct db_i *dbip, struct bu_attribute_value_set *avs, 
     RT_CK_DIR(dp);
 
     BU_AVS_INIT(avs);
+    if (dbip->i->dbi_workspace)
+	return db_workspace_read_attributes(dbip, dp, avs);
 
     if (db_get_external(&ext, dp, dbip) < 0)
 	return -1;		/* FAIL */

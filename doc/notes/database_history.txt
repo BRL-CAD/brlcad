@@ -752,6 +752,53 @@ and 1.99 seconds, respectively. There were three runs per condition.
 Before the warm draws, the DB5 file had 1.22 GB resident and the
 workspace data file had 82 MB resident.
 
+A QGED benchmark used the same 41.54 MB BREP in five fresh processes
+per backend and cache condition. It evicted the backing data file and
+confirmed zero resident pages before each cold trial. Each warm trial
+followed its matching cold trial. The software viewport captured the
+first frame containing the selected object. Each frame differed from
+the cleared viewport by 979 pixels at 556 by 452 pixels.
+
+                         Cold median     Warm median     Peak RSS
+  Mode                   to first frame  to first frame  across trials
+  Plain DB5                  6.01 s          4.68 s         0.33 GB
+  Embedded DB5 history      12.23 s          9.85 s         1.53 GB
+  LMDB workspace             9.38 s          8.40 s         1.54 GB
+
+From the draw command to the captured frame, warm medians were
+0.89, 0.92 and 1.22 seconds, respectively. Before each warm QGED
+run, the corresponding data file had 1.22, 2.42 or 1.22 GB resident.
+QGED reads drawing attributes for every visible directory entry when
+initializing its drawing state. The workspace attribute path in this
+baseline loads and verifies complete records, including their bodies.
+
+The workspace now reads attributes directly from the verified DB5
+metadata for each object. It reads and verifies geometry bodies when
+requested. Five more cold and warm QGED pairs reached the same frame
+in medians of 3.85 and 3.62 seconds, respectively. Peak RSS was 420 MB.
+Before each warm run, 122 MB of the workspace data file was resident.
+Median warm time from the draw command to the captured frame was 1.23
+seconds. A workspace regression removed a combination body and
+confirmed that its attributes were still readable and full record
+access and archive verification detected the missing body.
+
+A warm-cache edit loop exercised each history mode in one open GED
+process. The 41.61 MB model contained the same BREP and 512 small
+spheres. Twenty title edits each branched from the initial revision
+and were immediately undone. The command timings exclude database
+open and final verification. The 95th percentile uses nearest rank.
+
+                      Edit p50/p95   Undo p50/p95  Peak RSS  Output
+  Session DB5         118 / 125 ms   118 / 122 ms    87 MB   1.66 GB
+  Embedded DB5        591 / 625 ms   590 / 625 ms   130 MB   3.33 GB
+  LMDB workspace      3.75/4.08 ms   3.22/3.62 ms    47 MB   6.71 MB
+
+Output is the number of bytes written by the forty commands. Allocated
+storage grew by zero bytes in session DB5, 8.19 KB in embedded DB5 and
+98.30 KB in LMDB. Each durable store retained 21 revisions. All three
+histories verified and their plain exports matched every named record
+in the original model byte for byte.
+
 The same combination, group, removal, rename and metadata edits ran
 on ordinary DB5, session DB5, embedded DB5 and LMDB. All final named
 model records matched byte for byte, and a ray hit the geometry

@@ -231,6 +231,44 @@ test_native_geometry(struct db_i *db)
 }
 
 static int
+test_attribute_reads(const std::string &path, const EmbeddedPack &initial, struct bu_vls *message)
+{
+    ByteView descriptor;
+    Object object;
+    const auto region_id = initial.model.find(region_name);
+    CHECK(region_id != initial.model.end() &&
+	read_artifact(initial.pack, {Kind::Object, region_id->second}, descriptor) &&
+	decode_object(descriptor, object) && object.body_id != absent);
+    CHECK(Workspace::create(path.c_str(), initial.pack, message));
+
+    // Drop only the body to catch any attribute access that loads it.
+    CHECK(change_workspace_file(path, [&](MDB_txn *txn) {
+	std::array<uint8_t, 1 + absent.size()> key_bytes;
+	key_bytes.front() = static_cast<uint8_t>(Kind::Body);
+	std::copy(object.body_id.begin(), object.body_id.end(), key_bytes.begin() + 1);
+	MDB_val key{key_bytes.size(), key_bytes.data()};
+	MDB_dbi artifacts;
+	return mdb_dbi_open(txn, "artifacts", 0, &artifacts) == MDB_SUCCESS &&
+	    mdb_del(txn, artifacts, &key, nullptr) == MDB_SUCCESS;
+    }));
+
+    WorkspaceHead head;
+    const Database view(Workspace::open_snapshot(path.c_str(), head, message), db_close);
+    CHECK(view && head.revision == initial.pack.selected_revision);
+    const auto *region = db_lookup(view.get(), region_name, LOOKUP_QUIET);
+    CHECK(region);
+    struct bu_attribute_value_set attributes = BU_AVS_INIT_ZERO;
+    const int status = db5_get_attributes(view.get(), &attributes, region);
+    const bool has_region = BU_STR_EQUAL(bu_avs_get(&attributes, "region"), "R");
+    bu_avs_free(&attributes);
+    CHECK(status == 0 && has_region);
+    CHECK(read_record(view.get(), region_name).empty());
+    auto workspace = Workspace::open(path.c_str(), message);
+    CHECK(workspace && !workspace->verify(nullptr));
+    return 0;
+}
+
+static int
 test_writes(const char *path, const char *program, struct db_i *source, const EmbeddedPack &initial,
 	    const Pack &edited, struct bu_vls *message)
 {
@@ -751,6 +789,8 @@ main(int argc, const char **argv)
     struct bu_vls message = BU_VLS_INIT_ZERO;
     int result = test_workspace((fixture.path / "workspace").string(), edited.pack,
 	expected, name, record, &message);
+    if (!result)
+	result = test_attribute_reads((fixture.path / "attributes").string(), initial, &message);
     if (!result)
 	result = test_writes((fixture.path / "writer").string().c_str(), argv[0], source_db.get(),
 	    initial, edited.pack, &message);
