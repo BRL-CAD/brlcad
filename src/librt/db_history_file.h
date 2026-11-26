@@ -64,6 +64,14 @@ struct FileIdentity {
 };
 
 #ifdef DB_HISTORY_WIN32_FILE_LOCKS
+inline FileIdentity
+file_identity(const BY_HANDLE_FILE_INFORMATION &info)
+{
+    const auto index = (static_cast<uint64_t>(info.nFileIndexHigh) << std::numeric_limits<DWORD>::digits) |
+	info.nFileIndexLow;
+    return {info.dwVolumeSerialNumber, index};
+}
+
 inline std::optional<FileIdentity>
 file_identity(HANDLE handle)
 {
@@ -72,9 +80,7 @@ file_identity(HANDLE handle)
 	(info.dwFileAttributes & (FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_DIRECTORY)) ||
 	info.nNumberOfLinks != 1)
 	return {};
-    const auto index = (static_cast<uint64_t>(info.nFileIndexHigh) << std::numeric_limits<DWORD>::digits) |
-	info.nFileIndexLow;
-    return FileIdentity{info.dwVolumeSerialNumber, index};
+    return file_identity(info);
 }
 #else
 inline std::optional<FileIdentity>
@@ -251,6 +257,24 @@ public:
     bool valid() const { return handle != INVALID_HANDLE_VALUE; }
     bool synchronize() const { return FlushFileBuffers(handle) != 0; }
 
+    bool refers_to(const std::filesystem::path &path) const
+    {
+	BY_HANDLE_FILE_INFORMATION original, visible;
+	if (!GetFileInformationByHandle(handle, &original))
+	    return false;
+	const auto named = CreateFileW(path.c_str(), FILE_READ_ATTRIBUTES,
+	    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+	    FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+	if (named == INVALID_HANDLE_VALUE)
+	    return false;
+	const bool same = GetFileInformationByHandle(named, &visible) &&
+	    (visible.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+	    !(visible.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
+	    file_identity(original) == file_identity(visible);
+	CloseHandle(named);
+	return same;
+    }
+
 private:
     HANDLE handle;
 #else
@@ -262,6 +286,13 @@ private:
 	    status = fsync(fd);
 	} while (status && errno == EINTR);
 	return status == 0;
+    }
+
+    bool refers_to(const std::filesystem::path &path) const
+    {
+	struct stat original, visible;
+	return fstat(fd, &original) == 0 && lstat(path.c_str(), &visible) == 0 &&
+	    S_ISDIR(visible.st_mode) && original.st_dev == visible.st_dev && original.st_ino == visible.st_ino;
     }
 
 private:

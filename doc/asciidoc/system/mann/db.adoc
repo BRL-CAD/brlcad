@@ -65,6 +65,8 @@ Create a durable workspace in a new directory and switch to it. The workspace im
 +
 If the editor cannot reopen the created workspace or another writer changes it before the switch, the source stays open. The command reports the created path so you can inspect it or switch to it explicitly.
 +
+The destination name must stay available until publication. If another process creates a file or directory there first, it keeps the name and the import fails. If the parent directory cannot be synchronized after publication, the command reports the published path and keeps the source open.
++
 Close all open views before moving or replacing a workspace or its LMDB files. If the editor detects that those files changed identity, it reports the workspace as unavailable and refuses further edits. A pinned view can still read the model it opened.
 
 

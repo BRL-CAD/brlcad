@@ -192,17 +192,22 @@ ID and the value is empty. Import verifies the copied archive and
 directory in the transaction that publishes these tables and the
 bootstrap.
 
-The importing process reserves the canonical destination path until
-its LMDB environment closes. It can open other workspaces during the
-import. Readers in other processes require the committed bootstrap
-before accepting the destination as a workspace.
+The importing process reserves the destination path while it writes
+to a temporary sibling directory. Other workspaces remain available.
+Creation synchronizes the staged workspace directory to persist the
+LMDB file entries, then verifies and commits the bootstrap. It closes
+the staged LMDB environment before atomically moving the directory into
+place. Publication fails if the destination name is already occupied.
+Failure cleanup operates inside the staging directory. Terminating an
+import can leave a temporary `.brlcad-workspace-*` directory beside the
+destination.
 
-Before the import transaction, creation synchronizes the new
-workspace directory to persist the LMDB file entries, then synchronizes
-its parent to persist the workspace entry. The durable LMDB commit
-publishes the bootstrap after both synchronizations succeed. A reported
-synchronization failure aborts creation and attempts to remove the
-incomplete workspace.
+A final synchronization of the destination's parent makes the new
+directory entry durable. If it fails after publication, GED reports
+the published path and keeps the source open. The published workspace
+remains available for inspection. Creating workspaces requires a
+filesystem with atomic directory publication to a new name and
+directory synchronization.
 
 Before switching the open document, GED compares the reopened snapshot's
 revision ID, model ID and generation with the committed import. If

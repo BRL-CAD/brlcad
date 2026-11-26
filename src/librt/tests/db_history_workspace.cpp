@@ -528,6 +528,9 @@ test_workspace(const std::string &path, const Pack &pack, const Manifest &expect
     WorkspaceHead published;
     CHECK(!Workspace::create(path.c_str(), incomplete, message, &published) && !std::filesystem::exists(path));
     CHECK(published == WorkspaceHead{});
+    const auto directory = std::filesystem::path(path).parent_path();
+    CHECK(std::none_of(std::filesystem::directory_iterator(directory), std::filesystem::directory_iterator(),
+	[](const auto &entry) { return entry.path().filename().u8string().find(".brlcad-workspace-") == 0; }));
     CHECK(Workspace::create(path.c_str(), pack, message, &published));
     const auto initial = published;
     CHECK(!Workspace::create(path.c_str(), pack, message, &published) && published == initial);

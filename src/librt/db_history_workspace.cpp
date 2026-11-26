@@ -28,12 +28,18 @@
 #include <mutex>
 #include <shared_mutex>
 
+#ifdef __linux__
+#  include <linux/fs.h>
+#  include <sys/syscall.h>
+#endif
+
 #include "lmdb.h"
 
 #include "bio.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
+#include "bu/uuid.h"
 #include "bu/vls.h"
 #include "../libbu/picohash.h"
 #include "db_history_db5.h"
@@ -41,6 +47,13 @@
 #include "db_history_retention.h"
 #include "db_history_workspace.h"
 #include "librt_private.h"
+
+#if defined(DB_HISTORY_DIRECTORY_SYNC) && (defined(DB_HISTORY_WIN32_FILE_LOCKS) || \
+    (defined(SYS_renameat2) && defined(RENAME_NOREPLACE)) || \
+    (defined(__APPLE__) && defined(RENAME_EXCL)) || \
+    (defined(__FreeBSD__) && defined(AT_RENAME_NOREPLACE)))
+#  define DB_HISTORY_WORKSPACE_PUBLISH 1
+#endif
 
 struct db_workspace_view {
     std::unique_ptr<db_history::Workspace> workspace;
@@ -183,6 +196,118 @@ remove_workspace_path(const fs::path &path)
     return !bu_file_exists(name.c_str(), nullptr) || bu_file_remove(name.c_str());
 #endif
 }
+
+#ifdef DB_HISTORY_WORKSPACE_PUBLISH
+std::error_code
+publish_workspace_directory(const fs::path &source, const fs::path &destination)
+{
+#ifdef DB_HISTORY_WIN32_FILE_LOCKS
+    if (!MoveFileExW(source.c_str(), destination.c_str(), MOVEFILE_WRITE_THROUGH))
+	return {static_cast<int>(GetLastError()), std::system_category()};
+#else
+#  if defined(__APPLE__)
+    const auto result = renamex_np(source.c_str(), destination.c_str(), RENAME_EXCL);
+#  elif defined(__FreeBSD__)
+    const auto result = renameat2(AT_FDCWD, source.c_str(), AT_FDCWD, destination.c_str(), AT_RENAME_NOREPLACE);
+#  else
+    const auto result = syscall(SYS_renameat2, AT_FDCWD, source.c_str(),
+	AT_FDCWD, destination.c_str(), RENAME_NOREPLACE);
+#  endif
+    if (result != 0)
+	return {errno, std::generic_category()};
+#endif
+    return {};
+}
+
+class StagedWorkspace {
+public:
+    StagedWorkspace(const fs::path &parent, struct bu_vls *message) : out(message)
+    {
+	uint8_t id[16], name[37];
+	if (bu_uuid_create(id, 0, nullptr, nullptr) < 0 || bu_uuid_encode(id, name) != 0) {
+	    report(out, "Could not generate a workspace staging name");
+	    return;
+	}
+	root = parent / (std::string(".brlcad-workspace-") + reinterpret_cast<const char *>(name));
+	std::error_code error;
+#ifdef DB_HISTORY_WIN32_FILE_LOCKS
+	const bool made = fs::create_directory(root, error);
+#else
+	const bool made = mkdir(root.c_str(), S_IRWXU) == 0;
+#endif
+	if (!made) {
+	    report(out, "Could not create the workspace staging directory");
+	    return;
+	}
+	root_handle = std::make_unique<DirectorySync>(root);
+	if (!root_handle->valid()) {
+	    report(out, "Could not open the workspace staging directory");
+	    remove_workspace_path(root);
+	    root_handle.reset();
+	    return;
+	}
+
+	directory = root / "workspace";
+	if (!fs::create_directory(directory, error)) {
+	    report(out, "Could not create the staged workspace directory");
+	    return;
+	}
+	workspace_handle = std::make_unique<DirectorySync>(directory);
+	if (!valid()) {
+	    report(out, "Could not open the staged workspace directory");
+	    if (root_handle->refers_to(root))
+		remove_workspace_path(directory);
+	}
+    }
+
+    ~StagedWorkspace() { cleanup(); }
+
+    StagedWorkspace(const StagedWorkspace &) = delete;
+    StagedWorkspace &operator=(const StagedWorkspace &) = delete;
+
+    const fs::path &path() const { return directory; }
+    bool valid() const { return workspace_handle && workspace_handle->valid(); }
+    bool synchronize() const { return workspace_handle->synchronize(); }
+
+    bool at_original_path() const
+    {
+	return root_handle->refers_to(root) && workspace_handle->refers_to(directory);
+    }
+
+    void installed()
+    {
+	workspace_handle.reset();
+	cleanup();
+    }
+
+private:
+    void cleanup()
+    {
+	if (!root_handle)
+	    return;
+	if (root_handle->refers_to(root)) {
+	    if (workspace_handle && workspace_handle->refers_to(directory)) {
+		remove_workspace_path(directory / lock_file_name);
+		remove_workspace_path(directory / data_file_name);
+		workspace_handle.reset();
+		remove_workspace_path(directory);
+	    }
+	    root_handle.reset();
+	    if (remove_workspace_path(root))
+		return;
+	}
+	if (out)
+	    bu_vls_printf(out, "\nCould not remove workspace staging directory %s", root.u8string().c_str());
+	root_handle.reset();
+    }
+
+    fs::path root;
+    fs::path directory;
+    std::unique_ptr<DirectorySync> root_handle;
+    std::unique_ptr<DirectorySync> workspace_handle;
+    struct bu_vls *out;
+};
+#endif
 
 bool
 report_stale(struct bu_vls *message, const WorkspaceHead &expected, const WorkspaceHead &current)
@@ -354,23 +479,6 @@ open_environment(const char *path, unsigned int flags, size_t map_size = 0)
 	check(mdb_env_set_mapsize(raw, map_size));
     check(mdb_env_open(raw, path, flags, 0660));
     return env;
-}
-
-bool
-sync_import_directories(const fs::path &directory, struct bu_vls *message)
-{
-#ifdef DB_HISTORY_DIRECTORY_SYNC
-    const DirectorySync workspace(directory);
-    if (!workspace.valid() || !workspace.synchronize())
-	return report(message, "Could not synchronize the new workspace directory");
-
-    const DirectorySync parent(directory.parent_path());
-    return (parent.valid() && parent.synchronize()) ||
-	report(message, "Could not synchronize the parent of the new workspace");
-#else
-    (void)directory;
-    return report(message, "Workspace creation requires directory synchronization on this platform");
-#endif
 }
 
 void
@@ -931,6 +1039,7 @@ store_record(MDB_txn *txn, const Tables &tables, const ArtifactIndex &artifacts,
     return true;
 }
 
+#ifdef DB_HISTORY_WORKSPACE_PUBLISH
 size_t
 import_map_size(const Pack &pack)
 {
@@ -949,7 +1058,7 @@ import_map_size(const Pack &pack)
 
 bool
 import_pack(MDB_env *env, const Pack &pack, const Manifest &manifest, const WorkspaceHead &head,
-	    struct bu_vls *message)
+	    const StagedWorkspace &stage, const WorkspaceFiles &files, struct bu_vls *message)
 {
     auto txn = begin(env, 0);
     Tables tables;
@@ -990,9 +1099,45 @@ import_pack(MDB_env *env, const Pack &pack, const Manifest &manifest, const Work
 	return true;
     }))
 	return report(message, "Could not index the imported workspace revisions");
+    if (!stage.at_original_path() || !(WorkspaceFiles::at(stage.path()) == files))
+	return report(message, "The staged workspace files moved before import could commit");
     check(mdb_txn_commit(txn.release()));
     return true;
 }
+
+std::optional<WorkspaceFiles>
+populate_workspace(const StagedWorkspace &stage, const Pack &pack, const Manifest &manifest,
+		   const WorkspaceHead &head, struct bu_vls *message)
+{
+    try {
+	const auto location = stage.path().u8string();
+	const auto env = open_environment(location.c_str(), 0, import_map_size(pack));
+	const auto files = WorkspaceFiles::at(stage.path());
+	mdb_filehandle_t descriptor;
+	check(mdb_env_get_fd(env.get(), &descriptor));
+	if (!files || !files->lock || file_identity(descriptor) != files->data || !stage.at_original_path()) {
+	    report(message, "Could not identify the staged LMDB files");
+	    return {};
+	}
+	if (!stage.synchronize()) {
+	    report(message, "Could not synchronize the staged workspace directory");
+	    return {};
+	}
+	for (;;) {
+	    try {
+		return import_pack(env.get(), pack, manifest, head, stage, *files, message) ? files : std::nullopt;
+	    } catch (const LmdbError &failure) {
+		if (failure.code != MDB_MAP_FULL)
+		    throw;
+		grow_map(env.get());
+	    }
+	}
+    } catch (const LmdbError &failure) {
+	report(message, failure);
+	return {};
+    }
+}
+#endif
 
 } // namespace
 
@@ -1151,7 +1296,7 @@ struct Workspace::Registry {
 
     private:
 	Registry &registry;
-	const fs::path &path;
+	const fs::path path;
 	bool reserved = false;
     };
 };
@@ -1179,6 +1324,7 @@ Workspace::~Workspace()
 bool
 Workspace::create(const char *path, const Pack &pack, struct bu_vls *message, WorkspaceHead *published)
 {
+#ifdef DB_HISTORY_WORKSPACE_PUBLISH
     if (!path || !*path)
 	return report(message, "A workspace directory is required");
     Manifest manifest;
@@ -1186,52 +1332,63 @@ Workspace::create(const char *path, const Pack &pack, struct bu_vls *message, Wo
 	return report(message, "The source archive is missing its selected model");
 
     std::error_code error;
-    const auto directory = fs::u8path(path);
-    if (!fs::create_directory(directory, error))
-	return report(message, error ? error.message().c_str() : "The workspace directory already exists");
+    auto requested = fs::u8path(path);
+    while (requested.has_relative_path() && !requested.has_filename())
+	requested = requested.parent_path();
+    const auto name = requested.filename();
+    if (name.empty() || name == "." || name == "..")
+	return report(message, "A new workspace directory is required");
+    const auto parent_path = fs::canonical(requested.has_parent_path() ? requested.parent_path() : fs::path("."), error);
+    if (error)
+	return report(message, error.message().c_str());
 
-    const auto canonical = fs::canonical(directory, error);
+    const auto destination = parent_path / name;
+    if (fs::symlink_status(destination, error).type() != fs::file_type::not_found)
+	return report(message, error ? error.message().c_str() : "The workspace destination already exists");
+    const Registry::ImportReservation reservation(registry(), destination);
+    if (!reservation)
+	return report(message, "The workspace directory is already in use");
+    const DirectorySync parent(parent_path);
+    if (!parent.valid())
+	return report(message, "Could not open the parent directory of the new workspace");
+
+    std::optional<Registry::ImportReservation> stage_reservation;
+    StagedWorkspace stage(parent_path, message);
+    if (!stage.valid())
+	return false;
+    if (!stage_reservation.emplace(registry(), stage.path()))
+	return report(message, "The workspace staging directory is already in use");
+
+    const WorkspaceHead head{pack.selected_revision, pack.selected_model, initial_generation};
+    const auto files = populate_workspace(stage, pack, manifest, head, message);
+    if (!files)
+	return false;
+    // LMDB has closed its staging handles. The destination gains a
+    // complete store in one rename, even racing another importer.
+    if (!stage.at_original_path() || !(WorkspaceFiles::at(stage.path()) == *files) || !parent.refers_to(parent_path))
+	return report(message, "The staged workspace or its parent moved before publication");
+    error = publish_workspace_directory(stage.path(), destination);
     if (error) {
-	remove_workspace_path(directory);
+	if (error == std::errc::file_exists)
+	    return report(message, "The workspace destination already exists");
 	return report(message, error.message().c_str());
     }
-    const Registry::ImportReservation reservation(registry(), canonical);
-    if (!reservation) {
-	remove_workspace_path(canonical);
-	return report(message, "The workspace directory is already in use");
+    stage.installed();
+    if (!parent.synchronize()) {
+	if (message)
+	    bu_vls_printf(message, "Workspace published at %s. Its parent directory could not be synchronized.",
+		destination.u8string().c_str());
+	return false;
     }
-
-    try {
-	const auto location = canonical.u8string();
-	const auto env = open_environment(location.c_str(), 0, import_map_size(pack));
-	// Make the environment reachable on disk before committing its bootstrap.
-	if (sync_import_directories(canonical, message)) {
-	    const WorkspaceHead head{pack.selected_revision, pack.selected_model, initial_generation};
-	    for (;;) {
-		try {
-		    if (import_pack(env.get(), pack, manifest, head, message)) {
-			if (published)
-			    *published = head;
-			return true;
-		    }
-		    break;
-		} catch (const LmdbError &failure) {
-		    if (failure.code != MDB_MAP_FULL)
-			throw;
-		    grow_map(env.get());
-		}
-	    }
-	}
-    } catch (const LmdbError &failure) {
-	report(message, failure);
-    }
-    // An interrupted import leaves no committed bootstrap. On a
-    // reported failure remove only the files this new store used.
-    remove_workspace_path(canonical / lock_file_name);
-    remove_workspace_path(canonical / data_file_name);
-    if (!remove_workspace_path(canonical) && message)
-	bu_vls_strcat(message, "\nCould not remove the incomplete workspace directory");
-    return false;
+    if (published)
+	*published = head;
+    return true;
+#else
+    (void)path;
+    (void)pack;
+    (void)published;
+    return report(message, "Workspace creation requires atomic directory publication and directory synchronization");
+#endif
 }
 
 std::unique_ptr<Workspace>
