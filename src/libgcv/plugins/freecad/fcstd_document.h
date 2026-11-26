@@ -22,6 +22,7 @@
 
 #include "vmath.h"
 
+class gp_Quaternion;
 class gp_Trsf;
 
 namespace freecad {
@@ -29,28 +30,63 @@ namespace freecad {
 using Matrix = std::array<fastf_t, ELEMENTS_PER_MAT>;
 using Properties = std::map<std::string, std::string>;
 using Rgb = std::array<unsigned char, 3>;
+using Scale = std::array<double, 3>;
 
 Matrix placement_matrix(const gp_Trsf &transform);
+Matrix placement_matrix(const gp_Quaternion &rotation, const std::array<double, 3> &position);
 
 struct Object {
     std::string type;
     std::string shape_file;
     std::string linked_object;
     std::vector<std::string> children;
+    std::vector<std::string> array_elements;
+    std::string element_visibility;
+    std::string array_placements;
+    std::string array_scales;
+    size_t element_count = 0;
     Properties properties;
-    Matrix placement = MAT_INIT_IDN;
+    std::optional<Matrix> placement;
     Matrix link_placement = MAT_INIT_IDN;
-    std::array<double, 3> scale_vector = {1.0, 1.0, 1.0};
+    Scale scale_vector = {1.0, 1.0, 1.0};
     double scale = 1.0;
     bool has_link_placement = false;
     bool has_scale_vector = false;
     bool link_transform = false;
     bool unsupported_link = false;
+    bool suppressed = false;
     bool visible = true;
     bool has_view_visibility = false;
     bool override_material = false;
     std::optional<Rgb> color;
     std::optional<Rgb> material_color;
+
+    bool is_link_group() const
+    {
+	return type == "App::LinkGroup" || type == "App::LinkGroupPython";
+    }
+
+    bool is_link_element() const
+    {
+	return type == "App::LinkElement" || type == "App::LinkElementPython";
+    }
+
+    bool is_link() const
+    {
+	return type == "App::Link" || type == "App::LinkPython" || is_link_element();
+    }
+
+    bool expanded_array() const
+    {
+	return element_count && !array_elements.empty();
+    }
+
+    bool element_visible(size_t index) const
+    {
+	// The archived bitset stores element zero at the right.
+	return index >= element_visibility.size() ||
+	    element_visibility[element_visibility.size() - 1 - index] == '1';
+    }
 };
 
 struct Document {

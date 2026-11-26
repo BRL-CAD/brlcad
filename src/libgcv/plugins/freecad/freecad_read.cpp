@@ -14,6 +14,9 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <cmath>
+#include <cstdint>
+#include <cstring>
 #include <istream>
 #include <locale>
 #include <map>
@@ -21,6 +24,7 @@
 #include <set>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <BRepTools.hxx>
@@ -35,11 +39,13 @@
 #include <TopTools_ShapeMapHasher.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Iterator.hxx>
+#include <gp_Quaternion.hxx>
 #include <gp_Trsf.hxx>
 
 #include "opennurbs.h"
 
 #include "bn/mat.h"
+#include "bu/opt.h"
 #include "bu/path.h"
 #include "gcv/api.h"
 #include "rt/geom.h"
@@ -92,22 +98,27 @@ private:
     std::array<char, buffer_size> buffer;
 };
 
-class BinaryShapeBuffer : public std::streambuf {
+class BinaryMemberBuffer : public std::streambuf {
 public:
-    explicit BinaryShapeBuffer(Archive &archive)
+    explicit BinaryMemberBuffer(Archive &archive)
     {
 	constexpr size_t block_size = 64 * 1024;
 	std::array<char, block_size> block;
 	for (;;) {
 	    const auto count = archive.read(block.data(), block.size());
 	    if (count < 0)
-		throw std::runtime_error("could not inflate binary FCStd shape member");
+		throw std::runtime_error("could not inflate binary FCStd archive member");
 	    if (!count)
 		break;
 	    storage.insert(storage.end(), block.data(), block.data() + count);
 	}
 	if (!storage.empty())
 	    setg(storage.data(), storage.data(), storage.data() + storage.size());
+    }
+
+    std::string_view data() const
+    {
+	return storage.empty() ? std::string_view{} : std::string_view(storage.data(), storage.size());
     }
 
 protected:
@@ -196,37 +207,68 @@ write_combination(struct rt_wdb *writer, const std::string &name,
 static bool
 has_link(const Object &object)
 {
-    return !object.linked_object.empty() || object.type == "App::Link" ||
-	object.unsupported_link;
+    return !object.linked_object.empty() || object.is_link() || object.unsupported_link;
 }
 
 static std::vector<std::string>
-dependencies(const Document &document, const std::string &id, const Object &object)
+child_dependencies(const Document &document, const std::string &id,
+	const Object &object, const std::vector<std::string> &entries, bool per_element,
+	size_t &unavailable)
+{
+    std::vector<std::string> children;
+    for (size_t index = 0; index < entries.size(); ++index) {
+	const auto &child = entries[index];
+	if (child.empty() || (per_element && !object.element_visible(index)))
+	    continue;
+	const auto found = document.objects.find(child);
+	if (found == document.objects.end()) {
+	    bu_log("FreeCAD: %s references missing group member %s\n", id.c_str(), child.c_str());
+	    ++unavailable;
+	    continue;
+	}
+	// Link groups and arrays can show a member hidden elsewhere.
+	if (!found->second.suppressed && (per_element || found->second.visible))
+	    children.push_back(child);
+    }
+    return children;
+}
+
+static std::vector<std::string>
+dependencies(const Document &document, const std::string &id, const Object &object,
+	size_t &unavailable)
 {
     if (has_link(object)) {
 	if (object.unsupported_link) {
-	    bu_log("FreeCAD: %s uses an external, subobject, or array link\n", id.c_str());
+	    bu_log("FreeCAD: %s uses an external or subobject link\n", id.c_str());
+	    ++unavailable;
 	    return {};
 	}
-	if (document.objects.find(object.linked_object) != document.objects.end())
+	if (object.expanded_array()) {
+	    if (object.array_elements.size() != object.element_count) {
+		bu_log("FreeCAD: %s has an inconsistent link array element list\n", id.c_str());
+		++unavailable;
+		return {};
+	    }
+	    return child_dependencies(document, id, object, object.array_elements, true, unavailable);
+	}
+	const auto target = document.objects.find(object.linked_object);
+	if (target != document.objects.end()) {
+	    if (target->second.suppressed)
+		return {};
 	    return {object.linked_object};
+	}
 	bu_log("FreeCAD: %s has a missing link target\n", id.c_str());
+	++unavailable;
 	return {};
     }
     // A saved Body shape already represents its modeling history.
     if (!object.shape_file.empty() && object.type == "PartDesign::Body")
 	return {};
-    std::vector<std::string> children;
-    for (const auto &child : object.children) {
-	const auto found = document.objects.find(child);
-	if (found == document.objects.end()) {
-	    bu_log("FreeCAD: %s references missing group member %s\n", id.c_str(), child.c_str());
-	    continue;
-	}
-	if (found->second.visible)
-	    children.push_back(child);
+    if (object.shape_file.empty() && (object.type == "Mesh::Feature" || object.type == "Mesh::FeaturePython")) {
+	bu_log("FreeCAD: %s uses an unsupported mesh object\n", id.c_str());
+	++unavailable;
     }
-    return children;
+    return child_dependencies(document, id, object, object.children, object.is_link_group(), unavailable);
 }
 
 struct Node {
@@ -237,14 +279,14 @@ struct Node {
 
 static std::vector<std::string>
 order_nodes(const Document &document, const std::vector<std::string> &roots,
-	std::map<std::string, Node> &nodes)
+	std::map<std::string, Node> &nodes, size_t &unavailable)
 {
     std::vector<std::string> order;
     for (const auto &root : roots) {
 	auto added = nodes.emplace(root, Node());
 	if (!added.second)
 	    continue;
-	added.first->second.dependencies = dependencies(document, root, document.objects.at(root));
+	added.first->second.dependencies = dependencies(document, root, document.objects.at(root), unavailable);
 	std::vector<std::pair<std::string, size_t>> stack = {{root, 0}};
 	while (!stack.empty()) {
 	    auto &frame = stack.back();
@@ -259,7 +301,7 @@ order_nodes(const Document &document, const std::vector<std::string> &roots,
 	    auto inserted = nodes.emplace(child, Node());
 	    if (inserted.second) {
 		inserted.first->second.dependencies = dependencies(document, child,
-		    document.objects.at(child));
+		    document.objects.at(child), unavailable);
 		stack.emplace_back(child, 0);
 	    } else if (!inserted.first->second.complete) {
 		throw std::runtime_error("cyclic FreeCAD hierarchy at " + child);
@@ -270,7 +312,7 @@ order_nodes(const Document &document, const std::vector<std::string> &roots,
 }
 
 struct Geometry {
-    Matrix transform = MAT_INIT_IDN;
+    Matrix location = MAT_INIT_IDN;
     std::vector<Member> parts;
     size_t invalid_parts = 0;
     size_t nonmanifold_parts = 0;
@@ -403,7 +445,7 @@ read_shape(Archive &archive, const std::string &member, const std::string &name,
     if (extension_is(member.c_str(), "bin")) {
 	// BinTools seeks to previously read entities by their file offsets.
 	// Buffer just this member, since compressed ZIP data cannot seek.
-	BinaryShapeBuffer source(archive);
+	BinaryMemberBuffer source(archive);
 	std::istream in(&source);
 	has_data = in.peek() != std::istream::traits_type::eof();
 	if (has_data)
@@ -431,53 +473,223 @@ read_shape(Archive &archive, const std::string &member, const std::string &name,
 	}
 	return result;
     }
-    // FreeCAD stores the object placement in the shape's top-level location.
-    // Keep the definition local so LinkTransform can omit that placement.
-    result.transform = placement_matrix(shape.Location().Transformation());
+    // Keep the geometry reusable. The saved location can contain a shape
+    // offset in addition to the owning object's placement.
+    result.location = placement_matrix(shape.Location().Transformation());
     shape.Location(TopLoc_Location());
     write_shape(writer, name, shape, tolerance, result, timings);
     return result;
 }
 
+static void
+place_shape(const Object &object, const Geometry &geometry, Member &occurrence,
+	std::vector<Member> &members)
+{
+    members = geometry.parts;
+    occurrence.transform = object.placement.value_or(geometry.location);
+    if (!object.placement)
+	return;
+
+    // LinkTransform can omit the object's placement. Keep the remaining
+    // shape location on the primitive members so it follows every link.
+    Matrix inverse_placement;
+    if (!bn_mat_inverse(inverse_placement.data(), object.placement->data()))
+	throw std::runtime_error("could not invert FreeCAD shape placement");
+    Matrix shape_offset;
+    bn_mat_mul(shape_offset.data(), inverse_placement.data(), geometry.location.data());
+    for (auto &member : members)
+	bn_mat_mul2(shape_offset.data(), member.transform.data());
+}
+
 static Matrix
-link_member_matrix(const Object &link, const Member &target)
+scale_matrix(const Scale &values)
 {
     Matrix scale = MAT_INIT_IDN;
-    constexpr int axes = 3;
-    for (int axis = 0; axis < axes; ++axis) {
-	const double value = link.has_scale_vector ? link.scale_vector[axis] : link.scale;
+    for (size_t axis = 0; axis < values.size(); ++axis) {
+	const double value = values[axis];
 	if (ZERO(value))
 	    throw std::runtime_error("a FreeCAD link has zero scale");
 	scale[axis * (ELEMENTS_PER_PLANE + 1)] = value;
     }
-    if (!link.link_transform)
-	return scale;
-    Matrix result;
-    bn_mat_mul(result.data(), scale.data(), target.transform.data());
+    return scale;
+}
+
+template <typename UInt>
+static UInt
+read_little_endian(const char *data)
+{
+    UInt result = 0;
+    for (size_t byte = 0; byte < sizeof(UInt); ++byte)
+	result |= static_cast<UInt>(static_cast<unsigned char>(data[byte])) << (byte * 8);
+    return result;
+}
+
+template <typename Real, typename UInt>
+static Real
+read_list_real(const char *data)
+{
+    static_assert(sizeof(Real) == sizeof(UInt), "unsupported floating-point size");
+    const auto bits = read_little_endian<UInt>(data);
+    Real result;
+    std::memcpy(&result, &bits, sizeof(result));
+    if (!std::isfinite(result))
+	throw std::runtime_error("non-finite value in FCStd link array");
+    return result;
+}
+
+static constexpr size_t placement_components = 7;
+static constexpr size_t scale_components = 3;
+using ArrayLists = std::map<std::string, std::vector<double>>;
+
+static std::vector<double>
+read_array_list(Archive &archive, size_t components)
+{
+    const BinaryMemberBuffer buffer(archive);
+    auto data = buffer.data();
+    if (data.size() < sizeof(uint32_t))
+	throw std::runtime_error("truncated FCStd link array header");
+    const auto count = read_little_endian<uint32_t>(data.data());
+    data.remove_prefix(sizeof(uint32_t));
+    if (!count && data.empty())
+	return {};
+    if (!count || count > data.size() / components)
+	throw std::runtime_error("invalid FCStd link array size");
+
+    // FreeCAD writes a count followed by either float32 or float64 tuples.
+    const size_t values = count * components;
+    const size_t bytes = data.size() / values;
+    if (data.size() % values || (bytes != sizeof(uint32_t) && bytes != sizeof(uint64_t)))
+	throw std::runtime_error("invalid FCStd link array payload");
+    std::vector<double> result;
+    result.reserve(values);
+    for (size_t index = 0; index < values; ++index) {
+	const char *value = data.data() + index * bytes;
+	if (bytes == sizeof(uint32_t))
+	    result.push_back(read_list_real<float, uint32_t>(value));
+	else
+	    result.push_back(read_list_real<double, uint64_t>(value));
+    }
     return result;
 }
 
 static bool
-import_document(struct rt_wdb *writer, const gcv_opts *options, const char *source_path)
+find_array_list(const ArrayLists &lists, const std::string &file, const std::vector<double> *&result)
+{
+    if (file.empty()) {
+	result = nullptr;
+	return true;
+    }
+    const auto found = lists.find(file);
+    if (found == lists.end())
+	return false;
+    result = &found->second;
+    return true;
+}
+
+static void
+write_link_members(const Object &object, const Node &node,
+	const std::map<std::string, Node> &nodes, const ArrayLists &lists,
+	std::vector<Member> &members, const std::string &id, size_t &unavailable)
+{
+    if (node.dependencies.empty())
+	return;
+    const Matrix scale = scale_matrix(object.has_scale_vector ? object.scale_vector :
+	Scale{object.scale, object.scale, object.scale});
+    if (object.expanded_array()) {
+	for (const auto &element : node.dependencies) {
+	    Member target = nodes.at(element).occurrence;
+	    if (!target.name.empty()) {
+		bn_mat_mul2(scale.data(), target.transform.data());
+		members.push_back(std::move(target));
+	    }
+	}
+	return;
+    }
+
+    const auto &target = nodes.at(node.dependencies.front()).occurrence;
+    if (target.name.empty())
+	return;
+    const Matrix identity = MAT_INIT_IDN;
+    const Matrix &target_placement = object.link_transform ? target.transform : identity;
+    if (!object.element_count) {
+	Member member{target.name, target_placement};
+	bn_mat_mul2(scale.data(), member.transform.data());
+	members.push_back(std::move(member));
+	return;
+    }
+
+    const std::vector<double> *placements = nullptr;
+    const std::vector<double> *scales = nullptr;
+    if (!find_array_list(lists, object.array_placements, placements) ||
+	    !find_array_list(lists, object.array_scales, scales)) {
+	bu_log("FreeCAD: %s is missing an array placement or scale member\n", id.c_str());
+	++unavailable;
+	return;
+    }
+    for (size_t index = 0; index < object.element_count; ++index) {
+	if (!object.element_visible(index))
+	    continue;
+	Matrix element_placement = MAT_INIT_IDN;
+	if (placements && index < placements->size() / placement_components) {
+	    const double *p = placements->data() + index * placement_components;
+	    element_placement = placement_matrix(gp_Quaternion(p[3], p[4], p[5], p[6]), {p[0], p[1], p[2]});
+	}
+	Matrix element_scale = MAT_INIT_IDN;
+	if (scales && index < scales->size() / scale_components) {
+	    const double *s = scales->data() + index * scale_components;
+	    element_scale = scale_matrix({s[0], s[1], s[2]});
+	}
+	Member member{target.name};
+	bn_mat_mul4(member.transform.data(), scale.data(), element_placement.data(),
+	    element_scale.data(), target_placement.data());
+	members.push_back(std::move(member));
+    }
+}
+
+static bool
+import_document(struct rt_wdb *writer, const gcv_opts *options, const char *source_path,
+	bool strict)
 {
     const auto started = ImportClock::now();
     const Document document = read_document(source_path);
     std::set<std::string> group_members;
-    for (const auto &entry : document.objects)
-	group_members.insert(entry.second.children.begin(), entry.second.children.end());
+    for (const auto &entry : document.objects) {
+	const auto &object = entry.second;
+	group_members.insert(object.children.begin(), object.children.end());
+	if (object.expanded_array())
+	    group_members.insert(object.array_elements.begin(), object.array_elements.end());
+    }
     std::vector<std::string> roots;
     for (const auto &entry : document.objects)
-	if (entry.second.visible && !group_members.count(entry.first))
+	if (entry.second.visible && !entry.second.suppressed && !group_members.count(entry.first))
 	    roots.push_back(entry.first);
 
     std::map<std::string, Node> nodes;
-    const auto order = order_nodes(document, roots, nodes);
+    size_t unavailable = 0;
+    const auto order = order_nodes(document, roots, nodes, unavailable);
+    if (strict && unavailable) {
+	bu_log("FreeCAD: strict import rejected %zu unavailable references\n", unavailable);
+	return false;
+    }
     std::map<std::string, std::string> wanted;
     std::map<std::string, Geometry> geometry;
+    std::map<std::string, size_t> array_fields;
+    ArrayLists array_lists;
+    const auto request_list = [&](const std::string &file, size_t components) {
+	if (file.empty())
+	    return;
+	const auto result = array_fields.emplace(file, components);
+	if (result.first->second != components)
+	    throw std::runtime_error("conflicting FCStd link array member " + file);
+    };
     for (const auto &id : order) {
 	const auto &object = document.objects.at(id);
 	if (!has_link(object) && !object.shape_file.empty())
 	    wanted.emplace(object.shape_file, id);
+	if (object.element_count && !object.expanded_array() && !nodes.at(id).dependencies.empty()) {
+	    request_list(object.array_placements, placement_components);
+	    request_list(object.array_scales, scale_components);
+	}
     }
     size_t written = 0;
     size_t invalid_parts = 0;
@@ -496,6 +708,13 @@ import_document(struct rt_wdb *writer, const gcv_opts *options, const char *sour
 	std::string member;
 	while (archive.next(member)) {
 	    const auto requested = wanted.find(member);
+	    const auto array = array_fields.find(member);
+	    if (array != array_fields.end()) {
+		if (requested != wanted.end() || array_lists.count(member))
+		    throw std::runtime_error("duplicate or conflicting FCStd array member " + member);
+		array_lists.emplace(member, read_array_list(archive, array->second));
+		continue;
+	    }
 	    if (requested == wanted.end())
 		continue;
 	    if (geometry.find(member) != geometry.end())
@@ -507,6 +726,10 @@ import_document(struct rt_wdb *writer, const gcv_opts *options, const char *sour
 		++result.invalid_parts;
 		const char *message = occt_failure_message(failure);
 		bu_log("FreeCAD: %s: %s\n", member.c_str(), message ? message : "shape read failed");
+	    }
+	    if (result.parts.empty() && !result.invalid_parts) {
+		bu_log("FreeCAD: %s contains no saved BRep surfaces\n", member.c_str());
+		++result.invalid_parts;
 	    }
 	    written += result.parts.size();
 	    invalid_parts += result.invalid_parts;
@@ -535,22 +758,17 @@ import_document(struct rt_wdb *writer, const gcv_opts *options, const char *sour
 	const auto &object = document.objects.at(id);
 	Node &node = nodes.at(id);
 	std::vector<Member> members;
-	node.occurrence.transform = object.placement;
+	if (object.placement)
+	    node.occurrence.transform = *object.placement;
 	const bool linked = has_link(object);
 	if (linked) {
-	    if (!node.dependencies.empty()) {
-		const Member &target = nodes.at(node.dependencies.front()).occurrence;
-		if (!target.name.empty())
-		    members.push_back({target.name, link_member_matrix(object, target)});
-	    }
+	    write_link_members(object, node, nodes, array_lists, members, id, unavailable);
 	    if (object.has_link_placement)
 		node.occurrence.transform = object.link_placement;
 	} else {
 	    const auto shape = geometry.find(object.shape_file);
-	    if (shape != geometry.end() && !shape->second.parts.empty()) {
-		node.occurrence.transform = shape->second.transform;
-		members = shape->second.parts;
-	    }
+	    if (shape != geometry.end() && !shape->second.parts.empty())
+		place_shape(object, shape->second, node.occurrence, members);
 	    for (const auto &child : node.dependencies) {
 		const Member &occurrence = nodes.at(child).occurrence;
 		if (!occurrence.name.empty())
@@ -570,6 +788,12 @@ import_document(struct rt_wdb *writer, const gcv_opts *options, const char *sour
 	    ? object.material_color : object.color;
 	write_combination(writer, node.occurrence.name, members, properties,
 	    color ? color->data() : nullptr, linked);
+    }
+    if (unavailable || invalid_parts) {
+	bu_log("FreeCAD: %s (%zu unavailable references, %zu rejected parts)\n",
+	    strict ? "strict import rejected" : "partial import", unavailable, invalid_parts);
+	if (strict)
+	    return false;
     }
     std::vector<Member> members;
     for (const auto &id : roots) {
@@ -594,8 +818,27 @@ import_document(struct rt_wdb *writer, const gcv_opts *options, const char *sour
     return true;
 }
 
+static void
+create_options(struct bu_opt_desc **descriptions, void **data)
+{
+    auto strict = std::make_unique<int>(0);
+    const struct bu_opt_desc options[] = {
+	{"", "strict", "", nullptr, strict.get(), "reject partial geometry imports"},
+	BU_OPT_DESC_NULL
+    };
+    *descriptions = static_cast<struct bu_opt_desc *>(bu_malloc(sizeof(options), "FreeCAD reader options"));
+    std::copy_n(options, sizeof(options) / sizeof(options[0]), *descriptions);
+    *data = strict.release();
+}
+
+static void
+free_options(void *data)
+{
+    delete static_cast<int *>(data);
+}
+
 static int
-read(gcv_context *context, const gcv_opts *options, const void *UNUSED(data), const char *path)
+read(gcv_context *context, const gcv_opts *options, const void *data, const char *path)
 {
     if (!context || !context->dbip || !options || !path)
 	return 0;
@@ -603,7 +846,7 @@ read(gcv_context *context, const gcv_opts *options, const void *UNUSED(data), co
     if (!writer)
 	return 0;
     try {
-	return import_document(writer, options, path);
+	return import_document(writer, options, path, data && *static_cast<const int *>(data));
     } catch (const Standard_Failure &failure) {
 	const char *message = occt_failure_message(failure);
 	bu_log("FreeCAD: %s: %s\n", path, message ? message : "OCCT import failed");
@@ -634,7 +877,7 @@ can_read(const char *path)
 
 static const gcv_filter reader = {
     "FreeCAD Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_FREECAD, can_read,
-    nullptr, nullptr, read
+    create_options, free_options, read
 };
 static const gcv_filter * const filters[] = {&reader, nullptr};
 

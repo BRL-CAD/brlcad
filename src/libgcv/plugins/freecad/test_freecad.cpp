@@ -11,12 +11,17 @@
 
 #include "common.h"
 
+#include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstdint>
+#include <cstring>
 #include <fstream>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
@@ -46,7 +51,7 @@
 static const char *document = R"xml(
 <Document SchemaVersion="4">
   <Properties><Property name="Label"><String value="Native assembly"/></Property></Properties>
-  <Objects Count="8">
+  <Objects Count="13">
     <Object name="Assembly" type="App::Part"/>
     <Object name="Definition" type="Part::Feature"/>
     <Object name="First" type="App::Link"/>
@@ -55,14 +60,20 @@ static const char *document = R"xml(
     <Object name="TorusPatch" type="Part::Feature"/>
     <Object name="PeriodicEdges" type="Part::Feature"/>
     <Object name="Hidden" type="Part::Feature"/>
+    <Object name="Projection" type="App::LinkGroup"/>
+    <Object name="ProjectedLink" type="App::Link"/>
+    <Object name="OffsetDefinition" type="Part::Feature"/>
+    <Object name="OffsetLink" type="App::Link"/>
+    <Object name="PlacedOffsetLink" type="App::Link"/>
   </Objects>
-  <ObjectData Count="8">
+  <ObjectData Count="13">
     <Object name="Assembly"><Properties>
       <Property name="Placement"><PropertyPlacement Px="10" Py="20"
         Q2="0.7071067811865475" Q3="0.7071067811865476"/></Property>
-      <Property name="Group"><LinkList count="6">
+      <Property name="Group"><LinkList count="10">
         <Link value="First"/><Link value="Second"/><Link value="Cylinder"/><Link value="Hidden"/>
-        <Link value="TorusPatch"/><Link value="PeriodicEdges"/>
+        <Link value="TorusPatch"/><Link value="PeriodicEdges"/><Link value="Projection"/>
+        <Link value="OffsetDefinition"/><Link value="OffsetLink"/><Link value="PlacedOffsetLink"/>
       </LinkList></Property>
     </Properties></Object>
     <Object name="Definition"><Properties>
@@ -93,7 +104,32 @@ static const char *document = R"xml(
     </Properties></Object>
     <Object name="Hidden"><Properties>
       <Property name="Visibility"><Bool value="false"/></Property>
-      <Property name="Shape"><Part file="missing-hidden.brp"/></Property>
+      <Property name="Shape"><Part file="box.brp"/></Property>
+    </Properties></Object>
+    <Object name="Projection"><Properties>
+      <Property name="Placement"><PropertyPlacement Px="30"
+        Q2="0.7071067811865475" Q3="0.7071067811865476"/></Property>
+      <Property name="ElementList"><LinkList count="3">
+        <Link value="Hidden"/><Link value=""/><Link value="ProjectedLink"/>
+      </LinkList></Property>
+      <Property name="VisibilityList"><BoolList value="100"/></Property>
+    </Properties></Object>
+    <Object name="ProjectedLink"><Properties>
+      <Property name="Visibility"><Bool value="false"/></Property>
+      <Property name="LinkedObject"><Link value="Definition"/></Property>
+      <Property name="LinkPlacement"><PropertyPlacement Py="4"/></Property>
+    </Properties></Object>
+    <Object name="OffsetDefinition"><Properties>
+      <Property name="Shape"><Part file="box.brp"/></Property>
+      <Property name="Placement"><PropertyPlacement Px="20"/></Property>
+    </Properties></Object>
+    <Object name="OffsetLink"><Properties>
+      <Property name="LinkedObject"><Link value="OffsetDefinition"/></Property>
+      <Property name="LinkTransform"><Bool value="false"/></Property>
+    </Properties></Object>
+    <Object name="PlacedOffsetLink"><Properties>
+      <Property name="LinkedObject"><Link value="OffsetDefinition"/></Property>
+      <Property name="LinkTransform"><Bool value="true"/></Property>
     </Properties></Object>
   </ObjectData>
 </Document>
@@ -114,6 +150,61 @@ static const char *gui_document = R"xml(
     <Property name="ShapeMaterial"><PropertyMaterial diffuseColor="580496127"/></Property>
   </Properties></ViewProvider>
 </ViewProviderData></Document>
+)xml";
+
+static const char *array_document = R"xml(
+<Document SchemaVersion="4">
+  <Objects Count="6">
+    <Object name="Definition" type="Part::Feature"/>
+    <Object name="Compact" type="App::Link"/>
+    <Object name="Expanded" type="App::Link"/>
+    <Object name="VisibleElement" type="App::LinkElement"/>
+    <Object name="SuppressedElement" type="App::LinkElement"/>
+    <Object name="MaskedElement" type="App::LinkElement"/>
+  </Objects>
+  <ObjectData Count="6">
+    <Object name="Definition"><Properties>
+      <Property name="Visibility"><Bool value="false"/></Property>
+      <Property name="Placement"><PropertyPlacement Px="100"/></Property>
+      <Property name="Shape"><Part file="box.brp"/></Property>
+    </Properties></Object>
+    <Object name="Compact"><Properties>
+      <Property name="LinkedObject"><Link value="Definition"/></Property>
+      <Property name="ElementCount"><Integer value="3"/></Property>
+      <Property name="ShowElement"><Bool value="false"/></Property>
+      <Property name="LinkPlacement"><PropertyPlacement Px="5"/></Property>
+      <Property name="LinkTransform"><Bool value="true"/></Property>
+      <Property name="ScaleVector"><PropertyVector valueX="2" valueY="1" valueZ="1"/></Property>
+      <Property name="PlacementList"><PlacementList file="placements.bin"/></Property>
+      <Property name="ScaleList"><VectorList file="scales.bin"/></Property>
+      <Property name="VisibilityList"><BoolList value="101"/></Property>
+    </Properties></Object>
+    <Object name="Expanded"><Properties>
+      <Property name="LinkedObject"><Link value="Definition"/></Property>
+      <Property name="ElementCount"><Integer value="3"/></Property>
+      <Property name="ShowElement"><Bool value="true"/></Property>
+      <Property name="LinkTransform"><Bool value="true"/></Property>
+      <Property name="Scale"><Float value="3"/></Property>
+      <Property name="ElementList"><LinkList count="3">
+        <Link value="VisibleElement"/><Link value="SuppressedElement"/><Link value="MaskedElement"/>
+      </LinkList></Property>
+      <Property name="VisibilityList"><BoolList value="011"/></Property>
+    </Properties></Object>
+    <Object name="VisibleElement"><Properties>
+      <Property name="LinkedObject"><Link value="Definition"/></Property>
+      <Property name="LinkPlacement"><PropertyPlacement Px="6"/></Property>
+      <Property name="ScaleVector"><PropertyVector valueX="-1" valueY="1" valueZ="1"/></Property>
+      <Property name="Visibility"><Bool value="false"/></Property>
+    </Properties></Object>
+    <Object name="SuppressedElement"><Properties>
+      <Property name="LinkedObject"><Link value="Definition"/></Property>
+      <Property name="Suppressed"><Bool value="true"/></Property>
+    </Properties></Object>
+    <Object name="MaskedElement"><Properties>
+      <Property name="LinkedObject"><Link value="Definition"/></Property>
+    </Properties></Object>
+  </ObjectData>
+</Document>
 )xml";
 
 static void
@@ -170,7 +261,7 @@ make_periodic_edge_face()
 }
 
 static void
-generate_fixture()
+write_box()
 {
     TopoDS_Shape box = BRepPrimAPI_MakeBox(2, 3, 4).Shape();
     gp_Trsf translation;
@@ -178,19 +269,60 @@ generate_fixture()
     box.Move(TopLoc_Location(translation));
     std::ostringstream box_stream;
     BRepTools::Write(box, box_stream);
+    write_entry("box.brp", box_stream.str());
+}
 
+static void
+generate_fixture()
+{
+    write_box();
     const TopoDS_Shape cylinder = BRepPrimAPI_MakeCylinder(5, 9).Shape();
     std::ostringstream cylinder_stream;
     BinTools::Write(cylinder, cylinder_stream);
     std::ostringstream torus_stream, periodic_stream;
     BRepTools::Write(make_torus_patch(), torus_stream);
     BRepTools::Write(make_periodic_edge_face(), periodic_stream);
-    write_entry("box.brp", box_stream.str());
     write_entry("GuiDocument.xml", gui_document);
     write_entry("cylinder.bin", cylinder_stream.str());
     write_entry("torus.brp", torus_stream.str());
     write_entry("periodic.brp", periodic_stream.str());
     write_entry("Document.xml", document);
+}
+
+template <typename UInt, typename Value>
+static void
+append_binary(std::string &out, Value value)
+{
+    static_assert(sizeof(UInt) == sizeof(Value), "binary fixture value width");
+    UInt bits;
+    std::memcpy(&bits, &value, sizeof(bits));
+    for (size_t byte = 0; byte < sizeof(bits); ++byte)
+	out.push_back(static_cast<char>((bits >> (byte * 8)) & 0xff));
+}
+
+static void
+generate_arrays()
+{
+    write_box();
+    write_entry("Document.xml", array_document);
+    constexpr double quarter_turn = 0.7071067811865476;
+    const std::array<double, 21> placement_values = {
+	10, 0, 0, 0, 0, 0, 1,
+	700, 0, 0, 0, 0, 0, 1,
+	0, 20, 0, 0, 0, quarter_turn, quarter_turn
+    };
+    std::string placements;
+    append_binary<uint32_t>(placements, uint32_t(3));
+    for (double value : placement_values)
+	append_binary<uint64_t>(placements, value);
+    write_entry("placements.bin", placements);
+
+    const std::array<float, 9> scale_values = {1, 1, 1, 1, 1, 1, 3, 4, 1};
+    std::string scales;
+    append_binary<uint32_t>(scales, uint32_t(3));
+    for (float value : scale_values)
+	append_binary<uint32_t>(scales, value);
+    write_entry("scales.bin", scales);
 }
 
 class Internal {
@@ -308,19 +440,35 @@ check_fixture(const char *path)
     const Internal first(db, "First", ID_COMBINATION);
     const Internal second(db, "Second", ID_COMBINATION);
     const Internal definition(db, "Definition", ID_COMBINATION);
+    const Internal projection(db, "Projection", ID_COMBINATION);
+    const Internal projected_link(db, "ProjectedLink", ID_COMBINATION);
+    const Internal offset_definition(db, "OffsetDefinition", ID_COMBINATION);
+    const Internal offset_link(db, "OffsetLink", ID_COMBINATION);
+    const Internal placed_offset_link(db, "PlacedOffsetLink", ID_COMBINATION);
     const point_t origin = {0, 0, 0};
     const point_t unit_x = {1, 0, 0};
     const point_t in_assembly = {10, 21, 0};
     const point_t first_offset = {5, 0, 0};
     const point_t second_offset = {15, 0, 0};
     const point_t scaled_definition = {202, 0, 0};
+    const point_t in_projection = {30, 1, 0};
+    const point_t projected_offset = {0, 4, 0};
+    const point_t object_placement = {20, 0, 0};
+    const point_t shape_offset = {80, 0, 0};
     check_member(root, "Assembly", unit_x, in_assembly);
     check_member(assembly, "First", origin, first_offset);
     check_member(assembly, "Second", origin, second_offset);
     check_member(assembly, "Cylinder", origin, origin);
+    check_member(assembly, "Projection", unit_x, in_projection);
+    check_member(projection, "ProjectedLink", origin, projected_offset);
+    check_member(projected_link, "Definition", origin, origin);
     check_member(first, "Definition", origin, origin);
     check_member(second, "Definition", unit_x, scaled_definition);
     check_member(definition, "Definition.s", origin, origin);
+    check_member(assembly, "OffsetDefinition", origin, object_placement);
+    check_member(offset_definition, "Definition.s", origin, shape_offset);
+    check_member(offset_link, "OffsetDefinition", origin, origin);
+    check_member(placed_offset_link, "OffsetDefinition", origin, object_placement);
     if (find_member(combination(root)->tree, "Definition") ||
 	    db_lookup(db, "Hidden", LOOKUP_QUIET) ||
 	    db_lookup(db, "Definition.s_2", LOOKUP_QUIET))
@@ -340,6 +488,59 @@ check_fixture(const char *path)
 	throw std::runtime_error("inactive FreeCAD link material changed the inherited color");
 }
 
+static void
+check_arrays(const char *path)
+{
+    std::unique_ptr<struct db_i, decltype(&db_close)> database(
+	db_open(path, DB_OPEN_READONLY), db_close);
+    struct db_i *db = database.get();
+    if (!db || db_dirbuild(db) < 0)
+	throw std::runtime_error("could not read converted array fixture");
+
+    const Internal root(db, "arrays", ID_COMBINATION);
+    const Internal compact(db, "Compact", ID_COMBINATION);
+    const Internal expanded(db, "Expanded", ID_COMBINATION);
+    const Internal visible(db, "VisibleElement", ID_COMBINATION);
+    const point_t origin = {0, 0, 0};
+    const point_t array_placement = {5, 0, 0};
+    const point_t visible_placement = {18, 0, 0};
+    const point_t unit_x = {1, 0, 0};
+    const point_t reflected = {-1, 0, 0};
+    check_member(root, "Compact", origin, array_placement);
+    check_member(expanded, "VisibleElement", origin, visible_placement);
+    check_member(visible, "Definition", unit_x, reflected);
+    if (db_lookup(db, "SuppressedElement", LOOKUP_QUIET) ||
+	    db_lookup(db, "MaskedElement", LOOKUP_QUIET) ||
+	    find_member(combination(root)->tree, "VisibleElement"))
+	throw std::runtime_error("incorrect array element visibility");
+
+    std::vector<ON_3dPoint> positions;
+    std::vector<const union tree *> pending = {combination(compact)->tree};
+    while (!pending.empty()) {
+	const auto *node = pending.back();
+	pending.pop_back();
+	if (node && node->tr_op == OP_UNION) {
+	    pending.push_back(node->tr_b.tb_left);
+	    pending.push_back(node->tr_b.tb_right);
+	    continue;
+	}
+	if (!node || node->tr_op != OP_DB_LEAF || !node->tr_l.tl_mat ||
+		!BU_STR_EQUAL(node->tr_l.tl_name, "Definition"))
+	    throw std::runtime_error("array element did not share the definition");
+	point_t point;
+	MAT4X3PNT(point, node->tr_l.tl_mat, unit_x);
+	positions.emplace_back(point);
+    }
+    const auto has_point = [&](const ON_3dPoint &expected) {
+	return std::any_of(positions.begin(), positions.end(), [&](const auto &point) {
+	    return point.DistanceTo(expected) < fixture_tolerance;
+	});
+    };
+    if (positions.size() != 2 || !has_point(ON_3dPoint(222, 0, 0)) ||
+	    !has_point(ON_3dPoint(0, 323, 0)))
+	throw std::runtime_error("incorrect compact array placements");
+}
+
 int
 main(int argc, char **argv)
 {
@@ -352,6 +553,10 @@ main(int argc, char **argv)
 	    generate_fixture();
 	else if (command == "check" && argc == 3)
 	    check_fixture(argv[2]);
+	else if (command == "generate-arrays" && argc == 2)
+	    generate_arrays();
+	else if (command == "check-arrays" && argc == 3)
+	    check_arrays(argv[2]);
 	else
 	    return 1;
 	return 0;

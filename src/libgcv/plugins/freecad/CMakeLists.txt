@@ -84,11 +84,14 @@ if(BUILD_TESTING AND TARGET TKPrim AND TARGET TKTopAlgo)
   brlcad_addexec(test_gcv_freecad test_freecad.cpp
     "librt;libbu;OPENNURBS::OPENNURBS;TKPrim;TKTopAlgo" TEST)
   target_include_directories(test_gcv_freecad SYSTEM PRIVATE "${OpenCASCADE_INCLUDE_DIR}")
-  brlcad_add_test(NAME gcv_freecad COMMAND ${CMAKE_COMMAND}
-    -DGCV=$<TARGET_FILE:gcv>
-    -DFIXTURE=$<TARGET_FILE:test_gcv_freecad>
-    -DWORK=${CMAKE_CURRENT_BINARY_DIR}/test
-    -P ${CMAKE_CURRENT_SOURCE_DIR}/test_freecad.cmake)
+  foreach(freecad_test IN ITEMS gcv_freecad gcv_freecad_arrays)
+    brlcad_add_test(NAME ${freecad_test} COMMAND ${CMAKE_COMMAND}
+      -DGCV=$<TARGET_FILE:gcv>
+      -DFIXTURE=$<TARGET_FILE:test_gcv_freecad>
+      -DCASE=${freecad_test}
+      -DWORK=${CMAKE_CURRENT_BINARY_DIR}/test/${freecad_test}
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/test_freecad.cmake)
+  endforeach()
 endif()
 
 # Local Variables:

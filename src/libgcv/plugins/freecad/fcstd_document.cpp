@@ -14,6 +14,7 @@
 #include "fcstd_document.h"
 
 #include <algorithm>
+#include <charconv>
 #include <cmath>
 #include <exception>
 #include <limits>
@@ -227,13 +228,31 @@ read_placement(XmlAttributes attributes)
 	    rotation.SetVectorAndAngle(gp_Vec(number_attribute(attributes, "Ox"),
 		number_attribute(attributes, "Oy"), number_attribute(attributes, "Oz", 1.0)), angle);
     }
+    return placement_matrix(rotation, {number_attribute(attributes, "Px"),
+	number_attribute(attributes, "Py"), number_attribute(attributes, "Pz")});
+}
+
+Matrix
+placement_matrix(const gp_Quaternion &rotation, const std::array<double, 3> &position)
+{
     if (ZERO(rotation.SquareNorm()))
 	throw std::runtime_error("invalid FreeCAD placement quaternion");
     gp_Trsf transform;
     transform.SetRotation(rotation);
-    transform.SetTranslationPart(gp_Vec(number_attribute(attributes, "Px"),
-	number_attribute(attributes, "Py"), number_attribute(attributes, "Pz")));
+    transform.SetTranslationPart(gp_Vec(position[0], position[1], position[2]));
     return placement_matrix(transform);
+}
+
+static size_t
+array_count(XmlAttributes attributes)
+{
+    const auto value = attribute(attributes, "value");
+    unsigned int count = 0;
+    const auto end = value.data() + value.size();
+    const auto converted = std::from_chars(value.data(), end, count);
+    if (converted.ec != std::errc() || converted.ptr != end)
+	throw std::runtime_error("invalid FreeCAD link array count");
+    return count;
 }
 
 static bool
@@ -294,8 +313,16 @@ read_property(Object &object, XmlAttributes attributes, const std::string &prope
 	    object.unsupported_link = true;
 	else if (property == "LinkTransform" && element == "Bool")
 	    object.link_transform = xml_bool(attribute(attributes, "value"));
-	else if (property == "ElementCount" && element == "Integer")
-	    object.unsupported_link |= number_attribute(attributes, "value") > 0.0;
+	else if (property == "VisibilityList" && element == "BoolList")
+	    object.element_visibility = attribute(attributes, "value");
+	else if (property == "ElementCount" && element == "Integer" && object.is_link())
+	    object.element_count = array_count(attributes);
+	else if (property == "PlacementList" && element == "PlacementList" && object.is_link())
+	    object.array_placements = attribute(attributes, "file");
+	else if (property == "ScaleList" && element == "VectorList" && object.is_link())
+	    object.array_scales = attribute(attributes, "file");
+	else if (property == "Suppressed" && element == "Bool" && object.is_link_element())
+	    object.suppressed = xml_bool(attribute(attributes, "value"));
 	else if (property == "Scale" && element == "Float")
 	    object.scale = number_attribute(attributes, "value", 1.0);
 	else if (property == "ScaleVector" && element == "PropertyVector") {
@@ -366,10 +393,15 @@ read_element(XmlContext &context, std::string_view element, XmlAttributes attrib
 	    property = element == "Property" ? attribute(attributes, "name") : "";
 	else if (depth == 5 && !property.empty())
 	    read_property(*object, attributes, property, element, view);
-	else if (!view && depth == 6 && property == "Group" && element == "Link") {
+	else if (!view && depth == 6 && element == "Link" &&
+		property == (object->is_link_group() ? "ElementList" : "Group")) {
 	    const std::string child = attribute(attributes, "value");
-	    if (!child.empty())
+	    // Empty link group slots still occupy an index in VisibilityList.
+	    if (!child.empty() || property == "ElementList")
 		object->children.push_back(child);
+	} else if (!view && depth == 6 && element == "Link" && property == "ElementList" &&
+		object->is_link()) {
+	    object->array_elements.push_back(attribute(attributes, "value"));
 	} else if (!view && depth == 6 && property == "LinkedObject")
 	    object->unsupported_link = true;
     }

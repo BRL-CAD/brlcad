@@ -47,8 +47,8 @@ filter, or both, allowing format-specific behavior to be tuned without
 Builds with Open CASCADE, Expat, and one of minizip-ng, minizip, or libarchive
 can import FreeCAD *.FCStd* files. With minizip-ng or minizip, the reader uses
 the ZIP central directory for member lookups. It imports saved BRep solids
-and surfaces in millimeters and retains visible groups, placements, and
-single-object links within the document as BRL-CAD combinations. Referenced definitions
+and surfaces in millimeters and retains visible groups, placements, local links,
+and link arrays as BRL-CAD combinations. Referenced definitions
 are shared by their instances, including hidden definitions. Document and
 object labels and other scalar properties are stored as *freecad:* attributes.
 The reader imports saved object colors and link material overrides from the
@@ -56,9 +56,12 @@ GUI document.
 Validated BReps with authored nonmanifold edge uses carry the
 *freecad:topology=source_nonmanifold* attribute.
 
-External, subobject, and array links are reported and skipped. FreeCAD
-feature history and per-face display materials are outside the reader's
-supported inputs.
+The reader honors saved array placements, scales, element visibility, and
+suppression. External and subobject links and mesh objects are reported and
+skipped. Pass *-I --strict* to reject unavailable geometry references or
+rejected BReps, including arrays with missing placement or scale files.
+FreeCAD feature history, transparency, and per-face display materials
+are outside the reader's supported inputs.
 
 [[options]]
 == OPTIONS
