@@ -370,6 +370,10 @@ struct spatial_partition_s {
     triangle_s *tris;
     fastf_t *vertex_normals; /* for deallocation, access normals
 				through triangle_s */
+    point2d_t *uvs;
+    int *face_uvs;
+    size_t num_uvs;
+    size_t num_face_uvs;
 };
 
 static int
@@ -676,6 +680,21 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     sps->root = flat_root;
     sps->tris = tris;
     sps->vertex_normals = tri_norms;
+    sps->uvs = NULL;
+    sps->face_uvs = NULL;
+    sps->num_uvs = 0;
+    sps->num_face_uvs = 0;
+    if ((bot_ip->bot_flags & RT_BOT_HAS_TEXTURE_UVS) && bot_ip->uvs &&
+	bot_ip->face_uvs && bot_ip->num_uvs && bot_ip->num_face_uvs) {
+	sps->num_uvs = bot_ip->num_uvs;
+	sps->num_face_uvs = bot_ip->num_face_uvs;
+	sps->uvs = (point2d_t *)bu_calloc(sps->num_uvs, sizeof(point2d_t), "bot UVs");
+	for (size_t i = 0; i < sps->num_uvs; ++i)
+	    V2MOVE(sps->uvs[i], &bot_ip->uvs[i * ELEMENTS_PER_VECT]);
+	size_t index_bytes = sps->num_face_uvs * ELEMENTS_PER_POINT * sizeof(int);
+	sps->face_uvs = (int *)bu_malloc(index_bytes, "bot face UVs");
+	memcpy(sps->face_uvs, bot_ip->face_uvs, index_bytes);
+    }
 
     bot->tie = (void *)sps;
 
@@ -1353,41 +1372,40 @@ rt_bot_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 }
 
 
-/**
- * For a hit on the surface of an bot, return the (u, v) coordinates
- * of the hit point, 0 <= u, v <= 1.
- *
- * u = azimuth
- * v = elevation
- */
+/* Interpolate the texture coordinates at a hit using its barycentric weights. */
 C_DECL void
 rt_bot_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
-    struct bot_specific *bot;
     if (ap) RT_CK_APPLICATION(ap);
-
-    if (!stp)
+    if (!stp || !hitp || !uvp)
 	return;
     RT_CK_SOLTAB(stp);
-
-    if (hitp) RT_CK_HIT(hitp);
-    if (!uvp) return;
-
-    bot = (struct bot_specific *)stp->st_specific;
-
-    size_t i;
-
-    if (!bot || !hitp || !uvp)
+    RT_CK_HIT(hitp);
+    const struct bot_specific *bot = (const struct bot_specific *)stp->st_specific;
+    if (!bot || !(bot->bot_flags & RT_BOT_HAS_TEXTURE_UVS))
 	return;
-    triangle_s *trip = (triangle_s *)hitp->hit_private;
-    if (!trip)
+    const struct spatial_partition_s *sps = (const struct spatial_partition_s *)bot->tie;
+    const triangle_s *tri = (const triangle_s *)hitp->hit_private;
+    if (!sps || !tri || tri->face_id >= sps->num_face_uvs)
 	return;
 
-    if ((bot->bot_flags & RT_BOT_HAS_TEXTURE_UVS) /* && trip->tri_uvs */) {
-	for (i = X; i <= Z; i++) {
-	    /* TODO: do stuff */
-	}
+    const int *indices = &sps->face_uvs[tri->face_id * ELEMENTS_PER_POINT];
+    for (size_t i = 0; i < ELEMENTS_PER_POINT; ++i) {
+	if (indices[i] < 0 || (size_t)indices[i] >= sps->num_uvs)
+	    return;
     }
+
+    /* The prepared triangle swaps its last two corners for clockwise BoTs. */
+    const int clockwise = bot->bot_orientation == RT_BOT_CW;
+    const fastf_t *a = sps->uvs[indices[0]];
+    const fastf_t *b = sps->uvs[indices[clockwise ? 2 : 1]];
+    const fastf_t *c = sps->uvs[indices[clockwise ? 1 : 2]];
+    const fastf_t wb = FMIN(1.0, FMAX(0.0, hitp->hit_vpriv[Y]));
+    const fastf_t wc = FMIN(1.0 - wb, FMAX(0.0, hitp->hit_vpriv[Z]));
+    const fastf_t wa = 1.0 - wb - wc;
+    uvp->uv_u = wa * a[X] + wb * b[X] + wc * c[X];
+    uvp->uv_v = wa * a[Y] + wb * b[Y] + wc * c[Y];
+    uvp->uv_du = uvp->uv_dv = 0.0;
 }
 
 
@@ -1401,6 +1419,8 @@ rt_bot_free(struct soltab *stp)
 	bu_free(sps->root, "bot bvh flat nodes");
 	bu_free(sps->tris, "bot triangles");
 	bu_free(sps->vertex_normals, "bot normals");
+	bu_free(sps->uvs, "bot UVs");
+	bu_free(sps->face_uvs, "bot face UVs");
 	BU_PUT(sps, struct spatial_partition_s);
 	bot->tie = NULL;
     }
@@ -2423,13 +2443,9 @@ rt_bot_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
 	    MAT4X3VEC(&(top->normals[i*ELEMENTS_PER_VECT]), mat, tmp_n);
 	}
     }
-    if (tip->bot_flags & RT_BOT_HAS_TEXTURE_UVS) {
-	vect_t tmp_uvs;
-	for (size_t i = 0; i < tip->num_uvs; i++) {
-	    VMOVE(tmp_uvs, &(tip->uvs[i*ELEMENTS_PER_VECT]));
-	    MAT4X3VEC(&(top->uvs[i*ELEMENTS_PER_VECT]), mat, tmp_uvs);
-	}
-    }
+    /* Texture coordinates are independent of the geometry's placement. */
+    if ((tip->bot_flags & RT_BOT_HAS_TEXTURE_UVS) && tip->num_uvs && top->uvs != tip->uvs)
+	memcpy(top->uvs, tip->uvs, tip->num_uvs * ELEMENTS_PER_VECT * sizeof(fastf_t));
 
     return BRLCAD_OK;
 }
