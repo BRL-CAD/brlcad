@@ -13,6 +13,8 @@ brlcad_addexec(glint glint.cpp "librt;${M_LIBRARY}")
 brlcad_addexec(gqa gqa.c "libged;librt")
 
 brlcad_addexec(gtransfer gtransfer.c "librt;libpkg" NO_INSTALL)
+brlcad_find_package(LMDB REQUIRED)
+brlcad_addexec(gversion gversion.cpp "libged;librt;libbu;LMDB::LMDB" NO_INSTALL)
 
 add_subdirectory(beset)
 add_subdirectory(gdiff)

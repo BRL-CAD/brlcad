@@ -10,7 +10,15 @@ if(TEST slow-bigdb_5gb)
   set_property(TEST slow-bigdb_5gb PROPERTY SKIP_RETURN_CODE 123)
 endif(TEST slow-bigdb_5gb)
 
-cmakefiles(CMakeLists.txt)
+if(TARGET gversion)
+  brlcad_add_test(
+    NAME gversion_session
+    COMMAND
+      "${CMAKE_COMMAND}" "-DGVERSION=$<TARGET_FILE:gversion>" -P "${CMAKE_CURRENT_SOURCE_DIR}/gversion.cmake"
+  )
+endif()
+
+cmakefiles(CMakeLists.txt gversion.cmake)
 
 # Local Variables:
 # tab-width: 8
