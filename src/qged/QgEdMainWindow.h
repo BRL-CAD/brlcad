@@ -119,9 +119,10 @@ class QgEdMainWindow : public QMainWindow
 	void ConnectWidgets();
 	void SetupMenu();
 	void UpdateHistoryControls();
+	void CreateWorkspace();
 	void ExportSnapshot();
 	void SaveStagedEdit();
-	void RunFileExport(const QString &title, int argc, const char **argv);
+	void RunHistoryCommand(const QString &title, int argc, const char **argv, bool report_success = true);
 	void RedoHistory();
 	void ShowHistory();
 
@@ -133,6 +134,9 @@ class QgEdMainWindow : public QMainWindow
 	QAction *history_undo = nullptr;
 	QAction *history_redo = nullptr;
 	QAction *history_view = nullptr;
+	QAction *history_enable_session = nullptr;
+	QAction *history_enable_embedded = nullptr;
+	QAction *history_workspace = nullptr;
 	QAction *history_export = nullptr;
 	QAction *history_save_staged = nullptr;
 	QLabel *history_mode = nullptr;

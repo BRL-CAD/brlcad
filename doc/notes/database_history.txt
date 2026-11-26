@@ -643,6 +643,16 @@ on the M1917 workspace produced a 1.22 GB plain snapshot and a
 revision and verified. The source workspace continued to report the
 same revision and metadata, and its data file digest matched.
 
+QGED's Edit menu enabled session Undo and saved the retained journal
+in the open DB5 file. The Redo choice survived promotion and restored
+the primitive. Creating and copying a workspace from the File menu
+preserved the selected revision and checkpoint, and the window showed
+the active database after each switch. Canceling the directory chooser
+or entering an occupied name kept the previous document active.
+Closing a workspace cleared the displayed path and disabled setup
+actions. From a read-only copy of the M1917 DB5, the same menu created
+and opened a verified writable workspace. The source digest matched.
+
 QGED drew a primitive from an independent revision preview while
 the working file was at an earlier revision. Opening and closing the
 preview left the DB5 file byte-identical. The M1917 workspace preview

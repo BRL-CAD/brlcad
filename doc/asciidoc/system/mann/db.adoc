@@ -46,10 +46,14 @@ Returns information about the primitive shape at the end of the __shape_or_path_
 
 __history enable session [bytes]__::
 Start history for the open writable DB5 file on a platform that supports atomic replacement. Supported editing commands include `make`, `adjust`, `mvall`, `concat`, and `title`. Each `killrefs`, `killall`, or `killtree` edit has one Undo entry for its object and reference changes. Their `-n` previews also work on read-only databases. Edits save to the file as they complete, and closing the database discards the undo journal. The default journal limit is 64 MiB. When older revisions reach the limit, history may prune them. An individual edit beyond the limit fails before saving.
++
+In QGED, choose *Enable Session Undo* from the Edit menu to use the default journal limit.
 
 
 __history enable [embedded]__::
 Persist history in the open writable DB5 file. The file stores its selected model and history together, and reopening loads the saved history automatically. A session journal, if present, is promoted with its retained branches and redo choices. MGED records accepted edits, and QGED provides Undo, Redo, and revision inspection in the Edit menu.
++
+In QGED, choose *Save History in This File* from the Edit menu to enable embedded history or promote the open session journal.
 +
 For a DB4 file, run `dbupgrade legacy.g new.g` from a terminal. Open `new.g` and enable history there. The conversion keeps the original file available.
 
@@ -64,6 +68,8 @@ Use `--json` for a structured status object with schema version 1. Revision IDs 
 
 __history workspace directory__::
 Create a durable workspace in a new directory and switch to it. The workspace imports the open DB5 model and any retained session or embedded history. Subsequent edits save to the workspace. Reopen it with `db open directory`. The source file remains available. Run this command with the open workspace's path to report its status, or specify a new directory to copy it using the current workspace schema.
++
+In QGED, choose *Create Workspace* from the File menu and enter the new directory's name. With a workspace open, choose *Copy Workspace As* to make a copy and switch to it. The window shows the active database name after the switch.
 +
 If the editor cannot reopen the created workspace or another writer changes it before the switch, the source stays open. The command reports the created path so you can inspect it or switch to it explicitly.
 +

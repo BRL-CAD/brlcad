@@ -27,6 +27,7 @@
 
 #include <QCursor>
 #include <QEvent>
+#include <QFileInfo>
 #include <QKeySequence>
 #include <QTimer>
 #include <QMessageBox>
@@ -339,6 +340,9 @@ QgEdMainWindow::SetupMenu()
     auto *app = static_cast<QgEdApp *>(qApp);
     auto *open_workspace = file_menu->addAction(tr("Open Workspace…"));
     connect(open_workspace, &QAction::triggered, app, &QgEdApp::open_workspace);
+    history_workspace = file_menu->addAction(tr("Create Workspace…"));
+    history_workspace->setEnabled(false);
+    connect(history_workspace, &QAction::triggered, this, &QgEdMainWindow::CreateWorkspace);
 
     history_export = file_menu->addAction(tr("Export DB5 Snapshot…"));
     history_export->setEnabled(false);
@@ -376,6 +380,8 @@ QgEdMainWindow::SetupMenu()
     history_redo = edit_menu->addAction(tr("Redo"));
     edit_menu->addSeparator();
     history_view = edit_menu->addAction(tr("History…"));
+    history_enable_session = edit_menu->addAction(tr("Enable Session Undo"));
+    history_enable_embedded = edit_menu->addAction(tr("Save History in This File"));
     history_undo->setShortcuts(QKeySequence::Undo);
     history_redo->setShortcuts(QKeySequence::Redo);
     history_undo->setShortcutContext(Qt::WidgetWithChildrenShortcut);
@@ -383,9 +389,19 @@ QgEdMainWindow::SetupMenu()
     history_undo->setEnabled(false);
     history_redo->setEnabled(false);
     history_view->setEnabled(false);
+    history_enable_session->setEnabled(false);
+    history_enable_embedded->setEnabled(false);
     connect(history_undo, &QAction::triggered, app, [app]() { app->run_qcmd("db undo"); });
     connect(history_redo, &QAction::triggered, this, &QgEdMainWindow::RedoHistory);
     connect(history_view, &QAction::triggered, this, &QgEdMainWindow::ShowHistory);
+    connect(history_enable_session, &QAction::triggered, this, [this]() {
+	const char *argv[] = {"db", "history", "enable", "session"};
+	RunHistoryCommand(tr("Enable Session Undo"), sizeof(argv) / sizeof(argv[0]), argv, false);
+    });
+    connect(history_enable_embedded, &QAction::triggered, this, [this]() {
+	const char *argv[] = {"db", "history", "enable", "embedded"};
+	RunHistoryCommand(tr("Save History in This File"), sizeof(argv) / sizeof(argv[0]), argv);
+    });
     connect(edit_menu, &QMenu::aboutToShow, this, &QgEdMainWindow::UpdateHistoryControls);
     connect(app, &QgEdApp::history_update, this, &QgEdMainWindow::UpdateHistoryControls);
     connect(app, &QgEdApp::dbi_update, this, &QgEdMainWindow::UpdateHistoryControls);
@@ -418,6 +434,7 @@ QgEdMainWindow::UpdateHistoryControls()
 {
     auto *app = static_cast<QgEdApp *>(qApp);
     auto *gedp = app->mdl ? app->mdl->gedp : nullptr;
+    const auto *database = gedp ? gedp->dbip : nullptr;
     const std::unique_ptr<const struct ged_history_status, decltype(&ged_history_status_destroy)>
 	status(ged_history_status_create(gedp, nullptr), ged_history_status_destroy);
     const bool writable = qged_history_writable(status.get(), app->command_pending());
@@ -436,14 +453,49 @@ QgEdMainWindow::UpdateHistoryControls()
     history_undo->setEnabled(writable && status->undo.revision);
     history_redo->setEnabled(writable && status->redo_count);
     history_view->setEnabled(status && status->mode != GED_HISTORY_DISABLED);
-    history_export->setEnabled(!app->command_pending() && gedp && gedp->dbip &&
-	db_version(gedp->dbip) == BRLCAD_DB_FORMAT_LATEST && (!status || !status->edit_active));
+    const bool idle_db5 = !app->command_pending() && database &&
+	db_version(database) == BRLCAD_DB_FORMAT_LATEST && (!status || !status->edit_active);
+    const bool plain_writable = idle_db5 && status && status->mode == GED_HISTORY_DISABLED && !database->dbi_read_only;
+    const bool promote_session = idle_db5 && writable && status->mode == GED_HISTORY_SESSION;
+    history_enable_session->setEnabled(plain_writable);
+    history_enable_embedded->setEnabled(plain_writable || promote_session);
+    history_workspace->setText(status && status->mode == GED_HISTORY_WORKSPACE ?
+	tr("Copy Workspace As…") : tr("Create Workspace…"));
+    history_workspace->setEnabled(idle_db5 && status && !status->staged_conflict &&
+	(status->mode != GED_HISTORY_EMBEDDED || status->state == GED_HISTORY_CURRENT));
+    history_export->setEnabled(idle_db5);
     history_save_staged->setEnabled(!app->command_pending() && status && status->staged_conflict);
+    setWindowFilePath(database ? QString::fromLocal8Bit(database->dbi_filename) : QString());
 
     const auto text = status ? qged_history_status_text(*status) : QgHistoryStatusText{};
     history_mode->setText(text.label);
     history_mode->setToolTip(text.details);
     history_mode->setVisible(!text.label.isEmpty());
+}
+
+void
+QgEdMainWindow::CreateWorkspace()
+{
+    auto *app = static_cast<QgEdApp *>(qApp);
+    const std::unique_ptr<const struct ged_history_status, decltype(&ged_history_status_destroy)>
+	status(ged_history_status_create(app->mdl->gedp, nullptr), ged_history_status_destroy);
+    const bool copying = status && status->mode == GED_HISTORY_WORKSPACE;
+    const QString title = copying ? tr("Copy Workspace As") : tr("Create Workspace");
+    const QFileInfo source(windowFilePath());
+    QFileDialog dialog(this, title, source.absolutePath());
+    dialog.setAcceptMode(QFileDialog::AcceptSave);
+    dialog.setFileMode(QFileDialog::AnyFile);
+    dialog.setOption(QFileDialog::DontConfirmOverwrite);
+    dialog.setLabelText(QFileDialog::FileName, tr("New directory"));
+    dialog.setLabelText(QFileDialog::Accept, copying ? tr("Copy") : tr("Create"));
+    const QString base = copying ? source.fileName() : source.completeBaseName();
+    dialog.selectFile(base + (copying ? QStringLiteral("-copy") : QStringLiteral("-workspace")));
+    if (dialog.exec() != QDialog::Accepted)
+	return;
+
+    const QByteArray destination = dialog.selectedFiles().front().toLocal8Bit();
+    const char *argv[] = {"db", "history", "workspace", destination.constData()};
+    RunHistoryCommand(title, sizeof(argv) / sizeof(argv[0]), argv);
 }
 
 void
@@ -472,7 +524,7 @@ QgEdMainWindow::ExportSnapshot()
     const QByteArray destination = dialog.selectedFiles().front().toLocal8Bit();
     const char *argv[] = {"db", "history", "export", destination.constData(), "--with-history"};
     const int argc = sizeof(argv) / sizeof(argv[0]);
-    RunFileExport(title, dialog.selectedNameFilter() == with_history ? argc : argc - 1, argv);
+    RunHistoryCommand(title, dialog.selectedNameFilter() == with_history ? argc : argc - 1, argv);
 }
 
 void
@@ -485,17 +537,21 @@ QgEdMainWindow::SaveStagedEdit()
 
     const QByteArray destination = path.toLocal8Bit();
     const char *argv[] = {"db", "history", "conflict", "export", destination.constData()};
-    RunFileExport(tr("Save Staged Edit As"), sizeof(argv) / sizeof(argv[0]), argv);
+    RunHistoryCommand(tr("Save Staged Edit As"), sizeof(argv) / sizeof(argv[0]), argv);
 }
 
 void
-QgEdMainWindow::RunFileExport(const QString &title, int argc, const char **argv)
+QgEdMainWindow::RunHistoryCommand(const QString &title, int argc, const char **argv, bool report_success)
 {
     auto *app = static_cast<QgEdApp *>(qApp);
     struct bu_vls result = BU_VLS_INIT_ZERO;
+    QApplication::setOverrideCursor(Qt::WaitCursor);
     const int status = app->run_cmd(&result, argc, argv);
+    QApplication::restoreOverrideCursor();
     const QString message = QString::fromLocal8Bit(bu_vls_cstr(&result));
     bu_vls_free(&result);
+    if (status == BRLCAD_OK && !report_success)
+	return;
     QMessageBox response(status == BRLCAD_OK ? QMessageBox::Information : QMessageBox::Warning,
 	title, message, QMessageBox::Ok, this);
     response.setTextFormat(Qt::PlainText);
