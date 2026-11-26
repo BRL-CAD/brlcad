@@ -1,7 +1,7 @@
 BRLCAD_Find_Package(TinyGLTF REQUIRED)
 
 gcv_plugin_library(gcv-gltf SHARED gltf_read.cpp)
-target_link_libraries(gcv-gltf libgcv libwdb librt tinygltf::tinygltf)
+target_link_libraries(gcv-gltf libgcv libwdb librt libbn tinygltf::tinygltf)
 set_property(TARGET gcv-gltf APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 validate_style(gcv-gltf gltf_read.cpp)
 plugin_setup(gcv-gltf gcv)

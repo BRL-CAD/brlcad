@@ -20,14 +20,15 @@
 
 #include "common.h"
 
-#include <climits>
+#include <algorithm>
 #include <cstdint>
 #include <iostream>
-#include <limits>
+#include <set>
 #include <string>
 #include <vector>
 
 #include "vmath.h"
+#include "bn/mat.h"
 #include "bu/app.h"
 #include "bu/opt.h"
 #include "bg/trimesh.h"
@@ -36,115 +37,113 @@
 #include "gltf_read_util.h"
 
 static bool
-process_mesh(struct rt_wdb *outfp, const tg3_model &model, const tg3_mesh &mesh,
-    int verbosity, uint32_t mesh_number)
+process_mesh(struct rt_wdb *outfp, const tg3_model &model, uint32_t mesh_index,
+    uint32_t object_index, const mat_t transform, int verbosity)
 {
+    const tg3_mesh &mesh = model.meshes[mesh_index];
     std::string shape_name = brlcad_gltf::to_string(mesh.name);
     if (shape_name.empty())
-	shape_name = "gltf_import_" + std::to_string(mesh_number);
+	shape_name = "gltf_import_" + std::to_string(mesh_index);
+    shape_name = brlcad_gltf::unique_object_name(outfp->dbip, shape_name, object_index);
 
     if (verbosity)
-	std::cout << "BoT " << mesh_number << " name: " << shape_name << "\n";
+	std::cout << "BoT " << mesh_index << " name: " << shape_name << "\n";
 
     std::vector<fastf_t> vertices;
     std::vector<int> faces;
-    for (uint32_t primitive_number = 0; primitive_number < mesh.primitives_count;
-	++primitive_number) {
-	const tg3_primitive &primitive = mesh.primitives[primitive_number];
-	if (primitive.mode != TG3_MODE_TRIANGLES) {
-	    bu_log("Error: glTF primitive %u is not a triangle mesh\n", primitive_number);
+    for (uint32_t i = 0; i < mesh.primitives_count; ++i) {
+	if (!brlcad_gltf::append_triangle_primitive(model, mesh_index, i, vertices, faces))
 	    return false;
-	}
-
-	int32_t position_index = brlcad_gltf::find_attribute(primitive, "POSITION");
-	brlcad_gltf::accessor_view positions;
-	if (position_index == TG3_INDEX_NONE ||
-	    !brlcad_gltf::get_accessor_view(model, position_index, positions) ||
-	    positions.accessor->type != TG3_TYPE_VEC3 ||
-	    !brlcad_gltf::is_supported_position_component(
-		positions.accessor->component_type) ||
-	    positions.accessor->count > std::numeric_limits<size_t>::max()) {
-	    bu_log("Error: glTF primitive %u has invalid POSITION data\n", primitive_number);
-	    return false;
-	}
-	if (positions.accessor->component_type == TG3_COMPONENT_TYPE_DOUBLE)
-	    brlcad_gltf::warn_legacy_double_position(mesh_number, primitive_number);
-
-	size_t primitive_vertex_count = static_cast<size_t>(positions.accessor->count);
-	size_t first_vertex = vertices.size() / 3;
-	if (primitive_vertex_count > static_cast<size_t>(INT_MAX) - first_vertex ||
-	    primitive_vertex_count > (vertices.max_size() - vertices.size()) / 3) {
-	    bu_log("Error: glTF mesh %u has too many vertices\n", mesh_number);
-	    return false;
-	}
-	vertices.resize(vertices.size() + primitive_vertex_count * 3);
-
-	int32_t component_size = tg3_component_size(positions.accessor->component_type);
-	for (size_t vertex = 0; vertex < primitive_vertex_count; ++vertex) {
-	    for (size_t axis = 0; axis < 3; ++axis) {
-		double coordinate;
-		if (!brlcad_gltf::read_coordinate(
-			positions.data + vertex * positions.stride + axis * component_size,
-			positions.accessor->component_type, coordinate))
-		    return false;
-		vertices[(first_vertex + vertex) * 3 + axis] =
-		    static_cast<fastf_t>(coordinate);
-	    }
-	}
-
-	brlcad_gltf::accessor_view indices;
-	const tg3_accessor *index_accessor = nullptr;
-	size_t index_count = primitive_vertex_count;
-	if (primitive.indices != TG3_INDEX_NONE) {
-	    if (!brlcad_gltf::get_accessor_view(model, primitive.indices, indices) ||
-		indices.accessor->type != TG3_TYPE_SCALAR ||
-		indices.accessor->count > std::numeric_limits<size_t>::max()) {
-		bu_log("Error: glTF primitive %u has invalid index data\n", primitive_number);
-		return false;
-	    }
-	    index_accessor = indices.accessor;
-	    index_count = static_cast<size_t>(index_accessor->count);
-	}
-	if (index_count == 0 || index_count % 3 != 0 ||
-	    index_count > faces.max_size() - faces.size()) {
-	    bu_log("Error: glTF primitive %u does not contain complete triangles\n",
-		primitive_number);
-	    return false;
-	}
-
-	size_t first_index = faces.size();
-	faces.resize(first_index + index_count);
-	for (size_t i = 0; i < index_count; ++i) {
-	    size_t index = i;
-	    if (index_accessor &&
-		!brlcad_gltf::read_index(indices.data + i * indices.stride,
-		    index_accessor->component_type, index)) {
-		bu_log("Error: glTF primitive %u uses an unsupported index type\n",
-		    primitive_number);
-		return false;
-	    }
-	    if (index >= primitive_vertex_count) {
-		bu_log("Error: glTF primitive %u contains an invalid vertex index\n",
-		    primitive_number);
-		return false;
-	    }
-	    faces[first_index + i] = static_cast<int>(first_vertex + index);
-	}
     }
 
-    size_t vertex_count = vertices.size() / 3;
-    size_t face_count = faces.size() / 3;
+    size_t vertex_count = vertices.size() / ELEMENTS_PER_POINT;
+    size_t face_count = faces.size() / brlcad_gltf::TRIANGLE_VERTICES;
     if (vertex_count == 0 || face_count == 0) {
-	bu_log("Error: glTF mesh %u contains no triangles\n", mesh_number);
+	bu_log("Error: glTF mesh %u contains no triangles\n", mesh_index);
 	return false;
+    }
+
+    if (transform) {
+	for (size_t i = 0; i < vertices.size(); i += ELEMENTS_PER_POINT) {
+	    point_t point;
+	    MAT4X3PNT(point, transform, &vertices[i]);
+	    VMOVE(&vertices[i], point);
+	}
+
+	/* Baking a reflection into the vertices also reverses the winding. */
+	if (bn_mat_det3(transform) < 0.0) {
+	    for (size_t i = 0; i < faces.size(); i += brlcad_gltf::TRIANGLE_VERTICES)
+		std::swap(faces[i + 1], faces[i + 2]);
+	}
     }
 
     int type = RT_BOT_SURFACE;
     if (bg_trimesh_manifold_closed(vertex_count, face_count, vertices.data(), faces.data()))
 	type = RT_BOT_SOLID;
 
-    return mk_bot(outfp, shape_name.c_str(), type, RT_BOT_CCW, 0,
-	vertex_count, face_count, vertices.data(), faces.data(), NULL, NULL) >= 0;
+    if (mk_bot(outfp, shape_name.c_str(), type, RT_BOT_CCW, 0,
+	    vertex_count, face_count, vertices.data(), faces.data(), NULL, NULL) < 0) {
+	bu_log("Unable to write glTF mesh %u as %s\n", mesh_index, shape_name.c_str());
+	return false;
+    }
+    return true;
+}
+
+
+static bool
+handle_node(struct rt_wdb *outfp, const tg3_model &model, int32_t node_index,
+    const mat_t parent_transform, std::set<int32_t> &active_nodes, int verbosity)
+{
+    brlcad_gltf::active_node active(model, node_index, active_nodes);
+    const tg3_node *node = active.get();
+    if (!node)
+	return false;
+
+    mat_t local_transform, transform;
+    brlcad_gltf::node_transform(local_transform, *node);
+    bn_mat_mul(transform, parent_transform, local_transform);
+
+    if (node->mesh != TG3_INDEX_NONE) {
+	if (node->mesh < 0 || static_cast<uint32_t>(node->mesh) >= model.meshes_count) {
+	    bu_log("glTF node %d has invalid mesh index %d\n", node_index, node->mesh);
+	    return false;
+	}
+	if (!process_mesh(outfp, model, node->mesh, node_index, transform, verbosity))
+	    return false;
+    }
+
+    for (uint32_t i = 0; i < node->children_count; ++i) {
+	if (!handle_node(outfp, model, node->children[i], transform, active_nodes, verbosity))
+	    return false;
+    }
+    return true;
+}
+
+
+static bool
+convert_from_gltf(struct rt_wdb *outfp, const tg3_model &model, int verbosity)
+{
+    if (model.scenes_count == 0) {
+	/* A glTF asset can be a mesh library with no node placements. */
+	for (uint32_t i = 0; i < model.meshes_count; ++i) {
+	    if (!process_mesh(outfp, model, i, i, NULL, verbosity))
+		return false;
+	}
+	return true;
+    }
+
+    const tg3_scene *scene = brlcad_gltf::default_scene(model);
+    if (!scene)
+	return false;
+
+    mat_t identity;
+    MAT_IDN(identity);
+    std::set<int32_t> active_nodes;
+    for (uint32_t i = 0; i < scene->nodes_count; ++i) {
+	if (!handle_node(outfp, model, scene->nodes[i], identity, active_nodes, verbosity))
+	    return false;
+    }
+    return true;
 }
 
 
@@ -209,21 +208,15 @@ main(int argc, char **argv)
 	return BRLCAD_ERROR;
     }
     std::string title = "gltf-g import of " + std::string(argv[0]);
-    mk_id(outfp, title.c_str());
 
     if (verbosity)
 	std::cout << "Mesh count: " << model->meshes_count << "\n";
-    for (uint32_t i = 0; i < model->meshes_count; ++i) {
-	if (!process_mesh(outfp, *model.get(), model->meshes[i], verbosity, i)) {
-	    db_close(outfp->dbip);
-	    bu_vls_free(&output_path);
-	    return BRLCAD_ERROR;
-	}
-    }
+    bool converted = mk_id(outfp, title.c_str()) >= 0 &&
+	convert_from_gltf(outfp, *model.get(), verbosity);
 
     db_close(outfp->dbip);
     bu_vls_free(&output_path);
-    return BRLCAD_OK;
+    return converted ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 

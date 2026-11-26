@@ -18,10 +18,16 @@ gltf-g [-h] [-v] [-E] [-o _output_file.g_] _input_file_ [_output_file.g_]
 == DESCRIPTION
 
 *gltf-g* converts a glTF (GL Transmission Format) model into a BRL-CAD
-geometry database. Each glTF mesh is read and written as a Bag of
-Triangles (*BoT*) primitive in the output _.g_ file. A *BoT* whose
-trimesh is found to be a closed, manifold solid is stored as a solid
-*BoT*; otherwise it is stored as a surface *BoT*.
+geometry database. For each node in the selected scene that references a
+mesh, the converter writes a top-level Bag of Triangles (*BoT*) primitive
+and applies the node's transform and its ancestors' transforms to the
+vertices. If several nodes reference the same source mesh, each gets a
+separate *BoT*.
+
+The converter uses the default scene, or the first scene if the file
+specifies no default. For files without scenes, it writes one *BoT* per
+mesh in its local coordinates. Closed, manifold meshes are stored as
+solid *BoTs*. Other meshes are stored as surface *BoTs*.
 
 The input format is selected from the _input_file_ extension: a file
 ending in _.glb_ is read as binary glTF, while any other extension

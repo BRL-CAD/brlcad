@@ -19,28 +19,36 @@
  */
 /** @file gltf_read_util.h
  *
- * Shared checked access to TinyGLTF v3 models.
+ * Shared geometry and scene handling for the native glTF readers.
  */
 
 #ifndef BRLCAD_GLTF_READ_UTIL_H
 #define BRLCAD_GLTF_READ_UTIL_H
 
+#include <algorithm>
+#include <climits>
 #include <cstdint>
 #include <cstring>
 #include <fstream>
 #include <limits>
+#include <set>
 #include <string>
+#include <vector>
 
 #include "tiny_gltf_v3.h"
 
+#include "vmath.h"
+#include "bn/qmath.h"
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "rt/db_io.h"
 
 namespace brlcad_gltf {
 
 constexpr uint64_t MAX_FILE_BYTES = 1ULL << 30;
 constexpr uint64_t MAX_PARSE_MEMORY_BYTES = MAX_FILE_BYTES;
+constexpr size_t TRIANGLE_VERTICES = 3;
 
 struct accessor_view {
     const tg3_accessor *accessor = nullptr;
@@ -52,6 +60,87 @@ inline std::string
 to_string(tg3_str value)
 {
     return value.data ? std::string(value.data, value.len) : std::string();
+}
+
+inline std::string
+unique_object_name(const struct db_i *dbip, std::string base, uint32_t object_index)
+{
+    /* A glTF name can repeat and can contain NUL, which terminates a .g name. */
+    std::replace(base.begin(), base.end(), '\0', '_');
+    if (!db_lookup(dbip, base.c_str(), LOOKUP_QUIET))
+	return base;
+
+    base += "_" + std::to_string(object_index);
+    std::string name = base;
+    for (size_t suffix = 1; db_lookup(dbip, name.c_str(), LOOKUP_QUIET); ++suffix)
+	name = base + "_" + std::to_string(suffix);
+    return name;
+}
+
+inline const tg3_scene *
+default_scene(const tg3_model &model)
+{
+    int32_t index = model.default_scene >= 0 ? model.default_scene : 0;
+    if (static_cast<uint32_t>(index) >= model.scenes_count) {
+	bu_log("glTF default scene index %d is invalid\n", index);
+	return nullptr;
+    }
+    return &model.scenes[index];
+}
+
+class active_node {
+public:
+    active_node(const tg3_model &model, int32_t index, std::set<int32_t> &path)
+	: path_(path), index_(index)
+    {
+	if (index < 0 || static_cast<uint32_t>(index) >= model.nodes_count) {
+	    bu_log("glTF node index %d is invalid\n", index);
+	    return;
+	}
+	if (!path_.insert(index).second) {
+	    bu_log("glTF node hierarchy contains a cycle at node %d\n", index);
+	    return;
+	}
+	node_ = &model.nodes[index];
+    }
+
+    ~active_node()
+    {
+	if (node_)
+	    path_.erase(index_);
+    }
+
+    active_node(const active_node &) = delete;
+    active_node &operator=(const active_node &) = delete;
+
+    const tg3_node *get() const { return node_; }
+
+private:
+    std::set<int32_t> &path_;
+    int32_t index_;
+    const tg3_node *node_ = nullptr;
+};
+
+inline void
+node_transform(mat_t matrix, const tg3_node &node)
+{
+    if (node.has_matrix) {
+	/* glTF stores matrices by column. BRL-CAD stores them by row. */
+	MAT_TRANSPOSE(matrix, node.matrix);
+	return;
+    }
+
+    /* BRL-CAD's quaternion conversion uses the inverse rotation convention. */
+    quat_t rotation;
+    QCONJUGATE(rotation, node.rotation);
+    quat_quat2mat(matrix, rotation);
+
+    /* glTF composes T * R * S, so scale each column before translating. */
+    for (size_t row = 0; row < ELEMENTS_PER_VECT; ++row) {
+	for (size_t column = 0; column < ELEMENTS_PER_VECT; ++column)
+	    matrix[row * ELEMENTS_PER_HVECT + column] *= node.scale[column];
+    }
+    MAT_DELTAS_VEC(matrix, node.translation);
 }
 
 inline int32_t
@@ -174,6 +263,82 @@ read_coordinate(const uint8_t *data, int32_t component_type, double &value)
 	return true;
     }
     return false;
+}
+
+inline bool
+append_triangle_primitive(const tg3_model &model, uint32_t mesh_number,
+    uint32_t primitive_number, std::vector<fastf_t> &vertices, std::vector<int> &faces)
+{
+    const tg3_primitive &primitive = model.meshes[mesh_number].primitives[primitive_number];
+    if (primitive.mode != TG3_MODE_TRIANGLES) {
+	bu_log("glTF mesh %u primitive %u is not a triangle mesh\n", mesh_number, primitive_number);
+	return false;
+    }
+
+    accessor_view positions;
+    if (!get_accessor_view(model, find_attribute(primitive, "POSITION"), positions) ||
+	positions.accessor->type != TG3_TYPE_VEC3 ||
+	!is_supported_position_component(positions.accessor->component_type)) {
+	bu_log("glTF mesh %u primitive %u has invalid POSITION data\n", mesh_number, primitive_number);
+	return false;
+    }
+    if (positions.accessor->component_type == TG3_COMPONENT_TYPE_DOUBLE)
+	warn_legacy_double_position(mesh_number, primitive_number);
+
+    size_t first_vertex = vertices.size() / ELEMENTS_PER_POINT;
+    if (positions.accessor->count > static_cast<size_t>(INT_MAX) - first_vertex ||
+	positions.accessor->count > (vertices.max_size() - vertices.size()) / ELEMENTS_PER_POINT) {
+	bu_log("glTF mesh %u has too many vertices\n", mesh_number);
+	return false;
+    }
+    size_t vertex_count = static_cast<size_t>(positions.accessor->count);
+
+    accessor_view indices;
+    uint64_t index_count = vertex_count;
+    if (primitive.indices != TG3_INDEX_NONE) {
+	if (!get_accessor_view(model, primitive.indices, indices) ||
+	    indices.accessor->type != TG3_TYPE_SCALAR) {
+	    bu_log("glTF mesh %u primitive %u has invalid index data\n", mesh_number, primitive_number);
+	    return false;
+	}
+	index_count = indices.accessor->count;
+    }
+    if (index_count == 0 || index_count % TRIANGLE_VERTICES != 0 ||
+	index_count > faces.max_size() - faces.size()) {
+	bu_log("glTF mesh %u primitive %u has an invalid triangle index count\n",
+	    mesh_number, primitive_number);
+	return false;
+    }
+
+    const size_t first_index = faces.size();
+    faces.resize(first_index + static_cast<size_t>(index_count));
+    for (size_t i = 0; i < index_count; ++i) {
+	size_t index = i;
+	if (indices.accessor &&
+	    !read_index(indices.data + i * indices.stride, indices.accessor->component_type, index)) {
+	    bu_log("glTF mesh %u primitive %u uses an unsupported index type\n", mesh_number, primitive_number);
+	    return false;
+	}
+	if (index >= vertex_count) {
+	    bu_log("glTF mesh %u primitive %u contains an invalid vertex index\n", mesh_number, primitive_number);
+	    return false;
+	}
+	faces[first_index + i] = static_cast<int>(first_vertex + index);
+    }
+
+    const int32_t component_type = positions.accessor->component_type;
+    const int32_t component_size = tg3_component_size(component_type);
+    vertices.resize((first_vertex + vertex_count) * ELEMENTS_PER_POINT);
+    for (size_t i = 0; i < vertex_count; ++i) {
+	for (size_t axis = 0; axis < ELEMENTS_PER_POINT; ++axis) {
+	    double coordinate;
+	    if (!read_coordinate(positions.data + i * positions.stride + axis * component_size,
+		    component_type, coordinate))
+		return false;
+	    vertices[(first_vertex + i) * ELEMENTS_PER_POINT + axis] = static_cast<fastf_t>(coordinate);
+	}
+    }
+    return true;
 }
 
 inline void
