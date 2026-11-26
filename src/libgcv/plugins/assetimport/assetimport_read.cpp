@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -37,6 +38,7 @@
 #include "gcv/api.h"
 #include "wdb.h"
 #include "bg/trimesh.h"
+#include "bn/mat.h"
 #include "bu/color.h"
 #include "bu/opt.h"
 #include "bu/path.h"
@@ -84,6 +86,7 @@ typedef struct assetimport_read_state {
     struct wmember all;                             /* scene root */
 
     const aiScene* scene;                           /* assetimport generated scene */
+    std::vector<std::string> mesh_names;            /* BoT names by Assimp mesh index */
     int id_no;                                      /* region ident number */
     unsigned int dfs;                               /* number of nodes visited */
     unsigned int converted;                         /* number of meshes converted */
@@ -123,7 +126,7 @@ assetimport_rgb_from_floats(unsigned char rgb[3], fastf_t r, fastf_t g, fastf_t 
 }
 
 static void
-aimatrix_to_arr16(aiMatrix4x4 aimat, fastf_t* ret)
+aimatrix_to_arr16(const aiMatrix4x4 &aimat, mat_t ret)
 {
     ret[0 ] = aimat.a1;
     ret[1 ] = aimat.a2;
@@ -1066,166 +1069,144 @@ convert_x3d_nurbs(assetimport_read_state_t *pstate)
     return (int)(pstate->converted_nurbs - before);
 }
 
-static void
-generate_geometry(assetimport_read_state_t* pstate, wmember &region, unsigned int mesh_idx)
+static bool
+write_mesh(assetimport_read_state_t *pstate, unsigned int mesh_index,
+    const std::string &mesh_name)
 {
-    aiMesh* mesh = pstate->scene->mMeshes[mesh_idx];
-    /* sanity check: importer handles triangulation but make sure
-       we are dealing with only triangles */
-    if (mesh->mPrimitiveTypes != aiPrimitiveType_TRIANGLE) {
-	bu_log("WARNING: unknown primitive in mesh[%d] -- skipping\n", mesh_idx);
-	return;
-    }
-
-    int* faces = new int[mesh->mNumFaces * 3];
-    double* vertices = new double[mesh->mNumVertices * 3];
-    fastf_t* normals = NULL;
-    fastf_t* thickness = NULL;
-    bu_bitv* bitv = NULL;
+    const aiMesh &mesh = *pstate->scene->mMeshes[mesh_index];
+    constexpr size_t vertices_per_face = 3;
+    std::vector<int> faces(static_cast<size_t>(mesh.mNumFaces) * vertices_per_face);
+    std::vector<fastf_t> vertices(static_cast<size_t>(mesh.mNumVertices) * ELEMENTS_PER_POINT);
 
     if (pstate->gcv_options->verbosity_level || pstate->assetimport_read_options->verbose) {
-	bu_log("mesh[%d] num Faces: %d\n", mesh_idx, mesh->mNumFaces);
-	bu_log("mesh[%d] num vertices: %d\n", mesh_idx, mesh->mNumVertices);
+	bu_log("mesh[%u] num Faces: %u\n", mesh_index, mesh.mNumFaces);
+	bu_log("mesh[%u] num vertices: %u\n", mesh_index, mesh.mNumVertices);
     }
 
-    /* add all faces */
-    for (size_t i = 0; i < mesh->mNumFaces; i++) {
-	VMOVEN(&faces[i * 3], mesh->mFaces[i].mIndices, 3);
+    for (size_t i = 0; i < mesh.mNumFaces; ++i)
+	VMOVEN(&faces[i * vertices_per_face], mesh.mFaces[i].mIndices, vertices_per_face);
+
+    const fastf_t scale = pstate->gcv_options->scale_factor;
+    for (size_t i = 0; i < mesh.mNumVertices; ++i) {
+	const aiVector3D &vertex = mesh.mVertices[i];
+	VSET(&vertices[i * ELEMENTS_PER_POINT], vertex.x * scale, vertex.y * scale, vertex.z * scale);
     }
 
-    /* add all vertices */
-    for (size_t i = 0; i < mesh->mNumVertices; i++) {
-	point_t vertex;
-	VSET(vertex, mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
-	VSCALE(vertex, vertex, pstate->gcv_options->scale_factor);
-	VMOVE(&vertices[i * 3], vertex);
+    const unsigned char orientation = RT_BOT_CCW;
+    /* TODO: this generates a lot of false plate modes. */
+    const unsigned char mode = bg_trimesh_solid(static_cast<int>(mesh.mNumVertices),
+	    static_cast<int>(mesh.mNumFaces), vertices.data(), faces.data(), NULL)
+	? RT_BOT_PLATE : RT_BOT_SOLID;
+
+    std::vector<fastf_t> normals;
+    if (mesh.HasNormals()) {
+	normals.resize(static_cast<size_t>(mesh.mNumVertices) * ELEMENTS_PER_VECT);
+	for (size_t i = 0; i < mesh.mNumVertices; ++i) {
+	    const aiVector3D &normal = mesh.mNormals[i];
+	    vect_t unit_normal;
+	    VSET(unit_normal, normal.x, normal.y, normal.z);
+	    VUNITIZE(unit_normal);
+	    VMOVE(&normals[i * ELEMENTS_PER_VECT], unit_normal);
+	}
     }
 
-    /* check bot mode */
-    unsigned char orientation = RT_BOT_CCW; /* default ccw https://assimp.sourceforge.net/lib_html/data.html*/
-    unsigned char mode = RT_BOT_SURFACE;
-    {
-	rt_bot_internal bot = {};
-	bot.magic = RT_BOT_INTERNAL_MAGIC;
-	bot.orientation = orientation;
-	bot.num_vertices = mesh->mNumVertices;
-	bot.num_faces = mesh->mNumFaces;
-	bot.vertices = vertices;
-	bot.faces = faces;
-	/* TODO this generates a lot of false plate modes */
-	mode = bg_trimesh_solid((int)bot.num_vertices, (int)bot.num_faces, bot.vertices, bot.faces, NULL) ? RT_BOT_PLATE : RT_BOT_SOLID;
-    }
-
+    std::unique_ptr<fastf_t[]> thickness;
+    struct bu_bitv *face_mode = NULL;
     if (mode == RT_BOT_PLATE) {
 	const fastf_t plate_thickness = 1.0;
-	bitv = bu_bitv_new(mesh->mNumFaces * 3);
-	thickness = new fastf_t[mesh->mNumFaces * 3] {plate_thickness};
+	thickness.reset(new fastf_t[faces.size()] {plate_thickness});
+	face_mode = bu_bitv_new(faces.size());
     }
 
-    /* add mesh to region list */
-    std::string mesh_name = generate_unique_name(pstate->scene->mMeshes[mesh_idx]->mName.data, pstate->gcv_options->default_name, 1);
-    /* check for normals */
-    if (mesh->HasNormals()) {
-	normals = new fastf_t[mesh->mNumVertices * 3];
-	for (size_t i = 0; i < mesh->mNumVertices; i++) {
-	    vect_t normal;
-	    VSET(normal, mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
-	    VUNITIZE(normal);
-	    VMOVE(&normals[i * 3], normal);
+    const int result = mk_bot_w_normals(pstate->fd_out, mesh_name.c_str(), mode, orientation, 0,
+	mesh.mNumVertices, mesh.mNumFaces, vertices.data(), faces.data(), thickness.get(), face_mode,
+	normals.size() / ELEMENTS_PER_VECT, normals.data(), faces.data());
+
+    if (face_mode)
+	bu_bitv_free(face_mode);
+    if (result < 0) {
+	bu_log("Unable to write Assimp mesh %u as %s\n", mesh_index, mesh_name.c_str());
+	return false;
+    }
+
+    ++pstate->converted;
+    return true;
+}
+
+
+static bool
+handle_node(assetimport_read_state_t *pstate, const aiNode &node, const mat_t parent_transform)
+{
+    if (!node.mNumMeshes && !node.mNumChildren)
+	return true;
+
+    mat_t local_transform, world_transform;
+    aimatrix_to_arr16(node.mTransformation, local_transform);
+    /* Mesh vertices and node offsets must use the same units. */
+    const fastf_t scale = pstate->gcv_options->scale_factor;
+    MAT_DELTAS_MUL(local_transform, scale, scale, scale);
+    bn_mat_mul(world_transform, parent_transform, local_transform);
+
+    const std::string region_name = generate_unique_name(node.mName.data,
+	pstate->gcv_options->default_name, 0);
+    const bool verbose = pstate->gcv_options->verbosity_level || pstate->assetimport_read_options->verbose;
+    if (verbose) {
+	bu_log("\nNode %u: %s (region %s, %u meshes, %u children)\n",
+	    pstate->dfs, node.mName.data, region_name.c_str(), node.mNumMeshes, node.mNumChildren);
+	bn_mat_print("Node world transform", world_transform);
+    }
+    ++pstate->dfs;
+
+    struct wmember meshes;
+    BU_LIST_INIT(&meshes.l);
+    std::unique_ptr<shader_properties_t> shader;
+    for (unsigned int i = 0; i < node.mNumMeshes; ++i) {
+	const unsigned int mesh_index = node.mMeshes[i];
+	const aiMesh &mesh = *pstate->scene->mMeshes[mesh_index];
+	if (mesh.mPrimitiveTypes != aiPrimitiveType_TRIANGLE) {
+	    bu_log("WARNING: unknown primitive in mesh[%u] -- skipping\n", mesh_index);
+	    continue;
+	}
+	if (verbose)
+	    bu_log("      uses mesh %u\n", mesh_index);
+
+	std::string &mesh_name = pstate->mesh_names[mesh_index];
+	if (mesh_name.empty()) {
+	    mesh_name = generate_unique_name(mesh.mName.data, pstate->gcv_options->default_name, 1);
+	    if (!write_mesh(pstate, mesh_index, mesh_name)) {
+		mk_freemembers(&meshes.l);
+		return false;
+	    }
+	}
+	if (!mk_addmember(mesh_name.c_str(), &meshes.l, NULL, WMOP_UNION)) {
+	    mk_freemembers(&meshes.l);
+	    return false;
 	}
 
-	mk_bot_w_normals(pstate->fd_out, mesh_name.c_str(), mode, orientation, 0, mesh->mNumVertices, mesh->mNumFaces, vertices, faces, thickness, bitv, mesh->mNumVertices, normals, faces);
-    } else {
-	mk_bot(pstate->fd_out, mesh_name.c_str(), mode, orientation, 0, mesh->mNumVertices, mesh->mNumFaces, vertices, faces, thickness, bitv);
-    }
-    (void)mk_addmember(mesh_name.c_str(), &region.l, NULL, WMOP_UNION);
-
-    /* book keeping to log converted meshes */
-    pstate->converted++;
-
-    /* cleanup memory */
-    delete[] faces;
-    delete[] vertices;
-    delete[] normals;
-    delete[] thickness;
-    if (bitv)
-        bu_bitv_free(bitv);
-}
-
-static void
-handle_node(assetimport_read_state_t* pstate, aiNode* curr, struct wmember &regions)
-{
-    shader_properties_t *shader_prop = NULL;
-    std::string region_name = generate_unique_name(curr->mName.data, pstate->gcv_options->default_name, 0);
-
-    if (pstate->gcv_options->verbosity_level || pstate->assetimport_read_options->verbose) {
-	bu_log("\nCurr node name | dfs index: %s | %d\n", curr->mName.data, pstate->dfs);
-	bu_log("Curr node transformation:\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n", 
-		curr->mTransformation.a1, curr->mTransformation.a2, curr->mTransformation.a3, curr->mTransformation.a4,
-		curr->mTransformation.b1, curr->mTransformation.b2, curr->mTransformation.b3, curr->mTransformation.b4,
-		curr->mTransformation.c1, curr->mTransformation.c2, curr->mTransformation.c3, curr->mTransformation.c4,
-		curr->mTransformation.d1, curr->mTransformation.d2, curr->mTransformation.d3, curr->mTransformation.d4);
-	bu_log("Curr node children: %d\n", curr->mNumChildren);
-	bu_log("Curr node meshes: %d\n", curr->mNumMeshes);
-	bu_log("Region name: %s\n", region_name.c_str());
-	if (!curr->mNumMeshes)
-	    bu_log("\n");
+	/* A region has one material, taken from its last converted mesh. */
+	shader.reset(generate_shader(pstate, mesh_index));
     }
 
-    /* book keeping for dfs node traversal */
-    pstate->dfs++;
-
-    /* generate a list to hold this node's meshes */
-    struct wmember mesh;
-    BU_LIST_INIT(&mesh.l);
-
-    /* handle the current nodes meshes if any */
-    for (size_t i = 0; i < curr->mNumMeshes; i++) {
-	unsigned int mesh_idx = curr->mMeshes[i];\
-				if (pstate->gcv_options->verbosity_level || pstate->assetimport_read_options->verbose)
-				    bu_log("      uses mesh %d\n", mesh_idx);
-
-	generate_geometry(pstate, mesh, mesh_idx);
-
-	/* FIXME generate shader and color 
-	 * this assumes all mesh under a region are using the same material data.
-	 * if they're not, we're just using the last one
-	 */
-	if (shader_prop)
-	    delete shader_prop;
-	shader_prop = generate_shader(pstate, mesh_idx);
-    }
-    if (curr->mNumMeshes) {
-	/* apply parent transformations */
-	fastf_t tra[16];
-	aimatrix_to_arr16(curr->mTransformation, tra);
-
-	/* make region with all meshes */
-	mk_lrcomb(pstate->fd_out, region_name.c_str(), &mesh, 1, shader_prop->name, shader_prop->args, shader_prop->rgb, pstate->id_no, 0, pstate->assetimport_read_options->mat_code, 100, 0);
-	(void)mk_addmember(region_name.c_str(), &mesh.l, tra, WMOP_UNION);
+    if (!BU_LIST_IS_EMPTY(&meshes.l)) {
+	const int result = mk_lrcomb(pstate->fd_out, region_name.c_str(), &meshes,
+	    1, shader ? shader->name : NULL, shader ? shader->args : NULL, shader ? shader->rgb : NULL,
+	    pstate->id_no, 0, pstate->assetimport_read_options->mat_code, 100, 0);
+	if (result < 0 || !mk_addmember(region_name.c_str(), &pstate->all.l, world_transform, WMOP_UNION)) {
+	    bu_log("Unable to add Assimp region %s to the scene\n", region_name.c_str());
+	    return false;
+	}
 
 	if (!pstate->assetimport_read_options->const_id)
-	    pstate->id_no++;
+	    ++pstate->id_no;
     }
 
-    /* when we're done adding children, add to top level */
-    if (!curr->mNumChildren) {
-	/* apply child's transformations */
-	fastf_t tra[16];
-	aimatrix_to_arr16(curr->mTransformation, tra);
-	(void)mk_addmember(region_name.c_str(), &regions.l, tra, WMOP_UNION);
+    for (unsigned int i = 0; i < node.mNumChildren; ++i) {
+	if (!handle_node(pstate, *node.mChildren[i], world_transform))
+	    return false;
     }
-
-    /* recursive call all children */
-    for (size_t i = 0; i < curr->mNumChildren; i++) {
-	/* skip children with no meshes under them (cameras, etc) */
-	if (curr->mChildren[i]->mNumChildren || curr->mChildren[i]->mNumMeshes)
-	    handle_node(pstate, curr->mChildren[i], regions);
-    }
-
-    if (shader_prop)
-	delete shader_prop;
+    return true;
 }
+
 
 static int
 convert_input(assetimport_read_state_t* pstate)
@@ -1248,10 +1229,10 @@ convert_input(assetimport_read_state_t* pstate)
     
     if (!pstate->scene) {
 	if (pstate->converted_nurbs) {
-	    mk_lcomb(pstate->fd_out, "all.g", &pstate->all, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	    const int result = mk_lcomb(pstate->fd_out, "all.g", &pstate->all, 0, NULL, NULL, NULL, 0);
 	    bu_log("Converted %d X3D NURBS objects\n", pstate->converted_nurbs);
 	    aiReleasePropertyStore(props);
-	    return 1;
+	    return result >= 0;
 	}
 	bu_log("ERROR: bad scene conversion\n");
 	aiReleasePropertyStore(props);
@@ -1267,19 +1248,23 @@ convert_input(assetimport_read_state_t* pstate)
 	bu_log("Scene num Cameras: %d\n\n", pstate->scene->mNumCameras);
     }
 
+    bool success = true;
     if (pstate->scene->mNumMeshes) {
-	if (pstate->gcv_options->verbosity_level || pstate->assetimport_read_options->verbose)
-	    bu_log("-- root node --\n");
-	handle_node(pstate, &pstate->scene->mRootNode[0], pstate->all);
+	mat_t identity;
+	MAT_IDN(identity);
+	pstate->mesh_names.resize(pstate->scene->mNumMeshes);
+	success = handle_node(pstate, *pstate->scene->mRootNode, identity);
     }
 
-    /* make a top level 'all.g' */
-    if (!BU_LIST_IS_EMPTY(&pstate->all.l))
-	mk_lcomb(pstate->fd_out, "all.g", &pstate->all, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+    if (success && !BU_LIST_IS_EMPTY(&pstate->all.l)) {
+	success = mk_lcomb(pstate->fd_out, "all.g", &pstate->all, 0, NULL, NULL, NULL, 0) >= 0;
+    } else {
+	mk_freemembers(&pstate->all.l);
+    }
 
-    /* import handles triangulation and scrubs extra shapes - this should *in theory* always report 100% */
     if (pstate->scene->mNumMeshes)
-	bu_log("Converted ( %d / %d ) meshes ... %.2f%%\n", pstate->converted, pstate->scene->mNumMeshes, (float)pstate->converted / (float)pstate->scene->mNumMeshes * 100.0);
+	bu_log("Converted ( %u / %u ) meshes ... %.2f%%\n", pstate->converted,
+	    pstate->scene->mNumMeshes, static_cast<double>(pstate->converted) / pstate->scene->mNumMeshes * 100.0);
     if (pstate->converted_nurbs)
 	bu_log("Converted %d X3D NURBS objects\n", pstate->converted_nurbs);
 
@@ -1287,7 +1272,7 @@ convert_input(assetimport_read_state_t* pstate)
     aiReleaseImport(pstate->scene);
     aiReleasePropertyStore(props);
 
-    return (pstate->converted || pstate->converted_nurbs);
+    return success && (pstate->converted || pstate->converted_nurbs);
 }
 
 static void

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <asset>
+    <created>2000-01-01T00:00:00Z</created>
+    <modified>2000-01-01T00:00:00Z</modified>
+    <unit name="meter" meter="1"/>
+    <up_axis>Y_UP</up_axis>
+  </asset>
+  <library_geometries>
+    <geometry id="tetra" name="tetra">
+      <mesh>
+        <source id="positions">
+          <float_array id="coordinates" count="12">0 0 0 1 0 0 0 1 0 0 0 1</float_array>
+          <technique_common>
+            <accessor source="#coordinates" count="4" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="vertices">
+          <input semantic="POSITION" source="#positions"/>
+        </vertices>
+        <triangles count="4">
+          <input semantic="VERTEX" source="#vertices" offset="0"/>
+          <p>0 2 1 0 1 3 0 3 2 1 2 3</p>
+        </triangles>
+      </mesh>
+    </geometry>
+  </library_geometries>
+  <library_visual_scenes>
+    <visual_scene id="scene" name="scene">
+      <node id="assembly" name="assembly">
+        <translate>0 0 50</translate>
+        <node id="parent" name="parent">
+          <translate>10 20 30</translate>
+          <rotate>0 0 1 90</rotate>
+          <instance_geometry url="#tetra"/>
+          <node id="child" name="child">
+            <translate>1 2 3</translate>
+            <instance_geometry url="#tetra"/>
+          </node>
+        </node>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#scene"/>
+  </scene>
+</COLLADA>
