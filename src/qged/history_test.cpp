@@ -16,6 +16,7 @@
 #include <vector>
 
 #include <QCheckBox>
+#include <QEvent>
 #include <QFileInfo>
 #include <QMessageBox>
 #include <QPushButton>
@@ -24,6 +25,7 @@
 #include <QTreeWidget>
 
 #include "bu/app.h"
+#include "bu/str.h"
 #include "ged/history.h"
 
 #include "QgEdApp.h"
@@ -175,6 +177,27 @@ check_export(const QByteArray &path, const QString &current_revision)
 }
 
 bool
+check_db5_activation(QgEdApp &app, QAction &undo)
+{
+    auto *gedp = app.mdl->gedp;
+    const QByteArray source(gedp->dbip->dbi_filename);
+    const auto before = history_status(gedp);
+    CHECK(before && before->selected_revision && undo.isEnabled());
+    const std::unique_ptr<struct ged, decltype(&ged_close)> writer(ged_open("db", source.constData(), 1), ged_close);
+    const char *title[] = {"title", "Changed by another editor"};
+    CHECK(writer && ged_exec(writer.get(), 2, title) == BRLCAD_OK);
+
+    QEvent activation(QEvent::WindowActivate);
+    QCoreApplication::sendEvent(app.w, &activation);
+    const auto stale = history_status(gedp);
+    CHECK(stale && stale->state == GED_HISTORY_STALE && !stale->staged_conflict && stale->selected_revision);
+    CHECK(BU_STR_EQUAL(stale->selected_revision, before->selected_revision) && !undo.isEnabled());
+    CHECK(run(app, {"db", "open", source.constData()}));
+    CHECK(BU_STR_EQUAL(gedp->dbip->dbi_title, title[1]) && undo.isEnabled());
+    return true;
+}
+
+bool
 exercise(QgEdApp &app, const QTemporaryDir &directory)
 {
     const auto workspace = directory.filePath("History workspace");
@@ -206,6 +229,7 @@ exercise(QgEdApp &app, const QTemporaryDir &directory)
     CHECK(redo->isEnabled() && !embed->isEnabled());
     redo->trigger();
     CHECK(db_lookup(gedp->dbip, "model.s", LOOKUP_QUIET));
+    CHECK(check_db5_activation(app, *undo));
 
     CHECK(save_from_menu(*create, workspace, false));
     CHECK(QFileInfo(window.windowFilePath()).canonicalFilePath() == QFileInfo(workspace).canonicalFilePath());

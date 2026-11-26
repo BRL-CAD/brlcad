@@ -485,6 +485,16 @@ model and history. Terminating it after the directory flush recovered
 the new model and history. Each restart verified the selected archive
 against the live geometry.
 
+Linux fault injection denied the staged DB5 reopen and separately
+failed the parent directory sync after replacement. In session and
+embedded history, the failed reopen preserved the exact input bytes
+and selected revision. The sync failure warned that publication had
+already occurred and left one edit available to Undo and Redo. The
+same two failures on an M1917 copy preserved the old bytes before
+replacement and exposed the new title and revision after replacement.
+A fresh GED process verified the resulting archive. The supplied
+file's identity, size and modification time matched before and after.
+
 The private LMDB store imported 21,185 named records and 34,757
 artifacts from the same model. Verification and import took 7.7
 seconds after factoring the DB5 source. The resulting data file was
@@ -630,6 +640,12 @@ showed the open and current revision IDs and generations. The same
 activation check passed on the M1917 workspace copy. Reactivating an
 already open History dialog also disabled checkpoint changes. After a
 portable export, both status views displayed its recorded time.
+
+Session and embedded DB5 report a stale open revision as soon as
+status observes that another writer changed the file. The GED tests
+cover in-place changes and atomic replacement before a conflict is
+staged. On QGED window activation, Undo becomes unavailable. Reopening
+loads the committed revision and restores the appropriate actions.
 
 On read-only embedded DB5 and workspace documents, QGED compared two
 sibling revisions and showed the deleted and created objects in order

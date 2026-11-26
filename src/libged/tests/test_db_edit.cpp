@@ -68,6 +68,16 @@ run(struct ged *gedp, const char *(&argv)[argc])
     return ged_exec(gedp, static_cast<int>(argc), argv);
 }
 
+static bool
+idle_db5_is_stale(struct ged *gedp, enum ged_history_mode mode, const std::string &revision)
+{
+    const std::unique_ptr<const struct ged_history_status, decltype(&ged_history_status_destroy)>
+	status(ged_history_status_create(gedp, nullptr), ged_history_status_destroy);
+    return status && status->mode == mode && status->state == GED_HISTORY_STALE &&
+	!status->writable && !status->staged_conflict && status->selected_revision &&
+	revision == status->selected_revision;
+}
+
 static int
 count_change(const char *UNUSED(name), const struct bu_external *UNUSED(before),
 	     const struct bu_external *UNUSED(after), void *data)
@@ -234,6 +244,7 @@ test_disk_history()
     const std::unique_ptr<struct ged, decltype(&ged_close)> external(ged_open("db", path, 1), ged_close);
     const char *external_shape[] = {"make", "external.s", "sph", nullptr};
     CHECK(external && run(external.get(), title) == BRLCAD_OK && run(external.get(), external_shape) == BRLCAD_OK);
+    CHECK(idle_db5_is_stale(gedp, GED_HISTORY_SESSION, "1"));
     CHECK(run(gedp, verify_session) == BRLCAD_ERROR && contains_result(gedp, "changed since opening") && commits == 9);
     CHECK(run(gedp, undo) != BRLCAD_OK && contains_result(gedp, "changed since staging began"));
     char recovered_path[MAXPATHLEN] = {};
@@ -281,6 +292,8 @@ test_disk_history()
     const std::unique_ptr<struct ged, decltype(&ged_close)> stale(ged_open("db", path, 1), ged_close);
     CHECK(stale && run(stale.get(), enable) == BRLCAD_OK);
     CHECK(run(bounded.get(), title) == BRLCAD_OK);
+    CHECK(idle_db5_is_stale(stale.get(), GED_HISTORY_SESSION, "0"));
+    CHECK(run(stale.get(), status) == BRLCAD_OK && contains_result(stale.get(), "status stale"));
     CHECK(run(stale.get(), new_title) != BRLCAD_OK && contains_result(stale.get(), "conflict export"));
     CHECK(run(stale.get(), status) == BRLCAD_OK && contains_result(stale.get(), "status stale"));
     CHECK(run(stale.get(), save_conflict) == BRLCAD_OK);
@@ -493,6 +506,7 @@ test_embedded_history()
     Ged stale(ged_open("db", path, 1), ged_close);
     CHECK(stale && selected_id(stale.get()) == adopted);
     CHECK(run(gedp, fork_title) == BRLCAD_OK);
+    CHECK(idle_db5_is_stale(stale.get(), GED_HISTORY_EMBEDDED, adopted));
     const auto committed = selected_id(gedp);
     const char *staged_title[] = {"title", "unpublished embedded title", nullptr};
     CHECK(run(stale.get(), staged_title) != BRLCAD_OK && contains_result(stale.get(), "conflict export"));

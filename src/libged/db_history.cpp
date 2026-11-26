@@ -1462,12 +1462,14 @@ load_history_status(const ged_db_history *history, struct ged_history_status &st
 
     status.edit_active = history->stage != nullptr;
     status.staged_conflict = static_cast<bool>(history->conflict);
+    const bool db5_stale = !history->workspace && (status.staged_conflict ||
+	(history->save && !db_history::db5_history_save_is_current(history->save.get())));
     StatusChoice undo;
     std::vector<StatusChoice> redo;
     if (!history->workspace && !is_embedded(*history)) {
 	status.mode = GED_HISTORY_SESSION;
-	status.state = history->conflict ? GED_HISTORY_STALE : GED_HISTORY_CURRENT;
-	status.writable = history->save && !history->conflict;
+	status.state = db5_stale ? GED_HISTORY_STALE : GED_HISTORY_CURRENT;
+	status.writable = history->save && !db5_stale;
 	status.session_bytes = history->used;
 	status.session_limit = history->limit;
 	const auto oldest = history->revisions.begin()->first;
@@ -1506,8 +1508,8 @@ load_history_status(const ged_db_history *history, struct ged_history_status &st
 	    }
 	} else {
 	    status.mode = GED_HISTORY_EMBEDDED;
-	    status.state = history->conflict ? GED_HISTORY_STALE : history_state(history->embedded_status);
-	    status.writable = history->save && history->embedded_status == EmbeddedStatus::Current && !history->conflict;
+	    status.state = db5_stale ? GED_HISTORY_STALE : history_state(history->embedded_status);
+	    status.writable = history->save && status.state == GED_HISTORY_CURRENT;
 	}
 
 	if (pack->selected_revision != db_history::absent) {
@@ -1573,7 +1575,7 @@ print_status_text(struct bu_vls *out, const struct ged_history_status &status)
 	return;
     const bool session = status.mode == GED_HISTORY_SESSION;
     const bool workspace = status.mode == GED_HISTORY_WORKSPACE;
-    if (!session || status.staged_conflict)
+    if (!session || status.state != GED_HISTORY_CURRENT)
 	bu_vls_printf(out, "\nstatus %s\naccess %s", state_name(status.state), status.writable ? "read-write" : "read-only");
     if (workspace)
 	bu_vls_printf(out, "\ngeneration %ju", (uintmax_t)status.generation);
