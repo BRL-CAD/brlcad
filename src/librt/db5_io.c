@@ -276,17 +276,29 @@ db5_take_field(struct bu_external *field, const unsigned char **cp, size_t *avai
     return 0;
 }
 
-static int
-db5_take_record_metadata(struct db5_raw_internal *rip, const unsigned char **cp, size_t *remaining)
+static void
+db5_init_record_fields(struct db5_raw_internal *rip)
 {
     BU_EXTERNAL_INIT(&rip->name);
     BU_EXTERNAL_INIT(&rip->body);
     BU_EXTERNAL_INIT(&rip->attributes);
+}
+
+
+static int
+db5_name_valid(const unsigned char *name, size_t length)
+{
+    return length && memchr(name, '\0', length) == name + length - 1;
+}
+
+
+static int
+db5_take_record_metadata(struct db5_raw_internal *rip, const unsigned char **cp, size_t *remaining)
+{
+    db5_init_record_fields(rip);
     if (rip->h_name_present &&
 	(db5_take_field(&rip->name, cp, remaining, rip->h_name_width) < 0 ||
-	 !rip->name.ext_nbytes ||
-	 memchr(rip->name.ext_buf, '\0', rip->name.ext_nbytes) !=
-	 rip->name.ext_buf + rip->name.ext_nbytes - 1))
+	 !db5_name_valid(rip->name.ext_buf, rip->name.ext_nbytes)))
 	return -1;
 
     if (rip->a_present) {
@@ -365,8 +377,76 @@ db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
 }
 
 
+static int
+db5_read_field_length(FILE *fp, size_t *length, int format, size_t *remaining)
+{
+    unsigned char wire[sizeof(uint64_t)];
+    const size_t width = ENCODE_LEN(format);
+    if (width > *remaining || width > sizeof(size_t) || fread(wire, 1, width, fp) != width)
+	return -1;
+    db5_decode_length(length, wire, format);
+    *remaining -= width;
+    return *length <= *remaining ? 0 : -1;
+}
+
+
+static int
+db5_read_metadata_field(FILE *fp, struct bu_external *field, int format, size_t *remaining,
+			unsigned char **metadata, size_t offset)
+{
+    if (db5_read_field_length(fp, &field->ext_nbytes, format, remaining) < 0)
+	return -1;
+    if (!field->ext_nbytes)
+	return 0;
+    *metadata = (unsigned char *)bu_realloc(*metadata, offset + field->ext_nbytes, "raw v5 object");
+    if (fread(*metadata + offset, 1, field->ext_nbytes, fp) != field->ext_nbytes)
+	return -1;
+    *remaining -= field->ext_nbytes;
+    return 0;
+}
+
+
+static int
+db5_read_directory_record(struct db5_raw_internal *rip, FILE *fp, size_t remaining)
+{
+    unsigned char *metadata = NULL;
+    db5_init_record_fields(rip);
+	if (rip->h_name_present &&
+	(db5_read_metadata_field(fp, &rip->name, rip->h_name_width, &remaining, &metadata, 0) < 0 ||
+	 !db5_name_valid(metadata, rip->name.ext_nbytes)))
+	goto invalid;
+    const size_t name_size = rip->name.ext_nbytes;
+    if ((rip->a_present &&
+	 db5_read_metadata_field(fp, &rip->attributes, rip->a_width, &remaining, &metadata, name_size) < 0) ||
+	(rip->b_present && db5_read_field_length(fp, &rip->body.ext_nbytes, rip->b_width, &remaining) < 0))
+	goto invalid;
+
+    /* A directory entry uses only the metadata. Validate the body length
+     * above and seek across the body and padding to the required trailer. */
+    const b_off_t offset = (b_off_t)remaining;
+    if (offset < 0 || (size_t)offset != remaining ||
+	bu_fseek(fp, offset, SEEK_CUR) != 0 || fgetc(fp) != DB5HDR_MAGIC2)
+	goto invalid;
+
+    if (rip->h_name_present)
+	rip->name.ext_buf = metadata;
+    if (rip->attributes.ext_nbytes) {
+	rip->attributes.ext_buf = metadata + name_size;
+#if defined(USE_BINARY_ATTRIBUTES)
+	rip->attributes.widcode = rip->a_width;
+#endif
+    }
+    rip->buf = metadata;
+    return 0;
+
+invalid:
+    bu_free(metadata, "raw v5 object");
+    return -2;
+}
+
+
 int
-db5_read_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp, int skip_free_payload)
+db5_read_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp, uintmax_t available, int metadata_only)
 {
     unsigned char prefix[sizeof(struct db5_ondisk_header) + sizeof(uint64_t)];
     const size_t header_size = sizeof(struct db5_ondisk_header);
@@ -383,25 +463,13 @@ db5_read_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp, int skip_free_p
     size_t chunks;
     db5_decode_length(&chunks, prefix + header_size, rip->h_object_width);
     const size_t used = header_size + width;
-    if (chunks > SIZE_MAX / 8 || chunks * 8 <= used)
+    if (chunks > SIZE_MAX / 8 || chunks > available / 8 || chunks * 8 <= used)
 	return -2;
 
     const size_t length = chunks * 8;
-    if (skip_free_payload && length > BUFSIZ && rip->h_dli == DB5HDR_HFLAGS_DLI_FREE_STORAGE &&
-	!rip->h_name_present && !rip->a_present && !rip->b_present) {
-	/* A directory scan needs the free extent and its trailer. The
-	 * unused interior can span gigabytes after a legacy deletion. */
-	const size_t unused = length - used - 1;
-	const b_off_t offset = (b_off_t)unused;
-	if (offset < 0 || (size_t)offset != unused ||
-	    bu_fseek(fp, offset, SEEK_CUR) != 0 || fgetc(fp) != DB5HDR_MAGIC2)
-	    return -2;
-
-	const unsigned char *cp = prefix + used;
-	size_t remaining = 0;
+    if (metadata_only && length > BUFSIZ) {
 	rip->object_length = length;
-	rip->buf = NULL;
-	return db5_take_record_metadata(rip, &cp, &remaining) < 0 ? -2 : 0;
+	return db5_read_directory_record(rip, fp, length - used - 1);
     }
 
     unsigned char *record = (unsigned char *)bu_malloc(length, "raw v5 object");
@@ -420,7 +488,7 @@ db5_read_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp, int skip_free_p
 int
 db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 {
-    return db5_read_raw_internal_fp(rip, fp, 0);
+    return db5_read_raw_internal_fp(rip, fp, UINTMAX_MAX, 0);
 }
 
 

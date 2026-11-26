@@ -1116,7 +1116,24 @@ address-space limit produced the same object listing as the compact
 file. The previous reader failed allocating the free record under that
 limit.
 
-A full Linux Release suite passed 1,443 tests with access to local
+On the 2.42 GB embedded M1917 copy, the writable directory build read
+the names and attributes of large records and validated their body
+lengths and trailers without loading their bodies. Across five fresh
+processes, median time fell from 1.47 to 0.78 seconds and peak resident
+memory from 1.16 GiB to 24 MiB. The title and the sizes and offsets of
+the 1.20 GB archive and largest BREP matched on every run. The updated
+build also succeeded under the 1 GiB address-space limit. The library
+regression checks that large-record directory entries retain region
+flags, full record reads return exact bytes, and both mapped and
+writable scans reject a body that overruns its record. Under the same
+address-space limit, a writable GED listing found a sparse 5 GiB binary
+object and the small model records stored after it. On the M1917 copy,
+a title edit and Undo restored the two expected titles in fresh readers
+and both selected archives verified. Each full operation peaked at
+2.33 GiB of resident memory. The supplied model's identity, size and
+modification time matched before and after the test.
+
+A full Linux Release suite passed 1,444 tests with access to local
 sockets and private Xvfb displays. The run excluded the explanatory
 CTest notice. The 1 GiB DB5 title stress test passed. The 5 GiB title
 stress test skipped because its copies require 25 GiB of available memory.

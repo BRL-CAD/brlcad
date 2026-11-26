@@ -40,7 +40,7 @@ db5_scan_impl(
 		    const struct db5_raw_internal *,
 		    b_off_t addr, void *client_data),
     void *client_data,
-    int skip_free_payload)
+    int metadata_only)
 {
     unsigned char header[8];
     struct db5_raw_internal raw;
@@ -79,17 +79,24 @@ db5_scan_impl(
 	dbip->i->dbi_eof = addr;
 	BU_ASSERT(dbip->i->dbi_eof == (b_off_t)dbip->i->dbi_mf->buflen);
     } else {
-	/* In a totally portable way, read the database with stdio */
-	rewind(dbip->i->dbi_fp);
-	if (fread(header, sizeof header, 1, dbip->i->dbi_fp) != 1  ||
+	FILE *file = dbip->i->dbi_fp;
+	b_off_t eof = 0;
+	if (metadata_only && (bu_fseek(file, 0, SEEK_END) != 0 || (eof = bu_ftell(file)) < 0))
+	    goto fatal;
+	rewind(file);
+	if (fread(header, sizeof header, 1, file) != 1 ||
 	    db5_header_is_valid(header) == 0) {
 	    bu_log("db5_scan ERROR:  %s is lacking a proper BRL-CAD v5 database header\n", dbip->dbi_filename);
 	    goto fatal;
 	}
 	for (;;) {
-	    addr = bu_ftell(dbip->i->dbi_fp);
-	    if ((got = db5_read_raw_internal_fp(&raw, dbip->i->dbi_fp, skip_free_payload)) < 0) {
-		if (got == -1) break;		/* EOF */
+	    addr = bu_ftell(file);
+	    if (metadata_only && (addr < 0 || addr > eof))
+		goto fatal;
+	    const uintmax_t available = metadata_only ? (uintmax_t)(eof - addr) : UINTMAX_MAX;
+	    got = db5_read_raw_internal_fp(&raw, file, available, metadata_only);
+	    if (got < 0) {
+		if (got == -1 && (!metadata_only || addr == eof)) break;
 		goto fatal;
 	    }
 	    (*handler)(dbip, &raw, addr, client_data);
@@ -99,8 +106,8 @@ db5_scan_impl(
 		raw.buf = NULL;
 	    }
 	}
-	dbip->i->dbi_eof = bu_ftell(dbip->i->dbi_fp);
-	rewind(dbip->i->dbi_fp);
+	dbip->i->dbi_eof = bu_ftell(file);
+	rewind(file);
     }
 
     dbip->i->dbi_nrec = nrec;		/* # obj in db, not inc. header */

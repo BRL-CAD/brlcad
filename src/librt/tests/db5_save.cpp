@@ -19,6 +19,7 @@
  */
 #include "common.h"
 
+#include <cstring>
 #include <filesystem>
 #include <limits>
 #include <memory>
@@ -45,6 +46,8 @@
 
 using Database = std::unique_ptr<struct db_i, decltype(&db_close)>;
 using Save = std::unique_ptr<struct db5_save, decltype(&db5_save_free)>;
+static auto close_file = [](FILE *file) { fclose(file); };
+using File = std::unique_ptr<FILE, decltype(close_file)>;
 
 static constexpr int test_skipped = 77;
 static constexpr char replacement_unavailable[] = "Atomic DB5 replacement is unavailable on this platform";
@@ -283,6 +286,60 @@ verify_embedded(const char *path, struct db_i *initial, const struct db_i *diffe
 }
 
 static int
+verify_directory_scan(struct db_i *base)
+{
+    constexpr long payload_size = 256 * 1024;
+    constexpr uint8_t payload_byte = 0x5a;
+    constexpr char payload_name[] = "large.bin";
+    constexpr char region_name[] = "shape.r";
+    const std::vector<uint8_t> payload(payload_size, payload_byte);
+    struct rt_wdb *wdb = wdb_dbopen(base, RT_WDB_TYPE_DB_DEFAULT);
+    CHECK(wdb && mk_binunif(wdb, payload_name, payload.data(), WDB_BINUNIF_UINT8, payload_size) == 0);
+    CHECK(mk_region1(wdb, region_name, "shape.s", nullptr, nullptr, nullptr) == 0);
+    const std::string note(payload_size, 'x');
+    CHECK(db5_update_attribute(region_name, "comment", note.c_str(), base) == 0);
+    db_sync(base);
+
+    const auto payload_record = record_bytes(base, payload_name);
+    const auto region_record = record_bytes(base, region_name);
+    CHECK(payload_record.size() > BUFSIZ && region_record.size() > BUFSIZ);
+    const auto *payload_dp = db_lookup(base, payload_name, LOOKUP_QUIET);
+    CHECK(payload_dp && payload_dp->d_addr >= 0);
+
+    {
+	Database writable(db_open(base->dbi_filename, DB_OPEN_READWRITE), db_close);
+	CHECK(writable && db_dirbuild(writable.get()) == 0);
+	const auto *region = db_lookup(writable.get(), region_name, LOOKUP_QUIET);
+	CHECK(region && (region->d_flags & RT_DIR_REGION));
+	CHECK(record_bytes(writable.get(), payload_name) == payload_record);
+	CHECK(record_bytes(writable.get(), region_name) == region_record);
+    }
+
+    File file(fopen(base->dbi_filename, "rb+"), close_file);
+    CHECK(file && bu_fseek(file.get(), payload_dp->d_addr, SEEK_SET) == 0);
+    struct db5_raw_internal raw;
+    CHECK(db5_get_raw_internal_fp(&raw, file.get()) == 0);
+    CHECK(raw.buf && raw.body.ext_buf && raw.object_length == payload_record.size());
+    const bool exact = !memcmp(raw.buf, payload_record.data(), payload_record.size());
+    const auto body_offset = raw.body.ext_buf - raw.buf;
+    const size_t length_width = static_cast<size_t>(1) << raw.b_width;
+    bu_free(raw.buf, "raw v5 object");
+    CHECK(exact && body_offset >= static_cast<ptrdiff_t>(length_width));
+
+    // The declared body now extends beyond the record's intact trailer.
+    const std::vector<uint8_t> invalid_length(length_width, std::numeric_limits<uint8_t>::max());
+    const b_off_t length_offset = payload_dp->d_addr + body_offset - static_cast<b_off_t>(length_width);
+    CHECK(bu_fseek(file.get(), length_offset, SEEK_SET) == 0);
+    CHECK(fwrite(invalid_length.data(), 1, length_width, file.get()) == length_width);
+    CHECK(fclose(file.release()) == 0);
+    for (const char *mode : {DB_OPEN_READWRITE, DB_OPEN_READONLY}) {
+	Database malformed(db_open(base->dbi_filename, mode), db_close);
+	CHECK(malformed && db_dirbuild(malformed.get()) < 0);
+    }
+    return 0;
+}
+
+static int
 verify_wide_offsets(struct db_i *seed, const std::vector<uint8_t> &global,
 		    const std::vector<uint8_t> &shape, struct bu_vls *error)
 {
@@ -294,8 +351,6 @@ verify_wide_offsets(struct db_i *seed, const std::vector<uint8_t> &global,
 	return test_skipped;
     }
     const auto trailer = static_cast<b_off_t>(extent + sizeof(header) - 1);
-    auto close_file = [](FILE *file) { fclose(file); };
-    using File = std::unique_ptr<FILE, decltype(close_file)>;
     File source(fopen(seed->dbi_filename, "rb"), close_file);
     CHECK(source && fread(header, 1, sizeof(header), source.get()) == sizeof(header));
     CHECK(db5_header_is_valid(header));
@@ -368,6 +423,8 @@ main(int argc, char *argv[])
 	    result = verify_export(base.get(), original_record, &error);
 	else if (BU_STR_EQUAL(argv[1], "--wide-offsets"))
 	    result = verify_wide_offsets(base.get(), global, original_record, &error);
+	else if (BU_STR_EQUAL(argv[1], "--directory-scan"))
+	    result = verify_directory_scan(base.get());
 	bu_vls_free(&error);
 	return result;
     }
