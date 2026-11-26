@@ -27,6 +27,7 @@
 #include <iterator>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <variant>
@@ -91,6 +92,7 @@ struct ged_db_history {
     int original_read_only = 0;
     db_history::EmbeddedStatus embedded_status = db_history::EmbeddedStatus::Missing;
     db_history::EmbeddedPack embedded;
+    std::optional<std::vector<db_history::Id>> embedded_children;
     std::unique_ptr<db_history::Workspace> workspace;
     db_history::WorkspaceHead workspace_head;
     bool workspace_writable = false;
@@ -518,6 +520,7 @@ install_snapshot(struct ged *gedp, ged_db_history &history, struct db_i *replace
 	history.save.reset(db5_save_begin(replacement, nullptr));
     attach_history(history, replacement);
     if (embedded_head) {
+	history.embedded_children.reset();
 	db_history::EmbeddedPack published;
 	if (db_history::read_published_db5_history(replacement, *embedded_head, published)) {
 	    history.embedded_status = EmbeddedStatus::Current;
@@ -1246,10 +1249,39 @@ template <typename Visitor>
 bool
 visit_archive_revisions(const db_history::Pack &pack, Visitor visit)
 {
-    for (const auto &entry : pack.artifacts) {
-	if (entry.first.first != db_history::Kind::Revision)
-	    continue;
-	const auto &id = entry.first.second;
+    const auto first = pack.artifacts.lower_bound({db_history::Kind::Revision, db_history::absent});
+    for (auto entry = first; entry != pack.artifacts.end() && entry->first.first == db_history::Kind::Revision; ++entry) {
+	const auto &id = entry->first.second;
+	db_history::Revision revision;
+	if (!db_history::read_revision(pack, id, revision))
+	    return false;
+	visit(id, revision);
+    }
+    return true;
+}
+
+template <typename Visitor>
+bool
+visit_archive_children(ged_db_history &history, const db_history::Pack &pack, Visitor visit)
+{
+    // The portable index is ordered by artifact ID. Resolve its selected
+    // children once per opened snapshot, and verify their bytes on use.
+    const bool portable = !history.workspace;
+    if (!portable || !history.embedded_children) {
+	std::vector<db_history::Id> children;
+	if (!visit_archive_revisions(pack, [&](const db_history::Id &id, const db_history::Revision &revision) {
+	    if (revision.parent != pack.selected_revision || pack.boundaries.count(id))
+		return;
+	    visit(id, revision);
+	    if (portable)
+		children.push_back(id);
+	}))
+	    return false;
+	if (portable)
+	    history.embedded_children = std::move(children);
+	return true;
+    }
+    for (const auto &id : *history.embedded_children) {
 	db_history::Revision revision;
 	if (!db_history::read_revision(pack, id, revision))
 	    return false;
@@ -1455,7 +1487,7 @@ history_state(EmbeddedStatus embedded)
 }
 
 bool
-load_history_status(const ged_db_history *history, struct ged_history_status &status, struct bu_vls *message)
+load_history_status(ged_db_history *history, struct ged_history_status &status, struct bu_vls *message)
 {
     if (!history)
 	return true;
@@ -1525,10 +1557,9 @@ load_history_status(const ged_db_history *history, struct ged_history_status &st
 		undo = {id_string(selected.parent), selected.label};
 
 	    const auto preferred = pack->preferences.find(pack->selected_revision);
-	    if (!visit_archive_revisions(*pack, [&](const db_history::Id &id, const db_history::Revision &revision) {
-		if (revision.parent == pack->selected_revision && !pack->boundaries.count(id))
-		    redo.push_back({id_string(id), revision.label,
-			preferred != pack->preferences.end() && preferred->second == id});
+	    if (!visit_archive_children(*history, *pack, [&](const db_history::Id &id, const db_history::Revision &revision) {
+		redo.push_back({id_string(id), revision.label,
+		    preferred != pack->preferences.end() && preferred->second == id});
 	    })) {
 		if (message)
 		    bu_vls_strcpy(message, "An archived revision could not be read");
@@ -2153,9 +2184,7 @@ step_archive_revision(struct ged *gedp, ged_db_history &history, const db_histor
     } else {
 	const auto preferred = pack.preferences.find(pack.selected_revision);
 	size_t children = 0;
-	if (!visit_archive_revisions(pack, [&](const db_history::Id &id, const db_history::Revision &revision) {
-	    if (revision.parent != pack.selected_revision || pack.boundaries.count(id))
-		return;
+	if (!visit_archive_children(history, pack, [&](const db_history::Id &id, const db_history::Revision &) {
 	    children++;
 	    if (children == 1 || (preferred != pack.preferences.end() && preferred->second == id))
 		target = id;

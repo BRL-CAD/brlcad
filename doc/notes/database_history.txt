@@ -1007,6 +1007,17 @@ On an M1917 copy with six title edits, checkpoint and prefix selection,
 diff, checkout and explicit Redo returned the expected revisions.
 The resulting workspace passed full verification.
 
+An embedded export with 12,002 revisions had two Redo choices and a
+preferred child. The open editor now caches the selected revision's
+child IDs and verifies their records when used. Over five fresh
+processes per build with 100 repeated status calls each, the median
+warm query fell from 16.05 milliseconds to 9.51 microseconds. The
+median of the runs' 95th percentiles fell from 17.30 milliseconds to
+16.45 microseconds. The first query still took about 16 milliseconds
+to scan the revision index and build the list. The JSON status and
+archive bytes matched exactly. Redo selected the preferred child, Undo
+restored both choices, and fresh readers verified both revisions.
+
 While a plain DB5 export streamed a copy of M1917, a second process
 committed a title change. The exported 1.22 GB DB5 file matched the
 earlier export byte for byte and reopened at the original title.

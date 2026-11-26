@@ -1352,10 +1352,24 @@ test_history_selection(struct ged *gedp, bool checkpoints)
     const char *checkout[] = {"db", "history", "checkout", "--id", selected.c_str(), nullptr};
     CHECK(run(gedp, checkout) == BRLCAD_OK && selected_id(gedp) == selected);
     CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == root);
+    const auto offers_redo = [&](const std::string &preferred, const std::string &alternate) {
+	const std::unique_ptr<const struct ged_history_status, decltype(&ged_history_status_destroy)>
+	    status(ged_history_status_create(gedp, nullptr), ged_history_status_destroy);
+	if (!status || status->redo_count != 2)
+	    return false;
+	std::map<std::string, bool> choices;
+	for (size_t i = 0; i < status->redo_count; ++i)
+	    choices.emplace(status->redo[i].revision, status->redo[i].preferred);
+	return choices == std::map<std::string, bool>{{preferred, true}, {alternate, false}};
+    };
+    const char *redo[] = {"db", "redo", nullptr};
+    CHECK(offers_redo(selected, other) && run(gedp, redo) == BRLCAD_OK && selected_id(gedp) == selected);
+    CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == root);
     if (checkpoints) {
 	const char *redo_mark[] = {"db", "redo", selected.c_str(), nullptr};
 	CHECK(run(gedp, redo_mark) == BRLCAD_OK && selected_id(gedp) == other);
 	CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == root);
+	CHECK(offers_redo(other, selected));
     }
     const char *redo_exact[] = {"db", "redo", "--id", selected.c_str(), nullptr};
     CHECK(run(gedp, redo_exact) == BRLCAD_OK && selected_id(gedp) == selected);
