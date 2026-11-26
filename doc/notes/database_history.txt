@@ -854,6 +854,11 @@ on ordinary DB5, session DB5, embedded DB5 and LMDB. All final named
 model records matched byte for byte, and a ray hit the geometry
 through the same top-level combination in each mode.
 
+The same backend comparison renamed Panel.s to PANEL.s while its
+combination also referenced a distinct hidden panel.s. Only the
+matching leaf changed. Undo and Redo restored the expected spelling
+in all three history modes and kept the other primitive hidden.
+
 GED ran killrefs, killall and killtree in session DB5, embedded DB5
 and LMDB. Read-only previews preserved the selected revision. An
 injected failure after a reference rewrite and another after a tree
@@ -1034,6 +1039,11 @@ damaged archive index digest. It reported the appropriate status,
 refused modification, and exported readable geometry without history.
 Each input file kept its exact SHA-256 digest.
 
+An ordinary hidden primitive named _BRLCAD_HISTORY remained a model
+object. Embedded history enrollment reported the reserved-name
+collision and preserved the entire input file. Plain export retained
+that primitive and the separate _brlcad_history object byte for byte.
+
 The garbage_collect command compacts a history-enabled DB5 through
 atomic replacement. It retains a session journal or the complete
 embedded archive without adding a revision. In an embedded DB5 test,
@@ -1055,10 +1065,11 @@ database read matched every byte of the last 128 MiB body. The 10 GiB
 history-preserving export reopened with the same selected revision and
 binary body and passed full verification.
 
-The Linux suite passed 1,440 tests across the initial run and reruns
-with access to local sockets and X11. Its CTest notice returned the
-expected failure. The 5 GiB DB5 stress test skipped because it requires
-25 GiB of available memory. The repository and license checks passed.
+A full Linux Release rebuild passed 1,442 tests with access to local
+sockets and private Xvfb displays. The run excluded the explanatory
+CTest notice. The 1 GiB DB5 stress test passed. The 5 GiB stress test
+skipped because its title copies require 25 GiB of available memory.
+The repository and license checks passed.
 In a separate QGED run, viewport shortcuts moved between the expected
 workspace revisions. A terminal reader confirmed the restored primitive
 and verified the archive.

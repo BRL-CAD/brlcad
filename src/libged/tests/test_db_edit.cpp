@@ -1363,11 +1363,45 @@ test_history_selection(struct ged *gedp, bool checkpoints)
 }
 
 static int
+test_case_sensitive_rename(struct ged *gedp, bool history_enabled)
+{
+    const char *make_upper[] = {"make", "Panel.s", "sph", nullptr};
+    const char *make_lower[] = {"make", "panel.s", "tor", nullptr};
+    const char *group[] = {"g", "panels.c", "Panel.s", "panel.s", nullptr};
+    const char *hide[] = {"hide", "panel.s", nullptr};
+    CHECK(run(gedp, make_upper) == BRLCAD_OK && run(gedp, make_lower) == BRLCAD_OK);
+    CHECK(run(gedp, group) == BRLCAD_OK && run(gedp, hide) == BRLCAD_OK);
+
+    const auto matches = [&](const char *name, const char *absent) {
+	const auto *visible = db_lookup(gedp->dbip, name, LOOKUP_QUIET);
+	const auto *hidden = db_lookup(gedp->dbip, "panel.s", LOOKUP_QUIET);
+	if (!visible || !hidden || (visible->d_flags & RT_DIR_HIDDEN) || !(hidden->d_flags & RT_DIR_HIDDEN) ||
+	    visible->d_minor_type == hidden->d_minor_type || db_lookup(gedp->dbip, absent, LOOKUP_QUIET))
+	    return false;
+	const char *tree[] = {"get", "panels.c", "tree", nullptr};
+	return run(gedp, tree) == BRLCAD_OK && contains_result(gedp, name) &&
+	    contains_result(gedp, "panel.s") && !contains_result(gedp, absent);
+    };
+    CHECK(matches("Panel.s", "PANEL.s"));
+
+    const char *rename[] = {"db", "mvall", "Panel.s", "PANEL.s", nullptr};
+    CHECK(run(gedp, rename) == BRLCAD_OK && matches("PANEL.s", "Panel.s"));
+    if (history_enabled) {
+	const char *undo[] = {"db", "undo", nullptr};
+	const char *redo[] = {"db", "redo", nullptr};
+	CHECK(run(gedp, undo) == BRLCAD_OK && matches("Panel.s", "PANEL.s"));
+	CHECK(run(gedp, redo) == BRLCAD_OK && matches("PANEL.s", "Panel.s"));
+    }
+    return 0;
+}
+
+static int
 test_backend_parity(const std::filesystem::path &directory)
 {
     using Records = std::map<std::string, std::vector<uint8_t>>;
     Records plain_records;
     for (const char *mode : {"plain", "session", "embedded", "workspace"}) {
+	const bool versioned = !BU_STR_EQUAL(mode, "plain");
 	const auto path = (directory / (std::string(mode) + "-parity.g")).string();
 	auto *initial = db_create(path.c_str(), 5);
 	CHECK(initial);
@@ -1381,7 +1415,7 @@ test_backend_parity(const std::filesystem::path &directory)
 	    const auto workspace = (directory / "parity-workspace").string();
 	    const char *create[] = {"db", "history", "workspace", workspace.c_str(), nullptr};
 	    CHECK(run(gedp, create) == BRLCAD_OK);
-	} else if (!BU_STR_EQUAL(mode, "plain")) {
+	} else if (versioned) {
 	    const char *enable[] = {"db", "history", "enable", mode, nullptr};
 	    const int enabled = run(gedp, enable);
 	    if (enabled != BRLCAD_OK && contains_result(gedp, "Atomic DB5 replacement is unavailable"))
@@ -1407,7 +1441,8 @@ test_backend_parity(const std::filesystem::path &directory)
 	CHECK(run(gedp, rename) == BRLCAD_OK && run(gedp, attribute) == BRLCAD_OK &&
 	    run(gedp, region) == BRLCAD_OK && run(gedp, make_region) == BRLCAD_OK && run(gedp, title) == BRLCAD_OK);
 	CHECK(run(gedp, show_defaults) == BRLCAD_OK && contains_result(gedp, "ident 3101 air 0 los 68 material 17"));
-	if (!BU_STR_EQUAL(mode, "plain")) {
+	CHECK(test_case_sensitive_rename(gedp, versioned) == 0);
+	if (versioned) {
 	    const auto selected = selected_id(gedp);
 	    const char *invalid[] = {"comb", "partial.c", "u", "renamed.s", "u", "missing.s", nullptr};
 	    CHECK(run(gedp, invalid) == BRLCAD_ERROR && selected_id(gedp) == selected &&
@@ -1438,7 +1473,7 @@ test_backend_parity(const std::filesystem::path &directory)
 	    records.emplace(dp->d_namep, std::vector<uint8_t>(raw.ext_buf, raw.ext_buf + raw.ext_nbytes));
 	    bu_free_external(&raw);
 	} FOR_ALL_DIRECTORY_END;
-	if (BU_STR_EQUAL(mode, "plain"))
+	if (!versioned)
 	    plain_records = std::move(records);
 	else {
 	    CHECK(records == plain_records);
