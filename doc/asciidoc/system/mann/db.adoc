@@ -76,14 +76,16 @@ List retained revisions, including alternate branches. The optional name filter 
 The schema version 1 JSON result contains `revisions` and `checkpoints` arrays. Each revision includes `id`, `parent`, `label`, `authored` in Unix seconds, `selected`, and `retention_boundary`. Each checkpoint contains a `name` and a `revision` ID.
 
 
-__history show revision [--json]__::
+__history show [--id] revision [--json]__::
 List the records created, deleted, or updated by a single revision. A recorded rename also shows the old and new names together. Changed references appear in the same revision.
++
+Use `--id` with a full revision ID from history status or log to bypass checkpoint lookup.
 +
 The schema version 1 JSON result contains `revision` and `changes`. Change entries report `type`, `name`, and `new_name` for a rename. Rename entries are followed by the underlying record changes.
 
 
-__history checkout revision__::
-Restore the database to any retained revision. Use `db history log` to find its ID. In embedded and workspace history, a unique ID prefix or a mark name can select a revision.
+__history checkout [--id] revision__::
+Restore the database to any retained revision. Use `db history log` to find its ID. In embedded and workspace history, a unique ID prefix or a mark name can select a revision. Use `--id` to select a full revision ID directly.
 
 
 __history diff first second [--object name]__::
@@ -132,8 +134,8 @@ __put shape_name shape_type attributes__::
 Creates shape named __shape_name__ of type __shape_type__ with attributes as listed in _attributes_. The arguments to the _put_ command are the same as those returned by the _get_ command.
 
 
-__redo [revision]__::
-Restore a retained child of the selected revision. After Undo, Redo defaults to the child just left. Supply a revision when choosing among several branches.
+__redo [[--id] revision]__::
+Restore a retained child of the selected revision. After Undo, Redo defaults to the child just left. Supply a revision when choosing among several branches. Use `--id` to select a child by its full revision ID.
 
 
 _tops_::

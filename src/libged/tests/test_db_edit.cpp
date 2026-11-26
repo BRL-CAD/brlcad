@@ -1282,6 +1282,55 @@ test_push_history(struct ged *gedp)
 }
 
 static int
+test_history_selection(struct ged *gedp, bool checkpoints)
+{
+    const std::string root = selected_id(gedp);
+    const char *first[] = {"make", "history-selected.s", "sph", nullptr};
+    const char *second[] = {"make", "history-other.s", "sph", nullptr};
+    const char *undo[] = {"db", "undo", nullptr};
+    CHECK(!root.empty() && run(gedp, first) == BRLCAD_OK);
+    const auto selected = selected_id(gedp);
+    CHECK(!selected.empty() && selected != root);
+    CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == root);
+    CHECK(run(gedp, second) == BRLCAD_OK);
+    const auto other = selected_id(gedp);
+    CHECK(!other.empty() && other != root && other != selected);
+    if (checkpoints) {
+	const char *mark[] = {"db", "history", "mark", selected.c_str(), nullptr};
+	CHECK(run(gedp, mark) == BRLCAD_OK && selected_id(gedp) == other);
+	const char *show[] = {"db", "history", "show", selected.c_str(), "--json", nullptr};
+	CHECK(run(gedp, show) == BRLCAD_OK && contains_result(gedp, "history-other.s"));
+	const auto prefix = selected.substr(0, selected.length() - 1);
+	const char *short_id[] = {"db", "history", "show", "--id", prefix.c_str(), nullptr};
+	CHECK(run(gedp, short_id) == BRLCAD_ERROR);
+	const char *mark_option[] = {"db", "history", "mark", "--id", nullptr};
+	const char *show_option[] = {"db", "history", "show", "--id", "--json", nullptr};
+	CHECK(run(gedp, mark_option) == BRLCAD_OK && run(gedp, show_option) == BRLCAD_OK &&
+	    contains_result(gedp, "history-other.s"));
+    }
+
+    const char *show_exact[] = {"db", "history", "show", "--id", selected.c_str(), "--json", nullptr};
+    CHECK(run(gedp, show_exact) == BRLCAD_OK && contains_result(gedp, "history-selected.s") &&
+	!contains_result(gedp, "history-other.s"));
+    const std::unique_ptr<struct db_i, decltype(&db_close)>
+	preview(ged_history_open_revision_by_id(gedp, selected.c_str(), nullptr), db_close);
+    CHECK(preview && preview->dbi_read_only && db_lookup(preview.get(), "history-selected.s", LOOKUP_QUIET) &&
+	!db_lookup(preview.get(), "history-other.s", LOOKUP_QUIET) && selected_id(gedp) == other);
+
+    const char *checkout[] = {"db", "history", "checkout", "--id", selected.c_str(), nullptr};
+    CHECK(run(gedp, checkout) == BRLCAD_OK && selected_id(gedp) == selected);
+    CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == root);
+    if (checkpoints) {
+	const char *redo_mark[] = {"db", "redo", selected.c_str(), nullptr};
+	CHECK(run(gedp, redo_mark) == BRLCAD_OK && selected_id(gedp) == other);
+	CHECK(run(gedp, undo) == BRLCAD_OK && selected_id(gedp) == root);
+    }
+    const char *redo_exact[] = {"db", "redo", "--id", selected.c_str(), nullptr};
+    CHECK(run(gedp, redo_exact) == BRLCAD_OK && selected_id(gedp) == selected);
+    return 0;
+}
+
+static int
 test_backend_parity(const std::filesystem::path &directory)
 {
     using Records = std::map<std::string, std::vector<uint8_t>>;
@@ -1370,6 +1419,7 @@ test_backend_parity(const std::filesystem::path &directory)
 	    CHECK(test_sketch_rename(gedp) == 0);
 	    CHECK(test_instance_history(gedp) == 0);
 	    CHECK(test_push_history(gedp) == 0);
+	    CHECK(test_history_selection(gedp, !BU_STR_EQUAL(mode, "session")) == 0);
 	}
     }
     return 0;

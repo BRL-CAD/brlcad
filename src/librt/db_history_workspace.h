@@ -49,11 +49,19 @@ struct WorkspaceExport {
 
 struct RevisionLookup {
     enum class Failure { None, Unknown, Ambiguous };
+    enum class Match { Selector, FullId };
     std::string_view selector;
+    Match match = Match::Selector;
     Id id = absent;
     Revision revision{};
     bool boundary = false;
     Failure failure = Failure::None;
+
+    bool decode(Id &lower) const
+    {
+	return (match == Match::Selector || selector.size() == 2 * lower.size()) &&
+	    decode_id_prefix(selector, lower);
+    }
 };
 
 struct WorkspaceRetention {

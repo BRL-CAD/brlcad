@@ -709,11 +709,12 @@ bool
 resolve_revision(MDB_txn *txn, const Tables &tables, RevisionLookup &request, struct bu_vls *message)
 {
     Id id = absent;
-    if (!request.selector.empty() && !lookup_named(txn, tables.references, request.selector, id))
+    if (request.match == RevisionLookup::Match::Selector && !request.selector.empty() &&
+	!lookup_named(txn, tables.references, request.selector, id))
 	return report(message, "The workspace checkpoint is invalid");
     if (id == absent) {
 	Id lower;
-	if (decode_id_prefix(request.selector, lower)) {
+	if (request.decode(lower)) {
 	    // Seek through a partial byte too, so neighboring prefixes are skipped.
 	    const auto start = artifact_key({Kind::Revision, lower});
 	    const ByteView prefix{start.data(), 1 + request.selector.size() / 2};

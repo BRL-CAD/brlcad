@@ -65,6 +65,8 @@ Keep the original versioned document available. Updating a checkpoint
 name that already exists requires an explicit move. Supply separate
 inspection errors for an unknown revision, an ambiguous short ID, a
 read-only document, an active edit and a stale base revision.
+Use `--id` with show, checkout or redo to select a full revision ID
+directly. A plain selector continues to check saved checkpoint names.
 
 Undo moves to the parent. When returning along a known path, Redo
 selects the child just undone. At an ambiguous fork it lists the
@@ -609,6 +611,16 @@ QGED's history view listed the selected revision's new primitive.
 Creating a checkpoint and checking out both revisions from that view
 persisted the expected selection and checkpoint. Ctrl+Z in the
 console left the model revision selected.
+
+QGED selected the exact revision row even when a checkpoint used that
+revision's ID as its name. In a software-display test with 1,003
+revisions, the dialog populated in 13 milliseconds. Selecting the row
+showed its changed object, and the preview drew that object while the
+working revision stayed selected. Checkout then selected the requested
+revision. A separate M1917 workspace copy with 68 revisions passed
+the same selection, preview and checkout sequence. The GED regression
+exercised exact Show, preview, Checkout and Redo across session,
+embedded and workspace history.
 
 QGED drew a primitive from an independent revision preview while
 the working file was at an earlier revision. Opening and closing the

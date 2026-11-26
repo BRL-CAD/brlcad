@@ -356,7 +356,7 @@ DB_FORWARD_COMMANDS(DB_DECLARE_FORWARD)
 #define DB_HISTORY_COMMANDS(X) \
     X(history, GED_DB_HISTORY_USAGE, "Manage database history.") \
     X(undo, "", "Restore the parent revision.") \
-    X(redo, "[revision]", "Restore a child revision.")
+    X(redo, "[[--id] revision]", "Restore a child revision.")
 
 #define DB_DECLARE_HISTORY(_name, _usage, _purpose) \
     static int _db_cmd_ ## _name(void *bs, int argc, const char **argv) \

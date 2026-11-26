@@ -113,7 +113,7 @@ HistoryDialog::HistoryDialog(QgEdApp *application, QWidget *parent) :
     connect(preview, &QPushButton::clicked, this, &HistoryDialog::previewRevision);
     connect(checkout, &QPushButton::clicked, this, [this]() {
 	const QByteArray id = selectedRevision().toLatin1();
-	const char *argv[] = {"db", "history", "checkout", id.constData()};
+	const char *argv[] = {"db", "history", "checkout", "--id", id.constData()};
 	runCommand(sizeof(argv) / sizeof(argv[0]), argv);
     });
     layout->addWidget(buttons);
@@ -223,7 +223,7 @@ HistoryDialog::updateSelection()
 	return;
     struct bu_vls diagnostic = BU_VLS_INIT_ZERO;
     const QByteArray id = revision.toLatin1();
-    if (ged_history_visit_revision(app->mdl->gedp, id.constData(), nullptr, addChange, this, &diagnostic) != BRLCAD_OK) {
+    if (ged_history_visit_revision_by_id(app->mdl->gedp, id.constData(), nullptr, addChange, this, &diagnostic) != BRLCAD_OK) {
 	message->setText(QString::fromUtf8(bu_vls_cstr(&diagnostic)));
 	message->show();
     } else {
@@ -237,7 +237,7 @@ HistoryDialog::previewRevision()
 {
     const QByteArray id = selectedRevision().toLatin1();
     struct bu_vls diagnostic = BU_VLS_INIT_ZERO;
-    auto *snapshot = ged_history_open_revision(app->mdl->gedp, id.constData(), &diagnostic);
+    auto *snapshot = ged_history_open_revision_by_id(app->mdl->gedp, id.constData(), &diagnostic);
     if (!snapshot) {
 	message->setText(QString::fromUtf8(bu_vls_cstr(&diagnostic)));
 	message->show();

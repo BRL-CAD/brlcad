@@ -490,7 +490,7 @@ QgEdMainWindow::RedoHistory()
 	action->setData(revision);
     }
     if (auto *action = choices.exec(QCursor::pos()))
-	app->run_qcmd("db redo " + action->data().toString());
+	app->run_qcmd("db redo --id " + action->data().toString());
 }
 
 
