@@ -413,6 +413,10 @@ can_write_history(struct ged *gedp, const ged_db_history &history, bool adopt_ex
 		embedded_status_text(history.embedded_status));
 	return false;
     }
+    if (history.original_read_only) {
+	bu_vls_strcat(gedp->ged_result_str, "The database is open read-only");
+	return false;
+    }
     if (!history.save) {
 	bu_vls_printf(gedp->ged_result_str, "History requires a writable database with atomic replacement support");
 	return false;

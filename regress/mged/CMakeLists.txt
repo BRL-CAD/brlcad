@@ -27,6 +27,7 @@ set(
   facedef.mged
   g.mged
   hide.mged
+  history.mged
   i.mged
   in.mged
   keypoint.mged

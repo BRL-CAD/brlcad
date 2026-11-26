@@ -664,6 +664,19 @@ through its Tcl database alias after Redo. Opening both an embedded
 archive and a workspace with read-only access allowed inspection and
 rejected Undo.
 
+The regress-mged_history test drives MGED's accept and reject lifecycle,
+promotes session Undo to embedded DB5, and imports the selected revision
+and checkpoint into LMDB. A rename and title edit undo as one batch.
+Separate MGED readers open the workspace and its two DB5 exports, compare
+the model and verify durable history. Undo on read-only opens reports the
+access mode and preserves the selection. The test passed on Linux and is
+registered with the standard regression suite for native Windows builds.
+
+On the gversion regression fixture, MGED replayed the same sketch rename
+through session DB5, embedded DB5 and LMDB. The four named records matched
+the prototype byte for byte at the base, rename, Undo, Redo, alternate
+title branch and checkout of the original branch tip.
+
 MGED kept surviving legacy draw paths across publication and Undo.
 The GED scene test checked the rebound directory pointer and explicit
 wireframe color. A staged deletion that failed before publication left

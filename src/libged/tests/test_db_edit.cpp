@@ -401,9 +401,9 @@ test_embedded_history()
 	db_lookup(preview_mark.get(), "outline.s", LOOKUP_QUIET) && selected_id(inspector.get()) == fork);
     const char *verify[] = {"db", "history", "verify", nullptr};
     CHECK(run(inspector.get(), verify) == BRLCAD_OK && contains_result(inspector.get(), "Archive verified"));
-    CHECK(run(inspector.get(), undo) != BRLCAD_OK && contains_result(inspector.get(), "writable"));
+    CHECK(run(inspector.get(), undo) != BRLCAD_OK && contains_result(inspector.get(), "open read-only"));
     const char *compact[] = {"garbage_collect", "-c", nullptr};
-    CHECK(run(inspector.get(), compact) != BRLCAD_OK && contains_result(inspector.get(), "writable"));
+    CHECK(run(inspector.get(), compact) != BRLCAD_OK && contains_result(inspector.get(), "open read-only"));
     const char *missing_path[] = {"db", "history", "export", "--with-history", nullptr};
     CHECK(run(inspector.get(), missing_path) == GED_HELP);
     char archive_copy[MAXPATHLEN] = {};

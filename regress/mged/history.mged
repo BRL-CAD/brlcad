@@ -1,0 +1,121 @@
+# Read the selected revision from the same status output as the console.
+proc history_revision {mode} {
+    set status [db history status]
+    regression_assert {[lindex [split $status \n] 0] eq "mode $mode"} "Expected $mode history: $status"
+    regression_assert {[regexp -line {^revision ([0-9a-f]+)$} $status -> id]} \
+        "Missing selected revision in $status"
+    return $id
+}
+
+proc history_check_model {title record combination} {
+    regression_assert {[title] eq $title} "Reopened with a different title"
+    regression_assert {[db get renamed.s] eq $record} "Reopened with different primitive data"
+    regression_assert {[db get group.c] eq $combination} "Reopened with different combination data"
+}
+
+proc history_read_only {mode revision title record combination} {
+    regression_assert {[history_revision $mode] eq $revision} "Reopened at a different revision"
+    set undo_error [catch {db undo} result]
+    regression_assert {$undo_error && [string match {*read-only*} $result]} \
+        "Undo was not rejected as read-only: $result"
+    regression_assert {[history_revision $mode] eq $revision} "Read-only Undo changed the selected revision"
+    history_check_model $title $record $combination
+    db history verify
+}
+
+proc history_read_plain {title record combination} {
+    regression_assert {[db history status] eq {mode disabled}} "Plain export has history"
+    history_check_model $title $record $combination
+}
+
+proc history_reopen {database script} {
+    set driver {History reader.tcl}
+    set stream [open $driver w]
+    puts $stream {set history_child 1}
+    puts $stream [list source [info script]]
+    puts $stream $script
+    puts $stream [list puts {PASS reopened history}]
+    close $stream
+    set output [exec [info nameofexecutable] -c -r $database [list source $driver] 2>@1]
+    regression_assert {[lindex [split [string trim $output] \n] end] eq {PASS reopened history}} \
+        "Reader did not finish: $output"
+    file delete $driver
+}
+
+# A reader sources these procedures before running its own assertions.
+if {[info exists history_child]} {
+    return
+}
+
+set primitive original.s
+set workspace {History workspace}
+set archive {History snapshot.g}
+set plain {Plain snapshot.g}
+set original_title [title]
+make $primitive sph
+g group.c $primitive
+set original [db get $primitive]
+set original_group [db get group.c]
+db history enable session
+set base [history_revision session]
+
+e $primitive
+sed $primitive
+tra 10 0 0
+accept
+set accepted [history_revision session]
+set translated [db get $primitive]
+regression_assert {$accepted ne $base && $translated ne $original} "Accept did not commit the translation"
+
+sed $primitive
+tra 0 20 0
+reject
+regression_assert {[history_revision session] eq $accepted && [db get $primitive] eq $translated} \
+    "Reject changed the history or model"
+db undo
+regression_assert {[history_revision session] eq $base && [db get $primitive] eq $original} \
+    "One Undo did not restore the accepted edit's base"
+
+db history enable embedded
+set embedded_base [history_revision embedded]
+regression_assert {[db get $primitive] eq $original} "Promotion changed the selected model"
+db redo
+set embedded_accepted [history_revision embedded]
+regression_assert {$embedded_accepted ne $embedded_base && [db get $primitive] eq $translated} \
+    "Promotion lost the Redo choice or geometry"
+db history mark accepted
+db history verify
+
+db history workspace $workspace
+regression_assert {[history_revision workspace] eq $embedded_accepted} \
+    "Workspace import changed the selected revision"
+set edited_title {Renamed assembly}
+db history batch {Rename assembly part} [list [list db mvall $primitive renamed.s] [list title $edited_title]]
+set edited [history_revision workspace]
+set renamed_group [db get group.c]
+regression_assert {$edited ne $embedded_accepted && [title] eq $edited_title} \
+    "Batch did not commit a new title and revision"
+regression_assert {[db get renamed.s] eq $translated && [catch {db get $primitive}]} \
+    "Batch did not rename the primitive"
+regression_assert {[string match {*renamed.s*} $renamed_group]} \
+    "Batch did not update the combination reference"
+db undo
+regression_assert {[history_revision workspace] eq $embedded_accepted && [title] eq $original_title} \
+    "Undo did not restore the previous revision and title"
+regression_assert {[db get $primitive] eq $translated && [db get group.c] eq $original_group} \
+    "Undo did not restore the primitive and its reference"
+db redo
+regression_assert {[history_revision workspace] eq $edited} "Redo did not restore the batch revision"
+
+set read_workspace [list history_read_only workspace $edited $edited_title $translated $renamed_group]
+append read_workspace \n [list db history export --with-history $archive]
+append read_workspace \n [list db history export $plain]
+history_reopen $workspace $read_workspace
+history_reopen $archive [list history_read_only embedded $edited $edited_title $translated $renamed_group]
+history_reopen $plain [list history_read_plain $edited_title $translated $renamed_group]
+
+db history checkout accepted
+regression_assert {[history_revision workspace] eq $embedded_accepted} "Workspace import lost the checkpoint"
+db history verify
+db close
+file delete -force $workspace $archive $plain
