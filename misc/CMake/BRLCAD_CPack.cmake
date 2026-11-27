@@ -57,6 +57,11 @@ set(BRLCAD_BUNDLE_CONFLICT_POLICY "BRLCAD_WINS" CACHE STRING
   "External package collision policy (BRLCAD_WINS or MANIFEST_WINS)")
 set_property(CACHE BRLCAD_BUNDLE_CONFLICT_POLICY PROPERTY STRINGS
   BRLCAD_WINS MANIFEST_WINS)
+set(BRLCAD_BUNDLE_EXCLUDE_MANIFEST "")
+if(EXISTS "${BRLCAD_EXT_DIR}/bext-install-exclude-manifest.json")
+  set(BRLCAD_BUNDLE_EXCLUDE_MANIFEST
+    "${BRLCAD_EXT_DIR}/bext-install-exclude-manifest.json")
+endif()
 
 # If we're not on Windows, set the install prefix and create
 # TGZ and TBZ2 packages by default

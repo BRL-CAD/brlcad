@@ -20,6 +20,23 @@ if(INVALID_CASE)
   message(FATAL_ERROR "Escaping manifest entry was accepted")
 endif()
 
+if(EXCLUDED_CASE)
+  set(CPACK_TEMPORARY_DIRECTORY "${TEST_ROOT}/stage-excluded")
+  file(MAKE_DIRECTORY "${CPACK_TEMPORARY_DIRECTORY}")
+  set(CPACK_GENERATOR TGZ)
+  set(CPACK_PACKAGE_FILE_NAME bundle-excluded)
+  set(BRLCAD_BUNDLE_MANIFESTS "${TEST_ROOT}/one.json")
+  set(BRLCAD_BUNDLE_CONFLICT_POLICY BRLCAD_WINS)
+  set(BRLCAD_BUNDLE_EXCLUDE_MANIFEST "${TEST_ROOT}/excluded.json")
+  set(BRLCAD_BUNDLE_SYSTEM_NAME "${TEST_SYSTEM_NAME}")
+  set(BRLCAD_BUNDLE_INSTALL_PREFIX "/opt/brlcad")
+  set(BRLCAD_BUNDLE_LIB_DIR lib)
+  set(BRLCAD_BUNDLE_AUDIT_DIR "${TEST_ROOT}/audit")
+  set(BRLCAD_BUNDLE_SKIP_RELOCATION TRUE)
+  include("${MODULE_FILE}")
+  message(FATAL_ERROR "Excluded bext file was accepted from an external manifest")
+endif()
+
 function(write_manifest path root files)
   file(TO_CMAKE_PATH "${root}" root)
   set(json "{\n  \"schema\": 1,\n  \"platform\": \"${TEST_SYSTEM_NAME}\",\n  \"install_root\": \"${root}\",\n  \"files\": [")
@@ -133,6 +150,9 @@ set(one_files "bin/same.txt;share/order.txt;${TEST_ROOT}/one/share/absolute.txt"
 set(two_files "bin/same.txt;share/order.txt")
 write_manifest("${TEST_ROOT}/one.json" "${TEST_ROOT}/one" "${one_files}")
 write_manifest("${TEST_ROOT}/two.json" "${TEST_ROOT}/two" "${two_files}")
+file(WRITE "${TEST_ROOT}/excluded.json"
+  "{\n  \"schema\": 2,\n  \"platform\": \"${TEST_SYSTEM_NAME}\",\n"
+  "  \"files\": [\n    \"share/order.txt\"\n  ]\n}\n")
 run_case(BRLCAD_WINS BRL-CAD)
 run_case(MANIFEST_WINS two)
 run_prefixed_stage()
@@ -154,4 +174,20 @@ endif()
 file(READ "${TEST_ROOT}/audit/bundle-invalid-TGZ.log" invalid_audit)
 if(NOT invalid_audit MATCHES "ERROR: Manifest file is outside install_root")
   message(FATAL_ERROR "Escaping path failure was not audited:\n${invalid_audit}\n${invalid_output}\n${invalid_error}")
+endif()
+
+execute_process(
+  COMMAND "${CMAKE_COMMAND}" "-DTEST_ROOT=${TEST_ROOT}"
+    "-DMODULE_FILE=${MODULE_FILE}" "-DTEST_SYSTEM_NAME=${TEST_SYSTEM_NAME}"
+    -DEXCLUDED_CASE=TRUE -P "${CMAKE_CURRENT_LIST_FILE}"
+  RESULT_VARIABLE excluded_result OUTPUT_VARIABLE excluded_output ERROR_VARIABLE excluded_error
+)
+if(excluded_result EQUAL 0)
+  message(FATAL_ERROR "Excluded destination test unexpectedly succeeded")
+endif()
+file(READ "${TEST_ROOT}/audit/bundle-excluded-TGZ.log" excluded_audit)
+if(NOT excluded_audit MATCHES
+    "ERROR: External manifest destination is excluded by bext package policy: share/order.txt")
+  message(FATAL_ERROR
+    "Excluded destination failure was not audited:\n${excluded_audit}\n${excluded_output}\n${excluded_error}")
 endif()
