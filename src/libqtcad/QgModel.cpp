@@ -1729,8 +1729,8 @@ QgModel::refresh_database()
 int
 QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
-    struct ged *gedp = ged();
-    model_dbip = gedp->dbip;
+    struct ged *current_ged = ged();
+    model_dbip = current_ged->dbip;
 
     changed_dp.clear();
 
@@ -1745,7 +1745,7 @@ QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
     }
 
     command_running = true;
-    int ret = ged_exec(gedp, argc, argv);
+    int ret = ged_exec(current_ged, argc, argv);
     command_running = false;
 
     // If this is one of the GED commands supporting incremental input, this
@@ -1759,14 +1759,14 @@ QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
     }
 
     // If we have a new .g file, set the changed flag
-    if (model_dbip != gedp->dbip)
+    if (model_dbip != current_ged->dbip)
 	changed_db_flag = 1;
 
     // Assuming we're not doing a full rebuild, trigger the post-cmd updates
     refresh_database();
 
-    if (msg && gedp)
-	bu_vls_printf(msg, "%s", bu_vls_cstr(gedp->ged_result_str));
+    if (msg && current_ged)
+	bu_vls_printf(msg, "%s", bu_vls_cstr(current_ged->ged_result_str));
 
     return ret;
 }
@@ -1870,13 +1870,13 @@ void
 QgModel::toggle_hierarchy()
 {
     QTCAD_SLOT("QgModel::toggle_hierarchy", 1);
-    struct ged *gedp = ged();
-    if (!gedp || !gedp->dbip)
+    struct ged *current_ged = ged();
+    if (!current_ged || !current_ged->dbip)
 	return;
 
     flatten_hierarchy = !flatten_hierarchy;
     changed_db_flag = 1;
-    g_update(gedp->dbip);
+    g_update(current_ged->dbip);
 }
 
 void
