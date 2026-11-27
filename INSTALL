@@ -100,12 +100,17 @@ library in the correct location will always be loaded first, regardless of the
 presence of a "local" copy.
 
 
-Mac OS X Disk Mounting Image:
+Mac OS X / macOS Disk Mounting Image:
 
-Mount the .dmg and run the Installer .pkg contained therein.  This will install
-into /usr/brlcad/rel-X.Y.Z and will only require confirming that your
-environment is set up properly (i.e. add /usr/brlcad/rel-X.Y.Z/bin to your
-path) as described in the Quick Installation section.
+Note that macOS support is best-effort and prebuilt .dmg installers are
+not published for every release; check the GitHub Releases page for
+availability or build from source as described in doc/README.MacOSX.
+
+When a .dmg is available, mount the .dmg and run the Installer .pkg
+contained therein.  This will install into /usr/brlcad/rel-X.Y.Z and will
+only require confirming that your environment is set up properly (i.e. add
+/usr/brlcad/rel-X.Y.Z/bin to your path) as described in the Quick
+Installation section.
 
 
 Validating checksums:
