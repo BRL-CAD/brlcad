@@ -262,6 +262,22 @@ bg_nested_poly_triangulate_strict(int **faces, int *num_faces,
 	struct bg_triangulation_report *report);
 
 /**
+ * Strict constrained-Delaunay triangulation with an optional witness.
+ * On BG_TRIANGULATION_CROSSING_CONSTRAINTS, each row of crossing names
+ * the two input point indices of one intersecting constraint. On any
+ * other result the entries are -1. See bg_nested_poly_triangulate_strict.
+ */
+BG_EXPORT extern int
+bg_nested_poly_triangulate_strict_with_crossing(int **faces, int *num_faces,
+	point2d_t **out_pts, int *num_outpts,
+	const int *poly, const size_t poly_npts,
+	const int **holes_array, const size_t *holes_npts, const size_t nholes,
+	const int *steiner, const size_t steiner_npts,
+	const int *constraints, const size_t constraint_cnt,
+	const point2d_t *pts, const size_t npts,
+	struct bg_triangulation_report *report, int crossing[2][2]);
+
+/**
  * @brief
  * Triangulate a 2D polygon without holes.
  *

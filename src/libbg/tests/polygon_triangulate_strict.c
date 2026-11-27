@@ -263,11 +263,14 @@ main(int argc, const char **argv)
 	const int crossing[4] = {0, 2, 1, 3};
 	faces = NULL;
 	face_count = 0;
-	if (!bg_nested_poly_triangulate_strict(&faces,
+	int witness[2][2];
+	if (!bg_nested_poly_triangulate_strict_with_crossing(&faces,
 		&face_count, NULL, NULL, outer, 4, NULL, NULL, 0, NULL,
 		0, crossing, 2, (const point2d_t *)points, 4,
-		&report) || faces || face_count ||
-		report.reason != BG_TRIANGULATION_CROSSING_CONSTRAINTS)
+		&report, witness) || faces || face_count ||
+		report.reason != BG_TRIANGULATION_CROSSING_CONSTRAINTS ||
+		witness[0][0] != 0 || witness[0][1] != 2 ||
+		witness[1][0] != 1 || witness[1][1] != 3)
 	    return 16;
     }
 

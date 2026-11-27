@@ -1444,8 +1444,12 @@ bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	const int *steiner, const size_t steiner_npts,
 	const int *constraints, const size_t constraint_cnt,
 	const point2d_t *pts, const size_t npts,
-	struct bg_triangulation_report *report)
+	struct bg_triangulation_report *report, int crossing[2][2])
 {
+    if (crossing) {
+	crossing[0][0] = crossing[0][1] = -1;
+	crossing[1][0] = crossing[1][1] = -1;
+    }
     bg_triangulation_report_set(report, BG_TRIANGULATION_INVALID_INPUT, -1,
 	"invalid constrained triangulation input");
     if (!faces || !num_faces)
@@ -1669,6 +1673,12 @@ bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 		    segments[i].b == segments[j].b)
 		continue;
 	    if (segments_intersect(segments[i], segments[j])) {
+		if (crossing) {
+		    crossing[0][0] = segments[i].a;
+		    crossing[0][1] = segments[i].b;
+		    crossing[1][0] = segments[j].a;
+		    crossing[1][1] = segments[j].b;
+		}
 		char message[128];
 		std::snprintf(message, sizeof(message),
 		    "constraints %d-%d and %d-%d intersect",
@@ -1881,9 +1891,25 @@ bg_nested_poly_triangulate_strict(int **faces, int *num_faces,
 	const point2d_t *pts, const size_t npts,
 	struct bg_triangulation_report *report)
 {
+    return bg_nested_poly_triangulate_strict_with_crossing(faces,
+	num_faces, out_pts, num_outpts, poly, poly_pnts, holes_array,
+	holes_npts, nholes, steiner, steiner_npts, constraints,
+	constraint_cnt, pts, npts, report, NULL);
+}
+
+extern "C" int
+bg_nested_poly_triangulate_strict_with_crossing(int **faces, int *num_faces,
+	point2d_t **out_pts, int *num_outpts,
+	const int *poly, const size_t poly_pnts,
+	const int **holes_array, const size_t *holes_npts, const size_t nholes,
+	const int *steiner, const size_t steiner_npts,
+	const int *constraints, const size_t constraint_cnt,
+	const point2d_t *pts, const size_t npts,
+	struct bg_triangulation_report *report, int crossing[2][2])
+{
     return bg_detria(faces, num_faces, out_pts, num_outpts, poly,
 	poly_pnts, holes_array, holes_npts, nholes, steiner, steiner_npts,
-	constraints, constraint_cnt, pts, npts, report);
+	constraints, constraint_cnt, pts, npts, report, crossing);
 }
 
 extern "C" int
@@ -1905,7 +1931,7 @@ bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
     if (type == TRI_ANY || type == TRI_CONSTRAINED_DELAUNAY) {
 	int detria_ret = bg_detria(faces, num_faces, out_pts, num_outpts,
 	    poly, poly_pnts, holes_array, holes_npts, nholes, steiner,
-	    steiner_npts, NULL, 0, pts, npts, NULL);
+	    steiner_npts, NULL, 0, pts, npts, NULL, NULL);
 	return detria_ret;
     }
 
