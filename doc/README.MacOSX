@@ -1,114 +1,87 @@
-BRL-CAD on Max OS X README
-==========================
+BRL-CAD on macOS README
+=======================
 
-Being that this is one of the newest architectures to be added and
-officially supported, there are some issues to keep in mind with the
-installation when building from the sources.  Beyond the notes
-provided here, building on Mac OS X can generally be considered the
-same as the UNIX, BSD, and Linux platforms.
+macOS is supported on a best-effort basis.  While BRL-CAD is regularly
+built and tested on macOS in Continuous Integration, prebuilt macOS
+binary installers (.dmg) are not provided for every release.  Check the
+GitHub Releases page (https://github.com/BRL-CAD/brlcad/releases) for
+availability; if no macOS installer is posted for a given release, you
+will need to build from source (or run a Linux environment/container).
 
 Table of Contents
 -----------------
-  Introduction
-  Table of Contents
-  CMake
-  X11 Window Server
-  Supported Versions
-  Mac OS X 10.2
-  Parallel Builds
+  Support Status
+  Prerequisites
+  Building from Source
+  Debugging
+  Tips
   Bugs
 
-CMake
------------------
-Kitware provides Mac OSX compilations of CMake:
+Support Status
+--------------
+- Prebuilt Binaries: Provided intermittently (for example, Apple Silicon
+  arm64 .dmg installers on select releases).  Not every release ships a
+  macOS package.
+- Architecture: Modern builds target Apple Silicon (arm64) and Intel
+  (x86_64) macOS with Apple Clang.  Universal (fat) binaries are not
+  supported.
+- GUI Support: Classic Tcl/Tk interfaces (MGED, Archer) require XQuartz
+  (X11).  Experimental Qt support (qged) can be enabled with
+  -DBRLCAD_ENABLE_QT=ON.
 
-http://www.cmake.org/cmake/resources/software.html
+Prerequisites
+-------------
+To build BRL-CAD from source on macOS, install:
 
+1. Xcode Command Line Tools (Apple Clang, C++17 support):
+     xcode-select --install
 
-X11 Window Server
------------------
-You'll need to install an X11 server if you would like to build Tk and
-have a graphical user interface.  Apple no longer supports X11, so the
-recommended X Window Server is now XQuartz:  http://www.xquartz.org
+2. CMake (3.26 or later):
+     https://cmake.org/download/   (or: brew install cmake)
 
-Supported Versions
-------------------
-BRL-CAD is generally only "extensively" tested by the developers on
-the latest released version of Mac OS X.  That is to say that
-although the BRL-CAD package should build on prior versions of the Mac
-OS X operating system, they are generally and eventually not
-maintained and will require additional effort to obtain a build.
-Compiling on 10.3 or 10.4 should complete successfully.  Due to a
-variety of significant application programming interface issues in
-early releases of Mac OS X, versions prior to 10.2 are unsupported.
+3. XQuartz (required for X11 / Tk GUIs such as mged and archer):
+     brew install --cask xquartz
 
-Parallel Builds
----------------
-As many workstation and server systems shipped by Apple are
-multiprocessor systems, you can enjoy the benefits of decreased
-compile times by utilizing the "-j" option to make.  After running
-configure, run "make -j2" to build on a 2-processor system.
+4. OpenSSL 3:
+     brew install openssl@3
 
-Universal Builds
-----------------
+Building from Source
+--------------------
+Clone the repository and configure with CMake:
 
-Universal builds have not been fully vetted due to how BRL-CAD
-serializes data to disk. BRL-CAD's CMake logic is not currently
-set up to support this type of build, but plans to in the future.
+  git clone https://github.com/BRL-CAD/brlcad.git
+  cd brlcad
+  OPENSSL_ROOT_DIR="$(brew --prefix openssl@3)"
+  export PKG_CONFIG_PATH="$OPENSSL_ROOT_DIR/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+  cmake -S . -B build \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBRLCAD_BUNDLED_LIBS=ON \
+    -DOPENSSL_ROOT_DIR="$OPENSSL_ROOT_DIR" \
+    -DCMAKE_REQUIRE_FIND_PACKAGE_OpenSSL=ON
+  cmake --build build -j4
+  cmake --build build --target check
 
-CMake and Mac OSX
------------------
-
-On a default configuration, CMake has some problems performing parallel
-builds on OSX - typically this will manifest itself as a series of
-"too many open files" errors.  So far, the way to work around this in
-OSX 10.5 is to set the following system control variables to 50,000:
-
-kern.maxfiles
-kern.maxfilesperproc
-
-(check the current values using "sysctl <variable>" on the command line)
-
-and up the maxfiles limit in /etc/launchd.conf:
-
-limit maxfiles 50000 unlimited
-
-This is not widely tested, and OSX has quite a few limit settings that
-may or may not apply (and may change from one version to the next.)  As
-we get a better feel for various platforms we can assemble a table of
-required settings.  Other programs have this issue as well, so searching
-online may prove fruitful.
-
-So far, if parallel building doesn't work due to the above issue a
-non-parallel build will still succeed.  Another workaround is to build
-just subdirectories (e.g. src, doc, etc.) individually and then
-do a toplevel make in non-parallel mode to finalize the build.
-
+To enable Qt-based tools (such as qged), add -DBRLCAD_ENABLE_QT=ON to
+the CMake configure command.
 
 Debugging
 ---------
+Apple employs code signing and BRL-CAD development binaries are not
+signed by default.  To debug locally built apps using lldb or
+Instruments, sign them with get-task-allow entitlements:
 
-Apple now employs code signing and we do not yet.  To debug apps using
-Instruments, they will need to be signed with permissions in order to
-debug them.  Here's an example that signs them all with a
-get-task-allow permission that lets them be introspected:
-
-echo "<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>com.apple.security.get-task-allow</key><true/></dict></plist>" >> debug.plist
-codesign -s - -v -f --entitlements debug.plist bin/*
-
+  echo '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>com.apple.security.get-task-allow</key><true/></dict></plist>' > debug.plist
+  codesign -s - -v -f --entitlements debug.plist build/bin/*
 
 Tips
 ----
+To check your macOS version and CPU architecture when reporting issues:
 
-If you need to get information about your machine and OSX version, try
-these commands:
-
-sw_vers -productVersion
-uname -a
+  sw_vers -productVersion
+  uname -a
 
 Bugs
 ----
-The only known bugs specific to Mac OS X are limitations of Tk or the
-X11 event handler that are generally outside of BRL-CAD's domain.
-Refer to BUGS for more general details on known bugs and reporting
-mechanisms.
+macOS-specific issues (such as X11/XQuartz or Tk display limitations)
+can be reported at https://github.com/BRL-CAD/brlcad/issues.  Refer to
+the top-level BUGS file for general known issues.

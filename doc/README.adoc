@@ -48,7 +48,7 @@ make -j$(nproc)
 
 [NOTE]
 ====
-For detailed installation instructions across different platforms, please refer to our link:{docs-url}/install[Installation Guide].
+For detailed installation instructions across different platforms, please refer to our link:{docs-url}/install[Installation Guide].  On macOS, support is best-effort and prebuilt `.dmg` installers are not published for every release; see `doc/README.MacOSX` for current prerequisites (such as XQuartz and OpenSSL 3).
 ====
 
 == Documentation
