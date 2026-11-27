@@ -984,28 +984,21 @@ function(brlcad_load_bext_install_exclude_manifest manifest install_root valid_v
     return()
   endif()
 
-  string(JSON _brlcad_count ERROR_VARIABLE _brlcad_count_error LENGTH "${_brlcad_manifest_json}" files)
-  if(NOT "${_brlcad_count_error}" STREQUAL "NOTFOUND")
+  _brlcad_manifest_strings("${_brlcad_manifest_json}" files
+    _brlcad_excluded_files _brlcad_excluded_files_valid)
+  if(NOT _brlcad_excluded_files_valid)
     set(${reason_var} "manifest is missing the files category" PARENT_SCOPE)
     return()
   endif()
 
-  set(_brlcad_excluded_files)
-  if(_brlcad_count GREATER 0)
-    math(EXPR _brlcad_last "${_brlcad_count} - 1")
-    foreach(_brlcad_index RANGE 0 ${_brlcad_last})
-      string(JSON _brlcad_relative ERROR_VARIABLE _brlcad_path_error GET
-        "${_brlcad_manifest_json}" files ${_brlcad_index})
-      if(NOT "${_brlcad_path_error}" STREQUAL "NOTFOUND" OR
-         IS_ABSOLUTE "${_brlcad_relative}" OR
-         "${_brlcad_relative}" MATCHES "(^|/)\\.\\.(/|$)" OR
-         NOT EXISTS "${install_root}/${_brlcad_relative}")
-        set(${reason_var} "invalid or missing install exclusion path: ${_brlcad_relative}" PARENT_SCOPE)
-        return()
-      endif()
-      list(APPEND _brlcad_excluded_files "${_brlcad_relative}")
-    endforeach()
-  endif()
+  foreach(_brlcad_relative IN LISTS _brlcad_excluded_files)
+    if(IS_ABSOLUTE "${_brlcad_relative}" OR
+       "${_brlcad_relative}" MATCHES "(^|/)\\.\\.(/|$)" OR
+       NOT EXISTS "${install_root}/${_brlcad_relative}")
+      set(${reason_var} "invalid or missing install exclusion path: ${_brlcad_relative}" PARENT_SCOPE)
+      return()
+    endif()
+  endforeach()
   list(REMOVE_DUPLICATES _brlcad_excluded_files)
   set(BEXT_INSTALL_EXCLUDED_FILES "${_brlcad_excluded_files}" PARENT_SCOPE)
   set(${valid_var} TRUE PARENT_SCOPE)
