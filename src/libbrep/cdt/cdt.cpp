@@ -2383,16 +2383,13 @@ assemble_face_meshes(cdt_mesh_output &output, struct ON_Brep_CDT_State *state)
     return result >= 0;
 }
 
-static bool
+static int
 resample_intersecting_faces(struct ON_Brep_CDT_State *state,
-	const assembled_mesh_validation &validation, std::set<int> &resampled,
-	size_t &budget, double relative_scale = 1.0)
+	const int (&faces)[2], std::set<int> &resampled, size_t &budget,
+	double relative_scale = 1.0)
 {
     const size_t initial_budget = budget;
-    for (int triangle : validation.first_intersection) {
-	if (triangle < 0 || (size_t)triangle >= state->bot_face_to_brep_face.size())
-	    return false;
-	const int face = state->bot_face_to_brep_face[(size_t)triangle];
+    for (int face : faces) {
 	if (!budget || !resampled.insert(face).second)
 	    continue;
 	const ON_Surface *surface = state->brep->m_F[face].SurfaceOf();
@@ -2402,10 +2399,26 @@ resample_intersecting_faces(struct ON_Brep_CDT_State *state,
 	/* A shared-edge split replaces trim segments. Refresh the query
 	 * indexes before sampling this face again. */
 	if (!finalize_face_rtrees(state, face) ||
-		!do_triangulation(state, face, &budget, relative_scale))
-	    return false;
+		!do_triangulation(state, face, &budget, relative_scale)) {
+	    state->status = BREP_CDT_FAILED;
+	    cdt_diagnostic_set(state, BREP_CDT_RESULT_GEOMETRIC_FAILED,
+		BREP_CDT_STAGE_GEOMETRIC_VALIDATION, face, 0, 1,
+		"could not recertify an intersecting face after resampling");
+	    return -1;
+	}
     }
     return budget < initial_budget;
+}
+
+static bool
+uses_periodic_seam_chart(const struct ON_Brep_CDT_State *state, int face)
+{
+    const auto mesh = state->fmeshes.find(face);
+    if (mesh == state->fmeshes.end() || mesh->second.m_face_charts.empty())
+	return false;
+    /* A cap atlas already resolves the seam with model-space charts. */
+    return mesh->second.m_face_charts.front().type() != CDT_FACE_CHART_SPHERE_CAP &&
+	cdt_face_has_seam(state->brep->m_F[face]);
 }
 
 static int
@@ -2441,6 +2454,37 @@ certify_assembled_mesh(struct ON_Brep_CDT_State *s_cdt, int face_successes)
 	    !mesh_validation.unused_vertices &&
 	    !mesh_validation.degenerate_faces &&
 	    !mesh_validation.invalid_vertex_links;
+	int intersection_faces[2] = {-1, -1};
+	if (mesh_validation.intersecting_triangle_pairs) {
+	    for (size_t i = 0; i < 2; ++i) {
+		const int triangle = mesh_validation.first_intersection[i];
+		if (triangle >= 0 && (size_t)triangle < s_cdt->bot_face_to_brep_face.size())
+		    intersection_faces[i] = s_cdt->bot_face_to_brep_face[(size_t)triangle];
+	    }
+	}
+	const bool have_intersection_faces =
+	    intersection_faces[0] >= 0 && intersection_faces[1] >= 0;
+	const bool can_resample = only_intersection && have_intersection_faces &&
+	    !s_cdt->max_face_time_ms && resampling_budget &&
+	    resampling_rounds < maximum_resampling_rounds;
+
+	/* Trim-proximity filtering can leave periodic charts under-sampled.
+	 * Admit the omitted interior samples before refining individual
+	 * crossing chords between those charts. */
+	if (can_resample && !assembled_refinement_attempts && resampled.empty() &&
+		intersection_faces[0] != intersection_faces[1] &&
+		uses_periodic_seam_chart(s_cdt, intersection_faces[0]) &&
+		uses_periodic_seam_chart(s_cdt, intersection_faces[1])) {
+	    const int sampled = resample_intersecting_faces(s_cdt,
+		intersection_faces, resampled, resampling_budget);
+	    if (sampled < 0)
+		return -1;
+	    if (sampled) {
+		++resampling_rounds;
+		continue;
+	    }
+	}
+
 	size_t inserted = 0;
 	if (mesh_validation.invalid_vertex_links &&
 		assembled_refinement_attempts <
@@ -2466,17 +2510,17 @@ certify_assembled_mesh(struct ON_Brep_CDT_State *s_cdt, int face_successes)
 	    continue;
 	}
 
-	if (only_intersection && !s_cdt->max_face_time_ms && resampling_budget &&
-		resampling_rounds < maximum_resampling_rounds) {
-	    const size_t before = resampling_budget;
-	    bool sampled = resample_intersecting_faces(s_cdt, mesh_validation,
-		resampled, resampling_budget);
+	if (can_resample) {
+	    int sampled = resample_intersecting_faces(s_cdt,
+		intersection_faces, resampled, resampling_budget);
 	    /* The original spacing can add no new points. In that case try
 	     * finer interior samples while retaining all shared boundaries. */
-	    if (!sampled && resampling_budget == before &&
-		    s_cdt->tol.rel > ON_ZERO_TOLERANCE)
-		sampled = resample_intersecting_faces(s_cdt, mesh_validation,
-		    resampled_finer, resampling_budget, FACE_RESAMPLING_SCALE);
+	    if (!sampled && s_cdt->tol.rel > ON_ZERO_TOLERANCE)
+		sampled = resample_intersecting_faces(s_cdt,
+		    intersection_faces, resampled_finer, resampling_budget,
+		    FACE_RESAMPLING_SCALE);
+	    if (sampled < 0)
+		return -1;
 	    if (sampled) {
 		++resampling_rounds;
 		continue;
@@ -2501,19 +2545,11 @@ certify_assembled_mesh(struct ON_Brep_CDT_State *s_cdt, int face_successes)
 		mesh_validation.first_intersection[0]) + ", " +
 		std::to_string(mesh_validation.first_intersection[1]) + ")" :
 	    "");
-	if (mesh_validation.intersecting_triangle_pairs &&
-		mesh_validation.first_intersection[0] >= 0 &&
-		mesh_validation.first_intersection[1] >= 0 &&
-		(size_t)mesh_validation.first_intersection[0] <
-		s_cdt->bot_face_to_brep_face.size() &&
-		(size_t)mesh_validation.first_intersection[1] <
-		s_cdt->bot_face_to_brep_face.size()) {
-	    message += " from B-Rep faces " + std::to_string(
-		s_cdt->bot_face_to_brep_face[(size_t)
-		mesh_validation.first_intersection[0]]) + ", " +
-		std::to_string(s_cdt->bot_face_to_brep_face[(size_t)
-		mesh_validation.first_intersection[1]]);
+	if (have_intersection_faces) {
+	    message += " from B-Rep faces " + std::to_string(intersection_faces[0]) +
+		", " + std::to_string(intersection_faces[1]);
 	}
+
 	if (assembled_refinement_points)
 	    message += " after " + std::to_string(
 		assembled_refinement_attempts) + " refinement rounds and " +
