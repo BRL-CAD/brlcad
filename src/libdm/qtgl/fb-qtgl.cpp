@@ -387,7 +387,7 @@ fb_qtgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
     FB_CK_FB(ifp->i);
 
     qi->win_width = qi->vp_width = width;
-    qi->win_height = qi->vp_width = height;
+    qi->win_height = qi->vp_height = height;
 
     qi->qapp = new QApplication(qi->ac, qi->av);
 
@@ -412,7 +412,8 @@ fb_qtgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
     fbps.magic = FB_QTGL_MAGIC;
     fbps.data = (void *)dmp;
 
-    return qtgl_open_existing(ifp, width, height, &fbps);
+    return qtgl_open_existing(ifp, dm_get_width(dmp), dm_get_height(dmp),
+	&fbps);
 }
 
 static struct fb_platform_specific *
