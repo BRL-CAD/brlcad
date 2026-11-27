@@ -56,7 +56,7 @@ endif()
 brlcad_addlib(libdm "${LIBDM_SRCS}" "" "${DM_LOCAL_INCLUDE_DIRS}"
   PUBLIC_LIBS ${LIBDM_PUBLIC_LIBS}
   PRIVATE_LIBS PNG::PNG ${WINSOCK_LIB}
-  UNITY_BUILD_SKIP dm_init.cpp faceplate.c
+  UNITY_BUILD_SKIP dm_init.cpp faceplate.c view.c
 )
 set_target_properties(libdm PROPERTIES
   VERSION 20.0.1

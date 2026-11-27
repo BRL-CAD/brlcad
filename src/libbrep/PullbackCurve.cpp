@@ -42,13 +42,9 @@
 #include <mutex>
 #include <string>
 #include <sstream>
+#include <time.h>
 
-#if defined(HAVE_WINDOWS_H)
-#  include <windows.h>
-#else
-#  include <time.h>
-#endif
-
+#include "bio.h"
 #include "bu/parallel.h"
 #include "brep/defines.h"
 #include "brep/pullback.h"

@@ -88,6 +88,7 @@
 #include "bg/plane.h"
 #include "bg/sat.h"
 #include "bg/trimesh.h"
+#include "bn/mat.h"
 #include "bv/plot3.h"
 #include "bv/lod.h"
 #include "bv/util.h"
