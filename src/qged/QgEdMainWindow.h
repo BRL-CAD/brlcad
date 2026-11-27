@@ -29,6 +29,9 @@
 
 #ifndef QGEDMAINWINDOW_H
 #define QGEDMAINWINDOW_H
+
+#include <memory>
+
 #include <QAction>
 #include <QDockWidget>
 #include <QFileDialog>
@@ -61,6 +64,7 @@ class QgEdMainWindow : public QMainWindow
     public:
 	QgEdMainWindow(QgViewType canvas_type = QgViewType::Auto,
 		int quad_view = 0);
+	~QgEdMainWindow() override;
 
 	QgConsole *console;
 
@@ -145,7 +149,7 @@ class QgEdMainWindow : public QMainWindow
 	QMenu *tm_dialogs = NULL;
 	QgDockWidget *console_dock = NULL;
 	QgDockWidget *tree_dock = NULL;
-	QgWindowExtensionController *extension_ctrl = NULL;
+	std::unique_ptr<QgWindowExtensionController> extension_ctrl;
 };
 
 #endif /* QGEDMAINWINDOW_H */

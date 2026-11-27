@@ -104,6 +104,9 @@ QgEdMainWindow::QgEdMainWindow(QgViewType canvas_type, int quad_view)
     }
 }
 
+// The extension controller removes dock widgets while the layout still exists.
+QgEdMainWindow::~QgEdMainWindow() = default;
+
 void
 QgEdMainWindow::CreateWidgets(QgViewType canvas_type)
 {
@@ -284,8 +287,8 @@ QgEdMainWindow::ConnectWidgets()
     vc_ctrl->populate();
     oc_ctrl->populate();
 
-    extension_ctrl = new QgWindowExtensionController(this,
-	ap->pluginManager(), ap->pluginContext(), this);
+    extension_ctrl = std::make_unique<QgWindowExtensionController>(this,
+	ap->pluginManager(), ap->pluginContext());
     extension_ctrl->setPanelMenu(vm_panels,
 	QStringLiteral(QGED_CATEGORY_PANEL));
     extension_ctrl->setDialogMenu(tm_dialogs,
