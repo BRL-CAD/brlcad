@@ -19,6 +19,8 @@ simulate [options]... path duration
 
 *simulate* performs rigid-body physics evaluation. The Bullet physics engine is used with a collision algorithm that utilizes the librt ray tracer.
 
+NOTE: *simulate* requires BRL-CAD to be compiled with Bullet Physics support (`-DBRLCAD_ENABLE_BULLET=ON` with Bullet3 available at CMake configuration time). Builds compiled without Bullet will report that Bullet support is not enabled.
+
 The _path_ parameter specifies the path to the objects within the simulation. All primitives under this path are regarded as separate physical objects by default. If a combination has the attribute `simulate::type=region`, all primitives below it in the hierarchy are regarded as one physical object.
 
 The _duration_ parameter specifies the duration of the physics simulation (each use of the *simulate* command operates within a new physics environment).
