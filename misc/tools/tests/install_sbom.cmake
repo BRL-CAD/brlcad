@@ -30,14 +30,14 @@ foreach(git_arguments
   endif()
 endforeach()
 
-function(configure_install_sbom output allow_dirty)
+function(configure_install_sbom output allow_dirty bext_sbom_required)
   set(CMAKE_BINARY_DIR "${TEST_ROOT}/build")
   set(CMAKE_SOURCE_DIR "${TEST_ROOT}/source")
   set(DOC_DIR "share/doc")
   set(BRLCAD_SBOM_REVISION "test-revision")
   set(BRLCAD_SBOM_CREATED "2026-01-01T00:00:00Z")
   set(BRLCAD_SBOM_ALLOW_DIRTY "${allow_dirty}")
-  set(BRLCAD_BEXT_SBOM_REQUIRED FALSE)
+  set(BRLCAD_BEXT_SBOM_REQUIRED "${bext_sbom_required}")
   set(BRLCAD_SBOM_GIT_COMMAND "${GIT_EXECUTABLE}")
   set(BRLCAD_SBOM_EXECUTABLE "${SBOM_TOOL}")
   set(BRLCAD_VERSION "1.0.0")
@@ -53,13 +53,15 @@ endfunction()
 function(configure_install_sbom_with_dependencies output)
   set(BRLCAD_BEXT_COMPONENT_MANIFEST "${TEST_ROOT}/components.json")
   set(BRLCAD_BEXT_SBOM "${TEST_ROOT}/dependencies.spdx.json")
-  configure_install_sbom("${output}" OFF)
+  configure_install_sbom("${output}" OFF FALSE)
 endfunction()
 
 set(default_script "${TEST_ROOT}/build/install-sbom-default.cmake")
 set(dirty_script "${TEST_ROOT}/build/install-sbom-dirty.cmake")
-configure_install_sbom("${default_script}" OFF)
-configure_install_sbom("${dirty_script}" ON)
+set(missing_dependency_script "${TEST_ROOT}/build/install-sbom-missing-dependencies.cmake")
+configure_install_sbom("${default_script}" OFF FALSE)
+configure_install_sbom("${dirty_script}" ON FALSE)
+configure_install_sbom("${missing_dependency_script}" OFF TRUE)
 set(output "${TEST_ROOT}/install/share/doc/brlcad.spdx.json")
 set(installed_file "${TEST_ROOT}/install/bin/brlcad-test.txt")
 set(script_arguments
@@ -101,6 +103,16 @@ execute_process(
 )
 if(validation_result EQUAL 0 OR EXISTS "${output}")
   message(FATAL_ERROR "Install SBOM validation failure left a publishable output")
+endif()
+
+file(WRITE "${output}" "stale\n")
+execute_process(
+  COMMAND "${CMAKE_COMMAND}" ${script_arguments} -P "${missing_dependency_script}"
+  RESULT_VARIABLE missing_dependency_result
+  ERROR_QUIET
+)
+if(NOT missing_dependency_result EQUAL 0 OR EXISTS "${output}")
+  message(FATAL_ERROR "Missing bext SBOM metadata prevented a compatible install or left stale output")
 endif()
 
 file(WRITE "${TEST_ROOT}/install/lib/zlib-test.txt" "zlib\n")

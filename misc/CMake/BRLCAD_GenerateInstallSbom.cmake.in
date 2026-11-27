@@ -107,7 +107,8 @@ endif()
 
 if(_brlcad_bext_sbom_required AND
    (NOT EXISTS [==[@BRLCAD_BEXT_COMPONENT_MANIFEST@]==] OR NOT EXISTS [==[@BRLCAD_BEXT_SBOM@]==]))
-  message(FATAL_ERROR "Bundled dependencies are installed but complete bext SBOM metadata is unavailable")
+  message(WARNING "Bundled dependencies are installed but complete bext SBOM metadata is unavailable; skipping installed SBOM generation")
+  return()
 endif()
 
 set(_brlcad_sbom_arguments
