@@ -19,6 +19,8 @@ oed {path_lhs} [{path_rhs}]
 
 Places MGED directly into matrix edit mode.
 
+NOTE: *oed* is an MGED-specific interactive editing command and is not available in Archer.
+
 When only __path_lhs__ is specified, it is the complete path to the
 object being edited. The matrix immediately above its final component is
 selected, and the center of that object's bounding box is used as the
