@@ -25,6 +25,7 @@ TABLE OF CONTENTS
   Quick Source Install
   Installing from Binary
   Installing from Source
+  Building Binary Packages
   Testing Functionality
   Post-Installation
   Reporting Problems
@@ -262,6 +263,97 @@ or on operating systems set up to use sudo:
   sudo make install
 
 
+BUILDING BINARY PACKAGES
+------------------------
+
+The CMake package target creates a binary package using CPack.  External
+projects may contribute files to that package without becoming part of the
+BRL-CAD build or normal installation.  To do so, install the external project
+into a staging tree and describe the files to include in a JSON bundle
+manifest.  The external files and manifest must exist when CPack runs; BRL-CAD
+does not build the external project or populate its staging tree.
+
+For example, the following manifest adds bin/tool and lib/libtool.so from an
+external project's install tree:
+
+{
+  "schema": 1,
+  "platform": "Linux",
+  "install_root": "/path/to/upstream/install",
+  "install_prefixes": ["/path/to/upstream/build"],
+  "files": ["bin/tool", "lib/libtool.so"]
+}
+
+The manifest fields are:
+
+* schema - Required integer.  The only supported value is 1.
+
+* platform - Required string.  It must exactly match CMake's system name for
+  the BRL-CAD build, normally Linux, Windows, or Darwin.
+
+* install_root - Required string naming the root of the external install tree.
+  An absolute path is recommended.  A relative path is resolved relative to
+  the directory containing the manifest.
+
+* files - Required array of individual files to package.  Relative entries are
+  resolved below install_root and retain the same relative path in the BRL-CAD
+  package.  Absolute entries are permitted only when they are below
+  install_root; their package destinations are also relative to install_root.
+  Directory entries are not permitted.
+
+* install_prefixes - Optional array of absolute producer paths to remove when
+  making the contributed files relocatable.  BRL-CAD automatically processes
+  install_root and its resolved path, so list additional paths only when the
+  files may contain them, such as an external build directory.
+
+Use forward slashes in JSON paths, including on Windows, or escape each
+backslash as required by JSON.  Relative symbolic links are preserved if both
+the link and its target remain inside install_root and the packaged link can
+resolve to a packaged file.
+
+Supply one manifest during BRL-CAD configuration as follows:
+
+  cmake -S brlcad-X.Y.Z -B brlcad-build \
+    -D "BRLCAD_BUNDLE_MANIFESTS=/path/to/upstream/bundle-manifest.json"
+  cmake --build brlcad-build --config Release
+  cmake --build brlcad-build --target package --config Release
+
+BRLCAD_BUNDLE_MANIFESTS is an ordered, semicolon-separated CMake list.  Quote
+the complete definition when supplying more than one manifest:
+
+  -D "BRLCAD_BUNDLE_MANIFESTS=/path/one.json;/path/two.json"
+
+Later manifests replace matching files from earlier manifests.  By default,
+files installed by BRL-CAD take precedence over external files.  Configure
+with BRLCAD_BUNDLE_CONFLICT_POLICY=MANIFEST_WINS if external files should take
+precedence instead.
+
+A manifest may also be supplied or replaced for one CPack invocation without
+reconfiguring.  Run CPack from the configured build directory so it loads that
+directory's CPackConfig.cmake:
+
+  cd brlcad-build
+  cpack -D "BRLCAD_BUNDLE_MANIFESTS=/path/one.json;/path/two.json"
+
+Bundle manifests affect binary package staging only.  They do not affect the
+BRL-CAD build, cmake --install, the install target, or source packages.  A
+bext-install-manifest.json file may be reused only if it contains the required
+install_root and files fields described above.
+
+Package generation stops if a manifest has the wrong platform, references a
+missing file or directory, escapes install_root, contains an unsafe symbolic
+link, repeats a destination, or requests a destination prohibited by the bext
+package policy.  Package-path conflicts are compared without regard to case on
+Windows and Darwin.
+
+During packaging, occurrences of install_root, its resolved path, and any
+install_prefixes are replaced in contributed text and scrubbed from binary
+files.  ELF runtime paths are updated to locate packaged BRL-CAD libraries.
+Each run records additions, replacements, relocation actions, and failures in
+bundle-audit/bundle-merge-<generator>.log below the build directory.  Inspect
+that log and the resulting archive when validating a package.
+
+
 TESTING FUNCTIONALITY
 ---------------------
 
@@ -455,33 +547,9 @@ when compiling bext sources.  Default is 8.
 --- BRLCAD_BUNDLE_MANIFESTS ---
 
 An ordered, semicolon-separated list of JSON manifests whose files are added
-only to binary package staging.  These files do not participate in the BRL-CAD
-build or normal install.  Each schema 1 manifest supplies the target platform,
-an explicit install root, and a file list.  For example:
-
-{
-  "schema": 1,
-  "platform": "Linux",
-  "install_root": "/path/to/upstream/install",
-  "install_prefixes": ["/path/to/upstream/build"],
-  "files": ["bin/tool", "/path/to/upstream/install/lib/libtool.so"]
-}
-
-Relative file entries are resolved below install_root.  Absolute entries must
-also be below that root and are converted to package-relative paths.  Existing
-bext-install-manifest.json files satisfy this format.  Relative symbolic links
-are preserved when they remain inside the root; unsafe or missing entries stop
-package generation.
-
-The configured list is used by the package target.  A specific package run may
-override it without reconfiguring BRL-CAD:
-
-cpack -D "BRLCAD_BUNDLE_MANIFESTS=/path/one.json;/path/two.json"
-
-Bundled text paths are replaced with CMAKE_INSTALL_PREFIX, and binary paths
-and RPATHs are processed for relocation.  Each run writes an audit log under
-the build directory's bundle-audit directory, including every text-prefix
-replacement.
+only to binary package staging.  See BUILDING BINARY PACKAGES for the manifest
+schema, complete configuration and packaging commands, relocation behavior,
+and validation guidance.
 
 
 --- BRLCAD_BUNDLE_CONFLICT_POLICY ---
@@ -489,7 +557,8 @@ replacement.
 Controls package-path conflicts for BRLCAD_BUNDLE_MANIFESTS.  BRLCAD_WINS is
 the default and preserves files installed by BRL-CAD.  MANIFEST_WINS permits
 external files to replace them.  In both modes, later manifests replace files
-from earlier manifests.  It may also be overridden for one direct CPack run:
+from earlier manifests.  It may also be overridden for one CPack run from the
+configured build directory:
 
 cpack -D BRLCAD_BUNDLE_CONFLICT_POLICY=MANIFEST_WINS
 
