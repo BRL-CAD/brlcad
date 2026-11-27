@@ -4191,11 +4191,11 @@ cdt_face_chart::build_polar(const ON_BrepFace &face,
 
 bool
 cdt_face_chart::sphere_caps(ON_2dPoint &cut,
-	std::vector<cdt_face_chart> &caps) const
+	std::vector<cdt_face_chart> &caps, bool meridian) const
 {
     caps.clear();
     if (m_type != CDT_FACE_CHART_POLAR || !m_periodic ||
-	m_second_singular_side < 0 || !holes.empty() || !m_surface)
+	m_second_singular_side < 0 || (!meridian && !holes.empty()) || !m_surface)
 	return false;
     /* Use the analytic recognizer.  General surface recognition can read
      * beyond its span array and does not establish an exact sphere. */
@@ -4251,6 +4251,11 @@ cdt_face_chart::sphere_caps(ON_2dPoint &cut,
 	    sphere.radius;
 	if (!model_point.IsValid() || !(height < best_height))
 	    continue;
+	if (meridian) {
+	    cut = uv;
+	    best_height = height;
+	    continue;
+	}
 	bool crosses_edge = false;
 	for (size_t i = 0; i < outer.size(); ++i) {
 	    const auto &first = vertices[(size_t)outer[i]];
@@ -4271,6 +4276,13 @@ cdt_face_chart::sphere_caps(ON_2dPoint &cut,
     if (!cut.IsValid())
 	return false;
 
+    if (meridian) {
+	const ON_3dVector radial = cdt_surface_point(m_surface, cut) - sphere.Center();
+	axis = ON_CrossProduct(axis, radial);
+	if (!axis.Unitize())
+	    return false;
+	sphere.plane = ON_Plane(sphere.Center(), axis);
+    }
     caps.resize(2);
     for (size_t i = 0; i < caps.size(); ++i) {
 	cdt_face_chart &cap = caps[i];

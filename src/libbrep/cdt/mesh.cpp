@@ -6911,14 +6911,43 @@ cdt_mesh_t::condition_chart_radial_trims(cdt_face_chart &chart,
     }
 }
 
+static bool
+sphere_holes_clear_meridians(const ON_BrepFace &face, int direction, double seam)
+{
+    const ON_Interval domain = face.SurfaceOf()->Domain(direction);
+    const double tolerance = cdt_surface_parameter_tolerance(domain);
+    if (std::fabs(seam - domain.Min()) > tolerance &&
+	    std::fabs(seam - domain.Max()) > tolerance)
+	return false;
+
+    /* Use bounds of the p-curves, since checking the sampled polygon
+     * alone could miss a trim that crosses the cut between vertices. */
+    for (int index = 0; index < face.LoopCount(); ++index) {
+	const ON_BrepLoop *loop = face.Loop(index);
+	if (!loop || loop->m_type != ON_BrepLoop::inner)
+	    continue;
+	ON_BoundingBox bounds;
+	if (!loop->GetBoundingBox(bounds) || !bounds.IsValid())
+	    return false;
+	const double first = bounds.Min()[direction];
+	const double last = bounds.Max()[direction];
+	if (first <= domain.Min() + tolerance || last >= domain.Max() - tolerance ||
+		(first <= domain.Mid() + tolerance && last >= domain.Mid() - tolerance))
+	    return false;
+    }
+    return true;
+}
+
 bool
 cdt_mesh_t::build_sphere_chart_atlas(const cdt_face_chart &source,
 	std::vector<cdt_face_chart> &atlas)
 {
     ON_2dPoint cut;
-    if (!source.sphere_caps(cut, atlas))
+    const bool meridian_split = !source.holes.empty();
+    if (!source.sphere_caps(cut, atlas, meridian_split))
 	return true;
-    const ON_Surface &surface = *brep->m_F[f_id].SurfaceOf();
+    const ON_BrepFace &face = brep->m_F[f_id];
+    const ON_Surface &surface = *face.SurfaceOf();
     const int angular_direction = source.closed_direction();
     const int open_direction = 1 - angular_direction;
     const ON_Interval angular_domain = surface.Domain(angular_direction);
@@ -6947,6 +6976,40 @@ cdt_mesh_t::build_sphere_chart_atlas(const cdt_face_chart &source,
     const double projection_tolerance = projection_rounding_units *
 	std::numeric_limits<double>::epsilon() * std::max(1.0, coordinate_scale / radius);
 
+    const auto keep_source_chart = [&]() {
+	atlas.clear();
+	return true;
+    };
+    const auto project = [&](const cdt_face_chart &cap, long native, ON_2dPoint &image) {
+	if (native < 0 || (size_t)native >= m_pnts_2d.size())
+	    return false;
+	const auto &uv = m_pnts_2d[(size_t)native];
+	return cap.native_to_chart(ON_2dPoint(uv.first, uv.second), image);
+    };
+    ON_2dPoint low_pole, high_pole;
+    const auto meridian_side = [&](const ON_2dPoint &point) {
+	const point2d_t a = {low_pole.x, low_pole.y};
+	const point2d_t b = {high_pole.x, high_pole.y};
+	const point2d_t sample = {point.x, point.y};
+	return bg_orient2d(a, b, sample);
+    };
+    int original_seam_side = 0;
+    if (meridian_split) {
+	ON_2dPoint low(cut), high(cut);
+	low[open_direction] = surface.Domain(open_direction).Min();
+	high[open_direction] = surface.Domain(open_direction).Max();
+	if (!atlas.front().native_to_chart(low, low_pole) ||
+		!atlas.front().native_to_chart(high, high_pole))
+	    return fail("meridian poles could not be projected");
+	original_seam_side = meridian_side(projected_cut);
+	if (!original_seam_side ||
+		!sphere_holes_clear_meridians(face, angular_direction, cut[angular_direction]))
+	    return keep_source_chart();
+    }
+    const auto ring_angle = [](const ON_2dPoint &point) {
+	return std::atan2(point.y, point.x);
+    };
+
     /* Bound artificial-ring chord deviation and normal variation by the
      * requested tolerances.  The minimum keeps coarse cap polygons shaped
      * well enough for their constraints and interior surface samples. */
@@ -6962,11 +7025,12 @@ cdt_mesh_t::build_sphere_chart_atlas(const cdt_face_chart &source,
     if (!std::isfinite(requested_segments) ||
 	requested_segments > CDT_MAX_CHART_REFINEMENT_POINTS) {
 	// Keep the original chart when this split would exceed its point budget.
-	atlas.clear();
-	return true;
+	return keep_source_chart();
     }
-    const size_t ring_segments = std::max(minimum_ring_segments,
+    size_t ring_segments = std::max(minimum_ring_segments,
 	(size_t)requested_segments);
+    if (meridian_split && ring_segments % 2)
+	++ring_segments;
     const auto canonical_angle = [&](double angular) {
 	double result = cdt_surface_parameter(angular, angular_domain);
 	if (result >= angular_domain.Max() - angular_tolerance)
@@ -6977,6 +7041,7 @@ cdt_mesh_t::build_sphere_chart_atlas(const cdt_face_chart &source,
     std::set<int> active(source.outer.begin(), source.outer.end());
     active.insert(source.steiner.begin(), source.steiner.end());
     std::map<double, long> ring;
+    const std::set<int> seam_points(source.outer.begin(), source.outer.end());
     std::map<long, long> canonical_native;
     for (const auto &mapping : p2d3d) {
 	const long vertex = native_vertex(mapping.first);
@@ -6993,7 +7058,18 @@ cdt_mesh_t::build_sphere_chart_atlas(const cdt_face_chart &source,
 	    return fail("source chart lost a native sample");
 	const auto &uv = m_pnts_2d[(size_t)native];
 	const double open = open_direction ? uv.second : uv.first;
-	if (std::fabs(open - cut[open_direction]) <= open_tolerance) {
+	if (meridian_split) {
+	    if (!seam_points.count(point))
+		continue;
+	    const long representative = canonical(native);
+	    ON_2dPoint image;
+	    if (representative < 0 || !project(atlas.front(), representative, image) ||
+		    std::fabs(image.DistanceTo(ON_2dPoint::Origin) - projected_radius) >
+		    projection_tolerance) {
+		return keep_source_chart();
+	    }
+	    ring.emplace(ring_angle(image), representative);
+	} else if (std::fabs(open - cut[open_direction]) <= open_tolerance) {
 	    const long representative = canonical(native);
 	    if (representative < 0)
 		return fail("latitude sample has no model-space identity");
@@ -7002,53 +7078,91 @@ cdt_mesh_t::build_sphere_chart_atlas(const cdt_face_chart &source,
 	}
     }
 
-    /* Sample the geometric circle rather than its potentially nonuniform
-     * NURBS parameter.  Keep the existing isoparameter exactly after the
-     * pullback, and certify that it still gives the intended circle point.
-     * This also detects sphere parameterizations requiring a different cut
-     * before any points have been registered in the mesh. */
+    /* The ring must follow the geometric circle even when parameters
+     * are nonuniform. Keep the exact isoparameter after pulling back
+     * each new sample, then check its projection before editing the mesh. */
     std::vector<ON_2dPoint> existing_ring_images;
     for (const auto &sample : ring) {
-	const auto &uv = m_pnts_2d[(size_t)sample.second];
 	ON_2dPoint image;
-	if (!atlas.front().native_to_chart(ON_2dPoint(uv.first, uv.second), image))
-	    return fail("existing latitude sample could not be projected");
+	if (!project(atlas.front(), sample.second, image))
+	    return fail("existing ring sample could not be projected");
 	existing_ring_images.push_back(image);
     }
     cdt_face_chart sampler(atlas.front());
     if (sampler.add_refinement_point(0, cut, projected_cut) < 0)
-	return fail("latitude sampler could not retain its pullback seed");
-    std::vector<ON_2dPoint> pending;
-    const double phase = std::atan2(projected_cut.y, projected_cut.x);
+	return fail("ring sampler could not retain its pullback seed");
+    std::vector<std::pair<double, ON_2dPoint>> pending;
+    const double phase = ring_angle(meridian_split ? low_pole : projected_cut);
     for (size_t i = 0; i < ring_segments; ++i) {
 	const double angle = phase + 2.0 * ON_PI * i / ring_segments;
 	const ON_2dPoint projected(projected_radius * std::cos(angle),
 	    projected_radius * std::sin(angle));
-	bool existing = false;
-	for (const ON_2dPoint &image : existing_ring_images)
-	    existing = existing || image.DistanceTo(projected) <= projection_tolerance;
+	/* Keep the original B-Rep seam and both poles on the ring. Only
+	 * the artificial half of the meridian needs new samples. */
+	if (meridian_split && (!i || i == ring_segments / 2 ||
+		meridian_side(projected) == original_seam_side))
+	    continue;
+	const bool existing = std::any_of(existing_ring_images.begin(),
+	    existing_ring_images.end(), [&](const ON_2dPoint &image) {
+		return image.DistanceTo(projected) <= projection_tolerance;
+	    });
 	if (existing)
 	    continue;
 	ON_2dPoint uv;
 	if (!sampler.chart_to_native(projected, uv))
-	    return fail("latitude ring sample could not be pulled back to the surface");
-	uv[open_direction] = cut[open_direction];
-	uv[angular_direction] = canonical_angle(uv[angular_direction]);
-	ON_2dPoint round_trip;
-	if (!sampler.native_to_chart(uv, round_trip))
-	    return fail("latitude ring pullback could not be projected");
-	if (round_trip.DistanceTo(projected) > projection_tolerance) {
-	    atlas.clear();
-	    return true;
+	    return meridian_split ? keep_source_chart() :
+		fail("ring sample could not be pulled back to the surface");
+	if (meridian_split)
+	    uv[angular_direction] = angular_domain.Mid();
+	else {
+	    uv[open_direction] = cut[open_direction];
+	    uv[angular_direction] = canonical_angle(uv[angular_direction]);
 	}
-	pending.push_back(uv);
+	ON_2dPoint round_trip;
+	if (!sampler.native_to_chart(uv, round_trip) ||
+		round_trip.DistanceTo(projected) > projection_tolerance)
+	    return keep_source_chart();
+	const double key = meridian_split ? ring_angle(projected) : uv[angular_direction];
+	pending.emplace_back(key, uv);
     }
-    for (ON_2dPoint &uv : pending) {
-	const long native = register_refinement_sample(surface, uv);
+
+    if (meridian_split) {
+	/* A hole can fit on the exact sphere and still meet a chord of the
+	 * inscribed ring. Check the ring's inscribed radius before adding
+	 * artificial samples to the source mesh. */
+	std::vector<double> angles;
+	for (const auto &sample : ring)
+	    angles.push_back(sample.first);
+	for (const auto &sample : pending)
+	    angles.push_back(sample.first);
+	if (angles.size() < 3)
+	    return keep_source_chart();
+	std::sort(angles.begin(), angles.end());
+	double largest_gap = angles.front() + 2.0 * ON_PI - angles.back();
+	for (size_t i = 1; i < angles.size(); ++i)
+	    largest_gap = std::max(largest_gap, angles[i] - angles[i - 1]);
+	const double hole_radius = projected_radius * std::cos(0.5 * largest_gap) -
+	    projection_tolerance;
+	for (const auto &hole : source.holes) {
+	    const bool fits = std::any_of(atlas.begin(), atlas.end(),
+		[&](const cdt_face_chart &cap) {
+		    return std::all_of(hole.begin(), hole.end(), [&](int point) {
+			ON_2dPoint image;
+			return project(cap, source.native_point(point), image) &&
+			    image.DistanceTo(ON_2dPoint::Origin) < hole_radius;
+		    });
+		});
+	    if (!fits)
+		return keep_source_chart();
+	}
+    }
+
+    for (auto &sample : pending) {
+	const long native = register_refinement_sample(surface, sample.second);
 	if (native < 0)
-	    return fail("latitude ring sample could not be evaluated");
+	    return fail("ring sample could not be evaluated");
 	canonical_native.emplace(native_vertex(native), native);
-	ring.emplace(uv[angular_direction], native);
+	ring.emplace(sample.first, native);
     }
     index_native_images();
 
@@ -7079,6 +7193,11 @@ cdt_mesh_t::build_sphere_chart_atlas(const cdt_face_chart &source,
 	    cap.outer.push_back(point);
 	}
 	const auto in_cap = [&](long native) {
+	    if (meridian_split) {
+		ON_2dPoint image;
+		return project(cap, native, image) &&
+		    image.DistanceTo(ON_2dPoint::Origin) <= projected_radius + projection_tolerance;
+	    }
 	    const auto &uv = m_pnts_2d[(size_t)native];
 	    const double open = open_direction ? uv.second : uv.first;
 	    return component ? open >= cut[open_direction] - open_tolerance :
@@ -7101,6 +7220,18 @@ cdt_mesh_t::build_sphere_chart_atlas(const cdt_face_chart &source,
 	    }
 	    return orientation != 0;
 	};
+	for (const auto &source_hole : source.holes) {
+	    if (!in_cap(source.native_point(source_hole.front())))
+		continue;
+	    std::vector<int> &hole = cap.holes.emplace_back();
+	    for (int source_point : source_hole) {
+		const long native = source.native_point(source_point);
+		const int point = add_point(native);
+		if (point < 0)
+		    return fail("trim hole lost a cap vertex");
+		hole.push_back(point);
+	    }
+	}
 	std::set<int> interior;
 	for (int source_point : active) {
 	    const long native = source.native_point(source_point);
@@ -7121,7 +7252,7 @@ cdt_mesh_t::build_sphere_chart_atlas(const cdt_face_chart &source,
 		interior.insert(point);
 	}
 	std::set<std::pair<int, int>> constraints;
-	for (size_t i = 0; i < source.outer.size(); ++i) {
+	for (size_t i = 0; !meridian_split && i < source.outer.size(); ++i) {
 	    const long first = source.native_point(source.outer[i]);
 	    const long second = source.native_point(source.outer[(i + 1) % source.outer.size()]);
 	    if (!in_cap(first) || !in_cap(second))
@@ -7135,8 +7266,8 @@ cdt_mesh_t::build_sphere_chart_atlas(const cdt_face_chart &source,
 	}
 	cap.steiner.assign(interior.begin(), interior.end());
     }
-    bu_log("Face %d: split sphere into two regular caps sharing %zu ring samples\n",
-	f_id, ring.size());
+    bu_log("Face %d: split sphere at a %s into two caps sharing %zu ring samples\n",
+	f_id, meridian_split ? "meridian" : "latitude", ring.size());
     return true;
 }
 

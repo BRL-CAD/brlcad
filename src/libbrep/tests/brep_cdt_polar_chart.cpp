@@ -80,9 +80,10 @@ check_cap_maps(const cdt_face_chart &source, const ON_Surface &surface)
 static bool
 check_cap_atlas(const ON_Brep_CDT_State &state)
 {
-    if (state.fmeshes.size() != 1)
+    const auto face = state.fmeshes.find(0);
+    if (face == state.fmeshes.end())
 	return false;
-    const cdt_mesh_t &mesh = state.fmeshes.begin()->second;
+    const cdt_mesh_t &mesh = face->second;
     if (mesh.m_face_charts.size() != 2)
 	return false;
     std::set<const ON_3dPoint *> rings[2];
@@ -107,16 +108,17 @@ check_cap_atlas(const ON_Brep_CDT_State &state)
     if (!surface || !surface->IsSphere(&sphere, ON_ZERO_TOLERANCE))
 	return false;
     const cdt_face_chart &first_cap = mesh.m_face_charts.front();
-    const long first_native = first_cap.native_point(first_cap.outer.front());
-    const auto &first_uv = mesh.m_pnts_2d[(size_t)first_native];
-    ON_2dPoint pole(first_uv.first, first_uv.second);
-    const int open_direction = 1 - first_cap.closed_direction();
-    pole[open_direction] = surface->Domain(open_direction).Min();
-    ON_3dVector axis = sphere.Center() - surface->PointAt(pole.x, pole.y);
+    const auto ring_point = [&](size_t index) {
+	const long native = first_cap.native_point(first_cap.outer[index]);
+	return *mesh.pnts[(size_t)mesh.p2d3d.at(native)];
+    };
+    const size_t count = first_cap.outer.size();
+    const ON_3dPoint first_point = ring_point(0);
+    ON_3dVector axis = ON_CrossProduct(ring_point(count / 3) - first_point,
+	ring_point(2 * count / 3) - first_point);
     if (!axis.Unitize())
 	return false;
     const ON_3dPoint center = sphere.Center();
-    const ON_3dPoint &first_point = *mesh.pnts[(size_t)mesh.p2d3d.at(first_native)];
     const double height = (first_point - center) * axis;
     const double ring_radius = std::sqrt(std::max(0.0,
 	sphere.radius * sphere.radius - height * height));
@@ -386,6 +388,93 @@ exercise_truncated_sphere()
 	    mesh.m_face_charts.front().type() != CDT_FACE_CHART_POLAR ||
 	    !mesh.m_face_charts.front().constraints.empty()) {
 	std::cerr << "truncated sphere forced rays across the equator" << std::endl;
+	return false;
+    }
+    return true;
+}
+
+static bool
+exercise_trimmed_sphere()
+{
+    const ON_Sphere sphere(ON_3dPoint::Origin, 20.0);
+    std::unique_ptr<ON_Brep> brep(ON_BrepSphere(sphere));
+    if (!brep)
+	return false;
+    /* An isoparametric patch replaces part of the sphere. Its shared
+     * edges span the equator but stay between the two meridians. */
+    const ON_Surface *surface = brep->m_F[0].SurfaceOf();
+    const int angular = surface->IsClosed(0) ? 0 : 1;
+    const int open = 1 - angular;
+    constexpr int corner_count = 4;
+    ON_2dPoint corners[corner_count];
+    const ON_Interval longitude = surface->Domain(angular);
+    const ON_Interval latitude = surface->Domain(open);
+    corners[0][angular] = corners[3][angular] = longitude.ParameterAt(0.125);
+    corners[1][angular] = corners[2][angular] = longitude.ParameterAt(0.375);
+    corners[0][open] = corners[1][open] = latitude.ParameterAt(0.25);
+    corners[2][open] = corners[3][open] = latitude.ParameterAt(0.75);
+    if (angular)
+	std::swap(corners[1], corners[3]);
+    const int patch_face = brep->NewFace(brep->m_F[0].m_si).m_face_index;
+    brep->m_F[patch_face].m_bRev = brep->m_F[0].m_bRev;
+    const int outside = brep->NewLoop(ON_BrepLoop::outer,
+	brep->m_F[patch_face]).m_loop_index;
+    const int inside = brep->NewLoop(ON_BrepLoop::inner,
+	brep->m_F[0]).m_loop_index;
+    int vertices[corner_count], edges[corner_count];
+    for (int i = 0; i < corner_count; ++i)
+	vertices[i] = brep->NewVertex(surface->PointAt(corners[i].x,
+	    corners[i].y), 0.0).m_vertex_index;
+    for (int i = 0; i < corner_count; ++i) {
+	const int next = (i + 1) % corner_count;
+	const int varying = EQUAL(corners[i].x, corners[next].x) ? 1 : 0;
+	std::unique_ptr<ON_Curve> curve(surface->IsoCurve(varying,
+	    corners[i][1 - varying]));
+	ON_Interval span(corners[i][varying], corners[next][varying]);
+	if (span.IsDecreasing())
+	    span.Swap();
+	if (!curve || !curve->Trim(span))
+	    return false;
+	if (corners[i][varying] > corners[next][varying] && !curve->Reverse())
+	    return false;
+	edges[i] = brep->NewEdge(brep->m_V[vertices[i]],
+	    brep->m_V[vertices[next]], brep->AddEdgeCurve(curve.release()),
+	    NULL, 0.0).m_edge_index;
+    }
+    for (int i = 0; i < corner_count; ++i) {
+	const int next = (i + 1) % corner_count;
+	brep->NewTrim(brep->m_E[edges[i]], false, brep->m_L[outside],
+	    brep->AddTrimCurve(new ON_LineCurve(corners[i], corners[next])));
+	const int reverse = corner_count - 1 - i;
+	const int last = (reverse + 1) % corner_count;
+	brep->NewTrim(brep->m_E[edges[reverse]], true, brep->m_L[inside],
+	    brep->AddTrimCurve(new ON_LineCurve(corners[last], corners[reverse])));
+    }
+    for (int loop : {outside, inside}) {
+	brep->SetTrimIsoFlags(brep->m_L[loop]);
+	brep->SetTrimTypeFlags(brep->m_L[loop]);
+	brep->SetTrimBoundingBoxes(brep->m_L[loop]);
+	for (int i = 0; i < brep->m_L[loop].TrimCount(); ++i) {
+	    ON_BrepTrim *trim = brep->m_L[loop].Trim(i);
+	    trim->m_tolerance[0] = trim->m_tolerance[1] = 0.0;
+	}
+    }
+    ON_TextLog log(stderr);
+    if (!brep->IsSolid() || !brep->IsValid(&log))
+	return false;
+
+    std::unique_ptr<ON_Brep_CDT_State, decltype(&ON_Brep_CDT_Destroy)> state(
+	ON_Brep_CDT_Create(brep.get(), "sphere with a trim patch"), ON_Brep_CDT_Destroy);
+    struct bg_tess_tol tolerance = BG_TESS_TOL_INIT_ZERO;
+    tolerance.rel = 0.01;
+    ON_Brep_CDT_Tol_Set(state.get(), &tolerance);
+    if (ON_Brep_CDT_Tessellate(state.get(), 0, NULL) != 0 || !check_cap_atlas(*state)) {
+	std::cerr << "sphere with a trim patch did not certify its meridian atlas" << std::endl;
+	return false;
+    }
+    const auto &caps = state->fmeshes.at(0).m_face_charts;
+    if (caps[0].holes.size() + caps[1].holes.size() != 1) {
+	std::cerr << "meridian atlas did not preserve the sphere trim" << std::endl;
 	return false;
     }
     return true;
@@ -767,6 +856,8 @@ main(int, const char **argv)
 	return 10;
     if (!exercise_truncated_sphere())
 	return 11;
+    if (!exercise_trimmed_sphere())
+	return 12;
     return 0;
 }
 

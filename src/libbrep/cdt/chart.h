@@ -97,7 +97,7 @@ public:
 
     /* Empty cap charts are returned only when a complete analytic sphere
      * can be cut through existing samples on both sides of its B-Rep seam. */
-    bool sphere_caps(ON_2dPoint &cut, std::vector<cdt_face_chart> &caps) const;
+    bool sphere_caps(ON_2dPoint &cut, std::vector<cdt_face_chart> &caps, bool meridian = false) const;
     double sphere_radius() const { return m_sphere.radius; }
 
     long native_point(int chart_point) const;
