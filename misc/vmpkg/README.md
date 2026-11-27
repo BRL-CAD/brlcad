@@ -107,6 +107,7 @@ package bytes for replay.
 python3 -B -m unittest discover -s misc/vmpkg -p 'test_*.py'
 ```
 
-These tests also run with CTest as `vmpkg_tools` when the build finds a
-supported Python interpreter. For Rocky package locks, dependency artifacts,
-and installed-package smoke tests, use the [Rocky release guide](rocky-release.md).
+Configure with `-DBRLCAD_ENABLE_VMPKG_TESTS=ON` to register these tests with
+CTest as `vmpkg_tools` when the build finds a supported Python interpreter.
+For Rocky package locks, dependency artifacts, and installed-package smoke
+tests, use the [Rocky release guide](rocky-release.md).

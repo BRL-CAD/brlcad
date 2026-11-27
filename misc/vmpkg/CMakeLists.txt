@@ -34,7 +34,9 @@
 #
 ###
 
-if(BUILD_TESTING AND UNIX)
+option(BRLCAD_ENABLE_VMPKG_TESTS "Enable vmpkg tooling tests" OFF)
+
+if(BUILD_TESTING AND BRLCAD_ENABLE_VMPKG_TESTS AND UNIX)
   find_package(Python3 3.11.8 QUIET COMPONENTS Interpreter)
   if(Python3_Interpreter_FOUND)
     brlcad_add_test(NAME vmpkg_tools COMMAND "${Python3_EXECUTABLE}" -B -m unittest discover
