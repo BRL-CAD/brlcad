@@ -25,7 +25,6 @@
 
 #include "common.h"
 #include <QtGlobal>
-#include <chrono>
 #include <unordered_map>
 
 extern "C" {
@@ -39,8 +38,6 @@ extern "C" {
 
 typedef void (*bounds_update_t)(struct bview *);
 static std::unordered_map<struct bview *, bounds_update_t> drag_bounds_updates;
-static std::unordered_map<struct bview *, long long> drag_update_ts;
-static const long long drag_update_interval_ms = 16;
 
 static void
 suspend_drag_bounds_update(struct bview *v)
@@ -65,7 +62,6 @@ restore_drag_bounds_update(struct bview *v, int refresh_bounds)
     if (refresh_bounds && v->gv_bounds_update)
 	(*(v->gv_bounds_update))(v);
     drag_bounds_updates.erase(it);
-    drag_update_ts.erase(v);
 }
 
 // TODO - look into QShortcut, see if it might be a better way
@@ -303,13 +299,6 @@ int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e, i
 
     if (!e->buttons().testFlag(Qt::LeftButton))
 	return 0;
-
-    long long now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-	std::chrono::steady_clock::now().time_since_epoch()).count();
-    std::unordered_map<struct bview *, long long>::iterator ts_it = drag_update_ts.find(v);
-    if (ts_it != drag_update_ts.end() && (now_ms - ts_it->second) < drag_update_interval_ms)
-	return -1;
-    drag_update_ts[v] = now_ms;
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     int dx = e->x() - x_prev;

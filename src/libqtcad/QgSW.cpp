@@ -296,15 +296,13 @@ void QgSW::mouseMoveEvent(QMouseEvent *e)
     }
 
     // Current positions are the new previous positions
-    if (mret != -1) {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-        x_prev = e->x();
-        y_prev = e->y();
+    x_prev = e->x();
+    y_prev = e->y();
 #else
-        x_prev = e->position().x();
-        y_prev = e->position().y();
+    x_prev = e->position().x();
+    y_prev = e->position().y();
 #endif
-    }
 
     QWidget::mouseMoveEvent(e);
 }
