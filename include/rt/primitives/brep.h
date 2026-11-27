@@ -36,6 +36,15 @@
 __BEGIN_DECLS
 
 struct soltab;
+struct rt_bot_internal;
+
+/** Tessellate a closed B-Rep directly to a certified solid BoT.
+ * Returns zero and transfers ownership of the BoT on success.
+ * The optional log receives a diagnostic on failure. */
+RT_EXPORT extern int
+rt_brep_tessellate_bot(struct rt_bot_internal **bot,
+	const struct rt_db_internal *ip, const struct bg_tess_tol *ttol,
+	const char *name, int with_normals, struct bu_vls *log);
 
 /** Get a prepared BRep face's explicit RGB and transparency (0 opaque, 255 clear).
  * Returns one if the face has an appearance override, zero otherwise. */

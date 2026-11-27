@@ -2749,58 +2749,77 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip,
 
 
 int
-rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
+rt_brep_tessellate_bot(struct rt_bot_internal **output,
+	const struct rt_db_internal *ip, const struct bg_tess_tol *ttol,
+	const char *name, int with_normals, struct bu_vls *log)
 {
-    int ret = 0;
-    struct rt_brep_internal *bi = NULL;
-
-    if (!r || !m || !ip || !ttol || !tol)
+    if (!output)
+	return -1;
+    *output = NULL;
+    if (!ip || !ttol)
 	return -1;
 
     RT_CK_DB_INTERNAL(ip);
-    bi = (struct rt_brep_internal *)ip->idb_ptr;
+    const struct rt_brep_internal *bi =
+	static_cast<const struct rt_brep_internal *>(ip->idb_ptr);
     RT_BREP_CK_MAGIC(bi);
-
-    int fcnt=0, fncnt=0, ncnt=0, vcnt=0;
-    int *faces = NULL;
-    fastf_t *vertices = NULL;
-    int *face_normals = NULL;
-    fastf_t *normals = NULL;
 
     struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
     cdttol.abs = ttol->abs;
     cdttol.rel = ttol->rel;
     cdttol.norm = ttol->norm;
-    ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bi->brep, NULL);
-    ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
-    if (ON_Brep_CDT_Tessellate(s_cdt, 0, NULL)) {
-	// Couldn't get a solid mesh, we're done
-	ON_Brep_CDT_Destroy(s_cdt);
+    ON_Brep_CDT_State *state = ON_Brep_CDT_Create(bi->brep, name);
+    ON_Brep_CDT_Tol_Set(state, &cdttol);
+    if (ON_Brep_CDT_Tessellate(state, 0, NULL)) {
+	if (log) {
+	    struct brep_cdt_diagnostic diagnostic;
+	    ON_Brep_CDT_Diagnostic(&diagnostic, state);
+	    bu_vls_printf(log, "tessellation failed: %s\n", diagnostic.message);
+	}
+	ON_Brep_CDT_Destroy(state);
 	return -1;
     }
-    if (ON_Brep_CDT_Mesh(&faces, &fcnt, &vertices, &vcnt,
-	    &face_normals, &fncnt, &normals, &ncnt, s_cdt, 0, NULL) < 0) {
-	ON_Brep_CDT_Destroy(s_cdt);
-	return -1;
-    }
-    ON_Brep_CDT_Destroy(s_cdt);
 
     struct rt_bot_internal *bot;
-    BU_GET(bot, struct rt_bot_internal);
+    BU_ALLOC(bot, struct rt_bot_internal);
     bot->magic = RT_BOT_INTERNAL_MAGIC;
     bot->mode = RT_BOT_SOLID;
     bot->orientation = RT_BOT_CCW;
-    bot->bot_flags = 0;
-    bot->num_vertices = vcnt;
-    bot->num_faces = fcnt;
-    bot->vertices = vertices;
-    bot->faces = faces;
-    bot->thickness = NULL;
-    bot->face_mode = (struct bu_bitv *)NULL;
-    bot->num_normals = ncnt;
-    bot->num_face_normals = fncnt;
-    bot->normals = normals;
-    bot->face_normals = face_normals;
+
+    int face_count, vertex_count, face_normal_count = 0, normal_count = 0;
+    const int result = ON_Brep_CDT_Mesh(&bot->faces, &face_count,
+	&bot->vertices, &vertex_count,
+	with_normals ? &bot->face_normals : NULL,
+	with_normals ? &face_normal_count : NULL,
+	with_normals ? &bot->normals : NULL,
+	with_normals ? &normal_count : NULL, state, 0, NULL);
+    ON_Brep_CDT_Destroy(state);
+    if (result < 0) {
+	if (log)
+	    bu_vls_strcat(log, "mesh assembly failed\n");
+	rt_bot_internal_free(bot);
+	bu_free(bot, "B-Rep BoT");
+	return -1;
+    }
+
+    bot->num_faces = face_count;
+    bot->num_vertices = vertex_count;
+    bot->num_face_normals = face_normal_count;
+    bot->num_normals = normal_count;
+    *output = bot;
+    return 0;
+}
+
+
+int
+rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
+{
+    if (!r || !m || !tol)
+	return -1;
+
+    struct rt_bot_internal *bot;
+    if (rt_brep_tessellate_bot(&bot, ip, ttol, NULL, 0, NULL))
+	return -1;
 
     struct rt_db_internal intern;
     RT_DB_INTERNAL_INIT(&intern);
@@ -2809,15 +2828,10 @@ rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     intern.idb_ptr = (void *)bot;
     intern.idb_meth = &OBJ[intern.idb_type];
 
-    ret = rt_bot_tess(r, m, &intern, ttol, tol);
+    const int result = rt_bot_tess(r, m, &intern, ttol, tol);
+    rt_db_free_internal(&intern);
 
-    BU_PUT(bot, struct rt_bot_internal);
-    bu_free(faces, "faces");
-    bu_free(vertices, "vertices");
-    bu_free(face_normals, "face_normals");
-    bu_free(normals, "normals");
-
-    return ret;
+    return result;
 }
 
 

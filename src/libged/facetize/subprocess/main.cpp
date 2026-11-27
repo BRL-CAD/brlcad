@@ -171,6 +171,28 @@ method_setup(tess_opts *s)
 }
 
 static int
+brep_tessellate(struct rt_bot_internal **obot, const struct rt_db_internal *intern,
+	const char *name, const struct bg_tess_tol *ttol)
+{
+    struct bu_vls diagnostic = BU_VLS_INIT_ZERO;
+    const int result = rt_brep_tessellate_bot(obot, intern, ttol, name, 0,
+	&diagnostic);
+    if (result)
+	bu_log("%s: %s", name, bu_vls_cstr(&diagnostic));
+    bu_vls_free(&diagnostic);
+    if (result)
+	return BRLCAD_ERROR;
+
+    if (bot_is_manifold(*obot))
+	return BRLCAD_OK;
+
+    bu_log("%s: direct B-Rep mesh rejected by Manifold\n", name);
+    _tess_facetize_free_bot(*obot);
+    *obot = NULL;
+    return BRLCAD_ERROR;
+}
+
+static int
 dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct ged *gedp, struct directory *dp, tess_opts *s)
 {
     if (!s || !obot || !method_flag || !gedp || !dp)
@@ -280,24 +302,22 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 	goto dp_tessellate_cleanup;
     }
 
-    // For brep in particular, we have a cheat we can try.  Do a brep->csg
-    // conversion and see if the resulting CSG tree can be facetized.
-    if (intern.idb_minor_type == ID_BREP) {
-	ret = _brep_csg_tessellate(obot, gedp, dp, s);
-	if (ret == BRLCAD_OK) {
-	    bu_vls_sprintf(method_flag, "NMG_BREP_CSG");
-	    goto dp_tessellate_cleanup;
+    if (mset.find("NMG") != mset.end()) {
+	if (intern.idb_minor_type == ID_BREP) {
+	    /* CDT already produces an indexed mesh. Keep its vertices and
+	     * incidence intact for the Boolean backend. */
+	    ret = brep_tessellate(obot, &intern, dp->d_namep, &s->nmg_options.ttol);
+	} else {
+	    ret = _nmg_tessellate(obot, &intern, s);
 	}
-    }
-
-    // If we got this far, it's not a special case.  Start trying whatever tessellation methods
-    // are enabled
-
-    if (mset.find(std::string("NMG")) != mset.end()) {
-	// NMG is best, if it works
-	ret = _nmg_tessellate(obot, &intern, s);
 	if (ret == BRLCAD_OK) {
 	    bu_vls_sprintf(method_flag, "NMG");
+	    goto dp_tessellate_cleanup;
+	}
+	if (intern.idb_minor_type == ID_BREP &&
+		_brep_csg_tessellate(obot, gedp, dp, s) == BRLCAD_OK) {
+	    bu_vls_sprintf(method_flag, "NMG_BREP_CSG");
+	    ret = BRLCAD_OK;
 	    goto dp_tessellate_cleanup;
 	}
     }

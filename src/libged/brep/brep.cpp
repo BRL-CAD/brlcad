@@ -233,8 +233,7 @@ _brep_cmd_bot(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gb->wdbp->wdb_ttol;
-    struct rt_brep_internal *bi = (struct rt_brep_internal*)gb->intern.idb_ptr;
+    const struct bg_tess_tol *ttol = &gb->wdbp->wdb_ttol;
     struct bu_vls bname_bot = BU_VLS_INIT_ZERO;
 
     if (!argc) {
@@ -245,52 +244,12 @@ _brep_cmd_bot(void *bs, int argc, const char **argv)
 
     const char *bot_name = bu_vls_cstr(&bname_bot);
 
-    int fcnt, fncnt, ncnt, vcnt;
-    int *faces = NULL;
-    fastf_t *vertices = NULL;
-    int *face_normals = NULL;
-    fastf_t *normals = NULL;
-
-    struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
-    cdttol.abs = ttol->abs;
-    cdttol.rel = ttol->rel;
-    cdttol.norm = ttol->norm;
-    ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bi->brep, gb->solid_name.c_str());
-    ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
-    if (ON_Brep_CDT_Tessellate(s_cdt, 0, NULL) != 0) {
-	struct brep_cdt_diagnostic diagnostic;
-	ON_Brep_CDT_Diagnostic(&diagnostic, s_cdt);
-	bu_vls_printf(gedp->ged_result_str, "tessellation failed: %s\n",
-	    diagnostic.message);
-	ON_Brep_CDT_Destroy(s_cdt);
-	bu_vls_free(&bname_bot);
-	return BRLCAD_ERROR;
-    }
-    if (ON_Brep_CDT_Mesh(&faces, &fcnt, &vertices, &vcnt,
-	    &face_normals, &fncnt, &normals, &ncnt, s_cdt, 0, NULL) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "mesh assembly failed\n");
-	ON_Brep_CDT_Destroy(s_cdt);
-	bu_vls_free(&bname_bot);
-	return BRLCAD_ERROR;
-    }
-    ON_Brep_CDT_Destroy(s_cdt);
-
     struct rt_bot_internal *bot;
-    BU_GET(bot, struct rt_bot_internal);
-    bot->magic = RT_BOT_INTERNAL_MAGIC;
-    bot->mode = RT_BOT_SOLID;
-    bot->orientation = RT_BOT_CCW;
-    bot->bot_flags = 0;
-    bot->num_vertices = vcnt;
-    bot->num_faces = fcnt;
-    bot->vertices = vertices;
-    bot->faces = faces;
-    bot->thickness = NULL;
-    bot->face_mode = (struct bu_bitv *)NULL;
-    bot->num_normals = ncnt;
-    bot->num_face_normals = fncnt;
-    bot->normals = normals;
-    bot->face_normals = face_normals;
+    if (rt_brep_tessellate_bot(&bot, &gb->intern, ttol, gb->solid_name.c_str(),
+	    1, gedp->ged_result_str)) {
+	bu_vls_free(&bname_bot);
+	return BRLCAD_ERROR;
+    }
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (wdb_export(wdbp, bot_name, (void *)bot, ID_BOT, 1.0)) {
