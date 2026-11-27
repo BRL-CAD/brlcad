@@ -18,8 +18,7 @@
 #include <cmath>
 #include <limits>
 #include <map>
-#include <queue>
-#include <set>
+#include <numeric>
 #include <vector>
 
 #include "bg/tri_pt.h"
@@ -27,12 +26,32 @@
 #include "cdt.h"
 #include "assembly.h"
 
+struct assembled_mesh_query {
+    const fastf_t *vertices;
+    const int *indices;
+    const int *current;
+    const point_t *current_points;
+    size_t lowest_intersection;
+};
+
 static bool
-assembled_mesh_collect_candidate(size_t triangle, void *context)
+assembled_mesh_intersection_candidate(size_t candidate, void *data)
 {
-    std::vector<size_t> *candidates =
-	(std::vector<size_t> *)context;
-    candidates->push_back(triangle);
+    auto &query = *static_cast<assembled_mesh_query *>(data);
+    if (candidate >= query.lowest_intersection)
+	return true;
+    const int *other = &query.indices[candidate * 3];
+    for (int first_vertex : {query.current[0], query.current[1], query.current[2]}) {
+	if (first_vertex == other[0] || first_vertex == other[1] ||
+		first_vertex == other[2])
+	    return true;
+    }
+
+    point_t points[3];
+    for (int corner = 0; corner < 3; ++corner)
+	VMOVE(points[corner], &query.vertices[(size_t)other[corner] * 3]);
+    if (cdt_tri_tri_intersection(query.current_points, points))
+	query.lowest_intersection = candidate;
     return true;
 }
 
@@ -51,6 +70,103 @@ assembled_mesh_triangle_degenerate(const ON_3dPoint points[3])
 	longest_sq;
 }
 
+using vertex_link_edge = std::pair<int, int>;
+
+static bool
+vertex_link_is_cycle(const std::vector<vertex_link_edge> &neighbors)
+{
+    if (neighbors.empty())
+	return true;
+
+    /* The directed edges are sorted by origin. A manifold link has two
+     * incidences at each node, and walking either direction visits them
+     * all before returning to the start. */
+    for (size_t i = 0; i < neighbors.size(); i += 2) {
+	if (neighbors[i].first != neighbors[i + 1].first ||
+		(i && neighbors[i - 1].first == neighbors[i].first))
+	    return false;
+    }
+    const int start = neighbors.front().first;
+    int previous = start;
+    int current = neighbors.front().second;
+    size_t visited = 1;
+    while (current != start) {
+	const auto first = std::lower_bound(neighbors.begin(), neighbors.end(),
+	    current, [](const vertex_link_edge &edge, int vertex) {
+		return edge.first < vertex;
+	    });
+	const int next = first->second == previous ? (first + 1)->second :
+	    first->second;
+	previous = current;
+	current = next;
+	++visited;
+    }
+    return visited == neighbors.size() / 2;
+}
+
+static bool
+validate_assembled_links(int vertex_count, int face_count,
+	const fastf_t *vertices, const int *faces,
+	assembled_mesh_validation &validation)
+{
+    std::vector<size_t> offsets((size_t)vertex_count + 1, 0);
+    for (int vertex = 0; vertex < vertex_count; ++vertex) {
+	const fastf_t *point = &vertices[(size_t)vertex * 3];
+	if (!std::isfinite(point[0]) || !std::isfinite(point[1]) ||
+		!std::isfinite(point[2]))
+	    ++validation.nonfinite_vertices;
+    }
+
+    for (int face = 0; face < face_count; ++face) {
+	const int *indices = &faces[(size_t)face * 3];
+	ON_3dPoint points[3];
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int vertex = indices[corner];
+	    if (vertex < 0 || vertex >= vertex_count) {
+		++validation.invalid_indices;
+		return false;
+	    }
+	    ++offsets[(size_t)vertex + 1];
+	    const fastf_t *point = &vertices[(size_t)vertex * 3];
+	    points[corner] = ON_3dPoint(point[0], point[1], point[2]);
+	}
+	if (assembled_mesh_triangle_degenerate(points))
+	    ++validation.degenerate_faces;
+    }
+
+    /* Store all incident links contiguously. Individual vectors and tree
+     * nodes per vertex account for millions of allocations on large BoTs. */
+    std::partial_sum(offsets.begin(), offsets.end(), offsets.begin());
+    std::vector<vertex_link_edge> links(offsets.back());
+    {
+	std::vector<size_t> cursors(offsets.begin(), offsets.end() - 1);
+	for (int face = 0; face < face_count; ++face) {
+	    const int *indices = &faces[(size_t)face * 3];
+	    for (int corner = 0; corner < 3; ++corner) {
+		links[cursors[(size_t)indices[corner]]++] =
+		    {indices[(corner + 1) % 3], indices[(corner + 2) % 3]};
+	    }
+	}
+    }
+
+    std::vector<vertex_link_edge> neighbors;
+    for (size_t vertex = 0; vertex < (size_t)vertex_count; ++vertex) {
+	if (offsets[vertex] == offsets[vertex + 1]) {
+	    ++validation.unused_vertices;
+	    continue;
+	}
+	neighbors.clear();
+	for (size_t i = offsets[vertex]; i < offsets[vertex + 1]; ++i) {
+	    neighbors.push_back(links[i]);
+	    neighbors.emplace_back(links[i].second, links[i].first);
+	}
+	std::sort(neighbors.begin(), neighbors.end());
+	if (!vertex_link_is_cycle(neighbors))
+	    ++validation.invalid_vertex_links;
+    }
+    return true;
+}
+
 bool
 assembled_mesh_validate(int vertex_count, int face_count,
 	const fastf_t *vertices, const int *faces,
@@ -61,74 +177,9 @@ assembled_mesh_validate(int vertex_count, int face_count,
 	return false;
     *validation = assembled_mesh_validation();
 
-    typedef std::pair<int, int> mesh_edge;
-    std::vector<std::vector<mesh_edge>> vertex_link_edges(
-	(size_t)vertex_count);
-    std::vector<bool> used_vertices((size_t)vertex_count, false);
-    for (int vertex = 0; vertex < vertex_count; ++vertex) {
-	for (int coordinate = 0; coordinate < 3; ++coordinate) {
-	    if (!std::isfinite(vertices[3 * vertex + coordinate])) {
-		validation->nonfinite_vertices++;
-		break;
-	    }
-	}
-    }
-
-    for (int face = 0; face < face_count; ++face) {
-	ON_3dPoint points[3];
-	for (int corner = 0; corner < 3; ++corner) {
-	    const int vertex = faces[3 * face + corner];
-	    if (vertex < 0 || vertex >= vertex_count) {
-		validation->invalid_indices++;
-		return false;
-	    }
-	    used_vertices[(size_t)vertex] = true;
-	    points[corner] = ON_3dPoint(vertices[3 * vertex],
-		vertices[3 * vertex + 1], vertices[3 * vertex + 2]);
-	}
-	for (int corner = 0; corner < 3; ++corner) {
-	    const int vertex = faces[3 * face + corner];
-	    vertex_link_edges[(size_t)vertex].push_back(mesh_edge(
-		faces[3 * face + (corner + 1) % 3],
-		faces[3 * face + (corner + 2) % 3]));
-	}
-	if (assembled_mesh_triangle_degenerate(points))
-	    validation->degenerate_faces++;
-    }
-
-    for (bool used : used_vertices) {
-	if (!used)
-	    validation->unused_vertices++;
-    }
-
-    for (int vertex = 0; vertex < vertex_count; ++vertex) {
-	const std::vector<mesh_edge> &links =
-	    vertex_link_edges[(size_t)vertex];
-	if (links.empty())
-	    continue;
-	std::map<int, std::vector<int>> adjacency;
-	for (const mesh_edge &link : links) {
-	    adjacency[link.first].push_back(link.second);
-	    adjacency[link.second].push_back(link.first);
-	}
-	std::set<int> reached;
-	std::queue<int> work;
-	work.push(adjacency.begin()->first);
-	reached.insert(adjacency.begin()->first);
-	bool valid_link = true;
-	while (!work.empty()) {
-	    const int current = work.front();
-	    work.pop();
-	    const std::vector<int> &neighbors = adjacency[current];
-	    valid_link = valid_link && neighbors.size() == 2;
-	    for (int neighbor : neighbors) {
-		if (reached.insert(neighbor).second)
-		    work.push(neighbor);
-	    }
-	}
-	if (!valid_link || reached.size() != adjacency.size())
-	    validation->invalid_vertex_links++;
-    }
+    if (!validate_assembled_links(vertex_count, face_count, vertices, faces,
+	    *validation))
+	return false;
 
     /* Edge incidence and vertex links do not detect two otherwise valid
      * closed sheets crossing away from shared topology.  Query an R-tree of
@@ -140,6 +191,7 @@ assembled_mesh_validate(int vertex_count, int face_count,
 	    !validation->degenerate_faces) {
 	RTree<size_t, double, 3> triangle_index;
 	for (int face = 0; face < face_count; ++face) {
+	    const int *first = &faces[(size_t)face * 3];
 	    double minimum[3] = {
 		std::numeric_limits<double>::infinity(),
 		std::numeric_limits<double>::infinity(),
@@ -152,9 +204,8 @@ assembled_mesh_validate(int vertex_count, int face_count,
 	    };
 	    point_t first_points[3];
 	    for (int corner = 0; corner < 3; ++corner) {
-		const int vertex = faces[3 * face + corner];
-		VSET(first_points[corner], vertices[3 * vertex],
-		    vertices[3 * vertex + 1], vertices[3 * vertex + 2]);
+		const fastf_t *point = &vertices[(size_t)first[corner] * 3];
+		VMOVE(first_points[corner], point);
 		for (int axis = 0; axis < 3; ++axis) {
 		    minimum[axis] = std::min(minimum[axis],
 			(double)first_points[corner][axis]);
@@ -162,37 +213,20 @@ assembled_mesh_validate(int vertex_count, int face_count,
 			(double)first_points[corner][axis]);
 		}
 	    }
-	    std::vector<size_t> candidates;
+	    /* Tree order is not stable. Retain the lowest intersecting
+	     * triangle ID, using that bound as the search finds candidates. */
+	    assembled_mesh_query query = {
+		vertices, faces, first, first_points, (size_t)face
+	    };
 	    triangle_index.Search(minimum, maximum,
-		assembled_mesh_collect_candidate, &candidates);
-	    std::sort(candidates.begin(), candidates.end());
-	    for (size_t candidate : candidates) {
-		const int *first = &faces[3 * face];
-		const int *second = &faces[3 * candidate];
-		bool adjacent = false;
-		for (int i = 0; i < 3 && !adjacent; ++i) {
-		    for (int j = 0; j < 3; ++j) {
-			if (first[i] == second[j]) {
-			    adjacent = true;
-			    break;
-			}
-		    }
-		}
-		if (adjacent)
-		    continue;
+		assembled_mesh_intersection_candidate, &query);
+	    if (query.lowest_intersection < (size_t)face) {
+		const int *second = &faces[query.lowest_intersection * 3];
 		point_t second_points[3];
-		for (int corner = 0; corner < 3; ++corner) {
-		    const int vertex = second[corner];
-		    VSET(second_points[corner], vertices[3 * vertex],
-			vertices[3 * vertex + 1],
-			vertices[3 * vertex + 2]);
-		}
-		const bool intersects = cdt_tri_tri_intersection(first_points,
-		    second_points);
-		if (!intersects)
-		    continue;
+		for (int corner = 0; corner < 3; ++corner)
+		    VMOVE(second_points[corner], &vertices[(size_t)second[corner] * 3]);
 		validation->intersecting_triangle_pairs = 1;
-		validation->first_intersection[0] = (int)candidate;
+		validation->first_intersection[0] = (int)query.lowest_intersection;
 		validation->first_intersection[1] = face;
 		int coplanar = 0;
 		point_t start = VINIT_ZERO;
@@ -208,8 +242,6 @@ assembled_mesh_validate(int vertex_count, int face_count,
 		}
 		break;
 	    }
-	    if (validation->intersecting_triangle_pairs)
-		break;
 	    triangle_index.Insert(minimum, maximum, (size_t)face);
 	}
     }
@@ -527,63 +559,46 @@ closed_mesh_component_filter(int *faces, int *face_count,
 	    vertex_count < 4)
 	return 0;
 
-    /* Validate all indices before making the first transactional edit. */
-    for (int face = 0; face < *face_count; ++face) {
+    const auto repeats_vertex = [&](int face) {
+	const int *triangle = &faces[(size_t)face * 3];
+	return triangle[0] == triangle[1] || triangle[1] == triangle[2] ||
+	    triangle[2] == triangle[0];
+    };
+
+    /* Check every index before editing. A triangle with repeated vertices
+     * can otherwise falsely bridge components through its repeated edge. */
+    const int original_face_count = *face_count;
+    int first_degenerate = original_face_count;
+    for (int face = 0; face < original_face_count; ++face) {
+	const int *triangle = &faces[(size_t)face * 3];
 	for (int corner = 0; corner < 3; ++corner) {
-	    const int vertex = faces[(size_t)face * 3 + corner];
+	    const int vertex = triangle[corner];
 	    if (vertex < 0 || vertex >= vertex_count)
 		return 0;
 	}
+	if (first_degenerate == original_face_count && repeats_vertex(face))
+	    first_degenerate = face;
     }
 
-    /* Distinct face-mesh vertices may collapse to the same shared output
-     * point.  Cull the resulting zero-area index triangles before component
-     * discovery; otherwise their repeated edge can falsely bridge two
-     * components in this audit even though rt_bot_split correctly ignores
-     * that bridge. */
-    const int original_face_count = *face_count;
-    std::vector<int> compact_faces;
-    std::vector<int> compact_normals;
-    std::vector<int> compact_sources;
-    std::vector<size_t> compact_triangles;
-    compact_faces.reserve((size_t)original_face_count * 3);
-    if (face_normals)
-	compact_normals.reserve((size_t)original_face_count * 3);
-    if (source_faces)
-	compact_sources.reserve((size_t)original_face_count);
-    if (source_triangles)
-	compact_triangles.reserve((size_t)original_face_count);
-    for (int face = 0; face < original_face_count; ++face) {
-	const size_t offset = (size_t)face * 3;
-	if (faces[offset] == faces[offset + 1] ||
-		faces[offset + 1] == faces[offset + 2] ||
-		faces[offset + 2] == faces[offset])
+    /* The destination stays behind the input, so collapsing the triangle
+     * and its parallel provenance arrays does not need a full mesh copy. */
+    int retained = first_degenerate;
+    for (int face = first_degenerate; face < original_face_count; ++face) {
+	if (repeats_vertex(face))
 	    continue;
-	for (int corner = 0; corner < 3; ++corner) {
-	    compact_faces.push_back(faces[offset + corner]);
-	    if (face_normals)
-		compact_normals.push_back(face_normals[offset + corner]);
-	}
-	if (source_faces)
-	    compact_sources.push_back(source_faces[face]);
-	if (source_triangles)
-	    compact_triangles.push_back(source_triangles[face]);
-    }
-    int removed_count = original_face_count -
-	(int)(compact_faces.size() / 3);
-    if (removed_count) {
-	std::copy(compact_faces.begin(), compact_faces.end(), faces);
+	const size_t input = (size_t)face * 3;
+	const size_t output = (size_t)retained * 3;
+	std::copy_n(faces + input, 3, faces + output);
 	if (face_normals)
-	    std::copy(compact_normals.begin(), compact_normals.end(),
-		face_normals);
-	*face_count = (int)(compact_faces.size() / 3);
+	    std::copy_n(face_normals + input, 3, face_normals + output);
 	if (source_faces)
-	    std::copy(compact_sources.begin(), compact_sources.end(),
-		source_faces);
+	    source_faces[retained] = source_faces[face];
 	if (source_triangles)
-	    std::copy(compact_triangles.begin(), compact_triangles.end(),
-		source_triangles);
+	    source_triangles[retained] = source_triangles[face];
+	++retained;
     }
+    *face_count = retained;
+    const int removed_count = original_face_count - retained;
     if (*face_count < 2)
 	return removed_count;
 

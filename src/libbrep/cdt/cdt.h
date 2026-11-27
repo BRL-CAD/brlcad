@@ -145,6 +145,9 @@ struct ON_Brep_CDT_State {
     fastf_t ovlp_max_len;
     long max_face_time_ms;
     int64_t face_deadline;
+    /* Full tessellation can refine both sides of a crossing shared chord
+     * before attempting cleanup within a single face chart. */
+    bool defer_chart_cleanup = false;
 
     /* 3D data */
     std::vector<ON_3dPoint *> *w3dpnts;
@@ -194,6 +197,9 @@ struct ON_Brep_CDT_State {
 
     /* Face specific data */
     std::map<int, cdt_mesh_t> fmeshes;
+    /* These faces inherit a cylindrical support proven by their original
+     * seam, circular shared boundary, and the intact neighboring face. */
+    std::set<int> rebuilt_support_faces;
     std::map<int, RTree<void *, double, 2>> face_rtrees_2d;
     std::map<int, RTree<void *, double, 3>> face_rtrees_3d;
     std::map<int, std::map<int,ON_3dPoint *>> strim_pnts;
@@ -218,15 +224,22 @@ double ang_deg(const ON_3dVector &v1, const ON_3dVector &v2);
 std::set<bedge_seg_t *> split_edge_seg(struct ON_Brep_CDT_State *s_cdt,
     bedge_seg_t *bseg, int force, double *t, int update_rtrees,
     ON_3dPoint *shared_point = NULL, bool required_closed_split = false);
+bool shared_edge_midpoint_matches_trims(struct ON_Brep_CDT_State *state,
+	bedge_seg_t *segment, const ON_3dPoint &midpoint);
 std::set<cpolyedge_t *> split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *ce, int update_rtree);
 std::vector<cpolyedge_t *> cdt_face_polyedges(struct ON_Brep_CDT_State *s_cdt, int face_index);
 void CDT_Add3DNorm(struct ON_Brep_CDT_State *s, ON_3dPoint *norm, ON_3dPoint *vert, int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d);
 void CDT_Add3DPnt(struct ON_Brep_CDT_State *s, ON_3dPoint *p, int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d);
 void CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, double t_abs, double t_rel, double t_dist);
-bool GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index);
+bool GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index,
+    size_t additional_points = 0, double relative_scale = 1.0);
 void cdt_tol_global_calc(struct ON_Brep_CDT_State *s);
 void curved_edges_refine(struct ON_Brep_CDT_State *s_cdt);
+bool finalize_face_rtrees(struct ON_Brep_CDT_State *s_cdt, int face_index);
 void finalize_rtrees(struct ON_Brep_CDT_State *s_cdt);
+bool restore_cylinder_trim_parameters(ON_Brep &brep, ON_BrepFace &face);
+bool restore_collapsed_cylinder_support(ON_Brep &brep, ON_BrepFace &face);
+bool restore_periodic_rim_trims(ON_Brep &brep, ON_BrepFace &face);
 void initialize_edge_containers(struct ON_Brep_CDT_State *s_cdt);
 void refine_close_edges(struct ON_Brep_CDT_State *s_cdt);
 void tol_curved_edges_split(struct ON_Brep_CDT_State *s_cdt);

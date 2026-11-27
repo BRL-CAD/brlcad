@@ -815,6 +815,723 @@ curve_interior_point_parameter(double *parameter, const ON_NurbsCurve *curve,
 	point, tolerance, true);
 }
 
+/* Consecutive UVs can range over several turns. Test the lifted path
+ * against the shared edge in trim order, allowing independently
+ * parameterized curves and rejecting a different periodic branch. */
+static bool
+trim_curve_matches_edge(const ON_Curve &trim, const ON_Surface &surface,
+	const ON_BrepEdge &edge, bool reversed)
+{
+    for (int end = 0; end < 2; ++end) {
+	const ON_BrepVertex *vertex = edge.Vertex(reversed ? 1 - end : end);
+	const double t = trim.Domain().ParameterAt(end);
+	const ON_3dPoint point = cdt_surface_point(&surface, trim.PointAt(t));
+	if (!vertex || !point.IsValid() ||
+		point.DistanceTo(vertex->Point()) > BN_TOL_DIST)
+	    return false;
+    }
+    const std::unique_ptr<ON_NurbsCurve> curve(edge.NurbsCurve());
+    if (!curve)
+	return false;
+    const int spans = trim.SpanCount();
+    const int max_trim_spans = 4096;
+    if (spans < 1 || spans > max_trim_spans)
+	return false;
+    std::vector<double> breaks((size_t)spans + 1);
+    if (!trim.GetSpanVector(breaks.data()))
+	return false;
+    const ON_Interval trim_domain = trim.Domain();
+    const ON_Interval domain = curve->Domain();
+    ON_Interval remaining = domain;
+    const int samples_per_span = 4;
+    /* Dense imported p-curves can have hundreds of spans on a single
+     * edge, even when their edge parameters already agree. Allow those
+     * direct checks without multiplying the closest-point search budget. */
+    const int max_closest_point_searches = 1024;
+    int closest_point_searches = 0;
+    for (int span = 0; span < spans; ++span) {
+	const ON_Interval interval(breaks[span], breaks[span + 1]);
+	if (!interval.IsIncreasing())
+	    return false;
+	for (int sample = 1; sample <= samples_per_span; ++sample) {
+	    if (span == spans - 1 && sample == samples_per_span)
+		break;
+	    const double t = interval.ParameterAt(
+		(double)sample / samples_per_span);
+	    const ON_3dPoint point = cdt_surface_point(&surface, trim.PointAt(t));
+	    if (!point.IsValid())
+		return false;
+	    const double fraction = trim_domain.NormalizedParameterAt(t);
+	    double parameter = domain.ParameterAt(reversed ?
+		1.0 - fraction : fraction);
+	    const ON_3dPoint guess = curve->PointAt(parameter);
+	    const bool matches = guess.IsValid() &&
+		split_parameter_interior(remaining[0], remaining[1], parameter) &&
+		guess.DistanceTo(point) <= BN_TOL_DIST;
+	    if (!matches && (++closest_point_searches > max_closest_point_searches ||
+		    !curve_interior_point_parameter_impl(&parameter, curve.get(),
+			remaining, point, BN_TOL_DIST, false)))
+		return false;
+	    remaining[reversed ? 1 : 0] = parameter;
+	}
+    }
+    return true;
+}
+
+int
+cdt_test_many_trim_spans(void)
+{
+    const double edge_length = 10.0;
+    ON_Brep fixture;
+    const ON_3dPoint first(0.0, 0.0, 0.0);
+    const ON_3dPoint last(edge_length, 0.0, 0.0);
+    fixture.NewVertex(first, 0.0);
+    fixture.NewVertex(last, 0.0);
+    const ON_Interval domain(0.0, edge_length);
+    const int curve = fixture.AddEdgeCurve(new ON_LineCurve(ON_Line(first, last),
+	domain.Min(), domain.Max()));
+    const ON_BrepEdge &edge = fixture.NewEdge(fixture.m_V[0], fixture.m_V[1],
+	curve, nullptr, 0.0);
+    const ON_PlaneSurface surface(ON_xy_plane);
+    const int spans = 704;
+    ON_PolylineCurve trim;
+    for (int i = 0; i <= spans; ++i) {
+	const double parameter = domain.ParameterAt((double)i / spans);
+	trim.m_pline.Append(ON_3dPoint(parameter, 0.0, 0.0));
+	trim.m_t.Append(parameter);
+    }
+    if (!trim.ChangeDimension(2) ||
+	    !trim_curve_matches_edge(trim, surface, edge, false))
+	return 1;
+
+    /* A bad span late in the trim still invalidates the correspondence. */
+    trim.m_pline[spans - 2].y = 2.0 * BN_TOL_DIST;
+    return trim_curve_matches_edge(trim, surface, edge, false) ? 2 : 0;
+}
+
+/* A straight two-row control net with equal paired weights preserves the
+ * source axial parameter exactly. Other cylinders may twist or alter
+ * their axial speed and cannot use a line with this parameter domain. */
+static bool
+cylinder_axial_displacement(ON_3dVector &displacement,
+	const ON_NurbsSurface &surface, int axial, const ON_3dVector &axis)
+{
+    for (int i = 0; i < surface.CVCount(1 - axial); ++i) {
+	ON_3dPoint lower, upper;
+	ON_4dPoint lower_weight, upper_weight;
+	const int low_u = axial ? i : 0;
+	const int low_v = axial ? 0 : i;
+	const int high_u = axial ? i : 1;
+	const int high_v = axial ? 1 : i;
+	if (!surface.GetCV(low_u, low_v, lower) ||
+		!surface.GetCV(high_u, high_v, upper) ||
+		!surface.GetCV(low_u, low_v, lower_weight) ||
+		!surface.GetCV(high_u, high_v, upper_weight) ||
+		!NEAR_EQUAL(lower_weight.w, upper_weight.w, ON_ZERO_TOLERANCE))
+	    return false;
+	const ON_3dVector delta = upper - lower;
+	if (!i)
+	    displacement = (delta * axis) * axis;
+	if ((delta - displacement).Length() > ON_ZERO_TOLERANCE)
+	    return false;
+    }
+    return displacement.Length() > ON_ZERO_TOLERANCE;
+}
+
+static bool
+trim_endpoints_match_surface(const ON_BrepTrim &trim, const ON_Surface *surface)
+{
+    for (int end = 0; end < 2; ++end) {
+	const double t = trim.Domain().ParameterAt(end);
+	const ON_3dPoint point = cdt_surface_point(surface, trim.PointAt(t));
+	if (!point.IsValid() ||
+		point.DistanceTo(trim.Vertex(end)->Point()) > BN_TOL_DIST)
+	    return false;
+    }
+    return true;
+}
+
+static std::unique_ptr<ON_RevSurface>
+radian_cylinder_surface(const ON_BrepFace &face)
+{
+    const ON_NurbsSurface *source = ON_NurbsSurface::Cast(face.SurfaceOf());
+    if (!source)
+	return nullptr;
+    const bool u_closed = source->IsClosed(0);
+    if (u_closed == source->IsClosed(1))
+	return nullptr;
+    const int angular = u_closed ? 0 : 1;
+    const int axial = 1 - angular;
+    const ON_Interval u = source->Domain(angular);
+    const ON_Interval v = source->Domain(axial);
+    const double period = 2.0 * ON_PI;
+    if (!u.IsIncreasing() || !v.IsIncreasing() ||
+	    u.Length() <= period + cdt_surface_parameter_tolerance(u) ||
+	    source->Degree(axial) != 1 || source->CVCount(axial) != 2 ||
+	    cdt_face_has_seam(face))
+	return nullptr;
+
+    std::vector<const ON_BrepTrim *> trims;
+    bool source_matches = true;
+    const double axial_roundoff = cdt_surface_parameter_tolerance(v);
+    for (int li = 0; li < face.LoopCount(); ++li) {
+	const ON_BrepLoop *loop = face.Loop(li);
+	if (!loop)
+	    return nullptr;
+	for (int ti = 0; ti < loop->TrimCount(); ++ti) {
+	    const ON_BrepTrim *trim = loop->Trim(ti);
+	    if (!trim || !trim->Edge() || !trim->Vertex(0) || !trim->Vertex(1))
+		return nullptr;
+	    ON_BoundingBox bounds;
+	    if (!trim->GetBoundingBox(bounds) || !bounds.IsValid() ||
+		    bounds.Min()[axial] < v.Min() - axial_roundoff ||
+		    bounds.Max()[axial] > v.Max() + axial_roundoff)
+		return nullptr;
+	    trims.push_back(trim);
+	    source_matches = source_matches &&
+		trim_endpoints_match_surface(*trim, source);
+	}
+    }
+    if (source_matches)
+	return nullptr;
+
+    ON_Cylinder cylinder;
+    if (!source->IsCylinder(&cylinder, ON_ZERO_TOLERANCE) ||
+	    !cylinder.IsValid())
+	return nullptr;
+    ON_3dVector axis = cylinder.circle.plane.zaxis;
+    const ON_3dPoint center = cylinder.circle.Center();
+    ON_3dPoint point;
+    ON_3dVector du, dv;
+    const double parameters[2] = {angular ? v.Min() : u.Mid(),
+	angular ? u.Mid() : v.Min()};
+    if (!source->Ev1Der(parameters[0], parameters[1], point, du, dv))
+	return nullptr;
+    const ON_3dVector derivative = angular ? dv : du;
+    if (derivative * ON_CrossProduct(axis, point - center) < 0.0)
+	axis = -axis;
+    ON_3dVector displacement;
+    if (!cylinder_axial_displacement(displacement, *source, axial, axis))
+	return nullptr;
+
+    /* Recover the phase from one topological endpoint. The remaining
+     * endpoints and the shared edge shapes must independently agree. */
+    const ON_BrepTrim &anchor = *trims.front();
+    ON_3dVector radial = anchor.Vertex(0)->Point() - center;
+    radial -= (radial * axis) * axis;
+    if (!radial.Unitize())
+	return nullptr;
+    const double phase = std::remainder(u.Min() - anchor.PointAtStart()[angular],
+	period);
+    const ON_3dPoint start = center + ((point - center) * axis) * axis +
+	cylinder.circle.radius * (std::cos(phase) * radial +
+	    std::sin(phase) * ON_CrossProduct(axis, radial));
+    /* Use one evaluation period. The original trim loops retain their
+     * lifted coordinates, including multiple revolutions. */
+    auto result = std::make_unique<ON_RevSurface>();
+    result->m_curve = new ON_LineCurve(start, start + displacement);
+    result->m_axis = ON_Line(center, center + axis);
+    result->m_bTransposed = angular != 0;
+    if (!result->m_curve->SetDomain(v.Min(), v.Max()) ||
+	    !result->SetAngleRadians(0.0, period) ||
+	    !result->SetDomain(angular, u.Min(), u.Min() + period) ||
+	    !result->IsValid())
+	return nullptr;
+
+    for (const ON_BrepTrim *trim : trims) {
+	if (!trim_curve_matches_edge(*trim, *result, *trim->Edge(),
+		trim->m_bRev3d))
+	    return nullptr;
+    }
+    return result;
+}
+
+bool
+restore_cylinder_trim_parameters(ON_Brep &brep, ON_BrepFace &face)
+{
+    std::unique_ptr<ON_RevSurface> replacement = radian_cylinder_surface(face);
+    if (!replacement)
+	return false;
+    const int surface_index = brep.AddSurface(replacement.get());
+    if (surface_index < 0)
+	return false;
+    face.m_si = surface_index;
+    face.SetProxySurface(replacement.release());
+    return true;
+}
+
+/* A collapsed full-turn carrier can still have a cylindrical neighbor
+ * across its complete circular boundary. That neighbor fixes the support;
+ * the two uses of the straight seam fix the axial range and trim phase. */
+static bool
+collapsed_to_seam(const ON_NurbsSurface &source, int angular,
+	const ON_3dPoint (&endpoints)[2])
+{
+    const int axial = 1 - angular;
+    if (source.Degree(axial) != 1 || source.CVCount(axial) != 2)
+	return false;
+    for (int i = 0; i < source.CVCount(angular); ++i) {
+	ON_4dPoint row[2];
+	for (int end = 0; end < 2; ++end) {
+	    if (!source.GetCV(angular ? end : i, angular ? i : end, row[end]) ||
+		    !(row[end].w > 0.0))
+		return false;
+	    const ON_3dPoint p(row[end]);
+	    if (!p.IsValid() || p.DistanceTo(endpoints[end]) > BN_TOL_DIST)
+		return false;
+	}
+	if (!NEAR_EQUAL(row[0].w, row[1].w, ON_ZERO_TOLERANCE))
+	    return false;
+    }
+    return true;
+}
+
+static bool
+seam_spans_domain(const ON_BrepTrim &trim, int angular,
+	double boundary, const ON_Interval &axial)
+{
+    const auto first = trim.PointAtStart();
+    const auto last = trim.PointAtEnd();
+    /* Importers can extend the carrier slightly past the seam's endpoint.
+     * The unchanged 3D edge and all replacement lifts are checked below. */
+    const double axial_roundoff =
+	std::sqrt(std::numeric_limits<double>::epsilon()) * axial.Length();
+    return NEAR_EQUAL(first[angular], boundary, ON_ZERO_TOLERANCE) &&
+	NEAR_EQUAL(last[angular], boundary, ON_ZERO_TOLERANCE) &&
+	NEAR_EQUAL(std::min(first[1 - angular], last[1 - angular]),
+	    axial.Min(), axial_roundoff) &&
+	NEAR_EQUAL(std::max(first[1 - angular], last[1 - angular]),
+	    axial.Max(), axial_roundoff) &&
+	trim.IsLinear(ON_ZERO_TOLERANCE);
+}
+
+static std::unique_ptr<ON_RevSurface>
+continued_cylinder(const ON_BrepFace &face, const ON_BrepTrim &rim,
+	int angular, const ON_3dPoint (&ends)[2])
+{
+    const auto &source = *face.SurfaceOf();
+    const auto u = source.Domain(angular);
+    const auto v = source.Domain(1 - angular);
+    const auto first = rim.PointAtStart();
+    const auto last = rim.PointAtEnd();
+    const auto *edge = rim.Edge();
+    const double tol = cdt_surface_parameter_tolerance(u);
+    if (!edge || !edge->IsClosed() || edge->TrimCount() != 2 ||
+	    !rim.IsLinear(ON_ZERO_TOLERANCE) ||
+	    !NEAR_EQUAL(std::min(first[angular], last[angular]), u.Min(), tol) ||
+	    !NEAR_EQUAL(std::max(first[angular], last[angular]), u.Max(), tol) ||
+	    !NEAR_EQUAL(first[1 - angular], last[1 - angular], ON_ZERO_TOLERANCE) ||
+	    !(NEAR_EQUAL(first[1 - angular], v.Min(), ON_ZERO_TOLERANCE) ||
+	    NEAR_EQUAL(first[1 - angular], v.Max(), ON_ZERO_TOLERANCE)))
+	return nullptr;
+    const ON_BrepTrim *other = edge->Trim(edge->Trim(0) == &rim ? 1 : 0);
+    const ON_BrepFace *neighbor = other ? other->Face() : nullptr;
+    const ON_Surface *mate = neighbor && neighbor != &face ?
+	neighbor->SurfaceOf() : nullptr;
+    ON_Cylinder cylinder;
+    ON_Arc circle;
+    const double period = 2.0 * ON_PI;
+    if (!mate || !mate->IsCylinder(&cylinder, ON_ZERO_TOLERANCE) ||
+	    !cylinder.IsValid() || !edge->IsArc(nullptr, &circle, BN_TOL_DIST) ||
+	    !circle.IsCircle() ||
+	    !NEAR_EQUAL(circle.Radius(), cylinder.circle.Radius(), BN_TOL_DIST) ||
+	    std::fabs(u.Length() - period) * cylinder.circle.Radius() > BN_TOL_DIST)
+	return nullptr;
+
+    const auto center = cylinder.circle.Center();
+    const auto direction = cylinder.circle.plane.zaxis;
+    const ON_Line axis(center, center + direction);
+    const double radius = cylinder.circle.Radius();
+    const auto axis_start = axis.ClosestPointTo(ends[0]);
+    const auto axis_end = axis.ClosestPointTo(ends[1]);
+    auto radial = ends[0] - axis_start;
+    if (axis.ClosestPointTo(circle.Center()).DistanceTo(circle.Center()) >
+	    BN_TOL_DIST ||
+	    ON_CrossProduct(direction, circle.plane.zaxis).Length() * radius >
+	    BN_TOL_DIST ||
+	    !NEAR_EQUAL(radial.Length(), radius, BN_TOL_DIST) ||
+	    (ends[1] - axis_end - radial).Length() > BN_TOL_DIST ||
+	    !radial.Unitize())
+	return nullptr;
+
+    for (int orientation : {1, -1}) {
+	auto candidate = std::make_unique<ON_RevSurface>();
+	candidate->m_curve = new ON_LineCurve(axis_start + radius * radial,
+	    axis_end + radius * radial);
+	candidate->m_axis = ON_Line(center, center + orientation * direction);
+	candidate->m_bTransposed = angular != 0;
+	if (!candidate->m_curve->SetDomain(v.Min(), v.Max()) ||
+		!candidate->SetAngleRadians(0.0, period) ||
+		!candidate->SetDomain(angular, u.Min(), u.Max()) ||
+		!candidate->IsValid())
+	    continue;
+	bool matches = true;
+	for (int li = 0; li < face.LoopCount() && matches; ++li) {
+	    const ON_BrepLoop *loop = face.Loop(li);
+	    if (!loop) {
+		matches = false;
+		break;
+	    }
+	    for (int ti = 0; ti < loop->TrimCount(); ++ti) {
+		const ON_BrepTrim *trim = loop->Trim(ti);
+		if (!trim || !trim->Edge() || !trim_curve_matches_edge(*trim,
+			*candidate, *trim->Edge(), trim->m_bRev3d)) {
+		    matches = false;
+		    break;
+		}
+	    }
+	}
+	if (matches)
+	    return candidate;
+    }
+    return nullptr;
+}
+
+bool
+restore_collapsed_cylinder_support(ON_Brep &brep, ON_BrepFace &face)
+{
+    const auto *source = ON_NurbsSurface::Cast(face.SurfaceOf());
+    const auto *loop = face.OuterLoop();
+    if (!source || !loop ||
+	    source->IsClosed(0) || source->IsClosed(1))
+	return false;
+    for (int i = 0; i < loop->TrimCount(); ++i) {
+	const auto *primary = loop->Trim(i);
+	const auto *edge = primary ? primary->Edge() : nullptr;
+	if (!edge || primary->m_type != ON_BrepTrim::seam ||
+		edge->TrimCount() != 2 || !edge->IsLinear(BN_TOL_DIST) ||
+		!primary->Vertex(0) || !primary->Vertex(1))
+	    continue;
+	const auto *other = edge->Trim(edge->Trim(0) == primary ? 1 : 0);
+	if (!other || other->Face() != &face)
+	    continue;
+	for (int angular = 0; angular < 2; ++angular) {
+	    const auto u = source->Domain(angular);
+	    const auto v = source->Domain(1 - angular);
+	    if (!seam_spans_domain(*primary, angular, u.Min(), v) ||
+		    !seam_spans_domain(*other, angular, u.Max(), v))
+		continue;
+	    const bool forward = primary->PointAtStart()[1 - angular] <
+		primary->PointAtEnd()[1 - angular];
+	    const ON_3dPoint ends[2] = {primary->Vertex(forward ? 0 : 1)->Point(),
+		primary->Vertex(forward ? 1 : 0)->Point()};
+	    if (!collapsed_to_seam(*source, angular, ends))
+		continue;
+	    for (int j = 0; j < loop->TrimCount(); ++j) {
+		const auto *rim = loop->Trim(j);
+		if (!rim)
+		    continue;
+		auto support = continued_cylinder(face, *rim, angular, ends);
+		if (!support)
+		    continue;
+		const int index = brep.AddSurface(support.get());
+		if (index < 0)
+		    return false;
+		face.m_si = index;
+		face.SetProxySurface(support.release());
+		return true;
+	    }
+	}
+    }
+    return false;
+}
+
+int
+cdt_test_collapsed_cylinder_support(void)
+{
+    const double radius = 3.0;
+    const double height = 2.0;
+    const ON_Cylinder cylinder(ON_Circle(ON_xy_plane, radius), height);
+    std::unique_ptr<ON_RevSurface> lower(cylinder.RevSurfaceForm());
+    std::unique_ptr<ON_RevSurface> upper(cylinder.RevSurfaceForm());
+    ON_Brep fixture;
+    if (!lower || !upper ||
+	    !upper->Transform(ON_Xform::TranslationTransformation(0.0, 0.0,
+		height)) || !fixture.NewFace(*lower))
+	return 1;
+
+    const auto *ring = fixture.m_F[0].OuterLoop()->Trim(2);
+    if (!ring || !ring->Edge() || !ring->Edge()->IsClosed())
+	return 2;
+    const int vertex = ring->m_vi[0];
+    int vertices[] = {vertex, vertex, -1, -1};
+    int edges[] = {ring->m_ei, -1, -1, -1};
+    bool reverse[] = {!ring->m_bRev3d, false, false, false};
+    ON_BrepFace *damaged = fixture.NewFace(upper.get(), vertices, edges,
+	reverse);
+    if (!damaged)
+	return 3;
+    upper.release();
+    const auto *correct = damaged->SurfaceOf();
+    const ON_Interval angular = correct->Domain(0);
+    const ON_Interval axial = correct->Domain(1);
+    const ON_3dPoint low = correct->PointAt(angular.Min(), axial.Min());
+    const ON_3dPoint high = correct->PointAt(angular.Min(), axial.Max());
+    const double test_angle = angular.ParameterAt(0.25);
+    const auto expected = correct->PointAt(test_angle, axial.Mid());
+    if (restore_collapsed_cylinder_support(fixture, *damaged))
+	return 4;
+
+    auto collapsed = std::make_unique<ON_NurbsSurface>(3, false, 2, 2, 2, 2);
+    const ON_3dVector offset(0.0, BN_TOL_DIST / 32.0, 0.0);
+    if (!collapsed->MakeClampedUniformKnotVector(0) ||
+	    !collapsed->MakeClampedUniformKnotVector(1) ||
+	    !collapsed->SetDomain(0, angular.Min(), angular.Max()) ||
+	    !collapsed->SetDomain(1, axial.Min(), axial.Max()) ||
+	    !collapsed->SetCV(0, 0, low) || !collapsed->SetCV(0, 1, high) ||
+	    !collapsed->SetCV(1, 0, low + offset) ||
+	    !collapsed->SetCV(1, 1, high + offset))
+	return 4;
+    const int broken_surface = fixture.AddSurface(collapsed.get());
+    if (broken_surface < 0)
+	return 5;
+    damaged->m_si = broken_surface;
+    damaged->SetProxySurface(collapsed.release());
+    fixture.SetTolerancesBoxesAndFlags();
+    for (int i = 0; i < fixture.m_E.Count(); ++i)
+	fixture.m_E[i].m_tolerance = BN_TOL_DIST;
+    for (int i = 0; i < fixture.m_V.Count(); ++i)
+	fixture.m_V[i].m_tolerance = BN_TOL_DIST;
+    if (!fixture.IsValid())
+	return 6;
+    const ON__UINT32 crc = fixture.DataCRC(0);
+    ON_Brep working(fixture);
+    if (!restore_collapsed_cylinder_support(working, working.m_F[1]) ||
+	    fixture.DataCRC(0) != crc)
+	return 6;
+    const auto *recovered = working.m_F[1].SurfaceOf();
+    if (!recovered->IsCylinder(nullptr, ON_ZERO_TOLERANCE) ||
+	    recovered->PointAt(test_angle, axial.Mid()).DistanceTo(expected) >
+	    BN_TOL_DIST)
+	return 7;
+    return 0;
+}
+
+struct rim_trim_update {
+    ON_BrepTrim *trim;
+    std::unique_ptr<ON_LineCurve> curve;
+};
+
+/* Sliding junctions along a complete, straight UV rim preserves the
+ * trimming region. Require every revised subarc to agree with its own
+ * shared edge before installing any new curve. */
+static std::vector<rim_trim_update>
+periodic_rim_updates(ON_BrepLoop &loop, const ON_Surface &surface,
+	int start_trim, int angular, const ON_Interval &domain)
+{
+    const int axial = 1 - angular;
+    const auto first_uv = loop.Trim(start_trim)->PointAtStart();
+    const double start = first_uv[angular];
+    const double height = first_uv[axial];
+    const double parameter_tol = cdt_surface_parameter_tolerance(domain);
+    const auto height_domain = surface.Domain(axial);
+    const double height_tol = cdt_surface_parameter_tolerance(height_domain);
+    const bool forward = NEAR_EQUAL(start, domain.Min(), parameter_tol);
+    if ((!forward && !NEAR_EQUAL(start, domain.Max(), parameter_tol)) ||
+	    (!NEAR_EQUAL(height, height_domain.Min(), height_tol) &&
+	    !NEAR_EQUAL(height, height_domain.Max(), height_tol)))
+	return {};
+    const double finish = forward ? domain.Max() : domain.Min();
+
+    std::vector<ON_BrepTrim *> trims;
+    std::vector<double> division{start};
+    for (int step = 0; step < loop.TrimCount(); ++step) {
+	ON_BrepTrim *trim = loop.Trim((start_trim + step) % loop.TrimCount());
+	if (!trim || !trim->Edge() || !trim->Vertex(0) || !trim->Vertex(1) ||
+		!trim->IsLinear(ON_ZERO_TOLERANCE))
+	    return {};
+	const auto first = trim->PointAtStart();
+	const auto last = trim->PointAtEnd();
+	if (!NEAR_EQUAL(first[axial], height, height_tol) ||
+		!NEAR_EQUAL(last[axial], height, height_tol) ||
+		!NEAR_EQUAL(first[angular], division.back(), parameter_tol) ||
+		(forward ? !(last[angular] > first[angular]) :
+		    !(last[angular] < first[angular])))
+	    return {};
+	trims.push_back(trim);
+	division.push_back(last[angular]);
+	if (NEAR_EQUAL(last[angular], finish, parameter_tol))
+	    break;
+    }
+    if (trims.size() < 2 || !NEAR_EQUAL(division.back(), finish, parameter_tol) ||
+	    trims.front()->Vertex(0) != trims.back()->Vertex(1))
+	return {};
+
+    if (std::all_of(trims.begin(), trims.end(), [&](const ON_BrepTrim *trim) {
+		return trim_endpoints_match_surface(*trim, &surface);
+	    }))
+	return {};
+
+    const std::unique_ptr<ON_Curve> iso(surface.IsoCurve(angular, height));
+    const auto *rim = iso ? ON_NurbsCurve::Cast(iso.get()) : nullptr;
+    if (!rim || !NEAR_EQUAL(rim->Domain().Min(), domain.Min(), parameter_tol) ||
+	    !NEAR_EQUAL(rim->Domain().Max(), domain.Max(), parameter_tol))
+	return {};
+    /* Disjoint search intervals keep neighboring junctions ordered. */
+    const auto original = division;
+    for (size_t i = 1; i + 1 < division.size(); ++i) {
+	const ON_BrepVertex *vertex = trims[i]->Vertex(0);
+	if (vertex != trims[i - 1]->Vertex(1))
+	    return {};
+	const ON_3dPoint point = vertex->Point();
+	if (rim->PointAt(original[i]).DistanceTo(point) <= BN_TOL_DIST)
+	    continue;
+	const double left = 0.5 * (original[i - 1] + original[i]);
+	const double right = 0.5 * (original[i] + original[i + 1]);
+	const ON_Interval interval(std::min(left, right), std::max(left, right));
+	if (!curve_interior_point_parameter_impl(&division[i], rim, interval,
+		point, BN_TOL_DIST, false))
+	    return {};
+    }
+
+    std::vector<rim_trim_update> updates;
+    for (size_t i = 0; i < trims.size(); ++i) {
+	ON_2dPoint first, last;
+	first[axial] = last[axial] = height;
+	first[angular] = division[i];
+	last[angular] = division[i + 1];
+	auto replacement = std::make_unique<ON_LineCurve>(first, last);
+	const ON_BrepTrim &trim = *trims[i];
+	const ON_Interval tr = trim.Domain();
+	/* Both adjacent segments must agree with their own master edge.
+	 * Moving the shared subdivision never changes the rim as a set. */
+	if (!replacement->SetDomain(tr.Min(), tr.Max()) ||
+		!trim_curve_matches_edge(*replacement, surface, *trim.Edge(),
+		    trim.m_bRev3d))
+	    return {};
+	updates.push_back({trims[i], std::move(replacement)});
+    }
+    return updates;
+}
+
+bool
+restore_periodic_rim_trims(ON_Brep &brep, ON_BrepFace &face)
+{
+    const ON_NurbsSurface *surface = ON_NurbsSurface::Cast(face.SurfaceOf());
+    if (!surface)
+	return true;
+    const bool u_closed = surface->IsClosed(0);
+    if (u_closed == surface->IsClosed(1) || !cdt_face_has_seam(face))
+	return true;
+    const int angular = u_closed ? 0 : 1;
+    const ON_Interval domain = surface->Domain(angular);
+    for (int li = 0; li < face.LoopCount(); ++li) {
+	ON_BrepLoop *loop = face.Loop(li);
+	if (!loop)
+	    continue;
+	bool changed = false;
+	for (int ti = 0; ti < loop->TrimCount(); ++ti) {
+	    if (!loop->Trim(ti))
+		continue;
+	    auto updates = periodic_rim_updates(*loop, *surface, ti,
+		angular, domain);
+	    for (auto &update : updates) {
+		const int curve = brep.AddTrimCurve(update.curve.get());
+		if (curve < 0)
+		    return false;
+		update.curve.release();
+		if (!update.trim->ChangeTrimCurve(curve))
+		    return false;
+		changed = true;
+	    }
+	}
+	if (changed && !brep.SetTrimBoundingBoxes(*loop))
+	    return false;
+    }
+    return true;
+}
+
+int
+cdt_test_periodic_rim_conditioning(void)
+{
+    const double radius = 3.0;
+    const double height = 2.0;
+    const ON_Cylinder cylinder(ON_Circle(ON_xy_plane, radius), height);
+    auto surface = std::make_unique<ON_NurbsSurface>();
+    if (cylinder.GetNurbForm(*surface) != 2)
+	return 1;
+
+    ON_Brep source;
+    ON_NurbsSurface *carrier = surface.get();
+    const int surface_index = source.AddSurface(carrier);
+    if (surface_index < 0)
+	return 1;
+    surface.release();
+    ON_BrepFace &face = source.NewFace(surface_index);
+    ON_BrepLoop &loop = source.NewLoop(ON_BrepLoop::outer, face);
+    const ON_Interval u = carrier->Domain(0);
+    const ON_Interval v = carrier->Domain(1);
+    const double division = u.ParameterAt(0.36);
+    const double misplaced = u.ParameterAt(0.39);
+    const ON_2dPoint corner[] = {
+	ON_2dPoint(u.Min(), v.Min()), ON_2dPoint(division, v.Min()),
+	ON_2dPoint(u.Max(), v.Min()), ON_2dPoint(u.Max(), v.Max()),
+	ON_2dPoint(u.Min(), v.Max())
+    };
+    int vertex[] = {
+	source.NewVertex(carrier->PointAt(corner[0].x, corner[0].y), 0.0).m_vertex_index,
+	source.NewVertex(carrier->PointAt(corner[1].x, corner[1].y), 0.0).m_vertex_index,
+	-1,
+	source.NewVertex(carrier->PointAt(corner[3].x, corner[3].y), 0.0).m_vertex_index,
+	-1
+    };
+    vertex[2] = vertex[0];
+    vertex[4] = vertex[3];
+
+    int seam = -1;
+    for (int i = 0; i < 5; ++i) {
+	const int next = (i + 1) % 5;
+	const bool along_rim = i != 2 && i != 4;
+	if (i != 4) {
+	    std::unique_ptr<ON_Curve> edge(carrier->IsoCurve(along_rim ? 0 : 1,
+		along_rim ? corner[i].y : corner[i].x));
+	    const int direction = along_rim ? 0 : 1;
+	    const double first = corner[i][direction];
+	    const double last = corner[next][direction];
+	    if (!edge || !edge->Trim(ON_Interval(std::min(first, last),
+		    std::max(first, last))) || (first > last && !edge->Reverse()))
+		return 2;
+	    source.NewEdge(source.m_V[vertex[i]], source.m_V[vertex[next]],
+		source.AddEdgeCurve(edge.release()), nullptr, 2.0 * radius);
+	}
+	if (i == 2)
+	    seam = source.m_E.Count() - 1;
+	const int edge_index = i == 4 ? seam : source.m_E.Count() - 1;
+	ON_2dPoint start = corner[i];
+	ON_2dPoint end = corner[next];
+	if (i == 0)
+	    end.x = misplaced;
+	if (i == 1)
+	    start.x = misplaced;
+	ON_BrepTrim &trim = source.NewTrim(source.m_E[edge_index], i == 4,
+	    loop, source.AddTrimCurve(new ON_LineCurve(start, end)));
+	trim.m_type = i == 2 || i == 4 ? ON_BrepTrim::seam :
+	    ON_BrepTrim::boundary;
+	trim.m_tolerance[0] = trim.m_tolerance[1] = 0.0;
+    }
+    source.SetTrimIsoFlags();
+    source.SetTrimBoundingBoxes(loop);
+    if (!source.IsValid())
+	return 3;
+
+    const ON__UINT32 crc = source.DataCRC(0);
+    ON_Brep working(source);
+    if (!restore_periodic_rim_trims(working, working.m_F[0]) ||
+	    !working.IsValid() || source.DataCRC(0) != crc)
+	return 4;
+    const auto &first = working.m_T[0];
+    const auto &second = working.m_T[1];
+    if (!trim_endpoints_match_surface(first, carrier) ||
+	    !trim_endpoints_match_surface(second, carrier) ||
+	    !NEAR_EQUAL(first.PointAtEnd().x, second.PointAtStart().x,
+		ON_ZERO_TOLERANCE))
+	return 5;
+    if (first.PointAtStart().DistanceTo(corner[0]) > ON_ZERO_TOLERANCE ||
+	    second.PointAtEnd().DistanceTo(corner[2]) > ON_ZERO_TOLERANCE)
+	return 6;
+    return 0;
+}
+
 static bool
 close_edge_split_worthwhile(const struct ON_Brep_CDT_State *s_cdt,
 	const bedge_seg_t *bseg)
@@ -1055,8 +1772,17 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, ON_3dPoint &e
 	    s_len = (len_2 > 0 && len_2 < s_len) ? len_2 : s_len;
 	    if (!edge_spacing_floor(&s_len, s_cdt->absmin, local_min))
 		return false;
-	    max_allowed = 5*s_len;
-	    min_allowed = 0.2*s_len;
+	    max_allowed = 5.0 * s_len;
+	    min_allowed = 0.2 * s_len;
+	    if (s_cdt->tol.absmax <= ON_ZERO_TOLERANCE) {
+		/* The neighboring trim sets a triangle sizing preference.
+		 * Bound how far that preference can subdivide a straight
+		 * edge. Adjacent normals still control geometric refinement. */
+		double sizing_floor = 0.0;
+		if (shape_refinement_spacing(&sizing_floor, s_cdt->absmin,
+			bseg->cp_len))
+		    max_allowed = std::max(max_allowed, sizing_floor);
+	    }
 	    break;
 	case 3:
 	    // Linear edge connected to one or more non-linear edges.  If the start or end points
@@ -1076,11 +1802,14 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, ON_3dPoint &e
 	    }
 	    s_len = (len_1 > 0) ? len_1 : len_2;
 	    s_len = (len_2 > 0 && len_2 < s_len) ? len_2 : s_len;
-	    if (!edge_spacing_floor(&s_len, s_cdt->absmin, local_min))
-		return false;
-	    if (s_len > 0) {
-		max_allowed = 2*s_len;
-		min_allowed = 0.5*s_len;
+	    /* Only segments incident to an original endpoint have a
+	     * neighbor-derived spacing. Applying its floor to an interior
+	     * segment would turn that floor into a new subdivision target. */
+	    if (s_len > 0.0) {
+		if (!edge_spacing_floor(&s_len, s_cdt->absmin, local_min))
+		    return false;
+		max_allowed = 2 * s_len;
+		min_allowed = 0.5 * s_len;
 	    }
 	    break;
 	case 4:
@@ -1350,6 +2079,29 @@ select_edge_split(edge_split_candidate &candidate,
     return trim_progress;
 }
 
+
+/* Deferring chart cleanup is useful only if the shared edge can be
+ * subdivided without substituting geometry from inconsistent pullbacks. */
+bool
+shared_edge_midpoint_matches_trims(struct ON_Brep_CDT_State *state,
+	bedge_seg_t *segment, const ON_3dPoint &midpoint)
+{
+    if (!state || !segment->tseg1 || !segment->tseg2)
+	return false;
+    edge_split_candidate candidate;
+    if (!select_edge_split(candidate, state, segment, 1, nullptr,
+	    &midpoint, false))
+	return false;
+    const cpolyedge_t *segments[] = {segment->tseg1, segment->tseg2};
+    for (int side = 0; side < 2; ++side) {
+	const auto &trim = state->brep->m_T[segments[side]->trim_ind];
+	const ON_3dPoint mapped = cdt_surface_point(trim.SurfaceOf(),
+	    candidate.trim_points[side]);
+	if (!mapped.IsValid() || mapped.DistanceTo(midpoint) > BN_TOL_DIST)
+	    return false;
+    }
+    return true;
+}
 
 static long
 add_split_point(cdt_mesh_t &mesh, ON_2dPoint &uv, ON_3dPoint *point)
@@ -1792,7 +2544,7 @@ characterize_edges(struct ON_Brep_CDT_State *s_cdt)
 	int has_curved_edge = 0;
 	for (int j = 0; j < brep->m_V[i].m_ei.Count(); j++) {
 	    ON_BrepEdge &edge = brep->m_E[brep->m_V[i].m_ei[j]];
-	    const ON_Curve* crv = edge.EdgeCurveOf();
+	    const ON_Curve *crv = edge.TrimCount() ? edge.EdgeCurveOf() : NULL;
 	    if (crv && !crv->IsLinear(BN_TOL_DIST)) {
 		has_curved_edge = 1;
 		break;
@@ -1804,9 +2556,8 @@ characterize_edges(struct ON_Brep_CDT_State *s_cdt)
     std::vector<int> edge_type;
     for (int index = 0; index < brep->m_E.Count(); index++) {
 	ON_BrepEdge& edge = brep->m_E[index];
-	const ON_Curve* crv = edge.EdgeCurveOf();
+	const ON_Curve *crv = edge.TrimCount() ? edge.EdgeCurveOf() : NULL;
 
-	// Singularity
 	if (!crv) {
 	    edge_type.push_back(0);
 	    continue;
@@ -1852,6 +2603,9 @@ initialize_edge_containers(struct ON_Brep_CDT_State *s_cdt)
 
     for (int index = 0; index < brep->m_E.Count(); index++) {
 	ON_BrepEdge& edge = brep->m_E[index];
+	if (!edge.TrimCount())
+	    continue;
+
 	bedge_seg_t *bseg = new bedge_seg_t;
 	bseg->edge_ind = edge.m_edge_index;
 	bseg->brep = s_cdt->brep;
@@ -2595,7 +3349,7 @@ curved_edges_refine(struct ON_Brep_CDT_State *s_cdt)
     std::map<int, double> refine_targets;
     for (int index = 0; index < brep->m_E.Count(); index++) {
 	ON_BrepEdge& edge = brep->m_E[index];
-	const ON_Curve* crv = edge.EdgeCurveOf();
+	const ON_Curve *crv = edge.TrimCount() ? edge.EdgeCurveOf() : NULL;
 	if (!crv || crv->IsLinear(BN_TOL_DIST)) continue;
 	/* A closed edge has the same topological vertex at both ends.  A short
 	 * curve incident at that seam does not justify imposing its segment
@@ -2608,10 +3362,10 @@ curved_edges_refine(struct ON_Brep_CDT_State *s_cdt)
 	for (int i = 0; i < 2; i++) {
 	    int vert_ind = edge.Vertex(i)->m_vertex_index;
 	    for (int j = 0; j < brep->m_V[vert_ind].m_ei.Count(); j++) {
-		ON_BrepEdge &e2= brep->m_E[brep->m_V[vert_ind].m_ei[j]];
-		const ON_Curve* crv2 = e2.EdgeCurveOf();
+		const ON_BrepEdge &neighbor = brep->m_E[brep->m_V[vert_ind].m_ei[j]];
+		const ON_Curve *crv2 = neighbor.TrimCount() ? neighbor.EdgeCurveOf() : NULL;
 		if (crv2 && !crv2->IsLinear(BN_TOL_DIST)) {
-		    double emed = edge_median_seg_len(s_cdt, e2.m_edge_index);
+		    double emed = edge_median_seg_len(s_cdt, neighbor.m_edge_index);
 		    if (emed < lmed) {
 			target_len = (2*emed < target_len) ? 2*emed : target_len;
 			refine = true;
@@ -3071,6 +3825,17 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 	    }
 	}
     }
+}
+
+bool
+finalize_face_rtrees(struct ON_Brep_CDT_State *s_cdt, int face_index)
+{
+    s_cdt->face_rtrees_3d[face_index].RemoveAll();
+    if (!rebuild_face_rtree_2d(s_cdt, face_index, 1))
+	return false;
+    for (cpolyedge_t *trim : cdt_face_polyedges(s_cdt, face_index))
+	rtree_bbox_3d(s_cdt, trim);
+    return true;
 }
 
 void

@@ -14,6 +14,7 @@
 #include "common.h"
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -72,14 +73,15 @@ public:
 	cdt_topo_vertex_id preferred_pole,
 	bool allow_boundary_approximation);
 
+    void index_pullback_seeds();
     bool native_to_chart(const ON_2dPoint &native_uv,
 	ON_2dPoint &chart_uv) const;
     bool chart_to_native(const ON_2dPoint &chart_uv,
 	ON_2dPoint &native_uv) const;
     bool triangle_interior_sample(const int chart_triangle[3],
 	ON_2dPoint &native_uv) const;
-    bool triangle_surface_samples(const int chart_triangle[3],
-	ON_2dPoint native_uv[4]) const;
+    bool triangle_centroid_sample(const int chart_triangle[3],
+	ON_2dPoint &native_uv) const;
     int triangle_orientation(const int chart_triangle[3]) const;
     bool edge_midpoint_sample(const int chart_edge[2],
 	ON_2dPoint &native_uv, ON_2dPoint &chart_uv) const;
@@ -120,7 +122,8 @@ public:
 
 private:
     bool surface_point_to_native(const ON_2dPoint &chart_uv,
-	const ON_3dPoint &target, double tolerance, ON_2dPoint &native_uv) const;
+	const ON_3dPoint &target, double tolerance, ON_2dPoint &native_uv,
+	double fit_tolerance = 0.0) const;
     bool triangle_chart_image(const int chart_triangle[3],
 	ON_2dPoint triangle[3]) const;
     bool build_native(const ON_BrepFace &face,
@@ -197,6 +200,8 @@ private:
     double m_cylinder_cut = 0.0;
     int m_cylinder_orientation = 1;
     std::vector<ON_2dPoint> m_source_native_points;
+    struct pullback_seed_index;
+    std::shared_ptr<const pullback_seed_index> m_pullback_seeds;
     std::string m_failure;
 };
 

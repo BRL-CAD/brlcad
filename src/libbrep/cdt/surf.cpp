@@ -269,6 +269,24 @@ static bool SPntCallback(void *data, void *a_context) {
     return (sc->on_edge) ? false : true;
 }
 
+struct surface_sample_contact {
+    const ON_3dPoint &point;
+    bool on_chord = false;
+};
+
+static bool
+surface_sample_on_chord(void *data, void *context)
+{
+    const auto *trim = static_cast<const cpolyedge_t *>(data);
+    if (!trim->eseg)
+	return true;
+
+    auto &contact = *static_cast<surface_sample_contact *>(context);
+    const ON_Line chord(*trim->eseg->e_start, *trim->eseg->e_end);
+    contact.on_chord = chord.MinimumDistanceTo(contact.point) <= BN_TOL_DIST;
+    return !contact.on_chord;
+}
+
 /* If we've got trimming curves involved, we need to be more careful about respecting
  * the min edge distance. */
 static bool involves_trims(double *min_edge, struct cdt_surf_info *sinfo, ON_3dPoint &p1, ON_3dPoint &p2)
@@ -484,7 +502,8 @@ static bool UseTrimPntCallback(void *data, void *a_context) {
 
 
 static void
-sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int face_index)
+sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt,
+	int face_index, double relative_scale)
 {
     ON_BrepFace &face = s_cdt->brep->m_F[face_index];
     const ON_Surface *s = face.SurfaceOf();
@@ -605,7 +624,7 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
     const double edge_within_dist = sinfo->within_dist;
     struct brep_cdt_tol face_tolerance = BREP_CDT_TOL_ZERO;
     CDT_Tol_Set(&face_tolerance, face_scale, sinfo->max_edge,
-	s_cdt->tol.abs, s_cdt->tol.rel, s_cdt->absmin);
+	s_cdt->tol.abs, s_cdt->tol.rel * relative_scale, s_cdt->absmin);
     sinfo->min_edge = face_tolerance.min_dist;
     sinfo->max_edge = face_tolerance.max_dist;
     sinfo->within_dist = std::max(edge_within_dist,
@@ -613,8 +632,32 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
 }
 
 
-void
-filter_surface_pnts(struct cdt_surf_info *sinfo)
+static void
+filter_near_trim_offsets(struct cdt_surf_info &sinfo)
+{
+    auto point = sinfo.on_surf_points.begin();
+    while (point != sinfo.on_surf_points.end()) {
+	const ON_2dPoint &uv = **point;
+	const double minimum[2] = {uv.x - ON_ZERO_TOLERANCE,
+	    uv.y - ON_ZERO_TOLERANCE};
+	const double maximum[2] = {uv.x + ON_ZERO_TOLERANCE,
+	    uv.y + ON_ZERO_TOLERANCE};
+	struct trim_seg_context nearby = {&uv, false};
+	if (sinfo.rtree_trim_spnts_2d.Search(minimum, maximum, NULL, NULL))
+	    nearby.on_edge = true;
+	else
+	    sinfo.rtree_2d->Search(minimum, maximum, SPntCallback, &nearby);
+	if (nearby.on_edge) {
+	    delete *point;
+	    point = sinfo.on_surf_points.erase(point);
+	} else {
+	    ++point;
+	}
+    }
+}
+
+static void
+filter_surface_pnts(struct cdt_surf_info *sinfo, size_t additional_points)
 {
 
     cdt_mesh_t *fmesh =
@@ -641,110 +684,80 @@ filter_surface_pnts(struct cdt_surf_info *sinfo)
 	}
     }
 
-    // Remove points that are troublesome per 2D filtering criteria
-    std::set<ON_2dPoint *> rm_pnts;
-    std::set<ON_2dPoint *>::iterator osp_it;
-    for (osp_it = sinfo->on_surf_points.begin(); osp_it != sinfo->on_surf_points.end(); osp_it++) {
-	const ON_2dPoint *p = *osp_it;
-	double fMin[2];
-	double fMax[2];
-	fMin[0] = p->x - ON_ZERO_TOLERANCE;
-	fMin[1] = p->y - ON_ZERO_TOLERANCE;
-	fMax[0] = p->x + ON_ZERO_TOLERANCE;
-	fMax[1] = p->y + ON_ZERO_TOLERANCE;
+    /* Shared-boundary refinement resamples the face. Reuse existing
+     * evaluations so each retry adds only newly sampled UV locations. */
+    std::set<std::pair<double, double>> existing;
+    for (long point : fmesh->m_interior_pnts)
+	existing.insert(fmesh->m_pnts_2d[(size_t)point]);
+    if (!additional_points)
+	filter_near_trim_offsets(*sinfo);
 
-	if (sinfo->rtree_trim_spnts_2d.Search(fMin, fMax, NULL, NULL)) {
-	    rm_pnts.insert((ON_2dPoint *)p);
-	} else {
-	    struct trim_seg_context sc;
-	    sc.p = p;
-	    sc.on_edge = false;
+    const size_t initial_points = fmesh->m_interior_pnts.size();
+    const int face = sinfo->f->m_face_index;
+    auto &trim_index = sinfo->s_cdt->face_rtrees_3d[face];
+    const auto add_sample = [&](ON_2dPoint uv, bool check_trim) {
+	const auto key = std::make_pair(uv.x, uv.y);
+	if (additional_points ? !existing.insert(key).second :
+		existing.find(key) != existing.end())
+	    return;
 
-	    sinfo->rtree_2d->Search(fMin, fMax, SPntCallback, (void *)&sc);
-	    if (sc.on_edge) {
-		rm_pnts.insert((ON_2dPoint *)p);
+	ON_3dPoint point;
+	ON_3dVector normal = ON_3dVector::UnsetVector;
+	if (!cdt_surface_normal(sinfo->s, uv, point, normal))
+	    point = cdt_surface_point(sinfo->s, uv);
+	if (!point.IsValid())
+	    return;
+
+	if (check_trim) {
+	    const double tolerance = additional_points ? BN_TOL_DIST :
+		ON_ZERO_TOLERANCE;
+	    const double minimum[3] = {point.x - tolerance,
+		point.y - tolerance, point.z - tolerance};
+	    const double maximum[3] = {point.x + tolerance,
+		point.y + tolerance, point.z + tolerance};
+	    if (additional_points) {
+		/* The trim index has expanded bounds for proximity queries.
+		 * A hit alone does not prove contact with a trim chord. */
+		surface_sample_contact contact{point};
+		trim_index.Search(minimum, maximum, surface_sample_on_chord,
+		    &contact);
+		if (contact.on_chord)
+		    return;
+	    } else if (trim_index.Search(minimum, maximum, NULL, NULL)) {
+		return;
 	    }
 	}
+
+	const long native = fmesh->add_point(uv);
+	fmesh->m_interior_pnts.insert(native);
+	if (fmesh->m_bRev)
+	    normal = -normal;
+
+	auto *point_3d = new ON_3dPoint(point);
+	auto *normal_3d = new ON_3dPoint(normal);
+	const long model = fmesh->add_point(point_3d);
+	const long normal_index = fmesh->add_normal(normal_3d);
+	CDT_Add3DPnt(sinfo->s_cdt, point_3d, face, -1, -1, -1, uv.x, uv.y);
+	CDT_Add3DNorm(sinfo->s_cdt, normal_3d, point_3d,
+	    face, -1, -1, -1, uv.x, uv.y);
+	fmesh->p2d3d[native] = model;
+	fmesh->nmap[model] = normal_index;
+    };
+
+    for (const ON_2dPoint *point : sinfo->on_surf_points) {
+	if (additional_points && fmesh->m_interior_pnts.size() -
+		initial_points >= additional_points)
+	    break;
+	add_sample(*point, true);
     }
 
-    for (osp_it = rm_pnts.begin(); osp_it != rm_pnts.end(); osp_it++) {
-	ON_2dPoint *p = *osp_it;
-	sinfo->on_surf_points.erase(p);
-	delete p;
+    /* The original pass already supplies trim offsets for a resampled face. */
+    if (!additional_points) {
+	for (const ON_2dPoint *point : sinfo->on_trim_points)
+	    add_sample(*point, false);
     }
-    // Populate m_interior_pnts with the final set
-    for (osp_it = sinfo->on_surf_points.begin(); osp_it != sinfo->on_surf_points.end(); osp_it++) {
-	ON_2dPoint n2dp(**osp_it);
-
-	// Calculate the 3D point and normal values.
-	ON_3dPoint p3d;
-	ON_3dVector norm = ON_3dVector::UnsetVector;
-	if (!cdt_surface_normal(sinfo->s, n2dp, p3d, norm)) {
-	    p3d = cdt_surface_point(sinfo->s, n2dp);
-	}
-	if (!p3d.IsValid())
-	    continue;
-
-	// Last filtering pass before insertion: if we're too close to an edge
-	// in 3D, the point is out.
-	double fMin[3];
-	fMin[0] = p3d.x - ON_ZERO_TOLERANCE;
-	fMin[1] = p3d.y - ON_ZERO_TOLERANCE;
-	fMin[2] = p3d.z - ON_ZERO_TOLERANCE;
-	double fMax[3];
-	fMax[0] = p3d.x + ON_ZERO_TOLERANCE;
-	fMax[1] = p3d.y + ON_ZERO_TOLERANCE;
-	fMax[2] = p3d.z + ON_ZERO_TOLERANCE;
-	size_t nhits = sinfo->s_cdt->face_rtrees_3d[sinfo->f->m_face_index].Search(fMin, fMax, NULL, NULL);
-	if (nhits) continue;
-
-
-	long f_ind2d = fmesh->add_point(n2dp);
-	fmesh->m_interior_pnts.insert(f_ind2d);
-	if (fmesh->m_bRev) {
-	    norm = -1 * norm;
-	}
-
-	long f3ind = fmesh->add_point(new ON_3dPoint(p3d));
-	long fnind = fmesh->add_normal(new ON_3dPoint(norm));
-
-	CDT_Add3DPnt(sinfo->s_cdt, fmesh->pnts[fmesh->pnts.size()-1], sinfo->f->m_face_index, -1, -1, -1, n2dp.x, n2dp.y);
-	CDT_Add3DNorm(sinfo->s_cdt, fmesh->normals[fmesh->normals.size()-1], fmesh->pnts[fmesh->pnts.size()-1], sinfo->f->m_face_index, -1, -1, -1, n2dp.x, n2dp.y);
-
-	fmesh->p2d3d[f_ind2d] = f3ind;
-	fmesh->nmap[f3ind] = fnind;
-    }
-
-    // Points from trims are handled separately
-    for (osp_it = sinfo->on_trim_points.begin(); osp_it != sinfo->on_trim_points.end(); osp_it++) {
-	ON_2dPoint n2dp(**osp_it);
-
-	// Calculate the 3D point and normal values.
-	ON_3dPoint p3d;
-	ON_3dVector norm = ON_3dVector::UnsetVector;
-	if (!cdt_surface_normal(sinfo->s, n2dp, p3d, norm)) {
-	    p3d = cdt_surface_point(sinfo->s, n2dp);
-	}
-	if (!p3d.IsValid())
-	    continue;
-
-	long f_ind2d = fmesh->add_point(n2dp);
-	fmesh->m_interior_pnts.insert(f_ind2d);
-	if (fmesh->m_bRev) {
-	    norm = -1 * norm;
-	}
-
-	long f3ind = fmesh->add_point(new ON_3dPoint(p3d));
-	long fnind = fmesh->add_normal(new ON_3dPoint(norm));
-
-	CDT_Add3DPnt(sinfo->s_cdt, fmesh->pnts[fmesh->pnts.size()-1], sinfo->f->m_face_index, -1, -1, -1, n2dp.x, n2dp.y);
-	CDT_Add3DNorm(sinfo->s_cdt, fmesh->normals[fmesh->normals.size()-1], fmesh->pnts[fmesh->pnts.size()-1], sinfo->f->m_face_index, -1, -1, -1, n2dp.x, n2dp.y);
-
-	fmesh->p2d3d[f_ind2d] = f3ind;
-	fmesh->nmap[f3ind] = fnind;
-    }
-
 }
+
 
 static bool
 getSurfacePoint(
@@ -906,7 +919,8 @@ getSurfacePoint(
 }
 
 bool
-GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
+GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index,
+	size_t additional_points, double relative_scale)
 {
     ON_BrepFace &face = s_cdt->brep->m_F[face_index];
     const ON_Surface *s = face.SurfaceOf();
@@ -918,7 +932,7 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	    return true;
 	}
 
-	sinfo_init(&sinfo, s_cdt, face_index);
+	sinfo_init(&sinfo, s_cdt, face_index, relative_scale);
 
 	// Get the min and max dimensions in UV that will kick off the sampling
 	// process.  May be a smaller trimmed subset of surface so worth
@@ -1174,13 +1188,13 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	    tMax[1] = (*b_it)->Max().y;
 	    size_t nhits = sinfo.rtree_trim_spnts_2d.Search(tMin, tMax, NULL, NULL);
 
-	    if (!nhits) {
+	    if (!nhits || additional_points) {
 		sinfo.on_surf_points.insert(new ON_2dPoint(px,py));
 	    }
 	}
 
 	// Strip out points from the surface that are too close to the trimming curves.
-	filter_surface_pnts(&sinfo);
+	filter_surface_pnts(&sinfo, additional_points);
 
     }
     return true;

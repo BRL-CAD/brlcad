@@ -351,6 +351,46 @@ exercise_coincident_seams()
     return solid;
 }
 
+static bool
+exercise_truncated_sphere()
+{
+    const ON_Sphere sphere(ON_3dPoint::Origin, 25.0);
+    ON_RevSurface *surface = sphere.RevSurfaceForm(false);
+    if (!surface)
+	return false;
+    const double south_clearance = ON_PI / 50.0;
+    const ON_Interval latitude(-0.5 * ON_PI + south_clearance, 0.5 * ON_PI);
+    if (!surface->Trim(1, latitude)) {
+	delete surface;
+	return false;
+    }
+    std::unique_ptr<ON_Brep> brep(ON_BrepRevSurface(surface, true, false, NULL));
+    delete surface;
+    if (!brep || !brep->IsValid() || !brep->IsSolid() ||
+	    brep->m_F.Count() != 2 || !cdt_face_uses_polar_chart(brep->m_F[0])) {
+	std::cerr << "invalid truncated sphere fixture" << std::endl;
+	return false;
+    }
+
+    std::unique_ptr<ON_Brep_CDT_State, decltype(&ON_Brep_CDT_Destroy)> state(
+	ON_Brep_CDT_Create(brep.get(), "truncated sphere"), ON_Brep_CDT_Destroy);
+    struct bg_tess_tol tolerance = BG_TESS_TOL_INIT_ZERO;
+    tolerance.rel = 0.01;
+    ON_Brep_CDT_Tol_Set(state.get(), &tolerance);
+    if (ON_Brep_CDT_Tessellate(state.get(), 0, NULL) != 0) {
+	std::cerr << "truncated sphere did not certify" << std::endl;
+	return false;
+    }
+    const cdt_mesh_t &mesh = state->fmeshes.at(0);
+    if (mesh.m_face_charts.size() != 1 ||
+	    mesh.m_face_charts.front().type() != CDT_FACE_CHART_POLAR ||
+	    !mesh.m_face_charts.front().constraints.empty()) {
+	std::cerr << "truncated sphere forced rays across the equator" << std::endl;
+	return false;
+    }
+    return true;
+}
+
 enum class sphere_fixture {
     regular,
     reversed,
@@ -725,6 +765,8 @@ main(int, const char **argv)
 	!exercise_sphere(ON_3dPoint(4.0, -3.0, 2.0), 2.5, tilted_axis,
 	    sphere_fixture::nurbs_fallback))
 	return 10;
+    if (!exercise_truncated_sphere())
+	return 11;
     return 0;
 }
 

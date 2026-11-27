@@ -641,7 +641,8 @@ public:
     std::vector<ON_3dPoint *> pnts;
 
     bool record_chart_triangle(const triangle_t &triangle,
-	const chart_triangle_t &native_triangle, const cdt_face_chart &chart);
+	const chart_triangle_t &native_triangle, const cdt_face_chart &chart,
+	bool require_aligned_normal = false);
 
     /* Setup / Repair */
     long add_point(ON_2dPoint &on_2dp);
@@ -669,6 +670,7 @@ public:
 
     /* Triangulation related functions and data. */
     bool cdt(bool allow_general_boundary_cleanup = false);
+    bool chart_boundary_complete() const { return m_chart_boundary_complete; }
     std::vector<chart_triangle_t> tris_2d;
     std::vector<std::pair<double, double> > m_pnts_2d;
     std::vector<cdt_face_chart> m_face_charts;
@@ -699,13 +701,16 @@ public:
     bool brep_edge_pnt(long v);
     size_t geometric_degenerate_count();
     size_t incorrect_normal_count();
+    std::vector<bedge_seg_t *> folded_boundary_segments();
+    const std::vector<bedge_seg_t *> &crossing_boundary_segments() const
+	{ return m_crossing_boundary_segments; }
     bool repair_incorrect_normal_edges();
     bool repair_toleranced_nonmanifold_edges();
-    bool toleranced_boundary_triangle(const triangle_t &t);
 
     // Triangle geometry information
     ON_3dPoint tcenter(const triangle_t &t);
-    ON_3dVector bnorm(const triangle_t &t);
+    ON_3dVector bnorm(const triangle_t &t,
+	const ON_2dPoint *chart_center = NULL);
     ON_3dVector tnorm(const triangle_t &t);
     bool surface_triangle_deviation(const triangle_t &t, double *distance);
     ON_Plane tplane(const triangle_t &t);
@@ -857,6 +862,8 @@ private:
 	const std::vector<int> &steiner, const std::vector<int> &constraints) const;
     bool install_chart_result(cdt_face_chart &chart,
 	const std::set<int> &normalized_boundary_vertices, bool result);
+    void record_boundary_crossing(const cdt_face_chart &chart,
+	const int crossing[2][2], bool require_shared_midpoint = false);
     bool triangulate_face_chart(cdt_face_chart &chart,
 	chart_source &source, bool allow_general_boundary_cleanup);
 
@@ -872,6 +879,8 @@ private:
     /* Samples retain the triangulator's planar image even for triangles
      * whose native UV span does not reveal a seam or pole ambiguity. */
     std::map<std::array<long, 3>, std::array<ON_2dPoint, 4>> chart_triangle_samples;
+    bool m_chart_boundary_complete = true;
+    std::vector<bedge_seg_t *> m_crossing_boundary_segments;
 
     // For situations where we need to process using Brep data
     std::set<ON_3dPoint *> *edge_pnts;
@@ -893,6 +902,7 @@ private:
     std::vector<triangle_t> problem_edge_tris();
     bool tri_problem_edges(triangle_t &t);
     std::vector<triangle_t> interior_incorrect_normals();
+    bool toleranced_boundary_triangle(const triangle_t &t, bool topology_chart);
     double max_angle_delta(triangle_t &seed, std::vector<triangle_t> &s_tris);
 
     // Plotting utility functions

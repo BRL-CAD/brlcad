@@ -61,7 +61,8 @@ add_iso_trim(ON_Brep &brep, ON_BrepLoop &loop, const ON_Surface &surface,
 
 static bool
 exercise_cylinder(const ON_3dPoint &origin, ON_3dVector axis,
-	double radius, double height)
+	double radius, double height, double perturbation = 0.0,
+	bool expect_cylinder = true)
 {
     if (!axis.Unitize())
 	return false;
@@ -78,6 +79,21 @@ exercise_cylinder(const ON_3dPoint &origin, ON_3dVector axis,
     if (!surface->Trim(0, angular)) {
 	delete surface;
 	return false;
+    }
+
+    /* Model an imported surface whose cylindrical fit has a residual. */
+    if (perturbation > 0.0) {
+	const int u = surface->CVCount(0) / 2;
+	ON_4dPoint vertex;
+	if (!surface->GetCV(u, 0, vertex)) {
+	    delete surface;
+	    return false;
+	}
+	vertex.x += perturbation * vertex.w;
+	if (!surface->SetCV(u, 0, vertex)) {
+	    delete surface;
+	    return false;
+	}
     }
 
     std::unique_ptr<ON_Brep> brep(new ON_Brep);
@@ -104,6 +120,13 @@ exercise_cylinder(const ON_3dPoint &origin, ON_3dVector axis,
 	if (!add_iso_trim(*brep, loop, *surface, vertex_indices[i],
 		vertex_indices[next], corners[i], corners[next]))
 	    return false;
+    }
+
+    if (!expect_cylinder) {
+	const double loose_fit_tolerance = 0.05;
+	return surface->IsCylinder(nullptr, loose_fit_tolerance) &&
+	    !surface->IsCylinder(nullptr, BN_TOL_DIST) &&
+	    !cdt_face_uses_cylinder_chart(face);
     }
 
     if (!cdt_face_uses_cylinder_chart(face) ||
@@ -181,7 +204,9 @@ exercise_cylinder(const ON_3dPoint &origin, ON_3dVector axis,
 	const ON_3dPoint expected = surface->PointAt(native.x, native.y);
 	const ON_3dPoint actual = surface->PointAt(round_trip.x,
 	    round_trip.y);
-	if (actual.DistanceTo(expected) > 1.0e-9 * scale) {
+	const double round_trip_tolerance = perturbation > 0.0 ?
+	    BN_TOL_DIST : 1.0e-9 * scale;
+	if (actual.DistanceTo(expected) > round_trip_tolerance) {
 	    std::cerr << "cylinder chart round trip exceeded tolerance"
 		<< std::endl;
 	    return false;
@@ -1044,7 +1069,7 @@ exercise_seamless_cylinder_lift()
 }
 
 static bool
-exercise_revolution_cut_lift()
+exercise_revolution_cut_lift(bool dense_arcs = false)
 {
     const double radius = 10.0;
     const double height = 8.0;
@@ -1065,7 +1090,9 @@ exercise_revolution_cut_lift()
 
     const ON_Interval angular_domain = surface->Domain(angular_direction);
     const ON_Interval axial_domain = surface->Domain(axial_direction);
-    const int path_points = 12;
+    const int coarse_arc_samples = 12;
+    const int fine_arc_samples = 32;
+    const int path_points = dense_arcs ? fine_arc_samples : coarse_arc_samples;
     std::vector<std::pair<double, double>> native_points;
     std::vector<ON_3dPoint> point_storage;
     std::vector<const ON_3dPoint *> points_3d;
@@ -1085,6 +1112,12 @@ exercise_revolution_cut_lift()
 	append(0.025 + 0.95 * i / (path_points - 1), 0.25);
     for (int i = path_points - 1; i >= 0; --i)
 	append(0.025 + 0.95 * i / (path_points - 1), 0.75);
+    std::vector<int> steiner;
+    if (dense_arcs) {
+	append(0.5, 0.5);
+	steiner.push_back(outer.back());
+	outer.pop_back();
+    }
     for (const ON_3dPoint &point : point_storage)
 	points_3d.push_back(&point);
     outer.push_back(outer.front());
@@ -1093,11 +1126,17 @@ exercise_revolution_cut_lift()
 
     cdt_face_chart chart;
     if (!chart.build(face, native_points, outer,
-	    std::vector<std::vector<int>>(), std::vector<int>(),
+	    std::vector<std::vector<int>>(), steiner,
 	    std::vector<int>(), points_3d, topology_vertices) ||
 	    chart.type() != CDT_FACE_CHART_CYLINDER ||
 	    chart.closed_direction() != angular_direction) {
 	std::cerr << "revolution cut lift failed: " << chart.failure()
+	    << std::endl;
+	return false;
+    }
+    if (dense_arcs && (chart.constraints.size() != (size_t)(path_points - 2) ||
+	    !chart.steiner.empty())) {
+	std::cerr << "aligned cylinder arcs did not produce exact rulings"
 	    << std::endl;
 	return false;
     }
@@ -1119,6 +1158,11 @@ exercise_revolution_cut_lift()
 	V2SET(chart_points[i], chart.points[i].first, chart.points[i].second);
     std::vector<int> outline(chart.outer);
     outline.push_back(chart.outer.front());
+    std::vector<int> rulings;
+    for (const auto &ruling : chart.constraints) {
+	rulings.push_back(ruling.first);
+	rulings.push_back(ruling.second);
+    }
     int *faces = NULL;
     int face_count = 0;
     struct bg_triangulation_report report = {
@@ -1126,7 +1170,8 @@ exercise_revolution_cut_lift()
     };
     const int status = bg_nested_poly_triangulate_strict(&faces,
 	&face_count, NULL, NULL, outline.data(), outline.size(), NULL, NULL,
-	0, NULL, 0, NULL, 0, chart_points.get(), chart.points.size(), &report);
+	0, NULL, 0, rulings.empty() ? NULL : rulings.data(),
+	chart.constraints.size(), chart_points.get(), chart.points.size(), &report);
     bu_free(faces, "revolution cut lift triangles");
     if (status != BRLCAD_OK || face_count <= 0) {
 	std::cerr << "revolution cut lift did not triangulate: "
@@ -1620,6 +1665,115 @@ exercise_weakly_simple_cylinder()
     return cdt_test_developable_clean() == 0;
 }
 
+static bool
+exercise_open_cylinder_hole()
+{
+    const double radius = 4.0;
+    const double height = 5.0;
+    const ON_Cylinder cylinder(ON_Circle(ON_xy_plane, radius), height);
+    std::unique_ptr<ON_RevSurface> surface(cylinder.RevSurfaceForm());
+    const ON_Interval angular(0.25 * ON_PI, 0.75 * ON_PI);
+    if (!surface || !surface->Trim(0, angular))
+	return false;
+    ON_Brep brep;
+    ON_BrepFace *face = brep.NewFace(*surface);
+    if (!face || !cdt_face_uses_cylinder_chart(*face))
+	return false;
+
+    const ON_Interval u = surface->Domain(0);
+    const ON_Interval v = surface->Domain(1);
+    const ON_2dPoint hole_uv[] = {
+	ON_2dPoint(u.ParameterAt(0.4), v.ParameterAt(0.3)),
+	ON_2dPoint(u.ParameterAt(0.4), v.ParameterAt(0.7)),
+	ON_2dPoint(u.ParameterAt(0.6), v.ParameterAt(0.7)),
+	ON_2dPoint(u.ParameterAt(0.6), v.ParameterAt(0.3))
+    };
+    int vertices[4];
+    for (size_t i = 0; i < 4; ++i) {
+	vertices[i] = brep.NewVertex(surface->PointAt(hole_uv[i].x,
+	    hole_uv[i].y), 0.0).m_vertex_index;
+    }
+    ON_BrepLoop &hole = brep.NewLoop(ON_BrepLoop::inner, *face);
+    for (size_t i = 0; i < 4; ++i) {
+	const size_t next = (i + 1) % 4;
+	if (!add_iso_trim(brep, hole, *surface, vertices[i], vertices[next],
+		hole_uv[i], hole_uv[next]))
+	    return false;
+    }
+    return brep.SetTrimBoundingBoxes(*face) &&
+	!cdt_face_uses_cylinder_chart(*face);
+}
+
+static bool
+exercise_stretched_cylinder_trim()
+{
+    const double radius = 3.0;
+    const double sweep = 1.5 * ON_PI;
+    const double height = 2.0;
+    const ON_Circle circle(ON_xy_plane, radius);
+    const ON_Arc arc(circle, sweep);
+    ON_PolyCurve profile;
+    if (!profile.Append(new ON_ArcCurve(arc, 0.0, sweep)) ||
+	    !profile.Append(new ON_LineCurve(arc.EndPoint(), ON_3dPoint::Origin)) ||
+	    !profile.Append(new ON_LineCurve(ON_3dPoint::Origin, arc.StartPoint())))
+	return false;
+    std::unique_ptr<ON_Extrusion> extrusion(ON_Extrusion::CreateFrom3dCurve(
+	profile, &ON_xy_plane, height, true));
+    if (!extrusion)
+	return false;
+    std::unique_ptr<ON_Brep> brep(extrusion->BrepForm(nullptr, true));
+    if (!brep || !brep->IsValid() || !brep->IsSolid())
+	return false;
+
+    ON_BrepFace *side = nullptr;
+    for (int fi = 0; fi < brep->m_F.Count(); ++fi) {
+	const ON_Surface *surface = brep->m_F[fi].SurfaceOf();
+	if (surface && surface->IsCylinder(nullptr, ON_ZERO_TOLERANCE)) {
+	    side = &brep->m_F[fi];
+	    break;
+	}
+    }
+    if (!side || cdt_face_has_seam(*side))
+	return false;
+
+    /* Model an import that stretched the support domain while leaving
+     * the trim angles and shared 3D edges in their original units. */
+    const ON_Cylinder cylinder(circle, height);
+    auto stretched = std::make_unique<ON_NurbsSurface>();
+    const ON_Interval axial = side->SurfaceOf()->Domain(1);
+    const double stretched_period = 4.0 * ON_PI;
+    if (2 != cylinder.GetNurbForm(*stretched) ||
+	    !stretched->SetDomain(0, 0.0, stretched_period) ||
+	    !stretched->SetDomain(1, axial.Min(), axial.Max()))
+	return false;
+    const int surface_index = brep->AddSurface(stretched.get());
+    if (surface_index < 0)
+	return false;
+    side->m_si = surface_index;
+    side->SetProxySurface(stretched.release());
+    ON_BrepLoop *loop = side->OuterLoop();
+    for (int ti = 0; ti < loop->TrimCount(); ++ti)
+	loop->Trim(ti)->Edge()->m_tolerance = 2.0 * radius;
+    brep->SetTrimIsoFlags();
+    if (!brep->IsValid() || !brep->IsSolid())
+	return false;
+    const ON__UINT32 source_crc = brep->DataCRC(0);
+
+    struct ON_Brep_CDT_State *state = ON_Brep_CDT_Create(brep.get(),
+	"stretched cylinder trim fixture");
+    struct bg_tess_tol tolerance = BG_TESS_TOL_INIT_TOL;
+    ON_Brep_CDT_Tol_Set(state, &tolerance);
+    const bool certified = ON_Brep_CDT_Tessellate(state, 0, nullptr) == 0;
+    if (!certified) {
+	struct brep_cdt_diagnostic diagnostic;
+	ON_Brep_CDT_Diagnostic(&diagnostic, state);
+	std::cerr << "stretched cylinder tessellation failed: "
+	    << diagnostic.message << std::endl;
+    }
+    ON_Brep_CDT_Destroy(state);
+    return certified && brep->DataCRC(0) == source_crc;
+}
+
 int
 main(int, const char **argv)
 {
@@ -1667,6 +1821,20 @@ main(int, const char **argv)
 	return 17;
     if (!exercise_weakly_simple_cylinder())
 	return 18;
+    if (!exercise_cylinder(ON_3dPoint::Origin,
+	    ON_3dVector(0.0, 0.0, 1.0), 2.0, 5.0, BN_TOL_DIST / 8.0))
+	return 19;
+    if (!exercise_revolution_cut_lift(true))
+	return 20;
+    if (!exercise_stretched_cylinder_trim())
+	return 21;
+    const double loose_fit_perturbation = 0.02;
+    if (!exercise_cylinder(ON_3dPoint::Origin,
+	    ON_3dVector(0.0, 0.0, 1.0), 2.0, 5.0, loose_fit_perturbation,
+	    false))
+	return 22;
+    if (!exercise_open_cylinder_hole())
+	return 23;
     return 0;
 }
 

@@ -123,6 +123,34 @@ mesh_get(mesh_output &output, struct ON_Brep_CDT_State *state)
 }
 
 static bool
+unused_edge_contract(const ON_Brep &source, const struct bg_tess_tol &tolerance,
+	const mesh_output &expected)
+{
+    ON_Brep copy(source);
+    const int vertex_index = 0;
+    const ON_3dPoint start = copy.m_V[vertex_index].Point();
+    const ON_3dPoint end = start + ON_3dVector(100.0, 100.0, 100.0);
+    const int end_index = copy.NewVertex(end, 0.0).m_vertex_index;
+    const int curve_index = copy.AddEdgeCurve(new ON_LineCurve(start, end));
+    const int edge_index = copy.NewEdge(copy.m_V[vertex_index],
+	copy.m_V[end_index], curve_index, NULL, 0.0).m_edge_index;
+    if (!copy.IsValid() || !copy.IsSolid())
+	return false;
+
+    struct ON_Brep_CDT_State *state = ON_Brep_CDT_Create(&copy,
+	"unused edge on a closed shell");
+    ON_Brep_CDT_Tol_Set(state, &tolerance);
+    mesh_output output;
+    const bool unchanged = ON_Brep_CDT_Tessellate(state, 0, NULL) == 0 &&
+	mesh_get(output, state) && output.faces == expected.faces &&
+	output.vertices == expected.vertices && !copy.m_E[edge_index].TrimCount();
+    if (!unchanged)
+	bu_log("An unused B-Rep edge changed the closed-shell mesh\n");
+    ON_Brep_CDT_Destroy(state);
+    return unchanged;
+}
+
+static bool
 normal_mesh_get(struct ON_Brep_CDT_State *state)
 {
     int *faces = NULL;
@@ -673,6 +701,7 @@ main(int argc, const char **argv)
     second_ok = second_ok && mesh_get(second, state) &&
 	first.faces == second.faces && first.vertices == second.vertices;
 
+    bool unused_edge = first_ok && unused_edge_contract(*bi->brep, tolerance, first);
     bool empty_rejected = empty_mesh_contract();
     bool untrimmed_tree = untrimmed_surface_tree_contract();
     bool repaired = repair_contract();
@@ -716,7 +745,7 @@ main(int argc, const char **argv)
 	diagnostic.stage == BREP_CDT_STAGE_TOPOLOGY;
     ON_Brep_CDT_Destroy(state);
 
-    return initial && first_ok && second_ok && empty_rejected &&
+    return initial && first_ok && second_ok && unused_edge && empty_rejected &&
 	untrimmed_tree && repaired && local_surface_repaired &&
 	relaxed_fidelity_settings && relaxed_fidelity_acceptance &&
 	relaxed_invalid && relaxed_outer &&

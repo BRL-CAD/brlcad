@@ -49,6 +49,8 @@
 #define MAX_CHART_REFINEMENT_STAGNANT_ATTEMPTS 4
 #define MAX_SHARED_EDGE_REFINEMENT_DISTANCE_RATIO 0.05
 
+static constexpr double FACE_RESAMPLING_SCALE = 0.5;
+
 static bool
 cdt_tolerance_valid(const struct bg_tess_tol &tol)
 {
@@ -134,6 +136,17 @@ bseg_tangent(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, double eparam, 
 
 
 static bool
+check_chart_boundary(struct ON_Brep_CDT_State *s_cdt, const cdt_mesh_t *mesh)
+{
+    if (mesh->chart_boundary_complete())
+	return true;
+    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_CERTIFICATION_FAILED,
+	BREP_CDT_STAGE_ADAPTIVE_REFINEMENT, mesh->f_id, 0, 1,
+	"3-D seam refinement left a boundary vertex unused");
+    return false;
+}
+
+static bool
 refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh,
 	int cnt, int rebuild, bool allow_general_boundary_cleanup = false)
 {
@@ -216,6 +229,9 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh,
 	if (fmesh->repair_toleranced_nonmanifold_edges())
 	    return true;
     }
+
+    if (!check_chart_boundary(s_cdt, fmesh))
+	return false;
 
     const size_t initial_folds = fmesh->incorrect_normal_count();
     const size_t initial_intersections = fmesh->self_intersections(NULL,
@@ -401,7 +417,8 @@ cdt_rebuild_repair_face(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *mesh)
 }
 
 static bool
-do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
+do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi,
+	size_t *resampling_budget = NULL, double relative_scale = 1.0)
 {
     ON_BrepFace &face = s_cdt->brep->m_F[fi];
     if (s_cdt->max_face_time_ms > 0) {
@@ -444,14 +461,23 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
 
     // Sample the surface, independent of the trimming curves, to get points that
     // will tie the mesh to the interior surface.
-    if (!GetInteriorPoints(s_cdt, face.m_face_index)) {
+    cdt_mesh_t *fmesh = &s_cdt->fmeshes[fi];
+    const size_t initial_points = fmesh->m_interior_pnts.size();
+    const size_t additional_points = resampling_budget ? *resampling_budget : 0;
+    if (!GetInteriorPoints(s_cdt, fi, additional_points, relative_scale)) {
 	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REFINEMENT_LIMIT,
 	    BREP_CDT_STAGE_ADAPTIVE_REFINEMENT, face.m_face_index, 0, 1,
 	    "initial surface subdivision exceeded the face point limit");
 	return false;
     }
 
-    cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
+    if (resampling_budget) {
+	const size_t added = fmesh->m_interior_pnts.size() - initial_points;
+	if (!added)
+	    return true;
+	*resampling_budget -= added;
+    }
+
     fmesh->brep = s_cdt->brep;
     fmesh->p_cdt = (void *)s_cdt;
     fmesh->name = s_cdt->name;
@@ -499,6 +525,8 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
      * we want out of the box - trigger a series of checks. */
     if (!refine_triangulation(s_cdt, fmesh, 0, 0))
 	return false;
+    if (!check_chart_boundary(s_cdt, fmesh))
+	return false;
     const size_t geometric_degenerates =
 	fmesh->geometric_degenerate_count();
     if (geometric_degenerates) {
@@ -515,7 +543,8 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
      * can become the trusted reference for a later repair. */
     ON_BoundingBox source_bounds;
     const ON_Surface *source_surface =
-	s_cdt->orig_brep->m_F[face.m_face_index].SurfaceOf();
+	s_cdt->rebuilt_support_faces.count(face.m_face_index) ?
+	face.SurfaceOf() : s_cdt->orig_brep->m_F[face.m_face_index].SurfaceOf();
     if (!source_surface || !source_surface->GetBoundingBox(source_bounds) ||
 	!source_bounds.IsValid()) {
 	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_GEOMETRIC_FAILED,
@@ -928,6 +957,51 @@ collapse_subtolerance_brep_edges(struct ON_Brep_CDT_State *s_cdt)
 	    continue;
 
 	const size_t combined_root = *roots.begin();
+	const auto merged_point = [&](ON_3dPoint *point) {
+	    const auto index = point_index.find(point);
+	    if (index == point_index.end())
+		return point;
+	    const size_t component = root(index->second);
+	    return candidate_points[roots.count(component) ? combined_root :
+		component];
+	};
+
+	/* A bounded weld can still erase a face. Check every incident trim
+	 * ring against the prospective merge while its samples are intact. */
+	const size_t minimum_ring_vertices = 3;
+	const auto ring_survives = [&](const ON_BrepLoop &loop) {
+	    std::set<ON_3dPoint *> vertices;
+	    for (int i = 0; i < loop.TrimCount(); ++i) {
+		const ON_BrepTrim *trim = loop.Trim(i);
+		if (!trim)
+		    return false;
+		const auto segments = s_cdt->e2polysegs.find(trim->m_ei);
+		if (segments == s_cdt->e2polysegs.end())
+		    continue;
+		for (const bedge_seg_t *segment : segments->second) {
+		    if (!segment || !segment->e_start || !segment->e_end)
+			continue;
+		    vertices.insert(merged_point(segment->e_start));
+		    vertices.insert(merged_point(segment->e_end));
+		    if (vertices.size() >= minimum_ring_vertices)
+			return true;
+		}
+	    }
+	    return false;
+	};
+	const ON_BrepEdge &edge = s_cdt->brep->m_E[candidate.edge_index];
+	bool preserves_rings = true;
+	for (int i = 0; i < edge.TrimCount(); ++i) {
+	    const ON_BrepTrim *trim = edge.Trim(i);
+	    const ON_BrepLoop *loop = trim ? trim->Loop() : NULL;
+	    if (!loop || !ring_survives(*loop)) {
+		preserves_rings = false;
+		break;
+	    }
+	}
+	if (!preserves_rings)
+	    continue;
+
 	for (size_t component : roots) {
 	    if (component == combined_root)
 		continue;
@@ -1054,6 +1128,10 @@ cdt_test_subtolerance_edge_collapse(void)
     source.NewVertex(ON_3dPoint(200.0001, 0.0, 0.0));
     source.NewVertex(ON_3dPoint(400.0, 0.0, 0.0));
     source.NewVertex(ON_3dPoint(400.001, 0.0, 0.0));
+    const int ring_first_vertex = source.m_V.Count();
+    source.NewVertex(ON_3dPoint(0.0, 2.0, 0.0));
+    source.NewVertex(ON_3dPoint(0.0004, 2.0, 0.0));
+    source.NewVertex(ON_3dPoint(0.0, 3.0, 0.0));
     ON_BrepVertex &v0 = source.m_V[0];
     ON_BrepVertex &v1 = source.m_V[1];
     ON_BrepVertex &v2 = source.m_V[2];
@@ -1079,6 +1157,23 @@ cdt_test_subtolerance_edge_collapse(void)
     ON_BrepEdge &declared_tolerant = source.NewEdge(v6, v7,
 	source.AddEdgeCurve(new ON_LineCurve(v6.Point(), v7.Point())));
     declared_tolerant.m_tolerance = 0.01;
+
+    /* The first edge is within tolerance, but welding it would erase the
+     * triangular trim ring. It must keep all three authoritative vertices. */
+    ON_BrepFace &face = source.NewFace(source.AddSurface(
+	new ON_PlaneSurface(ON_xy_plane)));
+    ON_BrepLoop &loop = source.NewLoop(ON_BrepLoop::outer, face);
+    const int ring_edge_count = 3;
+    for (int edge_index = 0; edge_index < ring_edge_count; ++edge_index) {
+	ON_BrepVertex &first = source.m_V[ring_first_vertex + edge_index];
+	ON_BrepVertex &second = source.m_V[ring_first_vertex +
+	    (edge_index + 1) % ring_edge_count];
+	ON_BrepEdge &edge = source.NewEdge(first, second, source.AddEdgeCurve(
+	    new ON_LineCurve(first.Point(), second.Point())));
+	const int trim_curve = source.AddTrimCurve(new ON_LineCurve(
+	    ON_2dPoint(first.Point()), ON_2dPoint(second.Point())));
+	source.NewTrim(edge, false, loop, trim_curve);
+    }
 
     struct ON_Brep_CDT_State *state = ON_Brep_CDT_Create(&source,
 	"sub-tolerance edge test");
@@ -1127,7 +1222,9 @@ cdt_test_subtolerance_edge_collapse(void)
 	    (*state->vert_pnts)[1] != expected ||
 	    (*state->vert_pnts)[2] == expected ||
 	    (*state->vert_pnts)[6] != expected_declared ||
-	    (*state->vert_pnts)[7] != expected_declared)
+	    (*state->vert_pnts)[7] != expected_declared ||
+	    (*state->vert_pnts)[ring_first_vertex] ==
+	    (*state->vert_pnts)[ring_first_vertex + 1])
 	result = 2;
     else if (adjacent->e_start != expected ||
 	    adjacent->e_root_start != expected)
@@ -1470,9 +1567,28 @@ refine_assembled_intersection(struct ON_Brep_CDT_State *s_cdt,
     size_t inserted = 0;
     std::vector<int> changed_faces;
     if (prefer_triangle_edge_split) {
-	for (auto &entry : targets) {
-	    cdt_mesh_t &mesh = s_cdt->fmeshes[entry.first];
-	    inserted = mesh.split_problem_triangle_edges(entry.second, 1,
+	/* Refining a nearly exact chord leaves the crossing in place if
+	 * the other face carries the approximation error. Prioritize the
+	 * larger measured surface deviation and retain face order on ties. */
+	std::vector<std::pair<double, int>> priority;
+	for (const auto &entry : targets) {
+	    cdt_mesh_t &mesh = s_cdt->fmeshes.at(entry.first);
+	    double maximum = -1.0;
+	    for (const triangle_t &triangle : entry.second) {
+		double deviation;
+		if (mesh.surface_triangle_deviation(triangle, &deviation))
+		    maximum = std::max(maximum, deviation);
+	    }
+	    priority.emplace_back(maximum, entry.first);
+	}
+	std::stable_sort(priority.begin(), priority.end(),
+	    [](const auto &first, const auto &second) {
+		return first.first > second.first;
+	    });
+	for (const auto &entry : priority) {
+	    const int face = entry.second;
+	    cdt_mesh_t &mesh = s_cdt->fmeshes.at(face);
+	    inserted = mesh.split_problem_triangle_edges(targets.at(face), 1,
 		validation.first_intersection_point_valid ? &intersection : NULL);
 	    if (!inserted)
 		continue;
@@ -1712,8 +1828,9 @@ brep_cdt_promote_missing_outer_loops(ON_Brep *brep)
     return promoted;
 }
 
-static void
-brep_cdt_shrink_surfaces(ON_Brep &brep)
+static bool
+brep_cdt_shrink_surfaces(ON_Brep &brep,
+	std::set<int> *rebuilt_support = nullptr)
 {
     /* Shrinking a periodic support to a pcurve bounding box can discard the
      * surface needed by trims in another periodic image.  Preserve closed
@@ -1727,6 +1844,16 @@ brep_cdt_shrink_surfaces(ON_Brep &brep)
 	const ON_Surface *surface = face.SurfaceOf();
 	if (!surface)
 	    continue;
+	/* Shrinking a stretched cylindrical support can discard the full
+	 * revolution needed to recover the angular trim parameterization. */
+	if (rebuilt_support && restore_collapsed_cylinder_support(brep, face)) {
+	    rebuilt_support->insert(face.m_face_index);
+	    continue;
+	}
+	if (restore_cylinder_trim_parameters(brep, face))
+	    continue;
+	if (!restore_periodic_rim_trims(brep, face))
+	    return false;
 	int disabled_sides = 0;
 	if (cdt_face_has_seam(face)) {
 	    if (surface->IsClosed(0))
@@ -1739,6 +1866,7 @@ brep_cdt_shrink_surfaces(ON_Brep &brep)
 	brep.ShrinkSurface(face, disabled_sides);
     }
     brep.Compact();
+    return true;
 }
 
 int
@@ -1766,7 +1894,8 @@ cdt_test_periodic_surface_conditioning(void)
 
     const ON__UINT32 crc = source.DataCRC(0);
     ON_Brep working(source);
-    brep_cdt_shrink_surfaces(working);
+    if (!brep_cdt_shrink_surfaces(working))
+	return 5;
     const ON_Surface *conditioned = working.m_F[0].SurfaceOf();
     if (!working.IsValid() || !conditioned->IsClosed(0) ||
 	!conditioned->IsClosed(1) || source.DataCRC(0) != crc)
@@ -1834,6 +1963,23 @@ validate_tessellation_input(struct ON_Brep_CDT_State *s_cdt,
 	    return false;
 	}
     }
+    /* Imported solids can retain wire edges outside the trimmed shell.
+     * Check shell-edge incidence first so the topology error names the
+     * offending source edge. */
+    for (int index = 0; index < s_cdt->orig_brep->m_E.Count(); ++index) {
+	const ON_BrepEdge &edge = s_cdt->orig_brep->m_E[index];
+	const int incident_trims = edge.TrimCount();
+	if (incident_trims && incident_trims != 2) {
+	    const std::string message = "B-Rep edge " +
+		std::to_string(edge.m_edge_index) + " has " +
+		std::to_string(incident_trims) +
+		" incident trims, expected two for a closed manifold";
+	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_INVALID_BREP,
+		BREP_CDT_STAGE_TOPOLOGY, -1, 0, 0, message.c_str());
+	    return false;
+	}
+    }
+
     bool oriented = false;
     bool boundary = true;
     if (!s_cdt->orig_brep->IsManifold(&oriented, &boundary) || boundary ||
@@ -1842,18 +1988,6 @@ validate_tessellation_input(struct ON_Brep_CDT_State *s_cdt,
 	    BREP_CDT_STAGE_TOPOLOGY, -1, 0, 0,
 	    "input B-Rep is not a closed oriented manifold solid");
 	return false;
-    }
-
-    // For now, edges must have 2 and only 2 trims for this to work.
-    for (int index = 0; index < s_cdt->orig_brep->m_E.Count(); index++) {
-	ON_BrepEdge& edge = s_cdt->orig_brep->m_E[index];
-	if (edge.TrimCount() != 2) {
-	    bu_log("Edge %d trim count: %d - can't (yet) do watertight meshing\n", edge.m_edge_index, edge.TrimCount());
-	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_INVALID_BREP,
-		BREP_CDT_STAGE_TOPOLOGY, -1, 0, 0,
-		"B-Rep edge does not have exactly two trims");
-	    return false;
-	}
     }
 
     return true;
@@ -1870,7 +2004,13 @@ initialize_tessellation(struct ON_Brep_CDT_State *s_cdt, bool try_invalid_brep)
 
     // Attempt to minimize situations where 2D and 3D distances get out of sync
     // by shrinking the surfaces down to the active area of the face
-    brep_cdt_shrink_surfaces(*s_cdt->brep);
+    if (!brep_cdt_shrink_surfaces(*s_cdt->brep,
+	    &s_cdt->rebuilt_support_faces)) {
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_INITIALIZATION_FAILED,
+	    BREP_CDT_STAGE_EDGE_INITIALIZATION, -1, 0, 0,
+	    "failed to install corrected periodic trim curves");
+	return false;
+    }
 
     ON_Brep* brep = s_cdt->brep;
 
@@ -2032,45 +2172,165 @@ initialize_tessellation(struct ON_Brep_CDT_State *s_cdt, bool try_invalid_brep)
     return true;
 }
 
-static int
-triangulate_selected_faces(struct ON_Brep_CDT_State *s_cdt,
-	int face_cnt, const int *faces, int &face_successes)
+static bool
+triangulate_face(struct ON_Brep_CDT_State *s_cdt, int face,
+	double relative_scale = 1.0)
 {
-    int face_failures = 0;
-    face_successes = 0;
-    int first_failed_face = -1;
-    int fc = ((face_cnt == 0) || !faces) ? s_cdt->brep->m_F.Count() : face_cnt;
-    for (int i = 0; i < fc; i++) {
-	int fi = ((face_cnt == 0) || !faces) ? i : faces[i];
-	const auto inconsistent = s_cdt->inconsistent_edge_faces.find(fi);
-	bool face_triangulated = false;
-	if (inconsistent != s_cdt->inconsistent_edge_faces.end()) {
-	    const std::string message = "face pullback for closed B-Rep edge " +
-		std::to_string(inconsistent->second.first) +
-		" misses the authoritative shared edge by " +
-		std::to_string(inconsistent->second.second);
-	    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_GEOMETRIC_FAILED,
-		BREP_CDT_STAGE_GEOMETRIC_VALIDATION, fi, 0, 1,
-		message.c_str());
-	} else {
-	    face_triangulated = do_triangulation(s_cdt, fi);
+    const auto inconsistent = s_cdt->inconsistent_edge_faces.find(face);
+    if (inconsistent != s_cdt->inconsistent_edge_faces.end()) {
+	const std::string message = "face pullback for closed B-Rep edge " +
+	    std::to_string(inconsistent->second.first) +
+	    " misses the authoritative shared edge by " +
+	    std::to_string(inconsistent->second.second);
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_GEOMETRIC_FAILED,
+	    BREP_CDT_STAGE_GEOMETRIC_VALIDATION, face, 0, 1,
+	    message.c_str());
+    } else if (do_triangulation(s_cdt, face, NULL, relative_scale)) {
+	s_cdt->failed_face_diagnostics.erase(face);
+	return true;
+    }
+
+    if (s_cdt->diagnostic.face_index != face ||
+	    s_cdt->diagnostic.result >= 0) {
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_FACE_FAILED,
+	    BREP_CDT_STAGE_FACE_TRIANGULATION, face, 0, 1,
+	    "face triangulation failed without a specific diagnostic");
+    }
+    s_cdt->failed_face_diagnostics[face] = s_cdt->diagnostic;
+    return false;
+}
+
+static void
+refine_failed_shared_chords(struct ON_Brep_CDT_State *s_cdt)
+{
+    size_t split_count = 0;
+    for (int attempt = 0; attempt < CDT_MAX_CHART_REFINEMENT_ATTEMPTS;
+	    ++attempt) {
+	/* Both folded triangles and crossing constraints can be caused
+	 * by fixed boundary chords. Subdivide only implicated chords,
+	 * then rebuild both incident faces from the shared samples. */
+	std::map<std::pair<int, double>, bedge_seg_t *> chords;
+	for (const auto &failed : s_cdt->failed_face_diagnostics) {
+	    cdt_mesh_t &mesh = s_cdt->fmeshes.at(failed.first);
+	    const bool adaptive = failed.second.stage ==
+		BREP_CDT_STAGE_ADAPTIVE_REFINEMENT;
+	    /* Preserve the original partial mesh when a failure unrelated
+	     * to the shared chords blocks closure. */
+	    if (!adaptive && (failed.second.stage != BREP_CDT_STAGE_PSLG_VALIDATION ||
+		    mesh.crossing_boundary_segments().empty()))
+		return;
+	    const auto segments = adaptive ? mesh.folded_boundary_segments() :
+		mesh.crossing_boundary_segments();
+	    for (bedge_seg_t *segment : segments)
+		chords.emplace(std::make_pair(segment->edge_ind,
+		    segment->edge_start), segment);
 	}
-	if (face_triangulated) {
-	    face_successes++;
-	} else {
-	    if (s_cdt->diagnostic.face_index != fi ||
-		    s_cdt->diagnostic.result >= 0) {
-		cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_FACE_FAILED,
-		    BREP_CDT_STAGE_FACE_TRIANGULATION, fi, 0, 1,
-		    "face triangulation failed without a specific diagnostic");
-	    }
-	    s_cdt->failed_face_indices.push_back(fi);
-	    s_cdt->failed_face_diagnostics[fi] = s_cdt->diagnostic;
-	    if (first_failed_face < 0)
-		first_failed_face = fi;
-	    face_failures++;
+
+	std::set<int> changed_faces;
+	for (const auto &entry : chords) {
+	    if (split_count >= CDT_MAX_CHART_REFINEMENT_POINTS)
+		break;
+	    bedge_seg_t *segment = entry.second;
+	    if (!segment->tseg1 || !segment->tseg2)
+		continue;
+	    const ON_BrepTrim &first = s_cdt->brep->m_T[segment->tseg1->trim_ind];
+	    const ON_BrepTrim &second = s_cdt->brep->m_T[segment->tseg2->trim_ind];
+	    const int first_face = first.Face()->m_face_index;
+	    const int second_face = second.Face()->m_face_index;
+	    if (split_edge_seg(s_cdt, segment, 1, NULL, 0).empty())
+		continue;
+	    changed_faces.insert(first_face);
+	    changed_faces.insert(second_face);
+	    ++split_count;
+	}
+	if (changed_faces.empty())
+	    break;
+	finalize_rtrees(s_cdt);
+	for (int face : changed_faces) {
+	    cdt_mesh_t &mesh = s_cdt->fmeshes.at(face);
+	    /* An early rebuild failure can leave the old triangle state
+	     * referencing a trim segment destroyed by the split. */
+	    mesh.ue2b_map.clear();
+	    mesh.reset();
+	    (void)triangulate_face(s_cdt, face);
 	}
     }
+}
+
+static void
+retry_deferred_chart_cleanup(struct ON_Brep_CDT_State *state)
+{
+    auto failure = state->failed_face_diagnostics.begin();
+    while (failure != state->failed_face_diagnostics.end()) {
+	const auto current = failure++;
+	const int face = current->first;
+	if (current->second.stage == BREP_CDT_STAGE_PSLG_VALIDATION &&
+		!state->fmeshes.at(face).crossing_boundary_segments().empty())
+	    (void)triangulate_face(state, face);
+    }
+}
+
+static void
+refine_folded_face_sampling(struct ON_Brep_CDT_State *state)
+{
+    if (state->tol.rel <= ON_ZERO_TOLERANCE)
+	return;
+
+    auto failure = state->failed_face_diagnostics.begin();
+    while (failure != state->failed_face_diagnostics.end()) {
+	const auto current = failure++;
+	if (current->second.stage != BREP_CDT_STAGE_ADAPTIVE_REFINEMENT ||
+		current->second.result != BREP_CDT_RESULT_REFINEMENT_LIMIT)
+	    continue;
+
+	const int face = current->first;
+	cdt_mesh_t &mesh = state->fmeshes.at(face);
+	if (!mesh.incorrect_normal_count() || !finalize_face_rtrees(state, face))
+	    continue;
+
+	/* A coarse interior can fold even when its shared boundary is
+	 * already resolved. Rebuild the failed chart with finer interior
+	 * samples while retaining the existing shared edges. */
+	mesh.m_interior_pnts.clear();
+	(void)triangulate_face(state, face, FACE_RESAMPLING_SCALE);
+    }
+}
+
+static int
+triangulate_selected_faces(struct ON_Brep_CDT_State *s_cdt,
+	int face_cnt, int *faces, int &face_successes)
+{
+    const bool all_faces = !face_cnt || !faces;
+    const int count = all_faces ? s_cdt->brep->m_F.Count() : face_cnt;
+    const bool refine_shared = all_faces && !s_cdt->max_face_time_ms;
+    s_cdt->defer_chart_cleanup = refine_shared;
+    for (int i = 0; i < count; ++i) {
+	const int face = all_faces ? i : faces[i];
+	if (triangulate_face(s_cdt, face))
+	    ++face_successes;
+	else
+	    s_cdt->failed_face_indices.push_back(face);
+    }
+
+    if (refine_shared && !s_cdt->failed_face_indices.empty())
+	refine_failed_shared_chords(s_cdt);
+
+    s_cdt->defer_chart_cleanup = false;
+    if (refine_shared && !s_cdt->failed_face_indices.empty()) {
+	retry_deferred_chart_cleanup(s_cdt);
+	refine_folded_face_sampling(s_cdt);
+	s_cdt->failed_face_indices.clear();
+	for (const auto &failure : s_cdt->failed_face_diagnostics)
+	    s_cdt->failed_face_indices.push_back(failure.first);
+	face_successes = count - (int)s_cdt->failed_face_indices.size();
+    }
+
+    const int face_failures = (int)s_cdt->failed_face_indices.size();
+    const int first_failed_face = face_failures ?
+	s_cdt->failed_face_indices.front() : -1;
+    if (face_failures)
+	s_cdt->diagnostic = s_cdt->failed_face_diagnostics.at(
+	    s_cdt->failed_face_indices.back());
 
     // If we only tessellated some of the faces, we don't have the
     // full solid mesh yet (by definition).  Return accordingly.
@@ -2123,6 +2383,31 @@ assemble_face_meshes(cdt_mesh_output &output, struct ON_Brep_CDT_State *state)
     return result >= 0;
 }
 
+static bool
+resample_intersecting_faces(struct ON_Brep_CDT_State *state,
+	const assembled_mesh_validation &validation, std::set<int> &resampled,
+	size_t &budget, double relative_scale = 1.0)
+{
+    const size_t initial_budget = budget;
+    for (int triangle : validation.first_intersection) {
+	if (triangle < 0 || (size_t)triangle >= state->bot_face_to_brep_face.size())
+	    return false;
+	const int face = state->bot_face_to_brep_face[(size_t)triangle];
+	if (!budget || !resampled.insert(face).second)
+	    continue;
+	const ON_Surface *surface = state->brep->m_F[face].SurfaceOf();
+	if (!surface || surface->IsPlanar(NULL, ON_ZERO_TOLERANCE))
+	    continue;
+
+	/* A shared-edge split replaces trim segments. Refresh the query
+	 * indexes before sampling this face again. */
+	if (!finalize_face_rtrees(state, face) ||
+		!do_triangulation(state, face, &budget, relative_scale))
+	    return false;
+    }
+    return budget < initial_budget;
+}
+
 static int
 certify_assembled_mesh(struct ON_Brep_CDT_State *s_cdt, int face_successes)
 {
@@ -2130,6 +2415,13 @@ certify_assembled_mesh(struct ON_Brep_CDT_State *s_cdt, int face_successes)
     assembled_mesh_validation mesh_validation;
     size_t assembled_refinement_points = 0;
     int assembled_refinement_attempts = 0;
+    /* Each retry certifies a whole mesh. Limit the additional passes
+     * independently of the point budget. */
+    const int maximum_resampling_rounds = 4;
+    int resampling_rounds = 0;
+    size_t resampling_budget = CDT_MAX_ASSEMBLED_REFINEMENT_POINTS;
+    std::set<int> resampled;
+    std::set<int> resampled_finer;
     while (true) {
 	if (!assemble_face_meshes(output, s_cdt)) {
 	    s_cdt->status = BREP_CDT_FAILED;
@@ -2172,6 +2464,23 @@ certify_assembled_mesh(struct ON_Brep_CDT_State *s_cdt, int face_successes)
 	    assembled_refinement_attempts++;
 
 	    continue;
+	}
+
+	if (only_intersection && !s_cdt->max_face_time_ms && resampling_budget &&
+		resampling_rounds < maximum_resampling_rounds) {
+	    const size_t before = resampling_budget;
+	    bool sampled = resample_intersecting_faces(s_cdt, mesh_validation,
+		resampled, resampling_budget);
+	    /* The original spacing can add no new points. In that case try
+	     * finer interior samples while retaining all shared boundaries. */
+	    if (!sampled && resampling_budget == before &&
+		    s_cdt->tol.rel > ON_ZERO_TOLERANCE)
+		sampled = resample_intersecting_faces(s_cdt, mesh_validation,
+		    resampled_finer, resampling_budget, FACE_RESAMPLING_SCALE);
+	    if (sampled) {
+		++resampling_rounds;
+		continue;
+	    }
 	}
 
 	std::string message =

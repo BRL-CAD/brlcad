@@ -781,6 +781,7 @@ cdt_state_reset(struct ON_Brep_CDT_State *s_cdt)
     s_cdt->faces_to_update.clear();
     s_cdt->failed_face_indices.clear();
     s_cdt->failed_face_diagnostics.clear();
+    s_cdt->rebuilt_support_faces.clear();
     s_cdt->repair_source_valid = false;
     s_cdt->absmax = -1;
     s_cdt->absmin = -1;

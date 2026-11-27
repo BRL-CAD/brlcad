@@ -25,6 +25,7 @@
 #include "brep/pullback.h"
 #include "chart.h"
 #include "surface.h"
+#include "../../libbg/nanoflann.hpp"
 
 static const double CDT_CONIC_TOLERANCE = 0.05;
 
@@ -490,15 +491,79 @@ cdt_face_closed_direction(const ON_BrepFace &face)
     return seam_directions == 2u ? 1 : 0;
 }
 
+static bool
+has_straight_cylinder_ruling(const ON_Surface *surface)
+{
+    const auto *revolution = ON_RevSurface::Cast(surface);
+    const auto *generator = revolution ?
+	ON_LineCurve::Cast(revolution->m_curve) : nullptr;
+    if (!generator)
+	return false;
+    ON_3dVector direction = generator->m_line.Direction();
+    ON_3dVector axis = revolution->m_axis.Direction();
+    return direction.Unitize() && axis.Unitize() &&
+	ON_CrossProduct(direction, axis).Length() <= ON_ZERO_TOLERANCE;
+}
+
+static bool
+native_cylinder_holes(const ON_BrepFace &face, const ON_Surface &surface)
+{
+    if (face.LoopCount() < 2 || !has_straight_cylinder_ruling(&surface))
+	return false;
+    const ON_Interval u = surface.Domain(0);
+    const ON_Interval v = surface.Domain(1);
+    const double u_roundoff = cdt_surface_parameter_tolerance(u);
+    const double v_roundoff = cdt_surface_parameter_tolerance(v);
+    bool has_hole = false;
+    std::set<int> boundary_vertices;
+    for (int i = 0; i < face.LoopCount(); ++i) {
+	const auto *loop = face.Loop(i);
+	ON_BoundingBox bounds;
+	if (!loop || !loop->GetBoundingBox(bounds) || !bounds.IsValid() ||
+		bounds.Min().x < u.Min() - u_roundoff ||
+		bounds.Max().x > u.Max() + u_roundoff ||
+		bounds.Min().y < v.Min() - v_roundoff ||
+		bounds.Max().y > v.Max() + v_roundoff)
+	    return false;
+	has_hole = has_hole || loop->m_type == ON_BrepLoop::inner;
+	/* A hole with a shared corner still needs the analytic chart's
+	 * normalization for touching boundary paths. */
+	for (int ti = 0; ti < loop->TrimCount(); ++ti) {
+	    const auto *trim = loop->Trim(ti);
+	    if (!trim || trim->m_vi[0] < 0 ||
+		    !boundary_vertices.insert(trim->m_vi[0]).second)
+		return false;
+	}
+    }
+    return has_hole;
+}
+
+static bool
+fit_cylinder_chart(const ON_BrepFace &face, ON_Cylinder *cylinder)
+{
+    const ON_Surface *surface = face.SurfaceOf();
+    if (!surface)
+	return false;
+    const bool periodic = surface->IsClosed(0) || surface->IsClosed(1);
+    if (!periodic && cdt_face_has_seam(face))
+	return false;
+    /* The angular coordinate of an open revolution already unfolds the
+     * cylinder. Preserve the native relation between its trim loops when
+     * they occupy the same parameter interval. */
+    if (!periodic && native_cylinder_holes(face, *surface))
+	return false;
+    /* A short, noncircular NURBS extrusion can fit a cylinder to a loose
+     * tolerance. Its angular projection changes the local connectivity
+     * when the profile and cylinder differ by more than modeling tolerance. */
+    const double tolerance = !periodic && ON_NurbsSurface::Cast(surface) ?
+	(double)BN_TOL_DIST : CDT_CONIC_TOLERANCE;
+    return surface->IsCylinder(cylinder, tolerance);
+}
+
 bool
 cdt_face_uses_cylinder_chart(const ON_BrepFace &face)
 {
-    const ON_Surface *surface = face.SurfaceOf();
-    if (!surface || !surface->IsCylinder(NULL, CDT_CONIC_TOLERANCE))
-	return false;
-    if (cdt_face_has_seam(face))
-	return surface->IsClosed(0) || surface->IsClosed(1);
-    return true;
+    return fit_cylinder_chart(face, nullptr);
 }
 
 bool
@@ -955,37 +1020,104 @@ cdt_face_chart::native_to_chart(const ON_2dPoint &native_uv,
     return chart_uv.IsValid();
 }
 
+struct cdt_face_chart::pullback_seed_index {
+    using position = std::pair<double, double>;
+    using distance = nanoflann::L2_Simple_Adaptor<double, pullback_seed_index>;
+    using tree = nanoflann::KDTreeSingleIndexAdaptor<distance,
+	pullback_seed_index, 2, size_t>;
+
+    struct nearest {
+	using DistanceType = double;
+	size_t index = std::numeric_limits<size_t>::max();
+	double distance_squared = DBL_MAX;
+
+	bool full() const { return distance_squared < DBL_MAX; }
+	void sort() {}
+	bool addPoint(double candidate, size_t point)
+	{
+	    if (candidate < distance_squared ||
+		    (candidate <= distance_squared && point < index)) {
+		distance_squared = candidate;
+		index = point;
+	    }
+	    return true;
+	}
+	/* The search otherwise excludes exact ties at a leaf's distance bound.
+	 * Preserve the first matching chart index from the linear search. */
+	double worstDist() const
+	{
+	    return std::nextafter(distance_squared, DBL_MAX);
+	}
+    };
+
+    explicit pullback_seed_index(std::vector<position>::const_iterator begin,
+	    std::vector<position>::const_iterator end) :
+	coordinates(begin, end), index(2, *this) {}
+
+    size_t kdtree_get_point_count() const { return coordinates.size(); }
+    double kdtree_get_pt(size_t point, size_t axis) const
+    {
+	return axis ? coordinates[point].second : coordinates[point].first;
+    }
+    template <class Box> bool kdtree_get_bbox(Box &) const { return false; }
+
+    /* Own the indexed prefix because charts can move and append refinements. */
+    const std::vector<position> coordinates;
+    const tree index;
+};
+
+void
+cdt_face_chart::index_pullback_seeds()
+{
+    m_pullback_seeds.reset();
+    if (!m_planar_metric && m_type != CDT_FACE_CHART_CYLINDER &&
+	    m_type != CDT_FACE_CHART_SPHERE_CAP)
+	return;
+    const size_t count = std::min(points.size(), m_source_native_points.size());
+    /* An index would cost more than a scan for a small chart. */
+    const size_t minimum_index_size = 64;
+    if (count >= minimum_index_size)
+	m_pullback_seeds = std::make_shared<pullback_seed_index>(
+	    points.begin(), points.begin() + count);
+}
+
 /* A nearby chart vertex supplies the pullback seed, but the global search
  * remains necessary when that seed cannot reach the requested surface point.
  * The caller retains the tolerance policy of its chart representation. */
 bool
 cdt_face_chart::surface_point_to_native(const ON_2dPoint &chart_uv,
-	const ON_3dPoint &target, double tolerance, ON_2dPoint &native_uv) const
+	const ON_3dPoint &target, double tolerance, ON_2dPoint &native_uv,
+	double fit_tolerance) const
 {
-    double nearest_distance = DBL_MAX;
-    ON_2dPoint seed = ON_2dPoint::UnsetPoint;
-    for (size_t i = 0; i < points.size() &&
-	    i < m_source_native_points.size(); ++i) {
+    pullback_seed_index::nearest nearest;
+    const size_t count = std::min(points.size(), m_source_native_points.size());
+    size_t indexed = 0;
+    if (m_pullback_seeds && m_pullback_seeds->coordinates.size() <= count) {
+	const double query[2] = {chart_uv.x, chart_uv.y};
+	m_pullback_seeds->index.findNeighbors(nearest, query);
+	indexed = m_pullback_seeds->coordinates.size();
+    }
+    /* Refinement points are appended to the indexed prefix. */
+    for (size_t i = indexed; i < count; ++i) {
 	const double dx = points[i].first - chart_uv.x;
 	const double dy = points[i].second - chart_uv.y;
-	const double candidate = dx * dx + dy * dy;
-	if (candidate < nearest_distance) {
-	    nearest_distance = candidate;
-	    seed = m_source_native_points[i];
-	}
+	nearest.addPoint(dx * dx + dy * dy, i);
     }
+    const ON_2dPoint seed = nearest.full() ?
+	m_source_native_points[nearest.index] : ON_2dPoint::UnsetPoint;
     brlcad::PullbackContext context;
     ON_3dPoint lifted = ON_3dPoint::UnsetPoint;
     double distance = DBL_MAX;
+    const double search_tolerance = std::max(tolerance, fit_tolerance);
     bool mapped = seed.IsValid() &&
 	context.SurfaceClosestPointFromSeed(m_surface, target, seed,
-	    native_uv, lifted, distance, tolerance, NULL, NULL, tolerance);
+	    native_uv, lifted, distance, search_tolerance, NULL, NULL, tolerance);
     if (!mapped)
 	mapped = context.SurfaceClosestPoint(m_surface, target, native_uv,
-	    lifted, distance, 0, tolerance, tolerance);
+	    lifted, distance, 0, tolerance, search_tolerance);
     const double acceptance_factor = 4.0;
     return mapped && native_uv.IsValid() &&
-	distance <= acceptance_factor * tolerance;
+	distance <= std::max(acceptance_factor * tolerance, fit_tolerance);
 }
 
 bool
@@ -1054,8 +1186,11 @@ cdt_face_chart::chart_to_native(const ON_2dPoint &chart_uv,
 	    std::fabs(target.z)));
 	const double tolerance = 2048.0 *
 	    std::numeric_limits<double>::epsilon() * coordinate_scale;
+	/* Recognize and invert the cylinder fit to the same model-space
+	 * tolerance. The recovered parameters are evaluated on the source
+	 * surface for geometric certification. */
 	return surface_point_to_native(chart_uv, target, tolerance,
-	    native_uv);
+	    native_uv, CDT_CONIC_TOLERANCE);
     }
     if ((m_type != CDT_FACE_CHART_CONE_WEDGE &&
 	    m_type != CDT_FACE_CHART_POLAR) ||
@@ -1117,21 +1252,13 @@ cdt_face_chart::triangle_chart_image(const int chart_triangle[3],
 }
 
 bool
-cdt_face_chart::triangle_surface_samples(const int chart_triangle[3],
-	ON_2dPoint native_uv[4]) const
+cdt_face_chart::triangle_centroid_sample(const int chart_triangle[3],
+	ON_2dPoint &native_uv) const
 {
     ON_2dPoint triangle[3];
-    if (!native_uv || !triangle_chart_image(chart_triangle, triangle))
-	return false;
-    if (!chart_to_native((triangle[0] + triangle[1] + triangle[2]) / 3.0,
-	    native_uv[0]))
-	return false;
-    for (int edge = 0; edge < 3; ++edge) {
-	if (!chart_to_native((triangle[edge] + triangle[(edge + 1) % 3]) / 2.0,
-		native_uv[edge + 1]))
-	    return false;
-    }
-    return true;
+    return triangle_chart_image(chart_triangle, triangle) &&
+	chart_to_native((triangle[0] + triangle[1] + triangle[2]) / 3.0,
+	    native_uv);
 }
 
 bool
@@ -1247,6 +1374,7 @@ cdt_face_chart::repair_toleranced_edge_endpoint_samples(
 	    !std::isfinite(tolerance))
 	return 0;
 
+    m_pullback_seeds.reset();
     std::map<long, int> native_to_chart;
     std::set<long> ambiguous;
     for (const cdt_chart_vertex &vertex : vertices) {
@@ -2124,8 +2252,98 @@ cdt_face_chart::repair_periodic_seam_holes(double period,
     if (!splice(period, high_arc) || !splice(0.0, nonnegative))
 	return 0;
     repaired.holes.erase(repaired.holes.begin() + candidate);
+    repaired.m_pullback_seeds.reset();
     *this = std::move(repaired);
     return 1;
+}
+
+/* Opposite isoparametric arcs can supply exact straight rulings.
+ * Preserve both original boundary sequences and connect only aligned
+ * samples. This keeps a triangle chord from cutting across a thin wall. */
+static std::vector<std::pair<int, int>>
+rectangular_cylinder_rulings(const std::vector<std::pair<double, double>> &points,
+	const std::vector<int> &ring, double radius, bool &aligned_ends)
+{
+    aligned_ends = false;
+    if (ring.size() < 4)
+	return {};
+
+    double left = DBL_MAX, right = -DBL_MAX;
+    double bottom = DBL_MAX, top = -DBL_MAX;
+    for (int vertex : ring) {
+	const auto &point = points[(size_t)vertex];
+	left = std::min(left, point.first);
+	right = std::max(right, point.first);
+	bottom = std::min(bottom, point.second);
+	top = std::max(top, point.second);
+    }
+    const double scale = std::max({1.0, std::fabs(left), std::fabs(right),
+	std::fabs(bottom), std::fabs(top)});
+    const double tolerance = 4096.0 * std::numeric_limits<double>::epsilon() *
+	scale;
+    if (right - left <= tolerance || top - bottom <= tolerance)
+	return {};
+
+    enum rectangle_side { LEFT = 1, RIGHT = 2, BOTTOM = 4, TOP = 8 };
+    const auto sides = [&](int vertex) {
+	const auto &point = points[(size_t)vertex];
+	unsigned mask = 0;
+	if (std::fabs(point.first - left) <= tolerance)
+	    mask |= LEFT;
+	if (std::fabs(point.first - right) <= tolerance)
+	    mask |= RIGHT;
+	if (std::fabs(point.second - bottom) <= tolerance)
+	    mask |= BOTTOM;
+	if (std::fabs(point.second - top) <= tolerance)
+	    mask |= TOP;
+	return mask;
+    };
+    std::vector<std::pair<double, int>> lower, upper;
+    const unsigned corners[] = {LEFT | BOTTOM, RIGHT | BOTTOM,
+	LEFT | TOP, RIGHT | TOP};
+    std::set<unsigned> visited_corners;
+    for (size_t i = 0; i < ring.size(); ++i) {
+	const int vertex = ring[i];
+	const unsigned side = sides(vertex);
+	if (!(side & sides(ring[(i + 1) % ring.size()])))
+	    return {};
+	if (side == BOTTOM)
+	    lower.emplace_back(points[(size_t)vertex].first, vertex);
+	if (side == TOP)
+	    upper.emplace_back(points[(size_t)vertex].first, vertex);
+	if (std::find(std::begin(corners), std::end(corners), side) !=
+		std::end(corners))
+	    visited_corners.insert(side);
+    }
+    if (visited_corners.size() != sizeof(corners) / sizeof(corners[0]))
+	return {};
+
+    std::sort(lower.begin(), lower.end());
+    std::sort(upper.begin(), upper.end());
+    std::vector<std::pair<int, int>> rulings;
+    auto high = upper.begin();
+    const double maximum_sweep = ON_PI / 8.0;
+    const double maximum_span = maximum_sweep * radius + tolerance;
+    double last_lower = left, last_upper = left;
+    for (const auto &low : lower) {
+	while (high != upper.end() && high->first < low.first - tolerance)
+	    ++high;
+	if (high == upper.end())
+	    break;
+	if (std::fabs(high->first - low.first) > tolerance)
+	    continue;
+	if (low.first - last_lower > maximum_span ||
+		high->first - last_upper > maximum_span)
+	    return {};
+	rulings.emplace_back(low.second, high->second);
+	last_lower = low.first;
+	last_upper = high->first;
+	++high;
+    }
+    if (right - last_lower > maximum_span || right - last_upper > maximum_span)
+	return {};
+    aligned_ends = rulings.size() == lower.size() && rulings.size() == upper.size();
+    return rulings;
 }
 
 bool
@@ -2425,6 +2643,19 @@ cdt_face_chart::build_cylinder(const ON_BrepFace &face,
 	}
 	if (unique_steiner.insert(point).second)
 	    steiner.push_back(point);
+    }
+    /* A straight generator parallel to the revolution axis makes every
+     * span between the matched ends an exact cylinder ruling. A complete
+     * match preserves the angular resolution of both boundary arcs. */
+    if (!has_seam && holes.empty() && has_straight_cylinder_ruling(surface)) {
+	bool aligned_ends;
+	const auto rulings = rectangular_cylinder_rulings(points, outer,
+	    cylinder.circle.radius, aligned_ends);
+	if (!rulings.empty()) {
+	    constraints.insert(constraints.end(), rulings.begin(), rulings.end());
+	    if (aligned_ends)
+		steiner.clear();
+	}
     }
     return validate_boundary(face, native_points);
 }
@@ -3389,8 +3620,28 @@ cdt_face_chart::build_pole_wedge(const ON_BrepFace &face,
 	    }
 	    return false;
 	};
+	/* The fan resolves the paired seam at its pole.  An artificial
+	 * ray into the opposite hemisphere of an exact sphere can force
+	 * a nearly diametrical chord and wedge triangles along the ray
+	 * that the surface refinement cannot unfold. */
+	ON_Sphere sphere;
+	ON_3dVector pole_axis;
+	const auto *revolution = ON_RevSurface::Cast(m_surface);
+	const bool bound_spherical_fan = !ruled && !symbolic_pole_boundary &&
+	    selected_pole_seam && revolution &&
+	    revolution->IsSpherical(&sphere, ON_ZERO_TOLERANCE);
+	if (bound_spherical_fan) {
+	    pole_axis = cdt_surface_point(m_surface,
+		m_source_native_points[pole_source]) - sphere.Center();
+	}
 	const chart_geometry geometry(points);
 	const auto valid_fan_segment = [&](int point) {
+	    if (bound_spherical_fan) {
+		const ON_3dPoint model = cdt_surface_point(m_surface,
+		    m_source_native_points[(size_t)vertices[(size_t)point].native_point]);
+		if (!model.IsValid() || (model - sphere.Center()) * pole_axis <= 0.0)
+		    return false;
+	    }
 	    const double midpoint_x = 0.5 *
 		(points[(size_t)apex].first + points[(size_t)point].first);
 	    const double midpoint_y = 0.5 *
@@ -4421,6 +4672,7 @@ cdt_face_chart::build(const ON_BrepFace &face,
     m_cylinder_cut = 0.0;
     m_cylinder_orientation = 1;
     m_source_native_points.clear();
+    m_pullback_seeds.reset();
 
     if (topology_vertices.size() != native_points.size()) {
 	m_failure = "chart topology metadata does not match its point array";
@@ -4468,8 +4720,7 @@ cdt_face_chart::build(const ON_BrepFace &face,
 }
 
     ON_Cylinder cylinder;
-    if (cdt_face_uses_cylinder_chart(face) && face.SurfaceOf() &&
-	    face.SurfaceOf()->IsCylinder(&cylinder, CDT_CONIC_TOLERANCE)) {
+    if (fit_cylinder_chart(face, &cylinder)) {
 	built = build_cylinder(face, native_points, source_outer, source_holes,
 	    source_steiner, points_3d, topology_vertices, cylinder);
     } else {

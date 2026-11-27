@@ -446,86 +446,97 @@ ON_NurbsCurve_ClosestPointToLineSegment(
 
 
 
-static double
-trim_binary_search(fastf_t *tparam, const ON_BrepTrim *trim, double tstart, double tend, const ON_3dPoint &edge_3d, double tol, int depth, int force)
-{
-    if (!std::isfinite(tstart) || !std::isfinite(tend))
-	return -2;
+struct trim_search_sample {
+    explicit trim_search_sample(double t) : parameter(t) {}
 
-    double tcparam = tstart + 0.5 * (tend - tstart);
-    ON_3dPoint trim_2d = trim->PointAt(tcparam);
-    const ON_Surface *s = trim->SurfaceOf();
-    ON_3dPoint trim_3d = s->PointAt(trim_2d.x, trim_2d.y);
-    double dist = edge_3d.DistanceTo(trim_3d);
+    double parameter;
+    ON_3dPoint lifted;
+    bool evaluated = false;
+};
 
-    // Once midpoint rounding reaches an endpoint, another recursive call
-    // receives the same interval and can never make progress.  A depth bound
-    // is a second guard for malformed curves whose evaluations do not guide
-    // the search to a shrinking span.
-    const bool midpoint_is_interior = (tstart < tend) ?
-	(tcparam > tstart && tcparam < tend) :
-	(tcparam < tstart && tcparam > tend);
-    if (!midpoint_is_interior || depth >= 64) {
-	(*tparam) = tcparam;
-	return dist;
+struct trim_binary_search {
+    const ON_BrepTrim *trim;
+    const ON_Surface *surface;
+    const ON_3dPoint &target;
+    double tolerance;
+
+    const ON_3dPoint &evaluate(trim_search_sample &sample) const
+    {
+	if (!sample.evaluated) {
+	    const ON_3dPoint uv = trim->PointAt(sample.parameter);
+	    sample.lifted = surface->PointAt(uv.x, uv.y);
+	    sample.evaluated = true;
+	}
+	return sample.lifted;
     }
 
-    if (dist > tol && !force) {
-	ON_3dPoint trim_start_2d = trim->PointAt(tstart);
-	ON_3dPoint trim_end_2d = trim->PointAt(tend);
-	ON_3dPoint trim_start_3d = s->PointAt(trim_start_2d.x, trim_start_2d.y);
-	ON_3dPoint trim_end_3d = s->PointAt(trim_end_2d.x, trim_end_2d.y);
+    double find(fastf_t *parameter, trim_search_sample &start,
+	    trim_search_sample &end, trim_search_sample &midpoint,
+	    int depth = 0) const
+    {
+	const double outside_span = -2.0;
+	if (!std::isfinite(start.parameter) || !std::isfinite(end.parameter))
+	    return outside_span;
 
-	ON_3dVector v1 = edge_3d - trim_start_3d;
-	ON_3dVector v2 = edge_3d - trim_end_3d;
-	double vdot = ON_DotProduct(v1,v2);
+	const double distance = target.DistanceTo(evaluate(midpoint));
+	const auto accept_midpoint = [&]() {
+	    *parameter = midpoint.parameter;
+	    return distance;
+	};
 
-	if (vdot < 0 && dist > ON_ZERO_TOLERANCE) {
-	    double tlparam = DBL_MAX;
-	    double trparam = DBL_MAX;
-	    double fldist = trim_binary_search(&tlparam, trim, tstart, tcparam, edge_3d, tol, depth+1, 0);
-	    double frdist = trim_binary_search(&trparam, trim, tcparam, tend, edge_3d, tol, depth+1, 0);
-	    if (fldist >= 0 && frdist < -1) {
-		(*tparam) = tlparam;
-		return fldist;
-	    }
-	    if (frdist >= 0 && fldist < -1) {
-		(*tparam) = trparam;
-		return frdist;
-	    }
-	    if (fldist < -1 && frdist < -1) {
-		fldist = trim_binary_search(&tlparam, trim, tstart, tcparam, edge_3d, tol, depth+1, 1);
-		frdist = trim_binary_search(&trparam, trim, tcparam, tend, edge_3d, tol, depth+1, 1);
-		if ((fldist < frdist) && (fldist < dist)) {
-		    (*tparam) = tlparam;
-		    return fldist;
-		}
-		if ((frdist < fldist) && (frdist < dist)) {
-		    (*tparam) = trparam;
-		    return frdist;
-		}
-		(*tparam) = tcparam;
-		return dist;
+	/* Once rounding reaches an endpoint, another search receives
+	 * the same interval. Also bound the depth on malformed trims. */
+	const int max_depth = 64;
+	if (!(distance > tolerance) || depth >= max_depth ||
+		!(midpoint.parameter > std::min(start.parameter, end.parameter) &&
+		midpoint.parameter < std::max(start.parameter, end.parameter)))
+	    return accept_midpoint();
 
+	const ON_3dVector from_start = target - evaluate(start);
+	const ON_3dVector from_end = target - evaluate(end);
+	const double alignment = ON_DotProduct(from_start, from_end);
+	if (!(alignment < 0 && distance > ON_ZERO_TOLERANCE)) {
+	    if (depth == 0 || NEAR_ZERO(alignment, ON_ZERO_TOLERANCE))
+		return accept_midpoint();
+	    return outside_span;
+	}
+
+	/* The two child intervals share all three existing evaluations.
+	 * If neither brackets the target, compare their sampled centers
+	 * without evaluating either trim point a second time. */
+	trim_search_sample left(start.parameter +
+	    0.5 * (midpoint.parameter - start.parameter));
+	trim_search_sample right(midpoint.parameter +
+	    0.5 * (end.parameter - midpoint.parameter));
+	double left_parameter = DBL_MAX;
+	double right_parameter = DBL_MAX;
+	double left_distance = find(&left_parameter, start, midpoint, left,
+	    depth + 1);
+	double right_distance = find(&right_parameter, midpoint, end, right,
+	    depth + 1);
+	if (left_distance >= 0 && right_distance < 0) {
+	    *parameter = left_parameter;
+	    return left_distance;
+	}
+	if (right_distance >= 0 && left_distance < 0) {
+	    *parameter = right_parameter;
+	    return right_distance;
+	}
+	if (left_distance < 0 && right_distance < 0) {
+	    left_distance = target.DistanceTo(evaluate(left));
+	    right_distance = target.DistanceTo(evaluate(right));
+	    if (left_distance < right_distance && left_distance < distance) {
+		*parameter = left.parameter;
+		return left_distance;
 	    }
-	} else if (NEAR_ZERO(vdot, ON_ZERO_TOLERANCE)) {
-	    (*tparam) = tcparam;
-	    return dist;
-	} else {
-	    // Not in this span
-	    if (depth == 0) {
-		(*tparam) = tcparam;
-		return dist;
-	    } else {
-		return -2;
+	    if (right_distance < left_distance && right_distance < distance) {
+		*parameter = right.parameter;
+		return right_distance;
 	    }
 	}
+	return accept_midpoint();
     }
-
-    // close enough - this works
-    (*tparam) = tcparam;
-    return dist;
-}
+};
 
 bool
 ON_TrimCurve_GetClosestPoint(
@@ -554,7 +565,16 @@ ON_TrimCurve_GetClosestPoint(
 	return true;
     }
 
-    double vdist = trim_binary_search(t, trim, domain.ParameterAt(0), domain.ParameterAt(1), p, maximum_distance, 0, 0);
+    const ON_Surface *surface = trim->SurfaceOf();
+    if (!surface)
+	return false;
+
+    trim_search_sample start(domain.ParameterAt(0));
+    trim_search_sample end(domain.ParameterAt(1));
+    trim_search_sample midpoint(start.parameter + 0.5 * (end.parameter -
+	start.parameter));
+    const trim_binary_search search = {trim, surface, p, maximum_distance};
+    const double vdist = search.find(t, start, end, midpoint);
     if (vdist < 0) {
 	return false;
     }

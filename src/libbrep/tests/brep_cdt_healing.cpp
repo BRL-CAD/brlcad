@@ -576,7 +576,12 @@ main(int, const char **argv)
     const int curve = wired.AddEdgeCurve(new ON_LineCurve(wired.m_V[0].point, wired.m_V[1].point));
     wired.NewEdge(wired.m_V[0], wired.m_V[1], curve, NULL, 0.0);
     wired.Append(*source);
-    if (!run_case(wired, true, false, true, 0, 1, {0})) {
+    /* The primary tessellator already ignores wire edges on valid
+     * solids. Exercise removal and provenance directly in the healer. */
+    cdt_healing unwired;
+    if (!interpret(wired, unwired) || unwired.unused_edges != 1 ||
+	!unwired.edges.count(0) || !unwired.brep->IsValid() ||
+	!unwired.brep->IsSolid()) {
 	bu_log("unused-edge healing failed\n");
 	return 1;
     }
