@@ -39,6 +39,7 @@
 #include "wdb.h"
 #include "../ged_private.h"
 #include "./ged_facetize.h"
+#include "./transfer.h"
 #include "./validation.h"
 
 static const size_t FACETIZE_TERMINAL_DETAIL_LIMIT = 10u;
@@ -733,11 +734,14 @@ facetize_collect_primitive_summary(struct _ged_facetize_state *s)
     }
     db_close(cdbip);
 
+    if (s->execution.processes_leaves())
+	return;
+
     // Make combs with the various categories of object that weren't a
     // standard successful NMG ft_tessellate run
     struct bu_vls cname = BU_VLS_INIT_ZERO;
     for (m_it = method_sets.begin(); m_it != method_sets.end(); ++m_it) {
-	if (m_it->first == std::string("NMG"))
+	if (m_it->first == "NMG" || m_it->first == FACETIZE_PARTITION_METHOD)
 	    continue;
 	bu_vls_sprintf(&cname, "facetize_%s_objs", m_it->first.c_str());
 	if (db_lookup(dbip, bu_vls_cstr(&cname), LOOKUP_QUIET) != RT_DIR_NULL)

@@ -22,7 +22,7 @@ if(TARGET libged)
   # Phase D regression: coplanar window-frame subtraction pattern.
   # Exercises the instance-aware variant planning pass in the Manifold
   # facetize pipeline (plan.cpp + _booltree_leaf_tess variant resolution).
-  brlcad_addexec(regress_facetize regress_facetize.cpp "libged;libwdb;librt;libbu" TEST_USESDATA)
+  brlcad_addexec(regress_facetize regress_facetize.cpp "libged;libwdb;librt;libbg;libbu" TEST_USESDATA)
   if(TARGET regress_facetize)
     add_dependencies(regress_facetize ged_plugins)
   endif(TARGET regress_facetize)

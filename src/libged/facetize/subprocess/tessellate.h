@@ -28,6 +28,8 @@
 
 #include "common.h"
 
+#include <array>
+
 #include "vmath.h"
 #include "bu/vls.h"
 #include "bn/tol.h"
@@ -76,6 +78,13 @@ extern bool
 bot_is_manifold(struct rt_bot_internal *bot);
 
 __END_DECLS
+
+using FacetizeBotParts = std::array<struct rt_bot_internal *, 2>;
+
+/* On success, the caller owns both closed half-space meshes. */
+bool
+brep_contact_partition(FacetizeBotParts &parts, const struct rt_db_internal *intern,
+	const char *name, const struct bg_tess_tol *ttol);
 
 #endif // TESSELLATE_EXEC_H
 

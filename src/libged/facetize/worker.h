@@ -46,7 +46,8 @@ enum class FacetizeWorkerOperation {
     ValidateCsg = 2,
     EvaluateRegion = 3,
     NmgBooleanToBot = 4,
-    NmgBooleanToNmg = 5
+    NmgBooleanToNmg = 5,
+    TessellateLeaf = 6
 };
 
 struct FacetizePrimitiveSettings {

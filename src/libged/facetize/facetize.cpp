@@ -29,6 +29,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "bu/app.h"
@@ -42,8 +43,9 @@
 #define TESS_OPTS_IMPLEMENTATION
 #include "./tess_opts.h"
 #include "./ged_facetize.h"
+#include "./transfer.h"
 
-static const char FACETIZE_NMG_OUTPUT_FILE_SUFFIX[] = "_nmg_outputs.g";
+static const char FACETIZE_OUTPUT_FILE_SUFFIX[] = "_outputs.g";
 
 static int
 facetize_process_output(struct bu_vls *output, const char **command)
@@ -102,18 +104,18 @@ _facetize_methods_help(struct ged *gedp)
 }
 
 static int
-facetize_commit_nmg_outputs(struct _ged_facetize_state *s,
-	const std::vector<std::string> &output_names)
+facetize_commit_outputs(struct _ged_facetize_state *s,
+	const std::vector<std::string> &output_names, const char *new_root = nullptr)
 {
     if (!s || output_names.empty())
 	return BRLCAD_ERROR;
 
     std::string keep_file = std::string(bu_vls_cstr(s->wfile)) +
-	FACETIZE_NMG_OUTPUT_FILE_SUFFIX;
+	FACETIZE_OUTPUT_FILE_SUFFIX;
     (void)bu_file_delete(keep_file.c_str());
     struct ged *working_gedp = ged_open("db", bu_vls_cstr(s->wfile), 1);
     if (!working_gedp) {
-	facetize_failure(s, "unable to open staged NMG Boolean database '%s'",
+	facetize_failure(s, "unable to open staged database '%s'",
 		bu_vls_cstr(s->wfile));
 	return BRLCAD_ERROR;
     }
@@ -128,21 +130,213 @@ facetize_commit_nmg_outputs(struct _ged_facetize_state *s,
 	    keep_argv.data());
     ged_close(working_gedp);
     if (keep_result != BRLCAD_OK) {
-	facetize_failure(s, "unable to stage NMG Boolean outputs for import");
+	facetize_failure(s, "unable to stage facetize outputs for import");
 	(void)bu_file_delete(keep_file.c_str());
 	return BRLCAD_ERROR;
     }
 
-    const char *concat_argv[] = {"dbconcat", "-O", keep_file.c_str(), NULL};
-    int concat_result = ged_exec_dbconcat(s->gedp, 3, concat_argv);
+    const std::string affix = new_root ? std::string(new_root) + "_" : "";
+    const char *concat_argv[] = {"dbconcat", new_root ? "-L" : "-O",
+	keep_file.c_str(), new_root ? affix.c_str() : NULL, NULL};
+    int concat_result = ged_exec_dbconcat(s->gedp, new_root ? 4 : 3, concat_argv);
     (void)bu_file_delete(keep_file.c_str());
-    if (concat_result != BRLCAD_OK) {
-	facetize_failure(s, "unable to import staged NMG Boolean outputs");
+    if (concat_result != BRLCAD_OK ||
+	    (new_root && !db_lookup(s->dbip, new_root, LOOKUP_QUIET))) {
+	facetize_failure(s, "unable to import staged facetize outputs");
 	return BRLCAD_ERROR;
     }
     bu_vls_trunc(s->gedp->ged_result_str, 0);
     db_update_nref(s->dbip);
     return BRLCAD_OK;
+}
+
+static bool
+facetize_leaf_outputs(std::vector<std::string> &outputs,
+	struct _ged_facetize_state *s, const struct bu_ptbl &leaves)
+{
+    struct db_i *work = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
+    if (!work || db_dirbuild(work) < 0) {
+	if (work)
+	    db_close(work);
+	facetize_failure(s, "unable to open the completed leaf database");
+	return false;
+    }
+
+    bool valid = true;
+    for (size_t i = 0; i < leaves.end; ++i) {
+	auto *source = reinterpret_cast<struct directory *>(BU_PTBL_GET(&leaves, i));
+	const char *name = source->d_namep;
+	struct directory *result = db_lookup(work, name, LOOKUP_QUIET);
+	struct bu_attribute_value_set attrs = BU_AVS_INIT_ZERO;
+	if (!result || db5_get_attributes(work, &attrs, result) < 0) {
+	    facetize_failure(s, "unable to read leaf result '%s'", name);
+	    bu_avs_free(&attrs);
+	    valid = false;
+	    break;
+	}
+	const char *method = bu_avs_get(&attrs, FACETIZE_METHOD_ATTR);
+	const bool failed = method && BU_STR_EQUAL(method, "FAIL");
+	const bool bot = result->d_major_type == DB5_MAJORTYPE_BRLCAD &&
+	    result->d_minor_type == ID_BOT;
+	const bool partition = method && BU_STR_EQUAL(method, FACETIZE_PARTITION_METHOD) &&
+	    result->d_major_type == DB5_MAJORTYPE_BRLCAD && result->d_minor_type == ID_COMBINATION;
+	if (failed || (!bot && !partition)) {
+	    bu_avs_free(&attrs);
+	    if (s->tolerate_failures) {
+		// The worker has already recorded a diagnosed tessellation failure.
+		if (!failed)
+		    facetize_tolerated_failure(s, "no facetized leaf for '%s'; leaf left unchanged", name);
+		continue;
+	    }
+	    facetize_failure(s, "no facetized leaf for '%s'", name);
+	    valid = false;
+	    break;
+	}
+
+	/* Preserve the original object's display and material attributes. */
+	struct bu_attribute_value_set original = BU_AVS_INIT_ZERO;
+	if (db5_get_attributes(s->dbip, &original, source) < 0) {
+	    facetize_failure(s, "unable to read attributes of '%s'", name);
+	    bu_avs_free(&attrs);
+	    bu_avs_free(&original);
+	    valid = false;
+	    break;
+	}
+	if (method)
+	    bu_avs_add(&original, FACETIZE_METHOD_ATTR, method);
+	bu_avs_free(&attrs);
+	if (original.count && db5_update_attributes(result, &original, work) < 0) {
+	    facetize_failure(s, "unable to preserve attributes of '%s'", name);
+	    bu_avs_free(&original);
+	    valid = false;
+	    break;
+	}
+	bu_avs_free(&original);
+	outputs.emplace_back(name);
+    }
+    db_close(work);
+    return valid;
+}
+
+static bool
+facetize_find_leaf_objects(std::vector<struct directory *> &leaves,
+	struct db_i *dbip, std::vector<struct directory *> pending)
+{
+    std::unordered_set<struct directory *> visited;
+    while (!pending.empty()) {
+	struct directory *dp = pending.back();
+	pending.pop_back();
+	if (!visited.insert(dp).second)
+	    continue;
+
+	if (!(dp->d_flags & RT_DIR_COMB)) {
+	    leaves.push_back(dp);
+	    continue;
+	}
+
+	// A combination can be instanced many times. Its leaves need only one
+	// mesh per object, since the original instance matrices stay in the tree.
+	struct rt_db_internal intern;
+	RT_DB_INTERNAL_INIT(&intern);
+	if (rt_db_get_internal(&intern, dp, dbip, NULL) != ID_COMBINATION) {
+	    rt_db_free_internal(&intern);
+	    return false;
+	}
+	struct directory **children = NULL;
+	const int count = db_comb_children(dbip,
+	    static_cast<struct rt_comb_internal *>(intern.idb_ptr), &children, NULL, NULL);
+	rt_db_free_internal(&intern);
+	if (count)
+	    pending.insert(pending.end(), children, children + count);
+	if (children)
+	    bu_free(children, "facetize combination children");
+    }
+    return true;
+}
+
+static bool
+facetize_leaf_output_root(struct _ged_facetize_state *s, const FacetizePlan &plan)
+{
+    struct ged *work = ged_open("db", bu_vls_cstr(s->wfile), 1);
+    if (!work)
+	return false;
+
+    // Reserve the requested name before workers choose partition child names.
+    std::vector<const char *> args = {"g", plan.output.c_str()};
+    for (const std::string &input : plan.inputs)
+	args.push_back(input.c_str());
+    const bool exists = s->resume &&
+	db_lookup(work->dbip, plan.output.c_str(), LOOKUP_QUIET);
+    const bool ok = exists || ged_exec_g(work, args.size(), args.data()) == BRLCAD_OK;
+    ged_close(work);
+    return ok;
+}
+
+int
+_ged_facetize_leaves(struct _ged_facetize_state *s, const FacetizePlan &plan)
+{
+    std::vector<struct directory *> roots;
+    roots.reserve(plan.inputs.size());
+    for (const std::string &name : plan.inputs) {
+	struct directory *dp = db_lookup(s->dbip, name.c_str(), LOOKUP_QUIET);
+	if (!dp) {
+	    facetize_failure(s, "input object '%s' disappeared before leaf tessellation", name.c_str());
+	    return BRLCAD_ERROR;
+	}
+	roots.push_back(dp);
+    }
+
+    std::vector<struct directory *> candidates;
+    if (!facetize_find_leaf_objects(candidates, s->dbip, std::move(roots))) {
+	facetize_failure(s, "unable to read a combination while finding input primitives");
+	return BRLCAD_ERROR;
+    }
+    if (candidates.empty())
+	return BRLCAD_OK;
+    struct bu_ptbl leaves = BU_PTBL_INIT_ZERO;
+    const int count = db_search(&leaves, DB_SEARCH_FLAT | DB_SEARCH_HIDDEN,
+	"-type shape -or -type pnts", candidates.size(), candidates.data(), s->dbip,
+	NULL, NULL, NULL);
+    if (count <= 0) {
+	bu_ptbl_free(&leaves);
+	if (count < 0) {
+	    facetize_failure(s, "unable to find the input primitives for leaf tessellation");
+	    return BRLCAD_ERROR;
+	}
+	return BRLCAD_OK;
+    }
+
+    if (_ged_facetize_working_file_setup(s, &leaves) != BRLCAD_OK) {
+	bu_ptbl_free(&leaves);
+	facetize_failure(s, "unable to prepare the leaf tessellation database");
+	return BRLCAD_ERROR;
+    }
+
+    const bool in_place = plan.execution.writes_in_place();
+    if (!in_place && !facetize_leaf_output_root(s, plan)) {
+	bu_ptbl_free(&leaves);
+	facetize_failure(s, "unable to create output combination '%s'", plan.output.c_str());
+	return BRLCAD_ERROR;
+    }
+
+    const int tessellated = _ged_facetize_leaves_tri(s, s->dbip, &leaves);
+    std::vector<std::string> outputs;
+    const bool valid = tessellated == BRLCAD_OK && facetize_leaf_outputs(outputs, s, leaves);
+    bu_ptbl_free(&leaves);
+    facetize_collect_primitive_summary(s);
+    if (!valid)
+	return BRLCAD_ERROR;
+    if (outputs.empty()) {
+	facetize_failure(s, "no primitive leaves completed tessellation");
+	return BRLCAD_ERROR;
+    }
+    if (!in_place)
+	outputs = {plan.output};
+    const int committed = facetize_commit_outputs(s, outputs,
+	in_place ? nullptr : plan.output.c_str());
+    if (committed == BRLCAD_OK)
+	s->cleanup_workspace = true;
+    return committed;
 }
 
 int
@@ -211,7 +405,7 @@ _ged_facetize_objs(struct _ged_facetize_state *s, const FacetizePlan &plan)
 	}
 	db_close(work_dbip);
 	if (ret == BRLCAD_OK)
-	    ret = facetize_commit_nmg_outputs(s, successful_outputs);
+	    ret = facetize_commit_outputs(s, successful_outputs);
 	if (ret == BRLCAD_OK)
 	    s->cleanup_workspace = true;
 	goto booleval_cleanup;
@@ -264,6 +458,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     int in_place = 0;
     int nmg_boolean = 0;
     int nonoverlap_brep = 0;
+    int leaf_mode = 0;
     bool use_perturbation = false;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -276,7 +471,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     FacetizePlan plan;
 
     /* General options */
-    struct bu_opt_desc d[26];
+    struct bu_opt_desc d[27];
     BU_OPT(d[ 0], "h", "help",                                      "",                  NULL,           &print_help, "Print help and exit");
     BU_OPT(d[ 1], "v", "verbose",                                   "",  &bu_opt_incr_long,       &verbosity, "Verbose output (multiple flags increase verbosity)");
     BU_OPT(d[ 2], "q", "quiet",                                     "",                  NULL,                &quiet, "Suppress all output (overrides verbose flag)");
@@ -302,7 +497,9 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[22],  "", "perturb-vol-tol",                          "#",       &bu_opt_fastf_t,   &s->perturb_vol_tol, "Volume percentage threshold (0-100) that triggers the coplanarity-avoidance perturb retry when the CSG Crofton volume differs from the BoT volume by more than this amount. Default is 10.");
     BU_OPT(d[23],  "", "tolerate-failures",                         "",                  NULL, &s->tolerate_failures, "Continue after failed primitive or subtree evaluations and generate a partial result.  The output will not be a complete representation of the input if any failures are tolerated.");
     BU_OPT(d[24], "j", "jobs",                                     "#",           &bu_opt_int,     &s->max_workers, "Maximum number of facetize worker processes.  The default is selected conservatively from CPU and memory availability.");
-    BU_OPT_NULL(d[25]);
+    BU_OPT(d[25], "", "leaves", "", NULL, &leaf_mode,
+	"Facetize the primitive leaves and preserve the parent combinations, either in a new group or in place.");
+    BU_OPT_NULL(d[26]);
 
     /* skip command name argv[0] */
     argc-=(argc>0); argv+=(argc>0);
@@ -353,12 +550,24 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 	goto ged_facetize_done;
     }
 
+    if (leaf_mode && (region_mode || nonoverlap_brep || nmg_output ||
+	    nmg_boolean || force_perturb || db_version(gedp->dbip) < 5)) {
+	bu_vls_printf(gedp->ged_result_str,
+		"--leaves uses primitive BoT tessellation in a version 5 database.\n");
+	ret = BRLCAD_ERROR;
+	goto ged_facetize_done;
+    }
+
     s->execution.output_format = nmg_output ?
 	FacetizeOutputFormat::Nmg : FacetizeOutputFormat::Bot;
     s->execution.boolean_engine = (nmg_output || nmg_boolean) ?
 	FacetizeBooleanEngine::Nmg : FacetizeBooleanEngine::Manifold;
-    s->execution.scope = nonoverlap_brep ? FacetizeScope::NonOverlappingBrep :
-	(region_mode ? FacetizeScope::Regions : FacetizeScope::Objects);
+    if (nonoverlap_brep)
+	s->execution.scope = FacetizeScope::NonOverlappingBrep;
+    else if (region_mode)
+	s->execution.scope = FacetizeScope::Regions;
+    else if (leaf_mode)
+	s->execution.scope = FacetizeScope::Leaves;
     s->execution.commit_mode = in_place ?
 	FacetizeCommitMode::InPlace : FacetizeCommitMode::NewObject;
     use_perturbation = region_mode;

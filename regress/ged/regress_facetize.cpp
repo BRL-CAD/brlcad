@@ -77,6 +77,8 @@
  *          valid members of the imported output hierarchy.
  *
  *   TC9  - the facetize worker preserves the native B-Rep vertex and face arrays.
+ *
+ *   TC10 - two boxes sharing an edge produce a union of closed BoTs.
  */
 
 #include "common.h"
@@ -87,6 +89,7 @@
 #include <memory>
 #include <string>
 
+#include "bg/trimesh.h"
 #include "brep.h"
 #include "bu/app.h"
 #include "bu/env.h"
@@ -1440,6 +1443,121 @@ tc9_native_brep(const char *tmpdir)
     return matches ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
+static bool
+join_box_contact(ON_Brep &brep, const ON_Brep &neighbor)
+{
+    const int first_count = brep.m_E.Count();
+    brep.Append(neighbor);
+    const ON_3dPoint start(brep_box_width, brep_box_width, 0);
+    const ON_3dPoint end(brep_box_width, brep_box_width, brep_box_width);
+    int shared[2] = {-1, -1};
+    for (int i = 0; i < brep.m_E.Count(); ++i) {
+	ON_BrepEdge &edge = brep.m_E[i];
+	const bool forward = edge.PointAtStart() == start && edge.PointAtEnd() == end;
+	const bool reverse = edge.PointAtStart() == end && edge.PointAtEnd() == start;
+	if (forward || reverse) {
+	    if (reverse && !edge.Reverse())
+		return false;
+	    shared[i >= first_count] = i;
+	}
+    }
+    if (shared[0] < 0 || shared[1] < 0)
+	return false;
+
+    ON_BrepEdge &left = brep.m_E[shared[0]];
+    ON_BrepEdge &right = brep.m_E[shared[1]];
+    if (!brep.CombineCoincidentVertices(*left.Vertex(0), *right.Vertex(0)) ||
+	    !brep.CombineCoincidentVertices(*left.Vertex(1), *right.Vertex(1)) ||
+	    !brep.CombineCoincidentEdges(left, right))
+	return false;
+    // Both boxes have exactly coincident edge curves.
+    for (int i : shared)
+	brep.m_E[i].m_tolerance = 0.0;
+    brep.Compact();
+    brep.SetTrimTypeFlags();
+    return brep.IsValid() && !brep.IsManifold();
+}
+
+static bool
+check_partition(const char *gfile, const char *name)
+{
+    struct db_i *dbip = db_open(gfile, DB_OPEN_READONLY);
+    if (!dbip)
+	return false;
+
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    struct directory *dp = db_dirbuild(dbip) < 0 ? nullptr :
+	db_lookup(dbip, name, LOOKUP_QUIET);
+    bool valid = dp && rt_db_get_internal(&intern, dp, dbip, NULL) == ID_COMBINATION;
+    if (valid) {
+	auto *comb = static_cast<const struct rt_comb_internal *>(intern.idb_ptr);
+	const union tree *tree = comb->tree;
+	valid = tree && tree->tr_op == OP_UNION && !comb->region_flag;
+	if (valid) {
+	    for (const union tree *leaf : {tree->tr_b.tb_left, tree->tr_b.tb_right}) {
+		struct rt_db_internal member;
+		RT_DB_INTERNAL_INIT(&member);
+		dp = leaf && leaf->tr_op == OP_DB_LEAF && !leaf->tr_l.tl_mat ?
+		    db_lookup(dbip, leaf->tr_l.tl_name, LOOKUP_QUIET) : nullptr;
+		if (dp && rt_db_get_internal(&member, dp, dbip, NULL) == ID_BOT) {
+		    auto *bot = static_cast<struct rt_bot_internal *>(member.idb_ptr);
+		    const auto *vertices = reinterpret_cast<const point_t *>(bot->vertices);
+		    valid = bot->mode == RT_BOT_SOLID &&
+			!bg_trimesh_self_isect(bot->faces, bot->num_faces,
+			    vertices, bot->num_vertices) &&
+			!bg_trimesh_solid2(bot->num_vertices, bot->num_faces,
+			    bot->vertices, bot->faces, NULL) &&
+			NEAR_EQUAL(bg_trimesh_volume(bot->faces, bot->num_faces, vertices,
+			    bot->num_vertices), brep_box_width * brep_box_width * brep_box_width,
+			    BN_TOL_DIST);
+		} else {
+		    valid = false;
+		}
+		rt_db_free_internal(&member);
+		if (!valid)
+		    break;
+	    }
+	}
+    }
+    rt_db_free_internal(&intern);
+    db_close(dbip);
+    return valid;
+}
+
+static int
+tc10_contact_brep(const char *tmpdir, int verbose)
+{
+    const std::string gfile = std::string(tmpdir) + "/tc10_contact.g";
+    auto box = brep_box(0, 0);
+    const auto neighbor = brep_box(brep_box_width, brep_box_width);
+    if (!box || !neighbor || !join_box_contact(*box, *neighbor))
+	return BRLCAD_ERROR;
+
+    struct rt_wdb *wdbp = wdb_fopen(gfile.c_str());
+    if (!wdbp)
+	return BRLCAD_ERROR;
+    const bool written = !mk_brep(wdbp, "contact.s", box.get()) &&
+	!write_comb1(wdbp, "contact.c", "contact.s", 0);
+    wdb_close(wdbp);
+    if (!written)
+	return BRLCAD_ERROR;
+
+    const char *direct[] = {"facetize", "--methods", "NMG", "contact.s", "partition.c"};
+    const char *leaves[] = {"facetize", "--leaves", "--methods", "NMG", "contact.c", "mesh.c"};
+    if (run_facetize_command(gfile.c_str(), 5, direct, verbose) != BRLCAD_OK ||
+	    !check_partition(gfile.c_str(), "partition.c") ||
+	    run_facetize_command(gfile.c_str(), 6, leaves, verbose) != BRLCAD_OK ||
+	    check_object_type(gfile.c_str(), "mesh.c", ID_COMBINATION) != BRLCAD_OK ||
+	    !check_partition(gfile.c_str(), "mesh.c_contact.s") ||
+	    check_object_type(gfile.c_str(), "contact.s", ID_BREP) != BRLCAD_OK) {
+	bu_log("[regress_facetize] TC10: contact partition did not preserve both boxes\n");
+	return BRLCAD_ERROR;
+    }
+    bu_log("[regress_facetize] TC10: PASS\n");
+    return BRLCAD_OK;
+}
+
 /* ------------------------------------------------------------------ */
 /* main                                                                 */
 /* ------------------------------------------------------------------ */
@@ -1473,7 +1591,8 @@ return 1;
     if (tc6_havoc_wind9_pattern(tmpdir, verbose) != BRLCAD_OK) ret = 1;
     if (tc7_nmg_modes(tmpdir, verbose)             != BRLCAD_OK) ret = 1;
     if (tc8_implicit_root_persistence(tmpdir, verbose) != BRLCAD_OK) ret = 1;
-    if (tc9_native_brep(tmpdir)                 != BRLCAD_OK) ret = 1;
+    if (tc9_native_brep(tmpdir)        != BRLCAD_OK) ret = 1;
+    if (tc10_contact_brep(tmpdir, verbose)      != BRLCAD_OK) ret = 1;
 
     if (ret == 0)
 bu_log("[regress_facetize] All tests PASSED\n");

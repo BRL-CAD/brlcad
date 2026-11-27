@@ -80,6 +80,7 @@ struct _ged_facetize_state {
 
     // Processing
     FacetizeExecutionOptions execution;
+    bool direct_brep_partition;
     int resume;
 
     // Settings
@@ -130,6 +131,9 @@ _db_uniq_test(struct bu_vls *n, void *data);
 
 extern int
 _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan);
+
+extern int
+_ged_facetize_leaves(struct _ged_facetize_state *s, const FacetizePlan &plan);
 
 extern int
 _ged_facetize_objs(struct _ged_facetize_state *s, const FacetizePlan &plan);

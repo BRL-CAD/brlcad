@@ -10,7 +10,7 @@ facetize - Creates __new_object__ using __old_object__ as a guide, creating an e
 
 [source]
 ----
-facetize [-h] [-v] [-q] [-n] [-r] [-j jobs] [-s suffix] [-p prefix] [--in-place] [--max-time #] [--max-pnts #] [--resume] [--methods m1,m2,...] [--method-opts METHOD opt1=val opt2=val...] [--no-empty] [--log-file filename] [--nmg-booleval] [--disable-fixup] [--perturb] [--no-perturb] [--perturb-sa-tol #] [--perturb-vol-tol #] [--tolerate-failures] [-B -t threshold] {old_object new_object}
+facetize [-h] [-v] [-q] [-n] [-r] [-j jobs] [-s suffix] [-p prefix] [--in-place] [--leaves] [--max-time #] [--max-pnts #] [--resume] [--methods m1,m2,...] [--method-opts METHOD opt1=val opt2=val...] [--no-empty] [--log-file filename] [--nmg-booleval] [--disable-fixup] [--perturb] [--no-perturb] [--perturb-sa-tol #] [--perturb-vol-tol #] [--tolerate-failures] [-B -t threshold] {old_object new_object}
 ----
 
 
@@ -24,6 +24,9 @@ The *facetize* command can attempt to produce either triangle-only BoT objects, 
 In general Boolean evaluation of meshes is a very difficult problem, and there are also some specific considerations when it comes to preparing geometry for solid shotline raytracing that require more effort than producing a visualization mesh. It is recommended to use the *lint* command, both to verify input objects are well behaved before facetization and to check *facetize* outputs for any potential issues. Often times either the original CSG geometry definitions will need adjustment to avoid coplanar faces, or mesh editing is required to resolve problematic triangle configurations.
 
 By default all specified existing objects will be combined into a single mesh, but that is often undesirable when working within BRL-CAD - information stored on region combs such as color will be lost when converting in this fashion. The *-r* option will introspect into the specified objects and perform facetization on a per-region basis. (If the specified input has no regions in its tree, a normal facetization to a single object is performed instead.) The output will be a new hierarchy that references the facetized regions but retains the properties of parent regions. Users looking to interact visually with a shaded display of a model will likely find the *-r* output useful for that purpose.
+
+For a single B-Rep with supported coincident edge contacts, the output may be a union of two closed BoTs.
+Each mesh represents one side of the contact plane, preserving the volume while keeping each BoT manifold.
 
 There are a number of different verbosity levels available for the facetize command. One or multiple specifications of the *-v* flag will increase reporting detail. Because full output from facetize can be quite verbose, the user has the option to specify a log file with the *--log-file* option - this will capture _all_ output from the command and allow for more detailed scrutiny of what took place after a conversion has finished.
 
@@ -119,6 +122,13 @@ User specified prefix to use avoiding naming conflicts (naming conflict avoidanc
 *--in-place*::
 Replace the specified object(s) with their facetizations. (WARNING: this option is destructive and will change pre-existing geometry!)
 
+
+*--leaves*::
+Facetize each distinct primitive leaf under the specified objects in a version 5 database.
+The output combination references copies of the selected hierarchies with their Boolean operators and instance matrices.
+With *--in-place*, the original leaves are replaced under their existing names.
+A B-Rep with supported coincident edge contacts may be replaced by a union of two closed BoTs, under the original leaf name.
+If *--tolerate-failures* is specified, failed leaves retain their original geometry.
 
 *--max-time #*::
 Maximum time to spend per object (in seconds). Default is method specific. Note that specifying shorter times may cut off conversions (particularly using sampling methods) that could succeed with longer runtimes. Per-method time limits can also be adjusted to allow longer runtimes on slower methods.

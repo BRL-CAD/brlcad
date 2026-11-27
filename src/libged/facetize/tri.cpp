@@ -51,6 +51,7 @@
 #include "./ged_facetize.h"
 #include "./process.h"
 #include "./tess_opts.h"
+#include "./transfer.h"
 #include "./worker.h"
 
 static const size_t FACETIZE_EMPTY_CHECK_CROFTON_RAYS = 800u;
@@ -896,7 +897,9 @@ tess_run(struct _ged_facetize_state *s, const char *process_executable,
     size_t requested_workers = replay ? 1 : (size_t)s->max_workers;
     FacetizeWorkerPolicy worker_policy(requested_workers, object_names.size(),
 	bu_avail_cpus(), total_memory, available_memory);
-    bool staged_writes = worker_policy.worker_count() > 1;
+    // A partition is only visible after the staged writer has both BoTs.
+    const bool allow_partition = s->execution.processes_leaves() || s->direct_brep_partition;
+    bool staged_writes = allow_partition || worker_policy.worker_count() > 1;
 
     std::string worker_threads = std::to_string(
 	    worker_policy.threads_per_worker());
@@ -1017,7 +1020,8 @@ tess_run(struct _ged_facetize_state *s, const char *process_executable,
 
 	    const char *object_name = object_names[next_object].c_str();
 	    FacetizeWorkerRequest request;
-	    request.operation = FacetizeWorkerOperation::TessellatePrimitive;
+	    request.operation = allow_partition ? FacetizeWorkerOperation::TessellateLeaf :
+		FacetizeWorkerOperation::TessellatePrimitive;
 	    request.input_names.push_back(object_name);
 	    request.primitive = settings;
 	    if (!worker.channel.send_request(request)) {
@@ -1593,7 +1597,9 @@ mark_failed_tessellations(struct _ged_facetize_state *s, const std::vector<std::
 
     if (s->tolerate_failures) {
 	for (size_t i = 0; i < failed_dps.size(); i++)
-	    facetize_tolerated_failure(s, "primitive tessellation failed for '%s'; leaf will be omitted from boolean evaluation", failed_dps[i].c_str());
+	    facetize_tolerated_failure(s, "primitive tessellation failed for '%s'; %s",
+		    failed_dps[i].c_str(), s->execution.processes_leaves() ?
+		    "leaf will be left unchanged" : "leaf will be omitted from boolean evaluation");
     }
 }
 
@@ -2068,7 +2074,13 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 	s->variant_plan = (void *)vplan;
     }
 
-    if (_ged_facetize_leaves_tri(s, dbip, &leaf_dps)) {
+    const bool single_brep = argc == 1 && dpa[0]->d_minor_type == ID_BREP &&
+	s->execution.scope == FacetizeScope::Objects &&
+	!s->execution.uses_perturbation() && db_version(dbip) >= 5;
+    s->direct_brep_partition = single_brep;
+    const int tessellated = _ged_facetize_leaves_tri(s, dbip, &leaf_dps);
+    s->direct_brep_partition = false;
+    if (tessellated != BRLCAD_OK) {
 	facetize_log(s, 0, "FACETIZE: primitive tessellation failed; BoT boolean evaluation cannot proceed. Check the Primitive tessellation section in the final FACETIZE summary.\n");
 	facetize_collect_primitive_summary(s);
 	bu_ptbl_free(&leaf_dps);
@@ -2095,6 +2107,23 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 	db_close(wdbip);
 	bu_ptbl_free(&leaf_dps);
 	return BRLCAD_ERROR;
+    }
+
+    if (single_brep) {
+	struct directory *dp = db_lookup(wdbip, dpa[0]->d_namep, LOOKUP_QUIET);
+	if (facetize_partition_result(wdbip, dp)) {
+	    // A Boolean union into one mesh would reintroduce the contact.
+	    struct db_i *target = output_to_working ? wdbip : dbip;
+	    ret = facetize_copy_partition(target, oname, wdbip, dp);
+	    if (ret == BRLCAD_OK)
+		db_update_nref(target);
+	    else
+		facetize_failure(s, "unable to install partitioned B-Rep result '%s'", oname);
+	    db_close(wdbip);
+	    bu_ptbl_free(&leaf_dps);
+	    s->cleanup_workspace = cleanup && ret == BRLCAD_OK;
+	    return ret;
+	}
     }
 
     db_update_nref(wdbip);

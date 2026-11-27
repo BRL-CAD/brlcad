@@ -3,6 +3,7 @@ set(TESS_LIBS libged manifold::manifold)
 
 set(
   GED_TESS_SRCS
+  brep_contact.cpp
   brep_csg.cpp
   spsr.cpp
   main.cpp

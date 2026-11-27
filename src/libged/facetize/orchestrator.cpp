@@ -90,6 +90,7 @@ facetize_state_create()
     bu_vls_init(s->solid_suffix);
     bu_vls_sprintf(s->solid_suffix, ".bot");
 
+    s->direct_brep_partition = false;
     s->resume = 0;
     s->max_time = 0;
     s->max_pnts = 0;
@@ -350,6 +351,8 @@ facetize_execute_plan(struct _ged_facetize_state *s,
 	return _nonovlp_brep_facetize(s, plan);
     if (plan.execution.processes_regions())
 	return _ged_facetize_regions(s, plan);
+    if (plan.execution.processes_leaves())
+	return _ged_facetize_leaves(s, plan);
     return _ged_facetize_objs(s, plan);
 }
 

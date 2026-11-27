@@ -34,7 +34,8 @@ enum class FacetizeBooleanEngine {
 enum class FacetizeScope {
     Objects,
     Regions,
-    NonOverlappingBrep
+    NonOverlappingBrep,
+    Leaves
 };
 
 enum class FacetizeCommitMode {
@@ -58,6 +59,7 @@ struct FacetizeExecutionOptions {
     bool uses_nmg_boolean() const { return boolean_engine == FacetizeBooleanEngine::Nmg; }
     bool processes_regions() const { return scope == FacetizeScope::Regions; }
     bool processes_breps() const { return scope == FacetizeScope::NonOverlappingBrep; }
+    bool processes_leaves() const { return scope == FacetizeScope::Leaves; }
     bool writes_in_place() const { return commit_mode == FacetizeCommitMode::InPlace; }
     bool uses_perturbation() const { return perturb_mode == FacetizePerturbMode::Enabled; }
 };

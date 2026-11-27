@@ -193,7 +193,7 @@ brep_tessellate(struct rt_bot_internal **obot, const struct rt_db_internal *inte
 }
 
 static int
-dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct ged *gedp, struct directory *dp, tess_opts *s)
+dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct ged *gedp, struct directory *dp, tess_opts *s, FacetizeBotParts *parts = nullptr)
 {
     if (!s || !obot || !method_flag || !gedp || !dp)
 	return BRLCAD_ERROR;
@@ -314,6 +314,11 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 	    bu_vls_sprintf(method_flag, "NMG");
 	    goto dp_tessellate_cleanup;
 	}
+	if (intern.idb_minor_type == ID_BREP && parts &&
+		brep_contact_partition(*parts, &intern, dp->d_namep, &s->nmg_options.ttol)) {
+	    ret = BRLCAD_OK;
+	    goto dp_tessellate_cleanup;
+	}
 	if (intern.idb_minor_type == ID_BREP &&
 		_brep_csg_tessellate(obot, gedp, dp, s) == BRLCAD_OK) {
 	    bu_vls_sprintf(method_flag, "NMG_BREP_CSG");
@@ -394,8 +399,9 @@ facetize_server_request(struct ged *gedp, struct db_i *result_dbip,
 	const FacetizeWorkerRequest &request,
 	FacetizeWorkerServer &worker_channel, bool *result_sent)
 {
-    if (!gedp || !result_sent ||
-	    request.operation != FacetizeWorkerOperation::TessellatePrimitive ||
+    const bool preserve_leaf = request.operation == FacetizeWorkerOperation::TessellateLeaf;
+    if (!gedp || !result_sent || (preserve_leaf && !result_dbip) ||
+	    (!preserve_leaf && request.operation != FacetizeWorkerOperation::TessellatePrimitive) ||
 	    request.input_names.size() != 1)
 	return BRLCAD_ERROR;
     *result_sent = false;
@@ -425,26 +431,45 @@ facetize_server_request(struct ged *gedp, struct db_i *result_dbip,
     if (!dp || dp->d_major_type != DB5_MAJORTYPE_BRLCAD)
 	return BRLCAD_ERROR;
 
+    if (preserve_leaf && facetize_partition_result(gedp->dbip, dp))
+	return BRLCAD_OK;
+
     struct rt_bot_internal *obot = NULL;
     struct bu_vls method = BU_VLS_INIT_ZERO;
-    int ret = dp_tessellate(&obot, &method, gedp, dp, &options);
-    if (ret == BRLCAD_OK && obot) {
+    FacetizeBotParts parts = {};
+    int ret = dp_tessellate(&obot, &method, gedp, dp, &options,
+	    preserve_leaf ? &parts : nullptr);
+    if (ret == BRLCAD_OK && (obot || parts.front())) {
 	// Waiting here lets the parent stop an over-time tessellation without
 	// risking a partially replaced object in the working database.
 	facetize_test_fault(FACETIZE_TEST_FAULT_TESS_READY, object_name);
 	size_t payload_size = facetize_bot_payload_size(obot);
+	for (const struct rt_bot_internal *part : parts)
+	    facetize_payload_add(&payload_size, 1, facetize_bot_payload_size(part));
 	if (!worker_channel.send_write_ready(payload_size,
 		facetize_resident_size()) ||
 		!worker_channel.receive_write_proceed() ||
 		!worker_channel.send_write_started()) {
-	    _tess_facetize_free_bot(obot);
 	    ret = BRLCAD_ERROR;
 	} else {
 	    struct db_i *output_dbip = result_dbip ? result_dbip : gedp->dbip;
 	    const char *output_name = result_dbip ?
 		FACETIZE_WORKER_RESULT_OBJECT : object_name;
-	    ret = _tess_facetize_write_bot(output_dbip, obot, output_name,
-		    bu_vls_cstr(&method));
+	    if (parts.front()) {
+		// Publish the fixed-name result only after staging the second BoT.
+		ret = _tess_facetize_write_bot(result_dbip, parts.back(),
+		    FACETIZE_WORKER_PART_OBJECT, FACETIZE_PARTITION_METHOD);
+		parts.back() = nullptr;
+		if (ret == BRLCAD_OK) {
+		    ret = _tess_facetize_write_bot(result_dbip, parts.front(),
+			output_name, FACETIZE_PARTITION_METHOD);
+		    parts.front() = nullptr;
+		}
+	    } else {
+		ret = _tess_facetize_write_bot(output_dbip, obot, output_name,
+			bu_vls_cstr(&method));
+		obot = nullptr;
+	    }
 	    if (result_dbip && ret == BRLCAD_OK)
 		facetize_test_fault(FACETIZE_TEST_FAULT_STAGE_DONE,
 			object_name);
@@ -455,9 +480,10 @@ facetize_server_request(struct ged *gedp, struct db_i *result_dbip,
 		*result_sent = true;
 	    }
 	}
-    } else if (obot) {
-	_tess_facetize_free_bot(obot);
     }
+    _tess_facetize_free_bot(obot);
+    for (struct rt_bot_internal *part : parts)
+	_tess_facetize_free_bot(part);
     bu_vls_free(&method);
     return ret;
 }
@@ -759,7 +785,7 @@ facetize_writer(const char *work_file)
 	}
 
 	int ret = facetize_transfer_staged_object(dbip,
-		request.result_file.c_str(), request.object_name.c_str(), ID_BOT);
+		request.result_file.c_str(), request.object_name.c_str(), ID_BOT, true);
 	if (ret == BRLCAD_OK)
 	    facetize_test_fault(FACETIZE_TEST_FAULT_WRITER_DONE,
 		    request.object_name.c_str());

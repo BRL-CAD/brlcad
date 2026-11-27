@@ -23,6 +23,17 @@
 
 #include "rt/db_instance.h"
 
+inline constexpr char FACETIZE_PARTITION_METHOD[] = "CDT_PLANAR_PARTITION";
+inline constexpr char FACETIZE_WORKER_PART_OBJECT[] = "facetize_worker_result_part";
+
+bool
+facetize_partition_result(struct db_i *dbip, const struct directory *dp);
+
+/** Install a complete partition under a new name with locally named children. */
+int
+facetize_copy_partition(struct db_i *target, const char *name,
+	struct db_i *source, struct directory *partition);
+
 /**
  * Move the worker's fixed-name staged result into @p target_dbip under
  * @p object_name.  The expected type is checked before the target changes.
@@ -30,6 +41,6 @@
 int
 facetize_transfer_staged_object(struct db_i *target_dbip,
 	const char *result_file, const char *object_name,
-	int expected_object_type);
+	int expected_object_type, bool allow_partition = false);
 
 #endif /* LIBGED_FACETIZE_TRANSFER_H */

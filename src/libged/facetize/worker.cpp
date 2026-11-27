@@ -175,6 +175,7 @@ static bool
 facetize_operation_valid(FacetizeWorkerOperation operation)
 {
     return operation == FacetizeWorkerOperation::TessellatePrimitive ||
+	operation == FacetizeWorkerOperation::TessellateLeaf ||
 	operation == FacetizeWorkerOperation::ValidateCsg ||
 	operation == FacetizeWorkerOperation::EvaluateRegion ||
 	operation == FacetizeWorkerOperation::NmgBooleanToBot ||
@@ -294,6 +295,7 @@ FacetizeWorkerRequest::valid() const
 
     switch (operation) {
 	case FacetizeWorkerOperation::TessellatePrimitive:
+	case FacetizeWorkerOperation::TessellateLeaf:
 	    return input_names.size() == 1 && output_name.empty() &&
 		region.empty();
 	case FacetizeWorkerOperation::ValidateCsg:
