@@ -1307,7 +1307,10 @@ QgModel::g_update(struct db_i *n_dbip)
 	beginResetModel();
 	items_clear();
 	emit mdl_changed_db((void *)ged());
-	m_session->notifyDbChanged(nullptr);
+	if (new_database)
+	    m_session->notifyDbReplaced(nullptr);
+	else
+	    m_session->notifyDbChanged(nullptr);
 	emit view_change(QG_VIEW_DRAWN);
 	changed_db_flag = 0;
 	endResetModel();
@@ -1442,7 +1445,10 @@ QgModel::g_update(struct db_i *n_dbip)
 	(void)ged_selection_recompute(ged(), selectionSetKey());
 	notifySelectionItemsChanged();
 	emit mdl_changed_db((void *)ged());
-	m_session->notifyDbChanged(n_dbip);
+	if (new_database)
+	    m_session->notifyDbReplaced(n_dbip);
+	else
+	    m_session->notifyDbChanged(n_dbip);
 	emit check_highlights();
     }
 

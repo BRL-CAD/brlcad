@@ -45,7 +45,7 @@ class QTCAD_EXPORT QgPluginNotifier : public QObject
 	~QgPluginNotifier() override;
 
     signals:
-	/** Report that the active geometry database changed. */
+	/** Report that the host opened or closed the active geometry database. */
 	void dbChanged();
 	/** Report that the host selected a different active view. */
 	void viewChanged();

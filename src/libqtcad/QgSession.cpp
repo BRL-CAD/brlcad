@@ -61,6 +61,13 @@ QgSession::notifyDbChanged(struct db_i *dbip)
 }
 
 void
+QgSession::notifyDbReplaced(struct db_i *dbip)
+{
+    notifyDbChanged(dbip);
+    emit db_replaced();
+}
+
+void
 QgSession::notifyViewChanged(QgViewUpdateFlags flags)
 {
     emit view_changed(flags);

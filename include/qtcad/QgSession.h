@@ -40,10 +40,12 @@ public:
     void setActiveView(struct bview *view);
 
     void notifyDbChanged(struct db_i *dbip);
+    void notifyDbReplaced(struct db_i *dbip);
     void notifyViewChanged(QgViewUpdateFlags flags);
 
 signals:
     void db_changed(struct db_i *dbip);
+    void db_replaced();
     void view_changed(QgViewUpdateFlags flags);
 
 private:

@@ -148,7 +148,7 @@ QgEdApp::QgEdApp(int &argc, char *argv[], const char *g_file, int swrast_mode, i
 
     mdl = new QgModel();
     m_plugin_notifier = new QgPluginNotifier(this);
-    QObject::connect(mdl->session(), &QgSession::db_changed,
+    QObject::connect(mdl->session(), &QgSession::db_replaced,
 	m_plugin_notifier, &QgPluginNotifier::dbChanged);
     QObject::connect(this, &QgEdApp::view_update,
 	m_plugin_notifier, &QgPluginNotifier::viewUpdated);

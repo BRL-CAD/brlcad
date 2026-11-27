@@ -170,9 +170,11 @@ QgSessionTest::reconcilesModelEvents()
     QVERIFY(rootItem != nullptr);
     QVERIFY(model.allItems().empty());
     QVERIFY(&model.allItems() == model.items);
+    QSignalSpy replacements(model.session(), &QgSession::db_replaced);
     const char *openArguments[] = {"open", databasePath.constData()};
     QCOMPARE(model.run_cmd(model.ged()->ged_result_str, 2, openArguments),
 	BRLCAD_OK);
+    QCOMPARE(replacements.count(), 1);
     QVERIFY(ged_db_change_available(model.ged()));
     QCOMPARE(model.rowCount(), 0);
 
@@ -389,8 +391,10 @@ QgSessionTest::reconcilesModelEvents()
     QCOMPARE(modelResets.count(), resetsBeforeRename + 1);
 
     const char *closeArguments[] = {"close"};
+    QCOMPARE(replacements.count(), 1);
     QCOMPARE(model.run_cmd(model.ged()->ged_result_str, 1, closeArguments),
 	BRLCAD_OK);
+    QCOMPARE(replacements.count(), 2);
     QCOMPARE(changes.count(), 10);
     QCOMPARE(model.rowCount(), 0);
     QVERIFY(model.allItems().empty());
