@@ -29,7 +29,8 @@
 
 #include <Qt>
 
-enum QgDataRoles {
+namespace QgDataRoles {
+enum Role {
     BoolInternalRole = Qt::UserRole + 1000,
     BoolDisplayRole = Qt::UserRole + 1001,
     DirectoryInternalRole = Qt::UserRole + 1002,
@@ -38,6 +39,7 @@ enum QgDataRoles {
     DrawnDisplayRole = Qt::UserRole + 1005,
     SelectDisplayRole = Qt::UserRole + 1006
 };
+}
 
 #endif /* QGROLES_H */
 
