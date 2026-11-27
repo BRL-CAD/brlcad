@@ -75,6 +75,8 @@
  *
  *   TC8  - implicit solid roots survive the working-database close and remain
  *          valid members of the imported output hierarchy.
+ *
+ *   TC9  - the facetize worker preserves the native B-Rep vertex and face arrays.
  */
 
 #include "common.h"
@@ -82,13 +84,16 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <memory>
 #include <string>
 
+#include "brep.h"
 #include "bu/app.h"
 #include "bu/env.h"
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/process.h"
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "rt/db_instance.h"
@@ -1361,6 +1366,80 @@ tc8_implicit_root_persistence(const char *tmpdir, int verbose)
     return ret;
 }
 
+static constexpr double brep_box_width = 10.0;
+
+static std::unique_ptr<ON_Brep>
+brep_box(double x, double y)
+{
+    const double u = x + brep_box_width;
+    const double v = y + brep_box_width;
+    const ON_3dPoint corners[] = {
+	ON_3dPoint(x, y, 0), ON_3dPoint(u, y, 0),
+	ON_3dPoint(u, v, 0), ON_3dPoint(x, v, 0),
+	ON_3dPoint(x, y, brep_box_width), ON_3dPoint(u, y, brep_box_width),
+	ON_3dPoint(u, v, brep_box_width), ON_3dPoint(x, v, brep_box_width)
+    };
+    return std::unique_ptr<ON_Brep>(ON_BrepBox(corners));
+}
+
+static int
+tc9_native_brep(const char *tmpdir)
+{
+    const std::string gfile = std::string(tmpdir) + "/tc9_brep.g";
+    const auto box = brep_box(0, 0);
+    if (!box)
+	return BRLCAD_ERROR;
+
+    struct rt_wdb *wdbp = wdb_fopen(gfile.c_str());
+    if (!wdbp)
+	return BRLCAD_ERROR;
+    const int written = mk_brep(wdbp, "box.s", box.get());
+    wdb_close(wdbp);
+    if (written)
+	return BRLCAD_ERROR;
+
+    struct ged *gedp = ged_open("db", gfile.c_str(), 1);
+    if (!gedp)
+	return BRLCAD_ERROR;
+    const char *native[] = {"brep", "box.s", "bot", "native.bot"};
+    const int reference = ged_exec(gedp, 4, native);
+    ged_close(gedp);
+    if (reference != BRLCAD_OK)
+	return BRLCAD_ERROR;
+
+    char executable[MAXPATHLEN];
+    bu_dir(executable, MAXPATHLEN, BU_DIR_BIN, "ged_exec", BU_DIR_EXT, NULL);
+    const char *worker[] = {executable, "facetize_process", "--methods", "NMG",
+	gfile.c_str(), "box.s", NULL};
+    struct bu_process *process = NULL;
+    bu_process_create(&process, worker, BU_PROCESS_HIDE_WINDOW);
+    if (!process || bu_process_wait_n(&process, 0))
+	return BRLCAD_ERROR;
+
+    gedp = ged_open("db", gfile.c_str(), 1);
+    if (!gedp)
+	return BRLCAD_ERROR;
+    bool matches = true;
+    for (const char *field : {"V", "F"}) {
+	const char *expected[] = {"get", "native.bot", field};
+	const char *actual[] = {"get", "box.s_tess.bot", field};
+	if (ged_exec(gedp, 3, expected) != BRLCAD_OK) {
+	    matches = false;
+	    break;
+	}
+	const std::string value = bu_vls_cstr(gedp->ged_result_str);
+	if (ged_exec(gedp, 3, actual) != BRLCAD_OK ||
+		value != bu_vls_cstr(gedp->ged_result_str)) {
+	    matches = false;
+	    break;
+	}
+    }
+    ged_close(gedp);
+    bu_log("[regress_facetize] TC9: %s\n",
+	matches ? "PASS" : "facetize changed the indexed B-Rep mesh");
+    return matches ? BRLCAD_OK : BRLCAD_ERROR;
+}
+
 /* ------------------------------------------------------------------ */
 /* main                                                                 */
 /* ------------------------------------------------------------------ */
@@ -1394,6 +1473,7 @@ return 1;
     if (tc6_havoc_wind9_pattern(tmpdir, verbose) != BRLCAD_OK) ret = 1;
     if (tc7_nmg_modes(tmpdir, verbose)             != BRLCAD_OK) ret = 1;
     if (tc8_implicit_root_persistence(tmpdir, verbose) != BRLCAD_OK) ret = 1;
+    if (tc9_native_brep(tmpdir)                 != BRLCAD_OK) ret = 1;
 
     if (ret == 0)
 bu_log("[regress_facetize] All tests PASSED\n");
