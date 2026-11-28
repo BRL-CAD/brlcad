@@ -95,7 +95,7 @@ class QgEdMainWindow : public QMainWindow
 	void setActiveView(QgView *view);
 
 	// Utility wrapper for the closeEvent to save windowing dimensions
-	void closeEvent(QCloseEvent* e);
+	void closeEvent(QCloseEvent* e) override;
 
     public slots:
 	//void save_image();
