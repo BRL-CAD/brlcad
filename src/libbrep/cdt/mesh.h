@@ -460,8 +460,6 @@ class cpolyedge_t
 	    trim_start = 0.0;
 	    trim_end = 0.0;
 	    split_status = 0;
-	    v1_dist = 0.0;
-	    v2_dist = 0.0;
 	    eseg = NULL;
 	};
 
@@ -480,8 +478,6 @@ class cpolyedge_t
 	    trim_start = 0.0;
 	    trim_end = 0.0;
 	    split_status = 0;
-	    v1_dist = 0.0;
-	    v2_dist = 0.0;
 	    eseg = NULL;
 	};
 
@@ -497,8 +493,6 @@ class cpolyedge_t
 	double trim_start;
 	double trim_end;
 	int split_status;
-	double v1_dist;
-	double v2_dist;
 	bedge_seg_t *eseg;
 
 };

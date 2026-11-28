@@ -549,13 +549,35 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt,
 {
     ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
     ON_Interval domain(pe->trim_start, pe->trim_end);
+    const double coordinate_scale = std::max(1.0, std::max(
+	std::max(std::fabs(edge_mid_3d.x), std::fabs(edge_mid_3d.y)),
+	std::fabs(edge_mid_3d.z)));
+    constexpr double roundoff_units = 1024.0;
+    const double numerical_tolerance = roundoff_units *
+	std::numeric_limits<double>::epsilon() *
+	std::max(coordinate_scale, elen);
+    const ON_Surface *surface = trim.SurfaceOf();
+
+    /* Matching parameterizations often put the answer at the center of
+     * the interval. A match at evaluation roundoff needs no search. */
+    const double first = domain.Min();
+    const double last = domain.Max();
+    const double midpoint = first + 0.5 * (last - first);
+    if (surface && midpoint > first && midpoint < last) {
+	const ON_2dPoint uv = trim.PointAt(midpoint);
+	const ON_3dPoint point = cdt_surface_point(surface, uv);
+	if (point.IsValid() && point.DistanceTo(edge_mid_3d) <= numerical_tolerance) {
+	    *t = midpoint;
+	    return uv;
+	}
+    }
+
     double tparam;
     bool cpoint = ON_TrimCurve_GetClosestPoint(&tparam, &trim, edge_mid_3d, 0, &domain);
     if (!cpoint) {
 	tparam = (pe->trim_start + pe->trim_end) / 2.0;
     }
 
-    const ON_Surface *surface = trim.SurfaceOf();
     auto distance_squared = [&](double parameter) {
 	ON_2dPoint uv = trim.PointAt(parameter);
 	if (!uv.IsValid() || !surface)
@@ -568,12 +590,6 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt,
     };
     double best_parameter = tparam;
     double best_distance_squared = distance_squared(tparam);
-    double coordinate_scale = std::max(1.0, std::max(
-	std::max(std::fabs(edge_mid_3d.x), std::fabs(edge_mid_3d.y)),
-	std::fabs(edge_mid_3d.z)));
-    const double numerical_tolerance = 1024.0 *
-	std::numeric_limits<double>::epsilon() *
-	std::max(coordinate_scale, elen);
     double correction_tolerance = std::max(numerical_tolerance,
 	0.01 * std::max(elen, numerical_tolerance));
     if (std::isfinite(brep_edge_tol) && brep_edge_tol > 0.0 &&
@@ -650,6 +666,25 @@ shape_refinement_spacing(double *spacing, double absmin, double cp_len)
     const double local_min = std::isfinite(cp_len) && cp_len > 0.0 ?
 	cp_len / 256.0 : 0.0;
     return edge_spacing_floor(spacing, absmin, local_min);
+}
+
+static double
+linear_edge_neighbor_spacing(const bedge_seg_t &segment,
+	double preferred_spacing, double minimum_spacing)
+{
+    double sizing_floor = 0.0;
+    if (!shape_refinement_spacing(&sizing_floor, minimum_spacing,
+	    segment.cp_len) || preferred_spacing > sizing_floor)
+	return preferred_spacing;
+
+    /* A loop median below the subdivision floor can describe a fillet
+     * many times shorter than this straight edge. Keep the floor at the
+     * junctions and let element size grow away from them. For a straight
+     * edge the endpoint chord measures distance along the edge. */
+    constexpr double spacing_growth = 0.5;
+    const double from_start = segment.e_root_start->DistanceTo(*segment.e_start);
+    const double from_end = segment.e_root_end->DistanceTo(*segment.e_end);
+    return sizing_floor + spacing_growth * std::min(from_start, from_end);
 }
 
 static bool
@@ -1721,6 +1756,34 @@ cdt_test_linear_edge_spacing(void)
 	    curve->Domain(), ON_3dPoint(0.0, 0.01, 0.0), BN_TOL_DIST))
 	return 18;
 
+    /* A long straight edge next to a short curve keeps close samples at
+     * each junction and grows their spacing in the interior. */
+    ON_3dPoint root_start(0.0, 0.0, 0.0);
+    ON_3dPoint root_end(256.0, 0.0, 0.0);
+    ON_3dPoint inner_start(64.0, 0.0, 0.0);
+    ON_3dPoint inner_end(192.0, 0.0, 0.0);
+    bedge_seg_t segment;
+    segment.cp_len = root_start.DistanceTo(root_end);
+    segment.e_root_start = &root_start;
+    segment.e_root_end = &root_end;
+    segment.e_start = &root_start;
+    segment.e_end = &inner_start;
+    if (!NEAR_EQUAL(linear_edge_neighbor_spacing(segment, 0.5, floor),
+	    1.0, ON_ZERO_TOLERANCE))
+	return 19;
+    segment.e_start = &inner_end;
+    segment.e_end = &root_end;
+    if (!NEAR_EQUAL(linear_edge_neighbor_spacing(segment, 0.5, floor),
+	    1.0, ON_ZERO_TOLERANCE))
+	return 20;
+    segment.e_start = &inner_start;
+    segment.e_end = &inner_end;
+    if (!NEAR_EQUAL(linear_edge_neighbor_spacing(segment, 0.5, floor),
+	    33.0, ON_ZERO_TOLERANCE) ||
+	!NEAR_EQUAL(linear_edge_neighbor_spacing(segment, 2.0, floor),
+	    2.0, ON_ZERO_TOLERANCE))
+	return 21;
+
     return 0;
 }
 
@@ -1741,10 +1804,6 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, ON_3dPoint &e
 	    std::min(max_edgept_dist_from_edge, relative_tolerance) :
 	    relative_tolerance;
     }
-    ON_BrepLoop *l1 = s_cdt->brep->m_T[bseg->tseg1->trim_ind].Loop();
-    ON_BrepLoop *l2 = s_cdt->brep->m_T[bseg->tseg2->trim_ind].Loop();
-    const ON_Surface *s1= l1->SurfaceOf();
-    const ON_Surface *s2= l2->SurfaceOf();
     double len_1 = -1;
     double len_2 = -1;
     double s_len;
@@ -1759,11 +1818,12 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, ON_3dPoint &e
 	case 1:
 	    // Curved edge - default assigned values are correct.
 	    break;
-	case 2:
-	    // Linear edge on non-planar surface - use the median segment lengths
-	    // from the trims from non-planar faces associated with this edge
-	    len_1 = (!s1->IsPlanar(NULL, BN_TOL_DIST)) ? s_cdt->l_median_len[l1->m_loop_index] : -1;
-	    len_2 = (!s2->IsPlanar(NULL, BN_TOL_DIST)) ? s_cdt->l_median_len[l2->m_loop_index] : -1;
+	case 2: {
+	    // Size a straight edge from its adjacent non-planar trim loops.
+	    const int first_loop = s_cdt->brep->m_T[bseg->tseg1->trim_ind].m_li;
+	    const int second_loop = s_cdt->brep->m_T[bseg->tseg2->trim_ind].m_li;
+	    len_1 = s_cdt->l_median_len[first_loop];
+	    len_2 = s_cdt->l_median_len[second_loop];
 	    if (len_1 < 0 && len_2 < 0) {
 		bu_log("Error - both loops report invalid median lengths\n");
 		return false;
@@ -1774,16 +1834,11 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, ON_3dPoint &e
 		return false;
 	    max_allowed = 5.0 * s_len;
 	    min_allowed = 0.2 * s_len;
-	    if (s_cdt->tol.absmax <= ON_ZERO_TOLERANCE) {
-		/* The neighboring trim sets a triangle sizing preference.
-		 * Bound how far that preference can subdivide a straight
-		 * edge. Adjacent normals still control geometric refinement. */
-		double sizing_floor = 0.0;
-		if (shape_refinement_spacing(&sizing_floor, s_cdt->absmin,
-			bseg->cp_len))
-		    max_allowed = std::max(max_allowed, sizing_floor);
-	    }
+	    if (s_cdt->tol.absmax <= ON_ZERO_TOLERANCE)
+		max_allowed = linear_edge_neighbor_spacing(*bseg, max_allowed,
+		    s_cdt->absmin);
 	    break;
+	}
 	case 3:
 	    // Linear edge connected to one or more non-linear edges.  If the start or end points
 	    // are the same as the root start or end points, use the median edge length of the
@@ -1917,11 +1972,10 @@ select_edge_split(edge_split_candidate &candidate,
     }
 
     // Find the 2D points
-    double elen1 = bseg->nc->PointAt(bseg->edge_start).DistanceTo(
-	bseg->nc->PointAt(candidate.edge_parameter));
-    double elen2 = bseg->nc->PointAt(candidate.edge_parameter).DistanceTo(
-	bseg->nc->PointAt(bseg->edge_end));
-    double elen = (elen1 + elen2) * 0.5;
+    const ON_3dPoint curve_midpoint = bseg->nc->PointAt(candidate.edge_parameter);
+    const double elen = 0.5 *
+	(bseg->nc->PointAt(bseg->edge_start).DistanceTo(curve_midpoint) +
+	 curve_midpoint.DistanceTo(bseg->nc->PointAt(bseg->edge_end)));
     const ON_3dPoint &trim_target_3d = shared_point ? *shared_point :
 	candidate.point;
     candidate.trim_points[0] = get_trim_midpt(&candidate.trim_parameters[0],
@@ -3301,6 +3355,11 @@ update_loop_median_curved_edge_seg_lengths(struct ON_Brep_CDT_State *s_cdt)
     ON_Brep* brep = s_cdt->brep;
     for (int index = 0; index < brep->m_L.Count(); index++) {
 	const ON_BrepLoop &loop = brep->m_L[index];
+	const ON_Surface *surface = loop.SurfaceOf();
+	if (!surface || surface->IsPlanar(NULL, BN_TOL_DIST)) {
+	    s_cdt->l_median_len[index] = -1;
+	    continue;
+	}
 	std::vector<double> lsegs;
 	for (int lti = 0; lti < loop.TrimCount(); lti++) {
 	    ON_BrepTrim *trim = loop.Trim(lti);
@@ -3342,9 +3401,6 @@ curved_edges_refine(struct ON_Brep_CDT_State *s_cdt)
     // length involved.
     update_vert_edge_seg_lengths(s_cdt);
 
-
-    // Calculate loop median segment lengths contributed from the curved edges
-    update_loop_median_curved_edge_seg_lengths(s_cdt);
 
     std::map<int, double> refine_targets;
     for (int index = 0; index < brep->m_E.Count(); index++) {
