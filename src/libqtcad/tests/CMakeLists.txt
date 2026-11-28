@@ -111,11 +111,16 @@ if(QTCAD_TEST_QT_TEST)
     qtcad_test_plugin_panel
     qtcad_test_plugin_dialog
   )
-  brlcad_add_test(NAME test_qtcad_plugin_manager COMMAND test_qtcad_plugin_manager)
+  brlcad_add_test(NAME test_qtcad_plugin_manager COMMAND ${CMAKE_COMMAND}
+    "-DTEST_EXECUTABLE=$<TARGET_FILE:test_qtcad_plugin_manager>"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/test_qtcad_plugin_manager.cmake"
+  )
   set_property(TEST test_qtcad_plugin_manager APPEND PROPERTY ENVIRONMENT
-    QTCAD_TEST_PLUGIN_DIR=${QTCAD_TEST_PLUGIN_DIR}
+    "QTCAD_TEST_PLUGIN_DIR=$<TARGET_FILE_DIR:qtcad_test_plugin_valid>"
     BRLCAD_ROOT=${CMAKE_BINARY_DIR}
     QT_QPA_PLATFORM=offscreen
+    QT_DEBUG_PLUGINS=1
+    QT_FORCE_STDERR_LOGGING=1
   )
 endif()
 
@@ -289,6 +294,7 @@ cmakefiles(
   ${TEST_QTCAD_CONSOLE_SRCS}
   ${TEST_QTCAD_WIDGETS_SRCS}
   ${TEST_QTCAD_PLUGIN_MANAGER_SRCS}
+  test_qtcad_plugin_manager.cmake
   ${TEST_QTCAD_PLUGIN_CONTEXT_SRCS}
   ${TEST_QTCAD_PLUGIN_BASE_HDRS}
   ${TEST_QTCAD_PLUGIN_VALID_SRCS}

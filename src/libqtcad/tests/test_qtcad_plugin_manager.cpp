@@ -21,7 +21,9 @@
 #include "common.h"
 
 #include <QApplication>
+#include <QDebug>
 #include <QDialog>
+#include <QDir>
 #include <QDockWidget>
 #include <QMainWindow>
 #include <QMenu>
@@ -86,16 +88,39 @@ QgPluginManagerTest::settingsGroup() const
 void
 QgPluginManagerTest::initTestCase()
 {
-    QVERIFY(settingsDirectory.isValid());
-    QVERIFY(!pluginDirectory().isEmpty());
+    QVERIFY2(settingsDirectory.isValid(),
+	qPrintable(settingsDirectory.errorString()));
+    QVERIFY2(!pluginDirectory().isEmpty(), "QTCAD_TEST_PLUGIN_DIR is not set");
+    const QDir directory(pluginDirectory());
+    qInfo().noquote() << "Plugin directory:" << directory.absolutePath();
+    QVERIFY2(directory.exists(), "Plugin directory does not exist");
+    qInfo().noquote() << "Plugin directory entries:"
+	<< directory.entryList(QDir::Files, QDir::Name).join(QLatin1String(", "));
     QSettings::setDefaultFormat(QSettings::IniFormat);
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope,
 	settingsDirectory.path());
     QSettings settings;
+    qInfo().noquote() << "Settings file:" << settings.fileName();
     settings.beginGroup(settingsGroup());
     settings.remove(QString());
     settings.endGroup();
     settings.sync();
+    QCOMPARE(settings.status(), QSettings::NoError);
+
+    QgPluginManager manager(QStringList() << pluginDirectory(),
+	settingsGroup());
+    qInfo().noquote() << manager.diagnosticSummary();
+    const QStringList requiredPlugins = {
+	QString::fromLatin1(valid_plugin_id),
+	QString::fromLatin1(panel_plugin_id),
+	QString::fromLatin1(dialog_plugin_id)
+    };
+    for (const QString &id : requiredPlugins) {
+	QObject *instance = manager.instance(id);
+	const QString diagnostic = manager.diagnosticInfo(id);
+	qInfo().noquote() << diagnostic;
+	QVERIFY2(instance != nullptr, qPrintable(diagnostic));
+    }
 }
 
 void
@@ -467,6 +492,8 @@ main(int argc, char **argv)
     bu_setprogname(argv[0]);
     qputenv("QT_QPA_PLATFORM", QByteArrayLiteral("offscreen"));
     QApplication application(argc, argv);
+    application.setOrganizationName(QStringLiteral("BRL-CAD"));
+    application.setApplicationName(QStringLiteral("test_qtcad_plugin_manager"));
     QgPluginManagerTest test;
     return QTest::qExec(&test, argc, argv);
 }

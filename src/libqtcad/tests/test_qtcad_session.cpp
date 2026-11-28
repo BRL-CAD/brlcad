@@ -18,6 +18,7 @@
 #include <QTemporaryDir>
 #include <QtTest/QTest>
 
+#include "bu/app.h"
 #include "ged.h"
 #include "ged/database.h"
 #include "ged/scene.h"
@@ -592,7 +593,13 @@ QgSessionTest::tracksSessionAttributes()
     QCOMPARE(attributes.rowCount(QModelIndex()), 0);
 }
 
-QTEST_APPLESS_MAIN(QgSessionTest)
+int
+main(int argc, char **argv)
+{
+    bu_setprogname(argv[0]);
+    QgSessionTest test;
+    return QTest::qExec(&test, argc, argv);
+}
 
 #include "test_qtcad_session.moc"
 
